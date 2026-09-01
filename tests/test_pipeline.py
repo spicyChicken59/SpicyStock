@@ -1720,3 +1720,55 @@ def test_tickers_is_refused_for_a_mode_that_does_not_scan(monkeypatch, capsys):
         pipeline.main()
     assert exc.value.code == 2  # argparse's usage error, not EXIT_DEGRADED
     assert "does not scan" in capsys.readouterr().err
+
+
+def test_a_history_with_unreadable_dates_reports_itself_instead_of_passing_as_clean(
+    universe, mocked_boundaries, open_gate, tmp_path
+):
+    """A run entry whose `date` will not parse is kept rather than
+    quarantined -- src.ledger draws the line at shape, not content, and one
+    bad field is not grounds for setting a year of outcomes aside.
+
+    But the run that read it used to report itself CLEAN: exit 0, no band,
+    nothing in the email, while publishing a snapshot that broke its own
+    declared contract. A damaged record is a thing the operator has to be told
+    about, in the same place every other problem is told.
+    """
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / ledger.LEDGER_NAME).write_text(json.dumps({
+        "schema_version": ledger.SCHEMA_VERSION,
+        "runs": [{"date": "not-a-date", "type": "evening",
+                  "candidates": [{"ticker": "AAPL", "date": "2026-01-02", "score": 7}],
+                  "gated": []}],
+    }))
+    report = pipeline.RunReport()
+
+    pipeline.run("evening", dry_run=False, tickers=universe, report=report)
+
+    assert [e["stage"] for e in report.errors] == ["history"], report.errors
+    assert "1 of 1 runs" in report.errors[0]["message"]
+    assert report.exit_code == pipeline.EXIT_DEGRADED
+
+    # And the snapshot it published does not contradict itself: the record's
+    # span was recovered from the rows, which carry the session they burst on.
+    for candidate in clean(tmp_path)["candidates"]:
+        streak = candidate["streak"]
+        assert streak["seen_before"] <= (streak["history_sessions"] or 0), streak
+
+
+
+def test_the_exit_codes_are_the_numbers_actions_reads():
+    """Every other test in this file asserts `== pipeline.EXIT_DEGRADED` and
+    friends, which compares the code against the name it came from: change the
+    constant to 0 and all fifteen of them stay green, verified by mutation.
+    They are not wrong to read that way -- the name is what makes them
+    legible -- they just need one place that pins the name to a number.
+
+    This is that place. The contract is with GitHub Actions, which reads the
+    integer and knows nothing about the name: 0 is a run to trust, 1 is a run
+    that produced nothing, and 2 is the one that matters -- a run that finished
+    and must not be traded off as a complete scan. A 2 that silently became a 0
+    would turn every degraded night green, which is the failure step 5 exists
+    to end.
+    """
+    assert (pipeline.EXIT_OK, pipeline.EXIT_FAILED, pipeline.EXIT_DEGRADED) == (0, 1, 2)

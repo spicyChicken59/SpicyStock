@@ -127,9 +127,12 @@ a holiday makes a gap look one session longer, which can only *break* a streak,
 never invent one. The rule and its reasoning are in `src/ledger.py`.
 
 Reading that history can never kill a run. An unreadable `docs/ledger.json`
-degrades the run and publishes `streak: null` on every row — "we have never
-seen this name" and "we could not read the file that would know" are different
-sentences, and only one is a claim about the market.
+degrades the run and publishes, on every row, a `streak` whose `day` is null
+and whose `unknown_reason` is `history_unreadable` — never `streak: null`,
+which is a fourth state meaning the run recorded nothing at all, and never a
+day number. "We have never seen this name" and "we could not read the file
+that would know" are different sentences, only one is a claim about the
+market, and the email and the dashboard say different words for each.
 
 ## One-time setup
 
@@ -194,7 +197,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 568 tests, no network or API keys needed
+pytest tests/                   # 580 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the

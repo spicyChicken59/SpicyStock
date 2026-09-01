@@ -634,3 +634,66 @@ def test_a_morning_run_with_nothing_to_show_does_not_blame_the_market():
     assert "The run this follows through on scored no candidates." in build_html(
         [], "morning", DATED)
     assert "No candidates passed the quality gate" in build_html([], "evening", DATED)
+
+
+# _headline() knew the mode and the staleness, and neither of the two other
+# things it asserts: whether there are rows, and whether anything actually
+# shortened the list. Every sentence it produced said "the rows below" or "the
+# list below". Both gaps were found by rendering the band and reading it, not
+# by reading the function.
+
+def _band(stage: str, run_type: str, results, **stats) -> str:
+    from src.emailer import _headline
+    return _headline(
+        {"errors": [{"stage": stage, "message": "m"}], **stats}, run_type, results)
+
+
+def test_a_degraded_run_with_no_rows_does_not_point_at_rows():
+    """The morning run that refuses the fixture renders this directly above
+    `No shortlist.` -- and that is not a corner case. docs/data.json ships as
+    the fixture, so it is the state of the first production morning run and of
+    every one until evening.yml's commit-back succeeds.
+    """
+    for run_type in ("morning", "evening"):
+        headline = _band("history", run_type, [])
+        assert "rows below" not in headline, headline
+        assert "list below is incomplete" not in headline, headline
+        assert "no watchlist below" in headline or "no shortlist below" in headline
+
+
+def test_a_stale_morning_with_no_rows_still_names_the_gap_without_promising_rows():
+    headline = _band("history", "morning", [], stale_sessions=15, session="2026-08-11")
+    assert "NOTHING HAS PUBLISHED FOR 15 SESSIONS" in headline
+    assert "rows below" not in headline, headline
+    assert "2026-08-11" in headline
+
+
+def test_only_a_scan_problem_calls_the_list_incomplete():
+    """Of the stages an evening run can report, one shortens the list and the
+    rest spoil it. A chart that would not render printed "the list below is
+    incomplete" over a scan that reached every symbol it asked for -- a true
+    problem described falsely, which spends the trust the next real one needs.
+    """
+    rows = [{"ticker": "AAA"}]
+    incomplete = "the list below is incomplete"
+    assert incomplete in _band("scan", "evening", rows)
+    for stage in ("chart", "score", "history", "session", "archive"):
+        headline = _band(stage, "evening", rows)
+        assert incomplete not in headline, f"{stage}: {headline}"
+        assert "scan below is complete" in headline, f"{stage}: {headline}"
+
+
+def test_a_scan_problem_beside_another_one_still_says_incomplete():
+    """The list is shortened if ANY problem shortened it -- the check is over
+    every error, not over the first one."""
+    from src.emailer import _headline
+    stats = {"errors": [{"stage": "chart", "message": "m"},
+                        {"stage": "scan", "message": "m"}]}
+    assert "the list below is incomplete" in _headline(stats, "evening", [{"ticker": "A"}])
+
+
+def test_a_malformed_error_entry_cannot_crash_the_only_monitor():
+    """The band is what reports every other failure. It must not become one."""
+    from src.emailer import _headline
+    stats = {"errors": ["not a dict", None, {"no_stage": True}]}
+    assert "DEGRADED" in _headline(stats, "evening", [{"ticker": "A"}])

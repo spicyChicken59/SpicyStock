@@ -352,6 +352,43 @@ def session_dates(runs: list[dict]) -> list[date]:
     return sorted(days)
 
 
+def undated_runs(runs: list[dict]) -> int:
+    """How many run entries carry a `date` this module cannot read.
+
+    Such an entry is kept, not quarantined: _malformed_rows() draws the line at
+    shape, and one unreadable field is not grounds for setting a year of
+    outcomes aside. But it is a damaged record, and a run that reads one used
+    to report itself clean -- exit 0, no band -- while publishing a snapshot
+    whose own contract it broke. The count is what lets the run say so.
+    """
+    return sum(
+        1 for run in runs
+        if isinstance(run, dict) and _as_date(run.get("date")) is None
+    )
+
+
+def _dated_row_sessions(runs: list[dict]) -> set[date]:
+    """The sessions the ledger's ROWS carry, whatever their run entry says.
+
+    A candidate row's date is the session it burst on, which is the session the
+    run that wrote it scanned. So a run whose own `date` is unreadable is still
+    placeable through its rows, and the sessions it looked at are not lost from
+    the record's span. Read by Record.of(); see the reasoning there.
+    """
+    days: set[date] = set()
+    for run in runs:
+        if not isinstance(run, dict):
+            continue
+        for rows in (run.get("candidates") or [], run.get("gated") or []):
+            if not isinstance(rows, list):
+                continue
+            for row in rows:
+                day = _as_date(row.get("date")) if isinstance(row, dict) else None
+                if day is not None:
+                    days.add(day)
+    return days
+
+
 def oldest_session(runs: list[dict]) -> date | None:
     """The oldest session this ledger holds a run for, or None if it holds none.
 
@@ -394,7 +431,24 @@ class Record(NamedTuple):
 
     @classmethod
     def of(cls, runs: list[dict]) -> "Record":
-        days = session_dates(runs)
+        """Every session the ledger has EVIDENCE it looked at.
+
+        Not `session_dates(runs)` alone, which reads only each run's own
+        `date`. A run entry whose date will not parse is kept rather than
+        quarantined -- _malformed_rows() guards shape, not content -- and its
+        candidate rows still carry the session they burst on, which IS the
+        session that run scanned. Counting only the run dates therefore
+        published `seen_before: 8` beside `history_sessions: 0`, breaking the
+        declared invariant that a name cannot have burst on more sessions than
+        the record holds, on a run that reported itself clean with exit 0.
+
+        Taking the union makes that invariant structurally true instead of
+        merely asserted: every appearance appearance_index() can date is, by
+        construction, a session this record holds. It can only widen the span,
+        and it widens it exactly where the evidence is -- a session no run
+        entry could name but whose bursts are written down.
+        """
+        days = sorted(set(session_dates(runs)) | _dated_row_sessions(runs))
         return cls(days[0] if days else None, len(days), len(runs))
 
 

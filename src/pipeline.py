@@ -436,6 +436,15 @@ def load_history(report: RunReport) -> ledger.Ledger:
         # one-run ledger — the exact loss Ledger.set_aside() exists to prevent,
         # reintroduced through the door this catch-all opened.
         book.set_aside(f"{book.path} could not be read ({type(e).__name__}: {e})")
+    undated = ledger.undated_runs(book.runs)
+    if undated:
+        report.problem("history",
+                       f"{undated} of {len(book.runs)} runs in the history carry a date "
+                       "this run cannot read, so the record cannot say when they "
+                       "happened. Their bursts still count -- the rows carry their own "
+                       "sessions -- but the record's span is only what the readable "
+                       "dates prove, so some day numbers will be withheld that a whole "
+                       "history would have given")
     if book.load_error:
         report.problem("history",
                        f"the run history could not be read ({book.load_error}), so this "

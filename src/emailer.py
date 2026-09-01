@@ -98,7 +98,25 @@ def _prefix(scan_stats: dict) -> str:
     return STATUS_PREFIXES.get(status, "")
 
 
-def _headline(scan_stats: dict, run_type: str) -> str:
+#: The only stage whose problems make the shortlist SHORTER than the session
+#: deserved. Everything else -- a chart that would not render, a history that
+#: could not be read, a clock disagreement, a forward-return backfill, even
+#: Claude refusing every candidate -- leaves the list itself whole and spoils
+#: something about it. Saying "incomplete" over a complete 3-of-3 scan spends
+#: the reader's trust on a true problem described falsely, and the next real
+#: one is read past.
+SHORTENING_STAGES = frozenset({"scan"})
+
+
+def _shortened(scan_stats: dict) -> bool:
+    """Did anything actually cut the list, as opposed to spoiling it?"""
+    return any(
+        (e.get("stage") if isinstance(e, dict) else None) in SHORTENING_STAGES
+        for e in (scan_stats.get("errors") or [])
+    )
+
+
+def _headline(scan_stats: dict, run_type: str, results: list[dict] | None = None) -> str:
     """The one sentence in the band a phone skimmer actually reads.
 
     It was written for the evening run and keyed on nothing but `failed`, while
@@ -114,8 +132,20 @@ def _headline(scan_stats: dict, run_type: str) -> str:
     word for "one session late, possibly a holiday" and "nothing has published
     for three weeks". See src.pipeline's stale_snapshot_note() for why the
     second is knowable without a holiday calendar.
+
+    Two more things it has to know, both found by rendering it rather than
+    reading it. WHETHER THERE ARE ROWS: every sentence here said "the rows
+    below" or "the list below", and the morning run that refuses the fixture
+    says it directly above `No shortlist.` -- which is not a corner case but
+    the guaranteed state of the first production morning run, and of every one
+    until evening.yml's commit-back succeeds. AND WHICH STAGE BROKE: only a
+    `scan` problem shortens the list (see SHORTENING_STAGES); a chart that
+    failed to render printed "the list below is incomplete" over a complete
+    scan of every symbol asked for. _title() already branches on the first of
+    these; the band, which sits above it and is read first, did not.
     """
     morning = run_type == "morning"
+    rows = bool(results) if results is not None else True
     if scan_stats.get("status") == "failed":
         return ("THIS RUN FAILED — there is no watchlist below. A morning run "
                 "re-presents what the last evening run published, and this pass "
@@ -129,18 +159,32 @@ def _headline(scan_stats: dict, run_type: str) -> str:
         # market's scheduled holidays are adjacent, so this is true at every
         # gap of two or more, while unscheduled closures have run to
         # consecutive sessions and the band below names them.
-        return (f"NOTHING HAS PUBLISHED FOR {_plural(stale, 'SESSION').upper()} — the rows "
-                f"below are {scan_stats.get('session') or 'an older session'}'s, and no "
-                f"market holiday is that long. The evening run has stopped publishing.")
+        published = scan_stats.get("session") or "an older session"
+        where = (f"the rows below are {published}'s" if rows
+                 else f"the newest run anything published is {published}'s")
+        return (f"NOTHING HAS PUBLISHED FOR {_plural(stale, 'SESSION').upper()} — {where}, "
+                "and no market holiday is that long. The evening run has stopped "
+                "publishing.")
     if morning:
+        if not rows:
+            return ("THIS FOLLOW-THROUGH IS DEGRADED — there is no watchlist below. A "
+                    "morning run re-presents what the last evening run published, and "
+                    "there was nothing it could show.")
         return ("THIS FOLLOW-THROUGH IS DEGRADED — the rows below are an earlier evening "
                 "run's shortlist, re-presented before the open. This pass scanned "
                 "nothing itself, so read every reason below before acting on them.")
-    return ("THIS RUN WAS DEGRADED — the list below is incomplete. Do not read it as "
-            "a full scan of the universe.")
+    if not rows:
+        return ("THIS RUN WAS DEGRADED — there is no shortlist below, and the run that "
+                "produced none is not one to trust for that.")
+    if _shortened(scan_stats):
+        return ("THIS RUN WAS DEGRADED — the list below is incomplete. Do not read it as "
+                "a full scan of the universe.")
+    return ("THIS RUN WAS DEGRADED — the scan below is complete, but something in the run "
+            "that judged it was not. Read every reason below before acting on the rows.")
 
 
-def _banner(scan_stats: dict, run_type: str = "evening") -> str:
+def _banner(scan_stats: dict, run_type: str = "evening",
+            results: list[dict] | None = None) -> str:
     """The red band. Empty string when the run had nothing to report.
 
     First thing in the body, above the title, because the failure mode this
@@ -155,7 +199,7 @@ def _banner(scan_stats: dict, run_type: str = "evening") -> str:
     errors = scan_stats.get("errors") or []
     if not errors:
         return ""
-    headline = _headline(scan_stats, run_type)
+    headline = _headline(scan_stats, run_type, results)
     items = "".join(
         f'<li style="margin:2px 0;"><b>{e.get("stage", "?")}</b>: {e.get("message", "")}</li>'
         for e in errors
@@ -539,7 +583,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
 
     return f"""
     <html><body style="font-family:Arial,Helvetica,sans-serif;color:#222;">
-    {_banner(scan_stats, run_type)}
+    {_banner(scan_stats, run_type, results)}
     <h2 style="margin-bottom:4px;">{title}</h2>
     <p style="color:#666;margin-top:0;">
       {_funnel_line(results, run_type, scan_stats)}{_provenance_line(scan_stats)}

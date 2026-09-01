@@ -291,3 +291,33 @@ def test_no_workflow_stages_a_path_gitignore_blocks():
             f"these were NOT checked: {unanswered}. This guard only runs inside a "
             "checkout -- CI has one."
         )
+
+
+def test_readme_does_not_promise_a_null_streak_for_an_unreadable_history():
+    """README described the unreadable-history state as `streak: null` on every
+    row. It is not: it is a full block with `unknown_reason` set, which renders
+    different words to the reader -- and `streak: null` is a separate state
+    meaning the run recorded nothing. The paragraph making that exact
+    distinction got the shape of it wrong, two hundred lines from the one that
+    got it right.
+
+    Checked against the code rather than against a remembered string: whatever
+    src/ledger.py actually publishes for an unreadable history is what README
+    has to describe.
+    """
+    from src import ledger
+
+    block = ledger.unknown_streak(ledger.HISTORY_UNREADABLE)
+    assert block is not None and block.get("day") is None, (
+        "src.ledger no longer publishes a block for an unreadable history -- "
+        "re-check what README should say"
+    )
+    readme = _read("README.md")
+    assert "publishes `streak: null` on every row" not in readme, (
+        "README says an unreadable history publishes `streak: null`, but "
+        "src.ledger publishes a block with unknown_reason="
+        f"{block.get('unknown_reason')!r}"
+    )
+    assert "`history_unreadable`" in readme, (
+        "README no longer names the reason src.ledger actually publishes"
+    )

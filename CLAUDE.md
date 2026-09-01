@@ -59,6 +59,19 @@ string, `.env.example`'s `feed=` claim, and (step 10) that README's workflow
 inventory and its list of run modes are the ones that exist. Prose still needs
 a human.
 
+**Three shapes this project has now produced, each found only by mutation:**
+a test that passes because a DIFFERENT rule rejects (the rejection-path tests);
+a test that passes because of an incidental fact about the fixture rather than
+the rule (`test_the_morning_email_attaches_no_chart_and_says_why` passed on a
+path that did not resolve, not on the suppression it named; deleting the
+suppression left the suite green); and a test that compares a value against the
+NAME it came from (`assert report.exit_code == pipeline.EXIT_DEGRADED` stays
+green when the constant itself is changed to 0 — fifteen assertions did, and
+`test_the_exit_codes_are_the_numbers_actions_reads` is the one place that now
+pins the names to numbers so the other fifteen can keep reading legibly). The
+third shape is the cheapest to write and the hardest to see: nothing about it
+looks wrong.
+
 **A test whose answer depends on the hour it runs is the worst kind there is.**
 Step 10 made the run type a promise about the 16:15 ET close, so every
 end-to-end test in `tests/test_pipeline.py` would otherwise have been green all
@@ -87,7 +100,7 @@ that a fix did not introduce a new defect of the same class.**
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 568 tests with no network
+- **There is a regression net.** `pytest tests/` runs 580 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each

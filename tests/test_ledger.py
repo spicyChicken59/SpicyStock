@@ -2014,3 +2014,59 @@ def test_a_snapshot_with_no_run_in_it_is_refused(tmp_path):
     _snapshot(tmp_path, run=None)
     data, why = ledger.read_snapshot(tmp_path)
     assert data is None and "no run to follow through on" in why
+
+
+# A run entry whose `date` will not parse is KEPT, not quarantined: the line is
+# shape, not content, and one unreadable field is not grounds for setting a
+# year of outcomes aside. But the record's span was read from those run dates
+# alone while appearances were counted from the rows' own dates, so the two
+# disagreed -- and a snapshot went out publishing `seen_before: 8` beside
+# `history_sessions: 0`, breaking the invariant a test asserts is impossible,
+# on a run that reported itself clean with exit 0.
+
+def _undated_history(sessions: int) -> list[dict]:
+    return [{"date": "not-a-date", "type": "evening",
+             "candidates": [{"ticker": "RUNNER", "date": f"2026-08-{4 + i:02d}",
+                             "score": 7.5, "verdict": "B+", "reason": None}],
+             "gated": []}
+            for i in range(sessions)]
+
+
+def test_a_name_cannot_burst_on_more_sessions_than_the_record_holds():
+    """The declared invariant, over the input that used to break it."""
+    runs = _undated_history(8)
+    streak = ledger.streaks(runs, ["RUNNER"], date(2026, 8, 14))["RUNNER"]
+    assert streak["seen_before"] == 8
+    assert streak["history_sessions"] >= streak["seen_before"], streak
+    assert streak["history_from"] is not None, streak
+
+
+def test_the_record_recovers_its_span_from_the_rows_when_the_run_dates_cannot():
+    """The rows carry the session they burst on, which IS the session that run
+    scanned -- so a run entry nobody can date is still placeable through them,
+    and the sessions it looked at are not lost from the record."""
+    record = ledger.Record.of(_undated_history(8))
+    assert record.first == date(2026, 8, 4)
+    assert record.sessions == 8
+    assert record.entries == 8
+
+
+def test_a_history_nothing_at_all_can_be_dated_still_says_so():
+    """The inverse: recovering from the rows must not swallow the state where
+    there is nothing to recover. An undatable file is not an empty one, and the
+    reader is told different words for each."""
+    runs = [{"date": "xx", "type": "evening",
+             "candidates": [{"ticker": "A", "date": "yy", "score": 1}], "gated": []}]
+    assert ledger.streaks(runs, ["A"], date(2026, 8, 14))["A"]["unknown_reason"] == \
+        ledger.HISTORY_UNDATED
+    assert ledger.streaks([], ["A"], date(2026, 8, 14))["A"]["unknown_reason"] == \
+        ledger.NO_HISTORY
+
+
+def test_undated_run_entries_are_counted_so_the_run_can_report_them():
+    """A damaged record used to pass as clean. The count is what lets a run
+    say its history is partly unreadable instead of reporting exit 0."""
+    assert ledger.undated_runs(_undated_history(8)) == 8
+    assert ledger.undated_runs([{"date": "2026-08-04"}]) == 0
+    assert ledger.undated_runs([]) == 0
+    assert ledger.undated_runs(["not a dict"]) == 0
