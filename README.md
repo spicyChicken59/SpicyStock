@@ -91,7 +91,7 @@ python -m src.pipeline evening --dry-run --tickers NVDA,PLTR,SMCI,CRWD
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 64 tests, no network or API keys needed
+pytest tests/                   # 69 tests, no network or API keys needed
 ```
 
 ## The dashboard
@@ -114,8 +114,11 @@ top of the page.
 `docs/data.json` is `schema_version: 1`, and carries its own `_contract` block so the
 invariants live in the file rather than only here. The load-bearing ones:
 
-- `candidates` holds **every** scored candidate, ranked, never truncated:
-  `len(candidates) == run.scored`. `TOP_N` cuts the *email*, not the archive.
+- `candidates` must hold **every** scored candidate, ranked, never truncated:
+  `len(candidates) == run.scored`. Today `score_all()` returns `results[:TOP_N]`
+  and `archive()` writes exactly that, so `TOP_N` currently cuts the archive as
+  well as the email — making the archive unevaluable. Moving that cut into the
+  emailer is step 9's job, and this invariant is what it has to satisfy.
 - `run.scored + len(gated_out) == run.bursts`. Nothing a scan found may vanish.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
@@ -125,8 +128,8 @@ invariants live in the file rather than only here. The load-bearing ones:
 
 Regenerate it with `python3 tools/make_fixture.py docs/data.json`. The generator
 reads `data/symbols.txt` and `ScanConfig`, so it cannot emit a run this scanner
-could not produce; `tools/check_fixture_fresh.py` fails CI if the committed file
-drifts from it. The chart PNGs it references are absent until step 9, so the
+could not produce; `tools/check_fixture_fresh.py` regenerates it and fails the
+build if the committed file has drifted. The chart PNGs it references are absent until step 9, so the
 page degrades to an explained empty frame — that is the expected state.
 
 ### Checking it
@@ -172,9 +175,9 @@ dependency, and the script exits 0 with a note if chromium is missing.
 
 ## Notes
 
-- yfinance is unofficial Yahoo data; if it ever degrades, swap
-  `_download_batch` in `src/scanner.py` for Polygon.io or Alpaca (both have
-  free tiers) — the rest of the pipeline is unchanged.
+- The data layer is Alpaca (`_download_batch` in `src/scanner.py`). If the free
+  IEX feed proves too thin once the volume threshold is relative, swapping that
+  one function for another provider leaves the rest of the pipeline unchanged.
 - Every run archives its shortlist to `results/*.csv` and uploads charts as
   workflow artifacts (retained 30 days, and `results/` is gitignored so
   nothing accumulates in the repo), giving you a partial dataset for the AI

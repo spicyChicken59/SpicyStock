@@ -13,8 +13,14 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         out = pathlib.Path(tmp) / "regenerated.json"
-        subprocess.run([sys.executable, str(ROOT / "tools" / "make_fixture.py"), str(out)],
-                       check=True, capture_output=True)
+        proc = subprocess.run([sys.executable, str(ROOT / "tools" / "make_fixture.py"), str(out)],
+                              capture_output=True, text=True)
+        if proc.returncode != 0:
+            # Surface the generator's own error. capture_output + check=True
+            # hides it behind an opaque CalledProcessError in the CI log.
+            print(proc.stdout, end="")
+            print(proc.stderr, end="", file=sys.stderr)
+            return proc.returncode
         live = json.loads((ROOT / "docs" / "data.json").read_text())
         fresh = json.loads(out.read_text())
     if live != fresh:

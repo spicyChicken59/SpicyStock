@@ -1,4 +1,4 @@
-name: Evening scan (5:30 PM ET)
+name: Evening scan (6:16 PM ET)
 on:
   schedule:
     # These crons ARE the trigger. An earlier design used an external scheduler

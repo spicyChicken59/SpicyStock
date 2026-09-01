@@ -190,6 +190,18 @@ ok('the headline states the funnel',
   await page.textContent('#h1'));
 ok('four tiles', (await page.locator('#kpis .sc-tile').count()) === 4);
 
+// The page's honesty about ITSELF. README claims the page "says so at the top of
+// itself"; until now nothing asserted it, and a fabricated run rendering as a
+// real one is the worst thing this page could do.
+const fixtureBanner = await page.evaluate(() => {
+  const b = document.getElementById('fixture-banner');
+  return { shown: b && !b.hidden, text: ((b && b.textContent) || '').trim().slice(0, 60) };
+});
+ok('fabricated data is disclosed on the page, not only in the README',
+   run.fixture ? (fixtureBanner.shown && /sample data/i.test(fixtureBanner.text))
+               : !fixtureBanner.shown,
+   JSON.stringify(fixtureBanner));
+
 // --- the defect this contract exists to stop -------------------------------
 // The pipeline used to archive five names. A page that shows five names cannot
 // be used to judge the screener, so the table must hold every scored candidate.

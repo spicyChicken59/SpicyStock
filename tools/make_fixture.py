@@ -327,7 +327,7 @@ data = {
     "app": "SpicyStock",
     "generated": "2026-09-01T22:14:07Z",
     "_contract": {
-        "about": "docs/data.json is written by src/pipeline.py and read by docs/index.html at runtime. This block is documentation, not data; consumers ignore it.",
+        "about": "docs/data.json will be written by src/pipeline.py (step 9) and is read by docs/index.html at runtime. Today it is a hand-authored fixture from tools/make_fixture.py; run.fixture is true. This block is documentation, not data; consumers ignore it.",
         "documented_in": "README.md, 'The dashboard contract'",
         "invariants": [
             "candidates holds EVERY scored candidate, ranked by score descending, and is never truncated: len(candidates) == run.scored. The top run.shortlist_size of them are the shortlist that went out by email.",

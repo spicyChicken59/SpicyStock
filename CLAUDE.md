@@ -52,7 +52,7 @@ that a fix did not introduce a new defect of the same class.**
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net now, with known holes.** `pytest tests/` runs 64
+- **There is a regression net now, with known holes.** `pytest tests/` runs 69
   tests with no network and no API keys (step 6a). It deliberately asserts no
   strategy thresholds — steps 4 and 7 are about to change them. Untested:
   `get_universe()` and the symbol-file parser, `_download_batch`'s request
