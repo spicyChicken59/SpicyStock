@@ -25,6 +25,22 @@ and again on Tuesday used to arrive as two brand-new ideas. A streak whose
 `day` is null says so in words rather than rendering nothing: unknown is not
 day 1, and it was the one state no surface showed.
 
+THE MODE CHANGES WHAT IS TRUE, so every sentence that could be false in one of
+them branches on it. _funnel_line() and the empty-shortlist cell already did;
+_headline() and _title() did not, and each said something false in every
+degraded morning email — "the list below is incomplete, do not read it as a
+full scan of the universe" over last night's complete shortlist, under a
+heading promising a watchlist for TODAY over rows that could be fifteen
+sessions old. Both branch now, and the heading carries the session the rows
+came from so it cannot drift from them.
+
+AND HOW STALE IS NOT THE SAME AS DEGRADED. `scan_stats["stale_sessions"]` is
+how many sessions behind the snapshot is; src.pipeline sets it and
+stale_snapshot_note() holds the reasoning. At two or more no market closure can
+explain the gap, so _prefix() escalates the subject and _headline() the band —
+the three emails rendered at 1, 3 and 15 sessions used to be byte-identical but
+for a date, and a phone shows the subject and nothing else.
+
 Environment variables:
 
   RESEND_API_KEY   — from https://resend.com/api-keys
@@ -61,25 +77,85 @@ REQUIRED_ENV: tuple[str, ...] = ("RESEND_API_KEY", "EMAIL_TO")
 STATUS_PREFIXES = {"ok": "", "degraded": "DEGRADED — ", "failed": "FAILED — "}
 
 
-def _banner(scan_stats: dict) -> str:
+def _prefix(scan_stats: dict) -> str:
+    """The word before the label — and, for a stale follow-through, how stale.
+
+    Every staleness used to read DEGRADED. Rendered at one, three and fifteen
+    sessions the three emails were byte-identical but for a date, so a screener
+    dead for three weeks arrived in an inbox looking exactly like the Tuesday
+    after Presidents' Day. `stale_sessions` is set by src.pipeline only when
+    nothing has published for the session this run expected, and at two or more
+    the holiday reading is dead on arithmetic (see stale_snapshot_note): the
+    subject says so, because triage on a phone never gets past this line.
+
+    FAILED still outranks it. A run with no rows at all is the worse state, and
+    a stale count would be describing rows that are not there.
+    """
+    status = scan_stats.get("status", "ok")
+    stale = scan_stats.get("stale_sessions") or 0
+    if status == "degraded" and stale >= 2:
+        return f"NOTHING PUBLISHED IN {_plural(stale, 'SESSION').upper()} — "
+    return STATUS_PREFIXES.get(status, "")
+
+
+def _headline(scan_stats: dict, run_type: str) -> str:
+    """The one sentence in the band a phone skimmer actually reads.
+
+    It was written for the evening run and keyed on nothing but `failed`, while
+    _funnel_line(), the empty-shortlist cell and (since step 10) the whole
+    pipeline all branch on the mode. So the most prominent sentence in a
+    degraded MORNING email said "the list below is incomplete, do not read it
+    as a full scan of the universe" over last night's COMPLETE shortlist, in a
+    pass that scans no universe at all — and its failed twin said "no scan was
+    completed", which is true of every morning run by design. Two of the three
+    lines a skimmer reads were false for the state the band exists to flag.
+
+    A stale morning run gets a third headline, because "degraded" is the same
+    word for "one session late, possibly a holiday" and "nothing has published
+    for three weeks". See src.pipeline's stale_snapshot_note() for why the
+    second is knowable without a holiday calendar.
+    """
+    morning = run_type == "morning"
+    if scan_stats.get("status") == "failed":
+        return ("THIS RUN FAILED — there is no watchlist below. A morning run "
+                "re-presents what the last evening run published, and this pass "
+                "could not get that far."
+                if morning else
+                "THIS RUN FAILED — there is no shortlist below, and no scan was "
+                "completed.")
+    stale = scan_stats.get("stale_sessions") or 0
+    if morning and stale >= 2:
+        # "no market HOLIDAY is that long" and not "closure": none of the
+        # market's scheduled holidays are adjacent, so this is true at every
+        # gap of two or more, while unscheduled closures have run to
+        # consecutive sessions and the band below names them.
+        return (f"NOTHING HAS PUBLISHED FOR {_plural(stale, 'SESSION').upper()} — the rows "
+                f"below are {scan_stats.get('session') or 'an older session'}'s, and no "
+                f"market holiday is that long. The evening run has stopped publishing.")
+    if morning:
+        return ("THIS FOLLOW-THROUGH IS DEGRADED — the rows below are an earlier evening "
+                "run's shortlist, re-presented before the open. This pass scanned "
+                "nothing itself, so read every reason below before acting on them.")
+    return ("THIS RUN WAS DEGRADED — the list below is incomplete. Do not read it as "
+            "a full scan of the universe.")
+
+
+def _banner(scan_stats: dict, run_type: str = "evening") -> str:
     """The red band. Empty string when the run had nothing to report.
 
     First thing in the body, above the title, because the failure mode this
     exists for is a person skimming a familiar-looking table on a phone. The
     problems are printed in full rather than summarised into a status word:
     "138 of 230 symbols had no bar" tells an operator where to look, "degraded"
-    does not.
+    does not. Which sentence leads it is _headline()'s decision, and it depends
+    on the mode: this function's own docstring argued for a reader skimming a
+    familiar-looking table, and then said the wrong thing to every one of them
+    who opened a morning email.
     """
     errors = scan_stats.get("errors") or []
     if not errors:
         return ""
-    failed = scan_stats.get("status") == "failed"
-    headline = (
-        "THIS RUN FAILED — there is no shortlist below, and no scan was completed."
-        if failed else
-        "THIS RUN WAS DEGRADED — the list below is incomplete. Do not read it as "
-        "a full scan of the universe."
-    )
+    headline = _headline(scan_stats, run_type)
     items = "".join(
         f'<li style="margin:2px 0;"><b>{e.get("stage", "?")}</b>: {e.get("message", "")}</li>'
         for e in errors
@@ -112,18 +188,30 @@ def _provenance_line(scan_stats: dict) -> str:
             f"{claude} of {total}</span>")
 
 
-#: What a streak's `unknown_reason` says to a reader. `day: null` is the state
-#: this whole mechanism cares most about — UNKNOWN, which is not day 1 — and
-#: it used to render here as nothing at all, so a run that could not read its
-#: history produced rows a reader could not tell from first sightings. The
-#: dashboard says the same words for the same reasons; if you change one,
-#: change docs/index.html's streakText().
+#: What a streak's `unknown_reason` says to a reader when the record can say
+#: nothing narrower. `day: null` is the state this whole mechanism cares most
+#: about — UNKNOWN, which is not day 1 — and it used to render here as nothing
+#: at all, so a run that could not read its history produced rows a reader
+#: could not tell from first sightings. The dashboard says the same words for
+#: the same reasons; if you change one, change docs/index.html's streakText().
+#:
+#: `no_history` says how it RESOLVES, because that is the state a fresh install
+#: is permanently in until the first commit-back succeeds: every row on the
+#: page and in the email says this, and the only thing that used to suggest it
+#: was temporary was the word "yet".
 STREAK_UNKNOWN = {
-    "no_history": "streak unknown — no history has been recorded yet",
+    "no_history": "streak unknown — no history has been recorded yet; a day number "
+                  "appears once the record reaches back past the burst",
+    "history_undated": "streak unknown — the history holds runs, but none of them "
+                       "carry a date to count from",
     "history_unreadable": "streak unknown — the run could not read its history",
     "window_not_covered": "streak unknown — the history does not reach back this far",
 }
 UNKNOWN_FALLBACK = "streak unknown — no reason was recorded"
+#: A row with no `streak` field at all, which is not the same as a block that
+#: could not answer: nothing computed one. docs/index.html's streakText() says
+#: this in the same words for the same row.
+NO_STREAK_BLOCK = "streak unknown — this run recorded none"
 
 #: What happened to this name the LAST time it was seen. "not scored" used to
 #: cover both of these and they are close to opposites: score_cap means the
@@ -131,10 +219,18 @@ UNKNOWN_FALLBACK = "streak unknown — no reason was recorded"
 #: means the pipeline looked at it and threw it out at the quality gate. Read
 #: beside "day 2 of this setup", which looks like accumulating confirmation,
 #: the ambiguity is worth money.
+#:
+#: `score_cap` used to name "the scoring cap", which this email never explains
+#: and the dashboard called "the call cap" two words away. One mechanism, one
+#: name, and the name is the mechanism itself: a run sends a fixed number of
+#: candidates to Claude (src.pipeline's MAX_TO_SCORE) and the ones that rank
+#: below it are not scored. docs/index.html uses this map for its streak line
+#: AND for the gated table's "why" cell, which is where the second name was.
 LAST_OUTCOME = {
     "scored": None,  # rendered with the score itself, below
     "lynch_gate": "rejected at the 2LYNCH gate",
-    "score_cap": "passed the gate, but the scoring cap was already full",
+    "score_cap": "passed the gate, but the run had already sent its limit of "
+                 "candidates to Claude",
 }
 
 
@@ -170,6 +266,41 @@ def _last_appearance(streak: dict) -> str:
     return LAST_OUTCOME.get(outcome) or "no score was recorded then"
 
 
+def _plural(n: int, noun: str) -> str:
+    return f"{n} {noun}" if n == 1 else f"{n} {noun}s"
+
+
+def _no_day_note(streak: dict) -> str:
+    """What to say when `day` is null — the narrowest true answer, not "unknown".
+
+    A day number needs the record to reach back past where the chain starts
+    (src.ledger's _why_no_day), and an UNBROKEN chain pins its own start at the
+    oldest run in the file, so the window is never covered: a name bursting on
+    every one of the eight sessions the ledger holds got "streak unknown", while
+    a name that took a week off and burst twice got "day 2 of this setup". The
+    arithmetic is right — you cannot prove a chain did not start before your
+    record did — but "unknown" was the wrong thing to SAY, because the record
+    already answers a narrower question truthfully: how many earlier sessions it
+    holds a burst for, and how far back it goes at all.
+
+    So the span of the record is reported — src.ledger's `history_from` and
+    `history_sessions`, both facts about the FILE — beside how many of those
+    sessions this name burst on, and the only claim dropped is the one they are
+    short of: where the setup began. A block written before those fields
+    existed simply falls back to the flat sentence.
+    """
+    reason, begins = streak.get("unknown_reason"), streak.get("history_from")
+    sessions, seen = streak.get("history_sessions") or 0, streak.get("seen_before") or 0
+    if reason == "window_not_covered" and begins and sessions:
+        span = f"the {_plural(sessions, 'session')} in the record, which begins {begins}"
+        if seen:
+            return (f"day unknown — burst on {seen} of {span}; this setup may have "
+                    f"started before it")
+        return (f"day unknown — no earlier burst in {span}; an earlier one would fall "
+                f"outside it")
+    return STREAK_UNKNOWN.get(reason, UNKNOWN_FALLBACK)
+
+
 def _streak_note(row: dict) -> str:
     """"day 3 of this setup, since 2026-08-27 · last seen…", under the ticker.
 
@@ -178,17 +309,22 @@ def _streak_note(row: dict) -> str:
     nothing saying the reader had already looked at it and passed. src.ledger's
     MAX_STREAK_GAP_SESSIONS holds what "the same setup" means.
 
-    A null `day` is NOT day 1 and is no longer silent. It means nothing is
-    known — the history could not be read, or does not reach this far back —
-    and saying nothing left the two surfaces that render a streak disagreeing
-    about the one state that matters most. It never becomes "new setup":
-    that would turn a file error into a claim about the market.
+    A null `day` is NOT day 1 and is no longer silent. It means the day number
+    is not knowable — see _no_day_note() for how much else still is — and
+    saying nothing left the two surfaces that render a streak disagreeing about
+    the one state that matters most. It never becomes "new setup": that would
+    turn a file error into a claim about the market.
     """
+    if not isinstance(row.get("streak"), dict):
+        return _streak_span(NO_STREAK_BLOCK, "#666")
     streak = _streak_of(row)
     day = streak.get("day")
     if day is None:
-        text = STREAK_UNKNOWN.get(streak.get("unknown_reason"), UNKNOWN_FALLBACK)
-        colour = "#666"
+        text = _no_day_note(streak)
+        # Earlier bursts on record are the same news as day > 1 — the name has
+        # run before — so they get the same colour. A grey line under a name
+        # the record has eight bursts for reads as an absence of history.
+        colour = "#a5281b" if streak.get("seen_before") else "#666"
     elif day > 1:
         text = f"day {day} of this setup, since {streak.get('first_seen')}"
         colour = "#a5281b"
@@ -197,6 +333,10 @@ def _streak_note(row: dict) -> str:
         colour = "#666"
     if streak.get("last_seen"):
         text += f" · last seen {streak['last_seen']}, {_last_appearance(streak)}"
+    return _streak_span(text, colour)
+
+
+def _streak_span(text: str, colour: str) -> str:
     return f'<br><span style="color:{colour};font-size:12px;">{text}</span>'
 
 
@@ -208,16 +348,28 @@ def _streak_footnote(results: list[dict]) -> str:
     running whether or not the checklist let it through to a score, and one no
     reader can infer from "day 2 of this setup", which reads as two nights of
     agreement. Disclosed here rather than in every row, and only when a row
-    actually shows a multi-day streak.
+    actually makes a count that needs it.
+
+    That is TWO shapes of row, not one. "day 3 of this setup" is the obvious
+    one; "burst on 8 of the 8 sessions in the record" is the other, and it is
+    the same count over the same bursts — an unknown `day` withholds the day
+    number, not the appearances behind it.
     """
-    days = [_streak_of(row).get("day") for row in results]
-    if not any((day or 0) > 1 for day in days):
+    counted = [_streak_of(row) for row in results]
+    if not any((s.get("day") or 0) > 1
+               or (s.get("day") is None and (s.get("seen_before") or 0) > 0)
+               for s in counted):
         return ""
+    # Set as a note rather than as fine print. It was 11px grey at the foot of
+    # a seven-column table, under rows whose own streak line is red and 12px:
+    # the disclosure was quieter than the claim it qualifies.
     return (
-        '<p style="color:#666;font-size:11px;margin:8px 0 0;">'
-        "&ldquo;day N of this setup&rdquo; counts every session the scan found a burst "
-        "on for that name, including bursts the 2LYNCH gate rejected. It is not N "
-        "nights of confirmation."
+        '<p style="border-left:4px solid #ddd;padding:6px 0 6px 10px;color:#555;'
+        'font-size:12px;margin:10px 0 0;max-width:70ch;">'
+        "&ldquo;day N of this setup&rdquo;, and the earlier bursts a row with no day "
+        "number counts, are every session the scan found a burst on for that name — "
+        "including the ones the 2LYNCH gate rejected. Neither is N nights of "
+        "confirmation."
         "</p>"
     )
 
@@ -234,18 +386,26 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     A morning run counts different things because it did different things: it
     scanned no universe at all, so it reports the run it is following through
     on rather than a funnel it did not walk.
+
+    A FAILED run relabels the session, because it did not read it. The failure
+    notice knows which session it was going for — the clock says so even when
+    the run died on its first line — and printing that under "Session scanned"
+    would be the same silent relabelling the session was added here to end.
     """
     session = scan_stats.get("session") or "not recorded"
+    failed = scan_stats.get("status") == "failed"
+    unknown = "not recorded"
     if run_type == "morning":
-        parts = [("Following through on the session of", session),
-                 ("4% bursts that session", scan_stats.get("bursts", "?")),
-                 ("Passed 2LYNCH gate", scan_stats.get("gated", "?")),
+        parts = [("Session it should have followed" if failed
+                  else "Following through on the session of", session),
+                 ("4% bursts that session", scan_stats.get("bursts", unknown)),
+                 ("Passed 2LYNCH gate", scan_stats.get("gated", unknown)),
                  ("Watching", len(results))]
     else:
-        parts = [("Session scanned", session),
-                 ("Universe", scan_stats.get("universe", "?")),
-                 ("4% bursts found", scan_stats.get("bursts", "?")),
-                 ("Passed 2LYNCH gate", scan_stats.get("gated", "?")),
+        parts = [("Session it was scanning" if failed else "Session scanned", session),
+                 ("Universe", scan_stats.get("universe", unknown)),
+                 ("4% bursts found", scan_stats.get("bursts", unknown)),
+                 ("Passed 2LYNCH gate", scan_stats.get("gated", unknown)),
                  ("Shortlisted", len(results))]
     return " &nbsp;|&nbsp;\n      ".join(f"{label}: {value}" for label, value in parts)
 
@@ -268,9 +428,27 @@ def _chart_file(row: dict) -> Path | None:
     return path if path.exists() else None
 
 
-#: Printed where the picture would be when there is no attachable PNG and the
-#: caller did not say why. A morning row carries its own reason.
+#: Printed where the picture would be when the row names no chart at all and
+#: the caller did not say why. A morning row carries its own reason.
 NO_CHART = "no chart — none was rendered for this candidate"
+
+
+def _no_chart_note(row: dict) -> str:
+    """Why this cell holds words instead of a picture — checked, not assumed.
+
+    NO_CHART used to cover both branches of _chart_file(), so a chart that
+    rendered and was then deleted before the email went out reported "none was
+    rendered for this candidate" — a cause nothing had looked at. The row says
+    which of the two it is: `chart` is null when the render failed (src.pipeline
+    records the exception separately), and a path that is not on disk any more
+    is a different fact with a different fix.
+    """
+    if row.get("chart_note"):
+        return row["chart_note"]
+    if row.get("chart"):
+        return (f'no chart — one was rendered for this candidate, but {row["chart"]} '
+                f"is not there now, so there was nothing to attach")
+    return NO_CHART
 
 
 def _chart_cell(row: dict) -> str:
@@ -278,7 +456,7 @@ def _chart_cell(row: dict) -> str:
         return (f'<img src="cid:chart_{row["ticker"]}" width="280" '
                 f'alt="{row["ticker"]} chart">')
     return (f'<span style="color:#666;font-size:12px;">'
-            f'{row.get("chart_note") or NO_CHART}</span>')
+            f'{_no_chart_note(row)}</span>')
 
 
 def _close_cell(row: dict, scan_stats: dict) -> str:
@@ -294,12 +472,33 @@ def _close_cell(row: dict, scan_stats: dict) -> str:
     return f'<span style="color:#666;font-size:12px;">${row["close"]}{stamped}</span>'
 
 
+def _title(run_type: str, scan_stats: dict, results: list[dict]) -> str:
+    """The H2, which must not promise a day the rows are not from.
+
+    It read "follow-through watchlist for TODAY" over every morning row,
+    unconditionally — including a snapshot fifteen sessions old, where TODAY is
+    the one word in it that is false. The session the rows ARE from is what
+    goes in, so the heading cannot drift from them however stale they get;
+    "today" survives only as the hour the reader is looking, which is true
+    whatever the snapshot says.
+
+    The word "shortlist" needs rows under it. A failed morning run still knows
+    the session it was going for (src.pipeline's attempted_session), and naming
+    a shortlist over the empty-table cell would be the same promise from the
+    other direction.
+    """
+    if run_type != "morning":
+        return "Momentum Bursts — candidates for TOMORROW"
+    session = scan_stats.get("session")
+    if not session:
+        return "Momentum Bursts — follow-through, with nothing to follow"
+    if not results:
+        return f"Momentum Bursts — following through on {session}, at today&rsquo;s open"
+    return f"Momentum Bursts — {session}&rsquo;s shortlist, at today&rsquo;s open"
+
+
 def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
-    title = (
-        "Momentum Bursts — follow-through watchlist for TODAY"
-        if run_type == "morning"
-        else "Momentum Bursts — candidates for TOMORROW"
-    )
+    title = _title(run_type, scan_stats, results)
     rows = ""
     for i, r in enumerate(results, 1):
         detail = "<br>".join(r["lynch_detail"])
@@ -340,7 +539,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
 
     return f"""
     <html><body style="font-family:Arial,Helvetica,sans-serif;color:#222;">
-    {_banner(scan_stats)}
+    {_banner(scan_stats, run_type)}
     <h2 style="margin-bottom:4px;">{title}</h2>
     <p style="color:#666;margin-top:0;">
       {_funnel_line(results, run_type, scan_stats)}{_provenance_line(scan_stats)}
@@ -393,10 +592,12 @@ def subject_for(results: list[dict], run_type: str, scan_stats: dict) -> str:
     that fix and the only half a phone shows.
 
     Status and session both come before the ticker list: a phone truncates the
-    end, so what a reader must not miss goes first.
+    end, so what a reader must not miss goes first — and _prefix() is why the
+    word there escalates rather than reading DEGRADED for both a one-session
+    gap and a screener that has been dead for three weeks.
     """
     label = "Morning follow-through" if run_type == "morning" else "Evening candidates"
-    prefix = STATUS_PREFIXES.get(scan_stats.get("status", "ok"), "")
+    prefix = _prefix(scan_stats)
     session = scan_stats.get("session")
     dated = f"{label} {session}" if session else label
     top = ", ".join(r["ticker"] for r in results) or "none"

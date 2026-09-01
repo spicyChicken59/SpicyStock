@@ -32,13 +32,24 @@ jobs:
         run: pytest tests/ -v
       - name: Fail if the suite dirtied the working tree
         run: |
+          set -euo pipefail
+          # A NO-ANSWER IS NOT ALL-CLEAR. `git status` outside a repository
+          # prints "fatal: not a git repository" on stderr and nothing on
+          # stdout, so `[ -n "$(...)" ]` was false and this step exited 0
+          # reporting a clean tree it had never looked at — the same shape as
+          # the `git check-ignore` bug step 1 found. Ask git whether it can
+          # answer before believing the answer; `set -e` plus a plain
+          # assignment then fails the step on any other git error too.
+          git rev-parse --is-inside-work-tree > /dev/null \
+            || { echo "Not a git checkout — this check cannot answer, so it fails."; exit 1; }
           # Two checks, because they catch different things. The porcelain one
           # catches new tracked-visible files; it CANNOT see results/ or
           # charts/, which are gitignored — and those are exactly what a
           # regression in the tests' tmp_path isolation would produce.
-          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+          dirty=$(git status --porcelain --untracked-files=all)
+          if [ -n "$dirty" ]; then
             echo "The test suite left files behind:"
-            git status --porcelain --untracked-files=all
+            echo "$dirty"
             exit 1
           fi
           if [ -e results ] || [ -e charts ]; then

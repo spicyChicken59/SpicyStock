@@ -27,6 +27,7 @@ from src import ledger
 from src import pipeline
 from src import scanner
 from src.scanner import ScanConfig
+from src.scorer import render_chart
 from tests.test_ledger import contract_violations
 
 #: What Alpaca says when the plan does not carry the feed the scan asked for.
@@ -348,6 +349,62 @@ def test_a_run_that_could_not_scan_exits_failed_and_mails_the_reason(
     (sent,) = mocked_boundaries["resend"].sent
     assert sent["subject"].startswith("[4% Burst] FAILED — ")
     assert "FeedNotAuthorizedError" in sent["html"] and "delayed_sip" in sent["html"]
+
+
+def test_a_failure_notice_names_the_session_the_run_was_going_for(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv
+):
+    """Both failure notices printed "Session scanned: not recorded", and the
+    morning one "4% bursts that session: ?", in the one email where an operator
+    most wants to know which night broke. The session does not need the scan:
+    the clock knows it, or SCAN_SESSION_DATE does, before anything is spent.
+
+    It is labelled as the session the run was GOING FOR, not the one it read.
+    Nothing read it -- putting it under "Session scanned" would be the same
+    silent relabelling the session line was added to end."""
+    fake_alpaca.add_history("AAA", ohlcv("burst"))
+    fake_alpaca.raise_on_bars = FEED_DENIAL
+    session = str(scanner.current_session())
+
+    assert _main(monkeypatch, "evening", "--tickers", "AAA") == pipeline.EXIT_FAILED
+
+    (sent,) = mocked_boundaries["resend"].sent
+    assert f"Session it was scanning: {session}" in sent["html"]
+    assert "Session scanned" not in sent["html"], "it scanned nothing"
+    assert "not recorded" not in sent["html"].split("Universe")[0]
+    assert session in sent["subject"]
+
+
+def test_a_pinned_session_is_the_one_a_failure_notice_names(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv
+):
+    """The precondition: it comes from expected_session(), the one definition
+    both modes use, so a deliberate backfill that dies reports the session it
+    was backfilling and not today."""
+    fake_alpaca.add_history("AAA", ohlcv("burst"))
+    fake_alpaca.raise_on_bars = FEED_DENIAL
+    monkeypatch.setenv("SCAN_SESSION_DATE", "2026-08-14")
+
+    assert _main(monkeypatch, "evening", "--tickers", "AAA") == pipeline.EXIT_FAILED
+
+    assert "Session it was scanning: 2026-08-14" in mocked_boundaries["resend"].sent[0]["html"]
+
+
+def test_a_failure_notice_survives_a_session_it_cannot_name(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, caplog
+):
+    """Best effort, like everything else on this path: a run that died inside
+    ScanConfig() -- a malformed SCAN_SESSION_DATE is exactly that -- still gets
+    its email, with the session unrecorded, rather than losing the notice to a
+    second failure."""
+    fake_alpaca.add_history("AAA", ohlcv("burst"))
+    monkeypatch.setenv("SCAN_SESSION_DATE", "the day before yesterday")
+
+    assert _main(monkeypatch, "evening", "--tickers", "AAA") == pipeline.EXIT_FAILED
+
+    (sent,) = mocked_boundaries["resend"].sent
+    assert sent["subject"].startswith("[4% Burst] FAILED — ")
+    assert "Session it was scanning: not recorded" in sent["html"]
 
 
 def test_a_failed_dry_run_exits_failed_without_mailing(
@@ -1024,7 +1081,11 @@ def test_a_name_that_burst_yesterday_is_day_two_tonight(
     assert day_two["streak"] == {
         "day": 2, "unknown_reason": None, "first_seen": first, "last_seen": first,
         "last_score": day_one["score"], "last_verdict": day_one["verdict"],
-        "last_outcome": "scored", "seen_before": 1}
+        "last_outcome": "scored", "seen_before": 1,
+        # The span of the RECORD, the same on every row of the run: the seeded
+        # session eight back, and the two sessions the ledger held when this
+        # streak was computed (seeded + first; tonight is not in it yet).
+        "history_from": session_offset(-8), "history_sessions": 2}
     assert scored[0]["streak"] == day_two["streak"], "the email row carries the same block"
     (sent,) = mocked_boundaries["resend"].sent
     assert "day 2 of this setup" in sent["html"]
@@ -1201,7 +1262,8 @@ def test_a_morning_run_re_presents_the_evening_run_and_scans_nothing(
     (sent,) = mocked_boundaries["resend"].sent
     assert sent["subject"].startswith(
         f"[4% Burst] Morning follow-through {evening['run']['date']}: BURST")
-    assert "follow-through watchlist for TODAY" in sent["html"]
+    assert f"{evening['run']['date']}&rsquo;s shortlist, at today&rsquo;s open" in sent["html"], (
+        "the heading names the session the rows are from, not just TODAY")
     assert f"Following through on the session of: {evening['run']['date']}" in sent["html"]
 
 
@@ -1217,6 +1279,16 @@ def test_the_morning_email_attaches_no_chart_and_says_why(
     replaced with a different image after publishing, which is exactly what
     that half-finished run does.
 
+    THE SETUP IS LOAD-BEARING, and it did not use to be. A published row names
+    its chart as "charts/BURST.png" -- relative to docs/, because that is what
+    the dashboard resolves it against -- and from the repo root that path is
+    simply absent, so the assertions below passed on a path shape whatever
+    email_row() did with `chart`. Deleting `chart=None` left the whole suite
+    green. render_chart()'s default out_dir IS "charts" at the repo root, so
+    the file is put where the published path really points and the rule is
+    what decides the outcome: with the suppression removed this attaches a
+    stale PNG and emits cid:chart_BURST.
+
     The evening email is unaffected and keeps its charts: it attaches the PNGs
     it rendered moments earlier, in the same process."""
     fake_alpaca.add_history("BURST", ohlcv("burst"))
@@ -1228,6 +1300,14 @@ def test_the_morning_email_attaches_no_chart_and_says_why(
     chart = tmp_path / "docs" / "charts" / "BURST.png"
     was = chart.read_bytes()
     chart.write_bytes(was + b"a later session's picture")
+    # The published row says "charts/BURST.png". Put a PNG exactly there, the
+    # way render_chart() does when nobody overrides out_dir, so that resolving
+    # the row's path finds a real file and the suppression is the only thing
+    # standing between it and the email.
+    stale = Path(render_chart("BURST", ohlcv("burst", variant=1)))
+    (row,) = published(tmp_path)["candidates"]
+    assert stale == Path(row["chart"]) and stale.exists(), (
+        "the published path resolves to a file this codebase writes")
     market_clock.before_the_open()
 
     pipeline.run("morning", dry_run=False)
@@ -1237,8 +1317,11 @@ def test_the_morning_email_attaches_no_chart_and_says_why(
     assert "cid:chart_BURST" not in morning_mail["html"], "and nothing referencing one"
     assert pipeline.MORNING_CHART_NOTE in morning_mail["html"], (
         "the cell where the chart was says what happened")
+    assert pipeline.email_row(row)["chart"] is None, (
+        "and the rule itself: the row the morning pass renders names no chart")
     assert chart.read_bytes() == was + b"a later session's picture", (
-        "and the run did not touch the file either way")
+        "and the run did not touch either file")
+    assert stale.exists()
 
 
 def test_a_morning_run_writes_nothing(
@@ -1357,6 +1440,44 @@ def test_a_morning_run_following_a_stale_evening_run_says_which_session(
     assert problem["message"] in mocked_boundaries["resend"].sent[0]["html"]
 
 
+def test_a_morning_run_three_weeks_stale_says_so_in_the_subject_line(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The whole path, end to end: the gap the band computes is the gap the
+    subject escalates on, and a phone shows only the second. One session late
+    and fifteen sessions dead used to produce the same subject."""
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-15))
+    evening_run(tmp_path, fake_alpaca, ohlcv)
+    monkeypatch.delenv("SCAN_SESSION_DATE")
+    market_clock.before_the_open()
+
+    pipeline.run("morning", dry_run=False)
+
+    (sent,) = mocked_boundaries["resend"].sent
+    assert sent["subject"].startswith("[4% Burst] NOTHING PUBLISHED IN 15 SESSIONS — ")
+    assert "NOTHING HAS PUBLISHED FOR 15 SESSIONS" in sent["html"]
+    assert "that is 15 sessions ago" in sent["html"]
+
+
+def test_a_morning_run_one_session_stale_stays_ambiguous_everywhere(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The precondition for the test above, and the boundary itself: at a gap
+    of one a holiday really is a live explanation, so nothing escalates."""
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
+    evening_run(tmp_path, fake_alpaca, ohlcv)
+    monkeypatch.delenv("SCAN_SESSION_DATE")
+    market_clock.before_the_open()
+
+    pipeline.run("morning", dry_run=False)
+
+    (sent,) = mocked_boundaries["resend"].sent
+    assert sent["subject"].startswith("[4% Burst] DEGRADED — ")
+    assert "NOTHING PUBLISHED IN" not in sent["subject"]
+    assert "that is 1 session ago" in sent["html"]
+    assert "the market held no session for it to scan" in sent["html"]
+
+
 def test_the_stale_snapshot_band_never_asserts_that_a_session_existed():
     """The morning after every market holiday, this band used to read "the
     session to follow through on is 2026-11-26" over a day the market never
@@ -1369,10 +1490,16 @@ def test_the_stale_snapshot_band_never_asserts_that_a_session_existed():
     A holiday calendar is deliberately NOT the fix (an approximate one used to
     make a confident claim is a worse defect), so what this asserts is that the
     sentence stops making the claim: it says what published, that nothing has
-    since, and BOTH reasons that could explain it."""
+    since, and BOTH reasons that could explain it.
+
+    THE HEDGE IS ONLY LIVE AT A GAP OF ONE, which is what this case is (a
+    Wednesday snapshot on a Thursday morning). Stated at any gap it becomes
+    false in exactly the case it was written to protect -- see the two tests
+    above it."""
     said = pipeline.stale_snapshot_note(
         {"type": "evening", "status": "ok"}, "2026-11-25", "2026-11-26")
 
+    assert "that is 1 session ago" in said
     assert "the newest published run is the evening run of 2026-11-25" in said
     assert "nothing has published a later session" in said
     # Neither explanation may be presented as the one that happened.
@@ -1381,6 +1508,83 @@ def test_the_stale_snapshot_band_never_asserts_that_a_session_existed():
     # check, never as a session that was held.
     assert "the session to follow through on is" not in said
     assert "If the market did trade on 2026-11-26" in said
+
+
+def test_a_gap_of_two_kills_the_holiday_explanation_on_arithmetic_alone():
+    """The band the test above describes was rendered at 1, 3 and 15 sessions
+    and came out byte-identical but for a date -- so at fifteen it hedged with
+    an explanation that is itself false, because no US market holiday closes
+    the tape for fifteen consecutive sessions. None of the market's SCHEDULED
+    holidays are adjacent either, which is the whole rule and needs no
+    calendar: from a gap of two, at least one of those days was a scheduled
+    session. Unscheduled closures have run to consecutive sessions -- 9/11,
+    Sandy, the 2007 day of mourning the day after New Year's Day -- so one
+    clause is kept for them, named as the exception rather than offered as the
+    routine explanation."""
+    said = pipeline.stale_snapshot_note(
+        {"type": "evening", "status": "ok"}, "2026-08-27", "2026-08-31")
+
+    assert "that is 2 sessions ago" in said
+    assert "at least one of those 2 days was a scheduled session" in said
+    assert "The evening run has stopped publishing" in said
+    # The exception is kept, and named as one: unscheduled closures HAVE run to
+    # consecutive sessions. What must not survive is the routine hedge.
+    assert "UNSCHEDULED closure" in said and "9/11" in said
+    # The hedge the one-session band carries must NOT appear here.
+    assert "no session for it to scan" not in said
+    assert "cannot tell them apart" not in said
+
+
+def test_a_three_week_gap_says_three_weeks_and_not_one_session():
+    """The case the whole fix exists for: a screener dead for three weeks must
+    not wear the same clothes as the Tuesday after Presidents' Day."""
+    said = pipeline.stale_snapshot_note(
+        {"type": "evening", "status": "ok"}, "2026-08-10", "2026-08-31")
+
+    assert "that is 15 sessions ago, counting through 2026-08-31" in said
+    assert "at least one of those 15 days was a scheduled session" in said
+
+
+def test_a_snapshot_ahead_of_the_expected_session_is_not_called_stale():
+    """SCAN_SESSION_DATE can pin a run forward. "N sessions ago" would be a
+    negative number dressed as a delay, and the repair is a different one."""
+    said = pipeline.stale_snapshot_note(
+        {"type": "evening", "status": "ok"}, "2026-09-07", "2026-08-31")
+
+    assert "LATER than the session this run expected" in said
+    assert "sessions ago" not in said
+    assert "pinned forward with SCAN_SESSION_DATE" in said
+
+
+def test_a_snapshot_dated_on_a_non_session_is_neither_stale_nor_ahead():
+    """A Saturday and the Monday after are different dates with no trading
+    session between them. "0 sessions ago" is not a sentence, "1 session ago"
+    is wrong, and "LATER than expected" is wrong in the other direction --
+    a SCAN_SESSION_DATE pinned to a weekend produces exactly this."""
+    said = pipeline.stale_snapshot_note(
+        {"type": "evening"}, "2026-08-29", "2026-08-31")
+
+    assert pipeline.stale_sessions("2026-08-29", "2026-08-31") == 0
+    assert "no trading session separates the two dates" in said
+    assert "sessions ago" not in said and "LATER" not in said
+
+
+def test_a_snapshot_with_no_usable_date_says_the_gap_is_unknown():
+    """It comes off disk. A hand-edited or truncated snapshot must not make
+    this sentence claim a number it could not compute."""
+    said = pipeline.stale_snapshot_note({"type": "evening"}, None, "2026-08-31")
+
+    assert "cannot be compared with it" in said
+    assert "sessions ago" not in said and "at least one of those" not in said
+
+
+def test_the_gap_the_band_states_is_the_one_the_subject_escalates_on():
+    """One arithmetic, two surfaces. A band saying 15 sessions over a subject
+    saying DEGRADED would be the same split this fix exists to close."""
+    assert pipeline.stale_sessions("2026-08-10", "2026-08-31") == 15
+    assert pipeline.stale_sessions("2026-08-28", "2026-08-31") == 1
+    assert pipeline.stale_sessions("2026-09-07", "2026-08-31") == -5
+    assert pipeline.stale_sessions(None, "2026-08-31") is None
 
 
 def test_the_stale_snapshot_band_still_names_the_older_run_it_is_showing():

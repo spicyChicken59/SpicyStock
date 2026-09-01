@@ -80,6 +80,23 @@ same, so the picture is dropped and the cell says why. The evening email is
 unaffected: it attaches the PNGs it rendered moments earlier, in the same
 process.
 
+**A morning run that has nothing fresh to show says how stale it is, in the
+subject line.** Its whole input is the snapshot the last evening run published,
+so the interesting failure is that nothing published — and "nothing published
+last night" and "nothing has published for three weeks" must not arrive looking
+the same. There is no holiday calendar here, deliberately (an approximate one
+used to make a confident claim is a worse defect than the one it replaces), and
+none is needed: **none of the market's scheduled holidays are adjacent.** So a
+gap of one session is genuinely ambiguous and the red band names both
+explanations; from two sessions up, at least one of those days was a scheduled
+session and a holiday cannot account for the silence, so the band says so
+plainly — keeping one clause for an *unscheduled* closure, which has run to
+consecutive sessions (9/11, Sandy, the 2007 day of mourning after New Year's
+Day) and is news the reader already has — and the subject escalates
+from `DEGRADED — ` to `NOTHING PUBLISHED IN 15 SESSIONS — `. The heading names
+the session the rows are actually from, for the same reason: it used to read
+"follow-through watchlist for TODAY" over a snapshot fifteen sessions old.
+
 **The mode is a promise about the clock, and it is checked.** An evening run
 declares that today's session has closed; a morning run declares that it has
 not. When the clock disagrees — `evening` before 16:15 ET, `morning` after it —
@@ -177,7 +194,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 511 tests, no network or API keys needed
+pytest tests/                   # 568 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -235,20 +252,38 @@ invariants live in the file rather than only here. The load-bearing ones:
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
 - Every burst carries `streak` — `day`, `unknown_reason`, `first_seen`,
-  `last_seen`, `last_score`, `last_verdict`, `last_outcome`, `seen_before`.
+  `last_seen`, `last_score`, `last_verdict`, `last_outcome`, `seen_before`,
+  `history_from`, `history_sessions`.
   `day` is 1 exactly when `first_seen` is the burst's own session, and
   `last_seen` is `null` exactly when `seen_before` is 0. **A null `day` is not
   day 1**: it means the record cannot say, and `unknown_reason` says which of
-  `no_history`, `history_unreadable` and `window_not_covered` left it null.
+  `no_history`, `history_undated`, `history_unreadable` and
+  `window_not_covered` left it null.
   Every surface prints that state in words — the email row, both dashboard
   tables and the pick card — because a row that renders nothing is read as a
   first sighting, which was the state of two of those three.
+  `history_from` is the session of the oldest run the ledger holds and
+  `history_sessions` is how many distinct sessions it holds runs for: both are
+  facts about the *record*, the same on every row of a run, and they are what
+  an unknown `day` is unknown **over**. Without them the commonest unknown was
+  an inversion — a day number is withheld whenever the chain of appearances
+  reaches the oldest run in the file, which is exactly what an unbroken streak
+  does, so a name that burst on all eight sessions the ledger holds read
+  "streak unknown" while a name that took a week off and burst twice read
+  "day 2". The arithmetic is right and stays; with the pair, the surfaces say
+  *"burst on 8 of the 8 sessions in the record, which begins 2026-08-20 — this
+  setup may have started before it"* instead of "unknown".
   `last_outcome` is what happened to the appearance `last_seen` names:
   `scored`, or the reason it never was (`lynch_gate` — the checklist rejected
-  it; `score_cap` — it passed and better names filled the night's calls). A
+  it; `score_cap` — it passed and the run had already sent its limit of
+  candidates to Claude). A
   streak counts every session the scan found a burst on, gate rejections
   included, which is why that field exists: "not scored" covered a rejection
-  and a model outage with one phrase.
+  and a model outage with one phrase. The email and the dashboard print one
+  vocabulary for these: the gated table's "why" cell reads the same map as the
+  streak line and as `src/emailer.py`'s `LAST_OUTCOME`, because it used to say
+  "passed, over the call cap" beside a line on the same page naming a "scoring
+  cap" — two names for one mechanism, neither explained anywhere.
 - Numbers are numbers or `null` — never `0` for "unknown", never the string `"n/a"`.
   `src.ledger` writes every number through one coercion and dumps with
   `allow_nan=False`, because `json.dump` writes a NaN as a bare token no browser
@@ -382,9 +417,10 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**It is pinned to the fixture.** Run against a real six-session run it scores
-67/80 with no page errors — the page renders pipeline output fine — but a dozen
-of its checks are assertions about the fixture's particular contents (25 scored
+**It is pinned to the fixture.** It runs 91 checks against the committed
+`docs/data.json`. Run against a real six-session run instead, it drops about a
+dozen of them with no page errors — the page renders pipeline output fine —
+because those are assertions about the fixture's particular contents (25 scored
 and 5 shown, chart paths that 404, a non-empty gated list, a fallback row), and
 two of them *throw* on a first-ever run rather than failing: a history with no
 forward returns yet reaches `money(null)`, and a run where Claude scored
@@ -392,17 +428,22 @@ everything has no `.sc-chip--warn` to measure. Whoever commits a real run over
 the fixture has to reckon with that first; it is a change to
 `tools/dashboard_smoke.mjs`, which step 9 deliberately did not touch.
 
-**It does not check the streak line** either — the day-N note under each
-ticker and the "this setup" fact on each card. That line adds no column and no
-`.sc-chip--warn`, so the column indexes and fallback counts the smoke test
-measures are untouched, and the run above stays at 80/80 with it in place. It
-was watched in a browser separately: the page was opened against a `data.json`
-carrying every streak state (day 3, a gated repeat, a capped repeat, each of
-the three unknown reasons, day 1, and a row with no `streak` field at all), and
-the pick card, the scored table and the gated table were read back and agree
-word for word. That check is not committed — it is a one-off against
-`docs/index.html`, and the assertions worth keeping belong in this script,
-which is a change it deliberately did not make.
+**It does check the streak line**, on the states this fixture carries: that a
+shortlisted pick states its streak whatever the streak is, that a null `day`
+reports the record it is unknown *over* rather than the word "unknown", that it
+never renders as day 1, that a scored last appearance keeps its verdict, and
+that a repeat says which *setup* it is day N of. Those five are the wordings the
+email and the page had drifted apart on, so they are asserted here rather than
+watched in a browser once. The gated table's "why" cell is asserted the same
+way, against the sentence `src/emailer.py` prints for that outcome — scoped to
+the cell, because a row's streak line says what happened to the name *last*
+time in those same words, and a row-level match counts the wrong thing.
+
+What is still not checked is any streak state this fixture does not hold —
+`history_unreadable`, `history_undated`, an empty record, a row with no `streak`
+field at all. Those are covered on the email side in `tests/test_emailer.py` and
+in `src/ledger.py`'s own tests; on the page they were read back from the DOM
+against a hand-made `data.json` and agree, but that check is not committed.
 
 ## Tuning
 

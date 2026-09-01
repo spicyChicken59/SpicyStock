@@ -57,6 +57,14 @@ SESSION = "2026-09-01"
 MODEL = "claude-sonnet-4-6"
 
 
+#: The record every streak below was read out of: the seven sessions in `runs`
+#: that precede SESSION, the oldest of them 2026-08-21. The same pair on every
+#: row, because it describes the FILE and not the name -- and one session
+#: shorter than `runs`, because a run's streaks are computed before that run is
+#: added to the history they were computed from.
+SPAN = {"history_from": "2026-08-21", "history_sessions": 7}
+
+
 def streak(i):
     """Step 10's streak block, hand-authored and consistent with `runs` below.
 
@@ -67,39 +75,52 @@ def streak(i):
       day 2     one that started yesterday, after a burst the CHECKLIST threw
                 out -- last_outcome says which, because "not scored then" read
                 as an absence of judgement over a rejection
-      unknown   a chain reaching the oldest run this file holds, where nothing
-                before it was ever scanned: day 2 and day 12 are both possible
-                and the record cannot say which. last_outcome is score_cap
+      unknown   a chain reaching back to near the oldest run this file holds,
+                where nothing before it was ever scanned: day 3 and day 13 are
+                both possible and the record cannot say which. It is not silent
+                about that any more -- history_from and history_sessions say
+                what the unknown is unknown over, so the page can print "burst
+                on 2 of the 7 sessions in the record, which begins 2026-08-21,
+                and may have started before it". last_outcome is score_cap
                 there -- it passed and better names took the night's calls,
                 which is a different sentence from lynch_gate
       day 1     a name last seen a fortnight ago, which is day 1 of something
-                new rather than day 12 of something old; and a name nothing
+                new rather than day 13 of something old; and a name nothing
                 has ever carried
 
     src/ledger.py's MAX_STREAK_GAP_SESSIONS and _why_no_day() hold the rules;
-    these rows only have to obey them. The unknown row does: its chain starts
-    on 2026-08-25, the oldest run below, and the window wants five sessions
-    before that.
+    these rows only have to obey them, and now they can be CHECKED against them
+    from the file alone, which is what carrying the record in the block bought:
+
+      a day number needs the record to begin MAX_STREAK_GAP_SESSIONS sessions
+      before the setup did. 2026-08-21 is five sessions before the day-3 row's
+      2026-08-28 and seven before the day-2 row's 2026-08-31.
+      the unknown row must NOT have that reach: its chain starts 2026-08-25,
+      two sessions after the record does, which is why it is unknown.
+      every last_seen has to be a session the record holds. The day-1 row's
+      was 2026-08-17 against a file beginning 2026-08-25 -- a sighting on a
+      night that was never scanned, in a fixture nothing could check.
     """
     if i % 7 == 1:
         return {"day": 3, "unknown_reason": None, "first_seen": "2026-08-28",
                 "last_seen": "2026-08-31", "last_score": 7.4, "last_verdict": "B",
-                "last_outcome": "scored", "seen_before": 2}
+                "last_outcome": "scored", "seen_before": 2, **SPAN}
     if i % 7 == 2:
         return {"day": None, "unknown_reason": "window_not_covered",
-                "first_seen": None, "last_seen": "2026-08-25", "last_score": None,
-                "last_verdict": None, "last_outcome": "score_cap", "seen_before": 1}
+                "first_seen": None, "last_seen": "2026-08-31", "last_score": None,
+                "last_verdict": None, "last_outcome": "score_cap", "seen_before": 2,
+                **SPAN}
     if i % 7 == 3:
         return {"day": 2, "unknown_reason": None, "first_seen": "2026-08-31",
                 "last_seen": "2026-08-31", "last_score": None, "last_verdict": None,
-                "last_outcome": "lynch_gate", "seen_before": 1}
+                "last_outcome": "lynch_gate", "seen_before": 1, **SPAN}
     if i % 7 == 5:
         return {"day": 1, "unknown_reason": None, "first_seen": SESSION,
-                "last_seen": "2026-08-17", "last_score": 5.2, "last_verdict": "skip",
-                "last_outcome": "scored", "seen_before": 1}
+                "last_seen": "2026-08-21", "last_score": 5.2, "last_verdict": "skip",
+                "last_outcome": "scored", "seen_before": 1, **SPAN}
     return {"day": 1, "unknown_reason": None, "first_seen": SESSION,
             "last_seen": None, "last_score": None, "last_verdict": None,
-            "last_outcome": None, "seen_before": 0}
+            "last_outcome": None, "seen_before": 0, **SPAN}
 
 LABELS = {
     "2": "first or second burst",
@@ -497,9 +518,13 @@ by_src = collections.Counter(c["provenance"]["source"] for c in candidates)
 # burst on three consecutive sessions is one observation, not three, because
 # its d1/d3/d5 windows overlap and measure one move (src/ledger.py's
 # setup_leads). n < rows on every session that carries a repeat, and the two
-# are equal on 2026-08-25 because it is the oldest run this file holds -- with
+# are equal on 2026-08-21 because it is the oldest run this file holds -- with
 # nothing before it, every appearance in it leads its own setup as far as the
 # record can tell.
+#
+# These sessions are also the record the streak blocks above name: seven of
+# them before SESSION, the oldest 2026-08-21, which is what SPAN says and what
+# makes the day numbers up there ones the real code could have written.
 runs = [
     {"date": SESSION, "type": "evening", "bursts": BURSTS, "passed_gate": PASSED,
      "scored": len(candidates), "shortlist_size": 5, "top_score": candidates[0]["score"],
@@ -519,7 +544,13 @@ runs = [
      "forward_returns": {"d1": 0.88, "d3": 2.31, "d5": None, "n": 17, "rows": 18}},
     {"date": "2026-08-25", "type": "evening", "bursts": 38, "passed_gate": 22, "scored": 22,
      "shortlist_size": 5, "top_score": 9.0, "fallbacks": 0,
-     "forward_returns": {"d1": 1.84, "d3": 2.97, "d5": -0.42, "n": 22, "rows": 22}},
+     "forward_returns": {"d1": 1.84, "d3": 2.97, "d5": -0.42, "n": 21, "rows": 22}},
+    {"date": "2026-08-24", "type": "evening", "bursts": 41, "passed_gate": 23, "scored": 23,
+     "shortlist_size": 5, "top_score": 8.6, "fallbacks": 1,
+     "forward_returns": {"d1": -1.07, "d3": 0.94, "d5": 1.62, "n": 22, "rows": 23}},
+    {"date": "2026-08-21", "type": "evening", "bursts": 36, "passed_gate": 20, "scored": 20,
+     "shortlist_size": 5, "top_score": 8.2, "fallbacks": 0,
+     "forward_returns": {"d1": 0.41, "d3": 1.18, "d5": 2.05, "n": 20, "rows": 20}},
 ]
 
 data = {
@@ -527,7 +558,7 @@ data = {
     "app": "SpicyStock",
     "generated": "2026-09-01T22:14:07Z",
     "_contract": {
-        "about": "docs/data.json will be written by src/pipeline.py (step 9) and is read by docs/index.html at runtime. Today it is a hand-authored fixture from tools/make_fixture.py; run.fixture is true. This block is documentation, not data; consumers ignore it.",
+        "about": "docs/data.json is written by src/pipeline.py at the end of every run (see src/ledger.py) and read by docs/index.html at runtime. THIS copy is not one of those: it is the hand-authored fixture from tools/make_fixture.py, and run.fixture is true, which is how the morning run refuses to mail its invented tickers as a watchlist. A real run overwrites it and sets run.fixture false. This block is documentation, not data; consumers ignore it.",
         "documented_in": "README.md, 'The dashboard contract'",
         # IMPORTED from src.ledger, which is what the pipeline writes into its
         # own output. A second copy here is a second contract, and a fixture

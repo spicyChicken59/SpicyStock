@@ -65,7 +65,10 @@ jobs:
         # Exit 2 means the run finished but is degraded — no published run to
         # follow, or the one it found is not last night's. Actions turns red
         # for it on purpose: a follow-through nobody can trust must not look
-        # like one that worked.
+        # like one that worked. This job cannot say WHICH of those it was, and
+        # a red tick here reads the same on the morning after a holiday as on
+        # the morning after three weeks of silence — the email is where they
+        # separate, because its subject line carries the gap in sessions.
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM: ${{ secrets.RESEND_FROM }}

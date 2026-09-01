@@ -692,6 +692,18 @@ def email_row(row: dict) -> dict:
     return dict(row, lynch_detail=detail, chart=None, chart_note=MORNING_CHART_NOTE)
 
 
+def stale_sessions(session, expected) -> int | None:
+    """How many sessions behind the snapshot is. None when that is not a number.
+
+    src.ledger.sessions_between is the one definition of a session gap in this
+    project (weekends subtracted, holidays not), so this is a name for it and
+    not a second arithmetic. Zero or negative means the snapshot is not behind
+    at all — a session pinned into the future by SCAN_SESSION_DATE reaches here
+    too, and it is a different sentence from a stale one.
+    """
+    return ledger.sessions_between(session, expected)
+
+
 def stale_snapshot_note(source: dict, session, expected) -> str:
     """What to say when nothing has published for the session this run expected.
 
@@ -711,21 +723,81 @@ def stale_snapshot_note(source: dict, session, expected) -> str:
     others) used to make a confident claim is a worse defect than the one it
     replaces, and the evening run deliberately has none either — it discovers
     a closed market from the feed and fails on evidence. This run has no feed.
-    So it states what it can see, names both explanations, and says how to
-    tell them apart. It stays degraded and still exits 2 either way: a
-    follow-through on a snapshot that is not last night's must not look clean.
+
+    BUT THE HEDGE IS ONLY LIVE AT A GAP OF ONE, and stating it at any gap made
+    it false in exactly the case it was written to protect. None of the US
+    market's SCHEDULED holidays are adjacent — there is no pair of consecutive
+    weekday closures on the calendar — so from a gap of two sessions up, at
+    least one of those days was a scheduled session and "the market held no
+    session for it to scan" cannot account for the silence. Unscheduled
+    closures HAVE run to consecutive sessions (9/11, Hurricane Sandy, the 2007
+    day of mourning the day after New Year's Day), so that clause stays, named
+    as the exception it is: each was news the reader already has.
+
+    None of this needs a calendar — it is arithmetic on the gap, which is why
+    the gap is stated in every branch. Rendered at 1, 3 and 15 sessions the
+    three bands used to be byte-identical but for a date.
+
+    Degraded and exit 2 either way: a follow-through on a snapshot that is not
+    last night's must not look clean, however it got that way.
     """
     published = source.get("type") or "evening"
+    gap = stale_sessions(session, expected)
+    def tail(lead: str) -> str:
+        # "Either way" belongs to the branch that names two explanations, and
+        # only one branch still does. The facts after it are the same in all
+        # of them: which run is on the table, and that it is not today's.
+        return (f"{lead} the rows below are {session}'s, labelled {session} "
+                f"everywhere, and are not a scan of any session since")
+    if gap is None:
+        return (
+            f"the newest published run is the {published} run of {session}, which is not "
+            f"the session this run expected ({expected}) and cannot be compared with it — "
+            f"the date on the snapshot is missing or unreadable, so how far behind it is "
+            f"is unknown. " + tail("Meanwhile")
+        )
+    if gap == 0:
+        # Not "0 sessions ago": the two dates differ and NO trading session
+        # separates them, which happens when the published date is not a
+        # session at all — a SCAN_SESSION_DATE pinned to a weekend does it.
+        # Calling that "later" or "1 session ago" would both be wrong.
+        return (
+            f"the newest published run is the {published} run of {session}, which is not "
+            f"the session this run expected ({expected}) — though no trading session "
+            f"separates the two dates, so one of them is not a session the market held. "
+            f"A SCAN_SESSION_DATE pinned to a weekend does exactly this. " + tail("Meanwhile")
+        )
+    if gap < 0:
+        return (
+            f"the newest published run is the {published} run of {session}, which is "
+            f"LATER than the session this run expected ({expected}). A follow-through "
+            f"pass runs before today's close, so a published session ahead of it means "
+            f"a run was pinned forward with SCAN_SESSION_DATE, not that time has moved. "
+            + tail("Meanwhile")
+        )
+    if gap == 1:
+        return (
+            f"the newest published run is the {published} run of {session}, and nothing "
+            f"has published a later session — that is 1 session ago. There are two "
+            f"explanations and at a gap of one this run cannot tell them apart: last "
+            f"night's evening run did not publish (it failed, or it never ran), or the "
+            f"market held no session for it to scan. There is no holiday calendar here "
+            f"to choose between them, deliberately — an approximate one would name the "
+            f"wrong reason with confidence. If the market did trade on {expected}, then "
+            f"the evening run is what broke, and its own email and its Actions run say "
+            f"how. " + tail("Either way")
+        )
     return (
         f"the newest published run is the {published} run of {session}, and nothing has "
-        f"published a later session. There are two explanations and this run cannot tell "
-        f"them apart: last night's evening run did not publish (it failed, or it never "
-        f"ran), or the market held no session for it to scan. There is no holiday "
-        f"calendar here to choose between them, deliberately — an approximate one would "
-        f"name the wrong reason with confidence. If the market did trade on {expected}, "
-        f"then the evening run is what broke, and its own email and its Actions run say "
-        f"how. Either way the rows below are {session}'s, labelled {session} everywhere, "
-        f"and are not a scan of any session since"
+        f"published a later session — that is {gap} sessions ago, counting through "
+        f"{expected}. A market holiday does not explain a gap this long: none of the "
+        f"market's scheduled holidays are adjacent, so at least one of those {gap} days "
+        f"was a scheduled session and nothing scanned it. The evening run has stopped "
+        f"publishing — its own email and its Actions run say how it broke, and if "
+        f"neither exists it did not run at all. (An UNSCHEDULED closure can run to "
+        f"consecutive sessions — 9/11, Hurricane Sandy, the 2007 day of mourning that "
+        f"fell the day after New Year's Day — but each of those was news you would "
+        f"already have, which is the difference from silence.) " + tail("Meanwhile")
     )
 
 
@@ -809,6 +881,7 @@ def follow_through(mode: Mode, dry_run: bool = False,
     rows: list[dict] = []
     source: dict = {}
     session = None
+    behind: int | None = None
     if snapshot is None:
         report.problem("history",
                        f"there is nothing to follow through on: {why}. A morning run "
@@ -824,6 +897,7 @@ def follow_through(mode: Mode, dry_run: bool = False,
             # following through on. Monday morning after a Friday evening run
             # is the normal case and passes. What it must NOT do is assert
             # that the missing session existed — see stale_snapshot_note().
+            behind = stale_sessions(session, expected)
             report.problem("session", stale_snapshot_note(source, session, expected))
         status = source.get("status", "ok")
         # Carried forward, not re-derived, and not summarised into the status
@@ -853,10 +927,15 @@ def follow_through(mode: Mode, dry_run: bool = False,
         session=session,
         bursts=source.get("bursts", 0), gated=source.get("passed_gate", 0),
         scored_by=source.get("scored_by") or {},
+        # How far behind, in sessions, so the SUBJECT LINE can escalate. Every
+        # staleness read DEGRADED before this, and a screener dead for three
+        # weeks is not the Tuesday after Presidents' Day. src.emailer._prefix()
+        # and _headline() are what read it; the reason is in the band already.
+        stale_sessions=behind,
     )
 
     report.counts.update({"followed": len(rows), "shortlist": len(shortlist),
-                          "session": session,
+                          "session": session, "stale_sessions": behind,
                           "repeats": sum(1 for r in shortlist
                                          if ((r.get("streak") or {}).get("day") or 0) > 1)})
 
@@ -1047,6 +1126,29 @@ def _check_scoring(score_stats: dict, report: RunReport) -> None:
                                 f"Claude and carry a checklist fallback: {first}")
 
 
+def attempted_session() -> dict:
+    """The session a dead run was going for, for the email that reports it.
+
+    Both failure notices used to print "Session scanned: not recorded" and the
+    morning one "4% bursts that session: ?", because notify_failure() sent no
+    stats at all — in the one email where an operator most wants to know which
+    night broke. The session does not need the scan: expected_session() reads
+    it off the clock, or off SCAN_SESSION_DATE, and both are knowable before
+    the run spends anything.
+
+    It is NOT presented as the session that was read — src.emailer._funnel_line
+    relabels it on a failed run — because nothing read it. Best effort, like
+    everything else on this path: a run that died inside ScanConfig() (a
+    malformed SCAN_SESSION_DATE is exactly that) still gets its email, with
+    the session unrecorded, rather than losing the notice to a second failure.
+    """
+    try:
+        return {"session": ledger.iso_date(expected_session(ScanConfig()))}
+    except Exception:  # noqa: BLE001 — the notice matters more than the date on it
+        log.warning("Could not name the session the run was attempting", exc_info=True)
+        return {}
+
+
 def notify_failure(run_type: str, report: RunReport, dry_run: bool) -> None:
     """Best-effort: mail the fact that the run died. Never raises.
 
@@ -1065,7 +1167,7 @@ def notify_failure(run_type: str, report: RunReport, dry_run: bool) -> None:
         return
     try:
         from .emailer import send_failure_notice
-        send_failure_notice(run_type, report.errors)
+        send_failure_notice(run_type, report.errors, attempted_session())
     except Exception:  # noqa: BLE001 — see the docstring
         log.exception("Could not mail the failure notice either")
 

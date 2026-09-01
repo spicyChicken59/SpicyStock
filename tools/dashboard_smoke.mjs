@@ -134,6 +134,18 @@ const VARIANTS = {
     }
     return d;
   },
+  // Every run's rows collapse 1:1 into setups -- no name burst twice inside a
+  // window, so nothing was folded. The tile used to print the row count only
+  // when the two numbers DIFFERED, so the reader could not see the ratio in
+  // the one case where it is settled, and could not tell "nothing collapsed"
+  // from "the file does not say".
+  norepeats() {
+    const d = clone();
+    d.runs.forEach((r) => {
+      if (r.forward_returns && r.forward_returns.n) r.forward_returns.rows = r.forward_returns.n;
+    });
+    return d;
+  },
   // A run that got part way and lost something on the way.
   degraded() {
     const d = clone();
@@ -194,10 +206,13 @@ page.on('pageerror', (e) => errors.push('uncaught: ' + e.message));
 page.on('console', (m) => {
   if (m.type() !== 'error') return;
   const url = (m.location() && m.location().url) || '';
-  // The fixture names chart PNGs the repo does not ship, because the pipeline
-  // writes them and it has not run here. Every one 404s and the page swaps in
-  // an explained frame — that is the state under test, so these are counted
-  // and asserted on below rather than treated as page errors.
+  // The chart PNGs 404 because .gitignore blocks /docs/charts/ and NOTHING is
+  // ever committed there — see src/pipeline.py's CHARTS_DIR. So this is the
+  // permanent state of the published page, not a wait for the pipeline to run:
+  // locally the PNGs appear when an evening run writes them beside data.json,
+  // and in this checkout there are none. The page swaps in an explained frame,
+  // which is the state under test, so these are counted and asserted on below
+  // rather than treated as page errors.
   if (/\/charts\/[^/]+\.png$/.test(url)) { chart404.add(url); return; }
   errors.push('console: ' + m.text() + (url ? ' @ ' + url : ''));
 });
@@ -249,7 +264,8 @@ const horizon = (k) => {
   const names = have.reduce((a, r) => a + (r.forward_returns.n || 0), 0);
   const wsum = have.reduce((a, r) => a + r.forward_returns[k] * (r.forward_returns.n || 0), 0);
   const vals = have.map((r) => r.forward_returns[k]);
-  return { sessions: have.length, names, mean: names ? wsum / names : null,
+  const rows = have.reduce((a, r) => a + (r.forward_returns.rows || 0), 0);
+  return { sessions: have.length, names, rows, mean: names ? wsum / names : null,
            plain: vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null,
            best: vals.length ? Math.max(...vals) : null, worst: vals.length ? Math.min(...vals) : null };
 };
@@ -305,12 +321,20 @@ ok('the page names where the attrition actually is',
 // real one is the worst thing this page could do.
 const fixtureBanner = await page.evaluate(() => {
   const b = document.getElementById('fixture-banner');
-  return { shown: b && !b.hidden, text: ((b && b.textContent) || '').trim().slice(0, 60) };
+  return { shown: b && !b.hidden, text: ((b && b.textContent) || '').replace(/\s+/g, ' ').trim() };
 });
 ok('fabricated data is disclosed on the page, not only in the README',
    run.fixture ? (fixtureBanner.shown && /sample data/i.test(fixtureBanner.text))
                : !fixtureBanner.shown,
-   JSON.stringify(fixtureBanner));
+   fixtureBanner.text.slice(0, 60));
+// ...and disclosed WITHOUT the sentence it used to carry: "the pipeline does
+// not write docs/data.json yet" has been false since step 9, and README says
+// the opposite two sections away. The true half -- this file is a fixture and
+// none of it is a signal -- is what the banner is for.
+ok('and the disclosure does not deny that the pipeline writes this file',
+   !/does not write/i.test(fixtureBanner.text)
+   && /trading signal/i.test(fixtureBanner.text),
+   fixtureBanner.text.slice(0, 120));
 
 // --- the defect this contract exists to stop -------------------------------
 // The pipeline used to archive five names. A page that shows five names cannot
@@ -330,9 +354,69 @@ ok('the scored rows and the not-scored rows account for every burst',
 ok('and the page says so in words',
   (await page.textContent('#gated-hint')).includes(`accounts for all ${run.bursts} bursts`),
   await page.textContent('#gated-hint'));
-ok('the reason a burst went unscored is on its row',
-  (await page.locator('#gated-table tbody tr', { hasText: 'over the call cap' }).count())
-    === REAL.gated_out.filter((g) => g.reason === 'score_cap').length);
+// The words are the EMAIL's words, not this table's own: it used to say
+// 'passed, over the call cap' beside a streak line on the same page saying
+// 'the scoring cap was already full'. One mechanism, two names, neither
+// explained. Asserted as the sentence a reader sees, so a surface drifting
+// back to its own vocabulary fails here.
+// Scoped to the WHY cell, not the row: a row's streak line says what happened
+// to the name LAST time, in these same words, so a row-level match counts the
+// wrong thing and reports a number that happens to be right on some fixtures.
+const whyCells = await page.$$eval('#gated-table tbody td.col-why', (tds) => tds.map((t) => t.textContent.trim()));
+ok('the reason a burst went unscored is on its row, in the words the email uses',
+  whyCells.filter((t) => t === 'passed the gate, but the run had already sent its limit of candidates to Claude').length
+    === REAL.gated_out.filter((g) => g.reason === 'score_cap').length,
+  `${whyCells.length} cells, ${REAL.gated_out.filter((g) => g.reason === 'score_cap').length} capped`);
+ok('and the rejected ones say rejected, the same way',
+  whyCells.filter((t) => t === 'rejected at the 2LYNCH gate').length
+    === REAL.gated_out.filter((g) => g.reason !== 'score_cap').length);
+ok('and the code keeps its casing through a sheet that lowercases chips',
+  (await page.$eval('#gated-table tbody td.col-why .sc-chip',
+    (el) => getComputedStyle(el).textTransform)) === 'none');
+
+// --- the streak line, on the one state it used to get wrong -----------------
+// A day number is withheld whenever the chain of appearances reaches the
+// oldest run in the file, which is exactly what an UNBROKEN streak does. So
+// the longer a name has been bursting every session, the more certainly its
+// day is null -- and this page said "streak unknown" over it while saying
+// "day 2" over a name that had taken a week off. The record's own span is
+// what makes the narrower answer sayable; assert the sentence, because the
+// email says the same one and a reader gets both.
+const unknownDay = REAL.candidates.filter((c) => (c.streak || {}).day === null);
+const streakLines = await page.$$eval('#shortlist .facts',
+  (ds) => ds.map((d) => [...d.querySelectorAll('div')]
+    .filter((x) => x.querySelector('dt') && x.querySelector('dt').textContent === 'this setup')
+    .map((x) => x.querySelector('dd').textContent.trim())[0]));
+ok('a shortlisted pick states its streak, whatever the streak is',
+  streakLines.length === run.shortlist_size && streakLines.every(Boolean),
+  streakLines.join(' | ').slice(0, 90));
+ok('an unknown day reports the record it is unknown over, not the word unknown',
+  unknownDay.length === 0 || (await page.locator('#scores-table tbody tr',
+    { hasText: 'sessions in the record, which begins' }).count()) === unknownDay.length,
+  `${unknownDay.length} rows carry a null day`);
+ok('and never renders as day 1, which is a claim about the market',
+  (await page.locator('#scores-table tbody tr', { hasText: 'day unknown' })
+    .locator('text=new setup').count()) === 0);
+// The two wordings that differed from the email on rows that agreed otherwise:
+// this page dropped the verdict off a scored last appearance ("scored 7.5/10"
+// against the email's "scored 7.5/10 B+") and said "day 3, since" where the
+// email said "day 3 of this setup, since".
+const withVerdict = REAL.candidates.filter((c) => {
+  const st = c.streak || {};
+  return st.last_score !== null && st.last_score !== undefined && st.last_verdict
+    && (!st.last_outcome || st.last_outcome === 'scored');
+});
+ok('a scored last appearance keeps its verdict, the way the email prints it',
+  withVerdict.length > 0 && (await Promise.all(withVerdict.map((c) => page.locator(
+    '#scores-table tbody tr',
+    { hasText: `scored ${c.streak.last_score.toFixed(1)}/10 ${c.streak.last_verdict}` }
+  ).count()))).every((n) => n > 0),
+  `${withVerdict.length} rows carry a scored last appearance with a verdict`);
+const repeats = REAL.candidates.filter((c) => (c.streak || {}).day > 1);
+ok('and a repeat says which SETUP it is day N of, in the email\'s words',
+  repeats.length > 0 && (await page.locator('#scores-table tbody tr',
+    { hasText: 'of this setup, since' }).count()) === repeats.length,
+  `${repeats.length} repeats`);
 
 // --- provenance ------------------------------------------------------------
 // A fallback score is checklist arithmetic. It can outrank a real score, and
@@ -385,10 +469,11 @@ const agree = await page.evaluate(() => {
 });
 ok('the chart and the table say the same thing', agree);
 
-// --- the charts the pipeline has not written yet ---------------------------
-// Until the pipeline publishes PNGs into docs/, every chart path 404s. That is
-// the normal state and the reader must get a frame that explains it, not a
-// broken image icon.
+// --- the charts this checkout does not carry -------------------------------
+// /docs/charts/ is gitignored and never committed, so on GitHub Pages every
+// chart path 404s permanently, and in a fresh checkout it 404s until a local
+// evening run writes one. Either way the reader must get a frame that explains
+// it, not a broken image icon.
 const shortWithPath = REAL.candidates.filter((c) => c.rank <= run.shortlist_size && c.chart).length;
 ok('a missing chart PNG degrades to an explained frame, not a broken image',
   (await page.locator('#shortlist .sc-frame--empty').count()) === run.shortlist_size
@@ -477,11 +562,25 @@ ok('the mean is weighted by how many names each session contributed',
 ok('a session that has not closed is not counted as one',
   tiles[0].sub.startsWith(`${H1.sessions} sessions`) && H1.sessions < REAL.runs.length,
   `${tiles[0].sub} — ${REAL.runs.length} runs in the file`);
-// +5d exists for one session out of six. Treating the other five as zero would
-// pull it from -0.42% to about -0.08%, which is the whole failure mode.
+// A +5d window closes later than a +1d one, so the longest horizon always has
+// the fewest sessions in it. Treating the rest as zero would pull the mean
+// toward 0.00% — that is the whole failure mode. Asserted against the mean
+// over the sessions that DID close, with the count checked to be short of the
+// file's runs so the comparison is not vacuous. The exact count was pinned at
+// 1 and belonged to one generation of the fixture rather than to the rule.
 ok('and the horizons that have not happened are not averaged in as zeros',
-  tiles[2].value === money(H5.mean) && H5.sessions === 1,
-  `${tiles[2].value} from ${H5.sessions} session, ${H5.names} names`);
+  tiles[2].value === money(H5.mean) && H5.sessions > 0 && H5.sessions < REAL.runs.length,
+  `${tiles[2].value} from ${H5.sessions} of ${REAL.runs.length} sessions, ${H5.names} names`);
+// n IS SETUPS, and the tile says so -- but it used to print what they were
+// collapsed FROM only when the two numbers differed, which hid the ratio in
+// the 1:1 case and said nothing about the collapse in any file where a run of
+// repeats had just been folded into one setup.
+ok('a setup count says what it was collapsed from, whatever the ratio',
+  tiles.every((t, i) => {
+    const h = [H1, horizon('d3'), H5][i];
+    return !h.rows || t.sub.includes(`from ${h.rows} row`);
+  }),
+  tiles.map((t) => t.sub).join(' | '));
 // One observation is not a range. It read "ran -0.42% to -0.42%" until it did.
 ok('a single session is not dressed up as a spread',
   H5.sessions !== 1 || !/ran .* to /.test(tiles[2].delta), tiles[2].delta);
@@ -657,6 +756,12 @@ ok('a horizon with enough sessions stops saying there is not enough data',
   grown[0] === 'measured' && grown[1] === 'not enough data' && grown[2] === 'not enough data',
   grown.join(' | '));
 
+await open('/v/norepeats/');
+const flat = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')]
+  .map((t) => t.querySelector('.sc-tile__sub').textContent.trim()));
+ok('a 1:1 collapse still says what the setups were counted from',
+  flat.every((t) => /(\d+) setups? from \1 rows?/.test(t)), flat.join(' | '));
+
 await open('/v/degraded/');
 ok('a run that lost something says so at the top', !(await page.locator('#notice').isHidden()));
 ok('and names what it lost', (await page.textContent('#notice')).includes('214 symbols'), await page.textContent('#notice'));
@@ -681,6 +786,15 @@ await shot('charts-present');
 
 await browser.close();
 server.close();
+
+// README says how many checks this is. The number is the kind of fact that
+// rots silently -- three doc claims in this repo already did, which is why
+// tests/test_docs_are_true.py exists -- so it is checked here, where the real
+// number is. Counted after every other check has run, and counting itself.
+const claimed = (await readFile(join(ROOT, '..', 'README.md'), 'utf8')).match(/It runs (\d+) checks/);
+ok("README's count of these checks is the real one",
+  !!claimed && Number(claimed[1]) === results.length + 1,
+  `README says ${claimed ? claimed[1] : 'nothing'}, this run has ${results.length + 1}`);
 
 for (const r of results) console.log(`  ${r.pass ? 'ok  ' : 'FAIL'}  ${r.name}${r.detail ? '  — ' + r.detail : ''}`);
 // The no-data pass deliberately serves a 500, so its own console noise is not

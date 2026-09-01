@@ -87,7 +87,7 @@ that a fix did not introduce a new defect of the same class.**
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 511 tests with no network
+- **There is a regression net.** `pytest tests/` runs 568 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -118,12 +118,38 @@ that a fix did not introduce a new defect of the same class.**
   run. This is the second time this step was believed done and was not. Watch
   the first evening run after this lands.
 
+  **One judgement about the calendar, written down once.** The morning email's
+  staleness band needs to know whether a market closure could explain nothing
+  having published, and this project deliberately carries no holiday calendar
+  (an approximate one used to make a confident claim is worse than the defect
+  it replaces). It does not need one: NONE OF THE US MARKET'S SCHEDULED
+  HOLIDAYS ARE ADJACENT, so a gap of one session is genuinely ambiguous and a
+  gap of two or more is not — at least one of those days was a scheduled
+  session. (Unscheduled closures HAVE run to consecutive sessions — 9/11,
+  Sandy, the 2007 day of mourning the day after New Year's Day — so the band
+  keeps one clause for them, named as the exception, which is what stops the
+  arithmetic from becoming the next confidently false sentence.) That is the whole rule
+  behind `stale_snapshot_note()`'s branches and behind the subject line's
+  escalation, and it is arithmetic over `ledger.sessions_between()`, not a
+  calendar. Before it, the emails rendered at 1, 3 and 15 sessions stale were
+  byte-identical but for a date, and at 15 the hedge all three carried ("or the
+  market held no session for it to scan") was itself false — the screener dead
+  for three weeks arrived looking like the Tuesday after Presidents' Day.
+
   `docs/index.html` CAN be opened here after all: playwright's chromium is
   installed in this sandbox (`node tools/dashboard_smoke.mjs` after cloning the
-  design system to /tmp/design-system runs 80/80 with no page errors), which
-  the previous round of these notes said was impossible. Run it. The streak
+  design system to /tmp/design-system runs every check with no page errors),
+  which the previous round of these notes said was impossible. Run it. The
+  script now checks README's claim about how many checks it is, so that number
+  cannot rot the way three others in this repo already did. The streak
   line the page carries was additionally rendered against a data.json holding
-  every streak state and read back from the DOM, rather than argued about.
+  every streak state and read back from the DOM, rather than argued about, and
+  five of those wordings are asserted in the script now: the email and the page
+  had drifted apart on the null-`day` sentence, on the verdict after a scored
+  last appearance, on "day N **of this setup**", and on what the gated table
+  calls a burst the call budget crowded out — two vocabularies for one
+  mechanism, side by side on one page, under two comments each claiming they
+  matched.
 
 ## Local run
 

@@ -3,7 +3,7 @@
   "app": "SpicyStock",
   "generated": "2026-09-01T22:14:07Z",
   "_contract": {
-    "about": "docs/data.json will be written by src/pipeline.py (step 9) and is read by docs/index.html at runtime. Today it is a hand-authored fixture from tools/make_fixture.py; run.fixture is true. This block is documentation, not data; consumers ignore it.",
+    "about": "docs/data.json is written by src/pipeline.py at the end of every run (see src/ledger.py) and read by docs/index.html at runtime. THIS copy is not one of those: it is the hand-authored fixture from tools/make_fixture.py, and run.fixture is true, which is how the morning run refuses to mail its invented tickers as a watchlist. A real run overwrites it and sets run.fixture false. This block is documentation, not data; consumers ignore it.",
     "documented_in": "README.md, 'The dashboard contract'",
     "invariants": [
       "candidates holds EVERY scored candidate, ranked by score descending, and is never truncated: len(candidates) == run.scored. The top run.shortlist_size of them are the shortlist that went out by email.",
@@ -13,7 +13,8 @@
       "forward_returns and runs[].forward_returns are null until the sessions exist. Absent is null, never 0 and never a string.",
       "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
       "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
-      "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on; otherwise day and first_seen are null and unknown_reason is one of no_history, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
+      "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
+      "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
       "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was ('lynch_gate' rejected by the checklist, 'score_cap' passed but out of calls). Null exactly with last_seen. A gate rejection is never published as an absence of judgement.",
       "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
       "Numbers are numbers or null. No 'n/a' strings."
@@ -122,7 +123,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -208,7 +211,9 @@
         "last_score": 7.4,
         "last_verdict": "B",
         "last_outcome": "scored",
-        "seen_before": 2
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -290,11 +295,13 @@
         "day": null,
         "unknown_reason": "window_not_covered",
         "first_seen": null,
-        "last_seen": "2026-08-25",
+        "last_seen": "2026-08-31",
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "score_cap",
-        "seen_before": 1
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -380,7 +387,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "lynch_gate",
-        "seen_before": 1
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -466,7 +475,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -548,11 +559,13 @@
         "day": 1,
         "unknown_reason": null,
         "first_seen": "2026-09-01",
-        "last_seen": "2026-08-17",
+        "last_seen": "2026-08-21",
         "last_score": 5.2,
         "last_verdict": "skip",
         "last_outcome": "scored",
-        "seen_before": 1
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -638,7 +651,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -724,7 +739,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -810,7 +827,9 @@
         "last_score": 7.4,
         "last_verdict": "B",
         "last_outcome": "scored",
-        "seen_before": 2
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -892,11 +911,13 @@
         "day": null,
         "unknown_reason": "window_not_covered",
         "first_seen": null,
-        "last_seen": "2026-08-25",
+        "last_seen": "2026-08-31",
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "score_cap",
-        "seen_before": 1
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -982,7 +1003,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "lynch_gate",
-        "seen_before": 1
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -1068,7 +1091,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -1150,11 +1175,13 @@
         "day": 1,
         "unknown_reason": null,
         "first_seen": "2026-09-01",
-        "last_seen": "2026-08-17",
+        "last_seen": "2026-08-21",
         "last_score": 5.2,
         "last_verdict": "skip",
         "last_outcome": "scored",
-        "seen_before": 1
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -1240,7 +1267,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -1326,7 +1355,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -1412,7 +1443,9 @@
         "last_score": 7.4,
         "last_verdict": "B",
         "last_outcome": "scored",
-        "seen_before": 2
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -1494,11 +1527,13 @@
         "day": null,
         "unknown_reason": "window_not_covered",
         "first_seen": null,
-        "last_seen": "2026-08-25",
+        "last_seen": "2026-08-31",
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "score_cap",
-        "seen_before": 1
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -1584,7 +1619,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "lynch_gate",
-        "seen_before": 1
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -1670,7 +1707,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -1752,11 +1791,13 @@
         "day": 1,
         "unknown_reason": null,
         "first_seen": "2026-09-01",
-        "last_seen": "2026-08-17",
+        "last_seen": "2026-08-21",
         "last_score": 5.2,
         "last_verdict": "skip",
         "last_outcome": "scored",
-        "seen_before": 1
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -1842,7 +1883,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -1928,7 +1971,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -2014,7 +2059,9 @@
         "last_score": 7.4,
         "last_verdict": "B",
         "last_outcome": "scored",
-        "seen_before": 2
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -2096,11 +2143,13 @@
         "day": null,
         "unknown_reason": "window_not_covered",
         "first_seen": null,
-        "last_seen": "2026-08-25",
+        "last_seen": "2026-08-31",
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "score_cap",
-        "seen_before": 1
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -2186,7 +2235,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "lynch_gate",
-        "seen_before": 1
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "forward_returns": {
         "d1": null,
@@ -2253,7 +2304,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -2313,7 +2366,9 @@
         "last_score": 7.4,
         "last_verdict": "B",
         "last_outcome": "scored",
-        "seen_before": 2
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -2369,11 +2424,13 @@
         "day": null,
         "unknown_reason": "window_not_covered",
         "first_seen": null,
-        "last_seen": "2026-08-25",
+        "last_seen": "2026-08-31",
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "score_cap",
-        "seen_before": 1
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -2433,7 +2490,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "lynch_gate",
-        "seen_before": 1
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -2493,7 +2552,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -2549,11 +2610,13 @@
         "day": 1,
         "unknown_reason": null,
         "first_seen": "2026-09-01",
-        "last_seen": "2026-08-17",
+        "last_seen": "2026-08-21",
         "last_score": 5.2,
         "last_verdict": "skip",
         "last_outcome": "scored",
-        "seen_before": 1
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -2613,7 +2676,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -2673,7 +2738,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -2733,7 +2800,9 @@
         "last_score": 7.4,
         "last_verdict": "B",
         "last_outcome": "scored",
-        "seen_before": 2
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -2789,11 +2858,13 @@
         "day": null,
         "unknown_reason": "window_not_covered",
         "first_seen": null,
-        "last_seen": "2026-08-25",
+        "last_seen": "2026-08-31",
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "score_cap",
-        "seen_before": 1
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -2853,7 +2924,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "lynch_gate",
-        "seen_before": 1
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -2913,7 +2986,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -2969,11 +3044,13 @@
         "day": 1,
         "unknown_reason": null,
         "first_seen": "2026-09-01",
-        "last_seen": "2026-08-17",
+        "last_seen": "2026-08-21",
         "last_score": 5.2,
         "last_verdict": "skip",
         "last_outcome": "scored",
-        "seen_before": 1
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -3033,7 +3110,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -3093,7 +3172,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -3153,7 +3234,9 @@
         "last_score": 7.4,
         "last_verdict": "B",
         "last_outcome": "scored",
-        "seen_before": 2
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "lynch_gate"
     },
@@ -3209,11 +3292,13 @@
         "day": null,
         "unknown_reason": "window_not_covered",
         "first_seen": null,
-        "last_seen": "2026-08-25",
+        "last_seen": "2026-08-31",
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "score_cap",
-        "seen_before": 1
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "score_cap"
     },
@@ -3273,7 +3358,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "lynch_gate",
-        "seen_before": 1
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "score_cap"
     },
@@ -3333,7 +3420,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "score_cap"
     },
@@ -3389,11 +3478,13 @@
         "day": 1,
         "unknown_reason": null,
         "first_seen": "2026-09-01",
-        "last_seen": "2026-08-17",
+        "last_seen": "2026-08-21",
         "last_score": 5.2,
         "last_verdict": "skip",
         "last_outcome": "scored",
-        "seen_before": 1
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "score_cap"
     },
@@ -3453,7 +3544,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "score_cap"
     },
@@ -3513,7 +3606,9 @@
         "last_score": null,
         "last_verdict": null,
         "last_outcome": null,
-        "seen_before": 0
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
       },
       "reason": "score_cap"
     }
@@ -3617,8 +3712,42 @@
         "d1": 1.84,
         "d3": 2.97,
         "d5": -0.42,
-        "n": 22,
+        "n": 21,
         "rows": 22
+      }
+    },
+    {
+      "date": "2026-08-24",
+      "type": "evening",
+      "bursts": 41,
+      "passed_gate": 23,
+      "scored": 23,
+      "shortlist_size": 5,
+      "top_score": 8.6,
+      "fallbacks": 1,
+      "forward_returns": {
+        "d1": -1.07,
+        "d3": 0.94,
+        "d5": 1.62,
+        "n": 22,
+        "rows": 23
+      }
+    },
+    {
+      "date": "2026-08-21",
+      "type": "evening",
+      "bursts": 36,
+      "passed_gate": 20,
+      "scored": 20,
+      "shortlist_size": 5,
+      "top_score": 8.2,
+      "fallbacks": 0,
+      "forward_returns": {
+        "d1": 0.41,
+        "d3": 1.18,
+        "d5": 2.05,
+        "n": 20,
+        "rows": 20
       }
     }
   ]

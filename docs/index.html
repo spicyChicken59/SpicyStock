@@ -79,7 +79,11 @@
   #scores-table tbody td:first-child { line-height: 1.3; }
   #scores-table tbody .sc-eyebrow { margin-bottom: 1px; }
   #scores-table td.col-reason { font-size: 13px; color: var(--sc-text-2); }
-  #gated-table .col-why { min-width: 150px; }
+  /* The "why" cell carries the same sentence the streak line and the email
+     use for that outcome, which is longer than the two words it used to hold;
+     a chip that cannot wrap would push the table out instead. */
+  #gated-table .col-why { min-width: 210px; }
+  #gated-table .col-why .sc-chip { white-space: normal; text-align: left; }
   .runs-now td { font-weight: 600; }
 
   /* The funnel, the checklist aggregate and the score/outcome plot are drawn
@@ -135,9 +139,13 @@
        notice because "none of this happened" outranks "this run degraded". -->
   <div class="sc-callout sc-callout--warning" id="fixture-banner" hidden>
     <div class="sc-callout__label">Sample data — not a real run</div>
-    <p>The pipeline does not write <code>docs/data.json</code> yet. Every number
-      on this page, including the forward returns in the run history, is
-      hand-authored to exercise the layout. Nothing here is a trading signal.</p>
+    <p>Every number on this page, including the forward returns in the run
+      history, is hand-authored to exercise the layout — this copy of
+      <code>docs/data.json</code> is the placeholder the repo ships with, and it
+      says so in its own <code>run.fixture</code>. <strong>Nothing here is a
+      trading signal.</strong> The pipeline does write this file: every evening
+      run replaces it with that night's real one, and this banner disappears
+      with it.</p>
   </div>
 
   <!-- Run-level failures. Hidden when run.errors is empty. -->
@@ -425,8 +433,18 @@
   // STREAK_UNKNOWN uses, on purpose: a reader who gets the 8:30 email and
   // then opens this page must not be told two different things about one
   // row. Change one, change the other.
+  //
+  // Only the DATE FORMAT differs — this page writes '28 Aug 2026' everywhere
+  // and the email writes ISO everywhere, and no row is ever shown both at
+  // once. no_history says how it RESOLVES, because a fresh install is
+  // permanently in that state until the first commit-back succeeds: every row
+  // on the page says it, and the only thing that used to suggest it was
+  // temporary was the word 'yet'.
   var STREAK_UNKNOWN = {
-    no_history: 'streak unknown — no history has been recorded yet',
+    no_history: 'streak unknown — no history has been recorded yet; a day number '
+              + 'appears once the record reaches back past the burst',
+    history_undated: 'streak unknown — the history holds runs, but none of them '
+              + 'carry a date to count from',
     history_unreadable: 'streak unknown — the run could not read its history',
     window_not_covered: 'streak unknown — the history does not reach back this far'
   };
@@ -434,27 +452,57 @@
   // to cover both of the bottom two, which are near opposites: the gate threw
   // it out, or it passed and better names filled the night's calls. Beside
   // 'day 2 of this setup' — which reads as confirmation — that mattered.
+  //
+  // The gated table's 'why' cell reads this map too. It used to carry its own
+  // pair of phrases — 'failed the 2LYNCH gate' and 'passed, over the call
+  // cap' — beside a streak line on the same page saying 'rejected at the
+  // 2LYNCH gate' and naming a 'scoring cap': two vocabularies for one
+  // mechanism, side by side, and neither name explained anywhere. There is one
+  // now, and it describes the mechanism instead of naming it.
   var LAST_OUTCOME = {
     lynch_gate: 'rejected at the 2LYNCH gate',
-    score_cap: 'passed the gate, but the scoring cap was already full'
+    score_cap: 'passed the gate, but the run had already sent its limit of candidates to Claude'
   };
   // A number is required for the scored sentence, not just the word: a row
   // marked scored with no score in it would print 'scored —/10', and the
   // honest answer to a missing number is that there is not one. src/emailer.py
-  // _last_appearance() is the same rule in the same order.
+  // _last_appearance() is the same rule in the same order — including the
+  // VERDICT, which this surface used to drop, so one appearance read 'scored
+  // 7.5/10 B+' in the email and 'scored 7.5/10' here.
   function lastAppearance(s) {
     var scored = s.last_score !== null && s.last_score !== undefined;
     if (scored && (!s.last_outcome || s.last_outcome === 'scored')) {
-      return 'scored ' + num(s.last_score, 1) + '/10';
+      return ('scored ' + num(s.last_score, 1) + '/10 ' + (s.last_verdict || '')).trim();
     }
     return LAST_OUTCOME[s.last_outcome] || 'no score was recorded then';
+  }
+  // A null day is not 'unknown' full stop. The day number is withheld whenever
+  // the chain of appearances reaches the oldest run in the file, which is
+  // exactly what an UNBROKEN streak does — so a name that burst on all eight
+  // sessions the ledger holds read 'streak unknown', while a name that took a
+  // week off and burst twice read 'day 2'. The arithmetic is right and stays:
+  // you cannot prove a chain did not start before your record did. What the
+  // record CAN answer gets said instead — history_from and history_sessions
+  // are the file's own span, seen_before is how much of it this name is in.
+  // src/emailer.py's _no_day_note() builds the same sentence.
+  function noDayText(s) {
+    var seen = s.seen_before || 0, sessions = s.history_sessions || 0;
+    if (s.unknown_reason === 'window_not_covered' && s.history_from && sessions) {
+      var span = 'the ' + plural(sessions, 'session') + ' in the record, which begins '
+               + day(s.history_from);
+      return seen
+        ? 'day unknown — burst on ' + seen + ' of ' + span + '; this setup may have started before it'
+        : 'day unknown — no earlier burst in ' + span + '; an earlier one would fall outside it';
+    }
+    return STREAK_UNKNOWN[s.unknown_reason] || 'streak unknown — no reason was recorded';
   }
   function streakText(c) {
     var s = c.streak;
     if (!s) return 'streak unknown — this run recorded none';
     var text = (s.day === null || s.day === undefined)
-      ? (STREAK_UNKNOWN[s.unknown_reason] || 'streak unknown — no reason was recorded')
-      : (s.day > 1 ? 'day ' + s.day + ', since ' + day(s.first_seen) : 'day 1 — new setup');
+      ? noDayText(s)
+      : (s.day > 1 ? 'day ' + s.day + ' of this setup, since ' + day(s.first_seen)
+                   : 'day 1 — new setup');
     if (s.last_seen) text += ' · last seen ' + day(s.last_seen) + ', ' + lastAppearance(s);
     return text;
   }
@@ -466,9 +514,13 @@
     var s = c.streak || {};
     return el('div', {
       'class': 'sc-note',
-      title: '"day N" counts every session the scan found a burst on for this name, '
-           + 'including bursts the 2LYNCH gate rejected — not N nights of confirmation. '
-           + (s.seen_before || 0) + ' earlier session(s) in the ledger.',
+      // Same disclosure the email prints under its table, same words: the
+      // count includes gate rejections, and it covers the earlier bursts a row
+      // with no day number reports as well as the day number itself.
+      title: '"day N of this setup", and the earlier bursts a row with no day number '
+           + 'counts, are every session the scan found a burst on for that name — '
+           + 'including the ones the 2LYNCH gate rejected. Neither is N nights of '
+           + 'confirmation. ' + (s.seen_before || 0) + ' earlier session(s) in the ledger.',
       text: streakText(c)
     });
   }
@@ -956,18 +1008,24 @@
     // what was not scored
     $('gated-card').hidden = !gated.length;
     var byGate = gated.filter(function (g) { return g.reason !== 'score_cap'; }).length;
+    // The one place the limit gets a NUMBER. The cells below and the streak
+    // line say what it is in words; this says how big it was on this run.
     $('gated-hint').textContent = plural(gated.length, 'burst') + ' the scan found but no score exists for: ' +
-      byGate + ' failed the ' + gateTxt + ' 2LYNCH gate' +
-      (capped ? ' and ' + capped + ' passed it but fell outside the ' + run.score_cap + '-call cap' : '') +
+      byGate + ' rejected at the ' + gateTxt + ' 2LYNCH gate' +
+      (capped ? ' and ' + capped + ' passed it but ranked below the ' + run.score_cap +
+                ' candidates this run sent to Claude' : '') +
       '. ' + (run.scored || 0) + ' scored plus ' + gated.length + ' here accounts for all ' + (run.bursts || 0) + ' bursts.';
     table($('gated-table'), ['ticker', 'why', '2LYNCH', 'burst', 'vol x', 'close'],
       gated.map(function (g) {
         return el('tr', null, [
           el('td', null, [el('span', { 'class': 'sc-case', text: g.ticker }),
                           streakNote(g)]),
+          // sc-chip--case, because 2LYNCH is a code: the sheet lowercases a
+          // chip's text, so this cell rendered "2lynch gate" beside a streak
+          // line on the same page rendering "2LYNCH gate".
           el('td', { 'class': 'col-why' }, el('span', {
-            'class': 'sc-chip sc-chip--neutral',
-            text: g.reason === 'score_cap' ? 'passed, over the call cap' : 'failed the 2LYNCH gate'
+            'class': 'sc-chip sc-chip--neutral sc-chip--case',
+            text: LAST_OUTCOME[g.reason] || LAST_OUTCOME.lynch_gate
           })),
           el('td', { 'class': 'sc-mono', text: g.lynch }),
           el('td', { 'class': 'sc-num', text: pct(g.gain_pct) }),
@@ -1108,8 +1166,13 @@
               (h.sessions === 1 ? ' the only session so far'
                                 : ' sessions ran ' + pct(h.worst, 2) + ' to ' + pct(h.best, 2)) }),
         el('div', { 'class': 'sc-tile__sub',
+          // The row count is printed whenever the file carries one, including
+          // when it equals the setup count. Hiding it there hid the ratio in
+          // the two cases a reader most wants it: 1:1 (nothing collapsed) and
+          // a run of repeats collapsing many rows into few setups, which is
+          // where the numbers diverge most and the tile went quiet about it.
           text: h.sessions ? plural(h.sessions, 'session') + ' · ' + plural(h.setups, 'setup')
-                             + (h.rows && h.rows !== h.setups ? ' from ' + plural(h.rows, 'row') : '')
+                             + (h.rows ? ' from ' + plural(h.rows, 'row') : '')
                            : 'no session has closed' }),
         el('span', { 'class': 'sc-chip ' + st.chip, text: st.word })
       ]);

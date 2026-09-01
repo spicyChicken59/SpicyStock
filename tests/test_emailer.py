@@ -36,6 +36,11 @@ def make_result(ticker: str, **overrides) -> dict:
     return row
 
 
+def results_for(_run_type: str) -> list[dict]:
+    """Rows for a test that is not using the `results` fixture."""
+    return [make_result(t) for t in ("AAA", "BBB")]
+
+
 @pytest.fixture
 def results() -> list[dict]:
     return [make_result(t) for t in ("AAA", "BBB", "CCC", "DDD")]
@@ -56,7 +61,8 @@ def test_html_contains_every_candidate_it_was_given(results):
 def test_html_reports_the_scan_stats_and_the_run_type(results):
     evening = build_html(results, "evening", STATS)
     morning = build_html(results, "morning", STATS)
-    assert "TOMORROW" in evening and "TODAY" in morning
+    assert "candidates for TOMORROW" in evening
+    assert "follow-through" in morning and "TOMORROW" not in morning
     assert str(STATS["bursts"]) in evening
     assert str(STATS["gated"]) in evening
 
@@ -104,7 +110,23 @@ def test_charts_are_attached_inline_and_missing_ones_are_skipped(ohlcv, fake_res
     # nobody made. It used to, so a candidate whose chart failed to render
     # showed a broken-image icon in the one cell that should have said why.
     assert "cid:chart_BBB" not in html
+    # ... and says which of the two silences this is. The row NAMES a file, so
+    # something rendered one; "none was rendered for this candidate" asserted a
+    # cause nothing had checked, and pointed the reader at the wrong repair.
+    assert "charts/missing.png is not there now" in html
+    assert "none was rendered for this candidate" not in html
+
+
+def test_a_row_that_never_had_a_chart_says_that_and_not_the_other_one(fake_resend):
+    """The inverse of the row above, and the reason the two are separate
+    sentences: `chart` is null when render_chart() raised (src.pipeline records
+    the exception itself), and that IS "none was rendered". The message only
+    means something if the other case does not also produce it."""
+    send_email([make_result("AAA", chart=None)], "evening", STATS)
+
+    html = fake_resend.sent[0]["html"]
     assert "no chart — none was rendered for this candidate" in html
+    assert "is not there now" not in html
 
 
 def test_a_row_that_says_why_it_has_no_chart_says_that_instead(fake_resend):
@@ -166,6 +188,94 @@ def test_a_failed_run_says_that_instead(results):
     assert "THIS RUN FAILED" in build_html([], "evening", dict(DEGRADED, status="failed"))
 
 
+# --- the band and the heading branch on the MODE, like everything else -----
+# _banner() keyed on `failed` alone and had no morning branch, unlike
+# _funnel_line(), the empty-shortlist cell and the whole pipeline behind them.
+# So the most prominent sentence in a degraded morning email said "the list
+# below is incomplete, do not read it as a full scan of the universe" over last
+# night's COMPLETE shortlist, in a pass that scans no universe -- and its failed
+# twin said "no scan was completed", which is true of every morning run by
+# design. Of the three lines a phone skimmer reads, two were false.
+
+STALE = dict(DEGRADED, session="2026-08-10", stale_sessions=15,
+             errors=[{"stage": "session", "message": "nothing has published since"}])
+
+
+def test_a_degraded_morning_email_does_not_call_last_nights_shortlist_incomplete():
+    morning = build_html(results_for("morning"), "morning", dict(DEGRADED, session="2026-08-31"))
+
+    assert "the rows below are an earlier evening run's shortlist" in morning
+    assert "Do not read it as a full scan of the universe" not in morning, (
+        "a morning pass scans no universe, so it cannot have scanned part of one")
+
+
+def test_a_degraded_evening_email_still_says_the_scan_is_partial(results):
+    """The precondition for the test above: the evening sentence is right for
+    the evening run and must not have been traded away for the morning one."""
+    evening = build_html(results, "evening", DEGRADED)
+
+    assert "the list below is incomplete" in evening
+    assert "Do not read it as a full scan of the universe" in evening
+    assert "an earlier evening run's shortlist" not in evening
+
+
+def test_a_failed_morning_email_does_not_report_a_scan_it_never_makes():
+    """"no scan was completed" is true of every morning run ever, including
+    every clean one, so as the headline of a failure it says nothing."""
+    failed = dict(DEGRADED, status="failed", session="2026-08-31")
+    morning = build_html([], "morning", failed)
+
+    assert "there is no watchlist below" in morning
+    assert "no scan was completed" not in morning
+    assert "no scan was completed" in build_html([], "evening", failed), (
+        "and the evening headline keeps the sentence that is true of it")
+
+
+def test_a_stale_morning_email_leads_with_the_gap_not_with_degraded():
+    """One session late and fifteen sessions dead used to render the same
+    words. The headline is what a phone shows after the subject."""
+    band = build_html(results_for("morning"), "morning", STALE)
+
+    assert "NOTHING HAS PUBLISHED FOR 15 SESSIONS" in band
+    assert "no market holiday is that long" in band
+    assert "THIS FOLLOW-THROUGH IS DEGRADED" not in band
+
+
+def test_the_heading_cannot_promise_today_over_rows_from_another_session():
+    """It read "follow-through watchlist for TODAY" over every morning row
+    unconditionally, including a snapshot fifteen sessions old, directly above
+    a red band saying so. The session the rows are FROM is what goes in it."""
+    stale = build_html(results_for("morning"), "morning", STALE)
+    fresh = build_html(results_for("morning"), "morning", dict(DATED, status="ok"))
+
+    assert "2026-08-10&rsquo;s shortlist, at today&rsquo;s open" in stale
+    assert "2026-08-31&rsquo;s shortlist, at today&rsquo;s open" in fresh
+    assert "watchlist for TODAY" not in stale and "watchlist for TODAY" not in fresh
+
+
+def test_the_heading_does_not_promise_a_shortlist_that_is_not_there():
+    """A failed morning run still knows the session it was going for, and the
+    heading used that to announce "2026-08-31's shortlist" over an empty table
+    saying there is none."""
+    failed = dict(DATED, status="failed",
+                  errors=[{"stage": "history", "message": "unreadable"}])
+    html = build_html([], "morning", failed)
+
+    assert "following through on 2026-08-31, at today&rsquo;s open" in html
+    assert "shortlist, at today" not in html
+
+
+def test_a_heading_with_no_session_to_name_does_not_invent_one():
+    """The precondition: the date in the heading comes from the caller. With
+    no published run at all there is no session, and the heading says that
+    rather than falling back to a promise about today."""
+    html = build_html([], "morning", dict(STATS, status="degraded",
+                                          errors=[{"stage": "history", "message": "none"}]))
+
+    assert "follow-through, with nothing to follow" in html
+    assert "close 20" not in html
+
+
 def test_an_empty_shortlist_does_not_claim_a_quiet_market_when_the_run_broke():
     """Both are empty tables. Only one of them is a statement about stocks."""
     clean = build_html([], "evening", STATS)
@@ -217,7 +327,8 @@ DATED = dict(STATS, session="2026-08-31")
 def _with_streak(**streak):
     base = {"day": 1, "unknown_reason": None, "first_seen": "2026-08-31",
             "last_seen": None, "last_score": None, "last_verdict": None,
-            "last_outcome": None, "seen_before": 0}
+            "last_outcome": None, "seen_before": 0,
+            "history_from": "2026-08-03", "history_sessions": 20}
     return [make_result("AAA", streak=dict(base, **streak))]
 
 
@@ -234,6 +345,43 @@ def test_a_subject_with_no_session_to_name_does_not_invent_one(results):
     not from a clock this module reads for itself."""
     assert subject_for(results, "evening", STATS) == (
         "[4% Burst] Evening candidates: AAA, BBB, CCC, DDD")
+
+
+@pytest.mark.parametrize("gap,prefix", [
+    (1, "[4% Burst] DEGRADED — Morning follow-through"),
+    (2, "[4% Burst] NOTHING PUBLISHED IN 2 SESSIONS — Morning follow-through"),
+    (3, "[4% Burst] NOTHING PUBLISHED IN 3 SESSIONS — Morning follow-through"),
+    (15, "[4% Burst] NOTHING PUBLISHED IN 15 SESSIONS — Morning follow-through"),
+])
+def test_the_subject_escalates_once_a_holiday_cannot_explain_the_gap(gap, prefix, results):
+    """Rendered at 1, 3 and 15 sessions the three emails were byte-identical
+    but for a date -- and a phone shows the subject and nothing else, so a
+    screener dead for three weeks arrived looking like the Tuesday after
+    Presidents' Day. The boundary is 2 and it is arithmetic, not a calendar:
+    the US market has no two adjacent holidays. src.pipeline's
+    stale_snapshot_note() makes the same cut in the same place."""
+    stats = dict(DATED, status="degraded", stale_sessions=gap,
+                 errors=[{"stage": "session", "message": "nothing has published since"}])
+
+    assert subject_for(results, "morning", stats).startswith(prefix)
+
+
+def test_a_failed_run_outranks_a_stale_one_in_the_subject(results):
+    """A run with no rows at all is the worse state, and a stale count would be
+    describing rows that are not there."""
+    stats = dict(DATED, status="failed", stale_sessions=15, errors=[{"stage": "x", "message": "y"}])
+
+    assert subject_for([], "morning", stats).startswith("[4% Burst] FAILED — ")
+
+
+def test_a_run_that_is_not_stale_carries_no_stale_count(results):
+    """The precondition: the escalation comes from the caller's count, not from
+    the word "morning" or from the status."""
+    assert subject_for(results, "morning", dict(DATED, status="degraded",
+                                                errors=[{"stage": "x", "message": "y"}])
+                       ).startswith("[4% Burst] DEGRADED — ")
+    assert subject_for(results, "morning", dict(DATED, stale_sessions=15)).startswith(
+        "[4% Burst] Morning follow-through")
 
 
 def test_the_body_names_the_session_above_the_table(results):
@@ -315,7 +463,8 @@ def test_a_repeat_that_ran_out_of_calls_says_that_instead():
                                    seen_before=1),
                       "evening", DATED)
 
-    assert "last seen 2026-08-28, passed the gate, but the scoring cap was already full" in html
+    assert ("last seen 2026-08-28, passed the gate, but the run had already sent its "
+            "limit of candidates to Claude") in html
     assert "last seen 2026-08-28, rejected" not in html
 
 
@@ -348,8 +497,10 @@ def test_last_outcome_outranks_a_score_that_contradicts_it():
 
 @pytest.mark.parametrize("reason,said", [
     ("history_unreadable", "streak unknown — the run could not read its history"),
-    ("no_history", "streak unknown — no history has been recorded yet"),
-    ("window_not_covered", "streak unknown — the history does not reach back this far"),
+    ("history_undated", "streak unknown — the history holds runs, but none of them "
+                        "carry a date to count from"),
+    ("no_history", "streak unknown — no history has been recorded yet; a day number "
+                   "appears once the record reaches back past the burst"),
     ("something_new", "streak unknown — no reason was recorded"),
 ])
 def test_an_unknown_streak_says_which_kind_of_unknown_it_is(reason, said):
@@ -358,7 +509,8 @@ def test_an_unknown_streak_says_which_kind_of_unknown_it_is(reason, said):
     while the dashboard's pick card printed a sentence and its two tables
     printed nothing. Three surfaces, three answers, for the one state where a
     reader filling in the blank himself gets it wrong."""
-    html = build_html(_with_streak(day=None, unknown_reason=reason, first_seen=None),
+    html = build_html(_with_streak(day=None, unknown_reason=reason, first_seen=None,
+                                   history_from=None, history_sessions=0),
                       "evening", DATED)
 
     assert said in html
@@ -371,11 +523,70 @@ def test_an_unknown_streak_still_reports_what_the_record_did_hold():
     html = build_html(_with_streak(day=None, unknown_reason="window_not_covered",
                                    first_seen=None, last_seen="2026-08-14",
                                    last_score=5.2, last_verdict="skip",
-                                   last_outcome="scored", seen_before=1),
+                                   last_outcome="scored", seen_before=1,
+                                   history_from="2026-08-12", history_sessions=3),
                       "evening", DATED)
 
-    assert "streak unknown — the history does not reach back this far · " \
+    assert "day unknown — burst on 1 of the 3 sessions in the record, which begins " \
+           "2026-08-12; this setup may have started before it · " \
            "last seen 2026-08-14, scored 5.2/10 skip" in html
+
+
+def test_an_unbroken_run_reports_the_record_instead_of_saying_unknown():
+    """THE inversion this replaces: a day number needs the record to reach back
+    past where the chain starts, and an UNBROKEN chain pins its start at the
+    oldest run in the file -- so a name that burst on all eight sessions the
+    ledger holds read "streak unknown", while a name that took a week off and
+    burst twice read "day 2 of this setup". The arithmetic is right and stays.
+    What changes is that the record's own answer to the narrower question gets
+    said, instead of nothing."""
+    html = build_html(_with_streak(day=None, unknown_reason="window_not_covered",
+                                   first_seen=None, seen_before=8,
+                                   history_from="2026-08-20", history_sessions=8),
+                      "evening", DATED)
+
+    assert ("day unknown — burst on 8 of the 8 sessions in the record, which begins "
+            "2026-08-20; this setup may have started before it") in html
+    assert "the history does not reach back this far" not in html
+    assert "day 1" not in html and "new setup" not in html
+
+
+def test_a_shallow_record_with_no_earlier_burst_says_how_shallow():
+    """The other half: nothing was seen, but the record has barely looked, and
+    the reader needs both halves to weigh the absence."""
+    html = build_html(_with_streak(day=None, unknown_reason="window_not_covered",
+                                   first_seen=None, seen_before=0,
+                                   history_from="2026-08-27", history_sessions=3),
+                      "evening", DATED)
+
+    assert ("day unknown — no earlier burst in the 3 sessions in the record, which "
+            "begins 2026-08-27; an earlier one would fall outside it") in html
+
+
+def test_a_block_with_no_span_to_report_falls_back_to_the_flat_sentence():
+    """A row published before src.ledger carried history_from/history_sessions.
+    The richer sentence is built from the file's span; with no span there is
+    nothing to build it out of, and inventing one would be worse than the
+    sentence it replaced."""
+    html = build_html(_with_streak(day=None, unknown_reason="window_not_covered",
+                                   first_seen=None, seen_before=4,
+                                   history_from=None, history_sessions=0),
+                      "evening", DATED)
+
+    assert "streak unknown — the history does not reach back this far" in html
+    assert "in the record" not in html
+
+
+def test_a_fresh_install_says_the_unknown_resolves():
+    """The deployed product's permanent state until the first commit-back
+    succeeds: every row on every surface says no_history. The only thing that
+    used to suggest it was temporary was the word "yet"."""
+    html = build_html(_with_streak(day=None, unknown_reason="no_history",
+                                   first_seen=None, history_from=None,
+                                   history_sessions=0),
+                      "evening", DATED)
+
+    assert "a day number appears once the record reaches back past the burst" in html
 
 
 def test_a_streak_that_is_not_a_block_does_not_take_the_email_down(fake_resend):
@@ -384,7 +595,7 @@ def test_a_streak_that_is_not_a_block_does_not_take_the_email_down(fake_resend):
     does not arrive is the failure step 5 exists to end."""
     send_email([make_result("AAA", streak="day 2 probably")], "morning", DATED)
 
-    assert "streak unknown — no reason was recorded" in fake_resend.sent[0]["html"]
+    assert "streak unknown — this run recorded none" in fake_resend.sent[0]["html"]
 
 
 def test_a_row_carrying_no_streak_field_at_all_is_unknown_too(results):
@@ -392,7 +603,7 @@ def test_a_row_carrying_no_streak_field_at_all_is_unknown_too(results):
     Absence and "day 1 — new setup" must never render the same."""
     html = build_html(results, "evening", DATED)
 
-    assert html.count("streak unknown — no reason was recorded") == len(results)
+    assert html.count("streak unknown — this run recorded none") == len(results)
     assert "new setup" not in html
 
 
@@ -401,10 +612,19 @@ def test_what_day_n_counts_is_disclosed_once_under_the_table():
     included — the right call, and one no reader can infer from "day 2 of this
     setup"."""
     counted = build_html(_with_streak(day=2, first_seen="2026-08-28"), "evening", DATED)
+    # The same count, on a row that cannot put a day number on it: "burst on 8
+    # of the 8 sessions in the record" is over the same bursts and needs the
+    # same disclosure. It used to be gated on `day > 1` alone, so this row --
+    # which makes the LARGER claim -- carried none.
+    no_day = build_html(_with_streak(day=None, unknown_reason="window_not_covered",
+                                     first_seen=None, seen_before=8,
+                                     history_from="2026-08-20", history_sessions=8),
+                        "evening", DATED)
     single = build_html(_with_streak(), "evening", DATED)
 
-    assert "including bursts the 2LYNCH gate rejected" in counted
-    assert "including bursts the 2LYNCH gate rejected" not in single, (
+    assert "including the ones the 2LYNCH gate rejected" in counted
+    assert "including the ones the 2LYNCH gate rejected" in no_day
+    assert "including the ones the 2LYNCH gate rejected" not in single, (
         "and it is not printed under a table with no streak to explain")
 
 

@@ -162,6 +162,62 @@ def test_the_mode_that_does_not_scan_is_the_one_documented_as_costing_nothing():
     assert "The morning follow-through makes no" in _read("README.md")
 
 
+def test_the_documented_streak_fields_are_the_ones_the_block_carries():
+    """README lists the streak block's fields by name, and a reader uses that
+    list to know what a row can tell them.
+
+    It went stale the moment the block grew a field, and the only guard was
+    somebody remembering -- the failure mode this file exists for. Checked
+    against the block src.ledger actually publishes rather than against a
+    second list kept here, so there is nothing to keep in step.
+    """
+    from src import ledger
+
+    block = ledger.unknown_streak(ledger.NO_HISTORY)
+    readme = _read("README.md")
+    missing = sorted(field for field in block if f"`{field}`" not in readme)
+
+    assert not missing, (
+        f"README's dashboard contract does not name {missing} in the streak "
+        "block. Add them to the 'Every burst carries `streak`' bullet: "
+        "`history_from` is the session of the oldest run the ledger holds and "
+        "`history_sessions` how many distinct sessions that is, so a reader "
+        "can be told what an unknown `day` is unknown over."
+    )
+
+
+def test_every_reason_a_streak_can_carry_has_words_on_every_surface():
+    """A `day: null` renders as a sentence, and there are three places that
+    write one: README, the email, and the dashboard.
+
+    src.emailer's STREAK_UNKNOWN says in its own comment that docs/index.html
+    holds the same map and that changing one means changing the other. A
+    reason with no entry falls through to "no reason was recorded" -- which is
+    a true sentence about the renderer and a useless one to the reader, and it
+    is silent, so nobody finds out. That is the state history_undated shipped
+    in until this test.
+    """
+    from src import emailer, ledger
+
+    reasons = {ledger.NO_HISTORY, ledger.HISTORY_UNDATED,
+               ledger.HISTORY_UNREADABLE, ledger.WINDOW_NOT_COVERED}
+    page = _read("docs/index.html")
+
+    assert reasons <= set(emailer.STREAK_UNKNOWN), (
+        f"src.emailer.STREAK_UNKNOWN has no words for "
+        f"{sorted(reasons - set(emailer.STREAK_UNKNOWN))}; those rows render as "
+        '"no reason was recorded"'
+    )
+    assert not [r for r in reasons if r not in page], (
+        f"docs/index.html's STREAK_UNKNOWN has no words for "
+        f"{sorted(r for r in reasons if r not in page)}, so the page and the "
+        "email say different things about one row"
+    )
+    assert not [r for r in reasons if f"`{r}`" not in _read("README.md")], (
+        "README's streak bullet does not name every reason a null `day` can carry"
+    )
+
+
 def _gitignore_blocks(path: str) -> bool | None:
     """Does .gitignore block `path`? None when git DID NOT ANSWER.
 
