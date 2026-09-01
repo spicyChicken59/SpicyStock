@@ -1,3 +1,16 @@
+> [!WARNING]
+> **This guide is out of date and following it will not work.** It describes an
+> earlier build that used yfinance for data and Gmail OAuth for delivery. The
+> code now uses Alpaca and Resend.
+>
+> Parts 1–2 walk you through creating a Google Cloud OAuth client and running
+> `scripts/setup_gmail_oauth.py` — **that script does not exist in this repo**,
+> and the credential it asks you to mint is never read by any code here. Do not
+> create it.
+>
+> `.env.example` is the accurate list of what this project actually needs.
+> This file is scheduled to be rewritten; until then, treat it as history.
+
 # Setup Guide — start to finish (~20 minutes)
 
 Names used throughout (use these exactly, or substitute your own consistently):

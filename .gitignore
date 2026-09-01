@@ -2,15 +2,34 @@
 # in GitHub Actions they come from repository secrets, not from a file.
 .env
 .env.*
+*.env
+.env~
+.envrc
 !.env.example
 
-# Run artifacts. The pipeline writes both of these into the working tree on
-# every run (pipeline.archive -> results/, scorer.render_chart -> charts/),
-# so without this rule a local run leaves the repo dirty every time.
+# Other credential files that land in a repo like this one. The Google Cloud
+# console downloads client_secret_*.json, and google-auth-oauthlib writes
+# token.json / credentials.json — SETUP.md's Gmail flow produces both, and then
+# tells you to run `git add .` in the same directory.
+# A filename denylist is never complete: also turn on GitHub push protection.
+secrets*
+.secrets*
+credentials*.json
+client_secret*.json
+token.json
+.netrc
+*.pem
+*.key
+*.p12
+id_rsa*
+
+# Run artifacts. archive() writes results/ on every run (src/pipeline.py:36);
+# render_chart() writes charts/ whenever any candidate clears the 2LYNCH gate
+# (src/scorer.py:30). Without these rules a local run leaves the repo dirty.
 results/
 charts/
 
-# Written by the test suite into whatever directory you run it from.
+# Written into the working directory by tests/test_pipeline.py when it runs.
 results_preview.html
 
 # Python

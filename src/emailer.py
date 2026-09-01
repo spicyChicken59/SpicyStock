@@ -120,5 +120,8 @@ def send_email(results: list[dict], run_type: str, scan_stats: dict) -> None:
     }
 
     response = resend.Emails.send(params)
-    log.info("Email sent via Resend to %s (%d candidates), id=%s",
-              to, len(results), response.get("id"))
+    # Log the count, not the addresses: EMAIL_TO is a repository secret, and
+    # splitting it destroys the contiguous string GitHub Actions masks, so
+    # logging `to` would print every recipient in plaintext to the run log.
+    log.info("Email sent via Resend to %d recipient(s) (%d candidates), id=%s",
+              len(to), len(results), response.get("id"))

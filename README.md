@@ -49,8 +49,13 @@ client ("Sign in with Google", gmail.send scope only), run
 `scripts/setup_gmail_oauth.py` once locally to get a refresh token, push this
 repo to GitHub, and add six repository secrets:
 
-`ANTHROPIC_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
-`GOOGLE_REFRESH_TOKEN`, `GMAIL_SENDER`, `EMAIL_TO`
+`ANTHROPIC_API_KEY`, `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`,
+`RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_TO`
+
+> **Note:** the surrounding prose in this section is out of date — it describes
+> a Gmail OAuth flow the code no longer uses, and `scripts/setup_gmail_oauth.py`
+> does not exist. The six secret names above are correct and match
+> `.github/workflows/evening.yml`. See `.env.example` for what each one is.
 
 The two workflows in `.github/workflows/` then fire automatically on
 weekdays at 8:30 AM and 5:30 PM Eastern (DST-safe), and can be triggered
@@ -60,7 +65,8 @@ manually from the Actions tab.
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env   # fill in, then: export $(grep -v '^#' .env | xargs)
+cp .env.example .env             # fill it in, then load it:
+set -a; . ./.env; set +a
 
 # Full evening run without sending email:
 python -m src.pipeline evening --dry-run
