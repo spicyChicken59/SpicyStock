@@ -21,7 +21,7 @@ Known scheduled falsifications:
 | when this lands | what goes stale |
 |---|---|
 | ~~Step 3 sets `feed=` on the bars request~~ done | ~~`.env.example`'s "no `feed=` is set anywhere"~~ swept, along with the IEX-default paragraph it sat in |
-| Step 4 replaces the 5,000,000-share floor | ~~`.env.example`'s "the 5,000,000-share floor is still absolute" note~~ swept · STILL STALE: the volume numbers in README's Costs note, and README's Layer-1 filter description, which both still describe an absolute share floor |
+| ~~Step 4 replaces the 5,000,000-share floor~~ done | ~~`.env.example`'s absolute-floor note, README's Layer-1 filter description and Costs volume numbers~~ all swept |
 | Step 5 makes failures loud | `.env.example`'s "these fail in three different ways" block |
 | ~~Step 6 fixes the test suite~~ done | ~~the `detect_burst` comment in `.gitignore`, the broken-test note in README~~ swept |
 | Step 9 emits `docs/data.json` | the "hand-authored fixture" caveat in README's dashboard section |
@@ -97,9 +97,7 @@ python -m src.pipeline evening --dry-run
 1. ~~Repo hygiene — `.gitignore`, truthful `.env.example`, secret scanning~~ done
 2. ~~Shrink the universe to a checked-in symbol list~~ done
 3. ~~Fix the data request — split adjustment, freshness assertion~~ done
-4. Relative volume thresholds, percentile liquidity gate — code and tests
-   landed; NOT done until README's Layer-1 description and Costs note stop
-   describing an absolute share floor (see the table above)
+4. ~~Relative volume thresholds, percentile liquidity gate~~ done
 5. Fail loud
 6. ~~6a: real tests, offline mode, CI~~ done · 6b: threshold + canary assertions, after 4 and 7
 7. ~~Fix the 2LYNCH math (`L` is sign-blind, `Y` excludes the burst day)~~ done
