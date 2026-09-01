@@ -23,6 +23,7 @@ from src.scanner import (
     MARKET_TZ,
     Candidate,
     FeedNotAuthorizedError,
+    IncompleteScanError,
     ScanConfig,
     StaleDataError,
     apply_liquidity_gate,
@@ -813,3 +814,140 @@ def test_a_transient_failure_is_still_retried_and_dropped(fake_alpaca, ohlcv, mo
 
     assert run_scan(ScanConfig(), universe=["AAA"]) == []
     assert len(fake_alpaca.bar_requests) == 2, "one retry, then the batch is dropped"
+
+
+# --- coverage: how much of a scan may be missing ---------------------------
+# Step 3 raised only when EVERY symbol was behind the session; 60% stale warned
+# once and scanned on. These fix where the line is. Each one asserts the state
+# it is about -- how much of the universe arrived -- before asserting the
+# verdict, so a test cannot pass because a different shortfall raised.
+
+
+def _coverage(fake_alpaca, ohlcv, *, fresh: int, stale: int = 0, prefix: str = "S") -> list[str]:
+    """A universe of `fresh` current names and `stale` names a session behind."""
+    universe = []
+    for i in range(fresh):
+        name = f"{prefix}F{i}"
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i))
+        universe.append(name)
+    for i in range(stale):
+        name = f"{prefix}S{i}"
+        fake_alpaca.add_history(name, ohlcv("burst", variant=100 + i), stale_sessions=1)
+        universe.append(name)
+    return universe
+
+
+def _scan_shape(universe, fake_alpaca, cfg=None) -> dict:
+    """What the scan saw, without asserting anything about it."""
+    stats: dict = {}
+    try:
+        run_scan(cfg or ScanConfig(), universe=universe, stats=stats)
+    except (StaleDataError, IncompleteScanError):
+        pass
+    return stats
+
+
+def test_run_scan_reports_the_shape_of_the_scan_it_ran(fake_alpaca, ohlcv):
+    """The counts a caller cannot read off the returned list."""
+    universe = _coverage(fake_alpaca, ohlcv, fresh=8, stale=1) + ["NOSUCH"]
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(), universe=universe, stats=stats)
+
+    assert stats["requested"] == 10
+    assert stats["with_bars"] == 9, "NOSUCH registered no history at all"
+    assert stats["fresh"] == 8
+    assert list(stats["stale"]) == ["SS0"]
+    assert stats["no_bars"] == 1
+    assert stats["dropped"] == 0
+    assert stats["candidates"] == len(found)
+    assert stats["session"] == current_session()
+
+
+def test_a_scan_mostly_behind_the_session_raises_rather_than_reporting_a_minority(
+    fake_alpaca, ohlcv
+):
+    """The escalation step 3 left open: 50% stale is not a shortlist.
+
+    The names that DID update are real bursts, so this cannot pass by finding
+    nothing -- without the guard the scan returns them, ranked against a
+    dollar-volume percentile drawn from the same minority.
+    """
+    universe = _coverage(fake_alpaca, ohlcv, fresh=6, stale=6)
+    shape = _scan_shape(universe, fake_alpaca)
+    assert shape["with_bars"] == 12 and len(shape["stale"]) == 6, "half the scan, no more"
+    assert shape["dropped"] == 0 and shape["no_bars"] == 0, "nothing else went wrong"
+
+    with pytest.raises(StaleDataError, match="50%"):
+        run_scan(ScanConfig(), universe=universe)
+
+
+def test_a_scan_a_little_behind_the_session_still_returns_its_shortlist(fake_alpaca, ohlcv):
+    """The inverse: halts and delistings are a normal day, not a failure."""
+    universe = _coverage(fake_alpaca, ohlcv, fresh=11, stale=1)
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(), universe=universe, stats=stats)
+
+    assert len(stats["stale"]) / stats["with_bars"] < ScanConfig().max_stale_fraction
+    assert found, "the fresh names still burst"
+    assert "SS0" not in {c.ticker for c in found}, "the halted name is skipped, not scanned"
+
+
+def test_the_stale_fraction_is_not_applied_to_a_handful_of_tickers(fake_alpaca, ohlcv):
+    """`--tickers NVDA,PLTR` with one halted name is 50% stale and must still
+    scan: a fraction of two symbols is not a measurement of a market."""
+    universe = _coverage(fake_alpaca, ohlcv, fresh=1, stale=1)
+    shape = _scan_shape(universe, fake_alpaca)
+    assert len(shape["stale"]) / shape["with_bars"] >= ScanConfig().max_stale_fraction
+
+    assert [c.ticker for c in run_scan(ScanConfig(), universe=universe)] == ["SF0"]
+
+
+def test_a_scan_where_no_symbol_returned_a_bar_raises(fake_alpaca, ohlcv):
+    """The silent death: the feed answers every request with nothing.
+
+    Nothing is dropped, nothing is stale, no exception is raised anywhere --
+    the old scan simply returned [] and the email said the market was quiet.
+    """
+    shape = _scan_shape(["AAA", "BBB"], fake_alpaca)
+    assert shape["dropped"] == 0 and shape["with_bars"] == 0
+
+    with pytest.raises(IncompleteScanError, match="not one of 2 symbols"):
+        run_scan(ScanConfig(), universe=["AAA", "BBB"])
+
+
+def test_most_of_the_universe_dropped_raises_rather_than_ranking_the_rest(
+    fake_alpaca, ohlcv, monkeypatch
+):
+    """Half the batches failing is not a scan of the market, it is a scan of
+    whichever half the network liked."""
+    monkeypatch.setattr(time, "sleep", lambda *_: None)
+    universe = _coverage(fake_alpaca, ohlcv, fresh=12)
+    fake_alpaca.raise_on_bars = ConnectionError("connection reset by peer")
+    fake_alpaca.fail_symbols = {"SF0", "SF1", "SF2", "SF3", "SF4", "SF5"}
+    cfg = ScanConfig(batch_size=1)
+
+    shape = _scan_shape(universe, fake_alpaca, cfg)
+    assert shape["dropped"] == 6, "exactly half the universe, and nothing else"
+    assert not shape["stale"] and shape["no_bars"] == 0
+
+    with pytest.raises(IncompleteScanError, match="50%"):
+        run_scan(cfg, universe=universe)
+
+
+def test_a_few_dropped_symbols_are_reported_but_do_not_stop_the_scan(
+    fake_alpaca, ohlcv, monkeypatch
+):
+    """The inverse, and the brittleness guard: one flaky symbol must not kill
+    a run. It must still be counted -- src.pipeline degrades the run on it."""
+    monkeypatch.setattr(time, "sleep", lambda *_: None)
+    universe = _coverage(fake_alpaca, ohlcv, fresh=12)
+    fake_alpaca.raise_on_bars = ConnectionError("connection reset by peer")
+    fake_alpaca.fail_symbols = {"SF0"}
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(batch_size=1), universe=universe, stats=stats)
+
+    assert stats["dropped"] == 1
+    assert found and "SF0" not in [c.ticker for c in found]

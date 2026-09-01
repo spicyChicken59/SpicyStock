@@ -5,6 +5,14 @@ Builds an HTML table of the top candidates (with inline chart thumbnails)
 and sends it through Resend's API using an API key — no OAuth, no refresh
 tokens, no consent screens.
 
+THE EMAIL IS THE MONITOR. GitHub Actions is checked when something is already
+suspected; this arrives every evening whether or not anyone is watching. So a
+run that could not do its job must not produce the same cheerful table as one
+that could: `scan_stats["errors"]` — the `{stage, message}` list src.pipeline
+builds, and the shape docs/data.json's `run.errors` takes — puts a red band at
+the top of the body and a word in the subject line. An operator can tell a
+degraded run from a clean one in the inbox, without opening a log.
+
 Environment variables:
 
   RESEND_API_KEY   — from https://resend.com/api-keys
@@ -28,6 +36,68 @@ from pathlib import Path
 import resend
 
 log = logging.getLogger(__name__)
+
+#: Environment this layer cannot run without, collected by src.pipeline's
+#: preflight. Both were read with os.environ[...] on the LAST line of a run
+#: that had already paid for the scan and every Claude call; the preflight
+#: reads them before the first one. Empty counts as missing, which the direct
+#: subscript never did: an unset GitHub secret arrives as '', so RESEND_API_KEY
+#: sailed past that check and failed as a 401 from Resend instead.
+REQUIRED_ENV: tuple[str, ...] = ("RESEND_API_KEY", "EMAIL_TO")
+
+#: `scan_stats["status"]`, and what each one does to the subject line.
+STATUS_PREFIXES = {"ok": "", "degraded": "DEGRADED — ", "failed": "FAILED — "}
+
+
+def _banner(scan_stats: dict) -> str:
+    """The red band. Empty string when the run had nothing to report.
+
+    First thing in the body, above the title, because the failure mode this
+    exists for is a person skimming a familiar-looking table on a phone. The
+    problems are printed in full rather than summarised into a status word:
+    "138 of 230 symbols had no bar" tells an operator where to look, "degraded"
+    does not.
+    """
+    errors = scan_stats.get("errors") or []
+    if not errors:
+        return ""
+    failed = scan_stats.get("status") == "failed"
+    headline = (
+        "THIS RUN FAILED — there is no shortlist below, and no scan was completed."
+        if failed else
+        "THIS RUN WAS DEGRADED — the list below is incomplete. Do not read it as "
+        "a full scan of the universe."
+    )
+    items = "".join(
+        f'<li style="margin:2px 0;"><b>{e.get("stage", "?")}</b>: {e.get("message", "")}</li>'
+        for e in errors
+    )
+    return (
+        '<div style="border-left:6px solid #c0392b;background:#fdf3f2;'
+        'padding:12px 16px;margin:0 0 18px;">'
+        f'<div style="color:#a5281b;font-weight:bold;font-size:15px;">{headline}</div>'
+        f'<ul style="margin:8px 0 0;padding-left:20px;color:#7b2018;font-size:13px;">{items}</ul>'
+        "</div>"
+    )
+
+
+def _provenance_line(scan_stats: dict) -> str:
+    """"Scored by Claude: 8 of 12" — or nothing, when the caller did not say.
+
+    The per-row `verdict: unscored` already tells the truth about one candidate.
+    This is the count, next to the other funnel numbers, so a reader sees how
+    much of the shortlist nobody looked at without reading every row.
+    """
+    scored_by = scan_stats.get("scored_by") or {}
+    claude, fallback = scored_by.get("claude"), scored_by.get("fallback")
+    if claude is None or fallback is None:
+        return ""
+    total = claude + fallback
+    if not total:
+        return ""
+    colour = "#666" if not fallback else "#a5281b"
+    return (f' &nbsp;|&nbsp; <span style="color:{colour};">Scored by Claude: '
+            f"{claude} of {total}</span>")
 
 
 def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
@@ -59,17 +129,24 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
         </tr>"""
 
     if not results:
-        rows = ('<tr><td colspan="7" style="padding:16px;color:#666;">'
-                "No candidates passed the quality gate today.</td></tr>")
+        # An empty shortlist means two completely different things, and the
+        # cell used to state the innocent one either way.
+        empty = ("No candidates passed the quality gate today."
+                 if not scan_stats.get("errors")
+                 else "No shortlist. See the failures listed above — this is not "
+                      "a statement about the market.")
+        rows = f'<tr><td colspan="7" style="padding:16px;color:#666;">{empty}</td></tr>'
+
 
     return f"""
     <html><body style="font-family:Arial,Helvetica,sans-serif;color:#222;">
+    {_banner(scan_stats)}
     <h2 style="margin-bottom:4px;">{title}</h2>
     <p style="color:#666;margin-top:0;">
       Universe scanned: {scan_stats.get('universe', '?')} &nbsp;|&nbsp;
       4% bursts found: {scan_stats.get('bursts', '?')} &nbsp;|&nbsp;
       Passed 2LYNCH gate: {scan_stats.get('gated', '?')} &nbsp;|&nbsp;
-      Shortlisted: {len(results)}
+      Shortlisted: {len(results)}{_provenance_line(scan_stats)}
     </p>
     <table style="border-collapse:collapse;width:100%;max-width:1100px;">
       <tr style="background:#1a1a2e;color:#fff;text-align:left;">
@@ -103,26 +180,65 @@ def _build_attachments(results: list[dict]) -> list[dict]:
     return attachments
 
 
-def send_email(results: list[dict], run_type: str, scan_stats: dict) -> None:
-    to = [addr.strip() for addr in os.environ["EMAIL_TO"].split(",")]
-    sender = os.environ.get("RESEND_FROM", "onboarding@resend.dev")
-    label = "Morning watchlist" if run_type == "morning" else "Evening candidates"
-    top = ", ".join(r["ticker"] for r in results) or "none"
+def subject_for(results: list[dict], run_type: str, scan_stats: dict) -> str:
+    """The one line that shows in a notification, so the status goes in it.
 
-    resend.api_key = os.environ["RESEND_API_KEY"]
+    Before the ticker list, not after: a phone truncates the end.
+    """
+    label = "Morning watchlist" if run_type == "morning" else "Evening candidates"
+    prefix = STATUS_PREFIXES.get(scan_stats.get("status", "ok"), "")
+    top = ", ".join(r["ticker"] for r in results) or "none"
+    return f"[4% Burst] {prefix}{label}: {top}"
+
+
+def _required(name: str) -> str:
+    """An env var that must be present AND non-empty."""
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise KeyError(
+            f"{name} is unset or empty, so this run cannot deliver its email. "
+            "src.pipeline's preflight checks this before the scan spends "
+            "anything; reaching it here means send_email() was called directly."
+        )
+    return value
+
+
+def send_email(results: list[dict], run_type: str, scan_stats: dict) -> None:
+    to = [addr.strip() for addr in _required("EMAIL_TO").split(",")]
+    sender = os.environ.get("RESEND_FROM", "onboarding@resend.dev")
+
+    resend.api_key = _required("RESEND_API_KEY")
 
     params = {
         "from": sender,
         "to": to,
-        "subject": f"[4% Burst] {label}: {top}",
+        "subject": subject_for(results, run_type, scan_stats),
         "html": build_html(results, run_type, scan_stats),
         "attachments": _build_attachments(results),
     }
 
     response = resend.Emails.send(params)
+
     # Log the count, not the addresses. EMAIL_TO is a repository secret, and
     # Actions masks only exact occurrences of it. A single-recipient value
     # still matches and is masked, but split() breaks the contiguous string
     # for multi-recipient values, so those printed in plaintext to the run log.
     log.info("Email sent via Resend to %d recipient(s) (%d candidates), id=%s",
               len(to), len(results), response.get("id"))
+
+
+def send_failure_notice(run_type: str, errors: list[dict], scan_stats: dict | None = None) -> None:
+    """Mail the fact that there is nothing to mail.
+
+    A run that dies mid-scan sends nothing at all today, and nothing looks
+    exactly like a weekend. The screener could be dead for a fortnight before
+    anyone opened the Actions tab. This is the same email with no rows, a
+    FAILED subject and the exception in the band — deliberately the same
+    artifact, so the daily habit of reading it is the monitor.
+
+    Best effort by construction: the caller is already handling a failure, and
+    a second one here must not replace the first in the log.
+    """
+    stats = dict(scan_stats or {})
+    stats.update({"status": "failed", "errors": errors})
+    send_email([], run_type, stats)

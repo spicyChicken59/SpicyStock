@@ -38,13 +38,20 @@ default for us — the adjustment, the feed, and both ends of the window. See
 that function for why each one is a correctness matter rather than a
 preference.
 
-FRESHNESS: every scan targets one session (current_session(), or an explicit
-ScanConfig.session_date). Bars are requested only up to that session's end,
-and a symbol whose newest bar is not that session is dropped rather than
-compared as if it were today. A scan in which nothing carries the session
-raises StaleDataError instead of returning a quiet, plausible empty list —
-that is what a market holiday, a wrong-day cron and a dead feed all look
-like.
+FRESHNESS AND COVERAGE: every scan targets one session (current_session(), or
+an explicit ScanConfig.session_date). Bars are requested only up to that
+session's end, and a symbol whose newest bar is not that session is dropped
+rather than compared as if it were today. A few of those is a normal day.
+Past ScanConfig's max_stale_fraction it is not: the scan raises StaleDataError
+rather than emailing a shortlist drawn from whichever minority of the market
+did update. Two failures of arrival raise IncompleteScanError the same way —
+no symbol returning any bar at all, and more than max_dropped_fraction of the
+universe lost to failed batches. What all four have in common is that the
+alternative is `[]`, and `[]` is also what a quiet market looks like.
+
+Everything short of raising is reported rather than swallowed: run_scan
+fills an optional `stats` dict with the counts behind the shortlist, and
+src.pipeline decides from those whether the run was clean.
 
 RULE 4 IS ENFORCED BY CURATION, NOT BY CODE. Alpaca's asset data has no
 sector field, and nothing in this module tests one. Biotech is kept out by
@@ -94,8 +101,13 @@ from alpaca.data.timeframe import TimeFrame
 
 log = logging.getLogger(__name__)
 
-API_KEY = os.environ.get("ALPACA_API_KEY", "")
-SECRET_KEY = os.environ.get("ALPACA_SECRET_KEY", "")
+#: Environment this layer cannot run without. Declared here, next to the code
+#: that reads it, and collected by src.pipeline's preflight so a run fails
+#: before it spends an API call rather than after — see missing_env() there.
+#: An empty string counts as missing: GitHub Actions passes an unset secret as
+#: '' rather than leaving it out, so `os.environ[...]` succeeds on one and the
+#: failure surfaces later as a 401 from someone else's server.
+REQUIRED_ENV: tuple[str, ...] = ("ALPACA_API_KEY", "ALPACA_SECRET_KEY")
 
 # The scan universe, checked in rather than fetched. That file's header says
 # what is in it, what is deliberately left out, and why it should eventually
@@ -156,6 +168,16 @@ class StaleDataError(RuntimeError):
 
 class FeedNotAuthorizedError(RuntimeError):
     """Alpaca refused the requested data feed for these credentials."""
+
+
+class IncompleteScanError(RuntimeError):
+    """Too little of the universe came back for the result to describe a market.
+
+    Sibling of StaleDataError, and the distinction is what went wrong rather
+    than how bad it was: StaleDataError means bars arrived but belong to the
+    wrong session, this means they did not arrive. Both replace a shortlist
+    that would otherwise be indistinguishable from a quiet market.
+    """
 
 
 def _feed_from_env() -> DataFeed:
@@ -250,6 +272,30 @@ class ScanConfig:
     # with a different value rewrites docs/data.json. Delete it together with
     # that use — nothing in the scan will notice.
 
+    # --- how much of the universe may go missing before this is not a scan --
+    # Both are fractions of what was asked for, and both are deliberately
+    # generous: a handful of halted or delisted names is a normal day, and a
+    # scan must not die because one symbol was flaky. Half is the point where
+    # the answer stops being about the market and starts being about the feed
+    # — the cross-sectional percentile (rule 6) is then drawn from a minority
+    # of the universe, and "no bursts today" no longer means the market was
+    # quiet. Above these the scan raises instead of returning a shortlist that
+    # reads exactly like a clean one.
+    #
+    # NOT the line at which a run is called degraded. That is a lower bar, it
+    # is judged over the whole run rather than over the scan alone, and it
+    # lives in src.pipeline — this module reports what it saw, the
+    # orchestrator decides what the run was worth.
+    max_stale_fraction: float = 0.5
+    max_dropped_fraction: float = 0.5
+    # Below this many symbols the two fractions above are not applied at all.
+    # `--tickers NVDA,PLTR` is a scan of two, where one halted name is 50% of
+    # the universe and would abort a run that in fact found what it was asked
+    # for. A fraction needs a population to be a fraction of. The degenerate
+    # case is still covered from the other side: NOTHING carrying the session,
+    # and nothing returning a bar at all, raise at any size.
+    coverage_guard_min_symbols: int = 10
+
     lookback_days: int = 260
     batch_size: int = 100
     # Which Alpaca feed to read. See DEFAULT_FEED for the reasoning and for
@@ -290,8 +336,19 @@ def get_clients() -> StockHistoricalDataClient:
 
     There is no TradingClient any more. The asset-list call it existed for is
     gone, so nothing in this module is pinned to a paper account.
+
+    The keys are read HERE, not into module globals at import time. Import-time
+    capture made the preflight check a lie whenever the two disagreed: it reads
+    os.environ, so it would pass on credentials this function had already
+    replaced with the empty strings that were there when the module loaded.
+    A check that validates a different value from the one used is not a check.
+    Empty keys still raise ValueError("You must supply a method of
+    authentication") from the SDK constructor.
     """
-    return StockHistoricalDataClient(API_KEY, SECRET_KEY)
+    return StockHistoricalDataClient(
+        os.environ.get("ALPACA_API_KEY", ""),
+        os.environ.get("ALPACA_SECRET_KEY", ""),
+    )
 
 
 def get_universe(symbols_file: str | Path | None = None) -> list[str]:
@@ -616,11 +673,21 @@ def apply_liquidity_gate(candidates: list["Candidate"],
 # ---------------------------------------------------------------------
 
 def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
-             symbols_file: str | Path | None = None) -> list[Candidate]:
+             symbols_file: str | Path | None = None,
+             stats: dict | None = None) -> list[Candidate]:
     """Scan `universe` if given, else every symbol in the checked-in file.
 
     An explicit `universe` wins outright — the file is not read at all — which
     is how --tickers stays a self-contained smoke test.
+
+    `stats`, if given, is filled with what the returned list cannot show: how
+    many symbols were asked for, how many came back with bars, which ones were
+    behind the session, how many were dropped after a failed batch, and which
+    session was scanned. The same idiom as score_all(stats=...), and for the
+    same reason — a caller cannot tell a clean empty shortlist from a scan
+    that lost half the market by looking at `[]`. It is filled BEFORE the
+    guards below raise, so an operator (and the failure email) can still see
+    the shape of the scan that failed.
     """
     cfg = cfg or ScanConfig()
     data_client = get_clients()
@@ -677,12 +744,38 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
         log.info("Scanned %d/%d — %d candidates so far",
                   min(i + cfg.batch_size, len(tickers)), len(tickers), len(candidates))
 
+    # Everything the caller cannot read off the returned list. Set before the
+    # guards so a raise still leaves the numbers behind it visible.
+    if stats is not None:
+        stats.update({
+            "session": session,
+            "feed": cfg.feed.value,
+            "requested": len(tickers),
+            "with_bars": with_bars,
+            "fresh": with_bars - len(stale),
+            "stale": dict(stale),
+            "no_bars": len(tickers) - with_bars - dropped,
+            "dropped": dropped,
+            "candidates": len(candidates),
+        })
+
     if stale:
         # Normal in small numbers: halts, delistings, a name that did not trade.
         log.warning("%d of %d symbols had no bar for %s and were skipped: %s",
                     len(stale), with_bars, session,
                     ", ".join(f"{t} (last {d})" for t, d in list(stale.items())[:8])
                     + ("..." if len(stale) > 8 else ""))
+
+    # Three ways a scan can come back too empty to mean anything, in the order
+    # a diagnosis would take them: nothing arrived, most of it arrived stale,
+    # or the requests themselves failed. Each one otherwise returns [] and is
+    # read as "no bursts today".
+    if tickers and not with_bars and dropped < len(tickers):
+        raise IncompleteScanError(
+            f"not one of {len(tickers)} symbols returned a bar for {session}. "
+            "The credentials, the feed or the symbol list is wrong — an empty "
+            "shortlist here is not a quiet market."
+        )
     if with_bars and len(stale) == with_bars:
         # Every symbol that returned data is behind the session this run set
         # out to scan. That is a market holiday, a cron on the wrong day, a
@@ -694,6 +787,29 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             f"data are behind it (newest seen {max(stale.values())}). The market "
             "may not have traded that day, or the session may still be open. Pin "
             "the session with SCAN_SESSION_DATE=YYYY-MM-DD to scan it deliberately."
+        )
+    if (with_bars >= cfg.coverage_guard_min_symbols
+            and len(stale) / with_bars >= cfg.max_stale_fraction):
+        # Step 3 raised only when EVERY symbol was behind the session, so a
+        # feed updating 40% of the tape warned once and scanned on. What comes
+        # out of that is a real shortlist of the names that did update, ranked
+        # by rule 6 against a percentile drawn from the same minority — a
+        # plausible email about a market nobody looked at.
+        raise StaleDataError(
+            f"{len(stale)} of {with_bars} symbols with data ({len(stale) / with_bars:.0%}) "
+            f"carry no bar for {session}, at or above the {cfg.max_stale_fraction:.0%} "
+            f"this scan will tolerate (newest seen {max(stale.values())}). The "
+            "shortlist would describe the minority that did update. Pin the "
+            "session with SCAN_SESSION_DATE=YYYY-MM-DD to scan a past one."
+        )
+    if (len(tickers) >= cfg.coverage_guard_min_symbols
+            and dropped / len(tickers) >= cfg.max_dropped_fraction):
+        raise IncompleteScanError(
+            f"{dropped} of {len(tickers)} symbols ({dropped / len(tickers):.0%}) were "
+            f"dropped after their batch failed twice, at or above the "
+            f"{cfg.max_dropped_fraction:.0%} this scan will tolerate. Most of the "
+            "universe was never examined, so neither the shortlist nor the "
+            "dollar-volume percentile it was ranked against describes the market."
         )
 
     # Rule 6, last, because it is the only rule that needs the whole scan.
@@ -707,6 +823,8 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
         log.error("Scan complete with %d of %d symbols DROPPED — the shortlist is "
                   "incomplete and an empty result does not mean a quiet market",
                   dropped, len(tickers))
+    if stats is not None:
+        stats["candidates"] = len(candidates)
     log.info("Scan complete: %d candidates from %d symbols", len(candidates), len(tickers))
     return candidates
 

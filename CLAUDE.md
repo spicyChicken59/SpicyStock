@@ -22,7 +22,7 @@ Known scheduled falsifications:
 |---|---|
 | ~~Step 3 sets `feed=` on the bars request~~ done | ~~`.env.example`'s "no `feed=` is set anywhere"~~ swept, along with the IEX-default paragraph it sat in |
 | ~~Step 4 replaces the 5,000,000-share floor~~ done | ~~`.env.example`'s absolute-floor note, README's Layer-1 filter description and Costs volume numbers~~ all swept |
-| Step 5 makes failures loud | `.env.example`'s "these fail in three different ways" block |
+| ~~Step 5 makes failures loud~~ done | ~~`.env.example`'s "these fail in three different ways" block~~ swept |
 | ~~Step 6 fixes the test suite~~ done | ~~the `detect_burst` comment in `.gitignore`, the broken-test note in README~~ swept |
 | Step 9 emits `docs/data.json` | the "hand-authored fixture" caveat in README's dashboard section |
 | The universe widens past `data/symbols.txt` | the 230-name figures in README's diagram, Tuning and Costs sections |
@@ -72,7 +72,7 @@ that a fix did not introduce a new defect of the same class.**
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net now, with known holes.** `pytest tests/` runs 164
+- **There is a regression net now, with known holes.** `pytest tests/` runs 216
   tests with no network and no API keys (step 6a) — a count that is behind the
   suite until the batch in flight lands. The scan filter's thresholds ARE
   asserted now (step 4) and the 2LYNCH checks are too (step 7), each
@@ -98,7 +98,7 @@ python -m src.pipeline evening --dry-run
 2. ~~Shrink the universe to a checked-in symbol list~~ done
 3. ~~Fix the data request — split adjustment, freshness assertion~~ done
 4. ~~Relative volume thresholds, percentile liquidity gate~~ done
-5. Fail loud
+5. ~~Fail loud~~ done
 6. ~~6a: real tests, offline mode, CI~~ done · 6b: threshold + canary assertions, after 4 and 7
 7. ~~Fix the 2LYNCH math (`L` is sign-blind, `Y` excludes the burst day)~~ done
 8. ~~Harden the LLM layer (`temperature=0` — which is a TypeError in anthropic 1.x; it goes via `extra_body`)~~ done

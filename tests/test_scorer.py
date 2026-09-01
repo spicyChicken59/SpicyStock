@@ -28,6 +28,7 @@ from src.scorer import (
     STRUCTURED_OUTPUT_MODELS,
     UNSCORED_VERDICT,
     _fallback_score,
+    is_fatal_auth_failure,
     metrics_payload,
     render_chart,
     request_kwargs,
@@ -617,3 +618,75 @@ def test_score_all_counts_nothing_when_every_candidate_was_scored(claude):
     score_all(_inputs(6, 5), top_n=5, min_lynch=3, stats=stats)
     assert stats["fallback"] == 0
     assert stats["errors"] == []
+
+
+# --- a refused credential is not a per-candidate problem -------------------
+# Sibling of the scanner's refused-feed handling: the key is a property of the
+# run, so retrying it once per candidate buys the same 401 fifty times, fills
+# the log with it, and reaches the same all-fallback shortlist either way.
+
+
+@pytest.mark.parametrize("text", [
+    "anthropic.AuthenticationError: Error code: 401 - invalid x-api-key",
+    "anthropic.PermissionDeniedError: Error code: 403 - forbidden",
+    "RuntimeError: Could not resolve authentication method",
+])
+def test_a_refused_credential_is_recognised(text):
+    assert is_fatal_auth_failure(text)
+
+
+@pytest.mark.parametrize("text", [
+    "anthropic.APIStatusError: Error code: 503 - overloaded",
+    "anthropic.APIConnectionError: connection reset by peer",
+    "src.scorer.ScoreFormatError: no scoreable JSON object in 812 characters of reply",
+    "",
+])
+def test_a_transient_failure_is_not_mistaken_for_a_refused_credential(text):
+    assert not is_fatal_auth_failure(text)
+
+
+def test_a_refused_credential_is_not_retried(claude, candidate):
+    """The pair below is the whole classification: same code path, same
+    fallback, one call instead of two -- and the transient case must keep its
+    retry, or this is just a broken retry rather than a recognised refusal."""
+    claude.replies(RuntimeError("Error code: 401 - invalid x-api-key"))
+    result = score_candidate(candidate, make_lynch(5), CONTEXT, None)
+
+    assert len(claude.calls) == 1, "a rejected key is not transient; do not retry it"
+    assert result["provenance"]["source"] == "fallback"
+
+
+def test_a_transient_failure_is_still_retried(claude, candidate):
+    claude.replies(RuntimeError("Error code: 503 - overloaded"))
+    result = score_candidate(candidate, make_lynch(5), CONTEXT, None)
+
+    assert len(claude.calls) == 2, "one retry before giving up"
+    assert result["provenance"]["source"] == "fallback"
+
+
+def test_a_refused_credential_is_not_bought_again_for_every_candidate(claude):
+    """Three candidates, one refusal: one call, three honest fallback rows."""
+    claude.replies(RuntimeError("Error code: 401 - invalid x-api-key"))
+    stats: dict = {}
+    results = score_all(_inputs(6, 5, 4), top_n=5, min_lynch=3, stats=stats)
+
+    assert len(claude.calls) == 1, "the first refusal settles it for the run"
+    assert stats["claude"] == 0 and stats["fallback"] == 3
+    assert [r["provenance"]["source"] for r in results] == ["fallback"] * 3
+    assert all("401" in r["provenance"]["error"] for r in results), (
+        "every row must carry the reason, including the ones never sent"
+    )
+
+
+def test_a_transient_failure_does_not_stop_the_remaining_candidates(claude):
+    """The inverse, and the brittleness guard: one flaky call must not silence
+    the rest of the shortlist."""
+    claude.replies(
+        RuntimeError("503"), RuntimeError("503"),
+        json.dumps({"score": 6.0, "reason": "r", "verdict": "B", "key_risk": "k"}),
+    )
+    stats: dict = {}
+    score_all(_inputs(6, 6, 6), top_n=5, min_lynch=3, stats=stats)
+
+    assert len(claude.calls) == 4, "two attempts for T0, then one each for T1 and T2"
+    assert stats["claude"] == 2 and stats["fallback"] == 1

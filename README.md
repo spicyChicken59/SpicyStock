@@ -93,7 +93,7 @@ python -m src.pipeline evening --dry-run --tickers NVDA,PLTR,SMCI,CRWD
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 164 tests, no network or API keys needed
+pytest tests/                   # 216 tests, no network or API keys needed
 ```
 
 ## The dashboard

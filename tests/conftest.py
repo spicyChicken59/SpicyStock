@@ -93,9 +93,18 @@ def fake_alpaca(monkeypatch) -> FakeAlpaca:
     Patched where they are looked up (the scanner module's namespace) rather
     than in alpaca-py, so this keeps working if the SDK import style changes.
     Register bars with fake_alpaca.add_history(ticker, frame).
+
+    Throwaway credentials come with the double, the way fake_resend has always
+    supplied its own. A double stands in for a client that cannot be built
+    without a key, so "this boundary is available" and "its key is present"
+    are one fact -- and since step 5 the pipeline refuses to start without it,
+    so a test that mocks Alpaca and then fails preflight would be testing the
+    fixture rather than the code.
     """
     import src.scanner as scanner
 
+    monkeypatch.setenv("ALPACA_API_KEY", "test-not-a-real-key")
+    monkeypatch.setenv("ALPACA_SECRET_KEY", "test-not-a-real-secret")
     parent = FakeAlpaca()
     monkeypatch.setattr(
         scanner, "StockHistoricalDataClient", lambda *a, **k: FakeDataClient(parent, *a, **k)
@@ -135,8 +144,14 @@ def fake_anthropic(monkeypatch) -> _AnthropicControl:
     src.scorer does `import anthropic; anthropic.Anthropic()` inside
     _client(), so the module attribute is the boundary. A fresh subclass per
     test keeps the recorded calls from leaking between tests.
+
+    Supplies ANTHROPIC_API_KEY for the same reason fake_alpaca supplies
+    Alpaca's: the real client raises without one, and the pipeline's preflight
+    now refuses to start without one.
     """
     import anthropic
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-not-a-real-key")
 
     cls = type(
         "FakeAnthropicForTest",

@@ -65,6 +65,13 @@ class FakeAlpaca:
         self.request_fields: list[dict] = []
         self.data_clients: list["FakeDataClient"] = []
         self.raise_on_bars: Exception | None = None
+        #: When set, only batches containing one of these symbols raise
+        #: `raise_on_bars`; every other batch is served normally. A whole-scan
+        #: outage and one bad ticker are different failures -- the scanner
+        #: drops a fraction of the universe for the second and refuses to
+        #: report the scan at all for the first -- and a double that can only
+        #: fail everything cannot tell the two apart.
+        self.fail_symbols: set[str] = set()
 
     # -- registration -------------------------------------------------
     def add_history(self, ticker: str, df: pd.DataFrame, *, stale_sessions: int = 0) -> None:
@@ -164,13 +171,16 @@ class FakeDataClient:
         self._parent.bar_requests.append(request)
         fields = request.to_request_fields() if hasattr(request, "to_request_fields") else {}
         self._parent.request_fields.append(fields)
-        if self._parent.raise_on_bars is not None:
-            raise self._parent.raise_on_bars
         symbols = getattr(request, "symbol_or_symbols", None)
         if symbols is None:
             symbols = list(self._parent.history)
         elif isinstance(symbols, str):
             symbols = [symbols]
+        if self._parent.raise_on_bars is not None and (
+            not self._parent.fail_symbols
+            or set(symbols) & self._parent.fail_symbols
+        ):
+            raise self._parent.raise_on_bars
         return FakeBarSet(
             self._parent.bars_frame(
                 list(symbols),

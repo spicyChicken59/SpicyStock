@@ -47,7 +47,11 @@ Claude score sorts above every fallback whatever the numbers are.
 optional `stats` dict and logs an error naming how many candidates were never
 seen by Claude. A revoked API key used to produce a green run and a
 normal-looking email; it now produces a shortlist in which every row says
-`source: fallback` and a log line saying so.
+`source: fallback` and a log line saying so. Step 5 consumed those counts:
+src.pipeline reads the same `stats` dict, so a fallback also reaches the
+operator as a banner on the email and a non-zero exit code, and a credential
+the API rejects stops the run calling again (see is_fatal_auth_failure) rather
+than buying the same refusal once per candidate.
 """
 
 from __future__ import annotations
@@ -61,6 +65,12 @@ from pathlib import Path
 import pandas as pd
 
 log = logging.getLogger(__name__)
+
+#: Environment this layer cannot run without. Collected by src.pipeline's
+#: preflight, so a run without a key fails before the scan rather than after
+#: every candidate has quietly fallen back to checklist arithmetic. Empty
+#: counts as missing — an unset GitHub secret arrives as ''.
+REQUIRED_ENV: tuple[str, ...] = ("ANTHROPIC_API_KEY",)
 
 MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-6")
 KNOWLEDGE_PATH = Path(__file__).resolve().parent.parent / "knowledge" / "strategy.md"
@@ -176,6 +186,28 @@ def _error_text(exc: BaseException) -> str:
     module = getattr(cls, "__module__", "")
     name = cls.__qualname__ if module in ("", "builtins") else f"{module.split('.')[0]}.{cls.__qualname__}"
     return f"{name}: {exc}"
+
+
+#: Substrings of `_error_text()` that mean the next call will fail the same
+#: way. Sibling of the scanner's _is_feed_denied(), for the same reason and
+#: with the same caveat: a credential the API rejects is a property of the RUN,
+#: not of the candidate, so retrying it 25 times buys 50 identical failures, a
+#: log nobody can read, and a shortlist that is entirely fallbacks either way.
+#: Matched against the text rather than the exception because that is what
+#: survives into `provenance.error`, which is where score_all() reads it and
+#: where step 9 will archive it. Heuristic, and unconfirmed against a live
+#: refusal — everything it misses simply costs the old retries.
+FATAL_AUTH_MARKERS = (
+    "authenticationerror", "permissiondeniederror",
+    "could not resolve authentication", "invalid x-api-key",
+    "error code: 401", "error code: 403",
+)
+
+
+def is_fatal_auth_failure(error_text: str) -> bool:
+    """Will every remaining call fail the way this one did?"""
+    lowered = (error_text or "").lower()
+    return any(marker in lowered for marker in FATAL_AUTH_MARKERS)
 
 
 def _verdict_for(score: float) -> str:
@@ -448,6 +480,8 @@ def score_candidate(cand, lynch_result: dict, context: dict, chart_path: str | N
             last_error = e
             log.warning("Claude scoring attempt %d/%d failed for %s: %s",
                         attempt, attempts, cand.ticker, _error_text(e))
+            if is_fatal_auth_failure(_error_text(e)):
+                break  # a rejected key is not transient; the retry is theatre
             continue
         parsed["provenance"] = {
             "source": "claude",
@@ -491,11 +525,24 @@ def score_all(scored_inputs: list[tuple], top_n: int = 5, min_lynch: int = 3,
     exactly the rows `top_n` cuts away.
     """
     results = []
+    outage: str | None = None
     for cand, lynch_result, context, chart_path in scored_inputs:
         if lynch_result["passes"] < min_lynch:
             log.info("%s gated out (2LYNCH %s)", cand.ticker, lynch_result["summary"])
             continue
-        ai = score_candidate(cand, lynch_result, context, chart_path)
+        if outage is not None:
+            # The first candidate already proved the credential is refused.
+            # Every row still gets a fallback and says so; none of them costs
+            # another doomed request.
+            ai = _fallback(cand, lynch_result, outage)
+        else:
+            ai = score_candidate(cand, lynch_result, context, chart_path)
+            error = ai["provenance"]["error"]
+            if ai["provenance"]["source"] != "claude" and is_fatal_auth_failure(error):
+                outage = error
+                log.error("Claude refused the credential (%s) — scoring the "
+                          "remaining candidates from the checklist without "
+                          "calling again", error)
         results.append({
             "ticker": cand.ticker,
             "date": cand.date,
