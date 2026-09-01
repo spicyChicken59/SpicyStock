@@ -1,12 +1,32 @@
 """
 Layer 1 — Simplified Alpaca-based market scanner.
 
-Conditions (all must pass):
+Per-symbol conditions, all checked by detect_setup() on one frame:
   1. Price % change >= 4% vs. yesterday's close
   2. Today's volume >= yesterday's volume
-  3. Today's volume > 5,000,000 shares
+  3. Today's volume >= min_rvol x the stock's OWN trailing volume average
   4. Not a biotech stock
   5. Price > $4.00
+
+And one cross-sectional condition, applied by run_scan() over the whole batch:
+  6. Dollar volume at or above the min_dollar_volume_pctile percentile of
+     every symbol that traded the session.
+
+WHY 3 AND 6 ARE RELATIVE. Both used to be absolute, and an absolute number
+only means something against consolidated tape volume. The old rule 3 was a
+flat 5,000,000-share floor, which is (a) feed-dependent — IEX prints a few
+percent of the tape, so the floor rejected almost everything on the free plan
+— and (b) price-blind: it rejected a $180 leader trading 4.9M shares
+(~$880M) and admitted a $4.50 stock trading 6M shares (~$27M), which inverts
+knowledge/strategy.md's "higher-priced, liquid leaders over cheap laggards"
+and its "barely-liquid names where slippage eats the edge" kill criterion.
+
+A ratio is feed-invariant in a way a share count is not: whatever fraction of
+the tape the feed reports, the same fraction appears in the numerator and the
+denominator and largely cancels. A percentile is invariant the same way — it
+ranks names against each other, and a feed that halves everyone's volume does
+not change the ranking. `$3M/day` would have to be re-tuned per feed; "top
+70% of what we scanned" does not.
 
 UNIVERSE: get_universe() reads a checked-in symbol file (data/symbols.txt),
 not Alpaca's ~11,000-name asset list — no asset-list API call is made. Pass
@@ -64,6 +84,7 @@ from datetime import date, datetime, time as time_of_day, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import numpy as np
 import pandas as pd
 
 from alpaca.data.enums import Adjustment, DataFeed
@@ -110,9 +131,12 @@ except Exception as e:  # pragma: no cover - depends on the host's tz database
 SESSION_COMPLETE_ET = time_of_day(16, 15)
 
 # A daily end-of-day scan has no use for real-time data, and the free plan's
-# IEX feed is one venue's slice of consolidated volume — roughly a few percent
-# — which is why the 5,000,000-share floor currently matches almost nothing.
+# IEX feed is one venue's slice of consolidated volume — roughly a few percent.
 # delayed_sip is consolidated tape on a delay the scan does not care about.
+# Since step 4 both volume gates are ratios rather than absolute counts, so a
+# thin feed no longer empties the shortlist on its own; a fuller feed is still
+# the better input, because a few percent of the tape is a noisier estimate of
+# a stock's own average than the whole of it.
 #
 # UNVERIFIED AGAINST A LIVE ACCOUNT: the sandbox cannot reach Alpaca, so which
 # feeds this account may query has not been checked. If delayed_sip is refused,
@@ -183,7 +207,49 @@ def current_session(now: datetime | None = None) -> date:
 class ScanConfig:
     min_price: float = 4.0            # price > $4
     min_gain_pct: float = 4.0         # >= 4% up from yesterday
-    min_today_volume: int = 5_000_000 # volume > 5,000,000
+
+    # --- rule 3: volume against the stock's own norm -----------------------
+    # `min_rvol` is where a burst stops being ordinary. knowledge/strategy.md
+    # wants "volume clearly above average (ideally 2x+)" for an A+ and kills
+    # "volume barely above average — no institutional participation". Those
+    # are two different numbers and this gate is deliberately the lower one:
+    # set at 2.0 the scan would hand Claude a shortlist on which every name
+    # already met the A+ volume bar, and the kill criterion could never fire
+    # — the same defect, from the other side, as the old vs-yesterday ratio
+    # that was structurally floored at 1.0. At 1.5 the 1.5x-2.0x band still
+    # reaches the scorer, so "barely above average" remains a verdict Claude
+    # can reach on evidence.
+    min_rvol: float = 1.5
+    # Sessions in the trailing average, EXCLUDING the burst day itself. 50 is
+    # not a fresh guess: src.lynch's C check already measures the pre-burst
+    # day against `pre["Volume"].iloc[-51:-1].mean()`, and two layers of one
+    # pipeline disagreeing about what "average volume" means is how a metric
+    # ends up meaning nothing. ~10 weeks is long enough that one earnings
+    # spike cannot set the baseline, short enough to follow a name whose
+    # liquidity regime has changed.
+    rvol_lookback: int = 50
+    # Below this many prior sessions there is no average worth dividing by, so
+    # the name is dropped rather than measured against three days of history.
+    min_rvol_sessions: int = 20
+
+    # --- rule 6: cross-sectional liquidity, applied in run_scan() ----------
+    # Keep the top (100 - this)% of the session's scanned names by dollar
+    # volume. A percentile, not a dollar figure, because a dollar figure is a
+    # statement about the feed as much as about the stock. Sized to cut the
+    # illiquid tail rather than to select megacaps: on today's hand-curated
+    # large/mid-cap universe it removes very little, and that is correct —
+    # there is barely a tail to cut. It starts doing real work when the
+    # universe widens past data/symbols.txt, which is when "barely-liquid
+    # names where slippage eats the edge" becomes a live risk.
+    min_dollar_volume_pctile: float = 30.0
+
+    # NOT A STRATEGY THRESHOLD, and not read by detect_setup() any more: step
+    # 4 replaced the absolute 5,000,000-share floor with min_rvol above. The
+    # field survives only because tools/make_fixture.py still reads it to lift
+    # its hand-authored rows over the old floor, and regenerating that fixture
+    # with a different value rewrites docs/data.json. Delete it together with
+    # that use — nothing in the scan will notice.
+
     lookback_days: int = 260
     batch_size: int = 100
     # Which Alpaca feed to read. See DEFAULT_FEED for the reasoning and for
@@ -201,7 +267,16 @@ class Candidate:
     gain_pct: float
     volume: int
     prev_volume: int
+    #: today's volume over `avg_volume` — the stock's own trailing norm, NOT
+    #: over prev_volume. It used to be the vs-yesterday ratio while src.scorer
+    #: sent it to Claude labelled "volume_ratio_vs_50d_avg", so every metrics
+    #: block stated something about the candidate that was not true. Rule 2
+    #: rejects any day below the previous one, so that ratio could not print
+    #: below 1.00 and "volume barely above average" was unreachable by
+    #: construction.
     volume_ratio: float
+    #: the denominator, so the ratio can be audited without the frame.
+    avg_volume: float
     dollar_volume: float
     history: pd.DataFrame = field(repr=False, default=None)
 
@@ -381,6 +456,36 @@ def _feed_denied_error(feed: DataFeed, exc: Exception) -> FeedNotAuthorizedError
 # Core setup detector
 # ---------------------------------------------------------------------
 
+def trailing_volume_mean(df: pd.DataFrame, cfg: ScanConfig) -> float | None:
+    """Mean volume over the sessions BEFORE the last bar, or None.
+
+    Exclusive of the bar being measured, matching src.lynch's C check, which
+    divides the pre-burst day by `pre["Volume"].iloc[-51:-1].mean()`. The
+    exclusion is not a detail: a burst day inside its own denominator drags
+    the average up by roughly its own excess, so a genuine 10x day reports
+    about 8.5x on a 50-session window and about 5x on a 20-session one. The
+    ratio would then mean something different at every window length, which
+    is the opposite of what a normalised measure is for.
+
+    None when there is not enough history to have an average at all. A name
+    that listed three weeks ago has volume but no norm, and inventing one
+    from four sessions would let the thinnest possible baseline manufacture
+    the largest possible ratio.
+    """
+    # dropna AFTER the slice, never before: the window stays the last
+    # rvol_lookback sessions, and the count is of sessions that actually
+    # reported a volume. Counting rows instead would let a window that is
+    # mostly holes satisfy a guard about how much history there is — the same
+    # shape of mistake as measuring a burst against a two-day baseline.
+    prior = df["Volume"].iloc[-(cfg.rvol_lookback + 1):-1].dropna()
+    if len(prior) < cfg.min_rvol_sessions:
+        return None
+    mean = float(prior.mean())
+    if not (mean > 0):  # all-zero, or NaN
+        return None
+    return mean
+
+
 def detect_setup(df: pd.DataFrame, cfg: ScanConfig) -> dict | None:
     df = df.dropna(subset=["Close", "Volume"])
     if len(df) < 2:
@@ -402,23 +507,108 @@ def detect_setup(df: pd.DataFrame, cfg: ScanConfig) -> dict | None:
     if vol < prev_vol:
         return None
 
-    # 3. today's volume > 5,000,000
-    if vol <= cfg.min_today_volume:
+    # 3. today's volume >= min_rvol x its own trailing average. This replaced
+    #    an absolute 5,000,000-share floor, which measured the feed rather
+    #    than the stock — see the module docstring.
+    avg_vol = trailing_volume_mean(df, cfg)
+    if avg_vol is None:
+        return None
+    rvol = vol / avg_vol
+    if rvol < cfg.min_rvol:
         return None
 
     # 5. price > $4.00 (rule 4, no biotech, is curation — see module docstring)
     if close <= cfg.min_price:
         return None
 
+    # A bar that moved no money is not a candidate, and must not reach the
+    # gate as a None in a numeric field. Unreachable while min_rvol > 0, which
+    # is why it is written down rather than assumed.
+    dollar_volume = session_dollar_volume(df)
+    if dollar_volume is None:
+        return None
+
+    # Rule 6, the dollar-volume percentile, is NOT here: it is a fact about
+    # this name relative to every other name that traded today, and this
+    # function is handed one frame. run_scan() applies it.
     return {
         "date": str(pd.Timestamp(df.index[-1]).date()),
         "close": round(close, 2),
         "gain_pct": round(gain_pct, 2),
         "volume": int(vol),
         "prev_volume": int(prev_vol),
-        "volume_ratio": round(vol / prev_vol, 2) if prev_vol else 0.0,
-        "dollar_volume": round(close * vol),
+        "volume_ratio": round(rvol, 2),
+        "avg_volume": round(avg_vol),
+        # One definition, shared with the gate that ranks it — see
+        # session_dollar_volume() for what two roundings cost.
+        "dollar_volume": dollar_volume,
     }
+
+
+# ---------------------------------------------------------------------
+# Rule 6 — cross-sectional liquidity
+# ---------------------------------------------------------------------
+
+def session_dollar_volume(df: pd.DataFrame) -> float | None:
+    """Last bar's close x volume, or None if the bar cannot supply one.
+
+    THE candidate's `dollar_volume`, not a second opinion about it:
+    detect_setup() reports this exact call. That matters because this value
+    builds the session's percentile floor and Candidate.dollar_volume is
+    compared against it, so two roundings of "the same" product put a name a
+    fraction of a cent under its own percentile. Computed unrounded here
+    against a rounded candidate, that emptied 53 of 400 synthetic single-symbol
+    scans; the obvious repair — rounding here too, but from the rounded close —
+    disagreed by about $24 instead of about $1. One function, called by both.
+    """
+    tail = df.dropna(subset=["Close", "Volume"])
+    if tail.empty:
+        return None
+    value = round(float(tail["Close"].iloc[-1]) * float(tail["Volume"].iloc[-1]))
+    return float(value) if value > 0 else None
+
+
+def liquidity_floor(dollar_volumes: list[float], cfg: ScanConfig) -> float | None:
+    """The dollar-volume cutoff for this session, or None for "no gate".
+
+    The distribution is EVERY symbol that traded the session, not the bursting
+    ones. The bursts are a handful of names selected for having just done
+    something unusual to their volume; ranking them against each other asks
+    "was this the thinnest of today's three bursts", which on a quiet day
+    throws away a perfectly liquid name and on a wild one keeps a thin one.
+    Ranking them against the universe asks the question strategy.md actually
+    poses — is this a liquid leader or a name whose spread will eat the edge —
+    and gives an answer that does not move with how many bursts printed.
+    """
+    if cfg.min_dollar_volume_pctile <= 0 or not dollar_volumes:
+        return None
+    return float(np.percentile(dollar_volumes, cfg.min_dollar_volume_pctile))
+
+
+def apply_liquidity_gate(candidates: list["Candidate"],
+                         dollar_volumes: list[float],
+                         cfg: ScanConfig) -> list["Candidate"]:
+    """Drop candidates below the session's dollar-volume percentile.
+
+    Inclusive at the floor, which is what makes a one-symbol scan
+    (`--tickers NVDA`) still a scan: any percentile of a single value is that
+    value, and a strict comparison would reject the only name it was given.
+    """
+    floor = liquidity_floor(dollar_volumes, cfg)
+    if floor is None:
+        return candidates
+    kept = [c for c in candidates if c.dollar_volume >= floor]
+    dropped = [c for c in candidates if c.dollar_volume < floor]
+    if dropped:
+        log.info(
+            "Liquidity gate: dropped %d of %d bursts below the %gth percentile "
+            "of the %d names that traded (floor $%s/day): %s",
+            len(dropped), len(candidates), cfg.min_dollar_volume_pctile,
+            len(dollar_volumes), f"{floor:,.0f}",
+            ", ".join(f"{c.ticker} (${c.dollar_volume:,.0f})" for c in dropped[:8])
+            + ("..." if len(dropped) > 8 else ""),
+        )
+    return kept
 
 
 # ---------------------------------------------------------------------
@@ -441,6 +631,7 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     dropped = 0
     with_bars = 0
     stale: dict[str, date] = {}
+    session_dollar_volumes: list[float] = []
 
     for i in range(0, len(tickers), cfg.batch_size):
         batch = tickers[i: i + cfg.batch_size]
@@ -471,6 +662,11 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
         stale.update(batch_stale)
 
         for t, df in histories.items():
+            # Every symbol that traded, burst or not, is part of the
+            # distribution rule 6 ranks against — see liquidity_floor().
+            dv = session_dollar_volume(df)
+            if dv is not None:
+                session_dollar_volumes.append(dv)
             try:
                 m = detect_setup(df, cfg)
             except Exception:
@@ -500,6 +696,12 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             "the session with SCAN_SESSION_DATE=YYYY-MM-DD to scan it deliberately."
         )
 
+    # Rule 6, last, because it is the only rule that needs the whole scan.
+    # Dropped symbols are missing from the distribution as well as from the
+    # shortlist, which biases the floor by however many they were; the error
+    # below already says the shortlist is incomplete on that path.
+    candidates = apply_liquidity_gate(candidates, session_dollar_volumes, cfg)
+
     candidates.sort(key=lambda c: c.gain_pct, reverse=True)
     if dropped:
         log.error("Scan complete with %d of %d symbols DROPPED — the shortlist is "
@@ -513,4 +715,6 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     results = run_scan()
     for c in results[:20]:
-        print(f"{c.ticker}: +{c.gain_pct}% | vol {c.volume:,} (prev {c.prev_volume:,}, {c.volume_ratio}x) | close ${c.close}")
+        print(f"{c.ticker}: +{c.gain_pct}% | vol {c.volume:,} = {c.volume_ratio}x its "
+              f"{ScanConfig().rvol_lookback}-session average ({c.avg_volume:,.0f}) "
+              f"| ${c.dollar_volume:,.0f}/day | close ${c.close}")

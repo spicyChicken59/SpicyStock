@@ -21,7 +21,7 @@ Known scheduled falsifications:
 | when this lands | what goes stale |
 |---|---|
 | ~~Step 3 sets `feed=` on the bars request~~ done | ~~`.env.example`'s "no `feed=` is set anywhere"~~ swept, along with the IEX-default paragraph it sat in |
-| Step 4 replaces the 5,000,000-share floor | `.env.example`'s "the 5,000,000-share floor is still absolute" note, the volume numbers in README's Costs note, README's Layer-1 filter description |
+| Step 4 replaces the 5,000,000-share floor | ~~`.env.example`'s "the 5,000,000-share floor is still absolute" note~~ swept · STILL STALE: the volume numbers in README's Costs note, and README's Layer-1 filter description, which both still describe an absolute share floor |
 | Step 5 makes failures loud | `.env.example`'s "these fail in three different ways" block |
 | ~~Step 6 fixes the test suite~~ done | ~~the `detect_burst` comment in `.gitignore`, the broken-test note in README~~ swept |
 | Step 9 emits `docs/data.json` | the "hand-authored fixture" caveat in README's dashboard section |
@@ -40,8 +40,12 @@ different rule failing than the one they named — the 4% gain, the rule the
 product is named after, could be deleted with the whole suite green.
 
 **When you change or add a rule, delete it and watch the suite go red.** If it
-stays green, the test is shaped, not load-bearing. This is mandatory for steps
-4 and 7, which change the scan filter and the 2LYNCH maths.
+stays green, the test is shaped, not load-bearing. This was mandatory for steps
+4 and 7, which changed the scan filter and the 2LYNCH maths; both were done
+that way. Half the discipline is the inverse check: break a rule the test does
+NOT name and confirm the test fails too, rather than passing while a different
+rule does the rejecting. `tests/test_scanner.py`'s `_only_failing()` makes that
+a precondition of every rejection test instead of an inequality picked by eye.
 
 The doc-sweep rule above failed on three consecutive commits because it relied
 on remembering. `tests/test_docs_are_true.py` now enforces the mechanically
@@ -68,10 +72,11 @@ that a fix did not introduce a new defect of the same class.**
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net now, with known holes.** `pytest tests/` runs 104
-  tests with no network and no API keys (step 6a). It deliberately asserts no
-  strategy thresholds for the scan filter — step 4 is about to change those.
-  The 2LYNCH checks ARE asserted now (step 7), each mutation-tested. Untested:
+- **There is a regression net now, with known holes.** `pytest tests/` runs 164
+  tests with no network and no API keys (step 6a) — a count that is behind the
+  suite until the batch in flight lands. The scan filter's thresholds ARE
+  asserted now (step 4) and the 2LYNCH checks are too (step 7), each
+  mutation-tested. Untested:
   `get_universe()` and the symbol-file parser, `main()`'s exit code, and the
   real SDK wire shapes — the boundaries are doubles, so an SDK change passes
   here.
@@ -92,11 +97,13 @@ python -m src.pipeline evening --dry-run
 1. ~~Repo hygiene — `.gitignore`, truthful `.env.example`, secret scanning~~ done
 2. ~~Shrink the universe to a checked-in symbol list~~ done
 3. ~~Fix the data request — split adjustment, freshness assertion~~ done
-4. Relative volume thresholds, percentile liquidity gate
+4. Relative volume thresholds, percentile liquidity gate — code and tests
+   landed; NOT done until README's Layer-1 description and Costs note stop
+   describing an absolute share floor (see the table above)
 5. Fail loud
 6. ~~6a: real tests, offline mode, CI~~ done · 6b: threshold + canary assertions, after 4 and 7
 7. ~~Fix the 2LYNCH math (`L` is sign-blind, `Y` excludes the burst day)~~ done
-8. Harden the LLM layer (`temperature=0`, structured outputs)
+8. ~~Harden the LLM layer (`temperature=0` — which is a TypeError in anthropic 1.x; it goes via `extra_body`)~~ done
 9. Persist every scored candidate plus forward returns
 10. Resolve morning/evening and statefulness
 

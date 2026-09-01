@@ -19,11 +19,12 @@ no Google Sheet, no n8n.
 
 ```
 checked-in universe (data/symbols.txt, 230 names)
-        │  yfinance daily OHLCV, batched
+        │  Alpaca daily OHLCV, split-adjusted, delayed SIP, batched
         ▼
-Layer 1  4% burst filter ............. ≥4% gain, vol > yesterday, ≥1.5x 50d avg,
-        │                              price ≥ $3, ≥ $3M dollar volume
-        ▼  (~30–120 names on a normal day)
+Layer 1  4% burst filter ............. ≥4% gain, vol ≥ yesterday, ≥1.5x its own
+        │                              50-session average, price > $4, and in the
+        │                              top 70% of the day's dollar volume
+        ▼  (a handful on a 230-name universe)
 Layer 2  2LYNCH checklist (code) ..... 2 first/second burst · L linear prior move
         │                              Y young trend · N narrow consolidation
         │                              C calm pre-burst day · H close near high
@@ -39,8 +40,9 @@ Layer 5  Email ....................... HTML table with inline charts, top 5
                                        + CSV archived to results/
 ```
 
-**Evening run (5:30 PM ET):** scans today's completed session → candidates for tomorrow.
-**Morning run (8:30 AM ET):** scans the latest completed session (yesterday) → follow-through watchlist for today.
+**Evening run (6:16 PM ET):** scans that day's completed session → candidates for tomorrow.
+A morning run exists in `src/pipeline.py` but has no workflow and no distinct
+behaviour; resolving that is step 10.
 
 ## One-time setup
 
@@ -91,7 +93,7 @@ python -m src.pipeline evening --dry-run --tickers NVDA,PLTR,SMCI,CRWD
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 104 tests, no network or API keys needed
+pytest tests/                   # 164 tests, no network or API keys needed
 ```
 
 ## The dashboard
@@ -106,7 +108,8 @@ It shows the run's funnel (universe → bursts → 2LYNCH gate → scored → sh
 **every candidate the run scored** rather than the five that went out by email, each
 one's 2LYNCH checklist with its measured values, and — for every score — whether
 Claude produced it or the offline checklist fallback did. A fallback score can and
-does outrank real ones, so it is labelled everywhere it appears and called out at the
+cannot outrank one any more — `score_all` sorts on provenance before score — but it
+is still labelled everywhere it appears and called out at the
 top of the page.
 
 ### The data contract
@@ -155,14 +158,6 @@ dependency, and the script exits 0 with a note if chromium is missing.
 - Model: set `CLAUDE_MODEL` env var (default `claude-sonnet-4-6`)
 
 ## Costs and limits
-
-> **Note:** the pipeline diagram above, and most of this section, still
-> describe the original yfinance build (the data-source and retention bullets
-> below have been corrected; the rest have not). The real Layer-1
-> filter is `≥4% gain · today's volume ≥ yesterday's · volume > 5,000,000
-> shares · close > $4.00` — there is no 50-day-average or dollar-volume gate,
-> and `ScanConfig` exposes only `min_price`, `min_gain_pct`, `min_today_volume`,
-> `lookback_days` and `batch_size`. Rewriting this is a later step.
 
 - Market data: free (Alpaca). The scan now asks for `delayed_sip` rather than
   taking the plan default, so it reads consolidated volume instead of IEX's

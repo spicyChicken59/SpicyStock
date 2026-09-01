@@ -41,8 +41,11 @@ def _remap(specs, start):
         d["t"] = sym
         if d["close"] <= _CFG.min_price:
             d["close"] = round(_CFG.min_price + 1.25 + (i % 7) * 0.9, 2)
-        if d["vol"] <= _CFG.min_today_volume:
-            d["vol"] = _CFG.min_today_volume + 1_200_000 + i * 137_000
+        # Lift thin rows to a volume that clears the relative gate against a
+        # plausible trailing average. detect_setup no longer applies an
+        # absolute share floor; this is only to keep the fixture realistic.
+        if d["vol"] <= 5_000_000:
+            d["vol"] = 5_000_000 + 1_200_000 + i * 137_000
         if d["prev"] >= d["vol"]:
             d["prev"] = int(d["vol"] * 0.42)
         out.append(type(spec)(**d))
@@ -510,7 +513,7 @@ _uni = set(UNIVERSE)
 for _row in candidates + gated_out:
     assert _row["ticker"] in _uni, f'{_row["ticker"]} is not in data/symbols.txt'
     assert _row["close"] > _CFG.min_price, f'{_row["ticker"]} close {_row["close"]} <= ${_CFG.min_price}'
-    assert _row["volume"] > _CFG.min_today_volume, f'{_row["ticker"]} volume {_row["volume"]:,} <= floor'
+    assert _row["volume"] > 0, f'{_row["ticker"]} has no volume'
     if "prev_volume" in _row:
         assert _row["volume"] >= _row["prev_volume"], f'{_row["ticker"]} volume < prev_volume'
     assert _row["gain_pct"] >= _CFG.min_gain_pct, f'{_row["ticker"]} gain {_row["gain_pct"]} < 4%'
