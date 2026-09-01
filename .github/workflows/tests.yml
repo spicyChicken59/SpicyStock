@@ -1,0 +1,44 @@
+name: Tests
+# The offline regression suite. Every external boundary the pipeline touches
+# — Alpaca, Anthropic, Resend — is replaced with a double in tests/conftest.py,
+# and an autouse fixture severs socket connect(), so this job needs no
+# repository secrets and no market data.
+#
+# That is deliberate: NO secrets are passed to this job. A test that starts
+# reaching a real API fails here instead of quietly depending on credentials
+# that only the evening workflow has.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"   # same runtime as .github/workflows/evening.yml
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Run tests
+        run: pytest tests/ -v
+      - name: Fail if the suite dirtied the working tree
+        # archive() and render_chart() write results/ and charts/ relative to
+        # the working directory, so every test runs inside its own tmp_path.
+        # If that isolation ever regresses, this step catches it here rather
+        # than in a reviewer's diff.
+        run: |
+          dirt=$(git status --porcelain --untracked-files=all)
+          if [ -n "$dirt" ]; then
+            echo "The test suite left files behind:"
+            echo "$dirt"
+            exit 1
+          fi
