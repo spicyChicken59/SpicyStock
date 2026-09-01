@@ -73,14 +73,20 @@ that a fix did not introduce a new defect of the same class.**
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net now, with known holes.** `pytest tests/` runs 331
-  tests with no network and no API keys (step 6a) — a count that is behind the
-  suite until the batch in flight lands. The scan filter's thresholds ARE
-  asserted now (step 4) and the 2LYNCH checks are too (step 7), each
-  mutation-tested. Untested:
-  `get_universe()` and the symbol-file parser, `main()`'s exit code, and the
-  real SDK wire shapes — the boundaries are doubles, so an SDK change passes
-  here.
+- **There is a regression net.** `pytest tests/` runs 331 tests with no network
+  and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
+  and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
+  re-mutated both — 88 mutants, 84 killed, and the four survivors are each
+  provably equivalent or measure-zero (`>=`→`>` on a float boundary the grid
+  steps over), not gaps. The three holes this section used to name are closed:
+  `get_universe()` and the symbol-file parser (`tests/test_scanner.py`),
+  `main()`'s exit code (`tests/test_pipeline.py`), and the SDK wire shapes —
+  `tests/test_sdk_contract.py` builds a genuine `StockBarsRequest` and a genuine
+  `BarSet` offline and runs one scan through both the real object and the
+  double, so a shape change in alpaca-py fails here rather than passing.
+  Still untested: anything needing a socket — that the credentials can query the
+  feed, that Resend delivers, that Claude returns what the parser expects from a
+  real chart.
 
 ## Local run
 
@@ -100,7 +106,7 @@ python -m src.pipeline evening --dry-run
 3. ~~Fix the data request — split adjustment, freshness assertion~~ done
 4. ~~Relative volume thresholds, percentile liquidity gate~~ done
 5. ~~Fail loud~~ done
-6. ~~6a: real tests, offline mode, CI~~ done · 6b: threshold + canary assertions, after 4 and 7
+6. ~~6a: real tests, offline mode, CI · 6b: threshold + canary assertions~~ done
 7. ~~Fix the 2LYNCH math (`L` is sign-blind, `Y` excludes the burst day)~~ done
 8. ~~Harden the LLM layer (`temperature=0` — which is a TypeError in anthropic 1.x; it goes via `extra_body`)~~ done
 9. ~~Persist every scored candidate plus forward returns~~ done in `src/` —
