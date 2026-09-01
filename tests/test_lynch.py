@@ -277,3 +277,37 @@ def test_a_zero_range_burst_bar_does_not_get_a_free_pass():
     result = evaluate_2lynch(_frame(burst_zero_range=True))
     _only_failure_is(result, "H")
     assert "100%" not in result["checks"]["H_close_near_high"]["value"]
+
+
+# --- the fixture generator applies these same rules to hand-authored
+# measurements. It used to hold its own copies of the thresholds and fell
+# silently behind the step-7 fixes, so docs/data.json -- and the per-check pass
+# rates the dashboard aggregates from it -- described a checklist that no longer
+# existed. Nothing pinned the two together, which is why it was invisible.
+
+def test_the_fixture_generator_imports_the_thresholds_rather_than_copying_them():
+    import pathlib
+    import re
+
+    import src.lynch as lynch_mod
+
+    generator = (pathlib.Path(__file__).resolve().parent.parent
+                 / "tools" / "make_fixture.py").read_text()
+
+    names = [n for n in dir(lynch_mod)
+             if n.isupper() and isinstance(getattr(lynch_mod, n), (int, float))]
+    assert names, "src.lynch exposes no threshold constants to import"
+
+    missing = [n for n in names if n not in generator]
+    assert not missing, (
+        f"tools/make_fixture.py does not reference {missing}. If it re-declares a "
+        "threshold instead of importing it, the fixture can drift from the real "
+        "checklist without anything failing -- which has already happened once."
+    )
+
+    # And no bare numeric threshold left in the mirror's verdicts.
+    verdicts = re.findall(r'"pass":\s*([^,\n]+(?:\n[^,\n]+)?)', generator)
+    literals = [v for v in verdicts if re.search(r"\b\d+\.\d+\b", v)]
+    assert not literals, (
+        f"these verdicts still compare against a hard-coded number: {literals}"
+    )

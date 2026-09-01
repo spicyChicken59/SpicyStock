@@ -81,6 +81,27 @@
   #scores-table td.col-reason { font-size: 13px; color: var(--sc-text-2); }
   #gated-table .col-why { min-width: 150px; }
   .runs-now td { font-weight: 600; }
+
+  /* The funnel, the checklist aggregate and the score/outcome plot are drawn
+     at the host's own PIXEL width — the viewBox is the measured width, so one
+     SVG unit is one CSS pixel and the type stays the size it says it is. A
+     fixed viewBox scales the whole drawing instead: the score chart's 11px
+     labels land near 5px on a 390px phone. These redraw on resize. */
+  .s-name { font: 500 12px/1 var(--sc-font-mono); fill: var(--sc-text-2); }
+  .s-value { font: 700 13px/1 var(--sc-font-body); fill: var(--sc-heading); }
+  .s-share { font: 500 11px/1 var(--sc-font-mono); fill: var(--sc-text-3); }
+  .s-drop { font: 500 11px/1 var(--sc-font-mono); fill: var(--sc-text-3); }
+  /* Kept and lost are two segments of one bar, and BOTH carry their count in
+     the row above or the caption below, so the split never rides on the fill. */
+  .seg-kept { fill: var(--sc-chart-emphasis); }
+  .seg-lost { fill: var(--sc-chart-context); }
+
+  /* Horizon tiles: the value is the mean, the delta underneath carries the
+     spread between the best and worst session so a single number never reads
+     as a settled one. */
+  .horizon .sc-chip { margin-top: 8px; }
+  #checks-table .col-what { min-width: 170px; white-space: normal; }
+  #outcome-table .col-name { line-height: 1.3; }
 </style>
 </head>
 <body>
@@ -132,7 +153,21 @@
     <p id="fallback-body"></p>
   </div>
 
-  <section class="sc-grid sc-grid--4" id="kpis" aria-label="This run at a glance"></section>
+  <!-- The funnel. Four disconnected tiles could not show where the attrition
+       is; one shared linear scale can, and the loss between two stages is a
+       labelled segment rather than a subtraction the reader has to do. -->
+  <section class="sc-card" id="funnel-card" hidden>
+    <div class="sc-card__head">
+      <div>
+        <h2 id="funnel-title">From the universe to the shortlist</h2>
+        <p class="sc-hint" id="funnel-hint"></p>
+      </div>
+    </div>
+    <div class="sc-legend" id="funnel-legend"></div>
+    <div class="sc-chart" id="funnel-chart" role="group" tabindex="0"
+         aria-label="How many names reached each stage of the run, from the universe scanned down to the shortlist. The same numbers are in the table below."></div>
+    <div class="sc-table-scroll" id="funnel-scroll"><table class="sc-table sc-table--compact" id="funnel-table"></table></div>
+  </section>
 
   <section class="sc-card" id="shortlist-card" hidden>
     <div class="sc-card__head">
@@ -165,6 +200,58 @@
       </div>
     </div>
     <div class="sc-table-scroll" id="gated-scroll"><table class="sc-table sc-table--compact" id="gated-table"></table></div>
+  </section>
+
+  <!-- Which check is doing the gating. Computed over every burst that recorded
+       a checklist, scored and gated alike: a rate over the scored candidates
+       alone would describe only names that had already passed. -->
+  <section class="sc-card" id="checks-card" hidden>
+    <div class="sc-card__head">
+      <div>
+        <h2>Which 2LYNCH check is doing the gating</h2>
+        <p class="sc-hint" id="checks-hint"></p>
+      </div>
+    </div>
+    <div class="sc-notice" id="checks-bias" hidden>
+      <div class="sc-eyebrow">these rates are biased</div>
+      <p id="checks-bias-body"></p>
+    </div>
+    <div class="sc-legend" id="checks-legend"></div>
+    <div class="sc-chart" id="checks-chart" role="group" tabindex="0"
+         aria-label="Pass rate for each of the six 2LYNCH checks across every burst the scan found. The same numbers are in the table below."></div>
+    <div class="sc-table-scroll" id="checks-scroll"><table class="sc-table sc-table--compact" id="checks-table"></table></div>
+  </section>
+
+  <!-- Did a higher score do better? The one question that judges the screener
+       rather than describing it. Empty until the sessions close. -->
+  <section class="sc-card" id="outcome-card" hidden>
+    <div class="sc-card__head">
+      <div>
+        <h2>Score against what happened next</h2>
+        <p class="sc-hint" id="outcome-hint"></p>
+      </div>
+    </div>
+    <p class="sc-empty" id="outcome-empty" hidden></p>
+    <div id="outcome-plot" hidden>
+      <div class="sc-legend" id="outcome-legend"></div>
+      <div class="sc-chart" id="outcome-chart" role="group" tabindex="0"
+           aria-label="Each scored candidate as a dot: its score across, its next-day return up. The same numbers are in the table below."></div>
+      <p id="outcome-verdict"></p>
+      <div class="sc-table-scroll" id="outcome-scroll"><table class="sc-table sc-table--compact" id="outcome-table"></table></div>
+    </div>
+  </section>
+
+  <!-- The measurement loop. Means only, never a zero standing in for a session
+       that has not happened, and a stated bar for how much data is enough. -->
+  <section class="sc-card" id="returns-card" hidden>
+    <div class="sc-card__head">
+      <div>
+        <h2>Has any of this made money yet</h2>
+        <p class="sc-hint" id="returns-hint"></p>
+      </div>
+    </div>
+    <div class="sc-grid sc-grid--3" id="returns-tiles"></div>
+    <div class="sc-table-scroll" id="returns-scroll"><table class="sc-table sc-table--compact" id="returns-table"></table></div>
   </section>
 
   <section class="sc-card" id="runs-card" hidden>
@@ -408,6 +495,230 @@
     }, kids));
   }
 
+  // ---- charts that keep their type size -----------------------------------
+  // These take a viewBox of the host's own measured width, so one SVG unit is
+  // one CSS pixel and an 11px label is 11px at every viewport. drawScores uses
+  // a fixed 760-wide box and its labels shrink with the page; that chart is
+  // direct-labelled and has the full table beneath it, but a new chart should
+  // not repeat it. Redrawn on resize, debounced.
+  var redraws = [];
+  var redrawTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(redrawTimer);
+    redrawTimer = setTimeout(function () {
+      for (var i = 0; i < redraws.length; i++) redraws[i]();
+    }, 120);
+  });
+  // The host must be visible before this is called: a hidden card measures 0.
+  function pxWidth(host) { return Math.max(260, Math.round(host.getBoundingClientRect().width || 720)); }
+  function live(fn) { redraws.push(fn); fn(); }
+  function mount(host, w, h, kids) {
+    clear(host).appendChild(svgEl('svg', {
+      viewBox: '0 0 ' + w + ' ' + h, width: w, height: h,
+      'aria-hidden': 'true', role: 'presentation', preserveAspectRatio: 'xMidYMin meet'
+    }, kids));
+  }
+  function shareOf(n, total) {
+    if (!total) return '—';
+    var r = n / total * 100;
+    return (r < 9.5 ? r.toFixed(1) : r.toFixed(0)) + '%';
+  }
+  function rate(v, dp) { return v === null || v === undefined ? '—' : (v * 100).toFixed(dp || 0) + '%'; }
+  function figure(value, note) {
+    return el('span', null, [el('span', { 'class': 'sc-figure', text: value }),
+                             note ? el('span', { 'class': 'sc-note', text: note }) : null]);
+  }
+
+  // ---- the funnel ---------------------------------------------------------
+  // Five stages on ONE linear scale, so 5 out of 230 looks like 5 out of 230.
+  // Each row draws the previous stage in context grey behind the count that
+  // survived, and the caption under it names the loss and its cause — the
+  // reader never has to subtract two tiles to find where the run narrowed.
+  function funnelStages(run) {
+    var g = run.gate || {};
+    var short = run.shortlist_size || 0;
+    return [
+      { name: 'universe scanned', n: (run.universe && run.universe.size) || 0,
+        why: null, note: (run.universe && run.universe.label) || 'symbols scanned' },
+      { name: '4% bursts', n: run.bursts || 0,
+        why: 'no 4% gain on the day', note: 'the Layer-1 scan' },
+      { name: 'passed 2LYNCH', n: run.passed_gate || 0,
+        why: 'under ' + g.min_lynch_passes + ' of ' + g.total_checks + ' checks',
+        note: 'the ' + g.min_lynch_passes + '/' + g.total_checks + ' gate' },
+      { name: 'scored', n: run.scored || 0,
+        why: 'outside the ' + run.score_cap + '-call cap', note: 'one scoring call each' },
+      { name: 'shortlist', n: short,
+        why: 'ranked below the top ' + short, note: 'the names that went out by email' }
+    ];
+  }
+
+  function drawFunnel(host, stages) {
+    var W = pxWidth(host), PAD_R = 104, PW = Math.max(60, W - PAD_R);
+    var top = stages[0].n || 1;
+    // A minimum of 3px: the shortlist is 2% of the universe and must still be
+    // a bar rather than nothing, and it carries its count in the row above.
+    var x = function (v) { return Math.max(3, (v / top) * PW); };
+    var NAME = 15, BAR = 16, DROP = 19, GAP = 10;
+    var kids = [], y = 4, i, s, prev, lost;
+    for (i = 0; i < stages.length; i++) {
+      s = stages[i];
+      prev = i ? stages[i - 1].n : s.n;
+      kids.push(svgEl('text', { 'class': 's-name', x: 0, y: y + 11 }, s.name));
+      kids.push(svgEl('text', { 'class': 's-value', x: W, y: y + 11, 'text-anchor': 'end' },
+        [commas(s.n) + ' ', svgEl('tspan', { 'class': 's-share' }, shareOf(s.n, top))]));
+      y += NAME;
+      if (i) kids.push(svgEl('rect', { 'class': 'seg-lost', x: 0, y: y, width: x(prev), height: BAR, rx: 3 }));
+      kids.push(svgEl('rect', { 'class': 'seg-kept', x: 0, y: y, width: x(s.n), height: BAR, rx: 3 }));
+      y += BAR;
+      if (i + 1 < stages.length) {
+        lost = s.n - stages[i + 1].n;
+        kids.push(svgEl('text', { 'class': 's-drop', x: 0, y: y + 13 },
+          '↓ −' + commas(lost) + ' · ' + stages[i + 1].why));
+        y += DROP;
+      }
+      y += GAP;
+    }
+    mount(host, W, y, kids);
+  }
+
+  // ---- the 2LYNCH checks in aggregate -------------------------------------
+  // Per-check pass rate over every burst that recorded a checklist. Splitting
+  // it by whether the burst cleared the gate is the whole point: a check whose
+  // pass rate barely moves between the two groups is not gating anything, and
+  // that cannot be seen from the scored candidates alone, because every one of
+  // them already cleared it.
+  function checkStats(cands, gated, run) {
+    var min = run.gate ? run.gate.min_lynch_passes : null;
+    var rows = cands.concat(gated).filter(function (r) {
+      return r.lynch_detail && r.lynch_detail.length;
+    });
+    var order = [], by = {}, cleared = 0, failed = 0;
+    rows.forEach(function (r) {
+      var ok = min === null || min === undefined ? null : r.lynch_passes >= min;
+      if (ok === true) cleared++; else if (ok === false) failed++;
+      r.lynch_detail.forEach(function (d) {
+        var st = by[d.code];
+        if (!st) {
+          st = by[d.code] = { code: d.code, label: d.label, pass: 0, total: 0,
+                              cpass: 0, ctotal: 0, fpass: 0, ftotal: 0 };
+          order.push(st);
+        }
+        st.total++; if (d.pass) st.pass++;
+        if (ok === true) { st.ctotal++; if (d.pass) st.cpass++; }
+        else if (ok === false) { st.ftotal++; if (d.pass) st.fpass++; }
+      });
+    });
+    order.forEach(function (st) {
+      st.rate = st.total ? st.pass / st.total : null;
+      st.crate = st.ctotal ? st.cpass / st.ctotal : null;
+      st.frate = st.ftotal ? st.fpass / st.ftotal : null;
+      st.gap = (st.crate === null || st.frate === null) ? null : st.crate - st.frate;
+    });
+    var withGap = order.filter(function (st) { return st.gap !== null; });
+    var harshest = order.slice().sort(function (a, b) { return a.rate - b.rate; })[0] || null;
+    var weakest = withGap.sort(function (a, b) { return a.gap - b.gap; })[0] || null;
+    return { checks: order, covered: rows.length, cleared: cleared, failed: failed,
+             harshest: harshest, weakest: weakest };
+  }
+
+  function drawChecks(host, checks) {
+    var W = pxWidth(host), PAD_R = 116, PW = Math.max(60, W - PAD_R);
+    var NAME = 15, BAR = 14, GAP = 13;
+    var kids = [], y = 4;
+    checks.forEach(function (st) {
+      kids.push(svgEl('text', { 'class': 's-name', x: 0, y: y + 11 }, st.code + '  ' + st.label));
+      kids.push(svgEl('text', { 'class': 's-value', x: W, y: y + 11, 'text-anchor': 'end' },
+        [rate(st.rate) + ' ', svgEl('tspan', { 'class': 's-share' }, st.pass + '/' + st.total)]));
+      y += NAME;
+      kids.push(svgEl('rect', { 'class': 'seg-lost', x: 0, y: y, width: PW, height: BAR, rx: 3 }));
+      kids.push(svgEl('rect', { 'class': 'seg-kept', x: 0, y: y,
+        width: Math.max(2, (st.rate || 0) * PW), height: BAR, rx: 3 }));
+      y += BAR + GAP;
+    });
+    mount(host, W, y, kids);
+  }
+
+  // ---- forward returns by horizon -----------------------------------------
+  // Weighted by how many names each session contributed, because a 5-name
+  // session and a 25-name session are not one observation each. A horizon with
+  // no closed session is null all the way through and reads as pending; it is
+  // never averaged in as a zero.
+  var MIN_SESSIONS = 20;
+  function horizonStats(runs) {
+    return [1, 3, 5].map(function (d) {
+      var k = 'd' + d;
+      var have = runs.filter(function (r) {
+        var f = r.forward_returns || {};
+        return f[k] !== null && f[k] !== undefined;
+      });
+      var wsum = 0, names = 0, vals = [];
+      have.forEach(function (r) {
+        var f = r.forward_returns, w = f.n || 0;
+        wsum += f[k] * w; names += w; vals.push(f[k]);
+      });
+      var plain = vals.length ? vals.reduce(function (a, b) { return a + b; }, 0) / vals.length : null;
+      return {
+        days: d, key: k,
+        mean: names ? wsum / names : plain,
+        weighted: names > 0,
+        names: names, sessions: have.length,
+        best: vals.length ? Math.max.apply(null, vals) : null,
+        worst: vals.length ? Math.min.apply(null, vals) : null
+      };
+    });
+  }
+  function horizonState(h) {
+    if (!h.sessions) return { chip: 'sc-chip--neutral', word: 'no session closed yet' };
+    if (h.sessions < MIN_SESSIONS) return { chip: 'sc-chip--warn', word: 'not enough data' };
+    return { chip: 'sc-chip--good', word: 'measured' };
+  }
+
+  // ---- score against outcome ----------------------------------------------
+  // One dot per scored candidate that has a realised return: score across,
+  // next-day return up. Filled and hollow carry provenance, so the split is a
+  // shape and not a hue, and the table under it carries every number.
+  function measured(cands) {
+    return cands.filter(function (c) {
+      var f = c.forward_returns || {};
+      return f.d1 !== null && f.d1 !== undefined;
+    });
+  }
+  function mean(list) {
+    return list.length ? list.reduce(function (a, b) { return a + b; }, 0) / list.length : null;
+  }
+
+  function drawOutcome(host, rows) {
+    var W = pxWidth(host), PAD_L = 46, PAD_R = 10, PAD_T = 12, PAD_B = 34, H = 250;
+    var plotW = Math.max(60, W - PAD_L - PAD_R), plotH = H - PAD_T - PAD_B;
+    var ys = rows.map(function (c) { return c.forward_returns.d1; }).concat([0]);
+    var t = (S.ticks || function (lo, hi) { return { ticks: [lo, hi], lo: lo, hi: hi }; })(
+      Math.min.apply(null, ys), Math.max.apply(null, ys), 4);
+    var span = (t.hi - t.lo) || 1;
+    var x = function (v) { return PAD_L + Math.max(0, Math.min(10, v)) / 10 * plotW; };
+    var y = function (v) { return PAD_T + (t.hi - v) / span * plotH; };
+    var kids = [];
+    t.ticks.forEach(function (v) {
+      kids.push(svgEl('line', { 'class': 'sc-chart__grid', x1: PAD_L, x2: PAD_L + plotW, y1: y(v), y2: y(v) }));
+      kids.push(svgEl('text', { x: PAD_L - 7, y: y(v) + 3.5, 'text-anchor': 'end' }, pct(v, 1)));
+    });
+    // Zero is the line that decides whether a pick made money; it is not just
+    // another gridline.
+    kids.push(svgEl('line', { 'class': 'sc-chart__crosshair', x1: PAD_L, x2: PAD_L + plotW, y1: y(0), y2: y(0) }));
+    [0, 2, 4, 6, 8, 10].forEach(function (v) {
+      kids.push(svgEl('text', { x: x(v), y: PAD_T + plotH + 17, 'text-anchor': 'middle' }, String(v)));
+    });
+    kids.push(svgEl('text', { x: PAD_L + plotW / 2, y: H - 4, 'text-anchor': 'middle' }, 'score out of 10'));
+    rows.forEach(function (c) {
+      var fill = isFallback(c);
+      kids.push(svgEl('circle', {
+        'class': 'sc-dot ' + (fill ? 'is-hollow' : 'is-filled'),
+        cx: x(c.score), cy: y(c.forward_returns.d1), r: 5,
+        style: (fill ? 'stroke:' : 'fill:') + 'var(--sc-chart-1)'
+      }));
+    });
+    mount(host, W, H, kids);
+  }
+
   // ---- tables -------------------------------------------------------------
   function table(node, head, rows, numeric) {
     clear(node);
@@ -483,22 +794,41 @@
         ' They are marked "checklist fallback" everywhere they appear.';
     }
 
-    // tiles
+    // the funnel
     var gateTxt = run.gate ? '≥' + run.gate.min_lynch_passes + '/' + run.gate.total_checks : 'the gate';
     var capped = gated.filter(function (g) { return g.reason === 'score_cap'; }).length;
-    var tiles = [
-      ['4% bursts', commas(run.bursts), 'from ' + commas(run.universe && run.universe.size) + ' symbols scanned'],
-      ['passed 2LYNCH', commas(run.passed_gate), gateTxt + ' — ' + ((run.bursts || 0) - (run.passed_gate || 0)) + ' gated out'],
-      ['scored', commas(run.scored), capped ? capped + ' more passed but hit the ' + run.score_cap + '-call cap' : 'every candidate that passed the gate'],
-      ['AI-reviewed', ai + ' of ' + (run.scored || 0), fb ? fb + ' fell back to the offline checklist' : 'no fallbacks this run']
-    ];
-    clear($('kpis')).append.apply($('kpis'), tiles.map(function (t) {
-      return el('div', { 'class': 'sc-tile' }, [
-        el('div', { 'class': 'sc-tile__label', text: t[0] }),
-        el('div', { 'class': 'sc-tile__value', text: t[1] }),
-        el('div', { 'class': 'sc-tile__sub', text: t[2] })
-      ]);
-    }));
+    var stages = funnelStages(run);
+    var funnelTop = stages[0].n;
+    $('funnel-card').hidden = !funnelTop;
+    if (funnelTop) {
+      var biggest = stages.slice(1).reduce(function (best, st, i) {
+        var lost = stages[i].n - st.n;
+        return best && best.lost >= lost ? best : { lost: lost, into: st };
+      }, null);
+      $('funnel-hint').textContent =
+        stages.map(function (st) { return commas(st.n); }).join(' → ') + '. ' +
+        'The widest cut is ' + commas(biggest.lost) + ' names at "' + biggest.into.name + '" — ' +
+        biggest.into.why + '. ' +
+        (ai + fb ? 'Of the ' + (run.scored || 0) + ' scored, ' + ai + ' carry a Claude score and ' +
+                   (fb ? fb + ' fell back to the offline checklist.' : 'none fell back.') : '');
+      clear($('funnel-legend')).append(
+        el('span', null, [el('i', { 'class': 'is-swatch', style: 'background: var(--sc-chart-emphasis)' }), 'reached this stage']),
+        el('span', null, [el('i', { 'class': 'is-swatch', style: 'background: var(--sc-chart-context)' }), 'dropped before it'])
+      );
+      live(function () { drawFunnel($('funnel-chart'), stages); });
+      table($('funnel-table'), ['stage', 'reached', 'share of universe', 'dropped here', 'why'],
+        stages.map(function (st, i) {
+          var lost = i ? stages[i - 1].n - st.n : null;
+          return el('tr', null, [
+            el('td', null, [el('span', { text: st.name }), el('span', { 'class': 'sc-note', text: st.note })]),
+            el('td', { 'class': 'sc-num', text: commas(st.n) }),
+            el('td', { 'class': 'sc-num', text: shareOf(st.n, funnelTop) }),
+            el('td', { 'class': 'sc-num', text: lost === null ? '—' : '−' + commas(lost) }),
+            el('td', { text: i ? st.why : 'nothing dropped — this is what was scanned' })
+          ]);
+        }), [1, 2, 3]);
+      clipWatch($('funnel-scroll'), 'The funnel, stage by stage');
+    }
 
     // shortlist
     var short = cands.filter(function (c) { return c.rank <= shortN; });
@@ -563,6 +893,157 @@
         ]);
       }), [2, 3, 4, 5]);
     clipWatch($('gated-scroll'), 'Found but not scored');
+
+    // which check is doing the gating
+    var cs = checkStats(cands, gated, run);
+    $('checks-card').hidden = !cs.checks.length;
+    if (cs.checks.length) {
+      // The rates are only honest over every burst. If a file carries the
+      // checklist for the scored candidates alone, every one of them already
+      // cleared the gate, so say what the number is really describing rather
+      // than printing it as if it covered the run.
+      var partial = cs.covered < (run.bursts || cs.covered);
+      $('checks-bias').hidden = !partial;
+      if (partial) {
+        $('checks-bias-body').textContent =
+          'Only ' + plural(cs.covered, 'burst') + ' of the ' + (run.bursts || 0) +
+          ' this scan found recorded a checklist, and they are the ones that cleared the gate. ' +
+          'The candidates each check rejected are missing from these rates, so every one of them is ' +
+          'an overstatement. Read them as a description of the survivors, not of the run.';
+      }
+      $('checks-hint').textContent =
+        'Pass rate for each check across ' + plural(cs.covered, 'burst') + ' — ' + cs.cleared +
+        ' that cleared the ' + gateTxt + ' gate and ' + cs.failed + ' that did not. ' +
+        (cs.weakest && cs.harshest
+          ? cs.weakest.code + ' passes ' + rate(cs.weakest.rate) + ' of every burst, including ' +
+            rate(cs.weakest.frate) + ' of the ones that failed the gate, so it separates least; ' +
+            cs.harshest.code + ' passes ' + rate(cs.harshest.rate) + ' and is the hardest of the ' +
+            cs.checks.length + '.'
+          : '');
+      clear($('checks-legend')).append(
+        el('span', null, [el('i', { 'class': 'is-swatch', style: 'background: var(--sc-chart-emphasis)' }), 'passed the check']),
+        el('span', null, [el('i', { 'class': 'is-swatch', style: 'background: var(--sc-chart-context)' }), 'failed it'])
+      );
+      live(function () { drawChecks($('checks-chart'), cs.checks); });
+      table($('checks-table'),
+        ['check', 'what it tests', 'pass rate', 'cleared the gate', 'failed the gate', 'separation', 'note'],
+        cs.checks.map(function (st) {
+          var note = st === cs.harshest ? 'hardest gate' : (st === cs.weakest ? 'weakest separator' : null);
+          return el('tr', null, [
+            el('td', null, el('span', { 'class': 'sc-chip sc-chip--neutral sc-chip--case', text: st.code })),
+            el('td', { 'class': 'col-what', text: st.label }),
+            el('td', { 'class': 'sc-num' }, figure(rate(st.rate), st.pass + ' of ' + st.total)),
+            el('td', { 'class': 'sc-num' }, figure(rate(st.crate), st.cpass + ' of ' + st.ctotal)),
+            el('td', { 'class': 'sc-num' }, figure(rate(st.frate), st.fpass + ' of ' + st.ftotal)),
+            el('td', { 'class': 'sc-num', text: st.gap === null ? '—' : (st.gap * 100).toFixed(0) + ' pts' }),
+            el('td', null, note ? el('span', { 'class': 'sc-chip sc-chip--warn', text: note }) : null)
+          ]);
+        }), [2, 3, 4, 5]);
+      clipWatch($('checks-scroll'), 'Pass rate per 2LYNCH check');
+    }
+
+    // score against outcome
+    var done = measured(cands);
+    $('outcome-card').hidden = !cands.length;
+    $('outcome-plot').hidden = !done.length;
+    $('outcome-empty').hidden = !!done.length;
+    $('outcome-hint').textContent = 'One dot per scored candidate: the score this run gave it, ' +
+      'against what the next session actually did. This is the only view on the page that can ' +
+      'tell you the ranking is worth anything.';
+    if (!done.length) {
+      $('outcome-empty').textContent = 'None of the ' + (run.scored || 0) + ' candidates this run scored ' +
+        'has a next-day return yet — the session has not closed. There is nothing to plot, which is not ' +
+        'the same as a flat line at zero, so nothing is drawn. The pipeline fills this in when it records ' +
+        'forward returns against each candidate.';
+    } else {
+      var topPicks = done.filter(function (c) { return c.rank <= shortN; });
+      var others = done.filter(function (c) { return c.rank > shortN; });
+      var ms = mean(topPicks.map(function (c) { return c.forward_returns.d1; }));
+      var mr = mean(others.map(function (c) { return c.forward_returns.d1; }));
+      // The key has to BE the mark. Two identical squares beside the words
+      // "filled" and "hollow" is a legend that contradicts its own chart, and
+      // it is the shape — not the hue, which is one tone for both — that keeps
+      // the two kinds of score apart here.
+      clear($('outcome-legend')).append(
+        el('span', null, [el('i', { 'class': 'is-swatch', style: 'background: var(--sc-chart-1); border-radius: 50%' }),
+                          'filled dot — scored by Claude']),
+        el('span', null, [el('i', { 'class': 'is-swatch', style: 'background: none; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--sc-chart-1)' }),
+                          'hollow dot — offline checklist fallback'])
+      );
+      live(function () { drawOutcome($('outcome-chart'), done); });
+      $('outcome-verdict').textContent =
+        plural(done.length, 'candidate') + ' of the ' + (run.scored || 0) + ' scored have a +1d return' +
+        (done.length < cands.length ? '; the other ' + (cands.length - done.length) + ' are still pending' : '') + '. ' +
+        (topPicks.length && others.length
+          ? 'The ' + topPicks.length + ' on the shortlist averaged ' + pct(ms, 2) + ' against ' +
+            pct(mr, 2) + ' for the other ' + others.length + '. '
+          : '') +
+        'That is one session. A gap this size on ' + done.length + ' names is not evidence that the ' +
+        'ranking works — it takes many sessions, and the table under "Has any of this made money yet" ' +
+        'says how many are in.';
+      table($('outcome-table'), ['ticker', 'score', 'source', '+1d', '+3d', '+5d'],
+        done.map(function (c) {
+          var f = c.forward_returns;
+          var cell = function (k) {
+            return el('td', { 'class': 'sc-num',
+              text: f[k] === null || f[k] === undefined ? 'pending' : pct(f[k], 2) });
+          };
+          return el('tr', null, [
+            el('td', { 'class': 'col-name' }, [
+              el('span', { 'class': 'sc-case', text: c.ticker }),
+              c.rank <= shortN ? el('span', { 'class': 'sc-note', text: 'shortlist #' + c.rank }) : null]),
+            el('td', { 'class': 'sc-num', text: num(c.score, 1) }),
+            el('td', null, provChip(c)),
+            cell('d1'), cell('d3'), cell('d5')
+          ]);
+        }), [1, 3, 4, 5]);
+      clipWatch($('outcome-scroll'), 'Score against forward return');
+    }
+
+    // has any of this made money yet
+    var horizons = horizonStats(runs);
+    $('returns-card').hidden = !runs.length;
+    var enough = horizons.filter(function (h) { return h.sessions >= MIN_SESSIONS; });
+    $('returns-hint').textContent =
+      'Mean forward return across every scored candidate in a session, not just its shortlist, ' +
+      'weighted by how many names each session contributed. A horizon needs ' + MIN_SESSIONS +
+      ' sessions before its mean is worth reading; ' +
+      (enough.length
+        ? enough.map(function (h) { return '+' + h.days + 'd'; }).join(' and ') + ' clears that bar.'
+        : 'none of the three is close, so read all of them as provisional.');
+    clear($('returns-tiles')).append.apply($('returns-tiles'), horizons.map(function (h) {
+      var st = horizonState(h);
+      var dir = h.mean === null ? 'flat' : (h.mean > 0 ? 'good' : (h.mean < 0 ? 'bad' : 'flat'));
+      return el('div', { 'class': 'sc-tile horizon' }, [
+        el('div', { 'class': 'sc-tile__label', text: '+' + h.days + ' day' + (h.days === 1 ? '' : 's') }),
+        el('div', { 'class': 'sc-tile__value', text: h.mean === null ? 'pending' : pct(h.mean, 2) }),
+        el('div', { 'class': 'sc-delta sc-delta--' + dir,
+          text: h.mean === null ? '— no session has closed'
+            : (dir === 'good' ? '▲' : dir === 'bad' ? '▼' : '—') +
+              (h.sessions === 1 ? ' the only session so far'
+                                : ' sessions ran ' + pct(h.worst, 2) + ' to ' + pct(h.best, 2)) }),
+        el('div', { 'class': 'sc-tile__sub',
+          text: h.sessions ? plural(h.sessions, 'session') + ' · ' + commas(h.names) + ' names'
+                           : 'no session has closed' }),
+        el('span', { 'class': 'sc-chip ' + st.chip, text: st.word })
+      ]);
+    }));
+    table($('returns-table'),
+      ['horizon', 'mean return', 'sessions in', 'names behind', 'best session', 'worst session', 'status'],
+      horizons.map(function (h) {
+        var st = horizonState(h);
+        return el('tr', null, [
+          el('td', { text: '+' + h.days + ' day' + (h.days === 1 ? '' : 's') }),
+          el('td', { 'class': 'sc-num' }, figure(h.mean === null ? 'pending' : pct(h.mean, 2),
+            h.weighted ? 'weighted by names' : (h.sessions ? 'unweighted — no name counts' : null))),
+          el('td', { 'class': 'sc-num', text: commas(h.sessions) + ' of ' + commas(runs.length) }),
+          el('td', { 'class': 'sc-num', text: h.names ? commas(h.names) : '—' }),
+          el('td', { 'class': 'sc-num', text: h.best === null ? '—' : pct(h.best, 2) }),
+          el('td', { 'class': 'sc-num', text: h.worst === null ? '—' : pct(h.worst, 2) }),
+          el('td', null, el('span', { 'class': 'sc-chip ' + st.chip, text: st.word }))
+        ]);
+      }), [1, 2, 3, 4, 5]);
+    clipWatch($('returns-scroll'), 'Forward returns by horizon');
 
     // history
     $('runs-card').hidden = !runs.length;

@@ -20,8 +20,8 @@ Known scheduled falsifications:
 
 | when this lands | what goes stale |
 |---|---|
-| Step 3 sets `feed=` on the bars request | `.env.example`'s "no `feed=` is set anywhere" |
-| Step 4 replaces the 5,000,000-share floor | the IEX paragraph in `.env.example`, the volume numbers in README's Costs note, README's Layer-1 filter description |
+| ~~Step 3 sets `feed=` on the bars request~~ done | ~~`.env.example`'s "no `feed=` is set anywhere"~~ swept, along with the IEX-default paragraph it sat in |
+| Step 4 replaces the 5,000,000-share floor | `.env.example`'s "the 5,000,000-share floor is still absolute" note, the volume numbers in README's Costs note, README's Layer-1 filter description |
 | Step 5 makes failures loud | `.env.example`'s "these fail in three different ways" block |
 | ~~Step 6 fixes the test suite~~ done | ~~the `detect_burst` comment in `.gitignore`, the broken-test note in README~~ swept |
 | Step 9 emits `docs/data.json` | the "hand-authored fixture" caveat in README's dashboard section |
@@ -68,12 +68,13 @@ that a fix did not introduce a new defect of the same class.**
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net now, with known holes.** `pytest tests/` runs 74
+- **There is a regression net now, with known holes.** `pytest tests/` runs 104
   tests with no network and no API keys (step 6a). It deliberately asserts no
-  strategy thresholds — steps 4 and 7 are about to change them. Untested:
-  `get_universe()` and the symbol-file parser, `_download_batch`'s request
-  fields, `run_scan`'s retry path, `main()`'s exit code, and the real SDK wire
-  shapes (the boundaries are doubles, so an SDK change passes here).
+  strategy thresholds for the scan filter — step 4 is about to change those.
+  The 2LYNCH checks ARE asserted now (step 7), each mutation-tested. Untested:
+  `get_universe()` and the symbol-file parser, `main()`'s exit code, and the
+  real SDK wire shapes — the boundaries are doubles, so an SDK change passes
+  here.
 
 ## Local run
 
@@ -90,11 +91,11 @@ python -m src.pipeline evening --dry-run
 
 1. ~~Repo hygiene — `.gitignore`, truthful `.env.example`, secret scanning~~ done
 2. ~~Shrink the universe to a checked-in symbol list~~ done
-3. Fix the data request — split adjustment, freshness assertion
+3. ~~Fix the data request — split adjustment, freshness assertion~~ done
 4. Relative volume thresholds, percentile liquidity gate
 5. Fail loud
 6. ~~6a: real tests, offline mode, CI~~ done · 6b: threshold + canary assertions, after 4 and 7
-7. Fix the 2LYNCH math (`L` is sign-blind, `Y` excludes the burst day)
+7. ~~Fix the 2LYNCH math (`L` is sign-blind, `Y` excludes the burst day)~~ done
 8. Harden the LLM layer (`temperature=0`, structured outputs)
 9. Persist every scored candidate plus forward returns
 10. Resolve morning/evening and statefulness

@@ -30,6 +30,22 @@ import numpy as np
 import pandas as pd
 
 
+# --- thresholds -------------------------------------------------------------
+# Named because tools/make_fixture.py applies the same rules to hand-authored
+# measurements. When those two disagreed silently, the dashboard reported pass
+# rates the real checklist would never produce. Importing these makes a numeric
+# drift impossible; tests/test_lynch.py pins the predicates themselves.
+MAX_PRIOR_BURSTS = 1        # 2: first or second burst of the leg
+MIN_LINEAR_R2 = 0.55        # L: fit quality of the prior move
+MIN_LINEAR_SLOPE = 0.0      # L: ...and it must be an advance, not a collapse
+MAX_RUN_UP_1MO = 25.0       # Y: % run-up over the past month, through the burst
+MAX_EXT_VS_SMA20 = 15.0     # Y: % above the 20-day average, through the burst
+MAX_TIGHTNESS = 1.0         # N: pre-burst range vs the stock's own 60-day norm
+MAX_D1_MOVE = 2.0           # C: prior day's absolute move, %
+MAX_D1_VOL_RATIO = 1.2      # C: prior day's volume vs its 50-day average
+MAX_D1_RANGE_RATIO = 1.0    # C: prior day's range vs the same 60-day norm
+MIN_CLOSE_POS = 0.70        # H: where in the day's range the burst closed
+
 def _log_trend(y: np.ndarray) -> tuple[float, float]:
     """Least-squares fit of a straight line to `y`, returned as (slope, R²).
 
@@ -65,7 +81,7 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     rets = pre["Close"].pct_change().iloc[-20:] * 100
     prior_bursts = int((rets >= 4.0).sum())
     checks["2_first_or_second_burst"] = {
-        "pass": prior_bursts <= 1,
+        "pass": prior_bursts <= MAX_PRIOR_BURSTS,
         "value": f"{prior_bursts} prior 4% bursts in last 20 days",
     }
 
@@ -78,7 +94,7 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     slope, r2 = _log_trend(log_closes)
     fitted_move = (float(np.exp(slope * max(len(log_closes) - 1, 0))) - 1) * 100
     checks["L_linear_prior_move"] = {
-        "pass": bool(r2 >= 0.55 and slope >= 0.0),
+        "pass": bool(r2 >= MIN_LINEAR_R2 and slope >= MIN_LINEAR_SLOPE),
         "value": f"R²={r2:.2f}, fitted trend {fitted_move:+.1f}% over prior 30 days",
     }
 
@@ -92,7 +108,7 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     sma20 = closes.iloc[-20:].mean()
     ext_vs_sma20 = (closes.iloc[-1] / sma20 - 1) * 100
     checks["Y_young_trend"] = {
-        "pass": bool(run_up_1mo < 25.0 and ext_vs_sma20 < 15.0),
+        "pass": bool(run_up_1mo < MAX_RUN_UP_1MO and ext_vs_sma20 < MAX_EXT_VS_SMA20),
         # Spell out the frame of reference: the scorer reads this line, and
         # the same number means very different things before and after the
         # burst. (The old format hard-coded a "+", printing "+-33.8%".)
@@ -108,7 +124,7 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     norm_range = daily_range.iloc[-60:-7].mean() if len(pre) > 67 else daily_range.mean()
     tightness = recent_range / norm_range if norm_range else 9.9
     checks["N_narrow_consolidation"] = {
-        "pass": tightness <= 1.0,
+        "pass": tightness <= MAX_TIGHTNESS,
         "value": f"pre-burst range {recent_range:.1f}%/day = {tightness:.2f}x its norm",
     }
 
@@ -130,7 +146,7 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
         d1_range_ratio = float("inf")
         norm_text = " (no usable range norm)"
     checks["C_calm_preburst_day"] = {
-        "pass": bool(d1_move < 2.0 and d1_vol_ratio < 1.2 and d1_range_ratio <= 1.0),
+        "pass": bool(d1_move < MAX_D1_MOVE and d1_vol_ratio < MAX_D1_VOL_RATIO and d1_range_ratio <= MAX_D1_RANGE_RATIO),
         "value": (
             f"prior day {d1_move:.1f}% move, {d1_range:.1f}% range{norm_text}"
             f", {d1_vol_ratio:.2f}x volume"
@@ -142,7 +158,7 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     if rng > 0:
         close_pos = (float(burst["Close"]) - float(burst["Low"])) / rng
         checks["H_close_near_high"] = {
-            "pass": bool(close_pos >= 0.70),
+            "pass": bool(close_pos >= MIN_CLOSE_POS),
             "value": f"closed at {close_pos:.0%} of day's range",
         }
     else:

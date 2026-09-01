@@ -91,7 +91,7 @@ python -m src.pipeline evening --dry-run --tickers NVDA,PLTR,SMCI,CRWD
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 74 tests, no network or API keys needed
+pytest tests/                   # 104 tests, no network or API keys needed
 ```
 
 ## The dashboard
@@ -147,7 +147,8 @@ dependency, and the script exits 0 with a note if chromium is missing.
 ## Tuning
 
 - Scan universe: `data/symbols.txt` — a hand-curated starter list, not the whole market
-- Thresholds (price floor, gain %, share-volume floor): `ScanConfig` in `src/scanner.py`
+- Thresholds (price floor, gain %, share-volume floor), the data `feed`, and a
+  `session_date` override: `ScanConfig` in `src/scanner.py`
 - 2LYNCH pass criteria: `src/lynch.py`
 - Gate strictness / shortlist size / Claude-call cap: constants at the top of `src/pipeline.py`
 - Scoring rubric the AI follows: `knowledge/strategy.md` — edit this file to change how Claude judges setups; no code changes needed
@@ -163,10 +164,12 @@ dependency, and the script exits 0 with a note if chromium is missing.
 > and `ScanConfig` exposes only `min_price`, `min_gain_pct`, `min_today_volume`,
 > `lookback_days` and `batch_size`. Rewriting this is a later step.
 
-- Market data: free (Alpaca) — but see `.env.example`: the free plan serves
-  IEX data, a small fraction of consolidated volume, which the current
-  5,000,000-share floor will almost never clear. Free is viable only once that
-  threshold is made relative. A 230-symbol scan takes under a second inside
+- Market data: free (Alpaca). The scan now asks for `delayed_sip` rather than
+  taking the plan default, so it reads consolidated volume instead of IEX's
+  single-venue slice — see `.env.example`, and note this is unconfirmed against
+  a live account. If the account cannot serve that feed the run aborts with a
+  named error rather than returning an empty shortlist. A 230-symbol scan takes
+  under a second inside
   the Actions runner; well within the 55-min timeout.
 - Claude: ≤25 scoring calls/run with one chart image each — a few cents/day
   on Sonnet.
@@ -176,7 +179,7 @@ dependency, and the script exits 0 with a note if chromium is missing.
 ## Notes
 
 - The data layer is Alpaca (`_download_batch` in `src/scanner.py`). If the free
-  IEX feed proves too thin once the volume threshold is relative, swapping that
+  chosen feed proves too thin once the volume threshold is relative, swapping that
   one function for another provider leaves the rest of the pipeline unchanged.
 - Every run archives its shortlist to `results/*.csv` and uploads charts as
   workflow artifacts (retained 30 days, and `results/` is gitignored so

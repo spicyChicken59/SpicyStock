@@ -82,13 +82,56 @@ const REAL = JSON.parse(await readFile(join(ROOT, 'data.json'), 'utf8'));
 const clone = () => JSON.parse(JSON.stringify(REAL));
 const VARIANTS = {
   // What the page must look like once step 9 starts recording forward returns.
+  // 22 of the 25 land; the last three stay null, because a session closing for
+  // some names and not others is the normal state and the score/outcome plot
+  // must not quietly drop the pending ones or draw them at zero. The shortlist
+  // does better than the rest here, so the page has a real gap to describe —
+  // and, being one session, a real reason to refuse to call it evidence.
   forward() {
     const d = clone();
-    const vals = [[2.41, 3.02, -0.87], [-1.16, 0.44, 1.98], [0.73, 4.12, 5.6], [3.05, 2.2, 2.9], [-2.4, -3.11, -1.05]];
-    d.candidates.slice(0, 5).forEach((c, i) => {
+    const vals = [
+      [2.41, 3.02, -0.87], [-1.16, 0.44, 1.98], [0.73, 4.12, 5.6], [3.05, 2.2, 2.9], [-2.4, -3.11, -1.05],
+      [1.42, 2.18, 1.04], [-0.88, -1.42, 0.36], [0.31, 1.07, 1.85], [-1.95, -0.62, -2.4], [2.1, 3.44, 2.06],
+      [-0.44, 0.19, 0.77], [0.67, -0.35, 1.29], [-2.63, -3.9, -2.18], [1.08, 0.52, -0.44], [-0.19, 1.66, 2.31],
+      [-1.37, -2.05, -0.93], [0.52, 0.88, 1.4], [-3.02, -1.74, -3.61], [0.94, 2.37, 0.18], [-0.71, -1.11, 0.62],
+      [-1.84, -2.48, -1.29], [0.26, 0.73, 1.02]
+    ];
+    d.candidates.slice(0, vals.length).forEach((c, i) => {
       c.forward_returns = { d1: vals[i][0], d3: vals[i][1], d5: vals[i][2], as_of: '2026-09-08' };
     });
     d.runs[0].forward_returns = { d1: 0.52, d3: 1.33, d5: 1.71, n: d.candidates.length };
+    return d;
+  },
+  // A file that recorded a checklist only for the candidates it scored — which
+  // is what step 9 will produce if it forgets the gated ones. Every row left
+  // has already cleared the gate, so a per-check pass rate over them describes
+  // survivors and nothing else. The page has to say that, not print the number.
+  nodetail() {
+    const d = clone();
+    d.gated_out.forEach((g) => { delete g.lynch_detail; delete g.lynch_total; });
+    return d;
+  },
+  // The same run over a full-market universe — where the rebuild is heading,
+  // and where the shortlist is a thousandth of what was scanned. On one shared
+  // linear scale that bar is under a pixel, and a funnel that lets it round
+  // away has quietly stopped showing the last stage at all.
+  wide() {
+    const d = clone();
+    d.run.universe = { label: 'every US common stock', size: 5000 };
+    return d;
+  },
+  // Enough closed sessions for ONE horizon to clear the page's own bar, so the
+  // "not enough data" verdict is a judgement the page can change its mind
+  // about rather than a string it always prints.
+  history() {
+    const d = clone();
+    for (let i = 0; i < 24; i++) {
+      d.runs.push({
+        date: `2026-07-${String((i % 28) + 1).padStart(2, '0')}`, type: 'evening',
+        bursts: 40, passed_gate: 22, scored: 20, shortlist_size: 5, top_score: 8.0, fallbacks: 0,
+        forward_returns: { d1: ((i % 7) - 3) * 0.4, d3: null, d5: null, n: 20 }
+      });
+    }
     return d;
   },
   // A run that got part way and lost something on the way.
@@ -178,6 +221,41 @@ const setTheme = (t) => page.click(`.sc-theme-toggle button[data-theme="${t}"]`)
 const run = REAL.run;
 const fallbacks = REAL.candidates.filter((c) => c.provenance.source !== 'claude');
 
+// The four analysis views are all arithmetic over the fixture, so the expected
+// answers are computed here from the same data the page reads. Nothing below
+// compares the page against a number typed into this file.
+const STAGES = [
+  ['universe scanned', run.universe.size], ['4% bursts', run.bursts],
+  ['passed 2LYNCH', run.passed_gate], ['scored', run.scored], ['shortlist', run.shortlist_size]
+];
+const everyBurst = REAL.candidates.concat(REAL.gated_out);
+const CHECKS = (() => {
+  const by = new Map();
+  for (const r of everyBurst) {
+    const cleared = r.lynch_passes >= run.gate.min_lynch_passes;
+    for (const d of r.lynch_detail || []) {
+      if (!by.has(d.code)) by.set(d.code, { code: d.code, pass: 0, total: 0, cpass: 0, ctotal: 0, fpass: 0, ftotal: 0 });
+      const s = by.get(d.code);
+      s.total++; if (d.pass) s.pass++;
+      if (cleared) { s.ctotal++; if (d.pass) s.cpass++; } else { s.ftotal++; if (d.pass) s.fpass++; }
+    }
+  }
+  return [...by.values()].map((s) => ({ ...s, rate: s.pass / s.total, gap: s.cpass / s.ctotal - s.fpass / s.ftotal }));
+})();
+const HARSHEST = [...CHECKS].sort((a, b) => a.rate - b.rate)[0];
+const WEAKEST = [...CHECKS].sort((a, b) => a.gap - b.gap)[0];
+const horizon = (k) => {
+  const have = REAL.runs.filter((r) => (r.forward_returns || {})[k] !== null && (r.forward_returns || {})[k] !== undefined);
+  const names = have.reduce((a, r) => a + (r.forward_returns.n || 0), 0);
+  const wsum = have.reduce((a, r) => a + r.forward_returns[k] * (r.forward_returns.n || 0), 0);
+  const vals = have.map((r) => r.forward_returns[k]);
+  return { sessions: have.length, names, mean: names ? wsum / names : null,
+           plain: vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null,
+           best: vals.length ? Math.max(...vals) : null, worst: vals.length ? Math.min(...vals) : null };
+};
+const money = (v) => (v > 0 ? '+' : '') + v.toFixed(2) + '%';
+const near = (a, b, tol) => Math.abs(a - b) <= tol;
+
 // --- the run opens ---------------------------------------------------------
 // "auto" follows the runner's OS, which in headless Chromium is light, so each
 // theme is pinned explicitly rather than assumed.
@@ -188,7 +266,39 @@ ok('the run opens', (await page.textContent('#h1')) !== 'Snapshot unavailable', 
 ok('the headline states the funnel',
   (await page.textContent('#h1')) === `${run.bursts} bursts, ${run.scored} scored, ${run.shortlist_size} on the shortlist`,
   await page.textContent('#h1'));
-ok('four tiles', (await page.locator('#kpis .sc-tile').count()) === 4);
+
+// --- the funnel ------------------------------------------------------------
+// Four tiles could state the four numbers but not the shape between them. The
+// figure claims a shared linear scale and a named cause for every loss, so the
+// checks are that the bars are in proportion to the counts and that the drops
+// are the subtractions a reader would do.
+const funnel = await page.evaluate(() => ({
+  kept: [...document.querySelectorAll('#funnel-chart .seg-kept')].map((r) => +r.getAttribute('width')),
+  lost: document.querySelectorAll('#funnel-chart .seg-lost').length,
+  rows: [...document.querySelectorAll('#funnel-table tbody tr')].map((r) => [...r.children].map((c) => c.textContent.trim()))
+}));
+ok('the funnel draws every stage from the universe to the shortlist',
+  funnel.kept.length === STAGES.length && funnel.rows.length === STAGES.length && funnel.lost === STAGES.length - 1,
+  `${funnel.kept.length} bars, ${funnel.rows.length} rows, ${funnel.lost} drop segments`);
+ok('and the stages are the run\'s own numbers, named and in order',
+  funnel.rows.every((r, i) => r[0].startsWith(STAGES[i][0]) && r[1] === String(STAGES[i][1])),
+  JSON.stringify(funnel.rows.map((r) => r[1])) + ' vs ' + JSON.stringify(STAGES.map((x) => x[1])));
+ok('every drop is the difference between the two stages either side of it',
+  funnel.rows.every((r, i) => r[3] === (i === 0 ? '\u2014' : '\u2212' + (STAGES[i - 1][1] - STAGES[i][1]))),
+  JSON.stringify(funnel.rows.map((r) => r[3])));
+// The point of the figure: 5 of 230 has to LOOK like 5 of 230. A per-row
+// rescale would draw five near-equal bars and hide the attrition entirely.
+const scale = funnel.kept.map((w, i) => w / funnel.kept[0]);
+ok('the stages share one scale, so the narrowing is visible and not just stated',
+  scale.every((f, i) => i === 0 || f <= scale[i - 1] + 0.001)
+  && STAGES.every(([, v], i) => (v / STAGES[0][1]) * funnel.kept[0] < 4 || near(scale[i], v / STAGES[0][1], 0.02)),
+  scale.map((f) => f.toFixed(3)).join(' '));
+const worstDrop = STAGES.slice(1).map(([name, v], i) => ({ name, lost: STAGES[i][1] - v }))
+  .reduce((a, b) => (b.lost > a.lost ? b : a));
+ok('the page names where the attrition actually is',
+  (await page.textContent('#funnel-hint')).includes(String(worstDrop.lost))
+  && (await page.textContent('#funnel-hint')).includes(worstDrop.name),
+  `${worstDrop.lost} at ${worstDrop.name}`);
 
 // The page's honesty about ITSELF. README claims the page "says so at the top of
 // itself"; until now nothing asserted it, and a fabricated run rendering as a
@@ -304,6 +414,95 @@ const histAgree = await page.evaluate(() => {
 });
 ok('and it agrees with the tiles above it',
   histAgree.bursts === String(run.bursts) && histAgree.scored === String(run.scored), JSON.stringify(histAgree));
+
+// --- which 2LYNCH check is doing the gating --------------------------------
+// The view's whole claim is that it looks at EVERY burst. A rate over the
+// scored candidates alone would be survivorship bias with a percentage sign on
+// it: all 25 of them cleared the gate, so the names a check rejected are
+// exactly the ones missing. These check the denominators, not the picture.
+const checks = await page.evaluate(() => ({
+  bars: [...document.querySelectorAll('#checks-chart .seg-kept')].map((r) => +r.getAttribute('width')),
+  track: [...document.querySelectorAll('#checks-chart .seg-lost')].map((r) => +r.getAttribute('width')),
+  rows: [...document.querySelectorAll('#checks-table tbody tr')].map((r) => [...r.children].map((c) => c.textContent.trim())),
+  bias: !document.getElementById('checks-bias').hidden
+}));
+ok('a pass rate for each of the six checks',
+  checks.rows.length === CHECKS.length && checks.bars.length === CHECKS.length,
+  `${checks.rows.length} rows, ${checks.bars.length} bars, ${CHECKS.length} checks`);
+ok('the rates are taken over every burst the scan found, not just the scored',
+  checks.rows.every((r, i) => r[2].endsWith(`of ${CHECKS[i].total}`) && CHECKS[i].total === run.bursts),
+  JSON.stringify(checks.rows.map((r) => r[2])));
+ok('and the gate split accounts for all of them',
+  checks.rows.every((r, i) => r[3].endsWith(`of ${CHECKS[i].ctotal}`) && r[4].endsWith(`of ${CHECKS[i].ftotal}`))
+  && CHECKS[0].ctotal + CHECKS[0].ftotal === run.bursts && CHECKS[0].ctotal === run.passed_gate,
+  `${CHECKS[0].ctotal} cleared + ${CHECKS[0].ftotal} failed = ${run.bursts}`);
+ok('each row is the check it names',
+  checks.rows.every((r, i) => r[0] === CHECKS[i].code)
+  && checks.rows.every((r, i) => r[2].startsWith(`${Math.round(CHECKS[i].rate * 100)}%`)),
+  JSON.stringify(checks.rows.map((r) => r[0] + ' ' + r[2])));
+ok('the bars are the rates the table prints',
+  checks.bars.every((w, i) => near(w / checks.track[i], CHECKS[i].rate, 0.02)),
+  checks.bars.map((w, i) => (w / checks.track[i]).toFixed(2)).join(' '));
+// The finding this view exists to produce, in words as well as bars. Looked up
+// rather than indexed: a page that stops labelling either extreme must fail
+// here, not throw and take the rest of the run down with it.
+const weakRow = checks.rows.find((r) => r[6] === 'weakest separator');
+const hardRow = checks.rows.find((r) => r[6] === 'hardest gate');
+ok('the check that barely separates is called out by name',
+  !!weakRow && weakRow[0] === WEAKEST.code && (await page.textContent('#checks-hint')).includes(WEAKEST.code),
+  `${WEAKEST.code} at ${(WEAKEST.gap * 100).toFixed(0)}pts separation, page said ${weakRow ? weakRow[0] : 'nothing'}`);
+ok('and so is the one that rejects most',
+  !!hardRow && hardRow[0] === HARSHEST.code
+  && (await page.textContent('#checks-hint')).includes(`${Math.round(HARSHEST.rate * 100)}%`),
+  `${HARSHEST.code} passes ${(HARSHEST.rate * 100).toFixed(0)}%, page said ${hardRow ? hardRow[0] : 'nothing'}`);
+ok('no bias warning when the file really does carry every checklist', !checks.bias);
+
+// --- has any of this made money yet ----------------------------------------
+// A mean is the easiest number on this page to overstate. Three ways it could:
+// counting a session that has not closed, weighting a 5-name session like a
+// 25-name one, and calling five sessions a measurement.
+const tiles = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')].map((t) => ({
+  label: t.querySelector('.sc-tile__label').textContent.trim(),
+  value: t.querySelector('.sc-tile__value').textContent.trim(),
+  sub: t.querySelector('.sc-tile__sub').textContent.trim(),
+  delta: t.querySelector('.sc-delta').textContent.trim(),
+  chip: t.querySelector('.sc-chip').textContent.trim()
+})));
+const H1 = horizon('d1'), H5 = horizon('d5');
+ok('one tile per horizon', tiles.length === 3 && tiles.map((t) => t.label).join('|') === '+1 day|+3 days|+5 days',
+  tiles.map((t) => t.label).join('|'));
+ok('the mean is weighted by how many names each session contributed',
+  tiles[0].value === money(H1.mean),
+  `page ${tiles[0].value}, weighted ${money(H1.mean)}, unweighted ${money(H1.plain)}`);
+ok('a session that has not closed is not counted as one',
+  tiles[0].sub.startsWith(`${H1.sessions} sessions`) && H1.sessions < REAL.runs.length,
+  `${tiles[0].sub} — ${REAL.runs.length} runs in the file`);
+// +5d exists for one session out of six. Treating the other five as zero would
+// pull it from -0.42% to about -0.08%, which is the whole failure mode.
+ok('and the horizons that have not happened are not averaged in as zeros',
+  tiles[2].value === money(H5.mean) && H5.sessions === 1,
+  `${tiles[2].value} from ${H5.sessions} session, ${H5.names} names`);
+// One observation is not a range. It read "ran -0.42% to -0.42%" until it did.
+ok('a single session is not dressed up as a spread',
+  H5.sessions !== 1 || !/ran .* to /.test(tiles[2].delta), tiles[2].delta);
+ok('five sessions is not called a measurement',
+  tiles.every((t) => t.chip === 'not enough data')
+  && (await page.textContent('#returns-hint')).includes('none of the three'),
+  tiles.map((t) => t.chip).join(' | '));
+
+// --- score against outcome, before there is any outcome --------------------
+const outcome = await page.evaluate(() => ({
+  plot: !document.getElementById('outcome-plot').hidden,
+  empty: !document.getElementById('outcome-empty').hidden,
+  text: document.getElementById('outcome-empty').textContent.trim(),
+  dots: document.querySelectorAll('#outcome-chart .sc-dot').length
+}));
+ok('with nothing measured yet the outcome view draws nothing and says why',
+  !outcome.plot && outcome.empty && outcome.dots === 0 && /has not closed/.test(outcome.text),
+  outcome.text.slice(0, 80));
+ok('and does not pass a missing return off as a flat line at zero',
+  /not the same as a flat line at zero/.test(outcome.text));
+
 await shot('desktop-dark');
 
 // --- light ------------------------------------------------------------------
@@ -371,7 +570,92 @@ ok('and reach the shortlist card',
   (await page.locator('#shortlist .pick', { hasText: '+1d' }).count()) > 0);
 ok('a run whose returns are in is no longer pending in the history',
   !(await page.locator('#runs-table tbody tr:first-child').textContent()).includes('pending'));
+
+// --- score against outcome, once there IS an outcome -----------------------
+// The most over-claimable view on the page. It has to plot only the candidates
+// that really have a return, put them where their numbers say, keep the two
+// kinds of score apart by shape rather than hue, and refuse to call one
+// session's gap a result.
+const FWD = VARIANTS.forward();
+const fwdDone = FWD.candidates.filter((c) => (c.forward_returns || {}).d1 !== null && (c.forward_returns || {}).d1 !== undefined);
+const fwdPending = FWD.candidates.length - fwdDone.length;
+const plot = await page.evaluate(() => {
+  const zero = document.querySelector('#outcome-chart .sc-chart__crosshair');
+  return {
+    dots: [...document.querySelectorAll('#outcome-chart .sc-dot')].map((d) => ({
+      cx: +d.getAttribute('cx'), cy: +d.getAttribute('cy'), hollow: d.classList.contains('is-hollow')
+    })),
+    y0: zero ? +zero.getAttribute('y1') : null,
+    rows: document.querySelectorAll('#outcome-table tbody tr').length,
+    verdict: document.getElementById('outcome-verdict').textContent.trim()
+  };
+});
+ok('a dot for every candidate that has a return, and none for the ones that do not',
+  plot.dots.length === fwdDone.length && plot.rows === fwdDone.length && fwdPending > 0,
+  `${plot.dots.length} dots, ${fwdDone.length} measured, ${fwdPending} still pending`);
+ok('and the page says how many are still pending',
+  plot.verdict.includes(`${fwdPending} are still pending`), plot.verdict.slice(0, 110));
+// A dot above the zero line made money and a dot below it lost money. An
+// inverted or unscaled y would still draw 22 dots.
+ok('a dot sits on the side of zero its return says it does',
+  plot.y0 !== null && plot.dots.every((d, i) => {
+    // Guarded, not indexed blind: a page that plots MORE dots than there are
+    // measured candidates must fail here rather than throw on the overrun.
+    const c = fwdDone[i];
+    return !!c && (c.forward_returns.d1 > 0 ? d.cy < plot.y0 : d.cy > plot.y0);
+  }),
+  `zero at y=${plot.y0}, ${plot.dots.length} dots for ${fwdDone.length} measured`);
+ok('and further right means a higher score',
+  plot.dots.every((d, i) => i === 0 || d.cx <= plot.dots[i - 1].cx + 0.001),
+  plot.dots.slice(0, 4).map((d) => d.cx.toFixed(1)).join(' '));
+// Found by looking at it: the legend drew two identical squares beside the
+// words "filled" and "hollow", so the key contradicted the chart it explained.
+const keys = await page.evaluate(() => [...document.querySelectorAll('#outcome-legend i')]
+  .map((i) => getComputedStyle(i).backgroundColor + '|' + getComputedStyle(i).boxShadow));
+ok('the legend keys are the two marks, not two identical squares',
+  keys.length === 2 && keys[0] !== keys[1], keys.join('  vs  '));
+ok('a fallback score is a hollow dot, so the split is not only a colour',
+  plot.dots.filter((d) => d.hollow).length === fwdDone.filter((c) => c.provenance.source !== 'claude').length,
+  `${plot.dots.filter((d) => d.hollow).length} hollow of ${plot.dots.length}`);
+ok('one session is not reported as evidence that the ranking works',
+  /one session/.test(plot.verdict) && /not evidence/.test(plot.verdict), plot.verdict.slice(-120));
 await shot('forward-returns');
+
+// --- a file that recorded the checklist only for what it scored ------------
+await open('/v/nodetail/');
+const biased = await page.evaluate(() => ({
+  shown: !document.getElementById('checks-bias').hidden,
+  body: document.getElementById('checks-bias-body').textContent.trim(),
+  hint: document.getElementById('checks-hint').textContent.trim(),
+  rows: document.querySelectorAll('#checks-table tbody tr').length
+}));
+ok('per-check rates over the survivors alone are labelled as overstatements',
+  biased.shown && /overstatement/.test(biased.body) && biased.body.includes(`${run.scored} bursts`),
+  biased.body.slice(0, 120));
+ok('and the view still draws, over the rows it does have',
+  biased.rows === CHECKS.length && biased.hint.includes(`${run.scored} bursts`), biased.hint.slice(0, 90));
+
+// --- the funnel when the last stage is a rounding error --------------------
+await page.setViewportSize({ width: 390, height: 844 });
+await open('/v/wide/');
+const wide = await page.evaluate(() => ({
+  kept: [...document.querySelectorAll('#funnel-chart .seg-kept')].map((r) => +r.getAttribute('width')),
+  last: [...document.querySelectorAll('#funnel-table tbody tr')].pop().textContent.replace(/\s+/g, ' ').trim()
+}));
+ok('a stage worth a thousandth of the universe is still drawn, not rounded away',
+  wide.kept.length === STAGES.length && wide.kept.every((w) => w >= 3),
+  wide.kept.map((w) => w.toFixed(2)).join(' '));
+ok('and it still says how many names it is',
+  wide.last.includes(String(run.shortlist_size)), wide.last.slice(0, 90));
+await page.setViewportSize({ width: 1280, height: 1000 });
+
+// --- enough sessions for the page to change its mind -----------------------
+await open('/v/history/');
+const grown = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')]
+  .map((t) => t.querySelector('.sc-chip').textContent.trim()));
+ok('a horizon with enough sessions stops saying there is not enough data',
+  grown[0] === 'measured' && grown[1] === 'not enough data' && grown[2] === 'not enough data',
+  grown.join(' | '));
 
 await open('/v/degraded/');
 ok('a run that lost something says so at the top', !(await page.locator('#notice').isHidden()));

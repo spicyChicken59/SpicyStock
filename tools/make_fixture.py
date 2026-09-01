@@ -9,7 +9,13 @@ import collections, json, pathlib, sys
 
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
+from src.pipeline import MIN_LYNCH_PASSES
 from src.scanner import ScanConfig            # the real floors, not a copy
+from src.lynch import (                       # the real thresholds, not a copy
+    MAX_PRIOR_BURSTS, MIN_LINEAR_R2, MIN_LINEAR_SLOPE, MAX_RUN_UP_1MO,
+    MAX_EXT_VS_SMA20, MAX_TIGHTNESS, MAX_D1_MOVE, MAX_D1_VOL_RATIO,
+    MAX_D1_RANGE_RATIO, MIN_CLOSE_POS,
+)
 _CFG = ScanConfig()
 
 def _universe():
@@ -55,20 +61,41 @@ LABELS = {
     "H": "closed near the high",
 }
 
-def lynch(prior_bursts, r2, run_up, ext, recent_range, tightness, d1_move, d1_range, d1_vol, close_pos):
-    """Mirrors src/lynch.py: same thresholds, same value strings."""
+def lynch(prior_bursts, r2, run_up, ext, recent_range, tightness, d1_move, d1_range, d1_vol, close_pos, gain=0.0):
+    """The same rules src/lynch.py applies, over hand-authored measurements.
+
+    The thresholds are IMPORTED from src.lynch, not copied, so a numeric drift
+    is impossible. This function once held its own copies and silently fell
+    behind the step-7 fixes, so the dashboard reported pass rates the real
+    checklist would never produce. tests/test_lynch.py pins the predicates.
+    """
+    # Everything src/lynch.py needs that this spec did not carry is DERIVED here
+    # rather than added to 47 hand-written rows:
+    #   L's slope   -- run_up is the prior month's move, so its sign is the
+    #                  fitted trend's sign.
+    #   Y's values  -- src measures through the burst day; the spec's run_up and
+    #                  ext are pre-burst, so compound in the row's own gain.
+    #   C's ratio   -- norm_range = recent_range / tightness, by N's definition.
+    fitted = run_up
+    run_up_through = ((1 + run_up / 100) * (1 + gain / 100) - 1) * 100
+    ext_through = ((1 + ext / 100) * (1 + gain / 100) - 1) * 100
+    norm_range = (recent_range / tightness) if tightness else 0.0
+    d1_range_ratio = (d1_range / norm_range) if norm_range else 0.0
     return [
-        {"code": "2", "label": LABELS["2"], "pass": prior_bursts <= 1,
+        {"code": "2", "label": LABELS["2"], "pass": prior_bursts <= MAX_PRIOR_BURSTS,
          "value": f"{prior_bursts} prior 4% bursts in last 20 days"},
-        {"code": "L", "label": LABELS["L"], "pass": r2 >= 0.55,
-         "value": f"R²={r2:.2f} over prior 30 days"},
-        {"code": "Y", "label": LABELS["Y"], "pass": run_up < 25.0 and ext < 15.0,
-         "value": f"+{run_up:.1f}% past month, {ext:+.1f}% vs 20SMA"},
-        {"code": "N", "label": LABELS["N"], "pass": tightness <= 1.0,
+        {"code": "L", "label": LABELS["L"],
+         "pass": r2 >= MIN_LINEAR_R2 and fitted >= MIN_LINEAR_SLOPE,
+         "value": f"R²={r2:.2f}, fitted trend {fitted:+.1f}% over prior 30 days"},
+        {"code": "Y", "label": LABELS["Y"],
+         "pass": run_up_through < MAX_RUN_UP_1MO and ext_through < MAX_EXT_VS_SMA20,
+         "value": f"{run_up_through:+.1f}% past month, {ext_through:+.1f}% vs 20SMA (through today's burst)"},
+        {"code": "N", "label": LABELS["N"], "pass": tightness <= MAX_TIGHTNESS,
          "value": f"pre-burst range {recent_range:.1f}%/day = {tightness:.2f}x its norm"},
-        {"code": "C", "label": LABELS["C"], "pass": d1_move < 2.0 and d1_vol < 1.2,
-         "value": f"prior day {d1_move:.1f}% move, {d1_range:.1f}% range, {d1_vol:.2f}x volume"},
-        {"code": "H", "label": LABELS["H"], "pass": close_pos >= 0.70,
+        {"code": "C", "label": LABELS["C"],
+         "pass": d1_move < MAX_D1_MOVE and d1_vol < MAX_D1_VOL_RATIO and d1_range_ratio <= MAX_D1_RANGE_RATIO,
+         "value": f"prior day {d1_move:.1f}% move, {d1_range:.1f}% range = {d1_range_ratio:.2f}x its norm, {d1_vol:.2f}x volume"},
+        {"code": "H", "label": LABELS["H"], "pass": close_pos >= MIN_CLOSE_POS,
          "value": f"closed at {close_pos:.0%} of day's range"},
     ]
 
@@ -196,11 +223,39 @@ SPEC = [
       (-71.8, 14.2, -8.4, -34.2)),
 ]
 
-SPEC = _remap(SPEC, 0)
+def _consistent_with_the_checklist(specs):
+    """Make the hand-authored measurements possible under the CURRENT rules.
+
+    These tuples were written against the pre-step-7 checklist, where Y ignored
+    the burst day and C ignored the prior day's range. Under the real rules some
+    rows now gate out, which the assertions below catch. Rather than loosen the
+    rules to fit invented numbers, walk the numbers back until they describe a
+    candidate the real checklist would actually pass: shrink the prior run-up so
+    run-up-through-the-burst clears Y, and the prior day's range so it sits
+    inside its own norm for C. Nothing else is touched.
+    """
+    out = []
+    for spec in specs:
+        d = spec._asdict()
+        lm = list(d["lm"])
+        gain = d["gain"]
+        for _ in range(40):
+            passes = sum(1 for c in lynch(*lm, gain=gain) if c["pass"])
+            if passes >= 3:
+                break
+            lm[2] *= 0.80          # run_up
+            lm[3] *= 0.80          # ext vs 20SMA
+            lm[7] *= 0.85          # prior day's range
+        d["lm"] = tuple(lm)
+        out.append(type(spec)(**d))
+    return out
+
+
+SPEC = _consistent_with_the_checklist(_remap(SPEC, 0))
 
 
 def build_candidate(s):
-    detail = lynch(*s.lm)
+    detail = lynch(*s.lm, gain=s.gain)
     passes = sum(1 for d in detail if d["pass"])
     assert passes >= 3, f"{s.t} would have been gated out at {passes}/6"
     if s.src == "fallback":
@@ -250,39 +305,126 @@ for i, c in enumerate(candidates, 1):
 # --- what did not get scored ------------------------------------------------
 # 47 bursts - 25 scored = 22. Sixteen failed the >=3/6 gate; six cleared it but
 # fell outside MAX_TO_SCORE, which sorts on (passes, gain_pct) descending.
-G = collections.namedtuple("G", "t close gain vol prev passes reason")
+#
+# These rows carry their 2LYNCH MEASUREMENTS (lm), not just a pass count, for
+# the same reason the scored rows do: the dashboard's per-check aggregate asks
+# which of the six checks is doing the gating, and that question cannot be
+# answered from the names that passed the gate. A rate computed over the scored
+# 25 alone is survivorship bias wearing a percentage sign — the candidates a
+# check rejected are exactly the ones missing from it. `passes` stays declared
+# because the gate/cap arithmetic below is built on it, and build_gated asserts
+# the measurements compute back to it.
+G = collections.namedtuple("G", "t close gain vol prev passes reason lm")
 GATED = [
-    G("SOUN",  8.94,  5.12, 14208700,  6104300, 2, "lynch_gate"),
-    G("MARA",  19.83, 4.71, 28417200, 13092400, 2, "lynch_gate"),
-    G("RIOT",  14.26, 6.38, 31844100, 14208900, 2, "lynch_gate"),
-    G("CLSK",  11.07, 4.29, 22193600, 10847100, 1, "lynch_gate"),
-    G("AI",    27.61, 5.84,  9214800,  4108600, 2, "lynch_gate"),
-    G("BBAI",   6.42, 8.13, 18774200,  7442800, 1, "lynch_gate"),
-    G("VRT",   142.9, 4.06,  7118400,  3402700, 2, "lynch_gate"),
-    G("SMCI",  38.74, 4.92, 26094300, 11884200, 2, "lynch_gate"),
-    G("APLD",  16.38, 7.44, 13627900,  5814300, 1, "lynch_gate"),
-    G("NNE",   34.12, 6.71,  6483100,  2914700, 2, "lynch_gate"),
-    G("CRML",   4.18, 11.62, 9847300,  3218400, 0, "lynch_gate"),
-    G("MVIS",   1.94, 9.88, 21094600,  8412700, 0, "lynch_gate"),
-    G("GRRR",   3.47, 14.21, 7482100,  2104800, 0, "lynch_gate"),
-    G("SERV",  12.83, 5.47, 10428300,  4816200, 2, "lynch_gate"),
-    G("LTBR",  17.29, 4.83,  5218700,  2408100, 2, "lynch_gate"),
-    G("KTOS",  41.62, 4.11,  6104200,  2884300, 2, "lynch_gate"),
+    #                                                    2LYNCH measurements, in lynch()'s argument order
+    G("SOUN",  8.94,  5.12, 14208700,  6104300, 2, "lynch_gate",
+      (1, 0.44, 28.3, 16.4, 4.2, 1.21, 2.6, 4.9, 1.38, 0.91)),
+    G("MARA",  19.83, 4.71, 28417200, 13092400, 2, "lynch_gate",
+      (3, 0.31, 18.1, 9.4, 6.0, 1.44, 3.2, 5.7, 1.51, 0.84)),
+    G("RIOT",  14.26, 6.38, 31844100, 14208900, 2, "lynch_gate",
+      (4, 0.22, 26.9, 15.8, 7.7, 1.63, 1.6, 3.2, 1.13, 0.78)),
+    G("CLSK",  11.07, 4.29, 22193600, 10847100, 1, "lynch_gate",
+      (2, 0.48, 41.2, 24.3, 9.2, 1.32, 2.9, 5.2, 1.29, 0.88)),
+    G("AI",    27.61, 5.84,  9214800,  4108600, 2, "lynch_gate",
+      (0, 0.36, 31.4, 17.7, 10.9, 1.77, 3.6, 6.1, 1.64, 0.73)),
+    G("BBAI",   6.42, 8.13, 18774200,  7442800, 1, "lynch_gate",
+      (3, 0.19, 47.6, 28.4, 4.9, 1.18, 2.4, 4.6, 1.73, 0.95)),
+    G("VRT",   142.9, 4.06,  7118400,  3402700, 2, "lynch_gate",
+      (2, 0.41, 23.8, 13.9, 8.3, 1.51, 4.1, 7.2, 1.47, 0.81)),
+    G("SMCI",  38.74, 4.92, 26094300, 11884200, 2, "lynch_gate",
+      (1, 0.64, 36.2, 21.7, 12.0, 1.94, 2.2, 4.4, 1.33, 0.64)),
+    G("APLD",  16.38, 7.44, 13627900,  5814300, 1, "lynch_gate",
+      (1, 0.50, 25.4, 15.2, 5.3, 1.27, 3.4, 5.9, 1.88, 0.41)),
+    G("NNE",   34.12, 6.71,  6483100,  2914700, 2, "lynch_gate",
+      (2, 0.34, 52.1, 31.6, 10.0, 1.68, 1.7, 3.4, 1.19, 0.71)),
+    G("CRML",   4.18, 11.62, 9847300,  3218400, 0, "lynch_gate",
+      (6, 0.13, 38.9, 22.8, 6.9, 2.13, 4.7, 8.0, 1.57, 0.36)),
+    G("MVIS",   1.94, 9.88, 21094600,  8412700, 0, "lynch_gate",
+      (2, 0.44, 28.3, 16.4, 4.2, 1.21, 2.6, 4.9, 1.38, 0.61)),
+    G("GRRR",   3.47, 14.21, 7482100,  2104800, 0, "lynch_gate",
+      (3, 0.31, 33.7, 19.1, 6.0, 1.44, 3.2, 5.7, 1.51, 0.52)),
+    G("SERV",  12.83, 5.47, 10428300,  4816200, 2, "lynch_gate",
+      (1, 0.22, 26.9, 15.8, 7.7, 1.63, 2.1, 4.3, 1.42, 0.78)),
+    G("LTBR",  17.29, 4.83,  5218700,  2408100, 2, "lynch_gate",
+      (2, 0.48, 21.6, 11.8, 9.2, 1.32, 2.9, 5.2, 1.29, 0.88)),
+    G("KTOS",  41.62, 4.11,  6104200,  2884300, 2, "lynch_gate",
+      (5, 0.66, 31.4, 17.7, 10.9, 1.77, 0.7, 1.9, 0.88, 0.38)),
     # cleared the gate at 3/6 but ranked below the top 25 on (passes, gain_pct)
-    G("EOSE",   7.83, 4.07, 12048600,  5417300, 3, "score_cap"),
-    G("MP",     48.16, 4.05, 8114700,  3982400, 3, "score_cap"),
-    G("ASTS",   61.94, 4.04, 11384200, 5208900, 3, "score_cap"),
-    G("VSAT",   28.37, 4.03,  4917200, 2314600, 3, "score_cap"),
-    G("NPWR",    9.16, 4.02,  6742800, 3108400, 3, "score_cap"),
-    G("TMC",     4.71, 4.01, 15208400, 7014900, 3, "score_cap"),
+    G("EOSE",   7.83, 4.07, 12048600,  5417300, 3, "score_cap",
+      (1, 0.19, 11.3, 5.4, 4.9, 1.18, 2.4, 4.6, 1.73, 0.95)),
+    G("MP",     48.16, 4.05, 8114700,  3982400, 3, "score_cap",
+      (2, 0.41, 23.8, 13.9, 8.3, 1.51, 0.5, 1.6, 0.79, 0.81)),
+    G("ASTS",   61.94, 4.04, 11384200, 5208900, 3, "score_cap",
+      (1, 0.27, 36.2, 21.7, 12.0, 1.94, 1.4, 3.0, 1.11, 0.76)),
+    G("VSAT",   28.37, 4.03,  4917200, 2314600, 3, "score_cap",
+      (1, 0.50, 7.9, 3.2, 5.3, 1.27, 3.4, 5.9, 1.88, 0.86)),
+    G("NPWR",    9.16, 4.02,  6742800, 3108400, 3, "score_cap",
+      (0, 0.56, 52.1, 31.6, 10.0, 1.68, 2.8, 5.1, 1.26, 0.71)),
+    G("TMC",     4.71, 4.01, 15208400, 7014900, 3, "score_cap",
+      (6, 0.13, 12.6, 6.9, 4.2, 0.86, 4.7, 8.0, 1.57, 0.93)),
 ]
-GATED = _remap(GATED, len(SPEC))
+def _still_gated_out(specs):
+    """Make each gated row consistent with the reason it declares.
 
-gated_out = [{
-    "ticker": g.t, "date": SESSION, "close": g.close, "gain_pct": g.gain,
-    "volume": g.vol, "volume_ratio": round(g.vol / g.prev, 2),
-    "lynch": f"{g.passes}/6", "lynch_passes": g.passes, "reason": g.reason,
-} for g in GATED]
+    Two different targets, which the first version of this loop conflated:
+      lynch_gate rows must FAIL the checklist -- walk down the check that is
+        actually passing (H, the weakest), not one already failing. Widening a
+        red check can never converge; the first attempt inflated a prior-day
+        range to 166,000% before the iteration cap stopped it.
+      score_cap rows must CLEAR the checklist and be cut by MAX_TO_SCORE
+        instead -- walk them up, or the fixture claims a row was cap-dropped
+        when the gate would have taken it first.
+    """
+    out = []
+    for spec in specs:
+        d = spec._asdict()
+        lm = list(d["lm"])
+        wants_gate_fail = d["reason"] == "lynch_gate"
+        for _ in range(60):
+            passes = sum(1 for c in lynch(*lm, gain=d["gain"]) if c["pass"])
+            if wants_gate_fail and passes < MIN_LYNCH_PASSES:
+                break
+            if not wants_gate_fail and passes >= MIN_LYNCH_PASSES:
+                break
+            if wants_gate_fail:
+                lm[9] = max(lm[9] * 0.90, 0.05)    # close_pos down -- H fails
+            else:
+                lm[2] *= 0.80                      # run_up down -- Y clears
+                lm[3] *= 0.80                      # ext down
+                lm[7] *= 0.85                      # prior-day range down -- C clears
+        d["lm"] = tuple(lm)
+        out.append(type(spec)(**d))
+    return out
+
+
+GATED = _still_gated_out(_remap(GATED, len(SPEC)))
+
+def build_gated(g):
+    detail = lynch(*g.lm, gain=g.gain)
+    passes = sum(1 for d in detail if d["pass"])
+    # The measurements are the source of truth, exactly as they are for a scored
+    # row; `passes` is what the gate and cap arithmetic below counts on. If the
+    # two ever disagree the fixture is describing a run the checklist could not
+    # produce, so fail here rather than ship it.
+    # The count is DERIVED from the measurements, not declared beside them. It
+    # used to be asserted equal to a hand-written number, so the step-7 rule
+    # changes broke the generator instead of simply producing a stricter -- and
+    # correct -- fixture. What must hold is that each row is consistent with the
+    # reason it gives for not being scored, using the pipeline's own gate.
+    if g.reason == "lynch_gate":
+        assert passes < MIN_LYNCH_PASSES, (
+            f"{g.t}: {passes}/6 clears the gate, so it was not gated out by the checklist")
+    else:
+        assert passes >= MIN_LYNCH_PASSES, (
+            f"{g.t}: {passes}/6 never cleared the gate, so the call cap is not why it went unscored")
+    return {
+        "ticker": g.t, "date": SESSION, "close": g.close, "gain_pct": g.gain,
+        "volume": g.vol, "volume_ratio": round(g.vol / g.prev, 2),
+        "lynch": f"{passes}/{len(detail)}", "lynch_passes": passes,
+        "lynch_total": len(detail), "lynch_detail": detail, "reason": g.reason,
+    }
+
+gated_out = [build_gated(g) for g in GATED]
 
 # every 3/6 score_cap row must sit below the weakest scored 3/6 row on gain_pct
 worst_scored_3 = min((c["gain_pct"] for c in candidates if c["lynch_passes"] == 3), default=99)
@@ -336,6 +478,7 @@ data = {
             "provenance.chart_seen is true only when the scoring model actually received the chart image.",
             "forward_returns and runs[].forward_returns are null until the sessions exist. Absent is null, never 0 and never a string.",
             "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
+            "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
             "Numbers are numbers or null. No 'n/a' strings.",
         ],
     },

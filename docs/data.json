@@ -12,6 +12,7 @@
       "provenance.chart_seen is true only when the scoring model actually received the chart image.",
       "forward_returns and runs[].forward_returns are null until the sessions exist. Absent is null, never 0 and never a string.",
       "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
+      "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
       "Numbers are numbers or null. No 'n/a' strings."
     ]
   },
@@ -51,8 +52,8 @@
       "prev_volume": 1974500,
       "volume_ratio": 3.11,
       "dollar_volume": 146616701,
-      "lynch": "6/6",
-      "lynch_passes": 6,
+      "lynch": "5/6",
+      "lynch_passes": 5,
       "lynch_total": 6,
       "lynch_detail": [
         {
@@ -65,13 +66,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.81 over prior 30 days"
+          "value": "R²=0.81, fitted trend +14.2% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
-          "pass": true,
-          "value": "+14.2% past month, +6.4% vs 20SMA"
+          "pass": false,
+          "value": "+23.8% past month, +15.4% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -83,7 +84,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 0.8% move, 2.2% range, 0.91x volume"
+          "value": "prior day 0.8% move, 2.2% range = 0.51x its norm, 0.91x volume"
         },
         {
           "code": "H",
@@ -141,13 +142,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.68 over prior 30 days"
+          "value": "R²=0.68, fitted trend +11.9% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": true,
-          "value": "+11.9% past month, +4.8% vs 20SMA"
+          "value": "+18.8% past month, +11.3% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -159,7 +160,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.1% move, 2.6% range, 1.04x volume"
+          "value": "prior day 1.1% move, 2.6% range = 0.74x its norm, 1.04x volume"
         },
         {
           "code": "H",
@@ -217,13 +218,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.74 over prior 30 days"
+          "value": "R²=0.74, fitted trend +26.4% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": false,
-          "value": "+26.4% past month, +9.1% vs 20SMA"
+          "value": "+39.0% past month, +19.9% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -235,7 +236,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.6% move, 3.4% range, 1.11x volume"
+          "value": "prior day 1.6% move, 3.4% range = 0.68x its norm, 1.11x volume"
         },
         {
           "code": "H",
@@ -279,8 +280,8 @@
       "prev_volume": 9832100,
       "volume_ratio": 2.25,
       "dollar_volume": 1067619732,
-      "lynch": "5/6",
-      "lynch_passes": 5,
+      "lynch": "4/6",
+      "lynch_passes": 4,
       "lynch_total": 6,
       "lynch_detail": [
         {
@@ -293,13 +294,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.79 over prior 30 days"
+          "value": "R²=0.79, fitted trend +21.4% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
-          "pass": true,
-          "value": "+21.4% past month, +11.2% vs 20SMA"
+          "pass": false,
+          "value": "+27.8% past month, +17.1% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -311,7 +312,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": false,
-          "value": "prior day 2.3% move, 4.1% range, 1.38x volume"
+          "value": "prior day 2.3% move, 4.1% range = 1.01x its norm, 1.38x volume"
         },
         {
           "code": "H",
@@ -355,8 +356,8 @@
       "prev_volume": 486300,
       "volume_ratio": 13.88,
       "dollar_volume": 623785120,
-      "lynch": "4/6",
-      "lynch_passes": 4,
+      "lynch": "3/6",
+      "lynch_passes": 3,
       "lynch_total": 6,
       "lynch_detail": [
         {
@@ -369,13 +370,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": false,
-          "value": "R²=0.41 over prior 30 days"
+          "value": "R²=0.41, fitted trend +16.3% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
-          "pass": true,
-          "value": "+16.3% past month, +8.7% vs 20SMA"
+          "pass": false,
+          "value": "+24.5% past month, +16.4% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -387,7 +388,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 0.9% move, 2.1% range, 0.98x volume"
+          "value": "prior day 0.9% move, 2.1% range = 0.64x its norm, 0.98x volume"
         },
         {
           "code": "H",
@@ -431,8 +432,8 @@
       "prev_volume": 1442900,
       "volume_ratio": 4.77,
       "dollar_volume": 283524300,
-      "lynch": "5/6",
-      "lynch_passes": 5,
+      "lynch": "4/6",
+      "lynch_passes": 4,
       "lynch_total": 6,
       "lynch_detail": [
         {
@@ -445,13 +446,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.77 over prior 30 days"
+          "value": "R²=0.77, fitted trend +19.8% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
-          "pass": true,
-          "value": "+19.8% past month, +12.4% vs 20SMA"
+          "pass": false,
+          "value": "+25.3% past month, +17.6% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -463,7 +464,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.2% move, 2.8% range, 1.07x volume"
+          "value": "prior day 1.2% move, 2.8% range = 0.73x its norm, 1.07x volume"
         },
         {
           "code": "H",
@@ -521,13 +522,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": false,
-          "value": "R²=0.48 over prior 30 days"
+          "value": "R²=0.48, fitted trend +27.4% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": false,
-          "value": "+27.4% past month, +13.1% vs 20SMA"
+          "value": "+36.2% past month, +20.9% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -539,7 +540,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.4% move, 3.2% range, 1.09x volume"
+          "value": "prior day 1.4% move, 3.2% range = 0.71x its norm, 1.09x volume"
         },
         {
           "code": "H",
@@ -597,13 +598,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.71 over prior 30 days"
+          "value": "R²=0.71, fitted trend +34.2% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": false,
-          "value": "+34.2% past month, +18.9% vs 20SMA"
+          "value": "+49.4% past month, +32.4% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -615,7 +616,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.8% move, 3.9% range, 1.16x volume"
+          "value": "prior day 1.8% move, 3.9% range = 0.76x its norm, 1.16x volume"
         },
         {
           "code": "H",
@@ -673,13 +674,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.83 over prior 30 days"
+          "value": "R²=0.83, fitted trend +12.7% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": true,
-          "value": "+12.7% past month, +5.9% vs 20SMA"
+          "value": "+18.2% past month, +11.1% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -691,7 +692,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.0% move, 2.4% range, 1.02x volume"
+          "value": "prior day 1.0% move, 2.4% range = 0.69x its norm, 1.02x volume"
         },
         {
           "code": "H",
@@ -735,8 +736,8 @@
       "prev_volume": 3387100,
       "volume_ratio": 2.43,
       "dollar_volume": 923074602,
-      "lynch": "5/6",
-      "lynch_passes": 5,
+      "lynch": "4/6",
+      "lynch_passes": 4,
       "lynch_total": 6,
       "lynch_detail": [
         {
@@ -749,13 +750,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.69 over prior 30 days"
+          "value": "R²=0.69, fitted trend +23.8% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
-          "pass": true,
-          "value": "+23.8% past month, +14.2% vs 20SMA"
+          "pass": false,
+          "value": "+31.2% past month, +21.0% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -767,7 +768,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.7% move, 3.6% range, 1.14x volume"
+          "value": "prior day 1.7% move, 3.6% range = 0.67x its norm, 1.14x volume"
         },
         {
           "code": "H",
@@ -825,13 +826,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": false,
-          "value": "R²=0.48 over prior 30 days"
+          "value": "R²=0.48, fitted trend +17.1% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": true,
-          "value": "+17.1% past month, +8.3% vs 20SMA"
+          "value": "+22.0% past month, +12.9% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -843,7 +844,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.3% move, 2.9% range, 1.08x volume"
+          "value": "prior day 1.3% move, 2.9% range = 0.76x its norm, 1.08x volume"
         },
         {
           "code": "H",
@@ -901,13 +902,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.58 over prior 30 days"
+          "value": "R²=0.58, fitted trend +29.6% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": false,
-          "value": "+29.6% past month, +16.4% vs 20SMA"
+          "value": "+35.7% past month, +21.9% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -919,7 +920,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": false,
-          "value": "prior day 2.4% move, 4.3% range, 1.41x volume"
+          "value": "prior day 2.4% move, 4.3% range = 0.92x its norm, 1.41x volume"
         },
         {
           "code": "H",
@@ -977,13 +978,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.61 over prior 30 days"
+          "value": "R²=0.61, fitted trend +31.2% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": false,
-          "value": "+31.2% past month, +17.8% vs 20SMA"
+          "value": "+36.9% past month, +22.9% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -995,7 +996,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": false,
-          "value": "prior day 1.9% move, 4.0% range, 1.22x volume"
+          "value": "prior day 1.9% move, 4.0% range = 0.80x its norm, 1.22x volume"
         },
         {
           "code": "H",
@@ -1053,13 +1054,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.58 over prior 30 days"
+          "value": "R²=0.58, fitted trend +12.4% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": true,
-          "value": "+12.4% past month, +6.1% vs 20SMA"
+          "value": "+18.7% past month, +12.1% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -1071,7 +1072,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": false,
-          "value": "prior day 2.6% move, 5.1% range, 1.47x volume"
+          "value": "prior day 2.6% move, 5.1% range = 1.07x its norm, 1.47x volume"
         },
         {
           "code": "H",
@@ -1129,13 +1130,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": false,
-          "value": "R²=0.39 over prior 30 days"
+          "value": "R²=0.39, fitted trend +14.8% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": true,
-          "value": "+14.8% past month, +7.2% vs 20SMA"
+          "value": "+22.3% past month, +14.2% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -1147,7 +1148,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.5% move, 3.3% range, 1.13x volume"
+          "value": "prior day 1.5% move, 3.3% range = 0.60x its norm, 1.13x volume"
         },
         {
           "code": "H",
@@ -1205,13 +1206,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.56 over prior 30 days"
+          "value": "R²=0.56, fitted trend +17.1% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": true,
-          "value": "+21.4% past month, +11.8% vs 20SMA"
+          "value": "+21.9% past month, +13.9% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -1223,7 +1224,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": false,
-          "value": "prior day 2.1% move, 4.4% range, 1.34x volume"
+          "value": "prior day 2.1% move, 3.7% range = 0.85x its norm, 1.34x volume"
         },
         {
           "code": "H",
@@ -1281,13 +1282,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": false,
-          "value": "R²=0.37 over prior 30 days"
+          "value": "R²=0.37, fitted trend +14.7% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": true,
-          "value": "+22.9% past month, +13.7% vs 20SMA"
+          "value": "+20.6% past month, +14.4% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -1299,7 +1300,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.6% move, 3.7% range, 1.19x volume"
+          "value": "prior day 1.6% move, 2.7% range = 0.57x its norm, 1.19x volume"
         },
         {
           "code": "H",
@@ -1343,8 +1344,8 @@
       "prev_volume": 6207900,
       "volume_ratio": 2.24,
       "dollar_volume": 218259624,
-      "lynch": "4/6",
-      "lynch_passes": 4,
+      "lynch": "3/6",
+      "lynch_passes": 3,
       "lynch_total": 6,
       "lynch_detail": [
         {
@@ -1357,13 +1358,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.66 over prior 30 days"
+          "value": "R²=0.66, fitted trend +18.3% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
-          "pass": true,
-          "value": "+18.3% past month, +10.9% vs 20SMA"
+          "pass": false,
+          "value": "+23.6% past month, +15.8% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -1375,7 +1376,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.2% move, 2.7% range, 1.06x volume"
+          "value": "prior day 1.2% move, 2.7% range = 0.67x its norm, 1.06x volume"
         },
         {
           "code": "H",
@@ -1433,13 +1434,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": false,
-          "value": "R²=0.31 over prior 30 days"
+          "value": "R²=0.31, fitted trend +9.6% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": true,
-          "value": "+9.6% past month, +4.4% vs 20SMA"
+          "value": "+17.5% past month, +11.9% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -1451,7 +1452,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.8% move, 4.2% range, 1.08x volume"
+          "value": "prior day 1.8% move, 4.2% range = 0.87x its norm, 1.08x volume"
         },
         {
           "code": "H",
@@ -1509,13 +1510,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": false,
-          "value": "R²=0.22 over prior 30 days"
+          "value": "R²=0.22, fitted trend +8.1% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": true,
-          "value": "+8.1% past month, +3.7% vs 20SMA"
+          "value": "+17.8% past month, +13.0% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -1527,7 +1528,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.4% move, 3.8% range, 1.17x volume"
+          "value": "prior day 1.4% move, 3.8% range = 0.79x its norm, 1.17x volume"
         },
         {
           "code": "H",
@@ -1585,13 +1586,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.72 over prior 30 days"
+          "value": "R²=0.72, fitted trend +41.3% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": false,
-          "value": "+41.3% past month, +24.8% vs 20SMA"
+          "value": "+49.5% past month, +32.0% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -1603,7 +1604,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": false,
-          "value": "prior day 2.7% move, 5.4% range, 1.52x volume"
+          "value": "prior day 2.7% move, 5.4% range = 0.89x its norm, 1.52x volume"
         },
         {
           "code": "H",
@@ -1661,13 +1662,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.64 over prior 30 days"
+          "value": "R²=0.64, fitted trend +15.7% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": true,
-          "value": "+24.6% past month, +14.1% vs 20SMA"
+          "value": "+21.4% past month, +14.4% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -1679,7 +1680,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": false,
-          "value": "prior day 2.2% move, 4.7% range, 1.36x volume"
+          "value": "prior day 2.2% move, 3.4% range = 0.70x its norm, 1.36x volume"
         },
         {
           "code": "H",
@@ -1737,13 +1738,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.63 over prior 30 days"
+          "value": "R²=0.63, fitted trend +16.3% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": true,
-          "value": "+20.4% past month, +12.6% vs 20SMA"
+          "value": "+21.2% past month, +14.7% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -1755,7 +1756,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": false,
-          "value": "prior day 3.1% move, 5.8% range, 1.44x volume"
+          "value": "prior day 3.1% move, 4.9% range = 1.05x its norm, 1.44x volume"
         },
         {
           "code": "H",
@@ -1813,13 +1814,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": false,
-          "value": "R²=0.45 over prior 30 days"
+          "value": "R²=0.45, fitted trend +13.4% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": true,
-          "value": "+16.8% past month, +9.4% vs 20SMA"
+          "value": "+20.3% past month, +14.0% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -1831,7 +1832,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": false,
-          "value": "prior day 1.9% move, 4.1% range, 1.24x volume"
+          "value": "prior day 1.9% move, 3.5% range = 0.71x its norm, 1.24x volume"
         },
         {
           "code": "H",
@@ -1889,13 +1890,13 @@
           "code": "L",
           "label": "linear prior move",
           "pass": false,
-          "value": "R²=0.28 over prior 30 days"
+          "value": "R²=0.28, fitted trend +9.0% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": true,
-          "value": "+11.2% past month, +5.8% vs 20SMA"
+          "value": "+19.3% past month, +14.5% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
@@ -1907,7 +1908,7 @@
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.7% move, 4.6% range, 1.09x volume"
+          "value": "prior day 1.7% move, 3.9% range = 0.75x its norm, 1.09x volume"
         },
         {
           "code": "H",
@@ -1952,6 +1953,45 @@
       "volume_ratio": 2.33,
       "lynch": "2/6",
       "lynch_passes": 2,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.44, fitted trend +28.3% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+34.9% past month, +22.4% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 4.2%/day = 1.21x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.6% move, 4.9% range = 1.41x its norm, 1.38x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 91% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -1963,6 +2003,45 @@
       "volume_ratio": 2.17,
       "lynch": "2/6",
       "lynch_passes": 2,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "3 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.31, fitted trend +18.1% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+23.7% past month, +14.6% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 6.0%/day = 1.44x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 3.2% move, 5.7% range = 1.37x its norm, 1.51x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 84% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -1974,6 +2053,45 @@
       "volume_ratio": 2.24,
       "lynch": "2/6",
       "lynch_passes": 2,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "4 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.22, fitted trend +26.9% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+35.0% past month, +23.2% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 7.7%/day = 1.63x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.6% move, 3.2% range = 0.68x its norm, 1.13x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 78% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -1985,6 +2103,45 @@
       "volume_ratio": 2.05,
       "lynch": "1/6",
       "lynch_passes": 1,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.48, fitted trend +41.2% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+47.3% past month, +29.6% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 9.2%/day = 1.32x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.9% move, 5.2% range = 0.75x its norm, 1.29x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 88% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -1996,6 +2153,45 @@
       "volume_ratio": 2.24,
       "lynch": "2/6",
       "lynch_passes": 2,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "0 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.36, fitted trend +31.4% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+39.1% past month, +24.6% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 10.9%/day = 1.77x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 3.6% move, 6.1% range = 0.99x its norm, 1.64x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 73% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -2007,6 +2203,45 @@
       "volume_ratio": 2.52,
       "lynch": "1/6",
       "lynch_passes": 1,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "3 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.19, fitted trend +47.6% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+59.6% past month, +38.8% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 4.9%/day = 1.18x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.4% move, 4.6% range = 1.11x its norm, 1.73x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 95% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -2016,8 +2251,47 @@
       "gain_pct": 4.06,
       "volume": 7118400,
       "volume_ratio": 2.09,
-      "lynch": "2/6",
-      "lynch_passes": 2,
+      "lynch": "1/6",
+      "lynch_passes": 1,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.41, fitted trend +23.8% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+28.8% past month, +18.5% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 8.3%/day = 1.51x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 4.1% move, 7.2% range = 1.31x its norm, 1.47x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 81% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -2029,6 +2303,45 @@
       "volume_ratio": 2.2,
       "lynch": "2/6",
       "lynch_passes": 2,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.64, fitted trend +36.2% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+42.9% past month, +27.7% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 12.0%/day = 1.94x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.2% move, 4.4% range = 0.71x its norm, 1.33x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 64% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -2040,6 +2353,45 @@
       "volume_ratio": 2.34,
       "lynch": "1/6",
       "lynch_passes": 1,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.50, fitted trend +25.4% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+34.7% past month, +23.8% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 5.3%/day = 1.27x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 3.4% move, 5.9% range = 1.41x its norm, 1.88x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 41% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -2051,6 +2403,45 @@
       "volume_ratio": 2.22,
       "lynch": "2/6",
       "lynch_passes": 2,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.34, fitted trend +52.1% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+62.3% past month, +40.4% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 10.0%/day = 1.68x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.7% move, 3.4% range = 0.57x its norm, 1.19x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 71% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -2062,6 +2453,45 @@
       "volume_ratio": 3.06,
       "lynch": "0/6",
       "lynch_passes": 0,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "6 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.13, fitted trend +38.9% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+55.0% past month, +37.1% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 6.9%/day = 2.13x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 4.7% move, 8.0% range = 2.47x its norm, 1.57x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 36% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -2073,6 +2503,45 @@
       "volume_ratio": 2.51,
       "lynch": "0/6",
       "lynch_passes": 0,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.44, fitted trend +28.3% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+41.0% past month, +27.9% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 4.2%/day = 1.21x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.6% move, 4.9% range = 1.41x its norm, 1.38x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 61% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -2084,6 +2553,45 @@
       "volume_ratio": 3.55,
       "lynch": "0/6",
       "lynch_passes": 0,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "3 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.31, fitted trend +33.7% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+52.7% past month, +36.0% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 6.0%/day = 1.44x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 3.2% move, 5.7% range = 1.37x its norm, 1.51x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 52% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -2095,6 +2603,45 @@
       "volume_ratio": 2.17,
       "lynch": "2/6",
       "lynch_passes": 2,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.22, fitted trend +26.9% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+33.8% past month, +22.1% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 7.7%/day = 1.63x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.1% move, 4.3% range = 0.91x its norm, 1.42x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 78% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -2104,8 +2651,47 @@
       "gain_pct": 4.83,
       "volume": 5218700,
       "volume_ratio": 2.17,
-      "lynch": "2/6",
-      "lynch_passes": 2,
+      "lynch": "1/6",
+      "lynch_passes": 1,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.48, fitted trend +21.6% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+27.5% past month, +17.2% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 9.2%/day = 1.32x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.9% move, 5.2% range = 0.75x its norm, 1.29x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 88% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -2117,6 +2703,45 @@
       "volume_ratio": 2.12,
       "lynch": "2/6",
       "lynch_passes": 2,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "5 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.66, fitted trend +31.4% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+36.8% past month, +22.5% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 10.9%/day = 1.77x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 0.7% move, 1.9% range = 0.31x its norm, 0.88x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 38% of day's range"
+        }
+      ],
       "reason": "lynch_gate"
     },
     {
@@ -2128,6 +2753,45 @@
       "volume_ratio": 2.22,
       "lynch": "3/6",
       "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.19, fitted trend +11.3% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+15.8% past month, +9.7% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 4.9%/day = 1.18x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.4% move, 4.6% range = 1.11x its norm, 1.73x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 95% of day's range"
+        }
+      ],
       "reason": "score_cap"
     },
     {
@@ -2139,6 +2803,45 @@
       "volume_ratio": 2.04,
       "lynch": "3/6",
       "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.41, fitted trend +15.2% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+19.9% past month, +13.3% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 8.3%/day = 1.51x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 0.5% move, 1.2% range = 0.21x its norm, 0.79x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 81% of day's range"
+        }
+      ],
       "reason": "score_cap"
     },
     {
@@ -2150,6 +2853,45 @@
       "volume_ratio": 2.19,
       "lynch": "3/6",
       "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.27, fitted trend +36.2% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+41.7% past month, +26.6% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 12.0%/day = 1.94x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.4% move, 3.0% range = 0.48x its norm, 1.11x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 76% of day's range"
+        }
+      ],
       "reason": "score_cap"
     },
     {
@@ -2161,6 +2903,45 @@
       "volume_ratio": 3.8,
       "lynch": "3/6",
       "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.50, fitted trend +7.9% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+12.2% past month, +7.4% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 5.3%/day = 1.27x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 3.4% move, 5.9% range = 1.41x its norm, 1.88x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 86% of day's range"
+        }
+      ],
       "reason": "score_cap"
     },
     {
@@ -2172,6 +2953,45 @@
       "volume_ratio": 2.17,
       "lynch": "3/6",
       "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "0 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.56, fitted trend +52.1% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+58.2% past month, +36.9% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 10.0%/day = 1.68x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.8% move, 5.1% range = 0.86x its norm, 1.26x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 71% of day's range"
+        }
+      ],
       "reason": "score_cap"
     },
     {
@@ -2183,6 +3003,45 @@
       "volume_ratio": 2.17,
       "lynch": "3/6",
       "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "6 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.13, fitted trend +12.6% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+17.1% past month, +11.2% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 4.2%/day = 0.86x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 4.7% move, 8.0% range = 1.64x its norm, 1.57x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 93% of day's range"
+        }
+      ],
       "reason": "score_cap"
     }
   ],
