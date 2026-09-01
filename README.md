@@ -62,7 +62,9 @@ manually from the Actions tab.
 > exist, and `src/pipeline.py` treats `morning` and `evening` identically
 > apart from the email subject, the body heading, and the CSV filename.
 >
-> `SETUP.md` is kept only as a record of the original build — do not follow it.
+> An older `SETUP.md` walked through a Gmail OAuth flow this code no longer
+> uses; it was removed rather than annotated, since following it minted
+> credentials nothing reads. It is in git history if you want it.
 
 **Credential safety.** `.gitignore` blocks the credential filenames we can
 predict, and `.github/workflows/secret-scan.yml` runs gitleaks on every push

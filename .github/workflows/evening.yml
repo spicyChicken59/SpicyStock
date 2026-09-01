@@ -1,10 +1,12 @@
 name: Evening scan (5:30 PM ET)
 on:
   schedule:
-    # BACKUP ONLY. The primary trigger is an external scheduler (cron-job.org)
-    # calling the workflow_dispatch API at the exact time — see SETUP.md.
-    # These crons fire ~50 min after the target and run ONLY if no successful
-    # evening run happened today (checked via the results artifact).
+    # These crons ARE the trigger. An earlier design used an external scheduler
+    # (cron-job.org) hitting workflow_dispatch, with these as backup; that is no
+    # longer set up and you do not need it. The guard below still works
+    # standalone: the first matching cron of the day finds no results artifact
+    # and runs. Both crons are registered; the guard no-ops the wrong one for
+    # the current DST offset, so the effective fire time is 6:16 PM ET.
     - cron: "16 22 * * 1-5"   # backup while US is on EDT (UTC-4)
     - cron: "16 23 * * 1-5"   # backup while US is on EST (UTC-5)
   workflow_dispatch: {}
