@@ -1,27 +1,32 @@
 > [!WARNING]
-> **This entire guide is out of date. Following any part of it will not work.**
-> It documents an earlier build that used yfinance for market data and Gmail
-> OAuth for delivery. The code now uses Alpaca and Resend. `.env.example` is
-> the accurate list of what this project needs.
+> **Most of this guide is out of date — do not follow it end to end.** It
+> documents the original build, which used yfinance for market data and Gmail
+> OAuth for delivery. The code now uses Alpaca and Resend.
 >
-> Do not create any credential this file asks for. Specifically:
+> **For setup, use README's "One-time setup" and "Run locally" instead.**
+> `.env.example` lists the variables and explains each one.
 >
+> **Do not create any credential this file asks for**, with one exception:
+>
+> - **Part 3 (Anthropic API key) is still correct and still required.** It is
+>   the only section of this guide you should act on.
 > - **Parts 1–2** have you create a Google Cloud OAuth client and run
 >   `scripts/setup_gmail_oauth.py`. That script does not exist in this repo,
 >   and no code here reads a Google credential.
 > - **Part 4's** secrets table lists four Google secrets. The workflow reads
 >   `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ANTHROPIC_API_KEY`,
->   `RESEND_API_KEY`, `RESEND_FROM` and `EMAIL_TO` instead.
-> - **Part 5** says the log will read "Email sent via Gmail API". It says
->   "via Resend".
+>   `RESEND_API_KEY`, `RESEND_FROM` and `EMAIL_TO` instead. Part 4 also runs
+>   `git add .` — the repo now has a `.gitignore` that makes that safe, which
+>   it did not when this guide was written.
+> - **Part 5** says the log will read "Email sent via Gmail API"; it says
+>   "via Resend". Its closing line promises runs at 8:30 AM and 5:30 PM — only
+>   `evening.yml` exists, and it fires at 22:16 UTC.
 > - **Part 6a** tells you to mint a `github_pat_...` token with Actions
->   read/write and paste it into a third-party scheduling site. That is a
->   real, long-lived, repo-scoped credential and the current code does not
->   need it. Part 6b then points that token at `morning.yml/dispatches` —
->   a workflow that does not exist, so it would 404 forever.
->
-> This file is kept only as a record of the original setup. It is scheduled
-> to be rewritten.
+>   read/write and paste it into a third-party scheduling site. You do not
+>   need it: the in-repo cron runs without any external trigger. Note
+>   `evening.yml`'s own header comment still calls that external scheduler the
+>   "primary trigger" — that comment is stale too. Part 6b points the token at
+>   `morning.yml/dispatches`, a workflow that does not exist and would 404.
 
 # Setup Guide — start to finish (~20 minutes)
 

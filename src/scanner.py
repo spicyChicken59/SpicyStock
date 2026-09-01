@@ -21,8 +21,13 @@ pip install alpaca-py numpy pandas
 
 ENV VARS
 --------
-ALPACA_API_KEY, ALPACA_SECRET_KEY  (PAPER keys — get_clients() hardcodes
-                                    paper=True, so live keys fail to auth)
+ALPACA_API_KEY, ALPACA_SECRET_KEY  (PAPER keys — get_clients() pins only the
+                                    TradingClient to paper=True, and
+                                    get_universe() is its sole consumer, so
+                                    live keys fail the full-universe scan. The
+                                    data client has no paper flag, so --tickers
+                                    — which skips get_universe() — works on
+                                    live keys.)
 """
 
 from __future__ import annotations

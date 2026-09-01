@@ -5,29 +5,38 @@
 *.env
 .env~
 .envrc
-!.env.example
+!.env*.example
 
 # Credential files that tooling drops into a repo. The Google Cloud console
 # downloads client_secret_*.json, and Google's OAuth libraries conventionally
 # write token.json / credentials.json — relevant here because SETUP.md still
 # walks through the Gmail OAuth flow and then says to run `git add .`
-# (SETUP.md:89).
-# A filename denylist can never be complete. The real backstop is GitHub
-# secret scanning with push protection — turn it on.
+# (SETUP.md:101).
+# A filename denylist can never be complete. The backstops are the gitleaks
+# job in .github/workflows/secret-scan.yml and GitHub push protection.
 secrets.json
 secrets.yaml
 secrets.yml
+secrets.toml
+secrets/
 credentials*.json
 client_secret*.json
 token.json
 *.pem
 *.key
 
-# Run artifacts. archive() writes results/ on every run (src/pipeline.py:36);
-# render_chart() writes charts/ whenever a candidate clears the 2LYNCH gate
-# (src/scorer.py:30). Without these rules a local run leaves the repo dirty.
-results/
-charts/
+# Logs. A redirected run (`python -m src.pipeline evening > run.log 2>&1`)
+# lands here, and `git add .` would commit it.
+*.log
+logs/
+nohup.out
+
+# Run artifacts, written into the repo root. Anchored with a leading slash so
+# a tests/fixtures/results/ or docs/charts/ directory is not swallowed too.
+# archive() writes results/ on every run; render_chart() writes charts/
+# whenever a candidate clears the 2LYNCH gate.
+/results/
+/charts/
 
 # Written into the working directory by tests/test_pipeline.py. That suite
 # currently cannot run at all — it imports detect_burst, which src/scanner.py
@@ -41,11 +50,12 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.ipynb_checkpoints/
 
-# Virtualenvs
-.venv/
-venv/
-env/
+# Virtualenvs. Anchored: an `env/` package elsewhere in the tree is source.
+/.venv/
+/venv/
+/env/
 
 # Editor / OS
 .DS_Store
