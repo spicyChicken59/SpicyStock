@@ -56,6 +56,29 @@ def _remap(specs, start):
 SESSION = "2026-09-01"
 MODEL = "claude-sonnet-4-6"
 
+
+def streak(i):
+    """Step 10's streak block, hand-authored and consistent with `runs` below.
+
+    Keyed on the row's POSITION so the file regenerates byte-identically, and
+    written to exercise the three states a reader has to be able to tell
+    apart: a setup running for several sessions, one that started yesterday,
+    and a name last seen a fortnight ago -- which is day 1 of something new,
+    not day 12 of something old. src/ledger.py's MAX_STREAK_GAP_SESSIONS holds
+    the rule; these rows only have to obey it.
+    """
+    if i % 7 == 1:
+        return {"day": 3, "first_seen": "2026-08-28", "last_seen": "2026-08-31",
+                "last_score": 7.4, "last_verdict": "B", "seen_before": 2}
+    if i % 7 == 3:
+        return {"day": 2, "first_seen": "2026-08-31", "last_seen": "2026-08-31",
+                "last_score": None, "last_verdict": None, "seen_before": 1}
+    if i % 7 == 5:
+        return {"day": 1, "first_seen": SESSION, "last_seen": "2026-08-17",
+                "last_score": 5.2, "last_verdict": "skip", "seen_before": 1}
+    return {"day": 1, "first_seen": SESSION, "last_seen": None,
+            "last_score": None, "last_verdict": None, "seen_before": 0}
+
 LABELS = {
     "2": "first or second burst",
     "L": "linear prior move",
@@ -258,7 +281,7 @@ def _consistent_with_the_checklist(specs):
 SPEC = _consistent_with_the_checklist(_remap(SPEC, 0))
 
 
-def build_candidate(s):
+def build_candidate(s, i):
     detail = lynch(*s.lm, gain=s.gain)
     passes = sum(1 for d in detail if d["pass"])
     assert passes >= 3, f"{s.t} would have been gated out at {passes}/6"
@@ -298,10 +321,11 @@ def build_candidate(s):
                         "mplfinance ValueError: only 41 sessions of history, need 85"),
         "context": {"pct_off_52w_high": off_hi, "pct_above_52w_low": abv_lo,
                     "perf_3mo_pct": p3, "perf_6mo_pct": p6},
+        "streak": streak(i),
         "forward_returns": {"d1": None, "d3": None, "d5": None, "as_of": None},
     }
 
-candidates = [build_candidate(s) for s in SPEC]
+candidates = [build_candidate(s, i) for i, s in enumerate(SPEC)]
 candidates.sort(key=lambda c: c["score"], reverse=True)
 for i, c in enumerate(candidates, 1):
     c["rank"] = i
@@ -403,7 +427,7 @@ def _still_gated_out(specs):
 
 GATED = _still_gated_out(_remap(GATED, len(SPEC)))
 
-def build_gated(g):
+def build_gated(g, i):
     detail = lynch(*g.lm, gain=g.gain)
     passes = sum(1 for d in detail if d["pass"])
     # The measurements are the source of truth, exactly as they are for a scored
@@ -425,10 +449,11 @@ def build_gated(g):
         "ticker": g.t, "date": SESSION, "close": g.close, "gain_pct": g.gain,
         "volume": g.vol, "volume_ratio": round(g.vol / g.prev, 2),
         "lynch": f"{passes}/{len(detail)}", "lynch_passes": passes,
-        "lynch_total": len(detail), "lynch_detail": detail, "reason": g.reason,
+        "lynch_total": len(detail), "lynch_detail": detail,
+        "streak": streak(i), "reason": g.reason,
     }
 
-gated_out = [build_gated(g) for g in GATED]
+gated_out = [build_gated(g, i) for i, g in enumerate(GATED)]
 
 # every 3/6 score_cap row must sit below the weakest scored 3/6 row on gain_pct
 worst_scored_3 = min((c["gain_pct"] for c in candidates if c["lynch_passes"] == 3), default=99)

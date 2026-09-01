@@ -17,13 +17,16 @@ from __future__ import annotations
 import csv
 import json
 import sys
+from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
+from src import ledger
 from src import pipeline
 from src import scanner
+from src.scanner import ScanConfig
 from tests.test_ledger import contract_violations
 
 #: What Alpaca says when the plan does not carry the feed the scan asked for.
@@ -44,6 +47,45 @@ def universe(fake_alpaca, ohlcv) -> list[str]:
     fake_alpaca.add_history("QUIET", ohlcv("flat"))
     fake_alpaca.add_history("WALK", ohlcv("base"))
     return ["BURST", "QUIET", "WALK"]
+
+
+@pytest.fixture(autouse=True)
+def market_clock(monkeypatch):
+    """Put every test in this file on a definite side of the 16:15 ET close.
+
+    Step 10 made the run type a promise about the clock: an evening run
+    expects the session to have closed, a morning run expects it not to have,
+    and a disagreement degrades the run. Without a pin, whether an end-to-end
+    test here saw a clean run or a degraded one would depend on the hour the
+    suite happened to run -- green all evening and red all morning, which is
+    the worst kind of test there is.
+
+    The pin applies ONLY when the caller does not say what time it is:
+
+        scanner.session_has_closed()              -> what this fixture was told
+        scanner.session_has_closed(an_instant)    -> the real arithmetic
+
+    so a test that names an instant is still testing the real predicate, and
+    the tests that exercise the check itself pass one. `after_the_close` is the
+    default because it is the only side an evening run belongs on, and most of
+    this file is an evening run.
+    """
+    real = scanner.session_has_closed
+    state = {"closed": True}
+
+    def pinned(now=None):
+        return real(now) if now is not None else state["closed"]
+
+    monkeypatch.setattr(scanner, "session_has_closed", pinned)
+
+    class Clock:
+        def after_the_close(self) -> None:
+            state["closed"] = True
+
+        def before_the_open(self) -> None:
+            state["closed"] = False
+
+    return Clock()
 
 
 @pytest.fixture
@@ -126,9 +168,13 @@ def test_live_run_sends_through_the_mocked_transport(universe, mocked_boundaries
         assert row["ticker"] in sent[0]["html"]
 
 
-def test_morning_and_evening_both_run(universe, mocked_boundaries, open_gate, tmp_path):
-    pipeline.run("morning", dry_run=True, tickers=universe)
-    assert archived_csv(tmp_path).name.endswith("_morning.csv")
+def test_the_evening_csv_is_named_for_the_session_it_scanned(
+    universe, mocked_boundaries, open_gate, tmp_path
+):
+    """Not for the day the run happened. Those are the same date on a normal
+    evening and differ on exactly the runs that used to lie about it."""
+    pipeline.run("evening", dry_run=True, tickers=universe)
+    assert archived_csv(tmp_path).name == f"{scanner.current_session()}_evening.csv"
 
 
 def test_a_scan_with_no_candidates_still_completes(fake_alpaca, mocked_boundaries, ohlcv, tmp_path):
@@ -774,3 +820,515 @@ def test_the_ledger_row_is_the_judgement_next_to_what_followed_it(
                         "lynch_total", "checks", "forward_returns"}
     assert set(row["checks"]) == {"2", "L", "Y", "N", "C", "H"}
     assert sum(row["checks"].values()) == row["lynch_passes"]
+
+
+# ===========================================================================
+# Step 10 -- the mode means something, and a repeat looks like one.
+#
+# `run_type` used to change four cosmetic things and nothing else: both modes
+# ran the identical scan, and WHICH session that scan read was decided
+# entirely by the wall clock. Nothing compared the two, so `evening` before
+# the close scanned yesterday and mailed it as tonight's candidates, and
+# `morning` after the close mailed a watchlist for a day that had finished.
+#
+# Every test here uses the `market_clock` fixture at the top of this file to
+# say which side of the 16:15 ET close it is on. The predicate itself is
+# pinned in tests/test_scanner.py, against real instants.
+# ===========================================================================
+
+MORNING = pipeline.MODES["morning"]
+EVENING = pipeline.MODES["evening"]
+
+#: 11:00 and 18:30 ET on a Tuesday: one side of the close each.
+BEFORE = datetime(2026, 9, 1, 11, 0, tzinfo=scanner.MARKET_TZ)
+AFTER = datetime(2026, 9, 1, 18, 30, tzinfo=scanner.MARKET_TZ)
+
+
+# --- the check itself ------------------------------------------------------
+
+
+def test_a_mode_on_the_side_of_the_close_it_belongs_on_reports_nothing():
+    """The precondition for all four below: a disagreement is not simply what
+    this function always says."""
+    assert pipeline.session_disagreement(EVENING, ScanConfig(), now=AFTER) is None
+    assert pipeline.session_disagreement(MORNING, ScanConfig(), now=BEFORE) is None
+
+
+def test_an_evening_run_before_the_close_says_which_session_it_really_read():
+    """The defect, in one sentence: this run scans YESTERDAY and used to mail
+    it as tonight's candidates with today's date on it."""
+    said = pipeline.session_disagreement(EVENING, ScanConfig(), now=BEFORE)
+
+    assert said is not None
+    assert "has not closed yet" in said
+    assert str(scanner.current_session(BEFORE)) in said, "and names the session it read"
+
+
+def test_a_morning_run_after_the_close_says_it_is_not_a_pre_open_pass():
+    said = pipeline.session_disagreement(MORNING, ScanConfig(), now=AFTER)
+    assert said is not None and "already closed" in said
+
+
+def test_a_pinned_session_is_the_user_overruling_the_clock_on_purpose():
+    """SCAN_SESSION_DATE is how README says to seed a history, and a
+    deliberate backfill must not be reported as a mistake -- a warning that
+    fires on a documented workflow teaches a reader to ignore it."""
+    pinned = ScanConfig(session_date=date(2026, 8, 24))
+
+    assert pipeline.session_disagreement(EVENING, pinned, now=BEFORE) is None
+    assert pipeline.session_disagreement(MORNING, pinned, now=AFTER) is None
+
+
+def test_a_pinned_session_is_the_session_both_modes_are_about():
+    """One definition of "which session is this run about", so a pin cannot
+    mean the scanned session in one place and be ignored in the other."""
+    pinned = ScanConfig(session_date=date(2026, 8, 24))
+    assert pipeline.expected_session(pinned, now=AFTER) == date(2026, 8, 24)
+    assert pipeline.expected_session(ScanConfig(), now=AFTER) == scanner.current_session(AFTER)
+
+
+def test_the_two_modes_disagree_about_the_clock_in_opposite_directions():
+    """Each mode is on exactly one side, and they are not the same side --
+    a Mode table where both said the same thing would pass every test above
+    while making the run type mean nothing again."""
+    assert EVENING.after_the_close is not MORNING.after_the_close
+    assert EVENING.scans and not MORNING.scans
+
+
+def test_an_unknown_run_type_names_the_ones_that_exist():
+    with pytest.raises(ValueError, match="morning"):
+        pipeline.mode_for("afternoon")
+
+
+# --- what the run does about it --------------------------------------------
+
+
+def test_an_evening_run_before_the_close_degrades_and_says_so_everywhere(
+    monkeypatch, market_clock, universe, mocked_boundaries, open_gate, tmp_path
+):
+    """Degraded, not refused: refusing trades a mislabelled email for no
+    email, and no email is indistinguishable from a market holiday. The
+    reason has to reach all four places an operator might look."""
+    market_clock.before_the_open()
+    report = pipeline.RunReport()
+
+    scored = pipeline.run("evening", dry_run=False, tickers=universe, report=report)
+
+    assert scored, "the scan still happened and is still worth reading"
+    assert report.status == "degraded" and report.exit_code == pipeline.EXIT_DEGRADED
+    # EXACTLY the session problem, not "at least" it: a test that accepted a
+    # longer list would pass while a stale scan or a failed chart did the
+    # degrading and the clock check had been deleted.
+    assert [e["stage"] for e in report.errors] == ["session"], report.errors
+    (problem,) = report.errors
+    assert "has not closed yet" in problem["message"]
+    # the email
+    (sent,) = mocked_boundaries["resend"].sent
+    assert sent["subject"].startswith("[4% Burst] DEGRADED — ")
+    assert problem["message"] in sent["html"]
+    # the ledger and the dashboard snapshot
+    assert published(tmp_path)["run"]["errors"] == report.errors
+    assert recorded(tmp_path)["runs"][0]["status"] == "degraded"
+
+
+def test_a_run_on_the_right_side_of_the_close_is_clean(
+    market_clock, universe, mocked_boundaries, open_gate
+):
+    """The inverse check. If this degraded too, the test above would be
+    passing on a pipeline that simply always degrades."""
+    market_clock.after_the_close()
+    report = pipeline.RunReport()
+
+    pipeline.run("evening", dry_run=True, tickers=universe, report=report)
+
+    assert report.errors == [] and report.exit_code == pipeline.EXIT_OK
+
+
+def test_a_deliberate_backfill_is_not_reported_as_a_clock_mistake(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """A pinned session on the wrong side of the close is the documented way
+    to seed a history, and it stays clean."""
+    market_clock.before_the_open()
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-6))
+    report = pipeline.RunReport()
+
+    pipeline.run("evening", dry_run=True, tickers=["BURST"], report=report)
+
+    assert [e["stage"] for e in report.errors] == [], report.errors
+    assert archived_csv(tmp_path).name == f"{session_offset(-6)}_evening.csv", (
+        "and the CSV is named for the session it actually scanned")
+
+
+def test_the_email_names_the_session_that_was_scanned(
+    universe, mocked_boundaries, open_gate
+):
+    """The cheapest half of the fix, and the only half a phone shows: a run
+    that read yesterday's bars says so in the artifact a person opens."""
+    pipeline.run("evening", dry_run=False, tickers=universe)
+
+    (sent,) = mocked_boundaries["resend"].sent
+    session = scanner.current_session().isoformat()
+    assert session in sent["subject"]
+    assert f"Session scanned: {session}" in sent["html"]
+
+
+# --- a repeat is visible as a repeat ---------------------------------------
+
+
+def test_a_name_that_burst_yesterday_is_day_two_tonight(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """THE step-10 statefulness test. Two runs on consecutive sessions, and
+    the second one knows it has seen this name before -- in the file the
+    dashboard reads and in the email a person reads."""
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    first, second = session_offset(-1), session_offset(0)
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", first)
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+    (day_one,) = clean(tmp_path)["candidates"]
+    assert day_one["streak"]["day"] == 1, "nothing preceded it"
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", second)
+    scored = pipeline.run("evening", dry_run=False, tickers=["BURST"])
+
+    (day_two,) = clean(tmp_path)["candidates"]
+    assert day_two["streak"] == {
+        "day": 2, "first_seen": first, "last_seen": first,
+        "last_score": day_one["score"], "last_verdict": day_one["verdict"],
+        "seen_before": 1}
+    assert scored[0]["streak"] == day_two["streak"], "the email row carries the same block"
+    (sent,) = mocked_boundaries["resend"].sent
+    assert "day 2 of this setup" in sent["html"]
+    assert f"last seen {first}" in sent["html"]
+
+
+def test_a_first_sighting_says_so_rather_than_saying_nothing(
+    universe, mocked_boundaries, open_gate, tmp_path
+):
+    """The inverse: with an empty ledger every name really is on day 1, and
+    the email says which -- absence is not a readable signal."""
+    pipeline.run("evening", dry_run=False, tickers=universe)
+
+    assert all(c["streak"]["day"] == 1 for c in clean(tmp_path)["candidates"])
+    assert "day 1 — new setup" in mocked_boundaries["resend"].sent[0]["html"]
+
+
+def test_a_burst_the_gate_rejected_carries_its_streak_too(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, tmp_path
+):
+    """Otherwise the record disagrees with itself the next time the name comes
+    back: tonight it was never here, tomorrow it is on day 2 of nothing."""
+    monkeypatch.setattr(pipeline, "MIN_LYNCH_PASSES", 99)   # nothing can pass
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    (gated,) = clean(tmp_path)["gated_out"]
+    assert gated["streak"]["day"] == 2
+
+
+def test_re_running_one_session_does_not_make_every_name_a_repeat(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """A run repeated after a failure re-scans a session already in the
+    ledger. Counting the first attempt would report day 2 of a setup that
+    started that same evening."""
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    (again,) = clean(tmp_path)["candidates"]
+    assert again["streak"]["day"] == 1
+    assert again["streak"]["seen_before"] == 0
+
+
+def test_a_history_that_cannot_be_read_never_takes_the_run_with_it(
+    universe, mocked_boundaries, open_gate, tmp_path
+):
+    """The run happening now is worth more than the runs already gone: market
+    data is live-only and cannot be re-fetched, the history has already been
+    written down once. But it is REPORTED, and the streaks go out null --
+    "we have never seen this name" and "we could not read the file that would
+    know" are different sentences."""
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / ledger.LEDGER_NAME).write_text("{not json")
+    report = pipeline.RunReport()
+
+    scored = pipeline.run("evening", dry_run=False, tickers=universe, report=report)
+
+    assert scored, "the run finished"
+    assert [e["stage"] for e in report.errors] == ["history"], report.errors
+    (problem,) = report.errors
+    assert "could not be read" in problem["message"]
+    data = clean(tmp_path)
+    assert all(c["streak"] is None for c in data["candidates"]), (
+        "null means unknown; it must not collapse to a confident day 1")
+    html = mocked_boundaries["resend"].sent[0]["html"]
+    assert "new setup" not in html and "of this setup" not in html, (
+        "a null streak renders nothing at all, not a confident first sighting")
+    assert problem["message"] in html, "and the band says why the column is missing"
+
+
+def test_a_history_read_that_raises_outright_still_cannot_kill_the_run(
+    monkeypatch, universe, mocked_boundaries, open_gate, tmp_path
+):
+    """Ledger.load() handles the failures it can name -- unreadable JSON, a
+    schema it does not know. This is the one it cannot: anything else a read
+    can do, from a permission change to a bug in this module. Market data is
+    live-only and cannot be re-fetched; the history has already been written
+    down once, so the run wins.
+    """
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / ledger.LEDGER_NAME).write_text(
+        json.dumps({"schema_version": ledger.SCHEMA_VERSION, "runs": [{"date": "2026-01-02"}]}))
+    was = (tmp_path / "docs" / ledger.LEDGER_NAME).read_text()
+
+    def boom(self):
+        raise RuntimeError("something nobody predicted")
+
+    monkeypatch.setattr(ledger.Ledger, "load", boom)
+    report = pipeline.RunReport()
+
+    scored = pipeline.run("evening", dry_run=False, tickers=universe, report=report)
+
+    assert scored, "the run finished anyway"
+    assert [e["stage"] for e in report.errors] == ["history"], report.errors
+    (problem,) = report.errors
+    assert "something nobody predicted" in problem["message"]
+    assert all(c["streak"] is None for c in clean(tmp_path)["candidates"])
+    # AND the year of outcomes it could not read is still on disk. The run
+    # carries on with an empty history and then writes one — so a read that
+    # gives up without moving the old file aside destroys it, which is the
+    # loss Ledger.set_aside() exists to prevent and which this catch-all
+    # would otherwise have quietly reopened a door to.
+    assert (tmp_path / "docs" / (ledger.LEDGER_NAME + ".unreadable")).read_text() == (
+        was), "the previous ledger was overwritten by a run that could not read it"
+    assert json.loads((tmp_path / "docs" / ledger.LEDGER_NAME).read_text())["runs"]
+
+
+def test_the_history_is_read_once_and_the_two_files_agree_about_it(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The streak in docs/data.json and the one the email carried come from a
+    single read, taken before this run was added to the ledger."""
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    scored = pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    (published_row,) = published(tmp_path)["candidates"]
+    assert scored[0]["streak"] == published_row["streak"]
+
+
+# --- the morning mode: a follow-through pass, not a second scan -------------
+
+
+def evening_run(tmp_path, fake_alpaca, ohlcv, **kwargs) -> dict:
+    """One published evening run for a morning pass to follow through on."""
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    pipeline.run("evening", dry_run=True, tickers=["BURST"], **kwargs)
+    return published(tmp_path)
+
+
+def test_a_morning_run_re_presents_the_evening_run_and_scans_nothing(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The whole design decision, asserted: a morning run before the open has
+    no market data an evening run did not have -- the daily bar it would read
+    is the same bar -- so it does not scan, does not call Claude, and does not
+    spend anything. What it adds is these names at the hour someone might act
+    on them, with what the record says about each."""
+    evening = evening_run(tmp_path, fake_alpaca, ohlcv)
+    market_clock.before_the_open()
+    before = (len(mocked_boundaries["alpaca"].bar_requests),
+              len(mocked_boundaries["anthropic"].calls))
+
+    rows = pipeline.run("morning", dry_run=False)
+
+    assert [r["ticker"] for r in rows] == [c["ticker"] for c in evening["candidates"]]
+    assert (len(mocked_boundaries["alpaca"].bar_requests),
+            len(mocked_boundaries["anthropic"].calls)) == before, "nothing was spent"
+    (sent,) = mocked_boundaries["resend"].sent
+    assert sent["subject"].startswith(
+        f"[4% Burst] Morning follow-through {evening['run']['date']}: BURST")
+    assert "follow-through watchlist for TODAY" in sent["html"]
+    assert f"Following through on the session of: {evening['run']['date']}" in sent["html"]
+
+
+def test_a_morning_run_writes_nothing(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """docs/ledger.json is the record of what was SCANNED, and add_run() keys
+    its entries on (date, type): a morning entry beside the evening one would
+    carry the same candidates and count that burst twice in every mean across
+    runs. A view over the record does not belong inside it."""
+    evening_run(tmp_path, fake_alpaca, ohlcv)
+    market_clock.before_the_open()
+    def written():
+        return {p: p.read_bytes() for p in sorted(tmp_path.rglob("*")) if p.is_file()}
+
+    before = written()
+
+    pipeline.run("morning", dry_run=True)
+
+    assert written() == before, (
+        "docs/ is untouched and no CSV was written for a scan that did not happen")
+
+
+def test_a_morning_run_needs_no_market_or_model_keys(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """It runs neither layer, so demanding their keys would refuse a run that
+    would have worked perfectly."""
+    evening_run(tmp_path, fake_alpaca, ohlcv)
+    market_clock.before_the_open()
+    for var in ("ALPACA_API_KEY", "ALPACA_SECRET_KEY", "ANTHROPIC_API_KEY"):
+        monkeypatch.delenv(var)
+
+    assert pipeline.run("morning", dry_run=False)
+    assert pipeline.missing_env(dry_run=False, run_type="morning") == []
+    assert "ALPACA_API_KEY" in pipeline.missing_env(dry_run=False, run_type="evening"), (
+        "and an evening run still cannot start without them")
+
+
+def test_a_morning_run_carries_the_streaks_the_evening_run_recorded(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """Read out of the published run rather than recomputed: one arithmetic,
+    one answer, no second rule that can drift from the first."""
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+    monkeypatch.delenv("SCAN_SESSION_DATE")
+
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+
+    assert "day 2 of this setup" in mocked_boundaries["resend"].sent[0]["html"]
+
+
+def test_a_morning_run_with_nothing_published_says_so_and_still_mails(
+    market_clock, mocked_boundaries, tmp_path
+):
+    """Its whole input is the snapshot the last run published, so an absent
+    one is the interesting failure, not an edge case."""
+    market_clock.before_the_open()
+    report = pipeline.RunReport()
+
+    rows = pipeline.run("morning", dry_run=False, report=report)
+
+    assert rows == []
+    assert report.exit_code == pipeline.EXIT_DEGRADED
+    assert [e["stage"] for e in report.errors] == ["history"], report.errors
+    (problem,) = report.errors
+    assert "nothing to follow through on" in problem["message"]
+    (sent,) = mocked_boundaries["resend"].sent
+    assert sent["subject"].startswith("[4% Burst] DEGRADED — ")
+    assert "not a statement about the market" in sent["html"]
+
+
+def test_a_morning_run_refuses_to_mail_the_hand_authored_fixture(
+    market_clock, mocked_boundaries, tmp_path
+):
+    """docs/data.json ships as a fixture of invented rows. Mailing them as a
+    watchlist would put made-up names in front of a reader as last night's
+    judgements, and would look exactly like a working run."""
+    market_clock.before_the_open()
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / ledger.DATA_NAME).write_text(
+        (Path(__file__).resolve().parent.parent / "docs" / "data.json").read_text())
+    report = pipeline.RunReport()
+
+    rows = pipeline.run("morning", dry_run=False, report=report)
+
+    assert rows == []
+    assert [e["stage"] for e in report.errors] == ["history"], report.errors
+    assert "fixture" in report.errors[0]["message"]
+    assert "GOOGL" not in mocked_boundaries["resend"].sent[0]["html"]
+
+
+def test_a_morning_run_following_a_stale_evening_run_says_which_session(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """A week-old snapshot means the evening run has been failing and nobody
+    noticed -- exactly what this pipeline exists to stop being invisible."""
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-4))
+    evening_run(tmp_path, fake_alpaca, ohlcv)
+    monkeypatch.delenv("SCAN_SESSION_DATE")
+    market_clock.before_the_open()
+    report = pipeline.RunReport()
+
+    pipeline.run("morning", dry_run=False, report=report)
+
+    assert [e["stage"] for e in report.errors] == ["session"], report.errors
+    (problem,) = report.errors
+    assert session_offset(-4) in problem["message"]
+    assert str(scanner.current_session()) in problem["message"]
+    assert report.exit_code == pipeline.EXIT_DEGRADED
+
+
+def test_a_morning_run_on_the_session_it_should_follow_is_clean(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The precondition for the test above: a fresh snapshot is not reported."""
+    evening_run(tmp_path, fake_alpaca, ohlcv)
+    market_clock.before_the_open()
+    report = pipeline.RunReport()
+
+    pipeline.run("morning", dry_run=True, report=report)
+
+    assert report.errors == [] and report.exit_code == pipeline.EXIT_OK
+
+
+@pytest.mark.parametrize("status", ["failed", "degraded"])
+def test_a_morning_run_says_when_the_run_it_follows_was_not_clean(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, status
+):
+    """A shortlist from an incomplete scan is not a shortlist of the market,
+    and the reader of the 8:30 email is not the reader who saw last night's
+    red band. Both non-clean statuses carry forward, not just the loudest."""
+    data = evening_run(tmp_path, fake_alpaca, ohlcv)
+    data["run"]["status"] = status
+    (tmp_path / "docs" / ledger.DATA_NAME).write_text(json.dumps(data))
+    market_clock.before_the_open()
+    report = pipeline.RunReport()
+
+    pipeline.run("morning", dry_run=True, report=report)
+
+    assert [e["stage"] for e in report.errors] == ["history"], report.errors
+    assert status.upper() in report.errors[0]["message"]
+
+
+def test_a_morning_run_after_a_clean_evening_run_carries_no_such_warning(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The precondition for the two above: `ok` is not simply reported too."""
+    assert evening_run(tmp_path, fake_alpaca, ohlcv)["run"]["status"] == "ok"
+    market_clock.before_the_open()
+    report = pipeline.RunReport()
+
+    pipeline.run("morning", dry_run=True, report=report)
+
+    assert report.errors == []
+
+
+def test_tickers_is_refused_for_a_mode_that_does_not_scan(monkeypatch, capsys):
+    """A flag that silently does nothing is how a smoke test convinces someone
+    they tested something they did not."""
+    monkeypatch.setattr(sys, "argv", ["pipeline", "morning", "--tickers", "AAA"])
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+    assert exc.value.code == 2  # argparse's usage error, not EXIT_DEGRADED
+    assert "does not scan" in capsys.readouterr().err

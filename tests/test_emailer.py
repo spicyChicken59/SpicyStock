@@ -185,3 +185,101 @@ def test_an_empty_delivery_variable_is_missing_not_present(monkeypatch, fake_res
     with pytest.raises(KeyError, match=var):
         send_email([], "evening", STATS)
     assert fake_resend.sent == [], "nothing may be sent on the way to failing"
+
+
+# --- step 10: the session, and whether this name is a repeat ---------------
+# The mode was a label over a session the wall clock picked, so "Evening
+# candidates" could be yesterday's market and nothing in the inbox showed it.
+# And every night's list arrived as if it were the first time: a name that
+# burst on Monday and again on Tuesday looked like two new ideas.
+
+DATED = dict(STATS, session="2026-08-31")
+
+
+def _with_streak(**streak):
+    base = {"day": 1, "first_seen": "2026-08-31", "last_seen": None,
+            "last_score": None, "last_verdict": None, "seen_before": 0}
+    return [make_result("AAA", streak=dict(base, **streak))]
+
+
+def test_the_subject_names_the_session_that_was_scanned(results):
+    """The only half of the fix a phone shows."""
+    assert subject_for(results, "evening", DATED).startswith(
+        "[4% Burst] Evening candidates 2026-08-31: AAA")
+    assert subject_for(results, "morning", DATED).startswith(
+        "[4% Burst] Morning follow-through 2026-08-31: AAA")
+
+
+def test_a_subject_with_no_session_to_name_does_not_invent_one(results):
+    """The precondition: the date in the subject above comes from the caller,
+    not from a clock this module reads for itself."""
+    assert subject_for(results, "evening", STATS) == (
+        "[4% Burst] Evening candidates: AAA, BBB, CCC, DDD")
+
+
+def test_the_body_names_the_session_above_the_table(results):
+    assert "Session scanned: 2026-08-31" in build_html(results, "evening", DATED)
+
+
+def test_a_morning_body_reports_the_run_it_is_following_not_a_scan(results):
+    """It scanned no universe at all, so printing one would describe a funnel
+    it never walked."""
+    html = build_html(results, "morning", DATED)
+
+    assert "Following through on the session of: 2026-08-31" in html
+    assert "Universe" not in html and "Shortlisted" not in html
+    assert "Watching: 4" in html
+
+
+def test_a_repeat_says_which_day_of_the_setup_it_is():
+    """THE thing step 10 added to this email."""
+    html = build_html(_with_streak(day=3, first_seen="2026-08-27",
+                                   last_seen="2026-08-28", last_score=7.5,
+                                   last_verdict="B", seen_before=2),
+                      "evening", DATED)
+
+    assert "day 3 of this setup, since 2026-08-27" in html
+    assert "last seen 2026-08-28, scored 7.5/10 B" in html
+
+
+def test_a_first_sighting_says_that_rather_than_saying_nothing():
+    """Absence is not a readable signal: a row with no marker would be
+    indistinguishable from a run that could not read its history."""
+    assert "day 1 — new setup" in build_html(_with_streak(), "evening", DATED)
+
+
+def test_a_name_seen_before_but_not_recently_is_day_one_with_a_note():
+    """A ticker reappearing after a full base is day 1 of something new, and
+    when it was last seen is still worth knowing."""
+    html = build_html(_with_streak(last_seen="2026-08-14", last_score=5.2,
+                                   last_verdict="skip", seen_before=1),
+                      "evening", DATED)
+
+    assert "day 1 — new setup · last seen 2026-08-14, scored 5.2/10 skip" in html
+
+
+def test_a_repeat_the_gate_rejected_last_time_does_not_invent_a_score():
+    html = build_html(_with_streak(day=2, first_seen="2026-08-28",
+                                   last_seen="2026-08-28", seen_before=1),
+                      "evening", DATED)
+
+    assert "last seen 2026-08-28, not scored then" in html
+
+
+def test_a_row_with_no_streak_renders_no_streak(results):
+    """null is "this run could not read its history", and the red band above
+    the table already says so. Inventing "new setup" here would turn a file
+    error into a claim about the market."""
+    html = build_html([make_result("AAA", streak=None)], "evening", DATED)
+    assert "setup" not in html
+    assert "setup" not in build_html(results, "evening", DATED), (
+        "and a row that never carried the field at all is the same"
+    )
+
+
+def test_a_morning_run_with_nothing_to_show_does_not_blame_the_market():
+    """Three empty tables now, and only one of them is a statement about
+    stocks: a morning pass has nothing of its own to find."""
+    assert "The run this follows through on scored no candidates." in build_html(
+        [], "morning", DATED)
+    assert "No candidates passed the quality gate" in build_html([], "evening", DATED)

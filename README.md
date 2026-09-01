@@ -47,9 +47,54 @@ Layer 6  Email ....................... HTML table with inline charts, top 5 —
                                        the ONLY place TOP_N cuts anything
 ```
 
-**Evening run (6:16 PM ET):** scans that day's completed session → candidates for tomorrow.
-A morning run exists in `src/pipeline.py` but has no workflow and no distinct
-behaviour; resolving that is step 10.
+## The two runs
+
+| | `evening` (6:16 PM ET) | `morning` (8:30 AM ET) |
+|---|---|---|
+| what it does | **discovery** — scans the session that closed today | **follow-through** — re-presents the evening run before the open |
+| scans | yes, every layer above | no |
+| costs | ~25 Claude calls, a few cents | nothing |
+| writes | `docs/data.json`, `docs/ledger.json`, `docs/charts/`, `results/*.csv` | nothing |
+| workflow | `.github/workflows/evening.yml` | `.github/workflows/morning.yml` |
+
+**Why the morning run does not scan.** Before the open it has no market data
+the evening run did not have — the daily bar it would read is the same daily
+bar — so a "morning scan" is the evening scan repeated at a different hour, for
+the identical answer, at the same cost. What it can honestly add is these names
+in front of you at the hour you might act on them, each with what the record
+says about it. It reads the run `docs/data.json` already holds; it does not
+write to `docs/ledger.json`, because that file is the record of what was
+*scanned* and a second entry for one session would count that burst twice in
+every average across runs.
+
+**The mode is a promise about the clock, and it is checked.** An evening run
+declares that today's session has closed; a morning run declares that it has
+not. When the clock disagrees — `evening` before 16:15 ET, `morning` after it —
+the run is **degraded**, not refused: it still does its work and still mails,
+with the reason in the red band, in `docs/ledger.json` and in exit code 2.
+Refusing would trade a mislabelled email for no email, and no email is
+indistinguishable from a market holiday. Whatever the clock says, the session
+that was actually read is named in the subject line, above the table and in the
+CSV's filename, so the label cannot quietly become a different day.
+`SCAN_SESSION_DATE` is exempt: a pinned session is you overruling the clock on
+purpose, and a deliberate backfill is not a mistake.
+
+**Day N of this setup.** Every burst the evening run reports carries a
+`streak`: whether this name has appeared before, when it last did, what it
+scored then, and which session its current run of appearances started on. Two
+appearances belong to the **same setup** when the second lands within
+`MAX_STREAK_GAP_SESSIONS` (= `max(HORIZONS)` = 5) sessions of the first — the
+window this pipeline already commits to as the one a burst's outcome is decided
+over, so a second burst inside it happens while the first is still being judged.
+A ticker reappearing a fortnight later is day 1 of something new, not day 12 of
+something finished. Sessions, not calendar days, and weekends-only arithmetic:
+a holiday makes a gap look one session longer, which can only *break* a streak,
+never invent one. The rule and its reasoning are in `src/ledger.py`.
+
+Reading that history can never kill a run. An unreadable `docs/ledger.json`
+degrades the run and publishes `streak: null` on every row — "we have never
+seen this name" and "we could not read the file that would know" are different
+sentences, and only one is a claim about the market.
 
 ## One-time setup
 
@@ -59,18 +104,24 @@ what `.github/workflows/evening.yml` reads, and `.env.example` explains each:
 `ANTHROPIC_API_KEY`, `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`,
 `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_TO`
 
-`.github/workflows/evening.yml` then fires on weekdays and can be triggered
-manually from the Actions tab.
+Both pipeline workflows then fire on weekdays and can be triggered manually
+from the Actions tab. `morning.yml` is passed only the three delivery secrets,
+because the follow-through pass runs neither the scanner nor the scorer and
+`preflight()` asks the mode which layers it will use before demanding a key.
 
-> **Note:** `evening.yml` is the only *pipeline* workflow — `secret-scan.yml`
-> and `tests.yml` are the other two files in that directory. It fires at
-> 6:16 PM ET — 22:16 UTC
-> under EDT, 23:16 UTC under EST — not the 5:30 PM this README claims
-> elsewhere. Both crons are registered and the guard no-ops the wrong one. It is
-> labelled backup-only for an external trigger you should not set up. The
-> 8:30 AM morning run has no workflow file at all; `morning.yml` does not
-> exist, and `src/pipeline.py` treats `morning` and `evening` identically
-> apart from the email subject, the body heading, and the CSV filename.
+> **Note:** the four files in `.github/workflows/` are `evening.yml`,
+> `morning.yml`, `secret-scan.yml` and `tests.yml`. The evening scan fires at
+> 6:16 PM ET — 22:16 UTC under EDT, 23:16 UTC under EST — and the morning
+> follow-through at 8:30 AM ET (12:30 / 13:30 UTC). Both crons of each pair are
+> registered and a guard no-ops the one that does not match today's ET offset,
+> because GitHub crons are UTC and do not follow US daylight saving.
+> `evening.yml`'s crons are labelled backup-only for an external trigger you
+> should not set up; the guard works standalone.
+>
+> `morning.yml` depends on `evening.yml` having committed `docs/` back — see
+> "Does the history actually accumulate?" below. On a repo where that has never
+> happened it finds the hand-authored fixture, refuses it by name and mails a
+> degraded notice rather than a watchlist of invented tickers.
 >
 > An older `SETUP.md` walked through a Gmail OAuth flow this code no longer
 > uses; it was removed rather than annotated, since following it minted
@@ -98,19 +149,27 @@ python -m src.pipeline evening --dry-run
 # Smoke-test on a few tickers:
 python -m src.pipeline evening --dry-run --tickers NVDA,PLTR,SMCI,CRWD
 
+# Re-present the run above, the way the 8:30 AM job would. Scans nothing,
+# reads docs/data.json, needs no Alpaca or Anthropic key. --tickers is
+# refused here rather than ignored, because this mode does not scan:
+python -m src.pipeline morning --dry-run
+
 # Seed the history from a past session (its forward returns resolve at once):
 SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 331 tests, no network or API keys needed
+pytest tests/                   # 465 tests, no network or API keys needed
 ```
 
-Every run — `--dry-run` included, since `--dry-run` skips only the email —
-rewrites `docs/data.json`, updates `docs/ledger.json` and writes PNGs into
-`docs/charts/`. A four-ticker smoke test therefore replaces the committed
+Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
+email — rewrites `docs/data.json`, updates `docs/ledger.json` and writes PNGs
+into `docs/charts/`. A four-ticker smoke test therefore replaces the committed
 fixture with a four-ticker run. `git checkout docs/data.json` puts it back;
-`tools/check_fixture_fresh.py` tells you whether it needs putting back.
+`tools/check_fixture_fresh.py` tells you whether it needs putting back. A
+**morning** run writes nothing at all, so it cannot disturb the fixture — but
+it will refuse to read it, which is what you will see if you run one before an
+evening run has published anything.
 
 ## The dashboard
 
@@ -126,7 +185,8 @@ replaces it.
 
 It shows the run's funnel (universe → bursts → 2LYNCH gate → scored → shortlist),
 **every candidate the run scored** rather than the five that went out by email, each
-one's 2LYNCH checklist with its measured values, and — for every score — whether
+one's 2LYNCH checklist with its measured values, which day of its setup it is
+(and when it was last seen), and — for every score — whether
 Claude produced it or the offline checklist fallback did. A fallback score can no
 longer outrank a real one: `score_all` sorts on provenance before score, so every
 Claude score ranks above every fallback whatever the numbers say. It is labelled
@@ -149,6 +209,11 @@ invariants live in the file rather than only here. The load-bearing ones:
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
+- Every burst carries `streak` — `day`, `first_seen`, `last_seen`, `last_score`,
+  `last_verdict`, `seen_before` — or `null` when the run could not read its own
+  history. `day` is 1 exactly when `first_seen` is the burst's own session, and
+  `last_seen` is `null` exactly when `seen_before` is 0. A `null` streak means
+  unknown; it never collapses to a confident day 1.
 - Numbers are numbers or `null` — never `0` for "unknown", never the string `"n/a"`.
   `src.ledger` writes every number through one coercion and dumps with
   `allow_nan=False`, because `json.dump` writes a NaN as a bare token no browser
@@ -225,6 +290,24 @@ collect could never span more than one session. The workflow holds
 push by rebasing, and falls back to an artifact if the push still fails —
 market data is live-only, so a discarded snapshot cannot be re-fetched.
 
+Since step 10 that commit-back carries a second job: it is what the 8:30 AM
+follow-through reads, and it is what makes a streak possible at all. Remove it
+and both features fail quietly in the same way — every night's candidates would
+be day 1 of a setup, forever, because the file that knows otherwise would never
+survive a container.
+
+**It did not work until step 10, and nothing said so.** The step ran
+`git add docs results`, and `results/` is gitignored on purpose — `git add` on
+an ignored path exits 1, which under Actions' `bash -e` aborted the step before
+the commit. `docs/` was staged and then died with the container on every run,
+while the workflow's own comment said the history was being kept. It is
+`git add docs` now, and `tests/test_docs_are_true.py` checks that no path this
+workflow stages is one `.gitignore` blocks, because reading the two files side
+by side is exactly what missed it the first time. The `results/` artifact upload
+now runs on every completed scan rather than only on a failed push — which is
+what the note below has always claimed, and which is also the signal the
+workflow's own duplicate-run guard reads.
+
 
 ### Checking it
 
@@ -248,6 +331,14 @@ everything has no `.sc-chip--warn` to measure. Whoever commits a real run over
 the fixture has to reckon with that first; it is a change to
 `tools/dashboard_smoke.mjs`, which step 9 deliberately did not touch.
 
+**It does not check the streak line step 10 added** either — the day-N note
+under each ticker and the "this setup" fact on each card. That line was written
+against the selectors the smoke test already asserts on (it adds no column and
+no `.sc-chip--warn`, so the column indexes and fallback counts it measures are
+untouched), but it was never watched in a browser: chromium is not available in
+the sandbox this was built in. Run `node tools/dashboard_smoke.mjs` locally
+before trusting the page.
+
 ## Tuning
 
 - Scan universe: `data/symbols.txt` — a hand-curated starter list, not the whole market
@@ -259,6 +350,9 @@ the fixture has to reckon with that first; it is a change to
   candidate is archived whatever it says
 - How much history the ledger keeps, and how long a pending outcome is chased:
   `MAX_RUNS` and `FILL_WINDOW_RUNS` in `src/ledger.py`
+- What counts as one setup, for the "day N" a repeat carries:
+  `MAX_STREAK_GAP_SESSIONS` in `src/ledger.py`, with the reasoning beside it
+- What each run mode promises about the clock: `MODES` in `src/pipeline.py`
 - Scoring rubric the AI follows: `knowledge/strategy.md` — edit this file to change how Claude judges setups; no code changes needed
 - Model: set `CLAUDE_MODEL` env var (default `claude-sonnet-4-6`)
 
@@ -274,16 +368,18 @@ the fixture has to reckon with that first; it is a change to
   request per 100 candidates still waiting on a forward return — in practice one
   or two a run, on the same free feed.
 - Claude: ≤25 scoring calls/run with one chart image each — a few cents/day
-  on Sonnet.
-- GitHub Actions: free tier covers 2 runs/day comfortably (private repos get
-  2,000 min/month; ~40 min/day used).
+  on Sonnet, and only on the evening run. The morning follow-through makes no
+  model call and no data request at all.
+- GitHub Actions: free tier covers both daily runs comfortably (private repos
+  get 2,000 min/month). The evening scan is the long one; the morning job is a
+  file read and an email.
 
 ## Notes
 
 - The data layer is Alpaca (`_download_batch` in `src/scanner.py`). If the free
   chosen feed proves too thin once the volume threshold is relative, swapping that
   one function for another provider leaves the rest of the pipeline unchanged.
-- Every run archives **every scored candidate** — not the five that went out —
+- Every *evening* run archives **every scored candidate** — not the five that went out —
   three times over: `results/*.csv` (gitignored, uploaded as a 30-day workflow
   artifact), `docs/data.json` (the dashboard's snapshot of that run) and
   `docs/ledger.json` (the record, with forward returns filled in by later runs).

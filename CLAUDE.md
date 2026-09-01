@@ -25,8 +25,12 @@ Known scheduled falsifications:
 | ~~Step 5 makes failures loud~~ done | ~~`.env.example`'s "these fail in three different ways" block~~ swept |
 | ~~Step 6 fixes the test suite~~ done | ~~the `detect_burst` comment in `.gitignore`, the broken-test note in README~~ swept |
 | ~~Step 9 emits `docs/data.json`~~ done | ~~the "hand-authored fixture" caveat in README's dashboard section~~ swept — the committed copy is still the fixture and says so in `run.fixture`; the pipeline writes the real one |
-| `evening.yml` keeps `docs/` between runs (commit-back or artifact round-trip) | README's "Does the history actually accumulate?" section, which currently says it does not, and the stale `charts/` path in that workflow's upload step |
+| ~~`evening.yml` keeps `docs/` between runs~~ done in step 9 | ~~README's "Does the history actually accumulate?" section and the stale `charts/` path in that workflow's upload step~~ both swept; step 10 added why that commit-back now also feeds the morning run and every streak |
+| ~~Step 10 makes the mode mean something and reads the ledger back~~ done | ~~README's "morning has no workflow and no distinct behaviour" note, the workflow inventory, `.env.example`'s required-variable list~~ all swept; `morning.yml` now exists |
 | The universe widens past `data/symbols.txt` | the 230-name figures in README's diagram, Tuning and Costs sections |
+
+Nothing else is scheduled to go stale: step 10 was the last of the ten. The one
+row left is the open decision at the bottom of this file, not a step.
 
 ## Standing rule: no line numbers in comments or docs
 
@@ -51,7 +55,17 @@ a precondition of every rejection test instead of an inequality picked by eye.
 The doc-sweep rule above failed on three consecutive commits because it relied
 on remembering. `tests/test_docs_are_true.py` now enforces the mechanically
 checkable parts — the test count, the universe size, the email's universe
-string, and `.env.example`'s `feed=` claim. Prose still needs a human.
+string, `.env.example`'s `feed=` claim, and (step 10) that README's workflow
+inventory and its list of run modes are the ones that exist. Prose still needs
+a human.
+
+**A test whose answer depends on the hour it runs is the worst kind there is.**
+Step 10 made the run type a promise about the 16:15 ET close, so every
+end-to-end test in `tests/test_pipeline.py` would otherwise have been green all
+evening and red all morning. The `market_clock` fixture there pins the side of
+the close — but only for a caller that does NOT name an instant, so a test that
+passes a real `datetime` still exercises the real arithmetic, and the check
+itself is pinned against real instants in `tests/test_scanner.py`.
 
 ## Verification is by execution
 
@@ -73,12 +87,19 @@ that a fix did not introduce a new defect of the same class.**
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 331 tests with no network
+- **There is a regression net.** `pytest tests/` runs 465 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
   provably equivalent or measure-zero (`>=`→`>` on a float boundary the grid
-  steps over), not gaps. The three holes this section used to name are closed:
+  steps over), not gaps. Step 10 mutated its own additions the same way — 38
+  mutants over the mode/clock check, the streak arithmetic and the morning
+  mode, all 38 killed, and its three first-round survivors closed with the
+  tests they showed were missing rather than argued away. One of those was not
+  a missing test but a real regression: the catch-all that stops an unreadable
+  history from killing a run had reopened the door to a run OVERWRITING the
+  history it could not read, which is exactly what Ledger.set_aside() exists to
+  prevent. The three holes this section used to name are closed:
   `get_universe()` and the symbol-file parser (`tests/test_scanner.py`),
   `main()`'s exit code (`tests/test_pipeline.py`), and the SDK wire shapes —
   `tests/test_sdk_contract.py` builds a genuine `StockBarsRequest` and a genuine
@@ -86,7 +107,10 @@ that a fix did not introduce a new defect of the same class.**
   double, so a shape change in alpaca-py fails here rather than passing.
   Still untested: anything needing a socket — that the credentials can query the
   feed, that Resend delivers, that Claude returns what the parser expects from a
-  real chart.
+  real chart. And nothing here opens `docs/index.html`: the dashboard's own
+  smoke test (`tools/dashboard_smoke.mjs`) needs playwright's chromium, which
+  the sandbox does not have, so step 10's streak line on the page was written
+  against the selectors that test asserts on rather than watched in a browser.
 
 ## Local run
 
@@ -109,14 +133,26 @@ python -m src.pipeline evening --dry-run
 6. ~~6a: real tests, offline mode, CI · 6b: threshold + canary assertions~~ done
 7. ~~Fix the 2LYNCH math (`L` is sign-blind, `Y` excludes the burst day)~~ done
 8. ~~Harden the LLM layer (`temperature=0` — which is a TypeError in anthropic 1.x; it goes via `extra_body`)~~ done
-9. ~~Persist every scored candidate plus forward returns~~ done in `src/` —
-   `docs/data.json` + `docs/ledger.json`, forward returns filled by later runs.
-   NOT done end to end: nothing the run writes into `docs/` survives a GitHub
-   Actions container, so in CI the history restarts every night. That is one
-   change to `evening.yml` (see the table above and README)
-10. Resolve morning/evening and statefulness
+9. ~~Persist every scored candidate plus forward returns~~ done —
+   `docs/data.json` + `docs/ledger.json`, forward returns filled by later runs,
+   and `evening.yml` commits `docs/` back so the history survives the container
+10. ~~Resolve morning/evening and statefulness~~ done — the two modes are now
+    two behaviours: `evening` discovers (scan → score → archive), `morning`
+    follows through on what `evening` published and scans nothing, because
+    before the open it would be reading the same daily bar for the same answer.
+    Each mode declares which side of the 16:15 ET close it belongs on and
+    degrades loudly when the clock disagrees, with the session it really read
+    named in the subject line, above the table and in the CSV's filename;
+    `SCAN_SESSION_DATE` is exempt, since a pin is the user overruling the clock
+    on purpose. And the ledger is finally READ as well as written: every burst
+    carries a streak — day N of this setup, when the name was last seen, what
+    it scored then — with `ledger.MAX_STREAK_GAP_SESSIONS` holding the one
+    judgement about what "the same setup" means. A history that cannot be read
+    degrades the run and publishes a null streak; it never takes the run with
+    it and never collapses into a confident day 1.
 
-Full-market scanning comes after all ten.
+All ten are done. Full-market scanning comes next, and the open decision below
+is the first thing standing in front of it.
 
 **Open decision — the universe is now 230 names.** Step 2 traded ~11,000 symbols
 for a hand-curated list to make steps 3-8 testable in seconds instead of twenty

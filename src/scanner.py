@@ -225,6 +225,29 @@ def current_session(now: datetime | None = None) -> date:
     return session
 
 
+def session_has_closed(now: datetime | None = None) -> bool:
+    """Is TODAY's session already over, in market time?
+
+    The one fact that separates this pipeline's two modes, and the reason it
+    is a function rather than a comparison written out at each call site:
+    src.pipeline asks it to decide whether the mode it was given matches the
+    clock it is running on. An evening run is a scan of the session that
+    closed today, so it belongs on the True side; a morning run is a
+    follow-through before the open, so it belongs on the False side. Nothing
+    used to check either, and a `python -m src.pipeline evening` at lunchtime
+    scanned YESTERDAY and mailed it as tonight's candidates.
+
+    Equivalent to `current_session(now) == today in ET`, and deliberately the
+    same arithmetic: weekends are subtracted, holidays are not. A run on
+    Thanksgiving afternoon is told the session closed, targets a session the
+    market never held and fails loudly in run_scan() — which is the behaviour
+    current_session()'s docstring already argues for, not a second opinion
+    about the calendar.
+    """
+    now_et = (now or datetime.now(timezone.utc)).astimezone(MARKET_TZ)
+    return now_et.weekday() < 5 and now_et.time() >= SESSION_COMPLETE_ET
+
+
 @dataclass
 class ScanConfig:
     min_price: float = 4.0            # price > $4

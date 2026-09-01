@@ -13,6 +13,13 @@ builds, and the shape docs/data.json's `run.errors` takes — puts a red band at
 the top of the body and a word in the subject line. An operator can tell a
 degraded run from a clean one in the inbox, without opening a log.
 
+Two things step 10 added, for the same reason. `scan_stats["session"]` names
+the session that was actually read, in the subject and above the table: the run
+type was a label over a session the wall clock picked, so "Evening candidates"
+could be yesterday's market with nothing in the inbox showing it. And each row
+carries its streak — see _streak_note() — because a name that burst on Monday
+and again on Tuesday used to arrive as two brand-new ideas.
+
 Environment variables:
 
   RESEND_API_KEY   — from https://resend.com/api-keys
@@ -100,6 +107,66 @@ def _provenance_line(scan_stats: dict) -> str:
             f"{claude} of {total}</span>")
 
 
+def _streak_note(row: dict) -> str:
+    """"day 3 of this setup — since 2026-08-27, last seen…", under the ticker.
+
+    THE thing step 10 added to this email. A name that burst on Monday and
+    again on Tuesday used to arrive as a brand-new idea both nights, with
+    nothing saying the reader had already looked at it and passed. src.ledger's
+    MAX_STREAK_GAP_SESSIONS holds what "the same setup" means.
+
+    Empty when the row carries no streak at all — which is not the same as
+    day 1. A null streak means the run could not read its own history, and the
+    red band above the table already says so; inventing "new setup" here would
+    turn a file error into a claim about the market.
+    """
+    streak = row.get("streak")
+    if not streak:
+        return ""
+    day = streak.get("day") or 1
+    last, score, verdict = (streak.get("last_seen"), streak.get("last_score"),
+                            streak.get("last_verdict"))
+    if day > 1:
+        text = f"day {day} of this setup, since {streak.get('first_seen')}"
+        colour = "#a5281b"
+    else:
+        text = "day 1 — new setup"
+        colour = "#666"
+    if last:
+        judged = (f", scored {score}/10 {verdict or ''}".rstrip()
+                  if score is not None else ", not scored then")
+        text += f" · last seen {last}{judged}"
+    return f'<br><span style="color:{colour};font-size:12px;">{text}</span>'
+
+
+def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
+    """The counts under the title — and, since step 10, the SESSION.
+
+    Naming the session is what stops a mode from lying. The clock decides
+    which session gets scanned and the mode was only ever a label on top of
+    it, so an evening run started before the close mailed yesterday's market
+    as tonight's and no one reading this could tell. Now the run says which
+    session it read, in the artifact a person actually opens.
+
+    A morning run counts different things because it did different things: it
+    scanned no universe at all, so it reports the run it is following through
+    on rather than a funnel it did not walk.
+    """
+    session = scan_stats.get("session") or "not recorded"
+    if run_type == "morning":
+        parts = [("Following through on the session of", session),
+                 ("4% bursts that session", scan_stats.get("bursts", "?")),
+                 ("Passed 2LYNCH gate", scan_stats.get("gated", "?")),
+                 ("Watching", len(results))]
+    else:
+        parts = [("Session scanned", session),
+                 ("Universe", scan_stats.get("universe", "?")),
+                 ("4% bursts found", scan_stats.get("bursts", "?")),
+                 ("Passed 2LYNCH gate", scan_stats.get("gated", "?")),
+                 ("Shortlisted", len(results))]
+    return " &nbsp;|&nbsp;\n      ".join(f"{label}: {value}" for label, value in parts)
+
+
 def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
     title = (
         "Momentum Bursts — follow-through watchlist for TODAY"
@@ -112,7 +179,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
         rows += f"""
         <tr>
           <td style="padding:8px;border-bottom:1px solid #ddd;"><b>{i}. {r['ticker']}</b><br>
-              <span style="color:#666;font-size:12px;">${r['close']}</span></td>
+              <span style="color:#666;font-size:12px;">${r['close']}</span>{_streak_note(r)}</td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">+{r['gain_pct']}%</td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">{r['volume_ratio']}x</td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">
@@ -130,11 +197,17 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
 
     if not results:
         # An empty shortlist means two completely different things, and the
-        # cell used to state the innocent one either way.
-        empty = ("No candidates passed the quality gate today."
-                 if not scan_stats.get("errors")
-                 else "No shortlist. See the failures listed above — this is not "
-                      "a statement about the market.")
+        # cell used to state the innocent one either way. Three things, since
+        # step 10: a morning pass has nothing of its own to find, so "no
+        # candidates passed the quality gate" would be a sentence about a scan
+        # that never ran.
+        if scan_stats.get("errors"):
+            empty = ("No shortlist. See the failures listed above — this is not "
+                     "a statement about the market.")
+        elif run_type == "morning":
+            empty = "The run this follows through on scored no candidates."
+        else:
+            empty = "No candidates passed the quality gate today."
         rows = f'<tr><td colspan="7" style="padding:16px;color:#666;">{empty}</td></tr>'
 
 
@@ -143,10 +216,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
     {_banner(scan_stats)}
     <h2 style="margin-bottom:4px;">{title}</h2>
     <p style="color:#666;margin-top:0;">
-      Universe scanned: {scan_stats.get('universe', '?')} &nbsp;|&nbsp;
-      4% bursts found: {scan_stats.get('bursts', '?')} &nbsp;|&nbsp;
-      Passed 2LYNCH gate: {scan_stats.get('gated', '?')} &nbsp;|&nbsp;
-      Shortlisted: {len(results)}{_provenance_line(scan_stats)}
+      {_funnel_line(results, run_type, scan_stats)}{_provenance_line(scan_stats)}
     </p>
     <table style="border-collapse:collapse;width:100%;max-width:1100px;">
       <tr style="background:#1a1a2e;color:#fff;text-align:left;">
@@ -183,12 +253,22 @@ def _build_attachments(results: list[dict]) -> list[dict]:
 def subject_for(results: list[dict], run_type: str, scan_stats: dict) -> str:
     """The one line that shows in a notification, so the status goes in it.
 
-    Before the ticker list, not after: a phone truncates the end.
+    And, since step 10, the session. The mode was a label over a session the
+    wall clock picked, so "Evening candidates" could be yesterday's market and
+    "Morning watchlist" could be a day that had already closed — neither
+    visible from the inbox. Naming the session makes the mode unable to lie
+    even when the clock and the mode disagree, which is the cheapest half of
+    that fix and the only half a phone shows.
+
+    Status and session both come before the ticker list: a phone truncates the
+    end, so what a reader must not miss goes first.
     """
-    label = "Morning watchlist" if run_type == "morning" else "Evening candidates"
+    label = "Morning follow-through" if run_type == "morning" else "Evening candidates"
     prefix = STATUS_PREFIXES.get(scan_stats.get("status", "ok"), "")
+    session = scan_stats.get("session")
+    dated = f"{label} {session}" if session else label
     top = ", ".join(r["ticker"] for r in results) or "none"
-    return f"[4% Burst] {prefix}{label}: {top}"
+    return f"[4% Burst] {prefix}{dated}: {top}"
 
 
 def _required(name: str) -> str:

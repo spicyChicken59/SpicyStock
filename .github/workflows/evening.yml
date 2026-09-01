@@ -76,10 +76,20 @@ jobs:
         # span more than one session. Market data is live-only — a rejected push
         # discards a snapshot that cannot be re-fetched — so rebase onto
         # whatever landed during the run and retry.
+        #
+        # `git add docs` — NOT `git add docs results`. results/ is gitignored on
+        # purpose (README, "Notes"), and `git add` on an ignored path exits 1,
+        # which under Actions' `bash -e` aborted this step before the commit on
+        # every single run. docs/ was staged and never committed, the container
+        # took it, and the history this exists to accumulate restarted every
+        # night while the workflow reported it was being kept. Step 10 found it
+        # by running `git add` against these rules rather than reading them:
+        # both the streaks and the morning follow-through are built on this
+        # step actually working.
         run: |
           git config user.name  "spicystock"
           git config user.email "actions@github.com"
-          git add docs results
+          git add docs
           git diff --staged --quiet && exit 0
           git commit -m "run $(date -u +%F)"
           for i in 1 2 3; do
@@ -87,8 +97,15 @@ jobs:
             git pull --rebase origin "${GITHUB_REF_NAME}"
           done
           git push
-      - name: Keep the snapshot if the push failed
-        if: failure()
+      - name: Keep the run's artifacts
+        # always(), not failure(), and two reasons for the change. It is the
+        # 30-day copy of results/*.csv README documents — which a failure-only
+        # upload never produced on a run that worked. And it is the "an evening
+        # run already happened today" signal the guard above queries: until the
+        # `git add` fix above, that signal existed only because the persist step
+        # failed on every single run, so repairing that step would otherwise
+        # have quietly deleted the guard's only input.
+        if: always() && steps.guard.outputs.go == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: evening-${{ github.run_id }}

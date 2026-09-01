@@ -401,6 +401,35 @@
     return img;
   }
 
+  // ---- streaks -------------------------------------------------------------
+  // Step 10. Every run used to start from nothing, so a name that burst on
+  // Monday and again on Tuesday appeared as two brand-new day-1 ideas. The
+  // rule for what counts as ONE setup is src/ledger.py's
+  // MAX_STREAK_GAP_SESSIONS; this only renders what the file says.
+  //
+  // A missing block is not day 1. Null means the run could not read its own
+  // history, and the run's error band above already says so — printing "new
+  // setup" here would turn a file error into a claim about the market.
+  function streakText(c) {
+    var s = c.streak;
+    if (!s) return 'not recorded — no history was read';
+    var text = (s.day > 1) ? 'day ' + s.day + ', since ' + day(s.first_seen)
+                           : 'day 1 — new setup';
+    if (s.last_seen) {
+      text += ' · last seen ' + day(s.last_seen) + (s.last_score === null || s.last_score === undefined
+        ? ' (not scored)' : ' at ' + num(s.last_score, 1) + '/10');
+    }
+    return text;
+  }
+  function streakNote(c) {
+    if (!c.streak) return null;
+    return el('div', {
+      'class': 'sc-note',
+      title: c.streak.seen_before + ' earlier session(s) in the ledger',
+      text: streakText(c)
+    });
+  }
+
   function forwardCell(fr) {
     if (!fr) return 'not recorded';
     var have = ['d1', 'd3', 'd5'].filter(function (k) { return fr[k] !== null && fr[k] !== undefined; });
@@ -417,6 +446,7 @@
       ['$ volume', '$' + big(c.dollar_volume)],
       ['off 52w high', pct(c.context && c.context.pct_off_52w_high)],
       ['3-month', pct(c.context && c.context.perf_3mo_pct)],
+      ['this setup', streakText(c)],
       ['forward return', forwardCell(c.forward_returns)]
     ];
     return el('article', { 'class': 'sc-card sc-card--raised pick' }, [
@@ -854,7 +884,8 @@
         var fr = c.forward_returns || {};
         return el('tr', null, [
           el('td', null, [el('div', { 'class': 'sc-eyebrow', text: '#' + c.rank }),
-                          el('span', { 'class': 'sc-case', text: c.ticker })]),
+                          el('span', { 'class': 'sc-case', text: c.ticker }),
+                          streakNote(c)]),
           el('td', { 'class': 'sc-num', text: num(c.score, 1) }),
           el('td', null, provChip(c)),
           el('td', null, el('span', { 'class': 'sc-chip sc-chip--neutral sc-chip--case', text: c.verdict || '?' })),
@@ -881,7 +912,8 @@
     table($('gated-table'), ['ticker', 'why', '2LYNCH', 'burst', 'vol x', 'close'],
       gated.map(function (g) {
         return el('tr', null, [
-          el('td', null, el('span', { 'class': 'sc-case', text: g.ticker })),
+          el('td', null, [el('span', { 'class': 'sc-case', text: g.ticker }),
+                          streakNote(g)]),
           el('td', { 'class': 'col-why' }, el('span', {
             'class': 'sc-chip sc-chip--neutral',
             text: g.reason === 'score_cap' ? 'passed, over the call cap' : 'failed the 2LYNCH gate'

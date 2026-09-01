@@ -1,14 +1,66 @@
 """
 Orchestrator — ties all layers together. Two modes:
 
-  evening : scan today's completed session → candidates to watch TOMORROW
-  morning : re-scan the most recent completed session (yesterday) →
-            follow-through watchlist for TODAY
-
-Both modes are stateless and fully automated:
-  scan → 2LYNCH gate → chart render → Claude scoring → email → CSV archive
+  evening : DISCOVERY. Scan the session that closed today → candidates to
+            watch TOMORROW. Everything downstream — charts, Claude, the
+            archive, the ledger — belongs to this mode.
+  morning : FOLLOW-THROUGH. No scan. Re-present the last evening run's
+            candidates before today's open, with what the record says about
+            each one, and cost nothing to do it.
 
 Usage:  python -m src.pipeline morning|evening [--dry-run] [--tickers AAPL,MSFT]
+
+THE MODE IS A PROMISE ABOUT THE CLOCK (step 10)
+-----------------------------------------------
+`run_type` used to change four cosmetic things — the email subject, a heading,
+the CSV filename and a field in the ledger — and nothing else. Both modes ran
+the identical scan, and WHICH session that scan read was decided entirely by
+the wall clock in scanner.current_session(): today's session once 16:15 ET has
+passed, otherwise the previous one. Nothing compared the two. So
+`python -m src.pipeline evening` at lunchtime scanned YESTERDAY and mailed it
+as "Evening candidates", and `morning` after the close mailed a "Morning
+watchlist" for a day that had already finished. Neither was visible from the
+email, the CSV or the ledger — the same silent wrongness step 5 exists to end.
+
+Each mode now DECLARES the side of the close it belongs on (see MODES), and
+the run checks that against the clock before it spends anything. A
+disagreement does not stop the run: it degrades it, exactly like every other
+survivable problem here, so the reason lands in the RunReport, in the red band
+at the top of the email, in the ledger entry and in the exit code. Refusing
+would trade a mislabelled email for no email, and no email is indistinguishable
+from a market holiday — the failure this pipeline was built around.
+
+Two things make the label unable to lie in the first place, whatever the
+clock says: the session that was actually scanned is named in the email
+subject, in its header line and in the CSV's filename. A run that read
+yesterday's bars now says "session 2026-08-31" everywhere it speaks.
+
+SCAN_SESSION_DATE is exempt from the check by design. A run pinned to an old
+session is the user overruling the clock on purpose — README documents it as
+the way to seed a history — and a deliberate backfill must not be reported as
+a mistake. The pinned session then stands in for "what the clock would have
+said" everywhere in this module, so the morning mode's freshness check follows
+the same pin rather than contradicting it.
+
+A NAME IS NOT NEW JUST BECAUSE THE RUN IS (step 10)
+---------------------------------------------------
+Every run also used to start from nothing. A name that burst on Monday and
+still cleared the filter on Tuesday was presented as a brand-new day-1 idea on
+both nights, with nothing telling the reader they had already looked at it.
+Step 9 built the store that knows better — docs/ledger.json holds every scored
+and gated candidate for up to 260 runs — and the pipeline only ever wrote to
+it. It is now read back before the email goes out, and every burst the run
+reports carries a streak: which day of this setup it is, when the name last
+appeared, and what it was scored then. src.ledger.MAX_STREAK_GAP_SESSIONS
+holds the one judgement behind it (what "the same setup" means) and the
+reasoning for it.
+
+Reading that history can never kill a run. See load_history(): the run
+happening now is worth more than the runs already gone, which is the posture
+Ledger.load() already took for an unreadable file. But a history that could
+not be read is reported and the streaks go out null, because "we have never
+seen this name" and "we could not read the file that would know" are different
+sentences and only one of them is a claim about the market.
 
 FAILING LOUDLY (step 5)
 -----------------------
@@ -47,7 +99,7 @@ import logging
 import os
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from . import ledger, scanner
@@ -86,6 +138,87 @@ DEGRADED_NO_BARS_FRACTION = 0.10  # symbols the feed returned nothing for at all
 
 class PreflightError(RuntimeError):
     """The run cannot finish with the environment it has, so it does not start."""
+
+
+@dataclass(frozen=True)
+class Mode:
+    """What a run type promises, declared once instead of implied four times.
+
+    `scans` is the whole difference in behaviour, and it is deliberately not a
+    third state: a mode either goes and looks at the market or it re-presents
+    what the last one found. There is no honest middle, because a morning run
+    before the open has NO data an evening run did not have — the daily bar it
+    would read is the same bar, so a "morning scan" is the evening scan again
+    at a different hour, at the same cost in Claude calls, for the identical
+    answer. That is what made the old morning mode a label.
+
+    `after_the_close` is the side of 16:15 ET the mode belongs on, checked
+    against scanner.session_has_closed(). `expects` is the sentence a reader
+    gets when the two disagree; it is written here, next to the promise, so
+    the report cannot describe a rule different from the one being enforced.
+    """
+
+    name: str
+    scans: bool
+    after_the_close: bool
+    expects: str
+
+
+MODES: dict[str, Mode] = {
+    "evening": Mode(
+        name="evening", scans=True, after_the_close=True,
+        expects="an evening run is the discovery pass over the session that closed "
+                "today, so it expects to start after the 16:15 ET close",
+    ),
+    "morning": Mode(
+        name="morning", scans=False, after_the_close=False,
+        expects="a morning run is the follow-through pass over the last evening run, "
+                "so it expects to start before today's 16:15 ET close",
+    ),
+}
+
+
+def mode_for(run_type: str) -> Mode:
+    """The declared mode, or a ValueError naming the ones that exist."""
+    try:
+        return MODES[run_type]
+    except KeyError:
+        raise ValueError(
+            f"unknown run type {run_type!r}; expected one of: " + ", ".join(MODES)
+        ) from None
+
+
+def expected_session(cfg: ScanConfig, now: datetime | None = None) -> date:
+    """The session this run is about — the pin if there is one, else the clock.
+
+    One definition, used by both modes, so a pinned session cannot mean the
+    scanned session in one place and be ignored in the other.
+    """
+    return cfg.session_date or scanner.current_session(now)
+
+
+def session_disagreement(mode: Mode, cfg: ScanConfig,
+                         now: datetime | None = None) -> str | None:
+    """The sentence to report when the mode and the clock disagree, else None.
+
+    None whenever SCAN_SESSION_DATE is set: an explicitly pinned session is
+    the user overruling the clock on purpose (seeding a history, re-running a
+    day the market was closed), and reporting a deliberate backfill as a
+    mistake would teach a reader to ignore this line on the day it is right.
+    """
+    if cfg.session_date is not None:
+        return None
+    if scanner.session_has_closed(now) == mode.after_the_close:
+        return None
+    session = scanner.current_session(now)
+    if mode.after_the_close:
+        return (f"{mode.expects}, but today's session has not closed yet. The newest "
+                f"completed session is {session}, so that is what was read — it is "
+                f"yesterday's market, not tonight's. Everything below is labelled "
+                f"{session} and nothing has been relabelled as today.")
+    return (f"{mode.expects}, but today's session has already closed — the newest "
+            f"completed session is now {session}. This is a follow-through pass over "
+            f"a run that is no longer the latest one, however the subject line reads.")
 
 
 @dataclass
@@ -166,12 +299,20 @@ def missing_delivery_env() -> list[str]:
     return _absent(EMAIL_ENV)
 
 
-def missing_env(dry_run: bool = False) -> list[str]:
+def missing_env(dry_run: bool = False, run_type: str = "evening") -> list[str]:
     """Which required environment variables are absent or empty.
 
     Composed from each layer's own REQUIRED_ENV rather than listed here, so a
     layer that starts needing a new key cannot be preflighted against a stale
     copy of its requirements.
+
+    Only the layers the mode actually runs: a morning follow-through reads two
+    files this repo already contains and sends an email, so demanding Alpaca
+    and Anthropic keys for it would refuse a run that would have worked
+    perfectly. The default is "evening" — the mode that needs the most —
+    because a caller who forgets to say is then over-strict rather than
+    under-strict, and over-strict fails loudly at the start of a run instead of
+    quietly in the middle of one.
 
     Empty counts as missing. GitHub Actions passes an unset secret as '' , so
     every one of these would otherwise sail through an `in os.environ` check
@@ -181,18 +322,19 @@ def missing_env(dry_run: bool = False) -> list[str]:
     from .scanner import REQUIRED_ENV as SCAN_ENV
     from .scorer import REQUIRED_ENV as SCORE_ENV
 
+    market = list(SCAN_ENV) + list(SCORE_ENV) if mode_for(run_type).scans else []
     # --dry-run skips only delivery, so it still needs data and scoring keys.
-    required = list(SCAN_ENV) + list(SCORE_ENV) + ([] if dry_run else list(EMAIL_ENV))
+    required = market + ([] if dry_run else list(EMAIL_ENV))
     return _absent(required)
 
 
-def preflight(dry_run: bool = False) -> None:
+def preflight(dry_run: bool = False, run_type: str = "evening") -> None:
     """Refuse to start a run that cannot finish. Raises PreflightError.
 
     Reports EVERY missing variable, not the first: an operator setting this up
     should get one list, not one round trip per key.
     """
-    missing = missing_env(dry_run)
+    missing = missing_env(dry_run, run_type)
     if missing:
         raise PreflightError(
             "missing or empty required environment: " + ", ".join(missing)
@@ -202,7 +344,7 @@ def preflight(dry_run: bool = False) -> None:
     log.info("Preflight OK%s", " (dry run: delivery keys not required)" if dry_run else "")
 
 
-def archive(results: list[dict], run_type: str) -> Path:
+def archive(results: list[dict], run_type: str, session: date | None = None) -> Path:
     """The run's CSV, in results/ — every scored candidate, not the shortlist.
 
     It is handed `scored`, not the five rows that went out by email. Until step
@@ -210,10 +352,17 @@ def archive(results: list[dict], run_type: str) -> Path:
     as well as the email and the other twenty judgements a run made were never
     written down anywhere. results/ is gitignored and uploaded as a 30-day
     workflow artifact; the durable record is docs/ledger.json.
+
+    Named for the SESSION it scanned, not for the day it ran. Those are the
+    same date on a normal evening run and differ on exactly the runs that used
+    to lie: an evening run started before the close wrote yesterday's bursts
+    into a file stamped today, and a backfill of an old session wrote it into
+    a file stamped now. `session` of None falls back to the UTC date, which is
+    all a caller with no scan behind it can honestly say.
     """
     out = Path("results")
     out.mkdir(exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    stamp = (session or datetime.now(timezone.utc).date()).strftime("%Y-%m-%d")
     path = out / f"{stamp}_{run_type}.csv"
     cols = ["ticker", "date", "close", "gain_pct", "volume_ratio",
             "lynch", "score", "verdict", "reason", "key_risk"]
@@ -224,30 +373,105 @@ def archive(results: list[dict], run_type: str) -> Path:
     return path
 
 
+def load_history(report: RunReport) -> ledger.Ledger:
+    """The ledger, read back. NEVER raises — a run is not lost to its history.
+
+    Ledger.load() already takes that posture for a file it cannot parse (it
+    moves it aside and starts empty), and this matches it for everything else
+    a read can do: a directory where a file should be, a permission change, an
+    interrupted write. The run happening now is the thing that cannot be
+    re-fetched, because market data is live-only; the history has already been
+    written down once.
+
+    What is NOT swallowed is the fact of it. A failed read costs this run its
+    streak numbers, and saying nothing would leave every candidate looking
+    like a first-ever sighting — a claim about the market made out of a file
+    error. It degrades the run instead, and streaks_for() below answers null.
+    """
+    book = ledger.Ledger(ledger.DOCS_DIR)
+    try:
+        book.load()
+    except Exception as e:  # noqa: BLE001 — reported, never raised: see the docstring
+        log.exception("Could not read the run history at %s", book.path)
+        # Move it aside FIRST. Without this the run carries on with an empty
+        # history and write() replaces a year of accumulated outcomes with a
+        # one-run ledger — the exact loss Ledger.set_aside() exists to prevent,
+        # reintroduced through the door this catch-all opened.
+        book.set_aside(f"{book.path} could not be read ({type(e).__name__}: {e})")
+    if book.load_error:
+        report.problem("history",
+                       f"the run history could not be read ({book.load_error}), so this "
+                       "run cannot tell a name it has seen before from a new one: every "
+                       "streak below is null rather than day 1. The scan itself is "
+                       "unaffected, and this run still writes its own record")
+    return book
+
+
+def streaks_for(book: ledger.Ledger, session, tickers) -> dict[str, dict]:
+    """Day-N-of-this-setup for each ticker, or {} when the history is unknown.
+
+    An EMPTY ledger and an UNREADABLE one answer differently on purpose: with
+    an empty one every name really is on day 1 and the record says so, while
+    with an unreadable one nothing is known and every row publishes a null
+    streak. Collapsing the second into the first would dress a file error as a
+    fact about the market.
+    """
+    if book.load_error or session is None:
+        return {}
+    return ledger.streaks(book.runs, tickers, session)
+
+
 def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
         report: RunReport | None = None) -> list[dict]:
-    """One run, start to finish. Returns EVERY scored candidate, ranked.
+    """One run, start to finish, in whichever mode was asked for.
 
-    Not the five that went out by email: those are `scored[:TOP_N]`, cut here
-    rather than inside score_all(), because the truncated list used to be the
-    only thing this function ever produced and archive() wrote exactly it.
+    Returns the rows the run reported — every scored candidate for an evening
+    discovery run, the rows it followed through on for a morning one. Never
+    the five that went out by email: TOP_N cuts the email and nothing else.
 
-    `report`, if given, is filled with everything the shortlist cannot say:
-    which stage was running, what went wrong, and the counts behind it. main()
-    passes one in and exits on its code. A caller that does not pass one still
-    gets the same log lines and the same email — the report is built either
-    way; the argument only lets the caller read it.
+    `report`, if given, is filled with everything the returned rows cannot
+    say: which stage was running, what went wrong, and the counts behind it.
+    main() passes one in and exits on its code. A caller that does not pass one
+    still gets the same log lines and the same email — the report is built
+    either way; the argument only lets the caller read it.
     """
     report = report if report is not None else RunReport()
+    mode = mode_for(run_type)
+    if not mode.scans:
+        return follow_through(mode, dry_run=dry_run, report=report)
+    return discover(mode, dry_run=dry_run, tickers=tickers, report=report)
+
+
+def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None,
+             report: RunReport | None = None) -> list[dict]:
+    """The evening run: scan, gate, chart, score, archive, publish, mail.
+
+    Returns EVERY scored candidate, ranked. Not the five that went out by
+    email: those are `scored[:TOP_N]`, cut here rather than inside
+    score_all(), because the truncated list used to be the only thing this
+    function ever produced and archive() wrote exactly it.
+    """
+    report = report if report is not None else RunReport()
+    run_type = mode.name
     cfg = ScanConfig()
     log.info("=== %s run starting ===", run_type)
 
     report.stage = "preflight"
-    preflight(dry_run)
+    preflight(dry_run, run_type)
+
+    # Does the mode match the clock it is running on? Before the scan, so the
+    # reason reaches the email band, the ledger and the exit code even if a
+    # later stage fails; and reported rather than raised, because a run that
+    # says which session it read is a usable run.
+    report.stage = "session"
+    disagreement = session_disagreement(mode, cfg)
+    if disagreement:
+        report.problem("session", disagreement)
 
     # Layer 1: scan. Alpaca returns bars only up to the session the scan
-    # targets, so an evening run sees today's close and a morning run sees
-    # yesterday's; src.scanner drops anything that does not carry it.
+    # targets, and src.scanner drops anything that does not carry it. Which
+    # session that is comes from the clock (or SCAN_SESSION_DATE) — the check
+    # above is what makes sure it is the one this mode said it would read.
     report.stage = "scan"
     scan_stats: dict = {}
     candidates = run_scan(cfg, universe=tickers, stats=scan_stats)
@@ -314,6 +538,25 @@ def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
     shortlist = scored[:TOP_N]
     _check_scoring(score_stats, report)
 
+    # What the record already knows about these names. Read BEFORE this run is
+    # added to it — publish() adds it below out of the same object — so that
+    # a session scanned twice does not turn every name in it into a repeat of
+    # itself. The ledger is loaded once here and handed on, rather than opened
+    # again inside publish(), because two reads of one file can disagree.
+    report.stage = "history"
+    session = scan_stats.get("session")
+    book = load_history(report)
+    marks = streaks_for(book, session,
+                        [c.ticker for c, _lynch, _ctx in prepared])
+    for row in scored:
+        # The email reads this off the scored row; docs/data.json gets it from
+        # the same dict below. One lookup, two audiences, no second rule.
+        row["streak"] = marks.get(row["ticker"])
+    repeats = sum(1 for row in scored if (row.get("streak") or {}).get("day", 1) > 1)
+    if repeats:
+        log.info("%d of %d scored candidate(s) are a repeat of a setup already in "
+                 "the ledger", repeats, len(scored))
+
     # Report the universe actually scanned. This said "US common stocks" while
     # the scan had been narrowed to a checked-in list, so the daily email
     # described a market it no longer looks at. The count comes from the scan
@@ -336,17 +579,22 @@ def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
         bursts=n_bursts, gated=len(passed_gate),
         scored_by={"claude": score_stats.get("claude", 0),
                    "fallback": score_stats.get("fallback", 0)},
+        # The session that was actually read, in the subject line and above the
+        # table. This is what stops a mode from lying whatever the clock says:
+        # a run that scanned yesterday now says so in the artifact a person
+        # reads, instead of only in a JSON field nobody opens.
+        session=ledger.iso_date(session),
     )
 
     report.stage = "archive"
-    path = archive(scored, run_type)
+    path = archive(scored, run_type, session=session)
     log.info("Archived %d scored candidate(s) to %s", len(scored), path)
     published = publish(run_type=run_type, dry_run=dry_run, cfg=cfg, report=report,
                         scan_stats=scan_stats, score_stats=score_stats,
                         scored=scored, unscored=unscored, to_score=to_score,
                         n_bursts=n_bursts, n_passed=len(passed_gate),
                         shortlist_size=len(shortlist), chart_errors=chart_errors,
-                        explicit_tickers=tickers)
+                        explicit_tickers=tickers, book=book, marks=marks)
     log.info("Published %s (%d candidates, %d not scored) and %s (%d runs, %d "
              "forward return(s) filled this run)",
              published["data"], len(scored), len(unscored),
@@ -369,6 +617,135 @@ def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
     report.stage = "complete"
     report.log_summary(run_type)
     return scored
+
+
+def email_row(row: dict) -> dict:
+    """A published candidate, in the shape src.emailer renders.
+
+    docs/data.json and the email are two shapes of one judgement, and this is
+    the ONLY place they are converted — the alternative is a second rendering
+    rule that drifts from the first. Two differences do real work:
+
+      lynch_detail  the dashboard keeps one dict per check so it can draw
+                    them; the email wants the same six lines src.lynch built
+                    for it, so they are rebuilt from the same fields.
+      chart         the file names its charts relative to docs/, because
+                    docs/index.html sets them as an <img src>. The emailer
+                    opens them relative to the working directory, so the
+                    published path is put back under docs/ before it is used.
+    """
+    detail = [f"{'PASS' if d.get('pass') else 'FAIL'}  {d.get('code')} "
+              f"{d.get('label')}: {d.get('value')}"
+              for d in (row.get("lynch_detail") or [])]
+    return dict(row, lynch_detail=detail,
+                chart=str(ledger.DOCS_DIR / row["chart"]) if row.get("chart") else None)
+
+
+def follow_through(mode: Mode, dry_run: bool = False,
+                   report: RunReport | None = None) -> list[dict]:
+    """The morning run: last night's candidates again, before today's open.
+
+    IT DOES NOT SCAN, AND THAT IS THE POINT. A morning run has no market data
+    an evening run did not have — the daily bar it would read is the same
+    daily bar — so a "morning scan" is the evening scan repeated at a different
+    hour, for the identical answer, at the same cost in Claude calls. What it
+    can honestly add is the thing the evening email could not: these names in
+    front of a reader at the hour they might act on them, each one with what
+    the record says about it — which day of this setup it is, when it last
+    appeared, what it scored then.
+
+    IT WRITES NOTHING, and that is also deliberate. docs/ledger.json is the
+    record of what was SCANNED; add_run() keys its entries on (date, type), so
+    a morning entry for a session an evening run already recorded would sit
+    beside it carrying the same candidates, and every mean computed across
+    runs would count that one burst twice. A view over the record does not
+    belong inside it.
+
+    Its whole input is the snapshot the last run published, so a stale or
+    absent one is the interesting failure, not an edge case: it is reported
+    and the email goes out empty and marked, rather than showing yesterday's
+    week-old list as today's watchlist.
+    """
+    report = report if report is not None else RunReport()
+    cfg = ScanConfig()
+    run_type = mode.name
+    log.info("=== %s run starting ===", run_type)
+
+    report.stage = "preflight"
+    preflight(dry_run, run_type)
+
+    report.stage = "session"
+    disagreement = session_disagreement(mode, cfg)
+    if disagreement:
+        report.problem("session", disagreement)
+
+    report.stage = "history"
+    snapshot, why = ledger.read_snapshot(ledger.DOCS_DIR)
+    rows: list[dict] = []
+    source: dict = {}
+    session = None
+    if snapshot is None:
+        report.problem("history",
+                       f"there is nothing to follow through on: {why}. A morning run "
+                       "presents the last evening run's candidates; it does not scan, "
+                       "so with no published run there is nothing for it to show")
+    else:
+        source = snapshot["run"]
+        session = source.get("date")
+        rows = [email_row(row) for row in snapshot["candidates"]]
+        wanted = ledger.iso_date(expected_session(cfg))
+        if session != wanted:
+            # The check that makes this mode honest about WHICH session it is
+            # following through on. Monday morning after a Friday evening run
+            # is the normal case and passes; a week-old snapshot means the
+            # evening run has been failing and nobody noticed, which is
+            # exactly what this pipeline exists to stop being invisible.
+            report.problem("session",
+                           f"the newest published run is the {source.get('type')} run of "
+                           f"{session}, but the session to follow through on is {wanted}. "
+                           f"The list below is that older run's — nothing has published "
+                           f"{wanted} yet")
+        status = source.get("status", "ok")
+        if status != "ok":
+            # Carried forward, not re-derived. A follow-through over an
+            # incomplete scan presented as a complete one is the same silent
+            # wrongness this mode was built to stop — and the reader of the
+            # 8:30 email is not the reader who saw last night's red band.
+            report.problem("history",
+                           f"the {session} run this follows through on was itself a "
+                           f"{status.upper()} run, so its shortlist is not a complete "
+                           "scan of that session")
+
+    shortlist = rows[:TOP_N]
+    # Named for what it is. The old morning email printed "Universe scanned:
+    # 230 checked-in US common stocks" over a run that had scanned nothing.
+    followed = (f"nothing — this pass re-presents the {source.get('type', 'evening')} "
+                f"run of {session}") if session else "nothing — no run to follow"
+    stats = report.email_stats(
+        session=session, universe=followed,
+        bursts=source.get("bursts", 0), gated=source.get("passed_gate", 0),
+        scored_by=source.get("scored_by") or {},
+    )
+
+    report.counts.update({"followed": len(rows), "shortlist": len(shortlist),
+                          "session": session,
+                          "repeats": sum(1 for r in shortlist
+                                         if (r.get("streak") or {}).get("day", 1) > 1)})
+
+    report.stage = "email"
+    if dry_run:
+        log.info("DRY RUN — skipping email. Following through on %s:",
+                 session or "nothing — no run to follow")
+        for r in shortlist:
+            log.info("  %s  %s/10 (%s) day %s", r["ticker"], r["score"], r["verdict"],
+                     (r.get("streak") or {}).get("day", "?"))
+    else:
+        from .emailer import send_email
+        send_email(shortlist, run_type, stats)
+
+    report.stage = "complete"
+    report.log_summary(run_type)
+    return rows
 
 
 def forward_bars(cfg: ScanConfig, tickers: list[str], through) -> dict:
@@ -400,7 +777,8 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
             scan_stats: dict, score_stats: dict, scored: list[dict],
             unscored: list[tuple], to_score: list[tuple], n_bursts: int,
             n_passed: int, shortlist_size: int, chart_errors: dict,
-            explicit_tickers: list[str] | None) -> dict:
+            explicit_tickers: list[str] | None, book: ledger.Ledger,
+            marks: dict[str, dict]) -> dict:
     """Write docs/data.json and docs/ledger.json for the run that just ran.
 
     Everything the run knows, in the two shapes it is worth keeping: the
@@ -411,6 +789,10 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     it — the scoring is done and the email is still worth sending — but it is
     reported, because a ledger that silently stops accumulating outcomes is
     the same class of failure step 5 exists to end.
+
+    `book` arrives already loaded, and `marks` was computed from it before
+    this run was added: the caller reads the history once and hands both on,
+    so the streaks published here are the same numbers the email carries.
     """
     by_ticker = {cand.ticker: (cand, lynch, ctx) for cand, lynch, ctx in to_score}
     candidates = []
@@ -418,8 +800,14 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         cand, lynch, ctx = by_ticker[row["ticker"]]
         candidates.append(ledger.candidate_record(
             cand, lynch, ctx, row, rank=rank, docs_dir=ledger.DOCS_DIR,
-            chart_error=chart_errors.get(row["ticker"])))
-    gated_out = [ledger.gated_record(cand, lynch, reason)
+            chart_error=chart_errors.get(row["ticker"]),
+            streak_block=marks.get(row["ticker"])))
+    # Gated bursts carry a streak too, for the same reason they carry a
+    # checklist: a repeat that the gate rejected tonight is part of the setup's
+    # history, and dropping it would make the record disagree with itself the
+    # next time the name comes back.
+    gated_out = [ledger.gated_record(cand, lynch, reason,
+                                     streak_block=marks.get(cand.ticker))
                  for cand, lynch, reason in unscored]
 
     session = scan_stats.get("session")
@@ -451,7 +839,6 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         "errors": list(report.errors),
     }
 
-    book = ledger.Ledger(ledger.DOCS_DIR).load()
     entry = book.add_run(run, candidates, gated_out)
 
     # Measure forward returns through the newest completed session, which is
@@ -557,10 +944,21 @@ def notify_failure(run_type: str, report: RunReport, dry_run: bool) -> None:
 
 def main() -> None:
     p = argparse.ArgumentParser(description="4% Momentum Burst pipeline")
-    p.add_argument("run_type", choices=["morning", "evening"])
+    # The choices come from the mode table, so a mode cannot exist in one and
+    # not the other — the morning mode spent this whole rebuild being a name
+    # the parser accepted and the code did nothing with.
+    p.add_argument("run_type", choices=sorted(MODES),
+                   help="evening: scan the session that closed today. "
+                        "morning: re-present the last evening run before the open")
     p.add_argument("--dry-run", action="store_true", help="skip sending email")
     p.add_argument("--tickers", help="comma-separated tickers (testing only)")
     args = p.parse_args()
+
+    if args.tickers and not mode_for(args.run_type).scans:
+        # Refused rather than ignored. A flag that silently does nothing is how
+        # a smoke test convinces someone they tested something they did not.
+        p.error(f"--tickers is a scan option; the {args.run_type} run does not scan, "
+                "it re-presents the run docs/data.json already holds")
 
     tickers = [t.strip().upper() for t in args.tickers.split(",")] if args.tickers else None
     report = RunReport()

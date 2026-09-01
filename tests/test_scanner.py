@@ -37,6 +37,7 @@ from src.scanner import (
     liquidity_floor,
     run_scan,
     session_dollar_volume,
+    session_has_closed,
     trailing_volume_mean,
 )
 from src.scanner import _SYMBOL_RE
@@ -1327,6 +1328,52 @@ def test_a_session_is_finished_the_moment_the_settling_margin_has_passed():
     close = datetime.combine(date(2026, 9, 1), SESSION_COMPLETE_ET, tzinfo=MARKET_TZ)
     assert current_session(close) == date(2026, 9, 1)
     assert current_session(close - timedelta(minutes=1)) == date(2026, 8, 31)
+
+
+# --- which side of the close a run is on -----------------------------------
+# Step 10. src.pipeline asks this one question to decide whether the run type
+# it was given matches the clock it is running on: an evening run is a scan of
+# the session that closed today, a morning run is a pass before today's open,
+# and nothing used to check either. These pin the predicate itself; the
+# consequences are in tests/test_pipeline.py.
+
+
+def test_the_session_has_closed_after_the_settling_margin_and_not_before():
+    """The same line current_session() turns on, asserted from both sides so
+    that moving SESSION_COMPLETE_ET fails here too rather than quietly putting
+    the evening cron on the wrong side of its own check."""
+    close = datetime.combine(date(2026, 9, 1), SESSION_COMPLETE_ET, tzinfo=MARKET_TZ)
+    assert session_has_closed(close) is True
+    assert session_has_closed(close - timedelta(minutes=1)) is False
+
+
+def test_a_weekend_evening_is_not_a_session_that_closed_today():
+    """Saturday at 6pm: a session did close recently, but not today's -- there
+    was none. An evening run then is scanning Friday and should say so."""
+    assert session_has_closed(datetime(2026, 9, 5, 18, 30, tzinfo=MARKET_TZ)) is False
+
+
+def test_the_close_is_read_in_market_time_not_utc():
+    """19:00 UTC is 15:00 ET, an hour of trading left. Read as UTC it looks
+    like a finished evening -- the same instant that catches a dropped
+    timezone conversion in current_session()."""
+    assert session_has_closed(datetime(2026, 9, 1, 19, 0, tzinfo=timezone.utc)) is False
+
+
+@pytest.mark.parametrize("hour", [0, 6, 9, 13, 16, 17, 21, 23])
+@pytest.mark.parametrize("day", [31, 1, 2, 3, 4, 5, 6])   # Mon 2026-08-31 .. Sun
+def test_the_two_clock_functions_can_never_disagree(day, hour):
+    """"today's session has closed" and "the newest completed session is today"
+    are the same fact, and they are computed twice, in two functions.
+
+    Sweeping a week of hours pins them together: an edit that moves one
+    without the other -- a weekend rule dropped from the predicate, say --
+    fails here instead of producing a run that scans yesterday while insisting
+    the session closed today.
+    """
+    month = 8 if day == 31 else 9
+    now = datetime(2026, month, day, hour, 30, tzinfo=MARKET_TZ)
+    assert session_has_closed(now) == (current_session(now) == now.date())
 
 
 # =====================================================================

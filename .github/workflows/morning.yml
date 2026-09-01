@@ -1,0 +1,73 @@
+name: Morning follow-through (8:30 AM ET)
+# The other half of step 10. Until it landed, `morning` was a run type the
+# argument parser accepted, nothing scheduled, and which did exactly what
+# `evening` did apart from a word in the subject line.
+#
+# This job SCANS NOTHING. It reads the run docs/data.json already holds —
+# committed back to this branch by evening.yml — and mails it before the open,
+# with the streak the evening run recorded against each name. So:
+#
+#   * no ALPACA_* and no ANTHROPIC_API_KEY are passed, because no layer that
+#     needs them runs. src.pipeline's preflight asks the mode which layers it
+#     will use, so a missing one here is not a missing key, it is a key this
+#     run genuinely does not want.
+#   * it costs nothing: no market data request, no Claude call.
+#   * it writes nothing, so there is no commit-back step and no `contents:
+#     write`. A view over the record does not belong inside the record.
+#
+# It DEPENDS on evening.yml having committed docs/ — without that this reads
+# whatever data.json the checkout carries, which on a fresh clone is the
+# hand-authored fixture. That case is refused by name in src.ledger's
+# read_snapshot(): a fixture is not a run and its invented tickers must never
+# be mailed as a watchlist.
+on:
+  schedule:
+    # 8:30 AM ET, well before the 9:30 open. Both offsets are registered and
+    # the guard below no-ops the wrong one, the same trick evening.yml uses —
+    # GitHub crons are UTC and do not follow US daylight saving.
+    - cron: "30 12 * * 1-5"   # while US is on EDT (UTC-4)
+    - cron: "30 13 * * 1-5"   # while US is on EST (UTC-5)
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency:
+  group: morning-follow-through
+  cancel-in-progress: false
+jobs:
+  follow_through:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Guard — only the cron matching today's ET offset
+        id: guard
+        run: |
+          OFFSET=$(TZ=America/New_York date +%z)   # -0400 = EDT, -0500 = EST
+          if [ "$OFFSET" = "-0400" ]; then WANTED="30 12 * * 1-5"; else WANTED="30 13 * * 1-5"; fi
+          FIRED="${{ github.event.schedule }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$FIRED" = "$WANTED" ]; then
+            GO=true
+          else
+            GO=false
+          fi
+          echo "go=$GO" >> "$GITHUB_OUTPUT"
+          echo "offset=$OFFSET fired='$FIRED' -> go=$GO"
+      - uses: actions/setup-python@v5
+        if: steps.guard.outputs.go == 'true'
+        with:
+          python-version: "3.12"   # same runtime as evening.yml and tests.yml
+          cache: pip
+      - name: Install dependencies
+        if: steps.guard.outputs.go == 'true'
+        run: pip install -r requirements.txt
+      - name: Re-present last night's run
+        if: steps.guard.outputs.go == 'true'
+        # Exit 2 means the run finished but is degraded — no published run to
+        # follow, or the one it found is not last night's. Actions turns red
+        # for it on purpose: a follow-through nobody can trust must not look
+        # like one that worked.
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        run: python -m src.pipeline morning

@@ -13,6 +13,7 @@
       "forward_returns and runs[].forward_returns are null until the sessions exist. Absent is null, never 0 and never a string.",
       "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
       "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
+      "Every burst carries streak — day (1 for a setup starting today), first_seen, last_seen, last_score, last_verdict, seen_before — or null when the run could not read its own history. day is 1 exactly when first_seen is the burst's own session, and last_seen is null exactly when seen_before is 0. A null streak means unknown; it never collapses to a confident day 1.",
       "Numbers are numbers or null. No 'n/a' strings."
     ]
   },
@@ -111,6 +112,14 @@
         "perf_3mo_pct": 61.4,
         "perf_6mo_pct": 88.9
       },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -186,6 +195,14 @@
         "pct_above_52w_low": 94.2,
         "perf_3mo_pct": 38.6,
         "perf_6mo_pct": 21.4
+      },
+      "streak": {
+        "day": 3,
+        "first_seen": "2026-08-28",
+        "last_seen": "2026-08-31",
+        "last_score": 7.4,
+        "last_verdict": "B",
+        "seen_before": 2
       },
       "forward_returns": {
         "d1": null,
@@ -263,6 +280,14 @@
         "perf_3mo_pct": 96.3,
         "perf_6mo_pct": 174.2
       },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -338,6 +363,14 @@
         "pct_above_52w_low": 233.8,
         "perf_3mo_pct": 44.7,
         "perf_6mo_pct": 61.9
+      },
+      "streak": {
+        "day": 2,
+        "first_seen": "2026-08-31",
+        "last_seen": "2026-08-31",
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 1
       },
       "forward_returns": {
         "d1": null,
@@ -415,6 +448,14 @@
         "perf_3mo_pct": 52.1,
         "perf_6mo_pct": 118.6
       },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -490,6 +531,14 @@
         "pct_above_52w_low": 141.6,
         "perf_3mo_pct": 33.9,
         "perf_6mo_pct": 57.2
+      },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-08-17",
+        "last_score": 5.2,
+        "last_verdict": "skip",
+        "seen_before": 1
       },
       "forward_returns": {
         "d1": null,
@@ -567,6 +616,14 @@
         "perf_3mo_pct": 29.7,
         "perf_6mo_pct": 12.8
       },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -642,6 +699,14 @@
         "pct_above_52w_low": 203.1,
         "perf_3mo_pct": 71.4,
         "perf_6mo_pct": 44.3
+      },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
       },
       "forward_returns": {
         "d1": null,
@@ -719,6 +784,14 @@
         "perf_3mo_pct": 26.8,
         "perf_6mo_pct": 39.1
       },
+      "streak": {
+        "day": 3,
+        "first_seen": "2026-08-28",
+        "last_seen": "2026-08-31",
+        "last_score": 7.4,
+        "last_verdict": "B",
+        "seen_before": 2
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -794,6 +867,14 @@
         "pct_above_52w_low": 318.4,
         "perf_3mo_pct": 58.9,
         "perf_6mo_pct": 96.7
+      },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
       },
       "forward_returns": {
         "d1": null,
@@ -871,6 +952,14 @@
         "perf_3mo_pct": 21.3,
         "perf_6mo_pct": 34.8
       },
+      "streak": {
+        "day": 2,
+        "first_seen": "2026-08-31",
+        "last_seen": "2026-08-31",
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 1
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -946,6 +1035,14 @@
         "pct_above_52w_low": 74.9,
         "perf_3mo_pct": 18.6,
         "perf_6mo_pct": 27.4
+      },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
       },
       "forward_returns": {
         "d1": null,
@@ -1023,6 +1120,14 @@
         "perf_3mo_pct": 63.2,
         "perf_6mo_pct": 108.4
       },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-08-17",
+        "last_score": 5.2,
+        "last_verdict": "skip",
+        "seen_before": 1
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -1098,6 +1203,14 @@
         "pct_above_52w_low": 38.2,
         "perf_3mo_pct": 9.4,
         "perf_6mo_pct": -6.8
+      },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
       },
       "forward_returns": {
         "d1": null,
@@ -1175,6 +1288,14 @@
         "perf_3mo_pct": 4.2,
         "perf_6mo_pct": -18.9
       },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -1250,6 +1371,14 @@
         "pct_above_52w_low": 88.7,
         "perf_3mo_pct": 14.9,
         "perf_6mo_pct": 22.6
+      },
+      "streak": {
+        "day": 3,
+        "first_seen": "2026-08-28",
+        "last_seen": "2026-08-31",
+        "last_score": 7.4,
+        "last_verdict": "B",
+        "seen_before": 2
       },
       "forward_returns": {
         "d1": null,
@@ -1327,6 +1456,14 @@
         "perf_3mo_pct": 11.7,
         "perf_6mo_pct": 8.3
       },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -1402,6 +1539,14 @@
         "pct_above_52w_low": 79.2,
         "perf_3mo_pct": 16.4,
         "perf_6mo_pct": 31.8
+      },
+      "streak": {
+        "day": 2,
+        "first_seen": "2026-08-31",
+        "last_seen": "2026-08-31",
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 1
       },
       "forward_returns": {
         "d1": null,
@@ -1479,6 +1624,14 @@
         "perf_3mo_pct": -3.2,
         "perf_6mo_pct": -27.1
       },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -1554,6 +1707,14 @@
         "pct_above_52w_low": 27.3,
         "perf_3mo_pct": -1.8,
         "perf_6mo_pct": -14.6
+      },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-08-17",
+        "last_score": 5.2,
+        "last_verdict": "skip",
+        "seen_before": 1
       },
       "forward_returns": {
         "d1": null,
@@ -1631,6 +1792,14 @@
         "perf_3mo_pct": 118.4,
         "perf_6mo_pct": 204.7
       },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -1706,6 +1875,14 @@
         "pct_above_52w_low": 52.8,
         "perf_3mo_pct": 8.7,
         "perf_6mo_pct": -2.4
+      },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
       },
       "forward_returns": {
         "d1": null,
@@ -1783,6 +1960,14 @@
         "perf_3mo_pct": 12.3,
         "perf_6mo_pct": 18.9
       },
+      "streak": {
+        "day": 3,
+        "first_seen": "2026-08-28",
+        "last_seen": "2026-08-31",
+        "last_score": 7.4,
+        "last_verdict": "B",
+        "seen_before": 2
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -1858,6 +2043,14 @@
         "pct_above_52w_low": 41.9,
         "perf_3mo_pct": 5.6,
         "perf_6mo_pct": -9.7
+      },
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
       },
       "forward_returns": {
         "d1": null,
@@ -1935,6 +2128,14 @@
         "perf_3mo_pct": -8.4,
         "perf_6mo_pct": -34.2
       },
+      "streak": {
+        "day": 2,
+        "first_seen": "2026-08-31",
+        "last_seen": "2026-08-31",
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 1
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -1992,6 +2193,14 @@
           "value": "closed at 91% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2042,6 +2251,14 @@
           "value": "closed at 84% of day's range"
         }
       ],
+      "streak": {
+        "day": 3,
+        "first_seen": "2026-08-28",
+        "last_seen": "2026-08-31",
+        "last_score": 7.4,
+        "last_verdict": "B",
+        "seen_before": 2
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2092,6 +2309,14 @@
           "value": "closed at 78% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2142,6 +2367,14 @@
           "value": "closed at 88% of day's range"
         }
       ],
+      "streak": {
+        "day": 2,
+        "first_seen": "2026-08-31",
+        "last_seen": "2026-08-31",
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 1
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2192,6 +2425,14 @@
           "value": "closed at 73% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2242,6 +2483,14 @@
           "value": "closed at 95% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-08-17",
+        "last_score": 5.2,
+        "last_verdict": "skip",
+        "seen_before": 1
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2292,6 +2541,14 @@
           "value": "closed at 81% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2342,6 +2599,14 @@
           "value": "closed at 64% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2392,6 +2657,14 @@
           "value": "closed at 41% of day's range"
         }
       ],
+      "streak": {
+        "day": 3,
+        "first_seen": "2026-08-28",
+        "last_seen": "2026-08-31",
+        "last_score": 7.4,
+        "last_verdict": "B",
+        "seen_before": 2
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2442,6 +2715,14 @@
           "value": "closed at 71% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2492,6 +2773,14 @@
           "value": "closed at 36% of day's range"
         }
       ],
+      "streak": {
+        "day": 2,
+        "first_seen": "2026-08-31",
+        "last_seen": "2026-08-31",
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 1
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2542,6 +2831,14 @@
           "value": "closed at 61% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2592,6 +2889,14 @@
           "value": "closed at 52% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-08-17",
+        "last_score": 5.2,
+        "last_verdict": "skip",
+        "seen_before": 1
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2642,6 +2947,14 @@
           "value": "closed at 78% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2692,6 +3005,14 @@
           "value": "closed at 88% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2742,6 +3063,14 @@
           "value": "closed at 38% of day's range"
         }
       ],
+      "streak": {
+        "day": 3,
+        "first_seen": "2026-08-28",
+        "last_seen": "2026-08-31",
+        "last_score": 7.4,
+        "last_verdict": "B",
+        "seen_before": 2
+      },
       "reason": "lynch_gate"
     },
     {
@@ -2792,6 +3121,14 @@
           "value": "closed at 95% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "reason": "score_cap"
     },
     {
@@ -2842,6 +3179,14 @@
           "value": "closed at 81% of day's range"
         }
       ],
+      "streak": {
+        "day": 2,
+        "first_seen": "2026-08-31",
+        "last_seen": "2026-08-31",
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 1
+      },
       "reason": "score_cap"
     },
     {
@@ -2892,6 +3237,14 @@
           "value": "closed at 76% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "reason": "score_cap"
     },
     {
@@ -2942,6 +3295,14 @@
           "value": "closed at 86% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-08-17",
+        "last_score": 5.2,
+        "last_verdict": "skip",
+        "seen_before": 1
+      },
       "reason": "score_cap"
     },
     {
@@ -2992,6 +3353,14 @@
           "value": "closed at 71% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "reason": "score_cap"
     },
     {
@@ -3042,6 +3411,14 @@
           "value": "closed at 93% of day's range"
         }
       ],
+      "streak": {
+        "day": 1,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "seen_before": 0
+      },
       "reason": "score_cap"
     }
   ],
