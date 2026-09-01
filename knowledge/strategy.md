@@ -35,7 +35,9 @@ high-probability Day 1.
 - Burst day closes mid-range or weak (bottom half) — demand faded intraday.
 - Volume barely above average — no institutional participation.
 - Wide, loose, choppy chart with overlapping bars — no edge.
-- Stock 20%+ extended above its 20-day average — poor risk/reward.
+- Stock 20%+ extended above its 20-day average — poor risk/reward. The `Y`
+  line measures that distance through today's burst bar, which is the price
+  you would actually pay, so a large gap-up is already extended when it prints.
 - Straight down long-term downtrend where the burst is a dead-cat bounce.
 - Barely-liquid names where slippage eats the edge.
 
@@ -47,6 +49,9 @@ Weight these upward:
 - Signs of an Episodic Pivot: enormous volume (3x+), huge gap or gain,
   which usually means a real catalyst (earnings, guidance, FDA, contract).
   If volume ratio is 3x+ AND the gain is large, note possible EP in reason.
+  A gain that large also fails the `Y` check by construction: that FAIL is
+  the risk/reward warning, not an argument against the catalyst. Weight the
+  EP up if the chart earns it, but say in the reason how extended the entry is.
 - Higher-priced, liquid leaders over cheap laggards.
 
 # How to score
