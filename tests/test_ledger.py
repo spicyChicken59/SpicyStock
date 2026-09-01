@@ -955,6 +955,60 @@ def test_a_casualty_from_before_the_name_carried_a_stamp_is_still_found(tmp_path
         "the old one", "{corrupt"]
 
 
+#: How long a threaded test will wait before calling it a hang. Generous enough
+#: that a loaded CI runner is not called a deadlock, short enough that a real
+#: deadlock fails the job instead of burning its wall clock.
+RACE_TIMEOUT_S = 30
+
+
+def _run_together(target, runners: int):
+    """Run `target(barrier)` on `runners` threads and FAIL rather than hang.
+
+    Both race tests below used a bare `threading.Barrier` and a bare `join()`,
+    and neither has a timeout. That makes every failure mode inside them an
+    indefinite hang: a thread that dies before reaching the barrier leaves the
+    others waiting on a count that can never be reached, and `join()` then
+    waits on them forever. The pytest job on the merge commit sat in its "Run
+    tests" step for fourteen minutes and never finished, on a suite that takes
+    under a minute -- while its sibling job started in the same second and
+    finished green, so it was the tests, not the runner.
+
+    A hanging test is strictly worse than a failing one: a failure names a
+    rule, a hang reports nothing at all and looks exactly like slowness. This
+    project's whole posture is that a run nobody can trust must not look like
+    one that worked, and a test suite owes the same.
+
+    Exceptions raised inside a thread are collected and re-raised here. They
+    used to vanish, leaving a confusing assertion about the result instead of
+    the error that caused it.
+    """
+    barrier = threading.Barrier(runners, timeout=RACE_TIMEOUT_S)
+    failures: list[BaseException] = []
+    lock = threading.Lock()
+
+    def wrapped() -> None:
+        try:
+            target(barrier)
+        except BaseException as e:  # noqa: BLE001 -- re-raised below
+            with lock:
+                failures.append(e)
+
+    threads = [threading.Thread(target=wrapped) for _ in range(runners)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(RACE_TIMEOUT_S)
+
+    alive = [t for t in threads if t.is_alive()]
+    assert not alive, (
+        f"{len(alive)} of {runners} threads were still running after "
+        f"{RACE_TIMEOUT_S}s -- this is a deadlock, not a slow machine. "
+        f"First error from the others, if any: {failures[:1]}"
+    )
+    if failures:
+        raise failures[0]
+
+
 def test_forty_runs_failing_in_the_same_second_claim_forty_different_names(
         tmp_path, monkeypatch):
     """The race O_CREAT|O_EXCL is in there for, run rather than argued.
@@ -972,21 +1026,16 @@ def test_forty_runs_failing_in_the_same_second_claim_forty_different_names(
     monkeypatch.setattr(ledger, "datetime", _OneSecond)
     book = ledger.Ledger(tmp_path)
     runners = 40
-    together = threading.Barrier(runners)
     claimed: list = []
     lock = threading.Lock()
 
-    def claim() -> None:
+    def claim(together) -> None:
         together.wait()
         name = book._claim_quarantine()
         with lock:
             claimed.append(name)
 
-    threads = [threading.Thread(target=claim) for _ in range(runners)]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
+    _run_together(claim, runners)
 
     assert None not in claimed, "every one of them had a name to take"
     assert len(set(claimed)) == runners, (
@@ -1024,18 +1073,16 @@ def test_a_race_to_set_the_same_ledger_aside_keeps_it_exactly_once(tmp_path, mon
     year = json.dumps(_a_year_of_runs(20))
     (tmp_path / ledger.LEDGER_NAME).write_text(year)
     runners = 40
-    together = threading.Barrier(runners)
 
-    def move_it_aside() -> None:
+    def move_it_aside(together) -> None:
+        # Built BEFORE the barrier deliberately -- the window this races on
+        # opens after the read. Anything that throws here used to strand the
+        # other runners on a barrier count that could never be reached.
         book = ledger.Ledger(tmp_path)
         together.wait()
         book.set_aside("unreadable")
 
-    threads = [threading.Thread(target=move_it_aside) for _ in range(runners)]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
+    _run_together(move_it_aside, runners)
 
     kept = ledger.quarantined(tmp_path)
     assert [q.read_text() for q in kept] == [year], (
