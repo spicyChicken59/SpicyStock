@@ -10,8 +10,9 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import time
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time as time_of_day, timedelta, timezone
 
 import pytest
 import requests
@@ -21,20 +22,24 @@ from requests.exceptions import HTTPError
 
 from src.scanner import (
     MARKET_TZ,
+    SESSION_COMPLETE_ET,
     Candidate,
     FeedNotAuthorizedError,
     IncompleteScanError,
     ScanConfig,
     StaleDataError,
+    SymbolFileError,
     apply_liquidity_gate,
     current_session,
     detect_setup,
     get_clients,
+    get_universe,
     liquidity_floor,
     run_scan,
     session_dollar_volume,
     trailing_volume_mean,
 )
+from src.scanner import _SYMBOL_RE
 
 
 def test_flat_series_is_not_a_setup(ohlcv):
@@ -211,6 +216,45 @@ def test_a_zero_previous_close_cannot_divide(ohlcv):
     frame = _passing(ohlcv)
     frame.iloc[-2, frame.columns.get_loc("Close")] = 0.0
     assert detect_setup(frame, ScanConfig()) is None
+
+
+# The inclusive edges of rules 1 and 2 (step 6b). Rule 3's is asserted below
+# and rule 5's is asserted above -- the price floor is the one rule of the
+# five that is deliberately exclusive, and only a test that lands exactly on
+# each line can tell the two kinds apart.
+
+
+def test_rule1_a_gain_exactly_at_the_threshold_is_kept(ohlcv):
+    """4.0% up IS a 4% burst. The strategy is named after this number, and
+    `>=` quietly becoming `>` would drop every name that printed it exactly.
+    """
+    cfg = ScanConfig()
+    frame = _passing(ohlcv)
+    prev_close = float(frame["Close"].iloc[-2])
+    frame.iloc[-1, frame.columns.get_loc("Close")] = prev_close * (1 + cfg.min_gain_pct / 100)
+    assert _only_failing(frame, cfg) == set()
+
+    result = detect_setup(frame, cfg)
+    assert result is not None
+    assert result["gain_pct"] == pytest.approx(cfg.min_gain_pct, abs=0.01)
+
+
+def test_rule2_volume_exactly_equal_to_the_previous_day_is_kept(ohlcv):
+    """Rule 2 asks for volume that did not FALL. Equal is not a fall.
+
+    Yesterday is lifted to today rather than today dropped to yesterday: the
+    burst day carries the volume rule 3 needs, and levelling down would put
+    the frame under the relative-volume threshold instead, which is the
+    substitution `_only_failing` exists to catch.
+    """
+    cfg = ScanConfig()
+    frame = _passing(ohlcv)
+    _set_volume(frame, prev=float(frame["Volume"].iloc[-1]))
+    assert _only_failing(frame, cfg) == set()
+
+    result = detect_setup(frame, cfg)
+    assert result is not None
+    assert result["volume"] == result["prev_volume"]
 
 
 # =====================================================================
@@ -505,11 +549,24 @@ def test_the_gate_measures_a_name_against_the_same_number_it_reports(ohlcv):
     percentile. Parametrised over many frames because a single frame passed
     this on whichever way its own rounding happened to go -- 53 of 400
     synthetic tickers were evicted from their own one-symbol scan.
+
+    THE SWEEP HAS TO BE A SWEEP. Every ohlcv("burst") variant carries the same
+    last bar by construction -- $44.80 on exactly 25,000,000 shares, see
+    tests/synthetic.py -- and $44.80 rounds to itself, so forty variants of it
+    are forty copies of one arithmetic that cannot disagree with itself. Run
+    that way this test could not tell the two roundings apart, which was
+    measured rather than argued: re-introducing the second rounding left it
+    green. The prices and volumes are moved off those round numbers here so
+    that a cent of disagreement is worth thousands of dollars of product.
     """
     cfg = ScanConfig()
     checked = 0
     for variant in range(40):
-        frame = ohlcv("burst", variant=variant)
+        frame = _scale(ohlcv("burst", variant=variant),
+                       price=1.7391 * (1.0 + variant * 0.0137),
+                       volume=0.7137 * (1.0 + variant * 0.0219))
+        assert round(float(frame["Close"].iloc[-1]), 2) != float(frame["Close"].iloc[-1]), (
+            "a close that is already exact to the cent cannot show a rounding disagreement")
         m = detect_setup(frame, cfg)
         if m is None:
             continue
@@ -951,3 +1008,385 @@ def test_a_few_dropped_symbols_are_reported_but_do_not_stop_the_scan(
 
     assert stats["dropped"] == 1
     assert found and "SF0" not in [c.ticker for c in found]
+
+
+# =====================================================================
+# Step 6b -- get_universe() and the symbol-file parser
+#
+# Step 6a listed this as a hole and it is the widest one in the module: the
+# universe is the input to every other rule, and until now nothing exercised
+# the parser at all. A typo that silently shrank the scan by one name -- or by
+# a whole sector-grouped block -- would have looked exactly like a quiet day.
+# Every malformed input below must RAISE. None of them may be skipped.
+# =====================================================================
+
+
+def _symbol_file(tmp_path, text: str, name: str = "symbols.txt"):
+    path = tmp_path / name
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_the_universe_is_the_file_in_file_order(tmp_path):
+    """Order is preserved so the file can stay grouped by sector for a human
+    reader; sorting it here would make the grouping unreadable in review."""
+    path = _symbol_file(tmp_path, "NVDA\nAAPL\nMSFT\n")
+    assert get_universe(path) == ["NVDA", "AAPL", "MSFT"]
+
+
+def test_comments_and_blank_lines_are_not_symbols(tmp_path):
+    """The real file is a commented, sector-grouped document."""
+    path = _symbol_file(tmp_path, """
+# --- semis ---
+NVDA
+AMD    # trailing comments too
+
+  MSFT
+
+# --- and nothing else ---
+""")
+    assert get_universe(path) == ["NVDA", "AMD", "MSFT"]
+
+
+@pytest.mark.parametrize("line, why", [
+    ("nvda", "lower case is not how a ticker is written"),
+    ("BRK.B", "class shares are rejected on purpose -- see the file header"),
+    ("ABCDEF", "six characters is not a US ticker"),
+    ("NVDA AMD", "two symbols on one line"),
+    ("NVDA,AMD", "a comma-separated list"),
+    ("BF-B", "punctuation of any kind"),
+    ("N3VDA", "digits"),
+])
+def test_a_line_that_is_not_a_ticker_stops_the_run(line, why, tmp_path):
+    """A typo must fail the run, not quietly shrink the universe. The scan's
+    only defence against that is this raise -- an unparsed name is
+    indistinguishable downstream from a name that did not burst."""
+    path = _symbol_file(tmp_path, f"NVDA\n{line}\nMSFT\n")
+    with pytest.raises(SymbolFileError) as excinfo:
+        get_universe(path)
+    message = str(excinfo.value)
+    assert "line 2" in message, f"{why}: the operator needs the line number"
+    assert line in message, f"{why}: the operator needs the offending text"
+
+
+def test_a_duplicate_symbol_stops_the_run_and_names_both_lines(tmp_path):
+    """A duplicate is scanned twice, counted twice in the coverage fractions,
+    and ranked twice in the dollar-volume distribution rule 6 draws its floor
+    from. In a hand-typed, sector-grouped file it is the likeliest mistake of
+    all: one name filed under two sectors."""
+    path = _symbol_file(tmp_path, "NVDA\nMSFT\n# --- again ---\nNVDA\n")
+    with pytest.raises(SymbolFileError, match=r"line 4: NVDA is already listed on line 1"):
+        get_universe(path)
+
+
+def test_an_empty_file_is_not_a_universe(tmp_path):
+    """`[]` from here is a scan of nothing, which returns no candidates and
+    raises nothing -- the empty shortlist that reads like a quiet market."""
+    with pytest.raises(SymbolFileError, match="no symbols found"):
+        get_universe(_symbol_file(tmp_path, ""))
+
+
+def test_a_file_of_nothing_but_comments_is_not_a_universe(tmp_path):
+    """The same failure, one edit away: a file whose symbols were all
+    commented out still parses cleanly line by line."""
+    with pytest.raises(SymbolFileError, match="no symbols found"):
+        get_universe(_symbol_file(tmp_path, "# NVDA\n# MSFT\n\n   \n"))
+
+
+def test_a_missing_file_raises_the_symbol_file_error_not_an_oserror(tmp_path):
+    """src.pipeline catches SymbolFileError to fail the run loudly with a
+    message about the symbol file. A bare OSError escaping here would be
+    reported as an unknown crash instead."""
+    with pytest.raises(SymbolFileError, match="cannot read symbol file"):
+        get_universe(tmp_path / "does-not-exist.txt")
+
+
+def test_a_byte_order_mark_fails_loudly_rather_than_eating_the_first_symbol(tmp_path):
+    """An editor that writes UTF-8 with a BOM prefixes an invisible character
+    to line 1. The file is read as plain utf-8, so the BOM stays on the first
+    ticker and that line stops the run.
+
+    Loud is the right outcome and the reason this is asserted: the quiet
+    alternative -- skipping an unparseable line -- would drop whichever symbol
+    happened to be first in the file, on some machines and not others, with
+    nothing in the log.
+
+    The message reports the line with !r, which is what makes this diagnosable
+    rather than merely loud: an operator staring at a file that looks correct
+    gets `'\ufeffNVDA' is not a ticker` instead of `'NVDA' is not a ticker`.
+    """
+    path = _symbol_file(tmp_path, "﻿NVDA\nMSFT\n")
+    with pytest.raises(SymbolFileError) as excinfo:
+        get_universe(path)
+    message = str(excinfo.value)
+    assert "line 1" in message
+    assert "\\ufeff" in message, (
+        f"the byte-order mark has to survive into the message to be diagnosable: {message}")
+
+
+def test_surrounding_whitespace_is_not_part_of_a_ticker(tmp_path):
+    path = _symbol_file(tmp_path, "  NVDA\t\n\tMSFT  \n")
+    assert get_universe(path) == ["NVDA", "MSFT"]
+
+
+def test_the_checked_in_symbol_file_parses(fake_alpaca):
+    """get_universe() with no argument -- the production default, and the one
+    path that reads data/symbols.txt itself. A file that stopped parsing would
+    otherwise only be discovered by the cron."""
+    universe = get_universe()
+    assert len(universe) > 100
+    assert len(set(universe)) == len(universe)
+    assert all(_SYMBOL_RE.match(t) for t in universe)
+
+
+# =====================================================================
+# Step 6b -- batching, and the retry the scan is built around
+#
+# The retry is the reason a flaky symbol does not kill a run, and the reason a
+# permanently-broken one costs a hundred names instead of one. Step 6a covered
+# only the branch where both attempts fail; the successful retry, the size of
+# the loss when both do, and a refusal that only arrives on the second attempt
+# were all untested.
+# =====================================================================
+
+
+def _attempt_recorder(monkeypatch, failures: dict[int, Exception]) -> list[list[str]]:
+    """Record every get_stock_bars attempt; raise on the ones named.
+
+    `failures` is keyed by attempt number, so a batch can fail once and
+    succeed on the retry -- something a single `raise_on_bars` cannot express.
+    The returned list holds the symbols each attempt asked for, which is how
+    the batching itself is checked.
+    """
+    from tests.fakes import FakeDataClient
+
+    served = FakeDataClient.get_stock_bars
+    attempts: list[list[str]] = []
+
+    def recording(self, request):
+        symbols = getattr(request, "symbol_or_symbols", [])
+        attempts.append([symbols] if isinstance(symbols, str) else list(symbols))
+        exc = failures.get(len(attempts) - 1)
+        if exc is not None:
+            raise exc
+        return served(self, request)
+
+    monkeypatch.setattr(FakeDataClient, "get_stock_bars", recording)
+    return attempts
+
+
+def test_the_universe_is_requested_in_batches_that_lose_no_symbol(
+    fake_alpaca, ohlcv, monkeypatch
+):
+    """cfg.batch_size splits the universe into requests. The batches must
+    partition it -- a name in none of them is never scanned, and a name in two
+    is scanned twice and counted twice in the percentile rule 6 draws its
+    floor from."""
+    universe = _coverage(fake_alpaca, ohlcv, fresh=25)
+    attempts = _attempt_recorder(monkeypatch, {})
+
+    run_scan(ScanConfig(batch_size=10), universe=universe)
+
+    assert [len(a) for a in attempts] == [10, 10, 5]
+    assert [t for batch in attempts for t in batch] == universe
+
+
+def test_a_universe_smaller_than_one_batch_is_one_request(fake_alpaca, ohlcv, monkeypatch):
+    """`--tickers NVDA,PLTR` must not fan out into a request per name."""
+    universe = _coverage(fake_alpaca, ohlcv, fresh=2)
+    attempts = _attempt_recorder(monkeypatch, {})
+    run_scan(ScanConfig(), universe=universe)
+    assert attempts == [universe]
+
+
+def test_a_batch_that_fails_once_is_retried_and_keeps_its_symbols(
+    fake_alpaca, ohlcv, monkeypatch
+):
+    """The successful-retry path -- the entire reason the retry exists, and
+    the branch step 6a did not cover. A transient reset must cost nothing at
+    all: the same batch is asked for again, its candidates arrive, and the
+    coverage counters record no loss for src.pipeline to degrade the run on.
+    """
+    monkeypatch.setattr(time, "sleep", lambda *_: None)
+    universe = _coverage(fake_alpaca, ohlcv, fresh=12)
+    attempts = _attempt_recorder(monkeypatch, {0: ConnectionError("connection reset by peer")})
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(), universe=universe, stats=stats)
+
+    assert attempts == [universe, universe], "the retry must re-ask for the whole batch"
+    assert stats["dropped"] == 0 and stats["with_bars"] == 12
+    assert {c.ticker for c in found} == set(universe), "a retried batch loses nothing"
+
+
+def test_the_retry_waits_before_asking_again(fake_alpaca, ohlcv, monkeypatch):
+    """Without a pause the retry is a second request into whatever rate limit
+    or outage refused the first one, microseconds later."""
+    slept: list[float] = []
+    monkeypatch.setattr(time, "sleep", lambda seconds: slept.append(seconds))
+    _coverage(fake_alpaca, ohlcv, fresh=2)
+    _attempt_recorder(monkeypatch, {0: ConnectionError("connection reset by peer")})
+
+    run_scan(ScanConfig(), universe=["SF0", "SF1"])
+
+    assert slept and all(s > 0 for s in slept), f"the retry did not wait: {slept}"
+
+
+def test_a_batch_that_fails_twice_drops_every_symbol_in_it(fake_alpaca, ohlcv, monkeypatch):
+    """The cost of a permanent failure is the batch, not the symbol.
+
+    The symbol file is hand-typed and sector-grouped, so one bad ticker takes
+    a contiguous block of its neighbours down with it. The scan says so in the
+    log and counts all of them; a test that only ever failed one-symbol
+    batches would never have seen the difference.
+    """
+    monkeypatch.setattr(time, "sleep", lambda *_: None)
+    universe = _coverage(fake_alpaca, ohlcv, fresh=12)
+    reset = ConnectionError("connection reset by peer")
+    _attempt_recorder(monkeypatch, {0: reset, 1: reset})
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(batch_size=3), universe=universe, stats=stats)
+
+    assert stats["dropped"] == 3, "the whole batch, not the one symbol that failed"
+    assert stats["with_bars"] == 9
+    assert {c.ticker for c in found}.isdisjoint(universe[:3])
+
+
+def test_a_feed_refusal_that_only_arrives_on_the_retry_still_aborts_the_scan(
+    fake_alpaca, ohlcv, monkeypatch
+):
+    """The second half of the refusal classification. A refusal reaching the
+    retry -- a reset first, then the 403 -- must abort the run exactly as one
+    on the first attempt does. Handled on the first attempt only, every batch
+    would retry, be refused, and be dropped, ending in a complete scan of
+    nothing."""
+    monkeypatch.setattr(time, "sleep", lambda *_: None)
+    universe = _coverage(fake_alpaca, ohlcv, fresh=12)
+    _attempt_recorder(monkeypatch, {
+        0: ConnectionError("connection reset by peer"),
+        1: _alpaca_error(403, DENIAL),
+    })
+
+    with pytest.raises(FeedNotAuthorizedError, match="delayed_sip"):
+        run_scan(ScanConfig(), universe=universe)
+
+
+# --- the coverage limits, pinned from BELOW as well as above ---------------
+#
+# The tests step 6a wrote put exactly half a universe out of action and
+# asserted the raise, which kills a limit RAISED above 50% and says nothing
+# about one lowered to 10%. These two frames sit just under each limit and
+# must still produce a shortlist.
+
+
+def test_a_scan_just_inside_the_stale_limit_still_returns_its_shortlist(fake_alpaca, ohlcv):
+    """Five of twelve behind the session is 42% -- a bad day for the feed, not
+    a reason to throw away the ten bursts that did update."""
+    universe = _coverage(fake_alpaca, ohlcv, fresh=7, stale=5)
+    shape = _scan_shape(universe, fake_alpaca)
+    assert len(shape["stale"]) / shape["with_bars"] < ScanConfig().max_stale_fraction
+    assert shape["dropped"] == 0 and shape["no_bars"] == 0, "nothing else went wrong"
+
+    found = run_scan(ScanConfig(), universe=universe)
+
+    assert len(found) == 7, "the fresh names still burst"
+
+
+def test_a_scan_just_inside_the_dropped_limit_still_returns_its_shortlist(
+    fake_alpaca, ohlcv, monkeypatch
+):
+    """The same boundary for the other counter: five failed batches of twelve
+    is a flaky network, and the run is degraded by src.pipeline rather than
+    abandoned here."""
+    monkeypatch.setattr(time, "sleep", lambda *_: None)
+    universe = _coverage(fake_alpaca, ohlcv, fresh=12)
+    fake_alpaca.raise_on_bars = ConnectionError("connection reset by peer")
+    fake_alpaca.fail_symbols = {"SF0", "SF1", "SF2", "SF3", "SF4"}
+    cfg = ScanConfig(batch_size=1)
+
+    shape = _scan_shape(universe, fake_alpaca, cfg)
+    assert shape["dropped"] / len(universe) < cfg.max_dropped_fraction
+    assert not shape["stale"] and shape["no_bars"] == 0
+
+    found = run_scan(cfg, universe=universe)
+
+    assert len(found) == 7
+
+
+# --- when a session's bar is finished --------------------------------------
+
+
+def test_a_session_is_finished_the_moment_the_settling_margin_has_passed():
+    """SESSION_COMPLETE_ET is the line, and both sides of it are asserted so
+    that moving it -- to 20:15 for the extended session, say -- fails here
+    rather than silently making the evening cron scan yesterday.
+
+    Read off the constant: a minute either side of whatever it is set to.
+    """
+    close = datetime.combine(date(2026, 9, 1), SESSION_COMPLETE_ET, tzinfo=MARKET_TZ)
+    assert current_session(close) == date(2026, 9, 1)
+    assert current_session(close - timedelta(minutes=1)) == date(2026, 8, 31)
+
+
+# =====================================================================
+# Step 6b -- the numbers themselves
+#
+# Every rejection test above reads its boundary off ScanConfig, which is what
+# lets it keep testing the rule after a retune instead of testing the old
+# number. The cost is that not one of them notices a retune: set min_gain_pct
+# to 1.0 and the 4% momentum burst becomes a 1% momentum burst with the suite
+# green. These two tests are the other half.
+# =====================================================================
+
+
+def test_the_scan_filter_still_holds_the_thresholds_it_was_tuned_to():
+    """A strategy change has to be deliberate enough to edit a test.
+
+    Every number here is a claim knowledge/strategy.md or README makes about
+    what this scanner is. The coverage limits are in the same list because
+    lowering one turns an ordinary day's halts into a failed run, and raising
+    one lets a scan of a third of the market be emailed as the market.
+    """
+    cfg = ScanConfig()
+    assert (cfg.min_gain_pct, cfg.min_price) == (4.0, 4.0)
+    assert (cfg.min_rvol, cfg.rvol_lookback, cfg.min_rvol_sessions) == (1.5, 50, 20)
+    assert cfg.min_dollar_volume_pctile == 30.0
+    assert (cfg.max_stale_fraction, cfg.max_dropped_fraction) == (0.5, 0.5)
+    assert cfg.coverage_guard_min_symbols == 10
+    assert (cfg.lookback_days, cfg.batch_size) == (260, 100)
+    assert cfg.feed == DataFeed.DELAYED_SIP
+    assert SESSION_COMPLETE_ET == time_of_day(16, 15)
+
+
+def test_the_readme_describes_the_filter_the_code_applies():
+    """CLAUDE.md's standing rule, for the one paragraph that states all five
+    per-scan thresholds as numbers.
+
+    The rule has already failed on three consecutive commits by relying on
+    someone remembering, and step 4 rewrote every number in this line. A
+    retune that sweeps ScanConfig and leaves the README describing the old
+    strategy is the same defect as leaving the absolute share floor documented
+    after it was deleted.
+    """
+    readme = (pathlib.Path(__file__).resolve().parent.parent / "README.md").read_text()
+    layer1 = readme.split("Layer 1", 1)[-1].split("Layer 2", 1)[0]
+    cfg = ScanConfig()
+    claims = {
+        r"≥\s*([\d.]+)%\s*gain": cfg.min_gain_pct,
+        r"≥\s*([\d.]+)x its own": cfg.min_rvol,
+        r"([\d.]+)-session average": float(cfg.rvol_lookback),
+        r"price > \$([\d.]+)": cfg.min_price,
+        r"top ([\d.]+)% of the day's dollar volume": 100.0 - cfg.min_dollar_volume_pctile,
+    }
+    for pattern, expected in claims.items():
+        found = re.search(pattern, layer1)
+        assert found, (
+            f"README's Layer 1 paragraph no longer states {pattern!r}. Either the "
+            "filter description was reworded -- re-point this test at it -- or a "
+            "threshold stopped being documented at all."
+        )
+        assert float(found.group(1)) == expected, (
+            f"README says {found.group(0)!r}; ScanConfig says {expected}. "
+            "Sweep the docs (CLAUDE.md: a step is not done until they are true)."
+        )

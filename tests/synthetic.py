@@ -68,6 +68,22 @@ def make_ohlcv(
       burst  -- a `base` walk whose final bar is a +12% day on 8x the recent
                 average volume (>=25M shares, >$40 close after the step-up),
                 closing in the top 3% of its range.
+
+    A TRAP IN `burst`, WORTH KNOWING BEFORE SWEEPING VARIANTS. The burst bar is
+    written OVER the walk rather than drawn from it, and the `lift` below puts
+    the day before it on exactly $40.00. Every burst frame therefore closes at
+    exactly $44.80 whatever its seed, and most of them do it on exactly
+    25,000,000 shares -- the variants differ in the history behind the burst,
+    almost never in the burst itself.
+
+    That is deliberate (the bar has to clear every gate by a wide margin) and
+    it is fine for anything reading the history. But a test that sweeps
+    variants to vary the LAST bar is sweeping one arithmetic many times, and
+    such a test has already reported safety it did not have: the two roundings
+    of close x volume that step 4's percentile gate depends on were compared
+    over forty variants of $44.80 x 25,000,000, where the two roundings cannot
+    disagree, and re-introducing the bug left it green. Scale the frame
+    yourself when the burst bar's own numbers are the thing under test.
     """
     if kind not in KINDS:
         raise ValueError(f"unknown kind {kind!r}; expected one of {KINDS}")
