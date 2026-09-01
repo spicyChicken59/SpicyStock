@@ -10,6 +10,7 @@ import collections, json, pathlib, sys
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 from src.pipeline import MIN_LYNCH_PASSES
+from src.ledger import CONTRACT_INVARIANTS    # the real contract, not a copy
 from src.scanner import ScanConfig            # the real floors, not a copy
 from src.lynch import (                       # the real thresholds, not a copy
     MAX_PRIOR_BURSTS, MIN_LINEAR_R2, MIN_LINEAR_SLOPE, MAX_RUN_UP_1MO,
@@ -474,16 +475,11 @@ data = {
     "_contract": {
         "about": "docs/data.json will be written by src/pipeline.py (step 9) and is read by docs/index.html at runtime. Today it is a hand-authored fixture from tools/make_fixture.py; run.fixture is true. This block is documentation, not data; consumers ignore it.",
         "documented_in": "README.md, 'The dashboard contract'",
-        "invariants": [
-            "candidates holds EVERY scored candidate, ranked by score descending, and is never truncated: len(candidates) == run.scored. The top run.shortlist_size of them are the shortlist that went out by email.",
-            "run.scored + len(gated_out) == run.bursts. Nothing a scan found may vanish without appearing in one of the two lists.",
-            "Every candidate carries provenance.source: 'claude' when the model actually returned a score, 'fallback' when the offline checklist produced it. A fallback is never labelled claude.",
-            "provenance.chart_seen is true only when the scoring model actually received the chart image.",
-            "forward_returns and runs[].forward_returns are null until the sessions exist. Absent is null, never 0 and never a string.",
-            "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
-            "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
-            "Numbers are numbers or null. No 'n/a' strings.",
-        ],
+        # IMPORTED from src.ledger, which is what the pipeline writes into its
+        # own output. A second copy here is a second contract, and a fixture
+        # promising something the real file does not is the exact failure this
+        # generator exists to make impossible.
+        "invariants": list(CONTRACT_INVARIANTS),
     },
     "run": {
         "date": SESSION,

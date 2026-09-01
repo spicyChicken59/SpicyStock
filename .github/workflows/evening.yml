@@ -11,8 +11,14 @@ on:
     - cron: "16 23 * * 1-5"   # backup while US is on EST (UTC-5)
   workflow_dispatch: {}
 permissions:
-  contents: read
+  contents: write   # the run commits docs/ back; see "Persist the run" below
   actions: read
+
+# One scan at a time. An overlapping manual run would double the day's Claude
+# spend and race the other run's push.
+concurrency:
+  group: evening-scan
+  cancel-in-progress: false
 jobs:
   scan:
     runs-on: ubuntu-latest
@@ -62,12 +68,32 @@ jobs:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
         run: python -m src.pipeline evening
-      - name: Upload results archive
+      - name: Persist the run
         if: steps.guard.outputs.go == 'true'
+        # Without this the ledger cannot accumulate: docs/ is written inside the
+        # container and dies with it, so every CI run would start a fresh
+        # history and the forward returns step 9 exists to collect would never
+        # span more than one session. Market data is live-only — a rejected push
+        # discards a snapshot that cannot be re-fetched — so rebase onto
+        # whatever landed during the run and retry.
+        run: |
+          git config user.name  "spicystock"
+          git config user.email "actions@github.com"
+          git add docs results
+          git diff --staged --quiet && exit 0
+          git commit -m "run $(date -u +%F)"
+          for i in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+          done
+          git push
+      - name: Keep the snapshot if the push failed
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: evening-${{ github.run_id }}
           path: |
+            docs/data.json
+            docs/ledger.json
             results/
-            charts/
           retention-days: 30

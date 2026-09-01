@@ -50,16 +50,25 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from . import ledger, scanner
 from .lynch import evaluate_2lynch, extra_context
 from .scanner import ScanConfig, run_scan
+from .scorer import MODEL as DEFAULT_MODEL
 from .scorer import render_chart, score_all
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("pipeline")
 
-TOP_N = 5
+TOP_N = 5          # how many candidates the EMAIL carries. Not the archive.
 MIN_LYNCH_PASSES = 3
 MAX_TO_SCORE = 25  # cap Claude calls per run
+
+#: Where render_chart() writes. Under docs/ because GitHub Pages serves that
+#: directory and docs/index.html references a chart as a path relative to
+#: itself: a PNG in the repo-root charts/ can be named by the dashboard and
+#: never fetched by it, and that directory is gitignored besides, so the image
+#: died with the runner. See ledger.chart_ref() for the other half.
+CHARTS_DIR = ledger.DOCS_DIR / "charts"
 
 # Exit codes. 2 exists because "the screener is broken" and "the screener ran
 # and found nothing" must not be the same signal to the only monitor there is.
@@ -194,6 +203,14 @@ def preflight(dry_run: bool = False) -> None:
 
 
 def archive(results: list[dict], run_type: str) -> Path:
+    """The run's CSV, in results/ — every scored candidate, not the shortlist.
+
+    It is handed `scored`, not the five rows that went out by email. Until step
+    9 the caller passed score_all()'s truncated return, so TOP_N cut this file
+    as well as the email and the other twenty judgements a run made were never
+    written down anywhere. results/ is gitignored and uploaded as a 30-day
+    workflow artifact; the durable record is docs/ledger.json.
+    """
     out = Path("results")
     out.mkdir(exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -209,7 +226,11 @@ def archive(results: list[dict], run_type: str) -> Path:
 
 def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
         report: RunReport | None = None) -> list[dict]:
-    """One run, start to finish. Returns the shortlist that went out.
+    """One run, start to finish. Returns EVERY scored candidate, ranked.
+
+    Not the five that went out by email: those are `scored[:TOP_N]`, cut here
+    rather than inside score_all(), because the truncated list used to be the
+    only thing this function ever produced and archive() wrote exactly it.
 
     `report`, if given, is filled with everything the shortlist cannot say:
     which stage was running, what went wrong, and the counts behind it. main()
@@ -241,35 +262,56 @@ def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
         prepared.append((cand, lynch, ctx))
 
     prepared.sort(key=lambda x: (x[1]["passes"], x[0].gain_pct), reverse=True)
-    gated = [p for p in prepared if p[1]["passes"] >= MIN_LYNCH_PASSES][:MAX_TO_SCORE]
+    passed_gate = [p for p in prepared if p[1]["passes"] >= MIN_LYNCH_PASSES]
+    to_score = passed_gate[:MAX_TO_SCORE]
+    # Everything the scan found that will not be scored, with the reason it
+    # was not. Kept rather than dropped: docs/data.json's contract is that
+    # scored + gated_out accounts for every burst, and a per-check pass rate
+    # computed over the survivors alone describes the survivors, not the run.
+    scoring = {cand.ticker for cand, _lynch, _ctx in to_score}
+    unscored = [(cand, lynch,
+                 "lynch_gate" if lynch["passes"] < MIN_LYNCH_PASSES else "score_cap")
+                for cand, lynch, _ctx in prepared if cand.ticker not in scoring]
     log.info("%d bursts → %d passed 2LYNCH gate (scoring top %d)",
-             n_bursts, sum(1 for p in prepared if p[1]["passes"] >= MIN_LYNCH_PASSES), len(gated))
+             n_bursts, len(passed_gate), len(to_score))
 
     # Layers 3-5: charts + Claude scoring
     report.stage = "chart"
     scored_inputs = []
-    chart_failures: list[str] = []
-    for cand, lynch, ctx in gated:
+    chart_errors: dict[str, str] = {}
+    for cand, lynch, ctx in to_score:
         chart = None
         try:
-            chart = render_chart(cand.ticker, cand.history)
+            chart = render_chart(cand.ticker, cand.history, out_dir=str(CHARTS_DIR))
         except Exception as e:  # noqa: BLE001
             # Survivable — the candidate is still scored — but not free: the
             # model is told to trust the chart over the numbers, and without
             # one it is scoring blind. provenance.chart_seen records that per
-            # row; this records that the run had to do it at all.
+            # row; chart_error carries the reason into the archive, and this
+            # records that the run had to do it at all.
             log.warning("Chart render failed for %s: %s", cand.ticker, e)
-            chart_failures.append(f"{cand.ticker} ({type(e).__name__}: {e})")
+            chart_errors[cand.ticker] = f"{type(e).__name__}: {e}"
         scored_inputs.append((cand, lynch, ctx, chart))
-    if chart_failures:
-        report.problem("chart", f"{len(chart_failures)} of {len(gated)} charts failed to "
+    if chart_errors:
+        report.problem("chart", f"{len(chart_errors)} of {len(to_score)} charts failed to "
                                 "render; those candidates were scored without the image: "
-                                + ", ".join(chart_failures[:5]))
+                                + ", ".join(f"{t} ({e})" for t, e
+                                            in list(chart_errors.items())[:5]))
 
     report.stage = "score"
     score_stats: dict = {}
-    results = score_all(scored_inputs, top_n=TOP_N, min_lynch=MIN_LYNCH_PASSES,
-                        stats=score_stats)
+    returned = score_all(scored_inputs, top_n=TOP_N, min_lynch=MIN_LYNCH_PASSES,
+                         stats=score_stats)
+    # Every scored row, in rank order, untruncated. score_all() also returns
+    # its own top-N slice; `rows` is the list step 9 archives.
+    scored = score_stats.get("rows")
+    if scored is None:  # a caller who replaced score_all without filling stats
+        scored = list(returned)
+    # THE CUT — and the only one left. It used to happen inside score_all(),
+    # and archive() wrote that truncated return, so TOP_N threw away four
+    # fifths of every night's judgements before anything could record them.
+    # The email carries five; the archive carries all of them.
+    shortlist = scored[:TOP_N]
     _check_scoring(score_stats, report)
 
     # Report the universe actually scanned. This said "US common stocks" while
@@ -278,7 +320,8 @@ def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
     # that just ran rather than from a second read of the symbol file, which
     # could disagree with it.
     scanned = scan_stats.get("requested", len(tickers or []))
-    report.counts.update({"universe": scanned, "bursts": n_bursts, "gated": len(gated),
+    report.counts.update({"universe": scanned, "bursts": n_bursts,
+                          "gated": len(passed_gate), "to_score": len(to_score),
                           **{k: v for k, v in scan_stats.items() if k != "stale"},
                           "stale": len(scan_stats.get("stale", {})),
                           "scored": score_stats.get("scored", 0),
@@ -286,14 +329,28 @@ def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
                           "fallback": score_stats.get("fallback", 0)})
     stats = report.email_stats(
         universe=f"{scanned} checked-in US common stocks",
-        bursts=n_bursts, gated=len(gated),
+        # How many CLEARED the gate, not how many fitted under the call cap
+        # afterwards. The email prints this as "Passed 2LYNCH gate", and on any
+        # night with more than MAX_TO_SCORE survivors the capped number was a
+        # smaller answer to a question nobody asked.
+        bursts=n_bursts, gated=len(passed_gate),
         scored_by={"claude": score_stats.get("claude", 0),
                    "fallback": score_stats.get("fallback", 0)},
     )
 
     report.stage = "archive"
-    path = archive(results, run_type)
-    log.info("Archived shortlist to %s", path)
+    path = archive(scored, run_type)
+    log.info("Archived %d scored candidate(s) to %s", len(scored), path)
+    published = publish(run_type=run_type, dry_run=dry_run, cfg=cfg, report=report,
+                        scan_stats=scan_stats, score_stats=score_stats,
+                        scored=scored, unscored=unscored, to_score=to_score,
+                        n_bursts=n_bursts, n_passed=len(passed_gate),
+                        shortlist_size=len(shortlist), chart_errors=chart_errors,
+                        explicit_tickers=tickers)
+    log.info("Published %s (%d candidates, %d not scored) and %s (%d runs, %d "
+             "forward return(s) filled this run)",
+             published["data"], len(scored), len(unscored),
+             published["ledger"], published["runs"], published["filled"])
 
     # Layer 6: email. A degraded run still sends. Suppressing it would replace
     # a misleading email with no email, and no email is the failure this step
@@ -303,15 +360,128 @@ def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
     report.stage = "email"
     if dry_run:
         log.info("DRY RUN — skipping email. Shortlist:")
-        for r in results:
+        for r in shortlist:
             log.info("  %s  %s/10 (%s) %s", r["ticker"], r["score"], r["verdict"], r["reason"])
     else:
         from .emailer import send_email
-        send_email(results, run_type, stats)
+        send_email(shortlist, run_type, stats)
 
     report.stage = "complete"
     report.log_summary(run_type)
-    return results
+    return scored
+
+
+def forward_bars(cfg: ScanConfig, tickers: list[str], through) -> dict:
+    """Daily bars for names whose forward returns are still open.
+
+    Deliberately the scan's own downloader (src.scanner's _download_batch)
+    rather than a second request built here: it is the one place that decides
+    split adjustment, the feed and the window, and a second copy of those
+    decisions is a second thing to keep in step. This is the only extra data
+    call step 9 adds — one per batch_size names, on a free feed.
+
+    `through` is the newest session to read, which is the newest COMPLETED
+    session now, not the session the scan targeted. They are the same on a
+    normal evening run. They differ when a run deliberately scans an old
+    session (SCAN_SESSION_DATE), and then everything after that burst has
+    already happened, so the returns resolve inside the same run.
+    """
+    if not tickers:
+        return {}
+    client = scanner.get_clients()
+    frames: dict = {}
+    for i in range(0, len(tickers), cfg.batch_size):
+        frames.update(scanner._download_batch(client, tickers[i: i + cfg.batch_size],
+                                              cfg, through))
+    return frames
+
+
+def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
+            scan_stats: dict, score_stats: dict, scored: list[dict],
+            unscored: list[tuple], to_score: list[tuple], n_bursts: int,
+            n_passed: int, shortlist_size: int, chart_errors: dict,
+            explicit_tickers: list[str] | None) -> dict:
+    """Write docs/data.json and docs/ledger.json for the run that just ran.
+
+    Everything the run knows, in the two shapes it is worth keeping: the
+    dashboard's snapshot of tonight, and the ledger row per candidate that a
+    later run fills a forward return into. See src.ledger.
+
+    A failure to FETCH those later bars degrades the run rather than ending
+    it — the scoring is done and the email is still worth sending — but it is
+    reported, because a ledger that silently stops accumulating outcomes is
+    the same class of failure step 5 exists to end.
+    """
+    by_ticker = {cand.ticker: (cand, lynch, ctx) for cand, lynch, ctx in to_score}
+    candidates = []
+    for rank, row in enumerate(scored, start=1):
+        cand, lynch, ctx = by_ticker[row["ticker"]]
+        candidates.append(ledger.candidate_record(
+            cand, lynch, ctx, row, rank=rank, docs_dir=ledger.DOCS_DIR,
+            chart_error=chart_errors.get(row["ticker"])))
+    gated_out = [ledger.gated_record(cand, lynch, reason)
+                 for cand, lynch, reason in unscored]
+
+    session = scan_stats.get("session")
+    # The gate's own size, read off the checklist this run computed rather
+    # than copied from src.lynch as a number that could drift out of step.
+    # None on a night with no bursts, because then nothing measured it.
+    total_checks = next((lynch["total"] for _c, lynch, _x in to_score), None)
+    run = {
+        "date": ledger.iso_date(session) or ledger.iso_date(datetime.now(timezone.utc)),
+        "type": run_type,
+        "dry_run": bool(dry_run),
+        "fixture": False,
+        "universe": {
+            "label": ("data/symbols.txt (checked in)" if explicit_tickers is None
+                      else f"--tickers, {len(explicit_tickers)} named on the command line"),
+            "size": scan_stats.get("requested", len(explicit_tickers or [])),
+        },
+        "bursts": n_bursts,
+        "passed_gate": n_passed,
+        "scored": len(scored),
+        "score_cap": MAX_TO_SCORE,
+        "shortlist_size": shortlist_size,
+        "gate": {"min_lynch_passes": MIN_LYNCH_PASSES, "total_checks": total_checks},
+        "scored_by": {"claude": score_stats.get("claude", 0),
+                      "fallback": score_stats.get("fallback", 0)},
+        "model": next((r["provenance"]["model"] for r in scored
+                       if r["provenance"].get("model")), None) or DEFAULT_MODEL,
+        "status": report.status,
+        "errors": list(report.errors),
+    }
+
+    book = ledger.Ledger(ledger.DOCS_DIR).load()
+    entry = book.add_run(run, candidates, gated_out)
+
+    # Measure forward returns through the newest completed session, which is
+    # at least the one just scanned.
+    through = max(scanner.current_session(), session) if session else scanner.current_session()
+    pending = book.pending_tickers(through)
+    filled = 0
+    try:
+        frames = forward_bars(cfg, pending, through)
+    except Exception as e:  # noqa: BLE001 — reported, not raised: see the docstring
+        log.exception("Could not fetch bars for %d pending candidate(s)", len(pending))
+        report.problem("archive",
+                       f"forward returns for {len(pending)} candidate(s) from earlier runs "
+                       f"could not be updated ({type(e).__name__}: {e}); their outcomes stay "
+                       "pending in docs/ledger.json and will be retried next run")
+    else:
+        filled = book.fill_forward_returns(frames, through)
+
+    # Re-read the report AFTER the fetch: a problem raised in the two lines
+    # above is one of the run's problems, and the file that renders them must
+    # not be the one artifact that leaves it out. Stamped on the entry add_run
+    # handed back, never on runs[0] — the ledger is ordered by session, so
+    # backfilling an older one puts this run in the middle of it.
+
+    book.latest["run"]["errors"] = list(report.errors)
+    book.latest["run"]["status"] = entry["status"] = report.status
+
+    written = book.write()
+    return {"data": written["data"], "ledger": written["ledger"],
+            "runs": len(book.runs), "pending": len(pending), "filled": filled}
 
 
 def _check_scan(scan_stats: dict, report: RunReport) -> None:

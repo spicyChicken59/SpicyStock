@@ -15,13 +15,16 @@ turning this file into a no-op.
 from __future__ import annotations
 
 import csv
+import json
 import sys
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from src import pipeline
 from src import scanner
+from tests.test_ledger import contract_violations
 
 #: What Alpaca says when the plan does not carry the feed the scan asked for.
 #: The scanner classifies this as a refusal of the RUN rather than of the
@@ -84,7 +87,7 @@ def test_dry_run_does_not_send_email(universe, mocked_boundaries, open_gate):
     assert mocked_boundaries["resend"].sent == [], "--dry-run must skip delivery"
 
 
-def test_every_shortlisted_candidate_cost_exactly_one_model_call(
+def test_every_scored_candidate_cost_exactly_one_model_call(
     universe, mocked_boundaries, open_gate
 ):
     results = pipeline.run("evening", dry_run=True, tickers=universe)
@@ -94,20 +97,24 @@ def test_every_shortlisted_candidate_cost_exactly_one_model_call(
 def test_a_chart_is_rendered_for_each_scored_candidate(
     universe, mocked_boundaries, open_gate, tmp_path
 ):
+    """Under docs/, because that is the directory GitHub Pages serves and the
+    dashboard names a chart as a path relative to itself."""
     results = pipeline.run("evening", dry_run=True, tickers=universe)
-    charts = sorted(p.stem for p in (tmp_path / "charts").glob("*.png"))
+    charts = sorted(p.stem for p in (tmp_path / "docs" / "charts").glob("*.png"))
     assert charts == sorted(r["ticker"] for r in results)
 
 
 def test_the_run_writes_only_inside_the_working_directory(
     universe, mocked_boundaries, open_gate, tmp_path
 ):
-    """archive() and render_chart() both use paths relative to the process
-    working directory. That is why the suite chdirs into tmp_path."""
+    """archive(), render_chart() and the ledger all use paths relative to the
+    process working directory. That is why the suite chdirs into tmp_path."""
     pipeline.run("evening", dry_run=True, tickers=universe)
     assert Path("results").resolve().is_relative_to(tmp_path)
-    assert Path("charts").resolve().is_relative_to(tmp_path)
-    assert sorted(p.name for p in tmp_path.iterdir()) == ["charts", "results"]
+    assert Path("docs").resolve().is_relative_to(tmp_path)
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["docs", "results"]
+    assert sorted(p.name for p in (tmp_path / "docs").iterdir()) == [
+        "charts", "data.json", "ledger.json"]
 
 
 def test_live_run_sends_through_the_mocked_transport(universe, mocked_boundaries, open_gate):
@@ -115,7 +122,7 @@ def test_live_run_sends_through_the_mocked_transport(universe, mocked_boundaries
 
     sent = mocked_boundaries["resend"].sent
     assert len(sent) == 1
-    for row in results:
+    for row in results[:pipeline.TOP_N]:
         assert row["ticker"] in sent[0]["html"]
 
 
@@ -463,3 +470,307 @@ def test_the_report_hands_step_9_the_shape_docs_data_json_asks_for(
     assert [set(e) for e in report.errors] == [{"stage", "message"}, {"stage", "message"}]
     assert report.errors[1] == {"stage": "score", "message": "RuntimeError: boom"}
     assert report.status == "failed"
+
+
+# ===========================================================================
+# Step 9 -- the archive.
+#
+# The audit's central finding was that this system cannot tell you whether it
+# works: TOP_N cut the archive as well as the email, so four fifths of every
+# night's judgements were discarded unrecorded and no score was ever held next
+# to the return that followed it. Every test below is about what SURVIVES a
+# run -- the two files under docs/, what is in them, and what a later run adds.
+#
+# contract_violations() (tests/test_ledger.py) reads docs/data.json's own
+# invariants back out of the file it is given, so each test asserts the whole
+# contract as well as the one thing it is about: a change that fixes the named
+# claim by breaking another one cannot pass here.
+# ===========================================================================
+
+
+def published(tmp_path: Path) -> dict:
+    return json.loads((tmp_path / "docs" / "data.json").read_text())
+
+
+def recorded(tmp_path: Path) -> dict:
+    return json.loads((tmp_path / "docs" / "ledger.json").read_text())
+
+
+def clean(tmp_path: Path) -> dict:
+    """The published run, asserted against every invariant it declares."""
+    data = published(tmp_path)
+    assert contract_violations(data, docs_dir=tmp_path / "docs") == set()
+    return data
+
+
+def session_offset(days: int) -> str:
+    """The session `days` trading days from the newest completed one.
+
+    Negative is the past. Positive is a session that has not happened yet,
+    which is how "run this again tomorrow" is expressed to a double that dates
+    its bars from the request: src.scanner reads SCAN_SESSION_DATE and asks
+    for bars up to that session, and the fake answers with bars ending there.
+    """
+    end = scanner.current_session()
+    if days <= 0:
+        return pd.bdate_range(end=end, periods=abs(days) + 1)[0].date().isoformat()
+    return pd.bdate_range(start=end, periods=days + 1)[-1].date().isoformat()
+
+
+def served(fake_alpaca, ticker: str, session: str) -> pd.DataFrame:
+    """The bars the double would return for a request ending at `session`.
+
+    Used to recompute a forward return independently of the code that wrote
+    it: the double re-dates a registered frame so its newest bar lands on the
+    session asked for, exactly as a live feed returns bars up to the moment.
+    """
+    frame = fake_alpaca.bars_frame([ticker], end=pd.Timestamp(session).date())
+    return frame.loc[ticker]
+
+
+def expected_returns(frame: pd.DataFrame, burst: str, horizons=(1, 3, 5)) -> dict:
+    sessions = [stamp.date().isoformat() for stamp in frame.index]
+    start = sessions.index(burst)
+    base = float(frame["close"].iloc[start])
+    return {f"d{h}": round((float(frame["close"].iloc[start + h]) / base - 1) * 100, 2)
+            for h in horizons if start + h < len(sessions)}
+
+
+def test_the_published_run_satisfies_every_invariant_it_declares(
+    universe, mocked_boundaries, open_gate, tmp_path
+):
+    results = pipeline.run("evening", dry_run=True, tickers=universe)
+
+    data = clean(tmp_path)
+    assert data["run"]["fixture"] is False, "this file is a run, not the fixture"
+    assert data["run"]["dry_run"] is True
+    assert data["run"]["date"] == scanner.current_session().isoformat()
+    assert len(data["candidates"]) == data["run"]["scored"] == len(results)
+    assert [c["ticker"] for c in data["candidates"]] == [r["ticker"] for r in results]
+
+
+def test_top_n_cuts_the_email_and_nothing_else(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """THE step-9 invariant. score_all() returned results[:TOP_N] and archive()
+    wrote exactly that, so the shortlist size silently decided how much of the
+    run was ever recorded. Now the cut belongs to the email alone."""
+    monkeypatch.setattr(pipeline, "TOP_N", 1)
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+
+    scored = pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = clean(tmp_path)
+    assert len(scored) == 3, "run() returns every scored candidate"
+    assert data["run"]["scored"] == len(data["candidates"]) == 3
+    assert len(recorded(tmp_path)["runs"][0]["candidates"]) == 3
+    with archived_csv(tmp_path).open(newline="") as f:
+        assert len(list(csv.DictReader(f))) == 3
+
+    (sent,) = mocked_boundaries["resend"].sent
+    assert data["run"]["shortlist_size"] == 1
+    emailed = [name for name in names if name in sent["html"]]
+    assert emailed == [scored[0]["ticker"]], "the email still carries TOP_N of them"
+
+
+def test_a_burst_the_gate_rejected_is_archived_with_its_checklist(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, tmp_path
+):
+    """Nothing a scan found may vanish. The gated names carry their
+    measurements too, because a per-check pass rate computed over the
+    survivors alone is survivorship bias with a percentage sign."""
+    monkeypatch.setattr(pipeline, "MIN_LYNCH_PASSES", 99)
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+
+    scored = pipeline.run("evening", dry_run=True, tickers=names)
+
+    data = clean(tmp_path)
+    assert scored == [] and data["run"]["scored"] == 0
+    assert data["run"]["bursts"] == 3 and len(data["gated_out"]) == 3
+    assert {g["reason"] for g in data["gated_out"]} == {"lynch_gate"}
+    assert all(len(g["lynch_detail"]) == g["lynch_total"] for g in data["gated_out"])
+    assert mocked_boundaries["anthropic"].calls == [], "and nothing was paid for"
+
+
+def test_a_burst_the_call_cap_dropped_says_so_rather_than_disappearing(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The other way a burst goes unscored, and the two must not look alike:
+    one failed the checklist, the other simply cost too much to score."""
+    monkeypatch.setattr(pipeline, "MAX_TO_SCORE", 1)
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+
+    pipeline.run("evening", dry_run=True, tickers=names)
+
+    data = clean(tmp_path)
+    assert data["run"]["bursts"] == 3
+    assert data["run"]["passed_gate"] == 3, "all three cleared the gate"
+    assert data["run"]["scored"] == 1 and data["run"]["score_cap"] == 1
+    assert [g["reason"] for g in data["gated_out"]] == ["score_cap", "score_cap"]
+
+
+def test_the_chart_a_candidate_carries_is_one_the_page_can_serve(
+    universe, mocked_boundaries, open_gate, tmp_path
+):
+    """`charts/BURST.png` relative to docs/, not the repo-root charts/ that
+    GitHub Pages does not publish and .gitignore drops."""
+    pipeline.run("evening", dry_run=True, tickers=universe)
+
+    (burst,) = [c for c in clean(tmp_path)["candidates"] if c["ticker"] == "BURST"]
+    assert burst["chart"] == "charts/BURST.png"
+    assert (tmp_path / "docs" / burst["chart"]).is_file()
+    assert burst["chart_error"] is None
+    assert burst["provenance"]["chart_seen"] is True
+
+
+def test_a_chart_that_failed_to_render_is_null_with_the_reason_on_the_row(
+    monkeypatch, universe, mocked_boundaries, open_gate, tmp_path
+):
+    """The candidate is still scored, and the row says it was scored blind."""
+    monkeypatch.setattr(pipeline, "render_chart",
+                        lambda *a, **k: (_ for _ in ()).throw(ValueError("no renderer")))
+
+    pipeline.run("evening", dry_run=True, tickers=universe)
+
+    (burst,) = [c for c in clean(tmp_path)["candidates"] if c["ticker"] == "BURST"]
+    assert burst["chart"] is None
+    assert "no renderer" in burst["chart_error"]
+    assert burst["provenance"]["chart_seen"] is False
+
+
+def test_a_fallback_is_labelled_as_one_everywhere_it_is_archived(
+    universe, mocked_boundaries, open_gate, tmp_path
+):
+    """A checklist score is not a judgement anybody made. The archive is the
+    input to the backtest, so a row nobody reviewed must never read as one
+    that was."""
+    mocked_boundaries["anthropic"].set_error(RuntimeError("Error code: 401 - invalid x-api-key"))
+
+    pipeline.run("evening", dry_run=True, tickers=universe)
+
+    data = clean(tmp_path)
+    (burst,) = [c for c in data["candidates"] if c["ticker"] == "BURST"]
+    assert burst["provenance"] == {"source": "fallback", "model": None,
+                                   "chart_seen": False,
+                                   "error": "RuntimeError: Error code: 401 - invalid x-api-key"}
+    assert data["run"]["scored_by"] == {"claude": 0, "fallback": 1}
+    assert recorded(tmp_path)["runs"][0]["candidates"][0]["source"] == "fallback"
+    assert recorded(tmp_path)["runs"][0]["fallbacks"] == 1
+
+
+def test_a_second_run_keeps_the_first_and_fills_its_forward_returns(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The point of the exercise: a score recorded on one session, and what
+    the market did afterwards recorded against it by a later run.
+
+    Every expected number is recomputed here from the bars the double served,
+    not read back from the writer under test.
+    """
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    burst_session, next_session = session_offset(-2), session_offset(3)
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", burst_session)
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    first = recorded(tmp_path)["runs"][0]["candidates"][0]
+    want_d1 = expected_returns(served(fake_alpaca, "BURST", session_offset(0)),
+                               burst_session, horizons=(1,))
+    assert first["forward_returns"]["d1"] == want_d1["d1"], "one session had closed"
+    assert first["forward_returns"]["d3"] is None, "the others had not"
+
+    # ...and now it is three sessions later.
+    monkeypatch.setenv("SCAN_SESSION_DATE", next_session)
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    book = recorded(tmp_path)
+    assert [r["date"] for r in book["runs"]] == [next_session, burst_session], (
+        "the earlier run is still in the ledger")
+    older = book["runs"][1]["candidates"][0]
+    want = expected_returns(served(fake_alpaca, "BURST", next_session), burst_session)
+    assert older["forward_returns"]["d1"] == first["forward_returns"]["d1"], (
+        "a horizon already measured is not restated")
+    assert (older["forward_returns"]["d3"], older["forward_returns"]["d5"]) == (
+        want["d3"], want["d5"])
+    assert older["forward_returns"]["as_of"] == next_session
+    assert book["runs"][1]["forward_returns"] == {
+        "d1": first["forward_returns"]["d1"], "d3": want["d3"], "d5": want["d5"], "n": 1}
+    assert clean(tmp_path)["runs"][1]["forward_returns"]["d5"] == want["d5"], (
+        "and the dashboard reads the same history")
+
+
+def test_a_run_that_scans_an_old_session_resolves_its_own_outcomes(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """SCAN_SESSION_DATE points at a session whose next week has already
+    happened, so the candidates this run scores are measurable immediately.
+    That is how a history is seeded without waiting a year for one."""
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    burst_session = session_offset(-6)
+    monkeypatch.setenv("SCAN_SESSION_DATE", burst_session)
+
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    (candidate,) = clean(tmp_path)["candidates"]
+    want = expected_returns(served(fake_alpaca, "BURST", session_offset(0)), burst_session)
+    assert candidate["forward_returns"] == {**want, "as_of": session_offset(-1)}
+
+
+def test_todays_candidates_are_published_pending_rather_than_guessed(
+    universe, mocked_boundaries, open_gate, tmp_path
+):
+    """The inverse of the two above. Tonight's burst closed at tonight's
+    close; there is no session after it yet, and a 0 in that field would be a
+    return the market never printed."""
+    pipeline.run("evening", dry_run=True, tickers=universe)
+
+    data = clean(tmp_path)
+    assert all(c["forward_returns"] == {"d1": None, "d3": None, "d5": None, "as_of": None}
+               for c in data["candidates"])
+    assert data["runs"][0]["forward_returns"] == {"d1": None, "d3": None, "d5": None, "n": 0}
+    assert len(mocked_boundaries["alpaca"].bar_requests) == 1, (
+        "and no second request was made for returns that cannot exist")
+
+
+def test_a_failed_forward_return_fetch_degrades_the_run_but_still_publishes(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """A ledger that silently stops accumulating outcomes is exactly the class
+    of failure step 5 exists to end -- and the run itself is still worth
+    publishing and mailing."""
+    fake_alpaca.add_history("OLD", ohlcv("burst"))
+    fake_alpaca.add_history("NEW", ohlcv("burst", variant=1))
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-2))
+    pipeline.run("evening", dry_run=True, tickers=["OLD"])
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(3))
+    fake_alpaca.raise_on_bars = ConnectionError("connection reset by peer")
+    fake_alpaca.fail_symbols = {"OLD"}          # the scan of NEW still succeeds
+    report = pipeline.RunReport()
+
+    scored = pipeline.run("evening", dry_run=True, tickers=["NEW"], report=report)
+
+    assert scored, "the run that just happened is unaffected"
+    assert report.status == "degraded"
+    (problem,) = [e for e in report.errors if e["stage"] == "archive"]
+    assert "forward returns" in problem["message"] and "connection reset" in problem["message"]
+
+    data = clean(tmp_path)
+    assert data["run"]["errors"] == report.errors, "the file says so too"
+    older = recorded(tmp_path)["runs"][1]["candidates"][0]
+    assert older["forward_returns"]["d3"] is None, "still pending, not zeroed"
+
+
+def test_the_ledger_row_is_the_judgement_next_to_what_followed_it(
+    universe, mocked_boundaries, open_gate, tmp_path
+):
+    """What a backtest needs from one row, and the reason this file exists."""
+    pipeline.run("evening", dry_run=True, tickers=universe)
+
+    (row,) = [r for r in recorded(tmp_path)["runs"][0]["candidates"]
+              if r["ticker"] == "BURST"]
+    assert set(row) == {"ticker", "date", "rank", "score", "verdict", "source",
+                        "close", "gain_pct", "volume_ratio", "lynch_passes",
+                        "lynch_total", "checks", "forward_returns"}
+    assert set(row["checks"]) == {"2", "L", "Y", "N", "C", "H"}
+    assert sum(row["checks"].values()) == row["lynch_passes"]
