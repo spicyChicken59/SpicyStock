@@ -53,8 +53,9 @@ what `.github/workflows/evening.yml` reads, and `.env.example` explains each:
 `.github/workflows/evening.yml` then fires on weekdays and can be triggered
 manually from the Actions tab.
 
-> **Note:** there is only one workflow, and it fires at 22:16 UTC (6:16 PM ET
-> in winter), not the 5:30 PM this README claims elsewhere — the cron is
+> **Note:** there is only one workflow, and it fires at 6:16 PM ET — 22:16 UTC
+> under EDT, 23:16 UTC under EST — not the 5:30 PM this README claims
+> elsewhere. Both crons are registered and the guard no-ops the wrong one. It is
 > labelled backup-only for an external trigger you should not set up. The
 > 8:30 AM morning run has no workflow file at all; `morning.yml` does not
 > exist, and `src/pipeline.py` treats `morning` and `evening` identically
@@ -62,9 +63,13 @@ manually from the Actions tab.
 >
 > `SETUP.md` is kept only as a record of the original build — do not follow it.
 
-**Before pushing anything, turn on GitHub secret scanning with push
-protection** (Settings → Code security). `.gitignore` blocks the credential
-filenames we know about; push protection is what catches the rest.
+**Credential safety.** `.gitignore` blocks the credential filenames we can
+predict, and `.github/workflows/secret-scan.yml` runs gitleaks over full
+history on every push — that catches a key pasted into an arbitrary file, a
+committed log, or a secret in a commit message. Turning on GitHub secret
+scanning with push protection (Settings → Code security) adds a second layer
+that rejects the push before it lands; it is free on public repos and part of
+paid Secret Protection on private ones.
 
 ## Run locally
 
@@ -101,7 +106,10 @@ python -m tests.test_pipeline   # currently fails: imports detect_burst,
 > and `ScanConfig` exposes only `min_price`, `min_gain_pct`, `min_today_volume`,
 > `lookback_days` and `batch_size`. Rewriting this is a later step.
 
-- Market data: free (Alpaca). A full-universe scan takes ~10–20 min inside
+- Market data: free (Alpaca) — but see `.env.example`: the free plan serves
+  IEX data, a small fraction of consolidated volume, which the current
+  5,000,000-share floor will almost never clear. Free is viable only once that
+  threshold is made relative. A full-universe scan takes ~10–20 min inside
   the Actions runner; well within the 55-min timeout.
 - Claude: ≤25 scoring calls/run with one chart image each — a few cents/day
   on Sonnet.

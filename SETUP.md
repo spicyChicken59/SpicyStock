@@ -20,7 +20,8 @@
 >   it did not when this guide was written.
 > - **Part 5** says the log will read "Email sent via Gmail API"; it says
 >   "via Resend". Its closing line promises runs at 8:30 AM and 5:30 PM — only
->   `evening.yml` exists, and it fires at 22:16 UTC.
+>   `evening.yml` exists, and it fires at 6:16 PM ET (22:16 UTC under EDT,
+>   23:16 UTC under EST).
 > - **Part 6a** tells you to mint a `github_pat_...` token with Actions
 >   read/write and paste it into a third-party scheduling site. You do not
 >   need it: the in-repo cron runs without any external trigger. Note
