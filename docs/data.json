@@ -19,9 +19,10 @@
     "date": "2026-09-01",
     "type": "evening",
     "dry_run": false,
+    "fixture": true,
     "universe": {
-      "label": "Alpaca US common stocks, IEX feed",
-      "size": 4783
+      "label": "data/symbols.txt (checked in)",
+      "size": 230
     },
     "bursts": 47,
     "passed_gate": 31,
@@ -42,7 +43,7 @@
   "candidates": [
     {
       "rank": 1,
-      "ticker": "AEHR",
+      "ticker": "GOOGL",
       "date": "2026-09-01",
       "close": 23.87,
       "gain_pct": 8.42,
@@ -101,7 +102,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/AEHR.png",
+      "chart": "charts/GOOGL.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -4.2,
@@ -118,7 +119,7 @@
     },
     {
       "rank": 2,
-      "ticker": "NVTS",
+      "ticker": "META",
       "date": "2026-09-01",
       "close": 7.41,
       "gain_pct": 6.18,
@@ -177,7 +178,7 @@
         "chart_seen": false,
         "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
       },
-      "chart": "charts/NVTS.png",
+      "chart": "charts/META.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -11.7,
@@ -194,7 +195,7 @@
     },
     {
       "rank": 3,
-      "ticker": "RGTI",
+      "ticker": "NFLX",
       "date": "2026-09-01",
       "close": 31.06,
       "gain_pct": 9.94,
@@ -253,7 +254,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/RGTI.png",
+      "chart": "charts/NFLX.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -8.9,
@@ -270,7 +271,7 @@
     },
     {
       "rank": 4,
-      "ticker": "IONQ",
+      "ticker": "DIS",
       "date": "2026-09-01",
       "close": 48.22,
       "gain_pct": 5.31,
@@ -329,7 +330,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/IONQ.png",
+      "chart": "charts/DIS.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -14.1,
@@ -346,14 +347,14 @@
     },
     {
       "rank": 5,
-      "ticker": "SEZL",
+      "ticker": "CMCSA",
       "date": "2026-09-01",
       "close": 92.44,
       "gain_pct": 7.08,
-      "volume": 1204800,
+      "volume": 6748000,
       "prev_volume": 486300,
-      "volume_ratio": 2.48,
-      "dollar_volume": 111371712,
+      "volume_ratio": 13.88,
+      "dollar_volume": 623785120,
       "lynch": "4/6",
       "lynch_passes": 4,
       "lynch_total": 6,
@@ -422,14 +423,14 @@
     },
     {
       "rank": 6,
-      "ticker": "AMSC",
+      "ticker": "CHTR",
       "date": "2026-09-01",
       "close": 41.18,
       "gain_pct": 4.62,
-      "volume": 3287400,
+      "volume": 6885000,
       "prev_volume": 1442900,
-      "volume_ratio": 2.28,
-      "dollar_volume": 135375132,
+      "volume_ratio": 4.77,
+      "dollar_volume": 283524300,
       "lynch": "5/6",
       "lynch_passes": 5,
       "lynch_total": 6,
@@ -481,7 +482,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/AMSC.png",
+      "chart": "charts/CHTR.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -3.1,
@@ -498,7 +499,7 @@
     },
     {
       "rank": 7,
-      "ticker": "LUNR",
+      "ticker": "WBD",
       "date": "2026-09-01",
       "close": 14.73,
       "gain_pct": 6.87,
@@ -557,7 +558,7 @@
         "chart_seen": false,
         "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
       },
-      "chart": "charts/LUNR.png",
+      "chart": "charts/WBD.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -22.4,
@@ -574,7 +575,7 @@
     },
     {
       "rank": 8,
-      "ticker": "CIFR",
+      "ticker": "TMUS",
       "date": "2026-09-01",
       "close": 9.62,
       "gain_pct": 11.34,
@@ -633,7 +634,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/CIFR.png",
+      "chart": "charts/TMUS.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -18.6,
@@ -650,7 +651,7 @@
     },
     {
       "rank": 9,
-      "ticker": "HIMS",
+      "ticker": "T",
       "date": "2026-09-01",
       "close": 58.91,
       "gain_pct": 4.88,
@@ -709,7 +710,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/HIMS.png",
+      "chart": "charts/T.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -9.4,
@@ -726,7 +727,7 @@
     },
     {
       "rank": 10,
-      "ticker": "OKLO",
+      "ticker": "VZ",
       "date": "2026-09-01",
       "close": 112.37,
       "gain_pct": 5.94,
@@ -785,7 +786,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/OKLO.png",
+      "chart": "charts/VZ.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -12.8,
@@ -802,7 +803,7 @@
     },
     {
       "rank": 11,
-      "ticker": "BE",
+      "ticker": "EA",
       "date": "2026-09-01",
       "close": 34.55,
       "gain_pct": 4.21,
@@ -861,7 +862,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/BE.png",
+      "chart": "charts/EA.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -16.2,
@@ -878,7 +879,7 @@
     },
     {
       "rank": 12,
-      "ticker": "UEC",
+      "ticker": "TTWO",
       "date": "2026-09-01",
       "close": 11.84,
       "gain_pct": 4.73,
@@ -937,7 +938,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/UEC.png",
+      "chart": "charts/TTWO.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -7.8,
@@ -954,7 +955,7 @@
     },
     {
       "rank": 13,
-      "ticker": "RKLB",
+      "ticker": "MSFT",
       "date": "2026-09-01",
       "close": 68.19,
       "gain_pct": 4.34,
@@ -1013,7 +1014,7 @@
         "chart_seen": false,
         "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
       },
-      "chart": "charts/RKLB.png",
+      "chart": "charts/MSFT.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -5.4,
@@ -1030,7 +1031,7 @@
     },
     {
       "rank": 14,
-      "ticker": "FCEL",
+      "ticker": "ORCL",
       "date": "2026-09-01",
       "close": 6.28,
       "gain_pct": 5.62,
@@ -1089,7 +1090,7 @@
         "chart_seen": false,
         "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
       },
-      "chart": "charts/FCEL.png",
+      "chart": "charts/ORCL.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -41.7,
@@ -1106,14 +1107,14 @@
     },
     {
       "rank": 15,
-      "ticker": "PLUG",
+      "ticker": "CRM",
       "date": "2026-09-01",
-      "close": 3.94,
+      "close": 5.25,
       "gain_pct": 6.49,
       "volume": 48213700,
       "prev_volume": 21094800,
       "volume_ratio": 2.29,
-      "dollar_volume": 189961978,
+      "dollar_volume": 253121925,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -1165,7 +1166,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/PLUG.png",
+      "chart": "charts/CRM.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -52.3,
@@ -1182,7 +1183,7 @@
     },
     {
       "rank": 16,
-      "ticker": "SMR",
+      "ticker": "ADBE",
       "date": "2026-09-01",
       "close": 27.41,
       "gain_pct": 4.09,
@@ -1241,7 +1242,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/SMR.png",
+      "chart": "charts/ADBE.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -24.1,
@@ -1258,7 +1259,7 @@
     },
     {
       "rank": 17,
-      "ticker": "ACHR",
+      "ticker": "INTU",
       "date": "2026-09-01",
       "close": 12.06,
       "gain_pct": 5.18,
@@ -1317,7 +1318,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/ACHR.png",
+      "chart": "charts/INTU.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -19.8,
@@ -1334,7 +1335,7 @@
     },
     {
       "rank": 18,
-      "ticker": "JOBY",
+      "ticker": "NOW",
       "date": "2026-09-01",
       "close": 15.72,
       "gain_pct": 4.46,
@@ -1393,7 +1394,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/JOBY.png",
+      "chart": "charts/NOW.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -13.6,
@@ -1410,7 +1411,7 @@
     },
     {
       "rank": 19,
-      "ticker": "INDI",
+      "ticker": "WDAY",
       "date": "2026-09-01",
       "close": 4.87,
       "gain_pct": 7.21,
@@ -1469,7 +1470,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/INDI.png",
+      "chart": "charts/WDAY.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -63.4,
@@ -1486,7 +1487,7 @@
     },
     {
       "rank": 20,
-      "ticker": "LAES",
+      "ticker": "PANW",
       "date": "2026-09-01",
       "close": 5.34,
       "gain_pct": 8.96,
@@ -1545,7 +1546,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/LAES.png",
+      "chart": "charts/PANW.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -58.9,
@@ -1562,7 +1563,7 @@
     },
     {
       "rank": 21,
-      "ticker": "QUBT",
+      "ticker": "CRWD",
       "date": "2026-09-01",
       "close": 18.62,
       "gain_pct": 5.77,
@@ -1621,7 +1622,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/QUBT.png",
+      "chart": "charts/CRWD.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -11.2,
@@ -1638,7 +1639,7 @@
     },
     {
       "rank": 22,
-      "ticker": "WULF",
+      "ticker": "ZS",
       "date": "2026-09-01",
       "close": 8.19,
       "gain_pct": 4.92,
@@ -1697,7 +1698,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/WULF.png",
+      "chart": "charts/ZS.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -31.4,
@@ -1714,7 +1715,7 @@
     },
     {
       "rank": 23,
-      "ticker": "HUT",
+      "ticker": "FTNT",
       "date": "2026-09-01",
       "close": 22.14,
       "gain_pct": 4.18,
@@ -1773,7 +1774,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/HUT.png",
+      "chart": "charts/FTNT.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -27.6,
@@ -1790,7 +1791,7 @@
     },
     {
       "rank": 24,
-      "ticker": "BTDR",
+      "ticker": "NET",
       "date": "2026-09-01",
       "close": 13.47,
       "gain_pct": 6.03,
@@ -1849,7 +1850,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/BTDR.png",
+      "chart": "charts/NET.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -36.2,
@@ -1866,14 +1867,14 @@
     },
     {
       "rank": 25,
-      "ticker": "GEVO",
+      "ticker": "DDOG",
       "date": "2026-09-01",
-      "close": 3.12,
+      "close": 7.95,
       "gain_pct": 9.47,
       "volume": 19883100,
       "prev_volume": 8214600,
       "volume_ratio": 2.42,
-      "dollar_volume": 62035272,
+      "dollar_volume": 158070645,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -1925,7 +1926,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/GEVO.png",
+      "chart": "charts/DDOG.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -71.8,
@@ -1943,7 +1944,7 @@
   ],
   "gated_out": [
     {
-      "ticker": "SOUN",
+      "ticker": "SNOW",
       "date": "2026-09-01",
       "close": 8.94,
       "gain_pct": 5.12,
@@ -1954,7 +1955,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "MARA",
+      "ticker": "MDB",
       "date": "2026-09-01",
       "close": 19.83,
       "gain_pct": 4.71,
@@ -1965,7 +1966,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "RIOT",
+      "ticker": "HUBS",
       "date": "2026-09-01",
       "close": 14.26,
       "gain_pct": 6.38,
@@ -1976,7 +1977,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "CLSK",
+      "ticker": "VEEV",
       "date": "2026-09-01",
       "close": 11.07,
       "gain_pct": 4.29,
@@ -1987,7 +1988,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "AI",
+      "ticker": "PLTR",
       "date": "2026-09-01",
       "close": 27.61,
       "gain_pct": 5.84,
@@ -1998,7 +1999,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "BBAI",
+      "ticker": "APP",
       "date": "2026-09-01",
       "close": 6.42,
       "gain_pct": 8.13,
@@ -2009,7 +2010,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "VRT",
+      "ticker": "TTD",
       "date": "2026-09-01",
       "close": 142.9,
       "gain_pct": 4.06,
@@ -2020,7 +2021,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "SMCI",
+      "ticker": "RBLX",
       "date": "2026-09-01",
       "close": 38.74,
       "gain_pct": 4.92,
@@ -2031,7 +2032,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "APLD",
+      "ticker": "IBM",
       "date": "2026-09-01",
       "close": 16.38,
       "gain_pct": 7.44,
@@ -2042,7 +2043,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "NNE",
+      "ticker": "ADSK",
       "date": "2026-09-01",
       "close": 34.12,
       "gain_pct": 6.71,
@@ -2053,7 +2054,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "CRML",
+      "ticker": "CDNS",
       "date": "2026-09-01",
       "close": 4.18,
       "gain_pct": 11.62,
@@ -2064,9 +2065,9 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "MVIS",
+      "ticker": "SNPS",
       "date": "2026-09-01",
-      "close": 1.94,
+      "close": 8.85,
       "gain_pct": 9.88,
       "volume": 21094600,
       "volume_ratio": 2.51,
@@ -2075,9 +2076,9 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "GRRR",
+      "ticker": "AAPL",
       "date": "2026-09-01",
-      "close": 3.47,
+      "close": 9.75,
       "gain_pct": 14.21,
       "volume": 7482100,
       "volume_ratio": 3.55,
@@ -2086,7 +2087,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "SERV",
+      "ticker": "NVDA",
       "date": "2026-09-01",
       "close": 12.83,
       "gain_pct": 5.47,
@@ -2097,7 +2098,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "LTBR",
+      "ticker": "AVGO",
       "date": "2026-09-01",
       "close": 17.29,
       "gain_pct": 4.83,
@@ -2108,7 +2109,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "KTOS",
+      "ticker": "AMD",
       "date": "2026-09-01",
       "close": 41.62,
       "gain_pct": 4.11,
@@ -2119,7 +2120,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "EOSE",
+      "ticker": "INTC",
       "date": "2026-09-01",
       "close": 7.83,
       "gain_pct": 4.07,
@@ -2130,7 +2131,7 @@
       "reason": "score_cap"
     },
     {
-      "ticker": "MP",
+      "ticker": "QCOM",
       "date": "2026-09-01",
       "close": 48.16,
       "gain_pct": 4.05,
@@ -2141,7 +2142,7 @@
       "reason": "score_cap"
     },
     {
-      "ticker": "ASTS",
+      "ticker": "TXN",
       "date": "2026-09-01",
       "close": 61.94,
       "gain_pct": 4.04,
@@ -2152,18 +2153,18 @@
       "reason": "score_cap"
     },
     {
-      "ticker": "VSAT",
+      "ticker": "MU",
       "date": "2026-09-01",
       "close": 28.37,
       "gain_pct": 4.03,
-      "volume": 4917200,
-      "volume_ratio": 2.12,
+      "volume": 8803000,
+      "volume_ratio": 3.8,
       "lynch": "3/6",
       "lynch_passes": 3,
       "reason": "score_cap"
     },
     {
-      "ticker": "NPWR",
+      "ticker": "AMAT",
       "date": "2026-09-01",
       "close": 9.16,
       "gain_pct": 4.02,
@@ -2174,7 +2175,7 @@
       "reason": "score_cap"
     },
     {
-      "ticker": "TMC",
+      "ticker": "LRCX",
       "date": "2026-09-01",
       "close": 4.71,
       "gain_pct": 4.01,

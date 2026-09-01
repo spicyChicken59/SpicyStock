@@ -31,14 +31,52 @@ jobs:
       - name: Run tests
         run: pytest tests/ -v
       - name: Fail if the suite dirtied the working tree
-        # archive() and render_chart() write results/ and charts/ relative to
-        # the working directory, so every test runs inside its own tmp_path.
-        # If that isolation ever regresses, this step catches it here rather
-        # than in a reviewer's diff.
         run: |
-          dirt=$(git status --porcelain --untracked-files=all)
-          if [ -n "$dirt" ]; then
+          # Two checks, because they catch different things. The porcelain one
+          # catches new tracked-visible files; it CANNOT see results/ or
+          # charts/, which are gitignored — and those are exactly what a
+          # regression in the tests' tmp_path isolation would produce.
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
             echo "The test suite left files behind:"
-            echo "$dirt"
+            git status --porcelain --untracked-files=all
             exit 1
           fi
+          if [ -e results ] || [ -e charts ]; then
+            echo "The test suite wrote into the repo root (isolation regressed):"
+            ls -d results charts 2>/dev/null
+            exit 1
+          fi
+
+  dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The smoke test answers every cdn.jsdelivr.net request from this
+      # checkout, at the version the page pins, so opening the dashboard
+      # reaches nothing off the runner and cannot fail on someone else's CDN.
+      - name: The design system the page pins
+        run: |
+          PIN=$(grep -oEm1 'design-system@[^/"]+' docs/index.html | cut -d@ -f2)
+          echo "page pins $PIN"
+          git clone --depth 1 --branch "$PIN" https://github.com/spicyChicken59/design-system /tmp/design-system \
+            || { git clone https://github.com/spicyChicken59/design-system /tmp/design-system \
+                 && git -C /tmp/design-system checkout "$PIN"; }
+      - name: Open the dashboard and ask whether it works
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+          set -o pipefail
+          node tools/dashboard_smoke.mjs /tmp/design-system --shots /tmp/shots
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: The fixture must match its generator
+        run: python3 tools/check_fixture_fresh.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dashboard-shots
+          path: /tmp/shots

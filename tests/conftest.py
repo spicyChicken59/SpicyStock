@@ -23,7 +23,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient, FakeResend, FakeTradingClient  # noqa: E402
+from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient, FakeResend  # noqa: E402
 from tests.synthetic import make_ohlcv, seed_for  # noqa: E402
 
 
@@ -100,16 +100,10 @@ def fake_alpaca(monkeypatch) -> FakeAlpaca:
     monkeypatch.setattr(
         scanner, "StockHistoricalDataClient", lambda *a, **k: FakeDataClient(parent, *a, **k)
     )
-    # TradingClient was the asset-list boundary. Step 2 replaced the asset-list
-    # call with a checked-in symbol file, so the scanner may no longer import
-    # it; raising=False keeps this fixture correct either way, and the double
-    # stays available for whichever module needs a trading client next.
-    monkeypatch.setattr(
-        scanner,
-        "TradingClient",
-        lambda *a, **k: FakeTradingClient(parent, *a, **k),
-        raising=False,
-    )
+    # There is no TradingClient boundary any more: step 2 replaced the
+    # asset-list call with data/symbols.txt. Patching it with raising=False
+    # would CREATE an attribute src.scanner does not have, so every test would
+    # run against a module shaped differently from production.
     return parent
 
 

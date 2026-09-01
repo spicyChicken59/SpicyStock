@@ -1,6 +1,6 @@
 # 4% Momentum Burst — Fully Automated Scanner
 
-Scans the entire US stock market twice every trading day, applies the
+Scans a checked-in universe of 230 US common stocks each trading day, applies the
 Stockbee/Qullamaggie 4% Momentum Burst strategy with the 2LYNCH quality
 checklist, has Claude score the survivors (numbers + chart image), and
 emails a ranked top-5 shortlist. **Zero manual steps** — no DeepVue paste,
@@ -98,7 +98,9 @@ pytest tests/                   # 64 tests, no network or API keys needed
 
 `docs/index.html` is a static page served by GitHub Pages from `docs/`. It fetches
 `docs/data.json` in the browser and renders it — no server, no build step, no
-framework. The pipeline writes `data.json`; the page only reads it.
+framework. **`docs/data.json` is currently a hand-authored fixture** — the
+pipeline does not write it yet (step 9), and the page says so at the top of
+itself. Wiring it up is what makes the rest of this section true.
 
 It shows the run's funnel (universe → bursts → 2LYNCH gate → scored → shortlist),
 **every candidate the run scored** rather than the five that went out by email, each
@@ -121,14 +123,17 @@ invariants live in the file rather than only here. The load-bearing ones:
 - Numbers are numbers or `null` — never `0` for "unknown", never the string `"n/a"`.
 - `forward_returns` are `null` until those sessions have happened.
 
-`docs/data.json` is currently a hand-authored fixture. Wiring the pipeline to emit it
-is a later step; until then the chart PNGs it references are absent and the page
-degrades to an explained empty frame, which is the expected state.
+Regenerate it with `python3 tools/make_fixture.py docs/data.json`. The generator
+reads `data/symbols.txt` and `ScanConfig`, so it cannot emit a run this scanner
+could not produce; `tools/check_fixture_fresh.py` fails CI if the committed file
+drifts from it. The chart PNGs it references are absent until step 9, so the
+page degrades to an explained empty frame — that is the expected state.
 
 ### Checking it
 
 ```bash
-node tools/dashboard_smoke.mjs [design-system-checkout]
+git clone --branch v2.4.0 https://github.com/spicyChicken59/design-system /tmp/design-system
+node tools/dashboard_smoke.mjs        # /tmp/design-system is on its search path
 ```
 
 Opens the real page in headless Chromium and asserts what it promises. Offline by

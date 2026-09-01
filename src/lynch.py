@@ -125,6 +125,9 @@ def extra_context(df: pd.DataFrame) -> dict:
     return {
         "pct_off_52w_high": round((close / hi_52w - 1) * 100, 1),
         "pct_above_52w_low": round((close / lo_52w - 1) * 100, 1),
-        "perf_3mo_pct": round(perf_3mo, 1) if perf_3mo is not None else "n/a",
-        "perf_6mo_pct": round(perf_6mo, 1) if perf_6mo is not None else "n/a",
+        # None, not "n/a": these land in docs/data.json, whose contract is
+        # "numbers are numbers or null" — a string sentinel in a numeric field
+        # forces every consumer to special-case it.
+        "perf_3mo_pct": round(perf_3mo, 1) if perf_3mo is not None else None,
+        "perf_6mo_pct": round(perf_6mo, 1) if perf_6mo is not None else None,
     }

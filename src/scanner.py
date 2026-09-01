@@ -223,6 +223,7 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     data_client = get_clients()
     tickers = universe if universe is not None else get_universe(symbols_file)
     candidates: list[Candidate] = []
+    dropped = 0
 
     for i in range(0, len(tickers), cfg.batch_size):
         batch = tickers[i: i + cfg.batch_size]
@@ -233,7 +234,12 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             time.sleep(3)
             try:
                 histories = _download_batch(data_client, batch, cfg)
-            except Exception:
+            except Exception as e2:
+                # The symbol list is hand-typed and sector-grouped, so one bad
+                # ticker can drop a contiguous block of names. Say so.
+                dropped += len(batch)
+                log.error("Batch %d failed twice (%s) — dropping %d symbols: %s",
+                          i, e2, len(batch), ", ".join(batch[:8]) + ("..." if len(batch) > 8 else ""))
                 continue
 
         for t, df in histories.items():
@@ -248,6 +254,10 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
                   min(i + cfg.batch_size, len(tickers)), len(tickers), len(candidates))
 
     candidates.sort(key=lambda c: c.gain_pct, reverse=True)
+    if dropped:
+        log.error("Scan complete with %d of %d symbols DROPPED — the shortlist is "
+                  "incomplete and an empty result does not mean a quiet market",
+                  dropped, len(tickers))
     log.info("Scan complete: %d candidates from %d symbols", len(candidates), len(tickers))
     return candidates
 

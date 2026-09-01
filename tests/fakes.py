@@ -1,6 +1,6 @@
 """Test doubles for the three external boundaries the pipeline touches.
 
-  Alpaca    -- StockHistoricalDataClient / TradingClient (market data, universe)
+  Alpaca    -- StockHistoricalDataClient (daily bars)
   Anthropic -- anthropic.Anthropic (scoring)
   Resend    -- resend.Emails.send (delivery)
 
@@ -18,15 +18,6 @@ from typing import Any
 import pandas as pd
 
 # --------------------------------------------------------------- Alpaca ----
-
-
-@dataclass
-class FakeAsset:
-    """Shape of the alpaca-py asset objects get_universe() reads."""
-
-    symbol: str
-    tradable: bool = True
-    exchange: str = "NASDAQ"
 
 
 class FakeBarSet:
@@ -47,20 +38,12 @@ class FakeAlpaca:
 
     def __init__(self) -> None:
         self.history: dict[str, pd.DataFrame] = {}
-        self.assets: list[FakeAsset] = []
         self.bar_requests: list[Any] = []
-        self.asset_requests: list[Any] = []
         self.data_clients: list["FakeDataClient"] = []
-        self.trading_clients: list["FakeTradingClient"] = []
 
     # -- registration -------------------------------------------------
     def add_history(self, ticker: str, df: pd.DataFrame) -> None:
         self.history[ticker] = df
-        if ticker not in {a.symbol for a in self.assets}:
-            self.assets.append(FakeAsset(symbol=ticker))
-
-    def add_assets(self, *assets: FakeAsset) -> None:
-        self.assets.extend(assets)
 
     # -- the shape alpaca-py returns ----------------------------------
     def bars_frame(self, symbols: list[str]) -> pd.DataFrame:
@@ -95,18 +78,6 @@ class FakeDataClient:
         return FakeBarSet(self._parent.bars_frame(list(symbols)))
 
 
-class FakeTradingClient:
-    def __init__(self, parent: FakeAlpaca, *args: Any, **kwargs: Any) -> None:
-        self._parent = parent
-        self.init_args = (args, kwargs)
-        parent.trading_clients.append(self)
-
-    def get_all_assets(self, request: Any = None) -> list[FakeAsset]:
-        self._parent.asset_requests.append(request)
-        return list(self._parent.assets)
-
-
-# ------------------------------------------------------------ Anthropic ----
 
 
 @dataclass

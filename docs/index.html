@@ -110,6 +110,15 @@
     <div class="sc-meta" id="meta"></div>
   </div>
 
+  <!-- Sample data. Hidden unless run.fixture is true. Shown ABOVE the run
+       notice because "none of this happened" outranks "this run degraded". -->
+  <div class="sc-callout sc-callout--warning" id="fixture-banner" hidden>
+    <div class="sc-callout__label">Sample data — not a real run</div>
+    <p>The pipeline does not write <code>docs/data.json</code> yet. Every number
+      on this page, including the forward returns in the run history, is
+      hand-authored to exercise the layout. Nothing here is a trading signal.</p>
+  </div>
+
   <!-- Run-level failures. Hidden when run.errors is empty. -->
   <div class="sc-notice" id="notice" hidden>
     <div class="sc-eyebrow">this run degraded</div>
@@ -261,7 +270,7 @@
   function lynchTable(c) {
     var rows = (c.lynch_detail || []).map(function (d) {
       return el('tr', null, [
-        el('td', null, el('span', { 'class': 'sc-chip ' + (d.pass ? 'sc-chip--good' : 'sc-chip--neutral') + ' sc-chip--case', text: d.code })),
+        el('td', null, el('span', { 'class': 'sc-chip ' + (d.pass ? 'sc-chip--good' : 'sc-chip--neutral') + ' sc-chip--case', text: (d.pass ? '\u2713' : '\u2717') + d.code })),
         el('td', { text: d.label }),
         el('td', { 'class': 'sc-mono', text: d.pass ? 'pass' : 'fail' }),
         el('td', { text: d.value })
@@ -341,7 +350,10 @@
           return el('span', {
             'class': 'sc-chip ' + (d.pass ? 'sc-chip--good' : 'sc-chip--neutral') + ' sc-chip--case',
             title: d.label + ' — ' + (d.pass ? 'pass' : 'fail') + ': ' + d.value,
-            text: d.code
+            // A glyph, not colour alone: under deuteranopia the pass and fail
+            // chips sit 1.08:1 apart, and with the CDN blocked the row degrades
+            // to bare letters carrying no information at all.
+            text: (d.pass ? '\u2713' : '\u2717') + d.code
           });
         })),
         el('dl', { 'class': 'facts' }, facts.map(function (f) {
@@ -400,13 +412,20 @@
   function table(node, head, rows, numeric) {
     clear(node);
     node.appendChild(el('thead', null, el('tr', null, head.map(function (h, i) {
-      return el('th', { 'class': (numeric.indexOf(i) >= 0 ? 'sc-num' : null), text: h });
+      return el('th', { scope: 'col', 'class': (numeric.indexOf(i) >= 0 ? 'sc-num' : null), text: h });
     }))));
     node.appendChild(el('tbody', null, rows.length ? rows : el('tr', { 'class': 'sc-empty' },
       el('td', { colspan: head.length, text: 'Nothing to show.' }))));
   }
 
-  function clipWatch(scroll) {
+  function clipWatch(scroll, label) {
+    // Name the region and make the tab stop explicit rather than relying on
+    // Chromium's keyboard-focusable-scrollers, which not every engine has.
+    if (label) {
+      scroll.setAttribute('role', 'region');
+      scroll.setAttribute('aria-label', label);
+      scroll.setAttribute('tabindex', '0');
+    }
     var sync = function () { scroll.classList.toggle('is-clipped', scroll.scrollWidth - scroll.clientWidth > 2); };
     sync();
     window.addEventListener('resize', sync);
@@ -438,6 +457,9 @@
       el('span', { text: 'generated ' + day(d.generated) })
     );
     $('mast-right').textContent = day(run.date) + ' · ' + (run.type || '');
+
+    // fabricated data outranks every other caveat on the page
+    $('fixture-banner').hidden = !run.fixture;
 
     // run-level failures
     var errs = run.errors || [];
@@ -517,7 +539,7 @@
         ]);
       }), [1, 5, 6, 7, 8, 9, 10]);
     $('scores-table').querySelector('thead th:nth-child(12)').classList.add('col-reason');
-    clipWatch($('scores-scroll'));
+    clipWatch($('scores-scroll'), 'Every scored candidate');
 
     // what was not scored
     $('gated-card').hidden = !gated.length;
@@ -540,7 +562,7 @@
           el('td', { 'class': 'sc-num', text: '$' + num(g.close) })
         ]);
       }), [2, 3, 4, 5]);
-    clipWatch($('gated-scroll'));
+    clipWatch($('gated-scroll'), 'Found but not scored');
 
     // history
     $('runs-card').hidden = !runs.length;
@@ -564,7 +586,7 @@
           el('td', { 'class': 'sc-num', text: fr.n ? commas(fr.n) + ' names' : '—' })
         ]);
       }), [2, 3, 4, 5, 6, 7, 8, 9]);
-    clipWatch($('runs-scroll'));
+    clipWatch($('runs-scroll'), 'Recent runs');
 
     $('foot-left').textContent = 'Run ' + day(run.date) + ' (' + (run.type || '') + ') · schema v' +
       (d.schema_version === undefined ? '?' : d.schema_version) +

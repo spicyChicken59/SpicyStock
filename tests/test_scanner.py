@@ -68,3 +68,55 @@ def test_run_scan_survives_a_symbol_with_no_bars(fake_alpaca, ohlcv):
     fake_alpaca.add_history("BURST", ohlcv("burst"))
     candidates = run_scan(ScanConfig(), universe=["BURST", "GONE"])
     assert [c.ticker for c in candidates] == ["BURST"]
+
+
+# --- the rejection paths, added after the batch-1 audit found detect_setup was
+# tested on one of its five rules: every fixture bailed at rule 1 (gain < 4%),
+# so rules 2, 3 and 5 and the prev_close guard had no coverage at all.
+# Still threshold-agnostic: each case mutates a frame that otherwise passes,
+# and reads the boundary off ScanConfig rather than hard-coding a number.
+
+def _passing(ohlcv):
+    frame = ohlcv("burst")
+    assert detect_setup(frame, ScanConfig()) is not None, "fixture must pass first"
+    return frame
+
+
+def test_rule2_volume_below_the_previous_day_is_rejected(ohlcv):
+    frame = _passing(ohlcv).copy()
+    frame.iloc[-1, frame.columns.get_loc("Volume")] = frame["Volume"].iloc[-2] - 1
+    assert detect_setup(frame, ScanConfig()) is None
+
+
+def test_rule3_volume_at_or_below_the_floor_is_rejected(ohlcv):
+    cfg = ScanConfig()
+    frame = _passing(ohlcv).copy()
+    frame.iloc[-1, frame.columns.get_loc("Volume")] = cfg.min_today_volume
+    frame.iloc[-2, frame.columns.get_loc("Volume")] = cfg.min_today_volume - 1
+    assert detect_setup(frame, cfg) is None
+
+
+def test_rule5_price_at_or_below_the_floor_is_rejected(ohlcv):
+    cfg = ScanConfig()
+    frame = _passing(ohlcv).copy()
+    scale = cfg.min_price / float(frame["Close"].iloc[-1])
+    for col in ("Open", "High", "Low", "Close"):
+        frame[col] = frame[col] * scale
+    assert detect_setup(frame, cfg) is None
+
+
+def test_a_zero_previous_close_cannot_divide(ohlcv):
+    frame = _passing(ohlcv).copy()
+    frame.iloc[-2, frame.columns.get_loc("Close")] = 0.0
+    assert detect_setup(frame, ScanConfig()) is None
+
+
+def test_the_production_path_reads_the_symbol_file(fake_alpaca, ohlcv, tmp_path):
+    """Every other end-to-end test passes tickers=, so run_scan(universe=None)
+    -- the path the cron actually takes -- was never executed."""
+    symbols = tmp_path / "symbols.txt"
+    symbols.write_text("# a comment\n\nAAPL\nMSFT\n")
+    fake_alpaca.add_history("AAPL", ohlcv("burst"))
+    fake_alpaca.add_history("MSFT", ohlcv("flat"))
+    found = run_scan(ScanConfig(), symbols_file=str(symbols))
+    assert [c.ticker for c in found] == ["AAPL"]

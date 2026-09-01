@@ -89,5 +89,5 @@ def test_extra_context_degrades_on_a_short_history(ohlcv):
     """Fewer than 63 sessions: the performance fields report 'n/a' instead of
     raising, because a freshly-listed ticker still has to be scoreable."""
     ctx = extra_context(ohlcv("base").iloc[-40:])
-    assert ctx["perf_3mo_pct"] == "n/a"
-    assert ctx["perf_6mo_pct"] == "n/a"
+    assert ctx["perf_3mo_pct"] is None
+    assert ctx["perf_6mo_pct"] is None
