@@ -1,0 +1,78 @@
+# Secrets — never commit. The pipeline reads these from the environment;
+# in GitHub Actions they come from repository secrets, not from a file.
+.env
+.env.*
+*.env
+.env~
+.envrc
+!.env*.example
+
+# Credential files that tooling drops into a repo. The Google Cloud console
+# downloads client_secret_*.json, and Google's OAuth libraries conventionally
+# write token.json / credentials.json. The Gmail OAuth guide that produced
+# them is gone, but the rules stay: a key file is cheap to ignore and
+# expensive to commit.
+# A filename denylist can never be complete. The backstops are the gitleaks
+# job in .github/workflows/secret-scan.yml and GitHub push protection.
+secrets.json
+secrets.yaml
+secrets.yml
+secrets.toml
+/secrets/
+credentials*.json
+client_secret*.json
+token.json
+*.pem
+*.key
+
+# Logs. A redirected run (`python -m src.pipeline evening > run.log 2>&1`)
+# lands here, and `git add .` would commit it.
+*.log
+/logs/
+nohup.out
+
+# Run artifacts. Anchored with a leading slash so a tests/fixtures/results/
+# directory elsewhere in the tree is not swallowed too. archive() writes
+# results/ on every run; render_chart() writes charts/ whenever a candidate
+# clears the 2LYNCH gate.
+/results/
+/charts/
+
+# The charts the pipeline really writes today (src/pipeline.py's CHARTS_DIR).
+# NOT covered by /charts/ above — that rule is anchored to the repo root, and
+# `git check-ignore -v docs/charts/AAPL.png` said so — and nothing was ever
+# committed there only because evening.yml's persist step was aborting before
+# its commit on every run. Once that was fixed this became ~57 KB a chart, up
+# to 25 a night: about 360 MB a year of history that does not delta-compress
+# and cannot be taken back out afterwards. The page says where the image went
+# (docs/index.html's chartSlot) and the evening email still carries the PNGs
+# it just rendered, from the local filesystem.
+#
+# Anchored and directory-only on purpose. This project has twice shipped a
+# .gitignore round that swallowed source — src/env/loader.py and
+# tests/fixtures/results/ — so the rule names one directory under the repo
+# root and nothing else.
+/docs/charts/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Virtualenvs. Anchored: an `env/` package elsewhere in the tree is source.
+/.venv/
+/venv/
+/env/
+
+# Agent tooling scratch space (git worktrees created for parallel work).
+.claude/worktrees/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

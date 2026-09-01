@@ -1,0 +1,295 @@
+# SpicyStock scan universe — hand-curated starter list.
+#
+# WHAT THIS IS
+#   A deliberately small, hand-written list of liquid US common stocks, read
+#   by get_universe() in src/scanner.py in place of Alpaca's full ~11,000
+#   symbol tradable-asset list. A full-market scan took 10-20 minutes; this
+#   one takes seconds, which is the whole point — every later fix in the
+#   rebuild has to be testable in one sitting.
+#
+# THIS SHOULD EVENTUALLY BE GENERATED — DO NOT TREAT IT AS AUTHORITATIVE.
+#   These names were written out by hand, not fetched from an index or a
+#   screener, so the list is already stale on the day it is committed:
+#   tickers get renamed, companies merge, liquidity moves. A symbol that no
+#   longer trades simply returns no bars and is skipped. The real fix is a
+#   generator (index constituents plus a liquidity percentile — see the
+#   step-4 percentile gate) that rewrites this file on a schedule and
+#   records its source and date right here.
+#
+# WHAT IS IN IT
+#   ~230 large- and mid-cap US common stocks, grouped by sector for human
+#   reading only: get_universe() ignores the grouping and keeps file order.
+#   Deliberately excluded:
+#     - ETFs, ETNs, closed-end funds, and any leveraged or inverse product.
+#       This screener rates single companies, not baskets.
+#     - ADRs and foreign issuers — different home session, different data
+#       quality on a free IEX feed.
+#     - Biotech. That is rule 4 of the strategy (binary FDA events are not
+#       momentum), and with fundamentals_filter() deleted, curating this
+#       file is the only thing enforcing it — no code tests a sector. The
+#       pharma/biotech line is a judgement call: large diversified pharma
+#       (JNJ, LLY, MRK, PFE, ABBV, BMY) is kept, pure-play biotech is not.
+#     - Class shares spelled with punctuation (BRK.B). Alpaca's exact
+#       spelling for those could not be checked from this sandbox, and one
+#       unrecognised symbol takes down its whole 100-name request batch.
+#
+# FORMAT
+#   One ticker per line, A-Z, 1 to 5 characters. Blank lines are ignored.
+#   `#` starts a comment, on its own line or trailing after a symbol.
+#   Anything else is a hard error: get_universe() raises SymbolFileError
+#   rather than skipping the line, so a typo cannot quietly shrink the
+#   universe. A duplicated symbol is an error too.
+
+# --- Communication services ---
+GOOGL
+META
+NFLX
+DIS
+CMCSA
+CHTR
+WBD
+TMUS
+T
+VZ
+EA
+TTWO
+
+# --- Software and IT services ---
+MSFT
+ORCL
+CRM
+ADBE
+INTU
+NOW
+WDAY
+PANW
+CRWD
+ZS
+FTNT
+NET
+DDOG
+SNOW
+MDB
+HUBS
+VEEV
+PLTR
+APP
+TTD
+RBLX
+IBM
+ADSK
+CDNS
+SNPS
+
+# --- Semiconductors, hardware and equipment ---
+AAPL
+NVDA
+AVGO
+AMD
+INTC
+QCOM
+TXN
+MU
+AMAT
+LRCX
+KLAC
+ADI
+MRVL
+ON
+MCHP
+SWKS
+TER
+ENTG
+MPWR
+SMCI
+CSCO
+ANET
+HPQ
+HPE
+DELL
+WDC
+GLW
+APH
+MSI
+FSLR
+VRT
+
+# --- Consumer discretionary ---
+AMZN
+TSLA
+HD
+LOW
+TGT
+TJX
+ROST
+DG
+ULTA
+ORLY
+AZO
+KMX
+CVNA
+F
+GM
+LEN
+DHI
+PHM
+NKE
+DECK
+LULU
+MCD
+SBUX
+CMG
+MAR
+HLT
+WYNN
+LVS
+MGM
+DKNG
+RCL
+CCL
+ABNB
+BKNG
+UBER
+DASH
+
+# --- Consumer staples ---
+COST
+WMT
+PG
+KO
+PEP
+MDLZ
+TSN
+KR
+MO
+PM
+STZ
+MNST
+CELH
+CL
+EL
+
+# --- Financials ---
+JPM
+BAC
+WFC
+C
+GS
+MS
+SCHW
+BLK
+BX
+KKR
+APO
+ALL
+PGR
+AIG
+ICE
+CME
+MCO
+SPGI
+V
+MA
+AXP
+COF
+USB
+PNC
+TFC
+ALLY
+BK
+FI
+PYPL
+COIN
+HOOD
+
+# --- Healthcare (biotech deliberately excluded — see header) ---
+JNJ
+LLY
+MRK
+PFE
+ABBV
+BMY
+UNH
+CVS
+CI
+ELV
+HCA
+MDT
+ABT
+SYK
+BSX
+ISRG
+DXCM
+EW
+IDXX
+MCK
+ZTS
+
+# --- Industrials and transport ---
+BA
+GE
+CAT
+DE
+HON
+MMM
+RTX
+LMT
+NOC
+GD
+LHX
+EMR
+PH
+CMI
+UNP
+ODFL
+DAL
+UAL
+FDX
+UPS
+URI
+WM
+CARR
+PWR
+
+# --- Energy ---
+XOM
+CVX
+COP
+EOG
+OXY
+VLO
+MPC
+DVN
+FANG
+SLB
+HAL
+BKR
+OKE
+EQT
+
+# --- Materials ---
+APD
+SHW
+ECL
+DOW
+LYB
+NUE
+STLD
+FCX
+NEM
+
+# --- Utilities ---
+NEE
+DUK
+SO
+AEP
+CEG
+VST
+
+# --- REITs ---
+AMT
+PLD
+EQIX
+SPG
+O
+PSA

@@ -1,0 +1,1393 @@
+"""
+Step 9 — the run archive: every scored candidate, and what happened next.
+
+WHY THIS MODULE EXISTS
+----------------------
+The audit's central finding was that this system cannot tell you whether it
+works. It scored 25 candidates a night, emailed five, and kept nothing that
+could be checked against a price later — `score_all()` returned `results[:TOP_N]`
+and `archive()` wrote exactly that, so TOP_N cut the archive as well as the
+email and 80% of every night's judgements were discarded unrecorded. Nothing
+in the repo held a score next to the return that followed it, so the ranking
+had never been measured against a single realised outcome and could not be.
+
+Two files come out of here, and the split is deliberate:
+
+  docs/data.json    the dashboard's SNAPSHOT of the run that just finished —
+                    schema_version 1, the contract in `_contract`, read by
+                    docs/index.html in the browser. It is rewritten every run.
+
+  docs/ledger.json  the RECORD. One slim row per candidate per run, kept for
+                    MAX_RUNS runs, carrying the score, its provenance, the
+                    six checks, and the forward returns filled in by later
+                    runs. This is the file a backtest reads.
+
+data.json alone could not be the record: it describes one run, and the run it
+describes is always the newest, whose forward returns cannot exist yet. The
+ledger is what accumulates. Both are written under docs/ so that whatever
+publishes the dashboard publishes the evidence with it.
+
+The ledger row is deliberately slim — no chart paths, no prose, no measured
+check values. It is rewritten in full on every run and is meant to be
+committed, so its size is a daily git object: ~330 bytes a row keeps a year of
+runs near 2 MB, where the dashboard's full rows would be 20 MB.
+
+FORWARD RETURNS
+---------------
+A candidate's d1/d3/d5 are the percentage change from its burst-day close to
+the close 1, 3 and 5 SESSIONS later, positionally within the frame — sessions,
+not calendar days, so a holiday cannot silently shift a horizon.
+
+Both ends of that division come out of the SAME frame, fetched now. The
+archived `close` is deliberately not used as the denominator: a split between
+the burst and today restates every price before its ex-date, so an as-traded
+close from three weeks ago divided into a split-adjusted one is a -75% return
+the market never printed. Two closes from one adjusted frame cannot disagree
+about which scale they are on.
+
+`as_of` is the newest session whose close was actually used, or null when none
+was — so a row with three nulls and a null `as_of` says "nothing has happened
+yet", and can never be read as a claim about data this pipeline does not have.
+
+Filling is a read of bars this pipeline already knows how to fetch; there is
+no second data path and no third-party service. What it needs is that the
+ledger written by yesterday's run is still there tomorrow — the one thing this
+module cannot arrange from the inside. `evening.yml` now commits `docs/` back
+to the branch after each run for exactly that reason; see README's "Does the
+history actually accumulate?". Remove that step and this file still works
+perfectly while quietly measuring nothing, because every run starts from an
+empty history.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import math
+import os
+from datetime import date, datetime, timezone
+from pathlib import Path
+from typing import NamedTuple
+
+import numpy as np
+import pandas as pd
+
+log = logging.getLogger(__name__)
+
+#: The dashboard contract this module writes. docs/index.html reads it and
+#: README documents it.
+SCHEMA_VERSION = 1
+
+#: Forward-return horizons, in sessions after the burst.
+HORIZONS = (1, 3, 5)
+
+#: Where both files live. Relative, like archive()'s Path("results"), so the
+#: test suite's per-test chdir isolates them and a real run writes the repo's
+#: docs/ — which is also what GitHub Pages serves, so a chart written under it
+#: is reachable by the page that references it.
+DOCS_DIR = Path("docs")
+DATA_NAME = "data.json"
+LEDGER_NAME = "ledger.json"
+
+#: What a ledger this module could not read is renamed to: the file's own name,
+#: the UTC second it was set aside, and this. The stamp is in there because a
+#: FIXED name meant the second casualty silently replaced the first — see
+#: Ledger.set_aside(), and quarantined(), which is how to find them all.
+QUARANTINE_SUFFIX = "unreadable"
+
+#: How many names may be tried inside one second before giving up. Reaching the
+#: end means a hundred ledgers were quarantined in the same second, which is a
+#: loop somewhere, not a night's work.
+QUARANTINE_ATTEMPTS = 100
+
+#: How many runs the ledger keeps. ~260 sessions is a trading year; beyond it
+#: the oldest run is dropped, and dropped means gone — the file is the record.
+MAX_RUNS = 260
+
+#: How far back a run may still have its forward returns filled in. A row that
+#: is still incomplete after this many runs is a name that stopped trading, and
+#: re-requesting it every night forever buys nothing. Five sessions of history
+#: resolve every horizon, so this is generous by a factor of two.
+FILL_WINDOW_RUNS = 10
+
+#: WHAT COUNTS AS "THE SAME SETUP" — the one judgement behind every streak
+#: number this module produces, written down once because it is a judgement
+#: and not arithmetic.
+#:
+#: Two appearances of a ticker belong to the same setup when the second lands
+#: no more than this many sessions after the first. It is deliberately
+#: max(HORIZONS) rather than a fresh guess: the pipeline already commits to
+#: five sessions as the window over which a burst's outcome is decided
+#: (forward_returns measures d1/d3/d5 and stops), so a second burst inside it
+#: happens while the first one is still being judged — the same episode
+#: continuing. A burst that arrives after the whole window has resolved is a
+#: name that has had a full week to base again, and calling that "day 12" of
+#: anything would be a claim about a move that finished. Put the other way
+#: round, which is the case that made the rule necessary: the same ticker
+#: reappearing two weeks later is day 1 of a new setup, not day 12 of an old
+#: one.
+#:
+#: NOT a claim that the two bursts are related in any deeper sense. It is a
+#: grouping rule for a reader — "you saw this name on Monday and passed" — and
+#: nothing downstream trades off it.
+MAX_STREAK_GAP_SESSIONS = max(HORIZONS)
+
+#: Why a streak carries no day number. Each is a statement about the RECORD,
+#: never about the market, and they are kept apart because a reader who is told
+#: "we cannot say" acts differently from one told "this is new" — and the file
+#: error, the empty file, the undatable file and the shallow file are four
+#: different repairs.
+#:
+#: HISTORY_UNDATED is the fourth because the third was answering for it and
+#: lying: a ledger holding runs whose `date` nobody can parse reported
+#: no_history, which renders as "no history has been recorded yet" over a file
+#: with a year of runs in it. Nothing is recoverable from in here either way,
+#: but "the file holds runs I cannot place" sends a reader to the file and "no
+#: history yet" sends them nowhere.
+NO_HISTORY = "no_history"                    # the ledger holds no run at all
+HISTORY_UNDATED = "history_undated"          # it holds runs, none of them datable
+HISTORY_UNREADABLE = "history_unreadable"    # it was set aside; see Ledger.load()
+WINDOW_NOT_COVERED = "window_not_covered"    # it does not reach back far enough
+
+#: The invariants, in the file rather than only in the docs. tools/make_fixture.py
+#: imports this list rather than holding a second copy, so the hand-authored
+#: fixture and the pipeline's real output can never describe different contracts
+#: — the same reason that generator imports src.lynch's thresholds.
+CONTRACT_INVARIANTS = [
+    "candidates holds EVERY scored candidate, ranked by score descending, and is never truncated: len(candidates) == run.scored. The top run.shortlist_size of them are the shortlist that went out by email.",
+    "run.scored + len(gated_out) == run.bursts. Nothing a scan found may vanish without appearing in one of the two lists.",
+    "Every candidate carries provenance.source: 'claude' when the model actually returned a score, 'fallback' when the offline checklist produced it. A fallback is never labelled claude.",
+    "provenance.chart_seen is true only when the scoring model actually received the chart image.",
+    "forward_returns and runs[].forward_returns are null until the sessions exist. Absent is null, never 0 and never a string.",
+    "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
+    "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
+    "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
+    "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
+    "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was ('lynch_gate' rejected by the checklist, 'score_cap' passed but out of calls). Null exactly with last_seen. A gate rejection is never published as an absence of judgement.",
+    "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
+    "Numbers are numbers or null. No 'n/a' strings.",
+]
+
+#: What the pipeline's own output says about itself. The fixture generator
+#: keeps its own `about`, because "this is a hand-authored fixture" and "this
+#: is the run that just happened" are different sentences and only one of them
+#: can be true of a given file. `run.fixture` says which.
+CONTRACT_ABOUT = (
+    "Written by src/pipeline.py at the end of a run (see src/ledger.py) and read by "
+    "docs/index.html at runtime. run.fixture is false: every number here came out of "
+    "the run named in `run`. The per-candidate record with forward returns filled in "
+    "by later runs is docs/ledger.json. This block is documentation, not data; "
+    "consumers ignore it."
+)
+
+
+# ----------------------------------------------------------------- values --
+
+def _num(value, digits: int | None = None):
+    """A JSON number, or None. Never NaN, never a string, never 0 for unknown.
+
+    The contract's "numbers are numbers or null" is enforced here rather than
+    trusted: pandas and numpy hand back np.float64 and np.bool_ (which
+    json.dump refuses) and NaN (which it happily writes as a bare `NaN` token
+    that no JSON parser will read back, so the dashboard would fail to load
+    rather than show a gap). Anything that is not a finite number becomes null.
+    """
+    if value is None or isinstance(value, (str, bool)):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(number):
+        return None
+    if digits is not None:
+        return round(number, digits)
+    return int(number) if number.is_integer() else number
+
+
+def _as_date(value) -> date | None:
+    """A date from a date, a datetime, a pandas Timestamp or an ISO string."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    try:
+        return pd.Timestamp(value).date()
+    except Exception:  # noqa: BLE001 — anything unparseable is simply not a date
+        return None
+
+
+def iso_date(value) -> str | None:
+    """YYYY-MM-DD, or None. Public because src.pipeline dates its run with it."""
+    day = _as_date(value)
+    return day.isoformat() if day else None
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+# ------------------------------------------------------------- checklist --
+
+def check_rows(lynch_result: dict) -> list[dict]:
+    """The 2LYNCH detail the dashboard renders: code, label, pass, value.
+
+    Both code and label are DERIVED from the check's own name in
+    src.lynch.evaluate_2lynch ("L_linear_prior_move" -> "L", "linear prior
+    move"), not copied into a table here. A table would be a second place to
+    edit when a check is renamed, and this project has already shipped a
+    checklist whose two copies disagreed.
+    """
+    rows = []
+    for name, check in lynch_result.get("checks", {}).items():
+        code, _, rest = name.partition("_")
+        rows.append({
+            "code": code,
+            "label": rest.replace("_", " "),
+            "pass": bool(check["pass"]),
+            "value": str(check["value"]),
+        })
+    return rows
+
+
+def check_flags(lynch_result: dict) -> dict:
+    """{"2": True, "L": False, ...} — the ledger's compact form of the same.
+
+    The measured values are dropped and the pass/fail kept, because the
+    question a backtest asks of an old run is "which checks did this name
+    pass", and keeping six sentences per row for a year is 10 MB of git.
+    """
+    return {row["code"]: row["pass"] for row in check_rows(lynch_result)}
+
+
+# ------------------------------------------------------------- streaks --
+# Step 10. Every run before this one started from nothing: a name that burst
+# on Monday and still cleared the filter on Tuesday was presented as a
+# brand-new day-1 idea on both nights, with nothing telling the reader they
+# had already looked at it and passed. The ledger held every one of those
+# earlier appearances and the pipeline only ever wrote to it.
+#
+# A streak is a VIEW over the record, computed on demand, and it is
+# deliberately not stored in the ledger rows themselves. The record holds what
+# a run measured; the streak is arithmetic over the record, and a stored copy
+# is a second thing that can disagree with the file it was derived from — the
+# defect this project has already shipped in a checklist and in a fixture.
+
+
+def sessions_between(earlier, later) -> int | None:
+    """Trading sessions from `earlier` to `later`. None if either is not a date.
+
+    Weekends only, no holidays — the same simplification src.scanner makes in
+    current_session(), so the two cannot disagree about what a session is. A
+    holiday inside the span makes the gap look one session LONGER than it was,
+    which can only break a streak that should have continued. That is the safe
+    direction: this code under-claims that two bursts are one episode rather
+    than inventing continuity the market did not have.
+    """
+    start, end = _as_date(earlier), _as_date(later)
+    if start is None or end is None:
+        return None
+    return int(np.busday_count(start, end))
+
+
+def appearance_index(runs: list[dict]) -> dict[str, list[dict]]:
+    """ticker -> every session it burst on in this ledger, oldest first.
+
+    Both scored candidates and gated-out bursts count. The question a streak
+    answers is "has this setup been running", and the scan found the burst
+    whether or not the checklist let it through to a score — a name gated out
+    on Monday and scored on Tuesday is on day 2, not day 1.
+
+    Counting a gated burst is only honest if the reader is TOLD it was gated,
+    which is what `outcome` carries: "scored", or the ledger row's own reason
+    for never being scored. Without it the streak said "last seen Friday, not
+    scored then" over a name the pipeline had looked at and thrown out at the
+    quality gate — an absence of judgement standing in for a rejection — and
+    said exactly the same words over one that passed every check and lost its
+    place to twenty-five better names. `_slim` keeps that reason; this is
+    where it stops being discarded on the way to the streak.
+
+    Keyed by session inside a ticker so that a session scanned twice (a run
+    repeated after a failure writes a second entry under a different run type)
+    is one appearance, not two. A scored appearance wins over a gated one for
+    the same session, because it carries the judgement a reader wants back.
+    """
+    seen: dict[str, dict[date, dict]] = {}
+    for run in runs:
+        for scored, rows in ((True, run.get("candidates") or []),
+                             (False, run.get("gated") or [])):
+            for row in rows:
+                ticker, day = row.get("ticker"), _as_date(row.get("date"))
+                if not ticker or day is None:
+                    continue
+                by_session = seen.setdefault(ticker, {})
+                if day in by_session and not (scored and by_session[day]["score"] is None):
+                    continue
+                by_session[day] = {
+                    "date": day,
+                    "score": _num(row.get("score")) if scored else None,
+                    "verdict": row.get("verdict") if scored else None,
+                    # The record's own word, not a word chosen here. Today the
+                    # pipeline writes "lynch_gate" and "score_cap"; a reason it
+                    # learns to write tomorrow arrives at the reader intact
+                    # rather than flattened back into "not scored".
+                    "outcome": "scored" if scored else (row.get("reason") or None),
+                }
+    return {ticker: [by_session[k] for k in sorted(by_session)]
+            for ticker, by_session in seen.items()}
+
+
+def session_dates(runs: list[dict]) -> list[date]:
+    """Every session this ledger holds a run for, oldest first, one per date.
+
+    Distinct dates, not run entries: a session scanned twice (a morning and an
+    evening run, or a re-run after a failure) is one session that was looked
+    at, and counting it twice would inflate how much of the record a name is
+    being measured against.
+    """
+    days = {day for day in (_as_date(run.get("date")) for run in runs)
+            if day is not None}
+    return sorted(days)
+
+
+def undated_runs(runs: list[dict]) -> int:
+    """How many run entries carry a `date` this module cannot read.
+
+    Such an entry is kept, not quarantined: _malformed_rows() draws the line at
+    shape, and one unreadable field is not grounds for setting a year of
+    outcomes aside. But it is a damaged record, and a run that reads one used
+    to report itself clean -- exit 0, no band -- while publishing a snapshot
+    whose own contract it broke. The count is what lets the run say so.
+    """
+    return sum(
+        1 for run in runs
+        if isinstance(run, dict) and _as_date(run.get("date")) is None
+    )
+
+
+def _dated_row_sessions(runs: list[dict]) -> set[date]:
+    """The sessions the ledger's ROWS carry, whatever their run entry says.
+
+    A candidate row's date is the session it burst on, which is the session the
+    run that wrote it scanned. So a run whose own `date` is unreadable is still
+    placeable through its rows, and the sessions it looked at are not lost from
+    the record's span. Read by Record.of(); see the reasoning there.
+    """
+    days: set[date] = set()
+    for run in runs:
+        if not isinstance(run, dict):
+            continue
+        for rows in (run.get("candidates") or [], run.get("gated") or []):
+            if not isinstance(rows, list):
+                continue
+            for row in rows:
+                day = _as_date(row.get("date")) if isinstance(row, dict) else None
+                if day is not None:
+                    days.add(day)
+    return days
+
+
+def oldest_session(runs: list[dict]) -> date | None:
+    """The oldest session this ledger holds a run for, or None if it holds none.
+
+    How far back the record has actually LOOKED, which is a different question
+    from how far back it goes: a run is a night this pipeline scanned, so a
+    name absent from every run between two dates was absent from the market's
+    4% bursts on those nights — and a date with no run at all says nothing
+    either way. See _why_no_day().
+    """
+    days = session_dates(runs)
+    return days[0] if days else None
+
+
+class Record(NamedTuple):
+    """How much the ledger has LOOKED AT — the one input every streak shares.
+
+    Three numbers, and they travel together because every judgement below is
+    made against the same record and a reader has to be able to see it:
+
+      first     the oldest session the ledger holds a run for, or None
+      sessions  how many distinct sessions that is
+      entries   how many run entries the file holds, datable or not
+
+    `entries` exists only to tell an EMPTY file from an undatable one. Both
+    have `first is None` and `sessions == 0`, and the difference is whether the
+    reader is told "no history has been recorded yet" — true of the first,
+    false and misleading of the second, which is a file with content in it that
+    this module cannot place.
+
+    Measured over the whole file, including any run NEWER than the burst being
+    judged. That only matters for a backfill, where it makes `sessions` count
+    sessions after the burst as well and so makes "burst on N of the M sessions
+    in the record" under-claim. Under-claiming is the direction everything in
+    this module errs in: it would rather say less than invent continuity.
+    """
+
+    first: date | None
+    sessions: int
+    entries: int
+
+    @classmethod
+    def of(cls, runs: list[dict]) -> "Record":
+        """Every session the ledger has EVIDENCE it looked at.
+
+        Not `session_dates(runs)` alone, which reads only each run's own
+        `date`. A run entry whose date will not parse is kept rather than
+        quarantined -- _malformed_rows() guards shape, not content -- and its
+        candidate rows still carry the session they burst on, which IS the
+        session that run scanned. Counting only the run dates therefore
+        published `seen_before: 8` beside `history_sessions: 0`, breaking the
+        declared invariant that a name cannot have burst on more sessions than
+        the record holds, on a run that reported itself clean with exit 0.
+
+        Taking the union makes that invariant structurally true instead of
+        merely asserted: every appearance appearance_index() can date is, by
+        construction, a session this record holds. It can only widen the span,
+        and it widens it exactly where the evidence is -- a session no run
+        entry could name but whose bursts are written down.
+        """
+        days = sorted(set(session_dates(runs)) | _dated_row_sessions(runs))
+        return cls(days[0] if days else None, len(days), len(runs))
+
+
+#: What a run that has read nothing is measured against: a record with no span
+#: at all. Not the same sentence as "this name is new" — see unknown_streak().
+EMPTY_RECORD = Record(None, 0, 0)
+
+
+def _why_no_day(record: Record, first: date | None) -> str | None:
+    """Whether the record has looked far enough back to count days at all.
+
+    ABSENCE OF EVIDENCE IS ONLY EVIDENCE OF ABSENCE ONCE YOU HAVE LOOKED FAR
+    ENOUGH BACK. "day 1 — new setup" is not a reading of the ledger; it is the
+    claim that nothing preceded this burst, and on an empty file that claim is
+    made out of nothing at all. It shipped in the same email row as `FAIL
+    2_first_or_second_burst: 2 prior 4% bursts in last 20 days`, three lines
+    below — two sources answering one reader's question and contradicting each
+    other, because the price frame had looked back twenty sessions and the
+    ledger had looked back none.
+
+    So a day number requires the ledger to reach at least
+    MAX_STREAK_GAP_SESSIONS sessions before the session the claim is about.
+    That is the window in which an earlier appearance would have joined this
+    setup, so reaching past it is exactly what makes "nothing preceded this"
+    a reading rather than a guess.
+
+    Measured from `first` — where the chain of appearances starts — and not
+    from the burst's own session, because `first` is where the absence claim
+    is actually made. For day 1 the two are the same date and this is the rule
+    as written. For a longer chain, `first` is the older one, so this only
+    ever refuses a number the other reading would have allowed: a name bursting
+    on every session back to the oldest run in the file is not demonstrably on
+    day 6 rather than day 12.
+
+    A FLOOR, not a proof. It says the file reaches back past the window; it
+    cannot say every session inside the window was scanned, so a night the
+    workflow failed can still hide an appearance. It closes the case where
+    there is no evidence at all, which is the one that ships on every first
+    run — docs/ledger.json is not committed, so the first production run after
+    this prints it against every candidate.
+    """
+    if record.first is None:
+        # A file holding runs nobody can date is not an empty one, and saying
+        # "no history has been recorded yet" over it is a false sentence about
+        # a file with content: the repair is to look at the file, not to wait
+        # for it to fill up.
+        return HISTORY_UNDATED if record.entries else NO_HISTORY
+    reach = sessions_between(record.first, first)
+    if reach is None or reach < MAX_STREAK_GAP_SESSIONS:
+        return WINDOW_NOT_COVERED
+    return None
+
+
+def unknown_streak(reason: str) -> dict:
+    """A streak block that carries no day number, and says which of the four
+    reasons it does not.
+
+    Public because src.pipeline holds the one state this module cannot see: a
+    history that could not be READ. An unreadable ledger and an empty one look
+    identical from in here — both are `runs == []` — and they are different
+    sentences, only one of which is about the market.
+
+    history_from and history_sessions are null and 0 for exactly the reasons
+    this function serves: a record that could not be read, holds nothing, or
+    holds nothing datable has no span to report. Every OTHER kind of unknown —
+    window_not_covered — comes out of streak() with its span filled in, because
+    there the span is precisely what the reader needs in order to see what the
+    unknown is unknown over.
+    """
+    return {"day": None, "unknown_reason": reason, "first_seen": None,
+            "last_seen": None, "last_score": None, "last_verdict": None,
+            "last_outcome": None, "seen_before": 0,
+            "history_from": None, "history_sessions": 0}
+
+
+def streak(history: list[dict], session, *, record: Record = EMPTY_RECORD) -> dict:
+    """Where a burst on `session` sits in this name's run of appearances.
+
+      day          this appearance's place in the current setup, counting only
+                   the sessions it actually burst on. `day: 3` is the third
+                   such session, NOT the third calendar session since the
+                   setup began — a gap cannot inflate it. NULL when the record
+                   has not looked far enough back to say; see _why_no_day().
+      unknown_reason  which of no_history / history_undated /
+                   history_unreadable / window_not_covered left `day` null.
+                   Null when day is a number, so the two can never both be
+                   answers.
+      first_seen   the session the current setup started on. Equals the
+                   burst's own session exactly when day is 1, and is null
+                   exactly when day is: it is the same claim — where this
+                   setup began — and it cannot be known when day is not.
+      last_seen    the most recent EARLIER appearance anywhere in the ledger,
+                   or null for a name it has never carried. Deliberately not
+                   restricted to the current setup: "seen three weeks ago,
+                   day 1 today" is a true and useful pair of facts. It stays
+                   a fact when day is unknown, so it is still reported then.
+      last_score   what that earlier appearance was scored, and its verdict,
+                   or null when it was a burst the gate rejected. They
+                   describe the appearance `last_seen` names and no other.
+      last_outcome what happened to that appearance: "scored", or the reason
+                   it never was ("lynch_gate" — the checklist rejected it;
+                   "score_cap" — it passed and better names filled the night's
+                   calls). Null with last_seen. A null last_score means "no
+                   number"; it took this field to say WHY, and until it
+                   existed a rejection and a model outage read the same.
+      seen_before  how many earlier sessions this ticker burst on, in the
+                   runs the ledger still keeps. "Never seen before" therefore
+                   means "not in the last MAX_RUNS runs", not "not ever" —
+                   and 0 alongside a null day means "nothing in a record that
+                   cannot answer", not "nothing ever happened".
+      history_from the oldest session the RECORD holds a run for, and
+      history_sessions  how many distinct sessions that is. The same pair on
+                   every row of a run, because they describe the file rather
+                   than the name — and they are on the row anyway, because a
+                   row travels alone: into the email, into the ledger, onto
+                   the page, each read without the run block beside it.
+
+                   THEY ARE WHAT MAKES AN UNKNOWN DAY SAYABLE. `day` is
+                   withheld whenever the chain of appearances reaches the
+                   oldest run in the file, which is exactly what an unbroken
+                   streak does — so the longer a name has been bursting every
+                   session, the more certainly its day number is null, and a
+                   name that took a fortnight off and burst twice reads "day 2"
+                   beside it. The arithmetic is right and stays: you cannot
+                   prove a chain did not begin before your record did. But with
+                   these two a reader gets "burst on 8 of the 8 sessions in the
+                   record, which begins 2026-08-20 — it may have started
+                   earlier" where the block alone could only say "unknown", and
+                   that sentence is most of what the day number was for.
+
+    `record` is the whole ledger's span (see Record), not this ticker's own
+    history: how far back the FILE looked decides whether an absence in it
+    means anything.
+
+    Appearances ON `session` itself are excluded: re-running a session already
+    in the ledger must not turn every name in it into a repeat of itself, and
+    a backfill of an older session must not count the newer runs sitting above
+    it in the file. Both are decided by date, so neither depends on where the
+    entry landed in the run order.
+    """
+    day_of = _as_date(session)
+    prior = [row for row in history if day_of is not None and row["date"] < day_of]
+    prior.sort(key=lambda row: row["date"])
+
+    day, first, chain_end = 1, day_of, day_of
+    for row in reversed(prior):
+        gap = sessions_between(row["date"], chain_end)
+        if gap is None or gap > MAX_STREAK_GAP_SESSIONS:
+            break
+        day += 1
+        first = chain_end = row["date"]
+
+    last = prior[-1] if prior else None
+    block = {
+        "day": day,
+        "unknown_reason": None,
+        "first_seen": iso_date(first),
+        "last_seen": iso_date(last["date"]) if last else None,
+        "last_score": last["score"] if last else None,
+        "last_verdict": last["verdict"] if last else None,
+        "last_outcome": last["outcome"] if last else None,
+        "seen_before": len(prior),
+        "history_from": iso_date(record.first),
+        "history_sessions": record.sessions,
+    }
+    unknown = _why_no_day(record, first)
+    if unknown:
+        # The count and the last sighting survive: they are what the file
+        # holds. `day` and `first_seen` do not, because both are claims about
+        # what came BEFORE the earliest appearance in view, and that is the
+        # one thing a record this shallow cannot answer.
+        block.update(day=None, unknown_reason=unknown, first_seen=None)
+    return block
+
+
+def streaks(runs: list[dict], tickers, session,
+            *, unreadable: str | None = None) -> dict[str, dict]:
+    """One streak block per ticker, against the history in `runs`.
+
+    Four answers, and they are four because collapsing any pair of them puts
+    a claim about the market where a fact about a file belongs:
+
+      the ledger could not be READ      `unreadable` — every name unknown
+      the ledger holds nothing          no_history
+      it holds runs nothing can date    history_undated
+      it holds too little to say        window_not_covered
+
+    `unreadable` is passed in rather than inferred, because from here a
+    history that failed to parse and one that was never written look the same:
+    both are `runs == []`. Ledger.load_error is what knows the difference.
+    """
+    if unreadable:
+        return {ticker: unknown_streak(HISTORY_UNREADABLE) for ticker in tickers}
+    index = appearance_index(runs)
+    record = Record.of(runs)
+    return {ticker: streak(index.get(ticker, []), session, record=record)
+            for ticker in tickers}
+
+
+def setup_leads(runs: list[dict]) -> set[tuple[str, str]]:
+    """(ticker, session) for every appearance that STARTS a setup.
+
+    The unit an average has to be taken over. A name that bursts on five
+    consecutive sessions is ONE setup, not five observations: its d1/d3/d5
+    windows overlap and measure largely the same move, so counting each
+    session's row weights that single move five times against a name that
+    burst once. Two tickers — one bursting five sessions running at +20%, one
+    one-off at -10% — published a mean of +15.0% over "6 names", where the
+    honest reading is +5.0% over 2.
+
+    README's reason for making the morning run write-free is this argument
+    applied one session deep ("a second entry for one session would count that
+    burst twice in every average across runs"); this is the same argument one
+    session further out, where the double-counting is not a repeated row but a
+    repeated MOVE.
+
+    The setup is represented by its first appearance because that is the one
+    whose horizons are furthest along, and because it is stable: a later
+    session cannot change which row led. Where the record does not reach back
+    to the setup's real start, the earliest appearance IN VIEW leads, which is
+    the only row there is to choose.
+
+    What it cannot do is see a session the record does not hold. A night the
+    workflow failed, or a holiday inside a gap (sessions_between counts
+    weekends only, so a gap reads one session longer than it was), can break
+    one setup into two chains and count it twice. That is a smaller version of
+    the same error, bounded to holes in the record rather than applying to
+    every consecutive session — and it is the direction this module errs in
+    everywhere: it under-claims that two bursts are one episode rather than
+    inventing continuity the market did not have.
+    """
+    leads: set[tuple[str, str]] = set()
+    for ticker, appearances in appearance_index(runs).items():
+        previous = None
+        for row in appearances:
+            gap = sessions_between(previous, row["date"]) if previous else None
+            if gap is None or gap > MAX_STREAK_GAP_SESSIONS:
+                leads.add((ticker, iso_date(row["date"])))
+            previous = row["date"]
+    return leads
+
+
+# ------------------------------------------------------- dashboard rows --
+
+def chart_ref(chart_path: str | None, docs_dir: Path) -> str | None:
+    """`charts/AAA.png` — the path the PAGE needs, not the one the run used.
+
+    docs/index.html sets it as an <img src> relative to itself, so a chart the
+    run wrote outside docs/ can be referenced but never served. Returns None
+    for a chart outside the published directory rather than a path that 404s.
+    """
+    if not chart_path:
+        return None
+    try:
+        return Path(chart_path).resolve().relative_to(Path(docs_dir).resolve()).as_posix()
+    except ValueError:
+        log.warning("Chart %s is outside %s, so the dashboard cannot serve it",
+                    chart_path, docs_dir)
+        return None
+
+
+def candidate_record(cand, lynch_result: dict, context: dict, score_row: dict,
+                     rank: int, docs_dir: Path, chart_error: str | None = None,
+                     streak_block: dict | None = None) -> dict:
+    """One scored candidate, in the shape docs/data.json's contract describes.
+
+    `streak_block` may still be None, and null still means "unknown" the way
+    every other number in this file means it. But the states that used to
+    arrive as null now arrive as a BLOCK with a null `day` and an
+    `unknown_reason` — "the history could not be read" and "it does not reach
+    back far enough" are answers a reader can act on, and a bare null said
+    neither. Nothing here ever collapses to a confident day 1.
+    """
+    return {
+        "rank": rank,
+        "ticker": cand.ticker,
+        "date": iso_date(cand.date),
+        "close": _num(cand.close),
+        "gain_pct": _num(cand.gain_pct),
+        "volume": _num(getattr(cand, "volume", None)),
+        "prev_volume": _num(getattr(cand, "prev_volume", None)),
+        "volume_ratio": _num(cand.volume_ratio),
+        "dollar_volume": _num(cand.dollar_volume),
+        "lynch": lynch_result["summary"],
+        "lynch_passes": _num(lynch_result["passes"]),
+        "lynch_total": _num(lynch_result["total"]),
+        "lynch_detail": check_rows(lynch_result),
+        "score": _num(score_row["score"]),
+        "verdict": score_row.get("verdict"),
+        "reason": score_row.get("reason", ""),
+        "key_risk": score_row.get("key_risk", ""),
+        "provenance": dict(score_row["provenance"]),
+        "chart": chart_ref(score_row.get("chart"), docs_dir),
+        "chart_error": chart_error,
+        "context": {key: _num(value) for key, value in context.items()},
+        "streak": dict(streak_block) if streak_block else None,
+        "forward_returns": empty_returns(),
+    }
+
+
+def gated_record(cand, lynch_result: dict, reason: str,
+                 streak_block: dict | None = None) -> dict:
+    """One burst that was never scored, and why.
+
+    Carries the full checklist for the same reason the scored rows do: a
+    per-check pass rate computed over the survivors alone is survivorship bias
+    with a percentage sign, since the names a check rejected are exactly the
+    ones missing from it.
+    """
+    return {
+        "ticker": cand.ticker,
+        "date": iso_date(cand.date),
+        "close": _num(cand.close),
+        "gain_pct": _num(cand.gain_pct),
+        "volume": _num(getattr(cand, "volume", None)),
+        "volume_ratio": _num(cand.volume_ratio),
+        "lynch": lynch_result["summary"],
+        "lynch_passes": _num(lynch_result["passes"]),
+        "lynch_total": _num(lynch_result["total"]),
+        "lynch_detail": check_rows(lynch_result),
+        "streak": dict(streak_block) if streak_block else None,
+        "reason": reason,
+    }
+
+
+# ---------------------------------------------------------- ledger rows --
+
+def empty_returns() -> dict:
+    """Pending, spelled the one way the contract allows."""
+    out = {f"d{h}": None for h in HORIZONS}
+    out["as_of"] = None
+    return out
+
+
+def _slim(row: dict, lynch_result: dict | None = None, *, scored: bool) -> dict:
+    """A dashboard row reduced to what a backtest needs, and no more."""
+    flags = (check_flags(lynch_result) if lynch_result is not None
+             else {d["code"]: d["pass"] for d in row.get("lynch_detail", [])})
+    slim = {
+        "ticker": row["ticker"],
+        "date": row["date"],
+        "close": row["close"],
+        "gain_pct": row["gain_pct"],
+        "volume_ratio": row["volume_ratio"],
+        "lynch_passes": row["lynch_passes"],
+        "lynch_total": row["lynch_total"],
+        "checks": flags,
+        "forward_returns": dict(row.get("forward_returns") or empty_returns()),
+    }
+    verdict = ({"rank": row["rank"], "score": row["score"], "verdict": row["verdict"],
+                "source": row["provenance"]["source"]} if scored
+               else {"reason": row["reason"]})
+    # The judgement first, then the facts it was made from, then what happened
+    # next: the row reads left to right as the question this file exists to
+    # answer — was that score worth anything?
+    return {"ticker": slim.pop("ticker"), "date": slim.pop("date"), **verdict, **slim}
+
+
+# ------------------------------------------------------- forward returns --
+
+def forward_returns(df: pd.DataFrame | None, burst_date) -> dict:
+    """d1/d3/d5 for one candidate, measured inside one frame.
+
+    Returns the pending shape when the frame does not carry the burst session
+    at all — a name that stopped trading, or a symbol the feed no longer
+    knows. A missing measurement is null; it is never zero, and never a guess
+    taken from the nearest bar, which would silently move the horizon.
+    """
+    out = empty_returns()
+    burst = _as_date(burst_date)
+    if df is None or burst is None or len(df) == 0 or "Close" not in df:
+        return out
+
+    sessions = [_as_date(stamp) for stamp in df.index]
+    try:
+        start = sessions.index(burst)
+    except ValueError:
+        return out
+
+    closes = df["Close"].to_numpy(dtype=float)
+    base = float(closes[start])
+    if not math.isfinite(base) or base <= 0:
+        return out
+
+    measured_at = None
+    for horizon in HORIZONS:
+        position = start + horizon
+        if position >= len(closes):
+            continue
+        later = float(closes[position])
+        if not math.isfinite(later):
+            continue
+        out[f"d{horizon}"] = _num((later / base - 1) * 100, 2)
+        measured_at = sessions[position]
+    out["as_of"] = iso_date(measured_at)
+    return out
+
+
+def _measured(row: dict) -> bool:
+    """Has this row a forward return at any horizon yet?"""
+    returns = row.get("forward_returns") or {}
+    return any(returns.get(f"d{h}") is not None for h in HORIZONS)
+
+
+def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
+    """The run's mean forward return per horizon, over SETUPS rather than rows.
+
+      d1/d3/d5  the mean over the rows in `leads` — one per setup. A horizon
+                nobody has a value for is null rather than 0.0: the dashboard
+                weights these by `n` across sessions, and a zero would be
+                averaged in as a flat session that never happened.
+      n         how many setups are behind those means. THE WEIGHT: the
+                dashboard multiplies by it when it averages across sessions,
+                so it has to be the count the mean was taken over, or the
+                weighting is arithmetic over two different denominators.
+      rows      how many rows in this run carry a return at all. `n` is what
+                the means count; `rows` is what they were collapsed from, and
+                the pair is what lets a label say which of the two it is
+                showing instead of calling rows "names".
+
+    `leads` comes from setup_leads() over the WHOLE ledger, not this run:
+    whether a row starts a setup is a question about the sessions around it,
+    and a run cannot answer it about itself.
+    """
+    counted = [row for row in rows if (row.get("ticker"), row.get("date")) in leads]
+    out: dict = {}
+    for horizon in HORIZONS:
+        key = f"d{horizon}"
+        values = [row["forward_returns"][key] for row in counted
+                  if row.get("forward_returns", {}).get(key) is not None]
+        out[key] = round(sum(values) / len(values), 2) if values else None
+    out["n"] = sum(1 for row in counted if _measured(row))
+    out["rows"] = sum(1 for row in rows if _measured(row))
+    return out
+
+
+# -------------------------------------------------------------- the file --
+
+def _malformed_rows(runs: list[dict]) -> str | None:
+    """What is wrong INSIDE these run entries, or None if nothing is.
+
+    The same rule as load()'s two checks on the document itself, one level
+    further in, and
+    it is here because both of the alternatives are defects this module has
+    already shipped once. A run entry whose `candidates` is a string is either
+    skipped silently — the row-level filter again, publishing streaks and means
+    over a record with holes nobody is told about — or iterated, which hands
+    appearance_index() a single character and raises AttributeError out of the
+    middle of a run that had already fetched its bars and paid for its scores.
+    Reproduced: `{"candidates": "AAA"}` in one entry loads clean, sets no
+    load_error, and takes the run down inside streaks().
+
+    THE LINE IS SHAPE, NOT CONTENT. write() emits one document: an object,
+    whose `runs` is a list of objects, each with `candidates` and `gated` lists
+    of objects. That structure is what every reader in this module indexes into,
+    so a break anywhere in it means the file did not come out of write() and is
+    kept rather than half-read. What a row SAYS is content — a date nothing can
+    parse stays a row this module can hold, count and rewrite, and the streak
+    layer reports it in words (see HISTORY_UNDATED) instead of crashing over it.
+    """
+    for key in ("candidates", "gated"):
+        for run in runs:
+            rows = run.get(key)
+            if not isinstance(rows, list):
+                return (f"holds a run for {run.get('date')!r} whose {key} is a JSON "
+                        f"{type(rows).__name__} rather than a list of rows")
+            if any(not isinstance(row, dict) for row in rows):
+                return (f"holds a run for {run.get('date')!r} with {key} rows that "
+                        "are not ledger rows")
+    return None
+
+
+class Ledger:
+    """docs/ledger.json, plus the docs/data.json view of the run just added.
+
+    Load it, add the run that just finished, fill in whatever forward returns
+    the new bars have made knowable, write both files. Every step is separate
+    so that the one which touches the network (fetching those bars) stays in
+    src.pipeline with the pipeline's other boundaries, and everything here can
+    be driven from a dict of frames.
+    """
+
+    def __init__(self, docs_dir: Path | str = DOCS_DIR) -> None:
+        self.docs_dir = Path(docs_dir)
+        self.runs: list[dict] = []       # ordered by session, newest first
+        self.latest: dict | None = None  # the full record of the run just added
+        #: Why `runs` is empty, when it is empty because reading failed rather
+        #: than because there was nothing to read. load() only logged that
+        #: distinction, and a log is not a place a run reports anything: step
+        #: 10 reads the history back to tell a reader that a name is a repeat,
+        #: so "there is no history" and "the history could not be read" stop
+        #: being the same answer. src.pipeline puts this in the RunReport.
+        self.load_error: str | None = None
+
+    # -- persistence ---------------------------------------------------
+    @property
+    def path(self) -> Path:
+        return self.docs_dir / LEDGER_NAME
+
+    @property
+    def data_path(self) -> Path:
+        return self.docs_dir / DATA_NAME
+
+    def load(self) -> "Ledger":
+        """Read the existing ledger. A missing or unreadable one starts empty.
+
+        A file this module cannot read is a loud warning and an empty history,
+        not a crash: the run happening now is worth more than the runs already
+        gone, and it would otherwise be lost to a file it never wrote.
+
+        But it is moved aside first, never written over. Starting a fresh
+        history on top of an unreadable one would destroy the record over a
+        transient read error or a schema bump — the accumulated outcomes are
+        the one thing here that cannot be recomputed.
+        """
+        try:
+            raw = json.loads(self.path.read_text())
+        except FileNotFoundError:
+            return self
+        except Exception as e:  # noqa: BLE001 — every failure keeps the file; see set_aside()
+            log.error("Ledger %s is unreadable (%s) — moving it aside and starting "
+                      "a new history", self.path, e)
+            return self.set_aside(f"{self.path} is unreadable ({type(e).__name__}: {e})")
+        if not isinstance(raw, dict):
+            # Valid JSON is not the same thing as a ledger. `[]`, `null`, `4`
+            # and `"docs/ledger.json"` all parse, and every one of them used to
+            # raise AttributeError out of the .get() below — out of a function
+            # whose whole contract is that it does not raise, with load_error
+            # still unset and the file NOT moved aside, so the next write()
+            # replaced it. The catch-all above covers what json.loads DOES;
+            # this covers what it returns.
+            log.error("Ledger %s is a %s, not a ledger object — moving it aside",
+                      self.path, type(raw).__name__)
+            return self.set_aside(
+                f"{self.path} holds a JSON {type(raw).__name__}, not a ledger object")
+        if raw.get("schema_version") != SCHEMA_VERSION:
+            log.error("Ledger %s is schema_version %r, not %d — moving it aside "
+                      "rather than merging into it",
+                      self.path, raw.get("schema_version"), SCHEMA_VERSION)
+            return self.set_aside(
+                f"{self.path} is schema_version {raw.get('schema_version')!r}, "
+                f"not {SCHEMA_VERSION}")
+        runs = raw.get("runs")
+        if not isinstance(runs, list):
+            # The check above covers what json.loads RETURNED; this covers what
+            # a ledger object HOLDS, and it is the same defect one level in.
+            # `{"schema_version": 1, "runs": "…"}` — or "runs" missing entirely
+            # — used to fall into an `else []` with load_error still None and
+            # the file still in place, so the next write() put a one-run ledger
+            # where a year of outcomes had been, while the run told its reader
+            # "no history has been recorded yet" about a file that held one.
+            what = ("carries no runs at all" if "runs" not in raw else
+                    f"holds a JSON {type(runs).__name__} where its runs list should be")
+            log.error("Ledger %s %s — moving it aside", self.path, what)
+            return self.set_aside(f"{self.path} {what}")
+        junk = sum(1 for row in runs if not isinstance(row, dict))
+        if junk:
+            # AND THE SAME DEFECT ONE LEVEL FURTHER IN. A row-level filter that
+            # discards silently is not a milder version of the two above: it
+            # publishes day numbers and means computed over whatever survived
+            # the filter, which is worse than publishing none, and the next
+            # write() still replaces the file the discarded rows were in.
+            #
+            # The tolerated fraction is ZERO, deliberately, because no other
+            # fraction can be justified. write() emits every run as an object,
+            # in one document, in one call; a file that parses and holds
+            # something else did not come out of write() at all — a hand-edit, a
+            # merge conflict resolved by hand, another tool, a schema change —
+            # and there is no reading of "half the rows are junk" under which
+            # the other half is a record rather than a guess. What this costs is
+            # one run's streaks; what it buys is that the file is still on disk
+            # to be repaired, which is the only thing here that cannot be
+            # recomputed.
+            log.error("Ledger %s holds %d of %d run entries that are not objects "
+                      "— moving it aside", self.path, junk, len(runs))
+            return self.set_aside(
+                f"{self.path} holds {junk} of {len(runs)} run entries that are not "
+                "ledger runs")
+        inside = _malformed_rows(runs)
+        if inside:
+            # AND ONE LEVEL FURTHER IN AGAIN. See _malformed_rows() for where
+            # this stops and why it stops there.
+            log.error("Ledger %s %s — moving it aside", self.path, inside)
+            return self.set_aside(f"{self.path} {inside}")
+        self.runs = list(runs)
+        return self
+
+    def _claim_quarantine(self) -> Path | None:
+        """An unused name for the file about to be set aside, claimed atomically.
+
+        Named for the MOMENT it was set aside, because when a file cannot be
+        read the only thing that distinguishes one casualty from the next is
+        when it happened. A second is not fine enough on its own: a cron run
+        and a hand-fired re-run of the same night fail within the same second,
+        so the name carries a counter as well.
+
+        The counter is CLAIMED rather than checked. `exists()` and then rename
+        is two operations with room for another run in between, and the rename
+        would overwrite — which is the bug this replaces: the name used to be
+        fixed, `Path.replace` silently overwrote it, and a year of quarantined
+        outcomes was destroyed on the next night by a 35-byte corrupt file. Two
+        unreadable ledgers in a row is not exotic — a SCHEMA_VERSION bump and a
+        rollback does it in two runs. O_CREAT|O_EXCL fails rather than
+        overwrites, so the placeholder it leaves is a name nothing else holds.
+
+        None when no name could be claimed — an unwritable directory, or every
+        name inside this second already taken. The caller reports that rather
+        than pressing on and overwriting. See set_aside().
+        """
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        for attempt in range(QUARANTINE_ATTEMPTS):
+            suffix = "" if attempt == 0 else f"-{attempt}"
+            spoiled = self.path.with_name(
+                f"{self.path.name}.{stamp}{suffix}.{QUARANTINE_SUFFIX}")
+            try:
+                handle = os.open(spoiled, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            except FileExistsError:
+                continue          # somebody else's casualty already has it
+            except OSError as e:  # noqa: BLE001 — an unwritable directory
+                log.error("Could not claim a quarantine name next to %s (%s)",
+                          self.path, e)
+                return None
+            os.close(handle)
+            return spoiled
+        log.error("Every quarantine name next to %s is taken", self.path)
+        return None
+
+    def set_aside(self, why: str) -> "Ledger":
+        """Keep the file this module could not read, out of the way of the one
+        it is about to write. Best effort: an unwritable directory must not
+        stop the run either, and the next write is what matters.
+
+        Public because load() is not the only way a read can fail. src.pipeline
+        catches anything load() itself did not — a bug in here, an error no
+        version of this file has met — and has to reach this too: the run goes
+        on, and write() then puts a one-run ledger where a year of outcomes
+        used to be. Every path that gives up on reading the history keeps it,
+        and keeps every EARLIER one it was already keeping.
+        """
+        spoiled = self._claim_quarantine()
+        if spoiled is None:
+            why += ("; no quarantine name could be claimed beside it, so this run "
+                    "overwrites it")
+            self.load_error = why
+            return self
+        try:
+            # Onto the empty placeholder claimed a moment ago. replace()
+            # overwrites whatever it lands on, which is what destroyed the
+            # previous casualty; here what it lands on is a nothing this call
+            # created for the purpose, so there is nothing to destroy.
+            self.path.replace(spoiled)
+        except OSError as e:  # noqa: BLE001
+            spoiled.unlink(missing_ok=True)   # never leave the empty claim behind
+            log.error("Could not move %s aside (%s); this run will overwrite it",
+                      self.path, e)
+            why += f"; it could not be moved aside ({e}) and this run overwrites it"
+        else:
+            log.error("The previous ledger is at %s — it was NOT overwritten", spoiled)
+            why += f"; the previous file is at {spoiled}"
+        self.load_error = why
+        return self
+
+    # -- the run that just happened ------------------------------------
+    def add_run(self, run: dict, candidates: list[dict], gated: list[dict]) -> dict:
+        """Record this run, and hand back the entry that was stored.
+
+        Ordered by SESSION, not by arrival: backfilling an old session puts the
+        run that just executed in the middle of the ledger rather than at its
+        head, and anything reading runs[0] for "the run that just happened" is
+        reading somebody else's run. That is why the entry is returned.
+
+        Same (date, type) replaces rather than duplicates: a run repeated after
+        a failure is the same session scanned twice, and two rows for it would
+        double-count that session in every mean computed downstream. A backfill
+        older than the MAX_RUNS the ledger keeps is dropped again immediately,
+        which is what "the file keeps a year" means.
+
+        The cost of that key, named because it is a real one: a re-run that
+        scanned a DEGRADED or partial universe replaces a complete entry with
+        a worse one, and a name in the first attempt and missing from the
+        second loses its appearance — its streak resets, and its forward
+        returns start again as pending. Double-counting a session is the worse
+        failure of the two (it corrupts every published mean, silently and
+        permanently, where this loses one night's rows visibly), so the key
+        stays; a run that knows it scanned a partial universe is better fixed
+        by not writing it than by keying around it.
+        """
+        self.latest = {"run": dict(run), "candidates": list(candidates),
+                       "gated_out": list(gated)}
+        entry = {
+            "date": run["date"],
+            "type": run["type"],
+            "bursts": run["bursts"],
+            "passed_gate": run["passed_gate"],
+            "scored": run["scored"],
+            "shortlist_size": run["shortlist_size"],
+            "score_cap": run.get("score_cap"),
+            "top_score": max((c["score"] for c in candidates if c["score"] is not None),
+                             default=None),
+            "fallbacks": sum(1 for c in candidates
+                             if c["provenance"]["source"] != "claude"),
+            "model": run.get("model"),
+            "status": run.get("status", "ok"),
+            "dry_run": bool(run.get("dry_run")),
+            "candidates": [_slim(c, scored=True) for c in candidates],
+            "gated": [_slim(g, scored=False) for g in gated],
+        }
+        self.runs = [r for r in self.runs
+                     if (r.get("date"), r.get("type")) != (entry["date"], entry["type"])]
+        self.runs.insert(0, entry)
+        self.runs.sort(key=lambda r: (str(r.get("date")), str(r.get("type"))), reverse=True)
+        del self.runs[MAX_RUNS:]
+        self._recompute_means()
+        # A backfill older than everything the file keeps was dropped again by
+        # the line above, so _recompute_means() never saw it — and the entry
+        # this hands back still has to describe itself. Alone in the ledger,
+        # every appearance in it starts its own setup.
+        entry.setdefault("forward_returns",
+                         mean_returns(entry["candidates"], setup_leads([entry])))
+        return entry
+
+    def _recompute_means(self) -> None:
+        """Every run's published mean, from the rows the ledger now holds.
+
+        Over ALL runs, not just the one that changed, because a run's mean
+        depends on runs OTHER than itself: which of its rows start a setup is
+        decided by the sessions around them, so adding a session — a backfill
+        especially — can demote a row that used to lead. A stored mean that
+        disagrees with the rows under it is the defect this module already
+        refuses to ship in a streak, and it would be worse here, because a
+        mean is what somebody reads to decide whether any of this works.
+        """
+        leads = setup_leads(self.runs)
+        for run in self.runs:
+            run["forward_returns"] = mean_returns(run.get("candidates", []), leads)
+
+    # -- forward returns -----------------------------------------------
+    def _fillable(self, through: date | None) -> list[dict]:
+        """Rows that could still gain a horizon, newest FILL_WINDOW_RUNS runs."""
+        limit = _as_date(through)
+        out = []
+        for run in self.runs[:FILL_WINDOW_RUNS]:
+            for row in list(run.get("candidates", [])) + list(run.get("gated", [])):
+                returns = row.get("forward_returns") or {}
+                if all(returns.get(f"d{h}") is not None for h in HORIZONS):
+                    continue
+                burst = _as_date(row.get("date"))
+                if burst is None or (limit is not None and burst >= limit):
+                    continue  # the sessions after it have not happened yet
+                out.append(row)
+        return out
+
+    def pending_tickers(self, through: date | None = None) -> list[str]:
+        """Which symbols this run would have to fetch to fill anything in."""
+        seen: dict[str, None] = {}
+        for row in self._fillable(through):
+            seen.setdefault(row["ticker"], None)
+        return list(seen)
+
+    def fill_forward_returns(self, frames: dict, through: date | None = None) -> int:
+        """Fill every horizon these frames make knowable. Returns how many rows moved.
+
+        Idempotent: a row already carrying d1 keeps the value it was given,
+        because the frame it came from and the frame here are the same
+        arithmetic over the same feed, and rewriting it every night would turn
+        one restated bar into a silently changing record.
+        """
+        moved = 0
+        for row in self._fillable(through):
+            frame = frames.get(row["ticker"])
+            if frame is None:
+                continue
+            fresh = forward_returns(frame, row["date"])
+            current = row.setdefault("forward_returns", empty_returns())
+            changed = False
+            for horizon in HORIZONS:
+                key = f"d{horizon}"
+                if current.get(key) is None and fresh[key] is not None:
+                    current[key] = fresh[key]
+                    changed = True
+            if changed:
+                current["as_of"] = fresh["as_of"]
+                moved += 1
+        if moved:
+            self._recompute_means()
+            self._copy_returns_into_latest()
+        return moved
+
+    def _copy_returns_into_latest(self) -> None:
+        """Keep data.json's candidate rows agreeing with the ledger's.
+
+        They differ only when a run is scanning an OLD session — a backfill,
+        `SCAN_SESSION_DATE=...` — where the sessions after the burst have
+        already happened and the returns resolve in the same run that scored
+        them. That is the only way the dashboard's score-against-outcome plot
+        can carry a point, so it is worth the copy.
+
+        Found by (date, type), NOT by position. `runs` is ordered by session,
+        so backfilling a session older than one already recorded puts the run
+        that just executed somewhere in the middle — and reading the head
+        there published a file whose candidates all said "pending" while the
+        ledger beside it held their returns.
+        """
+        if not self.latest:
+            return
+        key = (self.latest["run"]["date"], self.latest["run"]["type"])
+        head = next((r for r in self.runs if (r.get("date"), r.get("type")) == key), None)
+        if head is None:
+            return
+        for slim_rows, full_rows in ((head.get("candidates", []), self.latest["candidates"]),
+                                     (head.get("gated", []), self.latest["gated_out"])):
+            by_ticker = {row["ticker"]: row for row in slim_rows}
+            for full in full_rows:
+                slim_row = by_ticker.get(full["ticker"])
+                if slim_row is not None and "forward_returns" in full:
+                    full["forward_returns"] = dict(slim_row["forward_returns"])
+
+    # -- output ---------------------------------------------------------
+    def dashboard(self) -> dict:
+        """docs/data.json: the newest run, plus the history's headline numbers."""
+        if self.latest is None:
+            raise ValueError("no run has been added, so there is nothing to publish")
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "app": "SpicyStock",
+            "generated": _now_iso(),
+            "_contract": {
+                "about": CONTRACT_ABOUT,
+                "documented_in": "README.md, 'The dashboard contract'",
+                "invariants": list(CONTRACT_INVARIANTS),
+            },
+            "run": self.latest["run"],
+            "candidates": self.latest["candidates"],
+            "gated_out": self.latest["gated_out"],
+            "runs": [{k: v for k, v in run.items()
+                      if k not in ("candidates", "gated")} for run in self.runs],
+        }
+
+    def write(self) -> dict:
+        """Write both files. Returns {"data": path, "ledger": path}.
+
+        `allow_nan=False` on purpose: json.dump's default writes NaN and
+        Infinity as bare tokens, which is not JSON, and the dashboard's fetch
+        would fail on the whole file rather than show one gap. _num() should
+        have caught it long before here; this is the check that the check ran.
+        """
+        self.docs_dir.mkdir(parents=True, exist_ok=True)
+        ledger = {"schema_version": SCHEMA_VERSION, "app": "SpicyStock",
+                  "generated": _now_iso(), "runs": self.runs}
+        _write_json(self.path, ledger)
+        _write_json(self.data_path, self.dashboard())
+        return {"data": self.data_path, "ledger": self.path}
+
+
+def _quarantine_key(path: Path) -> tuple[str, int]:
+    """Sort casualties by WHEN they were set aside, which their names encode.
+
+    Sorting the names as strings puts the first casualty of a second last:
+    `-` (0x2d) sorts before `.` (0x2e), so `ledger.json.<stamp>-1.unreadable`
+    lands ahead of the unnumbered `ledger.json.<stamp>.unreadable` it followed,
+    and `-10` lands ahead of `-2`. Twelve casualties inside one second came
+    back c1, c10, c11, c2 … c9, c0 out of a function that promised oldest
+    first. The stamp and the counter are the two things the name carries, so
+    they are what it sorts on — the counter as a number.
+
+    The pre-stamp name (no stamp, no counter) yields ("", 0) and sorts first,
+    which is where it belongs: it can only have been written by the code that
+    came before the stamp existed.
+    """
+    middle = path.name[len(LEDGER_NAME) + 1:-(len(QUARANTINE_SUFFIX) + 1)]
+    stamp, _, counter = middle.partition("-")
+    return stamp, int(counter) if counter.isdigit() else 0
+
+
+def quarantined(docs_dir: Path | str = DOCS_DIR) -> list[Path]:
+    """Every ledger set_aside() has kept under `docs_dir`, oldest first.
+
+    The quarantine name carries the second it was written, so there is no
+    single path to look at any more — which is the point, and why this exists:
+    a caller that hard-codes one name is a caller that can only ever see the
+    newest casualty, and the older ones are exactly what the fixed name used
+    to destroy.
+
+    Ordered by _quarantine_key rather than by name, because the two disagree.
+
+    The PRE-STAMP name is looked for as well. `ledger.json.*.unreadable` needs
+    two dots and so does not match the `ledger.json.unreadable` the fixed-name
+    version left behind: such a file is never destroyed, and was invisible to
+    the one function whose whole job is finding casualties.
+    """
+    room = Path(docs_dir)
+    found = set(room.glob(f"{LEDGER_NAME}.*.{QUARANTINE_SUFFIX}"))
+    legacy = room / f"{LEDGER_NAME}.{QUARANTINE_SUFFIX}"
+    if legacy.exists():
+        found.add(legacy)
+    return sorted(found, key=_quarantine_key)
+
+
+def _write_json(path: Path, payload: dict) -> None:
+    text = json.dumps(payload, indent=2, ensure_ascii=False, allow_nan=False)
+    path.write_text(text + "\n", encoding="utf-8")
+
+
+def read_snapshot(docs_dir: Path | str = DOCS_DIR) -> tuple[dict | None, str | None]:
+    """The last run's docs/data.json, or (None, why not). Never raises.
+
+    Step 10's morning mode is a follow-through pass over the run that already
+    happened, so the snapshot IS its input. It is read here rather than in
+    src.pipeline because this module is the one that writes the file and knows
+    what a valid one looks like — including the case that matters most:
+
+    A FIXTURE IS NOT A RUN. The docs/data.json committed to this repo is
+    hand-authored (tools/make_fixture.py) and says so in run.fixture. Mailing
+    its rows as a morning watchlist would put invented tickers in front of a
+    reader as tonight's judgements, which is the worst failure this pipeline
+    could produce and would look exactly like a working one. It is refused by
+    name, with the reason, rather than silently.
+    """
+    path = Path(docs_dir) / DATA_NAME
+    try:
+        data = json.loads(path.read_text())
+    except FileNotFoundError:
+        return None, (f"{path} does not exist — no run has published a snapshot here yet")
+    except Exception as e:  # noqa: BLE001 — "never raises" means never; see below
+        # Named failures only (OSError, ValueError) held that promise for the
+        # failures somebody had thought of. json.loads raises RecursionError on
+        # a deeply nested document, which is neither, so a morning run against
+        # a data.json of "[" * 100000 exited FAILED where the design says
+        # DEGRADED and "there is nothing to follow through on". Ledger.load()
+        # was widened to the same catch-all for the same reason; this is its
+        # sibling and was left behind.
+        return None, f"{path} could not be read ({type(e).__name__}: {e})"
+    version = data.get("schema_version") if isinstance(data, dict) else None
+    if version != SCHEMA_VERSION:
+        return None, f"{path} is schema_version {version!r}, not {SCHEMA_VERSION}"
+    run = data.get("run")
+    if not isinstance(run, dict) or not isinstance(data.get("candidates"), list):
+        return None, f"{path} carries no run to follow through on"
+    if run.get("fixture"):
+        return None, (f"{path} is the hand-authored fixture (run.fixture is true), not a "
+                      "run — its rows are invented and must never be mailed as a watchlist")
+    return data, None
