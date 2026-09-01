@@ -1,0 +1,71 @@
+name: Evening scan (5:30 PM ET)
+on:
+  schedule:
+    # BACKUP ONLY. The primary trigger is an external scheduler (cron-job.org)
+    # calling the workflow_dispatch API at the exact time — see SETUP.md.
+    # These crons fire ~50 min after the target and run ONLY if no successful
+    # evening run happened today (checked via the results artifact).
+    - cron: "16 22 * * 1-5"   # backup while US is on EDT (UTC-4)
+    - cron: "16 23 * * 1-5"   # backup while US is on EST (UTC-5)
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  actions: read
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Guard — external dispatch runs always; backup cron only if needed
+        id: guard
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          OFFSET=$(TZ=America/New_York date +%z)   # -0400 = EDT, -0500 = EST
+          if [ "$OFFSET" = "-0400" ]; then BACKUP="16 22 * * 1-5"; else BACKUP="16 23 * * 1-5"; fi
+          FIRED="${{ github.event.schedule }}"
+          GO=false
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            GO=true   # primary path: external scheduler or manual run
+          elif [ "$FIRED" = "$BACKUP" ]; then
+            TODAY=$(date -u +%Y-%m-%d)
+            DONE=$(gh api "repos/${{ github.repository }}/actions/artifacts?per_page=100" \
+              -q "[.artifacts[] | select((.name|startswith(\"evening-\")) and (.created_at|startswith(\"$TODAY\")))] | length" \
+              2>/dev/null || echo "0")
+            if [ "$DONE" = "0" ]; then
+              GO=true
+              echo "Backup trigger: no successful evening run today — running now."
+            else
+              echo "Backup trigger: evening run already completed today — skipping."
+            fi
+          fi
+          echo "go=$GO" >> "$GITHUB_OUTPUT"
+          echo "offset=$OFFSET fired='$FIRED' -> go=$GO"
+      - uses: actions/setup-python@v5
+        if: steps.guard.outputs.go == 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        if: steps.guard.outputs.go == 'true'
+        run: pip install -r requirements.txt
+      - name: Run evening pipeline
+        if: steps.guard.outputs.go == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: python -m src.pipeline evening
+      - name: Upload results archive
+        if: steps.guard.outputs.go == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: evening-${{ github.run_id }}
+          path: |
+            results/
+            charts/
+          retention-days: 30
