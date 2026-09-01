@@ -11,14 +11,14 @@
 # downloads client_secret_*.json, and Google's OAuth libraries conventionally
 # write token.json / credentials.json — relevant here because SETUP.md still
 # walks through the Gmail OAuth flow and then says to run `git add .`
-# (SETUP.md:101).
+# (SETUP.md, Part 4).
 # A filename denylist can never be complete. The backstops are the gitleaks
 # job in .github/workflows/secret-scan.yml and GitHub push protection.
 secrets.json
 secrets.yaml
 secrets.yml
 secrets.toml
-secrets/
+/secrets/
 credentials*.json
 client_secret*.json
 token.json
@@ -28,7 +28,7 @@ token.json
 # Logs. A redirected run (`python -m src.pipeline evening > run.log 2>&1`)
 # lands here, and `git add .` would commit it.
 *.log
-logs/
+/logs/
 nohup.out
 
 # Run artifacts, written into the repo root. Anchored with a leading slash so

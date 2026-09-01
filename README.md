@@ -53,7 +53,8 @@ what `.github/workflows/evening.yml` reads, and `.env.example` explains each:
 `.github/workflows/evening.yml` then fires on weekdays and can be triggered
 manually from the Actions tab.
 
-> **Note:** there is only one workflow, and it fires at 6:16 PM ET — 22:16 UTC
+> **Note:** there is only one *pipeline* workflow (`secret-scan.yml` is the
+> other file in that directory), and it fires at 6:16 PM ET — 22:16 UTC
 > under EDT, 23:16 UTC under EST — not the 5:30 PM this README claims
 > elsewhere. Both crons are registered and the guard no-ops the wrong one. It is
 > labelled backup-only for an external trigger you should not set up. The
@@ -64,9 +65,10 @@ manually from the Actions tab.
 > `SETUP.md` is kept only as a record of the original build — do not follow it.
 
 **Credential safety.** `.gitignore` blocks the credential filenames we can
-predict, and `.github/workflows/secret-scan.yml` runs gitleaks over full
-history on every push — that catches a key pasted into an arbitrary file, a
-committed log, or a secret in a commit message. Turning on GitHub secret
+predict, and `.github/workflows/secret-scan.yml` runs gitleaks on every push
+and a full-history sweep weekly — that catches a key pasted into an arbitrary
+file or a log committed by accident. It scans patch content, so a secret in a
+commit *message* is not covered. Turning on GitHub secret
 scanning with push protection (Settings → Code security) adds a second layer
 that rejects the push before it lands; it is free on public repos and part of
 paid Secret Protection on private ones.
@@ -99,8 +101,9 @@ python -m tests.test_pipeline   # currently fails: imports detect_burst,
 
 ## Costs and limits
 
-> **Note:** everything below this line, and the pipeline diagram above, still
-> describes the original yfinance build. The code uses Alpaca. The real Layer-1
+> **Note:** the pipeline diagram above, and most of this section, still
+> describe the original yfinance build (the data-source and retention bullets
+> below have been corrected; the rest have not). The real Layer-1
 > filter is `≥4% gain · today's volume ≥ yesterday's · volume > 5,000,000
 > shares · close > $4.00` — there is no 50-day-average or dollar-volume gate,
 > and `ScanConfig` exposes only `min_price`, `min_gain_pct`, `min_today_volume`,
