@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .lynch import evaluate_2lynch, extra_context
-from .scanner import ScanConfig, run_scan
+from .scanner import ScanConfig, get_universe, run_scan
 from .scorer import render_chart, score_all
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -79,7 +79,12 @@ def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None) 
 
     results = score_all(scored_inputs, top_n=TOP_N, min_lynch=MIN_LYNCH_PASSES)
 
-    stats = {"universe": "US common stocks", "bursts": n_bursts, "gated": len(gated)}
+    # Report the universe actually scanned. This said "US common stocks" while
+    # the scan had been narrowed to a checked-in list, so the daily email
+    # described a market it no longer looks at.
+    scanned = len(tickers) if tickers else len(get_universe())
+    stats = {"universe": f"{scanned} checked-in US common stocks",
+             "bursts": n_bursts, "gated": len(gated)}
     path = archive(results, run_type)
     log.info("Archived shortlist to %s", path)
 

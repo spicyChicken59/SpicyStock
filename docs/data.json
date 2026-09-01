@@ -399,7 +399,7 @@
       "score": 7.4,
       "verdict": "B+",
       "reason": "Tight consolidation broke on good volume, but the prior advance was choppy rather than linear.",
-      "key_risk": "thin float, wide spreads",
+      "key_risk": "liquidity thinner than the tape suggests",
       "provenance": {
         "source": "claude",
         "model": "claude-sonnet-4-6",
@@ -1159,7 +1159,7 @@
       "score": 4.9,
       "verdict": "C",
       "reason": "Low-priced name near the price floor; three prior bursts and a wide base make this a poor setup.",
-      "key_risk": "under $4, prone to fades",
+      "key_risk": "low base quality, prone to fades",
       "provenance": {
         "source": "claude",
         "model": "claude-sonnet-4-6",
@@ -1918,8 +1918,8 @@
       ],
       "score": 2.8,
       "verdict": "skip",
-      "reason": "Sub-$4 name with a 9% pop on no base; historically these give it all back within days.",
-      "key_risk": "sub-$4, no base",
+      "reason": "A 9% pop on no base; historically these give it all back within days.",
+      "key_risk": "no base under the move",
       "provenance": {
         "source": "claude",
         "model": "claude-sonnet-4-6",

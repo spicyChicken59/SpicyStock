@@ -97,7 +97,7 @@ SPEC = [
       (-14.1, 233.8, 44.7, 61.9)),
     C("SEZL", 92.44, 7.08, 1204800, 486300, 7.4, "B+",
       "Tight consolidation broke on good volume, but the prior advance was choppy rather than linear.",
-      "thin float, wide spreads", "claude", False,
+      "liquidity thinner than the tape suggests", "claude", False,
       (2, 0.41, 16.3, 8.7, 2.6, 0.79, 0.9, 2.1, 0.98, 0.89),
       (-6.3, 287.4, 52.1, 118.6)),
     C("AMSC", 41.18, 4.62, 3287400, 1442900, 7.1, "B+",
@@ -141,7 +141,7 @@ SPEC = [
       (-41.7, 38.2, 9.4, -6.8)),
     C("PLUG", 3.94, 6.49, 48213700, 21094800, 4.9, "C",
       "Low-priced name near the price floor; three prior bursts and a wide base make this a poor setup.",
-      "under $4, prone to fades", "claude", True,
+      "low base quality, prone to fades", "claude", True,
       (3, 0.39, 14.8, 7.2, 7.1, 1.29, 1.5, 3.3, 1.13, 0.74),
       (-52.3, 24.6, 4.2, -18.9)),
     C("SMR", 27.41, 4.09, 9932100, 4761300, 4.7, "C",
@@ -190,8 +190,8 @@ SPEC = [
       (1, 0.45, 16.8, 9.4, 8.3, 1.68, 1.9, 4.1, 1.24, 0.73),
       (-36.2, 41.9, 5.6, -9.7)),
     C("GEVO", 3.12, 9.47, 19883100, 8214600, 2.8, "skip",
-      "Sub-$4 name with a 9% pop on no base; historically these give it all back within days.",
-      "sub-$4, no base", "claude", True,
+      "A 9% pop on no base; historically these give it all back within days.",
+      "no base under the move", "claude", True,
       (4, 0.28, 11.2, 5.8, 9.1, 1.74, 1.7, 4.6, 1.09, 0.75),
       (-71.8, 14.2, -8.4, -34.2)),
 ]
@@ -372,6 +372,15 @@ for _row in candidates + gated_out:
         assert _row["volume"] >= _row["prev_volume"], f'{_row["ticker"]} volume < prev_volume'
     assert _row["gain_pct"] >= _CFG.min_gain_pct, f'{_row["ticker"]} gain {_row["gain_pct"]} < 4%'
 assert len({r["ticker"] for r in candidates + gated_out}) == len(candidates) + len(gated_out)
+
+# _remap rebinds every row to a different symbol and may lift its price, so any
+# prose naming an absolute price would contradict the numbers shipped beside it.
+import re as _re
+for _row in candidates:
+    _txt = " ".join(str(_row.get(k) or "") for k in ("reason", "key_risk"))
+    for _m in _re.finditer(r"(?:under|sub-|below)\s*\$?(\d+(?:\.\d+)?)", _txt, _re.I):
+        assert _row["close"] <= float(_m.group(1)), (
+            f'{_row["ticker"]} close ${_row["close"]} contradicts its own text "{_m.group(0)}"')
 print(f"fixture: {len(candidates)} scored + {len(gated_out)} gated, all in a {len(UNIVERSE)}-name universe, all clearing Layer-1")
 
 with open(out, "w") as f:

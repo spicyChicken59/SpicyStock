@@ -14,7 +14,7 @@ import pytest
 from src.emailer import build_html, send_email
 from src.scorer import render_chart
 
-STATS = {"universe": "US common stocks", "bursts": 42, "gated": 12}
+STATS = {"universe": "230 checked-in US common stocks", "bursts": 42, "gated": 12}
 
 
 def make_result(ticker: str, **overrides) -> dict:

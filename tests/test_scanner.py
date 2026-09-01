@@ -8,6 +8,8 @@ through a mocked Alpaca client without a key or a socket.
 
 from __future__ import annotations
 
+import pathlib
+
 import pytest
 
 from src.scanner import Candidate, ScanConfig, detect_setup, get_clients, run_scan
@@ -70,35 +72,70 @@ def test_run_scan_survives_a_symbol_with_no_bars(fake_alpaca, ohlcv):
     assert [c.ticker for c in candidates] == ["BURST"]
 
 
-# --- the rejection paths, added after the batch-1 audit found detect_setup was
-# tested on one of its five rules: every fixture bailed at rule 1 (gain < 4%),
-# so rules 2, 3 and 5 and the prev_close guard had no coverage at all.
-# Still threshold-agnostic: each case mutates a frame that otherwise passes,
-# and reads the boundary off ScanConfig rather than hard-coding a number.
+# --- the rejection paths. Rewritten after mutation testing showed the first
+# version was not load-bearing: it set today's volume to prev-1, which was also
+# below the 5,000,000 floor, so the rejection it observed was rule 3's, not
+# rule 2's. Deleting rule 2 -- or rule 1, the 4% gain the product is named
+# after -- left the suite green.
+#
+# Each test below now fails EXACTLY ONE rule and asserts that the frame it
+# started from still passes, so the rejection can only be the named rule's.
+# Still threshold-agnostic: every boundary is read off ScanConfig.
+
+FLOOR_HEADROOM = 1_500_000
+
 
 def _passing(ohlcv):
-    frame = ohlcv("burst")
-    assert detect_setup(frame, ScanConfig()) is not None, "fixture must pass first"
+    frame = ohlcv("burst").copy()
+    cfg = ScanConfig()
+    # Lift both volumes clear of the floor so a rule-2 violation cannot also
+    # trip rule 3, which is exactly how the first version of this test failed.
+    vol = frame.columns.get_loc("Volume")
+    frame.iloc[-1, vol] = cfg.min_today_volume + 2 * FLOOR_HEADROOM
+    frame.iloc[-2, vol] = cfg.min_today_volume + FLOOR_HEADROOM
+    assert detect_setup(frame, cfg) is not None, "the baseline frame must pass every rule"
     return frame
 
 
+def test_rule1_a_gain_below_the_threshold_is_rejected(ohlcv):
+    """The 4% gain. Deleting this rule used to leave the suite green."""
+    cfg = ScanConfig()
+    frame = _passing(ohlcv)
+    close = frame.columns.get_loc("Close")
+    prev_close = float(frame["Close"].iloc[-2])
+    # A gain of a quarter the threshold, with the price still clear of the floor.
+    frame.iloc[-1, close] = prev_close * (1 + cfg.min_gain_pct / 400)
+    assert float(frame["Close"].iloc[-1]) > cfg.min_price
+    assert float(frame["Volume"].iloc[-1]) > cfg.min_today_volume
+    assert float(frame["Volume"].iloc[-1]) >= float(frame["Volume"].iloc[-2])
+    assert detect_setup(frame, cfg) is None
+
+
 def test_rule2_volume_below_the_previous_day_is_rejected(ohlcv):
-    frame = _passing(ohlcv).copy()
-    frame.iloc[-1, frame.columns.get_loc("Volume")] = frame["Volume"].iloc[-2] - 1
-    assert detect_setup(frame, ScanConfig()) is None
+    cfg = ScanConfig()
+    frame = _passing(ohlcv)
+    vol = frame.columns.get_loc("Volume")
+    # Below yesterday, but still clear of the floor, so only rule 2 can fire.
+    frame.iloc[-1, vol] = float(frame["Volume"].iloc[-2]) - 1
+    assert float(frame["Volume"].iloc[-1]) > cfg.min_today_volume
+    assert detect_setup(frame, cfg) is None
 
 
 def test_rule3_volume_at_or_below_the_floor_is_rejected(ohlcv):
     cfg = ScanConfig()
-    frame = _passing(ohlcv).copy()
-    frame.iloc[-1, frame.columns.get_loc("Volume")] = cfg.min_today_volume
-    frame.iloc[-2, frame.columns.get_loc("Volume")] = cfg.min_today_volume - 1
+    frame = _passing(ohlcv)
+    vol = frame.columns.get_loc("Volume")
+    # At the floor, and still >= yesterday, so only rule 3 can fire.
+    frame.iloc[-1, vol] = cfg.min_today_volume
+    frame.iloc[-2, vol] = cfg.min_today_volume - 1
     assert detect_setup(frame, cfg) is None
 
 
 def test_rule5_price_at_or_below_the_floor_is_rejected(ohlcv):
     cfg = ScanConfig()
-    frame = _passing(ohlcv).copy()
+    frame = _passing(ohlcv)
+    # Scale the whole OHLC band so the gain percentage is untouched and only
+    # the price floor can reject it.
     scale = cfg.min_price / float(frame["Close"].iloc[-1])
     for col in ("Open", "High", "Low", "Close"):
         frame[col] = frame[col] * scale
@@ -106,17 +143,20 @@ def test_rule5_price_at_or_below_the_floor_is_rejected(ohlcv):
 
 
 def test_a_zero_previous_close_cannot_divide(ohlcv):
-    frame = _passing(ohlcv).copy()
+    frame = _passing(ohlcv)
     frame.iloc[-2, frame.columns.get_loc("Close")] = 0.0
     assert detect_setup(frame, ScanConfig()) is None
 
 
-def test_the_production_path_reads_the_symbol_file(fake_alpaca, ohlcv, tmp_path):
-    """Every other end-to-end test passes tickers=, so run_scan(universe=None)
-    -- the path the cron actually takes -- was never executed."""
+def test_the_production_path_reads_the_symbol_file(fake_alpaca, ohlcv, tmp_path, monkeypatch):
+    """run_scan(universe=None) -- the path the cron takes. Uses symbols that are
+    NOT in the real data/symbols.txt, so the test fails if the argument is
+    ignored and the default file is read instead."""
     symbols = tmp_path / "symbols.txt"
-    symbols.write_text("# a comment\n\nAAPL\nMSFT\n")
-    fake_alpaca.add_history("AAPL", ohlcv("burst"))
-    fake_alpaca.add_history("MSFT", ohlcv("flat"))
+    symbols.write_text("# a comment\n\nZZZA\nZZZB\n")
+    fake_alpaca.add_history("ZZZA", ohlcv("burst"))
+    fake_alpaca.add_history("ZZZB", ohlcv("flat"))
+    real = (pathlib.Path(__file__).resolve().parent.parent / "data" / "symbols.txt").read_text()
+    assert "ZZZA" not in real, "the fixture symbols must not exist in the real file"
     found = run_scan(ScanConfig(), symbols_file=str(symbols))
-    assert [c.ticker for c in found] == ["AAPL"]
+    assert [c.ticker for c in found] == ["ZZZA"]
