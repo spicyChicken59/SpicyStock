@@ -64,6 +64,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import os
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -86,6 +87,17 @@ HORIZONS = (1, 3, 5)
 DOCS_DIR = Path("docs")
 DATA_NAME = "data.json"
 LEDGER_NAME = "ledger.json"
+
+#: What a ledger this module could not read is renamed to: the file's own name,
+#: the UTC second it was set aside, and this. The stamp is in there because a
+#: FIXED name meant the second casualty silently replaced the first — see
+#: Ledger.set_aside(), and quarantined(), which is how to find them all.
+QUARANTINE_SUFFIX = "unreadable"
+
+#: How many names may be tried inside one second before giving up. Reaching the
+#: end means a hundred ledgers were quarantined in the same second, which is a
+#: loop somewhere, not a night's work.
+QUARANTINE_ATTEMPTS = 100
 
 #: How many runs the ledger keeps. ~260 sessions is a trading year; beyond it
 #: the oldest run is dropped, and dropped means gone — the file is the record.
@@ -119,6 +131,14 @@ FILL_WINDOW_RUNS = 10
 #: nothing downstream trades off it.
 MAX_STREAK_GAP_SESSIONS = max(HORIZONS)
 
+#: Why a streak carries no day number. Each is a statement about the RECORD,
+#: never about the market, and they are kept apart because a reader who is told
+#: "we cannot say" acts differently from one told "this is new" — and the file
+#: error, the empty file and the shallow file are three different repairs.
+NO_HISTORY = "no_history"                    # the ledger holds no run at all
+HISTORY_UNREADABLE = "history_unreadable"    # it was set aside; see Ledger.load()
+WINDOW_NOT_COVERED = "window_not_covered"    # it does not reach back far enough
+
 #: The invariants, in the file rather than only in the docs. tools/make_fixture.py
 #: imports this list rather than holding a second copy, so the hand-authored
 #: fixture and the pipeline's real output can never describe different contracts
@@ -131,7 +151,9 @@ CONTRACT_INVARIANTS = [
     "forward_returns and runs[].forward_returns are null until the sessions exist. Absent is null, never 0 and never a string.",
     "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
     "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
-    "Every burst carries streak — day (1 for a setup starting today), first_seen, last_seen, last_score, last_verdict, seen_before — or null when the run could not read its own history. day is 1 exactly when first_seen is the burst's own session, and last_seen is null exactly when seen_before is 0. A null streak means unknown; it never collapses to a confident day 1.",
+    "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on; otherwise day and first_seen are null and unknown_reason is one of no_history, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
+    "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was ('lynch_gate' rejected by the checklist, 'score_cap' passed but out of calls). Null exactly with last_seen. A gate rejection is never published as an absence of judgement.",
+    "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
     "Numbers are numbers or null. No 'n/a' strings.",
 ]
 
@@ -267,6 +289,15 @@ def appearance_index(runs: list[dict]) -> dict[str, list[dict]]:
     whether or not the checklist let it through to a score — a name gated out
     on Monday and scored on Tuesday is on day 2, not day 1.
 
+    Counting a gated burst is only honest if the reader is TOLD it was gated,
+    which is what `outcome` carries: "scored", or the ledger row's own reason
+    for never being scored. Without it the streak said "last seen Friday, not
+    scored then" over a name the pipeline had looked at and thrown out at the
+    quality gate — an absence of judgement standing in for a rejection — and
+    said exactly the same words over one that passed every check and lost its
+    place to twenty-five better names. `_slim` keeps that reason; this is
+    where it stops being discarded on the way to the streak.
+
     Keyed by session inside a ticker so that a session scanned twice (a run
     repeated after a failure writes a second entry under a different run type)
     is one appearance, not two. A scored appearance wins over a gated one for
@@ -287,30 +318,123 @@ def appearance_index(runs: list[dict]) -> dict[str, list[dict]]:
                     "date": day,
                     "score": _num(row.get("score")) if scored else None,
                     "verdict": row.get("verdict") if scored else None,
+                    # The record's own word, not a word chosen here. Today the
+                    # pipeline writes "lynch_gate" and "score_cap"; a reason it
+                    # learns to write tomorrow arrives at the reader intact
+                    # rather than flattened back into "not scored".
+                    "outcome": "scored" if scored else (row.get("reason") or None),
                 }
     return {ticker: [by_session[k] for k in sorted(by_session)]
             for ticker, by_session in seen.items()}
 
 
-def streak(history: list[dict], session) -> dict:
+def oldest_session(runs: list[dict]) -> date | None:
+    """The oldest session this ledger holds a run for, or None if it holds none.
+
+    How far back the record has actually LOOKED, which is a different question
+    from how far back it goes: a run is a night this pipeline scanned, so a
+    name absent from every run between two dates was absent from the market's
+    4% bursts on those nights — and a date with no run at all says nothing
+    either way. See _why_no_day().
+    """
+    days = [day for day in (_as_date(run.get("date")) for run in runs)
+            if day is not None]
+    return min(days) if days else None
+
+
+def _why_no_day(history_from: date | None, first: date | None) -> str | None:
+    """Whether the record has looked far enough back to count days at all.
+
+    ABSENCE OF EVIDENCE IS ONLY EVIDENCE OF ABSENCE ONCE YOU HAVE LOOKED FAR
+    ENOUGH BACK. "day 1 — new setup" is not a reading of the ledger; it is the
+    claim that nothing preceded this burst, and on an empty file that claim is
+    made out of nothing at all. It shipped in the same email row as `FAIL
+    2_first_or_second_burst: 2 prior 4% bursts in last 20 days`, three lines
+    below — two sources answering one reader's question and contradicting each
+    other, because the price frame had looked back twenty sessions and the
+    ledger had looked back none.
+
+    So a day number requires the ledger to reach at least
+    MAX_STREAK_GAP_SESSIONS sessions before the session the claim is about.
+    That is the window in which an earlier appearance would have joined this
+    setup, so reaching past it is exactly what makes "nothing preceded this"
+    a reading rather than a guess.
+
+    Measured from `first` — where the chain of appearances starts — and not
+    from the burst's own session, because `first` is where the absence claim
+    is actually made. For day 1 the two are the same date and this is the rule
+    as written. For a longer chain, `first` is the older one, so this only
+    ever refuses a number the other reading would have allowed: a name bursting
+    on every session back to the oldest run in the file is not demonstrably on
+    day 6 rather than day 12.
+
+    A FLOOR, not a proof. It says the file reaches back past the window; it
+    cannot say every session inside the window was scanned, so a night the
+    workflow failed can still hide an appearance. It closes the case where
+    there is no evidence at all, which is the one that ships on every first
+    run — docs/ledger.json is not committed, so the first production run after
+    this prints it against every candidate.
+    """
+    if history_from is None:
+        return NO_HISTORY
+    reach = sessions_between(history_from, first)
+    if reach is None or reach < MAX_STREAK_GAP_SESSIONS:
+        return WINDOW_NOT_COVERED
+    return None
+
+
+def unknown_streak(reason: str) -> dict:
+    """A streak block that carries no day number, and says which of the three
+    reasons it does not.
+
+    Public because src.pipeline holds the one state this module cannot see: a
+    history that could not be READ. An unreadable ledger and an empty one look
+    identical from in here — both are `runs == []` — and they are different
+    sentences, only one of which is about the market.
+    """
+    return {"day": None, "unknown_reason": reason, "first_seen": None,
+            "last_seen": None, "last_score": None, "last_verdict": None,
+            "last_outcome": None, "seen_before": 0}
+
+
+def streak(history: list[dict], session, *, history_from: date | None) -> dict:
     """Where a burst on `session` sits in this name's run of appearances.
 
       day          this appearance's place in the current setup, counting only
                    the sessions it actually burst on. `day: 3` is the third
                    such session, NOT the third calendar session since the
-                   setup began — a gap cannot inflate it.
+                   setup began — a gap cannot inflate it. NULL when the record
+                   has not looked far enough back to say; see _why_no_day().
+      unknown_reason  which of no_history / history_unreadable /
+                   window_not_covered left `day` null. Null when day is a
+                   number, so the two can never both be answers.
       first_seen   the session the current setup started on. Equals the
-                   burst's own session exactly when day is 1.
+                   burst's own session exactly when day is 1, and is null
+                   exactly when day is: it is the same claim — where this
+                   setup began — and it cannot be known when day is not.
       last_seen    the most recent EARLIER appearance anywhere in the ledger,
                    or null for a name it has never carried. Deliberately not
                    restricted to the current setup: "seen three weeks ago,
-                   day 1 today" is a true and useful pair of facts.
+                   day 1 today" is a true and useful pair of facts. It stays
+                   a fact when day is unknown, so it is still reported then.
       last_score   what that earlier appearance was scored, and its verdict,
                    or null when it was a burst the gate rejected. They
                    describe the appearance `last_seen` names and no other.
+      last_outcome what happened to that appearance: "scored", or the reason
+                   it never was ("lynch_gate" — the checklist rejected it;
+                   "score_cap" — it passed and better names filled the night's
+                   calls). Null with last_seen. A null last_score means "no
+                   number"; it took this field to say WHY, and until it
+                   existed a rejection and a model outage read the same.
       seen_before  how many earlier sessions this ticker burst on, in the
                    runs the ledger still keeps. "Never seen before" therefore
-                   means "not in the last MAX_RUNS runs", not "not ever".
+                   means "not in the last MAX_RUNS runs", not "not ever" —
+                   and 0 alongside a null day means "nothing in a record that
+                   cannot answer", not "nothing ever happened".
+
+    `history_from` is the oldest session the whole ledger holds a run for (see
+    oldest_session), not this ticker's own history: how far back the FILE
+    looked decides whether an absence in it means anything.
 
     Appearances ON `session` itself are excluded: re-running a session already
     in the ledger must not turn every name in it into a repeat of itself, and
@@ -331,27 +455,90 @@ def streak(history: list[dict], session) -> dict:
         first = chain_end = row["date"]
 
     last = prior[-1] if prior else None
-    return {
+    block = {
         "day": day,
+        "unknown_reason": None,
         "first_seen": iso_date(first),
         "last_seen": iso_date(last["date"]) if last else None,
         "last_score": last["score"] if last else None,
         "last_verdict": last["verdict"] if last else None,
+        "last_outcome": last["outcome"] if last else None,
         "seen_before": len(prior),
     }
+    unknown = _why_no_day(history_from, first)
+    if unknown:
+        # The count and the last sighting survive: they are what the file
+        # holds. `day` and `first_seen` do not, because both are claims about
+        # what came BEFORE the earliest appearance in view, and that is the
+        # one thing a record this shallow cannot answer.
+        block.update(day=None, unknown_reason=unknown, first_seen=None)
+    return block
 
 
-def streaks(runs: list[dict], tickers, session) -> dict[str, dict]:
+def streaks(runs: list[dict], tickers, session,
+            *, unreadable: str | None = None) -> dict[str, dict]:
     """One streak block per ticker, against the history in `runs`.
 
-    An empty ledger is a fine answer — every name is on day 1 and the record
-    says so. An UNREADABLE ledger is not: see Ledger.load_error and the null
-    `streak` src.pipeline publishes for it, because "we have never seen this
-    name" and "we could not read the file that would know" are different
-    sentences and only one of them is a claim about the market.
+    Three answers, and they are three because collapsing any pair of them puts
+    a claim about the market where a fact about a file belongs:
+
+      the ledger could not be READ      `unreadable` — every name unknown
+      the ledger holds nothing          no_history
+      it holds too little to say        window_not_covered
+
+    `unreadable` is passed in rather than inferred, because from here a
+    history that failed to parse and one that was never written look the same:
+    both are `runs == []`. Ledger.load_error is what knows the difference.
     """
+    if unreadable:
+        return {ticker: unknown_streak(HISTORY_UNREADABLE) for ticker in tickers}
     index = appearance_index(runs)
-    return {ticker: streak(index.get(ticker, []), session) for ticker in tickers}
+    history_from = oldest_session(runs)
+    return {ticker: streak(index.get(ticker, []), session, history_from=history_from)
+            for ticker in tickers}
+
+
+def setup_leads(runs: list[dict]) -> set[tuple[str, str]]:
+    """(ticker, session) for every appearance that STARTS a setup.
+
+    The unit an average has to be taken over. A name that bursts on five
+    consecutive sessions is ONE setup, not five observations: its d1/d3/d5
+    windows overlap and measure largely the same move, so counting each
+    session's row weights that single move five times against a name that
+    burst once. Two tickers — one bursting five sessions running at +20%, one
+    one-off at -10% — published a mean of +15.0% over "6 names", where the
+    honest reading is +5.0% over 2.
+
+    README's reason for making the morning run write-free is this argument
+    applied one session deep ("a second entry for one session would count that
+    burst twice in every average across runs"); this is the same argument one
+    session further out, where the double-counting is not a repeated row but a
+    repeated MOVE.
+
+    The setup is represented by its first appearance because that is the one
+    whose horizons are furthest along, and because it is stable: a later
+    session cannot change which row led. Where the record does not reach back
+    to the setup's real start, the earliest appearance IN VIEW leads, which is
+    the only row there is to choose.
+
+    What it cannot do is see a session the record does not hold. A night the
+    workflow failed, or a holiday inside a gap (sessions_between counts
+    weekends only, so a gap reads one session longer than it was), can break
+    one setup into two chains and count it twice. That is a smaller version of
+    the same error, bounded to holes in the record rather than applying to
+    every consecutive session — and it is the direction this module errs in
+    everywhere: it under-claims that two bursts are one episode rather than
+    inventing continuity the market did not have.
+    """
+    leads: set[tuple[str, str]] = set()
+    for ticker, appearances in appearance_index(runs).items():
+        previous = None
+        for row in appearances:
+            gap = sessions_between(previous, row["date"]) if previous else None
+            if gap is None or gap > MAX_STREAK_GAP_SESSIONS:
+                leads.add((ticker, iso_date(row["date"])))
+            previous = row["date"]
+    return leads
 
 
 # ------------------------------------------------------- dashboard rows --
@@ -378,9 +565,12 @@ def candidate_record(cand, lynch_result: dict, context: dict, score_row: dict,
                      streak_block: dict | None = None) -> dict:
     """One scored candidate, in the shape docs/data.json's contract describes.
 
-    `streak_block` is None when this run could not read its history — see
-    streaks(). Null there means "unknown", the same way every other number in
-    this file means it; it never collapses to a confident day 1.
+    `streak_block` may still be None, and null still means "unknown" the way
+    every other number in this file means it. But the states that used to
+    arrive as null now arrive as a BLOCK with a null `day` and an
+    `unknown_reason` — "the history could not be read" and "it does not reach
+    back far enough" are answers a reader can act on, and a bare null said
+    neither. Nothing here ever collapses to a confident day 1.
     """
     return {
         "rank": rank,
@@ -507,22 +697,41 @@ def forward_returns(df: pd.DataFrame | None, burst_date) -> dict:
     return out
 
 
-def mean_returns(rows: list[dict]) -> dict:
-    """The run's mean forward return per horizon, and how many names are behind it.
+def _measured(row: dict) -> bool:
+    """Has this row a forward return at any horizon yet?"""
+    returns = row.get("forward_returns") or {}
+    return any(returns.get(f"d{h}") is not None for h in HORIZONS)
 
-    A horizon nobody has a value for is null rather than 0.0: the dashboard
-    weights these by `n` across sessions, and a zero would be averaged in as a
-    flat session that never happened.
+
+def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
+    """The run's mean forward return per horizon, over SETUPS rather than rows.
+
+      d1/d3/d5  the mean over the rows in `leads` — one per setup. A horizon
+                nobody has a value for is null rather than 0.0: the dashboard
+                weights these by `n` across sessions, and a zero would be
+                averaged in as a flat session that never happened.
+      n         how many setups are behind those means. THE WEIGHT: the
+                dashboard multiplies by it when it averages across sessions,
+                so it has to be the count the mean was taken over, or the
+                weighting is arithmetic over two different denominators.
+      rows      how many rows in this run carry a return at all. `n` is what
+                the means count; `rows` is what they were collapsed from, and
+                the pair is what lets a label say which of the two it is
+                showing instead of calling rows "names".
+
+    `leads` comes from setup_leads() over the WHOLE ledger, not this run:
+    whether a row starts a setup is a question about the sessions around it,
+    and a run cannot answer it about itself.
     """
+    counted = [row for row in rows if (row.get("ticker"), row.get("date")) in leads]
     out: dict = {}
     for horizon in HORIZONS:
         key = f"d{horizon}"
-        values = [row["forward_returns"][key] for row in rows
+        values = [row["forward_returns"][key] for row in counted
                   if row.get("forward_returns", {}).get(key) is not None]
         out[key] = round(sum(values) / len(values), 2) if values else None
-    out["n"] = sum(1 for row in rows
-                   if any(row.get("forward_returns", {}).get(f"d{h}") is not None
-                          for h in HORIZONS))
+    out["n"] = sum(1 for row in counted if _measured(row))
+    out["rows"] = sum(1 for row in rows if _measured(row))
     return out
 
 
@@ -579,6 +788,18 @@ class Ledger:
             log.error("Ledger %s is unreadable (%s) — moving it aside and starting "
                       "a new history", self.path, e)
             return self.set_aside(f"{self.path} is unreadable ({type(e).__name__}: {e})")
+        if not isinstance(raw, dict):
+            # Valid JSON is not the same thing as a ledger. `[]`, `null`, `4`
+            # and `"docs/ledger.json"` all parse, and every one of them used to
+            # raise AttributeError out of the .get() below — out of a function
+            # whose whole contract is that it does not raise, with load_error
+            # still unset and the file NOT moved aside, so the next write()
+            # replaced it. The catch-all above covers what json.loads DOES;
+            # this covers what it returns.
+            log.error("Ledger %s is a %s, not a ledger object — moving it aside",
+                      self.path, type(raw).__name__)
+            return self.set_aside(
+                f"{self.path} holds a JSON {type(raw).__name__}, not a ledger object")
         if raw.get("schema_version") != SCHEMA_VERSION:
             log.error("Ledger %s is schema_version %r, not %d — moving it aside "
                       "rather than merging into it",
@@ -590,6 +811,46 @@ class Ledger:
         self.runs = [r for r in runs if isinstance(r, dict)] if isinstance(runs, list) else []
         return self
 
+    def _claim_quarantine(self) -> Path | None:
+        """An unused name for the file about to be set aside, claimed atomically.
+
+        Named for the MOMENT it was set aside, because when a file cannot be
+        read the only thing that distinguishes one casualty from the next is
+        when it happened. A second is not fine enough on its own: a cron run
+        and a hand-fired re-run of the same night fail within the same second,
+        so the name carries a counter as well.
+
+        The counter is CLAIMED rather than checked. `exists()` and then rename
+        is two operations with room for another run in between, and the rename
+        would overwrite — which is the bug this replaces: the name used to be
+        fixed, `Path.replace` silently overwrote it, and a year of quarantined
+        outcomes was destroyed on the next night by a 35-byte corrupt file. Two
+        unreadable ledgers in a row is not exotic — a SCHEMA_VERSION bump and a
+        rollback does it in two runs. O_CREAT|O_EXCL fails rather than
+        overwrites, so the placeholder it leaves is a name nothing else holds.
+
+        None when no name could be claimed — an unwritable directory, or every
+        name inside this second already taken. The caller reports that rather
+        than pressing on and overwriting. See set_aside().
+        """
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        for attempt in range(QUARANTINE_ATTEMPTS):
+            suffix = "" if attempt == 0 else f"-{attempt}"
+            spoiled = self.path.with_name(
+                f"{self.path.name}.{stamp}{suffix}.{QUARANTINE_SUFFIX}")
+            try:
+                handle = os.open(spoiled, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            except FileExistsError:
+                continue          # somebody else's casualty already has it
+            except OSError as e:  # noqa: BLE001 — an unwritable directory
+                log.error("Could not claim a quarantine name next to %s (%s)",
+                          self.path, e)
+                return None
+            os.close(handle)
+            return spoiled
+        log.error("Every quarantine name next to %s is taken", self.path)
+        return None
+
     def set_aside(self, why: str) -> "Ledger":
         """Keep the file this module could not read, out of the way of the one
         it is about to write. Best effort: an unwritable directory must not
@@ -599,17 +860,29 @@ class Ledger:
         catches anything load() itself did not — a bug in here, an error no
         version of this file has met — and has to reach this too: the run goes
         on, and write() then puts a one-run ledger where a year of outcomes
-        used to be. Every path that gives up on reading the history keeps it.
+        used to be. Every path that gives up on reading the history keeps it,
+        and keeps every EARLIER one it was already keeping.
         """
-        spoiled = self.path.with_name(self.path.name + ".unreadable")
+        spoiled = self._claim_quarantine()
+        if spoiled is None:
+            why += ("; no quarantine name could be claimed beside it, so this run "
+                    "overwrites it")
+            self.load_error = why
+            return self
         try:
+            # Onto the empty placeholder claimed a moment ago. replace()
+            # overwrites whatever it lands on, which is what destroyed the
+            # previous casualty; here what it lands on is a nothing this call
+            # created for the purpose, so there is nothing to destroy.
             self.path.replace(spoiled)
-            log.error("The previous ledger is at %s — it was NOT overwritten", spoiled)
-            why += f"; the previous file is at {spoiled}"
         except OSError as e:  # noqa: BLE001
+            spoiled.unlink(missing_ok=True)   # never leave the empty claim behind
             log.error("Could not move %s aside (%s); this run will overwrite it",
                       self.path, e)
             why += f"; it could not be moved aside ({e}) and this run overwrites it"
+        else:
+            log.error("The previous ledger is at %s — it was NOT overwritten", spoiled)
+            why += f"; the previous file is at {spoiled}"
         self.load_error = why
         return self
 
@@ -627,6 +900,16 @@ class Ledger:
         double-count that session in every mean computed downstream. A backfill
         older than the MAX_RUNS the ledger keeps is dropped again immediately,
         which is what "the file keeps a year" means.
+
+        The cost of that key, named because it is a real one: a re-run that
+        scanned a DEGRADED or partial universe replaces a complete entry with
+        a worse one, and a name in the first attempt and missing from the
+        second loses its appearance — its streak resets, and its forward
+        returns start again as pending. Double-counting a session is the worse
+        failure of the two (it corrupts every published mean, silently and
+        permanently, where this loses one night's rows visibly), so the key
+        stays; a run that knows it scanned a partial universe is better fixed
+        by not writing it than by keying around it.
         """
         self.latest = {"run": dict(run), "candidates": list(candidates),
                        "gated_out": list(gated)}
@@ -648,13 +931,34 @@ class Ledger:
             "candidates": [_slim(c, scored=True) for c in candidates],
             "gated": [_slim(g, scored=False) for g in gated],
         }
-        entry["forward_returns"] = mean_returns(entry["candidates"])
         self.runs = [r for r in self.runs
                      if (r.get("date"), r.get("type")) != (entry["date"], entry["type"])]
         self.runs.insert(0, entry)
         self.runs.sort(key=lambda r: (str(r.get("date")), str(r.get("type"))), reverse=True)
         del self.runs[MAX_RUNS:]
+        self._recompute_means()
+        # A backfill older than everything the file keeps was dropped again by
+        # the line above, so _recompute_means() never saw it — and the entry
+        # this hands back still has to describe itself. Alone in the ledger,
+        # every appearance in it starts its own setup.
+        entry.setdefault("forward_returns",
+                         mean_returns(entry["candidates"], setup_leads([entry])))
         return entry
+
+    def _recompute_means(self) -> None:
+        """Every run's published mean, from the rows the ledger now holds.
+
+        Over ALL runs, not just the one that changed, because a run's mean
+        depends on runs OTHER than itself: which of its rows start a setup is
+        decided by the sessions around them, so adding a session — a backfill
+        especially — can demote a row that used to lead. A stored mean that
+        disagrees with the rows under it is the defect this module already
+        refuses to ship in a streak, and it would be worse here, because a
+        mean is what somebody reads to decide whether any of this works.
+        """
+        leads = setup_leads(self.runs)
+        for run in self.runs:
+            run["forward_returns"] = mean_returns(run.get("candidates", []), leads)
 
     # -- forward returns -----------------------------------------------
     def _fillable(self, through: date | None) -> list[dict]:
@@ -704,8 +1008,7 @@ class Ledger:
                 current["as_of"] = fresh["as_of"]
                 moved += 1
         if moved:
-            for run in self.runs[:FILL_WINDOW_RUNS]:
-                run["forward_returns"] = mean_returns(run.get("candidates", []))
+            self._recompute_means()
             self._copy_returns_into_latest()
         return moved
 
@@ -775,6 +1078,18 @@ class Ledger:
         return {"data": self.data_path, "ledger": self.path}
 
 
+def quarantined(docs_dir: Path | str = DOCS_DIR) -> list[Path]:
+    """Every ledger set_aside() has kept under `docs_dir`, oldest name first.
+
+    The quarantine name carries the second it was written, so there is no
+    single path to look at any more — which is the point, and why this exists:
+    a caller that hard-codes one name is a caller that can only ever see the
+    newest casualty, and the older ones are exactly what the fixed name used
+    to destroy.
+    """
+    return sorted(Path(docs_dir).glob(f"{LEDGER_NAME}.*.{QUARANTINE_SUFFIX}"))
+
+
 def _write_json(path: Path, payload: dict) -> None:
     text = json.dumps(payload, indent=2, ensure_ascii=False, allow_nan=False)
     path.write_text(text + "\n", encoding="utf-8")
@@ -800,7 +1115,14 @@ def read_snapshot(docs_dir: Path | str = DOCS_DIR) -> tuple[dict | None, str | N
         data = json.loads(path.read_text())
     except FileNotFoundError:
         return None, (f"{path} does not exist — no run has published a snapshot here yet")
-    except (OSError, ValueError) as e:
+    except Exception as e:  # noqa: BLE001 — "never raises" means never; see below
+        # Named failures only (OSError, ValueError) held that promise for the
+        # failures somebody had thought of. json.loads raises RecursionError on
+        # a deeply nested document, which is neither, so a morning run against
+        # a data.json of "[" * 100000 exited FAILED where the design says
+        # DEGRADED and "there is nothing to follow through on". Ledger.load()
+        # was widened to the same catch-all for the same reason; this is its
+        # sibling and was left behind.
         return None, f"{path} could not be read ({type(e).__name__}: {e})"
     version = data.get("schema_version") if isinstance(data, dict) else None
     if version != SCHEMA_VERSION:

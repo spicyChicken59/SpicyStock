@@ -61,23 +61,45 @@ def streak(i):
     """Step 10's streak block, hand-authored and consistent with `runs` below.
 
     Keyed on the row's POSITION so the file regenerates byte-identically, and
-    written to exercise the three states a reader has to be able to tell
-    apart: a setup running for several sessions, one that started yesterday,
-    and a name last seen a fortnight ago -- which is day 1 of something new,
-    not day 12 of something old. src/ledger.py's MAX_STREAK_GAP_SESSIONS holds
-    the rule; these rows only have to obey it.
+    written to exercise the states a reader has to be able to tell apart:
+
+      day 3     a setup that has been running for three sessions
+      day 2     one that started yesterday, after a burst the CHECKLIST threw
+                out -- last_outcome says which, because "not scored then" read
+                as an absence of judgement over a rejection
+      unknown   a chain reaching the oldest run this file holds, where nothing
+                before it was ever scanned: day 2 and day 12 are both possible
+                and the record cannot say which. last_outcome is score_cap
+                there -- it passed and better names took the night's calls,
+                which is a different sentence from lynch_gate
+      day 1     a name last seen a fortnight ago, which is day 1 of something
+                new rather than day 12 of something old; and a name nothing
+                has ever carried
+
+    src/ledger.py's MAX_STREAK_GAP_SESSIONS and _why_no_day() hold the rules;
+    these rows only have to obey them. The unknown row does: its chain starts
+    on 2026-08-25, the oldest run below, and the window wants five sessions
+    before that.
     """
     if i % 7 == 1:
-        return {"day": 3, "first_seen": "2026-08-28", "last_seen": "2026-08-31",
-                "last_score": 7.4, "last_verdict": "B", "seen_before": 2}
+        return {"day": 3, "unknown_reason": None, "first_seen": "2026-08-28",
+                "last_seen": "2026-08-31", "last_score": 7.4, "last_verdict": "B",
+                "last_outcome": "scored", "seen_before": 2}
+    if i % 7 == 2:
+        return {"day": None, "unknown_reason": "window_not_covered",
+                "first_seen": None, "last_seen": "2026-08-25", "last_score": None,
+                "last_verdict": None, "last_outcome": "score_cap", "seen_before": 1}
     if i % 7 == 3:
-        return {"day": 2, "first_seen": "2026-08-31", "last_seen": "2026-08-31",
-                "last_score": None, "last_verdict": None, "seen_before": 1}
+        return {"day": 2, "unknown_reason": None, "first_seen": "2026-08-31",
+                "last_seen": "2026-08-31", "last_score": None, "last_verdict": None,
+                "last_outcome": "lynch_gate", "seen_before": 1}
     if i % 7 == 5:
-        return {"day": 1, "first_seen": SESSION, "last_seen": "2026-08-17",
-                "last_score": 5.2, "last_verdict": "skip", "seen_before": 1}
-    return {"day": 1, "first_seen": SESSION, "last_seen": None,
-            "last_score": None, "last_verdict": None, "seen_before": 0}
+        return {"day": 1, "unknown_reason": None, "first_seen": SESSION,
+                "last_seen": "2026-08-17", "last_score": 5.2, "last_verdict": "skip",
+                "last_outcome": "scored", "seen_before": 1}
+    return {"day": 1, "unknown_reason": None, "first_seen": SESSION,
+            "last_seen": None, "last_score": None, "last_verdict": None,
+            "last_outcome": None, "seen_before": 0}
 
 LABELS = {
     "2": "first or second burst",
@@ -471,26 +493,33 @@ assert BURSTS - PASSED == sum(1 for g in gated_out if g["reason"] == "lynch_gate
 
 by_src = collections.Counter(c["provenance"]["source"] for c in candidates)
 
+# `n` counts SETUPS and `rows` the rows they were collapsed from: a name that
+# burst on three consecutive sessions is one observation, not three, because
+# its d1/d3/d5 windows overlap and measure one move (src/ledger.py's
+# setup_leads). n < rows on every session that carries a repeat, and the two
+# are equal on 2026-08-25 because it is the oldest run this file holds -- with
+# nothing before it, every appearance in it leads its own setup as far as the
+# record can tell.
 runs = [
     {"date": SESSION, "type": "evening", "bursts": BURSTS, "passed_gate": PASSED,
      "scored": len(candidates), "shortlist_size": 5, "top_score": candidates[0]["score"],
      "fallbacks": by_src["fallback"],
-     "forward_returns": {"d1": None, "d3": None, "d5": None, "n": 0}},
+     "forward_returns": {"d1": None, "d3": None, "d5": None, "n": 0, "rows": 0}},
     {"date": "2026-08-31", "type": "evening", "bursts": 39, "passed_gate": 21, "scored": 21,
      "shortlist_size": 5, "top_score": 8.4, "fallbacks": 0,
-     "forward_returns": {"d1": 1.12, "d3": None, "d5": None, "n": 21}},
+     "forward_returns": {"d1": 1.12, "d3": None, "d5": None, "n": 19, "rows": 21}},
     {"date": "2026-08-28", "type": "evening", "bursts": 52, "passed_gate": 28, "scored": 25,
      "shortlist_size": 5, "top_score": 9.1, "fallbacks": 2,
-     "forward_returns": {"d1": -0.63, "d3": None, "d5": None, "n": 25}},
+     "forward_returns": {"d1": -0.63, "d3": None, "d5": None, "n": 23, "rows": 25}},
     {"date": "2026-08-27", "type": "evening", "bursts": 44, "passed_gate": 24, "scored": 24,
      "shortlist_size": 5, "top_score": 8.8, "fallbacks": 0,
-     "forward_returns": {"d1": 2.07, "d3": 1.44, "d5": None, "n": 24}},
+     "forward_returns": {"d1": 2.07, "d3": 1.44, "d5": None, "n": 22, "rows": 24}},
     {"date": "2026-08-26", "type": "evening", "bursts": 33, "passed_gate": 18, "scored": 18,
      "shortlist_size": 5, "top_score": 7.9, "fallbacks": 1,
-     "forward_returns": {"d1": 0.88, "d3": 2.31, "d5": None, "n": 18}},
+     "forward_returns": {"d1": 0.88, "d3": 2.31, "d5": None, "n": 17, "rows": 18}},
     {"date": "2026-08-25", "type": "evening", "bursts": 38, "passed_gate": 22, "scored": 22,
      "shortlist_size": 5, "top_score": 9.0, "fallbacks": 0,
-     "forward_returns": {"d1": 1.84, "d3": 2.97, "d5": -0.42, "n": 22}},
+     "forward_returns": {"d1": 1.84, "d3": 2.97, "d5": -0.42, "n": 22, "rows": 22}},
 ]
 
 data = {

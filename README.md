@@ -31,8 +31,8 @@ Layer 2  2LYNCH checklist (code) ..... 2 first/second burst · L linear prior mo
         │                              hard gate: ≥3/6 passes, top 25 kept
         ▼
 Layer 3  Chart render ................ 4-month candlestick + volume PNG per name,
-        │                              written to docs/charts/ so the dashboard
-        ▼                              can serve the same image the model saw
+        │                              written to docs/charts/ — gitignored, so
+        ▼                              they stay on the machine that ran
 Layer 4  Claude scoring .............. metrics + 2LYNCH detail + chart image →
         │                              score /10, verdict (A+…skip), 1-sentence
         │                              reason, key risk (strategy.md = rulebook)
@@ -43,7 +43,8 @@ Layer 5  Archive ..................... EVERY scored candidate, plus every burst
         │                              docs/ledger.json (the record, with the
         ▼                              forward returns a later run fills in),
                                        results/*.csv (a 30-day artifact)
-Layer 6  Email ....................... HTML table with inline charts, top 5 —
+Layer 6  Email ....................... HTML table, top 5, with the charts this
+                                       run just rendered attached inline —
                                        the ONLY place TOP_N cuts anything
 ```
 
@@ -54,7 +55,8 @@ Layer 6  Email ....................... HTML table with inline charts, top 5 —
 | what it does | **discovery** — scans the session that closed today | **follow-through** — re-presents the evening run before the open |
 | scans | yes, every layer above | no |
 | costs | ~25 Claude calls, a few cents | nothing |
-| writes | `docs/data.json`, `docs/ledger.json`, `docs/charts/`, `results/*.csv` | nothing |
+| writes | `docs/data.json`, `docs/ledger.json`, `docs/charts/` (gitignored), `results/*.csv` | nothing |
+| charts | attached inline — the PNGs it just rendered | none, and the email says why |
 | workflow | `.github/workflows/evening.yml` | `.github/workflows/morning.yml` |
 
 **Why the morning run does not scan.** Before the open it has no market data
@@ -67,15 +69,31 @@ write to `docs/ledger.json`, because that file is the record of what was
 *scanned* and a second entry for one session would count that burst twice in
 every average across runs.
 
+**And it carries no chart.** `docs/charts/` holds one PNG per ticker,
+overwritten by every evening run, with the session recorded nowhere in it —
+while `docs/data.json` is only rewritten at the end of a run. An evening run
+that rendered its charts and then died before publishing leaves the two a
+session apart, and the morning pass, which resolved its image by bare path,
+then paired last night's numbers with tonight's picture and said nothing. The
+model is told to trust the chart over the numbers and a reader will do the
+same, so the picture is dropped and the cell says why. The evening email is
+unaffected: it attaches the PNGs it rendered moments earlier, in the same
+process.
+
 **The mode is a promise about the clock, and it is checked.** An evening run
 declares that today's session has closed; a morning run declares that it has
 not. When the clock disagrees — `evening` before 16:15 ET, `morning` after it —
 the run is **degraded**, not refused: it still does its work and still mails,
-with the reason in the red band, in `docs/ledger.json` and in exit code 2.
+with the reason in the red band, in `docs/data.json`'s `run.errors`, and in exit
+code 2. Not in `docs/ledger.json` — `add_run()` records a status word per run
+and not the sentences behind it, and this paragraph claimed otherwise for a
+whole step. A morning run writes neither file, so for that mode the email and
+the exit code are the whole record.
 Refusing would trade a mislabelled email for no email, and no email is
 indistinguishable from a market holiday. Whatever the clock says, the session
-that was actually read is named in the subject line, above the table and in the
-CSV's filename, so the label cannot quietly become a different day.
+that was actually read is named in the subject line and above the table — and,
+on the evening run, which is the only one that writes a CSV, in that file's
+name too. The label cannot quietly become a different day.
 `SCAN_SESSION_DATE` is exempt: a pinned session is you overruling the clock on
 purpose, and a deliberate backfill is not a mistake.
 
@@ -159,7 +177,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 465 tests, no network or API keys needed
+pytest tests/                   # 511 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -176,8 +194,14 @@ evening run has published anything.
 `docs/index.html` is a static page served by GitHub Pages from `docs/`. It fetches
 `docs/data.json` in the browser and renders it — no server, no build step, no
 framework. **The pipeline writes that file at the end of every run** (step 9,
-`src/ledger.py`), together with `docs/ledger.json` and the chart PNGs the page
-shows. The copy committed here is still the hand-authored fixture from
+`src/ledger.py`), together with `docs/ledger.json` and the chart PNGs — which
+are **not** committed (`.gitignore` blocks `/docs/charts/`), so the published
+page has no images and every chart slot explains that instead. Open the page
+from a checkout that has just run the pipeline and the same slots fill in. A
+chart is ~57 KB and a night renders up to 25 of them: committing them is about
+360 MB a year of history that does not delta-compress and cannot be taken back
+out, and one file per ticker with no session in it cannot prove which run drew
+it anyway. The copy committed here is still the hand-authored fixture from
 `tools/make_fixture.py`, and it says so in its own `run.fixture: true`, which is
 what raises the "sample data" banner at the top of the page; a real run writes
 `false` and the banner disappears. The first run whose output is committed
@@ -186,7 +210,8 @@ replaces it.
 It shows the run's funnel (universe → bursts → 2LYNCH gate → scored → shortlist),
 **every candidate the run scored** rather than the five that went out by email, each
 one's 2LYNCH checklist with its measured values, which day of its setup it is
-(and when it was last seen), and — for every score — whether
+(or that the record cannot say, and why — never a silent blank), what was done
+with the name the last time it was seen, and — for every score — whether
 Claude produced it or the offline checklist fallback did. A fallback score can no
 longer outrank a real one: `score_all` sorts on provenance before score, so every
 Claude score ranks above every fallback whatever the numbers say. It is labelled
@@ -209,11 +234,21 @@ invariants live in the file rather than only here. The load-bearing ones:
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
-- Every burst carries `streak` — `day`, `first_seen`, `last_seen`, `last_score`,
-  `last_verdict`, `seen_before` — or `null` when the run could not read its own
-  history. `day` is 1 exactly when `first_seen` is the burst's own session, and
-  `last_seen` is `null` exactly when `seen_before` is 0. A `null` streak means
-  unknown; it never collapses to a confident day 1.
+- Every burst carries `streak` — `day`, `unknown_reason`, `first_seen`,
+  `last_seen`, `last_score`, `last_verdict`, `last_outcome`, `seen_before`.
+  `day` is 1 exactly when `first_seen` is the burst's own session, and
+  `last_seen` is `null` exactly when `seen_before` is 0. **A null `day` is not
+  day 1**: it means the record cannot say, and `unknown_reason` says which of
+  `no_history`, `history_unreadable` and `window_not_covered` left it null.
+  Every surface prints that state in words — the email row, both dashboard
+  tables and the pick card — because a row that renders nothing is read as a
+  first sighting, which was the state of two of those three.
+  `last_outcome` is what happened to the appearance `last_seen` names:
+  `scored`, or the reason it never was (`lynch_gate` — the checklist rejected
+  it; `score_cap` — it passed and better names filled the night's calls). A
+  streak counts every session the scan found a burst on, gate rejections
+  included, which is why that field exists: "not scored" covered a rejection
+  and a model outage with one phrase.
 - Numbers are numbers or `null` — never `0` for "unknown", never the string `"n/a"`.
   `src.ledger` writes every number through one coercion and dumps with
   `allow_nan=False`, because `json.dump` writes a NaN as a bare token no browser
@@ -233,8 +268,10 @@ invariant list itself from `src/ledger.py`, so it cannot emit a run this scanner
 could not produce, nor promise a contract different from the one the pipeline
 writes; `tools/check_fixture_fresh.py` regenerates it and fails the build if the
 committed file has drifted. The chart PNGs the fixture names do not exist, so the
-page degrades to an explained empty frame — that is the expected state for it. A
-real run writes its charts next to the file that names them.
+page degrades to an explained empty frame — and that is the expected state for
+the published page whether the file is a fixture or a real run, because the PNGs
+are not committed. A real run writes them next to the file that names them, for
+whoever is at that machine.
 
 ### Forward returns, and where the history lives
 
@@ -245,6 +282,12 @@ slim row per candidate per run (score, verdict, provenance, the six checks, the
 burst's own numbers), kept for the last 260 runs, with the forward returns filled
 in by later runs. `data.json`'s `runs[]` history is the per-run mean of the same
 rows, which is what the dashboard's "has any of this made money yet" panel reads.
+That mean is taken over **setups**, not rows: a name that bursts on five
+consecutive sessions is one move measured five times, and counting it five times
+weights that one move against every other name in the file. `forward_returns.n`
+is the setup count the mean was taken over — the weight the dashboard averages
+sessions by — and `forward_returns.rows` is what those setups were collapsed
+from. The page prints both, and calls neither of them "names".
 
 - `d1`, `d3`, `d5` are the percentage change from the burst-day close to the
   close 1, 3 and 5 **sessions** later — positions in the frame, not calendar
@@ -286,9 +329,24 @@ the branch after each run, the way the sibling SpicyCar project does. Without
 that step everything written into `docs/` would die with the container and every
 CI run would start a fresh history, so the forward returns this exists to
 collect could never span more than one session. The workflow holds
-`contents: write` and a `concurrency` group for that reason, retries a rejected
-push by rebasing, and falls back to an artifact if the push still fails —
-market data is live-only, so a discarded snapshot cannot be re-fetched.
+`contents: write` and a `concurrency` group for that reason, and retries a
+rejected push by rebasing onto whatever landed during the run — three attempts,
+then it fails the step loudly rather than pretending. Market data is live-only,
+so a discarded snapshot cannot be re-fetched; the run's 30-day artifact holds a
+copy of `docs/data.json` and `docs/ledger.json` either way.
+
+That retry only started existing in this round. `git pull --rebase` sat bare in
+the loop, and under Actions' `bash -e` a failing pull ends the step — so the
+first rejected push aborted it and iterations 2 and 3 never ran. It is `if !
+git pull --rebase ...` now, with a conflicting rebase aborted and named rather
+than left half-applied. Traced with `bash -ex` against a stub `git`, which is
+how the `git add` bug below was found too.
+
+**Nothing has ever exercised it.** The `git add` fix is real and a test now
+guards it, but no run of this workflow has yet reached the push at all: every
+run before it aborted at the add. Streaks and the whole input of the morning
+run rest on this step working, so the first evening run after this lands is
+worth watching in the Actions log.
 
 Since step 10 that commit-back carries a second job: it is what the 8:30 AM
 follow-through reads, and it is what makes a streak possible at all. Remove it
@@ -304,9 +362,12 @@ while the workflow's own comment said the history was being kept. It is
 `git add docs` now, and `tests/test_docs_are_true.py` checks that no path this
 workflow stages is one `.gitignore` blocks, because reading the two files side
 by side is exactly what missed it the first time. The `results/` artifact upload
-now runs on every completed scan rather than only on a failed push — which is
-what the note below has always claimed, and which is also the signal the
-workflow's own duplicate-run guard reads.
+now runs on every scan that finished, pass or fail, rather than only on a failed
+push — which is what the note below has always claimed, and which is also the
+signal the workflow's own duplicate-run guard reads. Finished, not `always()`:
+a cancelled run would otherwise upload the same artifact and tell that guard an
+evening run had already happened today, so cancelling one run would silently
+suppress the backup cron that exists to catch a missing one.
 
 
 ### Checking it
@@ -331,13 +392,17 @@ everything has no `.sc-chip--warn` to measure. Whoever commits a real run over
 the fixture has to reckon with that first; it is a change to
 `tools/dashboard_smoke.mjs`, which step 9 deliberately did not touch.
 
-**It does not check the streak line step 10 added** either — the day-N note
-under each ticker and the "this setup" fact on each card. That line was written
-against the selectors the smoke test already asserts on (it adds no column and
-no `.sc-chip--warn`, so the column indexes and fallback counts it measures are
-untouched), but it was never watched in a browser: chromium is not available in
-the sandbox this was built in. Run `node tools/dashboard_smoke.mjs` locally
-before trusting the page.
+**It does not check the streak line** either — the day-N note under each
+ticker and the "this setup" fact on each card. That line adds no column and no
+`.sc-chip--warn`, so the column indexes and fallback counts the smoke test
+measures are untouched, and the run above stays at 80/80 with it in place. It
+was watched in a browser separately: the page was opened against a `data.json`
+carrying every streak state (day 3, a gated repeat, a capped repeat, each of
+the three unknown reasons, day 1, and a row with no `streak` field at all), and
+the pick card, the scored table and the gated table were read back and agree
+word for word. That check is not committed — it is a one-off against
+`docs/index.html`, and the assertions worth keeping belong in this script,
+which is a change it deliberately did not make.
 
 ## Tuning
 
@@ -386,5 +451,6 @@ before trusting the page.
   The ledger is the dataset the AI rankings were always meant to be checked
   against — the Phase-2 item in the original doc — and reading it is how you
   find out whether the score predicts anything. See "Does the history actually
-  accumulate?" above for what CI still has to change before it does.
+  accumulate?" above for how it survives a CI container — and for the one thing
+  about that step nothing has ever exercised.
 - Output is screening for human review, not trading advice.

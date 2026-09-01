@@ -1,9 +1,12 @@
 """
 Layer 6 — Email delivery via Resend (https://resend.com).
 
-Builds an HTML table of the top candidates (with inline chart thumbnails)
-and sends it through Resend's API using an API key — no OAuth, no refresh
-tokens, no consent screens.
+Builds an HTML table of the top candidates and sends it through Resend's API
+using an API key — no OAuth, no refresh tokens, no consent screens. The
+evening email carries the chart PNGs the same run just rendered, inline; the
+morning email carries none and prints why in the cell where the picture would
+be, because the only image it could reach is one no file says the session of
+(src.pipeline's CHARTS_DIR has the whole argument).
 
 THE EMAIL IS THE MONITOR. GitHub Actions is checked when something is already
 suspected; this arrives every evening whether or not anyone is watching. So a
@@ -18,7 +21,9 @@ the session that was actually read, in the subject and above the table: the run
 type was a label over a session the wall clock picked, so "Evening candidates"
 could be yesterday's market with nothing in the inbox showing it. And each row
 carries its streak — see _streak_note() — because a name that burst on Monday
-and again on Tuesday used to arrive as two brand-new ideas.
+and again on Tuesday used to arrive as two brand-new ideas. A streak whose
+`day` is null says so in words rather than rendering nothing: unknown is not
+day 1, and it was the one state no surface showed.
 
 Environment variables:
 
@@ -107,36 +112,114 @@ def _provenance_line(scan_stats: dict) -> str:
             f"{claude} of {total}</span>")
 
 
+#: What a streak's `unknown_reason` says to a reader. `day: null` is the state
+#: this whole mechanism cares most about — UNKNOWN, which is not day 1 — and
+#: it used to render here as nothing at all, so a run that could not read its
+#: history produced rows a reader could not tell from first sightings. The
+#: dashboard says the same words for the same reasons; if you change one,
+#: change docs/index.html's streakText().
+STREAK_UNKNOWN = {
+    "no_history": "streak unknown — no history has been recorded yet",
+    "history_unreadable": "streak unknown — the run could not read its history",
+    "window_not_covered": "streak unknown — the history does not reach back this far",
+}
+UNKNOWN_FALLBACK = "streak unknown — no reason was recorded"
+
+#: What happened to this name the LAST time it was seen. "not scored" used to
+#: cover both of these and they are close to opposites: score_cap means the
+#: checklist passed it and better names filled the call budget, lynch_gate
+#: means the pipeline looked at it and threw it out at the quality gate. Read
+#: beside "day 2 of this setup", which looks like accumulating confirmation,
+#: the ambiguity is worth money.
+LAST_OUTCOME = {
+    "scored": None,  # rendered with the score itself, below
+    "lynch_gate": "rejected at the 2LYNCH gate",
+    "score_cap": "passed the gate, but the scoring cap was already full",
+}
+
+
+def _streak_of(row: dict) -> dict:
+    """The row's streak block, or {} for anything that is not one.
+
+    A morning row comes off disk (docs/data.json read back), so this is not a
+    hypothetical shape: a truncated or hand-edited snapshot must not take the
+    8:30 email down with it. The email is the monitor, and an email that does
+    not arrive is the failure step 5 exists to end. Anything unreadable renders
+    as an unknown streak, which is exactly what it is.
+    """
+    streak = row.get("streak")
+    return streak if isinstance(streak, dict) else {}
+
+
+def _last_appearance(streak: dict) -> str:
+    """What was done with this name the last time it appeared.
+
+    `last_outcome` is the authority. A row from before that field existed
+    carries only `last_score`, so a score present still reads as scored and a
+    score absent says exactly that and no more — "not scored then", the old
+    wording for every case, read as an absence of judgement when the truth was
+    usually a rejection.
+
+    A number is required for the scored sentence, not just the word: a row
+    marked "scored" with no score in it would otherwise print "scored None/10",
+    and the honest answer to a missing number is that there is no number.
+    """
+    outcome, score = streak.get("last_outcome"), streak.get("last_score")
+    if score is not None and outcome in (None, "scored"):
+        return f"scored {score}/10 {streak.get('last_verdict') or ''}".rstrip()
+    return LAST_OUTCOME.get(outcome) or "no score was recorded then"
+
+
 def _streak_note(row: dict) -> str:
-    """"day 3 of this setup — since 2026-08-27, last seen…", under the ticker.
+    """"day 3 of this setup, since 2026-08-27 · last seen…", under the ticker.
 
     THE thing step 10 added to this email. A name that burst on Monday and
     again on Tuesday used to arrive as a brand-new idea both nights, with
     nothing saying the reader had already looked at it and passed. src.ledger's
     MAX_STREAK_GAP_SESSIONS holds what "the same setup" means.
 
-    Empty when the row carries no streak at all — which is not the same as
-    day 1. A null streak means the run could not read its own history, and the
-    red band above the table already says so; inventing "new setup" here would
-    turn a file error into a claim about the market.
+    A null `day` is NOT day 1 and is no longer silent. It means nothing is
+    known — the history could not be read, or does not reach this far back —
+    and saying nothing left the two surfaces that render a streak disagreeing
+    about the one state that matters most. It never becomes "new setup":
+    that would turn a file error into a claim about the market.
     """
-    streak = row.get("streak")
-    if not streak:
-        return ""
-    day = streak.get("day") or 1
-    last, score, verdict = (streak.get("last_seen"), streak.get("last_score"),
-                            streak.get("last_verdict"))
-    if day > 1:
+    streak = _streak_of(row)
+    day = streak.get("day")
+    if day is None:
+        text = STREAK_UNKNOWN.get(streak.get("unknown_reason"), UNKNOWN_FALLBACK)
+        colour = "#666"
+    elif day > 1:
         text = f"day {day} of this setup, since {streak.get('first_seen')}"
         colour = "#a5281b"
     else:
         text = "day 1 — new setup"
         colour = "#666"
-    if last:
-        judged = (f", scored {score}/10 {verdict or ''}".rstrip()
-                  if score is not None else ", not scored then")
-        text += f" · last seen {last}{judged}"
+    if streak.get("last_seen"):
+        text += f" · last seen {streak['last_seen']}, {_last_appearance(streak)}"
     return f'<br><span style="color:{colour};font-size:12px;">{text}</span>'
+
+
+def _streak_footnote(results: list[dict]) -> str:
+    """What "day N" counts, said once under the table.
+
+    A streak counts every session the scan found a burst on, INCLUDING the
+    ones the 2LYNCH gate rejected — the right call, because the setup was
+    running whether or not the checklist let it through to a score, and one no
+    reader can infer from "day 2 of this setup", which reads as two nights of
+    agreement. Disclosed here rather than in every row, and only when a row
+    actually shows a multi-day streak.
+    """
+    days = [_streak_of(row).get("day") for row in results]
+    if not any((day or 0) > 1 for day in days):
+        return ""
+    return (
+        '<p style="color:#666;font-size:11px;margin:8px 0 0;">'
+        "&ldquo;day N of this setup&rdquo; counts every session the scan found a burst "
+        "on for that name, including bursts the 2LYNCH gate rejected. It is not N "
+        "nights of confirmation."
+        "</p>"
+    )
 
 
 def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
@@ -167,6 +250,50 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     return " &nbsp;|&nbsp;\n      ".join(f"{label}: {value}" for label, value in parts)
 
 
+def _chart_file(row: dict) -> Path | None:
+    """The chart PNG this row can really attach, or None. One rule, two callers.
+
+    _build_attachments() must not attach a file that is not there, and
+    build_html() must not print an <img> for an attachment that was never
+    made. They used to answer that separately — the HTML emitted
+    `cid:chart_TICKER` unconditionally — so a candidate whose chart failed to
+    render showed a broken-image icon where the picture belonged, which says
+    nothing about why. Since step 10 that is every morning row as well, by
+    design: see src.pipeline's MORNING_CHART_NOTE.
+    """
+    chart = row.get("chart")
+    if not chart:
+        return None
+    path = Path(chart)
+    return path if path.exists() else None
+
+
+#: Printed where the picture would be when there is no attachable PNG and the
+#: caller did not say why. A morning row carries its own reason.
+NO_CHART = "no chart — none was rendered for this candidate"
+
+
+def _chart_cell(row: dict) -> str:
+    if _chart_file(row):
+        return (f'<img src="cid:chart_{row["ticker"]}" width="280" '
+                f'alt="{row["ticker"]} chart">')
+    return (f'<span style="color:#666;font-size:12px;">'
+            f'{row.get("chart_note") or NO_CHART}</span>')
+
+
+def _close_cell(row: dict, scan_stats: dict) -> str:
+    """"$44.8 (close 2026-08-31)" — the price, and which session printed it.
+
+    The session is in the subject line and the funnel line, so it was
+    disclosed; it was not disclosed on the number the eye lands on. Under a
+    heading that reads "follow-through watchlist for TODAY", an unlabelled
+    price is read as this morning's, and it is last night's close.
+    """
+    session = scan_stats.get("session")
+    stamped = f" (close {session})" if session else ""
+    return f'<span style="color:#666;font-size:12px;">${row["close"]}{stamped}</span>'
+
+
 def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
     title = (
         "Momentum Bursts — follow-through watchlist for TODAY"
@@ -179,7 +306,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
         rows += f"""
         <tr>
           <td style="padding:8px;border-bottom:1px solid #ddd;"><b>{i}. {r['ticker']}</b><br>
-              <span style="color:#666;font-size:12px;">${r['close']}</span>{_streak_note(r)}</td>
+              {_close_cell(r, scan_stats)}{_streak_note(r)}</td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">+{r['gain_pct']}%</td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">{r['volume_ratio']}x</td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">
@@ -192,7 +319,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
               <b style="font-size:18px;">{r['score']}</b>/10<br>
               <span style="font-size:12px;">{r['verdict']}</span></td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">
-              <img src="cid:chart_{r['ticker']}" width="280" alt="{r['ticker']} chart"></td>
+              {_chart_cell(r)}</td>
         </tr>"""
 
     if not results:
@@ -227,6 +354,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
       </tr>
       {rows}
     </table>
+    {_streak_footnote(results)}
     <p style="color:#999;font-size:11px;margin-top:16px;">
       Automated screening output for human review — not trading advice.
       Verify charts and news before acting.</p>
@@ -234,16 +362,20 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
 
 
 def _build_attachments(results: list[dict]) -> list[dict]:
-    """Attach chart PNGs inline, referenced via cid:chart_<ticker> in the HTML."""
+    """Attach chart PNGs inline, referenced via cid:chart_<ticker> in the HTML.
+
+    Exactly the rows _chart_cell() drew an <img> for: the same _chart_file()
+    decides both, so the body can never reference an attachment that is not
+    in this list.
+    """
     attachments = []
     for r in results:
-        chart = r.get("chart")
-        if chart and Path(chart).exists():
-            content_b64 = base64.b64encode(Path(chart).read_bytes()).decode()
+        chart = _chart_file(r)
+        if chart is not None:
             attachments.append(
                 {
                     "filename": f"{r['ticker']}.png",
-                    "content": content_b64,
+                    "content": base64.b64encode(chart.read_bytes()).decode(),
                     "content_id": f"chart_{r['ticker']}",
                 }
             )

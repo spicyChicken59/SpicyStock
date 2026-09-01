@@ -49,8 +49,13 @@ def test_the_documented_test_count_is_the_real_one(request):
     claims: list[tuple[str, int]] = []
     for doc in ("README.md", "CLAUDE.md"):
         text = _read(doc)
+        # Both patterns require the word "tests" next to the number. The
+        # looser `runs (\d+)` this used to carry matched "runs 80/80 with no
+        # page errors" in a note about the dashboard smoke test and failed a
+        # document that was true -- the same crying-wolf failure this file
+        # already had once, arriving through the regex instead of the count.
         claims += [(doc, int(n)) for n in re.findall(r"(\d+)\s+tests\b", text)]
-        claims += [(doc, int(n)) for n in re.findall(r"runs\s+(\d+)\b", text)]
+        claims += [(doc, int(n)) for n in re.findall(r"runs\s+(\d+)\s+tests\b", text)]
     assert claims, "no documented test count found -- did the wording change?"
     wrong = [(d, n) for d, n in claims if n != total]
     assert not wrong, (
@@ -157,6 +162,37 @@ def test_the_mode_that_does_not_scan_is_the_one_documented_as_costing_nothing():
     assert "The morning follow-through makes no" in _read("README.md")
 
 
+def _gitignore_blocks(path: str) -> bool | None:
+    """Does .gitignore block `path`? None when git DID NOT ANSWER.
+
+    `git check-ignore -q` exits 0 for ignored, 1 for not ignored -- and 128 for
+    "not a git repository", which is not an answer at all. Reading 128 as
+    "not ignored" is how the caller below stopped being able to fail: in a
+    `git archive` tree the whole suite went green with the exact `git add docs
+    results` bug reinstated in evening.yml, and only `git init` killed it.
+    That is the same shape as the version of this test that passed on the very
+    workflow line that broke -- through a different door.
+
+    Both spellings are asked, because `/results/` in .gitignore has a trailing
+    slash and so matches directories only: `git check-ignore results` on a
+    path that does not exist in this checkout cannot tell that it is one, and
+    answers "not ignored".
+    """
+    import subprocess
+
+    answers = []
+    for spelling in (path, path.rstrip("/") + "/"):
+        try:
+            done = subprocess.run(["git", "check-ignore", "-q", spelling],
+                                  cwd=ROOT, capture_output=True, text=True)
+        except OSError:
+            return None                      # no git on this machine
+        if done.returncode not in (0, 1):
+            return None                      # not a checkout; 128 is not a "no"
+        answers.append(done.returncode == 0)
+    return any(answers)
+
+
 def test_no_workflow_stages_a_path_gitignore_blocks():
     """`git add <ignored path>` exits 1, and Actions runs every `run:` block
     under `bash -e`.
@@ -167,10 +203,16 @@ def test_no_workflow_stages_a_path_gitignore_blocks():
     while the workflow's own comment said the history was being kept and README
     said it accumulated. Reading the two files side by side is exactly what
     missed it; this reads them together.
-    """
-    import subprocess
 
-    for workflow in (ROOT / ".github" / "workflows").glob("*.yml"):
+    Where git cannot answer, this SKIPS rather than passing. A guard over the
+    bug that silently voided the whole rebuild's history is worth nothing if
+    it reports safety it is not providing, and a skip is the one outcome that
+    says so out loud -- see _gitignore_blocks().
+    """
+    import pytest
+
+    unanswered = []
+    for workflow in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
         for line in workflow.read_text().splitlines():
             stripped = line.strip()
             if not stripped.startswith("git add "):
@@ -178,21 +220,18 @@ def test_no_workflow_stages_a_path_gitignore_blocks():
             for path in stripped[len("git add "):].split():
                 if path.startswith("-"):
                     continue
-                # Both spellings. `/results/` in .gitignore has a trailing
-                # slash, so it matches directories only -- and `git
-                # check-ignore results` on a path that does not exist on this
-                # checkout cannot tell that it is one, and answers "not
-                # ignored". The first version of this test asked exactly that
-                # question and passed on the very workflow line that broke,
-                # which is the shape of test this project keeps having to
-                # delete.
-                blocked = any(
-                    subprocess.run(["git", "check-ignore", "-q", spelling],
-                                   cwd=ROOT).returncode == 0
-                    for spelling in (path, path.rstrip("/") + "/")
-                )
+                blocked = _gitignore_blocks(path)
+                if blocked is None:
+                    unanswered.append(f"{workflow.name}: git add {path}")
+                    continue
                 assert not blocked, (
                     f"{workflow.name} runs `git add {path}`, and .gitignore blocks it. "
                     "git exits 1 there, and under Actions' `bash -e` that aborts the "
                     "step before whatever comes after the add."
                 )
+    if unanswered:
+        pytest.skip(
+            "git check-ignore could not answer here (no repository, or no git), so "
+            f"these were NOT checked: {unanswered}. This guard only runs inside a "
+            "checkout -- CI has one."
+        )

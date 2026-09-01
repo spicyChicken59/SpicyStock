@@ -98,8 +98,26 @@ def test_charts_are_attached_inline_and_missing_ones_are_skipped(ohlcv, fake_res
     assert [a["filename"] for a in attachments] == ["AAA.png"]
     assert attachments[0]["content_id"] == "chart_AAA"
     assert base64.b64decode(attachments[0]["content"]).startswith(b"\x89PNG")
-    # The HTML references the attachment by content id, for both rows.
-    assert 'src="cid:chart_AAA"' in fake_resend.sent[0]["html"]
+    html = fake_resend.sent[0]["html"]
+    assert 'src="cid:chart_AAA"' in html
+    # And the row whose file is not there does NOT reference an attachment
+    # nobody made. It used to, so a candidate whose chart failed to render
+    # showed a broken-image icon in the one cell that should have said why.
+    assert "cid:chart_BBB" not in html
+    assert "no chart — none was rendered for this candidate" in html
+
+
+def test_a_row_that_says_why_it_has_no_chart_says_that_instead(fake_resend):
+    """The morning pass carries its own reason (src.pipeline's
+    MORNING_CHART_NOTE) rather than the generic one."""
+    rows = [make_result("AAA", chart=None, chart_note="no chart — this pass cannot date it")]
+
+    send_email(rows, "morning", STATS)
+
+    html = fake_resend.sent[0]["html"]
+    assert fake_resend.sent[0]["attachments"] == []
+    assert "no chart — this pass cannot date it" in html
+    assert "cid:chart_AAA" not in html
 
 
 # --- a degraded run must not look like a clean one -------------------------
@@ -197,8 +215,9 @@ DATED = dict(STATS, session="2026-08-31")
 
 
 def _with_streak(**streak):
-    base = {"day": 1, "first_seen": "2026-08-31", "last_seen": None,
-            "last_score": None, "last_verdict": None, "seen_before": 0}
+    base = {"day": 1, "unknown_reason": None, "first_seen": "2026-08-31",
+            "last_seen": None, "last_score": None, "last_verdict": None,
+            "last_outcome": None, "seen_before": 0}
     return [make_result("AAA", streak=dict(base, **streak))]
 
 
@@ -219,6 +238,22 @@ def test_a_subject_with_no_session_to_name_does_not_invent_one(results):
 
 def test_the_body_names_the_session_above_the_table(results):
     assert "Session scanned: 2026-08-31" in build_html(results, "evening", DATED)
+
+
+def test_the_price_says_which_session_closed_at_it(results):
+    """Under a heading reading "follow-through watchlist for TODAY", an
+    unlabelled $44.8 is read as this morning's price. It is last night's close.
+    The session was in the subject and the funnel line and not on the number
+    the eye lands on."""
+    assert "$44.8 (close 2026-08-31)" in build_html(results, "morning", DATED)
+    assert "$44.8 (close 2026-08-31)" in build_html(results, "evening", DATED)
+
+
+def test_a_price_with_no_session_to_name_is_not_given_a_made_up_one(results):
+    """The precondition: the date comes from the caller, not from a clock this
+    module reads for itself."""
+    html = build_html(results, "evening", STATS)
+    assert "$44.8<" in html and "close 20" not in html
 
 
 def test_a_morning_body_reports_the_run_it_is_following_not_a_scan(results):
@@ -258,23 +293,119 @@ def test_a_name_seen_before_but_not_recently_is_day_one_with_a_note():
     assert "day 1 — new setup · last seen 2026-08-14, scored 5.2/10 skip" in html
 
 
-def test_a_repeat_the_gate_rejected_last_time_does_not_invent_a_score():
+def test_a_repeat_the_gate_rejected_last_time_says_it_was_rejected():
+    """"not scored" covered this and the model-outage case with one phrase,
+    and they are opposite facts: here the pipeline looked at the name and threw
+    it out at the quality gate. Beside "day 2 of this setup", which reads as a
+    second night of agreement, that is worth money."""
+    html = build_html(_with_streak(day=2, first_seen="2026-08-28",
+                                   last_seen="2026-08-28", last_outcome="lynch_gate",
+                                   seen_before=1),
+                      "evening", DATED)
+
+    assert "last seen 2026-08-28, rejected at the 2LYNCH gate" in html
+    assert "not scored" not in html
+
+
+def test_a_repeat_that_ran_out_of_calls_says_that_instead():
+    """The other half of the pair: it passed the checklist and better names
+    filled the night's call budget. Nothing rejected it."""
+    html = build_html(_with_streak(day=2, first_seen="2026-08-28",
+                                   last_seen="2026-08-28", last_outcome="score_cap",
+                                   seen_before=1),
+                      "evening", DATED)
+
+    assert "last seen 2026-08-28, passed the gate, but the scoring cap was already full" in html
+    assert "last seen 2026-08-28, rejected" not in html
+
+
+def test_a_row_from_before_last_outcome_existed_claims_neither():
+    """A snapshot published by an older pipeline carries last_score and no
+    last_outcome. Guessing a reason for it would be inventing one."""
     html = build_html(_with_streak(day=2, first_seen="2026-08-28",
                                    last_seen="2026-08-28", seen_before=1),
                       "evening", DATED)
 
-    assert "last seen 2026-08-28, not scored then" in html
+    assert "last seen 2026-08-28, no score was recorded then" in html
+    assert "last seen 2026-08-28, rejected" not in html
+    assert "last seen 2026-08-28, passed the gate" not in html
 
 
-def test_a_row_with_no_streak_renders_no_streak(results):
-    """null is "this run could not read its history", and the red band above
-    the table already says so. Inventing "new setup" here would turn a file
-    error into a claim about the market."""
-    html = build_html([make_result("AAA", streak=None)], "evening", DATED)
-    assert "setup" not in html
-    assert "setup" not in build_html(results, "evening", DATED), (
-        "and a row that never carried the field at all is the same"
-    )
+def test_last_outcome_outranks_a_score_that_contradicts_it():
+    """The docstring says last_outcome is the authority, so a row carrying both
+    has to prove it. src.ledger never writes a gated appearance with a score --
+    but this row comes off disk, and the reading rule must not depend on the
+    writer being the version that wrote this file."""
+    html = build_html(_with_streak(day=2, first_seen="2026-08-28",
+                                   last_seen="2026-08-28", last_score=7.5,
+                                   last_verdict="B", last_outcome="lynch_gate",
+                                   seen_before=1),
+                      "evening", DATED)
+
+    assert "last seen 2026-08-28, rejected at the 2LYNCH gate" in html
+    assert "7.5/10" not in html
+
+
+@pytest.mark.parametrize("reason,said", [
+    ("history_unreadable", "streak unknown — the run could not read its history"),
+    ("no_history", "streak unknown — no history has been recorded yet"),
+    ("window_not_covered", "streak unknown — the history does not reach back this far"),
+    ("something_new", "streak unknown — no reason was recorded"),
+])
+def test_an_unknown_streak_says_which_kind_of_unknown_it_is(reason, said):
+    """`day: null` is the state this whole mechanism cares most about — unknown,
+    which is NOT day 1 — and this surface used to render it as nothing at all,
+    while the dashboard's pick card printed a sentence and its two tables
+    printed nothing. Three surfaces, three answers, for the one state where a
+    reader filling in the blank himself gets it wrong."""
+    html = build_html(_with_streak(day=None, unknown_reason=reason, first_seen=None),
+                      "evening", DATED)
+
+    assert said in html
+    assert "day 1" not in html and "new setup" not in html
+
+
+def test_an_unknown_streak_still_reports_what_the_record_did_hold():
+    """`day` is a claim about what came before; `last_seen` is a fact off the
+    file. Losing the second with the first would throw away what was known."""
+    html = build_html(_with_streak(day=None, unknown_reason="window_not_covered",
+                                   first_seen=None, last_seen="2026-08-14",
+                                   last_score=5.2, last_verdict="skip",
+                                   last_outcome="scored", seen_before=1),
+                      "evening", DATED)
+
+    assert "streak unknown — the history does not reach back this far · " \
+           "last seen 2026-08-14, scored 5.2/10 skip" in html
+
+
+def test_a_streak_that_is_not_a_block_does_not_take_the_email_down(fake_resend):
+    """A morning row comes off disk. A truncated or hand-edited snapshot must
+    cost a streak, not the 8:30 email -- the email is the monitor, and one that
+    does not arrive is the failure step 5 exists to end."""
+    send_email([make_result("AAA", streak="day 2 probably")], "morning", DATED)
+
+    assert "streak unknown — no reason was recorded" in fake_resend.sent[0]["html"]
+
+
+def test_a_row_carrying_no_streak_field_at_all_is_unknown_too(results):
+    """A row from before the field existed is not a first sighting either.
+    Absence and "day 1 — new setup" must never render the same."""
+    html = build_html(results, "evening", DATED)
+
+    assert html.count("streak unknown — no reason was recorded") == len(results)
+    assert "new setup" not in html
+
+
+def test_what_day_n_counts_is_disclosed_once_under_the_table():
+    """A streak counts every session the scan found a burst on, gate rejections
+    included — the right call, and one no reader can infer from "day 2 of this
+    setup"."""
+    counted = build_html(_with_streak(day=2, first_seen="2026-08-28"), "evening", DATED)
+    single = build_html(_with_streak(), "evening", DATED)
+
+    assert "including bursts the 2LYNCH gate rejected" in counted
+    assert "including bursts the 2LYNCH gate rejected" not in single, (
+        "and it is not printed under a table with no streak to explain")
 
 
 def test_a_morning_run_with_nothing_to_show_does_not_blame_the_market():

@@ -739,8 +739,12 @@ def test_a_second_run_keeps_the_first_and_fills_its_forward_returns(
     assert (older["forward_returns"]["d3"], older["forward_returns"]["d5"]) == (
         want["d3"], want["d5"])
     assert older["forward_returns"]["as_of"] == next_session
+    # `n` is the SETUPS the mean was taken over and `rows` is what they were
+    # collapsed from -- one candidate here, so the two agree and the pair says
+    # nothing was deduplicated away.
     assert book["runs"][1]["forward_returns"] == {
-        "d1": first["forward_returns"]["d1"], "d3": want["d3"], "d5": want["d5"], "n": 1}
+        "d1": first["forward_returns"]["d1"], "d3": want["d3"], "d5": want["d5"],
+        "n": 1, "rows": 1}
     assert clean(tmp_path)["runs"][1]["forward_returns"]["d5"] == want["d5"], (
         "and the dashboard reads the same history")
 
@@ -773,7 +777,8 @@ def test_todays_candidates_are_published_pending_rather_than_guessed(
     data = clean(tmp_path)
     assert all(c["forward_returns"] == {"d1": None, "d3": None, "d5": None, "as_of": None}
                for c in data["candidates"])
-    assert data["runs"][0]["forward_returns"] == {"d1": None, "d3": None, "d5": None, "n": 0}
+    assert data["runs"][0]["forward_returns"] == {"d1": None, "d3": None, "d5": None,
+                                                  "n": 0, "rows": 0}
     assert len(mocked_boundaries["alpaca"].bar_requests) == 1, (
         "and no second request was made for returns that cannot exist")
 
@@ -977,12 +982,33 @@ def test_the_email_names_the_session_that_was_scanned(
 # --- a repeat is visible as a repeat ---------------------------------------
 
 
+def seed_history(monkeypatch, fake_alpaca, ohlcv, back: int = 8) -> None:
+    """One old run, so the record has LOOKED further back than a streak reaches.
+
+    src.ledger puts a day number on a streak only when the ledger holds a run
+    at least MAX_STREAK_GAP_SESSIONS sessions before the appearance it counts
+    from: "day 1 — new setup" is the claim that nothing preceded this burst,
+    and against a file that has only ever seen tonight that claim is made out
+    of nothing. So a test ABOUT day numbers has to give the record something to
+    have looked at, or it is quietly testing the unknown branch instead.
+
+    A session with no burst in it, deliberately: it moves the ledger's reach
+    back without adding an appearance the streak under test would then have to
+    account for.
+    """
+    fake_alpaca.add_history("QUIET", ohlcv("flat"))
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-back))
+    pipeline.run("evening", dry_run=True, tickers=["QUIET"])
+    monkeypatch.delenv("SCAN_SESSION_DATE")
+
+
 def test_a_name_that_burst_yesterday_is_day_two_tonight(
     monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
     """THE step-10 statefulness test. Two runs on consecutive sessions, and
     the second one knows it has seen this name before -- in the file the
     dashboard reads and in the email a person reads."""
+    seed_history(monkeypatch, fake_alpaca, ohlcv)
     fake_alpaca.add_history("BURST", ohlcv("burst"))
     first, second = session_offset(-1), session_offset(0)
 
@@ -996,24 +1022,28 @@ def test_a_name_that_burst_yesterday_is_day_two_tonight(
 
     (day_two,) = clean(tmp_path)["candidates"]
     assert day_two["streak"] == {
-        "day": 2, "first_seen": first, "last_seen": first,
+        "day": 2, "unknown_reason": None, "first_seen": first, "last_seen": first,
         "last_score": day_one["score"], "last_verdict": day_one["verdict"],
-        "seen_before": 1}
+        "last_outcome": "scored", "seen_before": 1}
     assert scored[0]["streak"] == day_two["streak"], "the email row carries the same block"
     (sent,) = mocked_boundaries["resend"].sent
     assert "day 2 of this setup" in sent["html"]
-    assert f"last seen {first}" in sent["html"]
+    assert f"last seen {first}, scored " in sent["html"], (
+        "and what was done with it then, which is not the same as a bare score")
 
 
 def test_a_first_sighting_says_so_rather_than_saying_nothing(
-    universe, mocked_boundaries, open_gate, tmp_path
+    monkeypatch, fake_alpaca, universe, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
-    """The inverse: with an empty ledger every name really is on day 1, and
-    the email says which -- absence is not a readable signal."""
+    """The inverse: over a record that HAS looked back, a name with nothing
+    behind it is on day 1 and the email says which -- absence is not a readable
+    signal."""
+    seed_history(monkeypatch, fake_alpaca, ohlcv)
+
     pipeline.run("evening", dry_run=False, tickers=universe)
 
     assert all(c["streak"]["day"] == 1 for c in clean(tmp_path)["candidates"])
-    assert "day 1 — new setup" in mocked_boundaries["resend"].sent[0]["html"]
+    assert "day 1 — new setup" in mocked_boundaries["resend"].sent[-1]["html"]
 
 
 def test_a_burst_the_gate_rejected_carries_its_streak_too(
@@ -1021,6 +1051,7 @@ def test_a_burst_the_gate_rejected_carries_its_streak_too(
 ):
     """Otherwise the record disagrees with itself the next time the name comes
     back: tonight it was never here, tomorrow it is on day 2 of nothing."""
+    seed_history(monkeypatch, fake_alpaca, ohlcv)
     monkeypatch.setattr(pipeline, "MIN_LYNCH_PASSES", 99)   # nothing can pass
     fake_alpaca.add_history("BURST", ohlcv("burst"))
     monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
@@ -1031,6 +1062,8 @@ def test_a_burst_the_gate_rejected_carries_its_streak_too(
 
     (gated,) = clean(tmp_path)["gated_out"]
     assert gated["streak"]["day"] == 2
+    assert gated["streak"]["last_outcome"] == "lynch_gate", (
+        "and says the gate rejected it, which is what makes counting it honest")
 
 
 def test_re_running_one_session_does_not_make_every_name_a_repeat(
@@ -1039,6 +1072,7 @@ def test_re_running_one_session_does_not_make_every_name_a_repeat(
     """A run repeated after a failure re-scans a session already in the
     ledger. Counting the first attempt would report day 2 of a setup that
     started that same evening."""
+    seed_history(monkeypatch, fake_alpaca, ohlcv)
     fake_alpaca.add_history("BURST", ohlcv("burst"))
     monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
 
@@ -1069,11 +1103,15 @@ def test_a_history_that_cannot_be_read_never_takes_the_run_with_it(
     (problem,) = report.errors
     assert "could not be read" in problem["message"]
     data = clean(tmp_path)
-    assert all(c["streak"] is None for c in data["candidates"]), (
-        "null means unknown; it must not collapse to a confident day 1")
+    assert all(c["streak"]["day"] is None for c in data["candidates"]), (
+        "no day number; it must not collapse to a confident day 1")
+    assert {c["streak"]["unknown_reason"] for c in data["candidates"]} == {
+        "history_unreadable"}, "and it says WHICH unknown, not just that it is one"
     html = mocked_boundaries["resend"].sent[0]["html"]
     assert "new setup" not in html and "of this setup" not in html, (
-        "a null streak renders nothing at all, not a confident first sighting")
+        "an unknown streak is never dressed up as a first sighting")
+    assert "streak unknown — the run could not read its history" in html, (
+        "and it is not silent either: a row saying nothing reads as day 1 too")
     assert problem["message"] in html, "and the band says why the column is missing"
 
 
@@ -1103,14 +1141,16 @@ def test_a_history_read_that_raises_outright_still_cannot_kill_the_run(
     assert [e["stage"] for e in report.errors] == ["history"], report.errors
     (problem,) = report.errors
     assert "something nobody predicted" in problem["message"]
-    assert all(c["streak"] is None for c in clean(tmp_path)["candidates"])
+    assert all(c["streak"]["unknown_reason"] == "history_unreadable"
+               for c in clean(tmp_path)["candidates"])
     # AND the year of outcomes it could not read is still on disk. The run
     # carries on with an empty history and then writes one — so a read that
     # gives up without moving the old file aside destroys it, which is the
     # loss Ledger.set_aside() exists to prevent and which this catch-all
     # would otherwise have quietly reopened a door to.
-    assert (tmp_path / "docs" / (ledger.LEDGER_NAME + ".unreadable")).read_text() == (
-        was), "the previous ledger was overwritten by a run that could not read it"
+    (kept,) = ledger.quarantined(tmp_path / "docs")
+    assert kept.read_text() == was, (
+        "the previous ledger was overwritten by a run that could not read it")
     assert json.loads((tmp_path / "docs" / ledger.LEDGER_NAME).read_text())["runs"]
 
 
@@ -1165,6 +1205,42 @@ def test_a_morning_run_re_presents_the_evening_run_and_scans_nothing(
     assert f"Following through on the session of: {evening['run']['date']}" in sent["html"]
 
 
+def test_the_morning_email_attaches_no_chart_and_says_why(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """THE bug this replaces: docs/charts holds one PNG per ticker, rewritten
+    by every evening run, and docs/data.json is only rewritten at publish().
+    An evening run that rendered and then died left the directory a session
+    ahead of the snapshot -- and the morning row resolved its chart by bare
+    path, so every number in the row was Monday's and the attached picture was
+    Tuesday's, with nothing in the email showing it. Here the file on disk is
+    replaced with a different image after publishing, which is exactly what
+    that half-finished run does.
+
+    The evening email is unaffected and keeps its charts: it attaches the PNGs
+    it rendered moments earlier, in the same process."""
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    pipeline.run("evening", dry_run=False, tickers=["BURST"])
+    (evening_mail,) = mocked_boundaries["resend"].sent
+    assert [a["filename"] for a in evening_mail["attachments"]] == ["BURST.png"], (
+        "the evening email still carries the chart it just rendered")
+
+    chart = tmp_path / "docs" / "charts" / "BURST.png"
+    was = chart.read_bytes()
+    chart.write_bytes(was + b"a later session's picture")
+    market_clock.before_the_open()
+
+    pipeline.run("morning", dry_run=False)
+
+    morning_mail = mocked_boundaries["resend"].sent[1]
+    assert morning_mail["attachments"] == [], "no picture this pass cannot date"
+    assert "cid:chart_BURST" not in morning_mail["html"], "and nothing referencing one"
+    assert pipeline.MORNING_CHART_NOTE in morning_mail["html"], (
+        "the cell where the chart was says what happened")
+    assert chart.read_bytes() == was + b"a later session's picture", (
+        "and the run did not touch the file either way")
+
+
 def test_a_morning_run_writes_nothing(
     market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
@@ -1206,6 +1282,7 @@ def test_a_morning_run_carries_the_streaks_the_evening_run_recorded(
 ):
     """Read out of the published run rather than recomputed: one arithmetic,
     one answer, no second rule that can drift from the first."""
+    seed_history(monkeypatch, fake_alpaca, ohlcv)
     fake_alpaca.add_history("BURST", ohlcv("burst"))
     monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
     pipeline.run("evening", dry_run=True, tickers=["BURST"])
@@ -1216,7 +1293,7 @@ def test_a_morning_run_carries_the_streaks_the_evening_run_recorded(
     market_clock.before_the_open()
     pipeline.run("morning", dry_run=False)
 
-    assert "day 2 of this setup" in mocked_boundaries["resend"].sent[0]["html"]
+    assert "day 2 of this setup" in mocked_boundaries["resend"].sent[-1]["html"]
 
 
 def test_a_morning_run_with_nothing_published_says_so_and_still_mails(
@@ -1277,6 +1354,113 @@ def test_a_morning_run_following_a_stale_evening_run_says_which_session(
     assert session_offset(-4) in problem["message"]
     assert str(scanner.current_session()) in problem["message"]
     assert report.exit_code == pipeline.EXIT_DEGRADED
+    assert problem["message"] in mocked_boundaries["resend"].sent[0]["html"]
+
+
+def test_the_stale_snapshot_band_never_asserts_that_a_session_existed():
+    """The morning after every market holiday, this band used to read "the
+    session to follow through on is 2026-11-26" over a day the market never
+    held: expected_session() subtracts weekends and nothing else. Nine or ten
+    mornings a year of a confident false sentence, in the one place a reader
+    looks before risking money -- and each one teaching that the red band is
+    routine, which is what makes "the evening run has been failing" invisible
+    when it is the true reason.
+
+    A holiday calendar is deliberately NOT the fix (an approximate one used to
+    make a confident claim is a worse defect), so what this asserts is that the
+    sentence stops making the claim: it says what published, that nothing has
+    since, and BOTH reasons that could explain it."""
+    said = pipeline.stale_snapshot_note(
+        {"type": "evening", "status": "ok"}, "2026-11-25", "2026-11-26")
+
+    assert "the newest published run is the evening run of 2026-11-25" in said
+    assert "nothing has published a later session" in said
+    # Neither explanation may be presented as the one that happened.
+    assert "did not publish" in said and "no session for it to scan" in said
+    # And the date the clock would have named appears only as something to
+    # check, never as a session that was held.
+    assert "the session to follow through on is" not in said
+    assert "If the market did trade on 2026-11-26" in said
+
+
+def test_the_stale_snapshot_band_still_names_the_older_run_it_is_showing():
+    """The precondition for the test above: dropping the claim must not drop
+    the facts. Which run is on the table, and that it is not today's."""
+    said = pipeline.stale_snapshot_note(
+        {"type": "evening", "status": "degraded"}, "2026-08-24", "2026-08-31")
+
+    assert "the rows below are 2026-08-24's" in said
+    assert "not a scan of any session since" in said
+
+
+def test_a_morning_run_carries_last_nights_reasons_and_not_just_the_word(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The morning band said "was itself a DEGRADED run" and dropped every
+    sentence behind it -- so "NOT ONE of 12 candidates was scored by Claude;
+    the order is not a ranking", which is what a reader needs before acting on
+    a ranking, arrived as one word. src.emailer._banner() makes exactly this
+    argument for the evening email: the problems are printed in full because
+    "138 of 230 symbols had no bar" tells an operator where to look and
+    "degraded" does not."""
+    data = evening_run(tmp_path, fake_alpaca, ohlcv)
+    data["run"]["status"] = "degraded"
+    data["run"]["errors"] = [
+        {"stage": "scan", "message": "138 of 230 symbols carried no bar for that session"},
+        {"stage": "score", "message": "NOT ONE of 12 candidates was scored by Claude"},
+    ]
+    (tmp_path / "docs" / ledger.DATA_NAME).write_text(json.dumps(data))
+    market_clock.before_the_open()
+    report = pipeline.RunReport()
+
+    pipeline.run("morning", dry_run=False, report=report)
+
+    session = data["run"]["date"]
+    assert [e["stage"] for e in report.errors] == [
+        "history", f"{session} evening · scan", f"{session} evening · score"], report.errors
+    html = mocked_boundaries["resend"].sent[0]["html"]
+    for problem in data["run"]["errors"]:
+        assert problem["message"] in html, "the reason itself, not a summary of it"
+    assert f"{session} evening" in html, "and whose problem it is, in a band holding two runs'"
+
+
+def test_a_morning_run_carries_no_reasons_when_there_were_none(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The precondition: a status word with no sentences behind it does not
+    invent any, and a clean run carries nothing at all."""
+    data = evening_run(tmp_path, fake_alpaca, ohlcv)
+    data["run"]["status"] = "degraded"
+    (tmp_path / "docs" / ledger.DATA_NAME).write_text(json.dumps(data))
+    market_clock.before_the_open()
+    report = pipeline.RunReport()
+
+    pipeline.run("morning", dry_run=True, report=report)
+
+    assert [e["stage"] for e in report.errors] == ["history"]
+    assert "Its own reasons follow" not in report.errors[0]["message"]
+
+
+def test_a_snapshot_whose_errors_are_not_error_shaped_still_mails(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """run.errors comes off disk. A truncated or hand-edited file must not take
+    the 8:30 email down -- the email is the monitor, and losing it is the
+    failure the whole of step 5 exists to end."""
+    data = evening_run(tmp_path, fake_alpaca, ohlcv)
+    data["run"]["status"] = "degraded"
+    data["run"]["errors"] = ["a bare string", None, {"stage": "scan"}, {"message": "   "},
+                             {"message": "the one real sentence"}]
+    (tmp_path / "docs" / ledger.DATA_NAME).write_text(json.dumps(data))
+    market_clock.before_the_open()
+    report = pipeline.RunReport()
+
+    pipeline.run("morning", dry_run=False, report=report)
+
+    session = data["run"]["date"]
+    assert [e["stage"] for e in report.errors] == [
+        "history", f"{session} evening · unknown"], report.errors
+    assert "the one real sentence" in mocked_boundaries["resend"].sent[0]["html"]
 
 
 def test_a_morning_run_on_the_session_it_should_follow_is_clean(

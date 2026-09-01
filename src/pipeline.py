@@ -26,9 +26,13 @@ Each mode now DECLARES the side of the close it belongs on (see MODES), and
 the run checks that against the clock before it spends anything. A
 disagreement does not stop the run: it degrades it, exactly like every other
 survivable problem here, so the reason lands in the RunReport, in the red band
-at the top of the email, in the ledger entry and in the exit code. Refusing
-would trade a mislabelled email for no email, and no email is indistinguishable
-from a market holiday — the failure this pipeline was built around.
+at the top of the email, in docs/data.json's run.errors and in the exit code.
+Not in docs/ledger.json — add_run() keeps a status word per run and not the
+sentences behind it, and README and this docstring both claimed otherwise for
+a whole step. A morning run writes neither file, so for that mode the email
+and the exit code are the whole record. Refusing would trade a mislabelled
+email for no email, and no email is indistinguishable from a market holiday —
+the failure this pipeline was built around.
 
 Two things make the label unable to lie in the first place, whatever the
 clock says: the session that was actually scanned is named in the email
@@ -58,9 +62,12 @@ reasoning for it.
 Reading that history can never kill a run. See load_history(): the run
 happening now is worth more than the runs already gone, which is the posture
 Ledger.load() already took for an unreadable file. But a history that could
-not be read is reported and the streaks go out null, because "we have never
-seen this name" and "we could not read the file that would know" are different
-sentences and only one of them is a claim about the market.
+not be read is reported and every streak goes out with no day number and the
+reason it has none, because "we have never seen this name" and "we could not
+read the file that would know" are different sentences and only one of them is
+a claim about the market. Unknown is a state every surface renders in words —
+the email, both dashboard tables and the pick card — because the failure it
+guards against is a reader seeing nothing and reading it as day 1.
 
 FAILING LOUDLY (step 5)
 -----------------------
@@ -115,12 +122,42 @@ TOP_N = 5          # how many candidates the EMAIL carries. Not the archive.
 MIN_LYNCH_PASSES = 3
 MAX_TO_SCORE = 25  # cap Claude calls per run
 
-#: Where render_chart() writes. Under docs/ because GitHub Pages serves that
-#: directory and docs/index.html references a chart as a path relative to
-#: itself: a PNG in the repo-root charts/ can be named by the dashboard and
-#: never fetched by it, and that directory is gitignored besides, so the image
-#: died with the runner. See ledger.chart_ref() for the other half.
+#: Where render_chart() writes. Under docs/ because docs/index.html names a
+#: chart as a path relative to itself, so a dashboard opened on the machine
+#: that ran the pipeline shows the same image the model was given. See
+#: ledger.chart_ref() for the other half.
+#:
+#: THESE ARE NOT COMMITTED, and that is a decision, not an oversight (step 10).
+#: .gitignore blocks /docs/charts/, so what GitHub Pages serves carries no PNGs
+#: and the page degrades to an explained frame. Two reasons, and the second is
+#: the one that costs money:
+#:
+#:   Size. A chart is ~57 KB and a night renders up to MAX_TO_SCORE of them —
+#:   about 360 MB a year of history that does not delta-compress and cannot be
+#:   removed after the fact. Nothing had ever been committed only because the
+#:   persist step was aborting before its commit on every run.
+#:
+#:   A chart here cannot say which session drew it. One file per ticker,
+#:   overwritten by every evening run, with the session nowhere in the name or
+#:   the file. An evening run that renders and then dies before publish()
+#:   leaves this directory a session AHEAD of docs/data.json, and anything that
+#:   later resolves a chart by bare path attaches the newer picture to the
+#:   older numbers with nothing showing it — reproduced with file hashes. The
+#:   evening email is unaffected: it attaches the PNGs it rendered moments
+#:   earlier in the same process. The morning email carries no chart at all
+#:   and says so, which is the one thing a stale chart could not do; see
+#:   MORNING_CHART_NOTE.
 CHARTS_DIR = ledger.DOCS_DIR / "charts"
+
+#: What the morning email prints where a chart would be. The model is told to
+#: trust the chart over the numbers and a reader will do the same, so a picture
+#: that might belong to a different session is worse than no picture: it is
+#: wrong in the direction of confidence, and silently.
+MORNING_CHART_NOTE = (
+    "no chart — the PNG on disk is overwritten by every evening run and records no "
+    "session, so this pass cannot show that it is the one these numbers came from. "
+    "Last night's email carried the chart it had just rendered."
+)
 
 # Exit codes. 2 exists because "the screener is broken" and "the screener ran
 # and found nothing" must not be the same signal to the only monitor there is.
@@ -386,7 +423,8 @@ def load_history(report: RunReport) -> ledger.Ledger:
     What is NOT swallowed is the fact of it. A failed read costs this run its
     streak numbers, and saying nothing would leave every candidate looking
     like a first-ever sighting — a claim about the market made out of a file
-    error. It degrades the run instead, and streaks_for() below answers null.
+    error. It degrades the run instead, and streaks_for() below answers with a
+    block whose `day` is null and whose reason is "history_unreadable".
     """
     book = ledger.Ledger(ledger.DOCS_DIR)
     try:
@@ -408,17 +446,22 @@ def load_history(report: RunReport) -> ledger.Ledger:
 
 
 def streaks_for(book: ledger.Ledger, session, tickers) -> dict[str, dict]:
-    """Day-N-of-this-setup for each ticker, or {} when the history is unknown.
+    """Day-N-of-this-setup for each ticker. One block per ticker, always.
 
-    An EMPTY ledger and an UNREADABLE one answer differently on purpose: with
-    an empty one every name really is on day 1 and the record says so, while
-    with an unreadable one nothing is known and every row publishes a null
-    streak. Collapsing the second into the first would dress a file error as a
-    fact about the market.
+    An EMPTY ledger and an UNREADABLE one answer differently on purpose, and
+    src.ledger cannot tell them apart from the inside — both are `runs == []`.
+    Ledger.load_error is what knows, so it is passed in: an unreadable history
+    makes every block `day: null` with the reason, rather than a confident
+    day 1 assembled out of a file error.
+
+    Nothing returns an EMPTY dict any more. It used to for an unreadable
+    history and for a run with no session, and the caller's `marks.get()` then
+    turned that into `streak: null` on the row — a shape the email and the
+    dashboard each rendered differently, and two of the three rendered as
+    nothing at all. A block that says which kind of unknown it is can be
+    rendered; an absence cannot.
     """
-    if book.load_error or session is None:
-        return {}
-    return ledger.streaks(book.runs, tickers, session)
+    return ledger.streaks(book.runs, tickers, session, unreadable=book.load_error)
 
 
 def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
@@ -552,7 +595,11 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         # The email reads this off the scored row; docs/data.json gets it from
         # the same dict below. One lookup, two audiences, no second rule.
         row["streak"] = marks.get(row["ticker"])
-    repeats = sum(1 for row in scored if (row.get("streak") or {}).get("day", 1) > 1)
+    # `day` is None when the record cannot say, so it is compared as a number
+    # only after that is ruled out: `None > 1` is a TypeError, and it would be
+    # raised by the log line at the end of a run that had already succeeded.
+    repeats = sum(1 for row in scored
+                  if ((row.get("streak") or {}).get("day") or 0) > 1)
     if repeats:
         log.info("%d of %d scored candidate(s) are a repeat of a setup already in "
                  "the ledger", repeats, len(scored))
@@ -629,16 +676,88 @@ def email_row(row: dict) -> dict:
       lynch_detail  the dashboard keeps one dict per check so it can draw
                     them; the email wants the same six lines src.lynch built
                     for it, so they are rebuilt from the same fields.
-      chart         the file names its charts relative to docs/, because
-                    docs/index.html sets them as an <img src>. The emailer
-                    opens them relative to the working directory, so the
-                    published path is put back under docs/ before it is used.
+      chart         DROPPED, with MORNING_CHART_NOTE printed where the picture
+                    would have been. This used to resolve the published path
+                    back under docs/ and attach whatever PNG was sitting
+                    there — and docs/charts is one file per ticker, rewritten
+                    by every evening run and stamped with no session, while
+                    docs/data.json is only rewritten at publish(). An evening
+                    run that rendered and then died left the two a session
+                    apart, and this row then paired Monday's numbers with
+                    Tuesday's picture with nothing anywhere saying so.
     """
     detail = [f"{'PASS' if d.get('pass') else 'FAIL'}  {d.get('code')} "
               f"{d.get('label')}: {d.get('value')}"
               for d in (row.get("lynch_detail") or [])]
-    return dict(row, lynch_detail=detail,
-                chart=str(ledger.DOCS_DIR / row["chart"]) if row.get("chart") else None)
+    return dict(row, lynch_detail=detail, chart=None, chart_note=MORNING_CHART_NOTE)
+
+
+def stale_snapshot_note(source: dict, session, expected) -> str:
+    """What to say when nothing has published for the session this run expected.
+
+    It used to say "the session to follow through on is 2026-11-26" — a
+    sentence that asserts a session existed. Nothing here can know that:
+    expected_session() subtracts weekends and nothing else, so on the morning
+    after every market holiday this named a day the market never held and the
+    red band asserted it in confident prose. Reproduced at Friday 2026-11-27
+    08:30 ET against a Wednesday snapshot, and again the Tuesday after MLK
+    day: nine or ten mornings a year of a red band and a red Actions run,
+    each one teaching the reader that the band is routine — and the message
+    that matters, "the evening run has been failing and nobody noticed", is
+    that same band.
+
+    A holiday calendar is not the fix. An approximate one (pandas'
+    USFederalHolidayCalendar disagrees with the NYSE on Good Friday, among
+    others) used to make a confident claim is a worse defect than the one it
+    replaces, and the evening run deliberately has none either — it discovers
+    a closed market from the feed and fails on evidence. This run has no feed.
+    So it states what it can see, names both explanations, and says how to
+    tell them apart. It stays degraded and still exits 2 either way: a
+    follow-through on a snapshot that is not last night's must not look clean.
+    """
+    published = source.get("type") or "evening"
+    return (
+        f"the newest published run is the {published} run of {session}, and nothing has "
+        f"published a later session. There are two explanations and this run cannot tell "
+        f"them apart: last night's evening run did not publish (it failed, or it never "
+        f"ran), or the market held no session for it to scan. There is no holiday "
+        f"calendar here to choose between them, deliberately — an approximate one would "
+        f"name the wrong reason with confidence. If the market did trade on {expected}, "
+        f"then the evening run is what broke, and its own email and its Actions run say "
+        f"how. Either way the rows below are {session}'s, labelled {session} everywhere, "
+        f"and are not a scan of any session since"
+    )
+
+
+def carried_problems(source: dict, session) -> list[dict]:
+    """Last night's own problems, in last night's words, for this morning's reader.
+
+    src.emailer._banner() already argues this for the evening email: "138 of
+    230 symbols had no bar" tells an operator where to look and "degraded"
+    does not. The morning email carried the status word forward and dropped
+    every sentence behind it, so "NOT ONE of 12 candidates was scored by
+    Claude; the order is not a ranking" — the one thing a reader needs before
+    acting on a ranking — reached the 8:30 reader as the word DEGRADED.
+
+    The stage is prefixed with the run the problem belongs to, because one red
+    band now carries two runs' problems and a reader must be able to tell
+    which is which. Anything not shaped like {stage, message} is skipped: this
+    comes off disk, and a truncated or hand-edited snapshot must not take the
+    email down with it.
+    """
+    carried = []
+    for problem in source.get("errors") or []:
+        if not isinstance(problem, dict):
+            continue
+        message = str(problem.get("message", "")).strip()
+        if not message:
+            continue
+        carried.append({
+            "stage": f"{session} {source.get('type') or 'evening'} · "
+                     f"{problem.get('stage') or 'unknown'}",
+            "message": message,
+        })
+    return carried
 
 
 def follow_through(mode: Mode, dry_run: bool = False,
@@ -653,6 +772,12 @@ def follow_through(mode: Mode, dry_run: bool = False,
     front of a reader at the hour they might act on them, each one with what
     the record says about it — which day of this setup it is, when it last
     appeared, what it scored then.
+
+    IT ATTACHES NO CHART, for a reason of the same shape: the only picture it
+    could attach is whatever is in docs/charts right now, which is one file per
+    ticker with no session in it and is rewritten by every evening run. See
+    CHARTS_DIR and MORNING_CHART_NOTE. The evening email keeps its charts —
+    it attaches the ones it rendered moments earlier.
 
     IT WRITES NOTHING, and that is also deliberate. docs/ledger.json is the
     record of what was SCANNED; add_run() keys its entries on (date, type), so
@@ -693,36 +818,39 @@ def follow_through(mode: Mode, dry_run: bool = False,
         source = snapshot["run"]
         session = source.get("date")
         rows = [email_row(row) for row in snapshot["candidates"]]
-        wanted = ledger.iso_date(expected_session(cfg))
-        if session != wanted:
+        expected = ledger.iso_date(expected_session(cfg))
+        if session != expected:
             # The check that makes this mode honest about WHICH session it is
             # following through on. Monday morning after a Friday evening run
-            # is the normal case and passes; a week-old snapshot means the
-            # evening run has been failing and nobody noticed, which is
-            # exactly what this pipeline exists to stop being invisible.
-            report.problem("session",
-                           f"the newest published run is the {source.get('type')} run of "
-                           f"{session}, but the session to follow through on is {wanted}. "
-                           f"The list below is that older run's — nothing has published "
-                           f"{wanted} yet")
+            # is the normal case and passes. What it must NOT do is assert
+            # that the missing session existed — see stale_snapshot_note().
+            report.problem("session", stale_snapshot_note(source, session, expected))
         status = source.get("status", "ok")
+        # Carried forward, not re-derived, and not summarised into the status
+        # word either. A follow-through over an incomplete scan presented as a
+        # complete one is the same silent wrongness this mode was built to
+        # stop — and the reader of the 8:30 email is not the reader who saw
+        # last night's red band, which is the argument for carrying the
+        # reasons, not just the verdict.
+        carried = carried_problems(source, session)
         if status != "ok":
-            # Carried forward, not re-derived. A follow-through over an
-            # incomplete scan presented as a complete one is the same silent
-            # wrongness this mode was built to stop — and the reader of the
-            # 8:30 email is not the reader who saw last night's red band.
             report.problem("history",
                            f"the {session} run this follows through on was itself a "
                            f"{status.upper()} run, so its shortlist is not a complete "
-                           "scan of that session")
+                           "scan of that session"
+                           + (". Its own reasons follow, in the words it reported them"
+                              if carried else ""))
+        report.errors.extend(carried)
 
     shortlist = rows[:TOP_N]
-    # Named for what it is. The old morning email printed "Universe scanned:
-    # 230 checked-in US common stocks" over a run that had scanned nothing.
-    followed = (f"nothing — this pass re-presents the {source.get('type', 'evening')} "
-                f"run of {session}") if session else "nothing — no run to follow"
+    # No `universe` in this block. src.emailer._funnel_line's morning branch
+    # prints none, because this pass scanned none; a sentence saying so was
+    # built here for a whole step and never rendered anywhere, which reads as
+    # a feature that exists. What replaced the old "Universe scanned: 230
+    # checked-in US common stocks" line — printed over a run that had scanned
+    # nothing — is the funnel line naming the run being followed instead.
     stats = report.email_stats(
-        session=session, universe=followed,
+        session=session,
         bursts=source.get("bursts", 0), gated=source.get("passed_gate", 0),
         scored_by=source.get("scored_by") or {},
     )
@@ -730,7 +858,7 @@ def follow_through(mode: Mode, dry_run: bool = False,
     report.counts.update({"followed": len(rows), "shortlist": len(shortlist),
                           "session": session,
                           "repeats": sum(1 for r in shortlist
-                                         if (r.get("streak") or {}).get("day", 1) > 1)})
+                                         if ((r.get("streak") or {}).get("day") or 0) > 1)})
 
     report.stage = "email"
     if dry_run:
@@ -738,7 +866,7 @@ def follow_through(mode: Mode, dry_run: bool = False,
                  session or "nothing — no run to follow")
         for r in shortlist:
             log.info("  %s  %s/10 (%s) day %s", r["ticker"], r["score"], r["verdict"],
-                     (r.get("streak") or {}).get("day", "?"))
+                     (r.get("streak") or {}).get("day") or "unknown")
     else:
         from .emailer import send_email
         send_email(shortlist, run_type, stats)

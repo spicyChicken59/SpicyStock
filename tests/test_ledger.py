@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import json
 import math
-from datetime import date
+from datetime import date, datetime, timezone
 
 import pandas as pd
 import pytest
@@ -58,10 +58,16 @@ _RUN_KEYS = ("date", "type", "bursts", "passed_gate", "scored", "score_cap",
 #: value for a count; what the contract forbids is a string or a NaN in one.
 _NUMERIC = ("close", "gain_pct", "volume", "prev_volume", "volume_ratio",
             "dollar_volume", "score", "lynch_passes", "lynch_total", "rank",
-            "d1", "d3", "d5", "n", "bursts", "passed_gate", "scored", "size",
+            "d1", "d3", "d5", "n", "rows", "bursts", "passed_gate", "scored", "size",
             "shortlist_size", "score_cap", "top_score", "fallbacks",
             "day", "seen_before", "last_score",
             "pct_off_52w_high", "pct_above_52w_low", "perf_3mo_pct", "perf_6mo_pct")
+
+
+_STREAK_KEYS = {"day", "unknown_reason", "first_seen", "last_seen", "last_score",
+                "last_verdict", "last_outcome", "seen_before"}
+_UNKNOWN_REASONS = {ledger.NO_HISTORY, ledger.HISTORY_UNREADABLE,
+                    ledger.WINDOW_NOT_COVERED}
 
 
 def _streak_ok(row) -> bool:
@@ -74,31 +80,42 @@ def _streak_ok(row) -> bool:
     first_seen is today's session is a streak computed against nothing, which
     is the shape a broken read would take.
 
-    null is legal. It is what a run publishes when it could not read its own
-    history, and it is deliberately not the same as day 1.
+    A NULL day is legal and must carry the reason there is none, because that
+    is the difference between "we could not read the file", "the file does not
+    reach back far enough" and "this is new" -- and the last of the three is a
+    claim about the market that the first two cannot support. A day number
+    without a reason and a reason without a day are both refused: exactly one
+    of the pair answers.
+
+    The whole block being null is legal too, and means unknown.
     """
     streak = row.get("streak")
     if streak is None:
         return "streak" in row
-    if not isinstance(streak, dict):
+    if not isinstance(streak, dict) or set(streak) != _STREAK_KEYS:
         return False
-    if set(streak) != {"day", "first_seen", "last_seen", "last_score",
-                       "last_verdict", "seen_before"}:
-        return False
-    day, seen = streak["day"], streak["seen_before"]
-    if not isinstance(day, int) or isinstance(day, bool) or day < 1:
-        return False
+    day, seen, why = streak["day"], streak["seen_before"], streak["unknown_reason"]
     if not isinstance(seen, int) or isinstance(seen, bool) or seen < 0:
         return False
-    if (day == 1) != (streak["first_seen"] == row.get("date")):
-        return False
+    if (day is None) != (why is not None):
+        return False   # a day and a reason there is none, or neither of them
+    if day is None:
+        if why not in _UNKNOWN_REASONS:
+            return False
+        if streak["first_seen"] is not None:
+            return False   # where the setup began is the claim `day` makes
+    else:
+        if not isinstance(day, int) or isinstance(day, bool) or day < 1:
+            return False
+        if (day == 1) != (streak["first_seen"] == row.get("date")):
+            return False
+        if day > 1 and seen < day - 1:
+            return False   # more days in this setup than appearances to make them
     if (seen == 0) != (streak["last_seen"] is None):
         return False
-    if day > 1 and seen < day - 1:
-        return False   # more days in this setup than appearances to make them
-    if streak["last_seen"] is None and (streak["last_score"] is not None
-                                        or streak["last_verdict"] is not None):
-        return False   # a judgement from a sighting that never happened
+    if streak["last_seen"] is None and any(
+            streak[k] is not None for k in ("last_score", "last_verdict", "last_outcome")):
+        return False   # a judgement, or a rejection, from a sighting that never happened
     return True
 
 
@@ -132,7 +149,16 @@ def _returns_ok(returns, *, run_level: bool) -> bool:
         if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float))):
             return False
     if run_level:
-        return isinstance(returns.get("n"), int) and returns["n"] >= 0
+        n, rows = returns.get("n"), returns.get("rows")
+        if not all(isinstance(v, int) and not isinstance(v, bool) and v >= 0
+                   for v in (n, rows)):
+            return False
+        # n counts setups and rows counts the rows they were collapsed from, so
+        # a run cannot hold more setups than rows. The pair is the whole point:
+        # a mean weighted by rows over-weights the name that burst five
+        # sessions running, and a label saying "names" over a row count is not
+        # true of either number.
+        return n <= rows
     if "as_of" not in returns:
         return False
     measured = any(returns[k] is not None for k in horizons)
@@ -235,9 +261,15 @@ def _detail(passes: int) -> list[dict]:
 
 
 def _new_setup(session: str = "2026-08-31") -> dict:
-    """A streak block for a name nobody has seen before: day 1, nothing prior."""
-    return {"day": 1, "first_seen": session, "last_seen": None,
-            "last_score": None, "last_verdict": None, "seen_before": 0}
+    """A streak block for a name nobody has seen before: day 1, nothing prior.
+
+    Day 1 is a real answer here, not the default one: it is what a ledger that
+    reaches back past the streak window and holds no earlier appearance says.
+    src.ledger only publishes it under that condition -- see _why_no_day().
+    """
+    return {"day": 1, "unknown_reason": None, "first_seen": session,
+            "last_seen": None, "last_score": None, "last_verdict": None,
+            "last_outcome": None, "seen_before": 0}
 
 
 def _candidate(ticker: str, rank: int, score: float, source: str = "claude") -> dict:
@@ -283,7 +315,8 @@ def document() -> dict:
         }],
         "runs": [{"date": "2026-08-31", "type": "evening", "bursts": 3, "passed_gate": 2,
                   "scored": 2, "shortlist_size": 2, "top_score": 8.4, "fallbacks": 1,
-                  "forward_returns": {"d1": None, "d3": None, "d5": None, "n": 0}}],
+                  "forward_returns": {"d1": None, "d3": None, "d5": None,
+                                      "n": 0, "rows": 0}}],
     }
 
 
@@ -409,6 +442,57 @@ def test_a_verdict_from_a_sighting_that_never_happened_is_caught(document):
     _only(document, "streak")
 
 
+def test_a_rejection_from_a_sighting_that_never_happened_is_caught(document):
+    """last_outcome describes the appearance last_seen names. With no such
+    appearance there is nothing for it to describe, and "we rejected it then"
+    would be a sentence about a night that did not happen."""
+    document["candidates"][0]["streak"] = dict(_new_setup(), last_outcome="lynch_gate")
+    _only(document, "streak")
+
+
+def test_a_day_that_is_not_known_and_will_not_say_why_is_caught(document):
+    """The whole point of the null. A day nobody can compute is publishable
+    only with the reason attached, because "unknown" and "new" are what the
+    reader is being asked to tell apart."""
+    document["candidates"][0]["streak"] = dict(_new_setup(), day=None,
+                                               first_seen=None)
+    _only(document, "streak")
+
+
+def test_a_day_number_beside_a_reason_it_could_not_be_known_is_caught(document):
+    """The other direction: a block cannot both answer and decline to."""
+    document["candidates"][0]["streak"] = dict(_new_setup(),
+                                               unknown_reason=ledger.NO_HISTORY)
+    _only(document, "streak")
+
+
+def test_a_reason_nothing_in_the_ledger_can_produce_is_caught(document):
+    """The three reasons are three repairs -- a corrupt file, an empty one, a
+    shallow one. A fourth word means the writer invented a state, and the
+    reader has nothing to do with it."""
+    document["candidates"][0]["streak"] = dict(_new_setup(), day=None,
+                                               first_seen=None,
+                                               unknown_reason="dunno")
+    _only(document, "streak")
+
+
+def test_an_unknown_day_that_still_claims_where_the_setup_began_is_caught(document):
+    """first_seen answers the same question day does. A record that cannot
+    place the burst in a setup cannot say when that setup started either."""
+    document["candidates"][0]["streak"] = dict(
+        _new_setup(), day=None, unknown_reason=ledger.WINDOW_NOT_COVERED)
+    _only(document, "streak")
+
+
+def test_a_history_too_shallow_to_count_days_is_still_a_valid_document(document):
+    """The half that keeps the rule honest: an unknown day IS legal, so the
+    invariant cannot be satisfied by always writing a number."""
+    for row in document["candidates"] + document["gated_out"]:
+        row["streak"] = dict(_new_setup(), day=None, first_seen=None,
+                             unknown_reason=ledger.WINDOW_NOT_COVERED)
+    assert contract_violations(document) == set()
+
+
 def test_a_burst_with_no_streak_field_at_all_is_caught(document):
     """Absent is not the same as null. Null says "this run could not read its
     history"; missing says a writer forgot, and the reader cannot tell."""
@@ -446,6 +530,15 @@ def test_a_nan_is_caught(document):
 
 def test_a_run_mean_over_no_names_is_caught(document):
     document["runs"][0]["forward_returns"] = {"d1": 0.0, "d3": 0.0, "d5": 0.0}
+    _only(document, "returns_shape")
+
+
+def test_a_run_that_claims_more_setups_than_it_has_rows_is_caught(document):
+    """n is the weight the dashboard multiplies a session's mean by, and rows
+    is what those setups were collapsed from. More setups than rows is the
+    shape of a run that went back to weighting by rows and kept the label."""
+    document["runs"][0]["forward_returns"] = {"d1": 1.0, "d3": None, "d5": None,
+                                              "n": 4, "rows": 3}
     _only(document, "returns_shape")
 
 
@@ -508,18 +601,51 @@ def test_a_gap_in_the_closes_does_not_become_a_return():
     assert out["d3"] == 3.0
 
 
-def test_the_mean_of_no_measurements_is_null_not_zero():
-    rows = [{"forward_returns": ledger.empty_returns()} for _ in range(3)]
+def _row(ticker: str, session: str, **returns) -> dict:
+    """One ledger row, with whatever forward returns the test gives it."""
+    return {"ticker": ticker, "date": session,
+            "forward_returns": {**ledger.empty_returns(), **returns}}
 
-    assert ledger.mean_returns(rows) == {"d1": None, "d3": None, "d5": None, "n": 0}
+
+def _every_row_leads(rows: list[dict]) -> set:
+    """The leads set for rows that are each their own setup."""
+    return {(row["ticker"], row["date"]) for row in rows}
+
+
+def test_the_mean_of_no_measurements_is_null_not_zero():
+    rows = [_row(t, "2026-08-31") for t in ("AAA", "BBB", "CCC")]
+
+    assert ledger.mean_returns(rows, _every_row_leads(rows)) == {
+        "d1": None, "d3": None, "d5": None, "n": 0, "rows": 0}
 
 
 def test_the_mean_counts_only_the_names_that_have_one():
-    rows = [{"forward_returns": {"d1": 2.0, "d3": None, "d5": None, "as_of": "x"}},
-            {"forward_returns": {"d1": -1.0, "d3": 4.0, "d5": None, "as_of": "x"}},
-            {"forward_returns": ledger.empty_returns()}]
+    rows = [_row("AAA", "2026-08-31", d1=2.0, as_of="x"),
+            _row("BBB", "2026-08-31", d1=-1.0, d3=4.0, as_of="x"),
+            _row("CCC", "2026-08-31")]
 
-    assert ledger.mean_returns(rows) == {"d1": 0.5, "d3": 4.0, "d5": None, "n": 2}
+    assert ledger.mean_returns(rows, _every_row_leads(rows)) == {
+        "d1": 0.5, "d3": 4.0, "d5": None, "n": 2, "rows": 2}
+
+
+def test_a_row_that_continues_a_setup_is_not_a_second_observation():
+    """THE double-count. Two rows, one of them the next session of a move
+    already counted: its d1 window overlaps the first's and measures the same
+    move, so averaging both weights that one move twice.
+
+    Asserted against the mean a row count would have produced, because that is
+    the number this replaces: (20 + -10) / 2 = 5.0, not (20 + 20 + -10) / 3.
+    """
+    rows = [_row("AAA", "2026-08-31", d1=20.0, as_of="x"),
+            _row("AAA", "2026-09-01", d1=20.0, as_of="x"),
+            _row("BBB", "2026-09-01", d1=-10.0, as_of="x")]
+    leads = {("AAA", "2026-08-31"), ("BBB", "2026-09-01")}
+
+    out = ledger.mean_returns(rows, leads)
+
+    assert out["d1"] == 5.0, "the repeat session is the same move, not a second one"
+    assert (out["n"], out["rows"]) == (2, 3), (
+        "two setups, collapsed from three rows -- and the pair says which is which")
 
 
 # ===========================================================================
@@ -608,6 +734,15 @@ def test_an_unreadable_ledger_does_not_take_the_run_with_it(tmp_path, caplog):
     assert json.loads((tmp_path / ledger.LEDGER_NAME).read_text())["runs"]
 
 
+class _OneSecond(datetime):
+    """A clock that never moves, so "two failures in the same second" is a
+    fact of the test rather than a race it has to win."""
+
+    @classmethod
+    def now(cls, tz=None):
+        return datetime(2026, 9, 1, 19, 12, 33, tzinfo=timezone.utc)
+
+
 def test_a_ledger_this_module_cannot_read_is_moved_aside_not_overwritten(tmp_path):
     """The accumulated outcomes are the one thing here that cannot be
     recomputed, so a read error must not be allowed to destroy them."""
@@ -616,7 +751,77 @@ def test_a_ledger_this_module_cannot_read_is_moved_aside_not_overwritten(tmp_pat
     ledger.Ledger(tmp_path).load().add_run(*_run("2026-08-25"))
     ledger.Ledger(tmp_path).load()   # again: the second load finds no ledger
 
-    assert (tmp_path / (ledger.LEDGER_NAME + ".unreadable")).read_text() == "{not json"
+    assert [q.read_text() for q in ledger.quarantined(tmp_path)] == ["{not json"]
+
+
+def test_a_second_unreadable_ledger_does_not_destroy_the_first(tmp_path):
+    """THE data loss this replaces. The quarantine name used to be fixed and
+    Path.replace overwrites, so a year of outcomes set aside on Monday was
+    gone on Tuesday under a 35-byte corrupt file -- with the log line still
+    reading "it was NOT overwritten".
+
+    Nothing exotic gets you here: a SCHEMA_VERSION bump and a rollback does it
+    in two runs, and so does any cause that corrupts two writes running.
+    """
+    year = json.dumps({"schema_version": 99,
+                       "runs": [{"date": "2025-09-01", "type": "evening"}]})
+    (tmp_path / ledger.LEDGER_NAME).write_text(year)
+    ledger.Ledger(tmp_path).load()
+
+    (tmp_path / ledger.LEDGER_NAME).write_text("{corrupt")
+    ledger.Ledger(tmp_path).load()
+
+    kept = sorted(q.read_text() for q in ledger.quarantined(tmp_path))
+    assert kept == sorted([year, "{corrupt"]), (
+        "the irreplaceable file was destroyed by the next night's casualty")
+
+
+def test_two_casualties_inside_one_second_are_two_files(tmp_path, monkeypatch):
+    """The clock is the only thing that distinguishes one casualty from the
+    next, and a second is not fine enough: a cron run and a hand-fired re-run
+    of the same night fail together. The name carries a counter for that, and
+    the counter is claimed rather than checked."""
+    monkeypatch.setattr(ledger, "datetime", _OneSecond)
+    (tmp_path / ledger.LEDGER_NAME).write_text("first")
+    ledger.Ledger(tmp_path).load()
+    (tmp_path / ledger.LEDGER_NAME).write_text("second")
+    ledger.Ledger(tmp_path).load()
+
+    assert sorted(q.read_text() for q in ledger.quarantined(tmp_path)) == [
+        "first", "second"]
+
+
+def test_a_directory_where_the_ledger_should_be_is_left_where_it_is(tmp_path):
+    """The failure path that cannot be moved aside at all. The run still has
+    to survive it, the directory has to survive it, and the empty name the
+    move had claimed must not be left behind looking like a lost history."""
+    (tmp_path / ledger.LEDGER_NAME).mkdir()
+
+    book = ledger.Ledger(tmp_path).load()
+
+    assert (tmp_path / ledger.LEDGER_NAME).is_dir(), "still there"
+    assert ledger.quarantined(tmp_path) == [], "and no empty casualty beside it"
+    assert "could not be moved aside" in book.load_error
+
+
+def test_valid_json_that_is_not_a_ledger_is_kept_like_any_other_bad_read(tmp_path):
+    """`[]`, `null`, `4` and `"docs/ledger.json"` all parse. Every one of them
+    used to raise AttributeError out of load() -- past the catch-all, which
+    only wrapped json.loads -- so load_error stayed unset, the file was NOT
+    set aside, and the next write() replaced it. The pipeline survived on a
+    catch-all upstream; every direct caller did not.
+    """
+    for shape, payload in (("list", "[1, 2, 3]"), ("null", "null"),
+                           ("number", "4"), ("string", '"docs/ledger.json"')):
+        room = tmp_path / shape
+        room.mkdir()
+        (room / ledger.LEDGER_NAME).write_text(payload)
+
+        book = ledger.Ledger(room).load()
+
+        assert book.runs == [] and book.load_error, shape
+        assert "not a ledger object" in book.load_error, shape
+        assert [q.read_text() for q in ledger.quarantined(room)] == [payload]
 
 
 def test_a_ledger_from_another_schema_is_not_merged_into(tmp_path, caplog):
@@ -627,7 +832,7 @@ def test_a_ledger_from_another_schema_is_not_merged_into(tmp_path, caplog):
 
     assert book.runs == []
     assert "schema_version" in caplog.text
-    assert (tmp_path / (ledger.LEDGER_NAME + ".unreadable")).exists(), (
+    assert [q.read_text() for q in ledger.quarantined(tmp_path)], (
         "a ledger from another schema is kept, not written over")
 
 
@@ -644,8 +849,9 @@ def test_forward_returns_are_filled_into_an_earlier_run(tmp_path):
     assert filled == 2, "the scored row and the gated one"
     assert old["candidates"][0]["forward_returns"] == {
         "d1": 1.0, "d3": 3.0, "d5": 10.0, "as_of": "2026-08-31"}
-    assert old["forward_returns"] == {"d1": 1.0, "d3": 3.0, "d5": 10.0, "n": 1}, (
-        "the run mean covers the scored candidates")
+    assert old["forward_returns"] == {"d1": 1.0, "d3": 3.0, "d5": 10.0,
+                                      "n": 1, "rows": 1}, (
+        "the run mean covers the scored candidates, one setup from one row")
 
 
 def test_todays_own_candidates_are_not_asked_for_a_return_that_cannot_exist(tmp_path):
@@ -816,13 +1022,32 @@ def test_the_fixture_generator_and_the_pipeline_describe_one_contract():
 
 MON, TUE, WED = "2026-08-31", "2026-09-01", "2026-09-02"
 
+#: A record that has looked back months before anything these tests scan.
+#: Passed wherever a test asserts a day NUMBER, because src.ledger publishes
+#: one only where the file reaches back past the streak window -- see "how far
+#: back the record has looked" below, which is the section that varies this
+#: instead of holding it still.
+DEEP = date(2026, 1, 2)
+
 
 def _seen(session: str, *, score=None, verdict=None, ticker="AAA",
-          gated: bool = False) -> dict:
+          gated: bool = False, reason: str = "lynch_gate") -> dict:
     """One ledger run in which `ticker` burst on `session`."""
     row = {"ticker": ticker, "date": session, "score": score, "verdict": verdict}
+    if gated:
+        row["reason"] = reason
     key = "gated" if gated else "candidates"
     return {"date": session, "type": "evening", key: [row]}
+
+
+def _scanned(session: str) -> dict:
+    """A run that scanned that session and found nothing worth recording.
+
+    What makes a record DEEP rather than merely old: the ledger has looked at
+    that night. A ledger with no run before the streak window cannot tell
+    "nothing burst" from "nobody looked", which is the whole of _why_no_day().
+    """
+    return {"date": session, "type": "evening", "candidates": [], "gated": []}
 
 
 def test_sessions_between_counts_sessions_not_calendar_days():
@@ -834,26 +1059,29 @@ def test_sessions_between_counts_sessions_not_calendar_days():
     assert ledger.sessions_between("nonsense", MON) is None
 
 
-def test_a_name_with_no_history_is_day_one_of_a_new_setup():
+def test_a_name_a_deep_record_has_never_carried_is_day_one_of_a_new_setup():
     """The precondition for every test below: day 1 is not simply what this
-    function always says."""
-    assert ledger.streak([], TUE) == {
-        "day": 1, "first_seen": TUE, "last_seen": None,
-        "last_score": None, "last_verdict": None, "seen_before": 0}
+    function always says. It is what a record that has LOOKED far enough back
+    and found nothing says -- and only then."""
+    assert ledger.streak([], TUE, history_from=DEEP) == {
+        "day": 1, "unknown_reason": None, "first_seen": TUE, "last_seen": None,
+        "last_score": None, "last_verdict": None, "last_outcome": None,
+        "seen_before": 0}
 
 
 def test_a_name_that_burst_yesterday_is_day_two_today():
     """THE case the step exists for: seen on Monday, seen again on Tuesday."""
     history = ledger.appearance_index([_seen(MON, score=7.5, verdict="B")])
 
-    assert ledger.streak(history["AAA"], TUE) == {
-        "day": 2, "first_seen": MON, "last_seen": MON,
-        "last_score": 7.5, "last_verdict": "B", "seen_before": 1}
+    assert ledger.streak(history["AAA"], TUE, history_from=DEEP) == {
+        "day": 2, "unknown_reason": None, "first_seen": MON, "last_seen": MON,
+        "last_score": 7.5, "last_verdict": "B", "last_outcome": "scored",
+        "seen_before": 1}
 
 
 def test_three_consecutive_sessions_are_day_three():
     history = ledger.appearance_index([_seen(MON), _seen(TUE)])
-    assert ledger.streak(history["AAA"], WED)["day"] == 3
+    assert ledger.streak(history["AAA"], WED, history_from=DEEP)["day"] == 3
 
 
 def test_a_gap_of_exactly_the_limit_is_still_the_same_setup():
@@ -865,7 +1093,7 @@ def test_a_gap_of_exactly_the_limit_is_still_the_same_setup():
     history = ledger.appearance_index([_seen(MON)])
 
     assert ledger.sessions_between(MON, session) == limit
-    assert ledger.streak(history["AAA"], session)["day"] == 2, (
+    assert ledger.streak(history["AAA"], session, history_from=DEEP)["day"] == 2, (
         "a burst inside the window the first one's outcome is measured over")
 
 
@@ -878,7 +1106,7 @@ def test_a_gap_of_one_more_than_the_limit_starts_a_new_setup():
     history = ledger.appearance_index([_seen(MON, score=6.0, verdict="C")])
 
     assert ledger.sessions_between(MON, session) == limit + 1
-    streak = ledger.streak(history["AAA"], session)
+    streak = ledger.streak(history["AAA"], session, history_from=DEEP)
     assert streak["day"] == 1 and streak["first_seen"] == session
     assert streak["last_seen"] == MON and streak["seen_before"] == 1
     assert (streak["last_score"], streak["last_verdict"]) == (6.0, "C")
@@ -887,7 +1115,7 @@ def test_a_gap_of_one_more_than_the_limit_starts_a_new_setup():
 def test_a_ticker_two_weeks_later_is_not_day_twelve():
     """The example the rule was written against."""
     history = ledger.appearance_index([_seen("2026-08-17")])
-    assert ledger.streak(history["AAA"], "2026-08-31")["day"] == 1
+    assert ledger.streak(history["AAA"], MON, history_from=DEEP)["day"] == 1
 
 
 def test_the_gap_that_defines_one_setup_is_the_window_outcomes_are_measured_over():
@@ -906,11 +1134,50 @@ def test_a_burst_the_gate_rejected_still_counts_as_an_appearance():
     """The setup was there whether or not the checklist let it through to a
     score, and the reader is being told about the setup."""
     history = ledger.appearance_index([_seen(MON, gated=True)])
-    streak = ledger.streak(history["AAA"], TUE)
+    streak = ledger.streak(history["AAA"], TUE, history_from=DEEP)
 
     assert streak["day"] == 2
     assert streak["last_score"] is None and streak["last_verdict"] is None, (
         "it was never scored, and the row must not invent a judgement")
+
+
+def test_a_burst_the_gate_rejected_says_so_rather_than_saying_nothing():
+    """"Not scored then" reads as an absence of judgement -- the night the
+    model was down -- and it was being printed over a name the pipeline had
+    looked at and thrown out at the quality gate. Beside "day 2", which reads
+    as accumulating confirmation, that is the same reader question answered
+    two contradictory ways.
+    """
+    history = ledger.appearance_index([_seen(MON, gated=True, reason="lynch_gate")])
+
+    assert ledger.streak(history["AAA"], TUE,
+                         history_from=DEEP)["last_outcome"] == "lynch_gate"
+
+
+def test_the_two_ways_a_burst_goes_unscored_do_not_render_the_same():
+    """A name the checklist REJECTED and one it passed that lost its place to
+    twenty-five better names are different facts about the night, and both
+    used to arrive as "not scored then". The reason is in the ledger row;
+    until now it was dropped on the way to the streak."""
+    gated = ledger.appearance_index([_seen(MON, gated=True, reason="lynch_gate")])
+    capped = ledger.appearance_index([_seen(MON, gated=True, reason="score_cap")])
+
+    assert (ledger.streak(gated["AAA"], TUE, history_from=DEEP)["last_outcome"]
+            != ledger.streak(capped["AAA"], TUE, history_from=DEEP)["last_outcome"])
+    assert ledger.streak(capped["AAA"], TUE,
+                         history_from=DEEP)["last_outcome"] == "score_cap"
+
+
+def test_an_appearance_that_was_scored_says_so_even_with_no_number():
+    """The case "not scored then" was built for and still got wrong: Claude was
+    down, the fallback produced nothing, and the row carries no score. That is
+    an absence of judgement -- and it has to be distinguishable from a
+    rejection, which is exactly what a null score alone could not do."""
+    history = ledger.appearance_index([_seen(MON, score=None, verdict=None)])
+
+    streak = ledger.streak(history["AAA"], TUE, history_from=DEEP)
+
+    assert streak["last_outcome"] == "scored" and streak["last_score"] is None
 
 
 def test_an_appearance_on_the_session_being_scanned_is_not_a_repeat_of_itself():
@@ -918,7 +1185,7 @@ def test_an_appearance_on_the_session_being_scanned_is_not_a_repeat_of_itself():
     ledger. Counting the first attempt would report every name in it as day 2
     of a setup it started that same evening."""
     history = ledger.appearance_index([_seen(TUE, score=7.0)])
-    assert ledger.streak(history["AAA"], TUE)["day"] == 1
+    assert ledger.streak(history["AAA"], TUE, history_from=DEEP)["day"] == 1
 
 
 def test_a_backfill_does_not_count_the_newer_runs_sitting_above_it():
@@ -926,9 +1193,10 @@ def test_a_backfill_does_not_count_the_newer_runs_sitting_above_it():
     newer ones. Which appearances are prior is decided by DATE, not by where
     the entry landed in the file."""
     history = ledger.appearance_index([_seen(WED), _seen(MON)])
-    assert ledger.streak(history["AAA"], TUE) == {
-        "day": 2, "first_seen": MON, "last_seen": MON,
-        "last_score": None, "last_verdict": None, "seen_before": 1}
+    assert ledger.streak(history["AAA"], TUE, history_from=DEEP) == {
+        "day": 2, "unknown_reason": None, "first_seen": MON, "last_seen": MON,
+        "last_score": None, "last_verdict": None, "last_outcome": "scored",
+        "seen_before": 1}
 
 
 def test_one_session_scanned_twice_is_one_appearance():
@@ -939,15 +1207,16 @@ def test_one_session_scanned_twice_is_one_appearance():
         dict(_seen(MON), type="morning"),
     ])
     assert len(history["AAA"]) == 1
-    assert ledger.streak(history["AAA"], TUE) == {
-        "day": 2, "first_seen": MON, "last_seen": MON,
-        "last_score": 7.5, "last_verdict": "B", "seen_before": 1}
+    assert ledger.streak(history["AAA"], TUE, history_from=DEEP) == {
+        "day": 2, "unknown_reason": None, "first_seen": MON, "last_seen": MON,
+        "last_score": 7.5, "last_verdict": "B", "last_outcome": "scored",
+        "seen_before": 1}
 
 
 def test_seen_before_counts_every_earlier_sighting_not_just_this_setup():
     history = ledger.appearance_index([_seen("2026-06-01"), _seen("2026-07-01"),
                                        _seen(MON)])
-    streak = ledger.streak(history["AAA"], TUE)
+    streak = ledger.streak(history["AAA"], TUE, history_from=DEEP)
     assert (streak["day"], streak["seen_before"]) == (2, 3)
 
 
@@ -963,7 +1232,7 @@ def test_last_seen_is_the_most_recent_sighting_not_the_first():
         _seen(MON, score=6.5, verdict="B"),
     ])
 
-    streak = ledger.streak(history["AAA"], TUE)
+    streak = ledger.streak(history["AAA"], TUE, history_from=DEEP)
 
     assert streak["last_seen"] == MON
     assert (streak["last_score"], streak["last_verdict"]) == (6.5, "B"), (
@@ -971,20 +1240,174 @@ def test_last_seen_is_the_most_recent_sighting_not_the_first():
 
 
 def test_streaks_answers_for_every_name_it_is_asked_about():
-    runs = [_seen(MON, score=7.5, verdict="B"), _seen(MON, ticker="BBB", gated=True)]
+    runs = [_scanned("2026-06-01"), _seen(MON, score=7.5, verdict="B"),
+            _seen(MON, ticker="BBB", gated=True)]
     marks = ledger.streaks(runs, ["AAA", "BBB", "NEW"], TUE)
 
     assert marks["AAA"]["day"] == 2 and marks["BBB"]["day"] == 2
-    assert marks["NEW"] == {"day": 1, "first_seen": TUE, "last_seen": None,
-                            "last_score": None, "last_verdict": None,
+    assert marks["NEW"] == {"day": 1, "unknown_reason": None, "first_seen": TUE,
+                            "last_seen": None, "last_score": None,
+                            "last_verdict": None, "last_outcome": None,
                             "seen_before": 0}
 
 
-def test_an_empty_history_says_day_one_because_that_is_what_it_knows():
-    """An empty ledger and an unreadable one are different answers. This is
-    the empty one: every name really is on day 1 and the record says so.
-    src.pipeline publishes null for the unreadable one."""
-    assert ledger.streaks([], ["AAA"], TUE)["AAA"]["day"] == 1
+# --- how far back the record has looked -------------------------------------
+# Absence of evidence is only evidence of absence once you have looked far
+# enough back. Everything above passes a record that HAS; these are the tests
+# that vary it, and they are the ones that stop "day 1 -- new setup" from
+# being a sentence this module writes over an empty file.
+
+
+def test_an_empty_history_will_not_say_day_one_because_it_has_not_looked():
+    """REPLACES a test that asserted the opposite, and whose docstring said
+    "every name really is on day 1 and the record says so" -- two different
+    statements, only the second of which a file with nothing in it supports.
+
+    It was not a corner case. docs/ledger.json is not committed, so the first
+    production run prints this against every candidate; it recurs whenever
+    MAX_RUNS rolls a name off and on the night after a history is set aside.
+    And it shipped in the same email row as `FAIL 2_first_or_second_burst: 2
+    prior 4% bursts in last 20 days`, three lines below -- the price frame had
+    looked back twenty sessions, the ledger had looked back none, and they
+    answered one reader's question in opposite directions.
+    """
+    mark = ledger.streaks([], ["AAA"], TUE)["AAA"]
+
+    assert mark["day"] is None, "an empty file cannot know that this setup is new"
+    assert mark["unknown_reason"] == ledger.NO_HISTORY
+    assert mark["first_seen"] is None, "and cannot say when it began either"
+
+
+def test_a_record_that_stops_short_of_the_window_cannot_count_days():
+    """One night in the file is not a history. A name absent from it might
+    have burst the session before, in a night nobody scanned."""
+    marks = ledger.streaks([_scanned(MON)], ["AAA"], TUE)
+
+    assert marks["AAA"]["day"] is None
+    assert marks["AAA"]["unknown_reason"] == ledger.WINDOW_NOT_COVERED
+
+
+def test_the_record_must_reach_back_the_whole_streak_window():
+    """The boundary, from both sides and read off the constant. Reaching back
+    exactly the window is enough -- an earlier appearance inside it would have
+    joined this setup, so a file that covers it and holds none has looked.
+    """
+    limit = ledger.MAX_STREAK_GAP_SESSIONS
+    days = pd.bdate_range(end=TUE, periods=limit + 1)
+    just_enough, one_short = (days[0].date().isoformat(),
+                              days[1].date().isoformat())
+
+    assert ledger.sessions_between(just_enough, TUE) == limit
+    assert ledger.streaks([_scanned(just_enough)], ["AAA"], TUE)["AAA"]["day"] == 1
+    assert ledger.sessions_between(one_short, TUE) == limit - 1
+    assert ledger.streaks([_scanned(one_short)], ["AAA"], TUE)["AAA"]["day"] is None
+
+
+def test_a_repeat_the_record_cannot_place_still_says_when_it_was_last_seen():
+    """The unknown is `day`, not the file. What the ledger holds -- the last
+    sighting, what happened to it, how many there were -- is fact and stays;
+    only the two claims about what came BEFORE the earliest one in view are
+    withdrawn."""
+    runs = [_seen(MON, score=7.5, verdict="B")]
+
+    mark = ledger.streaks(runs, ["AAA"], TUE)["AAA"]
+
+    assert mark["day"] is None and mark["first_seen"] is None
+    assert mark["unknown_reason"] == ledger.WINDOW_NOT_COVERED
+    assert mark["last_seen"] == MON and mark["seen_before"] == 1
+    assert (mark["last_score"], mark["last_outcome"]) == (7.5, "scored")
+
+
+def test_the_window_is_measured_from_where_the_setup_started():
+    """A chain reaching back near the oldest run in the file makes day 1's
+    claim -- "nothing preceded THIS" -- one session further back, so that is
+    where the window has to be covered: before the setup's FIRST session, not
+    before tonight's. A name bursting every session since the file began is
+    not demonstrably on day 3 rather than day 8.
+
+    Built so the two readings disagree, and pinned so it stays that way: the
+    file reaches a full window back from TONIGHT, which is what the rule as
+    first written asked for, and two sessions back from where this setup
+    started, which is what the claim actually needs.
+    """
+    runs = [_scanned("2026-08-25"), _seen("2026-08-27"), _seen(MON)]
+
+    assert ledger.sessions_between("2026-08-25", TUE) == ledger.MAX_STREAK_GAP_SESSIONS
+    assert ledger.sessions_between("2026-08-25", "2026-08-27") == 2
+    assert ledger.streaks(runs, ["AAA"], TUE)["AAA"]["day"] is None, (
+        "measured from tonight the file looks deep enough, and it is not: "
+        "nobody scanned the four sessions before this setup's first burst")
+
+    reaching = [_scanned("2026-08-18")] + runs
+    assert ledger.streaks(reaching, ["AAA"], TUE)["AAA"]["day"] == 3
+
+
+def test_a_history_that_could_not_be_read_is_not_an_empty_one():
+    """Two empty histories, and the difference is whether "we have never seen
+    this name" is a claim about the market or about a file error. From in here
+    they are the same `runs == []`, so the caller passes the difference in."""
+    marks = ledger.streaks([], ["AAA"], TUE, unreadable="ledger.json is unreadable")
+
+    assert marks["AAA"]["day"] is None
+    assert marks["AAA"]["unknown_reason"] == ledger.HISTORY_UNREADABLE
+
+
+def test_a_session_that_cannot_be_placed_is_not_a_new_setup_either():
+    """A session this module cannot parse used to produce a confident day 1
+    with a null first_seen -- a block that contradicted its own contract."""
+    mark = ledger.streak([], "not a date", history_from=DEEP)
+
+    assert mark["day"] is None and mark["unknown_reason"] == ledger.WINDOW_NOT_COVERED
+
+
+# --- one setup, one observation ---------------------------------------------
+
+
+def test_consecutive_sessions_of_one_name_are_one_setup_to_an_average():
+    """What setup_leads() is for. Five sessions of one move are five rows and
+    one thing that happened, and their d1/d3/d5 windows overlap."""
+    runs = [_seen(MON), _seen(TUE), _seen(WED)]
+
+    assert ledger.setup_leads(runs) == {("AAA", MON)}, (
+        "the first appearance stands for the setup: it is the one whose "
+        "horizons are furthest along, and no later session can change it")
+
+
+def test_a_burst_exactly_the_window_later_is_still_one_setup():
+    """The boundary, read off the constant and the same one the streak uses:
+    inside the window the first burst's outcome is still being measured, so the
+    second session is the same episode -- and an average must not count it as a
+    second observation."""
+    limit = ledger.MAX_STREAK_GAP_SESSIONS
+    later = pd.bdate_range(start=MON, periods=limit + 1)[-1].date().isoformat()
+
+    assert ledger.sessions_between(MON, later) == limit
+    assert ledger.setup_leads([_seen(MON), _seen(later)]) == {("AAA", MON)}
+
+
+def test_a_name_that_comes_back_after_the_window_is_a_second_setup():
+    """The inverse, and the reason this is not simply "one row per ticker": a
+    name that based for a fortnight and burst again is a new move, and an
+    average that dropped it would be under-counting rather than de-duplicating.
+    """
+    later = pd.bdate_range(start=MON, periods=ledger.MAX_STREAK_GAP_SESSIONS + 2)
+    away = later[-1].date().isoformat()
+
+    assert ledger.setup_leads([_seen(MON), _seen(away)]) == {("AAA", MON),
+                                                             ("AAA", away)}
+
+
+def test_a_gated_burst_leads_a_setup_the_same_way_a_scored_one_does():
+    """Same rule as the streak: the scan found the burst either way, and a
+    setup that started with a rejection is still one setup."""
+    assert ledger.setup_leads([_seen(MON, gated=True), _seen(TUE)]) == {("AAA", MON)}
+
+
+def test_two_names_bursting_together_are_two_setups():
+    """The precondition: leads are per ticker, so this collapses appearances,
+    not names."""
+    assert ledger.setup_leads([_seen(MON), _seen(MON, ticker="BBB")]) == {
+        ("AAA", MON), ("BBB", MON)}
 
 
 # --- what load() says about why the history is empty ------------------------
@@ -1023,7 +1446,7 @@ def test_a_failure_load_cannot_name_still_keeps_the_file_and_says_why(tmp_path):
 
     assert book.runs == []
     assert "RecursionError" in (book.load_error or "")
-    assert (tmp_path / (ledger.LEDGER_NAME + ".unreadable")).read_text() == spoiled
+    assert [q.read_text() for q in ledger.quarantined(tmp_path)] == [spoiled]
 
 
 def test_a_ledger_from_another_schema_says_which_one(tmp_path):
@@ -1070,6 +1493,21 @@ def test_an_unparseable_snapshot_is_a_reason_not_an_exception(tmp_path):
     (tmp_path / ledger.DATA_NAME).write_text("{not json")
     data, why = ledger.read_snapshot(tmp_path)
     assert data is None and "could not be read" in why
+
+
+def test_a_snapshot_too_deep_to_parse_is_a_reason_not_an_exception(tmp_path):
+    """"Never raises" held only for the failures somebody had named. json.loads
+    raises RecursionError -- neither an OSError nor a ValueError -- on a deeply
+    nested document, and `python -m src.pipeline morning` against one exited
+    FAILED where the design says DEGRADED and "there is nothing to follow
+    through on". Ledger.load() was widened to a catch-all for exactly this;
+    this one, its sibling, was left behind.
+    """
+    (tmp_path / ledger.DATA_NAME).write_text("[" * 100_000 + "]" * 100_000)
+
+    data, why = ledger.read_snapshot(tmp_path)
+
+    assert data is None and "RecursionError" in why
 
 
 def test_a_snapshot_from_another_schema_is_refused(tmp_path):

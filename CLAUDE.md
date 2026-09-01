@@ -87,7 +87,7 @@ that a fix did not introduce a new defect of the same class.**
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 465 tests with no network
+- **There is a regression net.** `pytest tests/` runs 511 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -107,10 +107,23 @@ that a fix did not introduce a new defect of the same class.**
   double, so a shape change in alpaca-py fails here rather than passing.
   Still untested: anything needing a socket — that the credentials can query the
   feed, that Resend delivers, that Claude returns what the parser expects from a
-  real chart. And nothing here opens `docs/index.html`: the dashboard's own
-  smoke test (`tools/dashboard_smoke.mjs`) needs playwright's chromium, which
-  the sandbox does not have, so step 10's streak line on the page was written
-  against the selectors that test asserts on rather than watched in a browser.
+  real chart.
+
+  **And `evening.yml`'s commit-back has still never executed.** Every streak,
+  and the morning run's entire input, rest on it; the `git add` bug that voided
+  it is fixed and guarded by a test, but no run has yet reached the push at all,
+  so the push-and-rebase loop below it has never once run in anger. It was
+  traced with `bash -ex` against a stub `git` — three attempts really happen
+  now, where the old loop aborted after one — but that is a simulation, not a
+  run. This is the second time this step was believed done and was not. Watch
+  the first evening run after this lands.
+
+  `docs/index.html` CAN be opened here after all: playwright's chromium is
+  installed in this sandbox (`node tools/dashboard_smoke.mjs` after cloning the
+  design system to /tmp/design-system runs 80/80 with no page errors), which
+  the previous round of these notes said was impossible. Run it. The streak
+  line the page carries was additionally rendered against a data.json holding
+  every streak state and read back from the DOM, rather than argued about.
 
 ## Local run
 
@@ -142,14 +155,25 @@ python -m src.pipeline evening --dry-run
     before the open it would be reading the same daily bar for the same answer.
     Each mode declares which side of the 16:15 ET close it belongs on and
     degrades loudly when the clock disagrees, with the session it really read
-    named in the subject line, above the table and in the CSV's filename;
+    named in the subject line, above the table, and — on the evening run, the
+    only one that writes a CSV — in that file's name. The REASON for a
+    disagreement lands in the email, in `docs/data.json`'s `run.errors` and in
+    the exit code; `add_run()` keeps a status word and not the sentences, which
+    three separate places used to claim otherwise;
     `SCAN_SESSION_DATE` is exempt, since a pin is the user overruling the clock
     on purpose. And the ledger is finally READ as well as written: every burst
-    carries a streak — day N of this setup, when the name was last seen, what
-    it scored then — with `ledger.MAX_STREAK_GAP_SESSIONS` holding the one
-    judgement about what "the same setup" means. A history that cannot be read
-    degrades the run and publishes a null streak; it never takes the run with
-    it and never collapses into a confident day 1.
+    carries a streak — day N of this setup, when the name was last seen, and
+    what was DONE with it then (scored, rejected at the gate, or crowded out by
+    the call cap: three different facts that "not scored" used to cover with
+    one phrase) — with `ledger.MAX_STREAK_GAP_SESSIONS` holding the one
+    judgement about what "the same setup" means. A record that cannot answer —
+    unreadable, empty, or not reaching back far enough — publishes no day
+    number and says which of the three it is, on every surface, in words. It
+    never takes the run with it and never collapses into a confident day 1.
+    The morning email carries no chart: `docs/charts/` is one file per ticker
+    with no session in it, so a pass that reads it off disk cannot show the
+    picture belongs to the numbers beside it (the evening email, which attaches
+    what it just rendered, is unaffected).
 
 All ten are done. Full-market scanning comes next, and the open decision below
 is the first thing standing in front of it.

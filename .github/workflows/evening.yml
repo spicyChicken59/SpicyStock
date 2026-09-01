@@ -86,26 +86,57 @@ jobs:
         # by running `git add` against these rules rather than reading them:
         # both the streaks and the morning follow-through are built on this
         # step actually working.
+        #
+        # docs/charts/*.png is NOT committed either, and that is now a rule in
+        # .gitignore rather than an accident of this step failing: ~57 KB a
+        # chart, up to 25 a night, is about 360 MB a year of history that does
+        # not delta-compress and cannot be taken back out. `git add docs` skips
+        # ignored files inside a directory (it only exits 1 when an ignored
+        # path is named), so this line needs no change for it. See CHARTS_DIR
+        # in src/pipeline.py for the other half of that decision.
+        #
+        # Every failure below is either checked or fatal. `set -e` is on, so a
+        # command that fails anywhere except the left of `&&` or inside `if`
+        # ends the step: `git pull --rebase` used to sit bare in the loop, so
+        # the FIRST rejected push aborted the step and iterations 2 and 3 never
+        # ran. The retry existed only in the comment above it. Traced with
+        # `bash -ex`, which is also how the `git add` bug above was found.
         run: |
           git config user.name  "spicystock"
           git config user.email "actions@github.com"
           git add docs
           git diff --staged --quiet && exit 0
           git commit -m "run $(date -u +%F)"
-          for i in 1 2 3; do
-            git push && exit 0
-            git pull --rebase origin "${GITHUB_REF_NAME}"
+          for attempt in 1 2 3; do
+            if git push; then exit 0; fi
+            echo "push $attempt was rejected — rebasing onto what landed during the run"
+            if ! git pull --rebase origin "${GITHUB_REF_NAME}"; then
+              # A conflict, not a race. Leaving the rebase half-applied would
+              # make the next push send something nobody wrote, so put the tree
+              # back and fail loudly: market data is live-only, and the run's
+              # own artifact below still holds this snapshot.
+              git rebase --abort || true
+              echo "::error::rebase onto ${GITHUB_REF_NAME} conflicted; docs/ was not pushed — the snapshot is in this run's artifact."
+              exit 1
+            fi
           done
-          git push
+          echo "::error::docs/ could not be pushed after 3 attempts; the history did not accumulate tonight."
+          exit 1
       - name: Keep the run's artifacts
-        # always(), not failure(), and two reasons for the change. It is the
-        # 30-day copy of results/*.csv README documents — which a failure-only
-        # upload never produced on a run that worked. And it is the "an evening
-        # run already happened today" signal the guard above queries: until the
-        # `git add` fix above, that signal existed only because the persist step
-        # failed on every single run, so repairing that step would otherwise
-        # have quietly deleted the guard's only input.
-        if: always() && steps.guard.outputs.go == 'true'
+        # Not failure(), and two reasons for the change. It is the 30-day copy
+        # of results/*.csv README documents — which a failure-only upload never
+        # produced on a run that worked. And it is the "an evening run already
+        # happened today" signal the guard above queries: until the `git add`
+        # fix above, that signal existed only because the persist step failed on
+        # every single run, so repairing that step would otherwise have quietly
+        # deleted the guard's only input.
+        #
+        # `success() || failure()` rather than `always()`, which the first
+        # version of this used: always() also fires on a CANCELLED run, and the
+        # artifact it uploads then tells the guard an evening run completed
+        # today — so a manual cancel would silently suppress the backup cron
+        # that exists to catch exactly that. A cancelled run did not happen.
+        if: (success() || failure()) && steps.guard.outputs.go == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: evening-${{ github.run_id }}

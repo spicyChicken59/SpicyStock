@@ -377,9 +377,17 @@
     ]);
   }
 
+  // The chart PNGs are deliberately NOT committed (src/pipeline.py's
+  // CHARTS_DIR has the argument: ~360 MB a year of history that cannot be
+  // undone, and a file per ticker that records no session, so a chart on disk
+  // cannot prove which run drew it). So on the published page this <img>
+  // always 404s and the frame below is what a reader sees — while the same
+  // page opened from a checkout that has just run the pipeline shows the real
+  // image. The failure to avoid is the browser's broken-image icon, which
+  // says nothing; every path here says what happened instead.
   function chartSlot(c) {
     var why = c.chart
-      ? 'The pipeline has not published this chart yet.'
+      ? 'the pipeline rendered one beside this file and deliberately does not commit it, so the published page carries no copy. Open this page from a checkout that has just run the pipeline to see it.'
       : (c.chart_error || 'The chart failed to render for this candidate.');
     var empty = el('div', { 'class': 'sc-frame sc-frame--empty shot--empty' }, [
       el('img', {
@@ -407,25 +415,60 @@
   // rule for what counts as ONE setup is src/ledger.py's
   // MAX_STREAK_GAP_SESSIONS; this only renders what the file says.
   //
-  // A missing block is not day 1. Null means the run could not read its own
-  // history, and the run's error band above already says so — printing "new
-  // setup" here would turn a file error into a claim about the market.
+  // A NULL DAY IS NOT DAY 1. It means the record cannot say — it could not be
+  // read, it holds nothing, or it does not reach back far enough — and
+  // `unknown_reason` says which. Printing "new setup" there would turn a fact
+  // about a file into a claim about the market, and printing nothing (which
+  // both tables used to do) leaves the reader to supply the claim themselves.
+
+  // What each kind of unknown says. The same words src/emailer.py's
+  // STREAK_UNKNOWN uses, on purpose: a reader who gets the 8:30 email and
+  // then opens this page must not be told two different things about one
+  // row. Change one, change the other.
+  var STREAK_UNKNOWN = {
+    no_history: 'streak unknown — no history has been recorded yet',
+    history_unreadable: 'streak unknown — the run could not read its history',
+    window_not_covered: 'streak unknown — the history does not reach back this far'
+  };
+  // What was done with the name the last time it was seen. 'not scored' used
+  // to cover both of the bottom two, which are near opposites: the gate threw
+  // it out, or it passed and better names filled the night's calls. Beside
+  // 'day 2 of this setup' — which reads as confirmation — that mattered.
+  var LAST_OUTCOME = {
+    lynch_gate: 'rejected at the 2LYNCH gate',
+    score_cap: 'passed the gate, but the scoring cap was already full'
+  };
+  // A number is required for the scored sentence, not just the word: a row
+  // marked scored with no score in it would print 'scored —/10', and the
+  // honest answer to a missing number is that there is not one. src/emailer.py
+  // _last_appearance() is the same rule in the same order.
+  function lastAppearance(s) {
+    var scored = s.last_score !== null && s.last_score !== undefined;
+    if (scored && (!s.last_outcome || s.last_outcome === 'scored')) {
+      return 'scored ' + num(s.last_score, 1) + '/10';
+    }
+    return LAST_OUTCOME[s.last_outcome] || 'no score was recorded then';
+  }
   function streakText(c) {
     var s = c.streak;
-    if (!s) return 'not recorded — no history was read';
-    var text = (s.day > 1) ? 'day ' + s.day + ', since ' + day(s.first_seen)
-                           : 'day 1 — new setup';
-    if (s.last_seen) {
-      text += ' · last seen ' + day(s.last_seen) + (s.last_score === null || s.last_score === undefined
-        ? ' (not scored)' : ' at ' + num(s.last_score, 1) + '/10');
-    }
+    if (!s) return 'streak unknown — this run recorded none';
+    var text = (s.day === null || s.day === undefined)
+      ? (STREAK_UNKNOWN[s.unknown_reason] || 'streak unknown — no reason was recorded')
+      : (s.day > 1 ? 'day ' + s.day + ', since ' + day(s.first_seen) : 'day 1 — new setup');
+    if (s.last_seen) text += ' · last seen ' + day(s.last_seen) + ', ' + lastAppearance(s);
     return text;
   }
+  // Rendered for EVERY row, including one whose day is null. It used to
+  // return nothing at all there, so the state this whole mechanism cares most
+  // about — unknown, which is not day 1 — was visible on the pick card and
+  // invisible in both tables and in the email. Three surfaces, one sentence.
   function streakNote(c) {
-    if (!c.streak) return null;
+    var s = c.streak || {};
     return el('div', {
       'class': 'sc-note',
-      title: c.streak.seen_before + ' earlier session(s) in the ledger',
+      title: '"day N" counts every session the scan found a burst on for this name, '
+           + 'including bursts the 2LYNCH gate rejected — not N nights of confirmation. '
+           + (s.seen_before || 0) + ' earlier session(s) in the ledger.',
       text: streakText(c)
     });
   }
@@ -669,10 +712,18 @@
   }
 
   // ---- forward returns by horizon -----------------------------------------
-  // Weighted by how many names each session contributed, because a 5-name
-  // session and a 25-name session are not one observation each. A horizon with
-  // no closed session is null all the way through and reads as pending; it is
+  // Weighted by how much each session contributed, because a 5-setup session
+  // and a 25-setup session are not one observation each. A horizon with no
+  // closed session is null all the way through and reads as pending; it is
   // never averaged in as a zero.
+  //
+  // `n` IS SETUPS, NOT NAMES, and this page says so wherever it prints it.
+  // src/ledger.py's mean_returns() collapses a name that bursts on five
+  // consecutive sessions into the one setup it is — its d1/d3/d5 windows
+  // overlap and measure largely the same move — so calling n "names" here
+  // would put a bigger number in front of a reader than the mean was taken
+  // over. `rows` is what those setups were collapsed FROM, and is printed
+  // beside them rather than instead of them.
   var MIN_SESSIONS = 20;
   function horizonStats(runs) {
     return [1, 3, 5].map(function (d) {
@@ -681,17 +732,17 @@
         var f = r.forward_returns || {};
         return f[k] !== null && f[k] !== undefined;
       });
-      var wsum = 0, names = 0, vals = [];
+      var wsum = 0, setups = 0, rows = 0, vals = [];
       have.forEach(function (r) {
         var f = r.forward_returns, w = f.n || 0;
-        wsum += f[k] * w; names += w; vals.push(f[k]);
+        wsum += f[k] * w; setups += w; rows += (f.rows || 0); vals.push(f[k]);
       });
       var plain = vals.length ? vals.reduce(function (a, b) { return a + b; }, 0) / vals.length : null;
       return {
         days: d, key: k,
-        mean: names ? wsum / names : plain,
-        weighted: names > 0,
-        names: names, sessions: have.length,
+        mean: setups ? wsum / setups : plain,
+        weighted: setups > 0,
+        setups: setups, rows: rows, sessions: have.length,
         best: vals.length ? Math.max.apply(null, vals) : null,
         worst: vals.length ? Math.min.apply(null, vals) : null
       };
@@ -1038,7 +1089,9 @@
     var enough = horizons.filter(function (h) { return h.sessions >= MIN_SESSIONS; });
     $('returns-hint').textContent =
       'Mean forward return across every scored candidate in a session, not just its shortlist, ' +
-      'weighted by how many names each session contributed. A horizon needs ' + MIN_SESSIONS +
+      'weighted by how much each session contributed. One observation per SETUP, not per row: ' +
+      'a name that bursts five sessions running is one move measured five times, and counting ' +
+      'it five times would weight that move against every other name in the file. A horizon needs ' + MIN_SESSIONS +
       ' sessions before its mean is worth reading; ' +
       (enough.length
         ? enough.map(function (h) { return '+' + h.days + 'd'; }).join(' and ') + ' clears that bar.'
@@ -1055,21 +1108,24 @@
               (h.sessions === 1 ? ' the only session so far'
                                 : ' sessions ran ' + pct(h.worst, 2) + ' to ' + pct(h.best, 2)) }),
         el('div', { 'class': 'sc-tile__sub',
-          text: h.sessions ? plural(h.sessions, 'session') + ' · ' + commas(h.names) + ' names'
+          text: h.sessions ? plural(h.sessions, 'session') + ' · ' + plural(h.setups, 'setup')
+                             + (h.rows && h.rows !== h.setups ? ' from ' + plural(h.rows, 'row') : '')
                            : 'no session has closed' }),
         el('span', { 'class': 'sc-chip ' + st.chip, text: st.word })
       ]);
     }));
     table($('returns-table'),
-      ['horizon', 'mean return', 'sessions in', 'names behind', 'best session', 'worst session', 'status'],
+      ['horizon', 'mean return', 'sessions in', 'setups behind', 'best session', 'worst session', 'status'],
       horizons.map(function (h) {
         var st = horizonState(h);
         return el('tr', null, [
           el('td', { text: '+' + h.days + ' day' + (h.days === 1 ? '' : 's') }),
           el('td', { 'class': 'sc-num' }, figure(h.mean === null ? 'pending' : pct(h.mean, 2),
-            h.weighted ? 'weighted by names' : (h.sessions ? 'unweighted — no name counts' : null))),
+            h.weighted ? 'weighted by setups' : (h.sessions ? 'unweighted — no setup counts' : null))),
           el('td', { 'class': 'sc-num', text: commas(h.sessions) + ' of ' + commas(runs.length) }),
-          el('td', { 'class': 'sc-num', text: h.names ? commas(h.names) : '—' }),
+          el('td', { 'class': 'sc-num', title: h.rows ? commas(h.rows) + ' rows carry a return; repeats of one setup count once'
+                                                     : null,
+            text: h.setups ? commas(h.setups) : '—' }),
           el('td', { 'class': 'sc-num', text: h.best === null ? '—' : pct(h.best, 2) }),
           el('td', { 'class': 'sc-num', text: h.worst === null ? '—' : pct(h.worst, 2) }),
           el('td', null, el('span', { 'class': 'sc-chip ' + st.chip, text: st.word }))
@@ -1096,7 +1152,11 @@
           el('td', { 'class': 'sc-num', text: commas(r.fallbacks) }),
           el('td', { 'class': 'sc-num', text: num(r.top_score, 1) }),
           cell('d1'), cell('d3'), cell('d5'),
-          el('td', { 'class': 'sc-num', text: fr.n ? commas(fr.n) + ' names' : '—' })
+          el('td', { 'class': 'sc-num',
+            title: 'A name that bursts on consecutive sessions is one setup, counted once.',
+            text: fr.n ? commas(fr.n) + ' setup' + (fr.n === 1 ? '' : 's')
+                         + (fr.rows && fr.rows !== fr.n ? ' of ' + commas(fr.rows) + ' rows' : '')
+                       : '—' })
         ]);
       }), [2, 3, 4, 5, 6, 7, 8, 9]);
     clipWatch($('runs-scroll'), 'Recent runs');
