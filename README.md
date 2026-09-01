@@ -10,7 +10,7 @@ no Google Sheet, no n8n.
 
 | Original plan | This build | Why |
 |---|---|---|
-| DeepVue scan, pasted by hand daily | Built-in scanner over the full US universe (yfinance + NASDAQ symbol directory) | The one manual step is eliminated — full automation was the requirement |
+| DeepVue scan, pasted by hand daily | Built-in scanner over a checked-in symbol list (`data/symbols.txt`) | The one manual step is eliminated — full automation was the requirement |
 | n8n + Airtable + Google Sheets | Single Python pipeline + GitHub Actions cron | Fewer moving parts, zero hosting cost |
 | GPT-5 API | Claude API (vision + text) | One model handles chart reading and checklist reasoning in a single call |
 | NotebookLM knowledge base | `knowledge/strategy.md` injected as the system prompt | Deterministic, versioned, auditable — you can see exactly what rules the AI scores against |
@@ -18,7 +18,7 @@ no Google Sheet, no n8n.
 ## Pipeline
 
 ```
-NASDAQ+NYSE universe (~5,500 common stocks)
+checked-in universe (data/symbols.txt, 230 names)
         │  yfinance daily OHLCV, batched
         ▼
 Layer 1  4% burst filter ............. ≥4% gain, vol > yesterday, ≥1.5x 50d avg,
@@ -53,8 +53,9 @@ what `.github/workflows/evening.yml` reads, and `.env.example` explains each:
 `.github/workflows/evening.yml` then fires on weekdays and can be triggered
 manually from the Actions tab.
 
-> **Note:** there is only one *pipeline* workflow (`secret-scan.yml` is the
-> other file in that directory), and it fires at 6:16 PM ET — 22:16 UTC
+> **Note:** `evening.yml` is the only *pipeline* workflow — `secret-scan.yml`
+> and `tests.yml` are the other two files in that directory. It fires at
+> 6:16 PM ET — 22:16 UTC
 > under EDT, 23:16 UTC under EST — not the 5:30 PM this README claims
 > elsewhere. Both crons are registered and the guard no-ops the wrong one. It is
 > labelled backup-only for an external trigger you should not set up. The
@@ -89,13 +90,56 @@ python -m src.pipeline evening --dry-run
 python -m src.pipeline evening --dry-run --tickers NVDA,PLTR,SMCI,CRWD
 
 # Offline logic tests (no network / API key needed):
-python -m tests.test_pipeline   # currently fails: imports detect_burst,
-                                # which src/scanner.py does not define
+pip install -r requirements-dev.txt
+pytest tests/                   # 64 tests, no network or API keys needed
 ```
+
+## The dashboard
+
+`docs/index.html` is a static page served by GitHub Pages from `docs/`. It fetches
+`docs/data.json` in the browser and renders it — no server, no build step, no
+framework. The pipeline writes `data.json`; the page only reads it.
+
+It shows the run's funnel (universe → bursts → 2LYNCH gate → scored → shortlist),
+**every candidate the run scored** rather than the five that went out by email, each
+one's 2LYNCH checklist with its measured values, and — for every score — whether
+Claude produced it or the offline checklist fallback did. A fallback score can and
+does outrank real ones, so it is labelled everywhere it appears and called out at the
+top of the page.
+
+### The data contract
+
+`docs/data.json` is `schema_version: 1`, and carries its own `_contract` block so the
+invariants live in the file rather than only here. The load-bearing ones:
+
+- `candidates` holds **every** scored candidate, ranked, never truncated:
+  `len(candidates) == run.scored`. `TOP_N` cuts the *email*, not the archive.
+- `run.scored + len(gated_out) == run.bursts`. Nothing a scan found may vanish.
+- Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
+  `provenance.chart_seen` is true only when the model actually received the chart.
+- `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
+- Numbers are numbers or `null` — never `0` for "unknown", never the string `"n/a"`.
+- `forward_returns` are `null` until those sessions have happened.
+
+`docs/data.json` is currently a hand-authored fixture. Wiring the pipeline to emit it
+is a later step; until then the chart PNGs it references are absent and the page
+degrades to an explained empty frame, which is the expected state.
+
+### Checking it
+
+```bash
+node tools/dashboard_smoke.mjs [design-system-checkout]
+```
+
+Opens the real page in headless Chromium and asserts what it promises. Offline by
+construction: `docs/` is served locally and every CDN request is answered from a
+design-system checkout on disk. Needs playwright's chromium; it is not a repo
+dependency, and the script exits 0 with a note if chromium is missing.
 
 ## Tuning
 
-- Thresholds (price floor, volume ratios, dollar volume): `ScanConfig` in `src/scanner.py`
+- Scan universe: `data/symbols.txt` — a hand-curated starter list, not the whole market
+- Thresholds (price floor, gain %, share-volume floor): `ScanConfig` in `src/scanner.py`
 - 2LYNCH pass criteria: `src/lynch.py`
 - Gate strictness / shortlist size / Claude-call cap: constants at the top of `src/pipeline.py`
 - Scoring rubric the AI follows: `knowledge/strategy.md` — edit this file to change how Claude judges setups; no code changes needed
@@ -114,7 +158,7 @@ python -m tests.test_pipeline   # currently fails: imports detect_burst,
 - Market data: free (Alpaca) — but see `.env.example`: the free plan serves
   IEX data, a small fraction of consolidated volume, which the current
   5,000,000-share floor will almost never clear. Free is viable only once that
-  threshold is made relative. A full-universe scan takes ~10–20 min inside
+  threshold is made relative. A 230-symbol scan takes under a second inside
   the Actions runner; well within the 55-min timeout.
 - Claude: ≤25 scoring calls/run with one chart image each — a few cents/day
   on Sonnet.

@@ -23,7 +23,9 @@ Known scheduled falsifications:
 | Step 3 sets `feed=` on the bars request | `.env.example`'s "no `feed=` is set anywhere" |
 | Step 4 replaces the 5,000,000-share floor | the IEX paragraph in `.env.example`, the volume numbers in README's Costs note, README's Layer-1 filter description |
 | Step 5 makes failures loud | `.env.example`'s "these fail in three different ways" block |
-| Step 6 fixes the test suite | the `detect_burst` comment in `.gitignore`, the broken-test note in README |
+| ~~Step 6 fixes the test suite~~ done | ~~the `detect_burst` comment in `.gitignore`, the broken-test note in README~~ swept |
+| Step 9 emits `docs/data.json` | the "hand-authored fixture" caveat in README's dashboard section |
+| The universe widens past `data/symbols.txt` | the 230-name figures in README's diagram, Tuning and Costs sections |
 
 ## Standing rule: no line numbers in comments or docs
 
@@ -50,9 +52,12 @@ that a fix did not introduce a new defect of the same class.**
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **The test suite does not run.** `tests/test_pipeline.py` imports
-  `detect_burst`; `src/scanner.py` defines `detect_setup`. There is no
-  regression net until step 6. Assume nothing is covered.
+- **There is a regression net now, with known holes.** `pytest tests/` runs 64
+  tests with no network and no API keys (step 6a). It deliberately asserts no
+  strategy thresholds — steps 4 and 7 are about to change them. Untested:
+  `get_universe()` and the symbol-file parser, `_download_batch`'s request
+  fields, `run_scan`'s retry path, `main()`'s exit code, and the real SDK wire
+  shapes (the boundaries are doubles, so an SDK change passes here).
 
 ## Local run
 
@@ -68,14 +73,21 @@ python -m src.pipeline evening --dry-run
 ## Rebuild order
 
 1. ~~Repo hygiene — `.gitignore`, truthful `.env.example`, secret scanning~~ done
-2. Shrink the universe to a checked-in symbol list
+2. ~~Shrink the universe to a checked-in symbol list~~ done
 3. Fix the data request — split adjustment, freshness assertion
 4. Relative volume thresholds, percentile liquidity gate
 5. Fail loud
-6. Real tests, offline fixture mode, CI
+6. ~~6a: real tests, offline mode, CI~~ done · 6b: threshold + canary assertions, after 4 and 7
 7. Fix the 2LYNCH math (`L` is sign-blind, `Y` excludes the burst day)
 8. Harden the LLM layer (`temperature=0`, structured outputs)
 9. Persist every scored candidate plus forward returns
 10. Resolve morning/evening and statefulness
 
 Full-market scanning comes after all ten.
+
+**Open decision — the universe is now 230 names.** Step 2 traded ~11,000 symbols
+for a hand-curated list to make steps 3-8 testable in seconds instead of twenty
+minutes. That is a real strategy narrowing, not just a speed fix: 4% momentum
+bursts are most common in the small- and mid-caps this list excludes. The list is
+a scaffold. Replacing it with a generated, screened universe is required before
+this is a real screener, and it is not one of the ten steps above.

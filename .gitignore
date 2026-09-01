@@ -9,9 +9,9 @@
 
 # Credential files that tooling drops into a repo. The Google Cloud console
 # downloads client_secret_*.json, and Google's OAuth libraries conventionally
-# write token.json / credentials.json — relevant here because SETUP.md still
-# walks through the Gmail OAuth flow and then says to run `git add .`
-# (SETUP.md, Part 4).
+# write token.json / credentials.json. The Gmail OAuth guide that produced
+# them is gone, but the rules stay: a key file is cheap to ignore and
+# expensive to commit.
 # A filename denylist can never be complete. The backstops are the gitleaks
 # job in .github/workflows/secret-scan.yml and GitHub push protection.
 secrets.json
@@ -37,11 +37,6 @@ nohup.out
 # whenever a candidate clears the 2LYNCH gate.
 /results/
 /charts/
-
-# Written into the working directory by tests/test_pipeline.py. That suite
-# currently cannot run at all — it imports detect_burst, which src/scanner.py
-# does not define — so this rule is for once that is fixed.
-results_preview.html
 
 # Python
 __pycache__/
