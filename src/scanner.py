@@ -21,7 +21,8 @@ pip install alpaca-py numpy pandas
 
 ENV VARS
 --------
-ALPACA_API_KEY, ALPACA_SECRET_KEY  (paper or live — paper is default here)
+ALPACA_API_KEY, ALPACA_SECRET_KEY  (PAPER keys — get_clients() hardcodes
+                                    paper=True, so live keys fail to auth)
 """
 
 from __future__ import annotations

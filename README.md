@@ -57,16 +57,24 @@ repo to GitHub, and add six repository secrets:
 > does not exist. The six secret names above are correct and match
 > `.github/workflows/evening.yml`. See `.env.example` for what each one is.
 
-The two workflows in `.github/workflows/` then fire automatically on
-weekdays at 8:30 AM and 5:30 PM Eastern (DST-safe), and can be triggered
+`.github/workflows/evening.yml` then fires on weekdays and can be triggered
 manually from the Actions tab.
+
+> **Note:** there is only one workflow. The 8:30 AM morning run described
+> elsewhere in this README has no workflow file — `morning.yml` does not
+> exist, and `src/pipeline.py` treats `morning` and `evening` identically
+> apart from the email subject and the CSV filename.
+
+**Before pushing anything, turn on GitHub secret scanning with push
+protection** (Settings → Code security). `.gitignore` blocks the credential
+filenames we know about; push protection is what catches the rest.
 
 ## Run locally
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env             # fill it in, then load it:
-set -a; . ./.env; set +a
+cp .env.example .env             # fill it in, single-quoting every value:
+set -a; . ./.env; set +a         # this runs .env as a shell script
 
 # Full evening run without sending email:
 python -m src.pipeline evening --dry-run
@@ -75,7 +83,8 @@ python -m src.pipeline evening --dry-run
 python -m src.pipeline evening --dry-run --tickers NVDA,PLTR,SMCI,CRWD
 
 # Offline logic tests (no network / API key needed):
-python -m tests.test_pipeline
+python -m tests.test_pipeline   # currently fails: imports detect_burst,
+                                # which src/scanner.py does not define
 ```
 
 ## Tuning

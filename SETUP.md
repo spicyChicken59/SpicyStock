@@ -1,15 +1,27 @@
 > [!WARNING]
-> **This guide is out of date and following it will not work.** It describes an
-> earlier build that used yfinance for data and Gmail OAuth for delivery. The
-> code now uses Alpaca and Resend.
+> **This entire guide is out of date. Following any part of it will not work.**
+> It documents an earlier build that used yfinance for market data and Gmail
+> OAuth for delivery. The code now uses Alpaca and Resend. `.env.example` is
+> the accurate list of what this project needs.
 >
-> Parts 1–2 walk you through creating a Google Cloud OAuth client and running
-> `scripts/setup_gmail_oauth.py` — **that script does not exist in this repo**,
-> and the credential it asks you to mint is never read by any code here. Do not
-> create it.
+> Do not create any credential this file asks for. Specifically:
 >
-> `.env.example` is the accurate list of what this project actually needs.
-> This file is scheduled to be rewritten; until then, treat it as history.
+> - **Parts 1–2** have you create a Google Cloud OAuth client and run
+>   `scripts/setup_gmail_oauth.py`. That script does not exist in this repo,
+>   and no code here reads a Google credential.
+> - **Part 4's** secrets table lists four Google secrets. The workflow reads
+>   `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ANTHROPIC_API_KEY`,
+>   `RESEND_API_KEY`, `RESEND_FROM` and `EMAIL_TO` instead.
+> - **Part 5** says the log will read "Email sent via Gmail API". It says
+>   "via Resend".
+> - **Part 6a** tells you to mint a `github_pat_...` token with Actions
+>   read/write and paste it into a third-party scheduling site. That is a
+>   real, long-lived, repo-scoped credential and the current code does not
+>   need it. Part 6b then points that token at `morning.yml/dispatches` —
+>   a workflow that does not exist, so it would 404 forever.
+>
+> This file is kept only as a record of the original setup. It is scheduled
+> to be rewritten.
 
 # Setup Guide — start to finish (~20 minutes)
 
