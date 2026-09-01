@@ -1,0 +1,2286 @@
+{
+  "schema_version": 1,
+  "app": "SpicyStock",
+  "generated": "2026-09-01T22:14:07Z",
+  "_contract": {
+    "about": "docs/data.json is written by src/pipeline.py and read by docs/index.html at runtime. This block is documentation, not data; consumers ignore it.",
+    "documented_in": "README.md, 'The dashboard contract'",
+    "invariants": [
+      "candidates holds EVERY scored candidate, ranked by score descending, and is never truncated: len(candidates) == run.scored. The top run.shortlist_size of them are the shortlist that went out by email.",
+      "run.scored + len(gated_out) == run.bursts. Nothing a scan found may vanish without appearing in one of the two lists.",
+      "Every candidate carries provenance.source: 'claude' when the model actually returned a score, 'fallback' when the offline checklist produced it. A fallback is never labelled claude.",
+      "provenance.chart_seen is true only when the scoring model actually received the chart image.",
+      "forward_returns and runs[].forward_returns are null until the sessions exist. Absent is null, never 0 and never a string.",
+      "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
+      "Numbers are numbers or null. No 'n/a' strings."
+    ]
+  },
+  "run": {
+    "date": "2026-09-01",
+    "type": "evening",
+    "dry_run": false,
+    "universe": {
+      "label": "Alpaca US common stocks, IEX feed",
+      "size": 4783
+    },
+    "bursts": 47,
+    "passed_gate": 31,
+    "scored": 25,
+    "score_cap": 25,
+    "shortlist_size": 5,
+    "gate": {
+      "min_lynch_passes": 3,
+      "total_checks": 6
+    },
+    "scored_by": {
+      "claude": 21,
+      "fallback": 4
+    },
+    "model": "claude-sonnet-4-6",
+    "errors": []
+  },
+  "candidates": [
+    {
+      "rank": 1,
+      "ticker": "AEHR",
+      "date": "2026-09-01",
+      "close": 23.87,
+      "gain_pct": 8.42,
+      "volume": 6142300,
+      "prev_volume": 1974500,
+      "volume_ratio": 3.11,
+      "dollar_volume": 146616701,
+      "lynch": "6/6",
+      "lynch_passes": 6,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.81 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+14.2% past month, +6.4% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 3.1%/day = 0.72x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 0.8% move, 2.2% range, 0.91x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 94% of day's range"
+        }
+      ],
+      "score": 8.7,
+      "verdict": "A",
+      "reason": "Second burst out of a five-week base on 3x volume, closing at the high with no overhead supply.",
+      "key_risk": "earnings in 9 sessions",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/AEHR.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -4.2,
+        "pct_above_52w_low": 168.3,
+        "perf_3mo_pct": 61.4,
+        "perf_6mo_pct": 88.9
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 2,
+      "ticker": "NVTS",
+      "date": "2026-09-01",
+      "close": 7.41,
+      "gain_pct": 6.18,
+      "volume": 18420100,
+      "prev_volume": 7106400,
+      "volume_ratio": 2.59,
+      "dollar_volume": 136492941,
+      "lynch": "5/6",
+      "lynch_passes": 5,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.68 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+11.9% past month, +4.8% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 2.9%/day = 0.83x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.1% move, 2.6% range, 1.04x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 88% of day's range"
+        }
+      ],
+      "score": 8.3,
+      "verdict": "B",
+      "reason": "AI unavailable; checklist score 5/6.",
+      "key_risk": "not AI-reviewed",
+      "provenance": {
+        "source": "fallback",
+        "model": null,
+        "chart_seen": false,
+        "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
+      },
+      "chart": "charts/NVTS.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -11.7,
+        "pct_above_52w_low": 94.2,
+        "perf_3mo_pct": 38.6,
+        "perf_6mo_pct": 21.4
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 3,
+      "ticker": "RGTI",
+      "date": "2026-09-01",
+      "close": 31.06,
+      "gain_pct": 9.94,
+      "volume": 41883700,
+      "prev_volume": 15992000,
+      "volume_ratio": 2.62,
+      "dollar_volume": 1300907722,
+      "lynch": "5/6",
+      "lynch_passes": 5,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.74 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+26.4% past month, +9.1% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 4.4%/day = 0.88x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.6% move, 3.4% range, 1.11x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 86% of day's range"
+        }
+      ],
+      "score": 8.1,
+      "verdict": "A",
+      "reason": "First burst off a tight three-week shelf, volume 2.6x prior day, but the group is already extended.",
+      "key_risk": "sector-wide unwind risk",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/RGTI.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -8.9,
+        "pct_above_52w_low": 412.7,
+        "perf_3mo_pct": 96.3,
+        "perf_6mo_pct": 174.2
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 4,
+      "ticker": "IONQ",
+      "date": "2026-09-01",
+      "close": 48.22,
+      "gain_pct": 5.31,
+      "volume": 22140600,
+      "prev_volume": 9832100,
+      "volume_ratio": 2.25,
+      "dollar_volume": 1067619732,
+      "lynch": "5/6",
+      "lynch_passes": 5,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.79 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+21.4% past month, +11.2% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 3.8%/day = 0.94x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.3% move, 4.1% range, 1.38x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 82% of day's range"
+        }
+      ],
+      "score": 7.6,
+      "verdict": "B+",
+      "reason": "Clean second burst on a linear advance; close near the high but the prior day was heavy.",
+      "key_risk": "prior day already ran on volume",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/IONQ.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -14.1,
+        "pct_above_52w_low": 233.8,
+        "perf_3mo_pct": 44.7,
+        "perf_6mo_pct": 61.9
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 5,
+      "ticker": "SEZL",
+      "date": "2026-09-01",
+      "close": 92.44,
+      "gain_pct": 7.08,
+      "volume": 1204800,
+      "prev_volume": 486300,
+      "volume_ratio": 2.48,
+      "dollar_volume": 111371712,
+      "lynch": "4/6",
+      "lynch_passes": 4,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.41 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+16.3% past month, +8.7% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 2.6%/day = 0.79x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 0.9% move, 2.1% range, 0.98x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 89% of day's range"
+        }
+      ],
+      "score": 7.4,
+      "verdict": "B+",
+      "reason": "Tight consolidation broke on good volume, but the prior advance was choppy rather than linear.",
+      "key_risk": "thin float, wide spreads",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": false,
+        "error": null
+      },
+      "chart": null,
+      "chart_error": "mplfinance ValueError: only 41 sessions of history, need 85",
+      "context": {
+        "pct_off_52w_high": -6.3,
+        "pct_above_52w_low": 287.4,
+        "perf_3mo_pct": 52.1,
+        "perf_6mo_pct": 118.6
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 6,
+      "ticker": "AMSC",
+      "date": "2026-09-01",
+      "close": 41.18,
+      "gain_pct": 4.62,
+      "volume": 3287400,
+      "prev_volume": 1442900,
+      "volume_ratio": 2.28,
+      "dollar_volume": 135375132,
+      "lynch": "5/6",
+      "lynch_passes": 5,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.77 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+19.8% past month, +12.4% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 3.3%/day = 0.86x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.2% move, 2.8% range, 1.07x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 91% of day's range"
+        }
+      ],
+      "score": 7.1,
+      "verdict": "B+",
+      "reason": "Third burst in the leg, which is late, but the base is narrow and the close is strong.",
+      "key_risk": "third burst — trend no longer young",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/AMSC.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -3.1,
+        "pct_above_52w_low": 141.6,
+        "perf_3mo_pct": 33.9,
+        "perf_6mo_pct": 57.2
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 7,
+      "ticker": "LUNR",
+      "date": "2026-09-01",
+      "close": 14.73,
+      "gain_pct": 6.87,
+      "volume": 12994100,
+      "prev_volume": 5218700,
+      "volume_ratio": 2.49,
+      "dollar_volume": 191403093,
+      "lynch": "4/6",
+      "lynch_passes": 4,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.48 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+27.4% past month, +13.1% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 4.1%/day = 0.91x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.4% move, 3.2% range, 1.09x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 78% of day's range"
+        }
+      ],
+      "score": 6.7,
+      "verdict": "B",
+      "reason": "AI unavailable; checklist score 4/6.",
+      "key_risk": "not AI-reviewed",
+      "provenance": {
+        "source": "fallback",
+        "model": null,
+        "chart_seen": false,
+        "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
+      },
+      "chart": "charts/LUNR.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -22.4,
+        "pct_above_52w_low": 118.9,
+        "perf_3mo_pct": 29.7,
+        "perf_6mo_pct": 12.8
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 8,
+      "ticker": "CIFR",
+      "date": "2026-09-01",
+      "close": 9.62,
+      "gain_pct": 11.34,
+      "volume": 34118200,
+      "prev_volume": 12440300,
+      "volume_ratio": 2.74,
+      "dollar_volume": 328217084,
+      "lynch": "5/6",
+      "lynch_passes": 5,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.71 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+34.2% past month, +18.9% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 4.8%/day = 0.93x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.8% move, 3.9% range, 1.16x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 84% of day's range"
+        }
+      ],
+      "score": 6.6,
+      "verdict": "B",
+      "reason": "Big burst but it comes after a 34% month, so the trend is no longer young and risk is stretched.",
+      "key_risk": "extended above the 20-day",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/CIFR.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -18.6,
+        "pct_above_52w_low": 203.1,
+        "perf_3mo_pct": 71.4,
+        "perf_6mo_pct": 44.3
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 9,
+      "ticker": "HIMS",
+      "date": "2026-09-01",
+      "close": 58.91,
+      "gain_pct": 4.88,
+      "volume": 9847200,
+      "prev_volume": 4103800,
+      "volume_ratio": 2.4,
+      "dollar_volume": 580098552,
+      "lynch": "5/6",
+      "lynch_passes": 5,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "3 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.83 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+12.7% past month, +5.9% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 2.8%/day = 0.81x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.0% move, 2.4% range, 1.02x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 87% of day's range"
+        }
+      ],
+      "score": 6.4,
+      "verdict": "B",
+      "reason": "Orderly base and a good close, but this is the fourth burst in the leg and volume only doubled.",
+      "key_risk": "fourth burst in the leg",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/HIMS.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -9.4,
+        "pct_above_52w_low": 87.3,
+        "perf_3mo_pct": 26.8,
+        "perf_6mo_pct": 39.1
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 10,
+      "ticker": "OKLO",
+      "date": "2026-09-01",
+      "close": 112.37,
+      "gain_pct": 5.94,
+      "volume": 8214600,
+      "prev_volume": 3387100,
+      "volume_ratio": 2.43,
+      "dollar_volume": 923074602,
+      "lynch": "5/6",
+      "lynch_passes": 5,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.69 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+23.8% past month, +14.2% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 6.7%/day = 1.24x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.7% move, 3.6% range, 1.14x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 81% of day's range"
+        }
+      ],
+      "score": 6.2,
+      "verdict": "B",
+      "reason": "Burst is clean but the pre-burst week was wider than this name's own norm, so the base is loose.",
+      "key_risk": "loose base",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/OKLO.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -12.8,
+        "pct_above_52w_low": 318.4,
+        "perf_3mo_pct": 58.9,
+        "perf_6mo_pct": 96.7
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 11,
+      "ticker": "BE",
+      "date": "2026-09-01",
+      "close": 34.55,
+      "gain_pct": 4.21,
+      "volume": 11208400,
+      "prev_volume": 5641200,
+      "volume_ratio": 1.99,
+      "dollar_volume": 387250220,
+      "lynch": "4/6",
+      "lynch_passes": 4,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.48 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+17.1% past month, +8.3% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 3.4%/day = 0.89x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.3% move, 2.9% range, 1.08x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 64% of day's range"
+        }
+      ],
+      "score": 5.9,
+      "verdict": "C",
+      "reason": "Marginal burst on a 2x volume day; the advance into it was choppy and the close is mid-range.",
+      "key_risk": "close only mid-range",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/BE.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -16.2,
+        "pct_above_52w_low": 96.4,
+        "perf_3mo_pct": 21.3,
+        "perf_6mo_pct": 34.8
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 12,
+      "ticker": "UEC",
+      "date": "2026-09-01",
+      "close": 11.84,
+      "gain_pct": 4.73,
+      "volume": 14663900,
+      "prev_volume": 6892400,
+      "volume_ratio": 2.13,
+      "dollar_volume": 173620576,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.58 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+29.6% past month, +16.4% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 5.2%/day = 1.11x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.4% move, 4.3% range, 1.41x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 83% of day's range"
+        }
+      ],
+      "score": 5.7,
+      "verdict": "C",
+      "reason": "Volume barely cleared the prior day and the pre-burst session was already active.",
+      "key_risk": "no volume expansion",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/UEC.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -7.8,
+        "pct_above_52w_low": 74.9,
+        "perf_3mo_pct": 18.6,
+        "perf_6mo_pct": 27.4
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 13,
+      "ticker": "RKLB",
+      "date": "2026-09-01",
+      "close": 68.19,
+      "gain_pct": 4.34,
+      "volume": 16482300,
+      "prev_volume": 7913600,
+      "volume_ratio": 2.08,
+      "dollar_volume": 1123928037,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.61 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+31.2% past month, +17.8% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 5.9%/day = 1.18x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 1.9% move, 4.0% range, 1.22x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 79% of day's range"
+        }
+      ],
+      "score": 5.0,
+      "verdict": "skip",
+      "reason": "AI unavailable; checklist score 3/6.",
+      "key_risk": "not AI-reviewed",
+      "provenance": {
+        "source": "fallback",
+        "model": null,
+        "chart_seen": false,
+        "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
+      },
+      "chart": "charts/RKLB.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -5.4,
+        "pct_above_52w_low": 264.8,
+        "perf_3mo_pct": 63.2,
+        "perf_6mo_pct": 108.4
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 14,
+      "ticker": "FCEL",
+      "date": "2026-09-01",
+      "close": 6.28,
+      "gain_pct": 5.62,
+      "volume": 22947100,
+      "prev_volume": 9184200,
+      "volume_ratio": 2.5,
+      "dollar_volume": 144107788,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "3 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.58 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+12.4% past month, +6.1% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 6.3%/day = 1.32x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.6% move, 5.1% range, 1.47x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 72% of day's range"
+        }
+      ],
+      "score": 5.0,
+      "verdict": "skip",
+      "reason": "AI unavailable; checklist score 3/6.",
+      "key_risk": "not AI-reviewed",
+      "provenance": {
+        "source": "fallback",
+        "model": null,
+        "chart_seen": false,
+        "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
+      },
+      "chart": "charts/FCEL.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -41.7,
+        "pct_above_52w_low": 38.2,
+        "perf_3mo_pct": 9.4,
+        "perf_6mo_pct": -6.8
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 15,
+      "ticker": "PLUG",
+      "date": "2026-09-01",
+      "close": 3.94,
+      "gain_pct": 6.49,
+      "volume": 48213700,
+      "prev_volume": 21094800,
+      "volume_ratio": 2.29,
+      "dollar_volume": 189961978,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "3 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.39 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+14.8% past month, +7.2% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 7.1%/day = 1.29x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.5% move, 3.3% range, 1.13x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 74% of day's range"
+        }
+      ],
+      "score": 4.9,
+      "verdict": "C",
+      "reason": "Low-priced name near the price floor; three prior bursts and a wide base make this a poor setup.",
+      "key_risk": "under $4, prone to fades",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/PLUG.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -52.3,
+        "pct_above_52w_low": 24.6,
+        "perf_3mo_pct": 4.2,
+        "perf_6mo_pct": -18.9
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 16,
+      "ticker": "SMR",
+      "date": "2026-09-01",
+      "close": 27.41,
+      "gain_pct": 4.09,
+      "volume": 9932100,
+      "prev_volume": 4761300,
+      "volume_ratio": 2.09,
+      "dollar_volume": 272238861,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.56 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+21.4% past month, +11.8% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 4.6%/day = 1.04x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.1% move, 4.4% range, 1.34x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 77% of day's range"
+        }
+      ],
+      "score": 4.7,
+      "verdict": "C",
+      "reason": "Barely a 4% day and the prior session was heavier than the burst; nothing to lean on here.",
+      "key_risk": "burst day is not the volume day",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/SMR.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -24.1,
+        "pct_above_52w_low": 88.7,
+        "perf_3mo_pct": 14.9,
+        "perf_6mo_pct": 22.6
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 17,
+      "ticker": "ACHR",
+      "date": "2026-09-01",
+      "close": 12.06,
+      "gain_pct": 5.18,
+      "volume": 19446800,
+      "prev_volume": 8712400,
+      "volume_ratio": 2.23,
+      "dollar_volume": 234528408,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.37 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+22.9% past month, +13.7% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 5.4%/day = 1.16x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.6% move, 3.7% range, 1.19x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 68% of day's range"
+        }
+      ],
+      "score": 4.5,
+      "verdict": "C",
+      "reason": "Choppy prior move and a mid-range close; the burst has no base behind it.",
+      "key_risk": "no base",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/ACHR.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -19.8,
+        "pct_above_52w_low": 61.4,
+        "perf_3mo_pct": 11.7,
+        "perf_6mo_pct": 8.3
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 18,
+      "ticker": "JOBY",
+      "date": "2026-09-01",
+      "close": 15.72,
+      "gain_pct": 4.46,
+      "volume": 13884200,
+      "prev_volume": 6207900,
+      "volume_ratio": 2.24,
+      "dollar_volume": 218259624,
+      "lynch": "4/6",
+      "lynch_passes": 4,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "4 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.66 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+18.3% past month, +10.9% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 3.9%/day = 0.97x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.2% move, 2.7% range, 1.06x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 61% of day's range"
+        }
+      ],
+      "score": 4.3,
+      "verdict": "C",
+      "reason": "Fifth burst in the leg. The move is old and the close gave back most of the day's gain.",
+      "key_risk": "trend is old",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/JOBY.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -13.6,
+        "pct_above_52w_low": 79.2,
+        "perf_3mo_pct": 16.4,
+        "perf_6mo_pct": 31.8
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 19,
+      "ticker": "INDI",
+      "date": "2026-09-01",
+      "close": 4.87,
+      "gain_pct": 7.21,
+      "volume": 8137400,
+      "prev_volume": 3624100,
+      "volume_ratio": 2.25,
+      "dollar_volume": 39629138,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.31 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+9.6% past month, +4.4% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 6.8%/day = 1.41x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.8% move, 4.2% range, 1.08x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 58% of day's range"
+        }
+      ],
+      "score": 4.1,
+      "verdict": "skip",
+      "reason": "Erratic prior action, no consolidation and a weak close — this is noise, not a setup.",
+      "key_risk": "no consolidation",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/INDI.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -63.4,
+        "pct_above_52w_low": 19.7,
+        "perf_3mo_pct": -3.2,
+        "perf_6mo_pct": -27.1
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 20,
+      "ticker": "LAES",
+      "date": "2026-09-01",
+      "close": 5.34,
+      "gain_pct": 8.96,
+      "volume": 6742900,
+      "prev_volume": 2938700,
+      "volume_ratio": 2.29,
+      "dollar_volume": 36007086,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.22 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+8.1% past month, +3.7% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 7.4%/day = 1.53x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.4% move, 3.8% range, 1.17x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 63% of day's range"
+        }
+      ],
+      "score": 3.9,
+      "verdict": "skip",
+      "reason": "Sharp move with nothing behind it: the prior 30 days show no trend to continue.",
+      "key_risk": "no prior trend",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/LAES.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -58.9,
+        "pct_above_52w_low": 27.3,
+        "perf_3mo_pct": -1.8,
+        "perf_6mo_pct": -14.6
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 21,
+      "ticker": "QUBT",
+      "date": "2026-09-01",
+      "close": 18.62,
+      "gain_pct": 5.77,
+      "volume": 15208600,
+      "prev_volume": 6841200,
+      "volume_ratio": 2.22,
+      "dollar_volume": 283184132,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "4 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.72 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+41.3% past month, +24.8% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 5.7%/day = 0.94x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.7% move, 5.4% range, 1.52x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 71% of day's range"
+        }
+      ],
+      "score": 3.6,
+      "verdict": "skip",
+      "reason": "Already up 41% on the month; a burst this late in a parabolic move is a distribution risk.",
+      "key_risk": "parabolic, late",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/QUBT.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -11.2,
+        "pct_above_52w_low": 388.6,
+        "perf_3mo_pct": 118.4,
+        "perf_6mo_pct": 204.7
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 22,
+      "ticker": "WULF",
+      "date": "2026-09-01",
+      "close": 8.19,
+      "gain_pct": 4.92,
+      "volume": 27391400,
+      "prev_volume": 12064700,
+      "volume_ratio": 2.27,
+      "dollar_volume": 224335566,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.64 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+24.6% past month, +14.1% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 6.2%/day = 1.27x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.2% move, 4.7% range, 1.36x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 66% of day's range"
+        }
+      ],
+      "score": 3.4,
+      "verdict": "skip",
+      "reason": "Group-wide move rather than a stock-specific setup; base is wide and the close is soft.",
+      "key_risk": "moved with the group, not alone",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/WULF.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -31.4,
+        "pct_above_52w_low": 52.8,
+        "perf_3mo_pct": 8.7,
+        "perf_6mo_pct": -2.4
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 23,
+      "ticker": "HUT",
+      "date": "2026-09-01",
+      "close": 22.14,
+      "gain_pct": 4.18,
+      "volume": 7628300,
+      "prev_volume": 3491600,
+      "volume_ratio": 2.18,
+      "dollar_volume": 168890562,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.63 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+20.4% past month, +12.6% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 5.1%/day = 1.09x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 3.1% move, 5.8% range, 1.44x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 69% of day's range"
+        }
+      ],
+      "score": 3.2,
+      "verdict": "skip",
+      "reason": "Marginal gain, marginal volume, and the prior day already moved 3% — nothing is quiet here.",
+      "key_risk": "prior day was not calm",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/HUT.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -27.6,
+        "pct_above_52w_low": 64.1,
+        "perf_3mo_pct": 12.3,
+        "perf_6mo_pct": 18.9
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 24,
+      "ticker": "BTDR",
+      "date": "2026-09-01",
+      "close": 13.47,
+      "gain_pct": 6.03,
+      "volume": 11742800,
+      "prev_volume": 5108300,
+      "volume_ratio": 2.3,
+      "dollar_volume": 158175516,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.45 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+16.8% past month, +9.4% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 8.3%/day = 1.68x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 1.9% move, 4.1% range, 1.24x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 73% of day's range"
+        }
+      ],
+      "score": 3.0,
+      "verdict": "skip",
+      "reason": "The base is twice as wide as this name's own norm; there is no coil to release.",
+      "key_risk": "wide base",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/BTDR.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -36.2,
+        "pct_above_52w_low": 41.9,
+        "perf_3mo_pct": 5.6,
+        "perf_6mo_pct": -9.7
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 25,
+      "ticker": "GEVO",
+      "date": "2026-09-01",
+      "close": 3.12,
+      "gain_pct": 9.47,
+      "volume": 19883100,
+      "prev_volume": 8214600,
+      "volume_ratio": 2.42,
+      "dollar_volume": 62035272,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "4 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.28 over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+11.2% past month, +5.8% vs 20SMA"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 9.1%/day = 1.74x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.7% move, 4.6% range, 1.09x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 75% of day's range"
+        }
+      ],
+      "score": 2.8,
+      "verdict": "skip",
+      "reason": "Sub-$4 name with a 9% pop on no base; historically these give it all back within days.",
+      "key_risk": "sub-$4, no base",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/GEVO.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -71.8,
+        "pct_above_52w_low": 14.2,
+        "perf_3mo_pct": -8.4,
+        "perf_6mo_pct": -34.2
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    }
+  ],
+  "gated_out": [
+    {
+      "ticker": "SOUN",
+      "date": "2026-09-01",
+      "close": 8.94,
+      "gain_pct": 5.12,
+      "volume": 14208700,
+      "volume_ratio": 2.33,
+      "lynch": "2/6",
+      "lynch_passes": 2,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "MARA",
+      "date": "2026-09-01",
+      "close": 19.83,
+      "gain_pct": 4.71,
+      "volume": 28417200,
+      "volume_ratio": 2.17,
+      "lynch": "2/6",
+      "lynch_passes": 2,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "RIOT",
+      "date": "2026-09-01",
+      "close": 14.26,
+      "gain_pct": 6.38,
+      "volume": 31844100,
+      "volume_ratio": 2.24,
+      "lynch": "2/6",
+      "lynch_passes": 2,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "CLSK",
+      "date": "2026-09-01",
+      "close": 11.07,
+      "gain_pct": 4.29,
+      "volume": 22193600,
+      "volume_ratio": 2.05,
+      "lynch": "1/6",
+      "lynch_passes": 1,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "AI",
+      "date": "2026-09-01",
+      "close": 27.61,
+      "gain_pct": 5.84,
+      "volume": 9214800,
+      "volume_ratio": 2.24,
+      "lynch": "2/6",
+      "lynch_passes": 2,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "BBAI",
+      "date": "2026-09-01",
+      "close": 6.42,
+      "gain_pct": 8.13,
+      "volume": 18774200,
+      "volume_ratio": 2.52,
+      "lynch": "1/6",
+      "lynch_passes": 1,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "VRT",
+      "date": "2026-09-01",
+      "close": 142.9,
+      "gain_pct": 4.06,
+      "volume": 7118400,
+      "volume_ratio": 2.09,
+      "lynch": "2/6",
+      "lynch_passes": 2,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "SMCI",
+      "date": "2026-09-01",
+      "close": 38.74,
+      "gain_pct": 4.92,
+      "volume": 26094300,
+      "volume_ratio": 2.2,
+      "lynch": "2/6",
+      "lynch_passes": 2,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "APLD",
+      "date": "2026-09-01",
+      "close": 16.38,
+      "gain_pct": 7.44,
+      "volume": 13627900,
+      "volume_ratio": 2.34,
+      "lynch": "1/6",
+      "lynch_passes": 1,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "NNE",
+      "date": "2026-09-01",
+      "close": 34.12,
+      "gain_pct": 6.71,
+      "volume": 6483100,
+      "volume_ratio": 2.22,
+      "lynch": "2/6",
+      "lynch_passes": 2,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "CRML",
+      "date": "2026-09-01",
+      "close": 4.18,
+      "gain_pct": 11.62,
+      "volume": 9847300,
+      "volume_ratio": 3.06,
+      "lynch": "0/6",
+      "lynch_passes": 0,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "MVIS",
+      "date": "2026-09-01",
+      "close": 1.94,
+      "gain_pct": 9.88,
+      "volume": 21094600,
+      "volume_ratio": 2.51,
+      "lynch": "0/6",
+      "lynch_passes": 0,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "GRRR",
+      "date": "2026-09-01",
+      "close": 3.47,
+      "gain_pct": 14.21,
+      "volume": 7482100,
+      "volume_ratio": 3.55,
+      "lynch": "0/6",
+      "lynch_passes": 0,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "SERV",
+      "date": "2026-09-01",
+      "close": 12.83,
+      "gain_pct": 5.47,
+      "volume": 10428300,
+      "volume_ratio": 2.17,
+      "lynch": "2/6",
+      "lynch_passes": 2,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "LTBR",
+      "date": "2026-09-01",
+      "close": 17.29,
+      "gain_pct": 4.83,
+      "volume": 5218700,
+      "volume_ratio": 2.17,
+      "lynch": "2/6",
+      "lynch_passes": 2,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "KTOS",
+      "date": "2026-09-01",
+      "close": 41.62,
+      "gain_pct": 4.11,
+      "volume": 6104200,
+      "volume_ratio": 2.12,
+      "lynch": "2/6",
+      "lynch_passes": 2,
+      "reason": "lynch_gate"
+    },
+    {
+      "ticker": "EOSE",
+      "date": "2026-09-01",
+      "close": 7.83,
+      "gain_pct": 4.07,
+      "volume": 12048600,
+      "volume_ratio": 2.22,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "reason": "score_cap"
+    },
+    {
+      "ticker": "MP",
+      "date": "2026-09-01",
+      "close": 48.16,
+      "gain_pct": 4.05,
+      "volume": 8114700,
+      "volume_ratio": 2.04,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "reason": "score_cap"
+    },
+    {
+      "ticker": "ASTS",
+      "date": "2026-09-01",
+      "close": 61.94,
+      "gain_pct": 4.04,
+      "volume": 11384200,
+      "volume_ratio": 2.19,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "reason": "score_cap"
+    },
+    {
+      "ticker": "VSAT",
+      "date": "2026-09-01",
+      "close": 28.37,
+      "gain_pct": 4.03,
+      "volume": 4917200,
+      "volume_ratio": 2.12,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "reason": "score_cap"
+    },
+    {
+      "ticker": "NPWR",
+      "date": "2026-09-01",
+      "close": 9.16,
+      "gain_pct": 4.02,
+      "volume": 6742800,
+      "volume_ratio": 2.17,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "reason": "score_cap"
+    },
+    {
+      "ticker": "TMC",
+      "date": "2026-09-01",
+      "close": 4.71,
+      "gain_pct": 4.01,
+      "volume": 15208400,
+      "volume_ratio": 2.17,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "reason": "score_cap"
+    }
+  ],
+  "runs": [
+    {
+      "date": "2026-09-01",
+      "type": "evening",
+      "bursts": 47,
+      "passed_gate": 31,
+      "scored": 25,
+      "shortlist_size": 5,
+      "top_score": 8.7,
+      "fallbacks": 4,
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n": 0
+      }
+    },
+    {
+      "date": "2026-08-31",
+      "type": "evening",
+      "bursts": 39,
+      "passed_gate": 21,
+      "scored": 21,
+      "shortlist_size": 5,
+      "top_score": 8.4,
+      "fallbacks": 0,
+      "forward_returns": {
+        "d1": 1.12,
+        "d3": null,
+        "d5": null,
+        "n": 21
+      }
+    },
+    {
+      "date": "2026-08-28",
+      "type": "evening",
+      "bursts": 52,
+      "passed_gate": 28,
+      "scored": 25,
+      "shortlist_size": 5,
+      "top_score": 9.1,
+      "fallbacks": 2,
+      "forward_returns": {
+        "d1": -0.63,
+        "d3": null,
+        "d5": null,
+        "n": 25
+      }
+    },
+    {
+      "date": "2026-08-27",
+      "type": "evening",
+      "bursts": 44,
+      "passed_gate": 24,
+      "scored": 24,
+      "shortlist_size": 5,
+      "top_score": 8.8,
+      "fallbacks": 0,
+      "forward_returns": {
+        "d1": 2.07,
+        "d3": 1.44,
+        "d5": null,
+        "n": 24
+      }
+    },
+    {
+      "date": "2026-08-26",
+      "type": "evening",
+      "bursts": 33,
+      "passed_gate": 18,
+      "scored": 18,
+      "shortlist_size": 5,
+      "top_score": 7.9,
+      "fallbacks": 1,
+      "forward_returns": {
+        "d1": 0.88,
+        "d3": 2.31,
+        "d5": null,
+        "n": 18
+      }
+    },
+    {
+      "date": "2026-08-25",
+      "type": "evening",
+      "bursts": 38,
+      "passed_gate": 22,
+      "scored": 22,
+      "shortlist_size": 5,
+      "top_score": 9.0,
+      "fallbacks": 0,
+      "forward_returns": {
+        "d1": 1.84,
+        "d3": 2.97,
+        "d5": -0.42,
+        "n": 22
+      }
+    }
+  ]
+}
