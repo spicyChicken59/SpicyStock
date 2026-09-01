@@ -1,0 +1,33 @@
+# Secrets — never commit. The pipeline reads these from the environment;
+# in GitHub Actions they come from repository secrets, not from a file.
+.env
+.env.*
+!.env.example
+
+# Run artifacts. The pipeline writes both of these into the working tree on
+# every run (pipeline.archive -> results/, scorer.render_chart -> charts/),
+# so without this rule a local run leaves the repo dirty every time.
+results/
+charts/
+
+# Written by the test suite into whatever directory you run it from.
+results_preview.html
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
