@@ -32,6 +32,22 @@ Known scheduled falsifications:
 Cite functions, not `file.py:NN`. Three separate citations rotted inside a
 single step's own commits. `get_clients()` is stable; `scanner.py:78` is not.
 
+## Standing rule: prove a test can fail
+
+A test that cannot fail is worse than no test, because it reports safety that
+is not there. Three of this project's "rejection path" tests observed a
+different rule failing than the one they named — the 4% gain, the rule the
+product is named after, could be deleted with the whole suite green.
+
+**When you change or add a rule, delete it and watch the suite go red.** If it
+stays green, the test is shaped, not load-bearing. This is mandatory for steps
+4 and 7, which change the scan filter and the 2LYNCH maths.
+
+The doc-sweep rule above failed on three consecutive commits because it relied
+on remembering. `tests/test_docs_are_true.py` now enforces the mechanically
+checkable parts — the test count, the universe size, the email's universe
+string, and `.env.example`'s `feed=` claim. Prose still needs a human.
+
 ## Verification is by execution
 
 The strongest findings in this rebuild came from running the code, not reading
@@ -52,7 +68,7 @@ that a fix did not introduce a new defect of the same class.**
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net now, with known holes.** `pytest tests/` runs 69
+- **There is a regression net now, with known holes.** `pytest tests/` runs 74
   tests with no network and no API keys (step 6a). It deliberately asserts no
   strategy thresholds — steps 4 and 7 are about to change them. Untested:
   `get_universe()` and the symbol-file parser, `_download_batch`'s request
