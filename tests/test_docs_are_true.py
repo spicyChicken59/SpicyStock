@@ -25,7 +25,26 @@ def test_the_documented_test_count_is_the_real_one(request):
 
     Counts what pytest actually collected rather than `def test_` lines --
     parametrized tests expand, and the regex version undercounted by four.
+
+    Skipped unless this run collected the whole suite. Counting the items of a
+    partial run and calling the docs wrong is how a test earns a reputation for
+    crying wolf: `pytest tests/test_docs_are_true.py` went red on a repo whose
+    docs were correct, which teaches the reader to ignore it on the day it is
+    right.
     """
+    on_disk = {p.stem for p in (ROOT / "tests").glob("test_*.py")}
+    collected = {
+        pathlib.Path(str(item.fspath)).stem for item in request.session.items
+    }
+    missing = sorted(on_disk - collected)
+    if missing:
+        import pytest
+
+        pytest.skip(
+            f"partial run -- {missing} not collected; the documented count is "
+            "only checkable against the whole suite (`pytest tests/`)"
+        )
+
     total = len(request.session.items)
     claims: list[tuple[str, int]] = []
     for doc in ("README.md", "CLAUDE.md"):
