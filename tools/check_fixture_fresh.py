@@ -7,8 +7,11 @@ rows that could not have survived detect_setup's own floors. Neither the smoke
 test nor the Python suite could see it: one checks the page against the data,
 the other never opens the data. This closes that gap.
 
-TWO FILES, ONE FIXTURE. The canonical copy is tests/fixtures/data.json, and it
-is what this guards against tools/make_fixture.py. docs/data.json is whatever
+TWO FIXTURES, AND A COPY. The canonical one-night fixture is
+tests/fixtures/data.json, guarded here against tools/make_fixture.py; the
+thirty-run history is tests/fixtures/history/, guarded against
+tools/make_history.py, which drives the real pipeline and is byte-deterministic
+for exactly this reason. docs/data.json is whatever
 the last run wrote: the same fixture, byte for byte, on a fresh clone -- and
 last night's real run once evening.yml has committed one back. Until 3.1 this
 script compared docs/data.json itself to the generator, which made the first
@@ -21,8 +24,20 @@ import json, pathlib, subprocess, sys, tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 CANONICAL = ROOT / "tests" / "fixtures" / "data.json"
+HISTORY = ROOT / "tests" / "fixtures" / "history"
 LIVE = ROOT / "docs" / "data.json"
 REGENERATE = "python3 tools/make_fixture.py tests/fixtures/data.json"
+REGENERATE_HISTORY = "python3 tools/make_history.py tests/fixtures/history"
+
+
+def _generator_failed(proc: subprocess.CompletedProcess) -> bool:
+    """Surface the generator's own error. capture_output + check=True hides
+    it behind an opaque CalledProcessError in the CI log."""
+    if proc.returncode == 0:
+        return False
+    print(proc.stdout, end="")
+    print(proc.stderr, end="", file=sys.stderr)
+    return True
 
 
 def main() -> int:
@@ -30,13 +45,16 @@ def main() -> int:
         out = pathlib.Path(tmp) / "regenerated.json"
         proc = subprocess.run([sys.executable, str(ROOT / "tools" / "make_fixture.py"), str(out)],
                               capture_output=True, text=True)
-        if proc.returncode != 0:
-            # Surface the generator's own error. capture_output + check=True
-            # hides it behind an opaque CalledProcessError in the CI log.
-            print(proc.stdout, end="")
-            print(proc.stderr, end="", file=sys.stderr)
+        if _generator_failed(proc):
             return proc.returncode
         fresh = json.loads(out.read_text())
+        hist_out = pathlib.Path(tmp) / "history"
+        proc = subprocess.run([sys.executable, str(ROOT / "tools" / "make_history.py"), str(hist_out)],
+                              capture_output=True, text=True)
+        if _generator_failed(proc):
+            return proc.returncode
+        fresh_history = {name: json.loads((hist_out / name).read_text())
+                         for name in ("data.json", "ledger.json")}
     if not CANONICAL.exists():
         print(f"{CANONICAL.relative_to(ROOT)} is missing — re-run: {REGENERATE}")
         return 1
@@ -44,6 +62,13 @@ def main() -> int:
     if canonical != fresh:
         print(f"{CANONICAL.relative_to(ROOT)} is stale — re-run: {REGENERATE}")
         return 1
+    for name, regenerated in fresh_history.items():
+        path = HISTORY / name
+        if not path.exists() or json.loads(path.read_text()) != regenerated:
+            print(f"{path.relative_to(ROOT)} is {'missing' if not path.exists() else 'stale'} "
+                  f"— re-run: {REGENERATE_HISTORY}")
+            return 1
+    runs = len(fresh_history["ledger.json"]["runs"])
 
     if not LIVE.exists():
         # The page fetches this file and renders "Snapshot unavailable" without
@@ -65,7 +90,7 @@ def main() -> int:
                  "not the fixture — not this guard's business")
     print(f"fixture is current: {len(canonical['candidates'])} scored, "
           f"{len(canonical['gated_out'])} gated, universe {canonical['run']['universe']['size']}; "
-          f"{state}")
+          f"history fixture is current: {runs} runs; {state}")
     return 0
 
 

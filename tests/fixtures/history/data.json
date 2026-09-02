@@ -1,0 +1,1192 @@
+{
+  "schema_version": 1,
+  "app": "SpicyStock",
+  "generated": "2026-09-01T22:14:07Z",
+  "_contract": {
+    "about": "docs/data.json is written by src/pipeline.py at the end of every run (see src/ledger.py) and read by docs/index.html at runtime. THIS copy is a fixture: the multi-session one from tools/make_history.py, produced by running the real pipeline over a synthetic market with a stand-in scorer, so its shape is the pipeline's own and its numbers are invented. run.fixture is true, which is how the morning run refuses to mail these rows and how the page raises its sample-data banner. This block is documentation, not data; consumers ignore it.",
+    "documented_in": "README.md, 'The dashboard contract'",
+    "invariants": [
+      "candidates holds EVERY scored candidate, ranked by score descending, and is never truncated: len(candidates) == run.scored. The top run.shortlist_size of them are the shortlist that went out by email.",
+      "run.scored + len(gated_out) == run.bursts. Nothing a scan found may vanish without appearing in one of the two lists.",
+      "Every candidate carries provenance.source: 'claude' when the model actually returned a score, 'fallback' when the offline checklist produced it. A fallback is never labelled claude.",
+      "provenance.chart_seen is true only when the scoring model actually received the chart image.",
+      "forward_returns and runs[].forward_returns are null until the sessions exist. Absent is null, never 0 and never a string.",
+      "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
+      "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
+      "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
+      "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
+      "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was ('lynch_gate' rejected by the checklist, 'score_cap' passed but out of calls). Null exactly with last_seen. A gate rejection is never published as an absence of judgement.",
+      "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
+      "Numbers are numbers or null. No 'n/a' strings."
+    ]
+  },
+  "run": {
+    "date": "2026-09-01",
+    "type": "evening",
+    "dry_run": true,
+    "fixture": true,
+    "universe": {
+      "label": "synthetic fixture universe (77 invented histories)",
+      "size": 77
+    },
+    "bursts": 6,
+    "passed_gate": 5,
+    "scored": 5,
+    "score_cap": 25,
+    "shortlist_size": 5,
+    "gate": {
+      "min_lynch_passes": 3,
+      "total_checks": 6
+    },
+    "scored_by": {
+      "claude": 5,
+      "fallback": 0
+    },
+    "model": "claude-sonnet-4-6",
+    "status": "degraded",
+    "errors": [
+      {
+        "stage": "chart",
+        "message": "1 of 5 charts failed to render; those candidates were scored without the image: SHW (ValueError: fixture: mplfinance refused this frame)"
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "rank": 1,
+      "ticker": "MA",
+      "date": "2026-09-01",
+      "close": 185.03,
+      "gain_pct": 6.43,
+      "volume": 8594549,
+      "prev_volume": 3515925,
+      "volume_ratio": 3.26,
+      "dollar_volume": 1590260475,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "6 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.85, fitted trend +49.3% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+49.8% past month, +13.6% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 1.7%/day = 0.61x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm preburst day",
+          "pass": false,
+          "value": "prior day 0.2% move, 1.2% range = 0.45x its norm, 1.35x volume"
+        },
+        {
+          "code": "H",
+          "label": "close near high",
+          "pass": true,
+          "value": "closed at 89% of day's range"
+        }
+      ],
+      "score": 4.4,
+      "verdict": "skip",
+      "reason": "Volume expanded but the close gave back part of the range.",
+      "key_risk": "mid-range close",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/MA.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -0.9,
+        "pct_above_52w_low": 100.9,
+        "perf_3mo_pct": 63,
+        "perf_6mo_pct": 71.9
+      },
+      "streak": {
+        "day": 2,
+        "unknown_reason": null,
+        "first_seen": "2026-08-27",
+        "last_seen": "2026-08-27",
+        "last_score": 5.5,
+        "last_verdict": "C",
+        "last_outcome": "scored",
+        "seen_before": 4,
+        "history_from": "2026-07-22",
+        "history_sessions": 29
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 2,
+      "ticker": "APP",
+      "date": "2026-09-01",
+      "close": 98.47,
+      "gain_pct": 7.66,
+      "volume": 19361141,
+      "prev_volume": 7556657,
+      "volume_ratio": 1.86,
+      "dollar_volume": 1906430982,
+      "lynch": "4/6",
+      "lynch_passes": 4,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.90, fitted trend +41.1% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+30.1% past month, +14.2% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 1.0%/day = 0.36x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm preburst day",
+          "pass": true,
+          "value": "prior day 0.3% move, 1.0% range = 0.35x its norm, 0.72x volume"
+        },
+        {
+          "code": "H",
+          "label": "close near high",
+          "pass": true,
+          "value": "closed at 71% of day's range"
+        }
+      ],
+      "score": 4.1,
+      "verdict": "skip",
+      "reason": "Second burst in the leg; base quality is ordinary and the move is already known.",
+      "key_risk": "late in the leg",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/APP.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -2.6,
+        "pct_above_52w_low": 69.7,
+        "perf_3mo_pct": 63.5,
+        "perf_6mo_pct": 47.1
+      },
+      "streak": {
+        "day": 1,
+        "unknown_reason": null,
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-07-28",
+        "last_score": 2.4,
+        "last_verdict": "skip",
+        "last_outcome": "scored",
+        "seen_before": 1,
+        "history_from": "2026-07-22",
+        "history_sessions": 29
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 3,
+      "ticker": "SHW",
+      "date": "2026-09-01",
+      "close": 27.06,
+      "gain_pct": 6.04,
+      "volume": 29999576,
+      "prev_volume": 9936431,
+      "volume_ratio": 2.32,
+      "dollar_volume": 811871380,
+      "lynch": "5/6",
+      "lynch_passes": 5,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "0 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.24, fitted trend -1.8% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+6.0% past month, +5.4% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 0.9%/day = 0.44x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm preburst day",
+          "pass": true,
+          "value": "prior day 0.4% move, 1.0% range = 0.46x its norm, 0.75x volume"
+        },
+        {
+          "code": "H",
+          "label": "close near high",
+          "pass": true,
+          "value": "closed at 80% of day's range"
+        }
+      ],
+      "score": 3.3,
+      "verdict": "skip",
+      "reason": "Sharp day on a wide, overlapping chart with no edge.",
+      "key_risk": "prone to fade",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": false,
+        "error": null
+      },
+      "chart": null,
+      "chart_error": "ValueError: fixture: mplfinance refused this frame",
+      "context": {
+        "pct_off_52w_high": -1.5,
+        "pct_above_52w_low": 50.9,
+        "perf_3mo_pct": 6.9,
+        "perf_6mo_pct": 33.1
+      },
+      "streak": {
+        "day": 1,
+        "unknown_reason": null,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "last_outcome": null,
+        "seen_before": 0,
+        "history_from": "2026-07-22",
+        "history_sessions": 29
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 4,
+      "ticker": "EOG",
+      "date": "2026-09-01",
+      "close": 79.93,
+      "gain_pct": 5.19,
+      "volume": 9079258,
+      "prev_volume": 3691605,
+      "volume_ratio": 2.4,
+      "dollar_volume": 725743104,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "4 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.82, fitted trend +33.9% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+28.5% past month, +11.2% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 2.1%/day = 0.77x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm preburst day",
+          "pass": true,
+          "value": "prior day 1.2% move, 1.7% range = 0.62x its norm, 0.99x volume"
+        },
+        {
+          "code": "H",
+          "label": "close near high",
+          "pass": false,
+          "value": "closed at 49% of day's range"
+        }
+      ],
+      "score": 2,
+      "verdict": "skip",
+      "reason": "No consolidation behind the burst and a weak close — noise, not a setup.",
+      "key_risk": "no base under the move",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/EOG.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -3.3,
+        "pct_above_52w_low": 83.5,
+        "perf_3mo_pct": 53.5,
+        "perf_6mo_pct": 78.3
+      },
+      "streak": {
+        "day": 1,
+        "unknown_reason": null,
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-08-14",
+        "last_score": null,
+        "last_verdict": null,
+        "last_outcome": "lynch_gate",
+        "seen_before": 3,
+        "history_from": "2026-07-22",
+        "history_sessions": 29
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 5,
+      "ticker": "SNPS",
+      "date": "2026-09-01",
+      "close": 114.07,
+      "gain_pct": 4.85,
+      "volume": 16936173,
+      "prev_volume": 14601379,
+      "volume_ratio": 2.12,
+      "dollar_volume": 1931865833,
+      "lynch": "4/6",
+      "lynch_passes": 4,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.65, fitted trend +12.6% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+22.9% past month, +14.0% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 2.1%/day = 0.85x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm preburst day",
+          "pass": false,
+          "value": "prior day 0.4% move, 0.8% range = 0.33x its norm, 1.87x volume"
+        },
+        {
+          "code": "H",
+          "label": "close near high",
+          "pass": false,
+          "value": "closed at 20% of day's range"
+        }
+      ],
+      "score": 1.7,
+      "verdict": "skip",
+      "reason": "Sharp day on a wide, overlapping chart with no edge.",
+      "key_risk": "prone to fade",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/SNPS.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -4.7,
+        "pct_above_52w_low": 42.3,
+        "perf_3mo_pct": 35.2,
+        "perf_6mo_pct": 33.2
+      },
+      "streak": {
+        "day": 2,
+        "unknown_reason": null,
+        "first_seen": "2026-08-28",
+        "last_seen": "2026-08-28",
+        "last_score": 6.6,
+        "last_verdict": "B",
+        "last_outcome": "scored",
+        "seen_before": 2,
+        "history_from": "2026-07-22",
+        "history_sessions": 29
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    }
+  ],
+  "gated_out": [
+    {
+      "ticker": "LYB",
+      "date": "2026-09-01",
+      "close": 132.23,
+      "gain_pct": 6.21,
+      "volume": 4604335,
+      "volume_ratio": 2.8,
+      "lynch": "2/6",
+      "lynch_passes": 2,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "5 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.91, fitted trend +41.5% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+35.2% past month, +15.2% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 2.2%/day = 0.98x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm preburst day",
+          "pass": false,
+          "value": "prior day 0.4% move, 2.1% range = 0.91x its norm, 1.50x volume"
+        },
+        {
+          "code": "H",
+          "label": "close near high",
+          "pass": false,
+          "value": "closed at 33% of day's range"
+        }
+      ],
+      "streak": {
+        "day": 2,
+        "unknown_reason": null,
+        "first_seen": "2026-08-28",
+        "last_seen": "2026-08-28",
+        "last_score": 4.9,
+        "last_verdict": "skip",
+        "last_outcome": "scored",
+        "seen_before": 2,
+        "history_from": "2026-07-22",
+        "history_sessions": 29
+      },
+      "reason": "lynch_gate"
+    }
+  ],
+  "runs": [
+    {
+      "date": "2026-09-01",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 4.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "degraded",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n": 0,
+        "rows": 0
+      }
+    },
+    {
+      "date": "2026-08-31",
+      "type": "evening",
+      "bursts": 3,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 7.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 4.64,
+        "d3": null,
+        "d5": null,
+        "n": 2,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-08-28",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 8.5,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 1.29,
+        "d3": null,
+        "d5": null,
+        "n": 3,
+        "rows": 4
+      }
+    },
+    {
+      "date": "2026-08-27",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 6.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": -0.31,
+        "d3": 2.47,
+        "d5": null,
+        "n": 3,
+        "rows": 4
+      }
+    },
+    {
+      "date": "2026-08-26",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 6,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 6.74,
+        "d3": 6.56,
+        "d5": null,
+        "n": 1,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-25",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 6,
+      "scored": 6,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 5.3,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 2.69,
+        "d3": 4.28,
+        "d5": 6.13,
+        "n": 4,
+        "rows": 6
+      }
+    },
+    {
+      "date": "2026-08-24",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 8,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 3.48,
+        "d3": 9.35,
+        "d5": 10.59,
+        "n": 3,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-21",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 6.9,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 0.05,
+        "d3": -3.5,
+        "d5": -3.98,
+        "n": 2,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-08-20",
+      "type": "evening",
+      "bursts": 3,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 6.7,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 1.25,
+        "d3": 4.45,
+        "d5": 2.44,
+        "n": 2,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-19",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 7.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 2.98,
+        "d3": 4.38,
+        "d5": 9.5,
+        "n": 2,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-18",
+      "type": "evening",
+      "bursts": 2,
+      "passed_gate": 0,
+      "scored": 0,
+      "shortlist_size": 0,
+      "score_cap": 25,
+      "top_score": null,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n": 0,
+        "rows": 0
+      }
+    },
+    {
+      "date": "2026-08-17",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 3.8,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": -2.15,
+        "d3": -5.65,
+        "d5": -12.45,
+        "n": 2,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-08-14",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 7.6,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": -0.01,
+        "d3": -0.21,
+        "d5": -0.11,
+        "n": 2,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-13",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 8.5,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 2.04,
+        "d3": 3.26,
+        "d5": 4.92,
+        "n": 5,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-08-12",
+      "type": "evening",
+      "bursts": 9,
+      "passed_gate": 7,
+      "scored": 7,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 8,
+      "fallbacks": 7,
+      "model": "claude-sonnet-4-6",
+      "status": "degraded",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 2.33,
+        "d3": 5.52,
+        "d5": 6.68,
+        "n": 4,
+        "rows": 7
+      }
+    },
+    {
+      "date": "2026-08-11",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 8.7,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 2.33,
+        "d3": 4.09,
+        "d5": 9.93,
+        "n": 3,
+        "rows": 4
+      }
+    },
+    {
+      "date": "2026-08-10",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 6.3,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 1.31,
+        "d3": 3.15,
+        "d5": 8.68,
+        "n": 4,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-08-07",
+      "type": "evening",
+      "bursts": 2,
+      "passed_gate": 1,
+      "scored": 1,
+      "shortlist_size": 1,
+      "score_cap": 25,
+      "top_score": 3.9,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 6.99,
+        "d3": 14.68,
+        "d5": 21.24,
+        "n": 1,
+        "rows": 1
+      }
+    },
+    {
+      "date": "2026-08-06",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 6.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": -1.16,
+        "d3": 2.96,
+        "d5": 6.96,
+        "n": 1,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-08-05",
+      "type": "evening",
+      "bursts": 7,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 8.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 4.32,
+        "d3": 7.33,
+        "d5": 9.58,
+        "n": 3,
+        "rows": 4
+      }
+    },
+    {
+      "date": "2026-08-04",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 7.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 5.99,
+        "d3": 12.16,
+        "d5": 16.27,
+        "n": 3,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-03",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 1,
+      "scored": 1,
+      "shortlist_size": 1,
+      "score_cap": 25,
+      "top_score": 7.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 6.03,
+        "d3": 18.38,
+        "d5": 20.75,
+        "n": 1,
+        "rows": 1
+      }
+    },
+    {
+      "date": "2026-07-31",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 6.2,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 0.87,
+        "d3": 3.3,
+        "d5": 4.0,
+        "n": 1,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-07-30",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 4.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 3.28,
+        "d3": 5.91,
+        "d5": 6.5,
+        "n": 3,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-07-29",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 7.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 4.91,
+        "d3": 5.66,
+        "d5": 5.3,
+        "n": 4,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-07-28",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 6,
+      "scored": 6,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 6.7,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 1.09,
+        "d3": 3.07,
+        "d5": 3.21,
+        "n": 5,
+        "rows": 6
+      }
+    },
+    {
+      "date": "2026-07-27",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 6.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 0.41,
+        "d3": 2.4,
+        "d5": 3.77,
+        "n": 5,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-07-24",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 8.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 0.52,
+        "d3": 4.43,
+        "d5": 6.11,
+        "n": 4,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-07-23",
+      "type": "evening",
+      "bursts": 7,
+      "passed_gate": 6,
+      "scored": 6,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 6.7,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 1.86,
+        "d3": 1.83,
+        "d5": 3.0,
+        "n": 6,
+        "rows": 6
+      }
+    },
+    {
+      "date": "2026-07-22",
+      "type": "evening",
+      "bursts": 2,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 6.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 0.77,
+        "d3": 5.24,
+        "d5": 4.13,
+        "n": 2,
+        "rows": 2
+      }
+    }
+  ]
+}

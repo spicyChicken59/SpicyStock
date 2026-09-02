@@ -114,7 +114,7 @@ predicted.
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 645 tests with no network
+- **There is a regression net.** `pytest tests/` runs 648 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -166,9 +166,14 @@ predicted.
   `docs/index.html` CAN be opened here after all: playwright's chromium is
   installed in this sandbox (`node tools/dashboard_smoke.mjs` after cloning the
   design system to /tmp/design-system runs every check with no page errors),
-  which the previous round of these notes said was impossible. Run it. The
-  script now checks README's claim about how many checks it is, so that number
-  cannot rot the way three others in this repo already did. The streak
+  which the previous round of these notes said was impossible. Run it, and
+  LOOK at the screenshots it writes with `--shots`. The script now checks
+  README's claim about how many checks it is, so that number cannot rot the
+  way three others in this repo already did. Since 3.1 it opens the page
+  against three sources — the canonical fixture, the thirty-run history
+  `tools/make_history.py` writes by driving the real pipeline offline, and
+  whatever `docs/` holds — so the checks that know a fixture's contents never
+  run against the file a real run replaces. The streak
   line the page carries was additionally rendered against a data.json holding
   every streak state and read back from the DOM, rather than argued about, and
   five of those wordings are asserted in the script now: the email and the page

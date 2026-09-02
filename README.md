@@ -197,7 +197,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 645 tests, no network or API keys needed
+pytest tests/                   # 648 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -428,32 +428,51 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**It is pinned to the fixture.** It runs 91 checks against the committed
-`docs/data.json`. Run against a real six-session run instead, it drops about a
-dozen of them with no page errors — the page renders pipeline output fine —
-because those are assertions about the fixture's particular contents (25 scored
-and 5 shown, chart paths that 404, a non-empty gated list, a fallback row), and
-two of them *throw* on a first-ever run rather than failing: a history with no
-forward returns yet reaches `money(null)`, and a run where Claude scored
-everything has no `.sc-chip--warn` to measure. Whoever commits a real run over
-the fixture has to reckon with that first; it is a change to
-`tools/dashboard_smoke.mjs`, which step 9 deliberately did not touch.
+**Three data sources, one page.** It runs 103 checks, and which file each one
+reads is the point:
 
-**It does check the streak line**, on the states this fixture carries: that a
-shortlisted pick states its streak whatever the streak is, that a null `day`
-reports the record it is unknown *over* rather than the word "unknown", that it
-never renders as day 1, that a scored last appearance keeps its verdict, and
-that a repeat says which *setup* it is day N of. Those five are the wordings the
-email and the page had drifted apart on, so they are asserted here rather than
-watched in a browser once. The gated table's "why" cell is asserted the same
-way, against the sentence `src/emailer.py` prints for that outcome — scoped to
-the cell, because a row's streak line says what happened to the name *last*
-time in those same words, and a row-level match counts the wrong thing.
+- **`tests/fixtures/data.json`** — the canonical one-night fixture, served
+  under `/f/fixture/`. Most of the checks live here, because they know the
+  fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
+  score, chart paths that 404, a non-empty gated list, every streak state a
+  reader has to tell apart. Six mutated copies of it are served under
+  `/v/<name>/` for the states one night cannot hold at once.
+- **`tests/fixtures/history/`** — thirty consecutive runs written by the real
+  pipeline (`tools/make_history.py`, see `tests/fixtures/README.md`): forward
+  returns filled in by later runs, a night the scorer was down, a chart that
+  would not render, repeats on consecutive sessions, the last week still
+  pending. Every expectation is computed from the file the page is reading.
+- **`docs/`** — whatever the last run wrote, exactly as GitHub Pages serves it,
+  opened last with only the checks that hold for any run: it opens, its rows
+  add up to its own funnel, it says whether it is sample data, and it logs no
+  error. The fixture until the first commit-back, a real run after it — and
+  the script no longer has an opinion about which.
 
-What is still not checked is any streak state this fixture does not hold —
-`history_unreadable`, `history_undated`, an empty record, a row with no `streak`
-field at all. Those are covered on the email side in `tests/test_emailer.py` and
-in `src/ledger.py`'s own tests; on the page they were read back from the DOM
+That split is what closed the note this section used to carry: the script was
+pinned to the fixture's contents *and* read `docs/data.json`, so the first real
+run committed back would have failed a dozen checks and thrown in two
+(`money(null)` on a history with no closed session; a light-mode contrast
+measurement on a fallback chip a fully-scored run does not have). Both are
+null-safe now, and neither runs against `docs/` at all.
+
+**It does check the streak line**, on the states the one-night fixture carries:
+that a shortlisted pick states its streak whatever the streak is, that a null
+`day` reports the record it is unknown *over* rather than the word "unknown",
+that it never renders as day 1, that a scored last appearance keeps its
+verdict, and that a repeat says which *setup* it is day N of. Those five are the
+wordings the email and the page had drifted apart on, so they are asserted here
+rather than watched in a browser once. The gated table's "why" cell is asserted
+the same way, against the sentence `src/emailer.py` prints for that outcome —
+scoped to the cell, because a row's streak line says what happened to the name
+*last* time in those same words, and a row-level match counts the wrong thing.
+The history pass adds the repeat the ledger really computed — "day 2 of this
+setup" on a name that burst two sessions running — rather than one typed into
+a fixture.
+
+What is still not checked is any streak state neither fixture holds —
+`history_unreadable`, `history_undated`, a row with no `streak` field at all.
+Those are covered on the email side in `tests/test_emailer.py` and in
+`src/ledger.py`'s own tests; on the page they were read back from the DOM
 against a hand-made `data.json` and agree, but that check is not committed.
 
 ## Tuning

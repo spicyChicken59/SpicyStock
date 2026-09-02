@@ -363,3 +363,16 @@ def test_a_docs_data_json_that_claims_to_be_the_fixture_is_the_fixture():
     assert live.read_bytes() == FIXTURE.read_bytes(), (
         "docs/data.json says it is the fixture but differs from tests/fixtures/data.json"
     )
+
+
+def test_the_history_fixture_is_where_the_docs_say_it_is():
+    """The thirty-run fixture the smoke test's second source reads, and the
+    guard regenerates. README names the directory and the generator; a
+    fixture nobody can find is a fixture nobody regenerates."""
+    history = ROOT / "tests" / "fixtures" / "history"
+    assert (history / "data.json").exists() and (history / "ledger.json").exists()
+    readme = _read("README.md")
+    assert "tests/fixtures/history" in readme and "tools/make_history.py" in readme
+    assert (ROOT / "tests" / "fixtures" / "README.md").exists(), (
+        "tests/fixtures/README.md is where the fixtures say what they are"
+    )

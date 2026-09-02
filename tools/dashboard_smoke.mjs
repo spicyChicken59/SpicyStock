@@ -18,10 +18,19 @@
 // Offline by construction, so CI has nothing new to reach for: docs/ is served
 // from a local http server (the page fetches data.json, which file:// blocks),
 // every cdn.jsdelivr.net request is answered from a design-system checkout on
-// disk, and every other host is answered with an empty body. Two mutated
-// copies of data.json are served alongside the real one, so the states the
-// fixture cannot be in — forward returns that exist, a run that failed part
-// way — are exercised too.
+// disk, and every other host is answered with an empty body.
+//
+// THREE DATA SOURCES, ONE PAGE. docs/data.json is whatever the last run wrote
+// -- the fixture on a fresh clone, last night's real run once evening.yml has
+// committed one back -- so the checks that know the fixture's contents (25
+// scored, a fallback on the shortlist, chart paths that 404) cannot run against
+// it: the first real run would have failed a dozen of them and thrown in two.
+// They run against the canonical fixture instead, served under /f/fixture/;
+// the thirty-run history tools/make_history.py writes is served under
+// /f/history/, for the states one night cannot hold; and docs/ itself is
+// opened last, under /, with only the checks that hold for ANY run -- it opens,
+// it adds up, it says whether it is a fixture, and it logs no error. Mutated
+// copies of the fixture are served under /v/<name>/ as before.
 //
 // Needs playwright's chromium. It is not a repo dependency: `npm install
 // --no-save playwright@1.56` next to the repo, or have it installed globally
@@ -37,6 +46,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '..');
 const ROOT = join(REPO, 'docs');
+const FIXTURES = join(REPO, 'tests', 'fixtures');
+// Where /f/<source>/data.json and /f/<source>/ledger.json are answered from;
+// everything else under /f/<source>/ is docs/, so the same index.html renders
+// each one.
+const SOURCES = { fixture: FIXTURES, history: join(FIXTURES, 'history') };
 const argv = process.argv.slice(2);
 const SHOTS = argv.includes('--shots') ? argv[argv.indexOf('--shots') + 1] : null;
 
@@ -76,9 +90,13 @@ if (!chromium) { console.log('  skip  playwright is not installed — the dashbo
 
 // --- the server ------------------------------------------------------------
 // /            the real docs/, exactly as GitHub Pages would serve it
-// /v/<name>/   the same index.html against a mutated data.json, for the states
-//              a single day's fixture cannot hold at once
-const REAL = JSON.parse(await readFile(join(ROOT, 'data.json'), 'utf8'));
+// /f/<src>/    the same index.html against a fixture's data.json (and
+//              ledger.json, where the fixture has one) — see SOURCES
+// /v/<name>/   the same index.html against a mutated copy of the canonical
+//              fixture, for the states a single day's fixture cannot hold
+const REAL = JSON.parse(await readFile(join(FIXTURES, 'data.json'), 'utf8'));
+const HIST = JSON.parse(await readFile(join(SOURCES.history, 'data.json'), 'utf8'));
+const LIVE = JSON.parse(await readFile(join(ROOT, 'data.json'), 'utf8'));
 const clone = () => JSON.parse(JSON.stringify(REAL));
 const VARIANTS = {
   // What the page must look like once step 9 starts recording forward returns.
@@ -160,6 +178,18 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
                 '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 const server = createServer(async (req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0]);
+  const f = p.match(/^\/f\/([a-z]+)(\/.*)?$/);
+  if (f && SOURCES[f[1]]) {
+    const rest = f[2] && f[2] !== '/' ? f[2] : '/index.html';
+    if (rest === '/data.json' || rest === '/ledger.json') {
+      let body;
+      try { body = await readFile(join(SOURCES[f[1]], rest.slice(1))); }
+      catch { res.writeHead(404).end('this fixture has no ' + rest.slice(1)); return; }
+      res.writeHead(200, { 'content-type': 'application/json' }).end(body);
+      return;
+    }
+    p = rest;
+  }
   const v = p.match(/^\/v\/([a-z]+)(\/.*)?$/);
   if (v && VARIANTS[v[1]]) {
     const rest = v[2] && v[2] !== '/' ? v[2] : '/index.html';
@@ -213,7 +243,7 @@ page.on('console', (m) => {
   // and in this checkout there are none. The page swaps in an explained frame,
   // which is the state under test, so these are counted and asserted on below
   // rather than treated as page errors.
-  if (/\/charts\/[^/]+\.png$/.test(url)) { chart404.add(url); return; }
+  if (/\/charts\/[^/]+\.png$/.test(url)) { chart404.add(url.replace(/^.*\/charts\//, '')); return; }
   errors.push('console: ' + m.text() + (url ? ' @ ' + url : ''));
 });
 page.on('requestfailed', (r) => errors.push('request failed: ' + r.url().slice(0, 90)));
@@ -221,7 +251,7 @@ page.on('requestfailed', (r) => errors.push('request failed: ' + r.url().slice(0
 const results = [];
 const ok = (name, pass, detail = '') => results.push({ name, pass: !!pass, detail });
 const shot = async (n) => { if (SHOTS) await page.screenshot({ path: join(SHOTS, n + '.png'), fullPage: true }); };
-async function open(path = '/index.html') {
+async function open(path = '/f/fixture/') {
   await page.goto(BASE + path, { waitUntil: 'load' });
   await page.waitForFunction(() => {
     const h = document.getElementById('h1');
@@ -269,7 +299,12 @@ const horizon = (k) => {
            plain: vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null,
            best: vals.length ? Math.max(...vals) : null, worst: vals.length ? Math.min(...vals) : null };
 };
-const money = (v) => (v > 0 ? '+' : '') + v.toFixed(2) + '%';
+// null-safe, because a run with no closed session reaches this with null and
+// README used to say so as a known way for the script to throw.
+// The page's own date format ('12 Aug 2026'), for matching a row by its session.
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmtDay = (iso) => { const p = String(iso).slice(0, 10).split('-'); return `${Number(p[2])} ${MONTHS[Number(p[1]) - 1]} ${p[0]}`; };
+const money = (v) => (v === null || v === undefined ? 'pending' : (v > 0 ? '+' : '') + v.toFixed(2) + '%');
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
 
 // --- the run opens ---------------------------------------------------------
@@ -617,14 +652,19 @@ const light = await page.evaluate(() => {
   return {
     bg, dark: lum(bg) < 0.25,
     h1: cr(getComputedStyle(document.getElementById('h1')).color, bg),
-    chip: cr(getComputedStyle(chip).color, getComputedStyle(chip).backgroundColor),
+    // null when there is no fallback chip to measure -- a run Claude scored
+    // in full has none, and README used to list this as the other way the
+    // script threw on real output.
+    chip: chip ? cr(getComputedStyle(chip).color, getComputedStyle(chip).backgroundColor) : null,
     marks: [...document.querySelectorAll('#shortlist .sc-frame__mark')]
       .filter((m) => getComputedStyle(m).display !== 'none').length
   };
 });
 ok('light mode is actually light', !light.dark, light.bg);
 ok('the headline is readable in light mode', light.h1 >= 4.5, light.h1.toFixed(2) + ':1');
-ok('the fallback label is readable in light mode', light.chip >= 4.5, light.chip.toFixed(2) + ':1');
+ok('the fallback label is readable in light mode',
+  light.chip === null ? fallbacks.length === 0 : light.chip >= 4.5,
+  light.chip === null ? 'no fallback chip on this data' : light.chip.toFixed(2) + ':1');
 await shot('desktop-light');
 await setTheme('dark');
 await page.waitForTimeout(200);
@@ -783,6 +823,88 @@ ok('once the PNGs exist the picks show them instead of the empty frame',
   && (await page.locator('#shortlist .sc-frame--empty').count()) === run.shortlist_size - shortWithPath,
   `${await page.locator('#shortlist img.shot').count()} images, ${await page.locator('#shortlist .sc-frame--empty').count()} empty`);
 await shot('charts-present');
+
+// --- thirty runs, written by the real pipeline ----------------------------
+// tests/fixtures/history is what docs/ looks like after a month of
+// commit-backs: forward returns filled in by later runs, a night the scorer
+// was down, a chart that would not render, repeats on consecutive sessions,
+// and the last week still pending. Nothing about its numbers is typed here;
+// every expectation is computed from the file the page is reading.
+await open('/f/history/');
+await setTheme('dark');
+await page.waitForTimeout(200);
+const hrun = HIST.run;
+ok('the history fixture opens and is disclosed as sample data',
+  (await page.textContent('#h1')) === `${hrun.bursts} bursts, ${hrun.scored} scored, ${hrun.shortlist_size} on the shortlist`
+  && !(await page.locator('#fixture-banner').isHidden()),
+  await page.textContent('#h1'));
+ok('its scored and gated rows account for every burst of the newest run',
+  (await page.locator('#scores-table tbody tr').count()) === hrun.scored
+  && (await page.locator('#scores-table tbody tr').count()) + (await page.locator('#gated-table tbody tr').count()) === hrun.bursts);
+ok('every run in the file is in the history table',
+  (await page.locator('#runs-table tbody tr').count()) === HIST.runs.length,
+  `${HIST.runs.length} runs`);
+const hist = HIST.runs;
+const withD5 = hist.filter((r) => r.forward_returns && r.forward_returns.d5 !== null);
+const pendingD1 = hist.filter((r) => !r.forward_returns || r.forward_returns.d1 === null);
+const cells = await page.$$eval('#runs-table tbody tr', (trs) => trs.map((tr) => [...tr.children].map((td) => td.textContent.trim())));
+ok('a run whose horizons have closed prints them as percentages, and a pending one says pending',
+  withD5.length > 0 && pendingD1.length > 0
+  && cells.filter((c) => /^[+-]\d+\.\d{2}%$/.test(c[8])).length === withD5.length
+  && cells.filter((c) => c[6] === 'pending').length === pendingD1.length,
+  `${withD5.length} runs with +5d, ${pendingD1.length} with +1d pending`);
+const down = hist.filter((r) => r.fallbacks > 0);
+ok('the night the scorer was down is in the table with its fallback count',
+  down.length > 0 && cells.some((c) => c[0].startsWith(fmtDay(down[0].date)) && c[4] === String(down[0].fallbacks)),
+  down.length ? `${down[0].date}: ${down[0].fallbacks} fallbacks` : 'no such night in the fixture');
+const HH = [horizon('d1'), horizon('d3'), horizon('d5')];
+const htiles = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')].map((t) => ({
+  value: t.querySelector('.sc-tile__value').textContent.trim(), chip: t.querySelector('.sc-chip').textContent.trim() })));
+// horizon() reads REAL; recompute over HIST for this pass.
+const hhorizon = (k) => {
+  const have = HIST.runs.filter((r) => (r.forward_returns || {})[k] !== null && (r.forward_returns || {})[k] !== undefined);
+  const n = have.reduce((a, r) => a + (r.forward_returns.n || 0), 0);
+  return { sessions: have.length, mean: n ? have.reduce((a, r) => a + r.forward_returns[k] * (r.forward_returns.n || 0), 0) / n : null };
+};
+const hh = [hhorizon('d1'), hhorizon('d3'), hhorizon('d5')];
+ok('each horizon tile is the setup-weighted mean over the sessions that closed, and says whether that is enough',
+  htiles.length === 3 && htiles.every((t, i) => t.value === money(hh[i].mean)
+    && t.chip === (hh[i].sessions >= 20 ? 'measured' : (hh[i].sessions ? 'not enough data' : 'no session closed yet'))),
+  htiles.map((t, i) => `${t.value} over ${hh[i].sessions} (${t.chip})`).join(' | '));
+const hrepeats = HIST.candidates.filter((c) => (c.streak || {}).day > 1);
+ok('a repeat the ledger really computed says which setup it is day N of',
+  (await page.locator('#scores-table tbody tr', { hasText: 'of this setup, since' }).count()) === hrepeats.length,
+  `${hrepeats.length} repeats in the newest run`);
+const hblind = HIST.candidates.filter((c) => c.chart_error);
+ok('a chart the pipeline could not render says so on the page',
+  hblind.length > 0 && (await Promise.all(hblind.map((c) => page.locator('#scores-table tbody tr', { hasText: c.ticker }).count()))).every((n) => n > 0)
+  && (await page.locator('#shortlist .pick', { hasText: 'scored without the chart' }).count())
+     === hblind.filter((c) => c.rank <= hrun.shortlist_size && c.provenance.source === 'claude' && !c.provenance.chart_seen).length,
+  hblind.map((c) => `${c.ticker}: ${c.chart_error}`).join('; ').slice(0, 90));
+await shot('history-desktop-dark');
+
+// --- whatever docs/ holds right now -----------------------------------------
+// The published page, as GitHub Pages serves it: the fixture until the first
+// commit-back, a real run after it. Only the checks that hold for any run.
+await open('/');
+await setTheme('dark');
+await page.waitForTimeout(200);
+const lrun = LIVE.run || {};
+ok('docs/data.json opens, whatever run it is',
+  (await page.textContent('#h1')) === `${lrun.bursts || 0} bursts, ${lrun.scored || 0} scored, ${lrun.shortlist_size || 0} on the shortlist`,
+  `${lrun.type} run of ${lrun.date}${lrun.fixture ? ' (the fixture)' : ''}`);
+ok('and says whether it is sample data',
+  (await page.locator('#fixture-banner').isHidden()) === !lrun.fixture,
+  lrun.fixture ? 'fixture: banner shown' : 'real run: no banner');
+ok('and its rows add up to its own funnel',
+  (await page.locator('#scores-table tbody tr').count()) === (LIVE.candidates || []).length
+  && (LIVE.candidates || []).length + (LIVE.gated_out || []).length === (lrun.bursts || 0)
+  && (LIVE.candidates || []).length === (lrun.scored || 0),
+  `${(LIVE.candidates || []).length} scored + ${(LIVE.gated_out || []).length} gated = ${lrun.bursts} bursts`);
+ok('and every fallback in it is labelled',
+  (await page.locator('#scores-table tbody .sc-chip--warn').count())
+    === (LIVE.candidates || []).filter((c) => !c.provenance || c.provenance.source !== 'claude').length);
+await shot('live-desktop-dark');
 
 await browser.close();
 server.close();
