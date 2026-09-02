@@ -893,6 +893,19 @@ def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
     `leads` comes from setup_leads() over the WHOLE ledger, not this run:
     whether a row starts a setup is a question about the sessions around it,
     and a run cannot answer it about itself.
+
+    THE SUM IS math.fsum, NOT sum(), AND THAT IS NOT A STYLE CHOICE. CPython
+    3.12 changed the builtin `sum()` to compensated (Neumaier) summation for
+    floats, so the SAME ledger read by two interpreters published two
+    different numbers: sum([9.93, 6.9, 2.86, 2.41]) is 22.099999999999998 on
+    3.11 and 22.1 on 3.12, and the mean either side of that lands on opposite
+    sides of round(x, 2) -- 5.52 against 5.53. Found by regenerating this
+    project's own history fixture under 3.12, which is what CI runs, against a
+    copy generated under 3.11, which is what the sandbox runs; two of 1788
+    numbers differed and both were run-level means. A cent, and cosmetic --
+    but it is the number a reader judges the screener by, and "which Python
+    built the file" is not one of its inputs. fsum is correctly rounded, is
+    fixed across versions, and does not depend on the order of the rows.
     """
     counted = [row for row in rows if (row.get("ticker"), row.get("date")) in leads]
     out: dict = {}
@@ -900,7 +913,7 @@ def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
         key = f"d{horizon}"
         values = [row["forward_returns"][key] for row in counted
                   if row.get("forward_returns", {}).get(key) is not None]
-        out[key] = round(sum(values) / len(values), 2) if values else None
+        out[key] = round(math.fsum(values) / len(values), 2) if values else None
     out["n"] = sum(1 for row in counted if _measured(row))
     out["rows"] = sum(1 for row in rows if _measured(row))
     return out

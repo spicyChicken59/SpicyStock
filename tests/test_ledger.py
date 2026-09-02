@@ -774,6 +774,74 @@ def test_a_row_that_continues_a_setup_is_not_a_second_observation():
         "two setups, collapsed from three rows -- and the pair says which is which")
 
 
+def test_the_published_mean_is_the_one_exact_arithmetic_gives(monkeypatch):
+    """The mean a reader judges the screener by must not depend on which
+    Python read the file.
+
+    CPython 3.12 changed the builtin sum() to compensated summation for
+    floats. These four values -- taken from the run this really happened to in
+    tests/fixtures/history -- sum to 22.099999999999998 under 3.11 and to
+    22.1 under 3.12, and the mean either side of that rounds to 5.52 against
+    5.53. The fixture regenerated under CI's interpreter differed from the
+    committed one in exactly two numbers, and both were run-level means.
+
+    Checked against an INDEPENDENT oracle rather than against the expression
+    in mean_returns(): Fraction sums these doubles exactly, with no rounding
+    at all, so it answers "what is the mean of these four numbers" without
+    asking how src.ledger computes it. Comparing to a recomputed
+    fsum(...)/len(...) would be the third shaped-test pattern in CLAUDE.md --
+    a value checked against the name it came from.
+
+    What this CANNOT check from inside one interpreter is the cross-version
+    property itself; that was verified by running the generator under 3.11 and
+    3.12 and diffing. What it does check is that naive summation cannot come
+    back on any interpreter where it would round differently -- which is the
+    interpreter this suite is running on, whichever that is.
+    """
+    from fractions import Fraction
+
+    values = [9.93, 6.9, 2.86, 2.41]
+    rows = [_row(f"N{i}", "2026-08-31", d1=v, as_of="x") for i, v in enumerate(values)]
+    exact = sum((Fraction(v) for v in values), Fraction(0)) / len(values)
+
+    published = ledger.mean_returns(rows, _every_row_leads(rows))["d1"]
+
+    assert published == round(float(exact), 2) == 5.53, (
+        f"published {published}, exact mean {float(exact)!r}"
+    )
+
+
+def test_the_published_mean_does_not_depend_on_the_order_of_the_rows():
+    """A row's position in the file is not one of the mean's inputs.
+
+    The same property from the other side. These four values sum to 20.9 one
+    way and to 20.900000000000002 the other under naive summation, which
+    rounds to 5.23 against 5.22 -- so a backfill that reordered the rows would
+    move a published mean by a cent while measuring the same four numbers.
+    Found by searching for a discriminating case rather than picked by eye,
+    because the first values tried here (1e16, 3, 1, -1e16) passed under naive
+    summation by rounding luck -- the incidental-fact shape CLAUDE.md lists.
+
+    WHAT THIS DOES NOT COVER, stated because the search settled it: from
+    CPython 3.12 the builtin sum() is compensated, and 300,000 adversarial
+    inputs (up to 40 terms spanning nine orders of magnitude) produced no case
+    where it disagrees with fsum. So on 3.12 -- which is what CI runs -- this
+    test and the one above both stay green if fsum is swapped back for sum().
+    They are load-bearing on 3.11 and earlier, which is what this sandbox
+    runs, and the cross-version claim itself was settled by generating
+    tests/fixtures/history under both interpreters and diffing, not by either
+    of them.
+    """
+    values = [-22.04, 19.21, 0.52, 23.21]
+    rows = [_row(f"N{i}", "2026-08-31", d1=v, as_of="x") for i, v in enumerate(values)]
+    leads = _every_row_leads(rows)
+
+    forwards = ledger.mean_returns(rows, leads)["d1"]
+    backwards = ledger.mean_returns(list(reversed(rows)), leads)["d1"]
+
+    assert forwards == backwards == 5.23, f"{forwards} forwards, {backwards} reversed"
+
+
 # ===========================================================================
 # The ledger across runs
 # ===========================================================================

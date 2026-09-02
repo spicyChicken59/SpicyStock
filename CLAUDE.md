@@ -114,7 +114,7 @@ predicted.
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 648 tests with no network
+- **There is a regression net.** `pytest tests/` runs 650 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -135,6 +135,23 @@ predicted.
   Still untested: anything needing a socket — that the credentials can query the
   feed, that Resend delivers, that Claude returns what the parser expects from a
   real chart.
+
+  **The interpreter is part of the environment, and it changed an answer.**
+  CPython 3.12 made the builtin `sum()` compensated for floats, so the same
+  `docs/ledger.json` read by 3.11 and by 3.12 published two different run
+  means -- 5.52 against 5.53, on a `round(x, 2)` boundary. CI runs 3.12 and
+  this sandbox runs 3.11, so it would have turned the next PR red and looked
+  like a fixture problem. Found by regenerating `tests/fixtures/history` under
+  both and diffing: 2 of 1788 numbers differed and both were run-level means.
+  `mean_returns()` uses `math.fsum` now, which is correctly rounded, fixed
+  across versions and order-independent; the fixture is byte-identical under
+  3.11 and 3.12, at numpy 1.26/2.0/2.4/2.5 and pandas 2.0/2.2/3.0. Worth
+  knowing for the next fixture: **a generated artifact committed to this repo
+  is only as reproducible as the arithmetic behind it**, and the sandbox's
+  interpreter is not CI's. It is also a limit on mutation testing here -- from
+  3.12 no input distinguishes `sum()` from `fsum()` (300,000 adversarial cases
+  tried), so the two tests that pin this are load-bearing on 3.11 and
+  documentation on CI.
 
   **And `evening.yml`'s commit-back has still never executed.** Every streak,
   and the morning run's entire input, rest on it; the `git add` bug that voided
