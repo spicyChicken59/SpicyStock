@@ -114,7 +114,7 @@ predicted.
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 650 tests with no network
+- **There is a regression net.** `pytest tests/` runs 662 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -199,6 +199,48 @@ predicted.
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Open findings from the 3.1 audit — UNVERIFIED, and that word is load-bearing
+
+Three auditors were run over disjoint file sets after 3.1 (the process in the
+brief: make the change, two agents audit, fix every finding, two verify).
+**Two of the three finished; the third — the prose/docs auditor — never
+started, and every one of the 39 verifier agents died on a session usage
+limit.** So the list below is what two auditors REPORTED, with reproductions
+they say they ran, and NOTHING has been independently checked. The workflow's
+own summary calls them "refuted"; that is an artefact of a dead verifier
+returning null, not a judgement. Treat every line as a lead until it is
+reproduced — this project's own rule is that a claim argued but not run is a
+lead, not a finding, and that binds reviewing agents too.
+
+The two auditors that did finish both worked by execution: the runtime one
+drove 264 malformed shapes through the real morning path AND the real email
+renderer (the sweep in 3.1(b) stopped at the dry run, which does not render
+the email), and the fixtures one simulated a real commit-back into a copy of
+the repo.
+
+| severity | file | the claim |
+|---|---|---|
+| high | `src/emailer.py` | the line 3.1(b) fixed still crashes the morning email: `seen_before` was left beside `day` and is still compared raw |
+| high | `tools/dashboard_smoke.mjs` | the docs/-facing check counts the page's "Nothing to show." placeholder as a candidate row, so a real run that scores nothing turns CI red |
+| high | `tools/dashboard_smoke.mjs` | the docs/-facing headline check hard-codes the plural "bursts", so a real run finding exactly one burst turns CI red |
+| high | `src/ledger.py` | `snapshot_problem()` exempts `run.status = null`, and null is exactly the value that crashes `follow_through` |
+| medium | `src/pipeline.py` | `carried_problems()` raises on a non-iterable `run.errors`, and its docstring says it cannot |
+| medium | `src/emailer.py` | an unhashable `streak.unknown_reason` crashes `_no_day_note()` on a snapshot `read_snapshot` accepts |
+| medium | `src/emailer.py` | `run.scored_by` is shape-checked one level too shallow: its values crash or silently fabricate the provenance count |
+| medium | `src/ledger.py` | `SNAPSHOT_ROW_KEYS` is all-or-nothing over 23 keys of which only 9 are load-bearing, so the first morning after any schema-additive deploy refuses a genuine snapshot |
+| medium | `tests/test_ledger.py` | the two tests guarding the `fsum` change cannot fail on the interpreter CI runs, so that commit reverts green there (this one is DOCUMENTED as such in the tests' own docstrings and in the note below — the auditor is restating a known limit, not finding a new one) |
+| medium | `tools/make_history.py` | not deterministic: `CLAUDE_MODEL` leaks into the fixture, and the `MODEL` constant meant to pin it is never used |
+| medium | `tools/check_fixture_fresh.py` | nothing guards `docs/ledger.json`: the invented 30-run ledger can be dropped in, passes the guard and the suite, and the next real run adopts it and strips the fixture marker |
+| low | `src/ledger.py` | `snapshot_problem()`'s `context` clause is neither tested nor load-bearing: it can be deleted with the suite green |
+| low | `tools/make_history.py` | the scorer-down comment states a window a week wider than the code searches |
+
+The two highest-value patterns in there, if the list is ever thinned: the
+smoke test's docs/-facing checks were supposed to hold for ANY run and two of
+them do not, which is the same class of defect 3.1(a) existed to close; and
+the shape check stops one level short in three separate places, which is the
+same class 3.1(b) existed to close. **Check that a fix did not introduce a new
+defect of the same class** applies to 3.1 itself.
 
 ## Local run
 

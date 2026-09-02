@@ -197,7 +197,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 650 tests, no network or API keys needed
+pytest tests/                   # 662 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -243,6 +243,77 @@ Claude produced it or the offline checklist fallback did. A fallback score can n
 longer outrank a real one: `score_all` sorts on provenance before score, so every
 Claude score ranks above every fallback whatever the numbers say. It is labelled
 everywhere it appears and called out at the top of the page.
+
+### What the page answers, and what it refuses to answer
+
+Until step 11 this page rendered one night. `docs/ledger.json` had been
+accumulating every scored and gated candidate since step 9, and none of it
+reached the only public surface this project has — so the question the whole
+thing exists for, *does a higher score earn a higher forward return*, could not
+be asked here at all.
+
+It leads the page now, above the funnel, with four more views under it:
+
+| the question | where | counted over |
+|---|---|---|
+| Does a higher score earn a higher return? | `evidence.by_score`, banded by the rubric's own verdicts | setups |
+| Which 2LYNCH check predicts anything? | `evidence.by_check`, passed against failed | setups, every burst the scan found |
+| Does a streak pay — is day 3 worth more than day 1? | `evidence.by_day` | **appearances** |
+| Is it getting better or worse? | `evidence.by_month` | setups |
+| What happened the last times this name burst? | `evidence.by_ticker`, plus `docs/ledger.json` on request | setups |
+
+Alongside those five, the block carries what a reader needs to interpret them:
+`evidence.record` (how many runs, sessions and setups are behind everything
+here), `evidence.overall` (the same measurement over every scored setup),
+`evidence.shortlist` and `evidence.rest` (the names that went out by email
+against the ones that did not), `evidence.horizons` (which sessions after the
+burst were measured) and `evidence.band` (the range the strategy claims).
+
+**`+3d` and `+5d` are the horizons that matter, and the page says so on every
+number.** They are what this strategy trades — the burst is entered on day 1,
+held three to five sessions and exited — so `+1d` is an early read and never
+the result. Every mean carries the `n` of *its own* horizon, because a burst
+three sessions old has a `+3d` and no `+5d`, and one row count beside all three
+would attach a `+1d`-sized sample to a `+5d`-sized answer.
+
+**Below `evidence.min_setups` setups the page refuses the rate.** The number is
+still printed — hiding it would be its own dishonesty — but it is marked *not
+enough data*, and the sentence a reader takes away leans only on bands that
+clear the floor. Thirty is not calibrated from this project's own numbers,
+which would be circular: it comes from the claim being tested. Bonde says a
+burst runs 8–20% over three to five sessions, so the difference that matters is
+the ~8 points between "nothing happened" and the bottom of that band, and at
+n=30 the interval around a mean is comfortably narrower than that gap for any
+dispersion this strategy plausibly has. It is a floor on *arithmetic*, not a
+claim of significance — thirty overlapping momentum bursts in one market regime
+are not thirty independent draws, and the page says so where it prints the
+number.
+
+**One view counts appearances rather than setups, and has to.** Everything else
+is per setup, which is `mean_returns()`'s rule: a name that bursts on five
+consecutive sessions is one move measured five times. But a setup's *leading*
+row is day 1 by construction, so grouping setups by day number would put every
+row in one bucket and answer nothing. "Does a streak pay" therefore counts each
+appearance, its windows overlap, and the page discloses that rather than hiding
+it.
+
+**Why the aggregation is Python and not JavaScript.** Every number above is an
+average over setups, and that rule is a definition that lives in
+`src/ledger.py`. A second implementation of it in the browser is precisely the
+defect this project has already shipped twice — a checklist whose two copies
+disagreed, and a fixture promising a contract the pipeline did not write. So
+`evidence()` computes it at write time and `docs/index.html` renders it. The
+cost, named: the page can only ask what the run answered. A reader who wants a
+cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
+
+**The page fetches that file only when asked.** `docs/data.json` carries the
+summary; the per-name detail — every session a ticker burst on, with the score
+and what followed — needs the whole record, which projects to about 8.8 MB raw
+and **0.59 MB gzipped** after a full year (measured, at ~47 rows a run over 260
+runs). That is not a thing to spend on every visit for a view most readers
+never open, so the "load every burst of every name" button is the only second
+request this page makes. A 404 there is the normal state until `evening.yml`
+has committed a run back, and it is reported as a fact about the file.
 
 ### The data contract
 
@@ -294,6 +365,12 @@ invariants live in the file rather than only here. The load-bearing ones:
   streak line and as `src/emailer.py`'s `LAST_OUTCOME`, because it used to say
   "passed, over the call cap" beside a line on the same page naming a "scoring
   cap" — two names for one mechanism, neither explained anywhere.
+- `evidence` is the whole **record's** view rather than this run's: every block
+  in it is computed over `docs/ledger.json` by `src/ledger.py`'s `evidence()`.
+  Every mean is over setups except `evidence.by_day`, which counts appearances
+  and says so. Every mean carries the `n` of its own horizon, and `enough` is
+  that `n` against `evidence.min_setups` — a page must not decide for itself
+  whether a number may be read as a rate.
 - Numbers are numbers or `null` — never `0` for "unknown", never the string `"n/a"`.
   `src.ledger` writes every number through one coercion and dumps with
   `allow_nan=False`, because `json.dump` writes a NaN as a bare token no browser
@@ -428,7 +505,7 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 103 checks, and which file each one
+**Three data sources, one page.** It runs 118 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
@@ -447,6 +524,15 @@ reads is the point:
   add up to its own funnel, it says whether it is sample data, and it logs no
   error. The fixture until the first commit-back, a real run after it — and
   the script no longer has an opinion about which.
+
+The record-wide views are checked on both fixtures, which hold opposite
+states: the one-night fixture's evidence block is entirely pending, so the page
+must say the view is *correct and empty* rather than draw a flat line at zero;
+the thirty-run one is populated, so the bands, the refusals, the two-colour
+legend and the lazy record fetch all have something to assert against. A third
+variant, `/v/noevidence/`, serves a snapshot with the block removed — a file
+written before the pipeline published one — and the page has to say which kind
+of nothing that is instead of hiding the question.
 
 That split is what closed the note this section used to carry: the script was
 pinned to the fixture's contents *and* read `docs/data.json`, so the first real

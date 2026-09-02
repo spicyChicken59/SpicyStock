@@ -17,6 +17,7 @@
       "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
       "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was ('lynch_gate' rejected by the checklist, 'score_cap' passed but out of calls). Null exactly with last_seen. A gate rejection is never published as an absence of judgement.",
       "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
+      "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
       "Numbers are numbers or null. No 'n/a' strings."
     ]
   },
@@ -3750,5 +3751,2312 @@
         "rows": 20
       }
     }
-  ]
+  ],
+  "evidence": {
+    "min_setups": 30,
+    "band": {
+      "low": 8.0,
+      "high": 20.0
+    },
+    "horizons": [
+      1,
+      3,
+      5
+    ],
+    "record": {
+      "runs": 1,
+      "sessions": 1,
+      "from": "2026-09-01",
+      "to": "2026-09-01",
+      "setups": 47,
+      "scored_setups": 25,
+      "rows": 47
+    },
+    "overall": {
+      "setups": 25,
+      "outcomes": [
+        {
+          "horizon": 1,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        },
+        {
+          "horizon": 3,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        },
+        {
+          "horizon": 5,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        }
+      ]
+    },
+    "by_score": [
+      {
+        "low": 0.0,
+        "high": 5.0,
+        "verdict": "skip",
+        "setups": 11,
+        "enough": false,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "low": 5.0,
+        "high": 6.0,
+        "verdict": "C",
+        "setups": 4,
+        "enough": false,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "low": 6.0,
+        "high": 7.0,
+        "verdict": "B",
+        "setups": 4,
+        "enough": false,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "low": 7.0,
+        "high": 8.0,
+        "verdict": "B+",
+        "setups": 3,
+        "enough": false,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "low": 8.0,
+        "high": 9.0,
+        "verdict": "A",
+        "setups": 3,
+        "enough": false,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "low": 9.0,
+        "high": 10.0,
+        "verdict": "A+",
+        "setups": 0,
+        "enough": false,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      }
+    ],
+    "by_check": [
+      {
+        "code": "2",
+        "passed": {
+          "setups": 24,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          ]
+        },
+        "failed": {
+          "setups": 23,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          ]
+        },
+        "separation": null,
+        "enough": false
+      },
+      {
+        "code": "L",
+        "passed": {
+          "setups": 19,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          ]
+        },
+        "failed": {
+          "setups": 28,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          ]
+        },
+        "separation": null,
+        "enough": false
+      },
+      {
+        "code": "Y",
+        "passed": {
+          "setups": 18,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          ]
+        },
+        "failed": {
+          "setups": 29,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          ]
+        },
+        "separation": null,
+        "enough": false
+      },
+      {
+        "code": "N",
+        "passed": {
+          "setups": 13,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          ]
+        },
+        "failed": {
+          "setups": 34,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          ]
+        },
+        "separation": null,
+        "enough": false
+      },
+      {
+        "code": "C",
+        "passed": {
+          "setups": 21,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          ]
+        },
+        "failed": {
+          "setups": 26,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          ]
+        },
+        "separation": null,
+        "enough": false
+      },
+      {
+        "code": "H",
+        "passed": {
+          "setups": 34,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          ]
+        },
+        "failed": {
+          "setups": 13,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          ]
+        },
+        "separation": null,
+        "enough": false
+      }
+    ],
+    "by_day": [
+      {
+        "day": null,
+        "appearances": 25,
+        "enough": false,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      }
+    ],
+    "by_month": [
+      {
+        "month": "2026-09",
+        "setups": 25,
+        "enough": false,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      }
+    ],
+    "by_ticker": [
+      {
+        "ticker": "AAPL",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "ADBE",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 4.7,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "ADSK",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "AMAT",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "AMD",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "APP",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "AVGO",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "CDNS",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "CHTR",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 7.1,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "CMCSA",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 7.4,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "CRM",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 4.9,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "CRWD",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 3.6,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "DDOG",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 2.8,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "DIS",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 7.6,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "EA",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 5.9,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "FTNT",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 3.2,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "GOOGL",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 8.7,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "HUBS",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "IBM",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "INTC",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "INTU",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 4.5,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "LRCX",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "MDB",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "META",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 8.3,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "MSFT",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 5.0,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "MU",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "NET",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 3.0,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "NFLX",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 8.1,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "NOW",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 4.3,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "NVDA",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "ORCL",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 5.0,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "PANW",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 3.9,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "PLTR",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "QCOM",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "RBLX",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "SNOW",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "SNPS",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "T",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 6.4,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "TMUS",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 6.6,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "TTD",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "TTWO",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 5.7,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "TXN",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "VEEV",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "VZ",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 6.2,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "WBD",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 6.7,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "WDAY",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 4.1,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "ZS",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": 3.4,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      }
+    ],
+    "shortlist": {
+      "setups": 5,
+      "outcomes": [
+        {
+          "horizon": 1,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        },
+        {
+          "horizon": 3,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        },
+        {
+          "horizon": 5,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        }
+      ]
+    },
+    "rest": {
+      "setups": 20,
+      "outcomes": [
+        {
+          "horizon": 1,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        },
+        {
+          "horizon": 3,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        },
+        {
+          "horizon": 5,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        }
+      ]
+    }
+  }
 }

@@ -10,6 +10,11 @@ and every one of them says so in its own `run.fixture: true`.
 | `data.json` | `python3 tools/make_fixture.py tests/fixtures/data.json` | One hand-authored evening run: 25 scored, 22 gated, a fallback score that outranks a real one, a chart that failed to render, and every streak state a reader has to tell apart. `docs/data.json` is seeded from it and stays a byte-for-byte copy only until `evening.yml` commits a real run back. |
 | `history/data.json`, `history/ledger.json` | `python3 tools/make_history.py tests/fixtures/history` | Thirty consecutive evening runs over a synthetic market, **written by the real pipeline** through the test doubles: every row by `candidate_record()`, every forward return by `forward_returns()`, every streak by `streaks()`, every mean by `mean_returns()`. A session the scorer was down for, a chart that would not render, repeats on consecutive sessions, and the last week's outcomes still pending. |
 
+Both carry an `evidence` block computed by the real `src/ledger.py`, and they
+hold opposite states of it: `data.json`'s is entirely pending, because the run
+is one session old and nothing can have a five-session outcome yet — the page
+on its first day. `history/data.json`'s is populated.
+
 `tools/check_fixture_fresh.py` regenerates both and fails CI if either has
 drifted from its generator. `tools/dashboard_smoke.mjs` opens the page against
 both, and separately against whatever `docs/` holds.

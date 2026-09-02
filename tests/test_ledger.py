@@ -2327,3 +2327,213 @@ def test_a_streak_day_is_a_number_or_it_is_nothing(block, expected):
     """One rule for the three places that compare `day > 1` against a value
     read off disk. `"3" > 1` is a TypeError; `True > 1` is a lie."""
     assert ledger.streak_day(block) == expected
+
+
+# ===========================================================================
+# Step 11 -- evidence(): the five questions, computed where the definitions are
+#
+# The page renders these numbers and does not recompute them, so what is
+# asserted here is what the page is allowed to say. Two rules pull in opposite
+# directions and both have to hold: everything is per SETUP, except by_day,
+# which is per APPEARANCE and must be, because a setup's leading row is day 1
+# by construction.
+# ===========================================================================
+
+
+def _record(sessions: list[tuple[str, tuple[str, ...]]], returns: dict | None = None,
+            **run_extra) -> list[dict]:
+    """A ledger's `runs`, built by the real Ledger, with returns filled in.
+
+    `returns` maps (ticker, session) to a {d1,d3,d5} dict. Written through the
+    stored rows rather than through fill_forward_returns() so a test can state
+    an outcome without also having to state a price frame that produces it.
+    """
+    book = ledger.Ledger("unused")
+    for session, tickers in sessions:
+        run, candidates, gated = _run(session, tickers=tickers)
+        run.update(run_extra)
+        book.add_run(run, candidates, gated)
+    for entry in book.runs:
+        for row in entry["candidates"] + entry["gated"]:
+            got = (returns or {}).get((row["ticker"], row["date"]))
+            if got:
+                row["forward_returns"] = {**ledger.empty_returns(), **got, "as_of": "x"}
+    return book.runs
+
+
+def test_the_evidence_counts_each_setup_once_however_many_sessions_it_burst_on():
+    """The rule mean_returns() exists for, one level up.
+
+    AAA bursts on three consecutive sessions -- one move, whose d5 windows
+    overlap -- and BBB bursts once. Counting rows would weight AAA's move
+    three times against BBB's and report a mean of the wrong thing.
+    """
+    runs = _record(
+        [("2026-08-26", ("AAA",)), ("2026-08-25", ("AAA",)), ("2026-08-24", ("AAA", "BBB"))],
+        returns={("AAA", "2026-08-24"): {"d5": 30.0}, ("AAA", "2026-08-25"): {"d5": 30.0},
+                 ("AAA", "2026-08-26"): {"d5": 30.0}, ("BBB", "2026-08-24"): {"d5": 0.0}},
+    )
+
+    overall = ledger.at_horizon(ledger.evidence(runs)["overall"]["outcomes"], 5)
+
+    assert overall["n"] == 2, "AAA's three sessions are one setup"
+    assert overall["mean"] == 15.0, "not 22.5, which is what counting rows gives"
+
+
+def test_the_streak_view_counts_appearances_because_a_setup_lead_is_always_day_one():
+    """by_day is the one block per appearance, and the reason is structural.
+
+    setup_leads() picks the FIRST appearance of each setup, so if this block
+    counted setups every row in it would be day 1 and the question -- is day 3
+    worth more than day 1 -- would have no rows to answer it with.
+    """
+    # The record has to reach MAX_STREAK_GAP_SESSIONS back past where the
+    # setup starts before src.ledger will put a NUMBER on a day at all -- see
+    # _why_no_day(). Without the filler sessions every row here is an honest
+    # "cannot say", which is the right answer to a different question.
+    filler = [(day.date().isoformat(), ("QQQ",))
+              for day in pd.bdate_range(end="2026-08-21", periods=8)]
+    runs = _record(
+        [("2026-08-26", ("AAA",)), ("2026-08-25", ("AAA",)), ("2026-08-24", ("AAA",))] + filler,
+        returns={("AAA", "2026-08-24"): {"d5": 1.0}, ("AAA", "2026-08-25"): {"d5": 2.0},
+                 ("AAA", "2026-08-26"): {"d5": 3.0}},
+    )
+
+    by_day = {row["day"]: row for row in ledger.evidence(runs)["by_day"]}
+
+    assert set(by_day) >= {1, 2, 3}, f"only {sorted(by_day)} -- the later days were collapsed away"
+    assert [by_day[d]["appearances"] for d in (1, 2, 3)] == [1, 1, 1]
+    assert [ledger.at_horizon(by_day[d]["outcomes"], 5)["mean"]
+            for d in (1, 2, 3)] == [1.0, 2.0, 3.0]
+
+
+def test_whether_a_number_may_be_read_as_a_rate_is_decided_on_the_horizon_that_is_traded():
+    """d5 decides `enough`, not d1.
+
+    d1 always has the largest n -- it closes first -- so keying on it would
+    license a rate for a horizon nobody has measured. d3 and d5 are what this
+    strategy trades; a bucket with a hundred d1s and two d5s knows nothing
+    about the trade.
+    """
+    floor = ledger.MIN_SETUPS_FOR_A_RATE
+    sessions = [(f"2026-0{7 + i // 20}-{(i % 20) + 1:02d}", (f"T{i:02d}",)) for i in range(floor + 4)]
+    plenty = {(f"T{i:02d}", session): {"d1": 1.0} for i, (session, _t) in enumerate(sessions)}
+    runs = _record(sessions, returns=plenty)
+
+    everything = ledger.evidence(runs)
+
+    outcomes = everything["overall"]["outcomes"]
+    assert ledger.at_horizon(outcomes, 1)["n"] > floor, "the precondition: d1 has plenty"
+    assert ledger.at_horizon(outcomes, 5)["n"] == 0
+    assert not any(bucket["enough"] for bucket in everything["by_score"]), (
+        "a bucket with no five-session outcome at all was reported readable"
+    )
+
+
+def test_a_bucket_is_readable_at_the_floor_and_not_one_setup_below_it():
+    """The boundary itself, from both sides, so a >= cannot drift to a >."""
+    floor = ledger.MIN_SETUPS_FOR_A_RATE
+    for count, readable in ((floor, True), (floor - 1, False)):
+        sessions = [(d.date().isoformat(), (f"T{i:02d}",))
+                    for i, d in enumerate(pd.bdate_range(end="2026-08-31", periods=count))]
+        runs = _record(sessions, returns={(f"T{i:02d}", session): {"d5": 5.0}
+                                          for i, (session, _t) in enumerate(sessions)})
+
+        buckets = [b for b in ledger.evidence(runs)["by_score"] if b["setups"]]
+
+        assert [b["enough"] for b in buckets] == [readable] * len(buckets), (
+            f"{count} setups against a floor of {floor} read as enough={not readable}"
+        )
+
+
+def test_each_horizon_carries_the_n_of_its_own_measurements():
+    """A burst three sessions old has a d1 and a d3 and no d5.
+
+    Reporting one row count beside all three means attaching a d1-sized sample
+    to a d5-sized answer, which is how a mean of two things gets read as a
+    mean of thirty.
+    """
+    runs = _record([("2026-08-24", ("AAA", "BBB", "CCC"))],
+                   returns={("AAA", "2026-08-24"): {"d1": 1.0, "d3": 2.0, "d5": 3.0},
+                            ("BBB", "2026-08-24"): {"d1": 5.0, "d3": 6.0},
+                            ("CCC", "2026-08-24"): {"d1": 9.0}})
+
+    outcomes = ledger.evidence(runs)["overall"]["outcomes"]
+
+    assert [e["horizon"] for e in outcomes] == list(ledger.HORIZONS)
+    assert [e["n"] for e in outcomes] == [3, 2, 1]
+    assert [e["mean"] for e in outcomes] == [5.0, 4.0, 3.0]
+
+
+def test_the_score_bands_are_the_rubric_s_own_verdicts():
+    """The buckets are not a third opinion about what a 7 means.
+
+    Checked against src.scorer's verdict for a score inside each band -- the
+    function the pipeline really labels a candidate with -- rather than against
+    the table evidence() read them from, which would be a value compared with
+    the name it came from.
+    """
+    from src.scorer import _verdict_for
+
+    for bucket in ledger.evidence(_record([("2026-08-24", ("AAA",))]))["by_score"]:
+        inside = (bucket["low"] + min(bucket["high"], 10.0)) / 2
+        assert bucket["verdict"] == _verdict_for(inside), (
+            f"band {bucket['low']}-{bucket['high']} is labelled {bucket['verdict']}, "
+            f"but the scorer calls {inside} a {_verdict_for(inside)}"
+        )
+
+
+def test_a_check_is_measured_over_the_bursts_it_rejected_as_well():
+    """A per-check rate over the scored survivors is survivorship bias with a
+    percentage sign: the names a check threw out are exactly the ones missing
+    from it. _run()'s gated row fails every check, so it must appear on the
+    failed side of each one."""
+    runs = _record([("2026-08-24", ("AAA",))],
+                   returns={("AAA", "2026-08-24"): {"d5": 10.0}, ("ZZZ", "2026-08-24"): {"d5": -4.0}})
+
+    by_check = {row["code"]: row for row in ledger.evidence(runs)["by_check"]}
+
+    assert by_check, "no checks were measured at all"
+    gated_seen = [code for code, row in by_check.items() if row["failed"]["setups"]]
+    assert gated_seen, "every check counted only the candidate that was scored"
+    assert ledger.at_horizon(by_check[gated_seen[0]]["failed"]["outcomes"], 5)["mean"] == -4.0
+
+
+def test_the_claimed_band_is_counted_not_just_the_sign_of_the_return():
+    """"+2% at five sessions" and "inside the 8-20% a burst is claimed to run"
+    are different verdicts, and the strategy makes the second."""
+    low, high = ledger.CLAIMED_BAND
+    runs = _record([("2026-08-24", ("AAA", "BBB", "CCC"))],
+                   returns={("AAA", "2026-08-24"): {"d5": (low + high) / 2},
+                            ("BBB", "2026-08-24"): {"d5": low - 0.5},
+                            ("CCC", "2026-08-24"): {"d5": high + 0.5}})
+
+    overall = ledger.at_horizon(ledger.evidence(runs)["overall"]["outcomes"], 5)
+
+    assert overall["n"] == 3 and overall["in_band"] == 1
+    assert overall["mean"] > 0, "all three are positive; only one is in the band"
+
+
+def test_the_shortlist_split_uses_the_size_the_runs_really_emailed():
+    """Not src.pipeline's TOP_N, which is today's value. A record spans runs,
+    and splitting an older one at a boundary it never used would put names in
+    a shortlist that never received them."""
+    runs = _record([("2026-08-24", tuple(f"T{i}" for i in range(6)))], shortlist_size=2)
+
+    everything = ledger.evidence(runs)
+
+    assert everything["shortlist"]["setups"] == 2
+    assert everything["rest"]["setups"] == 4
+
+
+def test_the_published_snapshot_carries_the_record_s_view(tmp_path):
+    """docs/data.json is what the page reads, so the block has to be in it --
+    and the contract has to say what it is."""
+    book = ledger.Ledger(tmp_path)
+    book.add_run(*_run("2026-08-24"))
+
+    published = book.dashboard()
+
+    assert "evidence" in published
+    assert published["evidence"]["min_setups"] == ledger.MIN_SETUPS_FOR_A_RATE
+    assert any("evidence" in invariant for invariant in published["_contract"]["invariants"])

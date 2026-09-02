@@ -376,3 +376,54 @@ def test_the_history_fixture_is_where_the_docs_say_it_is():
     assert (ROOT / "tests" / "fixtures" / "README.md").exists(), (
         "tests/fixtures/README.md is where the fixtures say what they are"
     )
+
+
+def test_the_documented_evidence_blocks_are_the_ones_published():
+    """README's table names what the page can answer, and a reader uses it to
+    know which questions the file holds.
+
+    Checked against the block src.ledger actually publishes rather than a
+    second list kept here, so a block added to evidence() and never documented
+    fails the build instead of quietly existing. The same shape as the streak
+    fields test above, and for the same reason: this rule has failed four
+    times by being remembered.
+    """
+    from src import ledger
+
+    published = ledger.evidence([])
+    readme = _read("README.md")
+    missing = sorted(f"evidence.{key}" for key in published
+                     if f"`evidence.{key}`" not in readme and f"`{key}`" not in readme)
+
+    assert not missing, (
+        f"README does not name {missing}. Add them to 'What the page answers, "
+        "and what it refuses to answer' -- a block nobody documents is a "
+        "question nobody knows the page can answer."
+    )
+
+
+def test_the_page_renders_the_record_rather_than_recomputing_it():
+    """The whole reason evidence() is Python: mean_returns' setup rule is a
+    definition, and a second copy of it in JavaScript is the defect this
+    project has shipped twice.
+
+    So the page must take the floor and the per-block verdict FROM THE FILE.
+    Two earlier versions of this test were themselves the shapes CLAUDE.md
+    warns about: one grepped for "setup_leads" and failed on the comment
+    explaining why the page does not do it, and one grepped for the floor's
+    digits and matched `max-width: 30ch` in a stylesheet. What is asserted now
+    is the property itself -- the page reads `min_setups` and `enough` rather
+    than deciding either for itself.
+    """
+    page = _read("docs/index.html")
+
+    assert "evidence" in page, "the page does not read the evidence block at all"
+    assert "min_setups" in page, (
+        "the page does not read evidence.min_setups; carrying its own floor "
+        "lets the file and the page disagree about whether a number may be "
+        "read as a rate"
+    )
+    assert "b.enough" in page or ".enough" in page, (
+        "the page does not read `enough` off the file, so it is deciding for "
+        "itself which means are worth printing as rates"
+    )

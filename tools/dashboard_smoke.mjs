@@ -170,6 +170,14 @@ const VARIANTS = {
     d.run.errors = [{ stage: 'scanner', message: 'Alpaca returned no bars for 214 symbols; those were skipped.' }];
     return d;
   },
+  // A snapshot published before the pipeline learned to write an evidence
+  // block. The page must say which kind of nothing that is rather than
+  // hiding the card, the same rule the streak line follows.
+  noevidence() {
+    const d = clone();
+    delete d.evidence;
+    return d;
+  },
   // The pipeline has never run, or the write failed.
   nodata() { return null; }
 };
@@ -306,6 +314,12 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const fmtDay = (iso) => { const p = String(iso).slice(0, 10).split('-'); return `${Number(p[2])} ${MONTHS[Number(p[1]) - 1]} ${p[0]}`; };
 const money = (v) => (v === null || v === undefined ? 'pending' : (v > 0 ? '+' : '') + v.toFixed(2) + '%');
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
+// An evidence block carries one entry per horizon in a list keyed by
+// `horizon`, not an object keyed d1/d3/d5 — those names mean "a number, the
+// return" on every candidate row in the same file, and one key name over two
+// shapes is what the suite's own contract walker rejected.
+const at = (outcomes, h) => (outcomes || []).find((e) => e && e.horizon === h)
+  || { horizon: h, mean: null, n: 0, best: null, worst: null, in_band: 0 };
 
 // --- the run opens ---------------------------------------------------------
 // "auto" follows the runner's OS, which in headless Chromium is light, so each
@@ -624,6 +638,27 @@ ok('five sessions is not called a measurement',
   && (await page.textContent('#returns-hint')).includes('none of the three'),
   tiles.map((t) => t.chip).join(' | '));
 
+// --- the record's own view, on a record one session long -------------------
+// The fixture is one night old, so every horizon in its evidence block is
+// null by construction. That is not an edge case: it is the state of the page
+// on the first day it publishes anything, and every day after until five
+// sessions have closed.
+const EV = REAL.evidence;
+ok('the page carries the record\'s own view of whether the score works', !!EV && !!EV.by_score,
+  EV ? `${EV.by_score.length} score bands, ${EV.record.scored_setups} scored setups` : 'no evidence block');
+const evOne = await page.evaluate(() => ({
+  hidden: document.getElementById('evidence-card').hidden,
+  empty: !document.getElementById('evidence-empty').hidden,
+  body: !document.getElementById('evidence-body').hidden,
+  text: document.getElementById('evidence-empty').textContent.trim()
+}));
+ok('with nothing closed yet it says so instead of drawing a flat line at zero',
+  !evOne.hidden && evOne.empty && !evOne.body && /correct and empty/.test(evOne.text)
+  && /not the same as a flat line at zero/.test(evOne.text), evOne.text.slice(0, 90));
+ok('and it says how much is waiting rather than just that it is waiting',
+  evOne.text.includes(String(EV.record.scored_setups)) && evOne.text.includes(String(EV.record.sessions)),
+  `${EV.record.scored_setups} setups over ${EV.record.sessions} session`);
+
 // --- score against outcome, before there is any outcome --------------------
 const outcome = await page.evaluate(() => ({
   plot: !document.getElementById('outcome-plot').hidden,
@@ -807,6 +842,17 @@ ok('a run that lost something says so at the top', !(await page.locator('#notice
 ok('and names what it lost', (await page.textContent('#notice')).includes('214 symbols'), await page.textContent('#notice'));
 ok('the rest of the run still renders', (await page.locator('#scores-table tbody tr').count()) === run.scored);
 
+await open('/v/noevidence/');
+const gone = await page.evaluate(() => ({
+  hidden: document.getElementById('evidence-card').hidden,
+  text: document.getElementById('evidence-empty').textContent.trim(),
+  predict: document.getElementById('predict-card').hidden
+}));
+ok('a snapshot with no record in it says so rather than hiding the question',
+  !gone.hidden && /written before the pipeline began publishing one/.test(gone.text)
+  && /not that the answer is no/.test(gone.text), gone.text.slice(0, 90));
+ok('and the views that need a record stay down rather than drawing an empty shell', gone.predict);
+
 await page.goto(BASE + '/v/nodata/', { waitUntil: 'load' });
 await page.waitForTimeout(600);
 ok('a page with no data.json says so instead of showing an empty shell',
@@ -881,6 +927,89 @@ ok('a chart the pipeline could not render says so on the page',
   && (await page.locator('#shortlist .pick', { hasText: 'scored without the chart' }).count())
      === hblind.filter((c) => c.rank <= hrun.shortlist_size && c.provenance.source === 'claude' && !c.provenance.chart_seen).length,
   hblind.map((c) => `${c.ticker}: ${c.chart_error}`).join('; ').slice(0, 90));
+// The record's view, populated. Every expectation is computed from the file
+// the page is reading, so a change to how the pipeline aggregates fails here
+// rather than passing against a number typed into this script.
+const HEV = HIST.evidence;
+const hev = await page.evaluate(() => ({
+  body: !document.getElementById('evidence-body').hidden,
+  verdict: document.getElementById('evidence-verdict').textContent.trim(),
+  bars: document.querySelectorAll('#evidence-chart .bar').length,
+  rows: document.querySelectorAll('#evidence-table tbody tr').length,
+  tones: [...new Set([...document.querySelectorAll('#evidence-chart .bar')].map((b) => getComputedStyle(b).fill))].length,
+  chips: [...document.querySelectorAll('#evidence-table tbody .sc-chip--warn')].map((c) => c.textContent.trim()),
+  legend: document.querySelectorAll('#evidence-legend span').length
+}));
+// The chart draws the horizons the strategy trades, not +1d — that one is in
+// the tiles and the table, and putting the least meaningful number in the most
+// prominent place is the opposite of the point.
+const drawn = HEV.horizons.filter((h) => h > 1);
+const drawable = HEV.by_score.reduce((total, b) =>
+  total + drawn.filter((h) => at(b.outcomes, h).mean !== null).length, 0);
+ok('a record with outcomes draws a bar per horizon per score band',
+  hev.body && hev.bars === drawable && hev.rows === HEV.by_score.length,
+  `${hev.bars} bars for ${drawable} measured horizons, ${hev.rows} rows for ${HEV.by_score.length} bands`);
+// The legend names two horizons; if both series render in one colour the key
+// contradicts its own chart. That shipped once here already, drawn with a
+// class whose CSS hard-codes the fill and ignores the tone channel.
+ok('and the two horizons are two colours, as the legend says they are',
+  hev.tones === 2 && hev.legend >= 2, `${hev.tones} distinct fills across ${hev.bars} bars`);
+const short = HEV.by_score.filter((b) => !b.enough).length;
+ok('a band with too few setups is refused as a rate rather than printed as one',
+  short > 0 && hev.chips.filter((c) => c === 'not enough data').length === short,
+  `${short} bands under ${HEV.min_setups} setups, ${hev.chips.length} marked`);
+// The verdict is the sentence a reader takes away. It must lean only on bands
+// that cleared the floor, and must be able to say there is no answer yet.
+const readable = HEV.by_score.filter((b) => b.enough);
+ok('the verdict names only what the record can support',
+  readable.length
+    ? hev.verdict.includes(readable[readable.length - 1].verdict) && /not as a result|cannot show a ranking/.test(hev.verdict)
+    : /no answer here yet/.test(hev.verdict),
+  hev.verdict.slice(0, 120));
+
+const pred = await page.evaluate(() => ({
+  rows: document.querySelectorAll('#predict-table tbody tr').length,
+  hint: document.getElementById('predict-hint').textContent.trim()
+}));
+ok('every 2LYNCH check is measured against what happened next, not just against the gate',
+  pred.rows === HEV.by_check.length && /survivors/.test(pred.hint),
+  `${pred.rows} checks`);
+const streak = await page.evaluate(() => ({
+  rows: document.querySelectorAll('#streak-table tbody tr').length,
+  hint: document.getElementById('streak-hint').textContent.trim()
+}));
+// The one block counted per appearance rather than per setup. If the page
+// stops saying so, it is quietly reporting overlapping windows as independent.
+ok('the streak view says it counts appearances, and why it must',
+  streak.rows === HEV.by_day.length && /APPEARANCE/.test(streak.hint) && /overlap/.test(streak.hint),
+  streak.hint.slice(0, 100));
+ok('a burst the record cannot place is a row of its own, never a day 1',
+  (await page.locator('#streak-table tbody tr', { hasText: 'not known' }).count())
+    === HEV.by_day.filter((d) => d.day === null).length);
+ok('the record is broken down by month so a change over time is visible',
+  (await page.locator('#trend-table tbody tr').count()) === HEV.by_month.length,
+  `${HEV.by_month.length} months`);
+// The per-name view, and the page's one lazy fetch.
+const tick = await page.evaluate(() => ({
+  rows: document.querySelectorAll('#ticker-table tbody tr').length,
+  more: document.getElementById('ticker-more').textContent.trim(),
+  btn: !!document.querySelector('#ticker-more button')
+}));
+ok('the per-name view starts as a summary and offers the record rather than fetching it',
+  tick.rows === Math.min(15, HEV.by_ticker.length) && tick.btn && /fetched only if you ask/.test(tick.more),
+  `${tick.rows} of ${HEV.by_ticker.length} names shown`);
+await page.click('#ticker-more button');
+await page.waitForTimeout(400);
+const loaded = await page.evaluate(() => ({
+  rows: document.querySelectorAll('#ticker-table tbody tr').length,
+  // Scoped to the name cell: every rate cell carries its own .sc-note with
+  // the setup count, so a table-wide count is three times the rows and would
+  // have passed on any number at all.
+  notes: document.querySelectorAll('#ticker-table tbody td:first-child .sc-note').length
+}));
+ok('and asking for it loads every name, each with the sessions it burst on',
+  loaded.rows === HEV.by_ticker.length && loaded.notes === HEV.by_ticker.length,
+  `${loaded.rows} names, ${loaded.notes} with per-burst detail`);
 await shot('history-desktop-dark');
 
 // --- whatever docs/ holds right now -----------------------------------------
