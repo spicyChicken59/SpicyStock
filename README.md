@@ -202,12 +202,13 @@ pytest tests/                   # 645 tests, no network or API keys needed
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
 email — rewrites `docs/data.json`, updates `docs/ledger.json` and writes PNGs
-into `docs/charts/`. A four-ticker smoke test therefore replaces the committed
-fixture with a four-ticker run. `git checkout docs/data.json` puts it back;
-`tools/check_fixture_fresh.py` tells you whether it needs putting back. A
-**morning** run writes nothing at all, so it cannot disturb the fixture — but
-it will refuse to read it, which is what you will see if you run one before an
-evening run has published anything.
+into `docs/charts/`. A four-ticker smoke test therefore replaces whatever
+`docs/data.json` held with a four-ticker run — the hand-authored fixture on a
+fresh clone, last night's real run once `evening.yml` has committed one back.
+`git checkout docs/data.json` puts it back either way. A **morning** run writes
+nothing at all, so it cannot disturb that file — but it will refuse to read the
+fixture, which is what you will see if you run one before an evening run has
+published anything.
 
 ## The dashboard
 
@@ -221,11 +222,17 @@ from a checkout that has just run the pipeline and the same slots fill in. A
 chart is ~57 KB and a night renders up to 25 of them: committing them is about
 360 MB a year of history that does not delta-compress and cannot be taken back
 out, and one file per ticker with no session in it cannot prove which run drew
-it anyway. The copy committed here is still the hand-authored fixture from
-`tools/make_fixture.py`, and it says so in its own `run.fixture: true`, which is
-what raises the "sample data" banner at the top of the page; a real run writes
-`false` and the banner disappears. The first run whose output is committed
-replaces it.
+it anyway. `docs/data.json` is whatever the last run wrote. On a fresh clone
+that is the hand-authored fixture — a byte-for-byte copy of
+`tests/fixtures/data.json`, which `tools/make_fixture.py` generates — and it
+says so in its own `run.fixture: true`, which is what raises the "sample data"
+banner at the top of the page. The first evening run `evening.yml` commits back
+replaces it with a real run, `run.fixture` goes `false`, and the banner
+disappears; nothing in CI expects the file to stay a fixture, because a guard
+that has to be defeated to ship is worse than none. The canonical fixture stays
+at `tests/fixtures/data.json`, where `tools/check_fixture_fresh.py` guards it
+against its generator — and, for as long as `docs/data.json` still claims to be
+the fixture, guards that copy against the canonical one.
 
 It shows the run's funnel (universe → bursts → 2LYNCH gate → scored → shortlist),
 **every candidate the run scored** rather than the five that went out by email, each
@@ -300,12 +307,13 @@ reviewed candidate. Within each group it is score order. The wording in the
 `_contract` block has been left alone rather than regenerated under a builder
 who cannot see the page render.
 
-Regenerate the committed fixture with `python3 tools/make_fixture.py docs/data.json`.
+Regenerate the fixture with `python3 tools/make_fixture.py tests/fixtures/data.json`,
+and copy it over `docs/data.json` only while that file is still the fixture.
 The generator reads `data/symbols.txt`, `ScanConfig` and — since step 9 — the
 invariant list itself from `src/ledger.py`, so it cannot emit a run this scanner
 could not produce, nor promise a contract different from the one the pipeline
 writes; `tools/check_fixture_fresh.py` regenerates it and fails the build if the
-committed file has drifted. The chart PNGs the fixture names do not exist, so the
+canonical file has drifted. The chart PNGs the fixture names do not exist, so the
 page degrades to an explained empty frame — and that is the expected state for
 the published page whether the file is a fixture or a real run, because the PNGs
 are not committed. A real run writes them next to the file that names them, for

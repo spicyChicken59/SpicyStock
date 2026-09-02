@@ -1439,7 +1439,7 @@ def test_the_fixture_generator_and_the_pipeline_describe_one_contract():
     """tools/make_fixture.py imports this list rather than holding a copy, so
     the hand-authored fixture and a real run cannot promise different things."""
     committed = json.loads((ledger.Path(__file__).resolve().parent.parent
-                            / "docs" / "data.json").read_text())
+                            / "tests" / "fixtures" / "data.json").read_text())
 
     assert committed["_contract"]["invariants"] == ledger.CONTRACT_INVARIANTS
 

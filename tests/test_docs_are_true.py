@@ -321,3 +321,45 @@ def test_readme_does_not_promise_a_null_streak_for_an_unreadable_history():
     assert "`history_unreadable`" in readme, (
         "README no longer names the reason src.ledger actually publishes"
     )
+
+
+# --- where the fixture lives ------------------------------------------------
+# docs/data.json used to be the fixture AND the file every run rewrites, guarded
+# by a script that compared it to the generator on every push. The first
+# successful commit-back would have turned CI red for good. The canonical copy
+# is tests/fixtures/data.json now; docs/data.json is whatever the last run
+# wrote, seeded from it.
+
+FIXTURE = ROOT / "tests" / "fixtures" / "data.json"
+
+
+def test_the_canonical_fixture_is_where_the_docs_say_it_is():
+    """README names the path and the regenerate command. Both used to point at
+    docs/, and the command there would now overwrite a real run."""
+    assert FIXTURE.exists(), "tests/fixtures/data.json is the canonical fixture"
+    readme = _read("README.md")
+    assert "tests/fixtures/data.json" in readme
+    assert "make_fixture.py tests/fixtures/data.json" in readme
+    assert "make_fixture.py docs/data.json" not in readme, (
+        "README still tells the reader to regenerate the fixture over docs/data.json"
+    )
+
+
+def test_a_docs_data_json_that_claims_to_be_the_fixture_is_the_fixture():
+    """`run.fixture: true` is what raises the sample-data banner and what makes
+    the morning run refuse the file. A docs/data.json making that claim must
+    be the canonical fixture, byte for byte -- a hand-edited copy is a third
+    thing. Skipped, not passed, once a real run has replaced it: then there is
+    nothing to compare and saying so is the honest answer."""
+    import json
+
+    import pytest
+
+    live = ROOT / "docs" / "data.json"
+    run = json.loads(live.read_text()).get("run") or {}
+    if not run.get("fixture"):
+        pytest.skip(f"docs/data.json is the {run.get('type')} run of {run.get('date')}, "
+                    "not the fixture; nothing to compare")
+    assert live.read_bytes() == FIXTURE.read_bytes(), (
+        "docs/data.json says it is the fixture but differs from tests/fixtures/data.json"
+    )

@@ -1402,13 +1402,16 @@ def test_a_morning_run_with_nothing_published_says_so_and_still_mails(
 def test_a_morning_run_refuses_to_mail_the_hand_authored_fixture(
     market_clock, mocked_boundaries, tmp_path
 ):
-    """docs/data.json ships as a fixture of invented rows. Mailing them as a
-    watchlist would put made-up names in front of a reader as last night's
-    judgements, and would look exactly like a working run."""
+    """docs/data.json ships as a fixture of invented rows -- a copy of
+    tests/fixtures/data.json, which is what this reads, because docs/ stops
+    being the fixture the night evening.yml first commits a real run back.
+    Mailing those rows as a watchlist would put made-up names in front of a
+    reader as last night's judgements, and would look exactly like a working
+    run."""
     market_clock.before_the_open()
     (tmp_path / "docs").mkdir()
     (tmp_path / "docs" / ledger.DATA_NAME).write_text(
-        (Path(__file__).resolve().parent.parent / "docs" / "data.json").read_text())
+        (Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "data.json").read_text())
     report = pipeline.RunReport()
 
     rows = pipeline.run("morning", dry_run=False, report=report)
