@@ -624,6 +624,27 @@ def streak(history: list[dict], session, *, record: Record = EMPTY_RECORD) -> di
     return block
 
 
+def streak_day(block) -> int | None:
+    """A streak's `day` as a number, or None for anything that is not one.
+
+    Two callers compare `day > 1`, in src.emailer and src.pipeline, and both
+    read it off a docs/data.json row on the morning run. snapshot_problem()
+    checks that row's SHAPE and deliberately not its content, so a block
+    carrying `"day": "3"` reaches them well-formed -- and `"3" > 1` is a
+    TypeError, raised in the emailer after the band and the title were built
+    and before anything was sent. The rule that a day is a number or it is
+    nothing is written here once, because it used to be written as
+    `(... or 0) > 1` in three places, each guarding None and nothing else.
+
+    bool is excluded on purpose: `True > 1` is False and `True + 1` is 2, and
+    a day of `true` is not day 1 of anything.
+    """
+    day = block.get("day") if isinstance(block, dict) else None
+    if isinstance(day, bool) or not isinstance(day, (int, float)):
+        return None
+    return day
+
+
 def streaks(runs: list[dict], tickers, session,
             *, unreadable: str | None = None) -> dict[str, dict]:
     """One streak block per ticker, against the history in `runs`.
@@ -918,6 +939,23 @@ def _malformed_rows(runs: list[dict]) -> str | None:
             if any(not isinstance(row, dict) for row in rows):
                 return (f"holds a run for {run.get('date')!r} with {key} rows that "
                         "are not ledger rows")
+            # AND THE ONE OBJECT INSIDE A ROW THAT IS INDEXED INTO. A row's
+            # forward_returns is written as an object by _slim() every time,
+            # and read as one by _fillable(), _measured() and mean_returns()
+            # -- the last of which runs inside add_run(), which publish()
+            # calls after the scan and every Claude call have been paid for.
+            # A row carrying `"forward_returns": "x"` (or null: the `or {}`
+            # guards elsewhere do not cover a key that is present and null)
+            # loaded clean, computed every streak, and then took the evening
+            # run down in _recompute_means() before write() -- the night's
+            # scores gone from the record, the file still holding the row
+            # that did it. Reproduced against a one-row ledger. Shape, not
+            # content: the value inside the object is still whatever it is.
+            for row in rows:
+                if "forward_returns" in row and not isinstance(row["forward_returns"], dict):
+                    return (f"holds a run for {run.get('date')!r} with a {key} row "
+                            f"({row.get('ticker')!r}) whose forward_returns is a JSON "
+                            f"{type(row['forward_returns']).__name__} rather than an object")
     return None
 
 
@@ -1352,6 +1390,80 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(text + "\n", encoding="utf-8")
 
 
+#: Every key candidate_record() writes into a docs/data.json row. read_snapshot()
+#: requires all of them, and tests/test_ledger.py pins this set to what
+#: candidate_record() really emits, so the two cannot drift: a key added to the
+#: writer without being added here fails a test, not a morning run.
+#:
+#: The list is the WRITER's, not the email's. The tempting rule -- require only
+#: the keys the morning email indexes without a default -- is a list that has
+#: to be maintained by reading src.emailer, and this project has already shipped
+#: two copies of one checklist that disagreed. "Is this row one the pipeline
+#: wrote" is a question with one answer.
+SNAPSHOT_ROW_KEYS = frozenset({
+    "rank", "ticker", "date", "close", "gain_pct", "volume", "prev_volume",
+    "volume_ratio", "dollar_volume", "lynch", "lynch_passes", "lynch_total",
+    "lynch_detail", "score", "verdict", "reason", "key_risk", "provenance",
+    "chart", "chart_error", "context", "streak", "forward_returns",
+})
+
+
+def snapshot_problem(data: dict) -> str | None:
+    """What is wrong with the SHAPE of a snapshot's rows, or None if nothing is.
+
+    The fifth instance of one defect class, and the same line _malformed_rows()
+    draws for the ledger: read_snapshot() checked that `candidates` was a list
+    and stopped, so `"candidates": ["AAPL"]` was handed to the morning run as a
+    watchlist and took it down with AttributeError -- exit 1 and a FAILED
+    notice, where the design says exit 2 and "there is nothing to follow
+    through on". Not a data-loss path (the morning run writes nothing; verified
+    by hashing docs/ across every shape below), but the wrong exit code and the
+    wrong email, on the pass whose only job is to say what state the record is
+    in.
+
+    The list of shapes here is what a sweep of 37 malformed snapshots through
+    the real follow-through and the real email renderer crashed on -- twenty of
+    them, in three places: a row that is not an object; an object missing a key
+    the email indexes (`ticker`, `close`, `score`, `verdict`...), or carrying a
+    `ticker` that is not a string (the subject line joins them); and a nested
+    structure of the wrong shape (`lynch_detail` rows that are not objects, a
+    `streak` that is a string, `run.status` or `run.scored_by` that is not what
+    publish() writes). Everything below refuses exactly those, by naming the
+    row and the field, so the morning email can say which.
+
+    SHAPE, NOT CONTENT, as in the ledger: a score of "9" or a date nobody can
+    parse is a row this pass can still hold up and print. The one exception a
+    reader might expect -- a `streak.day` that is not a number -- is content,
+    and src.pipeline guards its single comparison against it instead.
+    """
+    run = data.get("run")
+    for field_name, wanted in (("status", str), ("scored_by", dict)):
+        value = run.get(field_name)
+        if value is not None and not isinstance(value, wanted):
+            return (f"run.{field_name} is a JSON {type(value).__name__}, not the "
+                    f"{wanted.__name__} publish() writes")
+    for position, row in enumerate(data.get("candidates") or [], start=1):
+        if not isinstance(row, dict):
+            return f"candidate row {position} is a JSON {type(row).__name__}, not a row"
+        missing = sorted(SNAPSHOT_ROW_KEYS - set(row))
+        if missing:
+            return (f"candidate row {position} ({row.get('ticker')!r}) is missing "
+                    f"{', '.join(missing)}")
+        if not isinstance(row["ticker"], str):
+            return (f"candidate row {position} has a {type(row['ticker']).__name__} "
+                    "where its ticker should be")
+        if not isinstance(row["lynch_detail"], list) or any(
+                not isinstance(check, dict) for check in row["lynch_detail"]):
+            return (f"candidate row {position} ({row['ticker']}) has a lynch_detail "
+                    "that is not a list of checks")
+        for field_name in ("streak", "provenance", "forward_returns", "context"):
+            value = row[field_name]
+            if value is not None and not isinstance(value, dict):
+                return (f"candidate row {position} ({row['ticker']}) has a "
+                        f"{type(value).__name__} where its {field_name} object should be")
+    return None
+
+
 def read_snapshot(docs_dir: Path | str = DOCS_DIR) -> tuple[dict | None, str | None]:
     """The last run's docs/data.json, or (None, why not). Never raises.
 
@@ -1390,4 +1502,8 @@ def read_snapshot(docs_dir: Path | str = DOCS_DIR) -> tuple[dict | None, str | N
     if run.get("fixture"):
         return None, (f"{path} is the hand-authored fixture (run.fixture is true), not a "
                       "run — its rows are invented and must never be mailed as a watchlist")
+    problem = snapshot_problem(data)
+    if problem:
+        return None, (f"{path} did not come out of a run as it stands: {problem}. Its rows "
+                      "cannot be re-presented as a watchlist")
     return data, None

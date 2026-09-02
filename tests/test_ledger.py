@@ -2117,3 +2117,145 @@ def test_undated_run_entries_are_counted_so_the_run_can_report_them():
     assert ledger.undated_runs([{"date": "2026-08-04"}]) == 0
     assert ledger.undated_runs([]) == 0
     assert ledger.undated_runs(["not a dict"]) == 0
+
+
+# --- the fifth instance: the snapshot's rows, and one object inside a row ---
+# read_snapshot() checked that `candidates` was a list and stopped. The same
+# class as the four Ledger.load() already closes -- a reader accepts a shape
+# it never indexes into, and a later consumer breaks -- one file over. And
+# _malformed_rows() stopped at "rows are objects" while three readers index
+# into the forward_returns object inside each one.
+
+
+def _real_candidate_record() -> dict:
+    """candidate_record() over a real Candidate, a real checklist and a real
+    context -- the writer's own output, not a hand-written imitation of it."""
+    from src.lynch import evaluate_2lynch, extra_context
+    from src.scanner import Candidate
+    from tests.synthetic import make_ohlcv
+
+    frame = make_ohlcv("burst", seed=11)
+    cand = Candidate(ticker="AAA", date="2026-08-31", close=44.8, gain_pct=12.0,
+                     volume=25_000_000, prev_volume=3_000_000, volume_ratio=8.0,
+                     avg_volume=3_100_000, dollar_volume=1.12e9, history=frame)
+    score_row = {"score": 7.5, "verdict": "B+", "reason": "r", "key_risk": "k",
+                 "provenance": {"source": "claude", "model": "m", "chart_seen": True,
+                                "error": None},
+                 "chart": "docs/charts/AAA.png"}
+    return ledger.candidate_record(cand, evaluate_2lynch(frame), extra_context(frame),
+                                   score_row, rank=1, docs_dir="docs",
+                                   streak_block=_new_setup())
+
+
+def test_the_snapshot_row_keys_are_the_ones_candidate_record_writes():
+    """SNAPSHOT_ROW_KEYS is a second statement of what a row carries, so it is
+    pinned to the first: a key added to the writer and not to the reader would
+    otherwise refuse every snapshot the next morning, and a key dropped from
+    the writer would leave the reader demanding one nothing produces."""
+    assert set(_real_candidate_record()) == set(ledger.SNAPSHOT_ROW_KEYS)
+
+
+def test_a_snapshot_whose_rows_are_not_rows_is_refused_by_name(tmp_path):
+    """`"candidates": ["AAPL"]` loaded, passed the list check, and became an
+    AttributeError out of the morning run -- FAILED and exit 1 where the design
+    says DEGRADED and "there is nothing to follow through on"."""
+    _snapshot(tmp_path, candidates=["AAPL"])
+
+    data, why = ledger.read_snapshot(tmp_path)
+
+    assert data is None
+    assert "did not come out of a run" in why and "row 1 is a JSON str" in why
+
+
+def _snapshot_row(**over) -> dict:
+    return dict(_candidate("AAA", 1, 7.0), **over)
+
+
+@pytest.mark.parametrize("candidates, names", [
+    ([None], ["row 1", "NoneType"]),
+    ([{"ticker": "AAA"}], ["row 1", "missing", "score", "verdict", "close"]),
+    ([_snapshot_row(ticker=42)], ["row 1", "int", "ticker"]),
+    ([_snapshot_row(lynch_detail="4/6")], ["AAA", "lynch_detail", "not a list of checks"]),
+    ([_snapshot_row(lynch_detail=["PASS 2"])], ["AAA", "lynch_detail"]),
+    ([_snapshot_row(streak="day 3")], ["AAA", "str", "streak"]),
+    ([_snapshot_row(provenance="claude")], ["AAA", "str", "provenance"]),
+    ([_snapshot_row(), _snapshot_row(forward_returns=[1, 2])], ["row 2", "list", "forward_returns"]),
+])
+def test_a_snapshot_row_of_the_wrong_shape_is_refused_and_named(tmp_path, candidates, names):
+    """Every one of these reached the follow-through as a watchlist and crashed
+    it somewhere downstream -- in email_row(), in the subject line's join, in
+    the checklist lines. The reason names the row and the field, because the
+    morning email is where an operator reads it."""
+    _snapshot(tmp_path, candidates=candidates)
+
+    data, why = ledger.read_snapshot(tmp_path)
+
+    assert data is None
+    for name in names:
+        assert name in why, (name, why)
+
+
+@pytest.mark.parametrize("run_field, value", [
+    ("status", {"a": 1}), ("status", 5), ("scored_by", "x"), ("scored_by", [1, 2]),
+])
+def test_a_run_block_of_the_wrong_shape_is_refused(tmp_path, run_field, value):
+    """`status` is upper-cased by the follow-through and `scored_by` is
+    indexed by the email's provenance line; neither had a guard."""
+    _snapshot(tmp_path, run={"date": MON, "type": "evening", "fixture": False,
+                             run_field: value})
+
+    data, why = ledger.read_snapshot(tmp_path)
+
+    assert data is None and f"run.{run_field}" in why
+
+
+def test_a_snapshot_row_the_writer_produced_is_not_refused(tmp_path):
+    """The precondition for every refusal above: the writer's own row passes,
+    with a null streak and a null forward return, which are both shapes the
+    pipeline legitimately publishes."""
+    row = dict(_real_candidate_record(), streak=None)
+    _snapshot(tmp_path, candidates=[row])
+
+    data, why = ledger.read_snapshot(tmp_path)
+
+    assert why is None and data["candidates"] == [row]
+
+
+@pytest.mark.parametrize("returns", ["x", None, [1, 2], 7])
+def test_a_ledger_row_whose_forward_returns_is_not_an_object_is_set_aside(tmp_path, returns):
+    """It used to load with no error, compute every streak, and then take the
+    evening run down inside add_run() -- after the scan and every Claude call
+    had been paid for, before write(). Reproduced with a one-row ledger.
+
+    Set aside, not tolerated: the file is still there to be repaired, which
+    is the one thing the module promises about a file it cannot read, and the
+    run that follows completes.
+    """
+    # Written by the module and then edited on disk, the way such a file
+    # arrives: add_run() cannot be made to write this shape, which is the
+    # point -- a file holding it did not come out of write().
+    book = ledger.Ledger(tmp_path).load()
+    book.add_run(*_run("2026-08-28"))
+    book.write()
+    stored = json.loads((tmp_path / ledger.LEDGER_NAME).read_text())
+    stored["runs"][0]["candidates"][0]["forward_returns"] = returns
+    (tmp_path / ledger.LEDGER_NAME).write_text(json.dumps(stored))
+
+    reloaded = ledger.Ledger(tmp_path).load()
+
+    assert reloaded.runs == []
+    assert "forward_returns" in reloaded.load_error and "'AAA'" in reloaded.load_error
+    assert len(ledger.quarantined(tmp_path)) == 1, "the file was kept, not overwritten"
+    reloaded.add_run(*_run("2026-08-31"))      # the call that used to raise
+    reloaded.write()
+    assert json.loads((tmp_path / ledger.LEDGER_NAME).read_text())["runs"][0]["date"] == "2026-08-31"
+
+
+@pytest.mark.parametrize("block, expected", [
+    ({"day": 3}, 3), ({"day": 3.0}, 3.0), ({"day": None}, None), ({"day": "3"}, None),
+    ({"day": True}, None), ({}, None), ("day 3", None), (None, None),
+])
+def test_a_streak_day_is_a_number_or_it_is_nothing(block, expected):
+    """One rule for the three places that compare `day > 1` against a value
+    read off disk. `"3" > 1` is a TypeError; `True > 1` is a lie."""
+    assert ledger.streak_day(block) == expected

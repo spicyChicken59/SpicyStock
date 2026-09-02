@@ -92,6 +92,19 @@ environment was swapped for one that executed the file as shell, and a
 `.gitignore` round that anchored three rules added two more unanchored. **Check
 that a fix did not introduce a new defect of the same class.**
 
+And when a defect is one of a class, **sweep for the next instance before
+declaring the class closed.** One class has now produced five: code reads a
+structure off disk, accepts a shape it never indexes into, and a later consumer
+breaks. `Ledger.load()` closed three, one level in each time; `read_snapshot()`
+was the fourth, found because the brief asked, and the fifth was found only by
+the sweep the fourth prompted — a stored row whose `forward_returns` is not an
+object loaded clean and took the evening run down inside `add_run()`, after
+every Claude call had been paid for. The sweep that found it was a table of
+thirty-seven malformed shapes run through the real code
+(`MALFORMED_SNAPSHOTS` in `tests/test_pipeline.py`), not a reading of it; the
+brief's one example crashed, and so did nineteen the reading would not have
+predicted.
+
 ## Environment constraints
 
 - **No live market data.** The sandbox proxy blocks Yahoo and Alpaca. Anything
@@ -100,7 +113,7 @@ that a fix did not introduce a new defect of the same class.**
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 580 tests with no network
+- **There is a regression net.** `pytest tests/` runs 645 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
