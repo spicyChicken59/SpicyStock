@@ -1727,21 +1727,29 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(text + "\n", encoding="utf-8")
 
 
-#: Every key candidate_record() writes into a docs/data.json row. read_snapshot()
-#: requires all of them, and tests/test_ledger.py pins this set to what
-#: candidate_record() really emits, so the two cannot drift: a key added to the
-#: writer without being added here fails a test, not a morning run.
+#: The keys a candidate row must carry for the morning follow-through to be
+#: able to present it.
 #:
-#: The list is the WRITER's, not the email's. The tempting rule -- require only
-#: the keys the morning email indexes without a default -- is a list that has
-#: to be maintained by reading src.emailer, and this project has already shipped
-#: two copies of one checklist that disagreed. "Is this row one the pipeline
-#: wrote" is a question with one answer.
+#: NOT every key candidate_record() writes, which is what the first version of
+#: this required. That version made the first morning after ANY schema-additive
+#: deploy refuse a perfectly good snapshot: docs/data.json still holds
+#: YESTERDAY's run, written by yesterday's code, so a key added to the writer
+#: is missing from the file the next morning reads -- exactly once, by
+#: construction, on a run that was fine. The screener would have degraded
+#: itself on every future schema change.
+#:
+#: Determined by EXPERIMENT, not by reading src.emailer. Reading it is what
+#: made the writer's whole key list tempting in the first place: a
+#: hand-maintained list of "what the email indexes" is a second copy of the
+#: emailer, and this project has already shipped two copies of one checklist
+#: that disagreed. tests/test_ledger.py's
+#: test_the_required_keys_are_the_ones_the_run_really_needs drops each key in
+#: turn and runs the real morning path and the real email renderer, so this set
+#: is checked against behaviour on every suite run: a key that becomes
+#: load-bearing later fails the build rather than the 8:30 email.
 SNAPSHOT_ROW_KEYS = frozenset({
-    "rank", "ticker", "date", "close", "gain_pct", "volume", "prev_volume",
-    "volume_ratio", "dollar_volume", "lynch", "lynch_passes", "lynch_total",
-    "lynch_detail", "score", "verdict", "reason", "key_risk", "provenance",
-    "chart", "chart_error", "context", "streak", "forward_returns",
+    "ticker", "close", "gain_pct", "volume_ratio", "lynch",
+    "score", "verdict", "reason", "key_risk",
 })
 
 
@@ -1806,12 +1814,30 @@ def snapshot_problem(data: dict) -> str | None:
         if not isinstance(row["ticker"], str):
             return (f"candidate row {position} has a {type(row['ticker']).__name__} "
                     "where its ticker should be")
-        if not isinstance(row["lynch_detail"], list) or any(
-                not isinstance(check, dict) for check in row["lynch_detail"]):
+        # A MISSING KEY AND A WRONG-TYPED ONE ARE DIFFERENT QUESTIONS, and the
+        # two halves of this function answer them differently on purpose.
+        # A key that is absent is what an OLDER version of this pipeline
+        # legitimately wrote, and the morning after a deploy reads exactly
+        # that -- so absence is tolerated unless the run genuinely needs it
+        # (see SNAPSHOT_ROW_KEYS). A key present with the wrong TYPE is not
+        # something any version of the writer produces: it means a hand edit,
+        # a truncation, or another tool, and that document did not come out of
+        # a run. So the checks below refuse it even where the run would have
+        # survived -- three of the four fields here no longer crash anything,
+        # because streak_day() and the guards around them were centralised,
+        # and they are still refused.
+        #
+        # .get() from here down, not [...]: everything below is OPTIONAL now,
+        # and a row legitimately missing one (an older run's snapshot, read the
+        # morning after a deploy) must reach the reader rather than a KeyError
+        # inside the check that exists to prevent one.
+        detail = row.get("lynch_detail")
+        if detail is not None and (not isinstance(detail, list)
+                                   or any(not isinstance(check, dict) for check in detail)):
             return (f"candidate row {position} ({row['ticker']}) has a lynch_detail "
                     "that is not a list of checks")
         for field_name in ("streak", "provenance", "forward_returns", "context"):
-            value = row[field_name]
+            value = row.get(field_name)
             if value is not None and not isinstance(value, dict):
                 return (f"candidate row {position} ({row['ticker']}) has a "
                         f"{type(value).__name__} where its {field_name} object should be")
@@ -1822,7 +1848,7 @@ def snapshot_problem(data: dict) -> str | None:
         # be. The seen_before comparison sits behind a short-circuit that only
         # opens when `day` is null -- so it needs BOTH, which is why a sweep
         # that varied one field at a time reported it safe.
-        streak = row["streak"] or {}
+        streak = row.get("streak") or {}
         reason = streak.get("unknown_reason")
         if reason is not None and not isinstance(reason, str):
             return (f"candidate row {position} ({row['ticker']}) has a "

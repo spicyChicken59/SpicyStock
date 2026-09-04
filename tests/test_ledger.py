@@ -29,7 +29,7 @@ from datetime import date, datetime, timezone
 import pandas as pd
 import pytest
 
-from src import ledger
+from src import ledger, pipeline
 
 # ===========================================================================
 # The contract, read back out of the file
@@ -2215,12 +2215,65 @@ def _real_candidate_record() -> dict:
                                    streak_block=_new_setup())
 
 
-def test_the_snapshot_row_keys_are_the_ones_candidate_record_writes():
-    """SNAPSHOT_ROW_KEYS is a second statement of what a row carries, so it is
-    pinned to the first: a key added to the writer and not to the reader would
-    otherwise refuse every snapshot the next morning, and a key dropped from
-    the writer would leave the reader demanding one nothing produces."""
-    assert set(_real_candidate_record()) == set(ledger.SNAPSHOT_ROW_KEYS)
+def test_every_required_key_is_one_the_pipeline_actually_writes():
+    """A required key the writer never writes would refuse every snapshot for
+    ever, and the first morning would be the first anyone heard of it."""
+    assert ledger.SNAPSHOT_ROW_KEYS <= set(_real_candidate_record())
+
+
+def test_the_required_keys_are_the_ones_the_run_really_needs(monkeypatch, tmp_path):
+    """SNAPSHOT_ROW_KEYS is DERIVED here rather than maintained by hand.
+
+    For every key candidate_record() writes: drop it from every row, bypass the
+    missing-key refusal, and run the real morning follow-through and the real
+    email renderer. A key whose absence breaks the run must be required; a key
+    whose absence the run survives must not be, because requiring it costs a
+    genuine snapshot the first morning after any deploy that adds a field --
+    docs/data.json still holds yesterday's run, written by yesterday's code.
+
+    This is what stops the required set being a second copy of src.emailer.
+    Nothing here reads the emailer; it runs it. 9 of the 23 keys are
+    load-bearing, and if that changes this fails rather than the 8:30 email.
+    """
+    import json as _json
+
+    from tests.fakes import FakeResend
+
+    written = _real_candidate_record()
+    monkeypatch.setattr(ledger, "snapshot_problem", lambda data: None)
+    monkeypatch.setenv("RESEND_API_KEY", "test-not-a-real-key")
+    monkeypatch.setenv("RESEND_FROM", "tests@example.invalid")
+    monkeypatch.setenv("EMAIL_TO", "one@example.invalid")
+    monkeypatch.delenv("SCAN_SESSION_DATE", raising=False)
+    import resend
+    double = FakeResend()
+    monkeypatch.setattr(resend.Emails, "send", lambda params, options=None: double.send(params))
+
+    source = _json.loads((ledger.Path(__file__).resolve().parent
+                          / "fixtures" / "history" / "data.json").read_text())
+    source["run"]["fixture"] = False
+
+    needed = set()
+    for key in sorted(written):
+        docs = tmp_path / key
+        (docs / "docs").mkdir(parents=True)
+        document = _json.loads(_json.dumps(source))
+        for row in document["candidates"]:
+            row.pop(key, None)
+        (docs / "docs" / ledger.DATA_NAME).write_text(_json.dumps(document))
+        monkeypatch.chdir(docs)
+        double.sent.clear()
+        try:
+            pipeline.run("morning", dry_run=False, report=pipeline.RunReport())
+            if not double.sent:
+                needed.add(key)
+        except Exception:      # noqa: BLE001 -- the point of the experiment
+            needed.add(key)
+
+    assert needed == set(ledger.SNAPSHOT_ROW_KEYS), (
+        f"the run needs {sorted(needed)} but the reader requires "
+        f"{sorted(ledger.SNAPSHOT_ROW_KEYS)}"
+    )
 
 
 def test_a_snapshot_whose_rows_are_not_rows_is_refused_by_name(tmp_path):

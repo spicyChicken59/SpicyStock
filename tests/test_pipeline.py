@@ -1823,7 +1823,9 @@ MALFORMED_SNAPSHOTS = {
     "a row has no score": (_drop("score"), NOT_A_RUN),
     "a row has no verdict": (_drop("verdict"), NOT_A_RUN),
     "a row has no close": (_drop("close"), NOT_A_RUN),
-    "a row has no lynch_detail": (_drop("lynch_detail"), NOT_A_RUN),
+    # lynch_detail is optional now: the email rebuilds its lines with a
+    # default, so a row without one is presented rather than refused.
+    "a row has no lynch_detail": (_drop("lynch_detail"), False),
     "lynch_detail is a string": (_row(lynch_detail="4/6"), NOT_A_RUN),
     "lynch_detail rows are strings": (_row(lynch_detail=["PASS 2"]), NOT_A_RUN),
     "streak is a string": (_row(streak="day 3"), NOT_A_RUN),
@@ -1865,6 +1867,11 @@ MALFORMED_SNAPSHOTS = {
         _run_field(scored_by={"claude": "5", "fallback": "1"}), "scored_by"),
     "run.scored_by counts are lists": (
         _run_field(scored_by={"claude": [1], "fallback": []}), "scored_by"),
+    # The context clause was the one shape check with no case naming it, so it
+    # could have been deleted with the suite green -- a guard reporting safety
+    # nothing measured.
+    "context is a string": (_row(context="x"), "context"),
+    "context is a list": (_row(context=[1]), "context"),
     "streak.unknown_reason is unhashable": (_streak(day=None, unknown_reason=["x"]), "unknown_reason"),
     "streak.seen_before is a string": (
         _streak(day=None, unknown_reason="no_history", seen_before="3"), "seen_before"),

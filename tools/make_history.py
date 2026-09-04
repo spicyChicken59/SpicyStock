@@ -185,7 +185,9 @@ def plan_bursts(names: list[str], rng: np.random.Generator) -> list[Burst]:
             busy[name] = day
     # A state the run history has to carry and one night's fixture cannot: a
     # session the scorer was down for every call. It lands on the busiest
-    # session between two and three weeks back, so it has gate survivors to
+    # session six to fourteen sessions back (SESSIONS - 15 .. SESSIONS - 6),
+    # which is far enough in that its outcomes have all closed and near enough
+    # that the page still shows it -- so it has gate survivors to
     # fall back on; the first generation put it on a fixed day that happened
     # to have none, and the fixture came out with a "scorer down" night nobody
     # could see. (The other such state, a chart that would not render, is
