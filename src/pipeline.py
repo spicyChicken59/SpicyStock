@@ -701,6 +701,19 @@ def email_row(row: dict) -> dict:
     return dict(row, lynch_detail=detail, chart=None, chart_note=MORNING_CHART_NOTE)
 
 
+def _day_number(row: dict) -> int:
+    """The row's streak day as a number, or 0 when it is not one.
+
+    A morning row comes off disk, and ledger.snapshot_problem() checks its
+    SHAPE, not its content: a `streak.day` of "3" is a well-formed block with
+    a wrong value in it. The old `(... or 0) > 1` guarded None and nothing
+    else, so that one string was a TypeError out of the counts block. The
+    rule is ledger.streak_day()'s; this only spells "not a number" as 0 for
+    a count.
+    """
+    return ledger.streak_day(row.get("streak")) or 0
+
+
 def stale_sessions(session, expected) -> int | None:
     """How many sessions behind the snapshot is. None when that is not a number.
 
@@ -945,8 +958,7 @@ def follow_through(mode: Mode, dry_run: bool = False,
 
     report.counts.update({"followed": len(rows), "shortlist": len(shortlist),
                           "session": session, "stale_sessions": behind,
-                          "repeats": sum(1 for r in shortlist
-                                         if ((r.get("streak") or {}).get("day") or 0) > 1)})
+                          "repeats": sum(1 for r in shortlist if _day_number(r) > 1)})
 
     report.stage = "email"
     if dry_run:

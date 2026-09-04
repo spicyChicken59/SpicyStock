@@ -697,3 +697,16 @@ def test_a_malformed_error_entry_cannot_crash_the_only_monitor():
     from src.emailer import _headline
     stats = {"errors": ["not a dict", None, {"no_stage": True}]}
     assert "DEGRADED" in _headline(stats, "evening", [{"ticker": "A"}])
+
+
+def test_a_streak_day_that_is_not_a_number_does_not_take_the_email_down(fake_resend):
+    """ledger.snapshot_problem() checks a morning row's SHAPE and not its
+    content, so a block whose day is the string "3" reaches this module
+    well-formed. It was a TypeError out of `day > 1` here, after the band and
+    the title had been built and before anything was sent -- the email is the
+    monitor, and it must arrive."""
+    send_email(_with_streak(day="3", seen_before=2, last_seen="2026-08-28"), "morning", DATED)
+
+    html = fake_resend.sent[0]["html"]
+    assert "streak unknown" in html and "day 3" not in html
+    assert "day N of this setup" in html, "the footnote path compares the same value"

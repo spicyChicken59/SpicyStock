@@ -29,7 +29,7 @@ from datetime import date, datetime, timezone
 import pandas as pd
 import pytest
 
-from src import ledger
+from src import ledger, pipeline
 
 # ===========================================================================
 # The contract, read back out of the file
@@ -774,6 +774,74 @@ def test_a_row_that_continues_a_setup_is_not_a_second_observation():
         "two setups, collapsed from three rows -- and the pair says which is which")
 
 
+def test_the_published_mean_is_the_one_exact_arithmetic_gives(monkeypatch):
+    """The mean a reader judges the screener by must not depend on which
+    Python read the file.
+
+    CPython 3.12 changed the builtin sum() to compensated summation for
+    floats. These four values -- taken from the run this really happened to in
+    tests/fixtures/history -- sum to 22.099999999999998 under 3.11 and to
+    22.1 under 3.12, and the mean either side of that rounds to 5.52 against
+    5.53. The fixture regenerated under CI's interpreter differed from the
+    committed one in exactly two numbers, and both were run-level means.
+
+    Checked against an INDEPENDENT oracle rather than against the expression
+    in mean_returns(): Fraction sums these doubles exactly, with no rounding
+    at all, so it answers "what is the mean of these four numbers" without
+    asking how src.ledger computes it. Comparing to a recomputed
+    fsum(...)/len(...) would be the third shaped-test pattern in CLAUDE.md --
+    a value checked against the name it came from.
+
+    What this CANNOT check from inside one interpreter is the cross-version
+    property itself; that was verified by running the generator under 3.11 and
+    3.12 and diffing. What it does check is that naive summation cannot come
+    back on any interpreter where it would round differently -- which is the
+    interpreter this suite is running on, whichever that is.
+    """
+    from fractions import Fraction
+
+    values = [9.93, 6.9, 2.86, 2.41]
+    rows = [_row(f"N{i}", "2026-08-31", d1=v, as_of="x") for i, v in enumerate(values)]
+    exact = sum((Fraction(v) for v in values), Fraction(0)) / len(values)
+
+    published = ledger.mean_returns(rows, _every_row_leads(rows))["d1"]
+
+    assert published == round(float(exact), 2) == 5.53, (
+        f"published {published}, exact mean {float(exact)!r}"
+    )
+
+
+def test_the_published_mean_does_not_depend_on_the_order_of_the_rows():
+    """A row's position in the file is not one of the mean's inputs.
+
+    The same property from the other side. These four values sum to 20.9 one
+    way and to 20.900000000000002 the other under naive summation, which
+    rounds to 5.23 against 5.22 -- so a backfill that reordered the rows would
+    move a published mean by a cent while measuring the same four numbers.
+    Found by searching for a discriminating case rather than picked by eye,
+    because the first values tried here (1e16, 3, 1, -1e16) passed under naive
+    summation by rounding luck -- the incidental-fact shape CLAUDE.md lists.
+
+    WHAT THIS DOES NOT COVER, stated because the search settled it: from
+    CPython 3.12 the builtin sum() is compensated, and 300,000 adversarial
+    inputs (up to 40 terms spanning nine orders of magnitude) produced no case
+    where it disagrees with fsum. So on 3.12 -- which is what CI runs -- this
+    test and the one above both stay green if fsum is swapped back for sum().
+    They are load-bearing on 3.11 and earlier, which is what this sandbox
+    runs, and the cross-version claim itself was settled by generating
+    tests/fixtures/history under both interpreters and diffing, not by either
+    of them.
+    """
+    values = [-22.04, 19.21, 0.52, 23.21]
+    rows = [_row(f"N{i}", "2026-08-31", d1=v, as_of="x") for i, v in enumerate(values)]
+    leads = _every_row_leads(rows)
+
+    forwards = ledger.mean_returns(rows, leads)["d1"]
+    backwards = ledger.mean_returns(list(reversed(rows)), leads)["d1"]
+
+    assert forwards == backwards == 5.23, f"{forwards} forwards, {backwards} reversed"
+
+
 # ===========================================================================
 # The ledger across runs
 # ===========================================================================
@@ -1439,7 +1507,7 @@ def test_the_fixture_generator_and_the_pipeline_describe_one_contract():
     """tools/make_fixture.py imports this list rather than holding a copy, so
     the hand-authored fixture and a real run cannot promise different things."""
     committed = json.loads((ledger.Path(__file__).resolve().parent.parent
-                            / "docs" / "data.json").read_text())
+                            / "tests" / "fixtures" / "data.json").read_text())
 
     assert committed["_contract"]["invariants"] == ledger.CONTRACT_INVARIANTS
 
@@ -2117,3 +2185,466 @@ def test_undated_run_entries_are_counted_so_the_run_can_report_them():
     assert ledger.undated_runs([{"date": "2026-08-04"}]) == 0
     assert ledger.undated_runs([]) == 0
     assert ledger.undated_runs(["not a dict"]) == 0
+
+
+# --- the fifth instance: the snapshot's rows, and one object inside a row ---
+# read_snapshot() checked that `candidates` was a list and stopped. The same
+# class as the four Ledger.load() already closes -- a reader accepts a shape
+# it never indexes into, and a later consumer breaks -- one file over. And
+# _malformed_rows() stopped at "rows are objects" while three readers index
+# into the forward_returns object inside each one.
+
+
+def _real_candidate_record() -> dict:
+    """candidate_record() over a real Candidate, a real checklist and a real
+    context -- the writer's own output, not a hand-written imitation of it."""
+    from src.lynch import evaluate_2lynch, extra_context
+    from src.scanner import Candidate
+    from tests.synthetic import make_ohlcv
+
+    frame = make_ohlcv("burst", seed=11)
+    cand = Candidate(ticker="AAA", date="2026-08-31", close=44.8, gain_pct=12.0,
+                     volume=25_000_000, prev_volume=3_000_000, volume_ratio=8.0,
+                     avg_volume=3_100_000, dollar_volume=1.12e9, history=frame)
+    score_row = {"score": 7.5, "verdict": "B+", "reason": "r", "key_risk": "k",
+                 "provenance": {"source": "claude", "model": "m", "chart_seen": True,
+                                "error": None},
+                 "chart": "docs/charts/AAA.png"}
+    return ledger.candidate_record(cand, evaluate_2lynch(frame), extra_context(frame),
+                                   score_row, rank=1, docs_dir="docs",
+                                   streak_block=_new_setup())
+
+
+def test_every_required_key_is_one_the_pipeline_actually_writes():
+    """A required key the writer never writes would refuse every snapshot for
+    ever, and the first morning would be the first anyone heard of it."""
+    assert ledger.SNAPSHOT_ROW_KEYS <= set(_real_candidate_record())
+
+
+def test_the_required_keys_are_the_ones_the_run_really_needs(monkeypatch, tmp_path):
+    """SNAPSHOT_ROW_KEYS is DERIVED here rather than maintained by hand.
+
+    For every key candidate_record() writes: drop it from every row, bypass the
+    missing-key refusal, and run the real morning follow-through and the real
+    email renderer. A key whose absence breaks the run must be required; a key
+    whose absence the run survives must not be, because requiring it costs a
+    genuine snapshot the first morning after any deploy that adds a field --
+    docs/data.json still holds yesterday's run, written by yesterday's code.
+
+    This is what stops the required set being a second copy of src.emailer.
+    Nothing here reads the emailer; it runs it. 9 of the 23 keys are
+    load-bearing, and if that changes this fails rather than the 8:30 email.
+    """
+    import json as _json
+
+    from tests.fakes import FakeResend
+
+    written = _real_candidate_record()
+    monkeypatch.setattr(ledger, "snapshot_problem", lambda data: None)
+    monkeypatch.setenv("RESEND_API_KEY", "test-not-a-real-key")
+    monkeypatch.setenv("RESEND_FROM", "tests@example.invalid")
+    monkeypatch.setenv("EMAIL_TO", "one@example.invalid")
+    monkeypatch.delenv("SCAN_SESSION_DATE", raising=False)
+    import resend
+    double = FakeResend()
+    monkeypatch.setattr(resend.Emails, "send", lambda params, options=None: double.send(params))
+
+    source = _json.loads((ledger.Path(__file__).resolve().parent
+                          / "fixtures" / "history" / "data.json").read_text())
+    source["run"]["fixture"] = False
+
+    needed = set()
+    for key in sorted(written):
+        docs = tmp_path / key
+        (docs / "docs").mkdir(parents=True)
+        document = _json.loads(_json.dumps(source))
+        for row in document["candidates"]:
+            row.pop(key, None)
+        (docs / "docs" / ledger.DATA_NAME).write_text(_json.dumps(document))
+        monkeypatch.chdir(docs)
+        double.sent.clear()
+        try:
+            pipeline.run("morning", dry_run=False, report=pipeline.RunReport())
+            if not double.sent:
+                needed.add(key)
+        except Exception:      # noqa: BLE001 -- the point of the experiment
+            needed.add(key)
+
+    assert needed == set(ledger.SNAPSHOT_ROW_KEYS), (
+        f"the run needs {sorted(needed)} but the reader requires "
+        f"{sorted(ledger.SNAPSHOT_ROW_KEYS)}"
+    )
+
+
+def test_a_snapshot_whose_rows_are_not_rows_is_refused_by_name(tmp_path):
+    """`"candidates": ["AAPL"]` loaded, passed the list check, and became an
+    AttributeError out of the morning run -- FAILED and exit 1 where the design
+    says DEGRADED and "there is nothing to follow through on"."""
+    _snapshot(tmp_path, candidates=["AAPL"])
+
+    data, why = ledger.read_snapshot(tmp_path)
+
+    assert data is None
+    assert "did not come out of a run" in why and "row 1 is a JSON str" in why
+
+
+def _snapshot_row(**over) -> dict:
+    return dict(_candidate("AAA", 1, 7.0), **over)
+
+
+@pytest.mark.parametrize("candidates, names", [
+    ([None], ["row 1", "NoneType"]),
+    ([{"ticker": "AAA"}], ["row 1", "missing", "score", "verdict", "close"]),
+    ([_snapshot_row(ticker=42)], ["row 1", "int", "ticker"]),
+    ([_snapshot_row(lynch_detail="4/6")], ["AAA", "lynch_detail", "not a list of checks"]),
+    ([_snapshot_row(lynch_detail=["PASS 2"])], ["AAA", "lynch_detail"]),
+    ([_snapshot_row(streak="day 3")], ["AAA", "str", "streak"]),
+    ([_snapshot_row(provenance="claude")], ["AAA", "str", "provenance"]),
+    ([_snapshot_row(), _snapshot_row(forward_returns=[1, 2])], ["row 2", "list", "forward_returns"]),
+])
+def test_a_snapshot_row_of_the_wrong_shape_is_refused_and_named(tmp_path, candidates, names):
+    """Every one of these reached the follow-through as a watchlist and crashed
+    it somewhere downstream -- in email_row(), in the subject line's join, in
+    the checklist lines. The reason names the row and the field, because the
+    morning email is where an operator reads it."""
+    _snapshot(tmp_path, candidates=candidates)
+
+    data, why = ledger.read_snapshot(tmp_path)
+
+    assert data is None
+    for name in names:
+        assert name in why, (name, why)
+
+
+@pytest.mark.parametrize("run_field, value", [
+    ("status", {"a": 1}), ("status", 5), ("scored_by", "x"), ("scored_by", [1, 2]),
+])
+def test_a_run_block_of_the_wrong_shape_is_refused(tmp_path, run_field, value):
+    """`status` is upper-cased by the follow-through and `scored_by` is
+    indexed by the email's provenance line; neither had a guard."""
+    _snapshot(tmp_path, run={"date": MON, "type": "evening", "fixture": False,
+                             run_field: value})
+
+    data, why = ledger.read_snapshot(tmp_path)
+
+    assert data is None and f"run.{run_field}" in why
+
+
+def test_a_snapshot_row_the_writer_produced_is_not_refused(tmp_path):
+    """The precondition for every refusal above: the writer's own row passes,
+    with a null streak and a null forward return, which are both shapes the
+    pipeline legitimately publishes."""
+    row = dict(_real_candidate_record(), streak=None)
+    _snapshot(tmp_path, candidates=[row])
+
+    data, why = ledger.read_snapshot(tmp_path)
+
+    assert why is None and data["candidates"] == [row]
+
+
+@pytest.mark.parametrize("returns", ["x", None, [1, 2], 7])
+def test_a_ledger_row_whose_forward_returns_is_not_an_object_is_set_aside(tmp_path, returns):
+    """It used to load with no error, compute every streak, and then take the
+    evening run down inside add_run() -- after the scan and every Claude call
+    had been paid for, before write(). Reproduced with a one-row ledger.
+
+    Set aside, not tolerated: the file is still there to be repaired, which
+    is the one thing the module promises about a file it cannot read, and the
+    run that follows completes.
+    """
+    # Written by the module and then edited on disk, the way such a file
+    # arrives: add_run() cannot be made to write this shape, which is the
+    # point -- a file holding it did not come out of write().
+    book = ledger.Ledger(tmp_path).load()
+    book.add_run(*_run("2026-08-28"))
+    book.write()
+    stored = json.loads((tmp_path / ledger.LEDGER_NAME).read_text())
+    stored["runs"][0]["candidates"][0]["forward_returns"] = returns
+    (tmp_path / ledger.LEDGER_NAME).write_text(json.dumps(stored))
+
+    reloaded = ledger.Ledger(tmp_path).load()
+
+    assert reloaded.runs == []
+    assert "forward_returns" in reloaded.load_error and "'AAA'" in reloaded.load_error
+    assert len(ledger.quarantined(tmp_path)) == 1, "the file was kept, not overwritten"
+    reloaded.add_run(*_run("2026-08-31"))      # the call that used to raise
+    reloaded.write()
+    assert json.loads((tmp_path / ledger.LEDGER_NAME).read_text())["runs"][0]["date"] == "2026-08-31"
+
+
+@pytest.mark.parametrize("block, expected", [
+    ({"day": 3}, 3), ({"day": 3.0}, 3.0), ({"day": None}, None), ({"day": "3"}, None),
+    ({"day": True}, None), ({}, None), ("day 3", None), (None, None),
+])
+def test_a_streak_day_is_a_number_or_it_is_nothing(block, expected):
+    """One rule for the three places that compare `day > 1` against a value
+    read off disk. `"3" > 1` is a TypeError; `True > 1` is a lie."""
+    assert ledger.streak_day(block) == expected
+
+
+# ===========================================================================
+# Step 11 -- evidence(): the five questions, computed where the definitions are
+#
+# The page renders these numbers and does not recompute them, so what is
+# asserted here is what the page is allowed to say. Two rules pull in opposite
+# directions and both have to hold: everything is per SETUP, except by_day,
+# which is per APPEARANCE and must be, because a setup's leading row is day 1
+# by construction.
+# ===========================================================================
+
+
+def _record(sessions: list[tuple[str, tuple[str, ...]]], returns: dict | None = None,
+            **run_extra) -> list[dict]:
+    """A ledger's `runs`, built by the real Ledger, with returns filled in.
+
+    `returns` maps (ticker, session) to a {d1,d3,d5} dict. Written through the
+    stored rows rather than through fill_forward_returns() so a test can state
+    an outcome without also having to state a price frame that produces it.
+    """
+    book = ledger.Ledger("unused")
+    for session, tickers in sessions:
+        run, candidates, gated = _run(session, tickers=tickers)
+        run.update(run_extra)
+        book.add_run(run, candidates, gated)
+    for entry in book.runs:
+        for row in entry["candidates"] + entry["gated"]:
+            got = (returns or {}).get((row["ticker"], row["date"]))
+            if got:
+                row["forward_returns"] = {**ledger.empty_returns(), **got, "as_of": "x"}
+    return book.runs
+
+
+def test_the_evidence_counts_each_setup_once_however_many_sessions_it_burst_on():
+    """The rule mean_returns() exists for, one level up.
+
+    AAA bursts on three consecutive sessions -- one move, whose d5 windows
+    overlap -- and BBB bursts once. Counting rows would weight AAA's move
+    three times against BBB's and report a mean of the wrong thing.
+    """
+    runs = _record(
+        [("2026-08-26", ("AAA",)), ("2026-08-25", ("AAA",)), ("2026-08-24", ("AAA", "BBB"))],
+        returns={("AAA", "2026-08-24"): {"d5": 30.0}, ("AAA", "2026-08-25"): {"d5": 30.0},
+                 ("AAA", "2026-08-26"): {"d5": 30.0}, ("BBB", "2026-08-24"): {"d5": 0.0}},
+    )
+
+    overall = ledger.at_horizon(ledger.evidence(runs)["overall"]["outcomes"], 5)
+
+    assert overall["n"] == 2, "AAA's three sessions are one setup"
+    assert overall["mean"] == 15.0, "not 22.5, which is what counting rows gives"
+
+
+def test_the_streak_view_counts_appearances_because_a_setup_lead_is_always_day_one():
+    """by_day is the one block per appearance, and the reason is structural.
+
+    setup_leads() picks the FIRST appearance of each setup, so if this block
+    counted setups every row in it would be day 1 and the question -- is day 3
+    worth more than day 1 -- would have no rows to answer it with.
+    """
+    # The record has to reach MAX_STREAK_GAP_SESSIONS back past where the
+    # setup starts before src.ledger will put a NUMBER on a day at all -- see
+    # _why_no_day(). Without the filler sessions every row here is an honest
+    # "cannot say", which is the right answer to a different question.
+    filler = [(day.date().isoformat(), ("QQQ",))
+              for day in pd.bdate_range(end="2026-08-21", periods=8)]
+    runs = _record(
+        [("2026-08-26", ("AAA",)), ("2026-08-25", ("AAA",)), ("2026-08-24", ("AAA",))] + filler,
+        returns={("AAA", "2026-08-24"): {"d5": 1.0}, ("AAA", "2026-08-25"): {"d5": 2.0},
+                 ("AAA", "2026-08-26"): {"d5": 3.0}},
+    )
+
+    by_day = {row["day"]: row for row in ledger.evidence(runs)["by_day"]}
+
+    assert set(by_day) >= {1, 2, 3}, f"only {sorted(by_day)} -- the later days were collapsed away"
+    assert [by_day[d]["appearances"] for d in (1, 2, 3)] == [1, 1, 1]
+    assert [ledger.at_horizon(by_day[d]["outcomes"], 5)["mean"]
+            for d in (1, 2, 3)] == [1.0, 2.0, 3.0]
+
+
+def test_whether_a_number_may_be_read_as_a_rate_is_decided_on_the_horizon_that_is_traded():
+    """d5 decides `enough`, not d1.
+
+    d1 always has the largest n -- it closes first -- so keying on it would
+    license a rate for a horizon nobody has measured. d3 and d5 are what this
+    strategy trades; a bucket with a hundred d1s and two d5s knows nothing
+    about the trade.
+    """
+    floor = ledger.MIN_SETUPS_FOR_A_RATE
+    sessions = [(f"2026-0{7 + i // 20}-{(i % 20) + 1:02d}", (f"T{i:02d}",)) for i in range(floor + 4)]
+    plenty = {(f"T{i:02d}", session): {"d1": 1.0} for i, (session, _t) in enumerate(sessions)}
+    runs = _record(sessions, returns=plenty)
+
+    everything = ledger.evidence(runs)
+
+    outcomes = everything["overall"]["outcomes"]
+    assert ledger.at_horizon(outcomes, 1)["n"] > floor, "the precondition: d1 has plenty"
+    assert ledger.at_horizon(outcomes, 5)["n"] == 0
+    assert not any(bucket["enough"] for bucket in everything["by_score"]), (
+        "a bucket with no five-session outcome at all was reported readable"
+    )
+
+
+def test_a_bucket_is_readable_at_the_floor_and_not_one_setup_below_it():
+    """The boundary itself, from both sides, so a >= cannot drift to a >."""
+    floor = ledger.MIN_SETUPS_FOR_A_RATE
+    for count, readable in ((floor, True), (floor - 1, False)):
+        sessions = [(d.date().isoformat(), (f"T{i:02d}",))
+                    for i, d in enumerate(pd.bdate_range(end="2026-08-31", periods=count))]
+        runs = _record(sessions, returns={(f"T{i:02d}", session): {"d5": 5.0}
+                                          for i, (session, _t) in enumerate(sessions)})
+
+        buckets = [b for b in ledger.evidence(runs)["by_score"] if b["setups"]]
+
+        assert [b["enough"] for b in buckets] == [readable] * len(buckets), (
+            f"{count} setups against a floor of {floor} read as enough={not readable}"
+        )
+
+
+def test_each_horizon_carries_the_n_of_its_own_measurements():
+    """A burst three sessions old has a d1 and a d3 and no d5.
+
+    Reporting one row count beside all three means attaching a d1-sized sample
+    to a d5-sized answer, which is how a mean of two things gets read as a
+    mean of thirty.
+    """
+    runs = _record([("2026-08-24", ("AAA", "BBB", "CCC"))],
+                   returns={("AAA", "2026-08-24"): {"d1": 1.0, "d3": 2.0, "d5": 3.0},
+                            ("BBB", "2026-08-24"): {"d1": 5.0, "d3": 6.0},
+                            ("CCC", "2026-08-24"): {"d1": 9.0}})
+
+    outcomes = ledger.evidence(runs)["overall"]["outcomes"]
+
+    assert [e["horizon"] for e in outcomes] == list(ledger.HORIZONS)
+    assert [e["n"] for e in outcomes] == [3, 2, 1]
+    assert [e["mean"] for e in outcomes] == [5.0, 4.0, 3.0]
+
+
+def test_the_score_bands_are_the_rubric_s_own_verdicts():
+    """The buckets are not a third opinion about what a 7 means.
+
+    Checked against src.scorer's verdict for a score inside each band -- the
+    function the pipeline really labels a candidate with -- rather than against
+    the table evidence() read them from, which would be a value compared with
+    the name it came from.
+    """
+    from src.scorer import _verdict_for
+
+    for bucket in ledger.evidence(_record([("2026-08-24", ("AAA",))]))["by_score"]:
+        inside = (bucket["low"] + min(bucket["high"], 10.0)) / 2
+        assert bucket["verdict"] == _verdict_for(inside), (
+            f"band {bucket['low']}-{bucket['high']} is labelled {bucket['verdict']}, "
+            f"but the scorer calls {inside} a {_verdict_for(inside)}"
+        )
+
+
+def test_a_check_is_measured_over_the_bursts_it_rejected_as_well():
+    """A per-check rate over the scored survivors is survivorship bias with a
+    percentage sign: the names a check threw out are exactly the ones missing
+    from it. _run()'s gated row fails every check, so it must appear on the
+    failed side of each one."""
+    runs = _record([("2026-08-24", ("AAA",))],
+                   returns={("AAA", "2026-08-24"): {"d5": 10.0}, ("ZZZ", "2026-08-24"): {"d5": -4.0}})
+
+    by_check = {row["code"]: row for row in ledger.evidence(runs)["by_check"]}
+
+    assert by_check, "no checks were measured at all"
+    gated_seen = [code for code, row in by_check.items() if row["failed"]["setups"]]
+    assert gated_seen, "every check counted only the candidate that was scored"
+    assert ledger.at_horizon(by_check[gated_seen[0]]["failed"]["outcomes"], 5)["mean"] == -4.0
+
+
+def test_the_claimed_band_is_counted_not_just_the_sign_of_the_return():
+    """"+2% at five sessions" and "inside the 8-20% a burst is claimed to run"
+    are different verdicts, and the strategy makes the second."""
+    low, high = ledger.CLAIMED_BAND
+    runs = _record([("2026-08-24", ("AAA", "BBB", "CCC"))],
+                   returns={("AAA", "2026-08-24"): {"d5": (low + high) / 2},
+                            ("BBB", "2026-08-24"): {"d5": low - 0.5},
+                            ("CCC", "2026-08-24"): {"d5": high + 0.5}})
+
+    overall = ledger.at_horizon(ledger.evidence(runs)["overall"]["outcomes"], 5)
+
+    assert overall["n"] == 3 and overall["in_band"] == 1
+    assert overall["mean"] > 0, "all three are positive; only one is in the band"
+
+
+def test_the_shortlist_split_uses_the_size_the_runs_really_emailed():
+    """Not src.pipeline's TOP_N, which is today's value. A record spans runs,
+    and splitting an older one at a boundary it never used would put names in
+    a shortlist that never received them."""
+    runs = _record([("2026-08-24", tuple(f"T{i}" for i in range(6)))], shortlist_size=2)
+
+    everything = ledger.evidence(runs)
+
+    assert everything["shortlist"]["setups"] == 2
+    assert everything["rest"]["setups"] == 4
+
+
+def test_the_published_snapshot_carries_the_record_s_view(tmp_path):
+    """docs/data.json is what the page reads, so the block has to be in it --
+    and the contract has to say what it is."""
+    book = ledger.Ledger(tmp_path)
+    book.add_run(*_run("2026-08-24"))
+
+    published = book.dashboard()
+
+    assert "evidence" in published
+    assert published["evidence"]["min_setups"] == ledger.MIN_SETUPS_FOR_A_RATE
+    assert any("evidence" in invariant for invariant in published["_contract"]["invariants"])
+
+
+def test_a_ledger_marked_as_a_fixture_is_never_adopted_as_the_record(tmp_path):
+    """tests/fixtures/history/ledger.json is thirty INVENTED sessions written
+    by this very class, so it loads perfectly. Dropped into docs/ -- by a hand
+    copy, a bad merge, someone seeding a local page -- the next real run would
+    adopt its outcomes as its own history, rewrite it without the marker, and
+    every mean and streak published afterwards would rest on invented data that
+    no longer said it was invented. Nothing else in the pipeline would notice.
+
+    Read from the committed fixture rather than a hand-written stand-in: what
+    has to be refused is the real file, and a stand-in could drift from it.
+    """
+    real_fixture = (ledger.Path(__file__).resolve().parent
+                    / "fixtures" / "history" / "ledger.json")
+    (tmp_path / ledger.LEDGER_NAME).write_text(real_fixture.read_text())
+
+    book = ledger.Ledger(tmp_path).load()
+
+    assert book.runs == [], "thirty invented sessions were adopted as the record"
+    assert "fixture" in (book.load_error or "")
+    assert len(ledger.quarantined(tmp_path)) == 1, "the file was kept, not overwritten"
+
+
+def test_the_history_fixture_pins_the_model_it_writes(monkeypatch):
+    """src.scorer reads CLAUDE_MODEL at IMPORT time and the pipeline copies that
+    name into every run, so regenerating tools/make_history.py with the variable
+    set produced a different fixture -- and failed tools/check_fixture_fresh.py
+    for the developer who had it set, on a file nobody had touched. Verified by
+    regenerating with CLAUDE_MODEL=claude-opus-4-5: run.model changed.
+
+    Patched rather than set in the environment, because an env var set at
+    generation time arrives after the import that read it.
+    """
+    import tools.make_history as make_history
+    from src import pipeline, scorer
+
+    monkeypatch.setattr(scorer, "MODEL", "claude-somebody-elses-model")
+    monkeypatch.setattr(pipeline, "DEFAULT_MODEL", "claude-somebody-elses-model")
+
+    with make_history._patched(make_history.DatedAlpaca()):
+        assert scorer.MODEL == make_history.MODEL
+        assert pipeline.DEFAULT_MODEL == make_history.MODEL
+
+    assert scorer.MODEL == "claude-somebody-elses-model", "the patch leaked out"
+    assert pipeline.DEFAULT_MODEL == "claude-somebody-elses-model"
+
+
+def test_the_committed_history_fixture_carries_that_pinned_model():
+    """The other half: the file on disk really was generated with the pin."""
+    import json as _json
+
+    import tools.make_history as make_history
+
+    data = _json.loads((ledger.Path(__file__).resolve().parent
+                        / "fixtures" / "history" / "data.json").read_text())
+
+    assert data["run"]["model"] == make_history.MODEL

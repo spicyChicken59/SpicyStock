@@ -165,6 +165,7 @@ CONTRACT_INVARIANTS = [
     "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
     "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was ('lynch_gate' rejected by the checklist, 'score_cap' passed but out of calls). Null exactly with last_seen. A gate rejection is never published as an absence of judgement.",
     "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
+    "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
     "Numbers are numbers or null. No 'n/a' strings.",
 ]
 
@@ -306,7 +307,7 @@ def appearance_index(runs: list[dict]) -> dict[str, list[dict]]:
     scored then" over a name the pipeline had looked at and thrown out at the
     quality gate — an absence of judgement standing in for a rejection — and
     said exactly the same words over one that passed every check and lost its
-    place to twenty-five better names. `_slim` keeps that reason; this is
+    place to twenty-five better names. `slim_row` keeps that reason; this is
     where it stops being discarded on the way to the streak.
 
     Keyed by session inside a ticker so that a session scanned twice (a run
@@ -624,6 +625,27 @@ def streak(history: list[dict], session, *, record: Record = EMPTY_RECORD) -> di
     return block
 
 
+def streak_day(block) -> int | None:
+    """A streak's `day` as a number, or None for anything that is not one.
+
+    Two callers compare `day > 1`, in src.emailer and src.pipeline, and both
+    read it off a docs/data.json row on the morning run. snapshot_problem()
+    checks that row's SHAPE and deliberately not its content, so a block
+    carrying `"day": "3"` reaches them well-formed -- and `"3" > 1` is a
+    TypeError, raised in the emailer after the band and the title were built
+    and before anything was sent. The rule that a day is a number or it is
+    nothing is written here once, because it used to be written as
+    `(... or 0) > 1` in three places, each guarding None and nothing else.
+
+    bool is excluded on purpose: `True > 1` is False and `True + 1` is 2, and
+    a day of `true` is not day 1 of anything.
+    """
+    day = block.get("day") if isinstance(block, dict) else None
+    if isinstance(day, bool) or not isinstance(day, (int, float)):
+        return None
+    return day
+
+
 def streaks(runs: list[dict], tickers, session,
             *, unreadable: str | None = None) -> dict[str, dict]:
     """One streak block per ticker, against the history in `runs`.
@@ -783,8 +805,16 @@ def empty_returns() -> dict:
     return out
 
 
-def _slim(row: dict, lynch_result: dict | None = None, *, scored: bool) -> dict:
-    """A dashboard row reduced to what a backtest needs, and no more."""
+def slim_row(row: dict, lynch_result: dict | None = None, *, scored: bool) -> dict:
+    """A dashboard row reduced to what a backtest needs, and no more.
+
+    Public because tools/make_fixture.py needs it too: that generator
+    hand-authors a dashboard document and then has to produce the LEDGER
+    shape of the same rows to compute its evidence block. Writing that
+    conversion a second time in the tool is how the fixture and the pipeline
+    end up describing different runs, which this project has already shipped
+    once in a checklist and once in a contract.
+    """
     flags = (check_flags(lynch_result) if lynch_result is not None
              else {d["code"]: d["pass"] for d in row.get("lynch_detail", [])})
     slim = {
@@ -872,6 +902,19 @@ def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
     `leads` comes from setup_leads() over the WHOLE ledger, not this run:
     whether a row starts a setup is a question about the sessions around it,
     and a run cannot answer it about itself.
+
+    THE SUM IS math.fsum, NOT sum(), AND THAT IS NOT A STYLE CHOICE. CPython
+    3.12 changed the builtin `sum()` to compensated (Neumaier) summation for
+    floats, so the SAME ledger read by two interpreters published two
+    different numbers: sum([9.93, 6.9, 2.86, 2.41]) is 22.099999999999998 on
+    3.11 and 22.1 on 3.12, and the mean either side of that lands on opposite
+    sides of round(x, 2) -- 5.52 against 5.53. Found by regenerating this
+    project's own history fixture under 3.12, which is what CI runs, against a
+    copy generated under 3.11, which is what the sandbox runs; two of 1788
+    numbers differed and both were run-level means. A cent, and cosmetic --
+    but it is the number a reader judges the screener by, and "which Python
+    built the file" is not one of its inputs. fsum is correctly rounded, is
+    fixed across versions, and does not depend on the order of the rows.
     """
     counted = [row for row in rows if (row.get("ticker"), row.get("date")) in leads]
     out: dict = {}
@@ -879,10 +922,306 @@ def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
         key = f"d{horizon}"
         values = [row["forward_returns"][key] for row in counted
                   if row.get("forward_returns", {}).get(key) is not None]
-        out[key] = round(sum(values) / len(values), 2) if values else None
+        out[key] = round(math.fsum(values) / len(values), 2) if values else None
     out["n"] = sum(1 for row in counted if _measured(row))
     out["rows"] = sum(1 for row in rows if _measured(row))
     return out
+
+
+# ------------------------------------------------------------- evidence --
+# Step 11. The ledger has been written since step 9 and read for streaks since
+# step 10, and NONE of what it holds has ever reached the page: docs/index.html
+# fetched data.json and rendered one night, so the question the whole project
+# exists to answer -- does a higher score earn a higher forward return -- was
+# unanswerable from the only public surface there is.
+#
+# WHY THIS IS COMPUTED HERE AND NOT IN THE BROWSER. Every number below is an
+# average over SETUPS rather than rows, which is mean_returns()' rule and the
+# reason setup_leads() exists: a name that bursts on five consecutive sessions
+# is one move measured five times, and counting each row weights that one move
+# five times against a name that burst once. That rule is a definition, it
+# lives in this module, and a second copy of it in JavaScript is precisely the
+# defect this project has already shipped twice -- a checklist whose two copies
+# disagreed, and a fixture promising a contract the pipeline did not write. The
+# page renders these numbers; it does not recompute them.
+#
+# The cost of that choice, named: the page can only ask the questions this
+# function answered when the run was written. A reader who wants a cut nobody
+# anticipated has to read docs/ledger.json, which is published beside it.
+
+#: How many setups a bucket needs before its mean is printed AS A RATE rather
+#: than as a handful of observations.
+#:
+#: NOT calibrated from this project's own numbers, which would be circular, and
+#: not from the synthetic fixture, whose dispersion is invented. It comes from
+#: the claim being tested: Bonde says a burst runs 8-20% over three to five
+#: sessions, so the difference that matters is the ~8 points between "nothing
+#: happened" and the bottom of that band. At n=30 the 95% interval around a
+#: mean is about +/- 0.36 of a standard deviation, so for any dispersion this
+#: strategy plausibly has, the interval is comfortably narrower than the gap the
+#: claim is about. Below 30 it is not, and the honest rendering is the rows and
+#: the count rather than a percentage that reads like a finding.
+#:
+#: A floor on ARITHMETIC, not a claim of significance. Thirty overlapping
+#: momentum bursts in one market regime are not thirty independent draws, and
+#: nothing here corrects for that. The page says so where it prints the number.
+MIN_SETUPS_FOR_A_RATE = 30
+
+#: The band Bonde claims a burst runs over three to five sessions. Carried into
+#: the published block so the page can show whether a bucket's outcomes land in
+#: it rather than only whether they are positive -- "+2% at d5" and "in the
+#: band the strategy promises" are different verdicts and the second is the one
+#: the strategy makes.
+CLAIMED_BAND = (8.0, 20.0)
+
+
+def outcome_summary(rows: list[dict]) -> list[dict]:
+    """One entry per horizon: mean, n, best, worst, and how many hit the band.
+
+    A LIST keyed by `horizon`, not an object keyed "d1"/"d3"/"d5", and that is
+    not a style choice. Those three names already mean "a number, the return"
+    everywhere else in docs/data.json -- on every candidate's forward_returns
+    and on every run's mean -- so reusing them for an OBJECT would put one key
+    name over two shapes in one document. The suite's own contract walker
+    caught it: it checks every value under a numeric key and reported 18
+    violations of "numbers are numbers or null" against a block that was
+    perfectly well-formed and badly named.
+
+    `n` is per HORIZON, never per row: a burst three sessions old has a d1 and
+    a d3 and no d5, and averaging d5 over the rows that have one while
+    reporting the row count would attach a d1-sized sample to a d5-sized
+    answer. Every mean on the page carries the n of its own horizon.
+
+    fsum for the same reason mean_returns uses it -- see there.
+    """
+    out = []
+    for horizon in HORIZONS:
+        key = f"d{horizon}"
+        values = [row["forward_returns"][key] for row in rows
+                  if isinstance(row.get("forward_returns"), dict)
+                  and isinstance(row["forward_returns"].get(key), (int, float))
+                  and not isinstance(row["forward_returns"].get(key), bool)]
+        out.append({
+            "horizon": horizon,
+            "mean": round(math.fsum(values) / len(values), 2) if values else None,
+            "n": len(values),
+            "best": max(values) if values else None,
+            "worst": min(values) if values else None,
+            "in_band": sum(1 for v in values
+                           if CLAIMED_BAND[0] <= v <= CLAIMED_BAND[1]),
+        })
+    return out
+
+
+def at_horizon(outcomes: list[dict], horizon: int) -> dict:
+    """The entry for one horizon, or an empty one. Public: the page needs it
+    and so does every caller here."""
+    for entry in outcomes or []:
+        if entry.get("horizon") == horizon:
+            return entry
+    return {"horizon": horizon, "mean": None, "n": 0, "best": None, "worst": None, "in_band": 0}
+
+
+def _enough(outcomes: list[dict]) -> bool:
+    """Has the longest horizon enough setups behind it to read as a rate?
+
+    d5 decides, not d1: d5 and d3 ARE this strategy's profit and loss, because
+    the trade is held three to five sessions and exited. d1 is an early read
+    and always has the largest n, so keying on it would license a rate for a
+    horizon nobody has measured yet.
+    """
+    return at_horizon(outcomes, max(HORIZONS))["n"] >= MIN_SETUPS_FOR_A_RATE
+
+
+def _leading_rows(runs: list[dict], leads: set, *, gated: bool) -> list[dict]:
+    """Every row that STARTS a setup, so nothing is counted twice."""
+    kinds = ("candidates", "gated") if gated else ("candidates",)
+    return [row for run in runs for kind in kinds
+            for row in (run.get(kind) or [])
+            if isinstance(row, dict) and (row.get("ticker"), row.get("date")) in leads]
+
+
+def _score_buckets() -> list[tuple[float, float, str]]:
+    """The rubric's own bands, not a second set of numbers.
+
+    knowledge/strategy.md defines the verdicts and src.scorer holds them as
+    VERDICT_BANDS; a bucketing invented here would be a third opinion about
+    what a 7 means. Read from the bottom up so `skip` gets its own bucket.
+    """
+    from .scorer import VERDICT_BANDS
+
+    edges = sorted(floor for floor, _verdict in VERDICT_BANDS)
+    names = {floor: verdict for floor, verdict in VERDICT_BANDS}
+    out = [(0.0, edges[0], "skip")]
+    for i, floor in enumerate(edges):
+        top = edges[i + 1] if i + 1 < len(edges) else 10.01
+        out.append((floor, top, names[floor]))
+    return out
+
+
+def evidence(runs: list[dict]) -> dict:
+    """The five questions the page exists to answer, computed over the record.
+
+    Every block carries the n its mean was taken over and whether that n
+    clears MIN_SETUPS_FOR_A_RATE, so the page never has to decide for itself
+    whether a number is worth printing as a rate -- and cannot decide
+    differently from the email or from a later reader of the same file.
+    """
+    leads = setup_leads(runs)
+    scored = _leading_rows(runs, leads, gated=False)
+    every = _leading_rows(runs, leads, gated=True)
+    sessions = session_dates(runs)
+
+    by_score = []
+    for low, high, verdict in _score_buckets():
+        rows = [r for r in scored
+                if isinstance(r.get("score"), (int, float))
+                and not isinstance(r.get("score"), bool)
+                and low <= r["score"] < high]
+        summary = outcome_summary(rows)
+        by_score.append({"low": low, "high": round(min(high, 10.0), 2),
+                         "verdict": verdict, "setups": len(rows),
+                         "enough": _enough(summary), "outcomes": summary})
+
+    # Which checks predict anything, over every burst the scan found -- scored
+    # AND gated. A rate over the survivors alone is survivorship bias with a
+    # percentage sign: the names a check rejected are exactly the ones missing.
+    codes: list[str] = []
+    for row in every:
+        for code in (row.get("checks") or {}):
+            if code not in codes:
+                codes.append(code)
+    by_check = []
+    for code in codes:
+        passed = [r for r in every if (r.get("checks") or {}).get(code) is True]
+        failed = [r for r in every if (r.get("checks") or {}).get(code) is False]
+        won, lost = outcome_summary(passed), outcome_summary(failed)
+        longest = max(HORIZONS)
+        win_mean = at_horizon(won, longest)["mean"]
+        lose_mean = at_horizon(lost, longest)["mean"]
+        separation = (None if win_mean is None or lose_mean is None
+                      else round(win_mean - lose_mean, 2))
+        by_check.append({
+            "code": code,
+            "passed": {"setups": len(passed), "outcomes": won},
+            "failed": {"setups": len(failed), "outcomes": lost},
+            "separation": separation,
+            "enough": _enough(won) and _enough(lost),
+        })
+
+    # DOES A STREAK PAY -- and this one counts APPEARANCES, not setups, which
+    # is the opposite of every block above and has to be. A setup's leading row
+    # is day 1 by construction (setup_leads picks the first appearance), so
+    # bucketing leads by day number answers nothing: every bucket but day 1
+    # would be empty. The question is precisely about the LATER appearances --
+    # is day 3 of a setup worth more than day 1 -- so each appearance is one
+    # observation here.
+    #
+    # The cost is the double-count mean_returns exists to avoid: a name that
+    # bursts five sessions running contributes five overlapping windows to
+    # these buckets. That is unavoidable for this question, so it is disclosed
+    # on the page rather than hidden, and it is why this block is the only one
+    # that says "appearances".
+    index = appearance_index(runs)
+    record = Record.of(runs)
+    day_of: dict[tuple, int | None] = {}
+    for ticker, appearances in index.items():
+        for row in appearances:
+            block = streak(appearances, row["date"], record=record)
+            day_of[(ticker, iso_date(row["date"]))] = streak_day(block)
+    by_number: dict = {}
+    for run in runs:
+        for row in run.get("candidates") or []:
+            if not isinstance(row, dict):
+                continue
+            by_number.setdefault(day_of.get((row.get("ticker"), row.get("date"))), []).append(row)
+    by_day = []
+    for day in sorted(by_number, key=lambda d: (d is None, d)):
+        summary = outcome_summary(by_number[day])
+        by_day.append({"day": day, "appearances": len(by_number[day]),
+                       "enough": _enough(summary), "outcomes": summary})
+
+    # Is it getting better or worse? By calendar month, which is the coarsest
+    # bucket a year of runs gives more than a handful of, and the one a reader
+    # already thinks in.
+    months: dict = {}
+    for row in scored:
+        if isinstance(row.get("date"), str) and len(row["date"]) >= 7:
+            months.setdefault(row["date"][:7], []).append(row)
+    by_month = []
+    for month in sorted(months):
+        summary = outcome_summary(months[month])
+        by_month.append({"month": month, "setups": len(months[month]),
+                         "enough": _enough(summary), "outcomes": summary})
+
+    # What happened the last times THIS ticker burst. One row per name, so the
+    # page can answer it without the reader fetching the whole record -- and
+    # bounded by the universe, not by the number of runs.
+    per_ticker: dict = {}
+    appearances_of: dict = {}
+    for run in runs:
+        for kind in ("candidates", "gated"):
+            for row in run.get(kind) or []:
+                if isinstance(row, dict) and isinstance(row.get("ticker"), str):
+                    appearances_of.setdefault(row["ticker"], []).append(row)
+    for row in every:
+        per_ticker.setdefault(row["ticker"], []).append(row)
+    by_ticker = []
+    for ticker in sorted(per_ticker):
+        seen = appearances_of.get(ticker, [])
+        scores = [r["score"] for r in per_ticker[ticker]
+                  if isinstance(r.get("score"), (int, float)) and not isinstance(r.get("score"), bool)]
+        by_ticker.append({
+            "ticker": ticker,
+            "setups": len(per_ticker[ticker]),
+            "appearances": len(seen),
+            "last_seen": max((r["date"] for r in seen if isinstance(r.get("date"), str)),
+                             default=None),
+            "best_score": max(scores) if scores else None,
+            "outcomes": outcome_summary(per_ticker[ticker]),
+        })
+
+    shortlisted = [r for r in scored if isinstance(r.get("rank"), int) and r["rank"] <= _shortlist_size(runs)]
+    others = [r for r in scored if isinstance(r.get("rank"), int) and r["rank"] > _shortlist_size(runs)]
+    return {
+        "min_setups": MIN_SETUPS_FOR_A_RATE,
+        "band": {"low": CLAIMED_BAND[0], "high": CLAIMED_BAND[1]},
+        "horizons": list(HORIZONS),
+        "record": {
+            "runs": len(runs),
+            "sessions": len(sessions),
+            "from": iso_date(sessions[0]) if sessions else None,
+            "to": iso_date(sessions[-1]) if sessions else None,
+            "setups": len(every),
+            "scored_setups": len(scored),
+            "rows": sum(len(run.get("candidates") or []) + len(run.get("gated") or [])
+                        for run in runs if isinstance(run, dict)),
+        },
+        "overall": {"setups": len(scored), "outcomes": outcome_summary(scored)},
+        "by_score": by_score,
+        "by_check": by_check,
+        "by_day": by_day,
+        "by_month": by_month,
+        "by_ticker": by_ticker,
+        "shortlist": {"setups": len(shortlisted), "outcomes": outcome_summary(shortlisted)},
+        "rest": {"setups": len(others), "outcomes": outcome_summary(others)},
+    }
+
+
+def _shortlist_size(runs: list[dict]) -> int:
+    """How many names the runs in this record actually emailed.
+
+    Read off the record rather than imported from src.pipeline's TOP_N,
+    because the record spans runs and TOP_N is today's value: a ledger written
+    before it changed would otherwise be split at a boundary those runs never
+    used. The newest run that states one wins; 0 means no run said, and then
+    nothing is called a shortlist.
+    """
+    for run in runs:
+        size = run.get("shortlist_size") if isinstance(run, dict) else None
+        if isinstance(size, int) and not isinstance(size, bool) and size > 0:
+            return size
+    return 0
 
 
 # -------------------------------------------------------------- the file --
@@ -918,6 +1257,23 @@ def _malformed_rows(runs: list[dict]) -> str | None:
             if any(not isinstance(row, dict) for row in rows):
                 return (f"holds a run for {run.get('date')!r} with {key} rows that "
                         "are not ledger rows")
+            # AND THE ONE OBJECT INSIDE A ROW THAT IS INDEXED INTO. A row's
+            # forward_returns is written as an object by slim_row() every time,
+            # and read as one by _fillable(), _measured() and mean_returns()
+            # -- the last of which runs inside add_run(), which publish()
+            # calls after the scan and every Claude call have been paid for.
+            # A row carrying `"forward_returns": "x"` (or null: the `or {}`
+            # guards elsewhere do not cover a key that is present and null)
+            # loaded clean, computed every streak, and then took the evening
+            # run down in _recompute_means() before write() -- the night's
+            # scores gone from the record, the file still holding the row
+            # that did it. Reproduced against a one-row ledger. Shape, not
+            # content: the value inside the object is still whatever it is.
+            for row in rows:
+                if "forward_returns" in row and not isinstance(row["forward_returns"], dict):
+                    return (f"holds a run for {run.get('date')!r} with a {key} row "
+                            f"({row.get('ticker')!r}) whose forward_returns is a JSON "
+                            f"{type(row['forward_returns']).__name__} rather than an object")
     return None
 
 
@@ -984,6 +1340,19 @@ class Ledger:
                       self.path, type(raw).__name__)
             return self.set_aside(
                 f"{self.path} holds a JSON {type(raw).__name__}, not a ledger object")
+        if raw.get("fixture"):
+            # A FIXTURE IS NOT A RECORD -- the same rule read_snapshot() applies
+            # to docs/data.json, one file over. tests/fixtures/history/ledger.json
+            # is thirty invented sessions written by the real Ledger, so it loads
+            # perfectly: drop it into docs/ and the next run adopts its outcomes
+            # as its own, rewrites it WITHOUT the marker, and every mean and
+            # streak the page publishes from then on is built on invented data
+            # that no longer says it is invented. Nothing else would ever notice.
+            log.error("Ledger %s is a fixture (fixture is true), not a record — "
+                      "moving it aside rather than accumulating into it", self.path)
+            return self.set_aside(
+                f"{self.path} is a fixture (fixture is true), not a run history; its "
+                "outcomes are invented and must never be adopted as this record")
         if raw.get("schema_version") != SCHEMA_VERSION:
             log.error("Ledger %s is schema_version %r, not %d — moving it aside "
                       "rather than merging into it",
@@ -1153,8 +1522,8 @@ class Ledger:
             "model": run.get("model"),
             "status": run.get("status", "ok"),
             "dry_run": bool(run.get("dry_run")),
-            "candidates": [_slim(c, scored=True) for c in candidates],
-            "gated": [_slim(g, scored=False) for g in gated],
+            "candidates": [slim_row(c, scored=True) for c in candidates],
+            "gated": [slim_row(g, scored=False) for g in gated],
         }
         self.runs = [r for r in self.runs
                      if (r.get("date"), r.get("type")) != (entry["date"], entry["type"])]
@@ -1285,6 +1654,12 @@ class Ledger:
             "gated_out": self.latest["gated_out"],
             "runs": [{k: v for k, v in run.items()
                       if k not in ("candidates", "gated")} for run in self.runs],
+            # Step 11. The answers to the questions the page exists to ask,
+            # computed here rather than in the browser -- see evidence(). This
+            # is the whole ledger's view, not this run's: `runs` above already
+            # carried a cross-run history of per-run means, so a block spanning
+            # the record is not a new kind of thing in this file.
+            "evidence": evidence(self.runs),
         }
 
     def write(self) -> dict:
@@ -1352,6 +1727,139 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(text + "\n", encoding="utf-8")
 
 
+#: The keys a candidate row must carry for the morning follow-through to be
+#: able to present it.
+#:
+#: NOT every key candidate_record() writes, which is what the first version of
+#: this required. That version made the first morning after ANY schema-additive
+#: deploy refuse a perfectly good snapshot: docs/data.json still holds
+#: YESTERDAY's run, written by yesterday's code, so a key added to the writer
+#: is missing from the file the next morning reads -- exactly once, by
+#: construction, on a run that was fine. The screener would have degraded
+#: itself on every future schema change.
+#:
+#: Determined by EXPERIMENT, not by reading src.emailer. Reading it is what
+#: made the writer's whole key list tempting in the first place: a
+#: hand-maintained list of "what the email indexes" is a second copy of the
+#: emailer, and this project has already shipped two copies of one checklist
+#: that disagreed. tests/test_ledger.py's
+#: test_the_required_keys_are_the_ones_the_run_really_needs drops each key in
+#: turn and runs the real morning path and the real email renderer, so this set
+#: is checked against behaviour on every suite run: a key that becomes
+#: load-bearing later fails the build rather than the 8:30 email.
+SNAPSHOT_ROW_KEYS = frozenset({
+    "ticker", "close", "gain_pct", "volume_ratio", "lynch",
+    "score", "verdict", "reason", "key_risk",
+})
+
+
+def snapshot_problem(data: dict) -> str | None:
+    """What is wrong with the SHAPE of a snapshot's rows, or None if nothing is.
+
+    The fifth instance of one defect class, and the same line _malformed_rows()
+    draws for the ledger: read_snapshot() checked that `candidates` was a list
+    and stopped, so `"candidates": ["AAPL"]` was handed to the morning run as a
+    watchlist and took it down with AttributeError -- exit 1 and a FAILED
+    notice, where the design says exit 2 and "there is nothing to follow
+    through on". Not a data-loss path (the morning run writes nothing; verified
+    by hashing docs/ across every shape below), but the wrong exit code and the
+    wrong email, on the pass whose only job is to say what state the record is
+    in.
+
+    The list of shapes here is what a sweep of 37 malformed snapshots through
+    the real follow-through and the real email renderer crashed on -- twenty of
+    them, in three places: a row that is not an object; an object missing a key
+    the email indexes (`ticker`, `close`, `score`, `verdict`...), or carrying a
+    `ticker` that is not a string (the subject line joins them); and a nested
+    structure of the wrong shape (`lynch_detail` rows that are not objects, a
+    `streak` that is a string, `run.status` or `run.scored_by` that is not what
+    publish() writes). Everything below refuses exactly those, by naming the
+    row and the field, so the morning email can say which.
+
+    SHAPE, NOT CONTENT, as in the ledger: a score of "9" or a date nobody can
+    parse is a row this pass can still hold up and print. The one exception a
+    reader might expect -- a `streak.day` that is not a number -- is content,
+    and src.pipeline guards its single comparison against it instead.
+    """
+    run = data.get("run")
+    for field_name, wanted in (("status", str), ("scored_by", dict), ("errors", list)):
+        value = run.get(field_name)
+        if field_name not in run:
+            # ABSENT IS FINE, NULL IS NOT, and the difference is not pedantry:
+            # follow_through() reads the status as `.get("status", "ok")`, and
+            # a default only applies to a MISSING key. A key present and null
+            # therefore reaches `.upper()` as None and takes the run down --
+            # exit 1 and a FAILED notice where the design says exit 2. The
+            # first version of this check exempted null explicitly and that is
+            # exactly the value that crashes.
+            continue
+        if not isinstance(value, wanted) or isinstance(value, bool):
+            return (f"run.{field_name} is {type(value).__name__}, not the "
+                    f"{wanted.__name__} publish() writes")
+    # One level into scored_by, because the email does ARITHMETIC on these two.
+    # It does not crash on strings: "5" + "1" is "51", so the provenance line
+    # rendered "Scored by Claude: 5 of 51" -- a fabricated count, which is
+    # worse than a crash because nothing anywhere says it is wrong.
+    for name, count in (run.get("scored_by") or {}).items():
+        if count is not None and (isinstance(count, bool) or not isinstance(count, (int, float))):
+            return (f"run.scored_by.{name} is {type(count).__name__}, not a number, "
+                    "and the email adds these together")
+    for position, row in enumerate(data.get("candidates") or [], start=1):
+        if not isinstance(row, dict):
+            return f"candidate row {position} is a JSON {type(row).__name__}, not a row"
+        missing = sorted(SNAPSHOT_ROW_KEYS - set(row))
+        if missing:
+            return (f"candidate row {position} ({row.get('ticker')!r}) is missing "
+                    f"{', '.join(missing)}")
+        if not isinstance(row["ticker"], str):
+            return (f"candidate row {position} has a {type(row['ticker']).__name__} "
+                    "where its ticker should be")
+        # A MISSING KEY AND A WRONG-TYPED ONE ARE DIFFERENT QUESTIONS, and the
+        # two halves of this function answer them differently on purpose.
+        # A key that is absent is what an OLDER version of this pipeline
+        # legitimately wrote, and the morning after a deploy reads exactly
+        # that -- so absence is tolerated unless the run genuinely needs it
+        # (see SNAPSHOT_ROW_KEYS). A key present with the wrong TYPE is not
+        # something any version of the writer produces: it means a hand edit,
+        # a truncation, or another tool, and that document did not come out of
+        # a run. So the checks below refuse it even where the run would have
+        # survived -- three of the four fields here no longer crash anything,
+        # because streak_day() and the guards around them were centralised,
+        # and they are still refused.
+        #
+        # .get() from here down, not [...]: everything below is OPTIONAL now,
+        # and a row legitimately missing one (an older run's snapshot, read the
+        # morning after a deploy) must reach the reader rather than a KeyError
+        # inside the check that exists to prevent one.
+        detail = row.get("lynch_detail")
+        if detail is not None and (not isinstance(detail, list)
+                                   or any(not isinstance(check, dict) for check in detail)):
+            return (f"candidate row {position} ({row['ticker']}) has a lynch_detail "
+                    "that is not a list of checks")
+        for field_name in ("streak", "provenance", "forward_returns", "context"):
+            value = row.get(field_name)
+            if value is not None and not isinstance(value, dict):
+                return (f"candidate row {position} ({row['ticker']}) has a "
+                        f"{type(value).__name__} where its {field_name} object should be")
+        # AND TWO FIELDS INSIDE THE STREAK BLOCK, because the email indexes
+        # into both. `unknown_reason` is a dict KEY there (LAST_OUTCOME-style
+        # lookup), so an unhashable one is a TypeError rather than a miss; and
+        # `seen_before` is compared against 0, which a string or a list cannot
+        # be. The seen_before comparison sits behind a short-circuit that only
+        # opens when `day` is null -- so it needs BOTH, which is why a sweep
+        # that varied one field at a time reported it safe.
+        streak = row.get("streak") or {}
+        reason = streak.get("unknown_reason")
+        if reason is not None and not isinstance(reason, str):
+            return (f"candidate row {position} ({row['ticker']}) has a "
+                    f"{type(reason).__name__} where its streak.unknown_reason should be")
+        seen = streak.get("seen_before")
+        if seen is not None and (isinstance(seen, bool) or not isinstance(seen, (int, float))):
+            return (f"candidate row {position} ({row['ticker']}) has a "
+                    f"{type(seen).__name__} where its streak.seen_before count should be")
+    return None
+
+
 def read_snapshot(docs_dir: Path | str = DOCS_DIR) -> tuple[dict | None, str | None]:
     """The last run's docs/data.json, or (None, why not). Never raises.
 
@@ -1390,4 +1898,8 @@ def read_snapshot(docs_dir: Path | str = DOCS_DIR) -> tuple[dict | None, str | N
     if run.get("fixture"):
         return None, (f"{path} is the hand-authored fixture (run.fixture is true), not a "
                       "run — its rows are invented and must never be mailed as a watchlist")
+    problem = snapshot_problem(data)
+    if problem:
+        return None, (f"{path} did not come out of a run as it stands: {problem}. Its rows "
+                      "cannot be re-presented as a watchlist")
     return data, None

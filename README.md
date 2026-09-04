@@ -197,17 +197,18 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 580 tests, no network or API keys needed
+pytest tests/                   # 676 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
 email — rewrites `docs/data.json`, updates `docs/ledger.json` and writes PNGs
-into `docs/charts/`. A four-ticker smoke test therefore replaces the committed
-fixture with a four-ticker run. `git checkout docs/data.json` puts it back;
-`tools/check_fixture_fresh.py` tells you whether it needs putting back. A
-**morning** run writes nothing at all, so it cannot disturb the fixture — but
-it will refuse to read it, which is what you will see if you run one before an
-evening run has published anything.
+into `docs/charts/`. A four-ticker smoke test therefore replaces whatever
+`docs/data.json` held with a four-ticker run — the hand-authored fixture on a
+fresh clone, last night's real run once `evening.yml` has committed one back.
+`git checkout docs/data.json` puts it back either way. A **morning** run writes
+nothing at all, so it cannot disturb that file — but it will refuse to read the
+fixture, which is what you will see if you run one before an evening run has
+published anything.
 
 ## The dashboard
 
@@ -221,11 +222,17 @@ from a checkout that has just run the pipeline and the same slots fill in. A
 chart is ~57 KB and a night renders up to 25 of them: committing them is about
 360 MB a year of history that does not delta-compress and cannot be taken back
 out, and one file per ticker with no session in it cannot prove which run drew
-it anyway. The copy committed here is still the hand-authored fixture from
-`tools/make_fixture.py`, and it says so in its own `run.fixture: true`, which is
-what raises the "sample data" banner at the top of the page; a real run writes
-`false` and the banner disappears. The first run whose output is committed
-replaces it.
+it anyway. `docs/data.json` is whatever the last run wrote. On a fresh clone
+that is the hand-authored fixture — a byte-for-byte copy of
+`tests/fixtures/data.json`, which `tools/make_fixture.py` generates — and it
+says so in its own `run.fixture: true`, which is what raises the "sample data"
+banner at the top of the page. The first evening run `evening.yml` commits back
+replaces it with a real run, `run.fixture` goes `false`, and the banner
+disappears; nothing in CI expects the file to stay a fixture, because a guard
+that has to be defeated to ship is worse than none. The canonical fixture stays
+at `tests/fixtures/data.json`, where `tools/check_fixture_fresh.py` guards it
+against its generator — and, for as long as `docs/data.json` still claims to be
+the fixture, guards that copy against the canonical one.
 
 It shows the run's funnel (universe → bursts → 2LYNCH gate → scored → shortlist),
 **every candidate the run scored** rather than the five that went out by email, each
@@ -236,6 +243,77 @@ Claude produced it or the offline checklist fallback did. A fallback score can n
 longer outrank a real one: `score_all` sorts on provenance before score, so every
 Claude score ranks above every fallback whatever the numbers say. It is labelled
 everywhere it appears and called out at the top of the page.
+
+### What the page answers, and what it refuses to answer
+
+Until step 11 this page rendered one night. `docs/ledger.json` had been
+accumulating every scored and gated candidate since step 9, and none of it
+reached the only public surface this project has — so the question the whole
+thing exists for, *does a higher score earn a higher forward return*, could not
+be asked here at all.
+
+It leads the page now, above the funnel, with four more views under it:
+
+| the question | where | counted over |
+|---|---|---|
+| Does a higher score earn a higher return? | `evidence.by_score`, banded by the rubric's own verdicts | setups |
+| Which 2LYNCH check predicts anything? | `evidence.by_check`, passed against failed | setups, every burst the scan found |
+| Does a streak pay — is day 3 worth more than day 1? | `evidence.by_day` | **appearances** |
+| Is it getting better or worse? | `evidence.by_month` | setups |
+| What happened the last times this name burst? | `evidence.by_ticker`, plus `docs/ledger.json` on request | setups |
+
+Alongside those five, the block carries what a reader needs to interpret them:
+`evidence.record` (how many runs, sessions and setups are behind everything
+here), `evidence.overall` (the same measurement over every scored setup),
+`evidence.shortlist` and `evidence.rest` (the names that went out by email
+against the ones that did not), `evidence.horizons` (which sessions after the
+burst were measured) and `evidence.band` (the range the strategy claims).
+
+**`+3d` and `+5d` are the horizons that matter, and the page says so on every
+number.** They are what this strategy trades — the burst is entered on day 1,
+held three to five sessions and exited — so `+1d` is an early read and never
+the result. Every mean carries the `n` of *its own* horizon, because a burst
+three sessions old has a `+3d` and no `+5d`, and one row count beside all three
+would attach a `+1d`-sized sample to a `+5d`-sized answer.
+
+**Below `evidence.min_setups` setups the page refuses the rate.** The number is
+still printed — hiding it would be its own dishonesty — but it is marked *not
+enough data*, and the sentence a reader takes away leans only on bands that
+clear the floor. Thirty is not calibrated from this project's own numbers,
+which would be circular: it comes from the claim being tested. Bonde says a
+burst runs 8–20% over three to five sessions, so the difference that matters is
+the ~8 points between "nothing happened" and the bottom of that band, and at
+n=30 the interval around a mean is comfortably narrower than that gap for any
+dispersion this strategy plausibly has. It is a floor on *arithmetic*, not a
+claim of significance — thirty overlapping momentum bursts in one market regime
+are not thirty independent draws, and the page says so where it prints the
+number.
+
+**One view counts appearances rather than setups, and has to.** Everything else
+is per setup, which is `mean_returns()`'s rule: a name that bursts on five
+consecutive sessions is one move measured five times. But a setup's *leading*
+row is day 1 by construction, so grouping setups by day number would put every
+row in one bucket and answer nothing. "Does a streak pay" therefore counts each
+appearance, its windows overlap, and the page discloses that rather than hiding
+it.
+
+**Why the aggregation is Python and not JavaScript.** Every number above is an
+average over setups, and that rule is a definition that lives in
+`src/ledger.py`. A second implementation of it in the browser is precisely the
+defect this project has already shipped twice — a checklist whose two copies
+disagreed, and a fixture promising a contract the pipeline did not write. So
+`evidence()` computes it at write time and `docs/index.html` renders it. The
+cost, named: the page can only ask what the run answered. A reader who wants a
+cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
+
+**The page fetches that file only when asked.** `docs/data.json` carries the
+summary; the per-name detail — every session a ticker burst on, with the score
+and what followed — needs the whole record, which projects to about 8.8 MB raw
+and **0.59 MB gzipped** after a full year (measured, at ~47 rows a run over 260
+runs). That is not a thing to spend on every visit for a view most readers
+never open, so the "load every burst of every name" button is the only second
+request this page makes. A 404 there is the normal state until `evening.yml`
+has committed a run back, and it is reported as a fact about the file.
 
 ### The data contract
 
@@ -287,6 +365,12 @@ invariants live in the file rather than only here. The load-bearing ones:
   streak line and as `src/emailer.py`'s `LAST_OUTCOME`, because it used to say
   "passed, over the call cap" beside a line on the same page naming a "scoring
   cap" — two names for one mechanism, neither explained anywhere.
+- `evidence` is the whole **record's** view rather than this run's: every block
+  in it is computed over `docs/ledger.json` by `src/ledger.py`'s `evidence()`.
+  Every mean is over setups except `evidence.by_day`, which counts appearances
+  and says so. Every mean carries the `n` of its own horizon, and `enough` is
+  that `n` against `evidence.min_setups` — a page must not decide for itself
+  whether a number may be read as a rate.
 - Numbers are numbers or `null` — never `0` for "unknown", never the string `"n/a"`.
   `src.ledger` writes every number through one coercion and dumps with
   `allow_nan=False`, because `json.dump` writes a NaN as a bare token no browser
@@ -300,12 +384,13 @@ reviewed candidate. Within each group it is score order. The wording in the
 `_contract` block has been left alone rather than regenerated under a builder
 who cannot see the page render.
 
-Regenerate the committed fixture with `python3 tools/make_fixture.py docs/data.json`.
+Regenerate the fixture with `python3 tools/make_fixture.py tests/fixtures/data.json`,
+and copy it over `docs/data.json` only while that file is still the fixture.
 The generator reads `data/symbols.txt`, `ScanConfig` and — since step 9 — the
 invariant list itself from `src/ledger.py`, so it cannot emit a run this scanner
 could not produce, nor promise a contract different from the one the pipeline
 writes; `tools/check_fixture_fresh.py` regenerates it and fails the build if the
-committed file has drifted. The chart PNGs the fixture names do not exist, so the
+canonical file has drifted. The chart PNGs the fixture names do not exist, so the
 page degrades to an explained empty frame — and that is the expected state for
 the published page whether the file is a fixture or a real run, because the PNGs
 are not committed. A real run writes them next to the file that names them, for
@@ -420,32 +505,60 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**It is pinned to the fixture.** It runs 91 checks against the committed
-`docs/data.json`. Run against a real six-session run instead, it drops about a
-dozen of them with no page errors — the page renders pipeline output fine —
-because those are assertions about the fixture's particular contents (25 scored
-and 5 shown, chart paths that 404, a non-empty gated list, a fallback row), and
-two of them *throw* on a first-ever run rather than failing: a history with no
-forward returns yet reaches `money(null)`, and a run where Claude scored
-everything has no `.sc-chip--warn` to measure. Whoever commits a real run over
-the fixture has to reckon with that first; it is a change to
-`tools/dashboard_smoke.mjs`, which step 9 deliberately did not touch.
+**Three data sources, one page.** It runs 124 checks, and which file each one
+reads is the point:
 
-**It does check the streak line**, on the states this fixture carries: that a
-shortlisted pick states its streak whatever the streak is, that a null `day`
-reports the record it is unknown *over* rather than the word "unknown", that it
-never renders as day 1, that a scored last appearance keeps its verdict, and
-that a repeat says which *setup* it is day N of. Those five are the wordings the
-email and the page had drifted apart on, so they are asserted here rather than
-watched in a browser once. The gated table's "why" cell is asserted the same
-way, against the sentence `src/emailer.py` prints for that outcome — scoped to
-the cell, because a row's streak line says what happened to the name *last*
-time in those same words, and a row-level match counts the wrong thing.
+- **`tests/fixtures/data.json`** — the canonical one-night fixture, served
+  under `/f/fixture/`. Most of the checks live here, because they know the
+  fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
+  score, chart paths that 404, a non-empty gated list, every streak state a
+  reader has to tell apart. Six mutated copies of it are served under
+  `/v/<name>/` for the states one night cannot hold at once.
+- **`tests/fixtures/history/`** — thirty consecutive runs written by the real
+  pipeline (`tools/make_history.py`, see `tests/fixtures/README.md`): forward
+  returns filled in by later runs, a night the scorer was down, a chart that
+  would not render, repeats on consecutive sessions, the last week still
+  pending. Every expectation is computed from the file the page is reading.
+- **`docs/`** — whatever the last run wrote, exactly as GitHub Pages serves it,
+  opened last with only the checks that hold for any run: it opens, its rows
+  add up to its own funnel, it says whether it is sample data, and it logs no
+  error. The fixture until the first commit-back, a real run after it — and
+  the script no longer has an opinion about which.
 
-What is still not checked is any streak state this fixture does not hold —
-`history_unreadable`, `history_undated`, an empty record, a row with no `streak`
-field at all. Those are covered on the email side in `tests/test_emailer.py` and
-in `src/ledger.py`'s own tests; on the page they were read back from the DOM
+The record-wide views are checked on both fixtures, which hold opposite
+states: the one-night fixture's evidence block is entirely pending, so the page
+must say the view is *correct and empty* rather than draw a flat line at zero;
+the thirty-run one is populated, so the bands, the refusals, the two-colour
+legend and the lazy record fetch all have something to assert against. A third
+variant, `/v/noevidence/`, serves a snapshot with the block removed — a file
+written before the pipeline published one — and the page has to say which kind
+of nothing that is instead of hiding the question.
+
+That split is what closed the note this section used to carry: the script was
+pinned to the fixture's contents *and* read `docs/data.json`, so the first real
+run committed back would have failed a dozen checks and thrown in two
+(`money(null)` on a history with no closed session; a light-mode contrast
+measurement on a fallback chip a fully-scored run does not have). Both are
+null-safe now, and neither runs against `docs/` at all.
+
+**It does check the streak line**, on the states the one-night fixture carries:
+that a shortlisted pick states its streak whatever the streak is, that a null
+`day` reports the record it is unknown *over* rather than the word "unknown",
+that it never renders as day 1, that a scored last appearance keeps its
+verdict, and that a repeat says which *setup* it is day N of. Those five are the
+wordings the email and the page had drifted apart on, so they are asserted here
+rather than watched in a browser once. The gated table's "why" cell is asserted
+the same way, against the sentence `src/emailer.py` prints for that outcome —
+scoped to the cell, because a row's streak line says what happened to the name
+*last* time in those same words, and a row-level match counts the wrong thing.
+The history pass adds the repeat the ledger really computed — "day 2 of this
+setup" on a name that burst two sessions running — rather than one typed into
+a fixture.
+
+What is still not checked is any streak state neither fixture holds —
+`history_unreadable`, `history_undated`, a row with no `streak` field at all.
+Those are covered on the email side in `tests/test_emailer.py` and in
+`src/ledger.py`'s own tests; on the page they were read back from the DOM
 against a hand-made `data.json` and agree, but that check is not committed.
 
 ## Tuning

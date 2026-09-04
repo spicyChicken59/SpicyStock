@@ -100,6 +100,15 @@
   .seg-kept { fill: var(--sc-chart-emphasis); }
   .seg-lost { fill: var(--sc-chart-context); }
 
+  /* The evidence bars carry their horizon through the tone channel, the way
+     #scores-chart .bar does. NOT .seg-kept: that rule hard-codes
+     --sc-chart-emphasis, so reusing it drew both series in one colour under a
+     legend naming two — a key contradicting the chart it explains, which is
+     the same defect the outcome legend already shipped once. Found by opening
+     the page and looking at it, not by a check. */
+  #evidence-chart .bar { fill: var(--sc-tone, var(--sc-chart-context)); }
+  #evidence-chart .s-drop { font-size: 10.5px; }
+
   /* Horizon tiles: the value is the mean, the delta underneath carries the
      spread between the best and worst session so a single number never reads
      as a settled one. */
@@ -160,6 +169,34 @@
     <div class="sc-callout__figure" id="fallback-figure"></div>
     <p id="fallback-body"></p>
   </div>
+
+  <!-- STEP 11. The question the whole project exists to answer, above
+       everything that merely describes a night. The ledger has been written
+       since step 9 and read for streaks since step 10, and until now none of
+       what it holds reached this page.
+
+       It carries no overall mean, deliberately: "Has any of this made money
+       yet" below already publishes one, and a second computation of one
+       number is how two copies of a rule drift. This card answers the
+       RELATION -- does a higher score earn a higher return -- and the counts
+       behind it. -->
+  <section class="sc-card" id="evidence-card" hidden>
+    <div class="sc-card__head">
+      <div>
+        <h2>Does a higher score earn a higher return?</h2>
+        <p class="sc-hint" id="evidence-hint"></p>
+      </div>
+    </div>
+    <p class="sc-empty" id="evidence-empty" hidden></p>
+    <div id="evidence-body" hidden>
+      <div class="sc-grid sc-grid--3" id="evidence-tiles"></div>
+      <p id="evidence-verdict"></p>
+      <div class="sc-legend" id="evidence-legend"></div>
+      <div class="sc-chart" id="evidence-chart" role="group" tabindex="0"
+           aria-label="Mean forward return at three and five sessions for each score band, with the 8 to 20 percent range the strategy claims marked. The same numbers are in the table below."></div>
+      <div class="sc-table-scroll" id="evidence-scroll"><table class="sc-table sc-table--compact" id="evidence-table"></table></div>
+    </div>
+  </section>
 
   <!-- The funnel. Four disconnected tiles could not show where the attrition
        is; one shared linear scale can, and the loss between two stages is a
@@ -228,6 +265,60 @@
     <div class="sc-chart" id="checks-chart" role="group" tabindex="0"
          aria-label="Pass rate for each of the six 2LYNCH checks across every burst the scan found. The same numbers are in the table below."></div>
     <div class="sc-table-scroll" id="checks-scroll"><table class="sc-table sc-table--compact" id="checks-table"></table></div>
+  </section>
+
+  <!-- Which check predicts anything, ACROSS THE RECORD -- as against the card
+       above, which asks which check is doing the gating on this one night.
+       Both denominators are every burst the scan found, scored and gated, for
+       the same reason: a rate over the survivors describes the survivors. -->
+  <section class="sc-card" id="predict-card" hidden>
+    <div class="sc-card__head">
+      <div>
+        <h2>Which 2LYNCH check predicts anything</h2>
+        <p class="sc-hint" id="predict-hint"></p>
+      </div>
+    </div>
+    <p class="sc-empty" id="predict-empty" hidden></p>
+    <div class="sc-table-scroll" id="predict-scroll"><table class="sc-table sc-table--compact" id="predict-table"></table></div>
+  </section>
+
+  <section class="sc-card" id="streak-card" hidden>
+    <div class="sc-card__head">
+      <div>
+        <h2>Does a streak pay?</h2>
+        <p class="sc-hint" id="streak-hint"></p>
+      </div>
+    </div>
+    <p class="sc-empty" id="streak-empty" hidden></p>
+    <div class="sc-table-scroll" id="streak-scroll"><table class="sc-table sc-table--compact" id="streak-table"></table></div>
+  </section>
+
+  <section class="sc-card" id="trend-card" hidden>
+    <div class="sc-card__head">
+      <div>
+        <h2>Is it getting better or worse?</h2>
+        <p class="sc-hint" id="trend-hint"></p>
+      </div>
+    </div>
+    <p class="sc-empty" id="trend-empty" hidden></p>
+    <div class="sc-table-scroll" id="trend-scroll"><table class="sc-table sc-table--compact" id="trend-table"></table></div>
+  </section>
+
+  <!-- What happened the last times THIS name burst. The summary comes out of
+       data.json's evidence block; the per-appearance detail needs the whole
+       record, so docs/ledger.json is fetched ONLY when a reader asks for it
+       (see loadRecord). A year of it is ~0.6 MB gzipped, which is not a thing
+       to spend on every visit for a view most readers never open. -->
+  <section class="sc-card" id="ticker-card" hidden>
+    <div class="sc-card__head">
+      <div>
+        <h2>What happened the last times each name burst</h2>
+        <p class="sc-hint" id="ticker-hint"></p>
+      </div>
+    </div>
+    <p class="sc-empty" id="ticker-empty" hidden></p>
+    <div class="sc-table-scroll" id="ticker-scroll"><table class="sc-table sc-table--compact" id="ticker-table"></table></div>
+    <div class="sc-show-more" id="ticker-more" hidden></div>
   </section>
 
   <!-- Did a higher score do better? The one question that judges the screener
@@ -852,6 +943,396 @@
     mount(host, W, H, kids);
   }
 
+  // ---- the evidence blocks (step 11) --------------------------------------
+  // EVERYTHING HERE IS READ FROM data.json's `evidence`, NEVER RECOMPUTED.
+  // Each mean is over setups rather than rows — src/ledger.py's mean_returns
+  // rule, the one that stops a name bursting five sessions running from being
+  // weighted five times — and a second implementation of it in JavaScript is
+  // exactly the defect this project has already shipped twice, in a checklist
+  // and in a contract. `enough` comes from the file for the same reason:
+  // whether an n may be read as a rate is one decision, taken once, in the
+  // place that knows what the n counts.
+  //
+  // A block's per-horizon numbers are a LIST keyed by `horizon`, not an object
+  // keyed d1/d3/d5, because those three names already mean "a number, the
+  // return" on every candidate row in this same file.
+  var FWD_KEYS = ['d1', 'd3', 'd5'];       // forward_returns, where they ARE numbers
+  function at(outcomes, horizon) {
+    var list = outcomes || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && list[i].horizon === horizon) return list[i];
+    }
+    return { horizon: horizon, mean: null, n: 0, best: null, worst: null, in_band: 0 };
+  }
+  function hzLabel(horizon) { return '+' + horizon + 'd'; }
+  function longestOf(ev) { return ev.horizons[ev.horizons.length - 1]; }
+
+  // A mean, with the n it was taken over and whether that n is enough. Below
+  // the bar the RATE IS REFUSED: the number is still shown, because hiding it
+  // would be its own dishonesty, but it is marked and the prose never leans
+  // on it.
+  function rateCell(entry, enough) {
+    if (!entry || entry.mean === null || entry.mean === undefined) {
+      return el('td', { 'class': 'sc-num' },
+        figure('pending', entry && entry.n === 0 ? 'no session has closed' : null));
+    }
+    return el('td', { 'class': 'sc-num' },
+      figure(pct(entry.mean, 2), plural(entry.n, 'setup') + (enough ? '' : ' — too few to read as a rate')));
+  }
+
+  function enoughChip(enough, n, floor) {
+    return el('span', {
+      'class': 'sc-chip ' + (enough ? 'sc-chip--good' : 'sc-chip--warn'),
+      title: enough ? n + ' setups, at or above the ' + floor + ' this page requires'
+                    : n + ' setups, under the ' + floor + ' this page requires before it prints a rate',
+      text: enough ? 'measured' : 'not enough data'
+    });
+  }
+
+  // Score band against outcome. Horizontal bars because the labels are words
+  // ("B+ 7–8"), two series on one axis with a legend, and the range the
+  // strategy actually claims drawn as gridlines rather than left implicit —
+  // "+2% at five sessions" and "inside the 8–20% a burst is supposed to run"
+  // are different verdicts, and the second is the one being tested.
+  function drawEvidence(host, buckets, band, shown) {
+    var W = pxWidth(host), PAD_L = 66, PAD_R = 58, PAD_T = 10, PAD_B = 26;
+    var plotW = Math.max(80, W - PAD_L - PAD_R);
+    var vals = [0, band.high];
+    buckets.forEach(function (b) {
+      shown.forEach(function (h) { var e = at(b.outcomes, h); if (e.mean !== null) vals.push(e.mean); });
+    });
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var t = (S.ticks || function (a, b2) { return { ticks: [a, b2], lo: a, hi: b2 }; })(lo, hi, 5);
+    var span = (t.hi - t.lo) || 1;
+    var x = function (v) { return PAD_L + (v - t.lo) / span * plotW; };
+    var ROW = 15, LANE = shown.length * ROW + 12;
+    var kids = [], bottom = PAD_T + buckets.length * LANE + 2;
+
+    t.ticks.forEach(function (v) {
+      kids.push(svgEl('line', { 'class': 'sc-chart__grid', x1: x(v), x2: x(v), y1: PAD_T - 4, y2: bottom }));
+      kids.push(svgEl('text', { x: x(v), y: bottom + 16, 'text-anchor': 'middle' }, pct(v, 0)));
+    });
+    // The claimed band, and zero. Zero decides whether a band made money at
+    // all; the other two decide whether it did what the strategy promises.
+    [band.low, band.high].forEach(function (v) {
+      if (v < t.lo || v > t.hi) return;
+      kids.push(svgEl('line', { 'class': 'sc-chart__grid', x1: x(v), x2: x(v), y1: PAD_T - 4, y2: bottom,
+        style: 'stroke-dasharray: 3 3' }));
+    });
+    kids.push(svgEl('line', { 'class': 'sc-chart__crosshair', x1: x(0), x2: x(0), y1: PAD_T - 4, y2: bottom }));
+
+    buckets.forEach(function (b, i) {
+      var top = PAD_T + i * LANE;
+      kids.push(svgEl('text', { 'class': 's-name', x: 0, y: top + 13 }, b.verdict));
+      kids.push(svgEl('text', { 'class': 's-share', x: 0, y: top + 27 }, num(b.low, 0) + '–' + num(b.high, 0)));
+      shown.forEach(function (h, j) {
+        var cell = at(b.outcomes, h), yy = top + j * ROW + (j ? 2 : 0);
+        if (cell.mean === null) {
+          kids.push(svgEl('text', { 'class': 's-drop', x: PAD_L + 4, y: yy + 11 }, hzLabel(h) + ' pending'));
+          return;
+        }
+        var from = Math.min(x(0), x(cell.mean)), to = Math.max(x(0), x(cell.mean));
+        kids.push(svgEl('rect', {
+          'class': 'bar', x: from, y: yy, width: Math.max(2, to - from), height: ROW - 4, rx: 3,
+          style: '--sc-tone: var(--sc-chart-' + (j ? '2' : '1') + ')'
+        }));
+        // Direct-labelled with the horizon AND the n, so neither the series
+        // nor the sample size rides on colour.
+        kids.push(svgEl('text', { 'class': 's-drop', x: to + 6, y: yy + ROW - 7 },
+          hzLabel(h) + ' ' + pct(cell.mean, 1) + ' (n=' + cell.n + ')'));
+      });
+    });
+    mount(host, W, bottom + PAD_B, kids);
+  }
+
+  // The sentence a reader takes away, and it is allowed to say no. It leans
+  // ONLY on bands whose n clears the file's own floor: a monotone climb across
+  // six-observation buckets is not a finding, and saying so here is the whole
+  // difference between this page and a brochure.
+  function scoreVerdict(ev) {
+    var readable = ev.by_score.filter(function (b) { return b.enough; });
+    var h = longestOf(ev);
+    if (!readable.length) {
+      return 'No score band yet has the ' + ev.min_setups + ' setups this page requires before it will read a mean as a rate, ' +
+        'so there is no answer here yet — only the counts below, shown with their n so you can watch them fill.';
+    }
+    if (readable.length === 1) {
+      return 'Only the ' + readable[0].verdict + ' band has enough setups to read as a rate (' +
+        plural(at(readable[0].outcomes, h).n, 'setup') + ' at ' + hzLabel(h) + '). One band cannot show a ranking: ' +
+        'a relation needs two points that can be compared, and the rest are still filling.';
+    }
+    var first = at(readable[0].outcomes, h), last = at(readable[readable.length - 1].outcomes, h);
+    var lift = last.mean - first.mean;
+    var direction = lift > 0.5 ? 'higher' : (lift < -0.5 ? 'LOWER' : 'no different');
+    return 'Across the bands with enough setups to read, the highest (' + readable[readable.length - 1].verdict +
+      ') returned ' + pct(last.mean, 2) + ' at ' + hzLabel(h) + ' against ' + pct(first.mean, 2) +
+      ' for the lowest (' + readable[0].verdict + ') — ' + direction +
+      (direction === 'no different' ? '. ' : ' by ' + pct(Math.abs(lift), 2).replace('+', '') + '. ') +
+      'That is ' + plural(last.n, 'setup') + ' against ' + plural(first.n, 'setup') +
+      ', in one market over ' + plural(ev.record.sessions, 'session') + ', and overlapping bursts are not independent draws. ' +
+      'Read it as the record so far, not as a result.';
+  }
+
+  function renderEvidence(ev) {
+    // A data.json with NO evidence block at all is a real state — a snapshot
+    // published before this page learned to ask the question — and hiding the
+    // card for it would leave a reader who came for that answer with nothing
+    // to read and no way to tell an absent view from an empty one. Same rule
+    // as the streak line: say which kind of nothing it is.
+    $('evidence-card').hidden = false;
+    if (!ev || !ev.by_score) {
+      $('evidence-hint').textContent = 'The one question that judges this screener rather than describing it.';
+      $('evidence-body').hidden = true;
+      $('evidence-empty').hidden = false;
+      $('evidence-empty').textContent =
+        'This snapshot carries no record of past runs, so the question cannot be answered from it. ' +
+        'That means the file was written before the pipeline began publishing one — not that the answer is no, ' +
+        'and not that nothing has been measured. The next evening run will include it.';
+      return;
+    }
+    var anyOutcome = ev.horizons.some(function (h) { return at(ev.overall.outcomes, h).n > 0; });
+    $('evidence-hint').textContent =
+      'Every candidate this screener has scored, grouped by the score it gave, against what the next sessions did. ' +
+      'One observation per setup — a name that bursts on consecutive sessions is one move, counted once. ' +
+      '+3d and +5d are the horizons this strategy trades: the burst is held three to five sessions and exited, so ' +
+      '+1d is an early read rather than the result.';
+    $('evidence-empty').hidden = !!anyOutcome;
+    $('evidence-body').hidden = !anyOutcome;
+    if (!anyOutcome) {
+      $('evidence-empty').textContent =
+        'Nothing has an outcome yet. The record holds ' + plural(ev.record.scored_setups, 'scored setup') +
+        ' over ' + plural(ev.record.sessions, 'session') + ', and a burst needs five more sessions to close before ' +
+        'it can be measured — so this view is correct and empty, which is not the same as a flat line at zero. ' +
+        'It fills in on its own as later runs record what happened.';
+      return;
+    }
+    clear($('evidence-tiles')).append.apply($('evidence-tiles'), ev.horizons.map(function (h) {
+      var o = at(ev.overall.outcomes, h);
+      return el('div', { 'class': 'sc-tile' }, [
+        el('div', { 'class': 'sc-tile__label', text: hzLabel(h) + ' measured' }),
+        el('div', { 'class': 'sc-tile__value', text: commas(o.n) }),
+        el('div', { 'class': 'sc-tile__sub',
+          text: 'of ' + plural(ev.record.scored_setups, 'scored setup') + ' — the rest have not closed yet' }),
+        enoughChip(o.n >= ev.min_setups, o.n, ev.min_setups)
+      ]);
+    }));
+    $('evidence-verdict').textContent = scoreVerdict(ev);
+    // The two horizons the strategy actually trades. +1d is in the tiles and
+    // the table; drawing it here as well would put the least meaningful number
+    // in the most prominent place.
+    var shown = ev.horizons.filter(function (h) { return h > 1; });
+    clear($('evidence-legend')).append(
+      el('span', null, [el('i', { 'class': 'is-swatch', style: 'background: var(--sc-chart-1)' }),
+                        hzLabel(shown[0]) + ' — three sessions after the burst']),
+      el('span', null, [el('i', { 'class': 'is-swatch', style: 'background: var(--sc-chart-2)' }),
+                        hzLabel(shown[shown.length - 1]) + ' — five sessions, the end of the hold']),
+      el('span', { 'class': 'sc-note', text: 'dashed lines: the ' + pct(ev.band.low, 0) + ' to ' + pct(ev.band.high, 0) + ' a burst is claimed to run' })
+    );
+    live(function () { drawEvidence($('evidence-chart'), ev.by_score, ev.band, shown); });
+    var h = longestOf(ev);
+    table($('evidence-table'),
+      ['score band', 'setups'].concat(ev.horizons.map(hzLabel)).concat(['in the claimed band', 'reads as']),
+      ev.by_score.map(function (b) {
+        var longest = at(b.outcomes, h);
+        return el('tr', null, [
+          el('td', null, [el('span', { 'class': 'sc-chip sc-chip--neutral sc-chip--case', text: b.verdict }),
+                          el('span', { 'class': 'sc-note', text: num(b.low, 0) + '–' + num(b.high, 0) + ' out of 10' })]),
+          el('td', { 'class': 'sc-num', text: commas(b.setups) })
+        ].concat(ev.horizons.map(function (hh) { return rateCell(at(b.outcomes, hh), b.enough); }))
+         .concat([
+          el('td', { 'class': 'sc-num' }, figure(commas(longest.in_band),
+            longest.n ? 'of ' + plural(longest.n, 'measured setup') : null)),
+          el('td', null, enoughChip(b.enough, longest.n, ev.min_setups))
+        ]));
+      }), [1, 2, 3, 4, 5]);
+    clipWatch($('evidence-scroll'), 'Score band against forward return');
+  }
+
+  function renderPredict(ev) {
+    var rows = (ev && ev.by_check) || [];
+    $('predict-card').hidden = !rows.length;
+    if (!rows.length) return;
+    var h = longestOf(ev);
+    var measurable = rows.filter(function (c) { return c.enough; });
+    var best = measurable.slice().sort(function (a, b) { return (b.separation || 0) - (a.separation || 0); })[0];
+    $('predict-hint').textContent =
+      'Each check against what happened next, over every burst the scan found — the ones it rejected included, because a rate over the survivors describes the survivors. ' +
+      'Separation is what a check is FOR: how much better the bursts that passed it did at ' + hzLabel(h) + ' than the ones that failed. ' +
+      (best ? 'On the record so far ' + best.code + ' separates most, by ' + pct(best.separation, 2).replace('+', '') + '. '
+            : 'No check yet has ' + ev.min_setups + ' setups on both sides, so none of these separations can be read as a rate. ') +
+      'A check that separates by nothing is not gating on anything a return can see.';
+    table($('predict-table'),
+      ['check', 'passed', hzLabel(h) + ' when passed', 'failed', hzLabel(h) + ' when failed', 'separation', 'reads as'],
+      rows.map(function (c) {
+        var won = at(c.passed.outcomes, h), lost = at(c.failed.outcomes, h);
+        return el('tr', null, [
+          el('td', null, el('span', { 'class': 'sc-chip sc-chip--neutral sc-chip--case', text: c.code })),
+          el('td', { 'class': 'sc-num', text: commas(c.passed.setups) }),
+          rateCell(won, c.enough),
+          el('td', { 'class': 'sc-num', text: commas(c.failed.setups) }),
+          rateCell(lost, c.enough),
+          el('td', { 'class': 'sc-num', text: c.separation === null || c.separation === undefined ? '—' : pct(c.separation, 2) }),
+          el('td', null, enoughChip(c.enough, Math.min(won.n, lost.n), ev.min_setups))
+        ]);
+      }), [1, 2, 3, 4, 5]);
+    clipWatch($('predict-scroll'), 'Each 2LYNCH check against the outcome');
+  }
+
+  function renderStreakPay(ev) {
+    var rows = (ev && ev.by_day) || [];
+    $('streak-card').hidden = !rows.length;
+    if (!rows.length) return;
+    var h = longestOf(ev);
+    // THIS ONE COUNTS APPEARANCES, and it is the only block on the page that
+    // does. A setup's first burst IS day 1, so grouping setups by day number
+    // would put every setup in one bucket and answer nothing. The cost is that
+    // a name bursting on consecutive sessions contributes overlapping windows
+    // here — disclosed rather than hidden, because it cannot be avoided for
+    // this question.
+    $('streak-hint').textContent =
+      'Every burst, grouped by which day of its setup it was. This is the one view on the page counted per APPEARANCE rather than per setup — ' +
+      'a setup’s first burst is day 1 by definition, so grouping setups by day would put them all in one row. ' +
+      'That means a name bursting on consecutive sessions appears more than once here, and its windows overlap; ' +
+      'no correction is made for it. A day with no number is one the record cannot place, never a day 1.';
+    table($('streak-table'),
+      ['day of the setup', 'appearances'].concat(ev.horizons.map(hzLabel)).concat(['in the claimed band', 'reads as']),
+      rows.map(function (r) {
+        var longest = at(r.outcomes, h);
+        return el('tr', null, [
+          el('td', null, r.day === null || r.day === undefined
+            ? [el('span', { text: 'not known' }),
+               el('span', { 'class': 'sc-note', text: 'the record does not reach back far enough to place these' })]
+            : [el('span', { text: 'day ' + r.day }),
+               el('span', { 'class': 'sc-note', text: r.day === 1 ? 'the first burst of a setup' : 'a repeat inside the same setup' })]),
+          el('td', { 'class': 'sc-num', text: commas(r.appearances) })
+        ].concat(ev.horizons.map(function (hh) { return rateCell(at(r.outcomes, hh), r.enough); }))
+         .concat([
+          el('td', { 'class': 'sc-num', text: commas(longest.in_band) }),
+          el('td', null, enoughChip(r.enough, longest.n, ev.min_setups))
+        ]));
+      }), [1, 2, 3, 4, 5]);
+    clipWatch($('streak-scroll'), 'Outcome by day of the setup');
+  }
+
+  function renderTrend(ev) {
+    var rows = (ev && ev.by_month) || [];
+    $('trend-card').hidden = !rows.length;
+    if (!rows.length) return;
+    var h = longestOf(ev);
+    var readable = rows.filter(function (r) { return r.enough; });
+    $('trend-hint').textContent =
+      'The same measurement by calendar month, so a screener that worked in one regime and stopped working in the next does not average into a flat line. ' +
+      (readable.length >= 2
+        ? readable.length + ' months have enough setups to read as rates.'
+        : 'No month yet has ' + ev.min_setups + ' measured setups, so these are counts rather than rates — a month is about twenty sessions, and most of a month’s bursts are still open.');
+    table($('trend-table'), ['month', 'setups'].concat(ev.horizons.map(hzLabel)).concat(['reads as']),
+      rows.map(function (r) {
+        return el('tr', null, [
+          el('td', { text: r.month }),
+          el('td', { 'class': 'sc-num', text: commas(r.setups) })
+        ].concat(ev.horizons.map(function (hh) { return rateCell(at(r.outcomes, hh), r.enough); }))
+         .concat([el('td', null, enoughChip(r.enough, at(r.outcomes, h).n, ev.min_setups))]));
+      }), [1, 2, 3, 4]);
+    clipWatch($('trend-scroll'), 'Outcome by month');
+  }
+
+  // ---- the per-name view, and the only second fetch on this page ----------
+  var TICKERS_SHOWN = 15;
+  var record = { rows: null, state: 'idle' };
+
+  function renderTickers(ev) {
+    var rows = (ev && ev.by_ticker) || [];
+    $('ticker-card').hidden = !rows.length;
+    if (!rows.length) return;
+    var repeats = rows.filter(function (r) { return r.appearances > 1; });
+    var ranked = rows.slice().sort(function (a, b) {
+      return (b.appearances - a.appearances) || String(a.ticker).localeCompare(String(b.ticker));
+    });
+    $('ticker-hint').textContent =
+      commas(rows.length) + ' names have burst since ' + day(ev.record.from) + '. ' +
+      commas(repeats.length) + ' of them more than once. Means are over setups, so a name that burst on ' +
+      'consecutive sessions counts once for that move; “appearances” is every session the scan found a burst on, ' +
+      'the ones the gate rejected included.';
+    var shown = record.rows ? ranked : ranked.slice(0, TICKERS_SHOWN);
+    var mid = ev.horizons.filter(function (x) { return x > 1; });
+    table($('ticker-table'),
+      ['name', 'appearances', 'setups', 'last burst', 'best score'].concat(mid.map(hzLabel)),
+      shown.map(function (r) {
+        return el('tr', null, [
+          el('td', null, [el('span', { 'class': 'sc-case', text: r.ticker }),
+                          record.rows ? el('div', { 'class': 'sc-note', text: appearanceLine(r.ticker) }) : null]),
+          el('td', { 'class': 'sc-num', text: commas(r.appearances) }),
+          el('td', { 'class': 'sc-num', text: commas(r.setups) }),
+          el('td', { text: day(r.last_seen) }),
+          el('td', { 'class': 'sc-num', text: r.best_score === null || r.best_score === undefined ? '—' : num(r.best_score, 1) })
+        ].concat(mid.map(function (hh) { return rateCell(at(r.outcomes, hh), false); })));
+      }), [1, 2, 4, 5, 6]);
+    clipWatch($('ticker-scroll'), 'Every name that has burst');
+    var more = clear($('ticker-more'));
+    $('ticker-more').hidden = false;
+    if (record.state === 'loading') {
+      more.appendChild(el('span', { 'class': 'sc-note', text: 'Loading the full record…' }));
+    } else if (record.state === 'failed') {
+      more.appendChild(el('span', { 'class': 'sc-note', text: 'The full record could not be loaded: ' + record.error +
+        '. The summary above still stands — it is written into this page’s own data file.' }));
+    } else if (record.rows) {
+      more.appendChild(el('span', { 'class': 'sc-note', text: 'Showing all ' + commas(ranked.length) +
+        ' names, each with every session it burst on, from docs/ledger.json.' }));
+    } else {
+      more.appendChild(el('button', {
+        'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button',
+        onclick: function () { loadRecord(ev); }
+      }, 'Load every burst of every name'));
+      more.appendChild(el('span', { 'class': 'sc-note', text: 'Showing the ' + Math.min(TICKERS_SHOWN, ranked.length) +
+        ' most frequent. The rest, and each name’s individual bursts, are in docs/ledger.json — a separate file, ' +
+        'fetched only if you ask for it.' }));
+    }
+  }
+
+  function appearanceLine(ticker) {
+    var mine = (record.rows || []).filter(function (r) { return r.ticker === ticker; });
+    if (!mine.length) return 'no rows in the record';
+    mine.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+    return mine.slice(0, 6).map(function (r) {
+      // forward_returns, where d1/d3/d5 really are numbers.
+      var out = r.forward_returns || {};
+      var got = FWD_KEYS.filter(function (k) { return out[k] !== null && out[k] !== undefined; });
+      return day(r.date) + ' ' + (r.score === null || r.score === undefined
+        ? (r.reason === 'score_cap' ? 'over the call cap' : 'rejected at the gate')
+        : num(r.score, 1) + '/10') +
+        (got.length ? ' → +' + got[got.length - 1].slice(1) + 'd ' + pct(out[got[got.length - 1]], 1) : ' → pending');
+    }).join(' · ');
+  }
+
+  // The one lazy fetch. docs/ledger.json is the whole record — about 0.6 MB
+  // gzipped after a year — so it is never pulled on load; the summary above
+  // comes out of data.json, which the page has already read. A 404 here is the
+  // normal state until evening.yml has committed a run back, so it is reported
+  // as a fact about the file rather than as a broken page.
+  function loadRecord(ev) {
+    if (record.state === 'loading') return;
+    record.state = 'loading';
+    renderTickers(ev);
+    fetch('ledger.json', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('ledger.json returned HTTP ' + r.status); return r.json(); })
+      .then(function (book) {
+        var rows = [];
+        ((book && book.runs) || []).forEach(function (run) {
+          ['candidates', 'gated'].forEach(function (kind) {
+            ((run || {})[kind] || []).forEach(function (row) { if (row && typeof row === 'object') rows.push(row); });
+          });
+        });
+        record.rows = rows;
+        record.state = 'loaded';
+        renderTickers(ev);
+      })
+      .catch(function (e) {
+        record.state = 'failed';
+        record.error = e.message || String(e);
+        renderTickers(ev);
+      });
+  }
+
   // ---- tables -------------------------------------------------------------
   function table(node, head, rows, numeric) {
     clear(node);
@@ -926,6 +1407,14 @@
           : 'None of them reached the shortlist this run.') +
         ' They are marked "checklist fallback" everywhere they appear.';
     }
+
+    // step 11 — what the record says, above what tonight says
+    var ev = d.evidence && typeof d.evidence === 'object' ? d.evidence : null;
+    renderEvidence(ev);
+    renderPredict(ev);
+    renderStreakPay(ev);
+    renderTrend(ev);
+    renderTickers(ev);
 
     // the funnel
     var gateTxt = run.gate ? '≥' + run.gate.min_lynch_passes + '/' + run.gate.total_checks : 'the gate';

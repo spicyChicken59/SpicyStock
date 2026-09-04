@@ -1402,13 +1402,16 @@ def test_a_morning_run_with_nothing_published_says_so_and_still_mails(
 def test_a_morning_run_refuses_to_mail_the_hand_authored_fixture(
     market_clock, mocked_boundaries, tmp_path
 ):
-    """docs/data.json ships as a fixture of invented rows. Mailing them as a
-    watchlist would put made-up names in front of a reader as last night's
-    judgements, and would look exactly like a working run."""
+    """docs/data.json ships as a fixture of invented rows -- a copy of
+    tests/fixtures/data.json, which is what this reads, because docs/ stops
+    being the fixture the night evening.yml first commits a real run back.
+    Mailing those rows as a watchlist would put made-up names in front of a
+    reader as last night's judgements, and would look exactly like a working
+    run."""
     market_clock.before_the_open()
     (tmp_path / "docs").mkdir()
     (tmp_path / "docs" / ledger.DATA_NAME).write_text(
-        (Path(__file__).resolve().parent.parent / "docs" / "data.json").read_text())
+        (Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "data.json").read_text())
     report = pipeline.RunReport()
 
     rows = pipeline.run("morning", dry_run=False, report=report)
@@ -1772,3 +1775,146 @@ def test_the_exit_codes_are_the_numbers_actions_reads():
     to end.
     """
     assert (pipeline.EXIT_OK, pipeline.EXIT_FAILED, pipeline.EXIT_DEGRADED) == (0, 1, 2)
+
+
+# --- a snapshot that did not come out of a run ---------------------------
+# Thirty-seven ways docs/data.json can be malformed, each run through the real
+# follow-through and the real email renderer. Twenty of them used to escape as
+# an exception: FAILED, exit 1 and a failure notice, where the design says
+# DEGRADED, exit 2 and "there is nothing to follow through on". Not a data-loss
+# path -- a morning run writes nothing, and docs/ is hashed before and after
+# to prove it on every shape -- but the wrong exit code and the wrong email on
+# the pass whose only job is to say what state the record is in.
+#
+# Two kinds of shape, and the table says which each is. REFUSED: the reader
+# names the row and the field and the run degrades with nothing to show --
+# the table carries the words the refusal must use, since `candidates` that
+# is not a list at all is turned away one check earlier, in older words.
+# TOLERATED: a field the follow-through never indexes, or content rather than
+# shape (a date nobody can parse, a score that is a string), which the run
+# carries and prints; the assertion there is only that nothing raised and
+# nothing was written.
+NOT_A_RUN = "did not come out of a run"
+
+def _drop(key):
+    return lambda d: d["candidates"].__setitem__(0, {k: v for k, v in d["candidates"][0].items() if k != key})
+
+
+def _row(**over):
+    return lambda d: d["candidates"][0].update(over)
+
+
+def _streak(**over):
+    return lambda d: d["candidates"][0]["streak"].update(over)
+
+
+def _run_field(**over):
+    return lambda d: d["run"].update(over)
+
+
+MALFORMED_SNAPSHOTS = {
+    # name: (mutation, the refusal's words -- or False when the shape is tolerated)
+    "candidates are strings": (lambda d: d.update(candidates=["AAPL"]), NOT_A_RUN),
+    "a candidate is null": (lambda d: d.update(candidates=[None]), NOT_A_RUN),
+    "a candidate is a number": (lambda d: d.update(candidates=[7]), NOT_A_RUN),
+    "a candidate is a list": (lambda d: d.update(candidates=[["AAPL"]]), NOT_A_RUN),
+    "a candidate is an empty object": (lambda d: d.update(candidates=[{}]), NOT_A_RUN),
+    "a row has no ticker": (_drop("ticker"), NOT_A_RUN),
+    "a row has no score": (_drop("score"), NOT_A_RUN),
+    "a row has no verdict": (_drop("verdict"), NOT_A_RUN),
+    "a row has no close": (_drop("close"), NOT_A_RUN),
+    # lynch_detail is optional now: the email rebuilds its lines with a
+    # default, so a row without one is presented rather than refused.
+    "a row has no lynch_detail": (_drop("lynch_detail"), False),
+    "lynch_detail is a string": (_row(lynch_detail="4/6"), NOT_A_RUN),
+    "lynch_detail rows are strings": (_row(lynch_detail=["PASS 2"]), NOT_A_RUN),
+    "streak is a string": (_row(streak="day 3"), NOT_A_RUN),
+    "streak is a list": (_row(streak=[1]), NOT_A_RUN),
+    "streak day is a string": (_streak(day="3"), False),
+    "forward_returns is a string": (_row(forward_returns="x"), NOT_A_RUN),
+    "provenance is a string": (_row(provenance="claude"), NOT_A_RUN),
+    "score is a string": (_row(score="9"), False),
+    "ticker is null": (_row(ticker=None), NOT_A_RUN),
+    "ticker is a number": (_row(ticker=42), NOT_A_RUN),
+    "run.date is an object": (_run_field(date={"a": 1}), False),
+    "run.date is a number": (_run_field(date=20260901), False),
+    "run.date is null": (_run_field(date=None), False),
+    "run.type is an object": (_run_field(type={"a": 1}), False),
+    "run.errors is a string": (_run_field(errors="boom"), "run.errors"),
+    "run.errors is an object": (_run_field(errors={"stage": "x", "message": "y"}), "run.errors"),
+    "run.errors holds a string": (_run_field(errors=["boom"]), False),
+    "run.status is an object": (_run_field(status={"a": 1}), NOT_A_RUN),
+    "run.status is a number": (_run_field(status=5), NOT_A_RUN),
+    "run.scored_by is a string": (_run_field(scored_by="x"), NOT_A_RUN),
+    "run.scored_by is a list": (_run_field(scored_by=[1, 2]), NOT_A_RUN),
+    "run.bursts is a string": (_run_field(bursts="many"), False),
+    "run.passed_gate is a list": (_run_field(passed_gate=[1]), False),
+    "gated_out is a string": (lambda d: d.update(gated_out="x"), False),
+    "gated_out rows are strings": (lambda d: d.update(gated_out=["x"]), False),
+    "runs is a string": (lambda d: d.update(runs="x"), False),
+    "candidates is an object": (lambda d: d.update(candidates={"a": 1}), "carries no run to follow through on"),
+    # --- one level further in again, found by the 3.1 audit ---------------
+    # Each of these was ACCEPTED by read_snapshot and then crashed the real
+    # morning path or the real email renderer. A dry run does not render the
+    # email, which is how the first sweep called some of them safe. The last
+    # two need `day` null as well: the seen_before comparison sits behind a
+    # short-circuit that only opens when there is no day number, so a sweep
+    # varying one field at a time reports it safe.
+    "run.status is null": (_run_field(status=None), "run.status"),
+    "run.errors is a number": (_run_field(errors=3), "run.errors"),
+    "run.errors is a bool": (_run_field(errors=True), "run.errors"),
+    "run.scored_by counts are strings": (
+        _run_field(scored_by={"claude": "5", "fallback": "1"}), "scored_by"),
+    "run.scored_by counts are lists": (
+        _run_field(scored_by={"claude": [1], "fallback": []}), "scored_by"),
+    # The context clause was the one shape check with no case naming it, so it
+    # could have been deleted with the suite green -- a guard reporting safety
+    # nothing measured.
+    "context is a string": (_row(context="x"), "context"),
+    "context is a list": (_row(context=[1]), "context"),
+    "streak.unknown_reason is unhashable": (_streak(day=None, unknown_reason=["x"]), "unknown_reason"),
+    "streak.seen_before is a string": (
+        _streak(day=None, unknown_reason="no_history", seen_before="3"), "seen_before"),
+    "streak.seen_before is a list": (
+        _streak(day=None, unknown_reason="no_history", seen_before=[1]), "seen_before"),
+}
+
+
+def _docs_digest(tmp_path: Path) -> str:
+    import hashlib
+    digest = hashlib.sha256()
+    for file in sorted((tmp_path / "docs").rglob("*")):
+        if file.is_file():
+            digest.update(file.name.encode())
+            digest.update(file.read_bytes())
+    return digest.hexdigest()
+
+
+@pytest.mark.parametrize("shape", sorted(MALFORMED_SNAPSHOTS))
+def test_a_malformed_snapshot_degrades_the_morning_run_instead_of_failing_it(
+    shape, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    mutate, refused = MALFORMED_SNAPSHOTS[shape]
+    evening_run(tmp_path, fake_alpaca, ohlcv)
+    path = tmp_path / "docs" / ledger.DATA_NAME
+    data = json.loads(path.read_text())
+    mutate(data)
+    path.write_text(json.dumps(data))
+    before = _docs_digest(tmp_path)
+    market_clock.before_the_open()
+    report = pipeline.RunReport()
+
+    pipeline.run("morning", dry_run=False, report=report)       # must not raise
+
+    assert _docs_digest(tmp_path) == before, "a morning run writes nothing, whatever it read"
+    (sent,) = mocked_boundaries["resend"].sent
+    assert not report.failed
+    if refused:
+        assert report.exit_code == pipeline.EXIT_DEGRADED
+        (problem,) = [e for e in report.errors if e["stage"] == "history"]
+        assert "nothing to follow through on" in problem["message"]
+        assert refused in problem["message"]
+        assert sent["subject"].startswith("[4% Burst] DEGRADED — ")
+        assert "No shortlist" in sent["html"]
+    else:
+        assert report.exit_code in (pipeline.EXIT_OK, pipeline.EXIT_DEGRADED)

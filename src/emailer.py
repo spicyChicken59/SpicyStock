@@ -63,6 +63,8 @@ from pathlib import Path
 
 import resend
 
+from . import ledger
+
 log = logging.getLogger(__name__)
 
 #: Environment this layer cannot run without, collected by src.pipeline's
@@ -362,7 +364,11 @@ def _streak_note(row: dict) -> str:
     if not isinstance(row.get("streak"), dict):
         return _streak_span(NO_STREAK_BLOCK, "#666")
     streak = _streak_of(row)
-    day = streak.get("day")
+    # A number or nothing -- ledger.streak_day() holds the rule. A morning
+    # row comes off disk, and a block whose day is the string "3" used to be
+    # a TypeError out of the comparison below, after the band and the title
+    # had been built and before anything was sent.
+    day = ledger.streak_day(streak)
     if day is None:
         text = _no_day_note(streak)
         # Earlier bursts on record are the same news as day > 1 — the name has
@@ -400,8 +406,8 @@ def _streak_footnote(results: list[dict]) -> str:
     number, not the appearances behind it.
     """
     counted = [_streak_of(row) for row in results]
-    if not any((s.get("day") or 0) > 1
-               or (s.get("day") is None and (s.get("seen_before") or 0) > 0)
+    if not any((ledger.streak_day(s) or 0) > 1
+               or (ledger.streak_day(s) is None and (s.get("seen_before") or 0) > 0)
                for s in counted):
         return ""
     # Set as a note rather than as fine print. It was 11px grey at the foot of

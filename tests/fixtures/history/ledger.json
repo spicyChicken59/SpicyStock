@@ -1,0 +1,4895 @@
+{
+  "schema_version": 1,
+  "app": "SpicyStock",
+  "generated": "2026-09-01T22:14:07Z",
+  "runs": [
+    {
+      "date": "2026-09-01",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 4.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "degraded",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "MA",
+          "date": "2026-09-01",
+          "rank": 1,
+          "score": 4.4,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 185.03,
+          "gain_pct": 6.43,
+          "volume_ratio": 3.26,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": null,
+            "d3": null,
+            "d5": null,
+            "as_of": null
+          }
+        },
+        {
+          "ticker": "APP",
+          "date": "2026-09-01",
+          "rank": 2,
+          "score": 4.1,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 98.47,
+          "gain_pct": 7.66,
+          "volume_ratio": 1.86,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": null,
+            "d3": null,
+            "d5": null,
+            "as_of": null
+          }
+        },
+        {
+          "ticker": "SHW",
+          "date": "2026-09-01",
+          "rank": 3,
+          "score": 3.3,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 27.06,
+          "gain_pct": 6.04,
+          "volume_ratio": 2.32,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": false,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": null,
+            "d3": null,
+            "d5": null,
+            "as_of": null
+          }
+        },
+        {
+          "ticker": "EOG",
+          "date": "2026-09-01",
+          "rank": 4,
+          "score": 2,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 79.93,
+          "gain_pct": 5.19,
+          "volume_ratio": 2.4,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": null,
+            "d3": null,
+            "d5": null,
+            "as_of": null
+          }
+        },
+        {
+          "ticker": "SNPS",
+          "date": "2026-09-01",
+          "rank": 5,
+          "score": 1.7,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 114.07,
+          "gain_pct": 4.85,
+          "volume_ratio": 2.12,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": null,
+            "d3": null,
+            "d5": null,
+            "as_of": null
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "LYB",
+          "date": "2026-09-01",
+          "reason": "lynch_gate",
+          "close": 132.23,
+          "gain_pct": 6.21,
+          "volume_ratio": 2.8,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": null,
+            "d3": null,
+            "d5": null,
+            "as_of": null
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n": 0,
+        "rows": 0
+      }
+    },
+    {
+      "date": "2026-08-31",
+      "type": "evening",
+      "bursts": 3,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 7.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "FSLR",
+          "date": "2026-08-31",
+          "rank": 1,
+          "score": 7.1,
+          "verdict": "B+",
+          "source": "claude",
+          "close": 76.06,
+          "gain_pct": 6.68,
+          "volume_ratio": 3.89,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 5.93,
+            "d3": null,
+            "d5": null,
+            "as_of": "2026-09-01"
+          }
+        },
+        {
+          "ticker": "AVGO",
+          "date": "2026-08-31",
+          "rank": 2,
+          "score": 6.2,
+          "verdict": "B",
+          "source": "claude",
+          "close": 100.25,
+          "gain_pct": 6.45,
+          "volume_ratio": 2.25,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 3.36,
+            "d3": null,
+            "d5": null,
+            "as_of": "2026-09-01"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "BA",
+          "date": "2026-08-31",
+          "reason": "lynch_gate",
+          "close": 245.68,
+          "gain_pct": 6.98,
+          "volume_ratio": 3.73,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -1.63,
+            "d3": null,
+            "d5": null,
+            "as_of": "2026-09-01"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 4.64,
+        "d3": null,
+        "d5": null,
+        "n": 2,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-08-28",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 8.5,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "WM",
+          "date": "2026-08-28",
+          "rank": 1,
+          "score": 8.5,
+          "verdict": "A",
+          "source": "claude",
+          "close": 217.63,
+          "gain_pct": 8.15,
+          "volume_ratio": 3.89,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 3.04,
+            "d3": null,
+            "d5": null,
+            "as_of": "2026-08-31"
+          }
+        },
+        {
+          "ticker": "SNPS",
+          "date": "2026-08-28",
+          "rank": 2,
+          "score": 6.6,
+          "verdict": "B",
+          "source": "claude",
+          "close": 108.37,
+          "gain_pct": 8.59,
+          "volume_ratio": 3.68,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.39,
+            "d3": null,
+            "d5": null,
+            "as_of": "2026-08-31"
+          }
+        },
+        {
+          "ticker": "LYB",
+          "date": "2026-08-28",
+          "rank": 3,
+          "score": 4.9,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 123.94,
+          "gain_pct": 7.34,
+          "volume_ratio": 2.66,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 0.45,
+            "d3": null,
+            "d5": null,
+            "as_of": "2026-08-31"
+          }
+        },
+        {
+          "ticker": "DE",
+          "date": "2026-08-28",
+          "rank": 4,
+          "score": 4.8,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 193.7,
+          "gain_pct": 6.01,
+          "volume_ratio": 2.76,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.14,
+            "d3": null,
+            "d5": null,
+            "as_of": "2026-08-31"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "BA",
+          "date": "2026-08-28",
+          "reason": "lynch_gate",
+          "close": 229.65,
+          "gain_pct": 8.63,
+          "volume_ratio": 3.78,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 6.98,
+            "d3": null,
+            "d5": null,
+            "as_of": "2026-08-31"
+          }
+        },
+        {
+          "ticker": "UNH",
+          "date": "2026-08-28",
+          "reason": "lynch_gate",
+          "close": 161.85,
+          "gain_pct": 6.05,
+          "volume_ratio": 2.31,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -0.35,
+            "d3": null,
+            "d5": null,
+            "as_of": "2026-08-31"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 1.29,
+        "d3": null,
+        "d5": null,
+        "n": 3,
+        "rows": 4
+      }
+    },
+    {
+      "date": "2026-08-27",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 6.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "VZ",
+          "date": "2026-08-27",
+          "rank": 1,
+          "score": 6.4,
+          "verdict": "B",
+          "source": "claude",
+          "close": 22.46,
+          "gain_pct": 7.46,
+          "volume_ratio": 4.25,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.69,
+            "d3": 6.13,
+            "d5": null,
+            "as_of": "2026-09-01"
+          }
+        },
+        {
+          "ticker": "AZO",
+          "date": "2026-08-27",
+          "rank": 2,
+          "score": 6.3,
+          "verdict": "B",
+          "source": "claude",
+          "close": 163.47,
+          "gain_pct": 8.24,
+          "volume_ratio": 2.38,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -1.35,
+            "d3": -5.08,
+            "d5": null,
+            "as_of": "2026-09-01"
+          }
+        },
+        {
+          "ticker": "MA",
+          "date": "2026-08-27",
+          "rank": 3,
+          "score": 5.5,
+          "verdict": "C",
+          "source": "claude",
+          "close": 173.97,
+          "gain_pct": 5.07,
+          "volume_ratio": 2.97,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.27,
+            "d3": 6.36,
+            "d5": null,
+            "as_of": "2026-09-01"
+          }
+        },
+        {
+          "ticker": "FDX",
+          "date": "2026-08-27",
+          "rank": 4,
+          "score": 4.3,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 136.36,
+          "gain_pct": 6.74,
+          "volume_ratio": 2.84,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -1.73,
+            "d3": 0.98,
+            "d5": null,
+            "as_of": "2026-09-01"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "FCX",
+          "date": "2026-08-27",
+          "reason": "lynch_gate",
+          "close": 50.97,
+          "gain_pct": 5.03,
+          "volume_ratio": 2.78,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -1.8,
+            "d3": -8.12,
+            "d5": null,
+            "as_of": "2026-09-01"
+          }
+        },
+        {
+          "ticker": "BA",
+          "date": "2026-08-27",
+          "reason": "lynch_gate",
+          "close": 211.4,
+          "gain_pct": 8.09,
+          "volume_ratio": 3.79,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 8.63,
+            "d3": 14.33,
+            "d5": null,
+            "as_of": "2026-09-01"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": -0.31,
+        "d3": 2.47,
+        "d5": null,
+        "n": 3,
+        "rows": 4
+      }
+    },
+    {
+      "date": "2026-08-26",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 6,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "F",
+          "date": "2026-08-26",
+          "rank": 1,
+          "score": 6,
+          "verdict": "B",
+          "source": "claude",
+          "close": 60.39,
+          "gain_pct": 5.33,
+          "volume_ratio": 2,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 2.01,
+            "d3": 1.35,
+            "d5": null,
+            "as_of": "2026-08-31"
+          }
+        },
+        {
+          "ticker": "FDX",
+          "date": "2026-08-26",
+          "rank": 2,
+          "score": 4.2,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 127.75,
+          "gain_pct": 7.65,
+          "volume_ratio": 2.81,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 6.74,
+            "d3": 6.56,
+            "d5": null,
+            "as_of": "2026-08-31"
+          }
+        },
+        {
+          "ticker": "DECK",
+          "date": "2026-08-26",
+          "rank": 3,
+          "score": 3.2,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 83.6,
+          "gain_pct": 4.75,
+          "volume_ratio": 3.33,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.35,
+            "d3": -2.25,
+            "d5": null,
+            "as_of": "2026-08-31"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "BA",
+          "date": "2026-08-26",
+          "reason": "lynch_gate",
+          "close": 195.57,
+          "gain_pct": 9.19,
+          "volume_ratio": 3.82,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 8.09,
+            "d3": 25.62,
+            "d5": null,
+            "as_of": "2026-08-31"
+          }
+        },
+        {
+          "ticker": "ENTG",
+          "date": "2026-08-26",
+          "reason": "lynch_gate",
+          "close": 90.05,
+          "gain_pct": 7.75,
+          "volume_ratio": 2.91,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.96,
+            "d3": 6.07,
+            "d5": null,
+            "as_of": "2026-08-31"
+          }
+        },
+        {
+          "ticker": "DE",
+          "date": "2026-08-26",
+          "reason": "lynch_gate",
+          "close": 182.01,
+          "gain_pct": 4.88,
+          "volume_ratio": 3.48,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 0.38,
+            "d3": 6.27,
+            "d5": null,
+            "as_of": "2026-08-31"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 6.74,
+        "d3": 6.56,
+        "d5": null,
+        "n": 1,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-25",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 6,
+      "scored": 6,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 5.3,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "APO",
+          "date": "2026-08-25",
+          "rank": 1,
+          "score": 5.3,
+          "verdict": "C",
+          "source": "claude",
+          "close": 131.2,
+          "gain_pct": 8,
+          "volume_ratio": 4.55,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.97,
+            "d3": 2.65,
+            "d5": 6.88,
+            "as_of": "2026-09-01"
+          }
+        },
+        {
+          "ticker": "ENTG",
+          "date": "2026-08-25",
+          "rank": 2,
+          "score": 5.1,
+          "verdict": "C",
+          "source": "claude",
+          "close": 83.57,
+          "gain_pct": 6.88,
+          "volume_ratio": 1.99,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 7.75,
+            "d3": 12.03,
+            "d5": 16.6,
+            "as_of": "2026-09-01"
+          }
+        },
+        {
+          "ticker": "STZ",
+          "date": "2026-08-25",
+          "rank": 3,
+          "score": 4.3,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 142.74,
+          "gain_pct": 5.76,
+          "volume_ratio": 3.8,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 1.25,
+            "d3": 0.77,
+            "d5": 0.23,
+            "as_of": "2026-09-01"
+          }
+        },
+        {
+          "ticker": "DECK",
+          "date": "2026-08-25",
+          "rank": 4,
+          "score": 3.8,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 79.81,
+          "gain_pct": 5.6,
+          "volume_ratio": 3.05,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 4.75,
+            "d3": 4.78,
+            "d5": 0.99,
+            "as_of": "2026-09-01"
+          }
+        },
+        {
+          "ticker": "HUBS",
+          "date": "2026-08-25",
+          "rank": 5,
+          "score": 3.1,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 24.09,
+          "gain_pct": 6.26,
+          "volume_ratio": 3.01,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.22,
+            "d3": 0.97,
+            "d5": 1.24,
+            "as_of": "2026-09-01"
+          }
+        },
+        {
+          "ticker": "PEP",
+          "date": "2026-08-25",
+          "rank": 6,
+          "score": 0.5,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 170.6,
+          "gain_pct": 4.72,
+          "volume_ratio": 2.01,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 2.24,
+            "d3": 1.48,
+            "d5": -0.19,
+            "as_of": "2026-09-01"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "DE",
+          "date": "2026-08-25",
+          "reason": "lynch_gate",
+          "close": 173.54,
+          "gain_pct": 5.09,
+          "volume_ratio": 3.5,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 4.88,
+            "d3": 11.61,
+            "d5": 12.68,
+            "as_of": "2026-09-01"
+          }
+        },
+        {
+          "ticker": "BA",
+          "date": "2026-08-25",
+          "reason": "lynch_gate",
+          "close": 179.11,
+          "gain_pct": 8.63,
+          "volume_ratio": 3.86,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 9.19,
+            "d3": 28.21,
+            "d5": 34.93,
+            "as_of": "2026-09-01"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 2.69,
+        "d3": 4.28,
+        "d5": 6.13,
+        "n": 4,
+        "rows": 6
+      }
+    },
+    {
+      "date": "2026-08-24",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 8,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "F",
+          "date": "2026-08-24",
+          "rank": 1,
+          "score": 8,
+          "verdict": "A",
+          "source": "claude",
+          "close": 57.47,
+          "gain_pct": 7.53,
+          "volume_ratio": 2.68,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.24,
+            "d3": 7.2,
+            "d5": 6.51,
+            "as_of": "2026-08-31"
+          }
+        },
+        {
+          "ticker": "DE",
+          "date": "2026-08-24",
+          "rank": 2,
+          "score": 3.4,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 165.14,
+          "gain_pct": 5.63,
+          "volume_ratio": 3.51,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 5.09,
+            "d3": 10.64,
+            "d5": 17.13,
+            "as_of": "2026-08-31"
+          }
+        },
+        {
+          "ticker": "DECK",
+          "date": "2026-08-24",
+          "rank": 3,
+          "score": 2.2,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 75.58,
+          "gain_pct": 5.55,
+          "volume_ratio": 2.49,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 5.6,
+            "d3": 10.22,
+            "d5": 8.12,
+            "as_of": "2026-08-31"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "BA",
+          "date": "2026-08-24",
+          "reason": "lynch_gate",
+          "close": 164.88,
+          "gain_pct": 8.83,
+          "volume_ratio": 3.92,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 8.63,
+            "d3": 28.21,
+            "d5": 49.01,
+            "as_of": "2026-08-31"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 3.48,
+        "d3": 9.35,
+        "d5": 10.59,
+        "n": 3,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-21",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 6.9,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "MCHP",
+          "date": "2026-08-21",
+          "rank": 1,
+          "score": 6.9,
+          "verdict": "B",
+          "source": "claude",
+          "close": 97.21,
+          "gain_pct": 7.45,
+          "volume_ratio": 4.4,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.71,
+            "d3": -4.77,
+            "d5": -4.94,
+            "as_of": "2026-08-28"
+          }
+        },
+        {
+          "ticker": "GS",
+          "date": "2026-08-21",
+          "rank": 2,
+          "score": 5.4,
+          "verdict": "C",
+          "source": "claude",
+          "close": 114.13,
+          "gain_pct": 6.76,
+          "volume_ratio": 2.79,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.8,
+            "d3": -2.23,
+            "d5": -3.02,
+            "as_of": "2026-08-28"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "SLB",
+          "date": "2026-08-21",
+          "reason": "lynch_gate",
+          "close": 72.88,
+          "gain_pct": 6.04,
+          "volume_ratio": 2.94,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -1.65,
+            "d3": 1.24,
+            "d5": -0.24,
+            "as_of": "2026-08-28"
+          }
+        },
+        {
+          "ticker": "BA",
+          "date": "2026-08-21",
+          "reason": "lynch_gate",
+          "close": 151.5,
+          "gain_pct": 5.31,
+          "volume_ratio": 3.97,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 8.83,
+            "d3": 29.09,
+            "d5": 51.59,
+            "as_of": "2026-08-28"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 0.05,
+        "d3": -3.5,
+        "d5": -3.98,
+        "n": 2,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-08-20",
+      "type": "evening",
+      "bursts": 3,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 6.7,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "USB",
+          "date": "2026-08-20",
+          "rank": 1,
+          "score": 6.7,
+          "verdict": "B",
+          "source": "claude",
+          "close": 163.1,
+          "gain_pct": 7.27,
+          "volume_ratio": 3.79,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -1.35,
+            "d3": -0.16,
+            "d5": -6.3,
+            "as_of": "2026-08-27"
+          }
+        },
+        {
+          "ticker": "WMT",
+          "date": "2026-08-20",
+          "rank": 2,
+          "score": 5.3,
+          "verdict": "C",
+          "source": "claude",
+          "close": 66.52,
+          "gain_pct": 6.58,
+          "volume_ratio": 3.84,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.5,
+            "d3": 1.04,
+            "d5": 7.9,
+            "as_of": "2026-08-27"
+          }
+        },
+        {
+          "ticker": "BLK",
+          "date": "2026-08-20",
+          "rank": 3,
+          "score": 5.1,
+          "verdict": "C",
+          "source": "claude",
+          "close": 33.96,
+          "gain_pct": 6.26,
+          "volume_ratio": 4.15,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 3.86,
+            "d3": 9.05,
+            "d5": 11.19,
+            "as_of": "2026-08-27"
+          }
+        }
+      ],
+      "gated": [],
+      "forward_returns": {
+        "d1": 1.25,
+        "d3": 4.45,
+        "d5": 2.44,
+        "n": 2,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-19",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 7.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "STZ",
+          "date": "2026-08-19",
+          "rank": 1,
+          "score": 7.4,
+          "verdict": "B+",
+          "source": "claude",
+          "close": 134.98,
+          "gain_pct": 7.14,
+          "volume_ratio": 4.8,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.62,
+            "d3": -0.0,
+            "d5": 7.07,
+            "as_of": "2026-08-26"
+          }
+        },
+        {
+          "ticker": "MCO",
+          "date": "2026-08-19",
+          "rank": 2,
+          "score": 3.4,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 125.1,
+          "gain_pct": 5.75,
+          "volume_ratio": 2.51,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": false,
+            "Y": true,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -6.46,
+            "d3": -14.17,
+            "d5": -19.76,
+            "as_of": "2026-08-26"
+          }
+        },
+        {
+          "ticker": "WMT",
+          "date": "2026-08-19",
+          "rank": 3,
+          "score": 3.3,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 62.41,
+          "gain_pct": 5.83,
+          "volume_ratio": 3.27,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 6.58,
+            "d3": 8.75,
+            "d5": 11.92,
+            "as_of": "2026-08-26"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "HPE",
+          "date": "2026-08-19",
+          "reason": "lynch_gate",
+          "close": 76.18,
+          "gain_pct": 4.84,
+          "volume_ratio": 3.11,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -3.09,
+            "d3": -9.43,
+            "d5": -13.37,
+            "as_of": "2026-08-26"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 2.98,
+        "d3": 4.38,
+        "d5": 9.5,
+        "n": 2,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-18",
+      "type": "evening",
+      "bursts": 2,
+      "passed_gate": 0,
+      "scored": 0,
+      "shortlist_size": 0,
+      "score_cap": 25,
+      "top_score": null,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [],
+      "gated": [
+        {
+          "ticker": "BA",
+          "date": "2026-08-18",
+          "reason": "lynch_gate",
+          "close": 144.03,
+          "gain_pct": 6.55,
+          "volume_ratio": 2.95,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -0.22,
+            "d3": 5.19,
+            "d5": 24.36,
+            "as_of": "2026-08-25"
+          }
+        },
+        {
+          "ticker": "HPE",
+          "date": "2026-08-18",
+          "reason": "lynch_gate",
+          "close": 72.66,
+          "gain_pct": 5.56,
+          "volume_ratio": 3.1,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 4.84,
+            "d3": -1.59,
+            "d5": -7.3,
+            "as_of": "2026-08-25"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n": 0,
+        "rows": 0
+      }
+    },
+    {
+      "date": "2026-08-17",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 3.8,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "ADBE",
+          "date": "2026-08-17",
+          "rank": 1,
+          "score": 3.8,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 163.52,
+          "gain_pct": 6.12,
+          "volume_ratio": 1.81,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": false,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -4.31,
+            "d3": -10.23,
+            "d5": -15.66,
+            "as_of": "2026-08-24"
+          }
+        },
+        {
+          "ticker": "MCO",
+          "date": "2026-08-17",
+          "rank": 2,
+          "score": 3.8,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 118.29,
+          "gain_pct": 6.44,
+          "volume_ratio": 3.03,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": false,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 0.01,
+            "d3": -1.07,
+            "d5": -9.23,
+            "as_of": "2026-08-24"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "RTX",
+          "date": "2026-08-17",
+          "reason": "lynch_gate",
+          "close": 218.81,
+          "gain_pct": 7.63,
+          "volume_ratio": 4.7,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.62,
+            "d3": 2.13,
+            "d5": 2.46,
+            "as_of": "2026-08-24"
+          }
+        },
+        {
+          "ticker": "HPE",
+          "date": "2026-08-17",
+          "reason": "lynch_gate",
+          "close": 68.84,
+          "gain_pct": 5.55,
+          "volume_ratio": 3.08,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 5.56,
+            "d3": 7.24,
+            "d5": 0.23,
+            "as_of": "2026-08-24"
+          }
+        },
+        {
+          "ticker": "SLB",
+          "date": "2026-08-17",
+          "reason": "lynch_gate",
+          "close": 68.84,
+          "gain_pct": 5.47,
+          "volume_ratio": 4.46,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.21,
+            "d3": -0.17,
+            "d5": 4.12,
+            "as_of": "2026-08-24"
+          }
+        },
+        {
+          "ticker": "UNH",
+          "date": "2026-08-17",
+          "reason": "lynch_gate",
+          "close": 142.42,
+          "gain_pct": 6.36,
+          "volume_ratio": 2.11,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 3.02,
+            "d3": 6.08,
+            "d5": 10.49,
+            "as_of": "2026-08-24"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": -2.15,
+        "d3": -5.65,
+        "d5": -12.45,
+        "n": 2,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-08-14",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 7.6,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "DECK",
+          "date": "2026-08-14",
+          "rank": 1,
+          "score": 7.6,
+          "verdict": "B+",
+          "source": "claude",
+          "close": 71.15,
+          "gain_pct": 5.57,
+          "volume_ratio": 2.34,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.14,
+            "d3": 0.09,
+            "d5": 0.63,
+            "as_of": "2026-08-21"
+          }
+        },
+        {
+          "ticker": "APO",
+          "date": "2026-08-14",
+          "rank": 2,
+          "score": 6.6,
+          "verdict": "B",
+          "source": "claude",
+          "close": 122.62,
+          "gain_pct": 7.7,
+          "volume_ratio": 1.82,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.17,
+            "d3": -0.5,
+            "d5": -0.86,
+            "as_of": "2026-08-21"
+          }
+        },
+        {
+          "ticker": "RTX",
+          "date": "2026-08-14",
+          "rank": 3,
+          "score": 5.8,
+          "verdict": "C",
+          "source": "claude",
+          "close": 203.29,
+          "gain_pct": 5.85,
+          "volume_ratio": 4.81,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 7.63,
+            "d3": 9.51,
+            "d5": 9.78,
+            "as_of": "2026-08-21"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "EOG",
+          "date": "2026-08-14",
+          "reason": "lynch_gate",
+          "close": 73.52,
+          "gain_pct": 5.8,
+          "volume_ratio": 2.68,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 0.34,
+            "d3": 7.34,
+            "d5": 2.05,
+            "as_of": "2026-08-21"
+          }
+        },
+        {
+          "ticker": "SLB",
+          "date": "2026-08-14",
+          "reason": "lynch_gate",
+          "close": 65.27,
+          "gain_pct": 5.53,
+          "volume_ratio": 4.57,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 5.47,
+            "d3": 5.53,
+            "d5": 11.66,
+            "as_of": "2026-08-21"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": -0.01,
+        "d3": -0.21,
+        "d5": -0.11,
+        "n": 2,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-13",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 8.5,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "UBER",
+          "date": "2026-08-13",
+          "rank": 1,
+          "score": 8.5,
+          "verdict": "A",
+          "source": "claude",
+          "close": 101.02,
+          "gain_pct": 8.74,
+          "volume_ratio": 3.95,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": false,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 2.16,
+            "d3": 6.41,
+            "d5": 11.4,
+            "as_of": "2026-08-20"
+          }
+        },
+        {
+          "ticker": "SLB",
+          "date": "2026-08-13",
+          "rank": 2,
+          "score": 5.8,
+          "verdict": "C",
+          "source": "claude",
+          "close": 61.85,
+          "gain_pct": 7.65,
+          "volume_ratio": 3.17,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 5.53,
+            "d3": 11.54,
+            "d5": 11.12,
+            "as_of": "2026-08-20"
+          }
+        },
+        {
+          "ticker": "EOG",
+          "date": "2026-08-13",
+          "rank": 3,
+          "score": 4.9,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 69.48,
+          "gain_pct": 5.62,
+          "volume_ratio": 2.54,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 5.8,
+            "d3": 7.03,
+            "d5": 9.82,
+            "as_of": "2026-08-20"
+          }
+        },
+        {
+          "ticker": "ISRG",
+          "date": "2026-08-13",
+          "rank": 4,
+          "score": 4.4,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 122.9,
+          "gain_pct": 6.16,
+          "volume_ratio": 2.74,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": false,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -3.51,
+            "d3": -7.55,
+            "d5": -8.72,
+            "as_of": "2026-08-20"
+          }
+        },
+        {
+          "ticker": "FCX",
+          "date": "2026-08-13",
+          "rank": 5,
+          "score": 2.5,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 47.47,
+          "gain_pct": 5.68,
+          "volume_ratio": 2.7,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.21,
+            "d3": -1.13,
+            "d5": 1.0,
+            "as_of": "2026-08-20"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "MSFT",
+          "date": "2026-08-13",
+          "reason": "lynch_gate",
+          "close": 115.74,
+          "gain_pct": 5.29,
+          "volume_ratio": 2.28,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -0.41,
+            "d3": -4.81,
+            "d5": -9.37,
+            "as_of": "2026-08-20"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 2.04,
+        "d3": 3.26,
+        "d5": 4.92,
+        "n": 5,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-08-12",
+      "type": "evening",
+      "bursts": 9,
+      "passed_gate": 7,
+      "scored": 7,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 8,
+      "fallbacks": 7,
+      "model": "claude-sonnet-4-6",
+      "status": "degraded",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "TSLA",
+          "date": "2026-08-12",
+          "rank": 1,
+          "score": 8,
+          "verdict": "unscored",
+          "source": "fallback",
+          "close": 95.56,
+          "gain_pct": 5.78,
+          "volume_ratio": 2.65,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 1.53,
+            "d3": 9.93,
+            "d5": 14.08,
+            "as_of": "2026-08-19"
+          }
+        },
+        {
+          "ticker": "AIG",
+          "date": "2026-08-12",
+          "rank": 2,
+          "score": 7,
+          "verdict": "unscored",
+          "source": "fallback",
+          "close": 26.52,
+          "gain_pct": 9.05,
+          "volume_ratio": 4.7,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 1.78,
+            "d3": 6.9,
+            "d5": 14.01,
+            "as_of": "2026-08-19"
+          }
+        },
+        {
+          "ticker": "ELV",
+          "date": "2026-08-12",
+          "rank": 3,
+          "score": 7,
+          "verdict": "unscored",
+          "source": "fallback",
+          "close": 117.3,
+          "gain_pct": 5.85,
+          "volume_ratio": 3.6,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.74,
+            "d3": 2.86,
+            "d5": 2.55,
+            "as_of": "2026-08-19"
+          }
+        },
+        {
+          "ticker": "MSFT",
+          "date": "2026-08-12",
+          "rank": 4,
+          "score": 5,
+          "verdict": "unscored",
+          "source": "fallback",
+          "close": 109.92,
+          "gain_pct": 5.83,
+          "volume_ratio": 1.99,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 5.29,
+            "d3": 2.41,
+            "d5": -3.92,
+            "as_of": "2026-08-19"
+          }
+        },
+        {
+          "ticker": "ODFL",
+          "date": "2026-08-12",
+          "rank": 5,
+          "score": 3,
+          "verdict": "unscored",
+          "source": "fallback",
+          "close": 27.01,
+          "gain_pct": 9.05,
+          "volume_ratio": 3.96,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 2.43,
+            "d3": 5.03,
+            "d5": 12.51,
+            "as_of": "2026-08-19"
+          }
+        },
+        {
+          "ticker": "PEP",
+          "date": "2026-08-12",
+          "rank": 6,
+          "score": 3,
+          "verdict": "unscored",
+          "source": "fallback",
+          "close": 146.61,
+          "gain_pct": 7.1,
+          "volume_ratio": 3.58,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 3.83,
+            "d3": 5.93,
+            "d5": 9.72,
+            "as_of": "2026-08-19"
+          }
+        },
+        {
+          "ticker": "DE",
+          "date": "2026-08-12",
+          "rank": 7,
+          "score": 3,
+          "verdict": "unscored",
+          "source": "fallback",
+          "close": 146.84,
+          "gain_pct": 6.44,
+          "volume_ratio": 2.89,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 5.89,
+            "d3": 7.1,
+            "d5": 5.99,
+            "as_of": "2026-08-19"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "IBM",
+          "date": "2026-08-12",
+          "reason": "lynch_gate",
+          "close": 86.84,
+          "gain_pct": 7.84,
+          "volume_ratio": 3.98,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 1.02,
+            "d3": 4.79,
+            "d5": 6.91,
+            "as_of": "2026-08-19"
+          }
+        },
+        {
+          "ticker": "CSCO",
+          "date": "2026-08-12",
+          "reason": "lynch_gate",
+          "close": 126.5,
+          "gain_pct": 4.8,
+          "volume_ratio": 1.51,
+          "lynch_passes": 0,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": false,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 2.47,
+            "d3": 1.87,
+            "d5": 0.0,
+            "as_of": "2026-08-19"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 2.33,
+        "d3": 5.53,
+        "d5": 6.68,
+        "n": 4,
+        "rows": 7
+      }
+    },
+    {
+      "date": "2026-08-11",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 8.7,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "ODFL",
+          "date": "2026-08-11",
+          "rank": 1,
+          "score": 8.7,
+          "verdict": "A",
+          "source": "claude",
+          "close": 24.77,
+          "gain_pct": 7.25,
+          "volume_ratio": 2.56,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 9.05,
+            "d3": 12.09,
+            "d5": 18.45,
+            "as_of": "2026-08-18"
+          }
+        },
+        {
+          "ticker": "DDOG",
+          "date": "2026-08-11",
+          "rank": 2,
+          "score": 5.1,
+          "verdict": "C",
+          "source": "claude",
+          "close": 29.2,
+          "gain_pct": 6.03,
+          "volume_ratio": 2.06,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": false,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -1.7,
+            "d3": -4.91,
+            "d5": -3.81,
+            "as_of": "2026-08-18"
+          }
+        },
+        {
+          "ticker": "WDAY",
+          "date": "2026-08-11",
+          "rank": 3,
+          "score": 4.3,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 104.38,
+          "gain_pct": 7.09,
+          "volume_ratio": 3.97,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 2.06,
+            "d3": 9.2,
+            "d5": 16.89,
+            "as_of": "2026-08-18"
+          }
+        },
+        {
+          "ticker": "UNH",
+          "date": "2026-08-11",
+          "rank": 4,
+          "score": 3.8,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 127.43,
+          "gain_pct": 6.45,
+          "volume_ratio": 2.54,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -0.37,
+            "d3": 5.08,
+            "d5": 15.14,
+            "as_of": "2026-08-18"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "WBD",
+          "date": "2026-08-11",
+          "reason": "lynch_gate",
+          "close": 55.5,
+          "gain_pct": 6.25,
+          "volume_ratio": 1.97,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.36,
+            "d3": -0.97,
+            "d5": -4.64,
+            "as_of": "2026-08-18"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 2.33,
+        "d3": 4.09,
+        "d5": 9.93,
+        "n": 3,
+        "rows": 4
+      }
+    },
+    {
+      "date": "2026-08-10",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 6.3,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "QCOM",
+          "date": "2026-08-10",
+          "rank": 1,
+          "score": 6.3,
+          "verdict": "B",
+          "source": "claude",
+          "close": 29.98,
+          "gain_pct": 6.04,
+          "volume_ratio": 3.16,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.65,
+            "d3": 1.24,
+            "d5": -0.96,
+            "as_of": "2026-08-17"
+          }
+        },
+        {
+          "ticker": "PH",
+          "date": "2026-08-10",
+          "rank": 2,
+          "score": 5.8,
+          "verdict": "C",
+          "source": "claude",
+          "close": 61.95,
+          "gain_pct": 7.77,
+          "volume_ratio": 4.33,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -2.41,
+            "d3": -3.23,
+            "d5": -2.25,
+            "as_of": "2026-08-17"
+          }
+        },
+        {
+          "ticker": "WDAY",
+          "date": "2026-08-10",
+          "rank": 3,
+          "score": 5.3,
+          "verdict": "C",
+          "source": "claude",
+          "close": 97.47,
+          "gain_pct": 6.96,
+          "volume_ratio": 2.67,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 7.09,
+            "d3": 12.75,
+            "d5": 21.88,
+            "as_of": "2026-08-17"
+          }
+        },
+        {
+          "ticker": "DE",
+          "date": "2026-08-10",
+          "rank": 4,
+          "score": 4.1,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 136.99,
+          "gain_pct": 6.99,
+          "volume_ratio": 2.68,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 0.7,
+            "d3": 13.5,
+            "d5": 14.79,
+            "as_of": "2026-08-17"
+          }
+        },
+        {
+          "ticker": "RTX",
+          "date": "2026-08-10",
+          "rank": 5,
+          "score": 2.2,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 188.55,
+          "gain_pct": 4.95,
+          "volume_ratio": 2.11,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 1.21,
+            "d3": 1.86,
+            "d5": 16.05,
+            "as_of": "2026-08-17"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "CSCO",
+          "date": "2026-08-10",
+          "reason": "lynch_gate",
+          "close": 117.57,
+          "gain_pct": 7.02,
+          "volume_ratio": 2.11,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": false,
+            "Y": true,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 2.66,
+            "d3": 10.25,
+            "d5": 9.61,
+            "as_of": "2026-08-17"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 1.31,
+        "d3": 3.16,
+        "d5": 8.68,
+        "n": 4,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-08-07",
+      "type": "evening",
+      "bursts": 2,
+      "passed_gate": 1,
+      "scored": 1,
+      "shortlist_size": 1,
+      "score_cap": 25,
+      "top_score": 3.9,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "DE",
+          "date": "2026-08-07",
+          "rank": 1,
+          "score": 3.9,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 128.04,
+          "gain_pct": 5.8,
+          "volume_ratio": 2.63,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 6.99,
+            "d3": 14.68,
+            "d5": 21.24,
+            "as_of": "2026-08-14"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "MA",
+          "date": "2026-08-07",
+          "reason": "lynch_gate",
+          "close": 152.89,
+          "gain_pct": 9.01,
+          "volume_ratio": 4.41,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 0.99,
+            "d3": 4.78,
+            "d5": 7.36,
+            "as_of": "2026-08-14"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 6.99,
+        "d3": 14.68,
+        "d5": 21.24,
+        "n": 1,
+        "rows": 1
+      }
+    },
+    {
+      "date": "2026-08-06",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 6.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "MA",
+          "date": "2026-08-06",
+          "rank": 1,
+          "score": 6.1,
+          "verdict": "B",
+          "source": "claude",
+          "close": 140.26,
+          "gain_pct": 6.29,
+          "volume_ratio": 4.48,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 9.01,
+            "d3": 11.2,
+            "d5": 20.92,
+            "as_of": "2026-08-13"
+          }
+        },
+        {
+          "ticker": "ALLY",
+          "date": "2026-08-06",
+          "rank": 2,
+          "score": 3.2,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 108.35,
+          "gain_pct": 6.59,
+          "volume_ratio": 2.35,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -1.16,
+            "d3": 2.96,
+            "d5": 6.96,
+            "as_of": "2026-08-13"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "WBD",
+          "date": "2026-08-06",
+          "reason": "lynch_gate",
+          "close": 52.16,
+          "gain_pct": 8.89,
+          "volume_ratio": 3.9,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.19,
+            "d3": 6.4,
+            "d5": 7.68,
+            "as_of": "2026-08-13"
+          }
+        },
+        {
+          "ticker": "APO",
+          "date": "2026-08-06",
+          "reason": "lynch_gate",
+          "close": 114.01,
+          "gain_pct": 6.91,
+          "volume_ratio": 3.3,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 0.17,
+            "d3": 0.91,
+            "d5": -0.14,
+            "as_of": "2026-08-13"
+          }
+        },
+        {
+          "ticker": "FSLR",
+          "date": "2026-08-06",
+          "reason": "lynch_gate",
+          "close": 71.45,
+          "gain_pct": 5.48,
+          "volume_ratio": 4.19,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": false,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.18,
+            "d3": -1.08,
+            "d5": 0.1,
+            "as_of": "2026-08-13"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": -1.16,
+        "d3": 2.96,
+        "d5": 6.96,
+        "n": 1,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-08-05",
+      "type": "evening",
+      "bursts": 7,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 8.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "MA",
+          "date": "2026-08-05",
+          "rank": 1,
+          "score": 8.1,
+          "verdict": "A",
+          "source": "claude",
+          "close": 131.96,
+          "gain_pct": 6.85,
+          "volume_ratio": 4.56,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 6.29,
+            "d3": 17.01,
+            "d5": 21.4,
+            "as_of": "2026-08-12"
+          }
+        },
+        {
+          "ticker": "BA",
+          "date": "2026-08-05",
+          "rank": 2,
+          "score": 6.5,
+          "verdict": "B",
+          "source": "claude",
+          "close": 120.12,
+          "gain_pct": 6.25,
+          "volume_ratio": 3.29,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 6.4,
+            "d3": 6.07,
+            "d5": 5.81,
+            "as_of": "2026-08-12"
+          }
+        },
+        {
+          "ticker": "F",
+          "date": "2026-08-05",
+          "rank": 3,
+          "score": 3.6,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 52.23,
+          "gain_pct": 5.54,
+          "volume_ratio": 2.78,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.26,
+            "d3": -1.08,
+            "d5": 1.52,
+            "as_of": "2026-08-12"
+          }
+        },
+        {
+          "ticker": "FSLR",
+          "date": "2026-08-05",
+          "rank": 4,
+          "score": 3,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 67.73,
+          "gain_pct": 4.79,
+          "volume_ratio": 4.25,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": false,
+            "Y": true,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 5.48,
+            "d3": 6.49,
+            "d5": 4.65,
+            "as_of": "2026-08-12"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "WBD",
+          "date": "2026-08-05",
+          "reason": "lynch_gate",
+          "close": 47.9,
+          "gain_pct": 8.74,
+          "volume_ratio": 3.75,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 8.89,
+            "d3": 9.04,
+            "d5": 15.45,
+            "as_of": "2026-08-12"
+          }
+        },
+        {
+          "ticker": "BAC",
+          "date": "2026-08-05",
+          "reason": "lynch_gate",
+          "close": 190.12,
+          "gain_pct": 6.72,
+          "volume_ratio": 4.39,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 4.62,
+            "d3": 6.72,
+            "d5": 14.0,
+            "as_of": "2026-08-12"
+          }
+        },
+        {
+          "ticker": "PEP",
+          "date": "2026-08-05",
+          "reason": "lynch_gate",
+          "close": 143.48,
+          "gain_pct": 6.5,
+          "volume_ratio": 2.23,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 1.27,
+            "d3": -4.69,
+            "d5": 2.18,
+            "as_of": "2026-08-12"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 4.32,
+        "d3": 7.33,
+        "d5": 9.58,
+        "n": 3,
+        "rows": 4
+      }
+    },
+    {
+      "date": "2026-08-04",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 7.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "LYB",
+          "date": "2026-08-04",
+          "rank": 1,
+          "score": 7.4,
+          "verdict": "B+",
+          "source": "claude",
+          "close": 97.8,
+          "gain_pct": 5.85,
+          "volume_ratio": 2.47,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 4.44,
+            "d3": 7.55,
+            "d5": 13.48,
+            "as_of": "2026-08-11"
+          }
+        },
+        {
+          "ticker": "FSLR",
+          "date": "2026-08-04",
+          "rank": 2,
+          "score": 6,
+          "verdict": "B",
+          "source": "claude",
+          "close": 64.64,
+          "gain_pct": 5.34,
+          "volume_ratio": 4.34,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": false,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 4.79,
+            "d3": 10.74,
+            "d5": 9.34,
+            "as_of": "2026-08-11"
+          }
+        },
+        {
+          "ticker": "WBD",
+          "date": "2026-08-04",
+          "rank": 3,
+          "score": 5.4,
+          "verdict": "C",
+          "source": "claude",
+          "close": 44.05,
+          "gain_pct": 6.39,
+          "volume_ratio": 3.74,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 8.74,
+            "d3": 18.18,
+            "d5": 25.99,
+            "as_of": "2026-08-11"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "BAC",
+          "date": "2026-08-04",
+          "reason": "lynch_gate",
+          "close": 178.15,
+          "gain_pct": 6.03,
+          "volume_ratio": 3.58,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 6.72,
+            "d3": 12.93,
+            "d5": 18.28,
+            "as_of": "2026-08-11"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 5.99,
+        "d3": 12.16,
+        "d5": 16.27,
+        "n": 3,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-03",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 1,
+      "scored": 1,
+      "shortlist_size": 1,
+      "score_cap": 25,
+      "top_score": 7.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "BAC",
+          "date": "2026-08-03",
+          "rank": 1,
+          "score": 7.4,
+          "verdict": "B+",
+          "source": "claude",
+          "close": 168.02,
+          "gain_pct": 8.07,
+          "volume_ratio": 3.58,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 6.03,
+            "d3": 18.38,
+            "d5": 20.75,
+            "as_of": "2026-08-10"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "CSCO",
+          "date": "2026-08-03",
+          "reason": "lynch_gate",
+          "close": 115.51,
+          "gain_pct": 6.13,
+          "volume_ratio": 1.83,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": false,
+            "Y": true,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -2.6,
+            "d3": -2.3,
+            "d5": 1.79,
+            "as_of": "2026-08-10"
+          }
+        },
+        {
+          "ticker": "DUK",
+          "date": "2026-08-03",
+          "reason": "lynch_gate",
+          "close": 114.01,
+          "gain_pct": 7.35,
+          "volume_ratio": 3.38,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -0.46,
+            "d3": -2.43,
+            "d5": -4.32,
+            "as_of": "2026-08-10"
+          }
+        },
+        {
+          "ticker": "MSFT",
+          "date": "2026-08-03",
+          "reason": "lynch_gate",
+          "close": 104.89,
+          "gain_pct": 6.52,
+          "volume_ratio": 3.19,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -0.51,
+            "d3": -1.1,
+            "d5": -1.34,
+            "as_of": "2026-08-10"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 6.03,
+        "d3": 18.38,
+        "d5": 20.75,
+        "n": 1,
+        "rows": 1
+      }
+    },
+    {
+      "date": "2026-07-31",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 6.2,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "WM",
+          "date": "2026-07-31",
+          "rank": 1,
+          "score": 6.2,
+          "verdict": "B",
+          "source": "claude",
+          "close": 196.09,
+          "gain_pct": 7.46,
+          "volume_ratio": 2.19,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.87,
+            "d3": 3.3,
+            "d5": 4.0,
+            "as_of": "2026-08-07"
+          }
+        },
+        {
+          "ticker": "DUK",
+          "date": "2026-07-31",
+          "rank": 2,
+          "score": 3.3,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 106.2,
+          "gain_pct": 6.72,
+          "volume_ratio": 3.39,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 7.35,
+            "d3": 5.33,
+            "d5": 4.92,
+            "as_of": "2026-08-07"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "ENTG",
+          "date": "2026-07-31",
+          "reason": "lynch_gate",
+          "close": 78.47,
+          "gain_pct": 6,
+          "volume_ratio": 3.53,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 1.08,
+            "d3": 4.48,
+            "d5": 5.87,
+            "as_of": "2026-08-07"
+          }
+        },
+        {
+          "ticker": "PFE",
+          "date": "2026-07-31",
+          "reason": "lynch_gate",
+          "close": 44.04,
+          "gain_pct": 6.09,
+          "volume_ratio": 3.31,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": false,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.11,
+            "d3": -0.27,
+            "d5": 5.17,
+            "as_of": "2026-08-07"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 0.87,
+        "d3": 3.3,
+        "d5": 4.0,
+        "n": 1,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-07-30",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 4.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "HUBS",
+          "date": "2026-07-30",
+          "rank": 1,
+          "score": 4.4,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 22.02,
+          "gain_pct": 8.02,
+          "volume_ratio": 3.57,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 2.63,
+            "d3": 0.25,
+            "d5": -1.6,
+            "as_of": "2026-08-06"
+          }
+        },
+        {
+          "ticker": "DHI",
+          "date": "2026-07-30",
+          "rank": 2,
+          "score": 4.1,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 43.51,
+          "gain_pct": 6.21,
+          "volume_ratio": 2.53,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -2.89,
+            "d3": -5.6,
+            "d5": -5.1,
+            "as_of": "2026-08-06"
+          }
+        },
+        {
+          "ticker": "ENTG",
+          "date": "2026-07-30",
+          "rank": 3,
+          "score": 3.8,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 74.03,
+          "gain_pct": 6.84,
+          "volume_ratio": 3.52,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 6.0,
+            "d3": 9.3,
+            "d5": 12.82,
+            "as_of": "2026-08-06"
+          }
+        },
+        {
+          "ticker": "DUK",
+          "date": "2026-07-30",
+          "rank": 4,
+          "score": 3.5,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 99.51,
+          "gain_pct": 6.25,
+          "volume_ratio": 3.36,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 6.72,
+            "d3": 14.04,
+            "d5": 11.79,
+            "as_of": "2026-08-06"
+          }
+        },
+        {
+          "ticker": "FDX",
+          "date": "2026-07-30",
+          "rank": 5,
+          "score": 3.2,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 98.42,
+          "gain_pct": 5.9,
+          "volume_ratio": 2.44,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 1.09,
+            "d3": 3.39,
+            "d5": 6.18,
+            "as_of": "2026-08-06"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "AIG",
+          "date": "2026-07-30",
+          "reason": "lynch_gate",
+          "close": 24.76,
+          "gain_pct": 5.41,
+          "volume_ratio": 2.59,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -0.66,
+            "d3": -0.71,
+            "d5": -1.15,
+            "as_of": "2026-08-06"
+          }
+        },
+        {
+          "ticker": "STZ",
+          "date": "2026-07-30",
+          "reason": "lynch_gate",
+          "close": 112.7,
+          "gain_pct": 6.16,
+          "volume_ratio": 2.45,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -0.4,
+            "d3": 0.27,
+            "d5": 2.84,
+            "as_of": "2026-08-06"
+          }
+        },
+        {
+          "ticker": "QCOM",
+          "date": "2026-07-30",
+          "reason": "lynch_gate",
+          "close": 27.7,
+          "gain_pct": 4.65,
+          "volume_ratio": 2.39,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 0.3,
+            "d3": 0.73,
+            "d5": 2.02,
+            "as_of": "2026-08-06"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 3.28,
+        "d3": 5.91,
+        "d5": 6.5,
+        "n": 3,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-07-29",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 7.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "FCX",
+          "date": "2026-07-29",
+          "rank": 1,
+          "score": 7.4,
+          "verdict": "B+",
+          "source": "claude",
+          "close": 40.87,
+          "gain_pct": 8.46,
+          "volume_ratio": 4.11,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 4.03,
+            "d3": 6.09,
+            "d5": 8.08,
+            "as_of": "2026-08-05"
+          }
+        },
+        {
+          "ticker": "XOM",
+          "date": "2026-07-29",
+          "rank": 2,
+          "score": 4.9,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 170.26,
+          "gain_pct": 5.63,
+          "volume_ratio": 3.9,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.89,
+            "d3": -6.89,
+            "d5": -9.06,
+            "as_of": "2026-08-05"
+          }
+        },
+        {
+          "ticker": "HUBS",
+          "date": "2026-07-29",
+          "rank": 3,
+          "score": 4.5,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 20.38,
+          "gain_pct": 5.96,
+          "volume_ratio": 3.52,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 8.02,
+            "d3": 9.84,
+            "d5": 6.25,
+            "as_of": "2026-08-05"
+          }
+        },
+        {
+          "ticker": "AIG",
+          "date": "2026-07-29",
+          "rank": 4,
+          "score": 3.2,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 23.49,
+          "gain_pct": 5.9,
+          "volume_ratio": 2.52,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 5.41,
+            "d3": 4.77,
+            "d5": 4.82,
+            "as_of": "2026-08-05"
+          }
+        },
+        {
+          "ticker": "DDOG",
+          "date": "2026-07-29",
+          "rank": 5,
+          "score": 2.5,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 26.96,
+          "gain_pct": 5.94,
+          "volume_ratio": 1.92,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": false,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 2.17,
+            "d3": 1.95,
+            "d5": 2.06,
+            "as_of": "2026-08-05"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "STZ",
+          "date": "2026-07-29",
+          "reason": "lynch_gate",
+          "close": 106.16,
+          "gain_pct": 5.89,
+          "volume_ratio": 2.1,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 6.16,
+            "d3": 6.0,
+            "d5": 7.66,
+            "as_of": "2026-08-05"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 4.91,
+        "d3": 5.66,
+        "d5": 5.3,
+        "n": 4,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-07-28",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 6,
+      "scored": 6,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 6.7,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "ELV",
+          "date": "2026-07-28",
+          "rank": 1,
+          "score": 6.7,
+          "verdict": "B",
+          "source": "claude",
+          "close": 105.32,
+          "gain_pct": 9.09,
+          "volume_ratio": 4.09,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.12,
+            "d3": 5.06,
+            "d5": 4.09,
+            "as_of": "2026-08-04"
+          }
+        },
+        {
+          "ticker": "CSCO",
+          "date": "2026-07-28",
+          "rank": 2,
+          "score": 6.1,
+          "verdict": "B",
+          "source": "claude",
+          "close": 107.25,
+          "gain_pct": 6.78,
+          "volume_ratio": 4.66,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": false,
+            "Y": true,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.48,
+            "d3": 1.48,
+            "d5": 4.9,
+            "as_of": "2026-08-04"
+          }
+        },
+        {
+          "ticker": "CCL",
+          "date": "2026-07-28",
+          "rank": 3,
+          "score": 4.4,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 85.4,
+          "gain_pct": 7.84,
+          "volume_ratio": 4.67,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.96,
+            "d3": -3.07,
+            "d5": -6.41,
+            "as_of": "2026-08-04"
+          }
+        },
+        {
+          "ticker": "WMT",
+          "date": "2026-07-28",
+          "rank": 4,
+          "score": 3.8,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 47.3,
+          "gain_pct": 5.64,
+          "volume_ratio": 2.58,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": false,
+            "Y": true,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 1.33,
+            "d3": 5.23,
+            "d5": 6.93,
+            "as_of": "2026-08-04"
+          }
+        },
+        {
+          "ticker": "ABT",
+          "date": "2026-07-28",
+          "rank": 5,
+          "score": 3.3,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 129.21,
+          "gain_pct": 7.05,
+          "volume_ratio": 3.88,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -0.85,
+            "d3": 1.63,
+            "d5": -1.82,
+            "as_of": "2026-08-04"
+          }
+        },
+        {
+          "ticker": "APP",
+          "date": "2026-07-28",
+          "rank": 6,
+          "score": 2.4,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 74.23,
+          "gain_pct": 6.99,
+          "volume_ratio": 2.51,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 4.37,
+            "d3": 1.97,
+            "d5": 1.97,
+            "as_of": "2026-08-04"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "FDX",
+          "date": "2026-07-28",
+          "reason": "lynch_gate",
+          "close": 91.45,
+          "gain_pct": 6.58,
+          "volume_ratio": 3.28,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 1.62,
+            "d3": 8.8,
+            "d5": 11.27,
+            "as_of": "2026-08-04"
+          }
+        },
+        {
+          "ticker": "STZ",
+          "date": "2026-07-28",
+          "reason": "lynch_gate",
+          "close": 100.25,
+          "gain_pct": 4.98,
+          "volume_ratio": 1.93,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 5.89,
+            "d3": 11.96,
+            "d5": 12.72,
+            "as_of": "2026-08-04"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 1.09,
+        "d3": 3.07,
+        "d5": 3.21,
+        "n": 5,
+        "rows": 6
+      }
+    },
+    {
+      "date": "2026-07-27",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 6.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "EOG",
+          "date": "2026-07-27",
+          "rank": 1,
+          "score": 6.4,
+          "verdict": "B",
+          "source": "claude",
+          "close": 63.71,
+          "gain_pct": 7.02,
+          "volume_ratio": 1.89,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 2.05,
+            "d3": 2.8,
+            "d5": -4.65,
+            "as_of": "2026-08-03"
+          }
+        },
+        {
+          "ticker": "AZO",
+          "date": "2026-07-27",
+          "rank": 2,
+          "score": 4.7,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 107.69,
+          "gain_pct": 7.38,
+          "volume_ratio": 3.37,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -2.2,
+            "d3": -1.72,
+            "d5": 1.03,
+            "as_of": "2026-08-03"
+          }
+        },
+        {
+          "ticker": "FDX",
+          "date": "2026-07-27",
+          "rank": 3,
+          "score": 4.5,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 85.81,
+          "gain_pct": 7.15,
+          "volume_ratio": 3.26,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 6.58,
+            "d3": 14.7,
+            "d5": 16.5,
+            "as_of": "2026-08-03"
+          }
+        },
+        {
+          "ticker": "MSFT",
+          "date": "2026-07-27",
+          "rank": 4,
+          "score": 3.4,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 92.74,
+          "gain_pct": 5.77,
+          "volume_ratio": 3.68,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -0.66,
+            "d3": 2.63,
+            "d5": 13.11,
+            "as_of": "2026-08-03"
+          }
+        },
+        {
+          "ticker": "SNPS",
+          "date": "2026-07-27",
+          "rank": 5,
+          "score": 2.8,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 98.49,
+          "gain_pct": 4.89,
+          "volume_ratio": 2.44,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -3.74,
+            "d3": -6.43,
+            "d5": -7.16,
+            "as_of": "2026-08-03"
+          }
+        }
+      ],
+      "gated": [],
+      "forward_returns": {
+        "d1": 0.41,
+        "d3": 2.4,
+        "d5": 3.77,
+        "n": 5,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-07-24",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 8.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "WBD",
+          "date": "2026-07-24",
+          "rank": 1,
+          "score": 8.4,
+          "verdict": "A",
+          "source": "claude",
+          "close": 40.12,
+          "gain_pct": 5.88,
+          "volume_ratio": 3.57,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 1.26,
+            "d3": 3.48,
+            "d5": 2.97,
+            "as_of": "2026-07-31"
+          }
+        },
+        {
+          "ticker": "BAC",
+          "date": "2026-07-24",
+          "rank": 2,
+          "score": 7.8,
+          "verdict": "B+",
+          "source": "claude",
+          "close": 156.21,
+          "gain_pct": 8.53,
+          "volume_ratio": 2.62,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.26,
+            "d3": 0.02,
+            "d5": -0.47,
+            "as_of": "2026-07-31"
+          }
+        },
+        {
+          "ticker": "STZ",
+          "date": "2026-07-24",
+          "rank": 3,
+          "score": 7.4,
+          "verdict": "B+",
+          "source": "claude",
+          "close": 95.19,
+          "gain_pct": 8.54,
+          "volume_ratio": 2.85,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.32,
+            "d3": 11.52,
+            "d5": 17.92,
+            "as_of": "2026-07-31"
+          }
+        },
+        {
+          "ticker": "GD",
+          "date": "2026-07-24",
+          "rank": 4,
+          "score": 2.8,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 87.57,
+          "gain_pct": 6.03,
+          "volume_ratio": 3.78,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.05,
+            "d3": -3.53,
+            "d5": -6.29,
+            "as_of": "2026-07-31"
+          }
+        },
+        {
+          "ticker": "USB",
+          "date": "2026-07-24",
+          "rank": 5,
+          "score": 2.5,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 139.96,
+          "gain_pct": 6.18,
+          "volume_ratio": 2.74,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 0.23,
+            "d3": 2.72,
+            "d5": 4.02,
+            "as_of": "2026-07-31"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "GS",
+          "date": "2026-07-24",
+          "reason": "lynch_gate",
+          "close": 98.64,
+          "gain_pct": 5.6,
+          "volume_ratio": 2.59,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 0.37,
+            "d3": 3.99,
+            "d5": 9.29,
+            "as_of": "2026-07-31"
+          }
+        },
+        {
+          "ticker": "RTX",
+          "date": "2026-07-24",
+          "reason": "lynch_gate",
+          "close": 172.88,
+          "gain_pct": 4.7,
+          "volume_ratio": 2.61,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -0.1,
+            "d3": 0.95,
+            "d5": 2.4,
+            "as_of": "2026-07-31"
+          }
+        },
+        {
+          "ticker": "ALLY",
+          "date": "2026-07-24",
+          "reason": "lynch_gate",
+          "close": 101.5,
+          "gain_pct": 6.6,
+          "volume_ratio": 2.4,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": false,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": -0.83,
+            "d3": 0.51,
+            "d5": -0.21,
+            "as_of": "2026-07-31"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 0.52,
+        "d3": 4.43,
+        "d5": 6.11,
+        "n": 4,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-07-23",
+      "type": "evening",
+      "bursts": 7,
+      "passed_gate": 6,
+      "scored": 6,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 6.7,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "XOM",
+          "date": "2026-07-23",
+          "rank": 1,
+          "score": 6.7,
+          "verdict": "B",
+          "source": "claude",
+          "close": 155.79,
+          "gain_pct": 5.96,
+          "volume_ratio": 4.94,
+          "lynch_passes": 6,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 3.41,
+            "d3": 3.47,
+            "d5": 8.31,
+            "as_of": "2026-07-30"
+          }
+        },
+        {
+          "ticker": "CCL",
+          "date": "2026-07-23",
+          "rank": 2,
+          "score": 6.6,
+          "verdict": "B",
+          "source": "claude",
+          "close": 80.81,
+          "gain_pct": 7.47,
+          "volume_ratio": 4.4,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.24,
+            "d3": 5.67,
+            "d5": 4.14,
+            "as_of": "2026-07-30"
+          }
+        },
+        {
+          "ticker": "WM",
+          "date": "2026-07-23",
+          "rank": 3,
+          "score": 5.3,
+          "verdict": "C",
+          "source": "claude",
+          "close": 168.94,
+          "gain_pct": 7.3,
+          "volume_ratio": 1.9,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 3.63,
+            "d3": 7.22,
+            "d5": 8.01,
+            "as_of": "2026-07-30"
+          }
+        },
+        {
+          "ticker": "PLD",
+          "date": "2026-07-23",
+          "rank": 4,
+          "score": 4.6,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 100.42,
+          "gain_pct": 6.76,
+          "volume_ratio": 2.67,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -1.1,
+            "d3": -6.67,
+            "d5": -8.22,
+            "as_of": "2026-07-30"
+          }
+        },
+        {
+          "ticker": "IBM",
+          "date": "2026-07-23",
+          "rank": 5,
+          "score": 3.5,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 71.27,
+          "gain_pct": 6.45,
+          "volume_ratio": 3.17,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.54,
+            "d3": -0.64,
+            "d5": 6.28,
+            "as_of": "2026-07-30"
+          }
+        },
+        {
+          "ticker": "GD",
+          "date": "2026-07-23",
+          "rank": 6,
+          "score": 2.9,
+          "verdict": "skip",
+          "source": "claude",
+          "close": 82.6,
+          "gain_pct": 7.07,
+          "volume_ratio": 3.29,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 6.03,
+            "d3": 1.94,
+            "d5": -0.5,
+            "as_of": "2026-07-30"
+          }
+        }
+      ],
+      "gated": [
+        {
+          "ticker": "QCOM",
+          "date": "2026-07-23",
+          "reason": "lynch_gate",
+          "close": 24.28,
+          "gain_pct": 6.77,
+          "volume_ratio": 3.38,
+          "lynch_passes": 1,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": false,
+            "Y": false,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "forward_returns": {
+            "d1": 2.26,
+            "d3": 3.43,
+            "d5": 14.11,
+            "as_of": "2026-07-30"
+          }
+        }
+      ],
+      "forward_returns": {
+        "d1": 1.86,
+        "d3": 1.83,
+        "d5": 3.0,
+        "n": 6,
+        "rows": 6
+      }
+    },
+    {
+      "date": "2026-07-22",
+      "type": "evening",
+      "bursts": 2,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 6.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "candidates": [
+        {
+          "ticker": "CL",
+          "date": "2026-07-22",
+          "rank": 1,
+          "score": 6.4,
+          "verdict": "B",
+          "source": "claude",
+          "close": 53.55,
+          "gain_pct": 6.61,
+          "volume_ratio": 2.93,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": -0.02,
+            "d3": 4.5,
+            "d5": 4.45,
+            "as_of": "2026-07-29"
+          }
+        },
+        {
+          "ticker": "DECK",
+          "date": "2026-07-22",
+          "rank": 2,
+          "score": 5.1,
+          "verdict": "C",
+          "source": "claude",
+          "close": 58.1,
+          "gain_pct": 7.38,
+          "volume_ratio": 3.25,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "forward_returns": {
+            "d1": 1.55,
+            "d3": 5.98,
+            "d5": 3.81,
+            "as_of": "2026-07-29"
+          }
+        }
+      ],
+      "gated": [],
+      "forward_returns": {
+        "d1": 0.77,
+        "d3": 5.24,
+        "d5": 4.13,
+        "n": 2,
+        "rows": 2
+      }
+    }
+  ],
+  "fixture": true,
+  "about": "docs/ledger.json is the record src/ledger.py accumulates across runs. THIS copy is a fixture from tools/make_history.py -- written by the real Ledger over a synthetic market -- and is never committed to docs/: a real run must never load invented history as its own. Ledger.load() ignores this key; the page reads it."
+}

@@ -18,10 +18,19 @@
 // Offline by construction, so CI has nothing new to reach for: docs/ is served
 // from a local http server (the page fetches data.json, which file:// blocks),
 // every cdn.jsdelivr.net request is answered from a design-system checkout on
-// disk, and every other host is answered with an empty body. Two mutated
-// copies of data.json are served alongside the real one, so the states the
-// fixture cannot be in — forward returns that exist, a run that failed part
-// way — are exercised too.
+// disk, and every other host is answered with an empty body.
+//
+// THREE DATA SOURCES, ONE PAGE. docs/data.json is whatever the last run wrote
+// -- the fixture on a fresh clone, last night's real run once evening.yml has
+// committed one back -- so the checks that know the fixture's contents (25
+// scored, a fallback on the shortlist, chart paths that 404) cannot run against
+// it: the first real run would have failed a dozen of them and thrown in two.
+// They run against the canonical fixture instead, served under /f/fixture/;
+// the thirty-run history tools/make_history.py writes is served under
+// /f/history/, for the states one night cannot hold; and docs/ itself is
+// opened last, under /, with only the checks that hold for ANY run -- it opens,
+// it adds up, it says whether it is a fixture, and it logs no error. Mutated
+// copies of the fixture are served under /v/<name>/ as before.
 //
 // Needs playwright's chromium. It is not a repo dependency: `npm install
 // --no-save playwright@1.56` next to the repo, or have it installed globally
@@ -37,6 +46,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '..');
 const ROOT = join(REPO, 'docs');
+const FIXTURES = join(REPO, 'tests', 'fixtures');
+// Where /f/<source>/data.json and /f/<source>/ledger.json are answered from;
+// everything else under /f/<source>/ is docs/, so the same index.html renders
+// each one.
+const SOURCES = { fixture: FIXTURES, history: join(FIXTURES, 'history') };
 const argv = process.argv.slice(2);
 const SHOTS = argv.includes('--shots') ? argv[argv.indexOf('--shots') + 1] : null;
 
@@ -76,9 +90,13 @@ if (!chromium) { console.log('  skip  playwright is not installed — the dashbo
 
 // --- the server ------------------------------------------------------------
 // /            the real docs/, exactly as GitHub Pages would serve it
-// /v/<name>/   the same index.html against a mutated data.json, for the states
-//              a single day's fixture cannot hold at once
-const REAL = JSON.parse(await readFile(join(ROOT, 'data.json'), 'utf8'));
+// /f/<src>/    the same index.html against a fixture's data.json (and
+//              ledger.json, where the fixture has one) — see SOURCES
+// /v/<name>/   the same index.html against a mutated copy of the canonical
+//              fixture, for the states a single day's fixture cannot hold
+const REAL = JSON.parse(await readFile(join(FIXTURES, 'data.json'), 'utf8'));
+const HIST = JSON.parse(await readFile(join(SOURCES.history, 'data.json'), 'utf8'));
+const LIVE = JSON.parse(await readFile(join(ROOT, 'data.json'), 'utf8'));
 const clone = () => JSON.parse(JSON.stringify(REAL));
 const VARIANTS = {
   // What the page must look like once step 9 starts recording forward returns.
@@ -152,6 +170,32 @@ const VARIANTS = {
     d.run.errors = [{ stage: 'scanner', message: 'Alpaca returned no bars for 214 symbols; those were skipped.' }];
     return d;
   },
+  // A REAL run on a quiet night: one burst, rejected at the gate, nothing
+  // scored. This is the shape that breaks a check written against a 47-burst
+  // fixture -- a headline whose plural is hard-coded, and a scores table whose
+  // "Nothing to show." placeholder counts as a candidate row -- and it is a
+  // shape production will produce within its first month. It exists so the
+  // claim that the docs/-facing checks hold for ANY run is something CI
+  // exercises rather than something this file asserts about itself.
+  quietnight() {
+    const d = clone();
+    d.run.fixture = false;
+    d.run.bursts = 1;
+    d.run.scored = 0;
+    d.run.passed_gate = 0;
+    d.run.shortlist_size = 0;
+    d.candidates = [];
+    d.gated_out = d.gated_out.slice(0, 1);
+    return d;
+  },
+  // A snapshot published before the pipeline learned to write an evidence
+  // block. The page must say which kind of nothing that is rather than
+  // hiding the card, the same rule the streak line follows.
+  noevidence() {
+    const d = clone();
+    delete d.evidence;
+    return d;
+  },
   // The pipeline has never run, or the write failed.
   nodata() { return null; }
 };
@@ -160,6 +204,18 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
                 '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 const server = createServer(async (req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0]);
+  const f = p.match(/^\/f\/([a-z]+)(\/.*)?$/);
+  if (f && SOURCES[f[1]]) {
+    const rest = f[2] && f[2] !== '/' ? f[2] : '/index.html';
+    if (rest === '/data.json' || rest === '/ledger.json') {
+      let body;
+      try { body = await readFile(join(SOURCES[f[1]], rest.slice(1))); }
+      catch { res.writeHead(404).end('this fixture has no ' + rest.slice(1)); return; }
+      res.writeHead(200, { 'content-type': 'application/json' }).end(body);
+      return;
+    }
+    p = rest;
+  }
   const v = p.match(/^\/v\/([a-z]+)(\/.*)?$/);
   if (v && VARIANTS[v[1]]) {
     const rest = v[2] && v[2] !== '/' ? v[2] : '/index.html';
@@ -213,7 +269,7 @@ page.on('console', (m) => {
   // and in this checkout there are none. The page swaps in an explained frame,
   // which is the state under test, so these are counted and asserted on below
   // rather than treated as page errors.
-  if (/\/charts\/[^/]+\.png$/.test(url)) { chart404.add(url); return; }
+  if (/\/charts\/[^/]+\.png$/.test(url)) { chart404.add(url.replace(/^.*\/charts\//, '')); return; }
   errors.push('console: ' + m.text() + (url ? ' @ ' + url : ''));
 });
 page.on('requestfailed', (r) => errors.push('request failed: ' + r.url().slice(0, 90)));
@@ -221,7 +277,7 @@ page.on('requestfailed', (r) => errors.push('request failed: ' + r.url().slice(0
 const results = [];
 const ok = (name, pass, detail = '') => results.push({ name, pass: !!pass, detail });
 const shot = async (n) => { if (SHOTS) await page.screenshot({ path: join(SHOTS, n + '.png'), fullPage: true }); };
-async function open(path = '/index.html') {
+async function open(path = '/f/fixture/') {
   await page.goto(BASE + path, { waitUntil: 'load' });
   await page.waitForFunction(() => {
     const h = document.getElementById('h1');
@@ -269,8 +325,25 @@ const horizon = (k) => {
            plain: vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null,
            best: vals.length ? Math.max(...vals) : null, worst: vals.length ? Math.min(...vals) : null };
 };
-const money = (v) => (v > 0 ? '+' : '') + v.toFixed(2) + '%';
+// null-safe, because a run with no closed session reaches this with null and
+// README used to say so as a known way for the script to throw.
+// The page's own date format ('12 Aug 2026'), for matching a row by its session.
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmtDay = (iso) => { const p = String(iso).slice(0, 10).split('-'); return `${Number(p[2])} ${MONTHS[Number(p[1]) - 1]} ${p[0]}`; };
+const money = (v) => (v === null || v === undefined ? 'pending' : (v > 0 ? '+' : '') + v.toFixed(2) + '%');
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
+// Mirrors the page's own plural(). A second copy, deliberately: a test has to
+// state its expectation in its own terms, and reconstructing the sentence by
+// calling the page's own function would assert only that the page agrees with
+// itself. The version this replaces hard-coded "bursts" and would have failed
+// on the first night the scan found exactly one.
+const plural = (n, one, many) => n + ' ' + (n === 1 ? one : (many || one + 's'));
+// An evidence block carries one entry per horizon in a list keyed by
+// `horizon`, not an object keyed d1/d3/d5 — those names mean "a number, the
+// return" on every candidate row in the same file, and one key name over two
+// shapes is what the suite's own contract walker rejected.
+const at = (outcomes, h) => (outcomes || []).find((e) => e && e.horizon === h)
+  || { horizon: h, mean: null, n: 0, best: null, worst: null, in_band: 0 };
 
 // --- the run opens ---------------------------------------------------------
 // "auto" follows the runner's OS, which in headless Chromium is light, so each
@@ -280,7 +353,7 @@ await setTheme('dark');
 await page.waitForTimeout(200);
 ok('the run opens', (await page.textContent('#h1')) !== 'Snapshot unavailable', await page.textContent('#h1'));
 ok('the headline states the funnel',
-  (await page.textContent('#h1')) === `${run.bursts} bursts, ${run.scored} scored, ${run.shortlist_size} on the shortlist`,
+  (await page.textContent('#h1')) === `${plural(run.bursts, 'burst')}, ${run.scored} scored, ${run.shortlist_size} on the shortlist`,
   await page.textContent('#h1'));
 
 // --- the funnel ------------------------------------------------------------
@@ -589,6 +662,27 @@ ok('five sessions is not called a measurement',
   && (await page.textContent('#returns-hint')).includes('none of the three'),
   tiles.map((t) => t.chip).join(' | '));
 
+// --- the record's own view, on a record one session long -------------------
+// The fixture is one night old, so every horizon in its evidence block is
+// null by construction. That is not an edge case: it is the state of the page
+// on the first day it publishes anything, and every day after until five
+// sessions have closed.
+const EV = REAL.evidence;
+ok('the page carries the record\'s own view of whether the score works', !!EV && !!EV.by_score,
+  EV ? `${EV.by_score.length} score bands, ${EV.record.scored_setups} scored setups` : 'no evidence block');
+const evOne = await page.evaluate(() => ({
+  hidden: document.getElementById('evidence-card').hidden,
+  empty: !document.getElementById('evidence-empty').hidden,
+  body: !document.getElementById('evidence-body').hidden,
+  text: document.getElementById('evidence-empty').textContent.trim()
+}));
+ok('with nothing closed yet it says so instead of drawing a flat line at zero',
+  !evOne.hidden && evOne.empty && !evOne.body && /correct and empty/.test(evOne.text)
+  && /not the same as a flat line at zero/.test(evOne.text), evOne.text.slice(0, 90));
+ok('and it says how much is waiting rather than just that it is waiting',
+  evOne.text.includes(String(EV.record.scored_setups)) && evOne.text.includes(String(EV.record.sessions)),
+  `${EV.record.scored_setups} setups over ${EV.record.sessions} session`);
+
 // --- score against outcome, before there is any outcome --------------------
 const outcome = await page.evaluate(() => ({
   plot: !document.getElementById('outcome-plot').hidden,
@@ -617,14 +711,19 @@ const light = await page.evaluate(() => {
   return {
     bg, dark: lum(bg) < 0.25,
     h1: cr(getComputedStyle(document.getElementById('h1')).color, bg),
-    chip: cr(getComputedStyle(chip).color, getComputedStyle(chip).backgroundColor),
+    // null when there is no fallback chip to measure -- a run Claude scored
+    // in full has none, and README used to list this as the other way the
+    // script threw on real output.
+    chip: chip ? cr(getComputedStyle(chip).color, getComputedStyle(chip).backgroundColor) : null,
     marks: [...document.querySelectorAll('#shortlist .sc-frame__mark')]
       .filter((m) => getComputedStyle(m).display !== 'none').length
   };
 });
 ok('light mode is actually light', !light.dark, light.bg);
 ok('the headline is readable in light mode', light.h1 >= 4.5, light.h1.toFixed(2) + ':1');
-ok('the fallback label is readable in light mode', light.chip >= 4.5, light.chip.toFixed(2) + ':1');
+ok('the fallback label is readable in light mode',
+  light.chip === null ? fallbacks.length === 0 : light.chip >= 4.5,
+  light.chip === null ? 'no fallback chip on this data' : light.chip.toFixed(2) + ':1');
 await shot('desktop-light');
 await setTheme('dark');
 await page.waitForTimeout(200);
@@ -767,6 +866,17 @@ ok('a run that lost something says so at the top', !(await page.locator('#notice
 ok('and names what it lost', (await page.textContent('#notice')).includes('214 symbols'), await page.textContent('#notice'));
 ok('the rest of the run still renders', (await page.locator('#scores-table tbody tr').count()) === run.scored);
 
+await open('/v/noevidence/');
+const gone = await page.evaluate(() => ({
+  hidden: document.getElementById('evidence-card').hidden,
+  text: document.getElementById('evidence-empty').textContent.trim(),
+  predict: document.getElementById('predict-card').hidden
+}));
+ok('a snapshot with no record in it says so rather than hiding the question',
+  !gone.hidden && /written before the pipeline began publishing one/.test(gone.text)
+  && /not that the answer is no/.test(gone.text), gone.text.slice(0, 90));
+ok('and the views that need a record stay down rather than drawing an empty shell', gone.predict);
+
 await page.goto(BASE + '/v/nodata/', { waitUntil: 'load' });
 await page.waitForTimeout(600);
 ok('a page with no data.json says so instead of showing an empty shell',
@@ -783,6 +893,200 @@ ok('once the PNGs exist the picks show them instead of the empty frame',
   && (await page.locator('#shortlist .sc-frame--empty').count()) === run.shortlist_size - shortWithPath,
   `${await page.locator('#shortlist img.shot').count()} images, ${await page.locator('#shortlist .sc-frame--empty').count()} empty`);
 await shot('charts-present');
+
+// --- thirty runs, written by the real pipeline ----------------------------
+// tests/fixtures/history is what docs/ looks like after a month of
+// commit-backs: forward returns filled in by later runs, a night the scorer
+// was down, a chart that would not render, repeats on consecutive sessions,
+// and the last week still pending. Nothing about its numbers is typed here;
+// every expectation is computed from the file the page is reading.
+await open('/f/history/');
+await setTheme('dark');
+await page.waitForTimeout(200);
+const hrun = HIST.run;
+ok('the history fixture opens and is disclosed as sample data',
+  (await page.textContent('#h1')) === `${plural(hrun.bursts, 'burst')}, ${hrun.scored} scored, ${hrun.shortlist_size} on the shortlist`
+  && !(await page.locator('#fixture-banner').isHidden()),
+  await page.textContent('#h1'));
+ok('its scored and gated rows account for every burst of the newest run',
+  (await page.locator('#scores-table tbody tr').count()) === hrun.scored
+  && (await page.locator('#scores-table tbody tr').count()) + (await page.locator('#gated-table tbody tr').count()) === hrun.bursts);
+ok('every run in the file is in the history table',
+  (await page.locator('#runs-table tbody tr').count()) === HIST.runs.length,
+  `${HIST.runs.length} runs`);
+const hist = HIST.runs;
+const withD5 = hist.filter((r) => r.forward_returns && r.forward_returns.d5 !== null);
+const pendingD1 = hist.filter((r) => !r.forward_returns || r.forward_returns.d1 === null);
+const cells = await page.$$eval('#runs-table tbody tr', (trs) => trs.map((tr) => [...tr.children].map((td) => td.textContent.trim())));
+ok('a run whose horizons have closed prints them as percentages, and a pending one says pending',
+  withD5.length > 0 && pendingD1.length > 0
+  && cells.filter((c) => /^[+-]\d+\.\d{2}%$/.test(c[8])).length === withD5.length
+  && cells.filter((c) => c[6] === 'pending').length === pendingD1.length,
+  `${withD5.length} runs with +5d, ${pendingD1.length} with +1d pending`);
+const down = hist.filter((r) => r.fallbacks > 0);
+ok('the night the scorer was down is in the table with its fallback count',
+  down.length > 0 && cells.some((c) => c[0].startsWith(fmtDay(down[0].date)) && c[4] === String(down[0].fallbacks)),
+  down.length ? `${down[0].date}: ${down[0].fallbacks} fallbacks` : 'no such night in the fixture');
+const HH = [horizon('d1'), horizon('d3'), horizon('d5')];
+const htiles = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')].map((t) => ({
+  value: t.querySelector('.sc-tile__value').textContent.trim(), chip: t.querySelector('.sc-chip').textContent.trim() })));
+// horizon() reads REAL; recompute over HIST for this pass.
+const hhorizon = (k) => {
+  const have = HIST.runs.filter((r) => (r.forward_returns || {})[k] !== null && (r.forward_returns || {})[k] !== undefined);
+  const n = have.reduce((a, r) => a + (r.forward_returns.n || 0), 0);
+  return { sessions: have.length, mean: n ? have.reduce((a, r) => a + r.forward_returns[k] * (r.forward_returns.n || 0), 0) / n : null };
+};
+const hh = [hhorizon('d1'), hhorizon('d3'), hhorizon('d5')];
+ok('each horizon tile is the setup-weighted mean over the sessions that closed, and says whether that is enough',
+  htiles.length === 3 && htiles.every((t, i) => t.value === money(hh[i].mean)
+    && t.chip === (hh[i].sessions >= 20 ? 'measured' : (hh[i].sessions ? 'not enough data' : 'no session closed yet'))),
+  htiles.map((t, i) => `${t.value} over ${hh[i].sessions} (${t.chip})`).join(' | '));
+const hrepeats = HIST.candidates.filter((c) => (c.streak || {}).day > 1);
+ok('a repeat the ledger really computed says which setup it is day N of',
+  (await page.locator('#scores-table tbody tr', { hasText: 'of this setup, since' }).count()) === hrepeats.length,
+  `${hrepeats.length} repeats in the newest run`);
+const hblind = HIST.candidates.filter((c) => c.chart_error);
+ok('a chart the pipeline could not render says so on the page',
+  hblind.length > 0 && (await Promise.all(hblind.map((c) => page.locator('#scores-table tbody tr', { hasText: c.ticker }).count()))).every((n) => n > 0)
+  && (await page.locator('#shortlist .pick', { hasText: 'scored without the chart' }).count())
+     === hblind.filter((c) => c.rank <= hrun.shortlist_size && c.provenance.source === 'claude' && !c.provenance.chart_seen).length,
+  hblind.map((c) => `${c.ticker}: ${c.chart_error}`).join('; ').slice(0, 90));
+// The record's view, populated. Every expectation is computed from the file
+// the page is reading, so a change to how the pipeline aggregates fails here
+// rather than passing against a number typed into this script.
+const HEV = HIST.evidence;
+const hev = await page.evaluate(() => ({
+  body: !document.getElementById('evidence-body').hidden,
+  verdict: document.getElementById('evidence-verdict').textContent.trim(),
+  bars: document.querySelectorAll('#evidence-chart .bar').length,
+  rows: document.querySelectorAll('#evidence-table tbody tr').length,
+  tones: [...new Set([...document.querySelectorAll('#evidence-chart .bar')].map((b) => getComputedStyle(b).fill))].length,
+  chips: [...document.querySelectorAll('#evidence-table tbody .sc-chip--warn')].map((c) => c.textContent.trim()),
+  legend: document.querySelectorAll('#evidence-legend span').length
+}));
+// The chart draws the horizons the strategy trades, not +1d — that one is in
+// the tiles and the table, and putting the least meaningful number in the most
+// prominent place is the opposite of the point.
+const drawn = HEV.horizons.filter((h) => h > 1);
+const drawable = HEV.by_score.reduce((total, b) =>
+  total + drawn.filter((h) => at(b.outcomes, h).mean !== null).length, 0);
+ok('a record with outcomes draws a bar per horizon per score band',
+  hev.body && hev.bars === drawable && hev.rows === HEV.by_score.length,
+  `${hev.bars} bars for ${drawable} measured horizons, ${hev.rows} rows for ${HEV.by_score.length} bands`);
+// The legend names two horizons; if both series render in one colour the key
+// contradicts its own chart. That shipped once here already, drawn with a
+// class whose CSS hard-codes the fill and ignores the tone channel.
+ok('and the two horizons are two colours, as the legend says they are',
+  hev.tones === 2 && hev.legend >= 2, `${hev.tones} distinct fills across ${hev.bars} bars`);
+const short = HEV.by_score.filter((b) => !b.enough).length;
+ok('a band with too few setups is refused as a rate rather than printed as one',
+  short > 0 && hev.chips.filter((c) => c === 'not enough data').length === short,
+  `${short} bands under ${HEV.min_setups} setups, ${hev.chips.length} marked`);
+// The verdict is the sentence a reader takes away. It must lean only on bands
+// that cleared the floor, and must be able to say there is no answer yet.
+const readable = HEV.by_score.filter((b) => b.enough);
+ok('the verdict names only what the record can support',
+  readable.length
+    ? hev.verdict.includes(readable[readable.length - 1].verdict) && /not as a result|cannot show a ranking/.test(hev.verdict)
+    : /no answer here yet/.test(hev.verdict),
+  hev.verdict.slice(0, 120));
+
+const pred = await page.evaluate(() => ({
+  rows: document.querySelectorAll('#predict-table tbody tr').length,
+  hint: document.getElementById('predict-hint').textContent.trim()
+}));
+ok('every 2LYNCH check is measured against what happened next, not just against the gate',
+  pred.rows === HEV.by_check.length && /survivors/.test(pred.hint),
+  `${pred.rows} checks`);
+const streak = await page.evaluate(() => ({
+  rows: document.querySelectorAll('#streak-table tbody tr').length,
+  hint: document.getElementById('streak-hint').textContent.trim()
+}));
+// The one block counted per appearance rather than per setup. If the page
+// stops saying so, it is quietly reporting overlapping windows as independent.
+ok('the streak view says it counts appearances, and why it must',
+  streak.rows === HEV.by_day.length && /APPEARANCE/.test(streak.hint) && /overlap/.test(streak.hint),
+  streak.hint.slice(0, 100));
+ok('a burst the record cannot place is a row of its own, never a day 1',
+  (await page.locator('#streak-table tbody tr', { hasText: 'not known' }).count())
+    === HEV.by_day.filter((d) => d.day === null).length);
+ok('the record is broken down by month so a change over time is visible',
+  (await page.locator('#trend-table tbody tr').count()) === HEV.by_month.length,
+  `${HEV.by_month.length} months`);
+// The per-name view, and the page's one lazy fetch.
+const tick = await page.evaluate(() => ({
+  rows: document.querySelectorAll('#ticker-table tbody tr').length,
+  more: document.getElementById('ticker-more').textContent.trim(),
+  btn: !!document.querySelector('#ticker-more button')
+}));
+ok('the per-name view starts as a summary and offers the record rather than fetching it',
+  tick.rows === Math.min(15, HEV.by_ticker.length) && tick.btn && /fetched only if you ask/.test(tick.more),
+  `${tick.rows} of ${HEV.by_ticker.length} names shown`);
+await page.click('#ticker-more button');
+await page.waitForTimeout(400);
+const loaded = await page.evaluate(() => ({
+  rows: document.querySelectorAll('#ticker-table tbody tr').length,
+  // Scoped to the name cell: every rate cell carries its own .sc-note with
+  // the setup count, so a table-wide count is three times the rows and would
+  // have passed on any number at all.
+  notes: document.querySelectorAll('#ticker-table tbody td:first-child .sc-note').length
+}));
+ok('and asking for it loads every name, each with the sessions it burst on',
+  loaded.rows === HEV.by_ticker.length && loaded.notes === HEV.by_ticker.length,
+  `${loaded.rows} names, ${loaded.notes} with per-burst detail`);
+await shot('history-desktop-dark');
+
+// --- the checks that must hold for ANY run ---------------------------------
+// docs/data.json is the fixture today and last night's real run once
+// evening.yml commits one back, so everything here has to be true of both.
+// Written once and run TWICE: against docs/ itself, and against a deliberately
+// awkward real run. Two of these were written against the fixture's shape and
+// were reproduced failing on a one-burst night before this was fixed -- the
+// same class of defect the three-source split exists to close, reintroduced by
+// the commit that introduced the split.
+//
+// Rows the page put DATA in: table() renders a "Nothing to show." placeholder
+// row when there are none, and counting that as a candidate is what turned a
+// quiet night into a red build.
+const dataRows = (sel) => page.locator(`${sel} tbody tr:not(.sc-empty)`).count();
+
+async function checksForAnyRun(data, where) {
+  const run = data.run || {};
+  const cands = data.candidates || [];
+  const gated = data.gated_out || [];
+  ok(`${where}: the page opens and its headline describes the run`,
+    (await page.textContent('#h1')) ===
+      `${plural(run.bursts || 0, 'burst')}, ${run.scored || 0} scored, ${run.shortlist_size || 0} on the shortlist`,
+    await page.textContent('#h1'));
+  ok(`${where}: it says whether it is sample data`,
+    (await page.locator('#fixture-banner').isHidden()) === !run.fixture,
+    run.fixture ? 'fixture: banner shown' : 'real run: no banner');
+  ok(`${where}: its rows add up to its own funnel`,
+    (await dataRows('#scores-table')) === cands.length
+    && cands.length + gated.length === (run.bursts || 0)
+    && cands.length === (run.scored || 0),
+    `${cands.length} scored + ${gated.length} gated = ${plural(run.bursts || 0, 'burst')}`);
+  ok(`${where}: a table with no rows says so instead of rendering an empty shell`,
+    cands.length > 0 || (await page.locator('#scores-table tbody tr.sc-empty').count()) === 1,
+    cands.length ? `${cands.length} scored, nothing to place` : 'nothing scored: placeholder shown');
+  ok(`${where}: every fallback in it is labelled`,
+    (await page.locator('#scores-table tbody .sc-chip--warn').count())
+      === cands.filter((c) => !c.provenance || c.provenance.source !== 'claude').length);
+}
+
+await open('/');
+await setTheme('dark');
+await page.waitForTimeout(200);
+await checksForAnyRun(LIVE, 'docs/');
+await shot('live-desktop-dark');
+
+// The same checks over a run that is NOT the fixture, so "holds for any run"
+// is exercised rather than asserted.
+await open('/v/quietnight/');
+await setTheme('dark');
+await page.waitForTimeout(200);
+await checksForAnyRun(VARIANTS.quietnight(), 'a one-burst night');
+await shot('quiet-night-dark');
 
 await browser.close();
 server.close();

@@ -25,6 +25,7 @@ Known scheduled falsifications:
 | ~~Step 5 makes failures loud~~ done | ~~`.env.example`'s "these fail in three different ways" block~~ swept |
 | ~~Step 6 fixes the test suite~~ done | ~~the `detect_burst` comment in `.gitignore`, the broken-test note in README~~ swept |
 | ~~Step 9 emits `docs/data.json`~~ done | ~~the "hand-authored fixture" caveat in README's dashboard section~~ swept — the committed copy is still the fixture and says so in `run.fixture`; the pipeline writes the real one |
+| ~~The first commit-back replaces `docs/data.json` with a real run~~ swept before it happened (3.1) | ~~`check_fixture_fresh.py` compared `docs/data.json` to the generator, so the pipeline working would have turned CI red on the next push; README's "regenerate … `docs/data.json`" and "pinned to the fixture" smoke-test section~~ — the canonical fixture is `tests/fixtures/data.json` now, `docs/data.json` is whatever the last run wrote, and the guard only checks a `docs/` copy that still *claims* to be the fixture |
 | ~~`evening.yml` keeps `docs/` between runs~~ done in step 9 | ~~README's "Does the history actually accumulate?" section and the stale `charts/` path in that workflow's upload step~~ both swept; step 10 added why that commit-back now also feeds the morning run and every streak |
 | ~~Step 10 makes the mode mean something and reads the ledger back~~ done | ~~README's "morning has no workflow and no distinct behaviour" note, the workflow inventory, `.env.example`'s required-variable list~~ all swept; `morning.yml` now exists |
 | The universe widens past `data/symbols.txt` | the 230-name figures in README's diagram, Tuning and Costs sections |
@@ -92,6 +93,19 @@ environment was swapped for one that executed the file as shell, and a
 `.gitignore` round that anchored three rules added two more unanchored. **Check
 that a fix did not introduce a new defect of the same class.**
 
+And when a defect is one of a class, **sweep for the next instance before
+declaring the class closed.** One class has now produced five: code reads a
+structure off disk, accepts a shape it never indexes into, and a later consumer
+breaks. `Ledger.load()` closed three, one level in each time; `read_snapshot()`
+was the fourth, found because the brief asked, and the fifth was found only by
+the sweep the fourth prompted — a stored row whose `forward_returns` is not an
+object loaded clean and took the evening run down inside `add_run()`, after
+every Claude call had been paid for. The sweep that found it was a table of
+thirty-seven malformed shapes run through the real code
+(`MALFORMED_SNAPSHOTS` in `tests/test_pipeline.py`), not a reading of it; the
+brief's one example crashed, and so did nineteen the reading would not have
+predicted.
+
 ## Environment constraints
 
 - **No live market data.** The sandbox proxy blocks Yahoo and Alpaca. Anything
@@ -100,7 +114,7 @@ that a fix did not introduce a new defect of the same class.**
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 580 tests with no network
+- **There is a regression net.** `pytest tests/` runs 676 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -121,6 +135,23 @@ that a fix did not introduce a new defect of the same class.**
   Still untested: anything needing a socket — that the credentials can query the
   feed, that Resend delivers, that Claude returns what the parser expects from a
   real chart.
+
+  **The interpreter is part of the environment, and it changed an answer.**
+  CPython 3.12 made the builtin `sum()` compensated for floats, so the same
+  `docs/ledger.json` read by 3.11 and by 3.12 published two different run
+  means -- 5.52 against 5.53, on a `round(x, 2)` boundary. CI runs 3.12 and
+  this sandbox runs 3.11, so it would have turned the next PR red and looked
+  like a fixture problem. Found by regenerating `tests/fixtures/history` under
+  both and diffing: 2 of 1788 numbers differed and both were run-level means.
+  `mean_returns()` uses `math.fsum` now, which is correctly rounded, fixed
+  across versions and order-independent; the fixture is byte-identical under
+  3.11 and 3.12, at numpy 1.26/2.0/2.4/2.5 and pandas 2.0/2.2/3.0. Worth
+  knowing for the next fixture: **a generated artifact committed to this repo
+  is only as reproducible as the arithmetic behind it**, and the sandbox's
+  interpreter is not CI's. It is also a limit on mutation testing here -- from
+  3.12 no input distinguishes `sum()` from `fsum()` (300,000 adversarial cases
+  tried), so the two tests that pin this are load-bearing on 3.11 and
+  documentation on CI.
 
   **And `evening.yml`'s commit-back has still never executed.** Every streak,
   and the morning run's entire input, rest on it; the `git add` bug that voided
@@ -152,9 +183,14 @@ that a fix did not introduce a new defect of the same class.**
   `docs/index.html` CAN be opened here after all: playwright's chromium is
   installed in this sandbox (`node tools/dashboard_smoke.mjs` after cloning the
   design system to /tmp/design-system runs every check with no page errors),
-  which the previous round of these notes said was impossible. Run it. The
-  script now checks README's claim about how many checks it is, so that number
-  cannot rot the way three others in this repo already did. The streak
+  which the previous round of these notes said was impossible. Run it, and
+  LOOK at the screenshots it writes with `--shots`. The script now checks
+  README's claim about how many checks it is, so that number cannot rot the
+  way three others in this repo already did. Since 3.1 it opens the page
+  against three sources — the canonical fixture, the thirty-run history
+  `tools/make_history.py` writes by driving the real pipeline offline, and
+  whatever `docs/` holds — so the checks that know a fixture's contents never
+  run against the file a real run replaces. The streak
   line the page carries was additionally rendered against a data.json holding
   every streak state and read back from the DOM, rather than argued about, and
   five of those wordings are asserted in the script now: the email and the page
@@ -163,6 +199,65 @@ that a fix did not introduce a new defect of the same class.**
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Findings from the 3.1 audit — twelve worked, one left standing
+
+Three auditors were run over disjoint file sets after 3.1 (the process in the
+brief: make the change, two agents audit, fix every finding, two verify).
+**Two of the three finished; the third — the prose/docs auditor — never
+started, and every one of the 39 verifier agents died on a session usage
+limit.** The workflow's own summary therefore called all thirteen "refuted",
+which is an artefact of a dead verifier returning null and not a judgement:
+they arrived as leads, unchecked either way.
+
+Twelve have since been reproduced HERE, by running them, and fixed. The
+thirteenth is a restatement of a limit the tests' own docstrings already
+carry. The auditors were right about every one that reproduced, and two of
+their claims were right about the crash but wrong about the mechanism — both
+noted in the table. **The prose/docs file set was never audited at all**, so
+whatever that third agent would have found is still unfound.
+
+The two auditors that did finish both worked by execution: the runtime one
+drove 264 malformed shapes through the real morning path AND the real email
+renderer (the sweep in 3.1(b) stopped at the dry run, which does not render
+the email), and the fixtures one simulated a real commit-back into a copy of
+the repo.
+
+**Six have since been reproduced and fixed** — the two smoke-test ones and
+four of the shape ones — and the table says which. The auditors were right
+about every one of the six, and all six were introduced by 3.1 itself, which
+is the rule about not replacing a bug with one of the same class failing on
+the round that wrote the rule down.
+
+Two things that only running them settled, both worth keeping:
+`streak.seen_before` sits behind a short-circuit that opens ONLY when `day`
+is null, so a sweep varying one field at a time reports it safe — it needs
+the pair. And `run.scored_by` does not crash on strings: `"5" + "1"` is
+`"51"`, so the email rendered "Scored by Claude: 5 of 51", a fabricated
+count, which is worse than a crash because nothing says it is wrong.
+
+| severity | file | the claim | where it stands |
+|---|---|---|---|
+| high | `src/emailer.py` | the line 3.1(b) fixed still crashes the morning email: `seen_before` was left beside `day` and is still compared raw | **FIXED** — reproduced with `day` null AND a non-numeric `seen_before`; refused by `snapshot_problem()` now |
+| high | `tools/dashboard_smoke.mjs` | the docs/-facing check counts the page's "Nothing to show." placeholder as a candidate row, so a real run that scores nothing turns CI red | **FIXED** — reproduced on a 1-burst/0-scored run; row counts exclude `.sc-empty` and a `quietnight` variant now runs the any-run checks in CI |
+| high | `tools/dashboard_smoke.mjs` | the docs/-facing headline check hard-codes the plural "bursts", so a real run finding exactly one burst turns CI red | **FIXED** — reproduced on a 1-burst run; the smoke test pluralises, and the two fixture-facing headlines with it |
+| high | `src/ledger.py` | `snapshot_problem()` exempts `run.status = null`, and null is exactly the value that crashes `follow_through` | **FIXED** — reproduced (`.get("status", "ok")`'s default applies to a MISSING key, not a null one); absent is fine, null is refused |
+| medium | `src/pipeline.py` | `carried_problems()` raises on a non-iterable `run.errors`, and its docstring says it cannot | **FIXED** — reproduced with an int and a bool; `run.errors` must be a list |
+| medium | `src/emailer.py` | an unhashable `streak.unknown_reason` crashes `_no_day_note()` on a snapshot `read_snapshot` accepts | **FIXED** — reproduced with a list and a dict; must be a string or null |
+| medium | `src/emailer.py` | `run.scored_by` is shape-checked one level too shallow: its values crash or silently fabricate the provenance count | **FIXED** — does not crash, FABRICATES: the counts must be numbers now |
+| medium | `src/ledger.py` | `SNAPSHOT_ROW_KEYS` is all-or-nothing over 23 keys of which only 9 are load-bearing, so the first morning after any schema-additive deploy refuses a genuine snapshot | **FIXED** — measured: exactly 9 of the 23 are load-bearing, the auditor's number. The required set is those 9, and it is now DERIVED by a test that drops each key and runs the real morning path, so it is not a hand-kept second copy of the emailer |
+| medium | `tests/test_ledger.py` | the two tests guarding the `fsum` change cannot fail on the interpreter CI runs, so that commit reverts green there (this one is DOCUMENTED as such in the tests' own docstrings and in the note below — the auditor is restating a known limit, not finding a new one) | still a lead — see the note above |
+| medium | `tools/make_history.py` | not deterministic: `CLAUDE_MODEL` leaks into the fixture, and the `MODEL` constant meant to pin it is never used | **FIXED** — reproduced (`CLAUDE_MODEL=claude-opus-4-5` changed `run.model`, so the guard failed for whoever had it set); `_patched()` pins `scorer.MODEL` now, which the unused `MODEL` constant existed for |
+| medium | `tools/check_fixture_fresh.py` | nothing guards `docs/ledger.json`: the invented 30-run ledger can be dropped in, passes the guard and the suite, and the next real run adopts it and strips the fixture marker | **FIXED, more strongly than reported** — `Ledger.load()` refuses a ledger carrying `fixture: true` and sets it aside, the same rule `read_snapshot()` applies to `data.json`. That stops the pipeline adopting invented history at RUN time, not just in CI |
+| low | `src/ledger.py` | `snapshot_problem()`'s `context` clause is neither tested nor load-bearing: it can be deleted with the suite green | **HALF FIXED, half refused** — "not tested" was true and now is not. "Not load-bearing" is also true, and the clause STAYS: a missing key is what an older pipeline wrote, a wrong-typed one is not something any version writes. That distinction is in the code now, because it is what reconciles keeping this with narrowing the key set |
+| low | `tools/make_history.py` | the scorer-down comment states a window a week wider than the code searches | **FIXED** — it is six to fourteen sessions, stated as the range the code searches |
+
+The two highest-value patterns in there, if the list is ever thinned: the
+smoke test's docs/-facing checks were supposed to hold for ANY run and two of
+them do not, which is the same class of defect 3.1(a) existed to close; and
+the shape check stops one level short in three separate places, which is the
+same class 3.1(b) existed to close. **Check that a fix did not introduce a new
+defect of the same class** applies to 3.1 itself.
 
 ## Local run
 

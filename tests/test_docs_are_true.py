@@ -321,3 +321,109 @@ def test_readme_does_not_promise_a_null_streak_for_an_unreadable_history():
     assert "`history_unreadable`" in readme, (
         "README no longer names the reason src.ledger actually publishes"
     )
+
+
+# --- where the fixture lives ------------------------------------------------
+# docs/data.json used to be the fixture AND the file every run rewrites, guarded
+# by a script that compared it to the generator on every push. The first
+# successful commit-back would have turned CI red for good. The canonical copy
+# is tests/fixtures/data.json now; docs/data.json is whatever the last run
+# wrote, seeded from it.
+
+FIXTURE = ROOT / "tests" / "fixtures" / "data.json"
+
+
+def test_the_canonical_fixture_is_where_the_docs_say_it_is():
+    """README names the path and the regenerate command. Both used to point at
+    docs/, and the command there would now overwrite a real run."""
+    assert FIXTURE.exists(), "tests/fixtures/data.json is the canonical fixture"
+    readme = _read("README.md")
+    assert "tests/fixtures/data.json" in readme
+    assert "make_fixture.py tests/fixtures/data.json" in readme
+    assert "make_fixture.py docs/data.json" not in readme, (
+        "README still tells the reader to regenerate the fixture over docs/data.json"
+    )
+
+
+def test_a_docs_data_json_that_claims_to_be_the_fixture_is_the_fixture():
+    """`run.fixture: true` is what raises the sample-data banner and what makes
+    the morning run refuse the file. A docs/data.json making that claim must
+    be the canonical fixture, byte for byte -- a hand-edited copy is a third
+    thing. Skipped, not passed, once a real run has replaced it: then there is
+    nothing to compare and saying so is the honest answer."""
+    import json
+
+    import pytest
+
+    live = ROOT / "docs" / "data.json"
+    run = json.loads(live.read_text()).get("run") or {}
+    if not run.get("fixture"):
+        pytest.skip(f"docs/data.json is the {run.get('type')} run of {run.get('date')}, "
+                    "not the fixture; nothing to compare")
+    assert live.read_bytes() == FIXTURE.read_bytes(), (
+        "docs/data.json says it is the fixture but differs from tests/fixtures/data.json"
+    )
+
+
+def test_the_history_fixture_is_where_the_docs_say_it_is():
+    """The thirty-run fixture the smoke test's second source reads, and the
+    guard regenerates. README names the directory and the generator; a
+    fixture nobody can find is a fixture nobody regenerates."""
+    history = ROOT / "tests" / "fixtures" / "history"
+    assert (history / "data.json").exists() and (history / "ledger.json").exists()
+    readme = _read("README.md")
+    assert "tests/fixtures/history" in readme and "tools/make_history.py" in readme
+    assert (ROOT / "tests" / "fixtures" / "README.md").exists(), (
+        "tests/fixtures/README.md is where the fixtures say what they are"
+    )
+
+
+def test_the_documented_evidence_blocks_are_the_ones_published():
+    """README's table names what the page can answer, and a reader uses it to
+    know which questions the file holds.
+
+    Checked against the block src.ledger actually publishes rather than a
+    second list kept here, so a block added to evidence() and never documented
+    fails the build instead of quietly existing. The same shape as the streak
+    fields test above, and for the same reason: this rule has failed four
+    times by being remembered.
+    """
+    from src import ledger
+
+    published = ledger.evidence([])
+    readme = _read("README.md")
+    missing = sorted(f"evidence.{key}" for key in published
+                     if f"`evidence.{key}`" not in readme and f"`{key}`" not in readme)
+
+    assert not missing, (
+        f"README does not name {missing}. Add them to 'What the page answers, "
+        "and what it refuses to answer' -- a block nobody documents is a "
+        "question nobody knows the page can answer."
+    )
+
+
+def test_the_page_renders_the_record_rather_than_recomputing_it():
+    """The whole reason evidence() is Python: mean_returns' setup rule is a
+    definition, and a second copy of it in JavaScript is the defect this
+    project has shipped twice.
+
+    So the page must take the floor and the per-block verdict FROM THE FILE.
+    Two earlier versions of this test were themselves the shapes CLAUDE.md
+    warns about: one grepped for "setup_leads" and failed on the comment
+    explaining why the page does not do it, and one grepped for the floor's
+    digits and matched `max-width: 30ch` in a stylesheet. What is asserted now
+    is the property itself -- the page reads `min_setups` and `enough` rather
+    than deciding either for itself.
+    """
+    page = _read("docs/index.html")
+
+    assert "evidence" in page, "the page does not read the evidence block at all"
+    assert "min_setups" in page, (
+        "the page does not read evidence.min_setups; carrying its own floor "
+        "lets the file and the page disagree about whether a number may be "
+        "read as a rate"
+    )
+    assert "b.enough" in page or ".enough" in page, (
+        "the page does not read `enough` off the file, so it is deciding for "
+        "itself which means are worth printing as rates"
+    )

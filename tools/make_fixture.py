@@ -1,4 +1,12 @@
-"""Hand-authored fixture for docs/data.json.
+"""Hand-authored fixture: the canonical copy is tests/fixtures/data.json.
+
+    python3 tools/make_fixture.py tests/fixtures/data.json
+
+docs/data.json is seeded from that file so a fresh clone renders, and it stays
+a copy of it only until evening.yml commits a real run back; after that the
+page shows the run and this fixture lives on where tools/check_fixture_fresh.py
+and tools/dashboard_smoke.mjs read it. Do not regenerate straight into docs/
+over a real run.
 
 Every 2LYNCH pass flag is COMPUTED from its measurement using the same
 thresholds src/lynch.py applies, and every fallback score is computed with
@@ -10,6 +18,7 @@ import collections, json, pathlib, sys
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 from src.pipeline import MIN_LYNCH_PASSES
+from src import ledger                        # the real evidence block, not a copy
 from src.ledger import CONTRACT_INVARIANTS    # the real contract, not a copy
 from src.scanner import ScanConfig            # the real floors, not a copy
 from src.lynch import (                       # the real thresholds, not a copy
@@ -553,6 +562,22 @@ runs = [
      "forward_returns": {"d1": 0.41, "d3": 1.18, "d5": 2.05, "n": 20, "rows": 20}},
 ]
 
+# The evidence block, computed by the REAL src/ledger.py over this fixture's
+# own rows rather than hand-authored. One run, whose forward returns have not
+# happened yet -- so every mean in it is null and every n is zero, which is
+# exactly the state of the page on the first day it publishes anything, and
+# the state a reader sees until five sessions have closed. The thirty-run
+# fixture in tests/fixtures/history is the populated twin; between them the
+# page's empty and full paths are both exercised.
+_LEDGER_RUNS = [{
+    "date": SESSION, "type": "evening", "shortlist_size": 5,
+    "candidates": [ledger.slim_row(c, scored=True) for c in candidates],
+    "gated": [ledger.slim_row(g, scored=False) for g in gated_out],
+}]
+EVIDENCE = ledger.evidence(_LEDGER_RUNS)
+assert all(entry["n"] == 0 for entry in EVIDENCE["overall"]["outcomes"]), (
+    "this fixture is one session old; nothing in it can have an outcome yet")
+
 data = {
     "schema_version": 1,
     "app": "SpicyStock",
@@ -585,6 +610,7 @@ data = {
     "candidates": candidates,
     "gated_out": gated_out,
     "runs": runs,
+    "evidence": EVIDENCE,
 }
 
 import sys
