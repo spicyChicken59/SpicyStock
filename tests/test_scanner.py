@@ -14,6 +14,7 @@ import re
 import time
 from datetime import date, datetime, time as time_of_day, timedelta, timezone
 
+import numpy as np
 import pytest
 import requests
 from alpaca.common.exceptions import APIError
@@ -598,6 +599,51 @@ def test_a_single_symbol_scan_is_not_gated_out_by_its_own_percentile(
     fake_alpaca.add_history("SOLO", _thin(ohlcv, "burst", price=6.0,
                                           volume=300_000, variant=variant))
     assert [c.ticker for c in run_scan(ScanConfig(), universe=["SOLO"])] == ["SOLO"]
+
+
+def test_the_liquidity_floor_is_not_universe_invariant():
+    """A percentile is feed-invariant. It is NOT universe-invariant, and the
+    scanner's own comment claimed the opposite of what it does.
+
+    That comment said the gate "starts doing real work when the universe widens
+    past data/symbols.txt, which is when barely-liquid names where slippage
+    eats the edge becomes a live risk". A percentile keeps a fixed FRACTION, so
+    widening the universe with the illiquid names curation removes moves the
+    absolute bar DOWN. This is the second thing the open decision has to answer
+    for, beside rule 4: widening does not merely cost more, it silently
+    rewrites a strategy rule unless the gate gains an absolute floor.
+
+    Two log-normal populations of the shape US dollar volume really has —
+    parameters stated here rather than fitted, because no live data reaches
+    this sandbox and an invented distribution asserted as measured would be
+    worse than one declared as invented. The DIRECTION and the ORDER OF
+    MAGNITUDE are what this pins; the exact figure is a property of the model.
+    """
+    rng = np.random.default_rng(20260904)
+    curated = np.exp(rng.normal(np.log(600e6), 1.0, 230))     # large/mid caps
+    widened = np.concatenate([                                # plus the tail
+        curated, np.exp(rng.normal(np.log(8e6), 1.6, 2770))])
+    cfg = ScanConfig()
+
+    tight = liquidity_floor(list(curated), cfg)
+    loose = liquidity_floor(list(widened), cfg)
+
+    # The fraction kept is fixed by construction on BOTH — that is the whole
+    # mechanism, and asserting it is what makes the floor comparison mean
+    # something rather than being an artefact of two different populations.
+    kept = cfg.min_dollar_volume_pctile / 100
+    assert abs((curated >= tight).mean() - (1 - kept)) < 0.02
+    assert abs((widened >= loose).mean() - (1 - kept)) < 0.02
+
+    assert loose < tight / 10, (
+        f"widening the universe should collapse the absolute floor; "
+        f"${tight/1e6:.0f}M -> ${loose/1e6:.0f}M")
+
+    # And the consequence, which is the part that costs money: a burst that is
+    # too thin to trade is refused today and admitted after the widening.
+    slippage_eats_the_edge = 20e6
+    assert slippage_eats_the_edge < tight, "refused while the universe is curated"
+    assert slippage_eats_the_edge > loose, "and admitted once it widens"
 
 
 def test_the_liquidity_gate_can_be_turned_off(ohlcv):

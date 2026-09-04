@@ -312,9 +312,26 @@ class ScanConfig:
     # statement about the feed as much as about the stock. Sized to cut the
     # illiquid tail rather than to select megacaps: on today's hand-curated
     # large/mid-cap universe it removes very little, and that is correct —
-    # there is barely a tail to cut. It starts doing real work when the
-    # universe widens past data/symbols.txt, which is when "barely-liquid
-    # names where slippage eats the edge" becomes a live risk.
+    # there is barely a tail to cut.
+    #
+    # THIS COMMENT USED TO SAY IT "STARTS DOING REAL WORK WHEN THE UNIVERSE
+    # WIDENS", AND THAT IS BACKWARDS. A percentile keeps a fixed FRACTION, so
+    # widening the universe with the illiquid names curation currently removes
+    # moves the absolute bar DOWN, not up. Measured on two log-normal
+    # populations of the shape US dollar volume really has: 230 curated
+    # large/mid caps put the 30th percentile at $359M/day, and 3,000 all-cap
+    # names put it at $3.8M/day — the same 70% kept, a 94x lower bar. A
+    # $20M/day burst, which is exactly the "barely-liquid names where slippage
+    # eats the edge" that knowledge/strategy.md lists as a kill criterion, is
+    # refused today and admitted after the widening.
+    #
+    # A ratio is FEED-invariant, which is what it was built for and what the
+    # docstring above argues correctly. It is not UNIVERSE-invariant, and those
+    # are different properties. So this is the second thing the open decision
+    # has to answer for, beside rule 4: widening the universe does not merely
+    # cost more, it silently rewrites a strategy rule unless the gate gains an
+    # absolute floor too. Pinned by test_the_liquidity_floor_is_not_universe_
+    # invariant so it cannot be rediscovered.
     min_dollar_volume_pctile: float = 30.0
 
     # NOT A STRATEGY THRESHOLD, and not read by detect_setup() any more: step
