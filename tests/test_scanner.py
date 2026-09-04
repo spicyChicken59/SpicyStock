@@ -1451,3 +1451,4 @@ def test_the_readme_describes_the_filter_the_code_applies():
             f"README says {found.group(0)!r}; ScanConfig says {expected}. "
             "Sweep the docs (CLAUDE.md: a step is not done until they are true)."
         )
+
