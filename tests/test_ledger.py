@@ -2537,3 +2537,61 @@ def test_the_published_snapshot_carries_the_record_s_view(tmp_path):
     assert "evidence" in published
     assert published["evidence"]["min_setups"] == ledger.MIN_SETUPS_FOR_A_RATE
     assert any("evidence" in invariant for invariant in published["_contract"]["invariants"])
+
+
+def test_a_ledger_marked_as_a_fixture_is_never_adopted_as_the_record(tmp_path):
+    """tests/fixtures/history/ledger.json is thirty INVENTED sessions written
+    by this very class, so it loads perfectly. Dropped into docs/ -- by a hand
+    copy, a bad merge, someone seeding a local page -- the next real run would
+    adopt its outcomes as its own history, rewrite it without the marker, and
+    every mean and streak published afterwards would rest on invented data that
+    no longer said it was invented. Nothing else in the pipeline would notice.
+
+    Read from the committed fixture rather than a hand-written stand-in: what
+    has to be refused is the real file, and a stand-in could drift from it.
+    """
+    real_fixture = (ledger.Path(__file__).resolve().parent
+                    / "fixtures" / "history" / "ledger.json")
+    (tmp_path / ledger.LEDGER_NAME).write_text(real_fixture.read_text())
+
+    book = ledger.Ledger(tmp_path).load()
+
+    assert book.runs == [], "thirty invented sessions were adopted as the record"
+    assert "fixture" in (book.load_error or "")
+    assert len(ledger.quarantined(tmp_path)) == 1, "the file was kept, not overwritten"
+
+
+def test_the_history_fixture_pins_the_model_it_writes(monkeypatch):
+    """src.scorer reads CLAUDE_MODEL at IMPORT time and the pipeline copies that
+    name into every run, so regenerating tools/make_history.py with the variable
+    set produced a different fixture -- and failed tools/check_fixture_fresh.py
+    for the developer who had it set, on a file nobody had touched. Verified by
+    regenerating with CLAUDE_MODEL=claude-opus-4-5: run.model changed.
+
+    Patched rather than set in the environment, because an env var set at
+    generation time arrives after the import that read it.
+    """
+    import tools.make_history as make_history
+    from src import pipeline, scorer
+
+    monkeypatch.setattr(scorer, "MODEL", "claude-somebody-elses-model")
+    monkeypatch.setattr(pipeline, "DEFAULT_MODEL", "claude-somebody-elses-model")
+
+    with make_history._patched(make_history.DatedAlpaca()):
+        assert scorer.MODEL == make_history.MODEL
+        assert pipeline.DEFAULT_MODEL == make_history.MODEL
+
+    assert scorer.MODEL == "claude-somebody-elses-model", "the patch leaked out"
+    assert pipeline.DEFAULT_MODEL == "claude-somebody-elses-model"
+
+
+def test_the_committed_history_fixture_carries_that_pinned_model():
+    """The other half: the file on disk really was generated with the pin."""
+    import json as _json
+
+    import tools.make_history as make_history
+
+    data = _json.loads((ledger.Path(__file__).resolve().parent
+                        / "fixtures" / "history" / "data.json").read_text())
+
+    assert data["run"]["model"] == make_history.MODEL

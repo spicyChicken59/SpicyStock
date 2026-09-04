@@ -1340,6 +1340,19 @@ class Ledger:
                       self.path, type(raw).__name__)
             return self.set_aside(
                 f"{self.path} holds a JSON {type(raw).__name__}, not a ledger object")
+        if raw.get("fixture"):
+            # A FIXTURE IS NOT A RECORD -- the same rule read_snapshot() applies
+            # to docs/data.json, one file over. tests/fixtures/history/ledger.json
+            # is thirty invented sessions written by the real Ledger, so it loads
+            # perfectly: drop it into docs/ and the next run adopts its outcomes
+            # as its own, rewrites it WITHOUT the marker, and every mean and
+            # streak the page publishes from then on is built on invented data
+            # that no longer says it is invented. Nothing else would ever notice.
+            log.error("Ledger %s is a fixture (fixture is true), not a record — "
+                      "moving it aside rather than accumulating into it", self.path)
+            return self.set_aside(
+                f"{self.path} is a fixture (fixture is true), not a run history; its "
+                "outcomes are invented and must never be adopted as this record")
         if raw.get("schema_version") != SCHEMA_VERSION:
             log.error("Ledger %s is schema_version %r, not %d — moving it aside "
                       "rather than merging into it",

@@ -63,7 +63,7 @@ import pandas as pd
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 
-from src import ledger, pipeline, scanner  # noqa: E402
+from src import ledger, pipeline, scanner, scorer  # noqa: E402
 from src.scorer import VERDICT_BANDS, _balanced_spans  # noqa: E402
 from tests.fakes import FakeAlpaca, FakeDataClient  # noqa: E402
 
@@ -84,6 +84,13 @@ UNIVERSE_STRIDE = 3
 #: asks for 260.
 WARMUP = 300
 GENERATED = "2026-09-01T22:14:07Z"
+#: The model name written into the fixture's run block. PINNED, because
+#: src.scorer reads CLAUDE_MODEL at import time and the pipeline copies that
+#: name into every run -- so regenerating with CLAUDE_MODEL set produced a
+#: different fixture and failed tools/check_fixture_fresh.py for the developer
+#: who had it set, on a file nobody had touched. Verified by regenerating with
+#: CLAUDE_MODEL=claude-opus-4-5: run.model changed. This constant existed for
+#: exactly that and was never wired up.
 MODEL = "claude-sonnet-4-6"
 
 ABOUT_DATA = (
@@ -380,7 +387,8 @@ def _patched(alpaca: DatedAlpaca):
     """
     import anthropic
 
-    saved = (scanner.StockHistoricalDataClient, anthropic.Anthropic, pipeline.render_chart)
+    saved = (scanner.StockHistoricalDataClient, anthropic.Anthropic, pipeline.render_chart,
+             scorer.MODEL, pipeline.DEFAULT_MODEL)
     env = {k: os.environ.get(k) for k in ("ALPACA_API_KEY", "ALPACA_SECRET_KEY",
                                           "ANTHROPIC_API_KEY", "SCAN_SESSION_DATE", "SCAN_FEED")}
     os.environ.update(ALPACA_API_KEY="fixture", ALPACA_SECRET_KEY="fixture",
@@ -402,10 +410,14 @@ def _patched(alpaca: DatedAlpaca):
     scanner.StockHistoricalDataClient = lambda *a, **k: FakeDataClient(alpaca, *a, **k)
     anthropic.Anthropic = QualityScorer
     pipeline.render_chart = chart
+    # Patched, not set in the environment: scorer reads CLAUDE_MODEL at import
+    # time, so an env var set here would arrive too late to change anything.
+    scorer.MODEL = pipeline.DEFAULT_MODEL = MODEL
     try:
         yield
     finally:
-        scanner.StockHistoricalDataClient, anthropic.Anthropic, pipeline.render_chart = saved
+        (scanner.StockHistoricalDataClient, anthropic.Anthropic, pipeline.render_chart,
+         scorer.MODEL, pipeline.DEFAULT_MODEL) = saved
         for k, v in env.items():
             if v is None:
                 os.environ.pop(k, None)
