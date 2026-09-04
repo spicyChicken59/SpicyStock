@@ -1838,8 +1838,8 @@ MALFORMED_SNAPSHOTS = {
     "run.date is a number": (_run_field(date=20260901), False),
     "run.date is null": (_run_field(date=None), False),
     "run.type is an object": (_run_field(type={"a": 1}), False),
-    "run.errors is a string": (_run_field(errors="boom"), False),
-    "run.errors is an object": (_run_field(errors={"stage": "x", "message": "y"}), False),
+    "run.errors is a string": (_run_field(errors="boom"), "run.errors"),
+    "run.errors is an object": (_run_field(errors={"stage": "x", "message": "y"}), "run.errors"),
     "run.errors holds a string": (_run_field(errors=["boom"]), False),
     "run.status is an object": (_run_field(status={"a": 1}), NOT_A_RUN),
     "run.status is a number": (_run_field(status=5), NOT_A_RUN),
@@ -1851,6 +1851,25 @@ MALFORMED_SNAPSHOTS = {
     "gated_out rows are strings": (lambda d: d.update(gated_out=["x"]), False),
     "runs is a string": (lambda d: d.update(runs="x"), False),
     "candidates is an object": (lambda d: d.update(candidates={"a": 1}), "carries no run to follow through on"),
+    # --- one level further in again, found by the 3.1 audit ---------------
+    # Each of these was ACCEPTED by read_snapshot and then crashed the real
+    # morning path or the real email renderer. A dry run does not render the
+    # email, which is how the first sweep called some of them safe. The last
+    # two need `day` null as well: the seen_before comparison sits behind a
+    # short-circuit that only opens when there is no day number, so a sweep
+    # varying one field at a time reports it safe.
+    "run.status is null": (_run_field(status=None), "run.status"),
+    "run.errors is a number": (_run_field(errors=3), "run.errors"),
+    "run.errors is a bool": (_run_field(errors=True), "run.errors"),
+    "run.scored_by counts are strings": (
+        _run_field(scored_by={"claude": "5", "fallback": "1"}), "scored_by"),
+    "run.scored_by counts are lists": (
+        _run_field(scored_by={"claude": [1], "fallback": []}), "scored_by"),
+    "streak.unknown_reason is unhashable": (_streak(day=None, unknown_reason=["x"]), "unknown_reason"),
+    "streak.seen_before is a string": (
+        _streak(day=None, unknown_reason="no_history", seen_before="3"), "seen_before"),
+    "streak.seen_before is a list": (
+        _streak(day=None, unknown_reason="no_history", seen_before=[1]), "seen_before"),
 }
 
 

@@ -1761,11 +1761,28 @@ def snapshot_problem(data: dict) -> str | None:
     and src.pipeline guards its single comparison against it instead.
     """
     run = data.get("run")
-    for field_name, wanted in (("status", str), ("scored_by", dict)):
+    for field_name, wanted in (("status", str), ("scored_by", dict), ("errors", list)):
         value = run.get(field_name)
-        if value is not None and not isinstance(value, wanted):
-            return (f"run.{field_name} is a JSON {type(value).__name__}, not the "
+        if field_name not in run:
+            # ABSENT IS FINE, NULL IS NOT, and the difference is not pedantry:
+            # follow_through() reads the status as `.get("status", "ok")`, and
+            # a default only applies to a MISSING key. A key present and null
+            # therefore reaches `.upper()` as None and takes the run down --
+            # exit 1 and a FAILED notice where the design says exit 2. The
+            # first version of this check exempted null explicitly and that is
+            # exactly the value that crashes.
+            continue
+        if not isinstance(value, wanted) or isinstance(value, bool):
+            return (f"run.{field_name} is {type(value).__name__}, not the "
                     f"{wanted.__name__} publish() writes")
+    # One level into scored_by, because the email does ARITHMETIC on these two.
+    # It does not crash on strings: "5" + "1" is "51", so the provenance line
+    # rendered "Scored by Claude: 5 of 51" -- a fabricated count, which is
+    # worse than a crash because nothing anywhere says it is wrong.
+    for name, count in (run.get("scored_by") or {}).items():
+        if count is not None and (isinstance(count, bool) or not isinstance(count, (int, float))):
+            return (f"run.scored_by.{name} is {type(count).__name__}, not a number, "
+                    "and the email adds these together")
     for position, row in enumerate(data.get("candidates") or [], start=1):
         if not isinstance(row, dict):
             return f"candidate row {position} is a JSON {type(row).__name__}, not a row"
@@ -1785,6 +1802,22 @@ def snapshot_problem(data: dict) -> str | None:
             if value is not None and not isinstance(value, dict):
                 return (f"candidate row {position} ({row['ticker']}) has a "
                         f"{type(value).__name__} where its {field_name} object should be")
+        # AND TWO FIELDS INSIDE THE STREAK BLOCK, because the email indexes
+        # into both. `unknown_reason` is a dict KEY there (LAST_OUTCOME-style
+        # lookup), so an unhashable one is a TypeError rather than a miss; and
+        # `seen_before` is compared against 0, which a string or a list cannot
+        # be. The seen_before comparison sits behind a short-circuit that only
+        # opens when `day` is null -- so it needs BOTH, which is why a sweep
+        # that varied one field at a time reported it safe.
+        streak = row["streak"] or {}
+        reason = streak.get("unknown_reason")
+        if reason is not None and not isinstance(reason, str):
+            return (f"candidate row {position} ({row['ticker']}) has a "
+                    f"{type(reason).__name__} where its streak.unknown_reason should be")
+        seen = streak.get("seen_before")
+        if seen is not None and (isinstance(seen, bool) or not isinstance(seen, (int, float))):
+            return (f"candidate row {position} ({row['ticker']}) has a "
+                    f"{type(seen).__name__} where its streak.seen_before count should be")
     return None
 
 

@@ -114,7 +114,7 @@ predicted.
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 662 tests with no network
+- **There is a regression net.** `pytest tests/` runs 670 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -200,7 +200,7 @@ predicted.
   mechanism, side by side on one page, under two comments each claiming they
   matched.
 
-## Open findings from the 3.1 audit — UNVERIFIED, and that word is load-bearing
+## Findings from the 3.1 audit — six reproduced and fixed, seven still leads
 
 Three auditors were run over disjoint file sets after 3.1 (the process in the
 brief: make the change, two agents audit, fix every finding, two verify).
@@ -219,15 +219,28 @@ renderer (the sweep in 3.1(b) stopped at the dry run, which does not render
 the email), and the fixtures one simulated a real commit-back into a copy of
 the repo.
 
+**Six have since been reproduced and fixed** — the two smoke-test ones and
+four of the shape ones — and the table says which. The auditors were right
+about every one of the six, and all six were introduced by 3.1 itself, which
+is the rule about not replacing a bug with one of the same class failing on
+the round that wrote the rule down.
+
+Two things that only running them settled, both worth keeping:
+`streak.seen_before` sits behind a short-circuit that opens ONLY when `day`
+is null, so a sweep varying one field at a time reports it safe — it needs
+the pair. And `run.scored_by` does not crash on strings: `"5" + "1"` is
+`"51"`, so the email rendered "Scored by Claude: 5 of 51", a fabricated
+count, which is worse than a crash because nothing says it is wrong.
+
 | severity | file | the claim |
 |---|---|---|
-| high | `src/emailer.py` | the line 3.1(b) fixed still crashes the morning email: `seen_before` was left beside `day` and is still compared raw |
-| high | `tools/dashboard_smoke.mjs` | the docs/-facing check counts the page's "Nothing to show." placeholder as a candidate row, so a real run that scores nothing turns CI red |
-| high | `tools/dashboard_smoke.mjs` | the docs/-facing headline check hard-codes the plural "bursts", so a real run finding exactly one burst turns CI red |
-| high | `src/ledger.py` | `snapshot_problem()` exempts `run.status = null`, and null is exactly the value that crashes `follow_through` |
-| medium | `src/pipeline.py` | `carried_problems()` raises on a non-iterable `run.errors`, and its docstring says it cannot |
-| medium | `src/emailer.py` | an unhashable `streak.unknown_reason` crashes `_no_day_note()` on a snapshot `read_snapshot` accepts |
-| medium | `src/emailer.py` | `run.scored_by` is shape-checked one level too shallow: its values crash or silently fabricate the provenance count |
+| high | `src/emailer.py` | the line 3.1(b) fixed still crashes the morning email: `seen_before` was left beside `day` and is still compared raw | — **FIXED** — reproduced with `day` null AND a non-numeric `seen_before`; refused by `snapshot_problem()` now
+| high | `tools/dashboard_smoke.mjs` | the docs/-facing check counts the page's "Nothing to show." placeholder as a candidate row, so a real run that scores nothing turns CI red | — **FIXED** — reproduced on a 1-burst/0-scored run; row counts exclude `.sc-empty` and a `quietnight` variant now runs the any-run checks in CI
+| high | `tools/dashboard_smoke.mjs` | the docs/-facing headline check hard-codes the plural "bursts", so a real run finding exactly one burst turns CI red | — **FIXED** — reproduced on a 1-burst run; the smoke test pluralises, and the two fixture-facing headlines with it
+| high | `src/ledger.py` | `snapshot_problem()` exempts `run.status = null`, and null is exactly the value that crashes `follow_through` | — **FIXED** — reproduced (`.get("status", "ok")`'s default applies to a MISSING key, not a null one); absent is fine, null is refused
+| medium | `src/pipeline.py` | `carried_problems()` raises on a non-iterable `run.errors`, and its docstring says it cannot | — **FIXED** — reproduced with an int and a bool; `run.errors` must be a list
+| medium | `src/emailer.py` | an unhashable `streak.unknown_reason` crashes `_no_day_note()` on a snapshot `read_snapshot` accepts | — **FIXED** — reproduced with a list and a dict; must be a string or null
+| medium | `src/emailer.py` | `run.scored_by` is shape-checked one level too shallow: its values crash or silently fabricate the provenance count | — **FIXED** — does not crash, FABRICATES: the counts must be numbers now
 | medium | `src/ledger.py` | `SNAPSHOT_ROW_KEYS` is all-or-nothing over 23 keys of which only 9 are load-bearing, so the first morning after any schema-additive deploy refuses a genuine snapshot |
 | medium | `tests/test_ledger.py` | the two tests guarding the `fsum` change cannot fail on the interpreter CI runs, so that commit reverts green there (this one is DOCUMENTED as such in the tests' own docstrings and in the note below — the auditor is restating a known limit, not finding a new one) |
 | medium | `tools/make_history.py` | not deterministic: `CLAUDE_MODEL` leaks into the fixture, and the `MODEL` constant meant to pin it is never used |
