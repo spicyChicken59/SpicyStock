@@ -1777,6 +1777,27 @@ def test_the_exit_codes_are_the_numbers_actions_reads():
     assert (pipeline.EXIT_OK, pipeline.EXIT_FAILED, pipeline.EXIT_DEGRADED) == (0, 1, 2)
 
 
+def test_the_three_numbers_that_decide_what_a_run_costs_and_shows():
+    """The same shape of pin as the exit codes above, for the same reason.
+
+    Truncation IS tested -- that the email carries TOP_N rows, that the gate
+    keeps candidates with at least MIN_LYNCH_PASSES, that no more than
+    MAX_TO_SCORE go to Claude -- but every one of those tests reads the
+    constant it is checking, so all three could be changed with the suite
+    green. Verified by mutation: 3 -> 4, 5 -> 6 and 25 -> 26 each left 676
+    tests passing.
+
+    They are not wrong to read that way; the names are what make them legible.
+    They need one place that says what the numbers are, because each is a real
+    commitment. MAX_TO_SCORE is the night's Claude bill and the cap the
+    "crowded out by the call budget" language exists for. TOP_N is how many
+    names a reader is asked to act on, and nothing else -- it has never cut the
+    archive since step 9. MIN_LYNCH_PASSES is half of six, the point where a
+    checklist stops being a majority verdict.
+    """
+    assert (pipeline.MIN_LYNCH_PASSES, pipeline.TOP_N, pipeline.MAX_TO_SCORE) == (3, 5, 25)
+
+
 # --- a snapshot that did not come out of a run ---------------------------
 # Thirty-seven ways docs/data.json can be malformed, each run through the real
 # follow-through and the real email renderer. Twenty of them used to escape as

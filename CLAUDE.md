@@ -114,7 +114,7 @@ predicted.
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 676 tests with no network
+- **There is a regression net.** `pytest tests/` runs 682 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -122,7 +122,15 @@ predicted.
   steps over), not gaps. Step 10 mutated its own additions the same way — 38
   mutants over the mode/clock check, the streak arithmetic and the morning
   mode, all 38 killed, and its three first-round survivors closed with the
-  tests they showed were missing rather than argued away. One of those was not
+  tests they showed were missing rather than argued away. Step 11 mutated its
+  own additions the same way -- nine over `evidence()`, five over the widened
+  snapshot shape check, three over the required-key set, all killed -- and
+  3.4 closed the five survivors the brief named: the staleness band's
+  `>= 2` boundary (every band test used a gap of 15), `current_session()`'s
+  weekend rewind (the Sunday case passes at one step OR two; only a Saturday
+  tells them apart), and `MIN_LYNCH_PASSES` / `TOP_N` / `MAX_TO_SCORE`, whose
+  truncation was tested everywhere while the numbers themselves were pinned
+  nowhere. One of those was not
   a missing test but a real regression: the catch-all that stops an unreadable
   history from killing a run had reopened the door to a run OVERWRITING the
   history it could not read, which is exactly what Ledger.set_aside() exists to
@@ -152,6 +160,30 @@ predicted.
   3.12 no input distinguishes `sum()` from `fsum()` (300,000 adversarial cases
   tried), so the two tests that pin this are load-bearing on 3.11 and
   documentation on CI.
+
+  **THE SCHEDULED RUNS HAVE NEVER ONCE HAD THEIR SECRETS, and that is the
+  whole reason nothing has accumulated.** Read from the Actions log on 4 Sep,
+  not inferred: every weekday since the rebuild merged, BOTH jobs have failed
+  the same way.
+
+      PreflightError: missing or empty required environment: ALPACA_API_KEY,
+      ALPACA_SECRET_KEY, ANTHROPIC_API_KEY, RESEND_API_KEY, EMAIL_TO
+
+  The pairs of crons make this easy to misread, so it is written down: the
+  US is on EDT, so the `16 22` (evening) and `30 12` (morning) crons are the
+  live ones and they FAIL; the `16 23` and `30 13` runs report SUCCESS
+  because the guard correctly no-ops them. A glance at the Actions tab shows
+  green ticks next to red ones every day and the green ones did nothing.
+
+  Nothing in the code is wrong here -- this is step 5 working exactly as
+  designed: preflight caught it before spending anything, named every missing
+  variable, and exited 1. It cannot even mail the failure notice, because two
+  of the missing secrets are what mailing needs, and it says so.
+  **It needs the six repository secrets set (README, "One-time setup"); no
+  amount of further work in this repo can do it.** Until then
+  `docs/ledger.json` will never exist, the forward returns cannot be measured,
+  the page's evidence block stays empty and correct, and the morning run has
+  nothing to follow through on.
 
   **And `evening.yml`'s commit-back has still never executed.** Every streak,
   and the morning run's entire input, rest on it; the `git add` bug that voided

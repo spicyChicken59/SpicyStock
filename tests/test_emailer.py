@@ -197,6 +197,8 @@ def test_a_failed_run_says_that_instead(results):
 # twin said "no scan was completed", which is true of every morning run by
 # design. Of the three lines a phone skimmer reads, two were false.
 
+from src.emailer import _plural  # noqa: E402 -- the band's own pluraliser
+
 STALE = dict(DEGRADED, session="2026-08-10", stale_sessions=15,
              errors=[{"stage": "session", "message": "nothing has published since"}])
 
@@ -666,6 +668,28 @@ def test_a_stale_morning_with_no_rows_still_names_the_gap_without_promising_rows
     assert "NOTHING HAS PUBLISHED FOR 15 SESSIONS" in headline
     assert "rows below" not in headline, headline
     assert "2026-08-11" in headline
+
+
+@pytest.mark.parametrize("gap, escalates", [(1, False), (2, True), (3, True), (15, True)])
+def test_the_headline_escalates_at_two_sessions_not_three(gap, escalates):
+    """The boundary itself, from both sides.
+
+    Every band test here used a gap of 15, so `stale >= 2` could be changed to
+    `stale >= 3` with the whole suite green -- verified by mutation. The
+    subject line's identical boundary was already parametrised over 1/2/3/15
+    and killed it; this is the same coverage one surface over.
+
+    Two is where the arithmetic changes, and the reason is the one judgement
+    CLAUDE.md records about the calendar: none of the market's SCHEDULED
+    holidays are adjacent, so at a gap of one a holiday is still a live
+    explanation and the band must stay ambiguous, while from two up at least
+    one of those days was a session nothing scanned.
+    """
+    headline = _band("history", "morning", [], stale_sessions=gap, session="2026-08-11")
+
+    assert ("NOTHING HAS PUBLISHED FOR" in headline) is escalates, headline
+    if escalates:
+        assert _plural(gap, "SESSION").upper() in headline
 
 
 def test_only_a_scan_problem_calls_the_list_incomplete():
