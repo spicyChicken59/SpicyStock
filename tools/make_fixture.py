@@ -25,7 +25,9 @@ from src.lynch import (                       # the real thresholds, not a copy
     MAX_PRIOR_BURSTS, MIN_LINEAR_R2, MIN_LINEAR_SLOPE, MAX_RUN_UP_1MO,
     MAX_EXT_VS_SMA20, MAX_TIGHTNESS, MAX_D1_MOVE, MAX_D1_VOL_RATIO,
     MAX_D1_RANGE_RATIO, MIN_CLOSE_POS,
+    MAX_CONSECUTIVE_UP_DAYS, BREAKDOWN_PCT, BREAKDOWN_LOOKBACK,
 )
+from src.pipeline import VETO_REASONS
 _CFG = ScanConfig()
 
 def _universe():
@@ -349,6 +351,17 @@ def build_candidate(s, i):
         score, verdict, reason, risk = s.score, s.verdict, s.reason, s.risk
         prov = {"source": "claude", "model": MODEL, "chart_seen": s.chart, "error": None}
     off_hi, abv_lo, p3, p6 = s.ctx
+    # Bonde's two measurements. This fixture holds MEASUREMENTS and not frames,
+    # so there is no walk here to count a run of up days off; they are authored
+    # from the row's position, spread across every value a SCORED row can
+    # legitimately carry. Up days cannot exceed MAX_CONSECUTIVE_UP_DAYS -- past
+    # that the pipeline's veto would have refused the row, so a scored one
+    # carrying 3 describes a run this pipeline cannot produce. The worst base
+    # day can be anything, including past BREAKDOWN_PCT, because that criterion
+    # rejects nothing: every third row here is one that broke down and was
+    # scored anyway, which is the state the page has to render.
+    up_days = i % (MAX_CONSECUTIVE_UP_DAYS + 1)
+    worst_base = round(BREAKDOWN_PCT + (1.4 if i % 3 else -0.6), 1)
     return {
         "rank": None,
         "ticker": s.t,
@@ -372,7 +385,8 @@ def build_candidate(s, i):
         "chart_error": (None if s.chart else
                         "mplfinance ValueError: only 41 sessions of history, need 85"),
         "context": {"pct_off_52w_high": off_hi, "pct_above_52w_low": abv_lo,
-                    "perf_3mo_pct": p3, "perf_6mo_pct": p6},
+                    "perf_3mo_pct": p3, "perf_6mo_pct": p6,
+                    "consecutive_up_days": up_days, "worst_base_day_pct": worst_base},
         "streak": streak(i),
         "forward_returns": {"d1": None, "d3": None, "d5": None, "as_of": None},
     }
@@ -383,8 +397,9 @@ for i, c in enumerate(candidates, 1):
     c["rank"] = i
 
 # --- what did not get scored ------------------------------------------------
-# 47 bursts - 25 scored = 22. Sixteen failed the >=3/6 gate; six cleared it but
-# fell outside MAX_TO_SCORE, which sorts on (passes, gain_pct) descending.
+# 48 bursts - 25 scored = 23. Sixteen failed the >=3/6 gate; six cleared it but
+# fell outside MAX_TO_SCORE, which sorts on (passes, gain_pct) descending; and
+# one was vetoed outright, which is neither of those and has to read as neither.
 #
 # These rows carry their 2LYNCH MEASUREMENTS (lm), not just a pass count, for
 # the same reason the scored rows do: the dashboard's per-check aggregate asks
@@ -442,6 +457,13 @@ GATED = [
       (0, 0.56, 52.1, 31.6, 10.0, 1.68, 2.8, 5.1, 1.26, 0.71)),
     G("TMC",     4.71, 4.01, 15208400, 7014900, 3, "score_cap",
       (6, 0.13, 12.6, 6.9, 4.2, 0.86, 4.7, 8.0, 1.57, 0.93)),
+    # Refused outright, and the only row here that passed the whole checklist:
+    # a 6/6 setup three up days into a run is what Bonde's cardinal rule is
+    # about, and it is the row the page and the email have to describe without
+    # saying the checklist rejected it. Its `lm` clears every check -- the
+    # assertion in build_gated() is what proves that, not this comment.
+    G("PLTR",  178.4,  4.62, 31840200, 12417600, 6, VETO_REASONS["up_days"],
+      (0, 0.86, 8.1, 3.4, 1.9, 0.61, 0.4, 1.1, 0.82, 0.96)),
 ]
 def _still_gated_out(specs):
     """Make each gated row consistent with the reason it declares.
@@ -459,6 +481,11 @@ def _still_gated_out(specs):
     for spec in specs:
         d = spec._asdict()
         lm = list(d["lm"])
+        if d["reason"] in VETO_REASONS.values():
+            # Nothing to converge: a vetoed row's pass count is not constrained
+            # by the gate, and this one is hand-authored to clear every check.
+            out.append(spec)
+            continue
         wants_gate_fail = d["reason"] == "lynch_gate"
         for _ in range(60):
             passes = sum(1 for c in lynch(*lm, gain=d["gain"]) if c["pass"])
@@ -491,7 +518,16 @@ def build_gated(g, i):
     # changes broke the generator instead of simply producing a stricter -- and
     # correct -- fixture. What must hold is that each row is consistent with the
     # reason it gives for not being scored, using the pipeline's own gate.
-    if g.reason == "lynch_gate":
+    if g.reason in VETO_REASONS.values():
+        # The only reason with nothing to prove about the pass count: a veto
+        # is absolute, so a vetoed row may sit anywhere from 0/6 to 6/6. What
+        # IS asserted is that this one is the interesting end of that range --
+        # a fixture whose vetoed row also failed the checklist would let the
+        # page call it a gate rejection and still look right.
+        assert passes == len(detail), (
+            f"{g.t}: {passes}/6, so this row cannot show that a veto refuses a "
+            "burst the checklist was happy with")
+    elif g.reason == "lynch_gate":
         assert passes < MIN_LYNCH_PASSES, (
             f"{g.t}: {passes}/6 clears the gate, so it was not gated out by the checklist")
     else:
@@ -513,13 +549,18 @@ for g in gated_out:
     if g["reason"] == "score_cap":
         assert g["gain_pct"] < worst_scored_3, g["ticker"]
 
-BURSTS = 47
+BURSTS = 48
 PASSED = 31
 CAP = 25
+VETOED = 1
 assert len(candidates) + len(gated_out) == BURSTS
 assert len(candidates) == CAP
 assert PASSED - CAP == sum(1 for g in gated_out if g["reason"] == "score_cap")
-assert BURSTS - PASSED == sum(1 for g in gated_out if g["reason"] == "lynch_gate")
+# A vetoed burst never reached the gate, so it is not part of PASSED -- and
+# this last sum used to be written as "everything that is not score_cap",
+# which counted a veto as a checklist rejection. Three reasons, three counts.
+assert VETOED == sum(1 for g in gated_out if g["reason"] in VETO_REASONS.values())
+assert BURSTS - PASSED - VETOED == sum(1 for g in gated_out if g["reason"] == "lynch_gate")
 
 by_src = collections.Counter(c["provenance"]["source"] for c in candidates)
 
@@ -602,7 +643,8 @@ data = {
         "scored": len(candidates),
         "score_cap": CAP,
         "shortlist_size": 5,
-        "gate": {"min_lynch_passes": 3, "total_checks": 6},
+        "gate": {"min_lynch_passes": 3, "total_checks": 6,
+                 "vetoes": list(VETO_REASONS)},
         "scored_by": {"claude": by_src["claude"], "fallback": by_src["fallback"]},
         "model": MODEL,
         "errors": [],

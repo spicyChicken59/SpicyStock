@@ -276,6 +276,16 @@ def metrics_payload(cand, lynch_result: dict, context: dict) -> dict:
         **context,
         "2lynch_summary": lynch_result["summary"],
         "2lynch_detail": lynch_result["detail_lines"],
+        # Measured criteria that are NOT checklist votes and do not move the
+        # pass count -- kept out of 2lynch_detail for exactly that reason,
+        # since a model told to anchor on "N of 6" must not be handed a
+        # seventh line under that heading. knowledge/strategy.md says how to
+        # weigh them; the line carries the threshold the code applied, so the
+        # rulebook never holds a second copy of the number.
+        "quality_notes": [
+            f"{'PASS' if c['pass'] else 'FAIL'}  {name}: {c['value']}"
+            for name, c in lynch_result.get("context_checks", {}).items()
+        ],
     }
     average = getattr(cand, "avg_volume", None)
     if average is not None:

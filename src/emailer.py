@@ -272,11 +272,17 @@ NO_STREAK_BLOCK = "streak unknown — this run recorded none"
 #: candidates to Claude (src.pipeline's MAX_TO_SCORE) and the ones that rank
 #: below it are not scored. docs/index.html uses this map for its streak line
 #: AND for the gated table's "why" cell, which is where the second name was.
+#: `veto_up_days` is a third thing again, and the wording has to keep it apart
+#: from lynch_gate: the checklist did not reject this name, an absolute rule
+#: did, and it may well have passed 6/6. src.pipeline.VETO_REASONS is where
+#: the word comes from, and a test asserts this map can say every word in it.
 LAST_OUTCOME = {
     "scored": None,  # rendered with the score itself, below
     "lynch_gate": "rejected at the 2LYNCH gate",
     "score_cap": "passed the gate, but the run had already sent its limit of "
                  "candidates to Claude",
+    "veto_up_days": "refused outright — it burst after three or more "
+                    "consecutive up days",
 }
 
 

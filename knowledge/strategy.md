@@ -41,6 +41,10 @@ high-probability Day 1.
   you would actually pay, so a large gap-up is already extended when it prints.
 - Straight down long-term downtrend where the burst is a dead-cat bounce.
 - Barely-liquid names where slippage eats the edge.
+- **A deep down day inside the base** — a FAIL on `base_breakdown` in
+  `quality_notes` (see below). The consolidation was not a rest, it was
+  distribution: the stock was being sold, and the burst is a bounce inside a
+  broken structure rather than a breakout from a quiet one.
 
 # Reading the metrics block
 
@@ -58,6 +62,24 @@ The two bases mean very different things:
 If `avg_volume` is present it is the denominator, so `volume` divided by it
 must reproduce `volume_ratio`; when it does not, trust `volume_ratio_basis`.
 Say which basis you used if the volume ratio is decisive in your reason.
+
+`quality_notes` is a separate list from `2lynch_detail` and is **not** part of
+the pass count — do not read "6/6" plus a FAIL here as 6 of 7. These are
+measured criteria the screener deliberately does not vote on, each line
+carrying what was measured and the threshold applied to it. A FAIL is a strong
+negative, not an automatic zero: one deep day at the far end of an otherwise
+tight base is weaker evidence than one three days ago, and the chart is what
+tells the two apart. Say so in the reason when a FAIL here decided the score.
+
+`consecutive_up_days` is how many sessions closed up in a row ENDING THE DAY
+BEFORE the burst — the run you would be buying into, not counting the entry.
+Anything you are scoring is 0, 1 or 2: **three or more is refused before it
+reaches you**, so you will never see one, and you do not need to apply that
+rule. What is left for you is the difference between the three you do see. 0 is
+a burst out of a flat or falling base, which is the setup; 2 is a burst on the
+third day of a drift up, which is a later entry into a move already underway.
+Weight it down accordingly, and read it beside the `C` check — a quiet prior
+day and two quiet up days are the same fact seen twice, not two reasons.
 
 # Qullamaggie overlay
 

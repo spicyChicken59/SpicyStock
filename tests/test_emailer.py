@@ -11,6 +11,7 @@ import base64
 
 import pytest
 
+from src import pipeline
 from src.emailer import build_html, send_email, send_failure_notice, subject_for
 from src.scorer import render_chart
 
@@ -480,6 +481,23 @@ def test_a_row_from_before_last_outcome_existed_claims_neither():
     assert "last seen 2026-08-28, no score was recorded then" in html
     assert "last seen 2026-08-28, rejected" not in html
     assert "last seen 2026-08-28, passed the gate" not in html
+
+
+def test_a_repeat_an_absolute_rule_refused_says_neither_of_the_other_two():
+    """The third outcome, and the one that reads worst if it borrows either
+    other phrase. "rejected at the 2LYNCH gate" is false -- the checklist may
+    have passed it 6/6 -- and "passed the gate, but..." says the run merely ran
+    out of calls. The reader has to be able to tell that a rule refused it."""
+    html = build_html(_with_streak(day=2, first_seen="2026-08-28",
+                                   last_seen="2026-08-28",
+                                   last_outcome=pipeline.VETO_REASONS["up_days"],
+                                   seen_before=1),
+                      "evening", DATED)
+
+    assert ("last seen 2026-08-28, refused outright — it burst after three or more "
+            "consecutive up days") in html
+    assert "rejected at the 2LYNCH gate" not in html
+    assert "passed the gate" not in html
 
 
 def test_last_outcome_outranks_a_score_that_contradicts_it():

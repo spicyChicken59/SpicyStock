@@ -114,7 +114,7 @@ predicted.
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 686 tests with no network
+- **There is a regression net.** `pytest tests/` runs 705 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -125,6 +125,21 @@ predicted.
   tests they showed were missing rather than argued away. Step 11 mutated its
   own additions the same way -- nine over `evidence()`, five over the widened
   snapshot shape check, three over the required-key set, all killed -- and
+  3.3 mutated its own additions the same way -- 41 over the up-days veto, the
+  base-breakdown criterion, the gate's reason vocabulary and the synthetic
+  frame's new knob; 36 killed on the first pass, and four of the five
+  survivors were real holes closed with the tests they showed were missing.
+  One of those four was not a missing test but a defect: `>` and `>=` on the
+  breakdown threshold were indistinguishable because NO frame could put the
+  raw `pct_change` on the boundary (8,000 adjacent close ratios tried), while
+  every surface printed the number rounded to a tenth -- so -4.04% was refused
+  displaying "-4.0%" and -3.96% passed displaying "-4.0%", two rows showing
+  the threshold under a note stating it, one refused and one not.
+  `worst_base_day()` rounds now, and the archive, the note and the predicate
+  are one number. The fifth survivor is the up-day loop's `range(n-1, 0, -1)`:
+  widening it to 0 is provably equivalent (index 0 is only reached by a
+  strictly increasing series, whose first element loses to its last), and the
+  argument is written beside the loop rather than here.
   3.4 closed the five survivors the brief named: the staleness band's
   `>= 2` boundary (every band test used a gap of 15), `current_session()`'s
   weekend rewind (the Sunday case passes at one step OR two; only a Saturday
@@ -343,6 +358,48 @@ python -m src.pipeline evening --dry-run
 
 All ten are done. Full-market scanning comes next, and the open decision below
 is the first thing standing in front of it.
+
+**The two Bonde rules the screener did not hold anywhere.** "Never buy after
+3+ consecutive up days" and "no 4% breakdown during the pullback" were in
+neither `src/lynch.py` nor `knowledge/strategy.md`, so the tool did not apply
+them and could not have been asked to. They are in now, and **neither is a
+seventh and eighth checklist item, which is the decision and not an
+omission.** `MIN_LYNCH_PASSES` is 3 of 6 — a MAJORITY — so two more checks
+would silently make it 3 of 8: a weaker gate wearing the same number, with
+the six-check structure that `tools/make_fixture.py`, the email, the page and
+every archived `lynch_total` are built on changed underneath them.
+
+Each rule went where the way Bonde states it puts it. **Up days is cardinal**
+("never buy") and is pure arithmetic on closes, so it is a VETO: it refuses
+the burst before the pass count is consulted, and the archived row names the
+rule. The case it exists for is a burst that passes 6/6 and is refused anyway
+— `veto_up_days` is a third reason beside `lynch_gate` and `score_cap`, and
+no surface may collapse it into either, because "rejected at the 2LYNCH gate"
+states the opposite of what happened to a 6/6 name. **A 4% base breakdown is
+a quality criterion**, so it is measured, judged against `BREAKDOWN_PCT`, and
+handed to the scoring model as a `quality_notes` line that carries the figure
+the code applied; `knowledge/strategy.md` names the criterion and deliberately
+holds no second copy of the number. It rejects nothing on its own.
+
+Two things this landed that were not the rules themselves. The synthetic
+`burst` frame's run of up days was whatever its walk happened to do — three
+or more on 8.5% of seeds, measured — so every end-to-end test in the suite
+carried an undeclared one-in-twelve chance of scanning a universe whose only
+candidate was refused; five really did, and they failed by finding zero
+candidates, which reads as a broken scan. `make_ohlcv`'s `up_run` is a
+parameter now. And the page's per-check view split every burst into "cleared
+the gate" and "failed the gate" using the pass count, which stopped being the
+same thing as the gate: a 6/6 vetoed row would have landed on the failed side,
+six passing checks counted as evidence that the checks reject. It is the
+CHECKLIST's split now, said so in the column heading, and the smoke test pins
+the difference against the vetoed count rather than asserting the two are
+equal.
+
+**UNVERIFIED AGAINST THE PRIMARY SOURCE.** stockbee.blogspot.com and
+qullamaggie.net are both blocked by this sandbox's egress proxy — checked
+with curl, not assumed — so three days and -4% come from the brief that
+specified the work and NOT from Bonde's own words. They are named constants
+for exactly that reason. Someone with access should check them.
 
 **Open decision — the universe is now 230 names.** Step 2 traded ~11,000 symbols
 for a hand-curated list to make steps 3-8 testable in seconds instead of twenty

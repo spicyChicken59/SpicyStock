@@ -29,6 +29,8 @@ Layer 2  2LYNCH checklist (code) ..... 2 first/second burst · L linear prior mo
         │                              Y young trend · N narrow consolidation
         │                              C calm pre-burst day · H close near high
         │                              hard gate: ≥3/6 passes, top 25 kept
+        │                              plus one veto, which outranks the count:
+        │                              never after 3+ consecutive up days
         ▼
 Layer 3  Chart render ................ 4-month candlestick + volume PNG per name,
         │                              written to docs/charts/ — gitignored, so
@@ -197,7 +199,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 686 tests, no network or API keys needed
+pytest tests/                   # 705 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -327,8 +329,14 @@ invariants live in the file rather than only here. The load-bearing ones:
   screener unevaluable. The cut now happens once, in `run()`, on the way to the
   email alone.
 - `run.scored + len(gated_out) == run.bursts`. Nothing a scan found may vanish.
-  A burst that went unscored carries `reason`: `lynch_gate` (it failed the
-  checklist) or `score_cap` (it passed and fell outside `MAX_TO_SCORE`).
+  A burst that went unscored carries `reason`: `veto_up_days` (an absolute rule
+  refused it, whatever the checklist said), `lynch_gate` (it failed the
+  checklist) or `score_cap` (it passed and fell outside `MAX_TO_SCORE`). The
+  three are different facts and no surface may collapse two of them: a vetoed
+  burst may have passed 6/6, so calling it a gate rejection states the
+  opposite of what happened. `run.gate.vetoes` names the absolute rules that
+  run applied, so a snapshot written before one existed is not described as
+  having enforced it.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
@@ -355,9 +363,9 @@ invariants live in the file rather than only here. The load-bearing ones:
   *"burst on 8 of the 8 sessions in the record, which begins 2026-08-20 — this
   setup may have started before it"* instead of "unknown".
   `last_outcome` is what happened to the appearance `last_seen` names:
-  `scored`, or the reason it never was (`lynch_gate` — the checklist rejected
-  it; `score_cap` — it passed and the run had already sent its limit of
-  candidates to Claude). A
+  `scored`, or the reason it never was (`veto_up_days` — an absolute rule
+  refused it; `lynch_gate` — the checklist rejected it; `score_cap` — it passed
+  and the run had already sent its limit of candidates to Claude). A
   streak counts every session the scan found a burst on, gate rejections
   included, which is why that field exists: "not scored" covered a rejection
   and a model outage with one phrase. The email and the dashboard print one
@@ -505,7 +513,7 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 124 checks, and which file each one
+**Three data sources, one page.** It runs 129 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
@@ -567,6 +575,11 @@ against a hand-made `data.json` and agree, but that check is not committed.
 - Thresholds (price floor, gain %, share-volume floor), the data `feed`, and a
   `session_date` override: `ScanConfig` in `src/scanner.py`
 - 2LYNCH pass criteria: `src/lynch.py`
+- The two rules that are not checks, and the note beside them saying why not:
+  `MAX_CONSECUTIVE_UP_DAYS` (an absolute veto) and `BREAKDOWN_PCT` /
+  `BREAKDOWN_LOOKBACK` (measured, sent to the model, rejecting nothing), also
+  in `src/lynch.py`. Neither is a seventh checklist item on purpose — the gate
+  is a majority of six, and adding to the six would quietly weaken it
 - Gate strictness / shortlist size / Claude-call cap: constants at the top of
   `src/pipeline.py`. `TOP_N` is the EMAIL's size and nothing else — every scored
   candidate is archived whatever it says

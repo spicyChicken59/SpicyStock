@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import csv
 import json
+import pathlib
 import sys
 from datetime import date, datetime
 from pathlib import Path
@@ -23,7 +24,9 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from src import emailer
 from src import ledger
+from src import lynch
 from src import pipeline
 from src import scanner
 from src.scanner import ScanConfig
@@ -710,6 +713,120 @@ def test_a_burst_the_call_cap_dropped_says_so_rather_than_disappearing(
     assert data["run"]["passed_gate"] == 3, "all three cleared the gate"
     assert data["run"]["scored"] == 1 and data["run"]["score_cap"] == 1
     assert [g["reason"] for g in data["gated_out"]] == ["score_cap", "score_cap"]
+
+
+def _perfect_burst(ohlcv, **kwargs):
+    """The first synthetic burst frame that passes all six checks.
+
+    Searched for rather than written down as a variant number: the `ohlcv`
+    fixture seeds from the TEST's own name, so the variant that scores 6/6
+    here scores something else in the next test and a number written in would
+    rot the first time either was renamed. The search is deterministic, and it
+    raises rather than falling back to a weaker frame -- a test about a rule
+    that overrules a perfect checklist proves nothing on a 5/6 one.
+    """
+    for variant in range(80):
+        frame = ohlcv("burst", variant=variant, **kwargs)
+        if lynch.evaluate_2lynch(frame)["passes"] == 6:
+            return frame
+    raise AssertionError(f"no 6/6 burst frame in 80 variants of {kwargs}")
+
+
+def test_a_burst_an_absolute_rule_refused_never_reaches_the_scorer(
+    fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The third way a burst goes unscored, and the one that must not look like
+    either of the others: the checklist was happy with it.
+
+    Both names here pass 6/6. One of them burst three sessions into a run up,
+    which Bonde refuses outright -- so it is dropped BEFORE the pass count is
+    consulted, no scoring call is made for it, and the archived row names the
+    rule rather than the gate. If the veto were a seventh checklist item this
+    name would score 6/7 and be scored.
+    """
+    # Three names, not two: the liquidity percentile gate needs a population
+    # to take a percentile OF, and it drops one of any pair.
+    names = ["KEEP0", "KEEP1", "DRIFT"]
+    for i, ticker in enumerate(names[:2]):
+        fake_alpaca.add_history(ticker, ohlcv("burst", variant=i, up_run=2))
+    fake_alpaca.add_history("DRIFT", _perfect_burst(
+        ohlcv, up_run=lynch.MAX_CONSECUTIVE_UP_DAYS + 1))
+
+    pipeline.run("evening", dry_run=True, tickers=names)
+
+    data = clean(tmp_path)
+    assert data["run"]["bursts"] == 3
+    assert data["run"]["passed_gate"] == 2, "the vetoed name never reached the gate"
+    assert sorted(c["ticker"] for c in data["candidates"]) == ["KEEP0", "KEEP1"]
+
+    (refused,) = data["gated_out"]
+    assert refused["ticker"] == "DRIFT"
+    assert refused["reason"] == pipeline.VETO_REASONS["up_days"]
+    assert refused["lynch_passes"] == refused["lynch_total"], (
+        "this row only proves anything if the checklist passed it")
+    assert [call["ticker"] for call in mocked_boundaries["anthropic"].calls
+            if "ticker" in call] == [], "and nothing was paid for either name"
+    assert "DRIFT" not in json.dumps(mocked_boundaries["anthropic"].calls)
+
+
+def test_a_vetoed_burst_outranks_the_checklist_as_the_reason_it_went_unscored(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """A name that breaks the veto AND fails the checklist reports the veto.
+
+    The order is the judgement: "rejected at the 2LYNCH gate" would name the
+    weaker of two reasons and hide the cardinal one, and the reader would have
+    no way to tell this row from the sixteen that simply were not good enough.
+    """
+    monkeypatch.setattr(pipeline, "MIN_LYNCH_PASSES", 99)
+    names = ["BOTH0", "BOTH1", "BOTH2"]
+    for i, ticker in enumerate(names):
+        fake_alpaca.add_history(ticker, ohlcv("burst", variant=i,
+                                              up_run=lynch.MAX_CONSECUTIVE_UP_DAYS + 1))
+
+    pipeline.run("evening", dry_run=True, tickers=names)
+
+    gated = clean(tmp_path)["gated_out"]
+    assert gated, "the scan found nothing to refuse, so this proves nothing"
+    for refused in gated:
+        assert refused["lynch_passes"] < 99, "this name really does fail the checklist too"
+        assert refused["reason"] == pipeline.VETO_REASONS["up_days"]
+
+
+def test_the_run_records_which_absolute_rules_it_applied(
+    fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """docs/index.html reads this to decide whether to tell the reader that a
+    veto could have cut a name at the gate stage. A snapshot written before the
+    rule existed carries no such list, and the page must not name a rule that
+    run did not enforce -- so the list has to be what the run really applied,
+    not a constant the page could have hard-coded."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+
+    pipeline.run("evening", dry_run=True, tickers=names)
+
+    gate = clean(tmp_path)["run"]["gate"]
+    assert gate["vetoes"] == list(pipeline.VETO_REASONS)
+    assert gate["vetoes"], "a run that applied no absolute rule would say so with []"
+
+
+def test_every_reason_a_burst_can_carry_can_be_said_in_words_on_both_surfaces():
+    """A reason word nothing can render is a row the reader is told nothing
+    about. The email and the page each hold their own copy of this vocabulary
+    -- they are different languages -- so the guard is that both are complete,
+    not that one is derived from the other.
+
+    This is the check that makes adding a veto safe: src.pipeline names the
+    rule, and this fails until both surfaces can say it.
+    """
+    page = (pathlib.Path(pipeline.__file__).resolve().parent.parent
+            / "docs" / "index.html").read_text()
+
+    for reason in list(pipeline.VETO_REASONS.values()) + ["lynch_gate", "score_cap"]:
+        assert emailer.LAST_OUTCOME.get(reason), f"src/emailer.py cannot say {reason}"
+        for table in ("LAST_OUTCOME", "OUTCOME_SHORT"):
+            block = page.split("var " + table + " = {", 1)[1].split("};", 1)[0]
+            assert f"{reason}:" in block, f"docs/index.html's {table} cannot say {reason}"
 
 
 def test_the_chart_a_candidate_carries_is_one_the_page_can_serve(

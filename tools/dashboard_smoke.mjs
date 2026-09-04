@@ -442,7 +442,13 @@ ok('the reason a burst went unscored is on its row, in the words the email uses'
   `${whyCells.length} cells, ${REAL.gated_out.filter((g) => g.reason === 'score_cap').length} capped`);
 ok('and the rejected ones say rejected, the same way',
   whyCells.filter((t) => t === 'rejected at the 2LYNCH gate').length
-    === REAL.gated_out.filter((g) => g.reason !== 'score_cap').length);
+    === REAL.gated_out.filter((g) => g.reason === 'lynch_gate').length);
+// A veto is the third reason and must not be counted as either of the other
+// two: this check used to read "not score_cap" as "rejected by the checklist",
+// which is the opposite of what a veto says about a name that passed 6/6.
+ok('and a burst refused by an absolute rule says so, not that the checklist rejected it',
+  whyCells.filter((t) => t.startsWith('refused outright')).length
+    === REAL.gated_out.filter((g) => String(g.reason).startsWith('veto_')).length);
 ok('and the code keeps its casing through a sheet that lowercases chips',
   (await page.$eval('#gated-table tbody td.col-why .sc-chip',
     (el) => getComputedStyle(el).textTransform)) === 'none');
@@ -521,6 +527,19 @@ ok('a failed check is not dressed as a passed one',
   (await page.locator('#shortlist .pick').first().locator('.sc-details tbody tr', { hasText: 'fail' }).count())
     === first.lynch_detail.filter((x) => !x.pass).length);
 
+// Bonde's two measurements, on the card rather than only in the prompt. The
+// up-day cell is asserted through a row whose value is ZERO: rendered through
+// the page's own number formatter it would print an em dash, which is what the
+// page says when a run predates the rule — two opposite facts, one glyph.
+const outOfFlat = REAL.candidates.find((c) => c.context && c.context.consecutive_up_days === 0);
+const cardText = await page.locator('#shortlist .pick').first().textContent();
+ok('a scored pick says how many up days it burst after, counting zero as an answer',
+  outOfFlat !== undefined
+  && (await page.locator('#shortlist .pick', { hasText: '0 up days' }).count()) > 0,
+  `${REAL.candidates.filter((c) => (c.context || {}).consecutive_up_days === 0).length} rows at zero`);
+ok('and what the worst day in its base was, which the screener measures and does not act on',
+  /worst base day/i.test(cardText), cardText.replace(/\s+/g, ' ').slice(0, 60));
+
 const blind = REAL.candidates.filter((c) => c.provenance.source === 'claude' && !c.provenance.chart_seen);
 ok('a score made without the chart says so',
   (await page.locator('.pick', { hasText: 'scored without the chart' }).count())
@@ -590,10 +609,22 @@ ok('a pass rate for each of the six checks',
 ok('the rates are taken over every burst the scan found, not just the scored',
   checks.rows.every((r, i) => r[2].endsWith(`of ${CHECKS[i].total}`) && CHECKS[i].total === run.bursts),
   JSON.stringify(checks.rows.map((r) => r[2])));
-ok('and the gate split accounts for all of them',
+ok('and the checklist split accounts for all of them',
   checks.rows.every((r, i) => r[3].endsWith(`of ${CHECKS[i].ctotal}`) && r[4].endsWith(`of ${CHECKS[i].ftotal}`))
-  && CHECKS[0].ctotal + CHECKS[0].ftotal === run.bursts && CHECKS[0].ctotal === run.passed_gate,
+  && CHECKS[0].ctotal + CHECKS[0].ftotal === run.bursts,
   `${CHECKS[0].ctotal} cleared + ${CHECKS[0].ftotal} failed = ${run.bursts}`);
+// The split is the CHECKLIST's, not the gate's, and the two are different
+// numbers the moment a veto refuses a burst that passed its checks. This used
+// to assert they were equal, which is how a 6/6 vetoed row would have been
+// counted as evidence that the checks reject -- six passing checks on the
+// failed side of a view whose whole subject is what the checks separate.
+ok('and it is the checklist that splits them, not the gate a veto also guards',
+  CHECKS[0].ctotal - run.passed_gate
+    === REAL.gated_out.filter((g) => String(g.reason).startsWith('veto_')).length,
+  `${CHECKS[0].ctotal} cleared the checklist, ${run.passed_gate} cleared the gate`);
+ok('and the column says checklist, so the two are not read as one number',
+  (await page.$$eval('#checks-table thead th', (th) => th.map((t) => t.textContent.trim())))
+    .includes('cleared the checklist'));
 ok('each row is the check it names',
   checks.rows.every((r, i) => r[0] === CHECKS[i].code)
   && checks.rows.every((r, i) => r[2].startsWith(`${Math.round(CHECKS[i].rate * 100)}%`)),

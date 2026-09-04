@@ -240,6 +240,43 @@ def test_the_request_carries_the_metrics_and_the_checklist(candidate, claude):
     assert "pct_off_52w_high" in text
 
 
+def test_a_measured_criterion_that_is_not_a_check_reaches_the_model_as_one(candidate, claude):
+    """`quality_notes` carries what the screener measures and does NOT vote on.
+
+    Two things are asserted, and the second is the reason the list exists.
+    The note has to arrive -- knowledge/strategy.md tells the model to weigh
+    it, and an empty list would leave that instruction describing nothing.
+    And it must not arrive inside `2lynch_detail`: the rulebook tells the
+    model to anchor on "N of 6", so a seventh line under that heading turns
+    a 6/6 into a 6/7 in the one place the anchor is read.
+    """
+    lynch = dict(make_lynch(4), context_checks={
+        "base_breakdown": {"pass": False, "value": "worst base day -5.1% in the prior 20"},
+    })
+
+    score_candidate(candidate, lynch, CONTEXT, None)
+
+    payload = json.loads(_text_of(claude.calls[0]).split("METRICS:\n", 1)[1]
+                         .split("\n\nRespond", 1)[0])
+    assert payload["quality_notes"] == ["FAIL  base_breakdown: worst base day -5.1% "
+                                        "in the prior 20"]
+    assert len(payload["2lynch_detail"]) == 4, "the checklist is still the checklist"
+    assert not any("base_breakdown" in line for line in payload["2lynch_detail"])
+
+
+def test_a_result_with_no_measured_criteria_sends_an_empty_list_not_a_missing_key(
+    candidate, claude
+):
+    """An older archived result, or a double built before the criteria existed,
+    carries no `context_checks`. The payload keeps the key so the rulebook's
+    instruction about `quality_notes` never points at something absent."""
+    score_candidate(candidate, make_lynch(4), CONTEXT, None)
+
+    payload = json.loads(_text_of(claude.calls[0]).split("METRICS:\n", 1)[1]
+                         .split("\n\nRespond", 1)[0])
+    assert payload["quality_notes"] == []
+
+
 def test_the_chart_is_attached_as_an_image_block(candidate, claude, ohlcv):
     chart = render_chart("AAA", ohlcv("burst"))
     score_candidate(candidate, make_lynch(), CONTEXT, chart)

@@ -110,7 +110,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 from . import ledger, scanner
-from .lynch import evaluate_2lynch, extra_context
+from .lynch import evaluate_2lynch, extra_context, failed_vetoes
 from .scanner import ScanConfig, run_scan
 from .scorer import MODEL as DEFAULT_MODEL
 from .scorer import render_chart, score_all
@@ -121,6 +121,30 @@ log = logging.getLogger("pipeline")
 TOP_N = 5          # how many candidates the EMAIL carries. Not the archive.
 MIN_LYNCH_PASSES = 3
 MAX_TO_SCORE = 25  # cap Claude calls per run
+
+#: The reason word an unscored burst carries, one per absolute rule in
+#: src.lynch, and the vocabulary docs/data.json's `gated_out[].reason` and the
+#: ledger's `streak.last_outcome` are written in. The word is derived from the
+#: rule's own name so a new veto cannot be added without a word for it, and a
+#: test asserts that the email and the page can both say every word in here:
+#: a reason nothing can render is a row the reader is told nothing about.
+VETO_REASONS = {name: f"veto_{name}" for name in ("up_days",)}
+
+
+def unscored_reason(lynch: dict) -> str:
+    """Why this burst was not scored — the veto first, because it is absolute.
+
+    The order is the judgement. A candidate three up days into a run that also
+    fails the checklist is refused by the up-days rule whatever the checklist
+    said, so "veto_up_days" is what the reader needs; reporting "lynch_gate"
+    would name the weaker of two reasons and hide the cardinal one.
+    """
+    broken = failed_vetoes(lynch)
+    if broken:
+        return VETO_REASONS[broken[0]]
+    if lynch["passes"] < MIN_LYNCH_PASSES:
+        return "lynch_gate"
+    return "score_cap"
 
 #: Where render_chart() writes. Under docs/ because docs/index.html names a
 #: chart as a path relative to itself, so a dashboard opened on the machine
@@ -538,15 +562,18 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         prepared.append((cand, lynch, ctx))
 
     prepared.sort(key=lambda x: (x[1]["passes"], x[0].gain_pct), reverse=True)
-    passed_gate = [p for p in prepared if p[1]["passes"] >= MIN_LYNCH_PASSES]
+    # A veto outranks the pass count. Bonde's up-days rule is stated as "never
+    # buy", so a burst that breaks it is refused however many checks it passed;
+    # a 6/6 name three up days into a run is exactly the case the rule is about.
+    passed_gate = [p for p in prepared
+                   if not failed_vetoes(p[1]) and p[1]["passes"] >= MIN_LYNCH_PASSES]
     to_score = passed_gate[:MAX_TO_SCORE]
     # Everything the scan found that will not be scored, with the reason it
     # was not. Kept rather than dropped: docs/data.json's contract is that
     # scored + gated_out accounts for every burst, and a per-check pass rate
     # computed over the survivors alone describes the survivors, not the run.
     scoring = {cand.ticker for cand, _lynch, _ctx in to_score}
-    unscored = [(cand, lynch,
-                 "lynch_gate" if lynch["passes"] < MIN_LYNCH_PASSES else "score_cap")
+    unscored = [(cand, lynch, unscored_reason(lynch))
                 for cand, lynch, _ctx in prepared if cand.ticker not in scoring]
     log.info("%d bursts → %d passed 2LYNCH gate (scoring top %d)",
              n_bursts, len(passed_gate), len(to_score))
@@ -1058,7 +1085,8 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         "scored": len(scored),
         "score_cap": MAX_TO_SCORE,
         "shortlist_size": shortlist_size,
-        "gate": {"min_lynch_passes": MIN_LYNCH_PASSES, "total_checks": total_checks},
+        "gate": {"min_lynch_passes": MIN_LYNCH_PASSES, "total_checks": total_checks,
+                 "vetoes": list(VETO_REASONS)},
         "scored_by": {"claude": score_stats.get("claude", 0),
                       "fallback": score_stats.get("fallback", 0)},
         "model": next((r["provenance"]["model"] for r in scored
