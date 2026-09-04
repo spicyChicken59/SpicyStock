@@ -770,6 +770,20 @@ def test_the_session_is_never_a_weekend():
     assert current_session(datetime(2026, 9, 6, 18, 30, tzinfo=MARKET_TZ)) == date(2026, 9, 4)
 
 
+def test_the_weekend_rewind_steps_back_one_day_at_a_time():
+    """Saturday, which is the only day of the week that can tell.
+
+    The rewind walks back a day at a time until it lands on a weekday. From
+    SUNDAY, one step lands on Saturday and loops to Friday, and TWO steps land
+    on Friday directly -- so the Sunday case above passes either way, and
+    `days=1` could be changed to `days=2` with the whole suite green, verified
+    by mutation. From Saturday the two differ: one step is Friday, two is
+    Thursday, and Thursday is a session whose bars this scan would then read
+    as "today".
+    """
+    assert current_session(datetime(2026, 9, 5, 18, 30, tzinfo=MARKET_TZ)) == date(2026, 9, 4)
+
+
 # --- freshness -------------------------------------------------------------
 
 
@@ -1437,3 +1451,4 @@ def test_the_readme_describes_the_filter_the_code_applies():
             f"README says {found.group(0)!r}; ScanConfig says {expected}. "
             "Sweep the docs (CLAUDE.md: a step is not done until they are true)."
         )
+

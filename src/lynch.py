@@ -20,7 +20,7 @@ Each test answers one question about the burst candidate:
        low-range, low-volume day (the "quiet before the move").
   H  — High close: the burst day closed in the top portion of its range.
 
-Each check returns pass/fail plus the raw measurement so Claude (Layer 3)
+Each check returns pass/fail plus the raw measurement so Claude (Layer 4)
 can weigh borderline cases with full context.
 """
 
@@ -46,6 +46,189 @@ MAX_D1_VOL_RATIO = 1.2      # C: prior day's volume vs its 50-day average
 MAX_D1_RANGE_RATIO = 1.0    # C: prior day's range vs the same 60-day norm
 MIN_CLOSE_POS = 0.70        # H: where in the day's range the burst closed
 
+# --- Bonde's two stated rules, which this screener did not have -------------
+# Both were missing from the checklist AND from knowledge/strategy.md, so the
+# tool did not hold them anywhere. Neither becomes a seventh and eighth
+# checklist item, and that is the decision rather than an omission:
+#
+#   MIN_LYNCH_PASSES is 3 of the 6 checks -- HALF of them. (This said "a
+#   majority" in three files until an audit did the arithmetic: a majority of
+#   six is four. The argument is unharmed and the word was wrong.) Adding two
+#   more checks would silently make it 3 of 8, weakening the gate everywhere
+#   while looking like a strengthening. The six-check structure is also what
+#   tools/make_fixture.py, the email, the page and every archived row's
+#   `lynch_total` are built on.
+#
+# So each rule goes where the way BONDE states it puts it:
+#
+#   UP DAYS is cardinal -- "never buy after 3+ consecutive up days" -- and is
+#   pure arithmetic on closes, needing no judgement. An absolute rule is a
+#   VETO, not one vote of eight: it rejects the burst outright, before the
+#   pass count is consulted, and the archived row names the rule that did it.
+#
+#   A 4% BREAKDOWN in the base is a quality criterion, not an absolute. It says
+#   the consolidation was not orderly, which is a judgement the checklist and
+#   the scoring model already make from several angles, and one deep day inside
+#   an otherwise clean base is a different thing from a broken one. So it is
+#   MEASURED, judged against BREAKDOWN_PCT, and both the number and the verdict
+#   go to the model as a `quality_notes` line, which knowledge/strategy.md
+#   tells it how to weigh. It rejects nothing on its own.
+#
+#   The threshold is here and not in knowledge/strategy.md: a second copy of a
+#   GATE number in the rulebook is how the two copies of this project's
+#   checklist came to disagree. strategy.md names the criterion; the line it
+#   reads carries the figure the code actually applied.
+#
+#   That rule is about the numbers the CODE acts on. strategy.md does state two
+#   bars of its own -- top 25% of range for an A+, 20% extension for an
+#   automatic kill -- against MIN_CLOSE_POS's top 30% and MAX_EXT_VS_SMA20's
+#   15%. Those are deliberate and now say so where they are written: a check
+#   answers "does this pass", the rulebook answers "how good is it", and an A+
+#   bar stricter than a passing one is the point rather than a drift. They are
+#   not second copies of these constants, and this comment claimed a blanket
+#   absence of second copies until a prose audit found them.
+#
+# Both measurements are archived on EVERY burst the scan found, scored or
+# refused, and survive into docs/ledger.json beside the forward returns -- so
+# the evidence views can one day ask whether either separates the winners, and
+# in particular whether the bursts the veto refused really did do worse than
+# the ones it let through. That sentence claimed all of this before it was
+# true: the vetoed row carried no `context` at all, and slim_row() dropped the
+# block on its way into the only file that outlives a run, so the question was
+# unanswerable by construction. Neither can answer it YET -- no run has ever
+# had its secrets -- but the record will now hold what an answer needs.
+#
+# UNVERIFIED AGAINST THE PRIMARY SOURCE. stockbee.blogspot.com and
+# qullamaggie.net are both blocked by this sandbox's egress proxy -- checked
+# with curl, not assumed -- so the numbers below come from the brief that
+# specified this work and NOT from Bonde's own words. They are named constants
+# for exactly that reason: if the source says four days rather than three, or
+# names a different window for the base, this is the one place to change.
+#: Every absolute rule, named once, here beside the rules themselves. The
+#: reason word an unscored burst carries is DERIVED from the name by
+#: veto_reason(), so nothing anywhere holds a second copy of this list that a
+#: new rule could be added without. It used to: src.pipeline kept its own
+#: tuple, and an audit added a realistic second veto to evaluate_2lynch alone
+#: and got a green suite plus an evening run that died on KeyError after the
+#: scan -- with the comment above that tuple claiming the arrangement made
+#: exactly that impossible.
+VETO_RULES = ("up_days",)
+
+MAX_CONSECUTIVE_UP_DAYS = 2   # veto at 3+, counted BEFORE the burst day
+BREAKDOWN_PCT = -4.0          # a single day this bad is a break, not a pullback
+BREAKDOWN_LOOKBACK = 20       # sessions of base examined for one, before the burst
+
+
+def _base(df: pd.DataFrame) -> pd.Series:
+    """The closes of the base: everything before the burst day, Close only.
+
+    The single slicing rule both measurements below apply, so that no caller
+    can hand them a differently-pruned frame and get a differently-shaped
+    answer. Close only, because a bar whose High the feed dropped still has a
+    real close and still happened -- discarding it would shorten the series
+    and move a run of up days that really occurred.
+    """
+    return df.dropna(subset=["Close"])["Close"].iloc[:-1]
+
+
+def consecutive_up_days(df: pd.DataFrame) -> int:
+    """How many sessions in a row closed up, ending the day BEFORE the burst.
+
+    The burst day itself is excluded on purpose: the rule is about what you are
+    buying INTO. "Never buy after three up days" is a statement about the run
+    that preceded the entry, and counting the entry as one of them would refuse
+    every burst that followed two up days rather than three.
+
+    Note what this catches that the checklist does not. `C` already asks the
+    prior day to be calm, and calm is not the same as down -- three quiet
+    +0.8% sessions pass `C` comfortably and are exactly the tired drift this
+    rule exists to refuse.
+
+    Takes the WHOLE frame, burst day last, and drops it here rather than at
+    each call site: this and worst_base_day() are called from two places, and
+    two callers slicing the burst day off separately is how the two copies of
+    a rule start to disagree. They did: evaluate_2lynch() had already dropped
+    every bar missing ANY of the five OHLCV fields while extra_context() had
+    dropped only those missing Close or Volume, so one bar with no High made
+    the veto count 2 and the number sent to the scoring model 3 -- a run that
+    told the model it had refused something it had allowed. _base() is the one
+    rule now, and it is the rule this measurement is about: closes.
+    """
+    closes = _base(df).to_numpy(dtype=float)
+    run = 0
+    # Down to 1 and not to 0: index 0 has no day before it. Widening the range
+    # is the one mutation of this function the suite cannot kill, and it is
+    # provably equivalent rather than a gap -- i reaches 0 only if every step
+    # back was an up day, which makes the series strictly increasing, and the
+    # comparison there would be closes[0] > closes[-1], its own minimum against
+    # its own maximum. That breaks, and the count is unchanged.
+    for i in range(len(closes) - 1, 0, -1):
+        if closes[i] > closes[i - 1]:
+            run += 1
+        else:
+            break
+    return run
+
+
+def worst_base_day(df: pd.DataFrame, lookback: int = BREAKDOWN_LOOKBACK) -> float | None:
+    """The worst single-session % change in the base, or None if there is none.
+
+    One deep down day is what separates a pullback from a break: a base that
+    dropped 4% in a session was not resting, it was being sold, and the burst
+    is a bounce inside a broken structure rather than a breakout from a quiet
+    one. The burst day is excluded for the same reason as above -- it is a big
+    UP day by construction, so including it could only ever dilute the window.
+
+    Rounded to the tenth of a percent the reader is shown, and compared at that
+    precision too. Unrounded, a base day of -4.04% failed the criterion while
+    every surface printed it as "-4.0%" beside a note saying -4.0% or worse is
+    a break: a row displaying the threshold value and refused by it, and its
+    -3.96% neighbour displaying the same value and passing. One number reaches
+    the archive, the note and the predicate now, and it is this one.
+    """
+    moves = _base(df).pct_change().iloc[-lookback:].dropna() * 100
+    if not len(moves):
+        return None
+    # `+ 0.0` collapses -0.0, which a base whose worst day is between 0 and
+    # -0.05% produces: it is archived as -0.0 and printed "-0.0%", a minus sign
+    # in front of nothing.
+    return round(float(moves.min()), 1) + 0.0
+
+
+def veto_reason(name: str) -> str:
+    """The reason word for an absolute rule, computed rather than looked up.
+
+    A lookup would raise on a rule whose word nobody remembered to add, and it
+    would raise in the pipeline's archive step -- after the scan, and on a
+    burst that was correctly refused. Deriving it means the worst a forgotten
+    rule can do is publish a word no surface has prose for, which the tests
+    below catch at development time rather than the run catching at midnight.
+    """
+    return f"veto_{name}"
+
+
+def failed_vetoes(lynch_result: dict) -> list[str]:
+    """The names of the absolute rules this candidate broke, in order.
+
+    Kept here beside the rules themselves rather than inlined into the
+    pipeline's gate, so that adding a second veto is one edit and not two.
+    A caller that does not know about vetoes at all (an older archived result
+    read back, a hand-built double in a test) reports none, which is the same
+    answer the code gave before this rule existed.
+    """
+    vetoes = lynch_result.get("vetoes")
+    if not isinstance(vetoes, dict):
+        return []
+    # One level in, not one level short. The container was checked and its
+    # entries were not, so a `vetoes` block holding anything but dicts raised
+    # AttributeError inside the pipeline's gate -- the same shape this project
+    # has now found six times, and the reason the check above exists at all.
+    # A non-string name is refused too: the word is built from it, and a run
+    # must not publish `veto_7` as a reason no surface has prose for.
+    return [name for name, v in vetoes.items()
+            if isinstance(name, str) and isinstance(v, dict) and not v.get("pass", True)]
+
+
 def _log_trend(y: np.ndarray) -> tuple[float, float]:
     """Least-squares fit of a straight line to `y`, returned as (slope, R²).
 
@@ -69,13 +252,38 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     """Run all six checks on a candidate's daily OHLCV history.
 
     The last row of `df` must be the burst day.
-    Returns {checks: {...}, passes: int, summary: "4/6", detail_lines: [...]}
+    Returns {checks: {...}, passes: int, summary: "4/6", detail_lines: [...],
+    vetoes: {...}, context_checks: {...}}. Neither of the last two is counted
+    in `passes`. `vetoes` is absolute -- the gate reads it through
+    failed_vetoes() before it looks at the pass count at all -- and
+    `context_checks` is the opposite: measured, judged, and left to the
+    scoring model to weigh, refusing nothing on its own.
     """
+    # The six checks read intraday ranges and volume, so they need a bar with
+    # all five fields. Bonde's two measurements read closes and must NOT: they
+    # are handed `raw`, and _base() applies their own single rule to it. When
+    # both read `df` the two disagreed on any frame with a partial bar in it,
+    # and the run reported one answer to the reader and the other to the model.
+    raw = df
     df = df.dropna(subset=["Open", "High", "Low", "Close", "Volume"]).copy()
     burst = df.iloc[-1]
     pre = df.iloc[:-1]  # everything before the burst day
 
     checks: dict[str, dict] = {}
+
+    # EVERY measurement below is rounded to the precision it is PRINTED at,
+    # once, and both the verdict and the line read that same rounded number.
+    # An audit found the class this closes: `worst_base_day()` was rounded for
+    # exactly this reason and the sweep stopped there, while four other checks
+    # went on displaying one number and deciding on another. Measured over 600
+    # synthetic bursts, the printed value sat exactly on its own threshold for
+    # N's tightness on 3.2% of frames and L's R² on 0.8% -- so roughly one
+    # burst in thirty showed the reader "1.00x its norm" under a rule stating
+    # 1.00 and was refused, or shown it and passed, with nothing to tell the
+    # two apart. Rounding here rather than in the f-strings is deliberate: two
+    # format strings that must agree is the arrangement that produced this.
+    def shown(value: float, places: int) -> float:
+        return round(float(value), places)
 
     # ---- 2: how many 4%+ up days in the last 20 sessions before today? ----
     rets = pre["Close"].pct_change().iloc[-20:] * 100
@@ -92,7 +300,8 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     # telling it the structure was orderly *downwards*.
     log_closes = np.log(pre["Close"].iloc[-30:].to_numpy(dtype=float))
     slope, r2 = _log_trend(log_closes)
-    fitted_move = (float(np.exp(slope * max(len(log_closes) - 1, 0))) - 1) * 100
+    r2 = shown(r2, 2)
+    fitted_move = shown((float(np.exp(slope * max(len(log_closes) - 1, 0))) - 1) * 100, 1)
     checks["L_linear_prior_move"] = {
         "pass": bool(r2 >= MIN_LINEAR_R2 and slope >= MIN_LINEAR_SLOPE),
         "value": f"R²={r2:.2f}, fitted trend {fitted_move:+.1f}% over prior 30 days",
@@ -104,9 +313,9 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     # same "-0.5% vs 20SMA" as the quiet day it gapped away from. Extension
     # is a fact about the price you would pay, which is today's close.
     closes = df["Close"]
-    run_up_1mo = (closes.iloc[-1] / closes.iloc[-21] - 1) * 100 if len(closes) >= 21 else 0.0
+    run_up_1mo = shown((closes.iloc[-1] / closes.iloc[-21] - 1) * 100, 1) if len(closes) >= 21 else 0.0
     sma20 = closes.iloc[-20:].mean()
-    ext_vs_sma20 = (closes.iloc[-1] / sma20 - 1) * 100
+    ext_vs_sma20 = shown((closes.iloc[-1] / sma20 - 1) * 100, 1)
     checks["Y_young_trend"] = {
         "pass": bool(run_up_1mo < MAX_RUN_UP_1MO and ext_vs_sma20 < MAX_EXT_VS_SMA20),
         # Spell out the frame of reference: the scorer reads this line, and
@@ -122,7 +331,8 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     daily_range = ((pre["High"] - pre["Low"]) / pre["Close"]) * 100
     recent_range = daily_range.iloc[-7:].mean()
     norm_range = daily_range.iloc[-60:-7].mean() if len(pre) > 67 else daily_range.mean()
-    tightness = recent_range / norm_range if norm_range else 9.9
+    recent_range = shown(recent_range, 1)
+    tightness = shown(recent_range / norm_range, 2) if norm_range else 9.9
     checks["N_narrow_consolidation"] = {
         "pass": tightness <= MAX_TIGHTNESS,
         "value": f"pre-burst range {recent_range:.1f}%/day = {tightness:.2f}x its norm",
@@ -130,9 +340,9 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
 
     # ---- C: calm day immediately before the burst ----
     d1 = pre.iloc[-1]
-    d1_range = (d1["High"] - d1["Low"]) / d1["Close"] * 100
-    d1_vol_ratio = d1["Volume"] / pre["Volume"].iloc[-51:-1].mean()
-    d1_move = abs(pre["Close"].pct_change().iloc[-1]) * 100
+    d1_range = shown((d1["High"] - d1["Low"]) / d1["Close"] * 100, 1)
+    d1_vol_ratio = shown(d1["Volume"] / pre["Volume"].iloc[-51:-1].mean(), 2)
+    d1_move = shown(abs(pre["Close"].pct_change().iloc[-1]) * 100, 1)
     # The range was measured and printed but left out of the verdict, so a
     # day that closed unchanged after a 15%-wide swing counted as "calm".
     # Judged against the stock's own norm, reusing N's baseline and multiple
@@ -140,7 +350,7 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     # the line says so: N's `else 9.9` sentinel prints "9.90x its norm" for a
     # range it never managed to measure, and that string goes to Claude.
     if norm_range:
-        d1_range_ratio = d1_range / norm_range
+        d1_range_ratio = shown(d1_range / norm_range, 2)
         norm_text = f" = {d1_range_ratio:.2f}x its norm"
     else:
         d1_range_ratio = float("inf")
@@ -156,7 +366,13 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     # ---- H: burst day closed near its high ----
     rng = float(burst["High"]) - float(burst["Low"])
     if rng > 0:
-        close_pos = (float(burst["Close"]) - float(burst["Low"])) / rng
+        # .0% is two decimal places on the ratio, so the reader's "70%" and
+        # MIN_CLOSE_POS's 0.70 are one number. Measured at 0% ambiguity on the
+        # synthetic frames, but only because make_ohlcv pins close_pos at one
+        # value for every seed -- the check nearest its own threshold is the
+        # one the suite never exercises near it, which is an artefact of the
+        # fixture and not a property of the code.
+        close_pos = shown((float(burst["Close"]) - float(burst["Low"])) / rng, 2)
         checks["H_close_near_high"] = {
             "pass": bool(close_pos >= MIN_CLOSE_POS),
             "value": f"closed at {close_pos:.0%} of day's range",
@@ -171,12 +387,47 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
             "value": "burst bar has no usable high-low range; close position undefined",
         }
 
+    # Bonde's cardinal rule, measured beside the checklist and deliberately
+    # not in it -- see MAX_CONSECUTIVE_UP_DAYS for why it is a veto and not a
+    # seventh vote. `checks`, `passes`, `total`, `summary` and `detail_lines`
+    # are untouched, so every consumer of the six-check structure sees exactly
+    # what it saw before this rule existed.
+    up_run = consecutive_up_days(raw)
+    vetoes = {
+        # Keyed by the names in VETO_RULES; a test asserts the two agree, so a
+        # rule added here without a name there fails at development time.
+        "up_days": {
+            "pass": up_run <= MAX_CONSECUTIVE_UP_DAYS,
+            "value": (f"{up_run} consecutive up day{'' if up_run == 1 else 's'} "
+                      f"into the burst; the rule refuses "
+                      f"{MAX_CONSECUTIVE_UP_DAYS + 1} or more"),
+        },
+    }
+
+    # Measured, judged, and handed to the model rather than acted on here.
+    # Separate from `checks` because it is not a vote, and separate from
+    # `vetoes` because it refuses nothing: src.scorer sends these as
+    # `quality_notes`, which knowledge/strategy.md tells the model to weigh.
+    worst = worst_base_day(raw)
+    context_checks = {
+        "base_breakdown": {
+            "pass": worst is None or worst > BREAKDOWN_PCT,
+            "value": (f"worst base day {worst:+.1f}% in the prior "
+                      f"{BREAKDOWN_LOOKBACK} sessions; {BREAKDOWN_PCT:+.1f}% or "
+                      f"worse is a break, not a pullback"
+                      if worst is not None
+                      else f"no usable base in the prior {BREAKDOWN_LOOKBACK} sessions"),
+        },
+    }
+
     passes = sum(1 for c in checks.values() if c["pass"])
     return {
         "checks": checks,
         "passes": passes,
         "total": len(checks),
         "summary": f"{passes}/{len(checks)}",
+        "vetoes": vetoes,
+        "context_checks": context_checks,
         "detail_lines": [
             f"{'PASS' if c['pass'] else 'FAIL'}  {name}: {c['value']}"
             for name, c in checks.items()
@@ -185,16 +436,34 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
 
 
 def extra_context(df: pd.DataFrame) -> dict:
-    """Additional metrics Claude uses for relative strength / setup scoring."""
+    """Additional metrics Claude uses for relative strength / setup scoring.
+
+    `raw` is kept for the same reason evaluate_2lynch() keeps one: Bonde's two
+    measurements have their own rule about which bars count, and handing them
+    a frame this function pruned for its own purposes made the number sent to
+    the model disagree with the verdict the veto reached from it.
+    """
+    raw = df
     df = df.dropna(subset=["Close", "Volume"])
     close = float(df["Close"].iloc[-1])
     hi_52w = float(df["High"].iloc[-252:].max()) if len(df) >= 60 else float(df["High"].max())
     lo_52w = float(df["Low"].iloc[-252:].min()) if len(df) >= 60 else float(df["Low"].min())
     perf_3mo = (close / float(df["Close"].iloc[-63]) - 1) * 100 if len(df) > 63 else None
     perf_6mo = (close / float(df["Close"].iloc[-126]) - 1) * 100 if len(df) > 126 else None
+    # The NUMBERS behind Bonde's two rules. Their verdicts travel separately --
+    # the veto through failed_vetoes(), the base breakdown through
+    # evaluate_2lynch()'s context_checks -- and these are the measurements
+    # themselves, which the archive keeps. `consecutive_up_days` is
+    # the veto's own measurement, reported for the same reason a passed check
+    # reports its value -- 0 up days and 2 are both allowed and are not the
+    # same setup -- and because the archive keeps this block, so the evidence
+    # views can one day ask whether either number separates the winners.
+    worst = worst_base_day(raw)
     return {
         "pct_off_52w_high": round((close / hi_52w - 1) * 100, 1),
         "pct_above_52w_low": round((close / lo_52w - 1) * 100, 1),
+        "consecutive_up_days": consecutive_up_days(raw),
+        "worst_base_day_pct": worst,
         # None, not "n/a": these land in docs/data.json, whose contract is
         # "numbers are numbers or null" — a string sentinel in a numeric field
         # forces every consumer to special-case it.

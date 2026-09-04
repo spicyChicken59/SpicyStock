@@ -427,3 +427,18 @@ def test_the_page_renders_the_record_rather_than_recomputing_it():
         "the page does not read `enough` off the file, so it is deciding for "
         "itself which means are worth printing as rates"
     )
+
+
+def test_the_feed_override_reaches_the_scheduled_run():
+    """src.scanner supports SCAN_FEED precisely so a refused feed can be
+    switched without a code change, and the evening workflow did not pass it --
+    so the escape hatch existed everywhere except the one place that needs it.
+    A variable, not a secret: it is not a credential, and an unset one expands
+    to '' which _feed_from_env() reads as "use the default"."""
+    evening = _read(".github/workflows/evening.yml")
+
+    assert "SCAN_FEED: ${{ vars.SCAN_FEED }}" in evening, (
+        "evening.yml does not forward SCAN_FEED; a refused data feed could "
+        "then only be fixed by editing the workflow"
+    )
+    assert "SCAN_FEED" in _read(".env.example")

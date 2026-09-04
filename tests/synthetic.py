@@ -57,6 +57,7 @@ def make_ohlcv(
     end: str = "2026-07-01",
     start_price: float = 25.0,
     base_volume: float = 3_000_000.0,
+    up_run: int = 1,
 ) -> pd.DataFrame:
     """Build one synthetic daily OHLCV frame.
 
@@ -68,6 +69,18 @@ def make_ohlcv(
       burst  -- a `base` walk whose final bar is a +12% day on 8x the recent
                 average volume (>=25M shares, >$40 close after the step-up),
                 closing in the top 3% of its range.
+
+    `up_run` is how many sessions in a row close up ENDING THE DAY BEFORE the
+    burst, and it applies to `burst` frames only. It is a parameter and not
+    whatever the walk happened to do, because src.lynch vetoes a burst that
+    follows three or more up days: measured over 200 seeds, the walk produced
+    three or more on 8.5% of them, so without this every end-to-end test in
+    the suite held an undeclared one-in-twelve chance of scanning a universe
+    whose only candidate was refused -- five of them really did, and they
+    failed by finding zero candidates, which reads as a broken scan and not as
+    a rule doing its job. Pass `up_run=3` to build the vetoed case on purpose.
+    The default is 1 rather than 0 so that a consumer reading the count back
+    cannot pass on a hard-coded zero.
 
     A TRAP IN `burst`, WORTH KNOWING BEFORE SWEEPING VARIANTS. The burst bar is
     written OVER the walk rather than drawn from it, and the `lift` below puts
@@ -104,7 +117,27 @@ def make_ohlcv(
     close = start_price * np.exp(np.cumsum(rets))
     volume = base_volume * vol_noise
 
+    if kind != "burst" and up_run != 1:
+        # Silently ignored for every other kind before this, including values
+        # no frame could hold: a test writing make_ohlcv("base", up_run=3) got
+        # whatever the walk did and nothing said so, which is a way to build
+        # exactly the shaped test this project's own rule forbids.
+        raise ValueError(f"up_run applies to burst frames only, not {kind!r}")
     if kind == "burst":
+        # The run of up days into the burst, made exact. Written before the
+        # lift and the burst bar because both are computed from close[-2],
+        # which this moves. `anchor` is forced DOWN so the run stops there:
+        # setting only the run itself would leave its length at the mercy of
+        # the walk again, one day further back.
+        if up_run < 0 or up_run > days - 3:
+            raise ValueError(f"up_run must be between 0 and {days - 3}")
+        anchor = days - 2 - up_run
+        close[anchor] = min(close[anchor], float(close[anchor - 1]) * 0.997)
+        for i in range(1, up_run + 1):
+            # 0.4%/day: quiet enough that `C` still calls the prior day calm,
+            # which is the tired-drift case the up-days rule is about.
+            close[anchor + i] = close[anchor + i - 1] * 1.004
+
         # Put the final bar far beyond every gate: a 12% gain on 8x the
         # trailing 50-day average volume, at least 25M shares, above $40.
         lift = max(1.0, 40.0 / float(close[-2]))

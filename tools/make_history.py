@@ -63,6 +63,7 @@ import pandas as pd
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 
+from src.lynch import MAX_CONSECUTIVE_UP_DAYS
 from src import ledger, pipeline, scanner, scorer  # noqa: E402
 from src.scorer import VERDICT_BANDS, _balanced_spans  # noqa: E402
 from tests.fakes import FakeAlpaca, FakeDataClient  # noqa: E402
@@ -83,6 +84,23 @@ UNIVERSE_STRIDE = 3
 #: range norm and extra_context 126 for six-month performance, and ScanConfig
 #: asks for 260.
 WARMUP = 300
+
+#: How often a planted burst is GIVEN a run of up days long enough to be
+#: refused, before quality tilts it. Stated rather than inherited from the
+#: walk: with nothing choosing it the rate was 33% of every planted burst and
+#: cut the scored population by a quarter, which is a large fact about this
+#: fixture decided by a seed. A poor setup drifts up into its burst more often
+#: than a good one, so the roll is scaled by (1 - q) and this is its average.
+#:
+#: It is NOT the refusal rate the fixture ends up with, and saying so is the
+#: point: 17 of 184 bursts are given a long run and 34 are refused, because a
+#: name that bursts again two or three sessions later has a real run of up days
+#: behind it -- 16 of the other 17 have another planted burst inside their own
+#: run window. That is the rule doing what it is for, not the fixture leaking,
+#: and it is why this constant is named for what it plants rather than for what
+#: comes out. (One frame is unexplained by either, and is written down here
+#: rather than rounded away.)
+VETO_RATE = 0.10
 GENERATED = "2026-09-01T22:14:07Z"
 #: The model name written into the fixture's run block. PINNED, because
 #: src.scorer reads CLAUDE_MODEL at import time and the pipeline copies that
@@ -152,6 +170,18 @@ class Burst:
         self.quiet = bool(rng.random() < 0.25 + 0.6 * q)       # tight, calm week before
         self.prior_bursts = int(rng.poisson(1.6 * (1 - q)))    # earlier 4% days in the window
         self.extended = bool(rng.random() < 0.55 * (1 - q))    # already up a lot this month
+        # The run of up days into the burst, CHOSEN rather than whatever the
+        # walk happened to do. This is the same class the burst-frame builder
+        # in tests/synthetic.py had, and the round that closed it there did not
+        # sweep here: the veto's rate in this fixture was an accident of the
+        # seed, and it landed at 33% of every planted burst -- a third of the
+        # record refused, and the scored population cut by a quarter, decided
+        # by nothing. A worse setup drifts up into its burst more often, which
+        # is the relation this fixture exists to hold; VETO_RATE is what makes
+        # it a stated one. Anything above MAX_CONSECUTIVE_UP_DAYS is refused.
+        self.up_run = int(rng.integers(0, MAX_CONSECUTIVE_UP_DAYS + 1))
+        if rng.random() < VETO_RATE * (1 - q) * 2:
+            self.up_run = int(MAX_CONSECUTIVE_UP_DAYS + 1 + rng.integers(0, 3))
         self.scorer_down = False
 
 
@@ -246,6 +276,24 @@ def build_frames(names: list[str], bursts: list[Burst], rng: np.random.Generator
             steps = rng.normal(b.drift5 / 5 / 100, 0.016, 5)
             for j, k in enumerate(range(t + 1, min(t + 6, total))):
                 rets[k] = steps[j]
+        # THE UP-RUNS, in a pass of their own and for the same reason the burst
+        # days get one. Written inside the shaping loop they were clobbered by
+        # the NEXT burst's own pre-window on the same name: 19 of 184 planted
+        # bursts reached the scanner with a run they were never given, and the
+        # veto's rate in this fixture came out at 21.7% against an intended
+        # 9.2%. The day before the run is forced down so the run stops where it
+        # is meant to; 0.4%/day keeps it quiet enough that check C still calls
+        # the prior session calm, which is the tired drift the rule is about.
+        for b in planted:
+            t = WARMUP + b.day
+            anchor = t - 1 - b.up_run
+            if anchor > 0:
+                rets[anchor] = -0.003
+                for k in range(anchor + 1, t):
+                    rets[k] = 0.004
+        # And the burst days LAST, because a burst one session after another
+        # has that other burst's day inside its own run window, and 0.4% there
+        # would erase a 5% burst.
         for b in planted:
             t = WARMUP + b.day
             rets[t] = b.gain / 100

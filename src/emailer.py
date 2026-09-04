@@ -272,11 +272,17 @@ NO_STREAK_BLOCK = "streak unknown — this run recorded none"
 #: candidates to Claude (src.pipeline's MAX_TO_SCORE) and the ones that rank
 #: below it are not scored. docs/index.html uses this map for its streak line
 #: AND for the gated table's "why" cell, which is where the second name was.
+#: `veto_up_days` is a third thing again, and the wording has to keep it apart
+#: from lynch_gate: the checklist did not reject this name, an absolute rule
+#: did, and it may well have passed 6/6. src.pipeline.VETO_REASONS is where
+#: the word comes from, and a test asserts this map can say every word in it.
 LAST_OUTCOME = {
     "scored": None,  # rendered with the score itself, below
     "lynch_gate": "rejected at the 2LYNCH gate",
     "score_cap": "passed the gate, but the run had already sent its limit of "
                  "candidates to Claude",
+    "veto_up_days": "refused outright — it burst after three or more "
+                    "consecutive up days",
 }
 
 
@@ -394,11 +400,16 @@ def _streak_footnote(results: list[dict]) -> str:
     """What "day N" counts, said once under the table.
 
     A streak counts every session the scan found a burst on, INCLUDING the
-    ones the 2LYNCH gate rejected — the right call, because the setup was
-    running whether or not the checklist let it through to a score, and one no
-    reader can infer from "day 2 of this setup", which reads as two nights of
-    agreement. Disclosed here rather than in every row, and only when a row
-    actually makes a count that needs it.
+    ones that were never scored — the checklist rejected them, the call cap
+    crowded them out, or an absolute rule refused them. That is the right call,
+    because the setup was running whether or not the screener let it through to
+    a score, and it is a thing no reader can infer from "day 2 of this setup",
+    which reads as two nights of agreement. Disclosed here rather than in every
+    row, and only when a row actually makes a count that needs it.
+
+    This used to say "including the ones the 2LYNCH gate rejected", which
+    became false when a third reason arrived and stayed false three lines under
+    a row printing that third reason's own words.
 
     That is TWO shapes of row, not one. "day 3 of this setup" is the obvious
     one; "burst on 8 of the 8 sessions in the record" is the other, and it is
@@ -418,8 +429,9 @@ def _streak_footnote(results: list[dict]) -> str:
         'font-size:12px;margin:10px 0 0;max-width:70ch;">'
         "&ldquo;day N of this setup&rdquo;, and the earlier bursts a row with no day "
         "number counts, are every session the scan found a burst on for that name — "
-        "including the ones the 2LYNCH gate rejected. Neither is N nights of "
-        "confirmation."
+        "including the ones that were never scored, whether the checklist rejected "
+        "them, an absolute rule refused them, or the call cap crowded them out. "
+        "Neither is N nights of confirmation."
         "</p>"
     )
 
@@ -445,16 +457,29 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     session = scan_stats.get("session") or "not recorded"
     failed = scan_stats.get("status") == "failed"
     unknown = "not recorded"
+    # "Passed 2LYNCH gate" counts the names that cleared the checklist AND were
+    # not refused by an absolute rule, so on a night with a veto the number is
+    # smaller than the checklist alone allowed -- and the label said the
+    # checklist had rejected a name that may have passed 6/6, which is the one
+    # collapse CLAUDE.md forbids by name. The refusals get their own line, and
+    # only when there are some: a run with none reads exactly as it always did,
+    # and a snapshot written before the rule existed reports 0 and says nothing.
+    vetoed = scan_stats.get("vetoed")
+    refused = ([("Refused by an absolute rule", vetoed)]
+               if isinstance(vetoed, (int, float)) and not isinstance(vetoed, bool) and vetoed
+               else [])
     if run_type == "morning":
         parts = [("Session it should have followed" if failed
                   else "Following through on the session of", session),
                  ("4% bursts that session", scan_stats.get("bursts", unknown)),
+                 *refused,
                  ("Passed 2LYNCH gate", scan_stats.get("gated", unknown)),
                  ("Watching", len(results))]
     else:
         parts = [("Session it was scanning" if failed else "Session scanned", session),
                  ("Universe", scan_stats.get("universe", unknown)),
                  ("4% bursts found", scan_stats.get("bursts", unknown)),
+                 *refused,
                  ("Passed 2LYNCH gate", scan_stats.get("gated", unknown)),
                  ("Shortlisted", len(results))]
     return " &nbsp;|&nbsp;\n      ".join(f"{label}: {value}" for label, value in parts)
@@ -583,7 +608,12 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
         elif run_type == "morning":
             empty = "The run this follows through on scored no candidates."
         else:
-            empty = "No candidates passed the quality gate today."
+            # A night whose every burst was refused outright did not fail the
+            # checklist, and saying so would state the opposite of what the
+            # rows beneath it record.
+            refused_all = (scan_stats.get("vetoed") or 0) and not (scan_stats.get("gated") or 0)
+            empty = ("Every burst the scan found was refused outright by an absolute rule."
+                     if refused_all else "No candidates passed the quality gate today.")
         rows = f'<tr><td colspan="7" style="padding:16px;color:#666;">{empty}</td></tr>'
 
 
@@ -668,7 +698,17 @@ def _required(name: str) -> str:
 
 def send_email(results: list[dict], run_type: str, scan_stats: dict) -> None:
     to = [addr.strip() for addr in _required("EMAIL_TO").split(",")]
-    sender = os.environ.get("RESEND_FROM", "onboarding@resend.dev")
+    # EMPTY COUNTS AS ABSENT, the same rule src.pipeline's _absent() applies to
+    # every other variable, and here it is the difference between a fallback
+    # and a rejected send. os.environ.get's default fires only on a MISSING
+    # key -- but evening.yml always sets `RESEND_FROM: ${{ secrets.RESEND_FROM }}`
+    # and GitHub expands an unset secret to '', so the variable is present and
+    # empty and the documented fallback was unreachable in the one place it
+    # was written for. Reproduced: absent gave onboarding@resend.dev, '' gave
+    # a sender of '', which Resend refuses -- so setting the other five
+    # secrets and leaving this one out sent nothing, and the run reported
+    # itself clean.
+    sender = os.environ.get("RESEND_FROM", "").strip() or "onboarding@resend.dev"
 
     resend.api_key = _required("RESEND_API_KEY")
 

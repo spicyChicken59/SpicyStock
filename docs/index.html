@@ -550,9 +550,22 @@
   // 2LYNCH gate' and naming a 'scoring cap': two vocabularies for one
   // mechanism, side by side, and neither name explained anywhere. There is one
   // now, and it describes the mechanism instead of naming it.
+  // veto_up_days is a third thing again and must not read as a fourth way of
+  // saying lynch_gate: the checklist did not reject this name, an absolute
+  // rule did, and it may well have passed 6/6. src/emailer.py's LAST_OUTCOME
+  // is the same map in the same words, and src.pipeline.VETO_REASONS is where
+  // the key comes from.
   var LAST_OUTCOME = {
     lynch_gate: 'rejected at the 2LYNCH gate',
-    score_cap: 'passed the gate, but the run had already sent its limit of candidates to Claude'
+    score_cap: 'passed the gate, but the run had already sent its limit of candidates to Claude',
+    veto_up_days: 'refused outright — it burst after three or more consecutive up days'
+  };
+  // Short forms of the same three, for the places a sentence has no room for
+  // the full phrase. Every key above has one, and a check below proves it.
+  var OUTCOME_SHORT = {
+    lynch_gate: 'rejected at the gate',
+    score_cap: 'over the call cap',
+    veto_up_days: 'refused by an absolute rule'
   };
   // A number is required for the scored sentence, not just the word: a row
   // marked scored with no score in it would print 'scored —/10', and the
@@ -623,6 +636,16 @@
     return have.map(function (k) { return '+' + k.slice(1) + 'd ' + pct(fr[k], 2); }).join(' · ');
   }
 
+  // 0 is a real answer here and null is not, so this cannot go through num():
+  // a burst out of a flat base is the setup, and rendering it as an em dash
+  // beside a genuine "the run that wrote this predates the rule" would say
+  // the same thing about two opposite facts.
+  function upDaysCell(c) {
+    var n = c.context && c.context.consecutive_up_days;
+    if (typeof n !== 'number') return '—';
+    return plural(n, 'up day');
+  }
+
   function pick(c) {
     var facts = [
       ['close', '$' + num(c.close)],
@@ -632,6 +655,15 @@
       ['$ volume', '$' + big(c.dollar_volume)],
       ['off 52w high', pct(c.context && c.context.pct_off_52w_high)],
       ['3-month', pct(c.context && c.context.perf_3mo_pct)],
+      // Bonde's two measurements. Every scored row is 0, 1 or 2 up days by
+      // construction -- three is refused before it can be scored -- so this
+      // cell separates a burst out of a flat base from one on the third day
+      // of a drift up, which is a materially later entry wearing the same
+      // score. The worst base day is the criterion the screener measures and
+      // deliberately does not act on: shown so a reader can see the model was
+      // told, and told what. Both read null on a snapshot older than the rule.
+      ['run into it', upDaysCell(c)],
+      ['worst base day', pct(c.context && c.context.worst_base_day_pct)],
       ['this setup', streakText(c)],
       ['forward return', forwardCell(c.forward_returns)]
     ];
@@ -758,8 +790,13 @@
         why: null, note: (run.universe && run.universe.label) || 'symbols scanned' },
       { name: '4% bursts', n: run.bursts || 0,
         why: 'no 4% gain on the day', note: 'the Layer-1 scan' },
+      // Two things cut a name at this stage now, and the caption says so only
+      // when the run really had a veto to apply: a snapshot written before
+      // the rule existed carries no gate.vetoes, and naming a rule that run
+      // did not enforce would be the confidently-false sentence again.
       { name: 'passed 2LYNCH', n: run.passed_gate || 0,
-        why: 'under ' + g.min_lynch_passes + ' of ' + g.total_checks + ' checks',
+        why: 'under ' + g.min_lynch_passes + ' of ' + g.total_checks + ' checks' +
+             ((g.vetoes || []).length ? ', or refused by an absolute rule' : ''),
         note: 'the ' + g.min_lynch_passes + '/' + g.total_checks + ' gate' },
       { name: 'scored', n: run.scored || 0,
         why: 'outside the ' + run.score_cap + '-call cap', note: 'one scoring call each' },
@@ -799,10 +836,18 @@
 
   // ---- the 2LYNCH checks in aggregate -------------------------------------
   // Per-check pass rate over every burst that recorded a checklist. Splitting
-  // it by whether the burst cleared the gate is the whole point: a check whose
-  // pass rate barely moves between the two groups is not gating anything, and
-  // that cannot be seen from the scored candidates alone, because every one of
-  // them already cleared it.
+  // it by whether the burst cleared the CHECKLIST is the whole point: a check
+  // whose pass rate barely moves between the two groups is not gating
+  // anything, and that cannot be seen from the scored candidates alone,
+  // because every one of them already cleared it.
+  //
+  // The checklist, and not the gate as a whole -- the two used to be the same
+  // number and are not any more. A burst refused by an absolute rule may have
+  // passed 6/6, so it belongs on the cleared side of a split about check
+  // quality; putting it on the failed side would mean six passing checks
+  // counted as evidence that the checks reject. `cleared` is therefore >=
+  // run.passed_gate, by exactly the number of bursts a veto refused, and the
+  // column headings say checklist rather than gate for the same reason.
   function checkStats(cands, gated, run) {
     var min = run.gate ? run.gate.min_lynch_passes : null;
     var rows = cands.concat(gated).filter(function (r) {
@@ -1298,7 +1343,7 @@
       var out = r.forward_returns || {};
       var got = FWD_KEYS.filter(function (k) { return out[k] !== null && out[k] !== undefined; });
       return day(r.date) + ' ' + (r.score === null || r.score === undefined
-        ? (r.reason === 'score_cap' ? 'over the call cap' : 'rejected at the gate')
+        ? (OUTCOME_SHORT[r.reason] || OUTCOME_SHORT.lynch_gate)
         : num(r.score, 1) + '/10') +
         (got.length ? ' → +' + got[got.length - 1].slice(1) + 'd ' + pct(out[got[got.length - 1]], 1) : ' → pending');
     }).join(' · ');
@@ -1496,13 +1541,23 @@
 
     // what was not scored
     $('gated-card').hidden = !gated.length;
-    var byGate = gated.filter(function (g) { return g.reason !== 'score_cap'; }).length;
+    // Three reasons, not two. This sentence used to read every row that was
+    // not score_cap as a checklist rejection, which a veto is not: a name
+    // refused for bursting after three up days may have passed 6/6, and
+    // counting it as "rejected at the ≥3/6 2LYNCH gate" states the opposite
+    // of what happened. Only the clauses with a count in them are printed,
+    // so a run with no vetoes reads exactly as it did before.
+    var vetoed = gated.filter(function (g) { return String(g.reason).indexOf('veto_') === 0; }).length;
+    var byGate = gated.length - capped - vetoed;
+    var why = [];
+    if (byGate) why.push(byGate + ' rejected at the ' + gateTxt + ' 2LYNCH gate');
+    if (vetoed) why.push(vetoed + ' refused by an absolute rule whatever the checklist said');
+    if (capped) why.push(capped + ' passed the gate but ranked below the ' + run.score_cap +
+                         ' candidates this run sent to Claude');
     // The one place the limit gets a NUMBER. The cells below and the streak
     // line say what it is in words; this says how big it was on this run.
     $('gated-hint').textContent = plural(gated.length, 'burst') + ' the scan found but no score exists for: ' +
-      byGate + ' rejected at the ' + gateTxt + ' 2LYNCH gate' +
-      (capped ? ' and ' + capped + ' passed it but ranked below the ' + run.score_cap +
-                ' candidates this run sent to Claude' : '') +
+      why.join(', ').replace(/, ([^,]*)$/, why.length > 1 ? ' and $1' : '$1') +
       '. ' + (run.scored || 0) + ' scored plus ' + gated.length + ' here accounts for all ' + (run.bursts || 0) + ' bursts.';
     table($('gated-table'), ['ticker', 'why', '2LYNCH', 'burst', 'vol x', 'close'],
       gated.map(function (g) {
@@ -1537,16 +1592,16 @@
       if (partial) {
         $('checks-bias-body').textContent =
           'Only ' + plural(cs.covered, 'burst') + ' of the ' + (run.bursts || 0) +
-          ' this scan found recorded a checklist, and they are the ones that cleared the gate. ' +
+          ' this scan found recorded a checklist, and they are the ones that cleared it. ' +
           'The candidates each check rejected are missing from these rates, so every one of them is ' +
           'an overstatement. Read them as a description of the survivors, not of the run.';
       }
       $('checks-hint').textContent =
         'Pass rate for each check across ' + plural(cs.covered, 'burst') + ' — ' + cs.cleared +
-        ' that cleared the ' + gateTxt + ' gate and ' + cs.failed + ' that did not. ' +
+        ' that cleared the ' + gateTxt + ' checklist and ' + cs.failed + ' that did not. ' +
         (cs.weakest && cs.harshest
           ? cs.weakest.code + ' passes ' + rate(cs.weakest.rate) + ' of every burst, including ' +
-            rate(cs.weakest.frate) + ' of the ones that failed the gate, so it separates least; ' +
+            rate(cs.weakest.frate) + ' of the ones that failed it, so it separates least; ' +
             cs.harshest.code + ' passes ' + rate(cs.harshest.rate) + ' and is the hardest of the ' +
             cs.checks.length + '.'
           : '');
@@ -1556,9 +1611,14 @@
       );
       live(function () { drawChecks($('checks-chart'), cs.checks); });
       table($('checks-table'),
-        ['check', 'what it tests', 'pass rate', 'cleared the gate', 'failed the gate', 'separation', 'note'],
+        ['check', 'what it tests', 'pass rate', 'cleared the checklist', 'failed the checklist', 'separation', 'note'],
         cs.checks.map(function (st) {
-          var note = st === cs.harshest ? 'hardest gate' : (st === cs.weakest ? 'weakest separator' : null);
+          // "hardest check", not "hardest gate": the columns beside it were
+          // renamed when a veto stopped making the gate and the checklist the
+          // same thing, and this chip kept the old word — two vocabularies for
+          // one mechanism inside one table, which is the drift the rename
+          // existed to end.
+          var note = st === cs.harshest ? 'hardest check' : (st === cs.weakest ? 'weakest separator' : null);
           return el('tr', null, [
             el('td', null, el('span', { 'class': 'sc-chip sc-chip--neutral sc-chip--case', text: st.code })),
             el('td', { 'class': 'col-what', text: st.label }),

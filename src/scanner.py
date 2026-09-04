@@ -158,6 +158,7 @@ SESSION_COMPLETE_ET = time_of_day(16, 15)
 DEFAULT_FEED = DataFeed.DELAYED_SIP
 
 
+
 class SymbolFileError(ValueError):
     """The symbol file is unreadable, empty, or has a line that is not a ticker."""
 
@@ -439,6 +440,21 @@ def _download_batch(data_client, tickers, cfg: ScanConfig,
         (this morning's partial one, on a scan targeting yesterday) is never
         returned in the first place. The end bound stops the frame going
         forward; _drop_stale_symbols() stops it lagging behind.
+
+        `end` is the END of the target session, so on an evening run scanning
+        today it is HOURS IN THE FUTURE -- measured at 18:30 UTC, the request
+        asks for data up to 23:59 UTC. That is deliberate and left alone.
+        Alpaca documents that a SIP query's `end` must be at least 15 minutes
+        old on a plan without a real-time subscription, and clamping `end` back
+        to now-16min was tried: it is unnecessary if the rule applies to the
+        `sip` feed rather than the `delayed_sip` one this scan names, and it
+        breaks any run whose target session is not yet over. The sandbox cannot
+        reach Alpaca, so which of those is true is UNVERIFIED -- and a
+        behavioural change to the data request on an unverified lead is exactly
+        what this project's notes warn against. If the first live run dies with
+        FeedNotAuthorizedError naming delayed_sip, this window is the first
+        suspect and SCAN_FEED=iex is the immediate workaround; evening.yml
+        forwards it now for that reason.
     """
     day_start = datetime(session.year, session.month, session.day, tzinfo=timezone.utc)
     start = day_start - timedelta(days=int(cfg.lookback_days * 1.6))

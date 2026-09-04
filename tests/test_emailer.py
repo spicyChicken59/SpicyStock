@@ -11,6 +11,7 @@ import base64
 
 import pytest
 
+from src import pipeline
 from src.emailer import build_html, send_email, send_failure_notice, subject_for
 from src.scorer import render_chart
 
@@ -196,6 +197,8 @@ def test_a_failed_run_says_that_instead(results):
 # night's COMPLETE shortlist, in a pass that scans no universe -- and its failed
 # twin said "no scan was completed", which is true of every morning run by
 # design. Of the three lines a phone skimmer reads, two were false.
+
+from src.emailer import _plural  # noqa: E402 -- the band's own pluraliser
 
 STALE = dict(DEGRADED, session="2026-08-10", stale_sessions=15,
              errors=[{"stage": "session", "message": "nothing has published since"}])
@@ -480,6 +483,23 @@ def test_a_row_from_before_last_outcome_existed_claims_neither():
     assert "last seen 2026-08-28, passed the gate" not in html
 
 
+def test_a_repeat_an_absolute_rule_refused_says_neither_of_the_other_two():
+    """The third outcome, and the one that reads worst if it borrows either
+    other phrase. "rejected at the 2LYNCH gate" is false -- the checklist may
+    have passed it 6/6 -- and "passed the gate, but..." says the run merely ran
+    out of calls. The reader has to be able to tell that a rule refused it."""
+    html = build_html(_with_streak(day=2, first_seen="2026-08-28",
+                                   last_seen="2026-08-28",
+                                   last_outcome=pipeline.VETO_REASONS["up_days"],
+                                   seen_before=1),
+                      "evening", DATED)
+
+    assert ("last seen 2026-08-28, refused outright — it burst after three or more "
+            "consecutive up days") in html
+    assert "rejected at the 2LYNCH gate" not in html
+    assert "passed the gate" not in html
+
+
 def test_last_outcome_outranks_a_score_that_contradicts_it():
     """The docstring says last_outcome is the authority, so a row carrying both
     has to prove it. src.ledger never writes a gated appearance with a score --
@@ -607,10 +627,56 @@ def test_a_row_carrying_no_streak_field_at_all_is_unknown_too(results):
     assert "new setup" not in html
 
 
+def test_the_funnel_does_not_tell_a_vetoed_six_of_six_it_failed_the_checklist():
+    """`gated` counts what cleared the checklist AND survived every veto.
+
+    It is printed under the label "Passed 2LYNCH gate", so on a night with a
+    refusal the label described a number the checklist did not produce — and
+    the burst it excluded may have passed 6/6, which is the collapse this
+    project forbids by name. The refusals get their own line.
+    """
+    stats = dict(DATED, bursts=4, vetoed=1, gated=2)
+
+    html = build_html([make_result("AAA")], "evening", stats)
+
+    assert "Refused by an absolute rule: 1" in html
+    assert "Passed 2LYNCH gate: 2" in html
+    assert "4% bursts found: 4" in html
+
+
+def test_a_run_with_no_refusals_reads_exactly_as_it_did_before():
+    """The line is conditional on there being one, and 0 is not one. A snapshot
+    written before the rule existed reports 0 and must say nothing at all —
+    naming a rule a run never applied is the confidently-false sentence."""
+    for vetoed in (0, None):
+        stats = dict(DATED, bursts=4, gated=3)
+        if vetoed is not None:
+            stats["vetoed"] = vetoed
+        html = build_html([make_result("AAA")], "evening", stats)
+        assert "absolute rule" not in html, vetoed
+        assert "Passed 2LYNCH gate: 3" in html
+
+
+def test_a_night_every_burst_was_refused_does_not_blame_the_checklist():
+    """"No candidates passed the quality gate today" states the opposite of
+    what happened when the checklist passed them and a rule refused them."""
+    stats = dict(DATED, bursts=3, vetoed=3, gated=0)
+
+    html = build_html([], "evening", stats)
+
+    assert "refused outright by an absolute rule" in html
+    assert "No candidates passed the quality gate" not in html
+
+
 def test_what_day_n_counts_is_disclosed_once_under_the_table():
-    """A streak counts every session the scan found a burst on, gate rejections
-    included — the right call, and one no reader can infer from "day 2 of this
-    setup"."""
+    """A streak counts every session the scan found a burst on, every unscored
+    one included — the right call, and one no reader can infer from "day 2 of
+    this setup".
+
+    The disclosure named the 2LYNCH gate alone while a third reason existed and
+    while a row three lines above printed that third reason's own words, so the
+    phrase asserted here covers all three ways a burst goes unscored.
+    """
     counted = build_html(_with_streak(day=2, first_seen="2026-08-28"), "evening", DATED)
     # The same count, on a row that cannot put a day number on it: "burst on 8
     # of the 8 sessions in the record" is over the same bursts and needs the
@@ -622,10 +688,16 @@ def test_what_day_n_counts_is_disclosed_once_under_the_table():
                         "evening", DATED)
     single = build_html(_with_streak(), "evening", DATED)
 
-    assert "including the ones the 2LYNCH gate rejected" in counted
-    assert "including the ones the 2LYNCH gate rejected" in no_day
-    assert "including the ones the 2LYNCH gate rejected" not in single, (
+    disclosure = "including the ones that were never scored"
+    assert disclosure in counted
+    assert disclosure in no_day
+    assert disclosure not in single, (
         "and it is not printed under a table with no streak to explain")
+    # All three reasons, named. A disclosure that lists two of them tells the
+    # reader the count is smaller than it is.
+    for reason in ("the checklist rejected", "an absolute rule refused",
+                   "the call cap crowded"):
+        assert reason in counted, reason
 
 
 def test_a_morning_run_with_nothing_to_show_does_not_blame_the_market():
@@ -666,6 +738,28 @@ def test_a_stale_morning_with_no_rows_still_names_the_gap_without_promising_rows
     assert "NOTHING HAS PUBLISHED FOR 15 SESSIONS" in headline
     assert "rows below" not in headline, headline
     assert "2026-08-11" in headline
+
+
+@pytest.mark.parametrize("gap, escalates", [(1, False), (2, True), (3, True), (15, True)])
+def test_the_headline_escalates_at_two_sessions_not_three(gap, escalates):
+    """The boundary itself, from both sides.
+
+    Every band test here used a gap of 15, so `stale >= 2` could be changed to
+    `stale >= 3` with the whole suite green -- verified by mutation. The
+    subject line's identical boundary was already parametrised over 1/2/3/15
+    and killed it; this is the same coverage one surface over.
+
+    Two is where the arithmetic changes, and the reason is the one judgement
+    CLAUDE.md records about the calendar: none of the market's SCHEDULED
+    holidays are adjacent, so at a gap of one a holiday is still a live
+    explanation and the band must stay ambiguous, while from two up at least
+    one of those days was a session nothing scanned.
+    """
+    headline = _band("history", "morning", [], stale_sessions=gap, session="2026-08-11")
+
+    assert ("NOTHING HAS PUBLISHED FOR" in headline) is escalates, headline
+    if escalates:
+        assert _plural(gap, "SESSION").upper() in headline
 
 
 def test_only_a_scan_problem_calls_the_list_incomplete():
@@ -710,3 +804,26 @@ def test_a_streak_day_that_is_not_a_number_does_not_take_the_email_down(fake_res
     html = fake_resend.sent[0]["html"]
     assert "streak unknown" in html and "day 3" not in html
     assert "day N of this setup" in html, "the footnote path compares the same value"
+
+
+@pytest.mark.parametrize("value", [None, "", "   "])
+def test_an_unset_sender_falls_back_even_when_actions_passes_it_as_empty(
+    monkeypatch, fake_resend, results, value
+):
+    """os.environ.get's default fires only on a MISSING key, and Actions never
+    leaves this one missing: evening.yml always sets RESEND_FROM, and GitHub
+    expands an unset secret to ''. So the variable arrives present and empty,
+    the documented fallback never fired, and the send went out with `from: ''`
+    -- which Resend refuses. Setting the other five secrets and leaving this
+    one out therefore mailed nothing while the run reported itself clean.
+
+    The same absent-versus-empty distinction as run.status, and the same rule
+    src.pipeline's _absent() already applies everywhere else.
+    """
+    monkeypatch.delenv("RESEND_FROM", raising=False)
+    if value is not None:
+        monkeypatch.setenv("RESEND_FROM", value)
+
+    send_email(results, "evening", DATED)
+
+    assert fake_resend.sent[0]["from"] == "onboarding@resend.dev"
