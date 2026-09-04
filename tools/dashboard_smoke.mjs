@@ -170,6 +170,24 @@ const VARIANTS = {
     d.run.errors = [{ stage: 'scanner', message: 'Alpaca returned no bars for 214 symbols; those were skipped.' }];
     return d;
   },
+  // A REAL run on a quiet night: one burst, rejected at the gate, nothing
+  // scored. This is the shape that breaks a check written against a 47-burst
+  // fixture -- a headline whose plural is hard-coded, and a scores table whose
+  // "Nothing to show." placeholder counts as a candidate row -- and it is a
+  // shape production will produce within its first month. It exists so the
+  // claim that the docs/-facing checks hold for ANY run is something CI
+  // exercises rather than something this file asserts about itself.
+  quietnight() {
+    const d = clone();
+    d.run.fixture = false;
+    d.run.bursts = 1;
+    d.run.scored = 0;
+    d.run.passed_gate = 0;
+    d.run.shortlist_size = 0;
+    d.candidates = [];
+    d.gated_out = d.gated_out.slice(0, 1);
+    return d;
+  },
   // A snapshot published before the pipeline learned to write an evidence
   // block. The page must say which kind of nothing that is rather than
   // hiding the card, the same rule the streak line follows.
@@ -314,6 +332,12 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const fmtDay = (iso) => { const p = String(iso).slice(0, 10).split('-'); return `${Number(p[2])} ${MONTHS[Number(p[1]) - 1]} ${p[0]}`; };
 const money = (v) => (v === null || v === undefined ? 'pending' : (v > 0 ? '+' : '') + v.toFixed(2) + '%');
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
+// Mirrors the page's own plural(). A second copy, deliberately: a test has to
+// state its expectation in its own terms, and reconstructing the sentence by
+// calling the page's own function would assert only that the page agrees with
+// itself. The version this replaces hard-coded "bursts" and would have failed
+// on the first night the scan found exactly one.
+const plural = (n, one, many) => n + ' ' + (n === 1 ? one : (many || one + 's'));
 // An evidence block carries one entry per horizon in a list keyed by
 // `horizon`, not an object keyed d1/d3/d5 — those names mean "a number, the
 // return" on every candidate row in the same file, and one key name over two
@@ -329,7 +353,7 @@ await setTheme('dark');
 await page.waitForTimeout(200);
 ok('the run opens', (await page.textContent('#h1')) !== 'Snapshot unavailable', await page.textContent('#h1'));
 ok('the headline states the funnel',
-  (await page.textContent('#h1')) === `${run.bursts} bursts, ${run.scored} scored, ${run.shortlist_size} on the shortlist`,
+  (await page.textContent('#h1')) === `${plural(run.bursts, 'burst')}, ${run.scored} scored, ${run.shortlist_size} on the shortlist`,
   await page.textContent('#h1'));
 
 // --- the funnel ------------------------------------------------------------
@@ -881,7 +905,7 @@ await setTheme('dark');
 await page.waitForTimeout(200);
 const hrun = HIST.run;
 ok('the history fixture opens and is disclosed as sample data',
-  (await page.textContent('#h1')) === `${hrun.bursts} bursts, ${hrun.scored} scored, ${hrun.shortlist_size} on the shortlist`
+  (await page.textContent('#h1')) === `${plural(hrun.bursts, 'burst')}, ${hrun.scored} scored, ${hrun.shortlist_size} on the shortlist`
   && !(await page.locator('#fixture-banner').isHidden()),
   await page.textContent('#h1'));
 ok('its scored and gated rows account for every burst of the newest run',
@@ -1012,28 +1036,57 @@ ok('and asking for it loads every name, each with the sessions it burst on',
   `${loaded.rows} names, ${loaded.notes} with per-burst detail`);
 await shot('history-desktop-dark');
 
-// --- whatever docs/ holds right now -----------------------------------------
-// The published page, as GitHub Pages serves it: the fixture until the first
-// commit-back, a real run after it. Only the checks that hold for any run.
+// --- the checks that must hold for ANY run ---------------------------------
+// docs/data.json is the fixture today and last night's real run once
+// evening.yml commits one back, so everything here has to be true of both.
+// Written once and run TWICE: against docs/ itself, and against a deliberately
+// awkward real run. Two of these were written against the fixture's shape and
+// were reproduced failing on a one-burst night before this was fixed -- the
+// same class of defect the three-source split exists to close, reintroduced by
+// the commit that introduced the split.
+//
+// Rows the page put DATA in: table() renders a "Nothing to show." placeholder
+// row when there are none, and counting that as a candidate is what turned a
+// quiet night into a red build.
+const dataRows = (sel) => page.locator(`${sel} tbody tr:not(.sc-empty)`).count();
+
+async function checksForAnyRun(data, where) {
+  const run = data.run || {};
+  const cands = data.candidates || [];
+  const gated = data.gated_out || [];
+  ok(`${where}: the page opens and its headline describes the run`,
+    (await page.textContent('#h1')) ===
+      `${plural(run.bursts || 0, 'burst')}, ${run.scored || 0} scored, ${run.shortlist_size || 0} on the shortlist`,
+    await page.textContent('#h1'));
+  ok(`${where}: it says whether it is sample data`,
+    (await page.locator('#fixture-banner').isHidden()) === !run.fixture,
+    run.fixture ? 'fixture: banner shown' : 'real run: no banner');
+  ok(`${where}: its rows add up to its own funnel`,
+    (await dataRows('#scores-table')) === cands.length
+    && cands.length + gated.length === (run.bursts || 0)
+    && cands.length === (run.scored || 0),
+    `${cands.length} scored + ${gated.length} gated = ${plural(run.bursts || 0, 'burst')}`);
+  ok(`${where}: a table with no rows says so instead of rendering an empty shell`,
+    cands.length > 0 || (await page.locator('#scores-table tbody tr.sc-empty').count()) === 1,
+    cands.length ? `${cands.length} scored, nothing to place` : 'nothing scored: placeholder shown');
+  ok(`${where}: every fallback in it is labelled`,
+    (await page.locator('#scores-table tbody .sc-chip--warn').count())
+      === cands.filter((c) => !c.provenance || c.provenance.source !== 'claude').length);
+}
+
 await open('/');
 await setTheme('dark');
 await page.waitForTimeout(200);
-const lrun = LIVE.run || {};
-ok('docs/data.json opens, whatever run it is',
-  (await page.textContent('#h1')) === `${lrun.bursts || 0} bursts, ${lrun.scored || 0} scored, ${lrun.shortlist_size || 0} on the shortlist`,
-  `${lrun.type} run of ${lrun.date}${lrun.fixture ? ' (the fixture)' : ''}`);
-ok('and says whether it is sample data',
-  (await page.locator('#fixture-banner').isHidden()) === !lrun.fixture,
-  lrun.fixture ? 'fixture: banner shown' : 'real run: no banner');
-ok('and its rows add up to its own funnel',
-  (await page.locator('#scores-table tbody tr').count()) === (LIVE.candidates || []).length
-  && (LIVE.candidates || []).length + (LIVE.gated_out || []).length === (lrun.bursts || 0)
-  && (LIVE.candidates || []).length === (lrun.scored || 0),
-  `${(LIVE.candidates || []).length} scored + ${(LIVE.gated_out || []).length} gated = ${lrun.bursts} bursts`);
-ok('and every fallback in it is labelled',
-  (await page.locator('#scores-table tbody .sc-chip--warn').count())
-    === (LIVE.candidates || []).filter((c) => !c.provenance || c.provenance.source !== 'claude').length);
+await checksForAnyRun(LIVE, 'docs/');
 await shot('live-desktop-dark');
+
+// The same checks over a run that is NOT the fixture, so "holds for any run"
+// is exercised rather than asserted.
+await open('/v/quietnight/');
+await setTheme('dark');
+await page.waitForTimeout(200);
+await checksForAnyRun(VARIANTS.quietnight(), 'a one-burst night');
+await shot('quiet-night-dark');
 
 await browser.close();
 server.close();
