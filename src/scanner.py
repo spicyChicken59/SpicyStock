@@ -154,7 +154,9 @@ SESSION_COMPLETE_ET = time_of_day(16, 15)
 # feeds this account may query has not been checked. If delayed_sip is refused,
 # the scan aborts with FeedNotAuthorizedError naming the feed (see run_scan) —
 # it does not degrade into an empty shortlist. Override with SCAN_FEED, or
-# ScanConfig(feed=...), for a plan that carries full SIP.
+# ScanConfig(feed=...), for a plan that carries full SIP. A rejected KEY is the
+# sibling case and aborts with CredentialsRejectedError; the two have opposite
+# fixes and _refusal_error() is where they are told apart.
 DEFAULT_FEED = DataFeed.DELAYED_SIP
 
 
@@ -169,6 +171,22 @@ class StaleDataError(RuntimeError):
 
 class FeedNotAuthorizedError(RuntimeError):
     """Alpaca refused the requested data feed for these credentials."""
+
+
+class CredentialsRejectedError(RuntimeError):
+    """Alpaca would not authenticate these credentials at all.
+
+    A SIBLING of FeedNotAuthorizedError, and the distinction is the whole
+    reason it exists: one means the key is wrong, the other means the key is
+    right and the plan does not carry the feed. They have opposite fixes, and
+    until this class existed both arrived as FeedNotAuthorizedError telling the
+    operator to "set SCAN_FEED to a feed this account carries -- or subscribe".
+    A typo in ALPACA_API_KEY therefore sent them shopping for a data plan.
+
+    The exception's own NAME reaches the failure email (src.emailer renders the
+    type), so this is not cosmetic: it is the first word the operator reads at
+    6:16pm about why nothing arrived.
+    """
 
 
 class IncompleteScanError(RuntimeError):
@@ -519,12 +537,12 @@ def _drop_stale_symbols(histories: dict[str, pd.DataFrame],
     return fresh, stale
 
 
-def _is_feed_denied(exc: Exception) -> bool:
-    """Does this look like Alpaca refusing the feed rather than a hiccup?
+def _is_permanent_refusal(exc: Exception) -> bool:
+    """Does this look like Alpaca refusing us outright rather than a hiccup?
 
-    The distinction matters because the feed is a property of the run, not of
-    the batch: if it is refused once it is refused every time, so retrying and
-    dropping turns a configuration error into an empty shortlist that looks
+    The distinction matters because a refusal is a property of the RUN, not of
+    the batch: if we are refused once we are refused every time, so retrying
+    and dropping turns a configuration error into an empty shortlist that looks
     exactly like a quiet market.
 
     Two signals, because only one of them is always present: the HTTP status
@@ -538,13 +556,39 @@ def _is_feed_denied(exc: Exception) -> bool:
     return "subscription" in text or "not permitted" in text
 
 
-def _feed_denied_error(feed: DataFeed, exc: Exception) -> FeedNotAuthorizedError:
+def _refusal_error(feed: DataFeed, exc: Exception) -> RuntimeError:
+    """WHICH refusal it was — the key, or the plan. They have opposite fixes.
+
+    This used to be one function returning one error, and 401 and 403 both
+    became "Alpaca refused the {feed} data feed ... set SCAN_FEED, or
+    subscribe". 401 does not mean that. It means Alpaca did not authenticate
+    the request at all, which on a first-time setup is overwhelmingly a wrong
+    or half-set key -- and the message sent that operator to buy a data plan.
+
+    The status is still a heuristic and this file has never seen a live
+    refusal, so NEITHER message asserts one cause and denies the other: each
+    leads with what the status says and names the alternative second. Being
+    approximately right in the right order beats being confidently wrong.
+    """
+    if getattr(exc, "status_code", None) == 401:
+        return CredentialsRejectedError(
+            f"Alpaca would not authenticate this request ({exc}). Check "
+            "ALPACA_API_KEY and ALPACA_SECRET_KEY: a 401 is what a wrong, "
+            "revoked or half-set pair looks like, and an unset GitHub secret "
+            "arrives as an empty string rather than as absent. If the pair is "
+            f"definitely right, a 401 can also mean this account may not query "
+            f"the {feed.value!r} feed — try SCAN_FEED=iex. Refusing to "
+            "continue: every batch would be refused the same way, and a scan "
+            "that dropped them all would report an empty market."
+        )
     return FeedNotAuthorizedError(
         f"Alpaca refused the {feed.value!r} data feed for these credentials "
         f"({exc}). Set SCAN_FEED to a feed this account carries — "
-        f"{', '.join(f.value for f in DataFeed)} — or subscribe. Refusing to "
-        "continue: every batch would be refused the same way, and a scan that "
-        "dropped them all would report an empty market."
+        f"{', '.join(f.value for f in DataFeed)} — or subscribe. If the feed "
+        "is definitely one this plan carries, check ALPACA_API_KEY and "
+        "ALPACA_SECRET_KEY instead. Refusing to continue: every batch would "
+        "be refused the same way, and a scan that dropped them all would "
+        "report an empty market."
     )
 
 
@@ -747,15 +791,15 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             # A refused feed is not transient and is not this batch's problem:
             # every batch will be refused, and retrying each of them ends in a
             # complete scan that found nothing. Stop on the first one.
-            if _is_feed_denied(e):
-                raise _feed_denied_error(cfg.feed, e) from e
+            if _is_permanent_refusal(e):
+                raise _refusal_error(cfg.feed, e) from e
             log.warning("Batch %d failed (%s); retrying once", i, e)
             time.sleep(3)
             try:
                 histories = _download_batch(data_client, batch, cfg, session)
             except Exception as e2:
-                if _is_feed_denied(e2):
-                    raise _feed_denied_error(cfg.feed, e2) from e2
+                if _is_permanent_refusal(e2):
+                    raise _refusal_error(cfg.feed, e2) from e2
                 # The symbol list is hand-typed and sector-grouped, so one bad
                 # ticker can drop a contiguous block of names. Say so.
                 dropped += len(batch)

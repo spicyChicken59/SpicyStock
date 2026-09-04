@@ -24,6 +24,7 @@ from src.scanner import (
     MARKET_TZ,
     SESSION_COMPLETE_ET,
     Candidate,
+    CredentialsRejectedError,
     FeedNotAuthorizedError,
     IncompleteScanError,
     ScanConfig,
@@ -867,6 +868,74 @@ def test_a_refused_feed_aborts_the_scan_instead_of_emptying_it(fake_alpaca, ohlc
         run_scan(ScanConfig(), universe=["AAA"])
 
     assert len(fake_alpaca.bar_requests) == 1, "a refusal is not transient; do not retry it"
+
+
+def test_a_rejected_key_is_not_reported_as_a_feed_this_plan_lacks(fake_alpaca, ohlcv):
+    """401 and 403 have OPPOSITE fixes and used to produce one message.
+
+    Both statuses were classified as a feed denial, so a wrong or half-set
+    ALPACA_API_KEY aborted with "Alpaca refused the 'delayed_sip' data feed ...
+    set SCAN_FEED to a feed this account carries — or subscribe": the operator
+    was sent to change a feed or buy a data plan over a typo. The exception's
+    own name reaches the failure email, so the FIRST WORD they read at 6:16pm
+    about why nothing arrived was the wrong one.
+
+    No test built a 401 before this one — every refusal case in this file used
+    403 or a status-less error — which is exactly why the conflation survived.
+    """
+    fake_alpaca.add_history("AAA", ohlcv("burst"))
+    fake_alpaca.raise_on_bars = _alpaca_error(401, "request is not authorized")
+
+    with pytest.raises(CredentialsRejectedError) as caught:
+        run_scan(ScanConfig(), universe=["AAA"])
+
+    said = str(caught.value)
+    assert "ALPACA_API_KEY" in said and "ALPACA_SECRET_KEY" in said
+    assert "subscribe" not in said, "a rejected key is not something you fix by subscribing"
+    # Still a refusal, so still not retried: a bad key is no more transient
+    # than a refused feed, and retrying it costs a second wrong answer.
+    assert len(fake_alpaca.bar_requests) == 1
+
+
+def test_a_refused_feed_still_says_feed_and_not_credentials(fake_alpaca, ohlcv):
+    """The control for the test above, and the half that must not regress.
+
+    Splitting the classifier is only worth anything if it splits: a 403 has to
+    keep naming the feed, or the fix has moved the wrong report rather than
+    removed it.
+    """
+    fake_alpaca.add_history("AAA", ohlcv("burst"))
+    fake_alpaca.raise_on_bars = _alpaca_error(403, DENIAL)
+
+    with pytest.raises(FeedNotAuthorizedError) as caught:
+        run_scan(ScanConfig(), universe=["AAA"])
+
+    assert "delayed_sip" in str(caught.value)
+    assert not isinstance(caught.value, CredentialsRejectedError)
+
+
+def test_neither_refusal_asserts_a_cause_it_cannot_know(fake_alpaca, ohlcv):
+    """This file has never seen a live refusal — its own DEFAULT_FEED comment
+    says so — so the status-to-cause mapping is inferred from the SDK and not
+    confirmed. Each message therefore leads with what the status says and names
+    the OTHER possibility second, rather than asserting one and denying it.
+
+    Without this, the fix would have replaced one confidently wrong sentence
+    with another, which is the defect class CLAUDE.md names twice.
+    """
+    fake_alpaca.add_history("AAA", ohlcv("burst"))
+
+    fake_alpaca.raise_on_bars = _alpaca_error(401, "request is not authorized")
+    with pytest.raises(CredentialsRejectedError) as unauth:
+        run_scan(ScanConfig(), universe=["AAA"])
+
+    fake_alpaca.bar_requests.clear()
+    fake_alpaca.raise_on_bars = _alpaca_error(403, DENIAL)
+    with pytest.raises(FeedNotAuthorizedError) as forbidden:
+        run_scan(ScanConfig(), universe=["AAA"])
+
+    assert "SCAN_FEED" in str(unauth.value), "the 401 message names the feed possibility too"
+    assert "ALPACA_API_KEY" in str(forbidden.value), "and the 403 names the credential one"
 
 
 def test_a_refusal_is_recognised_from_the_message_when_no_status_survives(fake_alpaca, ohlcv):
