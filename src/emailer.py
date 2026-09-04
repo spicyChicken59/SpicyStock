@@ -668,7 +668,17 @@ def _required(name: str) -> str:
 
 def send_email(results: list[dict], run_type: str, scan_stats: dict) -> None:
     to = [addr.strip() for addr in _required("EMAIL_TO").split(",")]
-    sender = os.environ.get("RESEND_FROM", "onboarding@resend.dev")
+    # EMPTY COUNTS AS ABSENT, the same rule src.pipeline's _absent() applies to
+    # every other variable, and here it is the difference between a fallback
+    # and a rejected send. os.environ.get's default fires only on a MISSING
+    # key -- but evening.yml always sets `RESEND_FROM: ${{ secrets.RESEND_FROM }}`
+    # and GitHub expands an unset secret to '', so the variable is present and
+    # empty and the documented fallback was unreachable in the one place it
+    # was written for. Reproduced: absent gave onboarding@resend.dev, '' gave
+    # a sender of '', which Resend refuses -- so setting the other five
+    # secrets and leaving this one out sent nothing, and the run reported
+    # itself clean.
+    sender = os.environ.get("RESEND_FROM", "").strip() or "onboarding@resend.dev"
 
     resend.api_key = _required("RESEND_API_KEY")
 

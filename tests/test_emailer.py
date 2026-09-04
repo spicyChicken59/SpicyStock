@@ -734,3 +734,26 @@ def test_a_streak_day_that_is_not_a_number_does_not_take_the_email_down(fake_res
     html = fake_resend.sent[0]["html"]
     assert "streak unknown" in html and "day 3" not in html
     assert "day N of this setup" in html, "the footnote path compares the same value"
+
+
+@pytest.mark.parametrize("value", [None, "", "   "])
+def test_an_unset_sender_falls_back_even_when_actions_passes_it_as_empty(
+    monkeypatch, fake_resend, results, value
+):
+    """os.environ.get's default fires only on a MISSING key, and Actions never
+    leaves this one missing: evening.yml always sets RESEND_FROM, and GitHub
+    expands an unset secret to ''. So the variable arrives present and empty,
+    the documented fallback never fired, and the send went out with `from: ''`
+    -- which Resend refuses. Setting the other five secrets and leaving this
+    one out therefore mailed nothing while the run reported itself clean.
+
+    The same absent-versus-empty distinction as run.status, and the same rule
+    src.pipeline's _absent() already applies everywhere else.
+    """
+    monkeypatch.delenv("RESEND_FROM", raising=False)
+    if value is not None:
+        monkeypatch.setenv("RESEND_FROM", value)
+
+    send_email(results, "evening", DATED)
+
+    assert fake_resend.sent[0]["from"] == "onboarding@resend.dev"
