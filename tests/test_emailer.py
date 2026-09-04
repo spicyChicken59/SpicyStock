@@ -627,10 +627,56 @@ def test_a_row_carrying_no_streak_field_at_all_is_unknown_too(results):
     assert "new setup" not in html
 
 
+def test_the_funnel_does_not_tell_a_vetoed_six_of_six_it_failed_the_checklist():
+    """`gated` counts what cleared the checklist AND survived every veto.
+
+    It is printed under the label "Passed 2LYNCH gate", so on a night with a
+    refusal the label described a number the checklist did not produce — and
+    the burst it excluded may have passed 6/6, which is the collapse this
+    project forbids by name. The refusals get their own line.
+    """
+    stats = dict(DATED, bursts=4, vetoed=1, gated=2)
+
+    html = build_html([make_result("AAA")], "evening", stats)
+
+    assert "Refused by an absolute rule: 1" in html
+    assert "Passed 2LYNCH gate: 2" in html
+    assert "4% bursts found: 4" in html
+
+
+def test_a_run_with_no_refusals_reads_exactly_as_it_did_before():
+    """The line is conditional on there being one, and 0 is not one. A snapshot
+    written before the rule existed reports 0 and must say nothing at all —
+    naming a rule a run never applied is the confidently-false sentence."""
+    for vetoed in (0, None):
+        stats = dict(DATED, bursts=4, gated=3)
+        if vetoed is not None:
+            stats["vetoed"] = vetoed
+        html = build_html([make_result("AAA")], "evening", stats)
+        assert "absolute rule" not in html, vetoed
+        assert "Passed 2LYNCH gate: 3" in html
+
+
+def test_a_night_every_burst_was_refused_does_not_blame_the_checklist():
+    """"No candidates passed the quality gate today" states the opposite of
+    what happened when the checklist passed them and a rule refused them."""
+    stats = dict(DATED, bursts=3, vetoed=3, gated=0)
+
+    html = build_html([], "evening", stats)
+
+    assert "refused outright by an absolute rule" in html
+    assert "No candidates passed the quality gate" not in html
+
+
 def test_what_day_n_counts_is_disclosed_once_under_the_table():
-    """A streak counts every session the scan found a burst on, gate rejections
-    included — the right call, and one no reader can infer from "day 2 of this
-    setup"."""
+    """A streak counts every session the scan found a burst on, every unscored
+    one included — the right call, and one no reader can infer from "day 2 of
+    this setup".
+
+    The disclosure named the 2LYNCH gate alone while a third reason existed and
+    while a row three lines above printed that third reason's own words, so the
+    phrase asserted here covers all three ways a burst goes unscored.
+    """
     counted = build_html(_with_streak(day=2, first_seen="2026-08-28"), "evening", DATED)
     # The same count, on a row that cannot put a day number on it: "burst on 8
     # of the 8 sessions in the record" is over the same bursts and needs the
@@ -642,10 +688,16 @@ def test_what_day_n_counts_is_disclosed_once_under_the_table():
                         "evening", DATED)
     single = build_html(_with_streak(), "evening", DATED)
 
-    assert "including the ones the 2LYNCH gate rejected" in counted
-    assert "including the ones the 2LYNCH gate rejected" in no_day
-    assert "including the ones the 2LYNCH gate rejected" not in single, (
+    disclosure = "including the ones that were never scored"
+    assert disclosure in counted
+    assert disclosure in no_day
+    assert disclosure not in single, (
         "and it is not printed under a table with no streak to explain")
+    # All three reasons, named. A disclosure that lists two of them tells the
+    # reader the count is smaller than it is.
+    for reason in ("the checklist rejected", "an absolute rule refused",
+                   "the call cap crowded"):
+        assert reason in counted, reason
 
 
 def test_a_morning_run_with_nothing_to_show_does_not_blame_the_market():

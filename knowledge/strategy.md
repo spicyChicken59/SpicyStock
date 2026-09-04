@@ -24,7 +24,10 @@ high-probability Day 1.
   not violent chop. Choppy charts produce failed breakouts.
 - **Powerful burst bar.** Big range, closes in the top 25% of the day's
   range, volume clearly above the stock's own norm (ideally 2x+ — read
-  `volume_ratio` together with `volume_ratio_basis`, see below).
+  `volume_ratio` together with `volume_ratio_basis`, see below). Top 25% is
+  YOUR bar for an A+, and it is deliberately stricter than the checklist's:
+  `H` passes at the top 30%, so a bar can pass `H` and still not be A+ on this
+  line. The two numbers answer different questions and are meant to differ.
 - **Room overhead.** Near or at 52-week highs, or breaking out of a
   multi-month base with little overhead supply.
 - **Relative strength.** The stock outperformed the market over 3–6 months
@@ -39,6 +42,9 @@ high-probability Day 1.
 - Stock 20%+ extended above its 20-day average — poor risk/reward. The `Y`
   line measures that distance through today's burst bar, which is the price
   you would actually pay, so a large gap-up is already extended when it prints.
+  20% is YOUR bar for an automatic kill and is deliberately LOOSER than the
+  checklist's: `Y` fails at 15%, so a FAIL there is a warning to weigh and not
+  by itself a skip. Read the measured number in the `Y` line, not the verdict.
 - Straight down long-term downtrend where the burst is a dead-cat bounce.
 - Barely-liquid names where slippage eats the edge.
 - **A deep down day inside the base** — a FAIL on `base_breakdown` in

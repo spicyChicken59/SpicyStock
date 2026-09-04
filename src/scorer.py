@@ -1,5 +1,6 @@
 """
-Layers 3-5 — Chart rendering + Claude scoring engine.
+Layers 3-4 — Chart rendering + Claude scoring engine.
+(Layer 5 is the archive, and it lives in src/ledger.py.)
 
 For each surviving candidate, we render a 4-month daily candlestick chart,
 send it to Claude together with the numeric metrics and the 2LYNCH results,
@@ -261,6 +262,16 @@ def volume_ratio_basis(cand) -> str:
             f"shares, which the scanner did not name")
 
 
+def _as_dict(value) -> dict:
+    """`value` when it is a dict, {} otherwise — no exceptions, ever.
+
+    `or {}` is not enough and `.get(k, {})` is less: the first lets a truthy
+    non-dict through to .items(), the second only defends a MISSING key and
+    not an explicit null. Both spellings have cost this project a run.
+    """
+    return value if isinstance(value, dict) else {}
+
+
 def metrics_payload(cand, lynch_result: dict, context: dict) -> dict:
     """The numbers Claude is asked to score. Every key means what it says."""
     payload = {
@@ -282,9 +293,15 @@ def metrics_payload(cand, lynch_result: dict, context: dict) -> dict:
         # seventh line under that heading. knowledge/strategy.md says how to
         # weigh them; the line carries the threshold the code applied, so the
         # rulebook never holds a second copy of the number.
+        # `or {}`, not a .get default: the default applies to a MISSING key and
+        # not to an explicit null, which is the distinction that cost this
+        # project a morning run once already. The entries are checked one level
+        # in for the same reason -- a block of the wrong shape must produce no
+        # notes, not an AttributeError inside the scoring call.
         "quality_notes": [
             f"{'PASS' if c['pass'] else 'FAIL'}  {name}: {c['value']}"
-            for name, c in lynch_result.get("context_checks", {}).items()
+            for name, c in _as_dict(lynch_result.get("context_checks")).items()
+            if isinstance(c, dict) and "pass" in c and "value" in c
         ],
     }
     average = getattr(cand, "avg_volume", None)

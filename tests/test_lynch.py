@@ -27,6 +27,7 @@ import pytest
 
 from src.lynch import (
     BREAKDOWN_LOOKBACK,
+    VETO_RULES,
     BREAKDOWN_PCT,
     MAX_CONSECUTIVE_UP_DAYS,
     MAX_D1_MOVE,
@@ -43,9 +44,10 @@ from src.lynch import (
     evaluate_2lynch,
     extra_context,
     failed_vetoes,
+    veto_reason,
     worst_base_day,
 )
-from tests.synthetic import KINDS, frame_digest
+from tests.synthetic import KINDS, frame_digest, make_ohlcv
 
 CHECK_LETTERS = ["2", "C", "H", "L", "N", "Y"]
 
@@ -821,6 +823,67 @@ def test_a_base_day_that_rounds_onto_the_threshold_is_refused_like_one_on_it():
     assert not just_over["context_checks"]["base_breakdown"]["pass"]
 
 
+def test_no_check_decides_on_a_number_different_from_the_one_it_prints():
+    """The class the base-breakdown fix closed, swept across the checklist.
+
+    That fix rounded ONE measurement so the archive, the note and the predicate
+    were one number, and the round was declared closed — on the one criterion
+    whose ambiguity rate is zero. An audit measured the others: over 600
+    synthetic bursts the printed value sat exactly on its own threshold for N's
+    tightness on 3.2% of frames and L's R² on 0.8%, so roughly one burst in
+    thirty showed a reader "1.00x its norm" under a rule stating 1.00 and was
+    refused by it, beside another shown the same string and passed.
+
+    The value strings go verbatim into the email, the page and the scoring
+    model's prompt, so this is not cosmetic: it is whether a stated rule and a
+    published measurement can contradict each other.
+
+    Asserted by SIMULATING THE READER — parse the printed numbers back out and
+    apply the rule to them — rather than by re-deriving the measurement, which
+    would only prove the arithmetic agrees with itself.
+    """
+    # 400 variants, not 120. At L's measured 0.8% ambiguity a short sweep hits
+    # the boundary without hitting a DISAGREEMENT, and the first version of
+    # this test passed with L's rounding deleted for exactly that reason. The
+    # earliest variants that separate them under this seed are 191 and 226.
+    seen = {"N": 0, "L": 0, "H": 0, "C": 0}
+    for variant in range(400):
+        result = evaluate_2lynch(make_ohlcv("burst", seed=[4071, variant], up_run=1))
+
+        tight = result["checks"]["N_narrow_consolidation"]
+        shown = float(re.search(r"= ([\d.]+)x its norm", tight["value"]).group(1))
+        assert (shown <= MAX_TIGHTNESS) == tight["pass"], tight["value"]
+        seen["N"] += abs(shown - MAX_TIGHTNESS) < 1e-9
+
+        linear = result["checks"]["L_linear_prior_move"]
+        r2, trend = re.search(r"R²=([\d.]+), fitted trend ([+-][\d.]+)%", linear["value"]).groups()
+        assert (float(r2) >= MIN_LINEAR_R2 and float(trend) >= 0) == linear["pass"], linear["value"]
+        seen["L"] += abs(float(r2) - MIN_LINEAR_R2) < 1e-9
+
+        high = result["checks"]["H_close_near_high"]
+        pos = float(re.search(r"closed at (\d+)% ", high["value"]).group(1)) / 100
+        assert (pos >= MIN_CLOSE_POS) == high["pass"], high["value"]
+
+        calm = result["checks"]["C_calm_preburst_day"]
+        vol = float(re.search(r"([\d.]+)x volume", calm["value"]).group(1))
+        if vol > MAX_D1_VOL_RATIO:
+            assert not calm["pass"], calm["value"]
+        seen["C"] += abs(vol - MAX_D1_VOL_RATIO) < 1e-9
+
+    # And the sweep really did visit the boundary, rather than passing because
+    # no frame came near one. N and L are the two it reaches: delete either
+    # one's rounding and this test goes red. C's and H's rounding is asserted
+    # on every frame above and pinned by none of them, because make_ohlcv's
+    # burst bar pins close_pos at one value for every seed and its volume
+    # profile never lands the ratio on 1.20 — so for those two this test is
+    # documentation and not a canary, which is worth knowing before trusting
+    # it. Closing that would take a frame builder that varies the burst bar,
+    # which is a change to the fixture and not to this rule.
+    assert seen["N"] or seen["L"], (
+        f"no frame printed a value ON its threshold ({seen}), so this run "
+        "proves nothing about the case the rounding exists for")
+
+
 def test_a_base_with_nothing_in_it_reports_no_break_rather_than_one():
     """`worst_base_day` returns None when there is no move to measure -- a
     frame one session long, or a history that arrives as a single bar.
@@ -876,6 +939,72 @@ def test_the_quality_note_carries_the_threshold_the_code_applied():
         "the criterion and let quality_notes carry the figure")
 
 
+#: Close is deliberately absent: _base() drops a bar with no Close too, so on
+#: that one column all three rules coincide and the gap cannot tell any two
+#: readings apart. The precondition inside the test says so if this list ever
+#: grows it back.
+@pytest.mark.parametrize("column", ["Open", "High", "Low", "Volume"])
+def test_a_bar_missing_one_field_cannot_make_the_two_surfaces_disagree(column):
+    """The verdict and the number must come off the same bars.
+
+    They did not. evaluate_2lynch() drops every bar missing ANY of the five
+    OHLCV fields, because the six checks read intraday ranges and volume;
+    extra_context() drops only bars missing Close or Volume. Both then called
+    these measurements with their own already-pruned frame, so ONE bar with no
+    High made the veto count two up days and allow the burst while the metrics
+    block told the scoring model there had been three -- the run reporting that
+    it had refused something it had scored. Reproduced on every one of the five
+    columns before the fix; zero disagreements across 140 frames after it.
+
+    Both callers hand these measurements the frame as received now, and _base()
+    is the one rule that decides which bars they count.
+    """
+    frame = _frame(up_run_days=2)
+    # INSIDE the run, not beside it. The first version of this test put the gap
+    # on the flat shelf day that ends the run, where dropping the bar changes
+    # nothing -- so it passed with the defect deliberately restored, which is
+    # the shaped-test pattern this file's own docstring warns about. The
+    # precondition below is what makes the position load-bearing instead of
+    # chosen by eye: it fails if the gap stops discriminating.
+    frame.iloc[-3, frame.columns.get_loc(column)] = float("nan")
+    pruned = frame.dropna(subset=["Open", "High", "Low", "Close", "Volume"])
+    assert consecutive_up_days(pruned) != consecutive_up_days(frame), (
+        "this gap does not change the count off a pruned frame, so the test "
+        "cannot tell the two readings apart")
+
+    result = evaluate_2lynch(frame)
+    context = extra_context(frame)
+
+    reported = int(result["vetoes"]["up_days"]["value"].split()[0])
+    assert reported == context["consecutive_up_days"], result["vetoes"]["up_days"]["value"]
+    assert f"{context['worst_base_day_pct']:+.1f}%" in (
+        result["context_checks"]["base_breakdown"]["value"])
+    # And the answer is the one the intact frame gives: a bar the feed served
+    # with a gap in it still happened, and dropping it would move a real run.
+    assert reported == consecutive_up_days(_frame(up_run_days=2))
+
+
+def test_every_rule_evaluate_2lynch_vetoes_on_is_named_in_VETO_RULES():
+    """The two must agree, and nothing else makes them.
+
+    src.pipeline builds its reason vocabulary from VETO_RULES. It used to keep
+    a hand-written tuple of the same names, and an audit added a realistic
+    second veto to evaluate_2lynch alone: the whole suite stayed green and the
+    evening run died on KeyError after the scan, inside the archive step, on a
+    burst that had been correctly refused. The lookup is gone -- veto_reason()
+    computes the word -- so a forgotten rule can no longer kill a run. This is
+    the other half: it catches the omission here instead, where it is free.
+    """
+    produced = set(evaluate_2lynch(_reference())["vetoes"])
+
+    assert produced == set(VETO_RULES), (
+        f"evaluate_2lynch vetoes on {sorted(produced)} and VETO_RULES names "
+        f"{sorted(VETO_RULES)}; src.pipeline's reason words come from the "
+        "second, so anything only in the first publishes no word and anything "
+        "only in the second names a rule that never runs")
+    assert all(veto_reason(name).startswith("veto_") for name in VETO_RULES)
+
+
 def test_a_result_from_before_the_rule_existed_reports_no_vetoes():
     """failed_vetoes() is read by the pipeline's gate against whatever
     evaluate_2lynch returned, and a hand-built double in a test or an older
@@ -891,6 +1020,16 @@ def test_a_result_from_before_the_rule_existed_reports_no_vetoes():
     # gate reads whatever evaluate_2lynch returned, and a double in a test can.
     assert failed_vetoes({"vetoes": {"up_days": {}}}) == []
     assert failed_vetoes({"vetoes": {"up_days": {"value": "measured, no verdict"}}}) == []
+    # And one level in, which is where this stopped. The container was checked
+    # and its entries were not, so a `vetoes` block of the wrong shape raised
+    # AttributeError inside the pipeline's gate -- the sixth time this project
+    # has shipped a check that stops a level short of what a caller indexes.
+    for entry in (None, "x", 1, [1], True):
+        assert failed_vetoes({"vetoes": {"up_days": entry}}) == [], entry
+    # A non-string name is refused too: veto_reason() builds the published word
+    # out of it, and `veto_7` is a reason no surface has prose for.
+    assert failed_vetoes({"vetoes": {7: {"pass": False}}}) == []
+    assert failed_vetoes({"vetoes": {None: {"pass": False}}}) == []
 
 
 # ---- the numbers themselves ----------------------------------------------

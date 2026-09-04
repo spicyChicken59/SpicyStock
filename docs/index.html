@@ -1613,7 +1613,12 @@
       table($('checks-table'),
         ['check', 'what it tests', 'pass rate', 'cleared the checklist', 'failed the checklist', 'separation', 'note'],
         cs.checks.map(function (st) {
-          var note = st === cs.harshest ? 'hardest gate' : (st === cs.weakest ? 'weakest separator' : null);
+          // "hardest check", not "hardest gate": the columns beside it were
+          // renamed when a veto stopped making the gate and the checklist the
+          // same thing, and this chip kept the old word — two vocabularies for
+          // one mechanism inside one table, which is the drift the rename
+          // existed to end.
+          var note = st === cs.harshest ? 'hardest check' : (st === cs.weakest ? 'weakest separator' : null);
           return el('tr', null, [
             el('td', null, el('span', { 'class': 'sc-chip sc-chip--neutral sc-chip--case', text: st.code })),
             el('td', { 'class': 'col-what', text: st.label }),

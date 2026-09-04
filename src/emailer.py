@@ -400,11 +400,16 @@ def _streak_footnote(results: list[dict]) -> str:
     """What "day N" counts, said once under the table.
 
     A streak counts every session the scan found a burst on, INCLUDING the
-    ones the 2LYNCH gate rejected — the right call, because the setup was
-    running whether or not the checklist let it through to a score, and one no
-    reader can infer from "day 2 of this setup", which reads as two nights of
-    agreement. Disclosed here rather than in every row, and only when a row
-    actually makes a count that needs it.
+    ones that were never scored — the checklist rejected them, the call cap
+    crowded them out, or an absolute rule refused them. That is the right call,
+    because the setup was running whether or not the screener let it through to
+    a score, and it is a thing no reader can infer from "day 2 of this setup",
+    which reads as two nights of agreement. Disclosed here rather than in every
+    row, and only when a row actually makes a count that needs it.
+
+    This used to say "including the ones the 2LYNCH gate rejected", which
+    became false when a third reason arrived and stayed false three lines under
+    a row printing that third reason's own words.
 
     That is TWO shapes of row, not one. "day 3 of this setup" is the obvious
     one; "burst on 8 of the 8 sessions in the record" is the other, and it is
@@ -424,8 +429,9 @@ def _streak_footnote(results: list[dict]) -> str:
         'font-size:12px;margin:10px 0 0;max-width:70ch;">'
         "&ldquo;day N of this setup&rdquo;, and the earlier bursts a row with no day "
         "number counts, are every session the scan found a burst on for that name — "
-        "including the ones the 2LYNCH gate rejected. Neither is N nights of "
-        "confirmation."
+        "including the ones that were never scored, whether the checklist rejected "
+        "them, an absolute rule refused them, or the call cap crowded them out. "
+        "Neither is N nights of confirmation."
         "</p>"
     )
 
@@ -451,16 +457,29 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     session = scan_stats.get("session") or "not recorded"
     failed = scan_stats.get("status") == "failed"
     unknown = "not recorded"
+    # "Passed 2LYNCH gate" counts the names that cleared the checklist AND were
+    # not refused by an absolute rule, so on a night with a veto the number is
+    # smaller than the checklist alone allowed -- and the label said the
+    # checklist had rejected a name that may have passed 6/6, which is the one
+    # collapse CLAUDE.md forbids by name. The refusals get their own line, and
+    # only when there are some: a run with none reads exactly as it always did,
+    # and a snapshot written before the rule existed reports 0 and says nothing.
+    vetoed = scan_stats.get("vetoed")
+    refused = ([("Refused by an absolute rule", vetoed)]
+               if isinstance(vetoed, (int, float)) and not isinstance(vetoed, bool) and vetoed
+               else [])
     if run_type == "morning":
         parts = [("Session it should have followed" if failed
                   else "Following through on the session of", session),
                  ("4% bursts that session", scan_stats.get("bursts", unknown)),
+                 *refused,
                  ("Passed 2LYNCH gate", scan_stats.get("gated", unknown)),
                  ("Watching", len(results))]
     else:
         parts = [("Session it was scanning" if failed else "Session scanned", session),
                  ("Universe", scan_stats.get("universe", unknown)),
                  ("4% bursts found", scan_stats.get("bursts", unknown)),
+                 *refused,
                  ("Passed 2LYNCH gate", scan_stats.get("gated", unknown)),
                  ("Shortlisted", len(results))]
     return " &nbsp;|&nbsp;\n      ".join(f"{label}: {value}" for label, value in parts)
@@ -589,7 +608,12 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
         elif run_type == "morning":
             empty = "The run this follows through on scored no candidates."
         else:
-            empty = "No candidates passed the quality gate today."
+            # A night whose every burst was refused outright did not fail the
+            # checklist, and saying so would state the opposite of what the
+            # rows beneath it record.
+            refused_all = (scan_stats.get("vetoed") or 0) and not (scan_stats.get("gated") or 0)
+            empty = ("Every burst the scan found was refused outright by an absolute rule."
+                     if refused_all else "No candidates passed the quality gate today.")
         rows = f'<tr><td colspan="7" style="padding:16px;color:#666;">{empty}</td></tr>'
 
 

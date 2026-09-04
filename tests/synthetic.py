@@ -117,6 +117,12 @@ def make_ohlcv(
     close = start_price * np.exp(np.cumsum(rets))
     volume = base_volume * vol_noise
 
+    if kind != "burst" and up_run != 1:
+        # Silently ignored for every other kind before this, including values
+        # no frame could hold: a test writing make_ohlcv("base", up_run=3) got
+        # whatever the walk did and nothing said so, which is a way to build
+        # exactly the shaped test this project's own rule forbids.
+        raise ValueError(f"up_run applies to burst frames only, not {kind!r}")
     if kind == "burst":
         # The run of up days into the burst, made exact. Written before the
         # lift and the burst bar because both are computed from close[-2],

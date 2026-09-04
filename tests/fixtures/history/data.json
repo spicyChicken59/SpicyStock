@@ -4,7 +4,7 @@
   "generated": "2026-09-01T22:14:07Z",
   "_contract": {
     "about": "docs/data.json is written by src/pipeline.py at the end of every run (see src/ledger.py) and read by docs/index.html at runtime. THIS copy is a fixture: the multi-session one from tools/make_history.py, produced by running the real pipeline over a synthetic market with a stand-in scorer, so its shape is the pipeline's own and its numbers are invented. run.fixture is true, which is how the morning run refuses to mail these rows and how the page raises its sample-data banner. This block is documentation, not data; consumers ignore it.",
-    "documented_in": "README.md, 'The dashboard contract'",
+    "documented_in": "README.md, 'The data contract'",
     "invariants": [
       "candidates holds EVERY scored candidate, ranked by score descending, and is never truncated: len(candidates) == run.scored. The top run.shortlist_size of them are the shortlist that went out by email.",
       "run.scored + len(gated_out) == run.bursts. Nothing a scan found may vanish without appearing in one of the two lists.",
@@ -30,11 +30,11 @@
       "label": "synthetic fixture universe (77 invented histories)",
       "size": 77
     },
-    "bursts": 6,
-    "passed_gate": 4,
-    "scored": 4,
+    "bursts": 9,
+    "passed_gate": 6,
+    "scored": 6,
     "score_cap": 25,
-    "shortlist_size": 4,
+    "shortlist_size": 5,
     "gate": {
       "min_lynch_passes": 3,
       "total_checks": 6,
@@ -43,7 +43,7 @@
       ]
     },
     "scored_by": {
-      "claude": 4,
+      "claude": 6,
       "fallback": 0
     },
     "model": "claude-sonnet-4-6",
@@ -51,91 +51,91 @@
     "errors": [
       {
         "stage": "chart",
-        "message": "1 of 4 charts failed to render; those candidates were scored without the image: SHW (ValueError: fixture: mplfinance refused this frame)"
+        "message": "1 of 6 charts failed to render; those candidates were scored without the image: IBM (ValueError: fixture: mplfinance refused this frame)"
       }
     ]
   },
   "candidates": [
     {
       "rank": 1,
-      "ticker": "APP",
+      "ticker": "IBM",
       "date": "2026-09-01",
-      "close": 98.47,
-      "gain_pct": 7.66,
-      "volume": 19361141,
-      "prev_volume": 7556657,
-      "volume_ratio": 1.86,
-      "dollar_volume": 1906430982,
-      "lynch": "4/6",
-      "lynch_passes": 4,
+      "close": 84.64,
+      "gain_pct": 7.56,
+      "volume": 7898670,
+      "prev_volume": 3421776,
+      "volume_ratio": 2.06,
+      "dollar_volume": 668510006,
+      "lynch": "5/6",
+      "lynch_passes": 5,
       "lynch_total": 6,
       "lynch_detail": [
         {
           "code": "2",
           "label": "first or second burst",
-          "pass": false,
-          "value": "2 prior 4% bursts in last 20 days"
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
         },
         {
           "code": "L",
           "label": "linear prior move",
-          "pass": true,
-          "value": "R²=0.90, fitted trend +41.1% over prior 30 days"
+          "pass": false,
+          "value": "R²=0.50, fitted trend +22.1% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
-          "pass": false,
-          "value": "+30.1% past month, +14.2% vs 20SMA (through today's burst)"
+          "pass": true,
+          "value": "+7.9% past month, +2.5% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
           "label": "narrow consolidation",
           "pass": true,
-          "value": "pre-burst range 1.0%/day = 0.36x its norm"
+          "value": "pre-burst range 2.4%/day = 0.90x its norm"
         },
         {
           "code": "C",
           "label": "calm preburst day",
           "pass": true,
-          "value": "prior day 0.3% move, 1.0% range = 0.35x its norm, 0.72x volume"
+          "value": "prior day 0.3% move, 1.5% range = 0.56x its norm, 0.90x volume"
         },
         {
           "code": "H",
           "label": "close near high",
           "pass": true,
-          "value": "closed at 71% of day's range"
+          "value": "closed at 70% of day's range"
         }
       ],
-      "score": 6.3,
-      "verdict": "B",
-      "reason": "Decent burst but the prior advance was choppy rather than linear.",
-      "key_risk": "loose base",
+      "score": 7.1,
+      "verdict": "B+",
+      "reason": "First burst out of a tight base on expanding volume, closing near the high.",
+      "key_risk": "earnings inside the hold window",
       "provenance": {
         "source": "claude",
         "model": "claude-sonnet-4-6",
-        "chart_seen": true,
+        "chart_seen": false,
         "error": null
       },
-      "chart": "charts/APP.png",
-      "chart_error": null,
+      "chart": null,
+      "chart_error": "ValueError: fixture: mplfinance refused this frame",
       "context": {
-        "pct_off_52w_high": -2.6,
-        "pct_above_52w_low": 69.7,
+        "pct_off_52w_high": -2.8,
+        "pct_above_52w_low": 145.2,
         "consecutive_up_days": 0,
-        "worst_base_day_pct": -3.4,
-        "perf_3mo_pct": 63.5,
-        "perf_6mo_pct": 47.1
+        "worst_base_day_pct": -2.2,
+        "perf_3mo_pct": 42.7,
+        "perf_6mo_pct": 71.3
       },
       "streak": {
         "day": 1,
         "unknown_reason": null,
         "first_seen": "2026-09-01",
-        "last_seen": "2026-07-28",
-        "last_score": 1.4,
-        "last_verdict": "skip",
-        "last_outcome": "scored",
-        "seen_before": 1,
+        "last_seen": "2026-08-03",
+        "last_score": null,
+        "last_verdict": null,
+        "last_outcome": "lynch_gate",
+        "seen_before": 3,
         "history_from": "2026-07-22",
         "history_sessions": 29
       },
@@ -148,194 +148,14 @@
     },
     {
       "rank": 2,
-      "ticker": "MA",
+      "ticker": "ABT",
       "date": "2026-09-01",
-      "close": 185.03,
-      "gain_pct": 6.43,
-      "volume": 8594549,
-      "prev_volume": 3515925,
-      "volume_ratio": 3.26,
-      "dollar_volume": 1590260475,
-      "lynch": "3/6",
-      "lynch_passes": 3,
-      "lynch_total": 6,
-      "lynch_detail": [
-        {
-          "code": "2",
-          "label": "first or second burst",
-          "pass": false,
-          "value": "6 prior 4% bursts in last 20 days"
-        },
-        {
-          "code": "L",
-          "label": "linear prior move",
-          "pass": true,
-          "value": "R²=0.85, fitted trend +49.3% over prior 30 days"
-        },
-        {
-          "code": "Y",
-          "label": "young trend",
-          "pass": false,
-          "value": "+49.8% past month, +13.6% vs 20SMA (through today's burst)"
-        },
-        {
-          "code": "N",
-          "label": "narrow consolidation",
-          "pass": true,
-          "value": "pre-burst range 1.7%/day = 0.61x its norm"
-        },
-        {
-          "code": "C",
-          "label": "calm preburst day",
-          "pass": false,
-          "value": "prior day 0.2% move, 1.2% range = 0.45x its norm, 1.35x volume"
-        },
-        {
-          "code": "H",
-          "label": "close near high",
-          "pass": true,
-          "value": "closed at 89% of day's range"
-        }
-      ],
-      "score": 4.9,
-      "verdict": "skip",
-      "reason": "Second burst in the leg; base quality is ordinary and the move is already known.",
-      "key_risk": "late in the leg",
-      "provenance": {
-        "source": "claude",
-        "model": "claude-sonnet-4-6",
-        "chart_seen": true,
-        "error": null
-      },
-      "chart": "charts/MA.png",
-      "chart_error": null,
-      "context": {
-        "pct_off_52w_high": -0.9,
-        "pct_above_52w_low": 100.9,
-        "consecutive_up_days": 1,
-        "worst_base_day_pct": -3.2,
-        "perf_3mo_pct": 63,
-        "perf_6mo_pct": 71.9
-      },
-      "streak": {
-        "day": 2,
-        "unknown_reason": null,
-        "first_seen": "2026-08-27",
-        "last_seen": "2026-08-27",
-        "last_score": 5.7,
-        "last_verdict": "C",
-        "last_outcome": "scored",
-        "seen_before": 4,
-        "history_from": "2026-07-22",
-        "history_sessions": 29
-      },
-      "forward_returns": {
-        "d1": null,
-        "d3": null,
-        "d5": null,
-        "as_of": null
-      }
-    },
-    {
-      "rank": 3,
-      "ticker": "SHW",
-      "date": "2026-09-01",
-      "close": 27.06,
-      "gain_pct": 6.04,
-      "volume": 29999576,
-      "prev_volume": 9936431,
-      "volume_ratio": 2.32,
-      "dollar_volume": 811871380,
-      "lynch": "5/6",
-      "lynch_passes": 5,
-      "lynch_total": 6,
-      "lynch_detail": [
-        {
-          "code": "2",
-          "label": "first or second burst",
-          "pass": true,
-          "value": "0 prior 4% bursts in last 20 days"
-        },
-        {
-          "code": "L",
-          "label": "linear prior move",
-          "pass": false,
-          "value": "R²=0.24, fitted trend -1.8% over prior 30 days"
-        },
-        {
-          "code": "Y",
-          "label": "young trend",
-          "pass": true,
-          "value": "+6.0% past month, +5.4% vs 20SMA (through today's burst)"
-        },
-        {
-          "code": "N",
-          "label": "narrow consolidation",
-          "pass": true,
-          "value": "pre-burst range 0.9%/day = 0.44x its norm"
-        },
-        {
-          "code": "C",
-          "label": "calm preburst day",
-          "pass": true,
-          "value": "prior day 0.4% move, 1.0% range = 0.46x its norm, 0.75x volume"
-        },
-        {
-          "code": "H",
-          "label": "close near high",
-          "pass": true,
-          "value": "closed at 80% of day's range"
-        }
-      ],
-      "score": 3.5,
-      "verdict": "skip",
-      "reason": "No consolidation behind the burst and a weak close — noise, not a setup.",
-      "key_risk": "no base under the move",
-      "provenance": {
-        "source": "claude",
-        "model": "claude-sonnet-4-6",
-        "chart_seen": false,
-        "error": null
-      },
-      "chart": null,
-      "chart_error": "ValueError: fixture: mplfinance refused this frame",
-      "context": {
-        "pct_off_52w_high": -1.5,
-        "pct_above_52w_low": 50.9,
-        "consecutive_up_days": 0,
-        "worst_base_day_pct": -1.5,
-        "perf_3mo_pct": 6.9,
-        "perf_6mo_pct": 33.1
-      },
-      "streak": {
-        "day": 1,
-        "unknown_reason": null,
-        "first_seen": "2026-09-01",
-        "last_seen": null,
-        "last_score": null,
-        "last_verdict": null,
-        "last_outcome": null,
-        "seen_before": 0,
-        "history_from": "2026-07-22",
-        "history_sessions": 29
-      },
-      "forward_returns": {
-        "d1": null,
-        "d3": null,
-        "d5": null,
-        "as_of": null
-      }
-    },
-    {
-      "rank": 4,
-      "ticker": "EOG",
-      "date": "2026-09-01",
-      "close": 79.93,
-      "gain_pct": 5.19,
-      "volume": 9079258,
-      "prev_volume": 3691605,
-      "volume_ratio": 2.4,
-      "dollar_volume": 725743104,
+      "close": 185.42,
+      "gain_pct": 6.2,
+      "volume": 28770155,
+      "prev_volume": 20731648,
+      "volume_ratio": 4.18,
+      "dollar_volume": 5334665098,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -350,62 +170,422 @@
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.82, fitted trend +33.9% over prior 30 days"
+          "value": "R²=0.86, fitted trend +62.9% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": false,
-          "value": "+28.5% past month, +11.2% vs 20SMA (through today's burst)"
+          "value": "+33.5% past month, +14.1% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
           "label": "narrow consolidation",
           "pass": true,
-          "value": "pre-burst range 2.1%/day = 0.77x its norm"
+          "value": "pre-burst range 1.6%/day = 0.67x its norm"
         },
         {
           "code": "C",
           "label": "calm preburst day",
-          "pass": true,
-          "value": "prior day 1.2% move, 1.7% range = 0.62x its norm, 0.99x volume"
+          "pass": false,
+          "value": "prior day 5.7% move, 7.3% range = 3.06x its norm, 3.08x volume"
         },
         {
           "code": "H",
           "label": "close near high",
-          "pass": false,
-          "value": "closed at 49% of day's range"
+          "pass": true,
+          "value": "closed at 82% of day's range"
         }
       ],
-      "score": 2.5,
-      "verdict": "skip",
-      "reason": "No consolidation behind the burst and a weak close — noise, not a setup.",
-      "key_risk": "no base under the move",
+      "score": 7.1,
+      "verdict": "B+",
+      "reason": "Breakout from a multi-week shelf on 3x volume with no overhead supply.",
+      "key_risk": "gap risk on the open",
       "provenance": {
         "source": "claude",
         "model": "claude-sonnet-4-6",
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/EOG.png",
+      "chart": "charts/ABT.png",
       "chart_error": null,
       "context": {
-        "pct_off_52w_high": -3.3,
-        "pct_above_52w_low": 83.5,
-        "consecutive_up_days": 1,
-        "worst_base_day_pct": -3.3,
-        "perf_3mo_pct": 53.5,
-        "perf_6mo_pct": 78.3
+        "pct_off_52w_high": -1.4,
+        "pct_above_52w_low": 91.7,
+        "consecutive_up_days": 2,
+        "worst_base_day_pct": -0.6,
+        "perf_3mo_pct": 79.4,
+        "perf_6mo_pct": 57.5
+      },
+      "streak": {
+        "day": 2,
+        "unknown_reason": null,
+        "first_seen": "2026-08-31",
+        "last_seen": "2026-08-31",
+        "last_score": 6,
+        "last_verdict": "B",
+        "last_outcome": "scored",
+        "seen_before": 4,
+        "history_from": "2026-07-22",
+        "history_sessions": 29
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 3,
+      "ticker": "AMAT",
+      "date": "2026-09-01",
+      "close": 197.74,
+      "gain_pct": 7.7,
+      "volume": 4980289,
+      "prev_volume": 610210,
+      "volume_ratio": 3.69,
+      "dollar_volume": 984797724,
+      "lynch": "4/6",
+      "lynch_passes": 4,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.67, fitted trend +19.7% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+25.8% past month, +11.8% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 1.0%/day = 0.41x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm preburst day",
+          "pass": true,
+          "value": "prior day 0.3% move, 0.6% range = 0.24x its norm, 0.45x volume"
+        },
+        {
+          "code": "H",
+          "label": "close near high",
+          "pass": true,
+          "value": "closed at 79% of day's range"
+        }
+      ],
+      "score": 6.3,
+      "verdict": "B",
+      "reason": "Clean second leg after an orderly advance; the week before was quiet and narrow.",
+      "key_risk": "group already extended",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/AMAT.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -1.9,
+        "pct_above_52w_low": 49.4,
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -2,
+        "perf_3mo_pct": 26,
+        "perf_6mo_pct": 19.2
       },
       "streak": {
         "day": 1,
         "unknown_reason": null,
         "first_seen": "2026-09-01",
-        "last_seen": "2026-08-14",
+        "last_seen": "2026-08-17",
+        "last_score": 2.7,
+        "last_verdict": "skip",
+        "last_outcome": "scored",
+        "seen_before": 2,
+        "history_from": "2026-07-22",
+        "history_sessions": 29
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 4,
+      "ticker": "FDX",
+      "date": "2026-09-01",
+      "close": 45.99,
+      "gain_pct": 7.12,
+      "volume": 32680364,
+      "prev_volume": 12770211,
+      "volume_ratio": 3.03,
+      "dollar_volume": 1502862783,
+      "lynch": "4/6",
+      "lynch_passes": 4,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "3 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.85, fitted trend +17.2% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+16.0% past month, +10.5% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 1.8%/day = 0.82x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm preburst day",
+          "pass": false,
+          "value": "prior day 0.4% move, 2.4% range = 1.09x its norm, 1.19x volume"
+        },
+        {
+          "code": "H",
+          "label": "close near high",
+          "pass": true,
+          "value": "closed at 79% of day's range"
+        }
+      ],
+      "score": 6.3,
+      "verdict": "B",
+      "reason": "Volume expanded but the close gave back part of the range.",
+      "key_risk": "mid-range close",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/FDX.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -1.8,
+        "pct_above_52w_low": 52.8,
+        "consecutive_up_days": 2,
+        "worst_base_day_pct": -3.5,
+        "perf_3mo_pct": 24.2,
+        "perf_6mo_pct": 10.2
+      },
+      "streak": {
+        "day": 1,
+        "unknown_reason": null,
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-08-12",
+        "last_score": 6.9,
+        "last_verdict": "B",
+        "last_outcome": "scored",
+        "seen_before": 1,
+        "history_from": "2026-07-22",
+        "history_sessions": 29
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 5,
+      "ticker": "DECK",
+      "date": "2026-09-01",
+      "close": 210.25,
+      "gain_pct": 5.68,
+      "volume": 6754480,
+      "prev_volume": 1910665,
+      "volume_ratio": 3.47,
+      "dollar_volume": 1420118369,
+      "lynch": "5/6",
+      "lynch_passes": 5,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "0 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.00, fitted trend +0.7% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+14.9% past month, +8.6% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 1.5%/day = 0.55x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm preburst day",
+          "pass": true,
+          "value": "prior day 0.4% move, 1.0% range = 0.37x its norm, 0.98x volume"
+        },
+        {
+          "code": "H",
+          "label": "close near high",
+          "pass": true,
+          "value": "closed at 75% of day's range"
+        }
+      ],
+      "score": 5.4,
+      "verdict": "C",
+      "reason": "Second burst in the leg; base quality is ordinary and the move is already known.",
+      "key_risk": "late in the leg",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/DECK.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -5.8,
+        "pct_above_52w_low": 60.1,
+        "consecutive_up_days": 2,
+        "worst_base_day_pct": -0.8,
+        "perf_3mo_pct": 35.8,
+        "perf_6mo_pct": 36.3
+      },
+      "streak": {
+        "day": 1,
+        "unknown_reason": null,
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-07-28",
         "last_score": null,
         "last_verdict": null,
         "last_outcome": "veto_up_days",
-        "seen_before": 3,
+        "seen_before": 2,
+        "history_from": "2026-07-22",
+        "history_sessions": 29
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 6,
+      "ticker": "GD",
+      "date": "2026-09-01",
+      "close": 504.65,
+      "gain_pct": 5.74,
+      "volume": 6088706,
+      "prev_volume": 1532618,
+      "volume_ratio": 2.46,
+      "dollar_volume": 3072642782,
+      "lynch": "4/6",
+      "lynch_passes": 4,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "6 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.94, fitted trend +100.3% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+42.7% past month, +16.3% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": true,
+          "value": "pre-burst range 1.7%/day = 0.52x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm preburst day",
+          "pass": true,
+          "value": "prior day 0.4% move, 0.9% range = 0.27x its norm, 0.62x volume"
+        },
+        {
+          "code": "H",
+          "label": "close near high",
+          "pass": true,
+          "value": "closed at 77% of day's range"
+        }
+      ],
+      "score": 4,
+      "verdict": "skip",
+      "reason": "Third or fourth push in an extended move; this is buying exhaustion.",
+      "key_risk": "extended above the 20-day",
+      "provenance": {
+        "source": "claude",
+        "model": "claude-sonnet-4-6",
+        "chart_seen": true,
+        "error": null
+      },
+      "chart": "charts/GD.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -1.6,
+        "pct_above_52w_low": 318.3,
+        "consecutive_up_days": 2,
+        "worst_base_day_pct": -1.9,
+        "perf_3mo_pct": 143.2,
+        "perf_6mo_pct": 178.2
+      },
+      "streak": {
+        "day": 1,
+        "unknown_reason": null,
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-08-21",
+        "last_score": null,
+        "last_verdict": null,
+        "last_outcome": "veto_up_days",
+        "seen_before": 9,
         "history_from": "2026-07-22",
         "history_sessions": 29
       },
@@ -419,60 +599,68 @@
   ],
   "gated_out": [
     {
-      "ticker": "SNPS",
+      "ticker": "GLW",
       "date": "2026-09-01",
-      "close": 114.07,
-      "gain_pct": 4.85,
-      "volume": 16936173,
-      "volume_ratio": 2.12,
-      "lynch": "4/6",
-      "lynch_passes": 4,
+      "close": 221.85,
+      "gain_pct": 6.37,
+      "volume": 13463769,
+      "volume_ratio": 3.67,
+      "lynch": "3/6",
+      "lynch_passes": 3,
       "lynch_total": 6,
       "lynch_detail": [
         {
           "code": "2",
           "label": "first or second burst",
-          "pass": true,
-          "value": "1 prior 4% bursts in last 20 days"
+          "pass": false,
+          "value": "3 prior 4% bursts in last 20 days"
         },
         {
           "code": "L",
           "label": "linear prior move",
           "pass": true,
-          "value": "R²=0.65, fitted trend +12.6% over prior 30 days"
+          "value": "R²=0.90, fitted trend +32.9% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
-          "pass": true,
-          "value": "+22.9% past month, +14.0% vs 20SMA (through today's burst)"
+          "pass": false,
+          "value": "+33.7% past month, +16.5% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
           "label": "narrow consolidation",
           "pass": true,
-          "value": "pre-burst range 2.1%/day = 0.85x its norm"
+          "value": "pre-burst range 1.8%/day = 0.69x its norm"
         },
         {
           "code": "C",
           "label": "calm preburst day",
-          "pass": false,
-          "value": "prior day 0.4% move, 0.8% range = 0.33x its norm, 1.87x volume"
+          "pass": true,
+          "value": "prior day 0.4% move, 0.9% range = 0.34x its norm, 0.62x volume"
         },
         {
           "code": "H",
           "label": "close near high",
           "pass": false,
-          "value": "closed at 20% of day's range"
+          "value": "closed at 45% of day's range"
         }
       ],
+      "context": {
+        "pct_off_52w_high": -4.2,
+        "pct_above_52w_low": 79.1,
+        "consecutive_up_days": 5,
+        "worst_base_day_pct": -1.4,
+        "perf_3mo_pct": 61.2,
+        "perf_6mo_pct": 50.8
+      },
       "streak": {
         "day": 2,
         "unknown_reason": null,
-        "first_seen": "2026-08-28",
-        "last_seen": "2026-08-28",
-        "last_score": 7.3,
-        "last_verdict": "B+",
+        "first_seen": "2026-08-27",
+        "last_seen": "2026-08-27",
+        "last_score": 3.4,
+        "last_verdict": "skip",
         "last_outcome": "scored",
         "seen_before": 2,
         "history_from": "2026-07-22",
@@ -481,62 +669,140 @@
       "reason": "veto_up_days"
     },
     {
-      "ticker": "LYB",
+      "ticker": "FSLR",
       "date": "2026-09-01",
-      "close": 132.23,
-      "gain_pct": 6.21,
-      "volume": 4604335,
-      "volume_ratio": 2.8,
-      "lynch": "2/6",
-      "lynch_passes": 2,
+      "close": 48.73,
+      "gain_pct": 5.7,
+      "volume": 6475305,
+      "volume_ratio": 2.29,
+      "lynch": "3/6",
+      "lynch_passes": 3,
       "lynch_total": 6,
       "lynch_detail": [
         {
           "code": "2",
           "label": "first or second burst",
           "pass": false,
-          "value": "5 prior 4% bursts in last 20 days"
+          "value": "3 prior 4% bursts in last 20 days"
         },
         {
           "code": "L",
           "label": "linear prior move",
-          "pass": true,
-          "value": "R²=0.91, fitted trend +41.5% over prior 30 days"
+          "pass": false,
+          "value": "R²=0.48, fitted trend +12.0% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
-          "pass": false,
-          "value": "+35.2% past month, +15.2% vs 20SMA (through today's burst)"
+          "pass": true,
+          "value": "+7.2% past month, +5.4% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
           "label": "narrow consolidation",
           "pass": true,
-          "value": "pre-burst range 2.2%/day = 0.98x its norm"
+          "value": "pre-burst range 1.0%/day = 0.39x its norm"
         },
         {
           "code": "C",
           "label": "calm preburst day",
-          "pass": false,
-          "value": "prior day 0.4% move, 2.1% range = 0.91x its norm, 1.50x volume"
+          "pass": true,
+          "value": "prior day 0.4% move, 0.8% range = 0.31x its norm, 1.08x volume"
         },
         {
           "code": "H",
           "label": "close near high",
           "pass": false,
-          "value": "closed at 33% of day's range"
+          "value": "closed at 65% of day's range"
         }
       ],
+      "context": {
+        "pct_off_52w_high": -2.4,
+        "pct_above_52w_low": 67.7,
+        "consecutive_up_days": 3,
+        "worst_base_day_pct": -2.1,
+        "perf_3mo_pct": 55.4,
+        "perf_6mo_pct": 59.4
+      },
       "streak": {
-        "day": 2,
+        "day": 1,
         "unknown_reason": null,
-        "first_seen": "2026-08-28",
-        "last_seen": "2026-08-28",
-        "last_score": 4.2,
-        "last_verdict": "skip",
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-08-04",
+        "last_score": 6.3,
+        "last_verdict": "B",
         "last_outcome": "scored",
-        "seen_before": 2,
+        "seen_before": 1,
+        "history_from": "2026-07-22",
+        "history_sessions": 29
+      },
+      "reason": "veto_up_days"
+    },
+    {
+      "ticker": "PEP",
+      "date": "2026-09-01",
+      "close": 59.98,
+      "gain_pct": 6.29,
+      "volume": 27820470,
+      "volume_ratio": 3.68,
+      "lynch": "1/6",
+      "lynch_passes": 1,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "7 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.91, fitted trend +74.0% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+66.0% past month, +28.6% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 4.0%/day = 1.53x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm preburst day",
+          "pass": false,
+          "value": "prior day 0.3% move, 1.8% range = 0.69x its norm, 1.22x volume"
+        },
+        {
+          "code": "H",
+          "label": "close near high",
+          "pass": false,
+          "value": "closed at 69% of day's range"
+        }
+      ],
+      "context": {
+        "pct_off_52w_high": -2.4,
+        "pct_above_52w_low": 106.8,
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -1.7,
+        "perf_3mo_pct": 84.5,
+        "perf_6mo_pct": 74.5
+      },
+      "streak": {
+        "day": 4,
+        "unknown_reason": null,
+        "first_seen": "2026-08-21",
+        "last_seen": "2026-08-28",
+        "last_score": null,
+        "last_verdict": null,
+        "last_outcome": "veto_up_days",
+        "seen_before": 5,
         "history_from": "2026-07-22",
         "history_sessions": 29
       },
@@ -547,12 +813,12 @@
     {
       "date": "2026-09-01",
       "type": "evening",
-      "bursts": 6,
-      "passed_gate": 4,
-      "scored": 4,
-      "shortlist_size": 4,
+      "bursts": 9,
+      "passed_gate": 6,
+      "scored": 6,
+      "shortlist_size": 5,
       "score_cap": 25,
-      "top_score": 6.3,
+      "top_score": 7.1,
       "fallbacks": 0,
       "model": "claude-sonnet-4-6",
       "status": "degraded",
@@ -568,178 +834,304 @@
     {
       "date": "2026-08-31",
       "type": "evening",
-      "bursts": 3,
-      "passed_gate": 1,
-      "scored": 1,
-      "shortlist_size": 1,
+      "bursts": 5,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
       "score_cap": 25,
-      "top_score": 6.6,
+      "top_score": 6,
       "fallbacks": 0,
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
       "forward_returns": {
-        "d1": 3.36,
+        "d1": 1.72,
         "d3": null,
         "d5": null,
-        "n": 1,
-        "rows": 1
+        "n": 3,
+        "rows": 3
       }
     },
     {
       "date": "2026-08-28",
       "type": "evening",
       "bursts": 6,
-      "passed_gate": 3,
-      "scored": 3,
-      "shortlist_size": 3,
-      "score_cap": 25,
-      "top_score": 7.7,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": 1.29,
-        "d3": null,
-        "d5": null,
-        "n": 3,
-        "rows": 3
-      }
-    },
-    {
-      "date": "2026-08-27",
-      "type": "evening",
-      "bursts": 6,
-      "passed_gate": 4,
-      "scored": 4,
-      "shortlist_size": 4,
-      "score_cap": 25,
-      "top_score": 6.7,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": -0.31,
-        "d3": 2.47,
-        "d5": null,
-        "n": 3,
-        "rows": 4
-      }
-    },
-    {
-      "date": "2026-08-26",
-      "type": "evening",
-      "bursts": 6,
       "passed_gate": 2,
       "scored": 2,
       "shortlist_size": 2,
       "score_cap": 25,
-      "top_score": 6.1,
+      "top_score": 4.1,
       "fallbacks": 0,
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
       "forward_returns": {
-        "d1": 6.74,
-        "d3": 6.56,
+        "d1": 1.1,
+        "d3": null,
         "d5": null,
         "n": 1,
         "rows": 2
       }
     },
     {
-      "date": "2026-08-25",
+      "date": "2026-08-27",
       "type": "evening",
       "bursts": 8,
-      "passed_gate": 5,
-      "scored": 5,
+      "passed_gate": 7,
+      "scored": 7,
       "shortlist_size": 5,
       "score_cap": 25,
-      "top_score": 7.4,
+      "top_score": 8.3,
       "fallbacks": 0,
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
       "forward_returns": {
-        "d1": 2.69,
-        "d3": 4.28,
-        "d5": 6.13,
+        "d1": 3.16,
+        "d3": 5.15,
+        "d5": null,
+        "n": 5,
+        "rows": 7
+      }
+    },
+    {
+      "date": "2026-08-26",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 6,
+      "scored": 6,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 6.9,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 3.69,
+        "d3": 4.79,
+        "d5": null,
         "n": 4,
-        "rows": 5
+        "rows": 6
+      }
+    },
+    {
+      "date": "2026-08-25",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 6.5,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": -1.32,
+        "d3": -0.43,
+        "d5": -0.72,
+        "n": 2,
+        "rows": 4
       }
     },
     {
       "date": "2026-08-24",
       "type": "evening",
       "bursts": 4,
-      "passed_gate": 3,
-      "scored": 3,
-      "shortlist_size": 3,
+      "passed_gate": 1,
+      "scored": 1,
+      "shortlist_size": 1,
       "score_cap": 25,
-      "top_score": 7.4,
+      "top_score": 4.9,
       "fallbacks": 0,
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
       "forward_returns": {
-        "d1": 3.48,
-        "d3": 9.35,
-        "d5": 10.59,
-        "n": 3,
-        "rows": 3
+        "d1": 6.0,
+        "d3": 5.44,
+        "d5": 3.41,
+        "n": 1,
+        "rows": 1
       }
     },
     {
       "date": "2026-08-21",
+      "type": "evening",
+      "bursts": 9,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 8,
+      "fallbacks": 4,
+      "model": "claude-sonnet-4-6",
+      "status": "degraded",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 0.36,
+        "d3": 3.73,
+        "d5": 6.92,
+        "n": 4,
+        "rows": 4
+      }
+    },
+    {
+      "date": "2026-08-20",
       "type": "evening",
       "bursts": 4,
       "passed_gate": 2,
       "scored": 2,
       "shortlist_size": 2,
       "score_cap": 25,
-      "top_score": 8.5,
+      "top_score": 6.3,
       "fallbacks": 0,
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
       "forward_returns": {
-        "d1": 0.05,
-        "d3": -3.5,
-        "d5": -3.98,
+        "d1": 2.82,
+        "d3": 2.83,
+        "d5": 8.21,
         "n": 2,
         "rows": 2
-      }
-    },
-    {
-      "date": "2026-08-20",
-      "type": "evening",
-      "bursts": 3,
-      "passed_gate": 3,
-      "scored": 3,
-      "shortlist_size": 3,
-      "score_cap": 25,
-      "top_score": 7.3,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": 1.25,
-        "d3": 4.45,
-        "d5": 2.44,
-        "n": 2,
-        "rows": 3
       }
     },
     {
       "date": "2026-08-19",
       "type": "evening",
       "bursts": 4,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 5.6,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n": 0,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-08-18",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 4.6,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 0.48,
+        "d3": 5.02,
+        "d5": 3.35,
+        "n": 2,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-08-17",
+      "type": "evening",
+      "bursts": 7,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 8.7,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 3.17,
+        "d3": 9.88,
+        "d5": 16.93,
+        "n": 4,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-08-14",
+      "type": "evening",
+      "bursts": 4,
       "passed_gate": 3,
       "scored": 3,
       "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 6.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 1.07,
+        "d3": 1.72,
+        "d5": 2.61,
+        "n": 3,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-13",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 6.5,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 4.05,
+        "d3": 2.67,
+        "d5": 4.64,
+        "n": 2,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-08-12",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 7.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 3.58,
+        "d3": 2.49,
+        "d5": 6.5,
+        "n": 4,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-08-11",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
       "score_cap": 25,
       "top_score": 6.2,
       "fallbacks": 0,
@@ -747,17 +1139,80 @@
       "status": "ok",
       "dry_run": true,
       "forward_returns": {
-        "d1": 2.98,
-        "d3": 4.38,
-        "d5": 9.5,
-        "n": 2,
+        "d1": 0.52,
+        "d3": -1.53,
+        "d5": -1.42,
+        "n": 3,
+        "rows": 4
+      }
+    },
+    {
+      "date": "2026-08-10",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 5.6,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 6.81,
+        "d3": 4.81,
+        "d5": 3.76,
+        "n": 3,
         "rows": 3
       }
     },
     {
-      "date": "2026-08-18",
+      "date": "2026-08-07",
       "type": "evening",
-      "bursts": 2,
+      "bursts": 4,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": -1.38,
+        "d3": -1.06,
+        "d5": -1.02,
+        "n": 2,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-08-06",
+      "type": "evening",
+      "bursts": 3,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 6.9,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 6.88,
+        "d3": 7.82,
+        "d5": 6.71,
+        "n": 2,
+        "rows": 2
+      }
+    },
+    {
+      "date": "2026-08-05",
+      "type": "evening",
+      "bursts": 3,
       "passed_gate": 0,
       "scored": 0,
       "shortlist_size": 0,
@@ -776,303 +1231,9 @@
       }
     },
     {
-      "date": "2026-08-17",
-      "type": "evening",
-      "bursts": 6,
-      "passed_gate": 1,
-      "scored": 1,
-      "shortlist_size": 1,
-      "score_cap": 25,
-      "top_score": 4.2,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": 0.01,
-        "d3": -1.07,
-        "d5": -9.23,
-        "n": 1,
-        "rows": 1
-      }
-    },
-    {
-      "date": "2026-08-14",
-      "type": "evening",
-      "bursts": 5,
-      "passed_gate": 2,
-      "scored": 2,
-      "shortlist_size": 2,
-      "score_cap": 25,
-      "top_score": 6.7,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": -0.01,
-        "d3": -0.21,
-        "d5": -0.11,
-        "n": 2,
-        "rows": 2
-      }
-    },
-    {
-      "date": "2026-08-13",
-      "type": "evening",
-      "bursts": 6,
-      "passed_gate": 3,
-      "scored": 3,
-      "shortlist_size": 3,
-      "score_cap": 25,
-      "top_score": 5.1,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": 0.83,
-        "d3": -0.55,
-        "d5": 0.7,
-        "n": 3,
-        "rows": 3
-      }
-    },
-    {
-      "date": "2026-08-12",
-      "type": "evening",
-      "bursts": 9,
-      "passed_gate": 6,
-      "scored": 6,
-      "shortlist_size": 5,
-      "score_cap": 25,
-      "top_score": 8,
-      "fallbacks": 6,
-      "model": "claude-sonnet-4-6",
-      "status": "degraded",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": 2.33,
-        "d3": 5.53,
-        "d5": 6.68,
-        "n": 4,
-        "rows": 6
-      }
-    },
-    {
-      "date": "2026-08-11",
-      "type": "evening",
-      "bursts": 5,
-      "passed_gate": 2,
-      "scored": 2,
-      "shortlist_size": 2,
-      "score_cap": 25,
-      "top_score": 8,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": 3.68,
-        "d3": 3.59,
-        "d5": 7.32,
-        "n": 2,
-        "rows": 2
-      }
-    },
-    {
-      "date": "2026-08-10",
-      "type": "evening",
-      "bursts": 6,
-      "passed_gate": 3,
-      "scored": 3,
-      "shortlist_size": 3,
-      "score_cap": 25,
-      "top_score": 5.5,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": -0.6,
-        "d3": -0.68,
-        "d5": 6.9,
-        "n": 2,
-        "rows": 3
-      }
-    },
-    {
-      "date": "2026-08-07",
-      "type": "evening",
-      "bursts": 2,
-      "passed_gate": 1,
-      "scored": 1,
-      "shortlist_size": 1,
-      "score_cap": 25,
-      "top_score": 5.5,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": 6.99,
-        "d3": 14.68,
-        "d5": 21.24,
-        "n": 1,
-        "rows": 1
-      }
-    },
-    {
-      "date": "2026-08-06",
-      "type": "evening",
-      "bursts": 5,
-      "passed_gate": 2,
-      "scored": 2,
-      "shortlist_size": 2,
-      "score_cap": 25,
-      "top_score": 4.4,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": -1.16,
-        "d3": 2.96,
-        "d5": 6.96,
-        "n": 1,
-        "rows": 2
-      }
-    },
-    {
-      "date": "2026-08-05",
-      "type": "evening",
-      "bursts": 7,
-      "passed_gate": 3,
-      "scored": 3,
-      "shortlist_size": 3,
-      "score_cap": 25,
-      "top_score": 6.1,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": 3.27,
-        "d3": 7.97,
-        "d5": 11.46,
-        "n": 2,
-        "rows": 3
-      }
-    },
-    {
       "date": "2026-08-04",
       "type": "evening",
-      "bursts": 4,
-      "passed_gate": 3,
-      "scored": 3,
-      "shortlist_size": 3,
-      "score_cap": 25,
-      "top_score": 6.5,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": 5.99,
-        "d3": 12.16,
-        "d5": 16.27,
-        "n": 3,
-        "rows": 3
-      }
-    },
-    {
-      "date": "2026-08-03",
-      "type": "evening",
-      "bursts": 4,
-      "passed_gate": 1,
-      "scored": 1,
-      "shortlist_size": 1,
-      "score_cap": 25,
-      "top_score": 5.9,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": 6.03,
-        "d3": 18.38,
-        "d5": 20.75,
-        "n": 1,
-        "rows": 1
-      }
-    },
-    {
-      "date": "2026-07-31",
-      "type": "evening",
-      "bursts": 4,
-      "passed_gate": 1,
-      "scored": 1,
-      "shortlist_size": 1,
-      "score_cap": 25,
-      "top_score": 4.8,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": 0.87,
-        "d3": 3.3,
-        "d5": 4.0,
-        "n": 1,
-        "rows": 1
-      }
-    },
-    {
-      "date": "2026-07-30",
-      "type": "evening",
-      "bursts": 8,
-      "passed_gate": 2,
-      "scored": 2,
-      "shortlist_size": 2,
-      "score_cap": 25,
-      "top_score": 4.4,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": -2.89,
-        "d3": -5.6,
-        "d5": -5.1,
-        "n": 1,
-        "rows": 2
-      }
-    },
-    {
-      "date": "2026-07-29",
-      "type": "evening",
-      "bursts": 6,
-      "passed_gate": 5,
-      "scored": 5,
-      "shortlist_size": 5,
-      "score_cap": 25,
-      "top_score": 7.4,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": 4.91,
-        "d3": 5.66,
-        "d5": 5.3,
-        "n": 4,
-        "rows": 5
-      }
-    },
-    {
-      "date": "2026-07-28",
-      "type": "evening",
-      "bursts": 8,
+      "bursts": 7,
       "passed_gate": 5,
       "scored": 5,
       "shortlist_size": 5,
@@ -1083,95 +1244,200 @@
       "status": "ok",
       "dry_run": true,
       "forward_returns": {
-        "d1": 1.33,
-        "d3": 2.58,
-        "d5": 3.0,
-        "n": 4,
+        "d1": 2.88,
+        "d3": 3.64,
+        "d5": 2.07,
+        "n": 3,
         "rows": 5
+      }
+    },
+    {
+      "date": "2026-08-03",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 7.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": -0.46,
+        "d3": -2.62,
+        "d5": 0.3,
+        "n": 2,
+        "rows": 5
+      }
+    },
+    {
+      "date": "2026-07-31",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 8.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 5.85,
+        "d3": 12.92,
+        "d5": 19.1,
+        "n": 2,
+        "rows": 3
+      }
+    },
+    {
+      "date": "2026-07-30",
+      "type": "evening",
+      "bursts": 9,
+      "passed_gate": 6,
+      "scored": 6,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 7.9,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 0.72,
+        "d3": 3.54,
+        "d5": 7.75,
+        "n": 3,
+        "rows": 6
+      }
+    },
+    {
+      "date": "2026-07-29",
+      "type": "evening",
+      "bursts": 10,
+      "passed_gate": 9,
+      "scored": 9,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 7.2,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 0.92,
+        "d3": 3.23,
+        "d5": 8.97,
+        "n": 9,
+        "rows": 9
+      }
+    },
+    {
+      "date": "2026-07-28",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 7.8,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 0.3,
+        "d3": 5.12,
+        "d5": 5.96,
+        "n": 3,
+        "rows": 3
       }
     },
     {
       "date": "2026-07-27",
       "type": "evening",
       "bursts": 5,
-      "passed_gate": 5,
-      "scored": 5,
-      "shortlist_size": 5,
-      "score_cap": 25,
-      "top_score": 5.6,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "forward_returns": {
-        "d1": 0.41,
-        "d3": 2.4,
-        "d5": 3.77,
-        "n": 5,
-        "rows": 5
-      }
-    },
-    {
-      "date": "2026-07-24",
-      "type": "evening",
-      "bursts": 8,
       "passed_gate": 2,
       "scored": 2,
       "shortlist_size": 2,
       "score_cap": 25,
-      "top_score": 6.1,
+      "top_score": 6.2,
       "fallbacks": 0,
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
       "forward_returns": {
-        "d1": 0.76,
-        "d3": 1.75,
-        "d5": 1.25,
+        "d1": -0.56,
+        "d3": 2.97,
+        "d5": 6.17,
         "n": 2,
         "rows": 2
       }
     },
     {
-      "date": "2026-07-23",
+      "date": "2026-07-24",
       "type": "evening",
-      "bursts": 7,
-      "passed_gate": 4,
-      "scored": 4,
-      "shortlist_size": 4,
+      "bursts": 9,
+      "passed_gate": 8,
+      "scored": 8,
+      "shortlist_size": 5,
       "score_cap": 25,
-      "top_score": 8.7,
+      "top_score": 6.9,
       "fallbacks": 0,
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
       "forward_returns": {
-        "d1": 2.99,
-        "d3": 1.49,
-        "d5": 1.9,
-        "n": 4,
-        "rows": 4
+        "d1": 0.94,
+        "d3": 2.05,
+        "d5": 3.84,
+        "n": 7,
+        "rows": 8
+      }
+    },
+    {
+      "date": "2026-07-23",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 6,
+      "scored": 6,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 9.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "forward_returns": {
+        "d1": 2.89,
+        "d3": 5.97,
+        "d5": 7.25,
+        "n": 5,
+        "rows": 6
       }
     },
     {
       "date": "2026-07-22",
       "type": "evening",
-      "bursts": 2,
-      "passed_gate": 1,
-      "scored": 1,
-      "shortlist_size": 1,
+      "bursts": 4,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
       "score_cap": 25,
-      "top_score": 5.3,
+      "top_score": 6.5,
       "fallbacks": 0,
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
       "forward_returns": {
-        "d1": -0.02,
-        "d3": 4.5,
-        "d5": 4.45,
-        "n": 1,
-        "rows": 1
+        "d1": 0.9,
+        "d3": 3.71,
+        "d5": 2.98,
+        "n": 4,
+        "rows": 4
       }
     }
   ],
@@ -1191,36 +1457,36 @@
       "sessions": 30,
       "from": "2026-07-22",
       "to": "2026-09-01",
-      "setups": 96,
-      "scored_setups": 68,
-      "rows": 159
+      "setups": 110,
+      "scored_setups": 92,
+      "rows": 178
     },
     "overall": {
-      "setups": 68,
+      "setups": 92,
       "outcomes": [
         {
           "horizon": 1,
-          "mean": 2.09,
-          "n": 65,
-          "best": 9.05,
-          "worst": -3.74,
+          "mean": 2.0,
+          "n": 87,
+          "best": 9.03,
+          "worst": -4.76,
           "in_band": 3
         },
         {
           "horizon": 3,
-          "mean": 3.93,
-          "n": 61,
-          "best": 18.38,
-          "worst": -7.55,
-          "in_band": 14
+          "mean": 3.79,
+          "n": 83,
+          "best": 25.85,
+          "worst": -10.96,
+          "in_band": 13
         },
         {
           "horizon": 5,
-          "mean": 5.37,
-          "n": 57,
-          "best": 25.99,
-          "worst": -9.23,
-          "in_band": 17
+          "mean": 5.9,
+          "n": 74,
+          "best": 34.21,
+          "worst": -17.71,
+          "in_band": 22
         }
       ]
     },
@@ -1229,31 +1495,31 @@
         "low": 0.0,
         "high": 5.0,
         "verdict": "skip",
-        "setups": 29,
-        "enough": false,
+        "setups": 39,
+        "enough": true,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 1.42,
-            "n": 27,
-            "best": 8.02,
-            "worst": -3.74,
+            "mean": 1.96,
+            "n": 38,
+            "best": 8.03,
+            "worst": -4.76,
             "in_band": 1
           },
           {
             "horizon": 3,
-            "mean": 1.81,
-            "n": 26,
-            "best": 10.64,
-            "worst": -6.67,
-            "in_band": 4
+            "mean": 3.03,
+            "n": 35,
+            "best": 23.38,
+            "worst": -10.96,
+            "in_band": 5
           },
           {
             "horizon": 5,
-            "mean": 2.98,
-            "n": 25,
-            "best": 17.13,
-            "worst": -9.23,
+            "mean": 3.92,
+            "n": 30,
+            "best": 34.21,
+            "worst": -17.71,
             "in_band": 6
           }
         ]
@@ -1262,32 +1528,32 @@
         "low": 5.0,
         "high": 6.0,
         "verdict": "C",
-        "setups": 14,
+        "setups": 17,
         "enough": false,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 2.77,
-            "n": 14,
-            "best": 6.99,
-            "worst": -3.51,
+            "mean": 2.09,
+            "n": 16,
+            "best": 7.59,
+            "worst": -2.21,
             "in_band": 0
           },
           {
             "horizon": 3,
-            "mean": 5.12,
-            "n": 14,
-            "best": 18.38,
-            "worst": -7.55,
-            "in_band": 4
+            "mean": 3.58,
+            "n": 16,
+            "best": 15.2,
+            "worst": -4.16,
+            "in_band": 3
           },
           {
             "horizon": 5,
-            "mean": 5.48,
-            "n": 12,
-            "best": 21.24,
-            "worst": -8.72,
-            "in_band": 3
+            "mean": 5.71,
+            "n": 15,
+            "best": 19.15,
+            "worst": -8.37,
+            "in_band": 4
           }
         ]
       },
@@ -1295,32 +1561,32 @@
         "low": 6.0,
         "high": 7.0,
         "verdict": "B",
-        "setups": 13,
+        "setups": 22,
         "enough": false,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 1.99,
-            "n": 12,
-            "best": 8.74,
-            "worst": -1.35,
+            "mean": 1.89,
+            "n": 20,
+            "best": 8.15,
+            "worst": -2.92,
             "in_band": 1
           },
           {
             "horizon": 3,
-            "mean": 5.1,
-            "n": 11,
-            "best": 18.18,
-            "worst": -0.16,
+            "mean": 3.25,
+            "n": 19,
+            "best": 14.48,
+            "worst": -3.8,
             "in_band": 2
           },
           {
             "horizon": 5,
-            "mean": 7.11,
-            "n": 10,
-            "best": 25.99,
-            "worst": -6.3,
-            "in_band": 1
+            "mean": 5.89,
+            "n": 17,
+            "best": 17.76,
+            "worst": -3.3,
+            "in_band": 7
           }
         ]
       },
@@ -1328,32 +1594,32 @@
         "low": 7.0,
         "high": 8.0,
         "verdict": "B+",
-        "setups": 8,
+        "setups": 7,
         "enough": false,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 2.67,
-            "n": 8,
-            "best": 7.75,
-            "worst": -0.24,
+            "mean": 1.58,
+            "n": 6,
+            "best": 4.89,
+            "worst": -0.85,
             "in_band": 0
           },
           {
             "horizon": 3,
-            "mean": 7.36,
+            "mean": 4.52,
             "n": 6,
-            "best": 12.03,
-            "worst": 2.86,
+            "best": 16.26,
+            "worst": -2.0,
             "in_band": 2
           },
           {
             "horizon": 5,
-            "mean": 9.82,
+            "mean": 7.5,
             "n": 6,
-            "best": 16.6,
-            "worst": 2.55,
-            "in_band": 4
+            "best": 25.21,
+            "worst": -1.26,
+            "in_band": 1
           }
         ]
       },
@@ -1361,32 +1627,32 @@
         "low": 8.0,
         "high": 9.0,
         "verdict": "A",
-        "setups": 4,
+        "setups": 6,
         "enough": false,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 3.32,
-            "n": 4,
-            "best": 9.05,
-            "worst": -0.71,
-            "in_band": 1
+            "mean": 1.6,
+            "n": 6,
+            "best": 6.94,
+            "worst": -1.66,
+            "in_band": 0
           },
           {
             "horizon": 3,
-            "mean": 5.18,
-            "n": 4,
-            "best": 12.09,
-            "worst": -4.77,
-            "in_band": 2
+            "mean": 6.16,
+            "n": 6,
+            "best": 9.57,
+            "worst": 2.33,
+            "in_band": 1
           },
           {
             "horizon": 5,
-            "mean": 8.97,
-            "n": 4,
-            "best": 18.45,
-            "worst": -4.94,
-            "in_band": 3
+            "mean": 12.47,
+            "n": 5,
+            "best": 17.9,
+            "worst": 7.09,
+            "in_band": 4
           }
         ]
       },
@@ -1394,31 +1660,31 @@
         "low": 9.0,
         "high": 10.0,
         "verdict": "A+",
-        "setups": 0,
+        "setups": 1,
         "enough": false,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": null,
-            "n": 0,
-            "best": null,
-            "worst": null,
-            "in_band": 0
+            "mean": 9.03,
+            "n": 1,
+            "best": 9.03,
+            "worst": 9.03,
+            "in_band": 1
           },
           {
             "horizon": 3,
-            "mean": null,
-            "n": 0,
-            "best": null,
-            "worst": null,
+            "mean": 25.85,
+            "n": 1,
+            "best": 25.85,
+            "worst": 25.85,
             "in_band": 0
           },
           {
             "horizon": 5,
-            "mean": null,
-            "n": 0,
-            "best": null,
-            "worst": null,
+            "mean": 25.52,
+            "n": 1,
+            "best": 25.52,
+            "worst": 25.52,
             "in_band": 0
           }
         ]
@@ -1428,473 +1694,504 @@
       {
         "code": "2",
         "passed": {
-          "setups": 40,
+          "setups": 62,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 1.92,
-              "n": 39,
-              "best": 8.74,
-              "worst": -4.31,
+              "mean": 2.18,
+              "n": 60,
+              "best": 9.03,
+              "worst": -2.92,
               "in_band": 2
             },
             {
               "horizon": 3,
-              "mean": 4.43,
-              "n": 36,
-              "best": 18.38,
-              "worst": -10.23,
-              "in_band": 7
-            },
-            {
-              "horizon": 5,
-              "mean": 5.47,
-              "n": 36,
-              "best": 25.99,
-              "worst": -15.66,
-              "in_band": 9
-            }
-          ]
-        },
-        "failed": {
-          "setups": 56,
-          "outcomes": [
-            {
-              "horizon": 1,
-              "mean": 1.93,
-              "n": 54,
-              "best": 9.05,
-              "worst": -3.74,
-              "in_band": 1
-            },
-            {
-              "horizon": 3,
-              "mean": 3.54,
-              "n": 51,
-              "best": 14.7,
-              "worst": -8.12,
+              "mean": 4.67,
+              "n": 58,
+              "best": 25.85,
+              "worst": -3.94,
               "in_band": 12
             },
             {
               "horizon": 5,
-              "mean": 6.24,
-              "n": 46,
-              "best": 24.36,
-              "worst": -8.22,
+              "mean": 6.81,
+              "n": 52,
+              "best": 25.52,
+              "worst": -8.37,
               "in_band": 16
             }
           ]
         },
-        "separation": -0.77,
+        "failed": {
+          "setups": 48,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": 1.41,
+              "n": 44,
+              "best": 8.03,
+              "worst": -5.71,
+              "in_band": 1
+            },
+            {
+              "horizon": 3,
+              "mean": 2.02,
+              "n": 40,
+              "best": 23.38,
+              "worst": -11.88,
+              "in_band": 4
+            },
+            {
+              "horizon": 5,
+              "mean": 3.7,
+              "n": 36,
+              "best": 34.21,
+              "worst": -18.09,
+              "in_band": 10
+            }
+          ]
+        },
+        "separation": 3.11,
         "enough": true
       },
       {
         "code": "L",
         "passed": {
-          "setups": 84,
+          "setups": 86,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 2.1,
-              "n": 82,
-              "best": 9.05,
-              "worst": -3.74,
-              "in_band": 3
+              "mean": 2.02,
+              "n": 83,
+              "best": 9.03,
+              "worst": -5.71,
+              "in_band": 2
             },
             {
               "horizon": 3,
-              "mean": 4.3,
-              "n": 76,
-              "best": 18.38,
-              "worst": -8.12,
-              "in_band": 18
+              "mean": 3.71,
+              "n": 79,
+              "best": 25.85,
+              "worst": -11.88,
+              "in_band": 13
             },
             {
               "horizon": 5,
-              "mean": 6.47,
+              "mean": 5.61,
               "n": 71,
-              "best": 25.99,
-              "worst": -8.72,
-              "in_band": 22
+              "best": 34.21,
+              "worst": -18.09,
+              "in_band": 19
             }
           ]
         },
         "failed": {
-          "setups": 12,
+          "setups": 24,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 0.57,
-              "n": 11,
-              "best": 4.79,
-              "worst": -4.31,
-              "in_band": 0
-            },
-            {
-              "horizon": 3,
-              "mean": 1.21,
-              "n": 11,
-              "best": 10.74,
-              "worst": -10.23,
+              "mean": 1.19,
+              "n": 21,
+              "best": 8.15,
+              "worst": -1.95,
               "in_band": 1
             },
             {
-              "horizon": 5,
-              "mean": 2.27,
-              "n": 11,
-              "best": 14.11,
-              "worst": -15.66,
+              "horizon": 3,
+              "mean": 3.11,
+              "n": 19,
+              "best": 15.2,
+              "worst": -3.94,
               "in_band": 3
+            },
+            {
+              "horizon": 5,
+              "mean": 5.21,
+              "n": 17,
+              "best": 18.71,
+              "worst": -8.37,
+              "in_band": 7
             }
           ]
         },
-        "separation": 4.2,
+        "separation": 0.4,
         "enough": false
       },
       {
         "code": "Y",
         "passed": {
-          "setups": 46,
+          "setups": 74,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 1.89,
-              "n": 45,
-              "best": 8.74,
-              "worst": -4.31,
+              "mean": 1.78,
+              "n": 70,
+              "best": 9.03,
+              "worst": -4.76,
               "in_band": 2
             },
             {
               "horizon": 3,
-              "mean": 3.61,
-              "n": 41,
-              "best": 18.18,
-              "worst": -10.23,
-              "in_band": 10
+              "mean": 3.5,
+              "n": 68,
+              "best": 25.85,
+              "worst": -10.96,
+              "in_band": 11
             },
             {
               "horizon": 5,
-              "mean": 4.89,
-              "n": 40,
-              "best": 25.99,
-              "worst": -15.66,
-              "in_band": 12
+              "mean": 5.38,
+              "n": 58,
+              "best": 25.52,
+              "worst": -17.71,
+              "in_band": 18
             }
           ]
         },
         "failed": {
-          "setups": 50,
+          "setups": 36,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 1.95,
-              "n": 48,
-              "best": 9.05,
-              "worst": -2.2,
+              "mean": 2.01,
+              "n": 34,
+              "best": 8.03,
+              "worst": -5.71,
               "in_band": 1
             },
             {
               "horizon": 3,
-              "mean": 4.17,
-              "n": 46,
-              "best": 18.38,
-              "worst": -6.67,
-              "in_band": 9
+              "mean": 3.79,
+              "n": 30,
+              "best": 23.38,
+              "worst": -11.88,
+              "in_band": 5
             },
             {
               "horizon": 5,
-              "mean": 6.87,
-              "n": 42,
-              "best": 24.36,
-              "worst": -8.22,
-              "in_band": 13
+              "mean": 5.83,
+              "n": 30,
+              "best": 34.21,
+              "worst": -18.09,
+              "in_band": 8
             }
           ]
         },
-        "separation": -1.98,
+        "separation": -0.45,
         "enough": true
       },
       {
         "code": "N",
         "passed": {
-          "setups": 77,
+          "setups": 88,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 2.04,
-              "n": 74,
-              "best": 9.05,
-              "worst": -4.31,
-              "in_band": 2
-            },
-            {
-              "horizon": 3,
-              "mean": 4.13,
-              "n": 68,
-              "best": 18.38,
-              "worst": -10.23,
-              "in_band": 16
-            },
-            {
-              "horizon": 5,
-              "mean": 6.21,
-              "n": 64,
-              "best": 24.36,
-              "worst": -15.66,
-              "in_band": 20
-            }
-          ]
-        },
-        "failed": {
-          "setups": 19,
-          "outcomes": [
-            {
-              "horizon": 1,
-              "mean": 1.46,
-              "n": 19,
-              "best": 8.74,
-              "worst": -3.51,
-              "in_band": 1
-            },
-            {
-              "horizon": 3,
-              "mean": 3.12,
-              "n": 19,
-              "best": 18.18,
-              "worst": -8.12,
-              "in_band": 3
-            },
-            {
-              "horizon": 5,
-              "mean": 4.82,
-              "n": 18,
-              "best": 25.99,
-              "worst": -8.72,
-              "in_band": 5
-            }
-          ]
-        },
-        "separation": 1.39,
-        "enough": false
-      },
-      {
-        "code": "C",
-        "passed": {
-          "setups": 78,
-          "outcomes": [
-            {
-              "horizon": 1,
-              "mean": 2.11,
-              "n": 75,
-              "best": 9.05,
-              "worst": -4.31,
+              "mean": 2.01,
+              "n": 82,
+              "best": 9.03,
+              "worst": -4.76,
               "in_band": 3
             },
             {
               "horizon": 3,
-              "mean": 4.25,
-              "n": 70,
-              "best": 18.38,
-              "worst": -10.23,
-              "in_band": 18
+              "mean": 3.78,
+              "n": 77,
+              "best": 25.85,
+              "worst": -10.96,
+              "in_band": 13
             },
             {
               "horizon": 5,
-              "mean": 5.67,
-              "n": 66,
-              "best": 25.99,
-              "worst": -15.66,
+              "mean": 5.42,
+              "n": 67,
+              "best": 34.2,
+              "worst": -17.71,
               "in_band": 21
             }
           ]
         },
         "failed": {
-          "setups": 18,
+          "setups": 22,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 1.16,
-              "n": 18,
-              "best": 7.75,
-              "worst": -1.8,
+              "mean": 1.26,
+              "n": 22,
+              "best": 6.63,
+              "worst": -5.71,
               "in_band": 0
             },
             {
               "horizon": 3,
-              "mean": 2.48,
-              "n": 17,
-              "best": 12.03,
-              "worst": -8.12,
-              "in_band": 1
+              "mean": 2.9,
+              "n": 21,
+              "best": 18.33,
+              "worst": -11.88,
+              "in_band": 3
             },
             {
               "horizon": 5,
-              "mean": 6.86,
-              "n": 16,
-              "best": 24.36,
-              "worst": -3.02,
+              "mean": 5.91,
+              "n": 21,
+              "best": 34.21,
+              "worst": -18.09,
+              "in_band": 5
+            }
+          ]
+        },
+        "separation": -0.49,
+        "enough": false
+      },
+      {
+        "code": "C",
+        "passed": {
+          "setups": 96,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": 1.91,
+              "n": 91,
+              "best": 9.03,
+              "worst": -5.71,
+              "in_band": 2
+            },
+            {
+              "horizon": 3,
+              "mean": 3.66,
+              "n": 86,
+              "best": 25.85,
+              "worst": -11.88,
+              "in_band": 14
+            },
+            {
+              "horizon": 5,
+              "mean": 5.54,
+              "n": 77,
+              "best": 34.21,
+              "worst": -18.09,
+              "in_band": 22
+            }
+          ]
+        },
+        "failed": {
+          "setups": 14,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": 1.46,
+              "n": 13,
+              "best": 8.15,
+              "worst": -2.21,
+              "in_band": 1
+            },
+            {
+              "horizon": 3,
+              "mean": 3.07,
+              "n": 12,
+              "best": 14.48,
+              "worst": -3.8,
+              "in_band": 2
+            },
+            {
+              "horizon": 5,
+              "mean": 5.47,
+              "n": 11,
+              "best": 19.15,
+              "worst": -3.3,
               "in_band": 4
             }
           ]
         },
-        "separation": -1.19,
+        "separation": 0.07,
         "enough": false
       },
       {
         "code": "H",
         "passed": {
-          "setups": 63,
+          "setups": 62,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 2.0,
-              "n": 61,
-              "best": 9.05,
-              "worst": -4.31,
+              "mean": 1.92,
+              "n": 57,
+              "best": 9.03,
+              "worst": -4.76,
               "in_band": 2
             },
             {
               "horizon": 3,
-              "mean": 4.37,
-              "n": 57,
-              "best": 18.18,
-              "worst": -10.23,
-              "in_band": 14
+              "mean": 4.4,
+              "n": 55,
+              "best": 25.85,
+              "worst": -9.37,
+              "in_band": 9
             },
             {
               "horizon": 5,
-              "mean": 6.19,
-              "n": 54,
-              "best": 25.99,
-              "worst": -15.66,
-              "in_band": 17
+              "mean": 6.42,
+              "n": 48,
+              "best": 34.21,
+              "worst": -12.9,
+              "in_band": 15
             }
           ]
         },
         "failed": {
-          "setups": 33,
+          "setups": 48,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 1.78,
-              "n": 32,
-              "best": 8.02,
-              "worst": -3.74,
+              "mean": 1.77,
+              "n": 47,
+              "best": 8.03,
+              "worst": -5.71,
               "in_band": 1
             },
             {
               "horizon": 3,
-              "mean": 3.03,
-              "n": 30,
-              "best": 18.38,
-              "worst": -8.12,
-              "in_band": 5
+              "mean": 2.55,
+              "n": 43,
+              "best": 23.38,
+              "worst": -11.88,
+              "in_band": 7
             },
             {
               "horizon": 5,
-              "mean": 5.36,
-              "n": 28,
-              "best": 24.36,
-              "worst": -9.23,
-              "in_band": 8
+              "mean": 4.47,
+              "n": 40,
+              "best": 34.2,
+              "worst": -18.09,
+              "in_band": 11
             }
           ]
         },
-        "separation": 0.83,
-        "enough": false
+        "separation": 1.95,
+        "enough": true
       }
     ],
     "by_day": [
       {
         "day": 1,
-        "appearances": 52,
+        "appearances": 71,
         "enough": true,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 2.34,
-            "n": 49,
-            "best": 9.05,
-            "worst": -3.51,
-            "in_band": 3
+            "mean": 2.26,
+            "n": 66,
+            "best": 8.15,
+            "worst": -4.76,
+            "in_band": 2
           },
           {
             "horizon": 3,
-            "mean": 4.52,
-            "n": 45,
-            "best": 18.38,
-            "worst": -7.55,
-            "in_band": 13
+            "mean": 3.78,
+            "n": 62,
+            "best": 23.38,
+            "worst": -10.96,
+            "in_band": 11
           },
           {
             "horizon": 5,
-            "mean": 6.36,
-            "n": 41,
-            "best": 25.99,
-            "worst": -9.23,
-            "in_band": 13
+            "mean": 6.24,
+            "n": 53,
+            "best": 34.21,
+            "worst": -17.71,
+            "in_band": 18
           }
         ]
       },
       {
         "day": 2,
-        "appearances": 12,
+        "appearances": 17,
         "enough": false,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 1.79,
-            "n": 11,
-            "best": 9.01,
-            "worst": -6.46,
-            "in_band": 1
-          },
-          {
-            "horizon": 3,
-            "mean": 2.94,
-            "n": 11,
-            "best": 13.5,
-            "worst": -14.17,
+            "mean": 1.52,
+            "n": 16,
+            "best": 8.6,
+            "worst": -5.58,
             "in_band": 2
           },
           {
-            "horizon": 5,
-            "mean": 5.48,
-            "n": 9,
-            "best": 20.92,
-            "worst": -19.76,
+            "horizon": 3,
+            "mean": 2.85,
+            "n": 15,
+            "best": 15.25,
+            "worst": -6.69,
             "in_band": 3
+          },
+          {
+            "horizon": 5,
+            "mean": 3.92,
+            "n": 11,
+            "best": 19.56,
+            "worst": -10.36,
+            "in_band": 4
+          }
+        ]
+      },
+      {
+        "day": 3,
+        "appearances": 1,
+        "enough": false,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 2.57,
+            "n": 1,
+            "best": 2.57,
+            "worst": 2.57,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 8.19,
+            "n": 1,
+            "best": 8.19,
+            "worst": 8.19,
+            "in_band": 1
+          },
+          {
+            "horizon": 5,
+            "mean": 12.12,
+            "n": 1,
+            "best": 12.12,
+            "worst": 12.12,
+            "in_band": 1
           }
         ]
       },
       {
         "day": null,
-        "appearances": 18,
+        "appearances": 28,
         "enough": false,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 1.05,
-            "n": 18,
-            "best": 6.58,
-            "worst": -3.74,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 1.46,
-            "n": 18,
-            "best": 14.7,
-            "worst": -6.89,
+            "mean": 1.65,
+            "n": 28,
+            "best": 9.03,
+            "worst": -2.92,
             "in_band": 1
           },
           {
+            "horizon": 3,
+            "mean": 4.08,
+            "n": 28,
+            "best": 25.85,
+            "worst": -4.16,
+            "in_band": 3
+          },
+          {
             "horizon": 5,
-            "mean": 1.66,
-            "n": 18,
-            "best": 16.5,
-            "worst": -9.06,
-            "in_band": 4
+            "mean": 5.78,
+            "n": 28,
+            "best": 25.52,
+            "worst": -2.11,
+            "in_band": 8
           }
         ]
       }
@@ -1902,69 +2199,69 @@
     "by_month": [
       {
         "month": "2026-07",
-        "setups": 22,
-        "enough": false,
+        "setups": 35,
+        "enough": true,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 1.75,
-            "n": 22,
-            "best": 8.02,
-            "worst": -3.74,
+            "mean": 1.33,
+            "n": 35,
+            "best": 9.03,
+            "worst": -2.92,
             "in_band": 1
           },
           {
             "horizon": 3,
-            "mean": 2.57,
-            "n": 22,
-            "best": 14.7,
-            "worst": -6.67,
-            "in_band": 2
+            "mean": 4.17,
+            "n": 35,
+            "best": 25.85,
+            "worst": -4.16,
+            "in_band": 6
           },
           {
             "horizon": 5,
-            "mean": 2.98,
-            "n": 22,
-            "best": 16.5,
-            "worst": -8.22,
-            "in_band": 5
+            "mean": 7.07,
+            "n": 35,
+            "best": 34.21,
+            "worst": -2.45,
+            "in_band": 9
           }
         ]
       },
       {
         "month": "2026-08",
-        "setups": 43,
+        "setups": 52,
         "enough": true,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 2.26,
-            "n": 43,
-            "best": 9.05,
-            "worst": -3.51,
+            "mean": 2.45,
+            "n": 52,
+            "best": 8.15,
+            "worst": -4.76,
             "in_band": 2
           },
           {
             "horizon": 3,
-            "mean": 4.69,
-            "n": 39,
-            "best": 18.38,
-            "worst": -7.55,
-            "in_band": 12
+            "mean": 3.52,
+            "n": 48,
+            "best": 23.38,
+            "worst": -10.96,
+            "in_band": 7
           },
           {
             "horizon": 5,
-            "mean": 6.88,
-            "n": 35,
-            "best": 25.99,
-            "worst": -9.23,
-            "in_band": 12
+            "mean": 4.84,
+            "n": 39,
+            "best": 34.2,
+            "worst": -17.71,
+            "in_band": 13
           }
         ]
       },
       {
         "month": "2026-09",
-        "setups": 3,
+        "setups": 5,
         "enough": false,
         "outcomes": [
           {
@@ -1997,10 +2294,1891 @@
     "by_ticker": [
       {
         "ticker": "ABT",
+        "setups": 2,
+        "appearances": 5,
+        "last_seen": "2026-09-01",
+        "best_score": 7,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 5.47,
+            "n": 2,
+            "best": 6.2,
+            "worst": 4.75,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 16.26,
+            "n": 1,
+            "best": 16.26,
+            "worst": 16.26,
+            "in_band": 1
+          },
+          {
+            "horizon": 5,
+            "mean": 25.21,
+            "n": 1,
+            "best": 25.21,
+            "worst": 25.21,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "ADBE",
         "setups": 1,
         "appearances": 1,
-        "last_seen": "2026-07-28",
+        "last_seen": "2026-08-26",
+        "best_score": 6.3,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 1.92,
+            "n": 1,
+            "best": 1.92,
+            "worst": 1.92,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 7.22,
+            "n": 1,
+            "best": 7.22,
+            "worst": 7.22,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "ADI",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-08-17",
+        "best_score": 8.7,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 3.72,
+            "n": 1,
+            "best": 3.72,
+            "worst": 3.72,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 6.18,
+            "n": 1,
+            "best": 6.18,
+            "worst": 6.18,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 13.3,
+            "n": 1,
+            "best": 13.3,
+            "worst": 13.3,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "ALLY",
+        "setups": 2,
+        "appearances": 2,
+        "last_seen": "2026-08-17",
+        "best_score": 7.6,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -0.22,
+            "n": 2,
+            "best": 0.38,
+            "worst": -0.83,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 0.23,
+            "n": 2,
+            "best": 0.23,
+            "worst": 0.22,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 1.25,
+            "n": 2,
+            "best": 1.45,
+            "worst": 1.05,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "AMAT",
+        "setups": 2,
+        "appearances": 3,
+        "last_seen": "2026-09-01",
+        "best_score": 6.3,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 1.72,
+            "n": 1,
+            "best": 1.72,
+            "worst": 1.72,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 2.62,
+            "n": 1,
+            "best": 2.62,
+            "worst": 2.62,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 10.96,
+            "n": 1,
+            "best": 10.96,
+            "worst": 10.96,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "APO",
+        "setups": 1,
+        "appearances": 4,
+        "last_seen": "2026-08-06",
+        "best_score": 6.1,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -0.3,
+            "n": 1,
+            "best": -0.3,
+            "worst": -0.3,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 0.5,
+            "n": 1,
+            "best": 0.5,
+            "worst": 0.5,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 17.76,
+            "n": 1,
+            "best": 17.76,
+            "worst": 17.76,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "APP",
+        "setups": 1,
+        "appearances": 3,
+        "last_seen": "2026-08-26",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -0.3,
+            "n": 1,
+            "best": -0.3,
+            "worst": -0.3,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -0.2,
+            "n": 1,
+            "best": -0.2,
+            "worst": -0.2,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 13.49,
+            "n": 1,
+            "best": 13.49,
+            "worst": 13.49,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "AVGO",
+        "setups": 2,
+        "appearances": 2,
+        "last_seen": "2026-08-10",
+        "best_score": 5.4,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -1.39,
+            "n": 2,
+            "best": -1.22,
+            "worst": -1.56,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 2.06,
+            "n": 2,
+            "best": 4.86,
+            "worst": -0.75,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 3.09,
+            "n": 2,
+            "best": 9.34,
+            "worst": -3.15,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "AZO",
+        "setups": 1,
+        "appearances": 2,
+        "last_seen": "2026-07-30",
+        "best_score": 5.8,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 7.2,
+            "n": 1,
+            "best": 7.2,
+            "worst": 7.2,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 8.06,
+            "n": 1,
+            "best": 8.06,
+            "worst": 8.06,
+            "in_band": 1
+          },
+          {
+            "horizon": 5,
+            "mean": 16.73,
+            "n": 1,
+            "best": 16.73,
+            "worst": 16.73,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "BA",
+        "setups": 2,
+        "appearances": 3,
+        "last_seen": "2026-08-27",
         "best_score": 4.2,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 4.09,
+            "n": 2,
+            "best": 6.83,
+            "worst": 1.35,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 3.88,
+            "n": 2,
+            "best": 6.42,
+            "worst": 1.33,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -2.11,
+            "n": 1,
+            "best": -2.11,
+            "worst": -2.11,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "BAC",
+        "setups": 2,
+        "appearances": 3,
+        "last_seen": "2026-08-13",
+        "best_score": 3.3,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 2.85,
+            "n": 2,
+            "best": 6.42,
+            "worst": -0.72,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -0.53,
+            "n": 2,
+            "best": -0.51,
+            "worst": -0.54,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -2.83,
+            "n": 2,
+            "best": -2.35,
+            "worst": -3.32,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "CCL",
+        "setups": 2,
+        "appearances": 2,
+        "last_seen": "2026-08-12",
+        "best_score": 7.2,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 1.11,
+            "n": 2,
+            "best": 2.43,
+            "worst": -0.2,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 2.95,
+            "n": 2,
+            "best": 4.48,
+            "worst": 1.41,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 5.54,
+            "n": 2,
+            "best": 9.08,
+            "worst": 2.0,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "CL",
+        "setups": 2,
+        "appearances": 2,
+        "last_seen": "2026-08-11",
+        "best_score": 5.7,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -1.04,
+            "n": 2,
+            "best": 0.39,
+            "worst": -2.47,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -1.66,
+            "n": 2,
+            "best": 7.64,
+            "worst": -10.96,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -6.15,
+            "n": 2,
+            "best": 5.41,
+            "worst": -17.71,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "CSCO",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-08-31",
+        "best_score": 4.3,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 0.93,
+            "n": 1,
+            "best": 0.93,
+            "worst": 0.93,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "DECK",
+        "setups": 2,
+        "appearances": 3,
+        "last_seen": "2026-09-01",
+        "best_score": 5.4,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 0.4,
+            "n": 1,
+            "best": 0.4,
+            "worst": 0.4,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 1.21,
+            "n": 1,
+            "best": 1.21,
+            "worst": 1.21,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 2.3,
+            "n": 1,
+            "best": 2.3,
+            "worst": 2.3,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "DG",
+        "setups": 2,
+        "appearances": 3,
+        "last_seen": "2026-08-11",
+        "best_score": 5.3,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 1.36,
+            "n": 2,
+            "best": 2.32,
+            "worst": 0.4,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 9.04,
+            "n": 2,
+            "best": 14.33,
+            "worst": 3.76,
+            "in_band": 1
+          },
+          {
+            "horizon": 5,
+            "mean": 8.72,
+            "n": 2,
+            "best": 14.96,
+            "worst": 2.48,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "DHI",
+        "setups": 3,
+        "appearances": 4,
+        "last_seen": "2026-08-21",
+        "best_score": 6.3,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 2.27,
+            "n": 3,
+            "best": 5.73,
+            "worst": 0.16,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 2.24,
+            "n": 3,
+            "best": 5.65,
+            "worst": -0.17,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 2.96,
+            "n": 3,
+            "best": 5.45,
+            "worst": 0.63,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "DIS",
+        "setups": 2,
+        "appearances": 3,
+        "last_seen": "2026-08-13",
+        "best_score": 6.5,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 5.26,
+            "n": 2,
+            "best": 6.4,
+            "worst": 4.12,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 6.15,
+            "n": 2,
+            "best": 7.08,
+            "worst": 5.22,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 9.65,
+            "n": 2,
+            "best": 11.07,
+            "worst": 8.23,
+            "in_band": 2
+          }
+        ]
+      },
+      {
+        "ticker": "DUK",
+        "setups": 1,
+        "appearances": 2,
+        "last_seen": "2026-08-11",
+        "best_score": 4.6,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 7.6,
+            "n": 1,
+            "best": 7.6,
+            "worst": 7.6,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 5.48,
+            "n": 1,
+            "best": 5.48,
+            "worst": 5.48,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 5.8,
+            "n": 1,
+            "best": 5.8,
+            "worst": 5.8,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "ELV",
+        "setups": 1,
+        "appearances": 2,
+        "last_seen": "2026-08-26",
+        "best_score": 2.9,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -0.1,
+            "n": 1,
+            "best": -0.1,
+            "worst": -0.1,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 0.0,
+            "n": 1,
+            "best": 0.0,
+            "worst": 0.0,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 10.96,
+            "n": 1,
+            "best": 10.96,
+            "worst": 10.96,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "ENTG",
+        "setups": 2,
+        "appearances": 2,
+        "last_seen": "2026-08-31",
+        "best_score": 6.6,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -0.3,
+            "n": 2,
+            "best": -0.19,
+            "worst": -0.41,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 1.79,
+            "n": 1,
+            "best": 1.79,
+            "worst": 1.79,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -1.9,
+            "n": 1,
+            "best": -1.9,
+            "worst": -1.9,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "EOG",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-07-29",
+        "best_score": 5.5,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 0.39,
+            "n": 1,
+            "best": 0.39,
+            "worst": 0.39,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -0.94,
+            "n": 1,
+            "best": -0.94,
+            "worst": -0.94,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -1.7,
+            "n": 1,
+            "best": -1.7,
+            "worst": -1.7,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "F",
+        "setups": 2,
+        "appearances": 3,
+        "last_seen": "2026-08-07",
+        "best_score": 5.4,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -2.12,
+            "n": 2,
+            "best": -1.13,
+            "worst": -3.11,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -5.97,
+            "n": 2,
+            "best": -4.16,
+            "worst": -7.79,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -1.32,
+            "n": 2,
+            "best": 4.78,
+            "worst": -7.42,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "FCX",
+        "setups": 1,
+        "appearances": 2,
+        "last_seen": "2026-07-30",
+        "best_score": 3,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 0.07,
+            "n": 1,
+            "best": 0.07,
+            "worst": 0.07,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 0.17,
+            "n": 1,
+            "best": 0.17,
+            "worst": 0.17,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 6.86,
+            "n": 1,
+            "best": 6.86,
+            "worst": 6.86,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "FDX",
+        "setups": 2,
+        "appearances": 2,
+        "last_seen": "2026-09-01",
+        "best_score": 6.9,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 0.56,
+            "n": 1,
+            "best": 0.56,
+            "worst": 0.56,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -3.22,
+            "n": 1,
+            "best": -3.22,
+            "worst": -3.22,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 4.8,
+            "n": 1,
+            "best": 4.8,
+            "worst": 4.8,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "FSLR",
+        "setups": 2,
+        "appearances": 2,
+        "last_seen": "2026-09-01",
+        "best_score": 6.3,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 4.41,
+            "n": 1,
+            "best": 4.41,
+            "worst": 4.41,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 4.72,
+            "n": 1,
+            "best": 4.72,
+            "worst": 4.72,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 0.68,
+            "n": 1,
+            "best": 0.68,
+            "worst": 0.68,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "GD",
+        "setups": 3,
+        "appearances": 10,
+        "last_seen": "2026-09-01",
+        "best_score": 4.4,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 5.28,
+            "n": 2,
+            "best": 5.7,
+            "worst": 4.86,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 14.84,
+            "n": 2,
+            "best": 18.33,
+            "worst": 11.35,
+            "in_band": 2
+          },
+          {
+            "horizon": 5,
+            "mean": 25.72,
+            "n": 2,
+            "best": 34.21,
+            "worst": 17.23,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "GLW",
+        "setups": 2,
+        "appearances": 3,
+        "last_seen": "2026-09-01",
+        "best_score": 4,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -0.35,
+            "n": 2,
+            "best": 0.4,
+            "worst": -1.1,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 1.57,
+            "n": 2,
+            "best": 7.23,
+            "worst": -4.09,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -2.45,
+            "n": 1,
+            "best": -2.45,
+            "worst": -2.45,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "GOOGL",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-08-24",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 3.29,
+            "n": 1,
+            "best": 3.29,
+            "worst": 3.29,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 7.63,
+            "n": 1,
+            "best": 7.63,
+            "worst": 7.63,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 12.13,
+            "n": 1,
+            "best": 12.13,
+            "worst": 12.13,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "GS",
+        "setups": 2,
+        "appearances": 2,
+        "last_seen": "2026-08-21",
+        "best_score": 8,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -0.72,
+            "n": 2,
+            "best": 0.77,
+            "worst": -2.21,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 2.6,
+            "n": 2,
+            "best": 6.89,
+            "worst": -1.68,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 9.26,
+            "n": 2,
+            "best": 17.9,
+            "worst": 0.62,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "HLT",
+        "setups": 2,
+        "appearances": 2,
+        "last_seen": "2026-08-25",
+        "best_score": 4.3,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -0.68,
+            "n": 2,
+            "best": 0.03,
+            "worst": -1.4,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 2.75,
+            "n": 2,
+            "best": 2.93,
+            "worst": 2.58,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 3.05,
+            "n": 2,
+            "best": 4.26,
+            "worst": 1.85,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "HUBS",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-08-18",
+        "best_score": 2.1,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -4.76,
+            "n": 1,
+            "best": -4.76,
+            "worst": -4.76,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -9.37,
+            "n": 1,
+            "best": -9.37,
+            "worst": -9.37,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -12.9,
+            "n": 1,
+            "best": -12.9,
+            "worst": -12.9,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "IBM",
+        "setups": 2,
+        "appearances": 4,
+        "last_seen": "2026-09-01",
+        "best_score": 7.1,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 0.08,
+            "n": 1,
+            "best": 0.08,
+            "worst": 0.08,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 0.35,
+            "n": 1,
+            "best": 0.35,
+            "worst": 0.35,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 6.73,
+            "n": 1,
+            "best": 6.73,
+            "worst": 6.73,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "IDXX",
+        "setups": 1,
+        "appearances": 2,
+        "last_seen": "2026-08-11",
+        "best_score": 4,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 6.19,
+            "n": 1,
+            "best": 6.19,
+            "worst": 6.19,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -6.25,
+            "n": 1,
+            "best": -6.25,
+            "worst": -6.25,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -13.24,
+            "n": 1,
+            "best": -13.24,
+            "worst": -13.24,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "ISRG",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-08-03",
+        "best_score": 5,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -0.07,
+            "n": 1,
+            "best": -0.07,
+            "worst": -0.07,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -3.25,
+            "n": 1,
+            "best": -3.25,
+            "worst": -3.25,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -1.99,
+            "n": 1,
+            "best": -1.99,
+            "worst": -1.99,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "JNJ",
+        "setups": 1,
+        "appearances": 2,
+        "last_seen": "2026-08-24",
+        "best_score": 5.5,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 0.56,
+            "n": 1,
+            "best": 0.56,
+            "worst": 0.56,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 9.72,
+            "n": 1,
+            "best": 9.72,
+            "worst": 9.72,
+            "in_band": 1
+          },
+          {
+            "horizon": 5,
+            "mean": 19.15,
+            "n": 1,
+            "best": 19.15,
+            "worst": 19.15,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "KR",
+        "setups": 2,
+        "appearances": 4,
+        "last_seen": "2026-08-27",
+        "best_score": 8.3,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -0.98,
+            "n": 2,
+            "best": -0.3,
+            "worst": -1.66,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 4.03,
+            "n": 2,
+            "best": 5.72,
+            "worst": 2.33,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 10.9,
+            "n": 1,
+            "best": 10.9,
+            "worst": 10.9,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "LYB",
+        "setups": 2,
+        "appearances": 4,
+        "last_seen": "2026-08-28",
+        "best_score": 6.5,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 2.95,
+            "n": 2,
+            "best": 6.52,
+            "worst": -0.61,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 7.71,
+            "n": 2,
+            "best": 13.99,
+            "worst": 1.43,
+            "in_band": 1
+          },
+          {
+            "horizon": 5,
+            "mean": 7.82,
+            "n": 1,
+            "best": 7.82,
+            "worst": 7.82,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "MA",
+        "setups": 3,
+        "appearances": 7,
+        "last_seen": "2026-08-28",
+        "best_score": 9.1,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 6.21,
+            "n": 3,
+            "best": 9.03,
+            "worst": 3.99,
+            "in_band": 1
+          },
+          {
+            "horizon": 3,
+            "mean": 7.9,
+            "n": 3,
+            "best": 25.85,
+            "worst": -2.27,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 11.87,
+            "n": 2,
+            "best": 25.52,
+            "worst": -1.79,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "MCHP",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-08-21",
+        "best_score": 8,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 0.12,
+            "n": 1,
+            "best": 0.12,
+            "worst": 0.12,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 4.72,
+            "n": 1,
+            "best": 4.72,
+            "worst": 4.72,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 11.06,
+            "n": 1,
+            "best": 11.06,
+            "worst": 11.06,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "MCO",
+        "setups": 3,
+        "appearances": 5,
+        "last_seen": "2026-08-31",
+        "best_score": 2.9,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 1.6,
+            "n": 3,
+            "best": 6.64,
+            "worst": -1.98,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 5.47,
+            "n": 2,
+            "best": 11.67,
+            "worst": -0.73,
+            "in_band": 1
+          },
+          {
+            "horizon": 5,
+            "mean": 6.12,
+            "n": 2,
+            "best": 12.17,
+            "worst": 0.07,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "MGM",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-07-30",
+        "best_score": 6.3,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 0.63,
+            "n": 1,
+            "best": 0.63,
+            "worst": 0.63,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 0.15,
+            "n": 1,
+            "best": 0.15,
+            "worst": 0.15,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 7.94,
+            "n": 1,
+            "best": 7.94,
+            "worst": 7.94,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "MPC",
+        "setups": 2,
+        "appearances": 4,
+        "last_seen": "2026-08-26",
+        "best_score": 7.1,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 5.64,
+            "n": 2,
+            "best": 6.39,
+            "worst": 4.89,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 6.66,
+            "n": 2,
+            "best": 9.22,
+            "worst": 4.1,
+            "in_band": 1
+          },
+          {
+            "horizon": 5,
+            "mean": 7.63,
+            "n": 2,
+            "best": 15.42,
+            "worst": -0.16,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "MSFT",
+        "setups": 1,
+        "appearances": 2,
+        "last_seen": "2026-08-03",
+        "best_score": 4.9,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -0.3,
+            "n": 1,
+            "best": -0.3,
+            "worst": -0.3,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 5.45,
+            "n": 1,
+            "best": 5.45,
+            "worst": 5.45,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 5.01,
+            "n": 1,
+            "best": 5.01,
+            "worst": 5.01,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "O",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-07-30",
+        "best_score": 6.1,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 1.84,
+            "n": 1,
+            "best": 1.84,
+            "worst": 1.84,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 5.02,
+            "n": 1,
+            "best": 5.02,
+            "worst": 5.02,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 10.3,
+            "n": 1,
+            "best": 10.3,
+            "worst": 10.3,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "OKE",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-08-27",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 1.0,
+            "n": 1,
+            "best": 1.0,
+            "worst": 1.0,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -0.84,
+            "n": 1,
+            "best": -0.84,
+            "worst": -0.84,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "PEP",
+        "setups": 3,
+        "appearances": 6,
+        "last_seen": "2026-09-01",
+        "best_score": 5.6,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 4.19,
+            "n": 3,
+            "best": 6.63,
+            "worst": -0.68,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 7.44,
+            "n": 3,
+            "best": 15.2,
+            "worst": -0.37,
+            "in_band": 1
+          },
+          {
+            "horizon": 5,
+            "mean": 11.0,
+            "n": 3,
+            "best": 18.71,
+            "worst": 0.65,
+            "in_band": 2
+          }
+        ]
+      },
+      {
+        "ticker": "PFE",
+        "setups": 2,
+        "appearances": 5,
+        "last_seen": "2026-08-21",
+        "best_score": 7.8,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 3.12,
+            "n": 2,
+            "best": 5.72,
+            "worst": 0.52,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 10.7,
+            "n": 2,
+            "best": 19.41,
+            "worst": 1.99,
+            "in_band": 1
+          },
+          {
+            "horizon": 5,
+            "mean": 9.17,
+            "n": 2,
+            "best": 19.61,
+            "worst": -1.26,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "PH",
+        "setups": 1,
+        "appearances": 2,
+        "last_seen": "2026-08-07",
+        "best_score": 2.5,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 5.62,
+            "n": 1,
+            "best": 5.62,
+            "worst": 5.62,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 1.16,
+            "n": 1,
+            "best": 1.16,
+            "worst": 1.16,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -2.38,
+            "n": 1,
+            "best": -2.38,
+            "worst": -2.38,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "PLD",
+        "setups": 1,
+        "appearances": 2,
+        "last_seen": "2026-08-07",
+        "best_score": 6.9,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 8.15,
+            "n": 1,
+            "best": 8.15,
+            "worst": 8.15,
+            "in_band": 1
+          },
+          {
+            "horizon": 3,
+            "mean": 14.48,
+            "n": 1,
+            "best": 14.48,
+            "worst": 14.48,
+            "in_band": 1
+          },
+          {
+            "horizon": 5,
+            "mean": 15.81,
+            "n": 1,
+            "best": 15.81,
+            "worst": 15.81,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "PYPL",
+        "setups": 2,
+        "appearances": 3,
+        "last_seen": "2026-08-28",
+        "best_score": 6.6,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 1.5,
+            "n": 2,
+            "best": 4.95,
+            "worst": -1.95,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 2.18,
+            "n": 2,
+            "best": 4.46,
+            "worst": -0.1,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -1.62,
+            "n": 1,
+            "best": -1.62,
+            "worst": -1.62,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "QCOM",
+        "setups": 2,
+        "appearances": 3,
+        "last_seen": "2026-08-27",
+        "best_score": 5.4,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 3.19,
+            "n": 2,
+            "best": 7.59,
+            "worst": -1.22,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 3.74,
+            "n": 2,
+            "best": 7.74,
+            "worst": -0.26,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -0.16,
+            "n": 1,
+            "best": -0.16,
+            "worst": -0.16,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "RTX",
+        "setups": 1,
+        "appearances": 2,
+        "last_seen": "2026-08-26",
+        "best_score": 8,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -0.3,
+            "n": 1,
+            "best": -0.3,
+            "worst": -0.3,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 7.25,
+            "n": 1,
+            "best": 7.25,
+            "worst": 7.25,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 7.09,
+            "n": 1,
+            "best": 7.09,
+            "worst": 7.09,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "SBUX",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-07-22",
+        "best_score": 6.5,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -2.92,
+            "n": 1,
+            "best": -2.92,
+            "worst": -2.92,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -1.89,
+            "n": 1,
+            "best": -1.89,
+            "worst": -1.89,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -1.81,
+            "n": 1,
+            "best": -1.81,
+            "worst": -1.81,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "SHW",
+        "setups": 2,
+        "appearances": 2,
+        "last_seen": "2026-08-14",
+        "best_score": 6.5,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": -1.22,
+            "n": 2,
+            "best": -0.01,
+            "worst": -2.43,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -3.62,
+            "n": 2,
+            "best": -0.96,
+            "worst": -6.29,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -2.54,
+            "n": 2,
+            "best": 4.17,
+            "worst": -9.24,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "SLB",
+        "setups": 2,
+        "appearances": 3,
+        "last_seen": "2026-08-17",
+        "best_score": 4.4,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 3.58,
+            "n": 2,
+            "best": 6.43,
+            "worst": 0.74,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 5.18,
+            "n": 2,
+            "best": 9.44,
+            "worst": 0.93,
+            "in_band": 1
+          },
+          {
+            "horizon": 5,
+            "mean": 6.84,
+            "n": 2,
+            "best": 11.94,
+            "worst": 1.74,
+            "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "STZ",
+        "setups": 2,
+        "appearances": 3,
+        "last_seen": "2026-08-13",
+        "best_score": 5.8,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 0.24,
+            "n": 2,
+            "best": 6.19,
+            "worst": -5.71,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -2.8,
+            "n": 2,
+            "best": 6.29,
+            "worst": -11.88,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -5.47,
+            "n": 2,
+            "best": 7.15,
+            "worst": -18.09,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "TSLA",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-08-03",
+        "best_score": 7,
         "outcomes": [
           {
             "horizon": 1,
@@ -2012,208 +4190,208 @@
           },
           {
             "horizon": 3,
-            "mean": 1.63,
+            "mean": -2.0,
             "n": 1,
-            "best": 1.63,
-            "worst": 1.63,
+            "best": -2.0,
+            "worst": -2.0,
             "in_band": 0
           },
           {
             "horizon": 5,
-            "mean": -1.82,
+            "mean": 2.58,
             "n": 1,
-            "best": -1.82,
-            "worst": -1.82,
+            "best": 2.58,
+            "worst": 2.58,
             "in_band": 0
           }
         ]
       },
       {
-        "ticker": "ADBE",
+        "ticker": "UBER",
         "setups": 1,
         "appearances": 1,
-        "last_seen": "2026-08-17",
+        "last_seen": "2026-08-05",
         "best_score": null,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": -4.31,
+            "mean": 1.28,
             "n": 1,
-            "best": -4.31,
-            "worst": -4.31,
+            "best": 1.28,
+            "worst": 1.28,
             "in_band": 0
           },
           {
             "horizon": 3,
-            "mean": -10.23,
+            "mean": 2.98,
             "n": 1,
-            "best": -10.23,
-            "worst": -10.23,
+            "best": 2.98,
+            "worst": 2.98,
             "in_band": 0
           },
           {
             "horizon": 5,
-            "mean": -15.66,
+            "mean": -0.44,
             "n": 1,
-            "best": -15.66,
-            "worst": -15.66,
+            "best": -0.44,
+            "worst": -0.44,
             "in_band": 0
           }
         ]
       },
       {
-        "ticker": "AIG",
+        "ticker": "UNH",
+        "setups": 3,
+        "appearances": 7,
+        "last_seen": "2026-08-31",
+        "best_score": 3.8,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 3.2,
+            "n": 3,
+            "best": 8.03,
+            "worst": -4.39,
+            "in_band": 1
+          },
+          {
+            "horizon": 3,
+            "mean": 16.22,
+            "n": 2,
+            "best": 23.38,
+            "worst": 9.06,
+            "in_band": 1
+          },
+          {
+            "horizon": 5,
+            "mean": 21.07,
+            "n": 2,
+            "best": 34.2,
+            "worst": 7.93,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "USB",
+        "setups": 1,
+        "appearances": 2,
+        "last_seen": "2026-08-25",
+        "best_score": 4.9,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 6.0,
+            "n": 1,
+            "best": 6.0,
+            "worst": 6.0,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": 5.44,
+            "n": 1,
+            "best": 5.44,
+            "worst": 5.44,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": 3.41,
+            "n": 1,
+            "best": 3.41,
+            "worst": 3.41,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "VZ",
         "setups": 2,
         "appearances": 3,
-        "last_seen": "2026-08-12",
-        "best_score": 7,
+        "last_seen": "2026-08-21",
+        "best_score": 5.2,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 3.6,
+            "mean": 3.29,
             "n": 2,
-            "best": 5.41,
-            "worst": 1.78,
+            "best": 5.73,
+            "worst": 0.84,
             "in_band": 0
           },
           {
             "horizon": 3,
-            "mean": 5.83,
+            "mean": 1.96,
             "n": 2,
-            "best": 6.9,
-            "worst": 4.77,
+            "best": 7.86,
+            "worst": -3.94,
             "in_band": 0
           },
           {
             "horizon": 5,
-            "mean": 9.41,
+            "mean": -1.17,
             "n": 2,
-            "best": 14.01,
-            "worst": 4.82,
-            "in_band": 1
+            "best": 6.02,
+            "worst": -8.37,
+            "in_band": 0
           }
         ]
       },
       {
-        "ticker": "ALLY",
+        "ticker": "WBD",
         "setups": 2,
-        "appearances": 2,
-        "last_seen": "2026-08-06",
-        "best_score": 2.2,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -0.99,
-            "n": 2,
-            "best": -0.83,
-            "worst": -1.16,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 1.73,
-            "n": 2,
-            "best": 2.96,
-            "worst": 0.51,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 3.38,
-            "n": 2,
-            "best": 6.96,
-            "worst": -0.21,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "APO",
-        "setups": 3,
         "appearances": 3,
         "last_seen": "2026-08-25",
-        "best_score": 6.8,
+        "best_score": 8.1,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 0.32,
-            "n": 3,
-            "best": 0.97,
-            "worst": -0.17,
+            "mean": 2.85,
+            "n": 2,
+            "best": 6.94,
+            "worst": -1.25,
             "in_band": 0
           },
           {
             "horizon": 3,
-            "mean": 1.02,
-            "n": 3,
-            "best": 2.65,
-            "worst": -0.5,
-            "in_band": 0
+            "mean": 2.89,
+            "n": 2,
+            "best": 9.57,
+            "worst": -3.8,
+            "in_band": 1
           },
           {
             "horizon": 5,
-            "mean": 1.96,
-            "n": 3,
-            "best": 6.88,
-            "worst": -0.86,
-            "in_band": 0
+            "mean": 4.85,
+            "n": 2,
+            "best": 12.99,
+            "worst": -3.3,
+            "in_band": 1
           }
         ]
       },
       {
-        "ticker": "APP",
-        "setups": 2,
-        "appearances": 2,
-        "last_seen": "2026-09-01",
-        "best_score": 6.3,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 4.37,
-            "n": 1,
-            "best": 4.37,
-            "worst": 4.37,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 1.97,
-            "n": 1,
-            "best": 1.97,
-            "worst": 1.97,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 1.97,
-            "n": 1,
-            "best": 1.97,
-            "worst": 1.97,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "AVGO",
+        "ticker": "WDAY",
         "setups": 1,
         "appearances": 1,
-        "last_seen": "2026-08-31",
-        "best_score": 6.6,
+        "last_seen": "2026-08-26",
+        "best_score": 3.2,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 3.36,
+            "mean": -1.6,
             "n": 1,
-            "best": 3.36,
-            "worst": 3.36,
+            "best": -1.6,
+            "worst": -1.6,
             "in_band": 0
           },
           {
             "horizon": 3,
-            "mean": null,
-            "n": 0,
-            "best": null,
-            "worst": null,
+            "mean": -2.23,
+            "n": 1,
+            "best": -2.23,
+            "worst": -2.23,
             "in_band": 0
           },
           {
@@ -2227,150 +4405,18 @@
         ]
       },
       {
-        "ticker": "AZO",
-        "setups": 2,
-        "appearances": 2,
-        "last_seen": "2026-08-27",
-        "best_score": 4.7,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -1.78,
-            "n": 2,
-            "best": -1.35,
-            "worst": -2.2,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": -3.4,
-            "n": 2,
-            "best": -1.72,
-            "worst": -5.08,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 1.03,
-            "n": 1,
-            "best": 1.03,
-            "worst": 1.03,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "BA",
-        "setups": 2,
-        "appearances": 9,
-        "last_seen": "2026-08-31",
-        "best_score": null,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 3.09,
-            "n": 2,
-            "best": 6.4,
-            "worst": -0.22,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 5.63,
-            "n": 2,
-            "best": 6.07,
-            "worst": 5.19,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 15.08,
-            "n": 2,
-            "best": 24.36,
-            "worst": 5.81,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "BAC",
-        "setups": 2,
-        "appearances": 4,
-        "last_seen": "2026-08-05",
-        "best_score": 6,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 3.15,
-            "n": 2,
-            "best": 6.03,
-            "worst": 0.26,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 9.2,
-            "n": 2,
-            "best": 18.38,
-            "worst": 0.02,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 10.14,
-            "n": 2,
-            "best": 20.75,
-            "worst": -0.47,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "BLK",
+        "ticker": "WM",
         "setups": 1,
-        "appearances": 1,
-        "last_seen": "2026-08-20",
-        "best_score": 7.3,
+        "appearances": 3,
+        "last_seen": "2026-08-19",
+        "best_score": 4,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 3.86,
+            "mean": 0.35,
             "n": 1,
-            "best": 3.86,
-            "worst": 3.86,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 9.05,
-            "n": 1,
-            "best": 9.05,
-            "worst": 9.05,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 11.19,
-            "n": 1,
-            "best": 11.19,
-            "worst": 11.19,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "CCL",
-        "setups": 1,
-        "appearances": 2,
-        "last_seen": "2026-07-28",
-        "best_score": null,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -0.24,
-            "n": 1,
-            "best": -0.24,
-            "worst": -0.24,
+            "best": 0.35,
+            "worst": 0.35,
             "in_band": 0
           },
           {
@@ -2383,1588 +4429,136 @@
           },
           {
             "horizon": 5,
-            "mean": 4.14,
+            "mean": 5.38,
             "n": 1,
-            "best": 4.14,
-            "worst": 4.14,
+            "best": 5.38,
+            "worst": 5.38,
             "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "CL",
-        "setups": 1,
-        "appearances": 1,
-        "last_seen": "2026-07-22",
-        "best_score": 5.3,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -0.02,
-            "n": 1,
-            "best": -0.02,
-            "worst": -0.02,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 4.5,
-            "n": 1,
-            "best": 4.5,
-            "worst": 4.5,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 4.45,
-            "n": 1,
-            "best": 4.45,
-            "worst": 4.45,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "CSCO",
-        "setups": 1,
-        "appearances": 4,
-        "last_seen": "2026-08-12",
-        "best_score": 6.8,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 0.48,
-            "n": 1,
-            "best": 0.48,
-            "worst": 0.48,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 1.48,
-            "n": 1,
-            "best": 1.48,
-            "worst": 1.48,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 4.9,
-            "n": 1,
-            "best": 4.9,
-            "worst": 4.9,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "DDOG",
-        "setups": 2,
-        "appearances": 2,
-        "last_seen": "2026-08-11",
-        "best_score": 5.4,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 0.23,
-            "n": 2,
-            "best": 2.17,
-            "worst": -1.7,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": -1.48,
-            "n": 2,
-            "best": 1.95,
-            "worst": -4.91,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": -0.88,
-            "n": 2,
-            "best": 2.06,
-            "worst": -3.81,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "DE",
-        "setups": 2,
-        "appearances": 7,
-        "last_seen": "2026-08-28",
-        "best_score": 5.5,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 6.04,
-            "n": 2,
-            "best": 6.99,
-            "worst": 5.09,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 12.66,
-            "n": 2,
-            "best": 14.68,
-            "worst": 10.64,
-            "in_band": 2
-          },
-          {
-            "horizon": 5,
-            "mean": 19.18,
-            "n": 2,
-            "best": 21.24,
-            "worst": 17.13,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "DECK",
-        "setups": 3,
-        "appearances": 5,
-        "last_seen": "2026-08-26",
-        "best_score": 6.7,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 2.43,
-            "n": 3,
-            "best": 5.6,
-            "worst": 0.14,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 5.43,
-            "n": 3,
-            "best": 10.22,
-            "worst": 0.09,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 4.19,
-            "n": 3,
-            "best": 8.12,
-            "worst": 0.63,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "DHI",
-        "setups": 1,
-        "appearances": 1,
-        "last_seen": "2026-07-30",
-        "best_score": 2.6,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -2.89,
-            "n": 1,
-            "best": -2.89,
-            "worst": -2.89,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": -5.6,
-            "n": 1,
-            "best": -5.6,
-            "worst": -5.6,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": -5.1,
-            "n": 1,
-            "best": -5.1,
-            "worst": -5.1,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "DUK",
-        "setups": 1,
-        "appearances": 3,
-        "last_seen": "2026-08-03",
-        "best_score": null,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 6.72,
-            "n": 1,
-            "best": 6.72,
-            "worst": 6.72,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 14.04,
-            "n": 1,
-            "best": 14.04,
-            "worst": 14.04,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 11.79,
-            "n": 1,
-            "best": 11.79,
-            "worst": 11.79,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "ELV",
-        "setups": 2,
-        "appearances": 2,
-        "last_seen": "2026-08-12",
-        "best_score": 7,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 0.43,
-            "n": 2,
-            "best": 0.74,
-            "worst": 0.12,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 3.96,
-            "n": 2,
-            "best": 5.06,
-            "worst": 2.86,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 3.32,
-            "n": 2,
-            "best": 4.09,
-            "worst": 2.55,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "ENTG",
-        "setups": 2,
-        "appearances": 4,
-        "last_seen": "2026-08-26",
-        "best_score": 7.4,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 6.88,
-            "n": 2,
-            "best": 7.75,
-            "worst": 6.0,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 10.66,
-            "n": 2,
-            "best": 12.03,
-            "worst": 9.3,
-            "in_band": 2
-          },
-          {
-            "horizon": 5,
-            "mean": 14.71,
-            "n": 2,
-            "best": 16.6,
-            "worst": 12.82,
-            "in_band": 2
-          }
-        ]
-      },
-      {
-        "ticker": "EOG",
-        "setups": 3,
-        "appearances": 4,
-        "last_seen": "2026-09-01",
-        "best_score": 4.5,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 3.92,
-            "n": 2,
-            "best": 5.8,
-            "worst": 2.05,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 4.92,
-            "n": 2,
-            "best": 7.03,
-            "worst": 2.8,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 2.58,
-            "n": 2,
-            "best": 9.82,
-            "worst": -4.65,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "F",
-        "setups": 2,
-        "appearances": 3,
-        "last_seen": "2026-08-26",
-        "best_score": 7.4,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 0.01,
-            "n": 2,
-            "best": 0.26,
-            "worst": -0.24,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 3.06,
-            "n": 2,
-            "best": 7.2,
-            "worst": -1.08,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 4.01,
-            "n": 2,
-            "best": 6.51,
-            "worst": 1.52,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "FCX",
-        "setups": 3,
-        "appearances": 3,
-        "last_seen": "2026-08-27",
-        "best_score": 7.4,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 0.81,
-            "n": 3,
-            "best": 4.03,
-            "worst": -1.8,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": -1.05,
-            "n": 3,
-            "best": 6.09,
-            "worst": -8.12,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 4.54,
-            "n": 2,
-            "best": 8.08,
-            "worst": 1.0,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "FDX",
-        "setups": 2,
-        "appearances": 5,
-        "last_seen": "2026-08-27",
-        "best_score": 5.9,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 6.66,
-            "n": 2,
-            "best": 6.74,
-            "worst": 6.58,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 10.63,
-            "n": 2,
-            "best": 14.7,
-            "worst": 6.56,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 16.5,
-            "n": 1,
-            "best": 16.5,
-            "worst": 16.5,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "FSLR",
-        "setups": 2,
-        "appearances": 4,
-        "last_seen": "2026-08-31",
-        "best_score": 5.7,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 5.36,
-            "n": 2,
-            "best": 5.93,
-            "worst": 4.79,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 10.74,
-            "n": 1,
-            "best": 10.74,
-            "worst": 10.74,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 9.34,
-            "n": 1,
-            "best": 9.34,
-            "worst": 9.34,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "GD",
-        "setups": 1,
-        "appearances": 2,
-        "last_seen": "2026-07-24",
-        "best_score": 5.6,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 6.03,
-            "n": 1,
-            "best": 6.03,
-            "worst": 6.03,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 1.94,
-            "n": 1,
-            "best": 1.94,
-            "worst": 1.94,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": -0.5,
-            "n": 1,
-            "best": -0.5,
-            "worst": -0.5,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "GS",
-        "setups": 2,
-        "appearances": 2,
-        "last_seen": "2026-08-21",
-        "best_score": 2.8,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 0.58,
-            "n": 2,
-            "best": 0.8,
-            "worst": 0.37,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 0.88,
-            "n": 2,
-            "best": 3.99,
-            "worst": -2.23,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 3.13,
-            "n": 2,
-            "best": 9.29,
-            "worst": -3.02,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "HPE",
-        "setups": 1,
-        "appearances": 3,
-        "last_seen": "2026-08-19",
-        "best_score": null,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 5.56,
-            "n": 1,
-            "best": 5.56,
-            "worst": 5.56,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 7.24,
-            "n": 1,
-            "best": 7.24,
-            "worst": 7.24,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 0.23,
-            "n": 1,
-            "best": 0.23,
-            "worst": 0.23,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "HUBS",
-        "setups": 2,
-        "appearances": 3,
-        "last_seen": "2026-08-25",
-        "best_score": 4.4,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 3.9,
-            "n": 2,
-            "best": 8.02,
-            "worst": -0.22,
-            "in_band": 1
-          },
-          {
-            "horizon": 3,
-            "mean": 5.41,
-            "n": 2,
-            "best": 9.84,
-            "worst": 0.97,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 3.75,
-            "n": 2,
-            "best": 6.25,
-            "worst": 1.24,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "IBM",
-        "setups": 2,
-        "appearances": 2,
-        "last_seen": "2026-08-12",
-        "best_score": null,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 0.24,
-            "n": 2,
-            "best": 1.02,
-            "worst": -0.54,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 2.08,
-            "n": 2,
-            "best": 4.79,
-            "worst": -0.64,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 6.6,
-            "n": 2,
-            "best": 6.91,
-            "worst": 6.28,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "ISRG",
-        "setups": 1,
-        "appearances": 1,
-        "last_seen": "2026-08-13",
-        "best_score": 5.1,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -3.51,
-            "n": 1,
-            "best": -3.51,
-            "worst": -3.51,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": -7.55,
-            "n": 1,
-            "best": -7.55,
-            "worst": -7.55,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": -8.72,
-            "n": 1,
-            "best": -8.72,
-            "worst": -8.72,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "LYB",
-        "setups": 2,
-        "appearances": 3,
-        "last_seen": "2026-09-01",
-        "best_score": 5.2,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 2.45,
-            "n": 2,
-            "best": 4.44,
-            "worst": 0.45,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 7.55,
-            "n": 1,
-            "best": 7.55,
-            "worst": 7.55,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 13.48,
-            "n": 1,
-            "best": 13.48,
-            "worst": 13.48,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "MA",
-        "setups": 2,
-        "appearances": 5,
-        "last_seen": "2026-09-01",
-        "best_score": 6.1,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 3.01,
-            "n": 2,
-            "best": 6.29,
-            "worst": -0.27,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 11.69,
-            "n": 2,
-            "best": 17.01,
-            "worst": 6.36,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 21.4,
-            "n": 1,
-            "best": 21.4,
-            "worst": 21.4,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "MCHP",
-        "setups": 1,
-        "appearances": 1,
-        "last_seen": "2026-08-21",
-        "best_score": 8.5,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -0.71,
-            "n": 1,
-            "best": -0.71,
-            "worst": -0.71,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": -4.77,
-            "n": 1,
-            "best": -4.77,
-            "worst": -4.77,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": -4.94,
-            "n": 1,
-            "best": -4.94,
-            "worst": -4.94,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "MCO",
-        "setups": 1,
-        "appearances": 2,
-        "last_seen": "2026-08-19",
-        "best_score": 4.2,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 0.01,
-            "n": 1,
-            "best": 0.01,
-            "worst": 0.01,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": -1.07,
-            "n": 1,
-            "best": -1.07,
-            "worst": -1.07,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": -9.23,
-            "n": 1,
-            "best": -9.23,
-            "worst": -9.23,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "MSFT",
-        "setups": 2,
-        "appearances": 4,
-        "last_seen": "2026-08-13",
-        "best_score": 5,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 2.31,
-            "n": 2,
-            "best": 5.29,
-            "worst": -0.66,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 2.52,
-            "n": 2,
-            "best": 2.63,
-            "worst": 2.41,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 4.59,
-            "n": 2,
-            "best": 13.11,
-            "worst": -3.92,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "ODFL",
-        "setups": 1,
-        "appearances": 2,
-        "last_seen": "2026-08-12",
-        "best_score": 8,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 9.05,
-            "n": 1,
-            "best": 9.05,
-            "worst": 9.05,
-            "in_band": 1
-          },
-          {
-            "horizon": 3,
-            "mean": 12.09,
-            "n": 1,
-            "best": 12.09,
-            "worst": 12.09,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 18.45,
-            "n": 1,
-            "best": 18.45,
-            "worst": 18.45,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "PEP",
-        "setups": 2,
-        "appearances": 3,
-        "last_seen": "2026-08-25",
-        "best_score": 1.2,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 1.76,
-            "n": 2,
-            "best": 2.24,
-            "worst": 1.27,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": -1.61,
-            "n": 2,
-            "best": 1.48,
-            "worst": -4.69,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 1.0,
-            "n": 2,
-            "best": 2.18,
-            "worst": -0.19,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "PFE",
-        "setups": 1,
-        "appearances": 1,
-        "last_seen": "2026-07-31",
-        "best_score": null,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -0.11,
-            "n": 1,
-            "best": -0.11,
-            "worst": -0.11,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": -0.27,
-            "n": 1,
-            "best": -0.27,
-            "worst": -0.27,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 5.17,
-            "n": 1,
-            "best": 5.17,
-            "worst": 5.17,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "PH",
-        "setups": 1,
-        "appearances": 1,
-        "last_seen": "2026-08-10",
-        "best_score": 5.5,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -2.41,
-            "n": 1,
-            "best": -2.41,
-            "worst": -2.41,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": -3.23,
-            "n": 1,
-            "best": -3.23,
-            "worst": -3.23,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": -2.25,
-            "n": 1,
-            "best": -2.25,
-            "worst": -2.25,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "PLD",
-        "setups": 1,
-        "appearances": 1,
-        "last_seen": "2026-07-23",
-        "best_score": 2.1,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -1.1,
-            "n": 1,
-            "best": -1.1,
-            "worst": -1.1,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": -6.67,
-            "n": 1,
-            "best": -6.67,
-            "worst": -6.67,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": -8.22,
-            "n": 1,
-            "best": -8.22,
-            "worst": -8.22,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "QCOM",
-        "setups": 2,
-        "appearances": 3,
-        "last_seen": "2026-08-10",
-        "best_score": null,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 0.8,
-            "n": 2,
-            "best": 2.26,
-            "worst": -0.65,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 2.33,
-            "n": 2,
-            "best": 3.43,
-            "worst": 1.24,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 6.57,
-            "n": 2,
-            "best": 14.11,
-            "worst": -0.96,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "RTX",
-        "setups": 2,
-        "appearances": 4,
-        "last_seen": "2026-08-17",
-        "best_score": 1.7,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 0.55,
-            "n": 2,
-            "best": 1.21,
-            "worst": -0.1,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 1.41,
-            "n": 2,
-            "best": 1.86,
-            "worst": 0.95,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 9.22,
-            "n": 2,
-            "best": 16.05,
-            "worst": 2.4,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "SHW",
-        "setups": 1,
-        "appearances": 1,
-        "last_seen": "2026-09-01",
-        "best_score": 3.5,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": null,
-            "n": 0,
-            "best": null,
-            "worst": null,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": null,
-            "n": 0,
-            "best": null,
-            "worst": null,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": null,
-            "n": 0,
-            "best": null,
-            "worst": null,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "SLB",
-        "setups": 1,
-        "appearances": 4,
-        "last_seen": "2026-08-21",
-        "best_score": null,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 5.53,
-            "n": 1,
-            "best": 5.53,
-            "worst": 5.53,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 11.54,
-            "n": 1,
-            "best": 11.54,
-            "worst": 11.54,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 11.12,
-            "n": 1,
-            "best": 11.12,
-            "worst": 11.12,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "SNPS",
-        "setups": 2,
-        "appearances": 3,
-        "last_seen": "2026-09-01",
-        "best_score": 7.3,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -1.68,
-            "n": 2,
-            "best": 0.39,
-            "worst": -3.74,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": -6.43,
-            "n": 1,
-            "best": -6.43,
-            "worst": -6.43,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": -7.16,
-            "n": 1,
-            "best": -7.16,
-            "worst": -7.16,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "STZ",
-        "setups": 2,
-        "appearances": 6,
-        "last_seen": "2026-08-25",
-        "best_score": 6.2,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -0.15,
-            "n": 2,
-            "best": 0.32,
-            "worst": -0.62,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 5.76,
-            "n": 2,
-            "best": 11.52,
-            "worst": -0.0,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 12.5,
-            "n": 2,
-            "best": 17.92,
-            "worst": 7.07,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "TSLA",
-        "setups": 1,
-        "appearances": 1,
-        "last_seen": "2026-08-12",
-        "best_score": 8,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 1.53,
-            "n": 1,
-            "best": 1.53,
-            "worst": 1.53,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 9.93,
-            "n": 1,
-            "best": 9.93,
-            "worst": 9.93,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 14.08,
-            "n": 1,
-            "best": 14.08,
-            "worst": 14.08,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "UBER",
-        "setups": 1,
-        "appearances": 1,
-        "last_seen": "2026-08-13",
-        "best_score": null,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 2.16,
-            "n": 1,
-            "best": 2.16,
-            "worst": 2.16,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 6.41,
-            "n": 1,
-            "best": 6.41,
-            "worst": 6.41,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 11.4,
-            "n": 1,
-            "best": 11.4,
-            "worst": 11.4,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "UNH",
-        "setups": 2,
-        "appearances": 3,
-        "last_seen": "2026-08-28",
-        "best_score": null,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -0.36,
-            "n": 2,
-            "best": -0.35,
-            "worst": -0.37,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 5.08,
-            "n": 1,
-            "best": 5.08,
-            "worst": 5.08,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 15.14,
-            "n": 1,
-            "best": 15.14,
-            "worst": 15.14,
-            "in_band": 1
-          }
-        ]
-      },
-      {
-        "ticker": "USB",
-        "setups": 2,
-        "appearances": 2,
-        "last_seen": "2026-08-20",
-        "best_score": 6.3,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": -0.56,
-            "n": 2,
-            "best": 0.23,
-            "worst": -1.35,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 1.28,
-            "n": 2,
-            "best": 2.72,
-            "worst": -0.16,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": -1.14,
-            "n": 2,
-            "best": 4.02,
-            "worst": -6.3,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "VZ",
-        "setups": 1,
-        "appearances": 1,
-        "last_seen": "2026-08-27",
-        "best_score": 6.7,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 0.69,
-            "n": 1,
-            "best": 0.69,
-            "worst": 0.69,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 6.13,
-            "n": 1,
-            "best": 6.13,
-            "worst": 6.13,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": null,
-            "n": 0,
-            "best": null,
-            "worst": null,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "WBD",
-        "setups": 2,
-        "appearances": 5,
-        "last_seen": "2026-08-11",
-        "best_score": 6.5,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 5.0,
-            "n": 2,
-            "best": 8.74,
-            "worst": 1.26,
-            "in_band": 1
-          },
-          {
-            "horizon": 3,
-            "mean": 10.83,
-            "n": 2,
-            "best": 18.18,
-            "worst": 3.48,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 14.48,
-            "n": 2,
-            "best": 25.99,
-            "worst": 2.97,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "WDAY",
-        "setups": 1,
-        "appearances": 2,
-        "last_seen": "2026-08-11",
-        "best_score": null,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 7.09,
-            "n": 1,
-            "best": 7.09,
-            "worst": 7.09,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 12.75,
-            "n": 1,
-            "best": 12.75,
-            "worst": 12.75,
-            "in_band": 1
-          },
-          {
-            "horizon": 5,
-            "mean": 21.88,
-            "n": 1,
-            "best": 21.88,
-            "worst": 21.88,
-            "in_band": 0
-          }
-        ]
-      },
-      {
-        "ticker": "WM",
-        "setups": 3,
-        "appearances": 3,
-        "last_seen": "2026-08-28",
-        "best_score": 7.7,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": 2.51,
-            "n": 3,
-            "best": 3.63,
-            "worst": 0.87,
-            "in_band": 0
-          },
-          {
-            "horizon": 3,
-            "mean": 5.26,
-            "n": 2,
-            "best": 7.22,
-            "worst": 3.3,
-            "in_band": 0
-          },
-          {
-            "horizon": 5,
-            "mean": 6.0,
-            "n": 2,
-            "best": 8.01,
-            "worst": 4.0,
-            "in_band": 1
           }
         ]
       },
       {
         "ticker": "WMT",
-        "setups": 2,
-        "appearances": 3,
-        "last_seen": "2026-08-20",
-        "best_score": 3.5,
+        "setups": 1,
+        "appearances": 2,
+        "last_seen": "2026-08-28",
+        "best_score": null,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 3.96,
-            "n": 2,
-            "best": 6.58,
-            "worst": 1.33,
+            "mean": 0.4,
+            "n": 1,
+            "best": 0.4,
+            "worst": 0.4,
             "in_band": 0
           },
           {
             "horizon": 3,
-            "mean": 6.99,
-            "n": 2,
-            "best": 8.75,
-            "worst": 5.23,
+            "mean": 8.48,
+            "n": 1,
+            "best": 8.48,
+            "worst": 8.48,
             "in_band": 1
           },
           {
             "horizon": 5,
-            "mean": 9.43,
-            "n": 2,
-            "best": 11.92,
-            "worst": 6.93,
-            "in_band": 1
+            "mean": 5.19,
+            "n": 1,
+            "best": 5.19,
+            "worst": 5.19,
+            "in_band": 0
           }
         ]
       },
       {
         "ticker": "XOM",
-        "setups": 1,
+        "setups": 2,
         "appearances": 2,
-        "last_seen": "2026-07-29",
-        "best_score": 8.7,
+        "last_seen": "2026-08-28",
+        "best_score": 6.4,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 3.41,
-            "n": 1,
-            "best": 3.41,
-            "worst": 3.41,
+            "mean": 0.95,
+            "n": 2,
+            "best": 1.1,
+            "worst": 0.79,
             "in_band": 0
           },
           {
             "horizon": 3,
-            "mean": 3.47,
+            "mean": 0.1,
             "n": 1,
-            "best": 3.47,
-            "worst": 3.47,
+            "best": 0.1,
+            "worst": 0.1,
             "in_band": 0
           },
           {
             "horizon": 5,
-            "mean": 8.31,
+            "mean": -0.16,
             "n": 1,
-            "best": 8.31,
-            "worst": 8.31,
-            "in_band": 1
+            "best": -0.16,
+            "worst": -0.16,
+            "in_band": 0
           }
         ]
       }
     ],
     "shortlist": {
-      "setups": 64,
+      "setups": 80,
       "outcomes": [
         {
           "horizon": 1,
-          "mean": 2.09,
-          "n": 61,
-          "best": 9.05,
-          "worst": -3.51,
+          "mean": 2.16,
+          "n": 76,
+          "best": 9.03,
+          "worst": -4.76,
           "in_band": 3
         },
         {
           "horizon": 3,
-          "mean": 4.17,
-          "n": 57,
-          "best": 18.38,
-          "worst": -7.55,
-          "in_band": 14
+          "mean": 3.75,
+          "n": 72,
+          "best": 25.85,
+          "worst": -10.96,
+          "in_band": 11
         },
         {
           "horizon": 5,
-          "mean": 5.79,
-          "n": 53,
-          "best": 25.99,
-          "worst": -9.23,
-          "in_band": 17
+          "mean": 5.67,
+          "n": 65,
+          "best": 34.2,
+          "worst": -17.71,
+          "in_band": 20
         }
       ]
     },
     "rest": {
-      "setups": 4,
+      "setups": 12,
       "outcomes": [
         {
           "horizon": 1,
-          "mean": 2.07,
-          "n": 4,
-          "best": 5.41,
-          "worst": -3.74,
+          "mean": 0.84,
+          "n": 11,
+          "best": 6.64,
+          "worst": -1.6,
           "in_band": 0
         },
         {
           "horizon": 3,
-          "mean": 0.45,
-          "n": 4,
-          "best": 4.77,
-          "worst": -6.43,
-          "in_band": 0
+          "mean": 4.08,
+          "n": 11,
+          "best": 18.33,
+          "worst": -4.09,
+          "in_band": 2
         },
         {
           "horizon": 5,
-          "mean": -0.14,
-          "n": 4,
-          "best": 4.82,
-          "worst": -7.16,
-          "in_band": 0
+          "mean": 7.55,
+          "n": 9,
+          "best": 34.21,
+          "worst": -2.45,
+          "in_band": 2
         }
       ]
     }

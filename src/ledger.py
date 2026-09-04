@@ -771,7 +771,7 @@ def candidate_record(cand, lynch_result: dict, context: dict, score_row: dict,
     }
 
 
-def gated_record(cand, lynch_result: dict, reason: str,
+def gated_record(cand, lynch_result: dict, context: dict, reason: str,
                  streak_block: dict | None = None) -> dict:
     """One burst that was never scored, and why.
 
@@ -779,6 +779,13 @@ def gated_record(cand, lynch_result: dict, reason: str,
     per-check pass rate computed over the survivors alone is survivorship bias
     with a percentage sign, since the names a check rejected are exactly the
     ones missing from it.
+
+    It carries `context` for exactly the same reason, and that argument was
+    missing until an audit asked what the two Bonde measurements were for. A
+    burst refused by the up-days veto may have passed all six checks, so it is
+    the single most informative row the record holds about whether that rule
+    earns its keep -- and it was the one row archived without the number the
+    rule was applied to.
     """
     return {
         "ticker": cand.ticker,
@@ -791,6 +798,7 @@ def gated_record(cand, lynch_result: dict, reason: str,
         "lynch_passes": _num(lynch_result["passes"]),
         "lynch_total": _num(lynch_result["total"]),
         "lynch_detail": check_rows(lynch_result),
+        "context": {key: _num(value) for key, value in context.items()},
         "streak": dict(streak_block) if streak_block else None,
         "reason": reason,
     }
@@ -826,6 +834,16 @@ def slim_row(row: dict, lynch_result: dict | None = None, *, scored: bool) -> di
         "lynch_passes": row["lynch_passes"],
         "lynch_total": row["lynch_total"],
         "checks": flags,
+        # Kept, where every other sentence-shaped field is dropped: these are
+        # measurements taken BEFORE the outcome, which is the definition of
+        # what a backtest may use, and the ledger is the only file that
+        # survives the next run. Dropping them left two of this screener's
+        # rules -- the up-days veto and the base-breakdown criterion -- with
+        # nowhere for their evidence to accumulate, which was their whole
+        # stated justification for being measured at all. Keeping all of
+        # `context` rather than the two: choosing a subset here would be
+        # choosing which hypotheses may ever be tested.
+        "context": dict(row.get("context") or {}),
         "forward_returns": dict(row.get("forward_returns") or empty_returns()),
     }
     verdict = ({"rank": row["rank"], "score": row["score"], "verdict": row["verdict"],
@@ -972,6 +990,13 @@ MIN_SETUPS_FOR_A_RATE = 30
 #: it rather than only whether they are positive -- "+2% at d5" and "in the
 #: band the strategy promises" are different verdicts and the second is the one
 #: the strategy makes.
+#:
+#: UNVERIFIED AGAINST THE PRIMARY SOURCE, exactly like src.lynch's
+#: MAX_CONSECUTIVE_UP_DAYS and BREAKDOWN_PCT: stockbee.blogspot.com and
+#: qullamaggie.net are blocked by this sandbox's egress proxy, so this comes
+#: from the brief that specified the work and not from Bonde's own words. It
+#: is the number every published verdict about the strategy is measured
+#: against, which makes it the one on this list that most deserves checking.
 CLAIMED_BAND = (8.0, 20.0)
 
 
@@ -1646,7 +1671,7 @@ class Ledger:
             "generated": _now_iso(),
             "_contract": {
                 "about": CONTRACT_ABOUT,
-                "documented_in": "README.md, 'The dashboard contract'",
+                "documented_in": "README.md, 'The data contract'",
                 "invariants": list(CONTRACT_INVARIANTS),
             },
             "run": self.latest["run"],
@@ -1857,6 +1882,26 @@ def snapshot_problem(data: dict) -> str | None:
         if seen is not None and (isinstance(seen, bool) or not isinstance(seen, (int, float))):
             return (f"candidate row {position} ({row['ticker']}) has a "
                     f"{type(seen).__name__} where its streak.seen_before count should be")
+        # AND THE TWO BESIDE THEM, which the sweep that wrote the block above
+        # stopped one field short of. `last_outcome` is the OTHER dict-key
+        # lookup in the email (LAST_OUTCOME.get), so an unhashable one is the
+        # same TypeError one field away from a comment naming that exact
+        # mechanism; an audit found it. `history_sessions` does not crash --
+        # it reaches _plural() and renders "[1, 2] sessions in the record",
+        # which is the shape this project has already called worse than a
+        # crash, because nothing about it says it is wrong.
+        #
+        # That is the whole streak block now: every remaining field is
+        # interpolated into a sentence, where a wrong type is visibly wrong
+        # rather than silently plausible.
+        outcome = streak.get("last_outcome")
+        if outcome is not None and not isinstance(outcome, str):
+            return (f"candidate row {position} ({row['ticker']}) has a "
+                    f"{type(outcome).__name__} where its streak.last_outcome should be")
+        held = streak.get("history_sessions")
+        if held is not None and (isinstance(held, bool) or not isinstance(held, (int, float))):
+            return (f"candidate row {position} ({row['ticker']}) has a "
+                    f"{type(held).__name__} where its streak.history_sessions count should be")
     return None
 
 

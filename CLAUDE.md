@@ -28,7 +28,7 @@ Known scheduled falsifications:
 | ~~The first commit-back replaces `docs/data.json` with a real run~~ swept before it happened (3.1) | ~~`check_fixture_fresh.py` compared `docs/data.json` to the generator, so the pipeline working would have turned CI red on the next push; README's "regenerate … `docs/data.json`" and "pinned to the fixture" smoke-test section~~ — the canonical fixture is `tests/fixtures/data.json` now, `docs/data.json` is whatever the last run wrote, and the guard only checks a `docs/` copy that still *claims* to be the fixture |
 | ~~`evening.yml` keeps `docs/` between runs~~ done in step 9 | ~~README's "Does the history actually accumulate?" section and the stale `charts/` path in that workflow's upload step~~ both swept; step 10 added why that commit-back now also feeds the morning run and every streak |
 | ~~Step 10 makes the mode mean something and reads the ledger back~~ done | ~~README's "morning has no workflow and no distinct behaviour" note, the workflow inventory, `.env.example`'s required-variable list~~ all swept; `morning.yml` now exists |
-| The universe widens past `data/symbols.txt` | the 230-name figures in README's diagram, Tuning and Costs sections |
+| The universe widens past `data/symbols.txt` | the four 230-name figures in README: its opening line, the diagram's universe box, the diagram's Layer-1 caption, and the Costs section's scan-time note. (This row named a Tuning section that holds none, and missed the opening line — checked by grepping, since a list of places is exactly the kind of claim that rots.) |
 
 Nothing else is scheduled to go stale: step 10 was the last of the ten. The one
 row left is the open decision at the bottom of this file, not a step.
@@ -104,7 +104,9 @@ every Claude call had been paid for. The sweep that found it was a table of
 thirty-seven malformed shapes run through the real code
 (`MALFORMED_SNAPSHOTS` in `tests/test_pipeline.py`), not a reading of it; the
 brief's one example crashed, and so did nineteen the reading would not have
-predicted.
+predicted. (It was thirty-seven when that sentence was written and the table
+has grown since — a count in prose beside a table that keeps growing is a
+citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 
 ## Environment constraints
 
@@ -114,7 +116,7 @@ predicted.
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 705 tests with no network
+- **There is a regression net.** `pytest tests/` runs 728 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -184,6 +186,14 @@ predicted.
       PreflightError: missing or empty required environment: ALPACA_API_KEY,
       ALPACA_SECRET_KEY, ANTHROPIC_API_KEY, RESEND_API_KEY, EMAIL_TO
 
+  That is the EVENING message. The morning job cannot produce it and never
+  has: `missing_env()` composes the requirement from the layers the mode
+  actually runs, and a follow-through scans nothing, so it names
+  `RESEND_API_KEY, EMAIL_TO` and no more. This paragraph said "BOTH jobs have
+  failed the same way" and printed one message; the mechanism is the same and
+  the message is not, which matters because that difference is the preflight
+  working exactly as designed.
+
   The pairs of crons make this easy to misread, so it is written down: the
   US is on EDT, so the `16 22` (evening) and `30 12` (morning) crons are the
   live ones and they FAIL; the `16 23` and `30 13` runs report SUCCESS
@@ -200,14 +210,22 @@ predicted.
   the page's evidence block stays empty and correct, and the morning run has
   nothing to follow through on.
 
-  **And `evening.yml`'s commit-back has still never executed.** Every streak,
-  and the morning run's entire input, rest on it; the `git add` bug that voided
-  it is fixed and guarded by a test, but no run has yet reached the push at all,
-  so the push-and-rebase loop below it has never once run in anger. It was
-  traced with `bash -ex` against a stub `git` — three attempts really happen
-  now, where the old loop aborted after one — but that is a simulation, not a
-  run. This is the second time this step was believed done and was not. Watch
-  the first evening run after this lands.
+  **And `evening.yml`'s commit-back has still never executed** — nor has the
+  step it lives in. Every streak, and the morning run's entire input, rest on
+  it; the `git add` bug that would have voided it is fixed and guarded by a
+  test. But read from the Actions API: `evening.yml` has fired SIX times ever,
+  all scheduled — three DST-guard no-ops and three preflight failures — and a
+  failed pipeline step skips the persist step entirely, so nothing has reached
+  the add, the commit or the push under any version. The buggy `git add docs
+  results` lived only on the rebuild branch and was fixed before that branch
+  merged, so no scheduled run ever checked it out either. An earlier draft of
+  this note, and two paragraphs of README, described that bug as failing
+  silently every night; it never ran once. The defect was real in the code and
+  the invented nightly failure was not, which is the difference this file's own
+  "verification is by execution" rule exists to keep. The push-and-rebase loop
+  was traced with `bash -ex` against a stub `git` — three attempts really
+  happen now, where the old loop aborted after one — but that is a simulation.
+  Watch the first evening run that gets past preflight.
 
   **One judgement about the calendar, written down once.** The morning email's
   staleness band needs to know whether a market closure could explain nothing
@@ -247,6 +265,56 @@ predicted.
   mechanism, side by side on one page, under two comments each claiming they
   matched.
 
+## Findings from the 3.3 audit — three auditors, every one finished
+
+The process the brief asks for, run properly for the first time: three agents
+over disjoint file sets, each working by execution, each re-running its
+findings against a pristine `git archive` copy because this tree was being
+edited under them. **All three finished** — including the prose/docs set,
+which CLAUDE.md had recorded as never audited at all. Thirty-eight findings.
+Every one was reproduced HERE before it was fixed, and two turned out to be
+about my own harness rather than the code.
+
+**The single highest-value pattern.** The commit put the veto's vocabulary in
+four places on the page — `LAST_OUTCOME`, `OUTCOME_SHORT`, the gated-hint
+sentence and the funnel caption — and pinned exactly one. Each of the other
+three could be made to say "rejected at the gate" about a burst that passed
+6/6, with the whole suite and every dashboard check green. All four are
+asserted on their WORDS now, and the funnel's guard needed a `novetoes`
+variant to pin at all: it is the branch for a snapshot written before the rule
+existed, and no source exercised it.
+
+**Six that were about the work being wrong, not untested:**
+
+| what | how it was found |
+|---|---|
+| A second veto added to `src.lynch` alone left the suite green and killed the evening run on `KeyError`, after the scan was paid for — while the comment above the lookup promised that was impossible | an auditor added a realistic `gap_too_wide` rule and ran it. `VETO_REASONS` is derived from `lynch.VETO_RULES` now and nothing indexes into it; `veto_reason()` computes the word |
+| `evaluate_2lynch` and `extra_context` cleaned the frame with different `dropna` sets, so one bar missing only its `High` made the veto count 2 and allow the burst while the metrics block told the model 3 | found by two auditors independently, reproduced on all five columns; both callers hand the measurements the frame as received now, and `_base()` is the one rule |
+| "Both measurements are archived per candidate … so the evidence views can ask whether either separates the winners" was false twice over: the VETOED row carried no `context` at all, and `slim_row()` dropped the block before the ledger — the only durable file, and the only one with forward returns | reproduced by reading the fixtures. `gated_record()` takes `context` and `slim_row()` keeps it; 52 refusals now sit in the record beside their outcomes |
+| An unhashable `streak.last_outcome` took the morning run down inside `LAST_OUTCOME.get()` — one field from a guard whose comment names that exact mechanism | driven through the real morning path. The sweep it prompted found `history_sessions`, which does not crash and instead renders "[1, 2] sessions in the record" |
+| **The rounding class was declared closed on the one instance that could not fire.** `worst_base_day()` was rounded so the shown and compared numbers were one; four other checks went on printing one number and deciding on another, at 3.2% (N) and 0.8% (L) of frames | measured over 600 bursts, independently reproduced. Every measurement is rounded once now and both the verdict and the line read it |
+| The email's funnel printed the veto-filtered count under "Passed 2LYNCH gate", so a 6/6 name was told it had failed the checklist — the one collapse this file forbids by name | reproduced on a real run. Refusals get their own line, and only when there are some |
+
+**And the fixture generator had the same defect the commit had just fixed
+elsewhere.** `make_ohlcv` got an `up_run` parameter because the veto's rate
+was whatever the walk did; `tools/make_history.py` was not swept, and its rate
+was 33% of every planted burst — a third of the record refused by nothing.
+Worse, when the parameter went in, 19 of 184 bursts still missed their run:
+a later burst's pre-window clobbered an earlier burst's, which is the
+one-pass hazard that file already documents for burst days. Up-runs get their
+own pass now. `VETO_RATE` is named for what it PLANTS and not for what comes
+out, because 16 of the 17 further refusals are real — a name that bursts again
+two sessions later has a genuine run of up days behind it.
+
+**Three things the auditors settled that are worth keeping.** A check counted
+among the 134 dashboard checks never opened the page — it compared Node-side
+arithmetic to Node-side arithmetic over the fixture. A check asserting
+`/worst base day/i` was asserting a label hard-coded in the page's own source,
+so every row could print an em dash and pass. And a test of mine that this
+file would call load-bearing was shaped: it put the NaN on the one offset
+where pruning the bar changes nothing, and passed with the defect restored.
+The precondition inside it is what makes the position load-bearing now.
+
 ## Findings from the 3.1 audit — twelve worked, one left standing
 
 Three auditors were run over disjoint file sets after 3.1 (the process in the
@@ -269,12 +337,6 @@ drove 264 malformed shapes through the real morning path AND the real email
 renderer (the sweep in 3.1(b) stopped at the dry run, which does not render
 the email), and the fixtures one simulated a real commit-back into a copy of
 the repo.
-
-**Six have since been reproduced and fixed** — the two smoke-test ones and
-four of the shape ones — and the table says which. The auditors were right
-about every one of the six, and all six were introduced by 3.1 itself, which
-is the rule about not replacing a bug with one of the same class failing on
-the round that wrote the rule down.
 
 Two things that only running them settled, both worth keeping:
 `streak.seen_before` sits behind a short-circuit that opens ONLY when `day`
@@ -364,10 +426,15 @@ is the first thing standing in front of it.
 neither `src/lynch.py` nor `knowledge/strategy.md`, so the tool did not apply
 them and could not have been asked to. They are in now, and **neither is a
 seventh and eighth checklist item, which is the decision and not an
-omission.** `MIN_LYNCH_PASSES` is 3 of 6 — a MAJORITY — so two more checks
+omission.** `MIN_LYNCH_PASSES` is 3 of 6 — HALF of them — so two more checks
 would silently make it 3 of 8: a weaker gate wearing the same number, with
 the six-check structure that `tools/make_fixture.py`, the email, the page and
-every archived `lynch_total` are built on changed underneath them.
+every archived `lynch_total` are built on changed underneath them. (This
+said "a MAJORITY" here, in `README.md` and in `src/lynch.py` until the prose
+audit did the arithmetic. A majority of six is four. The argument the word
+was supporting is untouched; the word was simply false, in three places, and
+it was the stated justification for refusing the two rules as checklist
+items — which is the worst kind of place for a wrong one.)
 
 Each rule went where the way Bonde states it puts it. **Up days is cardinal**
 ("never buy") and is pure arithmetic on closes, so it is a VETO: it refuses
@@ -400,6 +467,14 @@ qullamaggie.net are both blocked by this sandbox's egress proxy — checked
 with curl, not assumed — so three days and -4% come from the brief that
 specified the work and NOT from Bonde's own words. They are named constants
 for exactly that reason. Someone with access should check them.
+
+**And so is the 8–20% band**, which this note used to omit while naming the
+other two, though `ledger.CLAIMED_BAND` is sourced identically. It is the
+number every published verdict about the strategy is measured against — the
+page asks whether outcomes land in it, not merely whether they are positive
+— so of the three it is the one most worth checking. Found by the prose
+audit, which asked why one unverified constant carried the warning and its
+sibling did not.
 
 **Open decision — the universe is now 230 names.** Step 2 traded ~11,000 symbols
 for a hand-curated list to make steps 3-8 testable in seconds instead of twenty

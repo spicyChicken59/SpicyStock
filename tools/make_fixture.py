@@ -508,6 +508,16 @@ GATED = _still_gated_out(_remap(GATED, len(SPEC)))
 
 def build_gated(g, i):
     detail = lynch(*g.lm, gain=g.gain)
+    # The same two Bonde measurements the scored rows carry, and for the
+    # stronger reason: a vetoed row is the one the record needs if the veto is
+    # ever to be judged. Authored, not derived from a frame, because this
+    # generator holds measurements and not walks -- but a VETOED row must
+    # carry more than MAX_CONSECUTIVE_UP_DAYS, since that is why it was
+    # refused, and a gate or cap row must not.
+    vetoed = g.reason in VETO_REASONS.values()
+    up_days = (MAX_CONSECUTIVE_UP_DAYS + 1 if vetoed
+               else i % (MAX_CONSECUTIVE_UP_DAYS + 1))
+    worst_base = round(BREAKDOWN_PCT + (1.4 if i % 3 else -0.6), 1)
     passes = sum(1 for d in detail if d["pass"])
     # The measurements are the source of truth, exactly as they are for a scored
     # row; `passes` is what the gate and cap arithmetic below counts on. If the
@@ -538,6 +548,7 @@ def build_gated(g, i):
         "volume": g.vol, "volume_ratio": round(g.vol / g.prev, 2),
         "lynch": f"{passes}/{len(detail)}", "lynch_passes": passes,
         "lynch_total": len(detail), "lynch_detail": detail,
+        "context": {"consecutive_up_days": up_days, "worst_base_day_pct": worst_base},
         "streak": streak(i), "reason": g.reason,
     }
 
@@ -560,6 +571,23 @@ assert PASSED - CAP == sum(1 for g in gated_out if g["reason"] == "score_cap")
 # this last sum used to be written as "everything that is not score_cap",
 # which counted a veto as a checklist rejection. Three reasons, three counts.
 assert VETOED == sum(1 for g in gated_out if g["reason"] in VETO_REASONS.values())
+# The invariant the comment in build_candidate() states, now asserted rather
+# than described. An audit set the scored rows' up-day counts to 0-4, and the
+# generator, the freshness guard, the suite and 134 dashboard checks all passed
+# while the page rendered "4 up days" on a scored card under a rule that
+# refuses 3 or more -- a fixture describing a run this pipeline cannot produce,
+# which is the exact class check_fixture_fresh.py exists to close.
+for _c in candidates:
+    assert _c["context"]["consecutive_up_days"] <= MAX_CONSECUTIVE_UP_DAYS, (
+        f"{_c['ticker']} was scored with {_c['context']['consecutive_up_days']} up days "
+        f"into its burst; the veto refuses {MAX_CONSECUTIVE_UP_DAYS + 1} or more, so this "
+        "row describes a run the pipeline cannot produce")
+for _g in gated_out:
+    _refused = _g["reason"] in VETO_REASONS.values()
+    _up = _g["context"]["consecutive_up_days"]
+    assert (_up > MAX_CONSECUTIVE_UP_DAYS) == _refused, (
+        f"{_g['ticker']} carries {_up} up days and reason {_g['reason']}: a vetoed row "
+        "must exceed the threshold that refused it, and one that does must be vetoed")
 assert BURSTS - PASSED - VETOED == sum(1 for g in gated_out if g["reason"] == "lynch_gate")
 
 by_src = collections.Counter(c["provenance"]["source"] for c in candidates)
@@ -625,7 +653,7 @@ data = {
     "generated": "2026-09-01T22:14:07Z",
     "_contract": {
         "about": "docs/data.json is written by src/pipeline.py at the end of every run (see src/ledger.py) and read by docs/index.html at runtime. THIS copy is not one of those: it is the hand-authored fixture from tools/make_fixture.py, and run.fixture is true, which is how the morning run refuses to mail its invented tickers as a watchlist. A real run overwrites it and sets run.fixture false. This block is documentation, not data; consumers ignore it.",
-        "documented_in": "README.md, 'The dashboard contract'",
+        "documented_in": "README.md, 'The data contract'",
         # IMPORTED from src.ledger, which is what the pipeline writes into its
         # own output. A second copy here is a second contract, and a fixture
         # promising something the real file does not is the exact failure this

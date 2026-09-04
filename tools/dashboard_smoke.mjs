@@ -196,6 +196,20 @@ const VARIANTS = {
     delete d.evidence;
     return d;
   },
+  // A snapshot written by a pipeline that had no absolute rules: no
+  // gate.vetoes, and every unscored burst carries one of the two older reason
+  // words. The page must not tell that run's reader an absolute rule could
+  // have cut a name, which is the confidently-false sentence the funnel's own
+  // guard exists to prevent -- and until this variant existed, deleting that
+  // guard was invisible to every check here.
+  novetoes() {
+    const d = clone();
+    delete d.run.gate.vetoes;
+    for (const g of d.gated_out) {
+      if (String(g.reason).startsWith('veto_')) g.reason = 'lynch_gate';
+    }
+    return d;
+  },
   // The pipeline has never run, or the write failed.
   nodata() { return null; }
 };
@@ -453,6 +467,43 @@ ok('and the code keeps its casing through a sheet that lowercases chips',
   (await page.$eval('#gated-table tbody td.col-why .sc-chip',
     (el) => getComputedStyle(el).textTransform)) === 'none');
 
+// The commit that added the veto put its vocabulary in FOUR places on this
+// page -- LAST_OUTCOME, OUTCOME_SHORT, the gated-hint sentence and the funnel
+// caption -- and pinned exactly one of them. An audit made each of the other
+// three say "rejected at the gate" about a burst that may have passed 6/6 and
+// got a green suite and 129/129 here. These are the other three.
+//
+// Each asserts the WORDS a reader sees, not that a key exists: the Python
+// guard that a reason word is present in both maps passed throughout, because
+// a key can be present and say the wrong thing.
+const hint = await page.textContent('#gated-hint');
+const vetoedRows = REAL.gated_out.filter((g) => String(g.reason).startsWith('veto_')).length;
+ok('and the sentence above the gated table gives the veto its own clause',
+  vetoedRows === 0
+  || (hint.includes(`${vetoedRows} refused by an absolute rule`) && !/\d+ refused at the/.test(hint)),
+  hint);
+ok('and that clause does not fold the vetoed rows into the checklist count',
+  vetoedRows === 0
+  || hint.includes(`${REAL.gated_out.filter((g) => g.reason === 'lynch_gate').length} rejected at the`),
+  hint);
+
+const caption = (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent))).join(' ');
+ok('the funnel says an absolute rule can cut a name at the gate stage, when the run applied one',
+  ((REAL.run.gate || {}).vetoes || []).length && caption.includes('refused by an absolute rule'),
+  `gate.vetoes = ${JSON.stringify((REAL.run.gate || {}).vetoes)}`);
+// And the other side of that guard, which is the side it exists for. Run
+// against a snapshot carrying no gate.vetoes at all: naming a rule that run
+// never applied is the confidently-false sentence, and asserting only the
+// positive branch left the guard deletable with everything green.
+await open('/v/novetoes/');
+const oldCaption = (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent))).join(' ');
+const oldHint = await page.textContent('#gated-hint');
+ok('and says nothing of the kind about a run that had no absolute rule to apply',
+  !oldCaption.includes('refused by an absolute rule')
+  && !oldHint.includes('refused by an absolute rule'),
+  oldCaption.replace(/\s+/g, ' ').slice(0, 90));
+await open('/f/fixture/');
+
 // --- the streak line, on the one state it used to get wrong -----------------
 // A day number is withheld whenever the chain of appearances reaches the
 // oldest run in the file, which is exactly what an UNBROKEN streak does. So
@@ -531,14 +582,24 @@ ok('a failed check is not dressed as a passed one',
 // up-day cell is asserted through a row whose value is ZERO: rendered through
 // the page's own number formatter it would print an em dash, which is what the
 // page says when a run predates the rule — two opposite facts, one glyph.
-const outOfFlat = REAL.candidates.find((c) => c.context && c.context.consecutive_up_days === 0);
+// Scoped to the SHORTLIST, because that is where the assertion looks. It used
+// to search all 25 candidates for a row at zero and then look for the text
+// among the 5 picks, so a fixture whose zeros sat outside the top five turned
+// CI red while the page was entirely correct -- and said "20 rows at zero".
+const shortlistRows = REAL.candidates.filter((c) => c.rank <= run.shortlist_size);
+const flatPicks = shortlistRows.filter((c) => (c.context || {}).consecutive_up_days === 0).length;
 const cardText = await page.locator('#shortlist .pick').first().textContent();
 ok('a scored pick says how many up days it burst after, counting zero as an answer',
-  outOfFlat !== undefined
-  && (await page.locator('#shortlist .pick', { hasText: '0 up days' }).count()) > 0,
-  `${REAL.candidates.filter((c) => (c.context || {}).consecutive_up_days === 0).length} rows at zero`);
+  flatPicks > 0
+  && (await page.locator('#shortlist .pick', { hasText: '0 up days' }).count()) === flatPicks,
+  `${flatPicks} of the ${shortlistRows.length} shortlist picks burst out of a flat base`);
+// The VALUE, not the label: this tested /worst base day/i, which is a string
+// hard-coded in pick()'s facts array, so the page could print an em dash for
+// every row and pass. The number comes out of the data the page was given.
+const firstPick = REAL.candidates.find((c) => c.rank === 1);
 ok('and what the worst day in its base was, which the screener measures and does not act on',
-  /worst base day/i.test(cardText), cardText.replace(/\s+/g, ' ').slice(0, 60));
+  cardText.includes(`${firstPick.context.worst_base_day_pct.toFixed(1)}%`),
+  `expected ${firstPick.context.worst_base_day_pct}% in the #1 card`);
 
 const blind = REAL.candidates.filter((c) => c.provenance.source === 'claude' && !c.provenance.chart_seen);
 ok('a score made without the chart says so',
@@ -618,10 +679,22 @@ ok('and the checklist split accounts for all of them',
 // to assert they were equal, which is how a 6/6 vetoed row would have been
 // counted as evidence that the checks reject -- six passing checks on the
 // failed side of a view whose whole subject is what the checks separate.
+// Read off the RENDERED cell, not recomputed here. The first version of this
+// check compared CHECKS[0].ctotal against run.passed_gate -- both Node-side
+// arithmetic over the fixture -- so it was a fixture self-consistency
+// assertion counted among the dashboard checks: stubbing checkStats() to
+// return nothing failed six checks and left this one green.
+// Indexed defensively for the reason the streak checks below already state:
+// a page that stops rendering this table must FAIL here, not throw and take
+// the remaining checks down with it. Stubbing checkStats() to return nothing
+// did exactly that on the first version of this line.
+const clearedCell = (checks.rows[0] || [])[3] || '';
+const clearedShown = Number((clearedCell.match(/of (\d+)$/) || [])[1]);
 ok('and it is the checklist that splits them, not the gate a veto also guards',
-  CHECKS[0].ctotal - run.passed_gate
-    === REAL.gated_out.filter((g) => String(g.reason).startsWith('veto_')).length,
-  `${CHECKS[0].ctotal} cleared the checklist, ${run.passed_gate} cleared the gate`);
+  Number.isFinite(clearedShown)
+  && clearedShown - run.passed_gate
+     === REAL.gated_out.filter((g) => String(g.reason).startsWith('veto_')).length,
+  `page shows ${clearedShown} cleared the checklist, run.passed_gate is ${run.passed_gate}`);
 ok('and the column says checklist, so the two are not read as one number',
   (await page.$$eval('#checks-table thead th', (th) => th.map((t) => t.textContent.trim())))
     .includes('cleared the checklist'));
@@ -636,7 +709,11 @@ ok('the bars are the rates the table prints',
 // rather than indexed: a page that stops labelling either extreme must fail
 // here, not throw and take the rest of the run down with it.
 const weakRow = checks.rows.find((r) => r[6] === 'weakest separator');
-const hardRow = checks.rows.find((r) => r[6] === 'hardest gate');
+// 'hardest check', not 'hardest gate': the chip kept the gate's word after the
+// columns beside it were renamed, which was two vocabularies for one mechanism
+// inside one table. This assertion is what noticed the rename, so it is doing
+// its job -- but it is also the only thing pinning that chip's text.
+const hardRow = checks.rows.find((r) => r[6] === 'hardest check');
 ok('the check that barely separates is called out by name',
   !!weakRow && weakRow[0] === WEAKEST.code && (await page.textContent('#checks-hint')).includes(WEAKEST.code),
   `${WEAKEST.code} at ${(WEAKEST.gap * 100).toFixed(0)}pts separation, page said ${weakRow ? weakRow[0] : 'nothing'}`);
@@ -1065,6 +1142,41 @@ const loaded = await page.evaluate(() => ({
 ok('and asking for it loads every name, each with the sessions it burst on',
   loaded.rows === HEV.by_ticker.length && loaded.notes === HEV.by_ticker.length,
   `${loaded.rows} names, ${loaded.notes} with per-burst detail`);
+// OUTCOME_SHORT's words, asserted HERE and not against the fixture, because
+// this is the only source whose ledger holds vetoed appearances -- the same
+// check written on the fixture page passed while rendering nothing at all,
+// which is the vacuous shape this project keeps producing. The count comes
+// out of the ledger, so the assertion is that every refusal in the record
+// reaches the reader as a refusal.
+const LEDGER = JSON.parse(await readFile(join(SOURCES.history, 'ledger.json'), 'utf8'));
+// The page shows a name's six most recent appearances, so the expected count
+// is over that slice and not over the whole record -- 52 refusals are stored
+// and 51 are reachable, and asserting the stored number failed on a view that
+// was rendering correctly. Arithmetic over the same data, not a second copy of
+// the wording, which is the thing under test.
+const byTicker = new Map();
+for (const run of LEDGER.runs) {
+  for (const row of [...(run.candidates || []), ...(run.gated || [])]) {
+    if (!byTicker.has(row.ticker)) byTicker.set(row.ticker, []);
+    byTicker.get(row.ticker).push(row);
+  }
+}
+let refusedOnScreen = 0, gatedOnScreen = 0;
+for (const rows of byTicker.values()) {
+  rows.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  for (const r of rows.slice(0, 6)) {
+    if (r.score !== null && r.score !== undefined) continue;
+    if (String(r.reason || '').startsWith('veto_')) refusedOnScreen++;
+    else if (r.reason === 'lynch_gate') gatedOnScreen++;
+  }
+}
+const perName = await page.textContent('#ticker-table');
+const saidRefused = (perName.match(/refused by an absolute rule/g) || []).length;
+const saidGated = (perName.match(/rejected at the gate/g) || []).length;
+ok('a burst an absolute rule refused says so in the per-name record too',
+  refusedOnScreen > 0 && saidRefused === refusedOnScreen && saidGated === gatedOnScreen,
+  `${refusedOnScreen} refusals and ${gatedOnScreen} gate rejections reachable; ` +
+  `page said ${saidRefused} and ${saidGated}`);
 await shot('history-desktop-dark');
 
 // --- the checks that must hold for ANY run ---------------------------------

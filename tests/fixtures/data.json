@@ -4,7 +4,7 @@
   "generated": "2026-09-01T22:14:07Z",
   "_contract": {
     "about": "docs/data.json is written by src/pipeline.py at the end of every run (see src/ledger.py) and read by docs/index.html at runtime. THIS copy is not one of those: it is the hand-authored fixture from tools/make_fixture.py, and run.fixture is true, which is how the morning run refuses to mail its invented tickers as a watchlist. A real run overwrites it and sets run.fixture false. This block is documentation, not data; consumers ignore it.",
-    "documented_in": "README.md, 'The dashboard contract'",
+    "documented_in": "README.md, 'The data contract'",
     "invariants": [
       "candidates holds EVERY scored candidate, ranked by score descending, and is never truncated: len(candidates) == run.scored. The top run.shortlist_size of them are the shortlist that went out by email.",
       "run.scored + len(gated_out) == run.bursts. Nothing a scan found may vanish without appearing in one of the two lists.",
@@ -2350,6 +2350,10 @@
           "value": "closed at 91% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -4.6
+      },
       "streak": {
         "day": 1,
         "unknown_reason": null,
@@ -2412,6 +2416,10 @@
           "value": "closed at 84% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 1,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": 3,
         "unknown_reason": null,
@@ -2474,6 +2482,10 @@
           "value": "closed at 78% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 2,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": null,
         "unknown_reason": "window_not_covered",
@@ -2536,6 +2548,10 @@
           "value": "closed at 88% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -4.6
+      },
       "streak": {
         "day": 2,
         "unknown_reason": null,
@@ -2598,6 +2614,10 @@
           "value": "closed at 73% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 1,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": 1,
         "unknown_reason": null,
@@ -2660,6 +2680,10 @@
           "value": "closed at 95% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 2,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": 1,
         "unknown_reason": null,
@@ -2722,6 +2746,10 @@
           "value": "closed at 81% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -4.6
+      },
       "streak": {
         "day": 1,
         "unknown_reason": null,
@@ -2784,6 +2812,10 @@
           "value": "closed at 64% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 1,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": 1,
         "unknown_reason": null,
@@ -2846,6 +2878,10 @@
           "value": "closed at 41% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 2,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": 3,
         "unknown_reason": null,
@@ -2908,6 +2944,10 @@
           "value": "closed at 71% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -4.6
+      },
       "streak": {
         "day": null,
         "unknown_reason": "window_not_covered",
@@ -2970,6 +3010,10 @@
           "value": "closed at 36% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 1,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": 2,
         "unknown_reason": null,
@@ -3032,6 +3076,10 @@
           "value": "closed at 61% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 2,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": 1,
         "unknown_reason": null,
@@ -3094,6 +3142,10 @@
           "value": "closed at 52% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -4.6
+      },
       "streak": {
         "day": 1,
         "unknown_reason": null,
@@ -3156,6 +3208,10 @@
           "value": "closed at 78% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 1,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": 1,
         "unknown_reason": null,
@@ -3218,6 +3274,10 @@
           "value": "closed at 88% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 2,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": 1,
         "unknown_reason": null,
@@ -3280,6 +3340,10 @@
           "value": "closed at 38% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -4.6
+      },
       "streak": {
         "day": 3,
         "unknown_reason": null,
@@ -3342,6 +3406,10 @@
           "value": "closed at 95% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 1,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": null,
         "unknown_reason": "window_not_covered",
@@ -3404,6 +3472,10 @@
           "value": "closed at 81% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 2,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": 2,
         "unknown_reason": null,
@@ -3466,6 +3538,10 @@
           "value": "closed at 76% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -4.6
+      },
       "streak": {
         "day": 1,
         "unknown_reason": null,
@@ -3528,6 +3604,10 @@
           "value": "closed at 86% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 1,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": 1,
         "unknown_reason": null,
@@ -3590,6 +3670,10 @@
           "value": "closed at 71% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 2,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": 1,
         "unknown_reason": null,
@@ -3652,6 +3736,10 @@
           "value": "closed at 93% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -4.6
+      },
       "streak": {
         "day": 1,
         "unknown_reason": null,
@@ -3714,6 +3802,10 @@
           "value": "closed at 96% of day's range"
         }
       ],
+      "context": {
+        "consecutive_up_days": 3,
+        "worst_base_day_pct": -2.6
+      },
       "streak": {
         "day": 3,
         "unknown_reason": null,

@@ -199,7 +199,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 705 tests, no network or API keys needed
+pytest tests/                   # 728 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -216,7 +216,7 @@ published anything.
 
 `docs/index.html` is a static page served by GitHub Pages from `docs/`. It fetches
 `docs/data.json` in the browser and renders it — no server, no build step, no
-framework. **The pipeline writes that file at the end of every run** (step 9,
+framework. **An evening run writes that file at the end of every run** (step 9,
 `src/ledger.py`), together with `docs/ledger.json` and the chart PNGs — which
 are **not** committed (`.gitignore` blocks `/docs/charts/`), so the published
 page has no images and every chart slot explains that instead. Open the page
@@ -453,7 +453,10 @@ which is a change to `docs/index.html` and not part of this step.
 
 ### Does the history actually accumulate?
 
-Locally, yes: `docs/ledger.json` is written on every run and kept for 260 runs.
+Locally, yes: `docs/ledger.json` is written by every EVENING run and kept for
+260 runs. A morning run writes nothing at all — it is a follow-through pass, as
+the table above says — so "every run" here and in the dashboard section meant
+every discovering run, and now says so.
 
 In GitHub Actions it now accumulates too — `evening.yml` commits `docs/` back to
 the branch after each run, the way the sibling SpicyCar project does. Without
@@ -473,11 +476,17 @@ git pull --rebase ...` now, with a conflicting rebase aborted and named rather
 than left half-applied. Traced with `bash -ex` against a stub `git`, which is
 how the `git add` bug below was found too.
 
-**Nothing has ever exercised it.** The `git add` fix is real and a test now
-guards it, but no run of this workflow has yet reached the push at all: every
-run before it aborted at the add. Streaks and the whole input of the morning
-run rest on this step working, so the first evening run after this lands is
-worth watching in the Actions log.
+**Nothing has ever exercised it, and not for the reason this paragraph used
+to give.** The `git add` fix is real and a test now guards it. But no run has
+reached the push, or the add, or the commit-back step at all: `evening.yml`
+has fired six times, every one of them scheduled — three no-ops from the DST
+guard and three that died in preflight for want of secrets — and a failed
+pipeline step skips the persist step entirely. This said "every run before it
+aborted at the add", which describes something that has never happened once.
+The bug was real in the code and it was fixed before that code was ever the
+tip of `main`; the nightly failure it supposedly caused is invented. Streaks
+and the whole input of the morning run rest on this step working, so the first
+evening run that gets past preflight is worth watching in the Actions log.
 
 Since step 10 that commit-back carries a second job: it is what the 8:30 AM
 follow-through reads, and it is what makes a streak possible at all. Remove it
@@ -485,11 +494,16 @@ and both features fail quietly in the same way — every night's candidates woul
 be day 1 of a setup, forever, because the file that knows otherwise would never
 survive a container.
 
-**It did not work until step 10, and nothing said so.** The step ran
+**It would not have worked until step 10, and nothing said so.** The step ran
 `git add docs results`, and `results/` is gitignored on purpose — `git add` on
-an ignored path exits 1, which under Actions' `bash -e` aborted the step before
-the commit. `docs/` was staged and then died with the container on every run,
-while the workflow's own comment said the history was being kept. It is
+an ignored path exits 1, which under Actions' `bash -e` would have aborted the
+step before the commit. Would have: that version lived only on the rebuild
+branch and was fixed before the branch merged, so no scheduled run ever checked
+it out, and none has reached this step under any version. The defect is real
+and the test guarding it earns its place; what is not real is the nightly
+silent failure an earlier draft of this paragraph described, in which `docs/`
+was staged and died with the container on every run while the workflow's own
+comment claimed the history was being kept. It is
 `git add docs` now, and `tests/test_docs_are_true.py` checks that no path this
 workflow stages is one `.gitignore` blocks, because reading the two files side
 by side is exactly what missed it the first time. The `results/` artifact upload
@@ -513,15 +527,17 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 129 checks, and which file each one
+**Three data sources, one page.** It runs 134 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, every streak state a
-  reader has to tell apart. Six mutated copies of it are served under
-  `/v/<name>/` for the states one night cannot hold at once.
+  reader has to tell apart. Eight mutated copies of it are served under
+  `/v/<name>/` for the states one night cannot hold at once, beside a ninth
+  name that serves no document at all. This said six until two more were added
+  without it — read the count off `VARIANTS` in the smoke test, not from here.
 - **`tests/fixtures/history/`** — thirty consecutive runs written by the real
   pipeline (`tools/make_history.py`, see `tests/fixtures/README.md`): forward
   returns filled in by later runs, a night the scorer was down, a chart that
@@ -572,14 +588,17 @@ against a hand-made `data.json` and agree, but that check is not committed.
 ## Tuning
 
 - Scan universe: `data/symbols.txt` — a hand-curated starter list, not the whole market
-- Thresholds (price floor, gain %, share-volume floor), the data `feed`, and a
-  `session_date` override: `ScanConfig` in `src/scanner.py`
+- Thresholds (price floor, gain %, relative-volume floor and its lookback, the
+  dollar-volume percentile gate), the data `feed`, and a `session_date`
+  override: `ScanConfig` in `src/scanner.py`. There is no share-volume floor;
+  step 4 deleted it, and this bullet named the deleted knob and none of the
+  three that replaced it
 - 2LYNCH pass criteria: `src/lynch.py`
 - The two rules that are not checks, and the note beside them saying why not:
   `MAX_CONSECUTIVE_UP_DAYS` (an absolute veto) and `BREAKDOWN_PCT` /
   `BREAKDOWN_LOOKBACK` (measured, sent to the model, rejecting nothing), also
   in `src/lynch.py`. Neither is a seventh checklist item on purpose — the gate
-  is a majority of six, and adding to the six would quietly weaken it
+  is 3 of 6, so adding to the six would quietly make it 3 of 8 and weaken it
 - Gate strictness / shortlist size / Claude-call cap: constants at the top of
   `src/pipeline.py`. `TOP_N` is the EMAIL's size and nothing else — every scored
   candidate is archived whatever it says

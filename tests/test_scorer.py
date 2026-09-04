@@ -277,6 +277,28 @@ def test_a_result_with_no_measured_criteria_sends_an_empty_list_not_a_missing_ke
     assert payload["quality_notes"] == []
 
 
+@pytest.mark.parametrize("shape", [None, [], "x", 3, True, {"a": None}, {"a": "x"},
+                                   {"a": {}}, {"a": {"pass": True}}])
+def test_a_malformed_context_checks_block_sends_no_notes_rather_than_crashing(
+    shape, candidate, claude
+):
+    """`quality_notes` is built from a block this function does not own.
+
+    It was `.get("context_checks", {})`, whose default applies to a MISSING key
+    and not to an explicit null — the exact spelling that cost this project a
+    morning run once already — and its entries were hard-indexed. A wrong shape
+    now produces no notes, which is what "the screener measured nothing to
+    report" should look like, rather than an AttributeError inside a paid call.
+    """
+    lynch = dict(make_lynch(4), context_checks=shape)
+
+    score_candidate(candidate, lynch, CONTEXT, None)
+
+    payload = json.loads(_text_of(claude.calls[0]).split("METRICS:\n", 1)[1]
+                         .split("\n\nRespond", 1)[0])
+    assert payload["quality_notes"] == []
+
+
 def test_the_chart_is_attached_as_an_image_block(candidate, claude, ohlcv):
     chart = render_chart("AAA", ohlcv("burst"))
     score_candidate(candidate, make_lynch(), CONTEXT, chart)

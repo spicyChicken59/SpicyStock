@@ -996,9 +996,16 @@ def test_the_ledger_row_is_the_judgement_next_to_what_followed_it(
               if r["ticker"] == "BURST"]
     assert set(row) == {"ticker", "date", "rank", "score", "verdict", "source",
                         "close", "gain_pct", "volume_ratio", "lynch_passes",
-                        "lynch_total", "checks", "forward_returns"}
+                        "lynch_total", "checks", "context", "forward_returns"}
     assert set(row["checks"]) == {"2", "L", "Y", "N", "C", "H"}
     assert sum(row["checks"].values()) == row["lynch_passes"]
+    # `context` is here because the ledger is the only file that survives the
+    # next run, and everything in it was measured BEFORE the outcome beside it.
+    # Two of this screener's rules -- the up-days veto and the base-breakdown
+    # criterion -- are justified by being evaluable later, and until this key
+    # was kept there was nowhere for that evidence to accumulate.
+    assert {"consecutive_up_days", "worst_base_day_pct"} <= set(row["context"])
+    assert all(v is None or isinstance(v, (int, float)) for v in row["context"].values())
 
 
 # ===========================================================================
@@ -2011,6 +2018,23 @@ MALFORMED_SNAPSHOTS = {
     "context is a string": (_row(context="x"), "context"),
     "context is a list": (_row(context=[1]), "context"),
     "streak.unknown_reason is unhashable": (_streak(day=None, unknown_reason=["x"]), "unknown_reason"),
+    # last_outcome sits ONE FIELD from unknown_reason and is looked up the same
+    # way -- LAST_OUTCOME.get(outcome) -- so an unhashable one is a TypeError
+    # and not a miss. The guard was written for unknown_reason, with a comment
+    # naming that exact mechanism, and its neighbour was not swept. Found by
+    # an audit of the commit that edited LAST_OUTCOME.
+    "streak.last_outcome is a list": (_streak(last_outcome=["scored"]), "last_outcome"),
+    "streak.last_outcome is a dict": (_streak(last_outcome={"was": "scored"}), "last_outcome"),
+    "streak.last_outcome is a number": (_streak(last_outcome=3), "last_outcome"),
+    # The sweep that finding prompted. This one does not crash: it reaches
+    # _plural() and renders "[1, 2] sessions in the record", a fabricated
+    # sentence with nothing about it saying it is wrong.
+    "streak.history_sessions is a list": (
+        _streak(day=None, unknown_reason="window_not_covered", history_sessions=[1, 2]),
+        "history_sessions"),
+    "streak.history_sessions is a string": (
+        _streak(day=None, unknown_reason="window_not_covered", history_sessions="8"),
+        "history_sessions"),
     "streak.seen_before is a string": (
         _streak(day=None, unknown_reason="no_history", seen_before="3"), "seen_before"),
     "streak.seen_before is a list": (
