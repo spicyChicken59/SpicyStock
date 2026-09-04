@@ -1,12 +1,22 @@
 """
 Layer 1 — Simplified Alpaca-based market scanner.
 
-Per-symbol conditions, all checked by detect_setup() on one frame:
-  1. Price % change >= 4% vs. yesterday's close
-  2. Today's volume >= yesterday's volume
+Per-symbol conditions:
+  1. Price % change >= 4% vs. yesterday's close        } checked by
+  2. Today's volume >= yesterday's volume              } detect_setup()
   3. Today's volume >= min_rvol x the stock's OWN trailing volume average
-  4. Not a biotech stock
-  5. Price > $4.00
+  5. Price > $4.00                                     }
+
+  4. Not a biotech stock — NOT CHECKED BY ANY CODE. detect_setup takes
+     (df, cfg) and never sees a ticker, so it structurally cannot apply a
+     sector rule; the only thing enforcing this is the hand-curated contents
+     of data/symbols.txt, whose own header says so. This list used to open
+     "all checked by detect_setup()", which was false in that one line, while
+     a comment beside rule 5 in this same file admitted the rule was curation.
+     It matters far more than a stale sentence: replacing the curated symbol
+     file with a generated universe would DELETE A NAMED STRATEGY RULE, with
+     the whole suite green and no surface reporting it. Whatever generates
+     that universe has to answer for rule 4 or say plainly that it does not.
 
 And one cross-sectional condition, applied by run_scan() over the whole batch:
   6. Dollar volume at or above the min_dollar_volume_pctile percentile of
@@ -434,7 +444,18 @@ def get_universe(symbols_file: str | Path | None = None) -> list[str]:
 
 def _download_batch(data_client, tickers, cfg: ScanConfig,
                     session: date) -> dict[str, pd.DataFrame]:
-    """One /stocks/bars call, for the window ending at `session`.
+    """One get_stock_bars() call, for the window ending at `session`.
+
+    ONE SDK CALL, NOT ONE HTTP REQUEST — the first line of this docstring said
+    "One /stocks/bars call" and that is not what happens. get_stock_bars passes
+    page_size=10_000 and alpaca-py's _get_marketdata loops on next_page_token
+    until it is null, so a 100-symbol batch over this window is ~28,600 bars
+    and three GETs. Counted, not read: a fake transport served the pages and
+    logged three requests with tokens [None, '10000', '20000'].
+
+    The consequence is worth keeping, because it inverts the obvious tuning
+    move: request count is governed by TOTAL BARS, not by batch_size, so
+    raising batch_size to cut requests buys almost nothing at this window.
 
     Four fields Alpaca would otherwise default for us, and why each is set:
 

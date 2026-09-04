@@ -343,6 +343,16 @@ const horizon = (k) => {
 // README used to say so as a known way for the script to throw.
 // The page's own date format ('12 Aug 2026'), for matching a row by its session.
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// The page prints every funnel count through commas() -> toLocaleString, so a
+// comparison against String(n) is identical up to 999 and wrong from 1,000.
+// That was a live landmine under the widening this rebuild is heading for:
+// verified by setting the fixture's universe to 999 (134/134) and to 1,000
+// (133/134). The `wide` variant has set size 5000 since it was written, with
+// a comment saying "where the rebuild is heading", and passed throughout —
+// because it never compared a printed number. Third instance of the class the
+// 3.1 audit named: a docs/-facing check that cannot fail in the state it was
+// written for.
+const shown = (n) => Number(n).toLocaleString('en-US');
 const fmtDay = (iso) => { const p = String(iso).slice(0, 10).split('-'); return `${Number(p[2])} ${MONTHS[Number(p[1]) - 1]} ${p[0]}`; };
 const money = (v) => (v === null || v === undefined ? 'pending' : (v > 0 ? '+' : '') + v.toFixed(2) + '%');
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
@@ -384,10 +394,10 @@ ok('the funnel draws every stage from the universe to the shortlist',
   funnel.kept.length === STAGES.length && funnel.rows.length === STAGES.length && funnel.lost === STAGES.length - 1,
   `${funnel.kept.length} bars, ${funnel.rows.length} rows, ${funnel.lost} drop segments`);
 ok('and the stages are the run\'s own numbers, named and in order',
-  funnel.rows.every((r, i) => r[0].startsWith(STAGES[i][0]) && r[1] === String(STAGES[i][1])),
+  funnel.rows.every((r, i) => r[0].startsWith(STAGES[i][0]) && r[1] === shown(STAGES[i][1])),
   JSON.stringify(funnel.rows.map((r) => r[1])) + ' vs ' + JSON.stringify(STAGES.map((x) => x[1])));
 ok('every drop is the difference between the two stages either side of it',
-  funnel.rows.every((r, i) => r[3] === (i === 0 ? '\u2014' : '\u2212' + (STAGES[i - 1][1] - STAGES[i][1]))),
+  funnel.rows.every((r, i) => r[3] === (i === 0 ? '\u2014' : '\u2212' + shown(STAGES[i - 1][1] - STAGES[i][1]))),
   JSON.stringify(funnel.rows.map((r) => r[3])));
 // The point of the figure: 5 of 230 has to LOOK like 5 of 230. A per-row
 // rescale would draw five near-equal bars and hide the attrition entirely.
@@ -399,7 +409,7 @@ ok('the stages share one scale, so the narrowing is visible and not just stated'
 const worstDrop = STAGES.slice(1).map(([name, v], i) => ({ name, lost: STAGES[i][1] - v }))
   .reduce((a, b) => (b.lost > a.lost ? b : a));
 ok('the page names where the attrition actually is',
-  (await page.textContent('#funnel-hint')).includes(String(worstDrop.lost))
+  (await page.textContent('#funnel-hint')).includes(shown(worstDrop.lost))
   && (await page.textContent('#funnel-hint')).includes(worstDrop.name),
   `${worstDrop.lost} at ${worstDrop.name}`);
 
@@ -952,7 +962,17 @@ ok('a stage worth a thousandth of the universe is still drawn, not rounded away'
   wide.kept.length === STAGES.length && wide.kept.every((w) => w >= 3),
   wide.kept.map((w) => w.toFixed(2)).join(' '));
 ok('and it still says how many names it is',
-  wide.last.includes(String(run.shortlist_size)), wide.last.slice(0, 90));
+  wide.last.includes(shown(run.shortlist_size)), wide.last.slice(0, 90));
+// The check the `wide` variant existed for and never made: that a FOUR-DIGIT
+// universe still reads back as the number the run holds. Comparing String(n)
+// here is what broke at 1,000, and nothing noticed because this variant only
+// ever measured bar widths.
+const wideRows = await page.$$eval('#funnel-table tbody tr',
+  (rows) => rows.map((r) => [...r.children].map((c) => c.textContent.trim())));
+ok('and a four-digit universe reads back as the number the run holds',
+  wideRows.length === STAGES.length && wideRows[0][1] === shown(5000)
+  && wideRows[0][1] !== String(5000),
+  `${wideRows.length ? wideRows[0][1] : 'no rows'} — and String(5000) is ${String(5000)}`);
 await page.setViewportSize({ width: 1280, height: 1000 });
 
 // --- enough sessions for the page to change its mind -----------------------
