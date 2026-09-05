@@ -298,6 +298,17 @@ const VARIANTS = {
     return d;
   },
   // The pipeline has never run, or the write failed.
+  // A snapshot from before round 5: no run.liquidity, no liquidity_floor
+  // rows, no evidence.illiquid. The page must not tell that run it enforced
+  // a floor it never recorded, on the funnel, the gated hint or the ladder.
+  noliquidity() {
+    const d = clone(REAL);
+    delete d.run.liquidity;
+    d.gated_out = d.gated_out.filter((g) => g.reason !== 'liquidity_floor');
+    d.run.bursts -= REAL.gated_out.filter((g) => g.reason === 'liquidity_floor').length;
+    delete d.evidence.illiquid;
+    return d;
+  },
   nodata() { return null; }
 };
 
@@ -575,6 +586,21 @@ ok('and the code keeps its casing through a sheet that lowercases chips',
 // a key can be present and say the wrong thing.
 const hint = await page.textContent('#gated-hint');
 const vetoedRows = REAL.gated_out.filter((g) => String(g.reason).startsWith('veto_')).length;
+// The fourth reason, on the same three surfaces the veto was pinned on:
+// the why cell, the gated hint (with the floor in dollars, read off
+// run.liquidity rather than retyped), and the funnel caption.
+const illiquidRows = REAL.gated_out.filter((g) => g.reason === 'liquidity_floor').length;
+const floorDollars = '$' + Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(REAL.run.liquidity.floor);
+ok('a burst the liquidity floor refused says so in its why cell, not that the gate rejected it',
+  illiquidRows > 0 && whyCells.filter((t) => t.startsWith('refused by the liquidity floor')).length === illiquidRows,
+  `${illiquidRows} liquidity rows; cells: ${whyCells.filter((t) => t.startsWith('refused by the liquidity')).length}`);
+ok('and the sentence above the gated table gives the floor its own clause, with the dollar figure the run recorded',
+  hint.includes(`${illiquidRows} below the liquidity floor (${floorDollars}/day`)
+  && hint.includes(`the ${REAL.run.liquidity.pctile}th percentile`),
+  hint.slice(0, 200));
+ok('and that clause does not fold the liquidity rows into the checklist count',
+  hint.includes(`${REAL.gated_out.filter((g) => g.reason === 'lynch_gate').length} rejected at the`),
+  hint.slice(0, 200));
 ok('and the sentence above the gated table gives the veto its own clause',
   vetoedRows === 0
   || (hint.includes(`${vetoedRows} refused by an absolute rule`) && !/\d+ refused at the/.test(hint)),
@@ -601,6 +627,17 @@ ok('the funnel says an absolute rule can cut a name at the gate stage, when the 
 // against a snapshot carrying no gate.vetoes at all: naming a rule that run
 // never applied is the confidently-false sentence, and asserting only the
 // positive branch left the guard deletable with everything green.
+ok('the funnel caption names the floor at the stage it cuts, with the same dollar figure',
+  caption.includes(`below the liquidity floor (${floorDollars}/day`),
+  caption.slice(0, 200));
+await open('/v/noliquidity/');
+const noLiqCaption = (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent))).join(' ');
+const noLiqHint = await page.textContent('#gated-hint');
+const noLiqLadder = await page.$$eval('#control-table tbody tr', (rows) => rows.map((r) => r.textContent));
+ok('a snapshot from before rule 6 was archived is not told it enforced a floor',
+  !noLiqCaption.includes('liquidity floor') && !noLiqHint.includes('liquidity floor')
+  && !noLiqLadder.some((l) => /illiquid/.test(l)),
+  `caption: ${noLiqCaption.includes('liquidity floor')}, hint: ${noLiqHint.includes('liquidity floor')}, ladder rows: ${noLiqLadder.length}`);
 await open('/v/novetoes/');
 const oldCaption = (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent))).join(' ');
 const oldHint = await page.textContent('#gated-hint');
@@ -820,11 +857,18 @@ ok('and the checklist split accounts for all of them',
 // did exactly that on the first version of this line.
 const clearedCell = (checks.rows[0] || [])[3] || '';
 const clearedShown = Number((clearedCell.match(/of (\d+)$/) || [])[1]);
+// Since round 5 a second kind of row clears the checklist without being in
+// run.passed_gate: one rule 6 refused before the gate saw it, whose pass
+// count happens to clear the bar. It was never AT the gate, so it is on the
+// cleared side of a split about check quality for the same reason a vetoed
+// 6/6 is, and the fixture holds one of each kind on purpose.
+const clearedButNeverGated = REAL.gated_out.filter((g) =>
+  String(g.reason).startsWith('veto_')
+  || (g.reason === 'liquidity_floor' && g.lynch_passes >= REAL.run.gate.min_lynch_passes)).length;
 ok('and it is the checklist that splits them, not the gate a veto also guards',
-  Number.isFinite(clearedShown)
-  && clearedShown - run.passed_gate
-     === REAL.gated_out.filter((g) => String(g.reason).startsWith('veto_')).length,
-  `page shows ${clearedShown} cleared the checklist, run.passed_gate is ${run.passed_gate}`);
+  Number.isFinite(clearedShown) && clearedShown - run.passed_gate === clearedButNeverGated,
+  `page shows ${clearedShown} cleared the checklist, run.passed_gate is ${run.passed_gate}, ` +
+  `${clearedButNeverGated} cleared it without reaching the gate`);
 ok('and the column says checklist, so the two are not read as one number',
   (await page.$$eval('#checks-table thead th', (th) => th.map((t) => t.textContent.trim())))
     .includes('cleared the checklist'));
@@ -1278,15 +1322,26 @@ const hLadder = await page.$$eval('#control-table tbody tr', (rows) => rows.map(
 // FAIL line printed and read, to a count of failures, as a pass.
 const rowFor = (label) => hLadder.find((l) => l.startsWith(label)) || '';
 const countIn = (label) => Number((rowFor(label).match(new RegExp(label + '.*?(\\d+)')) || [])[1]);
-ok('the alternative is on the page as four disjoint populations, and says which is which',
-  hLadder.length === 4 && rowFor('the shortlist') && rowFor('what it refused')
-  && /call cap/.test(rowFor('the crowded-out')),
+ok('the alternative is on the page as five disjoint populations, and says which is which',
+  hLadder.length === 5 && rowFor('the shortlist') && rowFor('what it refused')
+  && /call cap/.test(rowFor('the crowded-out')) && /liquidity floor/.test(rowFor('the illiquid')),
   hLadder.map((l) => l.slice(0, 36)).join(' | ') || 'no ladder rendered');
 ok('and each row prints the setup count the ledger computed for that population',
   countIn('what it refused') === HIST.evidence.refused.setups
   && countIn('the crowded-out') === HIST.evidence.crowded_out.setups
-  && countIn('the shortlist') === HIST.evidence.shortlist.setups,
-  `refused ${HIST.evidence.refused.setups}, crowded ${HIST.evidence.crowded_out.setups}, shortlist ${HIST.evidence.shortlist.setups}`);
+  && countIn('the shortlist') === HIST.evidence.shortlist.setups
+  && countIn('the illiquid') === HIST.evidence.illiquid.setups,
+  `refused ${HIST.evidence.refused.setups}, crowded ${HIST.evidence.crowded_out.setups}, shortlist ${HIST.evidence.shortlist.setups}, illiquid ${HIST.evidence.illiquid.setups}`);
+// Rule 6's refusals are a population of their own and NOT part of the
+// control: a thirty-run record with liquidity rows in it must show them on
+// the ladder row that names the floor, and the verdict sentence must still
+// compare picks against what the STRATEGY refused, whose n is unchanged by
+// however many thin names the floor cut.
+ok('and the illiquid row holds setups the refused row does not count',
+  HIST.evidence.illiquid.setups > 0
+  && HIST.evidence.illiquid.setups + HIST.evidence.refused.setups + HIST.evidence.crowded_out.setups
+     + HIST.evidence.shortlist.setups + HIST.evidence.rest.setups === HIST.evidence.record.setups,
+  `illiquid ${HIST.evidence.illiquid.setups} of ${HIST.evidence.record.setups} setups`);
 ok('over thirty runs the control sentence carries both sides\' n and says which did better',
   (hPicks.n >= hEv.min_setups && hEv.refused.enough)
     ? (/did (better|WORSE|no differently)/.test(hv) && hv.includes(`over ${hPicks.n} setup`) && hv.includes(`over ${hRef.n} setup`))
@@ -1364,22 +1419,30 @@ for (const run of LEDGER.runs) {
     byTicker.get(row.ticker).push(row);
   }
 }
-let refusedOnScreen = 0, gatedOnScreen = 0;
+let refusedOnScreen = 0, gatedOnScreen = 0, illiquidOnScreen = 0;
 for (const rows of byTicker.values()) {
   rows.sort((a, b) => String(b.date).localeCompare(String(a.date)));
   for (const r of rows.slice(0, 6)) {
     if (r.score !== null && r.score !== undefined) continue;
     if (String(r.reason || '').startsWith('veto_')) refusedOnScreen++;
     else if (r.reason === 'lynch_gate') gatedOnScreen++;
+    else if (r.reason === 'liquidity_floor') illiquidOnScreen++;
   }
 }
 const perName = await page.textContent('#ticker-table');
 const saidRefused = (perName.match(/refused by an absolute rule/g) || []).length;
 const saidGated = (perName.match(/rejected at the gate/g) || []).length;
+const saidIlliquid = (perName.match(/below the liquidity floor/g) || []).length;
 ok('a burst an absolute rule refused says so in the per-name record too',
   refusedOnScreen > 0 && saidRefused === refusedOnScreen && saidGated === gatedOnScreen,
   `${refusedOnScreen} refusals and ${gatedOnScreen} gate rejections reachable; ` +
   `page said ${saidRefused} and ${saidGated}`);
+// The fourth word, on the same surface and by the same arithmetic: a burst
+// rule 6 refused is neither a veto nor a gate rejection, and the history is
+// the one source whose ledger holds them.
+ok('and a burst the liquidity floor refused says that, not that the gate rejected it',
+  illiquidOnScreen > 0 && saidIlliquid === illiquidOnScreen,
+  `${illiquidOnScreen} liquidity refusals reachable; page said ${saidIlliquid}`);
 await shot('history-desktop-dark');
 
 // --- the checks that must hold for ANY run ---------------------------------

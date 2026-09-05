@@ -153,6 +153,17 @@ WINDOW_NOT_COVERED = "window_not_covered"    # it does not reach back far enough
 #: imports this list rather than holding a second copy, so the hand-authored
 #: fixture and the pipeline's real output can never describe different contracts
 #: — the same reason that generator imports src.lynch's thresholds.
+#: The reason word for a burst rule 6 refused: dollar volume below the
+#: session's percentile floor. Defined here, beside the contract that names
+#: it, because the ledger is where the word has to survive -- src.pipeline
+#: writes it into gated_out[].reason, src.emailer and docs/index.html render
+#: it, and evidence() keeps the rows carrying it in a population of their own.
+#: Not a `veto_` word on purpose: those derive from src.lynch's VETO_RULES and
+#: are judged on a frame the checklist has already seen; this one is judged in
+#: the scanner against every other name that traded, before the checklist is
+#: consulted at all.
+LIQUIDITY_REASON = "liquidity_floor"
+
 CONTRACT_INVARIANTS = [
     "candidates holds EVERY scored candidate, ranked by score descending, and is never truncated: len(candidates) == run.scored. The top run.shortlist_size of them are the shortlist that went out by email.",
     "run.scored + len(gated_out) == run.bursts. Nothing a scan found may vanish without appearing in one of the two lists.",
@@ -163,10 +174,11 @@ CONTRACT_INVARIANTS = [
     "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
     "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
     "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
-    "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'veto_up_days' (an absolute rule refused it before the checklist was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same three words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and a veto is never published as a gate rejection.",
+    "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'liquidity_floor' (rule 6 refused it in the scan, for dollar volume below the session's percentile floor, before the checklist was consulted), 'veto_up_days' (an absolute rule refused it before the pass count was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same four words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and neither a veto nor a liquidity refusal is ever published as a gate rejection.",
+    "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when no name traded or the rule is off), refused (how many bursts sat below it). run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
     "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
     "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
-    "evidence.shortlist, evidence.rest, evidence.refused and evidence.crowded_out are four disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, and the names that cleared the gate and were never scored because the call budget filled. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked.",
+    "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
     "Numbers are numbers or null. No 'n/a' strings.",
 ]
 
@@ -855,6 +867,11 @@ def gated_record(cand, lynch_result: dict, context: dict, reason: str,
         "gain_pct": _num(cand.gain_pct),
         "volume": _num(getattr(cand, "volume", None)),
         "volume_ratio": _num(cand.volume_ratio),
+        # The number rule 6 judged, on every gated row and not only the ones
+        # it refused: a reader of a liquidity_floor row needs it beside
+        # run.liquidity.floor, and a reader of any other row can see how far
+        # above the floor a name the checklist rejected was trading.
+        "dollar_volume": _num(getattr(cand, "dollar_volume", None)),
         "lynch": lynch_result["summary"],
         "lynch_passes": _num(lynch_result["passes"]),
         "lynch_total": _num(lynch_result["total"]),
@@ -1304,7 +1321,11 @@ def evidence(runs: list[dict]) -> dict:
     # way out, so it counts as refused. Leading rows only, as everywhere.
     unscored = [chain[0] for chain in chains.values() if not any(_scored(r) for r in chain)]
     crowded = [r for r in unscored if r.get("reason") == "score_cap"]
-    refused = [r for r in unscored if r.get("reason") != "score_cap"]
+    # Rule 6's refusals are a population of their own, and NOT part of the
+    # control: their forward returns are bar prices on names the rule says
+    # are too thin to trade at those prices. See the contract sentence.
+    illiquid = [r for r in unscored if r.get("reason") == LIQUIDITY_REASON]
+    refused = [r for r in unscored if r.get("reason") not in ("score_cap", LIQUIDITY_REASON)]
     return {
         "min_setups": MIN_SETUPS_FOR_A_RATE,
         "band": {"low": CLAIMED_BAND[0], "high": CLAIMED_BAND[1]},
@@ -1332,6 +1353,7 @@ def evidence(runs: list[dict]) -> dict:
         "rest": _population(others),
         "refused": _population(refused),
         "crowded_out": _population(crowded),
+        "illiquid": _population(illiquid),
     }
 
 
@@ -1698,6 +1720,10 @@ class Ledger:
             # record could not be tested for what it records -- but it says
             # what it is, and README says how to put the file back.
             "universe": run.get("universe"),
+            # And the liquidity floor it applied, in dollars: the one number
+            # the open decision about widening the universe turns on, and the
+            # one a row refused under it has to be read against.
+            "liquidity": run.get("liquidity"),
             "candidates": [slim_row(c, scored=True) for c in candidates],
             "gated": [slim_row(g, scored=False) for g in gated],
         }

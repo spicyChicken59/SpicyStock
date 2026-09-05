@@ -564,17 +564,23 @@
   // rule did, and it may well have passed 6/6. src/emailer.py's LAST_OUTCOME
   // is the same map in the same words, and src.pipeline.VETO_REASONS is where
   // the key comes from.
+  // liquidity_floor is a fourth, and the one that reached no surface at all
+  // until round 5: rule 6 refused it in the scan, against every other name
+  // that traded, before the checklist was consulted. src.ledger's
+  // LIQUIDITY_REASON is the key, and run.liquidity carries the floor.
   var LAST_OUTCOME = {
     lynch_gate: 'rejected at the 2LYNCH gate',
     score_cap: 'passed the gate, but the run had already sent its limit of candidates to Claude',
-    veto_up_days: 'refused outright — it burst after three or more consecutive up days'
+    veto_up_days: 'refused outright — it burst after three or more consecutive up days',
+    liquidity_floor: 'refused by the liquidity floor — its dollar volume was below the session\u2019s percentile cut, so the checklist was never consulted'
   };
-  // Short forms of the same three, for the places a sentence has no room for
+  // Short forms of the same four, for the places a sentence has no room for
   // the full phrase. Every key above has one, and a check below proves it.
   var OUTCOME_SHORT = {
     lynch_gate: 'rejected at the gate',
     score_cap: 'over the call cap',
-    veto_up_days: 'refused by an absolute rule'
+    veto_up_days: 'refused by an absolute rule',
+    liquidity_floor: 'below the liquidity floor'
   };
   // A number is required for the scored sentence, not just the word: a row
   // marked scored with no score in it would print 'scored —/10', and the
@@ -641,7 +647,8 @@
            + 'counts, are every session the scan found a burst on for that name — '
            + 'including the ones that were never scored, whether '
            + 'the checklist rejected them, '
-           + 'an absolute rule refused them, or '
+           + 'an absolute rule refused them, '
+           + 'the liquidity floor refused them, or '
            + 'the call cap crowded them out. '
            + 'Neither is N nights of confirmation. '
            + (s.seen_before || 0) + ' earlier session(s) in the ledger.',
@@ -802,6 +809,18 @@
   // Each row draws the previous stage in context grey behind the count that
   // survived, and the caption under it names the loss and its cause — the
   // reader never has to subtract two tiles to find where the run narrowed.
+  // run.liquidity, when the run wrote one and it is the shape the pipeline
+  // writes. Absent on every snapshot from before round 5, and a page that
+  // read it unguarded would print "the undefinedth percentile".
+  function liquidityOf(run) {
+    var l = run && run.liquidity;
+    return l && typeof l === 'object' && !Array.isArray(l) ? l : null;
+  }
+  function floorText(run) {
+    var l = liquidityOf(run) || {};
+    var floor = typeof l.floor === 'number' && isFinite(l.floor) ? '$' + big(l.floor) + '/day' : 'floor not recorded';
+    return typeof l.pctile === 'number' ? floor + ', the ' + l.pctile + 'th percentile' : floor;
+  }
   function funnelStages(run) {
     var g = run.gate || {};
     var short = run.shortlist_size || 0;
@@ -827,7 +846,11 @@
         why: (g.total_checks && g.min_lynch_passes ? 'under ' + g.min_lynch_passes + ' of ' + g.total_checks + ' checks'
               : g.min_lynch_passes ? 'under ' + g.min_lynch_passes + ' checks passed'
               : 'below the gate') +
-             ((g.vetoes || []).length ? ', or refused by an absolute rule' : ''),
+             ((g.vetoes || []).length ? ', or refused by an absolute rule' : '') +
+             // Rule 6's cut lands at this stage too, and only when the run
+             // recorded applying it: a snapshot from before run.liquidity
+             // existed must not be told it enforced a floor.
+             (liquidityOf(run) ? ', or below the liquidity floor (' + floorText(run) + ')' : ''),
         note: g.total_checks && g.min_lynch_passes ? 'the ' + g.min_lynch_passes + '/' + g.total_checks + ' gate'
               : g.min_lynch_passes ? 'the ≥' + g.min_lynch_passes + '-pass gate'
               : 'the gate' },
@@ -1162,11 +1185,16 @@
   // crowded out is kept off the "refused" side on purpose: those names
   // cleared the gate, so counting them as the alternative would let a full
   // night pad the control with names the screener liked.
+  // The fifth row is not part of the control either, for the opposite
+  // reason: rule 6 refused those names as too thin to trade at the prices
+  // the bars print, so their returns overstate what a reader could have
+  // paid. Shown beside the ladder, never folded into "what it refused".
   var POPULATIONS = [
     ['shortlist', 'went out by email', 'the shortlist'],
     ['rest', 'scored, ranked below the shortlist', 'the rest of the scored'],
     ['refused', 'refused by the checklist or an absolute rule', 'what it refused'],
-    ['crowded_out', 'cleared the gate; never scored, the call cap had filled', 'the crowded-out']
+    ['crowded_out', 'cleared the gate; never scored, the call cap had filled', 'the crowded-out'],
+    ['illiquid', 'below the liquidity floor; bar returns a thin name could not capture', 'the illiquid']
   ];
   function controlVerdict(ev) {
     var h = longestOf(ev);
@@ -1195,7 +1223,9 @@
     $('control-hint').textContent =
       'The one comparison the record can make without a benchmark it does not hold: every burst the scan found, ' +
       'split by what this screener did with it, against what the next sessions did. Refusals are the strategy\u2019s ' +
-      'own judgement; the crowded-out row is the call budget\u2019s, and is kept off that side for that reason.';
+      'own judgement; the crowded-out row is the call budget\u2019s, and is kept off that side for that reason. ' +
+      'The illiquid row is rule 6\u2019s, kept off it for the opposite reason: those returns are bar prices on names ' +
+      'the rule says are too thin to be bought at them.';
     $('control-verdict').textContent = controlVerdict(ev);
     table($('control-table'),
       ['what the screener did', 'setups'].concat(ev.horizons.map(hzLabel)).concat(['in the claimed band', 'reads as']),
@@ -1656,10 +1686,14 @@
     // of what happened. Only the clauses with a count in them are printed,
     // so a run with no vetoes reads exactly as it did before.
     var vetoed = gated.filter(function (g) { return String(g.reason).indexOf('veto_') === 0; }).length;
-    var byGate = gated.length - capped - vetoed;
+    // And a fourth: rule 6's refusals, which never reached the checklist and
+    // must not be counted as its rejections either.
+    var illiquid = gated.filter(function (g) { return g.reason === 'liquidity_floor'; }).length;
+    var byGate = gated.length - capped - vetoed - illiquid;
     var why = [];
     if (byGate) why.push(byGate + ' rejected at the ' + gateTxt + ' 2LYNCH gate');
     if (vetoed) why.push(vetoed + ' refused by an absolute rule whatever the checklist said');
+    if (illiquid) why.push(illiquid + ' below the liquidity floor (' + floorText(run) + ') and never measured against it');
     if (capped) why.push(capped + ' passed the gate but ranked below the ' + (run.score_cap || 'capped number of') +
                          ' candidates this run sent to Claude');
     // The one place the limit gets a NUMBER. The cells below and the streak

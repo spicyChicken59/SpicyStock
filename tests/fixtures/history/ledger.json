@@ -20,6 +20,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 190247596.4,
+        "refused": 0
+      },
       "candidates": [
         {
           "ticker": "IBM",
@@ -355,6 +360,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 187495350,
+        "refused": 0
+      },
       "candidates": [
         {
           "ticker": "ABT",
@@ -552,6 +562,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 204469510.6,
+        "refused": 0
       },
       "candidates": [
         {
@@ -779,6 +794,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 270157178.6,
+        "refused": 0
       },
       "candidates": [
         {
@@ -1086,6 +1106,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 210146671.8,
+        "refused": 0
+      },
       "candidates": [
         {
           "ticker": "ELV",
@@ -1389,6 +1414,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 211054539,
+        "refused": 0
+      },
       "candidates": [
         {
           "ticker": "USB",
@@ -1622,6 +1652,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 193721823.8,
+        "refused": 0
+      },
       "candidates": [
         {
           "ticker": "USB",
@@ -1781,6 +1816,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 223775606.6,
+        "refused": 0
       },
       "candidates": [
         {
@@ -2111,6 +2151,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 161887274.6,
+        "refused": 0
+      },
       "candidates": [
         {
           "ticker": "DHI",
@@ -2260,7 +2305,7 @@
     {
       "date": "2026-08-19",
       "type": "evening",
-      "bursts": 4,
+      "bursts": 5,
       "passed_gate": 2,
       "scored": 2,
       "shortlist_size": 2,
@@ -2273,6 +2318,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 149343306.2,
+        "refused": 1
       },
       "candidates": [
         {
@@ -2410,6 +2460,38 @@
             "d5": 24.98,
             "as_of": "2026-08-26"
           }
+        },
+        {
+          "ticker": "ODFL",
+          "date": "2026-08-19",
+          "reason": "liquidity_floor",
+          "close": 18.82,
+          "gain_pct": 5.73,
+          "volume_ratio": 3,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "context": {
+            "pct_off_52w_high": -0.3,
+            "pct_above_52w_low": 59.7,
+            "consecutive_up_days": 6,
+            "worst_base_day_pct": -2.1,
+            "perf_3mo_pct": 33.2,
+            "perf_6mo_pct": 50.5
+          },
+          "forward_returns": {
+            "d1": -3.69,
+            "d3": -9.08,
+            "d5": -12.75,
+            "as_of": "2026-08-26"
+          }
         }
       ],
       "forward_returns": {
@@ -2423,7 +2505,7 @@
     {
       "date": "2026-08-18",
       "type": "evening",
-      "bursts": 4,
+      "bursts": 5,
       "passed_gate": 2,
       "scored": 2,
       "shortlist_size": 2,
@@ -2436,6 +2518,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 166255999,
+        "refused": 1
       },
       "candidates": [
         {
@@ -2573,6 +2660,38 @@
             "d5": 5.27,
             "as_of": "2026-08-25"
           }
+        },
+        {
+          "ticker": "ODFL",
+          "date": "2026-08-18",
+          "reason": "liquidity_floor",
+          "close": 17.8,
+          "gain_pct": 5.24,
+          "volume_ratio": 2.97,
+          "lynch_passes": 5,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": true,
+            "Y": true,
+            "N": true,
+            "C": true,
+            "H": false
+          },
+          "context": {
+            "pct_off_52w_high": -2.5,
+            "pct_above_52w_low": 51.1,
+            "consecutive_up_days": 5,
+            "worst_base_day_pct": -2.1,
+            "perf_3mo_pct": 24,
+            "perf_6mo_pct": 39.4
+          },
+          "forward_returns": {
+            "d1": 5.73,
+            "d3": -0.05,
+            "d5": -3.97,
+            "as_of": "2026-08-25"
+          }
         }
       ],
       "forward_returns": {
@@ -2599,6 +2718,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 169311660.6,
+        "refused": 0
       },
       "candidates": [
         {
@@ -2868,6 +2992,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 155884278,
+        "refused": 0
+      },
       "candidates": [
         {
           "ticker": "XOM",
@@ -3033,6 +3162,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 134251181.8,
+        "refused": 0
       },
       "candidates": [
         {
@@ -3232,6 +3366,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 192993291.60000002,
+        "refused": 0
+      },
       "candidates": [
         {
           "ticker": "MPC",
@@ -3421,7 +3560,7 @@
     {
       "date": "2026-08-11",
       "type": "evening",
-      "bursts": 5,
+      "bursts": 6,
       "passed_gate": 4,
       "scored": 4,
       "shortlist_size": 4,
@@ -3434,6 +3573,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 176002148.4,
+        "refused": 1
       },
       "candidates": [
         {
@@ -3609,6 +3753,38 @@
             "d5": -21.88,
             "as_of": "2026-08-18"
           }
+        },
+        {
+          "ticker": "QCOM",
+          "date": "2026-08-11",
+          "reason": "liquidity_floor",
+          "close": 25.35,
+          "gain_pct": 6.07,
+          "volume_ratio": 2.79,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "context": {
+            "pct_off_52w_high": -0.2,
+            "pct_above_52w_low": 48.2,
+            "consecutive_up_days": 0,
+            "worst_base_day_pct": -1.2,
+            "perf_3mo_pct": 30.6,
+            "perf_6mo_pct": 30.7
+          },
+          "forward_returns": {
+            "d1": 0.47,
+            "d3": 0.79,
+            "d5": -0.48,
+            "as_of": "2026-08-18"
+          }
         }
       ],
       "forward_returns": {
@@ -3635,6 +3811,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 212691449.8,
+        "refused": 0
       },
       "candidates": [
         {
@@ -3802,6 +3983,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 166194170,
+        "refused": 0
+      },
       "candidates": [
         {
           "ticker": "WM",
@@ -3951,7 +4137,7 @@
     {
       "date": "2026-08-06",
       "type": "evening",
-      "bursts": 3,
+      "bursts": 4,
       "passed_gate": 2,
       "scored": 2,
       "shortlist_size": 2,
@@ -3964,6 +4150,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 170293802.20000002,
+        "refused": 1
       },
       "candidates": [
         {
@@ -4069,6 +4260,38 @@
             "d5": -1.46,
             "as_of": "2026-08-13"
           }
+        },
+        {
+          "ticker": "AZO",
+          "date": "2026-08-06",
+          "reason": "liquidity_floor",
+          "close": 61.73,
+          "gain_pct": 4.93,
+          "volume_ratio": 2.09,
+          "lynch_passes": 2,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": false,
+            "H": true
+          },
+          "context": {
+            "pct_off_52w_high": -0.9,
+            "pct_above_52w_low": 98.8,
+            "consecutive_up_days": 6,
+            "worst_base_day_pct": -0.5,
+            "perf_3mo_pct": 52.2,
+            "perf_6mo_pct": 56.7
+          },
+          "forward_returns": {
+            "d1": -0.04,
+            "d3": 0.22,
+            "d5": -1.12,
+            "as_of": "2026-08-13"
+          }
         }
       ],
       "forward_returns": {
@@ -4082,7 +4305,7 @@
     {
       "date": "2026-08-05",
       "type": "evening",
-      "bursts": 3,
+      "bursts": 4,
       "passed_gate": 0,
       "scored": 0,
       "shortlist_size": 0,
@@ -4095,6 +4318,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 176022991.8,
+        "refused": 1
       },
       "candidates": [],
       "gated": [
@@ -4193,6 +4421,38 @@
             "d5": 1.31,
             "as_of": "2026-08-12"
           }
+        },
+        {
+          "ticker": "AZO",
+          "date": "2026-08-05",
+          "reason": "liquidity_floor",
+          "close": 58.83,
+          "gain_pct": 7.59,
+          "volume_ratio": 2.01,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": false,
+            "C": true,
+            "H": true
+          },
+          "context": {
+            "pct_off_52w_high": -1.8,
+            "pct_above_52w_low": 89.5,
+            "consecutive_up_days": 5,
+            "worst_base_day_pct": -0.5,
+            "perf_3mo_pct": 45.4,
+            "perf_6mo_pct": 46.5
+          },
+          "forward_returns": {
+            "d1": 4.93,
+            "d3": 4.49,
+            "d5": 6.08,
+            "as_of": "2026-08-12"
+          }
         }
       ],
       "forward_returns": {
@@ -4206,7 +4466,7 @@
     {
       "date": "2026-08-04",
       "type": "evening",
-      "bursts": 7,
+      "bursts": 8,
       "passed_gate": 5,
       "scored": 5,
       "shortlist_size": 5,
@@ -4219,6 +4479,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 197150178.4,
+        "refused": 1
       },
       "candidates": [
         {
@@ -4461,6 +4726,38 @@
             "d5": 7.56,
             "as_of": "2026-08-11"
           }
+        },
+        {
+          "ticker": "XOM",
+          "date": "2026-08-04",
+          "reason": "liquidity_floor",
+          "close": 14.27,
+          "gain_pct": 6.34,
+          "volume_ratio": 2.08,
+          "lynch_passes": 3,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": false,
+            "Y": true,
+            "N": true,
+            "C": false,
+            "H": false
+          },
+          "context": {
+            "pct_off_52w_high": -7.8,
+            "pct_above_52w_low": 17.4,
+            "consecutive_up_days": 1,
+            "worst_base_day_pct": -2.2,
+            "perf_3mo_pct": 6.6,
+            "perf_6mo_pct": 1.3
+          },
+          "forward_returns": {
+            "d1": -0.87,
+            "d3": 4.57,
+            "d5": 5.32,
+            "as_of": "2026-08-11"
+          }
         }
       ],
       "forward_returns": {
@@ -4474,7 +4771,7 @@
     {
       "date": "2026-08-03",
       "type": "evening",
-      "bursts": 8,
+      "bursts": 9,
       "passed_gate": 5,
       "scored": 5,
       "shortlist_size": 5,
@@ -4487,6 +4784,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 191448670.20000002,
+        "refused": 1
       },
       "candidates": [
         {
@@ -4761,6 +5063,38 @@
             "d5": 7.78,
             "as_of": "2026-08-10"
           }
+        },
+        {
+          "ticker": "QCOM",
+          "date": "2026-08-03",
+          "reason": "liquidity_floor",
+          "close": 24.07,
+          "gain_pct": 5.69,
+          "volume_ratio": 2.15,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": false,
+            "L": true,
+            "Y": false,
+            "N": true,
+            "C": true,
+            "H": true
+          },
+          "context": {
+            "pct_off_52w_high": -1.7,
+            "pct_above_52w_low": 40.7,
+            "consecutive_up_days": 2,
+            "worst_base_day_pct": -2.8,
+            "perf_3mo_pct": 20.6,
+            "perf_6mo_pct": 19.9
+          },
+          "forward_returns": {
+            "d1": -0.66,
+            "d3": -0.4,
+            "d5": -0.67,
+            "as_of": "2026-08-10"
+          }
         }
       ],
       "forward_returns": {
@@ -4787,6 +5121,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 144648934.2,
+        "refused": 0
       },
       "candidates": [
         {
@@ -4985,6 +5324,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 162117771.6,
+        "refused": 0
       },
       "candidates": [
         {
@@ -5320,6 +5664,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 146821119.8,
+        "refused": 0
       },
       "candidates": [
         {
@@ -5697,6 +6046,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 145024717.20000002,
+        "refused": 0
+      },
       "candidates": [
         {
           "ticker": "PFE",
@@ -5991,6 +6345,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 151707698.4,
+        "refused": 0
+      },
       "candidates": [
         {
           "ticker": "KR",
@@ -6172,7 +6531,7 @@
     {
       "date": "2026-07-24",
       "type": "evening",
-      "bursts": 9,
+      "bursts": 10,
       "passed_gate": 8,
       "scored": 8,
       "shortlist_size": 5,
@@ -6185,6 +6544,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 179566162.2,
+        "refused": 1
       },
       "candidates": [
         {
@@ -6500,6 +6864,38 @@
             "d5": 2.74,
             "as_of": "2026-07-31"
           }
+        },
+        {
+          "ticker": "MGM",
+          "date": "2026-07-24",
+          "reason": "liquidity_floor",
+          "close": 15.49,
+          "gain_pct": 6.18,
+          "volume_ratio": 2.74,
+          "lynch_passes": 4,
+          "lynch_total": 6,
+          "checks": {
+            "2": true,
+            "L": false,
+            "Y": true,
+            "N": true,
+            "C": false,
+            "H": true
+          },
+          "context": {
+            "pct_off_52w_high": -16.5,
+            "pct_above_52w_low": 19.8,
+            "consecutive_up_days": 1,
+            "worst_base_day_pct": -2,
+            "perf_3mo_pct": 10.2,
+            "perf_6mo_pct": 9.2
+          },
+          "forward_returns": {
+            "d1": -0.3,
+            "d3": 0.5,
+            "d5": 7.81,
+            "as_of": "2026-07-31"
+          }
         }
       ],
       "forward_returns": {
@@ -6526,6 +6922,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 160537948.20000002,
+        "refused": 0
       },
       "candidates": [
         {
@@ -6764,6 +7165,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 140296815.20000002,
+        "refused": 0
       },
       "candidates": [
         {

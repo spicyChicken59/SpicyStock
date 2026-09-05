@@ -23,7 +23,9 @@ checked-in universe (data/symbols.txt, 230 names)
         ▼
 Layer 1  4% burst filter ............. ≥4% gain, vol ≥ yesterday, ≥1.5x its own
         │                              50-session average, price > $4, and in the
-        │                              top 70% of the day's dollar volume
+        │                              top 70% of the day's dollar volume —
+        │                              the bottom 30% are ARCHIVED as refused,
+        │                              not dropped (round 5)
         ▼  (a handful on a 230-name universe)
 Layer 2  2LYNCH checklist (code) ..... 2 first/second burst · L linear prior move
         │                              Y young trend · N narrow consolidation
@@ -220,7 +222,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 850 tests, no network or API keys needed
+pytest tests/                   # 865 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -307,13 +309,17 @@ clear `min_setups` at the longest horizon, and always prints both n's.
 
 Alongside those six, the block carries what a reader needs to interpret them:
 `evidence.record` (how many runs, sessions and setups are behind everything
-here), `evidence.overall` (the same measurement over every scored setup), four
+here), `evidence.overall` (the same measurement over every scored setup), five
 disjoint populations — `evidence.shortlist` and `evidence.rest` (the names that
 went out by email against the scored ones that did not), `evidence.refused`
-(what the checklist or an absolute rule rejected) and `evidence.crowded_out`
+(what the checklist or an absolute rule rejected), `evidence.crowded_out`
 (cleared the gate, never scored because the call budget filled — kept apart
 from the refusals so a full night cannot pad the control with names the
-screener liked) — `evidence.horizons` (which sessions after the
+screener liked) and `evidence.illiquid` (what rule 6 refused for dollar volume
+below the session's floor — kept apart from the refusals for the opposite
+reason: those forward returns are bar prices on names the rule says are too
+thin to be bought at them, so they are shown beside the control and never in
+it) — `evidence.horizons` (which sessions after the
 burst were measured) and `evidence.band` (the range the strategy claims).
 
 **`+3d` and `+5d` are the horizons that matter, and the page says so on every
@@ -355,8 +361,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 11.07 MB raw
-and **0.68 MB gzipped** after a full year. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 11.54 MB raw
+and **0.72 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -382,14 +388,21 @@ invariants live in the file rather than only here. The load-bearing ones:
   screener unevaluable. The cut now happens once, in `run()`, on the way to the
   email alone.
 - `run.scored + len(gated_out) == run.bursts`. Nothing a scan found may vanish.
-  A burst that went unscored carries `reason`: `veto_up_days` (an absolute rule
+  A burst that went unscored carries `reason`: `liquidity_floor` (rule 6
+  refused it in the scan, for dollar volume below the session's percentile
+  floor, before the checklist saw it), `veto_up_days` (an absolute rule
   refused it, whatever the checklist said), `lynch_gate` (it failed the
   checklist) or `score_cap` (it passed and fell outside `MAX_TO_SCORE`). The
-  three are different facts and no surface may collapse two of them: a vetoed
+  four are different facts and no surface may collapse two of them: a vetoed
   burst may have passed 6/6, so calling it a gate rejection states the
-  opposite of what happened. `run.gate.vetoes` names the absolute rules that
-  run applied, so a snapshot written before one existed is not described as
-  having enforced it.
+  opposite of what happened, and a name below the floor was never measured
+  against the checklist at all. `run.gate.vetoes` names the absolute rules that
+  run applied, and `run.liquidity` records the floor (`pctile`, `floor` in
+  dollars, `refused`), so a snapshot written before either existed is not
+  described as having enforced it. The liquidity refusals were the one class
+  the record did not hold until round 5: `apply_liquidity_gate()` logged them
+  and dropped them, so on the documented four-name smoke test the thinnest
+  name vanished and the funnel counted the other three as everything found.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
@@ -416,7 +429,8 @@ invariants live in the file rather than only here. The load-bearing ones:
   *"burst on 8 of the 8 sessions in the record, which begins 2026-08-20 — this
   setup may have started before it"* instead of "unknown".
   `last_outcome` is what happened to the appearance `last_seen` names:
-  `scored`, or the reason it never was (`veto_up_days` — an absolute rule
+  `scored`, or the reason it never was (`liquidity_floor` — rule 6 refused it
+  before the checklist saw it; `veto_up_days` — an absolute rule
   refused it; `lynch_gate` — the checklist rejected it; `score_cap` — it passed
   and the run had already sent its limit of candidates to Claude). A
   streak counts every session the scan found a burst on, gate rejections
@@ -606,14 +620,14 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 158 checks, and which file each one
+**Three data sources, one page.** It runs 165 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 16 mutated copies of it are served
+  night can hold at once. 17 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now

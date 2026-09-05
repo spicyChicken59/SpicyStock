@@ -386,7 +386,7 @@ def test_the_published_contract_names_every_outcome_a_row_can_carry():
     """
     from src import emailer, ledger, pipeline
 
-    words = set(emailer.LAST_OUTCOME) | set(pipeline.VETO_REASONS.values())
+    words = set(emailer.LAST_OUTCOME) | set(pipeline.VETO_REASONS.values()) | {ledger.LIQUIDITY_REASON}
     contract = "\n".join(ledger.CONTRACT_INVARIANTS)
     missing = sorted(w for w in words if f"'{w}'" not in contract)
     assert not missing, (
@@ -398,6 +398,21 @@ def test_the_published_contract_names_every_outcome_a_row_can_carry():
     bullet = bullet[:bullet.index("\n\n")]
     assert not [w for w in words if f"`{w}`" not in bullet], (
         "README's last_outcome bullet does not name every outcome word")
+    # And the two renderers: a reason word no surface has words for is a row
+    # the reader is told nothing about, which is how rule 6's refusals were
+    # lost for a round. The page holds the same map twice (a long and a
+    # short form) and both are read as text, since a key present in one and
+    # missing from the other renders the fallback phrase for the other.
+    unscored = words - {"scored"}
+    assert unscored <= set(emailer.LAST_OUTCOME), (
+        f"src.emailer.LAST_OUTCOME has no words for {sorted(unscored - set(emailer.LAST_OUTCOME))}")
+    page = _read("docs/index.html")
+    for table in ("LAST_OUTCOME", "OUTCOME_SHORT"):
+        block = page[page.index(f"var {table} = {{"):]
+        block = block[:block.index("};")]
+        assert not [w for w in unscored if f"{w}:" not in block], (
+            f"docs/index.html's {table} has no words for "
+            f"{sorted(w for w in unscored if f'{w}:' not in block)}")
 
 
 def _gitignore_blocks(path: str) -> bool | None:

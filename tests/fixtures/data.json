@@ -15,10 +15,11 @@
       "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
       "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
       "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
-      "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'veto_up_days' (an absolute rule refused it before the checklist was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same three words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and a veto is never published as a gate rejection.",
+      "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'liquidity_floor' (rule 6 refused it in the scan, for dollar volume below the session's percentile floor, before the checklist was consulted), 'veto_up_days' (an absolute rule refused it before the pass count was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same four words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and neither a veto nor a liquidity refusal is ever published as a gate rejection.",
+      "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when no name traded or the rule is off), refused (how many bursts sat below it). run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
       "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
       "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
-      "evidence.shortlist, evidence.rest, evidence.refused and evidence.crowded_out are four disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, and the names that cleared the gate and were never scored because the call budget filled. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked.",
+      "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
       "Numbers are numbers or null. No 'n/a' strings."
     ]
   },
@@ -31,7 +32,7 @@
       "label": "data/symbols.txt (checked in)",
       "size": 230
     },
-    "bursts": 48,
+    "bursts": 50,
     "passed_gate": 31,
     "scored": 25,
     "score_cap": 25,
@@ -42,6 +43,11 @@
       "vetoes": [
         "up_days"
       ]
+    },
+    "liquidity": {
+      "pctile": 30.0,
+      "floor": 12400000,
+      "refused": 2
     },
     "scored_by": {
       "claude": 21,
@@ -2310,6 +2316,7 @@
       "gain_pct": 5.12,
       "volume": 14208700,
       "volume_ratio": 2.33,
+      "dollar_volume": 127025778,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -2376,6 +2383,7 @@
       "gain_pct": 4.71,
       "volume": 28417200,
       "volume_ratio": 2.17,
+      "dollar_volume": 563513076,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -2442,6 +2450,7 @@
       "gain_pct": 6.38,
       "volume": 31844100,
       "volume_ratio": 2.24,
+      "dollar_volume": 454096866,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -2508,6 +2517,7 @@
       "gain_pct": 4.29,
       "volume": 22193600,
       "volume_ratio": 2.05,
+      "dollar_volume": 245683152,
       "lynch": "1/6",
       "lynch_passes": 1,
       "lynch_total": 6,
@@ -2574,6 +2584,7 @@
       "gain_pct": 5.84,
       "volume": 9214800,
       "volume_ratio": 2.24,
+      "dollar_volume": 254420628,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -2640,6 +2651,7 @@
       "gain_pct": 8.13,
       "volume": 18774200,
       "volume_ratio": 2.52,
+      "dollar_volume": 120530364,
       "lynch": "1/6",
       "lynch_passes": 1,
       "lynch_total": 6,
@@ -2706,6 +2718,7 @@
       "gain_pct": 4.06,
       "volume": 7118400,
       "volume_ratio": 2.09,
+      "dollar_volume": 1017219360,
       "lynch": "1/6",
       "lynch_passes": 1,
       "lynch_total": 6,
@@ -2772,6 +2785,7 @@
       "gain_pct": 4.92,
       "volume": 26094300,
       "volume_ratio": 2.2,
+      "dollar_volume": 1010893182,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -2838,6 +2852,7 @@
       "gain_pct": 7.44,
       "volume": 13627900,
       "volume_ratio": 2.34,
+      "dollar_volume": 223225002,
       "lynch": "1/6",
       "lynch_passes": 1,
       "lynch_total": 6,
@@ -2904,6 +2919,7 @@
       "gain_pct": 6.71,
       "volume": 6483100,
       "volume_ratio": 2.22,
+      "dollar_volume": 221203372,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -2970,6 +2986,7 @@
       "gain_pct": 11.62,
       "volume": 9847300,
       "volume_ratio": 3.06,
+      "dollar_volume": 41161714,
       "lynch": "0/6",
       "lynch_passes": 0,
       "lynch_total": 6,
@@ -3036,6 +3053,7 @@
       "gain_pct": 9.88,
       "volume": 21094600,
       "volume_ratio": 2.51,
+      "dollar_volume": 186687210,
       "lynch": "0/6",
       "lynch_passes": 0,
       "lynch_total": 6,
@@ -3102,6 +3120,7 @@
       "gain_pct": 14.21,
       "volume": 7482100,
       "volume_ratio": 3.55,
+      "dollar_volume": 72950475,
       "lynch": "0/6",
       "lynch_passes": 0,
       "lynch_total": 6,
@@ -3168,6 +3187,7 @@
       "gain_pct": 5.47,
       "volume": 10428300,
       "volume_ratio": 2.17,
+      "dollar_volume": 133795089,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -3234,6 +3254,7 @@
       "gain_pct": 4.83,
       "volume": 5218700,
       "volume_ratio": 2.17,
+      "dollar_volume": 90231323,
       "lynch": "1/6",
       "lynch_passes": 1,
       "lynch_total": 6,
@@ -3300,6 +3321,7 @@
       "gain_pct": 4.11,
       "volume": 6104200,
       "volume_ratio": 2.12,
+      "dollar_volume": 254056804,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -3366,6 +3388,7 @@
       "gain_pct": 4.07,
       "volume": 12048600,
       "volume_ratio": 2.22,
+      "dollar_volume": 94340538,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -3432,6 +3455,7 @@
       "gain_pct": 4.05,
       "volume": 8114700,
       "volume_ratio": 2.04,
+      "dollar_volume": 390803952,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -3498,6 +3522,7 @@
       "gain_pct": 4.04,
       "volume": 11384200,
       "volume_ratio": 2.19,
+      "dollar_volume": 705137348,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -3564,6 +3589,7 @@
       "gain_pct": 4.03,
       "volume": 8803000,
       "volume_ratio": 3.8,
+      "dollar_volume": 249741110,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -3630,6 +3656,7 @@
       "gain_pct": 4.02,
       "volume": 6742800,
       "volume_ratio": 2.17,
+      "dollar_volume": 61764048,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -3696,6 +3723,7 @@
       "gain_pct": 4.01,
       "volume": 15208400,
       "volume_ratio": 2.17,
+      "dollar_volume": 71631564,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -3762,6 +3790,7 @@
       "gain_pct": 4.62,
       "volume": 31840200,
       "volume_ratio": 2.56,
+      "dollar_volume": 5680291680,
       "lynch": "6/6",
       "lynch_passes": 6,
       "lynch_total": 6,
@@ -3820,13 +3849,147 @@
         "history_sessions": 7
       },
       "reason": "veto_up_days"
+    },
+    {
+      "ticker": "ADI",
+      "date": "2026-09-01",
+      "close": 9.84,
+      "gain_pct": 6.27,
+      "volume": 1042600,
+      "volume_ratio": 2.49,
+      "dollar_volume": 10259184,
+      "lynch": "5/6",
+      "lynch_passes": 5,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.58, fitted trend +12.4% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+19.4% past month, +12.8% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 5.8%/day = 1.14x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.9% move, 3.7% range = 0.73x its norm, 1.08x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 82% of day's range"
+        }
+      ],
+      "context": {
+        "consecutive_up_days": 2,
+        "worst_base_day_pct": -2.6
+      },
+      "streak": {
+        "day": null,
+        "unknown_reason": "window_not_covered",
+        "first_seen": null,
+        "last_seen": "2026-08-31",
+        "last_score": null,
+        "last_verdict": null,
+        "last_outcome": "score_cap",
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
+      },
+      "reason": "liquidity_floor"
+    },
+    {
+      "ticker": "MRVL",
+      "date": "2026-09-01",
+      "close": 14.62,
+      "gain_pct": 4.38,
+      "volume": 612400,
+      "volume_ratio": 2.13,
+      "dollar_volume": 8953288,
+      "lynch": "0/6",
+      "lynch_passes": 0,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.29, fitted trend +34.7% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+40.6% past month, +26.2% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 9.6%/day = 1.71x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 3.3% move, 5.8% range = 1.03x its norm, 1.62x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 44% of day's range"
+        }
+      ],
+      "context": {
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -4.6
+      },
+      "streak": {
+        "day": 2,
+        "unknown_reason": null,
+        "first_seen": "2026-08-31",
+        "last_seen": "2026-08-31",
+        "last_score": null,
+        "last_verdict": null,
+        "last_outcome": "lynch_gate",
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
+      },
+      "reason": "liquidity_floor"
     }
   ],
   "runs": [
     {
       "date": "2026-09-01",
       "type": "evening",
-      "bursts": 48,
+      "bursts": 50,
       "passed_gate": 31,
       "scored": 25,
       "shortlist_size": 5,
@@ -3842,6 +4005,11 @@
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 12400000,
+        "refused": 2
       }
     },
     {
@@ -3863,6 +4031,11 @@
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 12400000,
+        "refused": 3
       }
     },
     {
@@ -3884,6 +4057,11 @@
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 13200000,
+        "refused": 2
       }
     },
     {
@@ -3905,6 +4083,11 @@
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 12000000,
+        "refused": 1
       }
     },
     {
@@ -3926,6 +4109,11 @@
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 12800000,
+        "refused": 0
       }
     },
     {
@@ -3947,6 +4135,11 @@
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 11600000,
+        "refused": 3
       }
     },
     {
@@ -3968,6 +4161,11 @@
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 12400000,
+        "refused": 2
       }
     },
     {
@@ -3989,6 +4187,11 @@
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 13200000,
+        "refused": 1
       }
     }
   ],
@@ -4008,9 +4211,9 @@
       "sessions": 1,
       "from": "2026-09-01",
       "to": "2026-09-01",
-      "setups": 48,
+      "setups": 50,
       "scored_setups": 25,
-      "rows": 48
+      "rows": 50
     },
     "overall": {
       "setups": 25,
@@ -4245,7 +4448,7 @@
       {
         "code": "2",
         "passed": {
-          "setups": 25,
+          "setups": 26,
           "outcomes": [
             {
               "horizon": 1,
@@ -4274,7 +4477,7 @@
           ]
         },
         "failed": {
-          "setups": 23,
+          "setups": 24,
           "outcomes": [
             {
               "horizon": 1,
@@ -4308,7 +4511,7 @@
       {
         "code": "L",
         "passed": {
-          "setups": 20,
+          "setups": 21,
           "outcomes": [
             {
               "horizon": 1,
@@ -4337,7 +4540,7 @@
           ]
         },
         "failed": {
-          "setups": 28,
+          "setups": 29,
           "outcomes": [
             {
               "horizon": 1,
@@ -4371,7 +4574,7 @@
       {
         "code": "Y",
         "passed": {
-          "setups": 19,
+          "setups": 20,
           "outcomes": [
             {
               "horizon": 1,
@@ -4400,7 +4603,7 @@
           ]
         },
         "failed": {
-          "setups": 29,
+          "setups": 30,
           "outcomes": [
             {
               "horizon": 1,
@@ -4463,7 +4666,7 @@
           ]
         },
         "failed": {
-          "setups": 34,
+          "setups": 36,
           "outcomes": [
             {
               "horizon": 1,
@@ -4497,7 +4700,7 @@
       {
         "code": "C",
         "passed": {
-          "setups": 22,
+          "setups": 23,
           "outcomes": [
             {
               "horizon": 1,
@@ -4526,7 +4729,7 @@
           ]
         },
         "failed": {
-          "setups": 26,
+          "setups": 27,
           "outcomes": [
             {
               "horizon": 1,
@@ -4560,7 +4763,7 @@
       {
         "code": "H",
         "passed": {
-          "setups": 35,
+          "setups": 36,
           "outcomes": [
             {
               "horizon": 1,
@@ -4589,7 +4792,7 @@
           ]
         },
         "failed": {
-          "setups": 13,
+          "setups": 14,
           "outcomes": [
             {
               "horizon": 1,
@@ -4727,6 +4930,39 @@
         "appearances": 1,
         "last_seen": "2026-09-01",
         "best_score": 4.7,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "ADI",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
         "outcomes": [
           {
             "horizon": 1,
@@ -5486,6 +5722,39 @@
         "appearances": 1,
         "last_seen": "2026-09-01",
         "best_score": 7.0,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        ]
+      },
+      {
+        "ticker": "MRVL",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
         "outcomes": [
           {
             "horizon": 1,
@@ -6365,6 +6634,36 @@
     },
     "crowded_out": {
       "setups": 6,
+      "outcomes": [
+        {
+          "horizon": 1,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        },
+        {
+          "horizon": 3,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        },
+        {
+          "horizon": 5,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        }
+      ],
+      "enough": false
+    },
+    "illiquid": {
+      "setups": 2,
       "outcomes": [
         {
           "horizon": 1,

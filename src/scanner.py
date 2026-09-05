@@ -812,30 +812,47 @@ def liquidity_floor(dollar_volumes: list[float], cfg: ScanConfig) -> float | Non
     return float(np.percentile(dollar_volumes, cfg.min_dollar_volume_pctile))
 
 
-def apply_liquidity_gate(candidates: list["Candidate"],
-                         dollar_volumes: list[float],
-                         cfg: ScanConfig) -> list["Candidate"]:
-    """Drop candidates below the session's dollar-volume percentile.
+def liquidity_split(candidates: list["Candidate"], dollar_volumes: list[float],
+                    cfg: ScanConfig) -> tuple[list["Candidate"], list["Candidate"], float | None]:
+    """Rule 6, applied: (kept, refused, floor).
 
     Inclusive at the floor, which is what makes a one-symbol scan
     (`--tickers NVDA`) still a scan: any percentile of a single value is that
     value, and a strict comparison would reject the only name it was given.
+
+    The refused list is RETURNED, not logged and dropped. This used to build
+    `dropped`, print it at INFO and hand back `kept` alone, so a burst rule 6
+    refused was in no count, no gated_out row, no ledger row and no line of
+    the email -- the one refusal class the record's "every burst the scan
+    found, scored or refused" did not hold for, and the one whose outcomes the
+    open decision about widening the universe most needs. Reproduced twice
+    independently on the documented --tickers smoke path: a genuine 12% burst
+    on $4.5B/day, refused because the other name traded more, and the funnel
+    printed "4% bursts found: 1" over it.
     """
     floor = liquidity_floor(dollar_volumes, cfg)
     if floor is None:
-        return candidates
+        return list(candidates), [], None
     kept = [c for c in candidates if c.dollar_volume >= floor]
-    dropped = [c for c in candidates if c.dollar_volume < floor]
-    if dropped:
+    refused = [c for c in candidates if c.dollar_volume < floor]
+    if refused:
         log.info(
-            "Liquidity gate: dropped %d of %d bursts below the %gth percentile "
+            "Liquidity gate: refused %d of %d bursts below the %gth percentile "
             "of the %d names that traded (floor $%s/day): %s",
-            len(dropped), len(candidates), cfg.min_dollar_volume_pctile,
+            len(refused), len(candidates), cfg.min_dollar_volume_pctile,
             len(dollar_volumes), f"{floor:,.0f}",
-            ", ".join(f"{c.ticker} (${c.dollar_volume:,.0f})" for c in dropped[:8])
-            + ("..." if len(dropped) > 8 else ""),
+            ", ".join(f"{c.ticker} (${c.dollar_volume:,.0f})" for c in refused[:8])
+            + ("..." if len(refused) > 8 else ""),
         )
-    return kept
+    return kept, refused, floor
+
+
+def apply_liquidity_gate(candidates: list["Candidate"],
+                         dollar_volumes: list[float],
+                         cfg: ScanConfig) -> list["Candidate"]:
+    """The kept half of liquidity_split(). Kept for its callers; run_scan()
+    uses the split, because it has to hand the other half on."""
+    return liquidity_split(candidates, dollar_volumes, cfg)[0]
 
 
 # ---------------------------------------------------------------------
@@ -844,7 +861,8 @@ def apply_liquidity_gate(candidates: list["Candidate"],
 
 def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
              symbols_file: str | Path | None = None,
-             stats: dict | None = None) -> list[Candidate]:
+             stats: dict | None = None,
+             refused: list[Candidate] | None = None) -> list[Candidate]:
     """Scan `universe` if given, else every symbol in the checked-in file.
 
     An explicit `universe` wins outright — the file is not read at all — which
@@ -858,6 +876,12 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     that lost half the market by looking at `[]`. It is filled BEFORE the
     guards below raise, so an operator (and the failure email) can still see
     the shape of the scan that failed.
+
+    `refused`, if given, receives the bursts rule 6 refused for dollar volume
+    below the session's percentile floor -- the same idiom again, because the
+    returned list is what the caller SCORES and these are bursts the scan
+    FOUND, and the record has to hold both. `stats["liquidity_floor"]` is the
+    floor in dollars, so the run can say what the bar was that night.
     """
     cfg = cfg or ScanConfig()
     data_client = get_clients()
@@ -1008,7 +1032,9 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     # Dropped symbols are missing from the distribution as well as from the
     # shortlist, which biases the floor by however many they were; the error
     # below already says the shortlist is incomplete on that path.
-    candidates = apply_liquidity_gate(candidates, session_dollar_volumes, cfg)
+    candidates, illiquid, floor = liquidity_split(candidates, session_dollar_volumes, cfg)
+    if refused is not None:
+        refused.extend(sorted(illiquid, key=lambda c: c.gain_pct, reverse=True))
 
     candidates.sort(key=lambda c: c.gain_pct, reverse=True)
     if dropped:
@@ -1017,6 +1043,8 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
                   dropped, len(tickers))
     if stats is not None:
         stats["candidates"] = len(candidates)
+        stats["liquidity_floor"] = floor
+        stats["liquidity_refused"] = len(illiquid)
     log.info("Scan complete: %d candidates from %d symbols", len(candidates), len(tickers))
     return candidates
 

@@ -37,6 +37,7 @@ from src.scanner import (
     StaleDataError,
     SymbolFileError,
     apply_liquidity_gate,
+    liquidity_split,
     current_session,
     detect_setup,
     get_clients,
@@ -493,6 +494,54 @@ def test_the_liquidity_gate_drops_the_thinnest_burst_of_the_session(fake_alpaca,
     found = run_scan(ScanConfig(), universe=["BIG", "TINY"] + [f"Q{i}" for i in range(8)])
 
     assert [c.ticker for c in found] == ["BIG"]
+
+
+def test_the_scan_hands_back_what_the_floor_refused_and_the_floor_itself(fake_alpaca, ohlcv):
+    """A burst rule 6 refused used to leave through a log line and nothing
+    else: apply_liquidity_gate() built `dropped`, printed it at INFO and
+    returned `kept`, so the thinner of two genuine 12% bursts on a two-name
+    --tickers run was in no count, no row and no line of the email --
+    reproduced twice independently. run_scan() hands the refused bursts to
+    the caller now, the same way it hands back stats, and records the floor
+    it applied so the run can say what the bar was that night."""
+    fake_alpaca.add_history("BIG", _thin(ohlcv, "burst", price=200.0, volume=5_000_000))
+    fake_alpaca.add_history("TINY", _thin(ohlcv, "burst", price=5.0, volume=200_000, variant=1))
+    for i in range(8):
+        fake_alpaca.add_history(f"Q{i}", _thin(ohlcv, "flat", price=80.0,
+                                               volume=2_000_000, variant=i + 2))
+    stats, refused = {}, []
+
+    found = run_scan(ScanConfig(), universe=["BIG", "TINY"] + [f"Q{i}" for i in range(8)],
+                     stats=stats, refused=refused)
+
+    assert [c.ticker for c in found] == ["BIG"]
+    assert [c.ticker for c in refused] == ["TINY"], "the refused burst reaches the caller"
+    assert refused[0].history is not None, "with its frame, so the checklist can still run on it"
+    assert stats["liquidity_refused"] == 1 and stats["candidates"] == 1
+    assert refused[0].dollar_volume < stats["liquidity_floor"] <= found[0].dollar_volume, (
+        "the floor recorded is the number the split was made on")
+
+
+def test_liquidity_split_is_the_gate_with_its_other_half(ohlcv):
+    """The kept list is apply_liquidity_gate()'s answer exactly; the refused
+    list is everything it dropped, and the floor is the percentile both were
+    judged against. With the rule off, nothing is refused and there is no
+    floor to report."""
+    cfg = ScanConfig()
+    cands = []
+    for i, dv in enumerate([2e6, 8e6, 30e6, 90e6]):
+        frame = _thin(ohlcv, "burst", price=50.0, volume=dv / 50.0, variant=i)
+        cands.append(Candidate(ticker=f"T{i}", history=frame, **detect_setup(frame, cfg)))
+    universe = [float(i + 1) * 1e6 for i in range(100)]
+
+    kept, refused, floor = liquidity_split(cands, universe, cfg)
+
+    assert kept == apply_liquidity_gate(cands, universe, cfg)
+    assert {c.ticker for c in kept} | {c.ticker for c in refused} == {c.ticker for c in cands}
+    assert not ({c.ticker for c in kept} & {c.ticker for c in refused})
+    assert floor == liquidity_floor(universe, cfg)
+    assert all(c.dollar_volume < floor for c in refused) and all(c.dollar_volume >= floor for c in kept)
+    assert liquidity_split(cands, [1e9] * 10, ScanConfig(min_dollar_volume_pctile=0)) == (cands, [], None)
 
 
 def test_the_gate_ranks_a_candidate_against_the_universe_not_against_the_bursts(ohlcv):

@@ -2511,6 +2511,34 @@ def test_the_alternative_is_what_the_strategy_refused_and_not_what_the_budget_cr
     assert not ev["refused"]["enough"], "three setups is not a rate"
 
 
+def test_the_illiquid_population_is_kept_beside_the_control_and_not_in_it():
+    """Rule 6's refusals get a fifth population with the same shape as the
+    other four, and they are NOT part of `refused`: their forward returns are
+    bar prices on names the rule says are too thin to trade at those prices.
+    Folding them in would let the thinnest names flatter or damn the
+    strategy on returns nobody could capture. Deleting the population, or
+    letting `refused` keep the rows, both fail here."""
+    runs = _record([("2026-08-24", ("AAA",))],
+                   returns={("AAA", "2026-08-24"): {"d5": 6.0}, ("ZZZ", "2026-08-24"): {"d5": 3.0}})
+    _with_reason(runs, "VVV", "veto_up_days", {"d5": 3.0})
+    _with_reason(runs, "CCC", "score_cap", {"d5": 20.0})
+    _with_reason(runs, "THIN", ledger.LIQUIDITY_REASON, {"d5": 40.0})
+    _with_reason(runs, "THN2", ledger.LIQUIDITY_REASON, {"d5": -10.0})
+
+    ev = ledger.evidence(runs)
+    d5 = lambda block: ledger.at_horizon(ev[block]["outcomes"], 5)   # noqa: E731
+
+    assert ev["illiquid"]["setups"] == 2 and d5("illiquid")["mean"] == 15.0
+    assert ev["refused"]["setups"] == 2 and d5("refused")["mean"] == 3.0, (
+        "the control is the checklist's and the veto's verdict, not the floor's")
+    assert ev["crowded_out"]["setups"] == 1
+    assert set(ev["illiquid"]) == set(ev["refused"]) == {"setups", "outcomes", "enough"}
+    assert not ev["illiquid"]["enough"]
+    assert (ev["shortlist"]["setups"] + ev["rest"]["setups"] + ev["refused"]["setups"]
+            + ev["crowded_out"]["setups"] + ev["illiquid"]["setups"]) == ev["record"]["setups"], (
+        "five disjoint populations that together are every setup")
+
+
 def test_a_setup_that_was_scored_once_is_a_pick_even_if_it_was_later_refused():
     """Leading rows only, the same rule every other block follows. AAA is
     scored on the 24th and refused by the gate on the 25th: one move, one

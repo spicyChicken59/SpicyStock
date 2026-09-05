@@ -284,6 +284,11 @@ LAST_OUTCOME = {
                  "candidates to Claude",
     "veto_up_days": "refused outright — it burst after three or more "
                     "consecutive up days",
+    # A fourth thing, and the one that used to reach no surface at all: rule 6
+    # refused it in the scan, against every other name that traded, before
+    # the checklist was consulted. src.ledger.LIQUIDITY_REASON is the key.
+    "liquidity_floor": "refused by the liquidity floor — its dollar volume was below "
+                       "the session's percentile cut, so the checklist was never consulted",
 }
 
 
@@ -477,7 +482,8 @@ def _streak_footnote(results: list[dict]) -> str:
         "&ldquo;day N of this setup&rdquo;, and the earlier bursts a row with no day "
         "number counts, are every session the scan found a burst on for that name — "
         "including the ones that were never scored, whether the checklist rejected "
-        "them, an absolute rule refused them, or the call cap crowded them out. "
+        "them, an absolute rule refused them, the liquidity floor refused them, or the "
+        "call cap crowded them out. "
         "Neither is N nights of confirmation."
         "</p>"
     )
@@ -515,6 +521,11 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     refused = ([("Refused by an absolute rule", vetoed)]
                if isinstance(vetoed, (int, float)) and not isinstance(vetoed, bool) and vetoed
                else [])
+    # Rule 6's refusals, the same way: only when there were some, and with
+    # the floor the run applied when it recorded one, because "below the
+    # liquidity floor: 3" is not readable without the number the floor was.
+    illiquid = _count(scan_stats, "illiquid")
+    refused += [(_liquidity_label(scan_stats), illiquid)] if illiquid else []
     # The stage the email did not have. It went "Passed 2LYNCH gate: 54"
     # straight to "Shortlisted: 1", so the 29 names that cleared the checklist
     # and were never looked at appeared nowhere -- next to "Scored by Claude:
@@ -546,6 +557,20 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
                  *capped,
                  ("Shortlisted", len(results))]
     return " &nbsp;|&nbsp;\n      ".join(f"{label}: {esc(value)}" for label, value in parts)
+
+
+def _liquidity_label(scan_stats: dict) -> str:
+    """The funnel's label for rule 6's refusals, carrying the floor in dollars
+    and the percentile it sits at when the run recorded them. A snapshot from
+    before run.liquidity existed carries neither, and then the label says only
+    what is known."""
+    floor, pctile = scan_stats.get("liquidity_floor"), scan_stats.get("liquidity_pctile")
+    known = isinstance(floor, (int, float)) and not isinstance(floor, bool)
+    if known and isinstance(pctile, (int, float)) and not isinstance(pctile, bool):
+        return f"Below the liquidity floor (${floor:,.0f}/day, the {pctile:g}th percentile)"
+    if known:
+        return f"Below the liquidity floor (${floor:,.0f}/day)"
+    return "Below the liquidity floor"
 
 
 def _chart_file(row: dict) -> Path | None:
@@ -726,6 +751,7 @@ def _empty_evening_note(scan_stats: dict) -> str:
     """
     bursts = _count(scan_stats, "bursts")
     vetoed = _count(scan_stats, "vetoed")
+    illiquid = _count(scan_stats, "illiquid")
     passed = _count(scan_stats, "gated")
     # Dropping `- passed` here is provably equivalent, and the term stays
     # anyway: every branch that reads by_checklist sits below `if passed:`,
@@ -734,7 +760,7 @@ def _empty_evening_note(scan_stats: dict) -> str:
     # a later edit that moves the early return would otherwise be wrong
     # silently. Noted because mutation testing finds it and there is nothing
     # to fix.
-    by_checklist = max(bursts - vetoed - passed, 0)
+    by_checklist = max(bursts - vetoed - illiquid - passed, 0)
 
     if not bursts:
         return ("No 4% burst anywhere in the universe today. Nothing reached the "
@@ -746,14 +772,27 @@ def _empty_evening_note(scan_stats: dict) -> str:
         return (f"{_plural(passed, 'burst')} cleared the 2LYNCH checklist and none "
                 "produced a score. See the run's log; this is not a verdict on "
                 "the market.")
-    if vetoed and by_checklist:
-        return (f"{_plural(vetoed, 'burst')} refused outright by an absolute rule and "
-                f"{by_checklist} rejected by the 2LYNCH checklist. Two different "
-                "verdicts, and neither is the other.")
+    # Three verdicts a burst can carry on a night nothing was scored, each
+    # with its own clause and only when its count is not zero. They are
+    # different facts -- a veto is not a checklist rejection, and a name
+    # below the liquidity floor was never measured against either -- so a
+    # sentence that folds two of them into one word is wrong about one.
+    clauses = ([f"{_plural(vetoed, 'burst')} refused outright by an absolute rule"] if vetoed else []) \
+        + ([f"{illiquid} below the liquidity floor"] if illiquid else []) \
+        + ([f"{by_checklist} rejected by the 2LYNCH checklist"] if by_checklist else [])
+    if len(clauses) > 1:
+        verdicts = "Two different verdicts, and neither is the other." if len(clauses) == 2 \
+            else "Three different verdicts, and none is another."
+        return f"{', '.join(clauses[:-1])} and {clauses[-1]}. {verdicts}"
     if vetoed:
         found = ("The one burst the scan found was" if bursts == 1
                  else f"All {bursts} bursts the scan found were")
         return (f"{found} refused outright by an absolute rule. "
+                "The checklist never got a say.")
+    if illiquid:
+        found = ("The one burst the scan found was" if bursts == 1
+                 else f"All {bursts} bursts the scan found were")
+        return (f"{found} below the liquidity floor. "
                 "The checklist never got a say.")
     return (f"No candidate passed the 2LYNCH checklist today — "
             f"{_plural(bursts, 'burst')} measured, none cleared it.")

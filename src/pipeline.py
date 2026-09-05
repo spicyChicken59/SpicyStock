@@ -607,8 +607,13 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     # above is what makes sure it is the one this mode said it would read.
     report.stage = "scan"
     scan_stats: dict = {}
-    candidates = run_scan(cfg, universe=tickers, stats=scan_stats)
-    n_bursts = len(candidates)
+    # Rule 6's refusals come back beside the list, not inside it: the list is
+    # what gets scored, and these are bursts the scan FOUND that the record
+    # has to hold. They used to be logged and dropped, so a burst refused for
+    # liquidity was in no count, no row and no line of the email.
+    illiquid_bursts: list = []
+    candidates = run_scan(cfg, universe=tickers, stats=scan_stats, refused=illiquid_bursts)
+    n_bursts = len(candidates) + len(illiquid_bursts)
     _check_scan(scan_stats, report)
 
     # Layer 2: 2LYNCH checklist + context, hard gate, keep the best
@@ -617,6 +622,13 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         lynch = evaluate_2lynch(cand.history)
         ctx = extra_context(cand.history)
         prepared.append((cand, lynch, ctx))
+    # The checklist runs on the refused bursts too. Nothing about the verdict
+    # depends on it -- rule 6 refused them before the pass count was
+    # consulted -- but the contract says every burst carries lynch_detail,
+    # the page's per-check rates are computed over all of them, and a row
+    # archived without the measurements is the row that can never be judged.
+    illiquid = [(cand, evaluate_2lynch(cand.history), extra_context(cand.history))
+                for cand in illiquid_bursts]
 
     prepared.sort(key=lambda x: (x[1]["passes"], x[0].gain_pct), reverse=True)
     # A veto outranks the pass count. Bonde's up-days rule is stated as "never
@@ -636,8 +648,11 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     # was applied to.
     unscored = [(cand, lynch, ctx, unscored_reason(lynch))
                 for cand, lynch, ctx in prepared if cand.ticker not in scoring]
-    log.info("%d bursts → %d passed 2LYNCH gate (scoring top %d)",
-             n_bursts, len(passed_gate), len(to_score))
+    # After the checklist's own refusals, with the reason the scanner gave:
+    # unscored_reason() is never asked, because these never reached the gate.
+    unscored += [(cand, lynch, ctx, ledger.LIQUIDITY_REASON) for cand, lynch, ctx in illiquid]
+    log.info("%d bursts → %d below the liquidity floor, %d passed 2LYNCH gate (scoring top %d)",
+             n_bursts, len(illiquid), len(passed_gate), len(to_score))
 
     # Layers 3-5: charts + Claude scoring
     report.stage = "chart"
@@ -727,6 +742,12 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         # is the one collapse this project forbids by name.
         vetoed=sum(1 for _c, _l, _x, reason in unscored
                    if reason in VETO_REASONS.values()),
+        # And how many rule 6 refused before the checklist saw them, with the
+        # floor it applied: "4% bursts found" counts them, so the funnel has
+        # to say where they went, and a reader of the number needs the bar.
+        illiquid=len(illiquid),
+        liquidity_floor=scan_stats.get("liquidity_floor"),
+        liquidity_pctile=cfg.min_dollar_volume_pctile,
         # And how many CLEARED the gate and were never looked at anyway. The
         # email's funnel went "Passed 2LYNCH gate: 54" straight to
         # "Shortlisted: 1", so on any night with more survivors than the call
@@ -1118,6 +1139,14 @@ def follow_through(mode: Mode, dry_run: bool = False,
         # re-labelled with today's.
         crowded_out=sum(1 for row in ((snapshot or {}).get("gated_out") or [])
                         if isinstance(row, dict) and row.get("reason") == "score_cap"),
+        # And the liquidity refusals, same source; the floor is the one THAT
+        # run recorded, and a snapshot from before the block existed has none.
+        illiquid=sum(1 for row in ((snapshot or {}).get("gated_out") or [])
+                     if isinstance(row, dict) and row.get("reason") == ledger.LIQUIDITY_REASON),
+        liquidity_floor=(source.get("liquidity") or {}).get("floor")
+        if isinstance(source.get("liquidity"), dict) else None,
+        liquidity_pctile=(source.get("liquidity") or {}).get("pctile")
+        if isinstance(source.get("liquidity"), dict) else None,
         score_cap=source.get("score_cap") or 0,
         scored_by=source.get("scored_by") or {},
         # How far behind, in sessions, so the SUBJECT LINE can escalate. Every
@@ -1248,6 +1277,14 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
                  # happened to a row. Both vocabularies are in one file, so the
                  # difference is stated here rather than left to be inferred.
                  "vetoes": list(VETO_REASONS)},
+        # Rule 6 as this run applied it. The floor is the session's number --
+        # a percentile of every name that traded, in dollars -- and it is the
+        # one figure the open decision about widening the universe turns on,
+        # so it is kept per run rather than left in a log line.
+        "liquidity": {"pctile": cfg.min_dollar_volume_pctile,
+                      "floor": ledger._num(scan_stats.get("liquidity_floor")),
+                      "refused": sum(1 for _c, _l, _x, reason in unscored
+                                     if reason == ledger.LIQUIDITY_REASON)},
         "scored_by": {"claude": score_stats.get("claude", 0),
                       "fallback": score_stats.get("fallback", 0)},
         "model": next((r["provenance"]["model"] for r in scored

@@ -722,6 +722,29 @@ def test_a_run_with_no_refusals_reads_exactly_as_it_did_before():
         assert "Passed 2LYNCH gate: 3" in html
 
 
+@pytest.mark.parametrize("stats, label", [
+    (dict(illiquid=2, liquidity_floor=359_000_000.0, liquidity_pctile=30.0),
+     "Below the liquidity floor ($359,000,000/day, the 30th percentile): 2"),
+    (dict(illiquid=1, liquidity_floor=12_400_000), "Below the liquidity floor ($12,400,000/day): 1"),
+    (dict(illiquid=3), "Below the liquidity floor: 3"),
+])
+def test_the_funnel_names_the_floor_it_applied_when_the_run_recorded_one(stats, label):
+    """Rule 6's refusals get a funnel line only when there were some, and it
+    carries the floor in dollars and the percentile when the run recorded
+    them -- "below the liquidity floor: 3" is not readable without the bar. A
+    snapshot from before run.liquidity existed carries neither, and the label
+    then says only what is known rather than inventing a figure."""
+    html = _visible_text(build_html([make_result("AAA")], "evening", dict(DATED, bursts=6, gated=3, **stats)))
+    assert label in html
+    assert html.index("4% bursts found") < html.index("Below the liquidity floor") < html.index("Passed 2LYNCH gate")
+
+
+def test_the_funnel_says_nothing_about_a_floor_on_a_night_nothing_sat_below_it():
+    html = build_html([make_result("AAA")], "evening",
+                      dict(DATED, bursts=3, gated=3, illiquid=0, liquidity_floor=1e8, liquidity_pctile=30.0))
+    assert "liquidity floor" not in html
+
+
 def test_a_night_every_burst_was_refused_does_not_blame_the_checklist():
     """"No candidates passed the quality gate today" states the opposite of
     what happened when the checklist passed them and a rule refused them."""
@@ -762,6 +785,30 @@ def test_a_night_every_burst_was_refused_does_not_blame_the_checklist():
      dict(bursts=4, vetoed=4, gated=0),
      ["All 4 bursts the scan found were refused outright"],
      ["rejected by the 2LYNCH checklist"]),
+    # The fourth verdict, on every shape the other three can take: alone,
+    # beside one of them, and beside both. Rule 6 never consulted the
+    # checklist, so its clause must never read as a checklist rejection.
+    ("every burst below the liquidity floor",
+     dict(bursts=3, vetoed=0, illiquid=3, gated=0),
+     ["All 3 bursts the scan found were below the liquidity floor", "never got a say"],
+     ["rejected by the 2LYNCH checklist", "absolute rule"]),
+    ("the one burst, below the floor",
+     dict(bursts=1, vetoed=0, illiquid=1, gated=0),
+     ["The one burst the scan found was below the liquidity floor"],
+     ["All 1", "rejected by the 2LYNCH checklist"]),
+    ("two below the floor among eight the checklist rejected",
+     dict(bursts=10, vetoed=0, illiquid=2, gated=0),
+     ["2 below the liquidity floor and 8 rejected by the 2LYNCH checklist", "Two different verdicts"],
+     ["absolute rule", "All 10 bursts"]),
+    ("a veto, two below the floor, and seven the checklist rejected",
+     dict(bursts=10, vetoed=1, illiquid=2, gated=0),
+     ["1 burst refused outright by an absolute rule, 2 below the liquidity floor and 7 rejected by the 2LYNCH checklist",
+      "Three different verdicts, and none is another"],
+     ["Two different verdicts", "All 10 bursts"]),
+    ("a veto and two below the floor, nothing for the checklist",
+     dict(bursts=3, vetoed=1, illiquid=2, gated=0),
+     ["1 burst refused outright by an absolute rule and 2 below the liquidity floor", "Two different verdicts"],
+     ["rejected by the 2LYNCH checklist", "All 3 bursts"]),
     ("the single-burst night, which reads wrong in the plural",
      dict(bursts=1, vetoed=1, gated=0),
      ["The one burst the scan found was refused outright"],

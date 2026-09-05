@@ -889,6 +889,97 @@ def test_the_email_names_a_command_line_universe_the_way_the_archive_does(
     assert "named on the command line" in label, label
 
 
+def _two_bursts_one_thin(fake_alpaca, ohlcv):
+    """Two genuine bursts and a small universe to rank them against: the
+    thinner one sits below the 30th percentile of what traded."""
+    from tests.test_scanner import _thin
+
+    fake_alpaca.add_history("FAT", _thin(ohlcv, "burst", price=200.0, volume=5_000_000))
+    fake_alpaca.add_history("THIN", _thin(ohlcv, "burst", price=5.0, volume=200_000, variant=1))
+    names = ["FAT", "THIN"]
+    for i in range(8):
+        fake_alpaca.add_history(f"Q{i}", _thin(ohlcv, "flat", price=80.0,
+                                               volume=2_000_000, variant=i + 2))
+        names.append(f"Q{i}")
+    return names
+
+
+def test_a_burst_the_liquidity_floor_refused_is_in_the_record_and_says_why(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The finding two refuters confirmed by execution: a genuine burst rule 6
+    refused was in no count, no gated_out row, no ledger row and no line of
+    the email, while the funnel printed "4% bursts found: 1" over it. Every
+    surface holds it now under its own word -- neither a veto nor a gate
+    rejection, because the checklist was never consulted -- and the run
+    records the floor it applied, in dollars, beside the count."""
+    names = _two_bursts_one_thin(fake_alpaca, ohlcv)
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = published(tmp_path)
+    assert data["run"]["bursts"] == 2, "the refused burst is a burst the scan found"
+    assert [c["ticker"] for c in data["candidates"]] == ["FAT"]
+    (row,) = data["gated_out"]
+    assert row["ticker"] == "THIN" and row["reason"] == ledger.LIQUIDITY_REASON
+    assert row["lynch_detail"], "the checklist still ran on it, so its row can be judged later"
+    liquidity = data["run"]["liquidity"]
+    assert liquidity["refused"] == 1 and liquidity["pctile"] == scanner.ScanConfig().min_dollar_volume_pctile
+    assert row["dollar_volume"] < liquidity["floor"] <= data["candidates"][0]["dollar_volume"]
+    assert data["run"]["scored"] + len(data["gated_out"]) == data["run"]["bursts"]
+    # The ledger keeps the row, the floor and the population apart.
+    (entry,) = recorded(tmp_path)["runs"]
+    assert entry["liquidity"] == liquidity
+    assert [g["reason"] for g in entry["gated"]] == [ledger.LIQUIDITY_REASON]
+    assert data["evidence"]["illiquid"]["setups"] == 1
+    assert data["evidence"]["refused"]["setups"] == 0, "rule 6's refusals are not the control"
+    # And the email says so, with the floor.
+    html = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "4% bursts found: 2" in html
+    assert f"Below the liquidity floor (${liquidity['floor']:,.0f}/day, the {liquidity['pctile']:g}th percentile): 1" in html
+    assert "THIN" not in html.split("Passed 2LYNCH gate")[0].split("Below the liquidity floor")[0], (
+        "the thin name is not passed off as scored")
+
+
+def test_the_morning_re_presents_the_liquidity_refusals_the_evening_recorded(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The follow-through reads the funnel off the snapshot's own rows, and
+    the floor it prints is the one THAT run recorded."""
+    names = _two_bursts_one_thin(fake_alpaca, ohlcv)
+    pipeline.run("evening", dry_run=True, tickers=names)
+    floor = published(tmp_path)["run"]["liquidity"]["floor"]
+    market_clock.before_the_open()
+
+    pipeline.run("morning", dry_run=False)
+
+    html = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert f"Below the liquidity floor (${floor:,.0f}/day" in html and "4% bursts that session: 2" in html
+
+
+def test_a_night_every_burst_was_below_the_floor_says_so_and_never_blames_the_checklist(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """One thin burst among fat non-bursting names: the scan found one burst
+    and rule 6 refused it. The note under the empty table must say that,
+    not that the checklist rejected it, and not that the market was quiet."""
+    from tests.test_scanner import _thin
+
+    fake_alpaca.add_history("THIN", _thin(ohlcv, "burst", price=5.0, volume=200_000, variant=1))
+    names = ["THIN"]
+    for i in range(8):
+        fake_alpaca.add_history(f"Q{i}", _thin(ohlcv, "flat", price=80.0, volume=2_000_000, variant=i + 2))
+        names.append(f"Q{i}")
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = published(tmp_path)
+    assert data["run"]["bursts"] == 1 and data["candidates"] == []
+    html = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "The one burst the scan found was below the liquidity floor. The checklist never got a say." in html
+    assert "No candidate passed the 2LYNCH checklist" not in html and "quiet market" not in html
+
+
 def test_the_record_says_what_each_run_scanned(
     market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):

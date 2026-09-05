@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 850 tests with no network
+- **There is a regression net.** `pytest tests/` runs 865 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -258,11 +258,11 @@ the email's funnel said "N checked-in US common stocks" over names typed with
 `.env.example` omitted the CSV an evening run writes; and two boundaries no
 test sat on (`>=` on `coverage_guard_min_symbols`, the "not permitted"
 clause) are pinned. **One class of finding was about the record's own
-contract and is not fixed yet:** a burst rule 6 refuses for liquidity vanishes
-from every surface — not in `bursts`, not in `gated_out`, not in the ledger —
-so on a two-name `--tickers` smoke test the thinner of two $5B names is
-refused and the email reads "4% bursts found: 1". A fourth reason word
-touches every surface that enumerates the three, which is its own round.
+contract and was left for its own round:** a burst rule 6 refuses for
+liquidity vanished from every surface — not in `bursts`, not in `gated_out`,
+not in the ledger — so on a two-name `--tickers` smoke test the thinner of two
+$5B names was refused and the email read "4% bursts found: 1". Round 5 below
+is that round.
 
 ## Findings from the round-4 audit — the reader and ledger lenses
 
@@ -567,9 +567,11 @@ exercised its headline. Nine mutants across them, all killed.
   `docs/ledger.json` -- and the page's whole "fetch it only when asked" design
   is argued from those. The 3.3 audit added `context` to both row types and
   nobody re-measured, because re-measuring meant building an eleven-megabyte
-  file by hand. It was 11.04 and 0.66 when measured, and 11.07 and 0.68 once
-  the round-4 prose sweep put a universe block on every run entry -- the
-  guard below caught that move on the same commit. `tools/measure_ledger.py` builds one now
+  file by hand. It was 11.04 and 0.66 when measured, 11.07 and 0.68 once
+  the round-4 prose sweep put a universe block on every run entry, and 11.54
+  and 0.72 once round 5 put a liquidity block on every entry and a dollar
+  volume on every gated row -- the guard below caught both moves on the
+  commits that made them. `tools/measure_ledger.py` builds one now
   -- real rows from the generated history, real row counts from the canonical
   one-night fixture, and `src.ledger`'s own writer, because `indent=2` is most
   of the raw size and a compact estimate is not the file a browser fetches --
@@ -672,6 +674,60 @@ exercised its headline. Nine mutants across them, all killed.
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Round 5 — rule 6's refusals reach every surface
+
+The one round-4 finding deliberately left open, and the only one of
+forty-six that survived the refuters: two of them reproduced it independently
+through the real evening path before this round began. `apply_liquidity_gate()`
+built `dropped`, logged it at INFO and returned `kept`, so a burst refused for
+dollar volume below the session's percentile floor was in no count, no
+`gated_out` row, no ledger row and no line of the email — the one refusal
+class the contract's "every burst the scan found, scored or refused" did not
+hold for, and the one whose outcomes the open decision about widening the
+universe most needs, since the floor is the number that decision turns on.
+
+`liquidity_split()` hands back both halves and the floor; `run_scan()` passes
+the refused bursts to the caller through a `refused=` list, the same idiom as
+`stats=`, and records `liquidity_floor` in the stats. The pipeline runs the
+checklist on them anyway (the contract says every burst carries
+`lynch_detail`, and a row archived without its measurements can never be
+judged), archives them under `ledger.LIQUIDITY_REASON` — `liquidity_floor`,
+deliberately not a `veto_` word, because those derive from `lynch.VETO_RULES`
+and are judged on a frame the checklist has seen, while this one is judged in
+the scanner against every other name that traded — counts them in
+`run.bursts`, and writes `run.liquidity` (`pctile`, `floor` in dollars,
+`refused`) into the run block and the ledger entry. Every gated row carries
+`dollar_volume` now, so a refused row can be read against the floor.
+
+**The fifth population is not part of the control, for the opposite reason
+the crowded-out one is not.** `evidence.illiquid` sits beside `refused` with
+the same shape and its own `enough`; its forward returns are bar prices on
+names the rule says are too thin to be bought at them, so folding them into
+the alternative would let the thinnest names flatter or damn the strategy on
+returns nobody could capture. The contract sentence says so, the page's
+ladder has a fifth row that says so, and the control verdict still compares
+picks against what the STRATEGY refused, whose n the floor cannot move.
+
+Every surface that enumerated three reasons enumerates four: the email's
+funnel gets a line carrying the floor in dollars and the percentile when the
+run recorded them ("Below the liquidity floor ($359,000,000/day, the 30th
+percentile): 2"), the empty-shortlist note gets a clause for it — three
+verdicts a burst can carry on a night nothing was scored, each printed only
+when its count is not zero, so "1 refused outright by an absolute rule, 2
+below the liquidity floor and 7 rejected by the 2LYNCH checklist" is one
+sentence and none of its three facts is another — the streak footnote on
+both surfaces names it, `LAST_OUTCOME` and `OUTCOME_SHORT` on both surfaces
+carry it, the page's funnel caption and gated hint print the floor read off
+`run.liquidity` rather than retyped, and a `noliquidity` smoke variant holds
+a snapshot from before the block existed, which must not be told it enforced
+a floor. The one-night fixture carries two refused rows under a $12.4M floor
+(the remapper that lifts thin rows to a plausible volume had to learn to
+leave those two thin — its lift put a $92M/day row under the floor, and the
+generator's own assertion caught it), and the thirty-run history gained
+eight ledger rows and an `illiquid` population of four setups from the real
+gate running over the synthetic market, with forward returns filled by the
+real code.
 
 ## Findings from the round-4 audit — the prose lens
 

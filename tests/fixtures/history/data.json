@@ -15,10 +15,11 @@
       "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
       "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
       "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
-      "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'veto_up_days' (an absolute rule refused it before the checklist was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same three words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and a veto is never published as a gate rejection.",
+      "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'liquidity_floor' (rule 6 refused it in the scan, for dollar volume below the session's percentile floor, before the checklist was consulted), 'veto_up_days' (an absolute rule refused it before the pass count was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same four words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and neither a veto nor a liquidity refusal is ever published as a gate rejection.",
+      "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when no name traded or the rule is off), refused (how many bursts sat below it). run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
       "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
       "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
-      "evidence.shortlist, evidence.rest, evidence.refused and evidence.crowded_out are four disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, and the names that cleared the gate and were never scored because the call budget filled. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked.",
+      "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
       "Numbers are numbers or null. No 'n/a' strings."
     ]
   },
@@ -42,6 +43,11 @@
       "vetoes": [
         "up_days"
       ]
+    },
+    "liquidity": {
+      "pctile": 30.0,
+      "floor": 190247596.4,
+      "refused": 0
     },
     "scored_by": {
       "claude": 6,
@@ -606,6 +612,7 @@
       "gain_pct": 6.37,
       "volume": 13463769,
       "volume_ratio": 3.67,
+      "dollar_volume": 2986908089,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -676,6 +683,7 @@
       "gain_pct": 5.7,
       "volume": 6475305,
       "volume_ratio": 2.29,
+      "dollar_volume": 315553517,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -746,6 +754,7 @@
       "gain_pct": 6.29,
       "volume": 27820470,
       "volume_ratio": 3.68,
+      "dollar_volume": 1668779172,
       "lynch": "1/6",
       "lynch_passes": 1,
       "lynch_total": 6,
@@ -828,6 +837,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 190247596.4,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -852,6 +866,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 187495350,
+        "refused": 0
       },
       "forward_returns": {
         "d1": 1.72,
@@ -878,6 +897,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 204469510.6,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": 1.1,
         "d3": null,
@@ -902,6 +926,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 270157178.6,
+        "refused": 0
       },
       "forward_returns": {
         "d1": 3.16,
@@ -928,6 +957,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 210146671.8,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": 3.69,
         "d3": 4.79,
@@ -952,6 +986,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 211054539,
+        "refused": 0
       },
       "forward_returns": {
         "d1": 1.11,
@@ -978,6 +1017,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 193721823.8,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": 6.0,
         "d3": 5.44,
@@ -1002,6 +1046,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 223775606.6,
+        "refused": 0
       },
       "forward_returns": {
         "d1": 0.36,
@@ -1028,6 +1077,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 161887274.6,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": 2.82,
         "d3": 2.83,
@@ -1039,7 +1093,7 @@
     {
       "date": "2026-08-19",
       "type": "evening",
-      "bursts": 4,
+      "bursts": 5,
       "passed_gate": 2,
       "scored": 2,
       "shortlist_size": 2,
@@ -1053,6 +1107,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 149343306.2,
+        "refused": 1
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -1064,7 +1123,7 @@
     {
       "date": "2026-08-18",
       "type": "evening",
-      "bursts": 4,
+      "bursts": 5,
       "passed_gate": 2,
       "scored": 2,
       "shortlist_size": 2,
@@ -1077,6 +1136,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 166255999,
+        "refused": 1
       },
       "forward_returns": {
         "d1": 0.48,
@@ -1103,6 +1167,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 169311660.6,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": 3.17,
         "d3": 9.88,
@@ -1127,6 +1196,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 155884278,
+        "refused": 0
       },
       "forward_returns": {
         "d1": 1.07,
@@ -1153,6 +1227,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 134251181.8,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": 4.05,
         "d3": 2.67,
@@ -1178,6 +1257,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 192993291.60000002,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": 3.58,
         "d3": 2.49,
@@ -1189,7 +1273,7 @@
     {
       "date": "2026-08-11",
       "type": "evening",
-      "bursts": 5,
+      "bursts": 6,
       "passed_gate": 4,
       "scored": 4,
       "shortlist_size": 4,
@@ -1202,6 +1286,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 176002148.4,
+        "refused": 1
       },
       "forward_returns": {
         "d1": 0.52,
@@ -1228,6 +1317,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 212691449.8,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": 6.81,
         "d3": 4.81,
@@ -1253,6 +1347,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 166194170,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": -1.38,
         "d3": -1.06,
@@ -1264,7 +1363,7 @@
     {
       "date": "2026-08-06",
       "type": "evening",
-      "bursts": 3,
+      "bursts": 4,
       "passed_gate": 2,
       "scored": 2,
       "shortlist_size": 2,
@@ -1278,6 +1377,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 170293802.20000002,
+        "refused": 1
+      },
       "forward_returns": {
         "d1": 6.88,
         "d3": 7.82,
@@ -1289,7 +1393,7 @@
     {
       "date": "2026-08-05",
       "type": "evening",
-      "bursts": 3,
+      "bursts": 4,
       "passed_gate": 0,
       "scored": 0,
       "shortlist_size": 0,
@@ -1303,6 +1407,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 176022991.8,
+        "refused": 1
+      },
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -1314,7 +1423,7 @@
     {
       "date": "2026-08-04",
       "type": "evening",
-      "bursts": 7,
+      "bursts": 8,
       "passed_gate": 5,
       "scored": 5,
       "shortlist_size": 5,
@@ -1328,6 +1437,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 197150178.4,
+        "refused": 1
+      },
       "forward_returns": {
         "d1": 2.24,
         "d3": 2.77,
@@ -1339,7 +1453,7 @@
     {
       "date": "2026-08-03",
       "type": "evening",
-      "bursts": 8,
+      "bursts": 9,
       "passed_gate": 5,
       "scored": 5,
       "shortlist_size": 5,
@@ -1352,6 +1466,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 191448670.20000002,
+        "refused": 1
       },
       "forward_returns": {
         "d1": -0.46,
@@ -1378,6 +1497,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 144648934.2,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": 5.85,
         "d3": 12.92,
@@ -1402,6 +1526,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 162117771.6,
+        "refused": 0
       },
       "forward_returns": {
         "d1": 0.72,
@@ -1428,6 +1557,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 146821119.8,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": 0.92,
         "d3": 3.23,
@@ -1452,6 +1586,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 145024717.20000002,
+        "refused": 0
       },
       "forward_returns": {
         "d1": 0.3,
@@ -1478,6 +1617,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 151707698.4,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": -0.56,
         "d3": 2.97,
@@ -1489,7 +1633,7 @@
     {
       "date": "2026-07-24",
       "type": "evening",
-      "bursts": 9,
+      "bursts": 10,
       "passed_gate": 8,
       "scored": 8,
       "shortlist_size": 5,
@@ -1502,6 +1646,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 179566162.2,
+        "refused": 1
       },
       "forward_returns": {
         "d1": 0.94,
@@ -1528,6 +1677,11 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 160537948.20000002,
+        "refused": 0
+      },
       "forward_returns": {
         "d1": 2.89,
         "d3": 5.97,
@@ -1552,6 +1706,11 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 140296815.20000002,
+        "refused": 0
       },
       "forward_returns": {
         "d1": 0.9,
@@ -1578,9 +1737,9 @@
       "sessions": 30,
       "from": "2026-07-22",
       "to": "2026-09-01",
-      "setups": 110,
+      "setups": 114,
       "scored_setups": 94,
-      "rows": 178
+      "rows": 186
     },
     "overall": {
       "setups": 94,
@@ -1815,28 +1974,28 @@
       {
         "code": "2",
         "passed": {
-          "setups": 62,
+          "setups": 64,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 2.18,
-              "n": 60,
+              "mean": 2.17,
+              "n": 62,
               "best": 9.03,
               "worst": -2.92,
               "in_band": 2
             },
             {
               "horizon": 3,
-              "mean": 4.67,
-              "n": 58,
+              "mean": 4.6,
+              "n": 60,
               "best": 25.85,
               "worst": -3.94,
               "in_band": 12
             },
             {
               "horizon": 5,
-              "mean": 6.81,
-              "n": 52,
+              "mean": 6.58,
+              "n": 54,
               "best": 25.52,
               "worst": -8.37,
               "in_band": 16
@@ -1844,28 +2003,28 @@
           ]
         },
         "failed": {
-          "setups": 48,
+          "setups": 50,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 1.41,
-              "n": 44,
+              "mean": 1.34,
+              "n": 46,
               "best": 8.03,
               "worst": -5.71,
               "in_band": 1
             },
             {
               "horizon": 3,
-              "mean": 2.02,
-              "n": 40,
+              "mean": 1.94,
+              "n": 42,
               "best": 23.38,
               "worst": -11.88,
               "in_band": 4
             },
             {
               "horizon": 5,
-              "mean": 3.7,
-              "n": 36,
+              "mean": 3.47,
+              "n": 38,
               "best": 34.21,
               "worst": -18.09,
               "in_band": 10
@@ -1878,28 +2037,28 @@
       {
         "code": "L",
         "passed": {
-          "setups": 86,
+          "setups": 88,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 2.02,
-              "n": 83,
+              "mean": 2.03,
+              "n": 85,
               "best": 9.03,
               "worst": -5.71,
               "in_band": 2
             },
             {
               "horizon": 3,
-              "mean": 3.71,
-              "n": 79,
+              "mean": 3.62,
+              "n": 81,
               "best": 25.85,
               "worst": -11.88,
               "in_band": 13
             },
             {
               "horizon": 5,
-              "mean": 5.61,
-              "n": 71,
+              "mean": 5.28,
+              "n": 73,
               "best": 34.21,
               "worst": -18.09,
               "in_band": 19
@@ -1907,62 +2066,62 @@
           ]
         },
         "failed": {
-          "setups": 24,
+          "setups": 26,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 1.19,
-              "n": 21,
+              "mean": 1.04,
+              "n": 23,
               "best": 8.15,
               "worst": -1.95,
               "in_band": 1
             },
             {
               "horizon": 3,
-              "mean": 3.11,
-              "n": 19,
+              "mean": 3.05,
+              "n": 21,
               "best": 15.2,
               "worst": -3.94,
               "in_band": 3
             },
             {
               "horizon": 5,
-              "mean": 5.21,
-              "n": 17,
+              "mean": 5.35,
+              "n": 19,
               "best": 18.71,
               "worst": -8.37,
               "in_band": 7
             }
           ]
         },
-        "separation": 0.4,
+        "separation": -0.07,
         "enough": false
       },
       {
         "code": "Y",
         "passed": {
-          "setups": 74,
+          "setups": 76,
           "outcomes": [
             {
               "horizon": 1,
               "mean": 1.78,
-              "n": 70,
+              "n": 72,
               "best": 9.03,
               "worst": -4.76,
               "in_band": 2
             },
             {
               "horizon": 3,
-              "mean": 3.5,
-              "n": 68,
+              "mean": 3.47,
+              "n": 70,
               "best": 25.85,
               "worst": -10.96,
               "in_band": 11
             },
             {
               "horizon": 5,
-              "mean": 5.38,
-              "n": 58,
+              "mean": 5.22,
+              "n": 60,
               "best": 25.52,
               "worst": -17.71,
               "in_band": 18
@@ -1970,62 +2129,62 @@
           ]
         },
         "failed": {
-          "setups": 36,
+          "setups": 38,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 2.01,
-              "n": 34,
+              "mean": 1.9,
+              "n": 36,
               "best": 8.03,
               "worst": -5.71,
               "in_band": 1
             },
             {
               "horizon": 3,
-              "mean": 3.79,
-              "n": 30,
+              "mean": 3.56,
+              "n": 32,
               "best": 23.38,
               "worst": -11.88,
               "in_band": 5
             },
             {
               "horizon": 5,
-              "mean": 5.83,
-              "n": 30,
+              "mean": 5.43,
+              "n": 32,
               "best": 34.21,
               "worst": -18.09,
               "in_band": 8
             }
           ]
         },
-        "separation": -0.45,
+        "separation": -0.21,
         "enough": true
       },
       {
         "code": "N",
         "passed": {
-          "setups": 88,
+          "setups": 92,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 2.01,
-              "n": 82,
+              "mean": 1.96,
+              "n": 86,
               "best": 9.03,
               "worst": -4.76,
               "in_band": 3
             },
             {
               "horizon": 3,
-              "mean": 3.78,
-              "n": 77,
+              "mean": 3.65,
+              "n": 81,
               "best": 25.85,
               "worst": -10.96,
               "in_band": 13
             },
             {
               "horizon": 5,
-              "mean": 5.42,
-              "n": 67,
+              "mean": 5.23,
+              "n": 71,
               "best": 34.2,
               "worst": -17.71,
               "in_band": 21
@@ -2037,7 +2196,7 @@
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 1.26,
+              "mean": 1.25,
               "n": 22,
               "best": 6.63,
               "worst": -5.71,
@@ -2045,7 +2204,7 @@
             },
             {
               "horizon": 3,
-              "mean": 2.9,
+              "mean": 2.93,
               "n": 21,
               "best": 18.33,
               "worst": -11.88,
@@ -2053,7 +2212,7 @@
             },
             {
               "horizon": 5,
-              "mean": 5.91,
+              "mean": 5.51,
               "n": 21,
               "best": 34.21,
               "worst": -18.09,
@@ -2061,34 +2220,34 @@
             }
           ]
         },
-        "separation": -0.49,
+        "separation": -0.28,
         "enough": false
       },
       {
         "code": "C",
         "passed": {
-          "setups": 96,
+          "setups": 98,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 1.91,
-              "n": 91,
+              "mean": 1.92,
+              "n": 93,
               "best": 9.03,
               "worst": -5.71,
               "in_band": 2
             },
             {
               "horizon": 3,
-              "mean": 3.66,
-              "n": 86,
+              "mean": 3.58,
+              "n": 88,
               "best": 25.85,
               "worst": -11.88,
               "in_band": 14
             },
             {
               "horizon": 5,
-              "mean": 5.54,
-              "n": 77,
+              "mean": 5.24,
+              "n": 79,
               "best": 34.21,
               "worst": -18.09,
               "in_band": 22
@@ -2096,62 +2255,62 @@
           ]
         },
         "failed": {
-          "setups": 14,
+          "setups": 16,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 1.46,
-              "n": 13,
+              "mean": 1.19,
+              "n": 15,
               "best": 8.15,
               "worst": -2.21,
               "in_band": 1
             },
             {
               "horizon": 3,
-              "mean": 3.07,
-              "n": 12,
+              "mean": 2.99,
+              "n": 14,
               "best": 14.48,
               "worst": -3.8,
               "in_band": 2
             },
             {
               "horizon": 5,
-              "mean": 5.47,
-              "n": 11,
+              "mean": 5.64,
+              "n": 13,
               "best": 19.15,
               "worst": -3.3,
               "in_band": 4
             }
           ]
         },
-        "separation": 0.07,
+        "separation": -0.4,
         "enough": false
       },
       {
         "code": "H",
         "passed": {
-          "setups": 62,
+          "setups": 64,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 1.92,
-              "n": 57,
+              "mean": 1.84,
+              "n": 59,
               "best": 9.03,
               "worst": -4.76,
               "in_band": 2
             },
             {
               "horizon": 3,
-              "mean": 4.4,
-              "n": 55,
+              "mean": 4.26,
+              "n": 57,
               "best": 25.85,
               "worst": -9.37,
               "in_band": 9
             },
             {
               "horizon": 5,
-              "mean": 6.42,
-              "n": 48,
+              "mean": 6.14,
+              "n": 50,
               "best": 34.21,
               "worst": -12.9,
               "in_band": 15
@@ -2159,64 +2318,64 @@
           ]
         },
         "failed": {
-          "setups": 48,
+          "setups": 50,
           "outcomes": [
             {
               "horizon": 1,
-              "mean": 1.77,
-              "n": 47,
+              "mean": 1.8,
+              "n": 49,
               "best": 8.03,
               "worst": -5.71,
               "in_band": 1
             },
             {
               "horizon": 3,
-              "mean": 2.55,
-              "n": 43,
+              "mean": 2.54,
+              "n": 45,
               "best": 23.38,
               "worst": -11.88,
               "in_band": 7
             },
             {
               "horizon": 5,
-              "mean": 4.47,
-              "n": 40,
+              "mean": 4.29,
+              "n": 42,
               "best": 34.2,
               "worst": -18.09,
               "in_band": 11
             }
           ]
         },
-        "separation": 1.95,
+        "separation": 1.85,
         "enough": true
       }
     ],
     "by_day": [
       {
         "day": 1,
-        "appearances": 71,
+        "appearances": 70,
         "enough": true,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 2.26,
-            "n": 66,
+            "mean": 2.29,
+            "n": 65,
             "best": 8.15,
             "worst": -4.76,
             "in_band": 2
           },
           {
             "horizon": 3,
-            "mean": 3.78,
-            "n": 62,
+            "mean": 3.84,
+            "n": 61,
             "best": 23.38,
             "worst": -10.96,
             "in_band": 11
           },
           {
             "horizon": 5,
-            "mean": 6.24,
-            "n": 53,
+            "mean": 6.21,
+            "n": 52,
             "best": 34.21,
             "worst": -17.71,
             "in_band": 18
@@ -2287,29 +2446,29 @@
       },
       {
         "day": null,
-        "appearances": 28,
+        "appearances": 29,
         "enough": false,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 1.65,
-            "n": 28,
+            "mean": 1.62,
+            "n": 29,
             "best": 9.03,
             "worst": -2.92,
             "in_band": 1
           },
           {
             "horizon": 3,
-            "mean": 4.08,
-            "n": 28,
+            "mean": 3.95,
+            "n": 29,
             "best": 25.85,
             "worst": -4.16,
             "in_band": 3
           },
           {
             "horizon": 5,
-            "mean": 5.78,
-            "n": 28,
+            "mean": 5.86,
+            "n": 29,
             "best": 25.52,
             "worst": -2.11,
             "in_band": 8
@@ -2680,8 +2839,8 @@
       {
         "ticker": "AZO",
         "setups": 1,
-        "appearances": 2,
-        "last_seen": "2026-07-30",
+        "appearances": 4,
+        "last_seen": "2026-08-06",
         "best_score": 5.8,
         "outcomes": [
           {
@@ -3769,32 +3928,32 @@
       {
         "ticker": "MGM",
         "setups": 1,
-        "appearances": 1,
+        "appearances": 2,
         "last_seen": "2026-07-30",
         "best_score": 6.3,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 0.63,
+            "mean": -0.3,
             "n": 1,
-            "best": 0.63,
-            "worst": 0.63,
+            "best": -0.3,
+            "worst": -0.3,
             "in_band": 0
           },
           {
             "horizon": 3,
-            "mean": 0.15,
+            "mean": 0.5,
             "n": 1,
-            "best": 0.15,
-            "worst": 0.15,
+            "best": 0.5,
+            "worst": 0.5,
             "in_band": 0
           },
           {
             "horizon": 5,
-            "mean": 7.94,
+            "mean": 7.81,
             "n": 1,
-            "best": 7.94,
-            "worst": 7.94,
+            "best": 7.81,
+            "worst": 7.81,
             "in_band": 0
           }
         ]
@@ -3895,6 +4054,39 @@
             "best": 10.3,
             "worst": 10.3,
             "in_band": 1
+          }
+        ]
+      },
+      {
+        "ticker": "ODFL",
+        "setups": 1,
+        "appearances": 2,
+        "last_seen": "2026-08-19",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": 5.73,
+            "n": 1,
+            "best": 5.73,
+            "worst": 5.73,
+            "in_band": 0
+          },
+          {
+            "horizon": 3,
+            "mean": -0.05,
+            "n": 1,
+            "best": -0.05,
+            "worst": -0.05,
+            "in_band": 0
+          },
+          {
+            "horizon": 5,
+            "mean": -3.97,
+            "n": 1,
+            "best": -3.97,
+            "worst": -3.97,
+            "in_band": 0
           }
         ]
       },
@@ -4098,33 +4290,33 @@
       },
       {
         "ticker": "QCOM",
-        "setups": 2,
-        "appearances": 3,
+        "setups": 4,
+        "appearances": 5,
         "last_seen": "2026-08-27",
         "best_score": 5.4,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 3.19,
-            "n": 2,
+            "mean": 1.54,
+            "n": 4,
             "best": 7.59,
             "worst": -1.22,
             "in_band": 0
           },
           {
             "horizon": 3,
-            "mean": 3.74,
-            "n": 2,
+            "mean": 1.97,
+            "n": 4,
             "best": 7.74,
-            "worst": -0.26,
+            "worst": -0.4,
             "in_band": 0
           },
           {
             "horizon": 5,
-            "mean": -0.16,
-            "n": 1,
+            "mean": -0.44,
+            "n": 3,
             "best": -0.16,
-            "worst": -0.16,
+            "worst": -0.67,
             "in_band": 0
           }
         ]
@@ -4593,32 +4785,32 @@
       },
       {
         "ticker": "XOM",
-        "setups": 2,
-        "appearances": 2,
+        "setups": 3,
+        "appearances": 3,
         "last_seen": "2026-08-28",
         "best_score": 6.4,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 0.95,
-            "n": 2,
+            "mean": 0.34,
+            "n": 3,
             "best": 1.1,
-            "worst": 0.79,
+            "worst": -0.87,
             "in_band": 0
           },
           {
             "horizon": 3,
-            "mean": 0.1,
-            "n": 1,
-            "best": 0.1,
+            "mean": 2.33,
+            "n": 2,
+            "best": 4.57,
             "worst": 0.1,
             "in_band": 0
           },
           {
             "horizon": 5,
-            "mean": -0.16,
-            "n": 1,
-            "best": -0.16,
+            "mean": 2.58,
+            "n": 2,
+            "best": 5.32,
             "worst": -0.16,
             "in_band": 0
           }
@@ -4740,6 +4932,36 @@
           "n": 0,
           "best": null,
           "worst": null,
+          "in_band": 0
+        }
+      ],
+      "enough": false
+    },
+    "illiquid": {
+      "setups": 4,
+      "outcomes": [
+        {
+          "horizon": 1,
+          "mean": 1.17,
+          "n": 4,
+          "best": 5.73,
+          "worst": -0.87,
+          "in_band": 0
+        },
+        {
+          "horizon": 3,
+          "mean": 1.23,
+          "n": 4,
+          "best": 4.57,
+          "worst": -0.4,
+          "in_band": 0
+        },
+        {
+          "horizon": 5,
+          "mean": 0.05,
+          "n": 4,
+          "best": 5.32,
+          "worst": -3.97,
           "in_band": 0
         }
       ],
