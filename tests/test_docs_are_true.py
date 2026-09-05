@@ -625,3 +625,61 @@ def test_a_snapshot_it_cannot_read_says_the_date_is_a_commit_time(tmp_path):
                              env={"PATH": f"{stub}:/usr/bin:/bin", "HOME": str(tmp_path)})
         assert out.stdout.strip() == f"GIT commit -m run (session unknown; committed {today})", (
             f"broken={broken!r}: {out.stdout!r}")
+
+
+def test_every_module_this_repo_imports_is_a_dependency_it_declares():
+    """A test that imports what CI does not have passes here and errors there.
+
+    That is not hypothetical: `import yaml` went into this file's workflow
+    checks, this sandbox happens to have PyYAML installed, the runner does not,
+    and four tests errored on three consecutive pushes while the suite was
+    green locally. Same shape as the CPython 3.11-vs-3.12 difference CLAUDE.md
+    records -- what is on this machine is not what CI has -- and the same fix:
+    something mechanical, because remembering did not work.
+
+    Walks the AST rather than grepping for "import", so a name inside a string
+    or a comment is not a dependency and a conditional import still is. Maps
+    each module to the distribution that PROVIDES it -- `yaml` comes from
+    PyYAML and `alpaca` from alpaca-py, and neither is guessable from the
+    module name.
+    """
+    import ast
+    import importlib.metadata
+    import sys
+
+    def normalise(name: str) -> str:
+        return re.sub(r"[-_.]+", "-", name).lower()
+
+    declared = set()
+    for name in ("requirements.txt", "requirements-dev.txt"):
+        for line in _read(name).splitlines():
+            line = line.split("#")[0].strip()
+            if line and not line.startswith("-"):
+                declared.add(normalise(re.split(r"[<>=!\[;]", line)[0].strip()))
+
+    imported = set()
+    for path in sorted(ROOT.glob("src/*.py")) + sorted(ROOT.glob("tests/**/*.py")) \
+            + sorted(ROOT.glob("tools/*.py")):
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Import):
+                imported |= {alias.name.split(".")[0] for alias in node.names}
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                imported.add(node.module.split(".")[0])
+
+    provides = importlib.metadata.packages_distributions()
+    local = {"src", "tests", "tools", "synthetic", "fakes", "conftest"}
+    missing = {}
+    for module in sorted(imported):
+        if module in sys.stdlib_module_names or module in local:
+            continue
+        dists = provides.get(module)
+        assert dists, (
+            f"{module!r} is imported but no installed distribution provides it; "
+            "this machine cannot say what to declare for it")
+        if not any(normalise(d) in declared for d in dists):
+            missing[module] = dists
+
+    assert not missing, (
+        f"imported but declared in neither requirements file: {missing}. "
+        "CI installs requirements-dev.txt and nothing else, so these error there "
+        "while passing here.")

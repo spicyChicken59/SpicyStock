@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 766 tests with no network
+- **There is a regression net.** `pytest tests/` runs 767 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -409,6 +409,20 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   all four and points at the rows, which do. Both pinned by tests that read
   both files, because a comment claiming two surfaces match is exactly what
   carried this for a round.
+
+  **And CI was red for three commits while the suite was green here, for the
+  reason this section already warns about.** The workflow checks parse
+  `.github/workflows/*.yml` and assert on the PARSED structure -- right, since
+  what went wrong there twice was a property of an `if:` condition and not a
+  spelling -- but `import yaml` was never declared. This sandbox happens to
+  have PyYAML; the runner installs `requirements-dev.txt` and nothing else, so
+  four tests errored there and passed here. PyYAML is declared now, and
+  `test_every_module_this_repo_imports_is_a_dependency_it_declares` walks the
+  AST of `src/`, `tests/` and `tools/` and maps each import to the
+  distribution that provides it -- `yaml` comes from PyYAML and `alpaca` from
+  alpaca-py, neither guessable from the module name. **The interpreter was the
+  first way this machine differed from CI and the installed packages are the
+  second; assume there is a third.**
 
   **And `evening.yml`'s commit-back has still never executed** — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on

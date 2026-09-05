@@ -6,3 +6,14 @@
 -r requirements.txt
 
 pytest>=8.0
+
+# tests/test_docs_are_true.py parses .github/workflows/*.yml and asserts on the
+# PARSED structure, because what went wrong there twice was a structural
+# property of an `if:` condition and not a spelling. It is here rather than in
+# requirements.txt because nothing the pipeline runs reads YAML.
+#
+# It was missing, and the sandbox this was written in happens to have PyYAML
+# installed while the runner does not -- so four tests passed locally and
+# errored in CI for three commits. Same lesson as the interpreter difference in
+# CLAUDE.md: what is on this machine is not what CI has.
+PyYAML>=6.0
