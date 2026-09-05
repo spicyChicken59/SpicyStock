@@ -16,6 +16,10 @@
       "model": "claude-sonnet-4-6",
       "status": "degraded",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "IBM",
@@ -347,6 +351,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "ABT",
@@ -541,6 +549,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "MA",
@@ -764,6 +776,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "KR",
@@ -1066,6 +1082,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "ELV",
@@ -1365,6 +1385,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "USB",
@@ -1594,6 +1618,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "USB",
@@ -1750,6 +1778,10 @@
       "model": "claude-sonnet-4-6",
       "status": "degraded",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "MCHP",
@@ -2075,6 +2107,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "DHI",
@@ -2234,6 +2270,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "WM",
@@ -2393,6 +2433,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "PFE",
@@ -2552,6 +2596,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "ADI",
@@ -2816,6 +2864,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "XOM",
@@ -2978,6 +3030,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "DIS",
@@ -3172,6 +3228,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "MPC",
@@ -3371,6 +3431,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "AMAT",
@@ -3568,6 +3632,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "PEP",
@@ -3730,6 +3798,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "WM",
@@ -3889,6 +3961,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "PLD",
@@ -4016,6 +4092,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [],
       "gated": [
         {
@@ -4136,6 +4216,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "APO",
@@ -4400,6 +4484,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "ABT",
@@ -4696,6 +4784,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "WBD",
@@ -4890,6 +4982,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "FCX",
@@ -5221,6 +5317,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "CCL",
@@ -5593,6 +5693,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "PFE",
@@ -5883,6 +5987,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "KR",
@@ -6074,6 +6182,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "MA",
@@ -6411,6 +6523,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "MA",
@@ -6645,6 +6761,10 @@
       "model": "claude-sonnet-4-6",
       "status": "ok",
       "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "candidates": [
         {
           "ticker": "SBUX",

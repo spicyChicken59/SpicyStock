@@ -163,7 +163,7 @@ CONTRACT_INVARIANTS = [
     "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
     "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
     "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
-    "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was ('lynch_gate' rejected by the checklist, 'score_cap' passed but out of calls). Null exactly with last_seen. A gate rejection is never published as an absence of judgement.",
+    "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'veto_up_days' (an absolute rule refused it before the checklist was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same three words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and a veto is never published as a gate rejection.",
     "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
     "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
     "evidence.shortlist, evidence.rest, evidence.refused and evidence.crowded_out are four disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, and the names that cleared the gate and were never scored because the call budget filled. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked.",
@@ -1686,6 +1686,18 @@ class Ledger:
             "model": run.get("model"),
             "status": run.get("status", "ok"),
             "dry_run": bool(run.get("dry_run")),
+            # What this run SCANNED, kept with the row so the record can tell
+            # a `--tickers` smoke test from a scan of the universe. Without it
+            # the four-name run README documents as a local check left a row
+            # nothing downstream could distinguish from a real night: the next
+            # real run read it as history, every name in it carried a streak
+            # that started on a run that never scanned the universe, and its
+            # scored rows counted as setups in the evidence. The row is still
+            # written -- the test suite and tools/make_history.py drive the
+            # pipeline through this same path, and a run that writes no
+            # record could not be tested for what it records -- but it says
+            # what it is, and README says how to put the file back.
+            "universe": run.get("universe"),
             "candidates": [slim_row(c, scored=True) for c in candidates],
             "gated": [slim_row(g, scored=False) for g in gated],
         }

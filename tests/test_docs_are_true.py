@@ -79,12 +79,19 @@ def test_the_documented_universe_size_is_the_real_one():
             for line in (ROOT / "data" / "symbols.txt").read_text().splitlines()
         ) if s
     ])
-    readme = _read("README.md")
+    # README and CLAUDE.md both. The opening line -- "a checked-in universe of
+    # 230 US common stocks", the first number a reader meets -- matched none of
+    # the four phrasings this used to hold, so it could say 999 with the suite
+    # green while the diagram three lines under it was guarded. CLAUDE.md's
+    # falsification table quotes the figure as "230 curated names".
+    readme = _read("README.md") + "\n" + _read("CLAUDE.md")
     patterns = [
         r"\b(\d{2,5})-name\b",
         r"\b(\d{2,5})-symbol\b",
         r"data/symbols\.txt,\s*(\d{2,5})\s*names",
         r"\b(\d{2,5})\s+checked-in\b",
+        r"universe of (\d{2,5}) US common stocks",
+        r"\b(\d{2,5}) curated names",
     ]
     claimed = {int(n) for p in patterns for n in re.findall(p, readme)}
     # ScanConfig.batch_size is a DIFFERENT real quantity that legitimately takes
@@ -101,25 +108,160 @@ def test_the_documented_universe_size_is_the_real_one():
     assert not wrong, f"README quotes {wrong} for the universe; data/symbols.txt has {actual}"
 
 
-def test_the_email_reports_the_universe_it_actually_scanned():
-    """The daily email is the artifact a person reads. It said "US common
-    stocks" for a full batch after the scan was narrowed to a checked-in file.
+def test_env_example_lists_the_feeds_the_sdk_accepts_and_the_default_the_scan_uses():
+    """.env.example enumerates SCAN_FEED's values and names its default.
+
+    This replaced a guard that could no longer fire: it was conditioned on a
+    sentence ("no feed= is set anywhere") that step 3 swept out of the file,
+    so it has passed vacuously ever since. The list and the default are facts
+    about alpaca-py's DataFeed and src.scanner.DEFAULT_FEED, so they are read
+    from there -- the prose audit changed the list to three feeds and the
+    default to iex and the suite stayed green.
     """
-    pipeline = _read("src/pipeline.py")
-    assert '"universe": "US common stocks"' not in pipeline, (
-        "pipeline hard-codes the pre-step-2 universe string into the email"
+    from alpaca.data.enums import DataFeed
+    from src.scanner import DEFAULT_FEED
+
+    env = _read(".env.example")
+    listed = re.search(r"Which Alpaca feed to read: ([a-z_, ]+)\.", env)
+    assert listed, ".env.example no longer lists SCAN_FEED's values -- did the wording change?"
+    assert [f.strip() for f in listed.group(1).split(",")] == [e.value for e in DataFeed], (
+        f".env.example lists {listed.group(1)!r}; alpaca-py's DataFeed has "
+        f"{[e.value for e in DataFeed]}"
+    )
+    stated = re.search(r"Defaults to (\w+)\.", env)
+    assert stated and stated.group(1) == DEFAULT_FEED.value, (
+        f".env.example says the feed defaults to {stated and stated.group(1)!r}; "
+        f"src.scanner.DEFAULT_FEED is {DEFAULT_FEED.value!r}"
     )
 
 
-def test_env_example_does_not_claim_feed_is_unset_once_it_is_set():
-    """.env.example asserts "no feed= is set anywhere". Step 3 sets it. This
-    test is here so that step cannot land without sweeping the claim.
+def test_the_documented_thresholds_are_the_ones_the_code_applies(ohlcv):
+    """README's pipeline diagram and schedule quote the numbers the code runs
+    on; .env.example quotes the close it keys the session on.
+
+    The prose audit mutated nine of them at once -- the gate to 4/6, the cap
+    to 99, the retention to 999 runs, the fill window to two, the shortlist
+    to 7, the evening to 7:16 PM, the volume ratio to 9.5x, the price floor to
+    $40, the close to 17:15 -- and the suite stayed green. Each is read off
+    the constant it describes; the times are derived from the workflow crons
+    the way the README derives them (UTC under EDT, minus four hours).
     """
-    if "no feed= is set anywhere" in _read(".env.example"):
-        assert "feed=" not in _read("src/scanner.py"), (
-            ".env.example still says no feed= is set, but src/scanner.py sets one -- "
-            "sweep .env.example (CLAUDE.md's falsification table lists this)"
-        )
+    import yaml
+    from src import ledger, lynch, pipeline, scanner
+
+    readme = _read("README.md")
+    cfg = scanner.ScanConfig()
+
+    def one(pattern, text=readme):
+        found = re.search(pattern, text, re.S)
+        assert found, f"README no longer says {pattern!r} -- did the wording change?"
+        return found.groups()
+
+    (gain,) = one(r"≥(\d+)% gain")
+    assert float(gain) == cfg.min_gain_pct
+    rvol, lookback = one(r"≥([\d.]+)x its own\D+?(\d+)-session average")
+    assert (float(rvol), int(lookback)) == (cfg.min_rvol, cfg.rvol_lookback)
+    (price,) = one(r"price > \$(\d+)")
+    assert float(price) == cfg.min_price
+    (kept,) = one(r"top (\d+)% of the day's dollar volume")
+    assert int(kept) == 100 - cfg.min_dollar_volume_pctile
+    need, of, cap = one(r"hard gate: ≥(\d)/(\d) passes, top (\d+) kept")
+    assert (int(need), int(of), int(cap)) == (
+        pipeline.MIN_LYNCH_PASSES, lynch.evaluate_2lynch(ohlcv("burst"))["total"],
+        pipeline.MAX_TO_SCORE)
+    (up_days,) = one(r"never after (\d)\+ consecutive up days")
+    assert int(up_days) == lynch.MAX_CONSECUTIVE_UP_DAYS + 1
+    (top,) = one(r"HTML table, top (\d+),")
+    assert int(top) == pipeline.TOP_N
+    (runs,) = one(r"kept for the last (\d+) runs")
+    assert int(runs) == ledger.MAX_RUNS
+    (window,) = one(r"retried for (\w+) runs")
+    words = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
+             "eight": 8, "nine": 9, "ten": 10, "twelve": 12, "twenty": 20}
+    assert words.get(window, window) == ledger.FILL_WINDOW_RUNS, (
+        f"README says forward returns are retried for {window} runs; "
+        f"ledger.FILL_WINDOW_RUNS is {ledger.FILL_WINDOW_RUNS}")
+
+    def cron_utc(name):
+        doc = yaml.safe_load(_read(f".github/workflows/{name}"))
+        crons = [c["cron"].split() for c in doc[True]["schedule"]]
+        return sorted((int(hour), int(minute)) for minute, hour, *_rest in crons)
+
+    (edt_h, m), (est_h, m2) = cron_utc("evening.yml")
+    assert m == m2 and est_h == edt_h + 1, "evening.yml's two crons are not an EDT/EST pair"
+    evening_et = f"{(edt_h - 4) % 12 or 12}:{m:02d} PM ET"
+    assert f"{edt_h:02d}:{m:02d} UTC under EDT, {est_h:02d}:{m:02d} UTC under EST" in readme
+    (edt_h, m), (est_h, m2) = cron_utc("morning.yml")
+    assert m == m2 and est_h == edt_h + 1, "morning.yml's two crons are not an EDT/EST pair"
+    morning_et = f"{edt_h - 4}:{m:02d} AM ET"
+    assert f"({edt_h:02d}:{m:02d} / {est_h:02d}:{m:02d} UTC)" in readme
+    # EVERY clock time README prints, not "at least one that is right": the
+    # first version of this asserted `in`, and changing one of the two "8:30
+    # AM ET" mentions left the other to satisfy it -- a mutation survived.
+    mentioned = set(re.findall(r"\b\d{1,2}:\d{2} [AP]M ET\b", readme))
+    assert mentioned == {evening_et, morning_et}, (
+        f"README mentions {sorted(mentioned)}; the crons say {evening_et} and {morning_et}")
+
+    close = scanner.SESSION_COMPLETE_ET
+    assert f"{close.hour}:{close.minute:02d} ET" in _read(".env.example"), (
+        f".env.example does not name the {close.hour}:{close.minute:02d} ET close "
+        "the session arithmetic keys on")
+
+
+def test_the_cost_paragraph_does_its_own_arithmetic():
+    """README's Costs section states its inputs -- image size, token counts,
+    prices, the call cap, the cache multipliers -- and then four conclusions:
+    the break-even, the saving, and the two nightly figures.
+
+    Two of the four were wrong from the day they were written, and CLAUDE.md
+    quoted a third figure for one of them: break-even was given as 1.25/0.9
+    = 1.4 calls, which charges the whole cache write against the reads as if
+    the first call were otherwise free (it is 1 + 0.25/0.9 = 1.28), and the
+    cached night was $0.13 in one file and rounded from a different token
+    count than the $0.24 beside it in the other. Every conclusion is
+    recomputed here from the inputs the paragraph itself states, so the
+    numbers can only be wrong together.
+    """
+    from src import pipeline
+
+    readme = _read("README.md")
+    costs = readme[readme.index("## Costs"):]
+
+    def num(pattern):
+        found = re.search(pattern, costs, re.S)
+        assert found, f"README's Costs section no longer states {pattern!r}"
+        return float(found.group(1).replace(",", ""))
+
+    width, height = re.search(r"PNG is (\d+)x(\d+)", costs).groups()
+    image = round(int(width) * int(height) / 750)
+    assert image == num(r"which is (\d+) image tokens")
+    system = num(r"~([\d,]+)\s+tokens of system prompt")
+    metrics = num(r"metrics block ~([\d,]+)")
+    per_call = system + metrics + image
+    assert abs(per_call - num(r"so ~([\d,]+) input tokens")) <= 50
+    out = num(r"~(\d+) out per call")
+    price_in, price_out = (float(x) for x in re.search(r"\$(\d+)/\$(\d+) per Mtok", costs).groups())
+    calls = num(r"≤(\d+) scoring calls/run")
+    assert calls == pipeline.MAX_TO_SCORE
+    write, read = num(r"cache write costs ([\d.]+)x"), num(r"a read ([\d.]+)x")
+
+    uncached = calls * (per_call * price_in + out * price_out) / 1e6
+    cached = ((system * write + (per_call - system)) * price_in + out * price_out
+              + (calls - 1) * ((system * read + (per_call - system)) * price_in + out * price_out)) / 1e6
+    break_even = 1 + (write - 1) / (1 - read)
+
+    assert num(r"break-even the second call \(([\d.]+) calls\)") == round(break_even, 2)
+    assert num(r"a full night (\d+)% cheaper") == round(100 * (1 - cached / uncached))
+    assert num(r"\$([\d.]+) this\s+paragraph used to quote") == round(uncached, 2)
+    assert num(r"about \$([\d.]+) a\s+run") == round(cached, 2)
+    assert num(r"roughly \$(\d+) a year") == round(cached * 252)
+    assert readme.count(f"~${round(cached, 2):.2f}") == 1, "the summary table quotes a different nightly figure"
+    for doc in ("CLAUDE.md", "src/scorer.py"):
+        # Comment markers and line wraps are not words: the scorer's copy
+        # wraps between the percentage and "cheaper".
+        text = " ".join(_read(doc).replace("#", " ").split())
+        assert f"{round(break_even, 2)} calls" in text, f"{doc} quotes a different break-even"
+        assert f"{round(100 * (1 - cached / uncached))}% cheaper" in text, f"{doc} quotes a different saving"
 
 
 def test_the_documented_workflow_files_are_the_ones_that_exist():
@@ -228,6 +370,34 @@ def test_every_reason_a_streak_can_carry_has_words_on_every_surface():
     assert not [r for r in reasons if f"`{r}`" not in _read("README.md")], (
         "README's streak bullet does not name every reason a null `day` can carry"
     )
+
+
+def test_the_published_contract_names_every_outcome_a_row_can_carry():
+    """docs/data.json carries its own `_contract`, and README says its
+    `last_outcome` bullet is what that block documents.
+
+    The block named three outcomes and README four: `veto_up_days`, the word
+    that exists so a 6/6 name refused by an absolute rule is never called a
+    gate rejection, was absent from the file's own documentation of the field
+    -- the collapse README forbids, in the contract itself. Every word the
+    email and the page can render is checked against the published sentences,
+    on both the last_outcome field and gated_out[].reason, and README's own
+    bullet is held to the same set.
+    """
+    from src import emailer, ledger, pipeline
+
+    words = set(emailer.LAST_OUTCOME) | set(pipeline.VETO_REASONS.values())
+    contract = "\n".join(ledger.CONTRACT_INVARIANTS)
+    missing = sorted(w for w in words if f"'{w}'" not in contract)
+    assert not missing, (
+        f"src.ledger.CONTRACT_INVARIANTS never names {missing}, so the file's own "
+        "documentation of last_outcome / gated_out[].reason is missing a word every "
+        "surface can render")
+    readme = _read("README.md")
+    bullet = readme[readme.index("`last_outcome` is what happened"):]
+    bullet = bullet[:bullet.index("\n\n")]
+    assert not [w for w in words if f"`{w}`" not in bullet], (
+        "README's last_outcome bullet does not name every outcome word")
 
 
 def _gitignore_blocks(path: str) -> bool | None:

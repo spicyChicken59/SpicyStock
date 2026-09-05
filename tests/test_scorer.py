@@ -625,6 +625,34 @@ def test_an_unknown_verdict_is_derived_from_the_score(candidate, claude):
     assert result["provenance"]["source"] == "claude"
 
 
+@pytest.mark.parametrize("score, said, band", [
+    (9.5, "skip", "A+"),   # ranked first and labelled skip, both archived
+    (3.0, "A+", "skip"),   # a kill criterion wearing the top label
+    (7.0, "B", "B+"),      # one band off, the common case
+    (8.0, "A", "A"),       # agrees: kept, and nothing is logged
+])
+def test_a_verdict_that_contradicts_its_own_score_is_the_bands(candidate, claude, caplog,
+                                                                score, said, band):
+    """knowledge/strategy.md defines the verdict AS the score's band -- "A+
+    (9-10), A (8-8.9) ... skip (<5)" -- and _validated() derived it only for
+    a word outside the rubric. A reply carrying score 9.5 and verdict "skip"
+    contradicts the rubric it was asked to apply, and both halves were kept:
+    the email ranked the name first and printed skip beside it. The score is
+    the judgement; the label is derived from it as the rubric says, and the
+    disagreement is logged so a model that keeps doing it is visible."""
+    import logging
+
+    claude.replies(json.dumps({"score": score, "reason": "r", "verdict": said, "key_risk": "k"}))
+    with caplog.at_level(logging.WARNING, logger="src.scorer"):
+        result = score_candidate(candidate, make_lynch(), CONTEXT, None)
+    assert (result["score"], result["verdict"]) == (score, band)
+    assert result["provenance"]["source"] == "claude", "a contradiction is not a format error"
+    disagreed = [r for r in caplog.records if "rubric's band" in r.getMessage()]
+    assert bool(disagreed) == (said != band)
+    if disagreed:
+        assert repr(said) in disagreed[0].getMessage() and repr(band) in disagreed[0].getMessage()
+
+
 def test_one_bad_reply_is_retried_before_anything_falls_back(candidate, claude):
     """A single malformed reply used to cost the candidate its score outright."""
     claude.replies(

@@ -334,13 +334,6 @@ class ScanConfig:
     # invariant so it cannot be rediscovered.
     min_dollar_volume_pctile: float = 30.0
 
-    # NOT A STRATEGY THRESHOLD, and not read by detect_setup() any more: step
-    # 4 replaced the absolute 5,000,000-share floor with min_rvol above. The
-    # field survives only because tools/make_fixture.py still reads it to lift
-    # its hand-authored rows over the old floor, and regenerating that fixture
-    # with a different value rewrites docs/data.json. Delete it together with
-    # that use — nothing in the scan will notice.
-
     # --- how much of the universe may go missing before this is not a scan --
     # Both are fractions of what was asked for, and both are deliberately
     # generous: a handful of halted or delisted names is a normal day, and a

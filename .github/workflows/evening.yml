@@ -153,13 +153,16 @@ jobs:
         #
         # `git add docs` — NOT `git add docs results`. results/ is gitignored on
         # purpose (README, "Notes"), and `git add` on an ignored path exits 1,
-        # which under Actions' `bash -e` aborted this step before the commit on
-        # every single run. docs/ was staged and never committed, the container
-        # took it, and the history this exists to accumulate restarted every
-        # night while the workflow reported it was being kept. Step 10 found it
-        # by running `git add` against these rules rather than reading them:
-        # both the streaks and the morning follow-through are built on this
-        # step actually working.
+        # which under Actions' `bash -e` would have aborted this step before
+        # the commit: docs/ staged and never committed, the container taking
+        # it, and the history this exists to accumulate restarting every night
+        # while the workflow reported it was being kept. Step 10 found it by
+        # running `git add` against these rules rather than reading them, and
+        # before any scheduled run reached this step (every one so far has
+        # stopped at preflight), so it never fired once — an earlier version
+        # of this comment said it had. Both the streaks and the morning
+        # follow-through are built on this step actually working, and it has
+        # still never executed.
         #
         # docs/charts/*.png is NOT committed either, and that is now a rule in
         # .gitignore rather than an accident of this step failing: ~57 KB a

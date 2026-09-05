@@ -1499,7 +1499,16 @@ server.close();
 // rots silently -- three doc claims in this repo already did, which is why
 // tests/test_docs_are_true.py exists -- so it is checked here, where the real
 // number is. Counted after every other check has run, and counting itself.
-const claimed = (await readFile(join(ROOT, '..', 'README.md'), 'utf8')).match(/It runs (\d+) checks/);
+const readme = await readFile(join(ROOT, '..', 'README.md'), 'utf8');
+// README says how many variants there are too, and that number said six,
+// then eight, while VARIANTS grew to sixteen -- the same rot, one paragraph
+// up. Counted off the object, excluding the one name that serves no document.
+const served = Object.keys(VARIANTS).filter((name) => name !== 'nodata').length;
+const variants = readme.match(/(\d+) mutated copies of it/);
+ok("README's count of the mutated fixtures is the real one",
+  !!variants && Number(variants[1]) === served,
+  `README says ${variants ? variants[1] : 'nothing'}, VARIANTS serves ${served}`);
+const claimed = readme.match(/It runs (\d+) checks/);
 ok("README's count of these checks is the real one",
   !!claimed && Number(claimed[1]) === results.length + 1,
   `README says ${claimed ? claimed[1] : 'nothing'}, this run has ${results.length + 1}`);

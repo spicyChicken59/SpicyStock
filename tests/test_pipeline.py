@@ -889,6 +889,33 @@ def test_the_email_names_a_command_line_universe_the_way_the_archive_does(
     assert "named on the command line" in label, label
 
 
+def test_the_record_says_what_each_run_scanned(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """README documents a four-ticker --tickers run as the local smoke test,
+    and that run writes docs/ledger.json like any other: one row per name,
+    read as history by the next real run on another session, committed by
+    the next `git add docs`. The row used to carry nothing that told it from
+    a scan -- data.json's headline said "named on the command line" and the
+    ledger entry beside it said nothing -- so the record could not answer
+    whether a streak, or a scored setup in the evidence, came from a night
+    that scanned the universe. Every entry carries its universe now, in the
+    ledger and in the runs table the page reads."""
+    snapshot = evening_run(tmp_path, fake_alpaca, ohlcv)
+
+    (entry,) = recorded(tmp_path)["runs"]
+    assert entry["universe"] == snapshot["run"]["universe"]
+    assert "named on the command line" in entry["universe"]["label"]
+    assert entry["universe"]["size"] == 1
+    (run,) = snapshot["runs"]
+    assert run["universe"] == entry["universe"], "the page's runs table drops the marker"
+    # And it survives a reload as the shape it was written in: a later run
+    # reads this entry back, and the marker is only useful if it is still
+    # there for a reader of the file the commit-back keeps.
+    book = ledger.Ledger(tmp_path / "docs").load()
+    assert book.runs[0]["universe"] == entry["universe"]
+
+
 def test_a_delivery_failure_is_written_into_the_record_it_leaves_behind(
     monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):

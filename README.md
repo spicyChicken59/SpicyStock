@@ -56,7 +56,7 @@ Layer 6  Email ....................... HTML table, top 5, with the charts this
 |---|---|---|
 | what it does | **discovery** — scans the session that closed today | **follow-through** — re-presents the evening run before the open |
 | scans | yes, every layer above | no |
-| costs | ~25 Claude calls, ~$0.13 | nothing |
+| costs | ~25 Claude calls, ~$0.15 | nothing |
 | writes | `docs/data.json`, `docs/ledger.json`, `docs/charts/` (gitignored), `results/*.csv` | nothing |
 | charts | attached inline — the PNGs it just rendered | none, and the email says why |
 | workflow | `.github/workflows/evening.yml` | `.github/workflows/morning.yml` |
@@ -220,7 +220,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 843 tests, no network or API keys needed
+pytest tests/                   # 850 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -228,10 +228,22 @@ email — rewrites `docs/data.json`, updates `docs/ledger.json` and writes PNGs
 into `docs/charts/`. A four-ticker smoke test therefore replaces whatever
 `docs/data.json` held with a four-ticker run — the hand-authored fixture on a
 fresh clone, last night's real run once `evening.yml` has committed one back.
-`git checkout docs/data.json` puts it back either way. A **morning** run writes
-nothing at all, so it cannot disturb that file — but it will refuse to read the
-fixture, which is what you will see if you run one before an evening run has
-published anything.
+`docs/ledger.json` gains a run too — one row per named ticker, marked with the
+universe it scanned (`runs[].universe` says `named on the command line`) so the
+record can tell it from a real night, but a row all the same: the next evening
+run on another session reads it as history, and `git add docs` would commit it.
+Put both files back with
+
+```bash
+rm -f docs/ledger.json && git checkout -- docs/
+```
+
+— the ledger is removed first because on a fresh clone it is untracked, so
+`git checkout` would leave it, and the first `git pull` after `evening.yml`
+commits a real one then refuses to overwrite it. A **morning** run writes
+nothing at all, so it cannot disturb either file — but it will refuse to read
+the fixture, which is what you will see if you run one before an evening run
+has published anything.
 
 ## The dashboard
 
@@ -343,8 +355,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 11.04 MB raw
-and **0.66 MB gzipped** after a full year. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 11.07 MB raw
+and **0.68 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -594,17 +606,18 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 157 checks, and which file each one
+**Three data sources, one page.** It runs 158 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
-  score, chart paths that 404, a non-empty gated list, every streak state a
-  reader has to tell apart. Eight mutated copies of it are served under
-  `/v/<name>/` for the states one night cannot hold at once, beside a ninth
-  name that serves no document at all. This said six until two more were added
-  without it — read the count off `VARIANTS` in the smoke test, not from here.
+  score, chart paths that 404, a non-empty gated list, the streak states one
+  night can hold at once. 16 mutated copies of it are served
+  under `/v/<name>/` for the states one night cannot hold at once, beside one
+  more name, `nodata`, that serves no document at all. This said six, then
+  eight, while `VARIANTS` in the smoke test grew past both, so the script now
+  checks that number the way it checks its own count of checks.
 - **`tests/fixtures/history/`** — thirty consecutive runs written by the real
   pipeline (`tools/make_history.py`, see `tests/fixtures/README.md`): forward
   returns filled in by later runs, a night the scorer was down, a chart that
@@ -699,8 +712,8 @@ against a hand-made `data.json` and agree, but that check is not committed.
   transport, not read. The practical consequence is that raising `batch_size`
   to cut requests — the obvious move when the universe widens — buys almost
   nothing at this window.
-- Claude: ≤25 scoring calls/run with one chart image each — **about $0.13 a
-  run, so roughly $34 a year** at 252 sessions, and only on the evening run.
+- Claude: ≤25 scoring calls/run with one chart image each — **about $0.15 a
+  run, so roughly $37 a year** at 252 sessions, and only on the evening run.
   This said "a few cents/day", which is out by about 5x. Measured rather than
   guessed: a real `render_chart()` PNG is 869x622, which is 721 image tokens by
   Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~1,590
@@ -712,9 +725,14 @@ against a hand-made `data.json` and agree, but that check is not committed.
 
   **The system prompt is 59% of every request and is byte-identical on all 25
   calls**, so it is sent with `cache_control` and read from cache after the
-  first. A cache write costs 1.25x and a read 0.1x, which makes break-even 1.4
-  calls and a full night 43% cheaper — the difference between the $0.25 this
-  paragraph used to quote and the $0.13 above. It needs no configuration: the
+  first. A cache write costs 1.25x and a read 0.1x — so the first call pays
+  0.25x more than it would have and every call after saves 0.9x, which makes
+  break-even the second call (1.28 calls) and a full night 41% cheaper: the
+  $0.25 this paragraph used to quote against the $0.15 above. (This said 1.4
+  calls, 43% and $0.13: 1.4 is 1.25 over 0.9, which charges the whole write
+  against the reads as if the first call were otherwise free, and the two
+  money figures were rounded from different token counts. A test now does the
+  paragraph's arithmetic from the numbers it states.) It needs no configuration: the
   default 5-minute window is the cheap one, and every read resets it, so a
   run's sequential calls hold the entry. `score_all()` logs what the cache
   actually did, because the saving is otherwise invisible from inside the run.

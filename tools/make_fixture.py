@@ -638,6 +638,10 @@ runs = [
      "shortlist_size": 5, "top_score": 8.2, "fallbacks": 0,
      "forward_returns": {"d1": 0.41, "d3": 1.18, "d5": 2.05, "n": 20, "rows": 20}},
 ]
+# src.ledger.add_run keeps the universe on every entry, so a --tickers smoke
+# test can be told from a scan; these were all "scans" of the checked-in file.
+for _run in runs:
+    _run["universe"] = {"label": "data/symbols.txt (checked in)", "size": len(UNIVERSE)}
 
 # The evidence block, computed by the REAL src/ledger.py over this fixture's
 # own rows rather than hand-authored. One run, whose forward returns have not
@@ -646,6 +650,15 @@ runs = [
 # the state a reader sees until five sessions have closed. The thirty-run
 # fixture in tests/fixtures/history is the populated twin; between them the
 # page's empty and full paths are both exercised.
+#
+# Which means this file describes TWO records at once, and says so here and
+# in tests/fixtures/README.md rather than leaving a reader to find it: `runs`
+# and the streak blocks above are a hand-authored seven-session history, so
+# the runs table and the day numbers have something to show, while `evidence`
+# is the real code's view of the one run this file actually holds rows for,
+# so evidence.record says runs: 1 beside a runs table of eight. A file a real
+# run writes never disagrees with itself this way -- both come off the same
+# ledger there -- and the history fixture is where the two agree.
 _LEDGER_RUNS = [{
     "date": SESSION, "type": "evening", "shortlist_size": 5,
     "candidates": [ledger.slim_row(c, scored=True) for c in candidates],

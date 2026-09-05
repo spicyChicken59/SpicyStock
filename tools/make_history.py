@@ -513,7 +513,12 @@ def generate(out_dir: pathlib.Path) -> dict:
     # take from it.
     data["generated"] = GENERATED
     data["run"]["fixture"] = True
-    data["run"]["universe"]["label"] = f"synthetic fixture universe ({len(names)} invented histories)"
+    label = f"synthetic fixture universe ({len(names)} invented histories)"
+    data["run"]["universe"]["label"] = label
+    # Every run entry carries the universe it scanned (src.ledger.add_run), in
+    # both files, and every one of these was driven through --tickers.
+    for entry in data["runs"] + book["runs"]:
+        entry["universe"]["label"] = label
     data["_contract"]["about"] = ABOUT_DATA
     book["generated"] = GENERATED
     book["fixture"] = True

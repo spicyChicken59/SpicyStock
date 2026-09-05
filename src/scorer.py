@@ -360,8 +360,10 @@ def request_kwargs(system: str, content: list[dict], model: str | None = None) -
         # of metrics and ~721 for an 869x622 chart. Without this the run paid
         # full price to send the same document up to MAX_TO_SCORE times a
         # night. A cache write costs 1.25x and a read 0.1x, so break-even is
-        # 1.4 calls: a night that scores two candidates is already ahead, and a
-        # full one is 43% cheaper.
+        # the second call (1.28 calls -- the write costs 0.25x more than the
+        # uncached call it replaces, each read saves 0.9x): a night that
+        # scores two candidates is already ahead, and a full one is 41%
+        # cheaper.
         #
         # No `ttl`: the default 5-minute window is the cheap one (an hour costs
         # 2x to write), and every read RESETS it, so a run's sequential calls
@@ -443,6 +445,16 @@ def _validated(obj: dict) -> dict:
     A verdict outside the rubric is DERIVED from the score rather than
     rejected: the score is the thing that ranks, and losing a real one over a
     cosmetic label would hand the slot to a candidate nobody reviewed.
+
+    So is a verdict INSIDE the rubric that disagrees with the score's own
+    band. knowledge/strategy.md defines the verdict as a function of the
+    score -- "A+ (9-10), A (8-8.9) ... skip (<5)" -- so a reply carrying
+    score 9.5 and verdict "skip" contradicts the rubric it was asked to
+    apply, and this used to keep both: the email then ranked the name first
+    and labelled it skip, and the ledger archived the pair. The score is
+    the judgement the model was asked for; the label is derived from it
+    here exactly as the rubric says, and the disagreement is logged rather
+    than lost, because a model that keeps doing it is worth knowing about.
     """
     try:
         score = float(obj["score"])
@@ -453,8 +465,12 @@ def _validated(obj: dict) -> dict:
 
     score = round(score, 1)
     verdict = str(obj.get("verdict", "")).strip()
-    if verdict not in VERDICTS:
-        verdict = _verdict_for(score)
+    expected = _verdict_for(score)
+    if verdict != expected:
+        if verdict in VERDICTS:
+            log.warning("Reply scored %.1f and said %r; the rubric's band for that score "
+                        "is %r, which is what is kept", score, verdict, expected)
+        verdict = expected
     return {
         "score": score,
         "reason": str(obj.get("reason", "")).strip(),

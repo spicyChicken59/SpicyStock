@@ -28,11 +28,11 @@ Known scheduled falsifications:
 | ~~The first commit-back replaces `docs/data.json` with a real run~~ swept before it happened (3.1) | ~~`check_fixture_fresh.py` compared `docs/data.json` to the generator, so the pipeline working would have turned CI red on the next push; README's "regenerate … `docs/data.json`" and "pinned to the fixture" smoke-test section~~ — the canonical fixture is `tests/fixtures/data.json` now, `docs/data.json` is whatever the last run wrote, and the guard only checks a `docs/` copy that still *claims* to be the fixture |
 | ~~`evening.yml` keeps `docs/` between runs~~ done in step 9 | ~~README's "Does the history actually accumulate?" section and the stale `charts/` path in that workflow's upload step~~ both swept; step 10 added why that commit-back now also feeds the morning run and every streak |
 | ~~Step 10 makes the mode mean something and reads the ledger back~~ done | ~~README's "morning has no workflow and no distinct behaviour" note, the workflow inventory, `.env.example`'s required-variable list~~ all swept; `morning.yml` now exists |
-| The universe widens past `data/symbols.txt` | **TWO STRATEGY RULES, not just prose.** (a) Rule 4, "not a biotech stock", is enforced by nothing but the curated contents of that file — `detect_setup(df, cfg)` never sees a ticker — so replacing it DELETES a named rule with the suite green. (b) The dollar-volume percentile is feed-invariant but NOT universe-invariant: measured on log-normal populations of the shape US dollar volume has, 230 curated names put the 30th percentile at $359M/day and 3,000 all-cap names at $3.8M/day, the same 70% kept and a 94x lower bar — so a $20M/day burst, `strategy.md`'s own "slippage eats the edge" kill criterion, is refused today and admitted after. Both are pinned by tests now. The generator has to answer for both or say plainly that it does not. |
+| The universe widens past `data/symbols.txt` | **TWO STRATEGY RULES, not just prose.** (a) Rule 4, "not a biotech stock", is enforced by nothing but the curated contents of that file — `detect_setup(df, cfg)` never sees a ticker — so replacing it DELETES a named rule with the suite green. (b) The dollar-volume percentile is feed-invariant but NOT universe-invariant: measured on log-normal populations of the shape US dollar volume has, 230 curated names put the 30th percentile at $359M/day and 3,000 all-cap names at $3.8M/day, the same 70% kept and a 94x lower bar — so a $20M/day burst, `strategy.md`'s own "slippage eats the edge" kill criterion, is refused today and admitted after. The percentile half is pinned by a test; rule 4 cannot be, because nothing in the code sees a ticker — which is the point. The generator has to answer for both or say plainly that it does not. |
 | The universe widens past `data/symbols.txt` | the four 230-name figures in README: its opening line, the diagram's universe box, the diagram's Layer-1 caption, and the Costs section's scan-time note. (This row named a Tuning section that holds none, and missed the opening line — checked by grepping, since a list of places is exactly the kind of claim that rots.) |
 
-Nothing else is scheduled to go stale: step 10 was the last of the ten. The one
-row left is the open decision at the bottom of this file, not a step.
+Nothing else is scheduled to go stale: step 10 was the last of the ten. The two
+rows left are one decision — the open one at the bottom of this file — not a step.
 
 ## Standing rule: no line numbers in comments or docs
 
@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 843 tests with no network
+- **There is a regression net.** `pytest tests/` runs 850 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -492,8 +492,12 @@ exercised its headline. Nine mutants across them, all killed.
   night.** `knowledge/strategy.md` is byte-identical on every call of a run --
   measured at ~1,590 tokens against ~388 of metrics and ~721 for an 869x622
   chart -- and nothing asked for it to be cached. It carries `cache_control`
-  now: a write costs 1.25x and a read 0.1x, so break-even is 1.4 calls and a
-  full night is 43% cheaper, $0.24 to $0.13. No `ttl`, because 5 minutes is
+  now: a write costs 1.25x and a read 0.1x, so break-even is the second call
+  (1.28 calls: the write costs 0.25x more than the uncached call it replaces
+  and each read saves 0.9x) and a full night is 41% cheaper, $0.25 to $0.15.
+  This said 1.4 calls, 43% and "$0.24 to $0.13" while README said $0.25 — the
+  same paragraph in two files with two arithmetics, and a test now does it
+  from README's stated inputs. No `ttl`, because 5 minutes is
   the cheap write and every read resets the window. The SDK's own
   `TextBlockParam` says the block is well formed, checked offline, which is
   the only kind of wire check this suite can make.
@@ -563,7 +567,9 @@ exercised its headline. Nine mutants across them, all killed.
   `docs/ledger.json` -- and the page's whole "fetch it only when asked" design
   is argued from those. The 3.3 audit added `context` to both row types and
   nobody re-measured, because re-measuring meant building an eleven-megabyte
-  file by hand. It is 11.04 and 0.66. `tools/measure_ledger.py` builds one now
+  file by hand. It was 11.04 and 0.66 when measured, and 11.07 and 0.68 once
+  the round-4 prose sweep put a universe block on every run entry -- the
+  guard below caught that move on the same commit. `tools/measure_ledger.py` builds one now
   -- real rows from the generated history, real row counts from the canonical
   one-night fixture, and `src.ledger`'s own writer, because `indent=2` is most
   of the raw size and a compact estimate is not the file a browser fetches --
@@ -666,6 +672,88 @@ exercised its headline. Nine mutants across them, all killed.
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Findings from the round-4 audit — the prose lens
+
+The lens CLAUDE.md recorded as never having run before 3.3, run again over the
+tree after the other four lenses' fixes landed. Nine findings and seven leads;
+every one reproduced here by execution before it was touched, and the fixes
+mutation-tested — 35 mutants over the new guards, 34 killed on the first pass.
+The survivor was a shaped assertion of exactly this file's third kind: the
+morning-time check used `in`, so changing one of README's two "8:30 AM ET"
+mentions left the other to satisfy it. Every clock time README prints is a
+set equality against the crons now.
+
+**The contract the file carries omitted the word that exists to stop a
+collapse.** README's `last_outcome` bullet named four outcomes; the
+`_contract` block `src.ledger` writes into every `docs/data.json` named
+three, and `veto_up_days` — the word that exists so a 6/6 name refused by an
+absolute rule is never called a gate rejection — was the missing one. The
+collapse README forbids, in the file's own documentation of the field, on
+every run since 3.3. Every word the email and the page can render is checked
+against the published sentences now, and README's bullet is held to the same
+set.
+
+**A `--tickers` run left a row the record could not tell from a scan.** The
+four-name smoke test README documents writes `docs/ledger.json` like any
+other run — one row per name, no marker — and the next real run on another
+session read it as history: streaks starting on a night that scanned nothing,
+scored rows counted as setups in the evidence, and `git add docs` committing
+the lot. README said `git checkout docs/data.json` put everything back; it
+never touched the ledger, which on a fresh clone is untracked, so the first
+`git pull` after `evening.yml` commits a real one refuses to overwrite it.
+Every run entry carries its `universe` now, in the ledger and in the page's
+runs table, and README says how to put both files back. The row is still
+written — the whole test suite and `tools/make_history.py` drive the pipeline
+through this path, and a run that writes no record cannot be tested for what
+it records. The ledger-size guard caught the block on the same commit: 11.04
+MB became 11.07, which is what it is for.
+
+**Nine numbers the docs quote were pinned nowhere, and two guards could no
+longer fire.** The prose audit mutated the gate to 4/6, the cap to 99, the
+retention to 999 runs, the fill window to two, the shortlist to 7, the evening
+to 7:16 PM, the volume ratio to 9.5x, the price floor to $40 and the close to
+17:15 at once, and the suite stayed green. One guard asserted a string the
+pipeline could no longer produce in that shape; the other was conditioned on
+a sentence step 3 swept out of `.env.example`. Both replaced: the diagram's
+numbers are read off `ScanConfig`, `MIN_LYNCH_PASSES`, `MAX_TO_SCORE`,
+`TOP_N`, `MAX_RUNS` and `FILL_WINDOW_RUNS`; the clock times are derived from
+the workflow crons the way README derives them; the feed list and default
+from alpaca-py's `DataFeed` and `DEFAULT_FEED`.
+
+**The cache paragraph's arithmetic was wrong in two of its four conclusions,
+and the two files quoting it disagreed on a third.** Break-even was given as
+1.25/0.9 = 1.4 calls, which charges the whole cache write against the reads
+as if the first call were otherwise free; it is 1 + 0.25/0.9 = 1.28. The
+cached night was $0.13 in README and rounded from a different token count
+than the "$0.24" beside it here, while README said $0.25. Recomputed from
+the inputs the paragraph states: $0.25 uncached, $0.15 cached, 41% cheaper,
+$37 a year — and a test now does that arithmetic from those inputs, so the
+conclusions can only be wrong together. The saving was overstated by two
+points and the nightly figure by two cents; the conclusion stands.
+
+**And a verdict that contradicted its own score was archived as given.**
+`knowledge/strategy.md` defines the verdict AS the score's band, and
+`_validated()` derived it only for a word outside the rubric: a reply with
+score 9.5 and verdict "skip" kept both, so the email ranked the name first
+and printed skip beside it. The band is what is kept now and the
+disagreement is logged, because a model that keeps doing it is worth knowing
+about. Found as a lead argued from the code; reproduced before it was fixed.
+
+Smaller, each reproduced: README said eight smoke variants beside a ninth
+while `VARIANTS` served sixteen beside `nodata`, and the smoke script now
+checks that number the way it checks its own count of checks; this file said
+"both are pinned by tests" of a rule nothing in the code can see; the
+one-night fixture's README called it "the page on its first day" while its
+`runs[]` and streak blocks describe a seven-session history and its
+`evidence` the one run it holds rows for — two records in one file, by
+design, and now said so; `strategy.md` told the model `Y` fails at 15% when
+it also fails at a 25% run-up over the month, and asked for relative strength
+against a market no input carries; `evening.yml`'s persist comment was the
+third copy of the retracted "failed every night" story; a `ScanConfig`
+comment described a field deleted in step 4. What the relative-strength
+bullet now says is what the inputs can support, which is also where a
+benchmark series would go if one is ever added.
 
 ## Findings from the 3.3 audit — three auditors, every one finished
 
