@@ -17,6 +17,30 @@ from src.scorer import render_chart
 
 STATS = {"universe": "230 checked-in US common stocks", "bursts": 42, "gated": 12}
 
+#: Every way a burst goes unscored, in the footnote's own words. ONE tuple for
+#: the two tests that pin the footnote on both surfaces, derived from the
+#: reason vocabulary so a fifth reason cannot arrive without a phrase.
+STREAK_REASON_PHRASES = ("the checklist rejected", "an absolute rule refused",
+                         "the liquidity floor refused", "the call cap crowded")
+
+
+def _visible_text(html: str) -> str:
+    """What a mail client shows, through a real parser -- the only honest
+    reading of an escaping claim."""
+    from html.parser import HTMLParser
+
+    class Reader(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.parts = []
+
+        def handle_data(self, data):
+            self.parts.append(data)
+
+    reader = Reader()
+    reader.feed(html)
+    return " ".join(" ".join(reader.parts).split())
+
 
 def make_result(ticker: str, **overrides) -> dict:
     row = {
@@ -70,7 +94,9 @@ def test_html_reports_the_scan_stats_and_the_run_type(results):
 
 def test_html_survives_an_empty_shortlist():
     html = build_html([], "evening", STATS)
-    assert "No candidates" in html
+    # STATS says 12 bursts CLEARED the checklist, so the note may not say the
+    # checklist rejected them -- it is the sentence for the opposite outcome.
+    assert "cleared the 2LYNCH checklist and none produced a score" in html
     assert "<table" in html
 
 
@@ -283,8 +309,8 @@ def test_an_empty_shortlist_does_not_claim_a_quiet_market_when_the_run_broke():
     """Both are empty tables. Only one of them is a statement about stocks."""
     clean = build_html([], "evening", STATS)
     broken = build_html([], "evening", DEGRADED)
-    assert "No candidates passed the quality gate" in clean
-    assert "No candidates passed the quality gate" not in broken
+    assert "cleared the 2LYNCH checklist" in clean
+    assert "cleared the 2LYNCH checklist" not in broken
     assert "not a statement about the market" in broken
 
 
@@ -627,6 +653,51 @@ def test_a_row_carrying_no_streak_field_at_all_is_unknown_too(results):
     assert "new setup" not in html
 
 
+@pytest.mark.parametrize("field,text", [
+    ("reason", "Breakout above <resistance> on 3x volume, clean base."),
+    ("reason", "Volume <avg since the gap, so demand is unproven."),
+    ("key_risk", "earnings <5 sessions> away"),
+    ("ticker", "A<B"),
+    ("verdict", "B<+"),
+])
+def test_what_the_model_said_reaches_the_reader_whole(field, text):
+    """The email interpolated model output straight into HTML, unescaped.
+
+    A reason of "Breakout above <resistance> on 3x volume, clean base." renders
+    in a mail client as "Breakout above" — the parser takes `<resistance>` for
+    a tag and swallows the rest of the sentence. Silently: nothing marks the
+    truncation, and the page renders the same row intact, so the two surfaces
+    disagree about what the model said. `<` followed by a letter is enough, and
+    a model writing about levels, ranges or comparisons produces one unprompted.
+
+    These fields are not this module's words. `reason` and `key_risk` are the
+    scoring model's, `ticker` comes off the feed, and on the morning path all
+    of them are read back out of a docs/data.json a previous run wrote.
+
+    Asserted through a REAL HTML PARSER rather than by substring: the bug is
+    precisely that the text is present in the source and absent from the render,
+    so `text in html` passes while the reader sees nothing.
+    """
+    from html.parser import HTMLParser
+
+    class Rendered(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.text = []
+
+        def handle_data(self, data):
+            self.text.append(data)
+
+    row = dict(make_result("AAA"), **{field: text})
+    parser = Rendered()
+    parser.feed(build_html([row], "evening", DATED))
+    rendered = " ".join(parser.text)
+
+    assert text in rendered, (
+        f"{field} was truncated by the HTML parser; the reader sees "
+        f"{[t for t in parser.text if text.split('<')[0].strip()[:12] in t]}")
+
+
 def test_the_funnel_does_not_tell_a_vetoed_six_of_six_it_failed_the_checklist():
     """`gated` counts what cleared the checklist AND survived every veto.
 
@@ -657,6 +728,47 @@ def test_a_run_with_no_refusals_reads_exactly_as_it_did_before():
         assert "Passed 2LYNCH gate: 3" in html
 
 
+@pytest.mark.parametrize("stats, label", [
+    (dict(illiquid=2, liquidity_floor=359_000_000.0, liquidity_pctile=30.0),
+     "Below the liquidity floor ($359.0M/day, the 30th percentile): 2"),
+    (dict(illiquid=1, liquidity_floor=12_400_000), "Below the liquidity floor ($12.4M/day): 1"),
+    (dict(illiquid=1, liquidity_floor=4.5e9, liquidity_pctile=1), "Below the liquidity floor ($4.5B/day, the 1st percentile): 1"),
+    (dict(illiquid=1, liquidity_floor=850_000, liquidity_pctile=22), "Below the liquidity floor ($850k/day, the 22nd percentile): 1"),
+    (dict(illiquid=1, liquidity_floor=1e6, liquidity_pctile=13), "Below the liquidity floor ($1.0M/day, the 13th percentile): 1"),
+    (dict(illiquid=3), "Below the liquidity floor: 3"),
+])
+def test_the_funnel_names_the_floor_it_applied_when_the_run_recorded_one(stats, label):
+    """Rule 6's refusals get a funnel line only when there were some, and it
+    carries the floor in dollars and the percentile when the run recorded
+    them -- "below the liquidity floor: 3" is not readable without the bar. A
+    snapshot from before run.liquidity existed carries neither, and the label
+    then says only what is known rather than inventing a figure."""
+    html = _visible_text(build_html([make_result("AAA")], "evening", dict(DATED, bursts=6, gated=3, **stats)))
+    assert label in html
+    assert html.index("4% bursts found") < html.index("Below the liquidity floor") < html.index("Passed 2LYNCH gate")
+
+
+def test_a_count_that_is_not_a_count_reaches_no_sentence():
+    """A negative count is not a count and a float is not the int the
+    pipeline writes. Unclamped, illiquid=-2 printed "Below the liquidity
+    floor: -2" in the funnel and "-2 below the liquidity floor and 7 rejected"
+    in the note -- seven of five bursts -- and vetoed=2.0 printed "Refused by
+    an absolute rule: 2.0" over a note that counted it as 0. Every count goes
+    through one clamp now and the funnel and the note read one number."""
+    html = _visible_text(build_html([], "evening", dict(DATED, bursts=5, vetoed=0, illiquid=-2, gated=0)))
+    assert "liquidity floor" not in html and "5 bursts measured, none cleared it" in html
+    html = _visible_text(build_html([], "evening", dict(DATED, bursts=5, vetoed=2.0, illiquid=0, gated=0)))
+    assert "absolute rule" not in html and "5 bursts measured, none cleared it" in html
+    html = _visible_text(build_html([], "evening", dict(DATED, bursts=5, vetoed=-1, illiquid=0, gated=0)))
+    assert "-1" not in html and "6 rejected" not in html
+
+
+def test_the_funnel_says_nothing_about_a_floor_on_a_night_nothing_sat_below_it():
+    html = build_html([make_result("AAA")], "evening",
+                      dict(DATED, bursts=3, gated=3, illiquid=0, liquidity_floor=1e8, liquidity_pctile=30.0))
+    assert "liquidity floor" not in html
+
+
 def test_a_night_every_burst_was_refused_does_not_blame_the_checklist():
     """"No candidates passed the quality gate today" states the opposite of
     what happened when the checklist passed them and a rule refused them."""
@@ -666,6 +778,137 @@ def test_a_night_every_burst_was_refused_does_not_blame_the_checklist():
 
     assert "refused outright by an absolute rule" in html
     assert "No candidates passed the quality gate" not in html
+
+
+# The empty-shortlist note used to be a two-way flag, and NEITHER way was
+# reliably true. `refused_all` read `vetoed and not gated` -- but `gated` is
+# how many PASSED, not how many the checklist rejected. Every case below was
+# rendered and read before it was written down; three of the five were wrong.
+@pytest.mark.parametrize("label, stats, must_say, must_not_say", [
+    # The one that made the email contradict itself on a single screen: the
+    # funnel two lines above said "Refused by an absolute rule: 1" while the
+    # cell said EVERY burst had been.
+    ("one veto among nine checklist rejections",
+     dict(bursts=10, vetoed=1, gated=0),
+     ["1 burst refused outright by an absolute rule", "9 rejected by the 2LYNCH checklist"],
+     ["Every burst", "All 10 bursts"]),
+    ("nine vetoes and one checklist rejection",
+     dict(bursts=10, vetoed=9, gated=0),
+     ["9 bursts refused outright", "1 rejected by the 2LYNCH checklist"],
+     ["Every burst", "All 10 bursts"]),
+    # Nothing was measured against the checklist, so nothing failed it. This
+    # printed "No candidates passed the quality gate today" directly under a
+    # funnel line reading "4% bursts found: 0" -- the project's named collapse,
+    # arriving from the other direction: the gate blamed for an outcome it had
+    # no part in.
+    ("a quiet market with no burst at all",
+     dict(bursts=0, vetoed=0, gated=0),
+     ["No 4% burst anywhere in the universe today", "quiet market, not a rejection"],
+     ["passed the quality gate", "2LYNCH checklist", "absolute rule"]),
+    ("every burst refused outright",
+     dict(bursts=4, vetoed=4, gated=0),
+     ["All 4 bursts the scan found were refused outright"],
+     ["rejected by the 2LYNCH checklist"]),
+    # The fourth verdict, on every shape the other three can take: alone,
+    # beside one of them, and beside both. Rule 6 never consulted the
+    # checklist, so its clause must never read as a checklist rejection.
+    ("every burst below the liquidity floor",
+     dict(bursts=3, vetoed=0, illiquid=3, gated=0),
+     ["All 3 bursts the scan found were below the liquidity floor", "never got a say"],
+     ["rejected by the 2LYNCH checklist", "absolute rule"]),
+    ("the one burst, below the floor",
+     dict(bursts=1, vetoed=0, illiquid=1, gated=0),
+     ["The one burst the scan found was below the liquidity floor"],
+     ["All 1", "rejected by the 2LYNCH checklist"]),
+    ("two below the floor among eight the checklist rejected",
+     dict(bursts=10, vetoed=0, illiquid=2, gated=0),
+     ["2 below the liquidity floor and 8 rejected by the 2LYNCH checklist", "Two different verdicts"],
+     ["absolute rule", "All 10 bursts"]),
+    ("a veto, two below the floor, and seven the checklist rejected",
+     dict(bursts=10, vetoed=1, illiquid=2, gated=0),
+     ["1 burst refused outright by an absolute rule, 2 below the liquidity floor and 7 rejected by the 2LYNCH checklist",
+      "Three different verdicts, and none is another"],
+     ["Two different verdicts", "All 10 bursts"]),
+    ("a veto and two below the floor, nothing for the checklist",
+     dict(bursts=3, vetoed=1, illiquid=2, gated=0),
+     ["1 burst refused outright by an absolute rule and 2 below the liquidity floor", "Two different verdicts"],
+     ["rejected by the 2LYNCH checklist", "All 3 bursts"]),
+    ("the single-burst night, which reads wrong in the plural",
+     dict(bursts=1, vetoed=1, gated=0),
+     ["The one burst the scan found was refused outright"],
+     ["All 1", "1 bursts"]),
+    ("nothing vetoed: the checklist really did reject them",
+     dict(bursts=7, vetoed=0, gated=0),
+     ["No candidate passed the 2LYNCH checklist today", "7 bursts measured"],
+     ["absolute rule"]),
+])
+def test_the_empty_shortlist_note_says_what_actually_happened(
+    label, stats, must_say, must_not_say
+):
+    html = build_html([], "evening", dict(DATED, **stats))
+
+    for phrase in must_say:
+        assert phrase in html, f"{label}: missing {phrase!r}"
+    for phrase in must_not_say:
+        assert phrase not in html, f"{label}: should not say {phrase!r}"
+
+
+def test_the_empty_shortlist_note_never_prints_a_negative_count():
+    """`bursts - vetoed - passed` is arithmetic on numbers a caller supplies,
+    and a stats block that does not add up must not produce "-3 rejected by
+    the 2LYNCH checklist". Clamped, and a non-number counts as zero rather
+    than reaching the subtraction at all."""
+    for stats in [dict(bursts=2, vetoed=9, gated=0),
+                  dict(bursts=2, vetoed=0, gated=9),
+                  dict(bursts="10", vetoed=None, gated=True)]:
+        html = build_html([], "evening", dict(DATED, **stats))
+        assert "-" not in html.split("colspan=\"7\"")[1].split("</td>")[0], stats
+
+
+def test_the_email_and_the_page_disclose_what_a_streak_counts_the_same_way():
+    """One disclosure, two surfaces, and a reader gets both.
+
+    The page's version named the 2LYNCH gate ALONE -- under a comment saying
+    "same disclosure the email prints, same words". That stopped being true
+    when the veto arrived: a 6/6 name refused by an absolute rule is counted in
+    `seen_before`, and the tooltip told the reader it was not. The email was
+    swept for exactly this in the 3.3 audit and the page was not.
+
+    Asserted on both files, because a comment claiming they match is what
+    carried the drift for a whole round.
+    """
+    import pathlib
+
+    html = build_html(_with_streak(day=2, first_seen="2026-08-28"), "evening", DATED)
+    page = pathlib.Path(__file__).resolve().parents[1].joinpath("docs/index.html").read_text()
+
+    for reason in STREAK_REASON_PHRASES:
+        assert reason in html, f"the email dropped {reason!r}"
+        assert reason in page, f"the page dropped {reason!r}"
+    # And the wording it drifted TO is gone from both, not merely joined.
+    assert "including the ones the 2LYNCH gate rejected" not in page
+    assert "including the ones the 2LYNCH gate rejected" not in html
+
+
+def test_the_email_and_the_page_name_the_call_cap_the_same_way():
+    """One mechanism, two surfaces, and a reader gets both. The page's funnel
+    has said "outside the 25-call cap" since step 9; the email's funnel had no
+    such stage at all until this round, and when it got one the phrase had to
+    be the page's rather than a second wording for the same cut.
+
+    Asserted against docs/index.html's own source, because that is where the
+    other half lives and a comment claiming they match is exactly what this
+    project has been caught by before.
+    """
+    import pathlib
+
+    html = build_html([], "evening", dict(DATED, bursts=40, gated=30, crowded_out=5,
+                                          score_cap=25))
+    page = pathlib.Path(__file__).resolve().parents[1].joinpath("docs/index.html").read_text()
+
+    assert "the 25-call cap" in html
+    assert "'-call cap'" in page, (
+        "the page stopped building the same phrase; the two surfaces have drifted")
 
 
 def test_what_day_n_counts_is_disclosed_once_under_the_table():
@@ -693,10 +936,10 @@ def test_what_day_n_counts_is_disclosed_once_under_the_table():
     assert disclosure in no_day
     assert disclosure not in single, (
         "and it is not printed under a table with no streak to explain")
-    # All three reasons, named. A disclosure that lists two of them tells the
-    # reader the count is smaller than it is.
-    for reason in ("the checklist rejected", "an absolute rule refused",
-                   "the call cap crowded"):
+    # All four reasons, named. A disclosure that lists three of them tells the
+    # reader the count is smaller than it is -- and this loop listed three for
+    # a round after the fourth arrived, so the clause could be deleted green.
+    for reason in STREAK_REASON_PHRASES:
         assert reason in counted, reason
 
 
@@ -705,7 +948,8 @@ def test_a_morning_run_with_nothing_to_show_does_not_blame_the_market():
     stocks: a morning pass has nothing of its own to find."""
     assert "The run this follows through on scored no candidates." in build_html(
         [], "morning", DATED)
-    assert "No candidates passed the quality gate" in build_html([], "evening", DATED)
+    assert "The run this follows through on scored no candidates." not in build_html(
+        [], "evening", DATED), "and an evening run says what its own scan found"
 
 
 # _headline() knew the mode and the staleness, and neither of the two other
@@ -793,37 +1037,72 @@ def test_a_malformed_error_entry_cannot_crash_the_only_monitor():
     assert "DEGRADED" in _headline(stats, "evening", [{"ticker": "A"}])
 
 
-def test_a_streak_day_that_is_not_a_number_does_not_take_the_email_down(fake_resend):
-    """ledger.snapshot_problem() checks a morning row's SHAPE and not its
-    content, so a block whose day is the string "3" reaches this module
-    well-formed. It was a TypeError out of `day > 1` here, after the band and
-    the title had been built and before anything was sent -- the email is the
-    monitor, and it must arrive."""
-    send_email(_with_streak(day="3", seen_before=2, last_seen="2026-08-28"), "morning", DATED)
 
-    html = fake_resend.sent[0]["html"]
-    assert "streak unknown" in html and "day 3" not in html
-    assert "day N of this setup" in html, "the footnote path compares the same value"
+def test_the_whole_monitor_survives_a_malformed_error_entry_not_just_its_headline():
+    """The test above is named for the monitor and exercised only _headline();
+    build_html() -- the entry point the name promises -- crashed on the very
+    same input, because _banner() called .get() on every entry with no guard.
+    Not reachable from the pipeline today, which is exactly why it reported
+    safety that was not there."""
+    stats = {"status": "degraded", "errors": ["not a dict", None, {"no_stage": True},
+                                               {"stage": "scan", "message": "a real one"}]}
+    html = build_html([], "evening", stats)
+    assert "a real one" in html
+    assert html.count("<li") == 2, "the two objects render; the two non-objects are skipped"
 
 
-@pytest.mark.parametrize("value", [None, "", "   "])
-def test_an_unset_sender_falls_back_even_when_actions_passes_it_as_empty(
-    monkeypatch, fake_resend, results, value
-):
-    """os.environ.get's default fires only on a MISSING key, and Actions never
-    leaves this one missing: evening.yml always sets RESEND_FROM, and GitHub
-    expands an unset secret to ''. So the variable arrives present and empty,
-    the documented fallback never fired, and the send went out with `from: ''`
-    -- which Resend refuses. Setting the other five secrets and leaving this
-    one out therefore mailed nothing while the run reported itself clean.
+@pytest.mark.parametrize("where, stats, must_read", [
+    # The one leaf that carries free text from OUTSIDE the codebase on the
+    # first real night: anthropic's SDK sets the exception message to the raw
+    # response body when it is not JSON, so an edge 5xx HTML page lands in
+    # _check_scoring()'s sentence, and the band interpolated it raw. The
+    # operator read "502 Bad Gateway 502 Bad Gateway cloudflare" with the
+    # tags swallowed as nested markup inside the <li>.
+    ("the red band", {"status": "degraded", "session": "2026-09-04", "bursts": 1, "gated": 1,
+                      "errors": [{"stage": "score", "message":
+                                  "First failures: BURST (anthropic.InternalServerError: Error code: 502 - "
+                                  "<html><head><title>502 Bad Gateway</title></head></html>)"}]},
+     "<html><head><title>502 Bad Gateway</title></head></html>"),
+    # A session string is read off docs/data.json by the morning run; a
+    # hand-edited file must not be able to inject markup into the title.
+    ("the session in the title and funnel", {"status": "ok", "session": "2026-09-04<b>x</b>",
+                                             "bursts": 1, "gated": 1}, "2026-09-04<b>x</b>"),
+])
+def test_every_free_text_leaf_reaches_the_reader_whole(where, stats, must_read):
+    html = build_html([], "evening", stats)
+    assert must_read in _visible_text(html), where
+    assert must_read not in html, f"{where}: the raw text is in the source, so it was not escaped"
 
-    The same absent-versus-empty distinction as run.status, and the same rule
-    src.pipeline's _absent() already applies everywhere else.
-    """
-    monkeypatch.delenv("RESEND_FROM", raising=False)
-    if value is not None:
-        monkeypatch.setenv("RESEND_FROM", value)
 
-    send_email(results, "evening", DATED)
+def test_the_checklist_lines_are_escaped_line_by_line():
+    row = make_result("AAA", lynch_detail=["PASS  2_first: 0 prior bursts <tight base>"])
+    html = build_html([row], "evening", DATED)
+    assert "0 prior bursts <tight base>" in _visible_text(html)
+    assert "<tight base>" not in html
 
-    assert fake_resend.sent[0]["from"] == "onboarding@resend.dev"
+
+def test_a_day_number_with_no_first_seen_drops_the_since_clause():
+    """src.ledger never writes the pair, so it is an off-disk shape -- and
+    "day 2 of this setup, since " with nothing after it is what the email
+    made of it (the page printed "since —")."""
+    html = build_html(_with_streak(day=2, first_seen=None), "evening", DATED)
+    text = _visible_text(html)
+    assert "day 2 of this setup" in text
+    assert "since" not in text.split("day 2 of this setup")[1][:20]
+
+
+@pytest.mark.parametrize("value, gain, ratio, score", [
+    (12.0, "+12.0%", "12.00x", "12.0"),
+    (12, "+12.0%", "12.00x", "12.0"),      # what ledger._num() hands the morning path
+    (8.39, "+8.4%", "8.39x", "8.4"),
+    (-0.5, "-0.5%", "-0.50x", "-0.5"),
+    ("n/a", "n/a", "n/a", "n/a"),           # a value that is not a number passes through
+])
+def test_the_three_numbers_read_the_same_on_both_paths(value, gain, ratio, score):
+    """The evening path hands floats and the morning path hands values that
+    came off disk through ledger._num(), which turns 12.0 into 12 -- so one
+    burst read "+12.0% | 8.39x | 7.0/10" at 6:30pm and "+12% | 8x | 7/10" at
+    8:30am. One rule, both paths."""
+    from src.emailer import fmt_gain, fmt_ratio, fmt_score
+
+    assert (fmt_gain(value), fmt_ratio(value), fmt_score(value)) == (gain, ratio, score)

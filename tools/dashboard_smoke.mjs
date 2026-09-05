@@ -115,9 +115,13 @@ const VARIANTS = {
       [-1.84, -2.48, -1.29], [0.26, 0.73, 1.02]
     ];
     d.candidates.slice(0, vals.length).forEach((c, i) => {
-      c.forward_returns = { d1: vals[i][0], d3: vals[i][1], d5: vals[i][2], as_of: '2026-09-08' };
+      // The open basis a fixed step below the close basis, so a check can
+      // tell which one a cell is showing without knowing which row it is.
+      c.forward_returns = { d1: vals[i][0], d3: vals[i][1], d5: vals[i][2], as_of: '2026-09-08',
+        from_open: { d1: +(vals[i][0] - 0.5).toFixed(2), d3: +(vals[i][1] - 0.5).toFixed(2), d5: +(vals[i][2] - 0.5).toFixed(2) } };
     });
-    d.runs[0].forward_returns = { d1: 0.52, d3: 1.33, d5: 1.71, n: d.candidates.length };
+    d.runs[0].forward_returns = { d1: 0.52, d3: 1.33, d5: 1.71, n: d.candidates.length,
+      from_open: { d1: 0.02, d3: 0.83, d5: 1.21, n: d.candidates.length } };
     return d;
   },
   // A file that recorded a checklist only for the candidates it scored — which
@@ -210,7 +214,261 @@ const VARIANTS = {
     }
     return d;
   },
+  // The quietest real night there is: the scan ran clean and found no 4%
+  // burst at all. Every candidate-facing card has nothing to hold, and the
+  // question is whether the page SAYS that or just goes blank -- the email's
+  // version of this said "No candidates passed the quality gate today" under
+  // a funnel reading "4% bursts found: 0", blaming the checklist for an
+  // outcome it had no part in.
+  quietmarket() {
+    const d = clone();
+    d.run.fixture = false;
+    d.run.bursts = 0;
+    d.run.passed_gate = 0;
+    d.run.scored = 0;
+    d.run.shortlist_size = 0;
+    d.run.scored_by = { claude: 0, fallback: 0 };
+    d.run.gate.total_checks = null;   // nothing measured a checklist either
+    d.candidates = [];
+    d.gated_out = [];
+    return d;
+  },
+  // The control ladder's other two sentences. The history source has 74
+  // scored setups closed and 14 refused, which is the "only one side can be
+  // read" branch; a direction may only be stated when BOTH clear min_setups,
+  // and "no comparison yet" when neither does. Neither state exists in any
+  // real source yet, so both are built from the history's own block with the
+  // n's moved and the means kept -- the sentence is what is under test, not
+  // the arithmetic behind the numbers, which tests/test_ledger.py pins.
+  thincontrol() {
+    const d = clone();
+    d.evidence = JSON.parse(JSON.stringify(HIST.evidence));
+    for (const block of [d.evidence.overall, d.evidence.refused]) {
+      block.outcomes.forEach((o) => { if (o.n) o.n = 5; });
+      block.enough = false;
+    }
+    return d;
+  },
+  fullcontrol() {
+    const d = clone();
+    d.evidence = JSON.parse(JSON.stringify(HIST.evidence));
+    const h = d.evidence.horizons[d.evidence.horizons.length - 1];
+    const picks = d.evidence.overall.outcomes.find((o) => o.horizon === h);
+    const ref = d.evidence.refused.outcomes.find((o) => o.horizon === h);
+    // DIFFERENT n's on the two sides. With both at 40 a verdict that printed
+    // the picks' n for the refused side too read identically, and the check
+    // that was meant to catch that passed with it in place.
+    picks.n = 40; picks.mean = 6.0;
+    ref.n = 45; ref.mean = 3.0;              // three points worse than the picks
+    d.evidence.refused.enough = true;
+    return d;
+  },
+  // A run entry whose date will not parse. The pipeline KEEPS such an entry
+  // (load_history degrades on it rather than refusing the file), the email
+  // says the history holds runs none of which carry a date, and the page
+  // printed "NaN undefined not" into the runs table's session column.
+  undated() {
+    const d = clone();
+    d.runs = [{ ...d.runs[0], date: 'not-a-date' }].concat(d.runs.slice(1));
+    return d;
+  },
+  // A snapshot written before the gate block, the cap, the provenance count
+  // or the shortlist size existed. The nogatetotal round guarded a null total
+  // and stopped one field short of a missing block: "under undefined checks
+  // passed" and "outside the undefined-call cap" reached the funnel.
+  oldsnap() {
+    const d = clone();
+    delete d.run.gate; delete d.run.score_cap; delete d.run.scored_by; delete d.run.shortlist_size;
+    return d;
+  },
+  // A day number with no first_seen beside it. src.ledger never writes the
+  // pair, so it is an off-disk shape -- and "day 2 of this setup, since —"
+  // is what the page made of it, the email "since " with nothing after.
+  nosince() {
+    const d = clone();
+    d.candidates[0].streak = { ...(d.candidates[0].streak || {}), day: 2, first_seen: null, seen_before: 1 };
+    return d;
+  },
+  // A run whose gate block never learned how many checks the checklist has.
+  // The producer emits null there when NOTHING measured a checklist that
+  // night, and every surface that mentions the gate concatenates the number
+  // into prose -- so the page published "rejected at the ≥3/null 2LYNCH gate"
+  // and "under 3 of null checks" over a run that had cleared everything, with
+  // the whole suite and every check here green. A null is not a state the
+  // canonical fixture can hold, so it needed its own source.
+  nogatetotal() {
+    const d = clone();
+    d.run.gate.total_checks = null;
+    return d;
+  },
   // The pipeline has never run, or the write failed.
+  // A snapshot from before round 5: no run.liquidity, no liquidity_floor
+  // rows, no evidence.illiquid. The page must not tell that run it enforced
+  // a floor it never recorded, on the funnel, the gated hint or the ladder.
+  noliquidity() {
+    const d = clone(REAL);
+    delete d.run.liquidity;
+    d.gated_out = d.gated_out.filter((g) => g.reason !== 'liquidity_floor');
+    d.run.bursts -= REAL.gated_out.filter((g) => g.reason === 'liquidity_floor').length;
+    delete d.evidence.illiquid;
+    return d;
+  },
+  // A snapshot from before the open basis existed: no from_open on any row,
+  // any run mean or any evidence outcome. The open tab must say the record
+  // predates it, and no close-basis number may appear under the open label.
+  noopen() {
+    const d = clone(REAL);
+    const strip = (fr) => { if (fr && typeof fr === 'object') delete fr.from_open; };
+    d.candidates.forEach((c) => strip(c.forward_returns));
+    d.gated_out.forEach((g) => strip(g.forward_returns));
+    d.runs.forEach((r) => strip(r.forward_returns));
+    const stripBlock = (b) => {
+      if (!b) return;
+      (b.outcomes || []).forEach((o) => delete o.from_open);
+      delete b.enough_from_open;
+    };
+    const ev = d.evidence;
+    ['overall', 'shortlist', 'rest', 'refused', 'crowded_out', 'illiquid', 'universe'].forEach((k) => stripBlock(ev[k]));
+    ['by_score', 'by_day', 'by_month', 'by_ticker'].forEach((k) => (ev[k] || []).forEach(stripBlock));
+    (ev.by_check || []).forEach((c) => { stripBlock(c.passed); stripBlock(c.failed); delete c.enough_from_open; });
+    return d;
+  },
+  // The common night on a 230-name universe: the call cap did not bite, so
+  // the liquidity clause is the LAST clause of the gated hint. And the night
+  // whose only unscored bursts are rule 6's, one clause alone. Both hid a
+  // joiner that rewrote the clause's own comma.
+  nocap() {
+    const d = clone(REAL);
+    const capped = d.gated_out.filter((g) => g.reason === 'score_cap').length;
+    d.gated_out = d.gated_out.filter((g) => g.reason !== 'score_cap');
+    d.run.bursts -= capped;
+    return d;
+  },
+  onlyfloor() {
+    const d = clone(REAL);
+    const kept = d.gated_out.filter((g) => g.reason === 'liquidity_floor');
+    d.run.bursts -= d.gated_out.length - kept.length;
+    d.run.passed_gate = d.run.scored;
+    d.gated_out = kept;
+    return d;
+  },
+  // The ladder half of the pre-round-5 state, on a source whose ladder
+  // renders: the one-night fixture shows no ladder at all (nothing has an
+  // outcome), so a check that read its rows could not fail.
+  noliquidityladder() {
+    const d = VARIANTS.fullcontrol();
+    delete d.evidence.illiquid;
+    return d;
+  },
+  // A reason word from a newer writer than this page. It used to render as
+  // "rejected at the 2LYNCH gate" -- the one collapse the contract forbids by
+  // name, silent, on every such row.
+  newreason() {
+    const d = clone(REAL);
+    d.gated_out[0].reason = 'veto_gap_too_wide';
+    return d;
+  },
+  // A record from before the benchmark: no runs[].benchmark, no evidence.universe.
+  nobenchmark() {
+    const d = VARIANTS.fullcontrol();
+    delete d.evidence.universe;
+    d.runs.forEach((r) => delete r.benchmark);
+    return d;
+  },
+  // And one with enough paired setups to say something: the picks +6.00% at
+  // +5d over 40 (fullcontrol's numbers), the universe +2.00% over 40 from the
+  // close and +0.50% over 39 from the next open, so the two bases cannot be
+  // read as one and the sentence has to name the one it is on.
+  fullbenchmark() {
+    const d = VARIANTS.fullcontrol();
+    const h = d.evidence.horizons[d.evidence.horizons.length - 1];
+    const bench = d.evidence.universe.outcomes.find((o) => o.horizon === h);
+    bench.n = 40; bench.mean = 2.0;
+    bench.from_open = { mean: 0.5, n: 39, best: 9, worst: -9, in_band: 0 };
+    d.evidence.universe.setups = 40;
+    d.evidence.universe.enough = true;
+    d.evidence.universe.enough_from_open = true;
+    // The picks and the refusals are complete on BOTH bases here, because a
+    // verdict is only reached when both sides clear the floor on the basis
+    // being read: without this the open tab fell to "no comparison yet" and
+    // the sentence under test was never rendered at all.
+    const picks = d.evidence.overall.outcomes.find((o) => o.horizon === h);
+    const ref = d.evidence.refused.outcomes.find((o) => o.horizon === h);
+    picks.from_open = { mean: 5.0, n: 38, best: 30, worst: -20, in_band: 0 };
+    ref.from_open = { mean: 2.5, n: 43, best: 25, worst: -22, in_band: 0 };
+    d.evidence.refused.enough_from_open = true;
+    d.evidence.overall.enough_from_open = true;
+    return d;
+  },
+  // A benchmark with a mean and too few setups behind it. The rung still
+  // shows the number, marked; the verdict must NOT read it as a rate. Every
+  // other block on this page carries that rule and nothing checked it here.
+  thinbenchmark() {
+    const d = VARIANTS.fullbenchmark();
+    const h = d.evidence.horizons[d.evidence.horizons.length - 1];
+    const bench = d.evidence.universe.outcomes.find((o) => o.horizon === h);
+    bench.n = 4;
+    d.evidence.universe.setups = 4;
+    d.evidence.universe.enough = false;
+    d.evidence.universe.enough_from_open = false;
+    return d;
+  },
+  // A record written under two screeners: the gate moved. Every mean on the
+  // page then averages both, and the page has to say which key moved rather
+  // than only that something did.
+  rulesdrift() {
+    const d = clone(REAL);
+    const ev = d.evidence;
+    const current = JSON.parse(JSON.stringify(ev.rules.current));
+    const older = JSON.parse(JSON.stringify(current));
+    older['gate.min_lynch_passes'] = 4;
+    older['scan.min_gain_pct'] = 5.0;
+    ev.rules = { current, sets: 2, differ: ['gate.min_lynch_passes', 'scan.min_gain_pct'], runs_without: 0 };
+    d.runs[0].rules = current;
+    d.runs.slice(1).forEach((r) => { r.rules = older; });
+    return d;
+  },
+  // And one whose runs predate the fingerprint: not knowing which rules made
+  // a row is a different sentence from knowing they were these.
+  norules() {
+    const d = clone(REAL);
+    d.evidence.rules = { current: null, sets: 0, differ: [], runs_without: d.runs.length };
+    d.runs.forEach((r) => delete r.rules);
+    return d;
+  },
+  // The state the FIRST real ledger spanning round 6 produces: rows written
+  // before the open basis existed sit beside new ones, so a block clears the
+  // floor on the close basis and not on the open one. No source had it, which
+  // is how three cards shipped reading the close basis's licence for both.
+  halfmeasured() {
+    const d = clone(REAL);
+    d.evidence = JSON.parse(JSON.stringify(HIST.evidence));
+    const thin = (block) => {
+      if (!block) return;
+      block.enough = true;
+      block.enough_from_open = false;
+      (block.outcomes || []).forEach((o) => { if (o.from_open) o.from_open.n = 5; });
+    };
+    (d.evidence.by_check || []).forEach((c) => { thin(c); });
+    (d.evidence.by_day || []).forEach(thin);
+    (d.evidence.by_month || []).forEach(thin);
+    return d;
+  },
+  // A band whose CLOSE mean runs past the claimed band and whose open mean
+  // does not. The chart's x-scale is otherwise pinned by 0 and band.high,
+  // which dwarf every real mean -- so a chart reading the wrong basis for
+  // its scale is invisible until one basis leaves the band. That is exactly
+  // the state a single huge winner produces.
+  widemean() {
+    const d = clone(REAL);
+    d.evidence = JSON.parse(JSON.stringify(HIST.evidence));
+    const h = d.evidence.horizons[d.evidence.horizons.length - 1];
+    const band = d.evidence.by_score.find((b) => b.outcomes.some((o) => o.horizon === h && o.mean !== null));
+    const cell = band.outcomes.find((o) => o.horizon === h);
+    cell.mean = 45.0;
+    cell.from_open = Object.assign({}, cell.from_open, { mean: 5.0 });
+    return d;
+  },
   nodata() { return null; }
 };
 
@@ -343,6 +601,16 @@ const horizon = (k) => {
 // README used to say so as a known way for the script to throw.
 // The page's own date format ('12 Aug 2026'), for matching a row by its session.
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// The page prints every funnel count through commas() -> toLocaleString, so a
+// comparison against String(n) is identical up to 999 and wrong from 1,000.
+// That was a live landmine under the widening this rebuild is heading for:
+// verified by setting the fixture's universe to 999 (134/134) and to 1,000
+// (133/134). The `wide` variant has set size 5000 since it was written, with
+// a comment saying "where the rebuild is heading", and passed throughout —
+// because it never compared a printed number. Third instance of the class the
+// 3.1 audit named: a docs/-facing check that cannot fail in the state it was
+// written for.
+const shown = (n) => Number(n).toLocaleString('en-US');
 const fmtDay = (iso) => { const p = String(iso).slice(0, 10).split('-'); return `${Number(p[2])} ${MONTHS[Number(p[1]) - 1]} ${p[0]}`; };
 const money = (v) => (v === null || v === undefined ? 'pending' : (v > 0 ? '+' : '') + v.toFixed(2) + '%');
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
@@ -384,10 +652,10 @@ ok('the funnel draws every stage from the universe to the shortlist',
   funnel.kept.length === STAGES.length && funnel.rows.length === STAGES.length && funnel.lost === STAGES.length - 1,
   `${funnel.kept.length} bars, ${funnel.rows.length} rows, ${funnel.lost} drop segments`);
 ok('and the stages are the run\'s own numbers, named and in order',
-  funnel.rows.every((r, i) => r[0].startsWith(STAGES[i][0]) && r[1] === String(STAGES[i][1])),
+  funnel.rows.every((r, i) => r[0].startsWith(STAGES[i][0]) && r[1] === shown(STAGES[i][1])),
   JSON.stringify(funnel.rows.map((r) => r[1])) + ' vs ' + JSON.stringify(STAGES.map((x) => x[1])));
 ok('every drop is the difference between the two stages either side of it',
-  funnel.rows.every((r, i) => r[3] === (i === 0 ? '\u2014' : '\u2212' + (STAGES[i - 1][1] - STAGES[i][1]))),
+  funnel.rows.every((r, i) => r[3] === (i === 0 ? '\u2014' : '\u2212' + shown(STAGES[i - 1][1] - STAGES[i][1]))),
   JSON.stringify(funnel.rows.map((r) => r[3])));
 // The point of the figure: 5 of 230 has to LOOK like 5 of 230. A per-row
 // rescale would draw five near-equal bars and hide the attrition entirely.
@@ -399,7 +667,7 @@ ok('the stages share one scale, so the narrowing is visible and not just stated'
 const worstDrop = STAGES.slice(1).map(([name, v], i) => ({ name, lost: STAGES[i][1] - v }))
   .reduce((a, b) => (b.lost > a.lost ? b : a));
 ok('the page names where the attrition actually is',
-  (await page.textContent('#funnel-hint')).includes(String(worstDrop.lost))
+  (await page.textContent('#funnel-hint')).includes(shown(worstDrop.lost))
   && (await page.textContent('#funnel-hint')).includes(worstDrop.name),
   `${worstDrop.lost} at ${worstDrop.name}`);
 
@@ -478,6 +746,21 @@ ok('and the code keeps its casing through a sheet that lowercases chips',
 // a key can be present and say the wrong thing.
 const hint = await page.textContent('#gated-hint');
 const vetoedRows = REAL.gated_out.filter((g) => String(g.reason).startsWith('veto_')).length;
+// The fourth reason, on the same three surfaces the veto was pinned on:
+// the why cell, the gated hint (with the floor in dollars, read off
+// run.liquidity rather than retyped), and the funnel caption.
+const illiquidRows = REAL.gated_out.filter((g) => g.reason === 'liquidity_floor').length;
+const floorDollars = '$' + Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(REAL.run.liquidity.floor);
+ok('a burst the liquidity floor refused says so in its why cell, not that the gate rejected it',
+  illiquidRows > 0 && whyCells.filter((t) => t.startsWith('refused by the liquidity floor')).length === illiquidRows,
+  `${illiquidRows} liquidity rows; cells: ${whyCells.filter((t) => t.startsWith('refused by the liquidity')).length}`);
+ok('and the sentence above the gated table gives the floor its own clause, with the dollar figure the run recorded',
+  hint.includes(`${illiquidRows} below the liquidity floor (${floorDollars}/day`)
+  && hint.includes(`the ${REAL.run.liquidity.pctile}th percentile`),
+  hint.slice(0, 200));
+ok('and that clause does not fold the liquidity rows into the checklist count',
+  hint.includes(`${REAL.gated_out.filter((g) => g.reason === 'lynch_gate').length} rejected at the`),
+  hint.slice(0, 200));
 ok('and the sentence above the gated table gives the veto its own clause',
   vetoedRows === 0
   || (hint.includes(`${vetoedRows} refused by an absolute rule`) && !/\d+ refused at the/.test(hint)),
@@ -488,6 +771,15 @@ ok('and that clause does not fold the vetoed rows into the checklist count',
   hint);
 
 const caption = (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent))).join(' ');
+// The email's funnel gained this cut in the same round -- it went "Passed
+// 2LYNCH gate: 54" straight to "Shortlisted: 1" and never said the 29 names
+// that cleared the checklist were not looked at. Both surfaces name it "the
+// N-call cap" with the run's own number, and neither had that phrase pinned,
+// which is how two vocabularies for one mechanism get here in the first place.
+ok('the funnel names the call cap with the number the run actually applied',
+  caption.includes(REAL.run.score_cap + '-call cap'),
+  `score_cap = ${REAL.run.score_cap}`);
+
 ok('the funnel says an absolute rule can cut a name at the gate stage, when the run applied one',
   ((REAL.run.gate || {}).vetoes || []).length && caption.includes('refused by an absolute rule'),
   `gate.vetoes = ${JSON.stringify((REAL.run.gate || {}).vetoes)}`);
@@ -495,6 +787,107 @@ ok('the funnel says an absolute rule can cut a name at the gate stage, when the 
 // against a snapshot carrying no gate.vetoes at all: naming a rule that run
 // never applied is the confidently-false sentence, and asserting only the
 // positive branch left the guard deletable with everything green.
+ok('the funnel caption names the floor at the stage it cuts, with the same dollar figure',
+  caption.includes(`below the liquidity floor (${floorDollars}/day`),
+  caption.slice(0, 200));
+await open('/v/noliquidity/');
+const noLiqCaption = (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent))).join(' ');
+const noLiqHint = await page.textContent('#gated-hint');
+const noLiqLadder = await page.$$eval('#control-table tbody tr', (rows) => rows.map((r) => r.textContent));
+ok('a snapshot from before rule 6 was archived is not told it enforced a floor',
+  !noLiqCaption.includes('liquidity floor') && !noLiqHint.includes('liquidity floor'),
+  `caption: ${noLiqCaption.includes('liquidity floor')}, hint: ${noLiqHint.includes('liquidity floor')}`);
+await open('/v/noliquidityladder/');
+const ladderWithout = await page.$$eval('#control-table tbody tr', (rows) => rows.map((r) => r.textContent));
+ok('and its ladder has five rows, not a sixth for a population the file does not hold',
+  ladderWithout.length === 5 && !ladderWithout.some((l) => /illiquid/.test(l)) && !noLiqLadder.some((l) => /illiquid/.test(l)),
+  `${ladderWithout.length} rows on a rendered ladder`);
+await open('/v/nobenchmark/');
+const ladderNoBench = await page.$$eval('#control-table tbody tr', (rows) => rows.map((r) => r.textContent));
+ok('a record from before the benchmark shows no universe rung and its verdict says nothing about one',
+  ladderNoBench.length === 5 && !ladderNoBench.some((l) => /universe/.test(l))
+  && !/buying anything in the universe/.test(await page.textContent('#control-verdict')),
+  `${ladderNoBench.length} rows`);
+await open('/v/fullbenchmark/');
+const benchVerdict = await page.textContent('#control-verdict');
+ok('with enough paired setups the verdict compares the picks to the universe, over the sessions they came from',
+  /Against buying anything in the universe on the same days — \+2\.00% equal-weight, paired with the 40 setups those picks are/.test(benchVerdict)
+  && /the picks did better, by 4\.00%/.test(benchVerdict) && /flatters the benchmark/.test(benchVerdict),
+  benchVerdict.slice(benchVerdict.indexOf('Against'), benchVerdict.indexOf('Against') + 140));
+// The benchmark is on the SAME basis as the picks it is compared with. Its
+// open-basis mean is deliberately different here, so a sentence reading the
+// close basis under the open label fails rather than merely looking odd.
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const benchOpen = await page.textContent('#control-verdict');
+ok('and it follows the basis switch, naming the benchmark measured the same way as the picks',
+  /paired with the 39 setups/.test(benchOpen) && /\+0\.50% equal-weight/.test(benchOpen)
+  && !/\+2\.00% equal-weight/.test(benchOpen) && /next session.s open/.test(benchOpen),
+  benchOpen.slice(benchOpen.indexOf('Against'), benchOpen.indexOf('Against') + 120));
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+await open('/v/thinbenchmark/');
+const thinBench = await page.textContent('#control-verdict');
+const thinRung = await page.$$eval('#control-table tbody tr', (rows) => {
+  const r = rows.find((x) => x.textContent.startsWith('the universe'));
+  return r ? r.textContent.replace(/\s+/g, ' ') : '';
+});
+ok('a benchmark under the floor is shown on the rung and refused as a rate in the verdict',
+  !/Against buying anything/.test(thinBench) && /the picks did better/.test(thinBench)
+  && /\+2\.00%/.test(thinRung) && /too few to read as a rate|not enough data/.test(thinRung),
+  `verdict: ${thinBench.slice(0, 60)} | rung: ${thinRung.slice(0, 90)}`);
+// The clause joiner, on the two nights the fixture's own ordering hid.
+const floorClause = `(${floorDollars}/day, the ${REAL.run.liquidity.pctile}th percentile)`;
+// Round 8. A mean across runs is a mean over one strategy only while the
+// record holds one set of rules, and the page says so when it does not.
+const restNote = await page.textContent('#rules-note');
+// The hidden PROPERTY, not isHidden(): an empty paragraph has no box either
+// way, so a note left permanently shown-but-empty passed a visibility check.
+const restHidden = await page.$eval('#rules-note', (n) => n.hidden);
+ok('a record made under one set of rules says nothing about blended screeners',
+  restNote.trim() === '' && restHidden === true,
+  `${JSON.stringify(restNote)} hidden=${restHidden}`);
+await open('/v/rulesdrift/');
+const driftNote = await page.textContent('#rules-note');
+ok('a record spanning two sets of rules says so and names the keys that moved',
+  /spans 2 sets of rules/.test(driftNote) && driftNote.includes('gate.min_lynch_passes')
+  && driftNote.includes('scan.min_gain_pct') && /averages more than one screener/.test(driftNote),
+  driftNote.slice(0, 150));
+await open('/v/norules/');
+const noRulesNote = await page.textContent('#rules-note');
+ok('and runs from before the fingerprint are counted apart, not as agreement',
+  new RegExp(VARIANTS.norules().runs.length + ' runs in the record predate').test(noRulesNote)
+  && !/spans/.test(noRulesNote) && /not the same as knowing it was this one/.test(noRulesNote),
+  noRulesNote.slice(0, 150));
+await open('/v/newreason/');
+const newWhy = await page.$eval('#gated-table tbody tr:first-child td.col-why', (td) => td.textContent.trim());
+ok('a reason word this page does not know is said as that, never as a gate rejection',
+  /not one this page knows/.test(newWhy) && newWhy.includes('veto_gap_too_wide') && !/2LYNCH gate/.test(newWhy),
+  newWhy);
+await open('/v/nocap/');
+const noCapHint = await page.textContent('#gated-hint');
+ok('with no crowded-out rows the liquidity clause is last and keeps its own comma',
+  noCapHint.includes(`2 below the liquidity floor ${floorClause} and never measured against it.`)
+  && / whatever the checklist said and 2 below/.test(noCapHint),
+  noCapHint.slice(0, 220));
+await open('/v/onlyfloor/');
+const onlyFloorHint = await page.textContent('#gated-hint');
+ok('and alone it is one clause, comma and space intact',
+  onlyFloorHint.includes(`2 bursts the scan found but no score exists for: 2 below the liquidity floor ${floorClause} and never measured against it.`),
+  onlyFloorHint.slice(0, 220));
+await open('/f/fixture/');
+const streakTitle = await page.$eval('#gated-table .sc-note[title]', (n) => n.getAttribute('title'));
+ok('the streak disclosure on the page names all four ways a burst goes unscored',
+  ['the checklist rejected', 'an absolute rule refused', 'the liquidity floor refused', 'the call cap crowded']
+    .every((phrase) => streakTitle.includes(phrase)),
+  streakTitle.slice(0, 160));
+const dollarCells = await page.$$eval('#gated-table tbody tr', (rows) => rows.map((r) => [r.querySelector('td .sc-case').textContent, r.querySelectorAll('td')[6].textContent.trim()]));
+// The page's big() rule, mirrored: the same rule src/emailer.py's
+// compact_dollars() follows, and tests/test_docs_are_true.py holds the two
+// to each other by executing the page's own function.
+const bigJs = (v) => (v >= 1e9 ? (v / 1e9).toFixed(1) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(0) + 'k' : String(v));
+ok('every gated row prints the dollar volume rule 6 judged, beside the floor the hint names',
+  dollarCells.length === REAL.gated_out.length
+  && dollarCells.every(([t, cell]) => cell === '$' + bigJs(REAL.gated_out.find((g) => g.ticker === t).dollar_volume)),
+  dollarCells.slice(0, 3).map((c) => c.join(' ')).join(' | '));
 await open('/v/novetoes/');
 const oldCaption = (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent))).join(' ');
 const oldHint = await page.textContent('#gated-hint');
@@ -502,6 +895,30 @@ ok('and says nothing of the kind about a run that had no absolute rule to apply'
   !oldCaption.includes('refused by an absolute rule')
   && !oldHint.includes('refused by an absolute rule'),
   oldCaption.replace(/\s+/g, ' ').slice(0, 90));
+
+// The same class one field over. `gate.total_checks` is the checklist's SIZE,
+// and the page concatenates it into three sentences: the funnel's "why" and
+// "note", and the gated table's "rejected at the ≥3/6 2LYNCH gate". The
+// producer emits null there when nothing measured a checklist that night, and
+// every one of those three read "3/null" and "under 3 of null checks" — a
+// threshold against a total that does not exist, stated as fact, with the
+// suite and every check here green because no source could hold a null.
+await open('/v/nogatetotal/');
+const nullTexts = [
+  await page.textContent('#funnel-hint'),
+  (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent))).join(' '),
+  await page.textContent('#gated-hint'),
+  await page.textContent('#checks-hint')
+];
+ok('a run that never measured the checklist prints no gate size at all',
+  nullTexts.every((t) => !/null|undefined|NaN/.test(t)),
+  nullTexts.find((t) => /null|undefined|NaN/.test(t)) || 'clean');
+// And the other half, which is what stops the fix being "delete the sentence":
+// the pass threshold IS known on such a run and must survive.
+ok('and still names the threshold it does know, which is the pass count',
+  nullTexts.slice(1).every((t) => t.includes('≥' + VARIANTS.nogatetotal().run.gate.min_lynch_passes)
+                                  || t.includes('under ' + VARIANTS.nogatetotal().run.gate.min_lynch_passes)),
+  nullTexts.slice(1).map((t) => t.replace(/\s+/g, ' ').slice(0, 60)).join(' | '));
 await open('/f/fixture/');
 
 // --- the streak line, on the one state it used to get wrong -----------------
@@ -690,11 +1107,18 @@ ok('and the checklist split accounts for all of them',
 // did exactly that on the first version of this line.
 const clearedCell = (checks.rows[0] || [])[3] || '';
 const clearedShown = Number((clearedCell.match(/of (\d+)$/) || [])[1]);
+// Since round 5 a second kind of row clears the checklist without being in
+// run.passed_gate: one rule 6 refused before the gate saw it, whose pass
+// count happens to clear the bar. It was never AT the gate, so it is on the
+// cleared side of a split about check quality for the same reason a vetoed
+// 6/6 is, and the fixture holds one of each kind on purpose.
+const clearedButNeverGated = REAL.gated_out.filter((g) =>
+  String(g.reason).startsWith('veto_')
+  || (g.reason === 'liquidity_floor' && g.lynch_passes >= REAL.run.gate.min_lynch_passes)).length;
 ok('and it is the checklist that splits them, not the gate a veto also guards',
-  Number.isFinite(clearedShown)
-  && clearedShown - run.passed_gate
-     === REAL.gated_out.filter((g) => String(g.reason).startsWith('veto_')).length,
-  `page shows ${clearedShown} cleared the checklist, run.passed_gate is ${run.passed_gate}`);
+  Number.isFinite(clearedShown) && clearedShown - run.passed_gate === clearedButNeverGated,
+  `page shows ${clearedShown} cleared the checklist, run.passed_gate is ${run.passed_gate}, ` +
+  `${clearedButNeverGated} cleared it without reaching the gate`);
 ok('and the column says checklist, so the two are not read as one number',
   (await page.$$eval('#checks-table thead th', (th) => th.map((t) => t.textContent.trim())))
     .includes('cleared the checklist'));
@@ -923,6 +1347,15 @@ ok('the legend keys are the two marks, not two identical squares',
 ok('a fallback score is a hollow dot, so the split is not only a colour',
   plot.dots.filter((d) => d.hollow).length === fwdDone.filter((c) => c.provenance.source !== 'claude').length,
   `${plot.dots.filter((d) => d.hollow).length} hollow of ${plot.dots.length}`);
+// THE ALTERNATIVE. The one-night fixture has no closed horizon, so the
+// evidence body -- and the control ladder inside it -- must stay hidden
+// together: a ladder of four "pending" rows under an empty-state note would
+// be the page saying two things about one state. The ladder itself is
+// checked on the history source and on two variants built from it below.
+ok('and the control ladder is hidden with the body it belongs to, not rendered under the empty note',
+  (await page.locator('#control-table tbody tr').count()) === 0
+  && await page.locator('#evidence-body').isHidden());
+
 ok('one session is not reported as evidence that the ranking works',
   /one session/.test(plot.verdict) && /not evidence/.test(plot.verdict), plot.verdict.slice(-120));
 await shot('forward-returns');
@@ -952,7 +1385,17 @@ ok('a stage worth a thousandth of the universe is still drawn, not rounded away'
   wide.kept.length === STAGES.length && wide.kept.every((w) => w >= 3),
   wide.kept.map((w) => w.toFixed(2)).join(' '));
 ok('and it still says how many names it is',
-  wide.last.includes(String(run.shortlist_size)), wide.last.slice(0, 90));
+  wide.last.includes(shown(run.shortlist_size)), wide.last.slice(0, 90));
+// The check the `wide` variant existed for and never made: that a FOUR-DIGIT
+// universe still reads back as the number the run holds. Comparing String(n)
+// here is what broke at 1,000, and nothing noticed because this variant only
+// ever measured bar widths.
+const wideRows = await page.$$eval('#funnel-table tbody tr',
+  (rows) => rows.map((r) => [...r.children].map((c) => c.textContent.trim())));
+ok('and a four-digit universe reads back as the number the run holds',
+  wideRows.length === STAGES.length && wideRows[0][1] === shown(5000)
+  && wideRows[0][1] !== String(5000),
+  `${wideRows.length ? wideRows[0][1] : 'no rows'} — and String(5000) is ${String(5000)}`);
 await page.setViewportSize({ width: 1280, height: 1000 });
 
 // --- enough sessions for the page to change its mind -----------------------
@@ -1115,9 +1558,211 @@ const streak = await page.evaluate(() => ({
 ok('the streak view says it counts appearances, and why it must',
   streak.rows === HEV.by_day.length && /APPEARANCE/.test(streak.hint) && /overlap/.test(streak.hint),
   streak.hint.slice(0, 100));
+// On the history source both sides of the control have closed outcomes, so
+// this is where the direction sentence is checked -- against the ledger's own
+// numbers, not against a rendered label. Whether it says better or worse is
+// the record's business; that it says one of them, with both n's, is this
+// check's.
+const hv = await page.textContent('#control-verdict');
+const hEv = HIST.evidence, hH = hEv.horizons[hEv.horizons.length - 1];
+const hPicks = hEv.overall.outcomes.find((o) => o.horizon === hH), hRef = hEv.refused.outcomes.find((o) => o.horizon === hH);
+const hLadder = await page.$$eval('#control-table tbody tr', (rows) => rows.map((r) => r.textContent.replace(/\s+/g, ' ')));
+// A missing row must FAIL these, not crash the runner: an earlier version
+// indexed hLadder[3] unguarded, so a ladder short by one row threw before any
+// FAIL line printed and read, to a count of failures, as a pass.
+const rowFor = (label) => hLadder.find((l) => l.startsWith(label)) || '';
+const countIn = (label) => Number((rowFor(label).match(new RegExp(label + '.*?(\\d+)')) || [])[1]);
+ok('the alternative is on the page as five disjoint populations and a benchmark rung, and says which is which',
+  hLadder.length === 6 && rowFor('the shortlist') && rowFor('what it refused')
+  && /call cap/.test(rowFor('the crowded-out')) && /liquidity floor/.test(rowFor('the illiquid'))
+  && /survivorship/.test(rowFor('the universe')),
+  hLadder.map((l) => l.slice(0, 36)).join(' | ') || 'no ladder rendered');
+// The benchmark pairs every scored setup with its session's universe move,
+// so its n is bounded by the scored setups and, over thirty runs where every
+// session but the last week has a benchmark, is most of them. Read off the
+// ledger's own block, and the rung's number must be that block's.
+// One formatter for every rendered percentage this file compares against
+// the ledger's own numbers; declared before its first use.
+const pctOf = (v) => (v === null || v === undefined ? null : (v > 0 ? '+' : '') + v.toFixed(2) + '%');
+const hBench = HIST.evidence.universe;
+const hBench5 = hBench.outcomes.find((o) => o.horizon === hH);
+ok('the universe rung holds a benchmark for most scored setups and prints the ledger\'s own mean',
+  hBench.setups > 0 && hBench.setups <= HIST.evidence.overall.setups && hBench5.n > 0
+  && countIn('the universe') === hBench.setups && rowFor('the universe').includes(pctOf(hBench5.mean)),
+  `${hBench.setups} of ${HIST.evidence.overall.setups} setups paired; +5d ${hBench5.mean} over ${hBench5.n}`);
+ok('and the run entries carry the benchmark the rung was built from, pending only for the last week',
+  HIST.runs.filter((r) => r.benchmark && r.benchmark.d5 !== null).length >= HIST.runs.length - 6
+  && HIST.runs.every((r) => r.benchmark && typeof r.benchmark.n5 === 'number')
+  && HIST.runs.filter((r) => r.benchmark && r.benchmark.d5 !== null).every((r) => r.benchmark.n5 > 1),
+  `${HIST.runs.filter((r) => r.benchmark && r.benchmark.d5 !== null).length} of ${HIST.runs.length} runs benchmarked`);
+ok('and each row prints the setup count the ledger computed for that population',
+  countIn('what it refused') === HIST.evidence.refused.setups
+  && countIn('the crowded-out') === HIST.evidence.crowded_out.setups
+  && countIn('the shortlist') === HIST.evidence.shortlist.setups
+  && countIn('the illiquid') === HIST.evidence.illiquid.setups,
+  `refused ${HIST.evidence.refused.setups}, crowded ${HIST.evidence.crowded_out.setups}, shortlist ${HIST.evidence.shortlist.setups}, illiquid ${HIST.evidence.illiquid.setups}`);
+// Rule 6's refusals are a population of their own and NOT part of the
+// control: a thirty-run record with liquidity rows in it must show them on
+// the ladder row that names the floor, and the verdict sentence must still
+// compare picks against what the STRATEGY refused, whose n is unchanged by
+// however many thin names the floor cut.
+ok('and the illiquid row holds setups the refused row does not count',
+  HIST.evidence.illiquid.setups > 0
+  && HIST.evidence.illiquid.setups + HIST.evidence.refused.setups + HIST.evidence.crowded_out.setups
+     + HIST.evidence.shortlist.setups + HIST.evidence.rest.setups === HIST.evidence.record.setups,
+  `illiquid ${HIST.evidence.illiquid.setups} of ${HIST.evidence.record.setups} setups`);
+ok('over thirty runs the control sentence carries both sides\' n and says which did better',
+  (hPicks.n >= hEv.min_setups && hEv.refused.enough)
+    ? (/did (better|WORSE|no differently)/.test(hv) && hv.includes(`over ${hPicks.n} setup`) && hv.includes(`over ${hRef.n} setup`))
+    : (/(No comparison yet|Only one side can be read yet)/.test(hv) && hv.includes(`${hPicks.n} scored setup`) && hv.includes(`${hRef.n} refused one`)),
+  hv.slice(0, 120));
+await open('/v/thincontrol/');
+const thin = await page.textContent('#control-verdict');
+ok('with neither side at the floor the control refuses a direction and prints both n\'s',
+  /^No comparison yet: 5 scored setups and 5 refused ones have closed/.test(thin)
+  && !/did (better|WORSE|no differently)/.test(thin),
+  thin.slice(0, 90));
+await open('/v/fullcontrol/');
+const full = await page.textContent('#control-verdict');
+ok('with both sides at the floor it states the direction, by how much, over which n\'s',
+  /the picks did better, by 3\.00%/.test(full) && full.includes('+6.00% at +5d from the burst-day close over 40 setups')
+  && full.includes('refused returned +3.00% over 45 setups'),
+  full.slice(0, 160));
+// --- the return basis: one switch, every number, every heading --------------
+// Round 6. The record carries two measurements of every return -- from the
+// burst-day close (what the setup did) and from the next session's open (what
+// a reader of the 18:16 email could have paid) -- and the page shows ONE at a
+// time. The checks below read the same block off the ledger's own file for
+// each basis and compare, so a cell that showed a close-basis number under the
+// open-basis label would fail here.
+await open('/f/history/');
+const tabs = await page.$$eval('#basis-tabs .sc-tab', (b) => b.map((t) => [t.dataset.basis, t.getAttribute('aria-pressed'), t.textContent.trim()]));
+ok('the return basis is one control with two named choices, the burst close pressed by default',
+  tabs.length === 2 && tabs[0][0] === 'close' && tabs[0][1] === 'true' && tabs[1][0] === 'open' && tabs[1][1] === 'false'
+  && /burst-day close/.test(tabs[0][2]) && /next session/.test(tabs[1][2]),
+  JSON.stringify(tabs));
+const hRef5 = HEV.refused.outcomes.find((o) => o.horizon === hH);
+const ladderCloseRefused = countIn('what it refused');
+const cellText = async (sel) => (await page.locator(sel).textContent()).replace(/\s+/g, ' ').trim();
+const refusedRowCells = async () => page.$$eval('#control-table tbody tr', (rows) => {
+  const r = rows.find((x) => x.textContent.startsWith('what it refused'));
+  return r ? [...r.querySelectorAll('td')].map((td) => td.textContent.replace(/\s+/g, ' ').trim()) : [];
+});
+const closeCells = await refusedRowCells();
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const openCells = await refusedRowCells();
+ok('switching to the open basis changes the ladder to the ledger\'s own from_open means',
+  closeCells.length === openCells.length && openCells.length > 0
+  && closeCells[4].startsWith(pctOf(hRef5.mean)) && openCells[4].startsWith(pctOf(hRef5.from_open.mean))
+  && hRef5.mean !== hRef5.from_open.mean,
+  `close ${closeCells[4]} vs open ${openCells[4]}; ledger ${hRef5.mean} / ${hRef5.from_open.mean}`);
+const openHints = await page.$$eval('#evidence-hint, #control-hint, #runs-hint, #control-verdict, #evidence-verdict', (ps) => ps.map((p) => p.textContent));
+ok('and every heading that carries a return names the basis it is on',
+  openHints.every((t) => /next session.s open/.test(t)) && !openHints.some((t) => /burst-day close/.test(t)),
+  openHints.map((t) => t.slice(0, 60)).join(' | '));
+const openRunIndex = HIST.runs.findIndex((r) => r.forward_returns && r.forward_returns.from_open && r.forward_returns.from_open.d5 !== null);
+const openRun = HIST.runs[openRunIndex];
+// The table lists runs in the file's order, so the row is found by position:
+// the session cell prints a formatted day, not the ISO date.
+const openRunRow = await page.$$eval('#runs-table tbody tr', (rows, i) => {
+  const r = rows[i];
+  return r ? [...r.querySelectorAll('td')].map((td) => td.textContent.replace(/\s+/g, ' ').trim()) : [];
+}, openRunIndex);
+ok('the runs table follows the switch too, reading each run\'s own from_open mean',
+  openRunRow.length > 0 && openRunRow[8] === pctOf(openRun.forward_returns.from_open.d5)
+  && openRunRow[8] !== pctOf(openRun.forward_returns.d5),
+  `row ${openRunRow[8]}; ledger open ${openRun.forward_returns.from_open.d5}, close ${openRun.forward_returns.d5}`);
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+ok('and switching back restores every close-basis number',
+  JSON.stringify(await refusedRowCells()) === JSON.stringify(closeCells) && countIn('what it refused') === ladderCloseRefused);
+await open('/v/forward/');
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const fwdOpenCell = (await page.locator('#scores-table tbody tr:first-child td:nth-child(9)').textContent()).trim();
+const FWD0 = VARIANTS.forward().candidates[0].forward_returns;
+ok('a candidate row shows its own open-basis return under the open label, not the close one',
+  fwdOpenCell === pctOf(FWD0.from_open.d1) && fwdOpenCell !== pctOf(FWD0.d1), `cell ${fwdOpenCell}; open ${FWD0.from_open.d1}, close ${FWD0.d1}`);
+// Round 6 said one basis at a time, named in every heading. The score-band
+// CHART is the most prominent number on the page and read the close basis
+// whatever the switch said, so it printed one figure over a table row
+// printing another.
+await open('/f/history/');
+const chartLabels = async () => page.$$eval('#evidence-chart text.s-drop', (t) => t.map((x) => x.textContent.trim()));
+// The BARS as well as the labels: reverting only the x-scale read leaves the
+// labels right and draws them against a scale built from the other basis,
+// which a label-only check cannot see.
+const chartBars = async () => page.$$eval('#evidence-chart .sc-bar, #evidence-chart rect', (r) => r.map((x) => x.getAttribute('width')).filter(Boolean));
+const chartClose = await chartLabels();
+const barsClose = await chartBars();
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const chartOpen = await chartLabels();
+const barsOpen = await chartBars();
+// The chart labels one decimal, so the comparison does too.
+const one = (v) => (v > 0 ? '+' : '') + v.toFixed(1) + '%';
+const chartHz = HIST.evidence.horizons[HIST.evidence.horizons.length - 1];
+const bandWithBoth = HIST.evidence.by_score.find((b) => {
+  const o = b.outcomes.find((x) => x.horizon === chartHz);
+  return o && o.mean !== null && o.from_open && o.from_open.mean !== null && o.mean !== o.from_open.mean;
+});
+const bandClose = bandWithBoth.outcomes.find((x) => x.horizon === chartHz);
+ok('the score-band chart follows the basis switch, like the table under it',
+  chartClose.length > 0 && chartOpen.length === chartClose.length
+  && JSON.stringify(chartOpen) !== JSON.stringify(chartClose)
+  && chartOpen.includes('+' + chartHz + 'd ' + one(bandClose.from_open.mean) + ' (n=' + bandClose.from_open.n + ')')
+  && chartClose.includes('+' + chartHz + 'd ' + one(bandClose.mean) + ' (n=' + bandClose.n + ')')
+  && barsClose.length > 0 && JSON.stringify(barsOpen) !== JSON.stringify(barsClose),
+  `close ${chartClose.slice(0, 2).join(' | ')} :: open ${chartOpen.slice(0, 2).join(' | ')}`);
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+// And three cards read `enough` where the ledger publishes a licence per
+// basis, so an open-basis mean was chipped "measured" on the close basis's n.
+await open('/v/halfmeasured/');
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const basisChips = await page.$$eval('#predict-table tbody tr td:last-child, #streak-table tbody tr td:last-child, #trend-table tbody tr td:last-child',
+  (tds) => tds.map((t) => t.textContent.trim()));
+const rateNotes = await page.$$eval('#predict-table tbody tr, #streak-table tbody tr, #trend-table tbody tr',
+  (rows) => rows.map((r) => r.textContent).join(' '));
+ok('a card whose open basis is under the floor is not chipped measured on the close basis\'s licence',
+  basisChips.length > 0 && basisChips.every((c) => /not enough data/.test(c))
+  && /too few to read as a rate/.test(rateNotes),
+  `${basisChips.length} chips, first: ${basisChips[0]}`);
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+// The x-scale, not just the labels. On any record whose means all sit inside
+// the claimed band the scale is pinned by 0 and band.high and a chart reading
+// the wrong basis for it draws identically; this source has one band past the
+// band's top on the close basis alone, so the two scales must differ.
+await open('/v/widemean/');
+const wideClose = await page.$$eval('#evidence-chart text', (t) => t.map((x) => x.textContent.trim()).filter((x) => /^[+-]\d+%$/.test(x)));
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const wideOpen = await page.$$eval('#evidence-chart text', (t) => t.map((x) => x.textContent.trim()).filter((x) => /^[+-]\d+%$/.test(x)));
+ok('and its x-axis is built from the basis being shown, not the other one',
+  wideClose.length > 0 && wideOpen.length > 0
+  && JSON.stringify(wideOpen) !== JSON.stringify(wideClose)
+  && Math.max(...wideClose.map((t) => parseInt(t, 10))) > Math.max(...wideOpen.map((t) => parseInt(t, 10))),
+  `close axis ${wideClose.join(' ')} :: open axis ${wideOpen.join(' ')}`);
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+await open('/v/noopen/');
+const noOpenTab = await page.$eval('#basis-tabs .sc-tab[data-basis="open"]', (b) => ({ disabled: b.disabled, pressed: b.getAttribute('aria-pressed') }));
+const noOpenNote = await page.textContent('#basis-note');
+ok('a record from before the open basis greys that choice and says why, rather than showing close numbers under it',
+  noOpenTab.disabled && noOpenTab.pressed === 'false' && /predates the open basis/.test(noOpenNote)
+  && /burst-day close/.test(await page.textContent('#runs-hint')),
+  `disabled ${noOpenTab.disabled}, pressed ${noOpenTab.pressed}; ${noOpenNote.slice(0, 90)}`);
+await open('/f/history/');
 ok('a burst the record cannot place is a row of its own, never a day 1',
   (await page.locator('#streak-table tbody tr', { hasText: 'not known' }).count())
     === HEV.by_day.filter((d) => d.day === null).length);
+// FOUR reasons put a burst in that bucket -- no_history, history_undated,
+// history_unreadable and window_not_covered -- and the note under it named
+// one: the only one any available source carries. A run whose history could
+// not be READ lands every burst here and was told the record did not reach
+// back far enough, which is a different fault with a different fix. The row
+// notes carry the specific reason; the bucket may only say what is true of
+// all four, so the check is that it does NOT pick one.
+const bucketNote = await page.locator('#streak-table tbody tr', { hasText: 'not known' })
+  .locator('.sc-note').first().textContent();
+ok('and the bucket does not blame one of the four reasons it cannot tell apart',
+  !/reach back|no history|could not read|undated/i.test(bucketNote)
+  && /rows in the ledger carry the specific reason/.test(bucketNote),
+  bucketNote);
 ok('the record is broken down by month so a change over time is visible',
   (await page.locator('#trend-table tbody tr').count()) === HEV.by_month.length,
   `${HEV.by_month.length} months`);
@@ -1161,22 +1806,30 @@ for (const run of LEDGER.runs) {
     byTicker.get(row.ticker).push(row);
   }
 }
-let refusedOnScreen = 0, gatedOnScreen = 0;
+let refusedOnScreen = 0, gatedOnScreen = 0, illiquidOnScreen = 0;
 for (const rows of byTicker.values()) {
   rows.sort((a, b) => String(b.date).localeCompare(String(a.date)));
   for (const r of rows.slice(0, 6)) {
     if (r.score !== null && r.score !== undefined) continue;
     if (String(r.reason || '').startsWith('veto_')) refusedOnScreen++;
     else if (r.reason === 'lynch_gate') gatedOnScreen++;
+    else if (r.reason === 'liquidity_floor') illiquidOnScreen++;
   }
 }
 const perName = await page.textContent('#ticker-table');
 const saidRefused = (perName.match(/refused by an absolute rule/g) || []).length;
 const saidGated = (perName.match(/rejected at the gate/g) || []).length;
+const saidIlliquid = (perName.match(/below the liquidity floor/g) || []).length;
 ok('a burst an absolute rule refused says so in the per-name record too',
   refusedOnScreen > 0 && saidRefused === refusedOnScreen && saidGated === gatedOnScreen,
   `${refusedOnScreen} refusals and ${gatedOnScreen} gate rejections reachable; ` +
   `page said ${saidRefused} and ${saidGated}`);
+// The fourth word, on the same surface and by the same arithmetic: a burst
+// rule 6 refused is neither a veto nor a gate rejection, and the history is
+// the one source whose ledger holds them.
+ok('and a burst the liquidity floor refused says that, not that the gate rejected it',
+  illiquidOnScreen > 0 && saidIlliquid === illiquidOnScreen,
+  `${illiquidOnScreen} liquidity refusals reachable; page said ${saidIlliquid}`);
 await shot('history-desktop-dark');
 
 // --- the checks that must hold for ANY run ---------------------------------
@@ -1220,6 +1873,37 @@ async function checksForAnyRun(data, where) {
 await open('/');
 await setTheme('dark');
 await page.waitForTimeout(200);
+// --- the reader lens's smaller findings, each on the state it named --------
+await open('/v/undated/');
+const runsCol = await page.$$eval('#runs-table tbody tr td:first-child', (tds) => tds.map((t) => t.textContent.trim()));
+ok('a run whose date will not parse is shown as it is, never as NaN or undefined',
+  runsCol.length > 0 && !runsCol.some((t) => /NaN|undefined/.test(t)) && runsCol.some((t) => t.includes('not-a-date')),
+  runsCol.slice(0, 2).join(' | '));
+await open('/v/oldsnap/');
+const oldFunnel = (await page.textContent('#funnel-hint')) + ' '
+  + (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent).join(' ')))
+  + ' ' + (await page.textContent('#gated-hint'));
+ok('a snapshot with no gate block and no cap prints neither undefined nor a number it does not have',
+  !/undefined|NaN|null/.test(oldFunnel) && /the gate/.test(oldFunnel) && /the call cap/.test(oldFunnel),
+  oldFunnel.replace(/\s+/g, ' ').slice(0, 120));
+await open('/v/nosince/');
+const firstStreak = await page.locator('#scores-table tbody tr').first().locator('.sc-note').first().textContent();
+ok('a day number with no first_seen beside it drops the "since" clause rather than printing a dash',
+  /day 2 of this setup/.test(firstStreak) && !/since/.test(firstStreak),
+  firstStreak.slice(0, 80));
+await open('/f/fixture/');
+ok('the weakest-check sentence names the denominator its number was taken over',
+  /of the bursts that failed the checklist/.test(await page.textContent('#checks-hint'))
+  && !/of the ones that failed it/.test(await page.textContent('#checks-hint')),
+  (await page.textContent('#checks-hint')).slice(0, 100));
+await open('/v/quietmarket/');
+ok('the empty evidence note states the horizons as they are, not five sessions for all of them',
+  /at least one more session to close for \+1d and five for \+5d/.test(await page.textContent('#evidence-empty')),
+  (await page.textContent('#evidence-empty')).slice(0, 120));
+// Back to the source the any-run checks below were opened on.
+await open('/');
+await page.waitForTimeout(200);
+
 await checksForAnyRun(LIVE, 'docs/');
 await shot('live-desktop-dark');
 
@@ -1231,6 +1915,33 @@ await page.waitForTimeout(200);
 await checksForAnyRun(VARIANTS.quietnight(), 'a one-burst night');
 await shot('quiet-night-dark');
 
+// And the quietest real night there is: the scan ran clean and found no 4%
+// burst at all. The EMAIL's version of this said "No candidates passed the
+// quality gate today" directly under "4% bursts found: 0" -- blaming the
+// checklist for an outcome it had no part in, which is this project's named
+// collapse arriving from the opposite direction. The page is checked for the
+// same sentence rather than assumed clear of it.
+await open('/v/quietmarket/');
+await setTheme('dark');
+await page.waitForTimeout(200);
+await checksForAnyRun(VARIANTS.quietmarket(), 'a night with no burst at all');
+// innerText, not textContent: this page's <script> lives inside <body>, so
+// textContent hands back the source too -- and its comments discuss the very
+// sentences being searched for. The first version of this check failed on its
+// own commentary, which is the "asserting the page's own source" shape this
+// project has already been caught by once.
+const quietBody = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
+ok('a night with no burst at all blames nothing on the checklist',
+  !/passed the (quality|2LYNCH) gate today/i.test(quietBody)
+  && !/rejected at the/i.test(quietBody),
+  (quietBody.match(/.{0,90}(passed the (quality|2LYNCH) gate today|rejected at the).{0,60}/i) || [''])[0]);
+// And it still says what DID happen, in the one place left that can: the
+// funnel's widest cut is the burst filter, and it names it.
+ok('and says where every name was cut, which is the burst filter itself',
+  (await page.textContent('#funnel-hint')).includes('at "4% bursts"'),
+  (await page.textContent('#funnel-hint')).replace(/\s+/g, ' '));
+await shot('quiet-market-dark');
+
 await browser.close();
 server.close();
 
@@ -1238,7 +1949,16 @@ server.close();
 // rots silently -- three doc claims in this repo already did, which is why
 // tests/test_docs_are_true.py exists -- so it is checked here, where the real
 // number is. Counted after every other check has run, and counting itself.
-const claimed = (await readFile(join(ROOT, '..', 'README.md'), 'utf8')).match(/It runs (\d+) checks/);
+const readme = await readFile(join(ROOT, '..', 'README.md'), 'utf8');
+// README says how many variants there are too, and that number said six,
+// then eight, while VARIANTS grew to sixteen -- the same rot, one paragraph
+// up. Counted off the object, excluding the one name that serves no document.
+const served = Object.keys(VARIANTS).filter((name) => name !== 'nodata').length;
+const variants = readme.match(/(\d+) mutated copies of it/);
+ok("README's count of the mutated fixtures is the real one",
+  !!variants && Number(variants[1]) === served,
+  `README says ${variants ? variants[1] : 'nothing'}, VARIANTS serves ${served}`);
+const claimed = readme.match(/It runs (\d+) checks/);
 ok("README's count of these checks is the real one",
   !!claimed && Number(claimed[1]) === results.length + 1,
   `README says ${claimed ? claimed[1] : 'nothing'}, this run has ${results.length + 1}`);

@@ -495,25 +495,45 @@ def generate(out_dir: pathlib.Path) -> dict:
     with tempfile.TemporaryDirectory() as tmp, _patched(alpaca):
         cwd = os.getcwd()
         os.chdir(tmp)
+        # Driven as a real UNIVERSE scan, not with --tickers: the names go
+        # into a symbol file the scanner reads for itself. It matters beyond
+        # tidiness -- a --tickers run has no universe, so it contributes no
+        # benchmark to any run and receives none (Ledger.fill_benchmarks),
+        # and driving the generator that way produced thirty sessions whose
+        # universe rung was empty while the real path fills it. A fixture
+        # written by the real pipeline has to take the real path.
+        symbols = pathlib.Path(tmp) / "symbols.txt"
+        symbols.write_text("\n".join(names) + "\n", encoding="utf-8")
+        saved_symbols = scanner.SYMBOLS_FILE
+        scanner.SYMBOLS_FILE = symbols
         try:
             for session in sessions:
                 os.environ["SCAN_SESSION_DATE"] = session
                 report = pipeline.RunReport()
-                pipeline.discover(pipeline.MODES["evening"], dry_run=True,
-                                  tickers=names, report=report)
+                pipeline.discover(pipeline.MODES["evening"], dry_run=True, report=report)
                 reports.append((session, report.status, len(report.errors)))
         finally:
+            scanner.SYMBOLS_FILE = saved_symbols
             os.chdir(cwd)
         data = json.loads((pathlib.Path(tmp) / "docs" / ledger.DATA_NAME).read_text())
         book = json.loads((pathlib.Path(tmp) / "docs" / ledger.LEDGER_NAME).read_text())
 
     # Label it. run.fixture is what the morning run and the page key on; the
-    # universe label would otherwise read "--tickers, 46 named on the command
-    # line", which is how the run was driven and not what a reader should
-    # take from it.
+    # universe label would otherwise name the temporary symbol file the scan
+    # really read, which is how the run was driven and not what a reader
+    # should take from it. The benchmark blocks carry the same label for the
+    # same reason -- they were stamped with what the scan called itself.
     data["generated"] = GENERATED
     data["run"]["fixture"] = True
-    data["run"]["universe"]["label"] = f"synthetic fixture universe ({len(names)} invented histories)"
+    label = f"synthetic fixture universe ({len(names)} invented histories)"
+    data["run"]["universe"]["label"] = label
+    # Every run entry carries the universe it scanned (src.ledger.add_run), in
+    # both files, and every one of these read the temporary file above.
+    for entry in data["runs"] + book["runs"]:
+        entry["universe"]["label"] = label
+        bench = entry.get("benchmark")
+        if isinstance(bench, dict) and isinstance(bench.get("universe"), dict):
+            bench["universe"]["label"] = label
     data["_contract"]["about"] = ABOUT_DATA
     book["generated"] = GENERATED
     book["fixture"] = True

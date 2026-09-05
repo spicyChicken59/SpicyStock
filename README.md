@@ -23,7 +23,9 @@ checked-in universe (data/symbols.txt, 230 names)
         ▼
 Layer 1  4% burst filter ............. ≥4% gain, vol ≥ yesterday, ≥1.5x its own
         │                              50-session average, price > $4, and in the
-        │                              top 70% of the day's dollar volume
+        │                              top 70% of the day's dollar volume —
+        │                              the bottom 30% are ARCHIVED as refused,
+        │                              not dropped (round 5)
         ▼  (a handful on a 230-name universe)
 Layer 2  2LYNCH checklist (code) ..... 2 first/second burst · L linear prior move
         │                              Y young trend · N narrow consolidation
@@ -56,7 +58,7 @@ Layer 6  Email ....................... HTML table, top 5, with the charts this
 |---|---|---|
 | what it does | **discovery** — scans the session that closed today | **follow-through** — re-presents the evening run before the open |
 | scans | yes, every layer above | no |
-| costs | ~25 Claude calls, a few cents | nothing |
+| costs | ~25 Claude calls, ~$0.15 | nothing |
 | writes | `docs/data.json`, `docs/ledger.json`, `docs/charts/` (gitignored), `results/*.csv` | nothing |
 | charts | attached inline — the PNGs it just rendered | none, and the email says why |
 | workflow | `.github/workflows/evening.yml` | `.github/workflows/morning.yml` |
@@ -144,6 +146,27 @@ what `.github/workflows/evening.yml` reads, and `.env.example` explains each:
 `ANTHROPIC_API_KEY`, `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`,
 `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_TO`
 
+**Then, before the first scheduled night, rehearse the boundaries once from
+your own machine:**
+
+```bash
+set -a; . ./.env; set +a
+python tools/live_check.py            # ~$0.02 and one test email
+python tools/live_check.py --no-spend # the free checks only
+```
+
+It asks each boundary exactly one question through the pipeline's OWN code —
+`_download_batch()` for Alpaca, `score_candidate()` over a chart `render_chart()`
+drew for Claude, `deliver()` for Resend — so a pass means the nightly run's own
+calls work. It tells a wrong key from a wrong feed (401 vs 403, the way
+`run_scan()` does), reports whether the feed carries today's session, whether
+Claude honours `cache_control` and whether the cache actually hits on a second
+call, and whether Resend accepts `RESEND_FROM`. Every check is exercised offline
+in `tests/test_live_check.py`, including the one where `--no-spend` must NOT
+print READY over boundaries it never tried. The one thing it cannot try is the
+commit-back push, which only Actions can run: watch the first evening run's
+"Persist the run" step for that.
+
 Both pipeline workflows then fire on weekdays and can be triggered manually
 from the Actions tab. `morning.yml` is passed only the three delivery secrets,
 because the follow-through pass runs neither the scanner nor the scorer and
@@ -199,7 +222,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 728 tests, no network or API keys needed
+pytest tests/                   # 916 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -207,10 +230,22 @@ email — rewrites `docs/data.json`, updates `docs/ledger.json` and writes PNGs
 into `docs/charts/`. A four-ticker smoke test therefore replaces whatever
 `docs/data.json` held with a four-ticker run — the hand-authored fixture on a
 fresh clone, last night's real run once `evening.yml` has committed one back.
-`git checkout docs/data.json` puts it back either way. A **morning** run writes
-nothing at all, so it cannot disturb that file — but it will refuse to read the
-fixture, which is what you will see if you run one before an evening run has
-published anything.
+`docs/ledger.json` gains a run too — one row per named ticker, marked with the
+universe it scanned (`runs[].universe` says `named on the command line`) so the
+record can tell it from a real night, but a row all the same: the next evening
+run on another session reads it as history, and `git add docs` would commit it.
+Put both files back with
+
+```bash
+rm -f docs/ledger.json && git checkout -- docs/
+```
+
+— the ledger is removed first because on a fresh clone it is untracked, so
+`git checkout` would leave it, and the first `git pull` after `evening.yml`
+commits a real one then refuses to overwrite it. A **morning** run writes
+nothing at all, so it cannot disturb either file — but it will refuse to read
+the fixture, which is what you will see if you run one before an evening run
+has published anything.
 
 ## The dashboard
 
@@ -263,12 +298,34 @@ It leads the page now, above the funnel, with four more views under it:
 | Does a streak pay — is day 3 worth more than day 1? | `evidence.by_day` | **appearances** |
 | Is it getting better or worse? | `evidence.by_month` | setups |
 | What happened the last times this name burst? | `evidence.by_ticker`, plus `docs/ledger.json` on request | setups |
+| **Did the picks beat what the strategy refused?** | `evidence.refused` against `evidence.overall`, under the score-band table | setups |
 
-Alongside those five, the block carries what a reader needs to interpret them:
+The last row is the north star's own question — "proven from its own record
+that its picks beat the alternative" — and until it existed the page measured
+the picks against the claimed band and against each other, never against the
+names the strategy said no to, which the ledger has archived with the same
+forward returns since 3.3. The page states a direction only when BOTH sides
+clear `min_setups` at the longest horizon, and always prints both n's.
+
+Alongside those six, the block carries what a reader needs to interpret them:
 `evidence.record` (how many runs, sessions and setups are behind everything
-here), `evidence.overall` (the same measurement over every scored setup),
-`evidence.shortlist` and `evidence.rest` (the names that went out by email
-against the ones that did not), `evidence.horizons` (which sessions after the
+here), `evidence.overall` (the same measurement over every scored setup), five
+disjoint populations — `evidence.shortlist` and `evidence.rest` (the names that
+went out by email against the scored ones that did not), `evidence.refused`
+(what the checklist or an absolute rule rejected), `evidence.crowded_out`
+(cleared the gate, never scored because the call budget filled — kept apart
+from the refusals so a full night cannot pad the control with names the
+screener liked) and `evidence.illiquid` (what rule 6 refused for dollar volume
+below the session's floor — kept apart from the refusals for the opposite
+reason: those forward returns are bar prices on names the rule says are too
+thin to be bought at them, so they are shown beside the control and never in
+it) — plus `evidence.universe`, the benchmark rung (not a population of
+setups but the whole universe's move paired with each of them) and
+`evidence.rules`, which says how many distinct sets of rules the record spans,
+which keys differ between them, and how many runs predate the fingerprint
+entirely: **a mean across runs is a mean over one strategy only while `sets`
+is 1**, and a run carrying no fingerprint is not a run that agrees with this
+one — `evidence.horizons` (which sessions after the
 burst were measured) and `evidence.band` (the range the strategy claims).
 
 **`+3d` and `+5d` are the horizons that matter, and the page says so on every
@@ -310,11 +367,19 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 8.8 MB raw
-and **0.59 MB gzipped** after a full year (measured, at ~47 rows a run over 260
-runs). That is not a thing to spend on every visit for a view most readers
-never open, so the "load every burst of every name" button is the only second
-request this page makes. A 404 there is the normal state until `evening.yml`
+and what followed — needs the whole record, which projects to about 14.03 MB raw
+and **1.08 MB gzipped** after a full year. That is not a thing to spend on every
+visit for a view most readers never open, so the "load every burst of every
+name" button is the only second request this page makes.
+
+Those two numbers were 8.8 and 0.59, and they were stale: the 3.3 audit added
+`context` to both row types and nobody re-measured, because re-measuring meant
+building an eleven-megabyte file by hand. `python tools/measure_ledger.py` builds
+one now — real rows from the generated history, real row counts from the
+canonical one-night fixture, and `src.ledger`'s own writer, since `indent=2` is
+most of the raw size and a compact estimate is not the file a browser fetches.
+`tests/test_docs_are_true.py` checks that what it prints is what this paragraph
+says, so the next person to grow a row does not have to remember. A 404 there is the normal state until `evening.yml`
 has committed a run back, and it is reported as a fact about the file.
 
 ### The data contract
@@ -329,14 +394,21 @@ invariants live in the file rather than only here. The load-bearing ones:
   screener unevaluable. The cut now happens once, in `run()`, on the way to the
   email alone.
 - `run.scored + len(gated_out) == run.bursts`. Nothing a scan found may vanish.
-  A burst that went unscored carries `reason`: `veto_up_days` (an absolute rule
+  A burst that went unscored carries `reason`: `liquidity_floor` (rule 6
+  refused it in the scan, for dollar volume below the session's percentile
+  floor, before the checklist saw it), `veto_up_days` (an absolute rule
   refused it, whatever the checklist said), `lynch_gate` (it failed the
   checklist) or `score_cap` (it passed and fell outside `MAX_TO_SCORE`). The
-  three are different facts and no surface may collapse two of them: a vetoed
+  four are different facts and no surface may collapse two of them: a vetoed
   burst may have passed 6/6, so calling it a gate rejection states the
-  opposite of what happened. `run.gate.vetoes` names the absolute rules that
-  run applied, so a snapshot written before one existed is not described as
-  having enforced it.
+  opposite of what happened, and a name below the floor was never measured
+  against the checklist at all. `run.gate.vetoes` names the absolute rules that
+  run applied, and `run.liquidity` records the floor (`pctile`, `floor` in
+  dollars, `refused`), so a snapshot written before either existed is not
+  described as having enforced it. The liquidity refusals were the one class
+  the record did not hold until round 5: `apply_liquidity_gate()` logged them
+  and dropped them, so on the documented four-name smoke test the thinnest
+  name vanished and the funnel counted the other three as everything found.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
@@ -363,7 +435,8 @@ invariants live in the file rather than only here. The load-bearing ones:
   *"burst on 8 of the 8 sessions in the record, which begins 2026-08-20 — this
   setup may have started before it"* instead of "unknown".
   `last_outcome` is what happened to the appearance `last_seen` names:
-  `scored`, or the reason it never was (`veto_up_days` — an absolute rule
+  `scored`, or the reason it never was (`liquidity_floor` — rule 6 refused it
+  before the checklist saw it; `veto_up_days` — an absolute rule
   refused it; `lynch_gate` — the checklist rejected it; `score_cap` — it passed
   and the run had already sent its limit of candidates to Claude). A
   streak counts every session the scan found a burst on, gate rejections
@@ -423,6 +496,42 @@ from. The page prints both, and calls neither of them "names".
 - `d1`, `d3`, `d5` are the percentage change from the burst-day close to the
   close 1, 3 and 5 **sessions** later — positions in the frame, not calendar
   days, so a holiday cannot quietly shift a horizon.
+- `runs[].rules` is **every number this screener's rules turned on when that
+  run was made**: the scan's strategy thresholds, every threshold and window
+  the checklist names, the vetoes in force and the gate. It is derived rather
+  than listed — `src.pipeline.rules_fingerprint()` walks what `src.lynch`
+  names, its `WINDOWS`, and the `ScanConfig` fields that config itself marks
+  as strategy — so a threshold added later is recorded the moment it is named.
+  The trap it exists to avoid is a fingerprint that misses a number and so
+  reports "same rules" across a change that altered them, which is worse than
+  no fingerprint; the six checklist windows were bare literals until round 8
+  named them for that reason. `MAX_TO_SCORE`, `TOP_N`, the feed and the
+  universe are deliberately not in it: each is already a fact of the run block
+  and none of them changes what a burst is. A run from before the fingerprint
+  carries no `rules` key at all — absent, never null, because the contract
+  distinguishes "this run had none" from a shape no writer produces.
+- `runs[].benchmark` is the **whole universe's equal-weight return from that
+  session** — `d1`, `d3`, `d5` from the close and `from_open` from the next
+  open, with `n1`/`n3`/`n5` the number of symbols behind each — filled by a
+  later run from the frames its own scan already read, at no extra request.
+  `evidence.universe` pairs every scored setup with its own session's
+  benchmark, so its outcomes are the alternative "buy anything in the universe
+  that day" over the same sessions in the same proportions as the picks. It is
+  a curated large-cap list as it stands today, so the comparison carries
+  survivorship bias in the benchmark's favour, and the page's rung says so.
+- `forward_returns.from_open` is the **same three closes divided by the next
+  session's open** — the earliest price a reader of the 18:16 ET email could
+  have paid. The two bases answer two questions about one move: what the
+  setup did, and what acting on it could have had. Measured, not argued: burst
+  close 100, next open 110, next close 111 records `d1` +11.0% and
+  `from_open.d1` +0.91%. Both are paper prices from one venue's official
+  prints with no slippage, so the open basis is a better upper bound and not a
+  fill. Every run mean and every evidence outcome carries both, the open basis
+  nested under `from_open` with its own `n` and its own `enough_from_open`; the
+  page shows one basis at a time, chosen by one control, and names it in every
+  heading that carries a return. A row or a run from before this basis existed
+  has no `from_open`, which the page reads as "not measured", never as zero and
+  never as the close-basis number under an open-basis label.
 - Both closes come out of the **same** freshly fetched frame. The archived
   `close` is deliberately not the denominator: a split between the burst and
   today restates every price before its ex-date, and an as-traded close divided
@@ -469,6 +578,21 @@ then it fails the step loudly rather than pretending. Market data is live-only,
 so a discarded snapshot cannot be re-fetched; the run's 30-day artifact holds a
 copy of `docs/data.json` and `docs/ledger.json` either way.
 
+**Which nights get kept is the exit code, and 1 was hiding two of them.** A
+`run:` step fails on any non-zero code, and an `if:` with no status function has
+`success()` ANDed into it — so the persist step originally ran on clean nights
+only. Exit 2 is a run that WORKED and noted a problem: it scanned, rendered,
+paid for up to 25 Claude calls, wrote both files complete and mailed the
+shortlist. One chart that will not render is enough to earn it, as is one Claude
+fallback, a mode/clock disagreement or >10% stale symbols — this repo's own
+30-session fixture is 2 degraded in 30. Every one of those nights was thrown
+away. And the record is written *before* the email, so a run that dies
+delivering — an unverified `RESEND_FROM` domain is the likely one — is in the
+same position and exited 1 for it, the same code as a preflight that spent
+nothing. It exits 3 now. The step captures the code and re-raises it last, after
+the persist and the artifact upload, so the job's colour is unchanged: 2 and 3
+are still red. Only the record is rescued.
+
 That retry only started existing in this round. `git pull --rebase` sat bare in
 the loop, and under Actions' `bash -e` a failing pull ends the step — so the
 first rejected push aborted it and iterations 2 and 3 never ran. It is `if !
@@ -508,11 +632,22 @@ comment claimed the history was being kept. It is
 workflow stages is one `.gitignore` blocks, because reading the two files side
 by side is exactly what missed it the first time. The `results/` artifact upload
 now runs on every scan that finished, pass or fail, rather than only on a failed
-push — which is what the note below has always claimed, and which is also the
-signal the workflow's own duplicate-run guard reads. Finished, not `always()`:
-a cancelled run would otherwise upload the same artifact and tell that guard an
-evening run had already happened today, so cancelling one run would silently
-suppress the backup cron that exists to catch a missing one.
+push — which is what the note below has always claimed. Finished, not `always()`:
+a cancelled run would otherwise upload an artifact too, and a cancelled run did
+not happen.
+
+**The backup-cron guard counts published sessions, not uploads.** It used to
+count any `evening-*` artifact created on today's UTC date, and both halves of
+that were wrong: the artifact step uploads on failure too, so a preflight
+failure — or a Run-workflow click at lunch to test the secrets — silenced that
+night's cron (read off the Actions API: both failed 4 Sep runs left one); and
+an EST night starts at 23:16 UTC, so a run over ~44 minutes uploaded under
+tomorrow's UTC date and silenced the following night. A run that published
+names its artifact `evening-<session>-<id>`, a run that did not is
+`evening-failed-<id>`, and the guard counts only the first shape against the
+session a run tonight would scan. Traced through the guard's own shell against
+a stub `gh` running its real `jq` filter, six scenarios, in
+`tests/test_docs_are_true.py`.
 
 
 ### Checking it
@@ -527,17 +662,18 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 134 checks, and which file each one
+**Three data sources, one page.** It runs 190 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
-  score, chart paths that 404, a non-empty gated list, every streak state a
-  reader has to tell apart. Eight mutated copies of it are served under
-  `/v/<name>/` for the states one night cannot hold at once, beside a ninth
-  name that serves no document at all. This said six until two more were added
-  without it — read the count off `VARIANTS` in the smoke test, not from here.
+  score, chart paths that 404, a non-empty gated list, the streak states one
+  night can hold at once. 29 mutated copies of it are served
+  under `/v/<name>/` for the states one night cannot hold at once, beside one
+  more name, `nodata`, that serves no document at all. This said six, then
+  eight, while `VARIANTS` in the smoke test grew past both, so the script now
+  checks that number the way it checks its own count of checks.
 - **`tests/fixtures/history/`** — thirty consecutive runs written by the real
   pipeline (`tools/make_history.py`, see `tests/fixtures/README.md`): forward
   returns filled in by later runs, a night the scorer was down, a chart that
@@ -616,14 +752,50 @@ against a hand-made `data.json` and agree, but that check is not committed.
   taking the plan default, so it reads consolidated volume instead of IEX's
   single-venue slice — see `.env.example`, and note this is unconfirmed against
   a live account. If the account cannot serve that feed the run aborts with a
-  named error rather than returning an empty shortlist. A 230-symbol scan takes
-  under a second inside
-  the Actions runner; well within the 55-min timeout. Step 9 adds one more bars
-  request per 100 candidates still waiting on a forward return — in practice one
-  or two a run, on the same free feed.
-- Claude: ≤25 scoring calls/run with one chart image each — a few cents/day
-  on Sonnet, and only on the evening run. The morning follow-through makes no
-  model call and no data request at all.
+  named error rather than returning an empty shortlist. A 230-symbol scan is
+  seconds, not minutes, and is nowhere near the 55-min timeout — but "under a
+  second", which this said, is not supported: 0.97s is what the scan costs
+  driven through the offline doubles, and those do strictly LESS work than
+  alpaca-py, with no HTTP, no JSON decode and no BarSet construction. That is a
+  floor on the real cost, measured, and the real path adds a network round trip
+  and the SDK's own decode on top of it. Step 9 adds one more bars request per
+  100 candidates still waiting on a forward return — in practice one or two a
+  run, on the same free feed.
+- **One bars request per 100 names is wrong, and already is.** alpaca-py sends
+  `page_size=10_000` and loops on `next_page_token`, so the request count is set
+  by TOTAL BARS rather than by `batch_size`: a 100-symbol batch over the scan's
+  own 297-session window is ~28,600 bars and three GETs. Counted through a fake
+  transport, not read. The practical consequence is that raising `batch_size`
+  to cut requests — the obvious move when the universe widens — buys almost
+  nothing at this window.
+- Claude: ≤25 scoring calls/run with one chart image each — **about $0.15 a
+  run, so roughly $37 a year** at 252 sessions, and only on the evening run.
+  This said "a few cents/day", which is out by about 5x. Measured rather than
+  guessed: a real `render_chart()` PNG is 869x622, which is 721 image tokens by
+  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~1,590
+  tokens of system prompt and the metrics block ~390, so ~2,700 input tokens
+  and ~120 out per call, at claude-sonnet-4-6's $3/$15 per Mtok. The text
+  halves are chars/4 estimates — `count_tokens` needs a network call this
+  sandbox cannot make — so treat the figure as ±30%, which does not rescue "a
+  few cents".
+
+  **The system prompt is 59% of every request and is byte-identical on all 25
+  calls**, so it is sent with `cache_control` and read from cache after the
+  first. A cache write costs 1.25x and a read 0.1x — so the first call pays
+  0.25x more than it would have and every call after saves 0.9x, which makes
+  break-even the second call (1.28 calls) and a full night 41% cheaper: the
+  $0.25 this paragraph used to quote against the $0.15 above. (This said 1.4
+  calls, 43% and $0.13: 1.4 is 1.25 over 0.9, which charges the whole write
+  against the reads as if the first call were otherwise free, and the two
+  money figures were rounded from different token counts. A test now does the
+  paragraph's arithmetic from the numbers it states.) It needs no configuration: the
+  default 5-minute window is the cheap one, and every read resets it, so a
+  run's sequential calls hold the entry. `score_all()` logs what the cache
+  actually did, because the saving is otherwise invisible from inside the run.
+
+  The cap is what keeps this flat: it does NOT grow when the universe widens,
+  because MAX_TO_SCORE bounds the calls and not the scan.
+  The morning follow-through makes no model call and no data request at all.
 - GitHub Actions: free tier covers both daily runs comfortably (private repos
   get 2,000 min/month). The evening scan is the long one; the morning job is a
   file read and an email.

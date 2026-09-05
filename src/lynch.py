@@ -36,6 +36,30 @@ import pandas as pd
 # rates the real checklist would never produce. Importing these makes a numeric
 # drift impossible; tests/test_lynch.py pins the predicates themselves.
 MAX_PRIOR_BURSTS = 1        # 2: first or second burst of the leg
+PRIOR_BURST_PCT = 4.0       # 2: what counts as an earlier burst — the scan's gain rule, applied to history
+
+#: How much history each check READS, as against the thresholds above, which
+#: are what a measurement is compared AGAINST. Two different kinds of number,
+#: and the difference is load-bearing twice over.
+#:
+#: These were bare literals inside evaluate_2lynch -- iloc[-20:], iloc[-30:],
+#: iloc[-21], iloc[-7:], iloc[-60:-7] -- so they were invisible to anything
+#: reasoning about this strategy's numbers: rules_fingerprint() walks what
+#: this module names, and a window left as a literal would let the record say
+#: "same rules" across a change that altered them. They are grouped rather
+#: than left as module scalars because tools/make_fixture.py starts from
+#: hand-authored MEASUREMENTS and never slices a frame, so it can carry a
+#: threshold and cannot carry a window -- and two guards in tests/test_lynch.py
+#: are written against the scalars for exactly that reason. Putting the
+#: distinction in the code beats adding an exemption list to the guards.
+WINDOWS = {
+    "prior_burst_lookback": 20,   # 2: sessions searched for earlier bursts
+    "linear_fit_sessions": 30,    # L: sessions of prior move the log-price fit covers
+    "sma_sessions": 20,           # Y: the moving average the extension is measured against
+    "run_up_sessions": 20,        # Y: sessions the month's run-up spans
+    "tight_sessions": 7,          # N: the recent window called "the consolidation"
+    "norm_sessions": 60,          # N: the range norm, ending where that window starts
+}
 MIN_LINEAR_R2 = 0.55        # L: fit quality of the prior move
 MIN_LINEAR_SLOPE = 0.0      # L: ...and it must be an advance, not a collapse
 MAX_RUN_UP_1MO = 25.0       # Y: % run-up over the past month, through the burst
@@ -286,11 +310,12 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
         return round(float(value), places)
 
     # ---- 2: how many 4%+ up days in the last 20 sessions before today? ----
-    rets = pre["Close"].pct_change().iloc[-20:] * 100
-    prior_bursts = int((rets >= 4.0).sum())
+    rets = pre["Close"].pct_change().iloc[-WINDOWS["prior_burst_lookback"]:] * 100
+    prior_bursts = int((rets >= PRIOR_BURST_PCT).sum())
     checks["2_first_or_second_burst"] = {
         "pass": prior_bursts <= MAX_PRIOR_BURSTS,
-        "value": f"{prior_bursts} prior 4% bursts in last 20 days",
+        "value": (f"{prior_bursts} prior {PRIOR_BURST_PCT:g}% bursts in last "
+                  f"{WINDOWS['prior_burst_lookback']} days"),
     }
 
     # ---- L: shape AND direction of the prior 30-day move (log-price fit) ----
@@ -298,7 +323,7 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     # smooth 45% collapse with R²=1.00 and reported "R²=1.00 over prior 30
     # days" to the scorer, telling Claude the structure was orderly without
     # telling it the structure was orderly *downwards*.
-    log_closes = np.log(pre["Close"].iloc[-30:].to_numpy(dtype=float))
+    log_closes = np.log(pre["Close"].iloc[-WINDOWS["linear_fit_sessions"]:].to_numpy(dtype=float))
     slope, r2 = _log_trend(log_closes)
     r2 = shown(r2, 2)
     fitted_move = shown((float(np.exp(slope * max(len(log_closes) - 1, 0))) - 1) * 100, 1)
@@ -313,24 +338,41 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     # same "-0.5% vs 20SMA" as the quiet day it gapped away from. Extension
     # is a fact about the price you would pay, which is today's close.
     closes = df["Close"]
-    run_up_1mo = shown((closes.iloc[-1] / closes.iloc[-21] - 1) * 100, 1) if len(closes) >= 21 else 0.0
-    sma20 = closes.iloc[-20:].mean()
+    sma20 = closes.iloc[-WINDOWS["sma_sessions"]:].mean()
     ext_vs_sma20 = shown((closes.iloc[-1] / sma20 - 1) * 100, 1)
+    if len(closes) >= WINDOWS["run_up_sessions"] + 1:
+        run_up_1mo = shown((closes.iloc[-1] / closes.iloc[-(WINDOWS["run_up_sessions"] + 1)] - 1) * 100, 1)
+        run_up_text = f"{run_up_1mo:+.1f}% past month"
+        run_up_ok = run_up_1mo < MAX_RUN_UP_1MO
+    else:
+        # Fewer than 21 closes survive the cleaning, so there is no month to
+        # measure over. This used to substitute 0.0 -- and print "+0.0% past
+        # month" to the scoring model as if it had been measured, on a frame
+        # whose real run-up over the sessions it did have was +16.9%. A number
+        # that was not measured is not 0; it is not a number. The same rule C
+        # already applies to a range norm it cannot compute: say so, and let
+        # the half that WAS measured decide on its own.
+        run_up_1mo = None
+        run_up_text = (f"no {WINDOWS['run_up_sessions']}-session history "
+                       "to measure a month over")
+        run_up_ok = True
     checks["Y_young_trend"] = {
-        "pass": bool(run_up_1mo < MAX_RUN_UP_1MO and ext_vs_sma20 < MAX_EXT_VS_SMA20),
+        "pass": bool(run_up_ok and ext_vs_sma20 < MAX_EXT_VS_SMA20),
         # Spell out the frame of reference: the scorer reads this line, and
         # the same number means very different things before and after the
         # burst. (The old format hard-coded a "+", printing "+-33.8%".)
         "value": (
-            f"{run_up_1mo:+.1f}% past month, {ext_vs_sma20:+.1f}% vs 20SMA"
+            f"{run_up_text}, {ext_vs_sma20:+.1f}% vs 20SMA"
             " (through today's burst)"
         ),
     }
 
     # ---- N: narrow consolidation over the 5-10 days pre-burst ----
     daily_range = ((pre["High"] - pre["Low"]) / pre["Close"]) * 100
-    recent_range = daily_range.iloc[-7:].mean()
-    norm_range = daily_range.iloc[-60:-7].mean() if len(pre) > 67 else daily_range.mean()
+    recent_range = daily_range.iloc[-WINDOWS["tight_sessions"]:].mean()
+    norm_range = (daily_range.iloc[-WINDOWS["norm_sessions"]:-WINDOWS["tight_sessions"]].mean()
+                  if len(pre) > WINDOWS["norm_sessions"] + WINDOWS["tight_sessions"]
+                  else daily_range.mean())
     recent_range = shown(recent_range, 1)
     tightness = shown(recent_range / norm_range, 2) if norm_range else 9.9
     checks["N_narrow_consolidation"] = {
@@ -373,10 +415,20 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
         # one the suite never exercises near it, which is an artefact of the
         # fixture and not a property of the code.
         close_pos = shown((float(burst["Close"]) - float(burst["Low"])) / rng, 2)
-        checks["H_close_near_high"] = {
-            "pass": bool(close_pos >= MIN_CLOSE_POS),
-            "value": f"closed at {close_pos:.0%} of day's range",
-        }
+        if 0.0 <= close_pos <= 1.0:
+            checks["H_close_near_high"] = {
+                "pass": bool(close_pos >= MIN_CLOSE_POS),
+                "value": f"closed at {close_pos:.0%} of day's range",
+            }
+        else:
+            # A close OUTSIDE its own day's range is the same class of bad bar
+            # as an inverted one, and used to print "closed at 145% of day's
+            # range" and PASS -- the branch below caught rng <= 0 and nothing
+            # caught a close the range does not contain.
+            checks["H_close_near_high"] = {
+                "pass": False,
+                "value": f"close outside its own range ({close_pos:.0%}); no usable bar",
+            }
     else:
         # A bar with no high-low separation (or an inverted one, which
         # `if rng else 1.0` also let through) demonstrates no intraday demand

@@ -58,6 +58,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import html
 import os
 from pathlib import Path
 
@@ -162,8 +163,8 @@ def _headline(scan_stats: dict, run_type: str, results: list[dict] | None = None
         # gap of two or more, while unscheduled closures have run to
         # consecutive sessions and the band below names them.
         published = scan_stats.get("session") or "an older session"
-        where = (f"the rows below are {published}'s" if rows
-                 else f"the newest run anything published is {published}'s")
+        where = (f"the rows below are {esc(published)}'s" if rows
+                 else f"the newest run anything published is {esc(published)}'s")
         return (f"NOTHING HAS PUBLISHED FOR {_plural(stale, 'SESSION').upper()} — {where}, "
                 "and no market holiday is that long. The evening run has stopped "
                 "publishing.")
@@ -203,8 +204,8 @@ def _banner(scan_stats: dict, run_type: str = "evening",
         return ""
     headline = _headline(scan_stats, run_type, results)
     items = "".join(
-        f'<li style="margin:2px 0;"><b>{e.get("stage", "?")}</b>: {e.get("message", "")}</li>'
-        for e in errors
+        f'<li style="margin:2px 0;"><b>{esc(e.get("stage", "?"))}</b>: {esc(e.get("message", ""))}</li>'
+        for e in [x for x in errors if isinstance(x, dict)]
     )
     return (
         '<div style="border-left:6px solid #c0392b;background:#fdf3f2;'
@@ -283,6 +284,11 @@ LAST_OUTCOME = {
                  "candidates to Claude",
     "veto_up_days": "refused outright — it burst after three or more "
                     "consecutive up days",
+    # A fourth thing, and the one that used to reach no surface at all: rule 6
+    # refused it in the scan, against every other name that traded, before
+    # the checklist was consulted. src.ledger.LIQUIDITY_REASON is the key.
+    "liquidity_floor": "refused by the liquidity floor — its dollar volume was below "
+                       "the session's percentile cut, so the checklist was never consulted",
 }
 
 
@@ -316,6 +322,51 @@ def _last_appearance(streak: dict) -> str:
     if score is not None and outcome in (None, "scored"):
         return f"scored {score}/10 {streak.get('last_verdict') or ''}".rstrip()
     return LAST_OUTCOME.get(outcome) or "no score was recorded then"
+
+
+def _as_float(value):
+    return value if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+
+
+def fmt_gain(value) -> str:
+    """"+12.0%" on both paths. The evening path hands a float, the morning path
+    a value that came off disk through ledger._num(), which turns 12.0 into 12
+    -- so the same burst read "+12.0%" at 6:30pm and "+12%" at 8:30am."""
+    v = _as_float(value)
+    return f"{v:+.1f}%" if v is not None else str(value)
+
+
+def fmt_ratio(value) -> str:
+    v = _as_float(value)
+    return f"{v:.2f}x" if v is not None else str(value)
+
+
+def fmt_score(value) -> str:
+    v = _as_float(value)
+    return f"{v:.1f}" if v is not None else str(value)
+
+
+def esc(value) -> str:
+    """Text on its way into the email's HTML, made safe to be text.
+
+    Nothing in this file escaped anything, and the row fields it interpolates
+    are not this module's words: `reason` and `key_risk` are the SCORING
+    MODEL's, `ticker` comes off the feed, and on the morning path every one of
+    them is read back out of docs/data.json — a file a previous run wrote.
+
+    The failure is silent, which is what makes it matter. A reason of
+    "Breakout above <resistance> on 3x volume, clean base." renders in a mail
+    client as "Breakout above" — the parser takes `<resistance>` for a tag and
+    swallows the rest. Verified with a real HTML parser: the sentence the owner
+    reads to justify a trade is truncated with nothing to say it was. A `<`
+    followed by a letter is enough, and a model writing about levels, ranges
+    or comparisons produces one without trying.
+
+    Applied to LEAVES, never to the fragments this module builds — those carry
+    <br> and <span> on purpose. docs/index.html has never had this problem: it
+    builds nodes and sets textContent, so the browser escapes for it.
+    """
+    return html.escape("" if value is None else str(value), quote=True)
 
 
 def _plural(n: int, noun: str) -> str:
@@ -382,13 +433,14 @@ def _streak_note(row: dict) -> str:
         # the record has eight bursts for reads as an absence of history.
         colour = "#a5281b" if streak.get("seen_before") else "#666"
     elif day > 1:
-        text = f"day {day} of this setup, since {streak.get('first_seen')}"
+        text = f"day {esc(day)} of this setup" + (
+            f", since {esc(streak.get('first_seen'))}" if streak.get("first_seen") else "")
         colour = "#a5281b"
     else:
         text = "day 1 — new setup"
         colour = "#666"
     if streak.get("last_seen"):
-        text += f" · last seen {streak['last_seen']}, {_last_appearance(streak)}"
+        text += f" · last seen {esc(streak['last_seen'])}, {_last_appearance(streak)}"
     return _streak_span(text, colour)
 
 
@@ -400,8 +452,9 @@ def _streak_footnote(results: list[dict]) -> str:
     """What "day N" counts, said once under the table.
 
     A streak counts every session the scan found a burst on, INCLUDING the
-    ones that were never scored — the checklist rejected them, the call cap
-    crowded them out, or an absolute rule refused them. That is the right call,
+    ones that were never scored — the checklist rejected them, an absolute
+    rule refused them, the liquidity floor refused them, or the call cap
+    crowded them out. That is the right call,
     because the setup was running whether or not the screener let it through to
     a score, and it is a thing no reader can infer from "day 2 of this setup",
     which reads as two nights of agreement. Disclosed here rather than in every
@@ -409,7 +462,10 @@ def _streak_footnote(results: list[dict]) -> str:
 
     This used to say "including the ones the 2LYNCH gate rejected", which
     became false when a third reason arrived and stayed false three lines under
-    a row printing that third reason's own words.
+    a row printing that third reason's own words. The fourth arrived in round
+    5 and the sentence was swept on both surfaces while the test that pins
+    them still looped over three phrases -- so the clause could be deleted
+    from either surface with everything green, which an audit did.
 
     That is TWO shapes of row, not one. "day 3 of this setup" is the obvious
     one; "burst on 8 of the 8 sessions in the record" is the other, and it is
@@ -430,7 +486,8 @@ def _streak_footnote(results: list[dict]) -> str:
         "&ldquo;day N of this setup&rdquo;, and the earlier bursts a row with no day "
         "number counts, are every session the scan found a burst on for that name — "
         "including the ones that were never scored, whether the checklist rejected "
-        "them, an absolute rule refused them, or the call cap crowded them out. "
+        "them, an absolute rule refused them, the liquidity floor refused them, or the "
+        "call cap crowded them out. "
         "Neither is N nights of confirmation."
         "</p>"
     )
@@ -464,16 +521,37 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     # collapse CLAUDE.md forbids by name. The refusals get their own line, and
     # only when there are some: a run with none reads exactly as it always did,
     # and a snapshot written before the rule existed reports 0 and says nothing.
-    vetoed = scan_stats.get("vetoed")
-    refused = ([("Refused by an absolute rule", vetoed)]
-               if isinstance(vetoed, (int, float)) and not isinstance(vetoed, bool) and vetoed
-               else [])
+    # Through _count(), like every count below it: a float here printed
+    # "Refused by an absolute rule: 2.0" over a note that counted it as 0,
+    # so one email contradicted itself on one screen.
+    vetoed = _count(scan_stats, "vetoed")
+    refused = [("Refused by an absolute rule", vetoed)] if vetoed else []
+    # Rule 6's refusals, the same way: only when there were some, and with
+    # the floor the run applied when it recorded one, because "below the
+    # liquidity floor: 3" is not readable without the number the floor was.
+    illiquid = _count(scan_stats, "illiquid")
+    refused += [(_liquidity_label(scan_stats), illiquid)] if illiquid else []
+    # The stage the email did not have. It went "Passed 2LYNCH gate: 54"
+    # straight to "Shortlisted: 1", so the 29 names that cleared the checklist
+    # and were never looked at appeared nowhere -- next to "Scored by Claude:
+    # 25 of 25", which a reader takes for complete coverage of the 54. The
+    # page's funnel has had this cut since step 9 and names the same cause.
+    #
+    # Printed only when the cap actually bit, the same rule the refusals
+    # follow: a night that scored everything that got through reads as it
+    # always did, and a caller that does not report the number says nothing.
+    crowded = _count(scan_stats, "crowded_out")
+    cap = _count(scan_stats, "score_cap")
+    capped = ([(f"Crowded out by the {cap}-call cap" if cap
+                else "Crowded out by the call cap", crowded)]
+              if crowded else [])
     if run_type == "morning":
         parts = [("Session it should have followed" if failed
                   else "Following through on the session of", session),
                  ("4% bursts that session", scan_stats.get("bursts", unknown)),
                  *refused,
                  ("Passed 2LYNCH gate", scan_stats.get("gated", unknown)),
+                 *capped,
                  ("Watching", len(results))]
     else:
         parts = [("Session it was scanning" if failed else "Session scanned", session),
@@ -481,8 +559,52 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
                  ("4% bursts found", scan_stats.get("bursts", unknown)),
                  *refused,
                  ("Passed 2LYNCH gate", scan_stats.get("gated", unknown)),
+                 *capped,
                  ("Shortlisted", len(results))]
-    return " &nbsp;|&nbsp;\n      ".join(f"{label}: {value}" for label, value in parts)
+    return " &nbsp;|&nbsp;\n      ".join(f"{label}: {esc(value)}" for label, value in parts)
+
+
+def compact_dollars(value: float) -> str:
+    """$12.4M, $1.3B, $850k: the SAME rule as docs/index.html's big(), so the
+    email and the page print one figure for one floor. The email printed
+    "$12,400,000/day" beside a page printing "$12.4M/day" for the same
+    run.liquidity.floor -- both true, and the "$0.24 in one file, $0.25 in
+    the other" shape this project counts. A test executes the page's own
+    function through node and compares."""
+    if value >= 1e9:
+        return f"${value / 1e9:.1f}B"
+    if value >= 1e6:
+        return f"${value / 1e6:.1f}M"
+    if value >= 1e3:
+        return f"${value / 1e3:.0f}k"
+    return f"${value:g}"
+
+
+def ordinal(n) -> str:
+    """30th, 1st, 22nd, 13th. Both surfaces built the ordinal as `{n}th`, so a
+    percentile ending in 1, 2 or 3 read "the 1th percentile" -- the same wrong
+    word on the email and the page, which at least kept them in one
+    vocabulary. docs/index.html's ordinal() is this rule."""
+    whole = int(n) if float(n).is_integer() else None
+    if whole is None:
+        return f"{n:g}th"
+    if 10 <= whole % 100 <= 13:
+        return f"{whole}th"
+    return f"{whole}{ {1: 'st', 2: 'nd', 3: 'rd'}.get(whole % 10, 'th') }"
+
+
+def _liquidity_label(scan_stats: dict) -> str:
+    """The funnel's label for rule 6's refusals, carrying the floor in dollars
+    and the percentile it sits at when the run recorded them. A snapshot from
+    before run.liquidity existed carries neither, and then the label says only
+    what is known."""
+    floor, pctile = scan_stats.get("liquidity_floor"), scan_stats.get("liquidity_pctile")
+    known = isinstance(floor, (int, float)) and not isinstance(floor, bool)
+    if known and isinstance(pctile, (int, float)) and not isinstance(pctile, bool):
+        return f"Below the liquidity floor ({compact_dollars(floor)}/day, the {ordinal(pctile)} percentile)"
+    if known:
+        return f"Below the liquidity floor ({compact_dollars(floor)}/day)"
+    return "Below the liquidity floor"
 
 
 def _chart_file(row: dict) -> Path | None:
@@ -521,15 +643,15 @@ def _no_chart_note(row: dict) -> str:
     if row.get("chart_note"):
         return row["chart_note"]
     if row.get("chart"):
-        return (f'no chart — one was rendered for this candidate, but {row["chart"]} '
+        return (f'no chart — one was rendered for this candidate, but {esc(row["chart"])} '
                 f"is not there now, so there was nothing to attach")
     return NO_CHART
 
 
 def _chart_cell(row: dict) -> str:
     if _chart_file(row):
-        return (f'<img src="cid:chart_{row["ticker"]}" width="280" '
-                f'alt="{row["ticker"]} chart">')
+        return (f'<img src="cid:chart_{esc(row["ticker"])}" width="280" '
+                f'alt="{esc(row["ticker"])} chart">')
     return (f'<span style="color:#666;font-size:12px;">'
             f'{_no_chart_note(row)}</span>')
 
@@ -543,8 +665,8 @@ def _close_cell(row: dict, scan_stats: dict) -> str:
     price is read as this morning's, and it is last night's close.
     """
     session = scan_stats.get("session")
-    stamped = f" (close {session})" if session else ""
-    return f'<span style="color:#666;font-size:12px;">${row["close"]}{stamped}</span>'
+    stamped = f" (close {esc(session)})" if session else ""
+    return f'<span style="color:#666;font-size:12px;">${esc(row["close"])}{stamped}</span>'
 
 
 def _title(run_type: str, scan_stats: dict, results: list[dict]) -> str:
@@ -568,30 +690,32 @@ def _title(run_type: str, scan_stats: dict, results: list[dict]) -> str:
     if not session:
         return "Momentum Bursts — follow-through, with nothing to follow"
     if not results:
-        return f"Momentum Bursts — following through on {session}, at today&rsquo;s open"
-    return f"Momentum Bursts — {session}&rsquo;s shortlist, at today&rsquo;s open"
+        return f"Momentum Bursts — following through on {esc(session)}, at today&rsquo;s open"
+    return f"Momentum Bursts — {esc(session)}&rsquo;s shortlist, at today&rsquo;s open"
 
 
 def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
     title = _title(run_type, scan_stats, results)
     rows = ""
     for i, r in enumerate(results, 1):
-        detail = "<br>".join(r["lynch_detail"])
+        # Escaped line by line: these are src.lynch's own sentences today,
+        # and off disk tomorrow, and a `<` in either is markup to a mail client.
+        detail = "<br>".join(esc(line) for line in r["lynch_detail"])
         rows += f"""
         <tr>
-          <td style="padding:8px;border-bottom:1px solid #ddd;"><b>{i}. {r['ticker']}</b><br>
+          <td style="padding:8px;border-bottom:1px solid #ddd;"><b>{i}. {esc(r['ticker'])}</b><br>
               {_close_cell(r, scan_stats)}{_streak_note(r)}</td>
-          <td style="padding:8px;border-bottom:1px solid #ddd;">+{r['gain_pct']}%</td>
-          <td style="padding:8px;border-bottom:1px solid #ddd;">{r['volume_ratio']}x</td>
+          <td style="padding:8px;border-bottom:1px solid #ddd;">{esc(fmt_gain(r['gain_pct']))}</td>
+          <td style="padding:8px;border-bottom:1px solid #ddd;">{esc(fmt_ratio(r['volume_ratio']))}</td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">
-              <b>{r['lynch']}</b>
+              <b>{esc(r['lynch'])}</b>
               <details><summary style="cursor:pointer;color:#0066cc;font-size:12px;">detail</summary>
               <div style="font-size:11px;color:#555;font-family:monospace;">{detail}</div></details></td>
-          <td style="padding:8px;border-bottom:1px solid #ddd;">{r['reason']}<br>
-              <span style="color:#a33;font-size:12px;">Risk: {r['key_risk']}</span></td>
+          <td style="padding:8px;border-bottom:1px solid #ddd;">{esc(r['reason'])}<br>
+              <span style="color:#a33;font-size:12px;">Risk: {esc(r['key_risk'])}</span></td>
           <td style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">
-              <b style="font-size:18px;">{r['score']}</b>/10<br>
-              <span style="font-size:12px;">{r['verdict']}</span></td>
+              <b style="font-size:18px;">{esc(fmt_score(r['score']))}</b>/10<br>
+              <span style="font-size:12px;">{esc(r['verdict'])}</span></td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">
               {_chart_cell(r)}</td>
         </tr>"""
@@ -608,12 +732,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
         elif run_type == "morning":
             empty = "The run this follows through on scored no candidates."
         else:
-            # A night whose every burst was refused outright did not fail the
-            # checklist, and saying so would state the opposite of what the
-            # rows beneath it record.
-            refused_all = (scan_stats.get("vetoed") or 0) and not (scan_stats.get("gated") or 0)
-            empty = ("Every burst the scan found was refused outright by an absolute rule."
-                     if refused_all else "No candidates passed the quality gate today.")
+            empty = _empty_evening_note(scan_stats)
         rows = f'<tr><td colspan="7" style="padding:16px;color:#666;">{empty}</td></tr>'
 
 
@@ -638,6 +757,94 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
       Automated screening output for human review — not trading advice.
       Verify charts and news before acting.</p>
     </body></html>"""
+
+
+def _empty_evening_note(scan_stats: dict) -> str:
+    """Why an evening run has nothing to show, said from the counts.
+
+    This was a two-way flag and neither way was reliably true.
+
+    `refused_all` read `vetoed and not gated` -- but `gated` is how many
+    PASSED the checklist, not how many it rejected, so the flag meant "some
+    name was vetoed and nobody got through". One veto in ten bursts set it,
+    and the cell then said "EVERY burst the scan found was refused outright by
+    an absolute rule" three lines under a funnel reading "Refused by an
+    absolute rule: 1". The email contradicted itself on one screen.
+
+    Its other branch said "No candidates passed the quality gate today" on a
+    night the scan found NO BURST AT ALL -- printed directly under "4% bursts
+    found: 0". Nothing was measured against the checklist, so nothing failed
+    it; the market was quiet, which is a different fact and the one the reader
+    needs. That is also the collapse this project forbids by name, arriving
+    from the opposite direction: the gate gets blamed for an outcome it had no
+    part in.
+
+    So the note is computed rather than chosen. `bursts - vetoed - passed` is
+    what the checklist actually rejected, clamped because a malformed stats
+    block must not produce a negative count in a sentence.
+    """
+    bursts = _count(scan_stats, "bursts")
+    vetoed = _count(scan_stats, "vetoed")
+    illiquid = _count(scan_stats, "illiquid")
+    passed = _count(scan_stats, "gated")
+    # Dropping `- passed` here is provably equivalent, and the term stays
+    # anyway: every branch that reads by_checklist sits below `if passed:`,
+    # so passed is 0 by then. It is kept because it is what the number MEANS
+    # -- the bursts that were neither refused outright nor let through -- and
+    # a later edit that moves the early return would otherwise be wrong
+    # silently. Noted because mutation testing finds it and there is nothing
+    # to fix.
+    by_checklist = max(bursts - vetoed - illiquid - passed, 0)
+
+    if not bursts:
+        return ("No 4% burst anywhere in the universe today. Nothing reached the "
+                "checklist, so nothing failed it — this is a quiet market, not a "
+                "rejection.")
+    if passed:
+        # Names got through and still produced no row. Rare, and the sentence
+        # must not say the checklist rejected them -- it did the opposite.
+        return (f"{_plural(passed, 'burst')} cleared the 2LYNCH checklist and none "
+                "produced a score. See the run's log; this is not a verdict on "
+                "the market.")
+    # Three verdicts a burst can carry on a night nothing was scored, each
+    # with its own clause and only when its count is not zero. They are
+    # different facts -- a veto is not a checklist rejection, and a name
+    # below the liquidity floor was never measured against either -- so a
+    # sentence that folds two of them into one word is wrong about one.
+    clauses = ([f"{_plural(vetoed, 'burst')} refused outright by an absolute rule"] if vetoed else []) \
+        + ([f"{illiquid} below the liquidity floor"] if illiquid else []) \
+        + ([f"{by_checklist} rejected by the 2LYNCH checklist"] if by_checklist else [])
+    if len(clauses) > 1:
+        verdicts = "Two different verdicts, and neither is the other." if len(clauses) == 2 \
+            else "Three different verdicts, and none is another."
+        return f"{', '.join(clauses[:-1])} and {clauses[-1]}. {verdicts}"
+    if vetoed:
+        found = ("The one burst the scan found was" if bursts == 1
+                 else f"All {bursts} bursts the scan found were")
+        return (f"{found} refused outright by an absolute rule. "
+                "The checklist never got a say.")
+    if illiquid:
+        found = ("The one burst the scan found was" if bursts == 1
+                 else f"All {bursts} bursts the scan found were")
+        return (f"{found} below the liquidity floor. "
+                "The checklist never got a say.")
+    return (f"No candidate passed the 2LYNCH checklist today — "
+            f"{_plural(bursts, 'burst')} measured, none cleared it.")
+
+
+def _count(scan_stats: dict, key: str) -> int:
+    """One stats number as an int, or 0 for anything that is not one.
+
+    Every other reader of these keys goes through `or 0`, which turns a string
+    into itself and lets it reach arithmetic. This is a note about how many
+    names were refused; a stats block carrying "10" must not make it read
+    "10 bursts refused and -10 rejected".
+    """
+    value = scan_stats.get(key)
+    # Clamped: a negative count is not a count, and unclamped it reached the
+    # funnel as "Below the liquidity floor: -2" and the note as "-2 below the
+    # liquidity floor and 7 rejected" -- seven of five bursts.
+    return max(value, 0) if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
 def _build_attachments(results: list[dict]) -> list[dict]:
@@ -696,38 +903,53 @@ def _required(name: str) -> str:
     return value
 
 
-def send_email(results: list[dict], run_type: str, scan_stats: dict) -> None:
+def sender_address() -> str:
+    """Who the mail is from: RESEND_FROM, or Resend's sandbox sender.
+
+    EMPTY COUNTS AS ABSENT, the same rule src.pipeline's _absent() applies to
+    every other variable, and here it is the difference between a fallback
+    and a rejected send. os.environ.get's default fires only on a MISSING
+    key -- but evening.yml always sets `RESEND_FROM: ${{ secrets.RESEND_FROM }}`
+    and GitHub expands an unset secret to '', so the variable is present and
+    empty and the documented fallback was unreachable in the one place it
+    was written for. Reproduced: absent gave onboarding@resend.dev, '' gave
+    a sender of '', which Resend refuses -- so setting the other five
+    secrets and leaving this one out sent nothing, and the run reported
+    itself clean.
+    """
+    return os.environ.get("RESEND_FROM", "").strip() or "onboarding@resend.dev"
+
+
+def deliver(subject: str, html: str, attachments: list[dict] | None = None) -> dict:
+    """Hand one message to Resend and return its reply. The ONLY send path.
+
+    Split out of send_email() so that tools/live_check.py can push a plainly
+    labelled test message through the same key, the same sender rule and the
+    same recipient parsing the nightly run uses -- rather than carrying a
+    second copy of those four lines that would drift from this one. A live
+    check that exercised a different send path would prove that path works.
+    """
     to = [addr.strip() for addr in _required("EMAIL_TO").split(",")]
-    # EMPTY COUNTS AS ABSENT, the same rule src.pipeline's _absent() applies to
-    # every other variable, and here it is the difference between a fallback
-    # and a rejected send. os.environ.get's default fires only on a MISSING
-    # key -- but evening.yml always sets `RESEND_FROM: ${{ secrets.RESEND_FROM }}`
-    # and GitHub expands an unset secret to '', so the variable is present and
-    # empty and the documented fallback was unreachable in the one place it
-    # was written for. Reproduced: absent gave onboarding@resend.dev, '' gave
-    # a sender of '', which Resend refuses -- so setting the other five
-    # secrets and leaving this one out sent nothing, and the run reported
-    # itself clean.
-    sender = os.environ.get("RESEND_FROM", "").strip() or "onboarding@resend.dev"
-
     resend.api_key = _required("RESEND_API_KEY")
-
-    params = {
-        "from": sender,
+    response = resend.Emails.send({
+        "from": sender_address(),
         "to": to,
-        "subject": subject_for(results, run_type, scan_stats),
-        "html": build_html(results, run_type, scan_stats),
-        "attachments": _build_attachments(results),
-    }
-
-    response = resend.Emails.send(params)
-
+        "subject": subject,
+        "html": html,
+        "attachments": list(attachments or []),
+    })
     # Log the count, not the addresses. EMAIL_TO is a repository secret, and
     # Actions masks only exact occurrences of it. A single-recipient value
     # still matches and is masked, but split() breaks the contiguous string
     # for multi-recipient values, so those printed in plaintext to the run log.
-    log.info("Email sent via Resend to %d recipient(s) (%d candidates), id=%s",
-              len(to), len(results), response.get("id"))
+    log.info("Email sent via Resend to %d recipient(s), id=%s", len(to), response.get("id"))
+    return response
+
+
+def send_email(results: list[dict], run_type: str, scan_stats: dict) -> None:
+    deliver(subject_for(results, run_type, scan_stats),
+            build_html(results, run_type, scan_stats),
+            _build_attachments(results))
 
 
 def send_failure_notice(run_type: str, errors: list[dict], scan_stats: dict | None = None) -> None:

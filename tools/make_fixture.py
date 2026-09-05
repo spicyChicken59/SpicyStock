@@ -18,16 +18,18 @@ import collections, json, pathlib, sys
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 from src.pipeline import MIN_LYNCH_PASSES
+from src.scorer import _fallback_score
 from src import ledger                        # the real evidence block, not a copy
 from src.ledger import CONTRACT_INVARIANTS    # the real contract, not a copy
 from src.scanner import ScanConfig            # the real floors, not a copy
 from src.lynch import (                       # the real thresholds, not a copy
     MAX_PRIOR_BURSTS, MIN_LINEAR_R2, MIN_LINEAR_SLOPE, MAX_RUN_UP_1MO,
     MAX_EXT_VS_SMA20, MAX_TIGHTNESS, MAX_D1_MOVE, MAX_D1_VOL_RATIO,
-    MAX_D1_RANGE_RATIO, MIN_CLOSE_POS,
+    MAX_D1_RANGE_RATIO, MIN_CLOSE_POS, PRIOR_BURST_PCT,
     MAX_CONSECUTIVE_UP_DAYS, BREAKDOWN_PCT, BREAKDOWN_LOOKBACK,
+    WINDOWS,                                  # and the windows its lines print
 )
-from src.pipeline import VETO_REASONS
+from src.pipeline import VETO_REASONS, rules_fingerprint
 _CFG = ScanConfig()
 
 def _universe():
@@ -56,7 +58,10 @@ def _remap(specs, start):
         # Lift thin rows to a volume that clears the relative gate against a
         # plausible trailing average. detect_setup no longer applies an
         # absolute share floor; this is only to keep the fixture realistic.
-        if d["vol"] <= 5_000_000:
+        # Except the rows rule 6 refused, whose whole point is to be thin:
+        # lifting them put a $92M/day row under a $12.4M floor, and the
+        # assertion in build_gated() is what caught it.
+        if d["vol"] <= 5_000_000 and d.get("reason") != ledger.LIQUIDITY_REASON:
             d["vol"] = 5_000_000 + 1_200_000 + i * 137_000
         if d["prev"] >= d["vol"]:
             d["prev"] = int(d["vol"] * 0.42)
@@ -164,13 +169,16 @@ def lynch(prior_bursts, r2, run_up, ext, recent_range, tightness, d1_move, d1_ra
     d1_range_ratio = (d1_range / norm_range) if norm_range else 0.0
     return [
         {"code": "2", "label": LABELS["2"], "pass": prior_bursts <= MAX_PRIOR_BURSTS,
-         "value": f"{prior_bursts} prior 4% bursts in last 20 days"},
+         "value": (f"{prior_bursts} prior {PRIOR_BURST_PCT:g}% bursts in last "
+                   f"{WINDOWS['prior_burst_lookback']} days")},
         {"code": "L", "label": LABELS["L"],
          "pass": r2 >= MIN_LINEAR_R2 and fitted >= MIN_LINEAR_SLOPE,
-         "value": f"R²={r2:.2f}, fitted trend {fitted:+.1f}% over prior 30 days"},
+         "value": (f"R²={r2:.2f}, fitted trend {fitted:+.1f}% over prior "
+                   f"{WINDOWS['linear_fit_sessions']} days")},
         {"code": "Y", "label": LABELS["Y"],
          "pass": run_up_through < MAX_RUN_UP_1MO and ext_through < MAX_EXT_VS_SMA20,
-         "value": f"{run_up_through:+.1f}% past month, {ext_through:+.1f}% vs 20SMA (through today's burst)"},
+         "value": (f"{run_up_through:+.1f}% past month, {ext_through:+.1f}% vs "
+                   f"{WINDOWS['sma_sessions']}SMA (through today's burst)")},
         {"code": "N", "label": LABELS["N"], "pass": tightness <= MAX_TIGHTNESS,
          "value": f"pre-burst range {recent_range:.1f}%/day = {tightness:.2f}x its norm"},
         {"code": "C", "label": LABELS["C"],
@@ -341,7 +349,14 @@ def build_candidate(s, i):
     assert passes >= 3, f"{s.t} would have been gated out at {passes}/6"
     if s.src == "fallback":
         # src/scorer.py's own fallback formula, verbatim
-        score = round(passes / len(detail) * 10, 1)
+        # THE SCORER'S OWN RULE, not a formula typed here. This was
+        # `round(passes / len(detail) * 10, 1)`, which is the pre-step-8
+        # arithmetic: src.scorer._fallback_score() has mapped the pass count
+        # to the LOW end of its rubric band since then (5/6 is 7.0, not 8.3),
+        # so the fixture, the page's sentence about the fallback and the code
+        # were three different rules -- and the sentence and the fixture
+        # agreed, which is why nothing noticed.
+        score = _fallback_score({"passes": passes, "total": len(detail), "summary": ""})
         verdict = "B" if score >= 6 else "skip"
         reason = f"AI unavailable; checklist score {passes}/{len(detail)}."
         risk = "not AI-reviewed"
@@ -388,7 +403,8 @@ def build_candidate(s, i):
                     "perf_3mo_pct": p3, "perf_6mo_pct": p6,
                     "consecutive_up_days": up_days, "worst_base_day_pct": worst_base},
         "streak": streak(i),
-        "forward_returns": {"d1": None, "d3": None, "d5": None, "as_of": None},
+        # Pending on both bases, in the shape the ledger writes.
+        "forward_returns": ledger.empty_returns(),
     }
 
 candidates = [build_candidate(s, i) for i, s in enumerate(SPEC)]
@@ -464,7 +480,21 @@ GATED = [
     # assertion in build_gated() is what proves that, not this comment.
     G("PLTR",  178.4,  4.62, 31840200, 12417600, 6, VETO_REASONS["up_days"],
       (0, 0.86, 8.1, 3.4, 1.9, 0.61, 0.4, 1.1, 0.82, 0.96)),
+    # Refused by rule 6 before the checklist saw them: dollar volume below
+    # FLOOR, the session's 30th-percentile cut. Their pass counts are whatever
+    # the measurements say -- one clears the gate, one does not -- because the
+    # rule never asked. The row the record used to lose entirely (round 5).
+    G("WBD",    9.84,  6.27,  1042600,   418300, 4, ledger.LIQUIDITY_REASON,
+      (1, 0.58, 12.4, 6.1, 5.8, 1.14, 1.9, 3.7, 1.08, 0.82)),
+    G("TTWO",  14.62,  4.38,   612400,   287900, 2, ledger.LIQUIDITY_REASON,
+      (2, 0.29, 34.7, 20.9, 9.6, 1.71, 3.3, 5.8, 1.62, 0.44)),
 ]
+
+#: Rule 6's floor for this session, in dollars: the 30th percentile of every
+#: name that traded. Below every scored and gated row's dollar volume except
+#: the two rows marked LIQUIDITY_REASON, which the assertions below hold.
+FLOOR = 12_400_000
+PCTILE = 30.0
 def _still_gated_out(specs):
     """Make each gated row consistent with the reason it declares.
 
@@ -481,9 +511,10 @@ def _still_gated_out(specs):
     for spec in specs:
         d = spec._asdict()
         lm = list(d["lm"])
-        if d["reason"] in VETO_REASONS.values():
+        if d["reason"] in VETO_REASONS.values() or d["reason"] == ledger.LIQUIDITY_REASON:
             # Nothing to converge: a vetoed row's pass count is not constrained
-            # by the gate, and this one is hand-authored to clear every check.
+            # by the gate, and this one is hand-authored to clear every check;
+            # a liquidity row's pass count was never consulted at all.
             out.append(spec)
             continue
         wants_gate_fail = d["reason"] == "lynch_gate"
@@ -537,15 +568,27 @@ def build_gated(g, i):
         assert passes == len(detail), (
             f"{g.t}: {passes}/6, so this row cannot show that a veto refuses a "
             "burst the checklist was happy with")
+    elif g.reason == ledger.LIQUIDITY_REASON:
+        # Nothing to prove about the pass count either -- the rule that
+        # refused it is about dollar volume, and THAT is what is asserted.
+        assert round(g.close * g.vol) < FLOOR, (
+            f"{g.t}: ${g.close * g.vol:,.0f}/day is not below the ${FLOOR:,} floor "
+            "that this row says refused it")
     elif g.reason == "lynch_gate":
         assert passes < MIN_LYNCH_PASSES, (
             f"{g.t}: {passes}/6 clears the gate, so it was not gated out by the checklist")
     else:
         assert passes >= MIN_LYNCH_PASSES, (
             f"{g.t}: {passes}/6 never cleared the gate, so the call cap is not why it went unscored")
+    if g.reason != ledger.LIQUIDITY_REASON:
+        assert round(g.close * g.vol) >= FLOOR, (
+            f"{g.t}: ${g.close * g.vol:,.0f}/day sits below the ${FLOOR:,} floor, so rule 6 "
+            f"would have refused it before the reason it gives ({g.reason}) applied")
     return {
         "ticker": g.t, "date": SESSION, "close": g.close, "gain_pct": g.gain,
         "volume": g.vol, "volume_ratio": round(g.vol / g.prev, 2),
+        # src.ledger.gated_record keeps the number rule 6 judged on every row.
+        "dollar_volume": round(g.close * g.vol),
         "lynch": f"{passes}/{len(detail)}", "lynch_passes": passes,
         "lynch_total": len(detail), "lynch_detail": detail,
         "context": {"consecutive_up_days": up_days, "worst_base_day_pct": worst_base},
@@ -560,16 +603,21 @@ for g in gated_out:
     if g["reason"] == "score_cap":
         assert g["gain_pct"] < worst_scored_3, g["ticker"]
 
-BURSTS = 48
+BURSTS = 50
 PASSED = 31
 CAP = 25
 VETOED = 1
+ILLIQUID = 2
 assert len(candidates) + len(gated_out) == BURSTS
+assert ILLIQUID == sum(1 for g in gated_out if g["reason"] == ledger.LIQUIDITY_REASON)
+for _c in candidates:
+    assert _c["dollar_volume"] >= FLOOR, (
+        f"{_c['ticker']} was scored on ${_c['dollar_volume']:,}/day, below the ${FLOOR:,} floor")
 assert len(candidates) == CAP
 assert PASSED - CAP == sum(1 for g in gated_out if g["reason"] == "score_cap")
 # A vetoed burst never reached the gate, so it is not part of PASSED -- and
 # this last sum used to be written as "everything that is not score_cap",
-# which counted a veto as a checklist rejection. Three reasons, three counts.
+# which counted a veto as a checklist rejection. Four reasons, four counts.
 assert VETOED == sum(1 for g in gated_out if g["reason"] in VETO_REASONS.values())
 # The invariant the comment in build_candidate() states, now asserted rather
 # than described. An audit set the scored rows' up-day counts to 0-4, and the
@@ -588,7 +636,7 @@ for _g in gated_out:
     assert (_up > MAX_CONSECUTIVE_UP_DAYS) == _refused, (
         f"{_g['ticker']} carries {_up} up days and reason {_g['reason']}: a vetoed row "
         "must exceed the threshold that refused it, and one that does must be vetoed")
-assert BURSTS - PASSED - VETOED == sum(1 for g in gated_out if g["reason"] == "lynch_gate")
+assert BURSTS - PASSED - VETOED - ILLIQUID == sum(1 for g in gated_out if g["reason"] == "lynch_gate")
 
 by_src = collections.Counter(c["provenance"]["source"] for c in candidates)
 
@@ -630,6 +678,42 @@ runs = [
      "shortlist_size": 5, "top_score": 8.2, "fallbacks": 0,
      "forward_returns": {"d1": 0.41, "d3": 1.18, "d5": 2.05, "n": 20, "rows": 20}},
 ]
+# src.ledger.add_run keeps the universe on every entry, so a --tickers smoke
+# test can be told from a scan; these were all "scans" of the checked-in file.
+for _i, _run in enumerate(runs):
+    # The open basis beside the close basis on every run mean (src.ledger's
+    # mean_returns), with its own n. Hand-authored a little below the close
+    # basis, which is what an overnight gap in the direction of the burst
+    # does to the price a reader could have paid; the headline run has
+    # nothing on either basis yet.
+    _fr = _run["forward_returns"]
+    _fr["from_open"] = {k: (None if _fr[k] is None else round(_fr[k] - 0.6 - 0.05 * _i, 2))
+                        for k in ("d1", "d3", "d5")}
+    _fr["from_open"]["n"] = 0 if _fr["n"] == 0 else _fr["n"] - (1 if _i % 3 == 0 else 0)
+    # The universe's own return from each session (src.ledger.add_run writes
+    # the pending shape; fill_benchmarks fills it on the evening five sessions
+    # later). Hand-authored where the run's own returns are in: a little
+    # below the picks, over most of the 230 names.
+    _bench = ledger.empty_benchmark()
+    for _h in ("d1", "d3", "d5"):
+        if _fr[_h] is not None:
+            _bench[_h] = round(_fr[_h] - 0.9 + 0.1 * (_i % 3), 2)
+            _bench["n" + _h[1:]] = len(UNIVERSE) - 2 - (_i % 4)
+            _bench["from_open"][_h] = round(_bench[_h] - 0.3, 2)
+            _bench["from_open"]["n" + _h[1:]] = _bench["n" + _h[1:]] - 1
+    _run["benchmark"] = _bench
+    _run["universe"] = {"label": "data/symbols.txt (checked in)", "size": len(UNIVERSE)}
+    # One screener across the whole file: these eight sessions were scanned by
+    # the rules this checkout holds, so evidence.rules reports one set and
+    # nothing on the page warns about a blended record. The drifted state is a
+    # smoke variant, because a fixture cannot hold both.
+    _run["rules"] = rules_fingerprint()
+    # And the floor each night applied (src.ledger.add_run keeps it): the
+    # headline run's is FLOOR; the older ones vary the way a percentile of
+    # the day's tape would, with a refusal count that goes with it.
+    _run["liquidity"] = ({"pctile": PCTILE, "floor": FLOOR, "refused": ILLIQUID} if _i == 0
+                         else {"pctile": PCTILE, "floor": FLOOR + 400_000 * ((_i * 7) % 5 - 2),
+                               "refused": (_i * 3) % 4})
 
 # The evidence block, computed by the REAL src/ledger.py over this fixture's
 # own rows rather than hand-authored. One run, whose forward returns have not
@@ -638,8 +722,28 @@ runs = [
 # the state a reader sees until five sessions have closed. The thirty-run
 # fixture in tests/fixtures/history is the populated twin; between them the
 # page's empty and full paths are both exercised.
+#
+# Which means this file describes TWO records at once, and says so here and
+# in tests/fixtures/README.md rather than leaving a reader to find it: `runs`
+# and the streak blocks above are a hand-authored seven-session history, so
+# the runs table and the day numbers have something to show, while `evidence`
+# is the real code's view of the one run this file actually holds rows for,
+# so evidence.record says runs: 1 beside a runs table of eight. A file a real
+# run writes never disagrees with itself this way -- both come off the same
+# ledger there -- and the history fixture is where the two agree.
 _LEDGER_RUNS = [{
     "date": SESSION, "type": "evening", "shortlist_size": 5,
+    # The same rules the run block names, so evidence.rules reports one set
+    # rather than a run that predates the fingerprint -- which is what this
+    # file would otherwise describe, and is not true of it.
+    "rules": rules_fingerprint(),
+    # And the benchmark Ledger.add_run() would have written for this run:
+    # pending, because nothing after this session has happened. Without it
+    # evidence.universe.setups was 0 where the pipeline writes 25 for the
+    # same record -- the fixture describing a file the pipeline cannot
+    # produce, which is the one thing this generator exists to prevent.
+    "benchmark": {**ledger.empty_benchmark(),
+                  "universe": {"label": "data/symbols.txt (checked in)", "size": len(UNIVERSE)}},
     "candidates": [ledger.slim_row(c, scored=True) for c in candidates],
     "gated": [ledger.slim_row(g, scored=False) for g in gated_out],
 }]
@@ -673,6 +777,8 @@ data = {
         "shortlist_size": 5,
         "gate": {"min_lynch_passes": 3, "total_checks": 6,
                  "vetoes": list(VETO_REASONS)},
+        "rules": rules_fingerprint(),
+        "liquidity": {"pctile": PCTILE, "floor": FLOOR, "refused": ILLIQUID},
         "scored_by": {"claude": by_src["claude"], "fallback": by_src["fallback"]},
         "model": MODEL,
         "errors": [],
@@ -711,7 +817,7 @@ with open(out, "w") as f:
     f.write("\n")
 print(f"wrote {out}: {len(candidates)} candidates "
       f"({by_src['claude']} claude / {by_src['fallback']} fallback), "
-      f"{len(gated_out)} gated out, {len(runs)} runs")
+      f"{len(gated_out)} gated out ({ILLIQUID} below the liquidity floor), {len(runs)} runs")
 for c in candidates[:6]:
     print(f"  #{c['rank']:2d} {c['ticker']:5s} {c['score']:>4} {c['verdict']:5s} "
           f"{c['lynch']} {c['provenance']['source']}")

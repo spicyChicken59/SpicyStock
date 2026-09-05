@@ -14,6 +14,8 @@ import re
 import time
 from datetime import date, datetime, time as time_of_day, timedelta, timezone
 
+import numpy as np
+import pandas as pd
 import pytest
 import requests
 from alpaca.common.exceptions import APIError
@@ -21,15 +23,21 @@ from alpaca.data.enums import Adjustment, DataFeed
 from requests.exceptions import HTTPError
 
 from src.scanner import (
+    previous_session,
+    _drop_gapped_symbols,
+    _download_batch,
+    _last_bar_date,
     MARKET_TZ,
     SESSION_COMPLETE_ET,
     Candidate,
+    CredentialsRejectedError,
     FeedNotAuthorizedError,
     IncompleteScanError,
     ScanConfig,
     StaleDataError,
     SymbolFileError,
     apply_liquidity_gate,
+    liquidity_split,
     current_session,
     detect_setup,
     get_clients,
@@ -488,6 +496,73 @@ def test_the_liquidity_gate_drops_the_thinnest_burst_of_the_session(fake_alpaca,
     assert [c.ticker for c in found] == ["BIG"]
 
 
+def test_every_config_field_is_either_strategy_or_plumbing():
+    """A field that is in neither list escapes the rules fingerprint in
+    silence: the run would record "these are the rules" over a number that
+    changed what a burst is and was never written down. Both lists are
+    checked against the dataclass rather than against each other, so a field
+    added later cannot arrive uncategorised, and neither can a list keep
+    naming a field that was deleted."""
+    import dataclasses
+
+    fields = {f.name for f in dataclasses.fields(ScanConfig)}
+    strategy, operational = set(ScanConfig.STRATEGY_FIELDS), set(ScanConfig.OPERATIONAL_FIELDS)
+
+    assert not (strategy & operational), sorted(strategy & operational)
+    assert strategy | operational == fields, (
+        f"uncategorised: {sorted(fields - strategy - operational)}; "
+        f"named but not fields: {sorted((strategy | operational) - fields)}")
+    assert "STRATEGY_FIELDS" not in fields, "the lists are class attributes, not fields"
+
+
+def test_the_scan_hands_back_what_the_floor_refused_and_the_floor_itself(fake_alpaca, ohlcv):
+    """A burst rule 6 refused used to leave through a log line and nothing
+    else: apply_liquidity_gate() built `dropped`, printed it at INFO and
+    returned `kept`, so the thinner of two genuine 12% bursts on a two-name
+    --tickers run was in no count, no row and no line of the email --
+    reproduced twice independently. run_scan() hands the refused bursts to
+    the caller now, the same way it hands back stats, and records the floor
+    it applied so the run can say what the bar was that night."""
+    fake_alpaca.add_history("BIG", _thin(ohlcv, "burst", price=200.0, volume=5_000_000))
+    fake_alpaca.add_history("TINY", _thin(ohlcv, "burst", price=5.0, volume=200_000, variant=1))
+    for i in range(8):
+        fake_alpaca.add_history(f"Q{i}", _thin(ohlcv, "flat", price=80.0,
+                                               volume=2_000_000, variant=i + 2))
+    stats, refused = {}, []
+
+    found = run_scan(ScanConfig(), universe=["BIG", "TINY"] + [f"Q{i}" for i in range(8)],
+                     stats=stats, refused=refused)
+
+    assert [c.ticker for c in found] == ["BIG"]
+    assert [c.ticker for c in refused] == ["TINY"], "the refused burst reaches the caller"
+    assert refused[0].history is not None, "with its frame, so the checklist can still run on it"
+    assert stats["liquidity_refused"] == 1 and stats["candidates"] == 1
+    assert refused[0].dollar_volume < stats["liquidity_floor"] <= found[0].dollar_volume, (
+        "the floor recorded is the number the split was made on")
+
+
+def test_liquidity_split_is_the_gate_with_its_other_half(ohlcv):
+    """The kept list is apply_liquidity_gate()'s answer exactly; the refused
+    list is everything it dropped, and the floor is the percentile both were
+    judged against. With the rule off, nothing is refused and there is no
+    floor to report."""
+    cfg = ScanConfig()
+    cands = []
+    for i, dv in enumerate([2e6, 8e6, 30e6, 90e6]):
+        frame = _thin(ohlcv, "burst", price=50.0, volume=dv / 50.0, variant=i)
+        cands.append(Candidate(ticker=f"T{i}", history=frame, **detect_setup(frame, cfg)))
+    universe = [float(i + 1) * 1e6 for i in range(100)]
+
+    kept, refused, floor = liquidity_split(cands, universe, cfg)
+
+    assert kept == apply_liquidity_gate(cands, universe, cfg)
+    assert {c.ticker for c in kept} | {c.ticker for c in refused} == {c.ticker for c in cands}
+    assert not ({c.ticker for c in kept} & {c.ticker for c in refused})
+    assert floor == liquidity_floor(universe, cfg)
+    assert all(c.dollar_volume < floor for c in refused) and all(c.dollar_volume >= floor for c in kept)
+    assert liquidity_split(cands, [1e9] * 10, ScanConfig(min_dollar_volume_pctile=0)) == (cands, [], None)
+
+
 def test_the_gate_ranks_a_candidate_against_the_universe_not_against_the_bursts(ohlcv):
     """The denominator is the whole scan, and it has to be.
 
@@ -597,6 +672,51 @@ def test_a_single_symbol_scan_is_not_gated_out_by_its_own_percentile(
     fake_alpaca.add_history("SOLO", _thin(ohlcv, "burst", price=6.0,
                                           volume=300_000, variant=variant))
     assert [c.ticker for c in run_scan(ScanConfig(), universe=["SOLO"])] == ["SOLO"]
+
+
+def test_the_liquidity_floor_is_not_universe_invariant():
+    """A percentile is feed-invariant. It is NOT universe-invariant, and the
+    scanner's own comment claimed the opposite of what it does.
+
+    That comment said the gate "starts doing real work when the universe widens
+    past data/symbols.txt, which is when barely-liquid names where slippage
+    eats the edge becomes a live risk". A percentile keeps a fixed FRACTION, so
+    widening the universe with the illiquid names curation removes moves the
+    absolute bar DOWN. This is the second thing the open decision has to answer
+    for, beside rule 4: widening does not merely cost more, it silently
+    rewrites a strategy rule unless the gate gains an absolute floor.
+
+    Two log-normal populations of the shape US dollar volume really has —
+    parameters stated here rather than fitted, because no live data reaches
+    this sandbox and an invented distribution asserted as measured would be
+    worse than one declared as invented. The DIRECTION and the ORDER OF
+    MAGNITUDE are what this pins; the exact figure is a property of the model.
+    """
+    rng = np.random.default_rng(20260904)
+    curated = np.exp(rng.normal(np.log(600e6), 1.0, 230))     # large/mid caps
+    widened = np.concatenate([                                # plus the tail
+        curated, np.exp(rng.normal(np.log(8e6), 1.6, 2770))])
+    cfg = ScanConfig()
+
+    tight = liquidity_floor(list(curated), cfg)
+    loose = liquidity_floor(list(widened), cfg)
+
+    # The fraction kept is fixed by construction on BOTH — that is the whole
+    # mechanism, and asserting it is what makes the floor comparison mean
+    # something rather than being an artefact of two different populations.
+    kept = cfg.min_dollar_volume_pctile / 100
+    assert abs((curated >= tight).mean() - (1 - kept)) < 0.02
+    assert abs((widened >= loose).mean() - (1 - kept)) < 0.02
+
+    assert loose < tight / 10, (
+        f"widening the universe should collapse the absolute floor; "
+        f"${tight/1e6:.0f}M -> ${loose/1e6:.0f}M")
+
+    # And the consequence, which is the part that costs money: a burst that is
+    # too thin to trade is refused today and admitted after the widening.
+    slippage_eats_the_edge = 20e6
+    assert slippage_eats_the_edge < tight, "refused while the universe is curated"
+    assert slippage_eats_the_edge > loose, "and admitted once it widens"
 
 
 def test_the_liquidity_gate_can_be_turned_off(ohlcv):
@@ -867,6 +987,74 @@ def test_a_refused_feed_aborts_the_scan_instead_of_emptying_it(fake_alpaca, ohlc
         run_scan(ScanConfig(), universe=["AAA"])
 
     assert len(fake_alpaca.bar_requests) == 1, "a refusal is not transient; do not retry it"
+
+
+def test_a_rejected_key_is_not_reported_as_a_feed_this_plan_lacks(fake_alpaca, ohlcv):
+    """401 and 403 have OPPOSITE fixes and used to produce one message.
+
+    Both statuses were classified as a feed denial, so a wrong or half-set
+    ALPACA_API_KEY aborted with "Alpaca refused the 'delayed_sip' data feed ...
+    set SCAN_FEED to a feed this account carries — or subscribe": the operator
+    was sent to change a feed or buy a data plan over a typo. The exception's
+    own name reaches the failure email, so the FIRST WORD they read at 6:16pm
+    about why nothing arrived was the wrong one.
+
+    No test built a 401 before this one — every refusal case in this file used
+    403 or a status-less error — which is exactly why the conflation survived.
+    """
+    fake_alpaca.add_history("AAA", ohlcv("burst"))
+    fake_alpaca.raise_on_bars = _alpaca_error(401, "request is not authorized")
+
+    with pytest.raises(CredentialsRejectedError) as caught:
+        run_scan(ScanConfig(), universe=["AAA"])
+
+    said = str(caught.value)
+    assert "ALPACA_API_KEY" in said and "ALPACA_SECRET_KEY" in said
+    assert "subscribe" not in said, "a rejected key is not something you fix by subscribing"
+    # Still a refusal, so still not retried: a bad key is no more transient
+    # than a refused feed, and retrying it costs a second wrong answer.
+    assert len(fake_alpaca.bar_requests) == 1
+
+
+def test_a_refused_feed_still_says_feed_and_not_credentials(fake_alpaca, ohlcv):
+    """The control for the test above, and the half that must not regress.
+
+    Splitting the classifier is only worth anything if it splits: a 403 has to
+    keep naming the feed, or the fix has moved the wrong report rather than
+    removed it.
+    """
+    fake_alpaca.add_history("AAA", ohlcv("burst"))
+    fake_alpaca.raise_on_bars = _alpaca_error(403, DENIAL)
+
+    with pytest.raises(FeedNotAuthorizedError) as caught:
+        run_scan(ScanConfig(), universe=["AAA"])
+
+    assert "delayed_sip" in str(caught.value)
+    assert not isinstance(caught.value, CredentialsRejectedError)
+
+
+def test_neither_refusal_asserts_a_cause_it_cannot_know(fake_alpaca, ohlcv):
+    """This file has never seen a live refusal — its own DEFAULT_FEED comment
+    says so — so the status-to-cause mapping is inferred from the SDK and not
+    confirmed. Each message therefore leads with what the status says and names
+    the OTHER possibility second, rather than asserting one and denying it.
+
+    Without this, the fix would have replaced one confidently wrong sentence
+    with another, which is the defect class CLAUDE.md names twice.
+    """
+    fake_alpaca.add_history("AAA", ohlcv("burst"))
+
+    fake_alpaca.raise_on_bars = _alpaca_error(401, "request is not authorized")
+    with pytest.raises(CredentialsRejectedError) as unauth:
+        run_scan(ScanConfig(), universe=["AAA"])
+
+    fake_alpaca.bar_requests.clear()
+    fake_alpaca.raise_on_bars = _alpaca_error(403, DENIAL)
+    with pytest.raises(FeedNotAuthorizedError) as forbidden:
+        run_scan(ScanConfig(), universe=["AAA"])
+
+    assert "SCAN_FEED" in str(unauth.value), "the 401 message names the feed possibility too"
+    assert "ALPACA_API_KEY" in str(forbidden.value), "and the 403 names the credential one"
 
 
 def test_a_refusal_is_recognised_from_the_message_when_no_status_survives(fake_alpaca, ohlcv):
@@ -1452,3 +1640,174 @@ def test_the_readme_describes_the_filter_the_code_applies():
             "Sweep the docs (CLAUDE.md: a step is not done until they are true)."
         )
 
+
+
+
+def _genuine_barset(symbol: str, rows: list[dict]):
+    """A real alpaca-py BarSet, the shape the SDK hands _download_batch."""
+    from alpaca.data.models import BarSet
+
+    class Client:
+        def get_stock_bars(self, request):
+            return BarSet({symbol: rows})
+
+    return Client()
+
+
+def _bar_rows(frame, session: date) -> list[dict]:
+    """The wire rows for `frame`, ending on `session`, oldest first."""
+    idx = pd.bdate_range(end=pd.Timestamp(session), periods=len(frame))
+    return [{"t": (t.normalize() + pd.Timedelta(hours=4)).tz_localize("UTC").isoformat(),
+             "o": float(r.Open), "h": float(r.High), "l": float(r.Low), "c": float(r.Close),
+             "v": float(r.Volume), "n": 1.0, "vw": float(r.Close)}
+            for t, (_, r) in zip(idx, frame.iterrows())]
+
+
+def test_a_newest_first_response_is_not_read_as_a_stale_symbol(ohlcv):
+    """BarSet.df keeps the response's order and the request pins no `sort`, so
+    this was an assumption: a newest-first reply made _last_bar_date() read the
+    OLDEST bar, every symbol read as stale, and the run died blaming a market
+    holiday. Reproduced with a genuine BarSet, fixed by sorting what came back
+    rather than by changing what is asked for."""
+    session = date(2026, 6, 24)
+    rows = _bar_rows(ohlcv("burst"), session)
+
+    df = _download_batch(_genuine_barset("X", list(reversed(rows))), ["X"], ScanConfig(), session)["X"]
+
+    assert _last_bar_date(df) == session
+    assert df.index.is_monotonic_increasing
+    assert detect_setup(df, ScanConfig()) is not None, "and the burst on the newest bar is still found"
+
+
+def test_a_bar_the_feed_sent_twice_does_not_hide_the_burst(ohlcv):
+    """A duplicated newest bar made iloc[-1] and iloc[-2] the same session, so
+    the day's gain read as 0% and a real 4% burst was silently missed."""
+    session = date(2026, 6, 24)
+    rows = _bar_rows(ohlcv("burst"), session)
+
+    df = _download_batch(_genuine_barset("X", rows + [rows[-1]]), ["X"], ScanConfig(), session)["X"]
+
+    assert not df.index.has_duplicates
+    assert len(df) == len(rows)
+    assert detect_setup(df, ScanConfig()) is not None
+
+
+
+def test_a_hole_before_the_session_does_not_publish_a_two_day_move_as_a_burst(ohlcv):
+    """_drop_stale_symbols checks only the newest bar. A halt or a dropped bar
+    the session before leaves iloc[-2] two sessions old while the frame passes
+    freshness, and detect_setup() then reads the TWO-day move as the day's 4%
+    burst. Reproduced with a genuine BarSet: 12.0% printed as 12.45%."""
+    session = date(2026, 6, 24)
+    rows = _bar_rows(ohlcv("burst"), session)
+    cfg = ScanConfig()
+    whole = _download_batch(_genuine_barset("X", rows), ["X"], cfg, session)
+    holed = _download_batch(_genuine_barset("X", rows[:-2] + rows[-1:]), ["X"], cfg, session)
+    assert _last_bar_date(holed["X"]) == session, "precondition: the hole passes freshness"
+
+    kept, gapped = _drop_gapped_symbols(holed, session)
+    assert kept == {} and gapped == {"X": pd.Timestamp(rows[-3]["t"]).date()}
+    kept, gapped = _drop_gapped_symbols(whole, session)
+    assert list(kept) == ["X"] and gapped == {}
+
+
+def test_previous_session_is_weekend_only_arithmetic_like_current_session():
+    assert previous_session(date(2026, 6, 24)) == date(2026, 6, 23)   # Wed -> Tue
+    assert previous_session(date(2026, 6, 22)) == date(2026, 6, 19)   # Mon -> Fri
+    assert previous_session(date(2026, 6, 20)) == date(2026, 6, 19)   # Sat -> Fri
+
+
+def test_a_gapped_symbol_is_counted_and_not_scanned(fake_alpaca, ohlcv):
+    """Through run_scan: the name is reported under `gapped`, not published as
+    a burst and not silently dropped."""
+    names = [f"G{i}" for i in range(12)]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i))
+    # The double re-dates every frame contiguously, so a hole has to be asked
+    # for by name rather than cut out of the frame handed in.
+    fake_alpaca.add_history("HOLE", ohlcv("burst", variant=99), gap_before_session=True)
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(), universe=names + ["HOLE"], stats=stats)
+
+    assert "HOLE" in stats["gapped"]
+    assert "HOLE" not in [c.ticker for c in found]
+    assert len(found) == 12
+
+
+def test_a_detector_that_raises_on_every_symbol_is_not_a_quiet_market(fake_alpaca, ohlcv, monkeypatch):
+    """The one path the coverage guards did not cover. A pandas API change
+    that makes detect_setup raise on every frame used to be swallowed per
+    symbol with no count, so the scan returned [] and raised nothing -- the
+    exact shape every guard in this module exists to prevent."""
+    import src.scanner as scanner_mod
+
+    names = [f"B{i}" for i in range(12)]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i))
+    stats: dict = {}
+    assert len(run_scan(ScanConfig(), universe=names, stats=stats)) == 12, "precondition: healthy"
+
+    def boom(df, cfg):
+        raise AttributeError("'Series' object has no attribute 'iloc'")
+    monkeypatch.setattr(scanner_mod, "detect_setup", boom)
+
+    with pytest.raises(IncompleteScanError, match="raised on every one"):
+        run_scan(ScanConfig(), universe=names, stats=stats)
+    assert len(stats["detector_errors"]) == 12
+
+
+def test_one_symbol_the_detector_cannot_read_is_counted_and_the_scan_goes_on(fake_alpaca, ohlcv, monkeypatch):
+    """The other half: a single bad frame is one symbol's problem, reported
+    in the stats and not fatal."""
+    import src.scanner as scanner_mod
+
+    names = [f"B{i}" for i in range(12)]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i))
+    real = scanner_mod.detect_setup
+    calls = []
+
+    # The FIRST frame only. Not "the frame whose close is B3's": the synthetic
+    # burst pins the same final close on every seed, so that raised on ten of
+    # twelve and the test asserted a number the harness had invented.
+    def one_bad(df, cfg):
+        calls.append(1)
+        if len(calls) == 1:
+            raise ValueError("a dtype surprise")
+        return real(df, cfg)
+    monkeypatch.setattr(scanner_mod, "detect_setup", one_bad)
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(), universe=names, stats=stats)
+
+    assert len(found) == 11
+    assert len(stats["detector_errors"]) == 1
+    assert "ValueError: a dtype surprise" in next(iter(stats["detector_errors"].values()))
+
+
+# --- the two boundaries the last audit found unpinned --------------------
+
+def test_the_coverage_guard_fires_at_exactly_its_minimum_universe(fake_alpaca, ohlcv):
+    """`>=` on coverage_guard_min_symbols, and no test sat on the boundary:
+    changing it to `>` left the whole suite green, so a scan of exactly the
+    minimum that was half stale would silently have stopped raising."""
+    cfg = ScanConfig()
+    n = cfg.coverage_guard_min_symbols
+    names = [f"S{i}" for i in range(n)]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i),
+                                stale_sessions=1 if i < n // 2 else 0)
+
+    with pytest.raises(StaleDataError):
+        run_scan(cfg, universe=names)
+
+
+def test_a_status_less_refusal_whose_body_says_not_permitted_is_permanent():
+    """The `or "not permitted" in text` clause was exercised by no test, so
+    it was a claim about Alpaca's wording nobody had checked and nothing
+    would notice being deleted."""
+    from src.scanner import _is_permanent_refusal
+
+    assert _is_permanent_refusal(_alpaca_error(None, "this endpoint is not permitted for your plan"))
+    assert not _is_permanent_refusal(_alpaca_error(None, "internal server error"))

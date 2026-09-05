@@ -11,13 +11,19 @@
       "Every candidate carries provenance.source: 'claude' when the model actually returned a score, 'fallback' when the offline checklist produced it. A fallback is never labelled claude.",
       "provenance.chart_seen is true only when the scoring model actually received the chart image.",
       "forward_returns and runs[].forward_returns are null until the sessions exist. Absent is null, never 0 and never a string.",
+      "d1/d3/d5 divide the close 1, 3 and 5 sessions after the burst by the BURST-DAY CLOSE: what the setup did. forward_returns.from_open divides the same later closes by the NEXT session's open, the earliest price a reader of the evening email could have paid: what acting on it could have had. Both are paper prices from one venue's official prints with no slippage. Every mean and every evidence outcome carries both, the open basis nested under from_open with its own n, and enough_from_open is the open basis's own licence to be read as a rate -- a surface that shows a number says which basis it is on, and never shows a close-basis number under an open-basis label or the reverse. A row or a run from before this basis existed carries no from_open, which is not a measurement of zero.",
       "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
       "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
       "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
       "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
-      "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was ('lynch_gate' rejected by the checklist, 'score_cap' passed but out of calls). Null exactly with last_seen. A gate rejection is never published as an absence of judgement.",
+      "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'liquidity_floor' (rule 6 refused it in the scan, for dollar volume below the session's percentile floor, before the checklist was consulted), 'veto_up_days' (an absolute rule refused it before the pass count was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same four words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and neither a veto nor a liquidity refusal is ever published as a gate rejection.",
+      "runs[].benchmark.universe is the universe the benchmark was measured over, and it is always the one that run's own universe block names: a run is benchmarked only from a later scan of the same universe, so a --tickers run contributes no benchmark to anything and receives none. A run whose universe no later scan has read keeps a null benchmark forever, which is the honest answer and not a zero.",
+      "runs[].rules is every number this screener's rules turned on when that run was made — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. A run from before it carries no rules block, and no surface may read that as agreement.",
+      "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when no name traded or the rule is off), refused (how many bursts sat below it). run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
       "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
       "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
+      "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
+      "runs[].benchmark is the whole universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), with nN the number of symbols behind each horizon; null until a later run's scan carried the sessions, and null forever for a run whose universe later scans never fetched. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks; it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
       "Numbers are numbers or null. No 'n/a' strings."
     ]
   },
@@ -30,7 +36,7 @@
       "label": "data/symbols.txt (checked in)",
       "size": 230
     },
-    "bursts": 48,
+    "bursts": 50,
     "passed_gate": 31,
     "scored": 25,
     "score_cap": 25,
@@ -41,6 +47,43 @@
       "vetoes": [
         "up_days"
       ]
+    },
+    "rules": {
+      "check.breakdown_lookback": 20,
+      "check.breakdown_pct": -4.0,
+      "check.max_consecutive_up_days": 2,
+      "check.max_d1_move": 2.0,
+      "check.max_d1_range_ratio": 1.0,
+      "check.max_d1_vol_ratio": 1.2,
+      "check.max_ext_vs_sma20": 15.0,
+      "check.max_prior_bursts": 1,
+      "check.max_run_up_1mo": 25.0,
+      "check.max_tightness": 1.0,
+      "check.min_close_pos": 0.7,
+      "check.min_linear_r2": 0.55,
+      "check.min_linear_slope": 0.0,
+      "check.prior_burst_pct": 4.0,
+      "check.vetoes": [
+        "up_days"
+      ],
+      "gate.min_lynch_passes": 3,
+      "scan.min_dollar_volume_pctile": 30.0,
+      "scan.min_gain_pct": 4.0,
+      "scan.min_price": 4.0,
+      "scan.min_rvol": 1.5,
+      "scan.min_rvol_sessions": 20,
+      "scan.rvol_lookback": 50,
+      "window.linear_fit_sessions": 30,
+      "window.norm_sessions": 60,
+      "window.prior_burst_lookback": 20,
+      "window.run_up_sessions": 20,
+      "window.sma_sessions": 20,
+      "window.tight_sessions": 7
+    },
+    "liquidity": {
+      "pctile": 30.0,
+      "floor": 12400000,
+      "refused": 2
     },
     "scored_by": {
       "claude": 21,
@@ -137,101 +180,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
       "rank": 2,
-      "ticker": "META",
-      "date": "2026-09-01",
-      "close": 7.41,
-      "gain_pct": 6.18,
-      "volume": 18420100,
-      "prev_volume": 7106400,
-      "volume_ratio": 2.59,
-      "dollar_volume": 136492941,
-      "lynch": "5/6",
-      "lynch_passes": 5,
-      "lynch_total": 6,
-      "lynch_detail": [
-        {
-          "code": "2",
-          "label": "first or second burst",
-          "pass": false,
-          "value": "2 prior 4% bursts in last 20 days"
-        },
-        {
-          "code": "L",
-          "label": "linear prior move",
-          "pass": true,
-          "value": "R²=0.68, fitted trend +11.9% over prior 30 days"
-        },
-        {
-          "code": "Y",
-          "label": "young trend",
-          "pass": true,
-          "value": "+18.8% past month, +11.3% vs 20SMA (through today's burst)"
-        },
-        {
-          "code": "N",
-          "label": "narrow consolidation",
-          "pass": true,
-          "value": "pre-burst range 2.9%/day = 0.83x its norm"
-        },
-        {
-          "code": "C",
-          "label": "calm pre-burst day",
-          "pass": true,
-          "value": "prior day 1.1% move, 2.6% range = 0.74x its norm, 1.04x volume"
-        },
-        {
-          "code": "H",
-          "label": "closed near the high",
-          "pass": true,
-          "value": "closed at 88% of day's range"
-        }
-      ],
-      "score": 8.3,
-      "verdict": "B",
-      "reason": "AI unavailable; checklist score 5/6.",
-      "key_risk": "not AI-reviewed",
-      "provenance": {
-        "source": "fallback",
-        "model": null,
-        "chart_seen": false,
-        "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
-      },
-      "chart": "charts/META.png",
-      "chart_error": null,
-      "context": {
-        "pct_off_52w_high": -11.7,
-        "pct_above_52w_low": 94.2,
-        "perf_3mo_pct": 38.6,
-        "perf_6mo_pct": 21.4,
-        "consecutive_up_days": 1,
-        "worst_base_day_pct": -2.6
-      },
-      "streak": {
-        "day": 3,
-        "unknown_reason": null,
-        "first_seen": "2026-08-28",
-        "last_seen": "2026-08-31",
-        "last_score": 7.4,
-        "last_verdict": "B",
-        "last_outcome": "scored",
-        "seen_before": 2,
-        "history_from": "2026-08-21",
-        "history_sessions": 7
-      },
-      "forward_returns": {
-        "d1": null,
-        "d3": null,
-        "d5": null,
-        "as_of": null
-      }
-    },
-    {
-      "rank": 3,
       "ticker": "NFLX",
       "date": "2026-09-01",
       "close": 31.06,
@@ -317,11 +275,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 4,
+      "rank": 3,
       "ticker": "DIS",
       "date": "2026-09-01",
       "close": 48.22,
@@ -407,11 +370,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 5,
+      "rank": 4,
       "ticker": "CMCSA",
       "date": "2026-09-01",
       "close": 92.44,
@@ -497,11 +465,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 6,
+      "rank": 5,
       "ticker": "CHTR",
       "date": "2026-09-01",
       "close": 41.18,
@@ -587,63 +560,68 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 7,
-      "ticker": "WBD",
+      "rank": 6,
+      "ticker": "META",
       "date": "2026-09-01",
-      "close": 14.73,
-      "gain_pct": 6.87,
-      "volume": 12994100,
-      "prev_volume": 5218700,
-      "volume_ratio": 2.49,
-      "dollar_volume": 191403093,
-      "lynch": "4/6",
-      "lynch_passes": 4,
+      "close": 7.41,
+      "gain_pct": 6.18,
+      "volume": 18420100,
+      "prev_volume": 7106400,
+      "volume_ratio": 2.59,
+      "dollar_volume": 136492941,
+      "lynch": "5/6",
+      "lynch_passes": 5,
       "lynch_total": 6,
       "lynch_detail": [
         {
           "code": "2",
           "label": "first or second burst",
-          "pass": true,
-          "value": "1 prior 4% bursts in last 20 days"
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
         },
         {
           "code": "L",
           "label": "linear prior move",
-          "pass": false,
-          "value": "R²=0.48, fitted trend +27.4% over prior 30 days"
+          "pass": true,
+          "value": "R²=0.68, fitted trend +11.9% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
-          "pass": false,
-          "value": "+36.2% past month, +20.9% vs 20SMA (through today's burst)"
+          "pass": true,
+          "value": "+18.8% past month, +11.3% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
           "label": "narrow consolidation",
           "pass": true,
-          "value": "pre-burst range 4.1%/day = 0.91x its norm"
+          "value": "pre-burst range 2.9%/day = 0.83x its norm"
         },
         {
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.4% move, 3.2% range = 0.71x its norm, 1.09x volume"
+          "value": "prior day 1.1% move, 2.6% range = 0.74x its norm, 1.04x volume"
         },
         {
           "code": "H",
           "label": "closed near the high",
           "pass": true,
-          "value": "closed at 78% of day's range"
+          "value": "closed at 88% of day's range"
         }
       ],
-      "score": 6.7,
+      "score": 7.0,
       "verdict": "B",
-      "reason": "AI unavailable; checklist score 4/6.",
+      "reason": "AI unavailable; checklist score 5/6.",
       "key_risk": "not AI-reviewed",
       "provenance": {
         "source": "fallback",
@@ -651,25 +629,25 @@
         "chart_seen": false,
         "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
       },
-      "chart": "charts/WBD.png",
+      "chart": "charts/META.png",
       "chart_error": null,
       "context": {
-        "pct_off_52w_high": -22.4,
-        "pct_above_52w_low": 118.9,
-        "perf_3mo_pct": 29.7,
-        "perf_6mo_pct": 12.8,
-        "consecutive_up_days": 0,
-        "worst_base_day_pct": -4.6
+        "pct_off_52w_high": -11.7,
+        "pct_above_52w_low": 94.2,
+        "perf_3mo_pct": 38.6,
+        "perf_6mo_pct": 21.4,
+        "consecutive_up_days": 1,
+        "worst_base_day_pct": -2.6
       },
       "streak": {
-        "day": 1,
+        "day": 3,
         "unknown_reason": null,
-        "first_seen": "2026-09-01",
-        "last_seen": null,
-        "last_score": null,
-        "last_verdict": null,
-        "last_outcome": null,
-        "seen_before": 0,
+        "first_seen": "2026-08-28",
+        "last_seen": "2026-08-31",
+        "last_score": 7.4,
+        "last_verdict": "B",
+        "last_outcome": "scored",
+        "seen_before": 2,
         "history_from": "2026-08-21",
         "history_sessions": 7
       },
@@ -677,11 +655,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 8,
+      "rank": 7,
       "ticker": "TMUS",
       "date": "2026-09-01",
       "close": 9.62,
@@ -767,11 +750,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 9,
+      "rank": 8,
       "ticker": "T",
       "date": "2026-09-01",
       "close": 58.91,
@@ -857,11 +845,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 10,
+      "rank": 9,
       "ticker": "VZ",
       "date": "2026-09-01",
       "close": 112.37,
@@ -947,11 +940,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 11,
+      "rank": 10,
       "ticker": "EA",
       "date": "2026-09-01",
       "close": 34.55,
@@ -1037,11 +1035,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 12,
+      "rank": 11,
       "ticker": "TTWO",
       "date": "2026-09-01",
       "close": 11.84,
@@ -1127,21 +1130,26 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 13,
-      "ticker": "MSFT",
+      "rank": 12,
+      "ticker": "WBD",
       "date": "2026-09-01",
-      "close": 68.19,
-      "gain_pct": 4.34,
-      "volume": 16482300,
-      "prev_volume": 7913600,
-      "volume_ratio": 2.08,
-      "dollar_volume": 1123928037,
-      "lynch": "3/6",
-      "lynch_passes": 3,
+      "close": 14.73,
+      "gain_pct": 6.87,
+      "volume": 12994100,
+      "prev_volume": 5218700,
+      "volume_ratio": 2.49,
+      "dollar_volume": 191403093,
+      "lynch": "4/6",
+      "lynch_passes": 4,
       "lynch_total": 6,
       "lynch_detail": [
         {
@@ -1153,37 +1161,37 @@
         {
           "code": "L",
           "label": "linear prior move",
-          "pass": true,
-          "value": "R²=0.61, fitted trend +31.2% over prior 30 days"
+          "pass": false,
+          "value": "R²=0.48, fitted trend +27.4% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": false,
-          "value": "+36.9% past month, +22.9% vs 20SMA (through today's burst)"
+          "value": "+36.2% past month, +20.9% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
           "label": "narrow consolidation",
-          "pass": false,
-          "value": "pre-burst range 5.9%/day = 1.18x its norm"
+          "pass": true,
+          "value": "pre-burst range 4.1%/day = 0.91x its norm"
         },
         {
           "code": "C",
           "label": "calm pre-burst day",
-          "pass": false,
-          "value": "prior day 1.9% move, 4.0% range = 0.80x its norm, 1.22x volume"
+          "pass": true,
+          "value": "prior day 1.4% move, 3.2% range = 0.71x its norm, 1.09x volume"
         },
         {
           "code": "H",
           "label": "closed near the high",
           "pass": true,
-          "value": "closed at 79% of day's range"
+          "value": "closed at 78% of day's range"
         }
       ],
       "score": 5.0,
       "verdict": "skip",
-      "reason": "AI unavailable; checklist score 3/6.",
+      "reason": "AI unavailable; checklist score 4/6.",
       "key_risk": "not AI-reviewed",
       "provenance": {
         "source": "fallback",
@@ -1191,105 +1199,15 @@
         "chart_seen": false,
         "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
       },
-      "chart": "charts/MSFT.png",
+      "chart": "charts/WBD.png",
       "chart_error": null,
       "context": {
-        "pct_off_52w_high": -5.4,
-        "pct_above_52w_low": 264.8,
-        "perf_3mo_pct": 63.2,
-        "perf_6mo_pct": 108.4,
+        "pct_off_52w_high": -22.4,
+        "pct_above_52w_low": 118.9,
+        "perf_3mo_pct": 29.7,
+        "perf_6mo_pct": 12.8,
         "consecutive_up_days": 0,
         "worst_base_day_pct": -4.6
-      },
-      "streak": {
-        "day": 1,
-        "unknown_reason": null,
-        "first_seen": "2026-09-01",
-        "last_seen": "2026-08-21",
-        "last_score": 5.2,
-        "last_verdict": "skip",
-        "last_outcome": "scored",
-        "seen_before": 1,
-        "history_from": "2026-08-21",
-        "history_sessions": 7
-      },
-      "forward_returns": {
-        "d1": null,
-        "d3": null,
-        "d5": null,
-        "as_of": null
-      }
-    },
-    {
-      "rank": 14,
-      "ticker": "ORCL",
-      "date": "2026-09-01",
-      "close": 6.28,
-      "gain_pct": 5.62,
-      "volume": 22947100,
-      "prev_volume": 9184200,
-      "volume_ratio": 2.5,
-      "dollar_volume": 144107788,
-      "lynch": "3/6",
-      "lynch_passes": 3,
-      "lynch_total": 6,
-      "lynch_detail": [
-        {
-          "code": "2",
-          "label": "first or second burst",
-          "pass": false,
-          "value": "3 prior 4% bursts in last 20 days"
-        },
-        {
-          "code": "L",
-          "label": "linear prior move",
-          "pass": true,
-          "value": "R²=0.58, fitted trend +12.4% over prior 30 days"
-        },
-        {
-          "code": "Y",
-          "label": "young trend",
-          "pass": true,
-          "value": "+18.7% past month, +12.1% vs 20SMA (through today's burst)"
-        },
-        {
-          "code": "N",
-          "label": "narrow consolidation",
-          "pass": false,
-          "value": "pre-burst range 6.3%/day = 1.32x its norm"
-        },
-        {
-          "code": "C",
-          "label": "calm pre-burst day",
-          "pass": false,
-          "value": "prior day 2.6% move, 5.1% range = 1.07x its norm, 1.47x volume"
-        },
-        {
-          "code": "H",
-          "label": "closed near the high",
-          "pass": true,
-          "value": "closed at 72% of day's range"
-        }
-      ],
-      "score": 5.0,
-      "verdict": "skip",
-      "reason": "AI unavailable; checklist score 3/6.",
-      "key_risk": "not AI-reviewed",
-      "provenance": {
-        "source": "fallback",
-        "model": null,
-        "chart_seen": false,
-        "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
-      },
-      "chart": "charts/ORCL.png",
-      "chart_error": null,
-      "context": {
-        "pct_off_52w_high": -41.7,
-        "pct_above_52w_low": 38.2,
-        "perf_3mo_pct": 9.4,
-        "perf_6mo_pct": -6.8,
-        "consecutive_up_days": 1,
-        "worst_base_day_pct": -2.6
       },
       "streak": {
         "day": 1,
@@ -1307,11 +1225,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 15,
+      "rank": 13,
       "ticker": "CRM",
       "date": "2026-09-01",
       "close": 5.25,
@@ -1397,11 +1320,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 16,
+      "rank": 14,
       "ticker": "ADBE",
       "date": "2026-09-01",
       "close": 27.41,
@@ -1487,11 +1415,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 17,
+      "rank": 15,
       "ticker": "INTU",
       "date": "2026-09-01",
       "close": 12.06,
@@ -1577,11 +1510,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 18,
+      "rank": 16,
       "ticker": "NOW",
       "date": "2026-09-01",
       "close": 15.72,
@@ -1667,11 +1605,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 19,
+      "rank": 17,
       "ticker": "WDAY",
       "date": "2026-09-01",
       "close": 4.87,
@@ -1757,11 +1700,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 20,
+      "rank": 18,
       "ticker": "PANW",
       "date": "2026-09-01",
       "close": 5.34,
@@ -1847,11 +1795,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 21,
+      "rank": 19,
       "ticker": "CRWD",
       "date": "2026-09-01",
       "close": 18.62,
@@ -1937,11 +1890,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 22,
+      "rank": 20,
       "ticker": "ZS",
       "date": "2026-09-01",
       "close": 8.19,
@@ -2027,11 +1985,16 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
-      "rank": 23,
+      "rank": 21,
       "ticker": "FTNT",
       "date": "2026-09-01",
       "close": 22.14,
@@ -2117,7 +2080,202 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
+      }
+    },
+    {
+      "rank": 22,
+      "ticker": "MSFT",
+      "date": "2026-09-01",
+      "close": 68.19,
+      "gain_pct": 4.34,
+      "volume": 16482300,
+      "prev_volume": 7913600,
+      "volume_ratio": 2.08,
+      "dollar_volume": 1123928037,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.61, fitted trend +31.2% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+36.9% past month, +22.9% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 5.9%/day = 1.18x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 1.9% move, 4.0% range = 0.80x its norm, 1.22x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 79% of day's range"
+        }
+      ],
+      "score": 3.0,
+      "verdict": "skip",
+      "reason": "AI unavailable; checklist score 3/6.",
+      "key_risk": "not AI-reviewed",
+      "provenance": {
+        "source": "fallback",
+        "model": null,
+        "chart_seen": false,
+        "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
+      },
+      "chart": "charts/MSFT.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -5.4,
+        "pct_above_52w_low": 264.8,
+        "perf_3mo_pct": 63.2,
+        "perf_6mo_pct": 108.4,
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -4.6
+      },
+      "streak": {
+        "day": 1,
+        "unknown_reason": null,
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-08-21",
+        "last_score": 5.2,
+        "last_verdict": "skip",
+        "last_outcome": "scored",
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
+      }
+    },
+    {
+      "rank": 23,
+      "ticker": "ORCL",
+      "date": "2026-09-01",
+      "close": 6.28,
+      "gain_pct": 5.62,
+      "volume": 22947100,
+      "prev_volume": 9184200,
+      "volume_ratio": 2.5,
+      "dollar_volume": 144107788,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "3 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.58, fitted trend +12.4% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+18.7% past month, +12.1% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 6.3%/day = 1.32x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.6% move, 5.1% range = 1.07x its norm, 1.47x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 72% of day's range"
+        }
+      ],
+      "score": 3.0,
+      "verdict": "skip",
+      "reason": "AI unavailable; checklist score 3/6.",
+      "key_risk": "not AI-reviewed",
+      "provenance": {
+        "source": "fallback",
+        "model": null,
+        "chart_seen": false,
+        "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
+      },
+      "chart": "charts/ORCL.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -41.7,
+        "pct_above_52w_low": 38.2,
+        "perf_3mo_pct": 9.4,
+        "perf_6mo_pct": -6.8,
+        "consecutive_up_days": 1,
+        "worst_base_day_pct": -2.6
+      },
+      "streak": {
+        "day": 1,
+        "unknown_reason": null,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "last_outcome": null,
+        "seen_before": 0,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
@@ -2207,7 +2365,12 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     },
     {
@@ -2297,7 +2460,12 @@
         "d1": null,
         "d3": null,
         "d5": null,
-        "as_of": null
+        "as_of": null,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null
+        }
       }
     }
   ],
@@ -2309,6 +2477,7 @@
       "gain_pct": 5.12,
       "volume": 14208700,
       "volume_ratio": 2.33,
+      "dollar_volume": 127025778,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -2375,6 +2544,7 @@
       "gain_pct": 4.71,
       "volume": 28417200,
       "volume_ratio": 2.17,
+      "dollar_volume": 563513076,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -2441,6 +2611,7 @@
       "gain_pct": 6.38,
       "volume": 31844100,
       "volume_ratio": 2.24,
+      "dollar_volume": 454096866,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -2507,6 +2678,7 @@
       "gain_pct": 4.29,
       "volume": 22193600,
       "volume_ratio": 2.05,
+      "dollar_volume": 245683152,
       "lynch": "1/6",
       "lynch_passes": 1,
       "lynch_total": 6,
@@ -2573,6 +2745,7 @@
       "gain_pct": 5.84,
       "volume": 9214800,
       "volume_ratio": 2.24,
+      "dollar_volume": 254420628,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -2639,6 +2812,7 @@
       "gain_pct": 8.13,
       "volume": 18774200,
       "volume_ratio": 2.52,
+      "dollar_volume": 120530364,
       "lynch": "1/6",
       "lynch_passes": 1,
       "lynch_total": 6,
@@ -2705,6 +2879,7 @@
       "gain_pct": 4.06,
       "volume": 7118400,
       "volume_ratio": 2.09,
+      "dollar_volume": 1017219360,
       "lynch": "1/6",
       "lynch_passes": 1,
       "lynch_total": 6,
@@ -2771,6 +2946,7 @@
       "gain_pct": 4.92,
       "volume": 26094300,
       "volume_ratio": 2.2,
+      "dollar_volume": 1010893182,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -2837,6 +3013,7 @@
       "gain_pct": 7.44,
       "volume": 13627900,
       "volume_ratio": 2.34,
+      "dollar_volume": 223225002,
       "lynch": "1/6",
       "lynch_passes": 1,
       "lynch_total": 6,
@@ -2903,6 +3080,7 @@
       "gain_pct": 6.71,
       "volume": 6483100,
       "volume_ratio": 2.22,
+      "dollar_volume": 221203372,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -2969,6 +3147,7 @@
       "gain_pct": 11.62,
       "volume": 9847300,
       "volume_ratio": 3.06,
+      "dollar_volume": 41161714,
       "lynch": "0/6",
       "lynch_passes": 0,
       "lynch_total": 6,
@@ -3035,6 +3214,7 @@
       "gain_pct": 9.88,
       "volume": 21094600,
       "volume_ratio": 2.51,
+      "dollar_volume": 186687210,
       "lynch": "0/6",
       "lynch_passes": 0,
       "lynch_total": 6,
@@ -3101,6 +3281,7 @@
       "gain_pct": 14.21,
       "volume": 7482100,
       "volume_ratio": 3.55,
+      "dollar_volume": 72950475,
       "lynch": "0/6",
       "lynch_passes": 0,
       "lynch_total": 6,
@@ -3167,6 +3348,7 @@
       "gain_pct": 5.47,
       "volume": 10428300,
       "volume_ratio": 2.17,
+      "dollar_volume": 133795089,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -3233,6 +3415,7 @@
       "gain_pct": 4.83,
       "volume": 5218700,
       "volume_ratio": 2.17,
+      "dollar_volume": 90231323,
       "lynch": "1/6",
       "lynch_passes": 1,
       "lynch_total": 6,
@@ -3299,6 +3482,7 @@
       "gain_pct": 4.11,
       "volume": 6104200,
       "volume_ratio": 2.12,
+      "dollar_volume": 254056804,
       "lynch": "2/6",
       "lynch_passes": 2,
       "lynch_total": 6,
@@ -3365,6 +3549,7 @@
       "gain_pct": 4.07,
       "volume": 12048600,
       "volume_ratio": 2.22,
+      "dollar_volume": 94340538,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -3431,6 +3616,7 @@
       "gain_pct": 4.05,
       "volume": 8114700,
       "volume_ratio": 2.04,
+      "dollar_volume": 390803952,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -3497,6 +3683,7 @@
       "gain_pct": 4.04,
       "volume": 11384200,
       "volume_ratio": 2.19,
+      "dollar_volume": 705137348,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -3563,6 +3750,7 @@
       "gain_pct": 4.03,
       "volume": 8803000,
       "volume_ratio": 3.8,
+      "dollar_volume": 249741110,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -3629,6 +3817,7 @@
       "gain_pct": 4.02,
       "volume": 6742800,
       "volume_ratio": 2.17,
+      "dollar_volume": 61764048,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -3695,6 +3884,7 @@
       "gain_pct": 4.01,
       "volume": 15208400,
       "volume_ratio": 2.17,
+      "dollar_volume": 71631564,
       "lynch": "3/6",
       "lynch_passes": 3,
       "lynch_total": 6,
@@ -3761,6 +3951,7 @@
       "gain_pct": 4.62,
       "volume": 31840200,
       "volume_ratio": 2.56,
+      "dollar_volume": 5680291680,
       "lynch": "6/6",
       "lynch_passes": 6,
       "lynch_total": 6,
@@ -3819,13 +4010,147 @@
         "history_sessions": 7
       },
       "reason": "veto_up_days"
+    },
+    {
+      "ticker": "ADI",
+      "date": "2026-09-01",
+      "close": 9.84,
+      "gain_pct": 6.27,
+      "volume": 1042600,
+      "volume_ratio": 2.49,
+      "dollar_volume": 10259184,
+      "lynch": "5/6",
+      "lynch_passes": 5,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.58, fitted trend +12.4% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+19.4% past month, +12.8% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 5.8%/day = 1.14x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": true,
+          "value": "prior day 1.9% move, 3.7% range = 0.73x its norm, 1.08x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 82% of day's range"
+        }
+      ],
+      "context": {
+        "consecutive_up_days": 2,
+        "worst_base_day_pct": -2.6
+      },
+      "streak": {
+        "day": null,
+        "unknown_reason": "window_not_covered",
+        "first_seen": null,
+        "last_seen": "2026-08-31",
+        "last_score": null,
+        "last_verdict": null,
+        "last_outcome": "score_cap",
+        "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
+      },
+      "reason": "liquidity_floor"
+    },
+    {
+      "ticker": "MRVL",
+      "date": "2026-09-01",
+      "close": 14.62,
+      "gain_pct": 4.38,
+      "volume": 612400,
+      "volume_ratio": 2.13,
+      "dollar_volume": 8953288,
+      "lynch": "0/6",
+      "lynch_passes": 0,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": false,
+          "value": "R²=0.29, fitted trend +34.7% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+40.6% past month, +26.2% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 9.6%/day = 1.71x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 3.3% move, 5.8% range = 1.03x its norm, 1.62x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": false,
+          "value": "closed at 44% of day's range"
+        }
+      ],
+      "context": {
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -4.6
+      },
+      "streak": {
+        "day": 2,
+        "unknown_reason": null,
+        "first_seen": "2026-08-31",
+        "last_seen": "2026-08-31",
+        "last_score": null,
+        "last_verdict": null,
+        "last_outcome": "lynch_gate",
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
+      },
+      "reason": "liquidity_floor"
     }
   ],
   "runs": [
     {
       "date": "2026-09-01",
       "type": "evening",
-      "bursts": 48,
+      "bursts": 50,
       "passed_gate": 31,
       "scored": 25,
       "shortlist_size": 5,
@@ -3836,7 +4161,71 @@
         "d3": null,
         "d5": null,
         "n": 0,
-        "rows": 0
+        "rows": 0,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null,
+          "n": 0
+        }
+      },
+      "benchmark": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n1": 0,
+        "n3": 0,
+        "n5": 0,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null,
+          "n1": 0,
+          "n3": 0,
+          "n5": 0
+        },
+        "universe": null
+      },
+      "universe": {
+        "label": "data/symbols.txt (checked in)",
+        "size": 230
+      },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 12400000,
+        "refused": 2
       }
     },
     {
@@ -3853,7 +4242,71 @@
         "d3": null,
         "d5": null,
         "n": 19,
-        "rows": 21
+        "rows": 21,
+        "from_open": {
+          "d1": 0.47,
+          "d3": null,
+          "d5": null,
+          "n": 19
+        }
+      },
+      "benchmark": {
+        "d1": 0.32,
+        "d3": null,
+        "d5": null,
+        "n1": 227,
+        "n3": 0,
+        "n5": 0,
+        "from_open": {
+          "d1": 0.02,
+          "d3": null,
+          "d5": null,
+          "n1": 226,
+          "n3": 0,
+          "n5": 0
+        },
+        "universe": null
+      },
+      "universe": {
+        "label": "data/symbols.txt (checked in)",
+        "size": 230
+      },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 12400000,
+        "refused": 3
       }
     },
     {
@@ -3870,7 +4323,71 @@
         "d3": null,
         "d5": null,
         "n": 23,
-        "rows": 25
+        "rows": 25,
+        "from_open": {
+          "d1": -1.33,
+          "d3": null,
+          "d5": null,
+          "n": 23
+        }
+      },
+      "benchmark": {
+        "d1": -1.33,
+        "d3": null,
+        "d5": null,
+        "n1": 226,
+        "n3": 0,
+        "n5": 0,
+        "from_open": {
+          "d1": -1.63,
+          "d3": null,
+          "d5": null,
+          "n1": 225,
+          "n3": 0,
+          "n5": 0
+        },
+        "universe": null
+      },
+      "universe": {
+        "label": "data/symbols.txt (checked in)",
+        "size": 230
+      },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 13200000,
+        "refused": 2
       }
     },
     {
@@ -3887,7 +4404,71 @@
         "d3": 1.44,
         "d5": null,
         "n": 22,
-        "rows": 24
+        "rows": 24,
+        "from_open": {
+          "d1": 1.32,
+          "d3": 0.69,
+          "d5": null,
+          "n": 21
+        }
+      },
+      "benchmark": {
+        "d1": 1.17,
+        "d3": 0.54,
+        "d5": null,
+        "n1": 225,
+        "n3": 225,
+        "n5": 0,
+        "from_open": {
+          "d1": 0.87,
+          "d3": 0.24,
+          "d5": null,
+          "n1": 224,
+          "n3": 224,
+          "n5": 0
+        },
+        "universe": null
+      },
+      "universe": {
+        "label": "data/symbols.txt (checked in)",
+        "size": 230
+      },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 12000000,
+        "refused": 1
       }
     },
     {
@@ -3904,7 +4485,71 @@
         "d3": 2.31,
         "d5": null,
         "n": 17,
-        "rows": 18
+        "rows": 18,
+        "from_open": {
+          "d1": 0.08,
+          "d3": 1.51,
+          "d5": null,
+          "n": 17
+        }
+      },
+      "benchmark": {
+        "d1": 0.08,
+        "d3": 1.51,
+        "d5": null,
+        "n1": 228,
+        "n3": 228,
+        "n5": 0,
+        "from_open": {
+          "d1": -0.22,
+          "d3": 1.21,
+          "d5": null,
+          "n1": 227,
+          "n3": 227,
+          "n5": 0
+        },
+        "universe": null
+      },
+      "universe": {
+        "label": "data/symbols.txt (checked in)",
+        "size": 230
+      },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 12800000,
+        "refused": 0
       }
     },
     {
@@ -3921,7 +4566,71 @@
         "d3": 2.97,
         "d5": -0.42,
         "n": 21,
-        "rows": 22
+        "rows": 22,
+        "from_open": {
+          "d1": 0.99,
+          "d3": 2.12,
+          "d5": -1.27,
+          "n": 21
+        }
+      },
+      "benchmark": {
+        "d1": 1.14,
+        "d3": 2.27,
+        "d5": -1.12,
+        "n1": 227,
+        "n3": 227,
+        "n5": 227,
+        "from_open": {
+          "d1": 0.84,
+          "d3": 1.97,
+          "d5": -1.42,
+          "n1": 226,
+          "n3": 226,
+          "n5": 226
+        },
+        "universe": null
+      },
+      "universe": {
+        "label": "data/symbols.txt (checked in)",
+        "size": 230
+      },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 11600000,
+        "refused": 3
       }
     },
     {
@@ -3938,7 +4647,71 @@
         "d3": 0.94,
         "d5": 1.62,
         "n": 22,
-        "rows": 23
+        "rows": 23,
+        "from_open": {
+          "d1": -1.97,
+          "d3": 0.04,
+          "d5": 0.72,
+          "n": 21
+        }
+      },
+      "benchmark": {
+        "d1": -1.97,
+        "d3": 0.04,
+        "d5": 0.72,
+        "n1": 226,
+        "n3": 226,
+        "n5": 226,
+        "from_open": {
+          "d1": -2.27,
+          "d3": -0.26,
+          "d5": 0.42,
+          "n1": 225,
+          "n3": 225,
+          "n5": 225
+        },
+        "universe": null
+      },
+      "universe": {
+        "label": "data/symbols.txt (checked in)",
+        "size": 230
+      },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 12400000,
+        "refused": 2
       }
     },
     {
@@ -3955,7 +4728,71 @@
         "d3": 1.18,
         "d5": 2.05,
         "n": 20,
-        "rows": 20
+        "rows": 20,
+        "from_open": {
+          "d1": -0.54,
+          "d3": 0.23,
+          "d5": 1.1,
+          "n": 20
+        }
+      },
+      "benchmark": {
+        "d1": -0.39,
+        "d3": 0.38,
+        "d5": 1.25,
+        "n1": 225,
+        "n3": 225,
+        "n5": 225,
+        "from_open": {
+          "d1": -0.69,
+          "d3": 0.08,
+          "d5": 0.95,
+          "n1": 224,
+          "n3": 224,
+          "n5": 224
+        },
+        "universe": null
+      },
+      "universe": {
+        "label": "data/symbols.txt (checked in)",
+        "size": 230
+      },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 13200000,
+        "refused": 1
       }
     }
   ],
@@ -3975,9 +4812,9 @@
       "sessions": 1,
       "from": "2026-09-01",
       "to": "2026-09-01",
-      "setups": 48,
+      "setups": 50,
       "scored_setups": 25,
-      "rows": 48
+      "rows": 50
     },
     "overall": {
       "setups": 25,
@@ -3988,7 +4825,14 @@
           "n": 0,
           "best": null,
           "worst": null,
-          "in_band": 0
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
         },
         {
           "horizon": 3,
@@ -3996,7 +4840,14 @@
           "n": 0,
           "best": null,
           "worst": null,
-          "in_band": 0
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
         },
         {
           "horizon": 5,
@@ -4004,7 +4855,14 @@
           "n": 0,
           "best": null,
           "worst": null,
-          "in_band": 0
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
         }
       ]
     },
@@ -4013,8 +4871,9 @@
         "low": 0.0,
         "high": 5.0,
         "verdict": "skip",
-        "setups": 11,
+        "setups": 13,
         "enough": false,
+        "enough_from_open": false,
         "outcomes": [
           {
             "horizon": 1,
@@ -4022,7 +4881,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4030,7 +4896,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4038,7 +4911,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4046,8 +4926,9 @@
         "low": 5.0,
         "high": 6.0,
         "verdict": "C",
-        "setups": 4,
+        "setups": 3,
         "enough": false,
+        "enough_from_open": false,
         "outcomes": [
           {
             "horizon": 1,
@@ -4055,7 +4936,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4063,7 +4951,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4071,7 +4966,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4079,8 +4981,9 @@
         "low": 6.0,
         "high": 7.0,
         "verdict": "B",
-        "setups": 4,
+        "setups": 3,
         "enough": false,
+        "enough_from_open": false,
         "outcomes": [
           {
             "horizon": 1,
@@ -4088,7 +4991,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4096,7 +5006,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4104,7 +5021,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4112,8 +5036,9 @@
         "low": 7.0,
         "high": 8.0,
         "verdict": "B+",
-        "setups": 3,
+        "setups": 4,
         "enough": false,
+        "enough_from_open": false,
         "outcomes": [
           {
             "horizon": 1,
@@ -4121,7 +5046,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4129,7 +5061,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4137,7 +5076,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4145,8 +5091,9 @@
         "low": 8.0,
         "high": 9.0,
         "verdict": "A",
-        "setups": 3,
+        "setups": 2,
         "enough": false,
+        "enough_from_open": false,
         "outcomes": [
           {
             "horizon": 1,
@@ -4154,7 +5101,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4162,7 +5116,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4170,7 +5131,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4180,6 +5148,7 @@
         "verdict": "A+",
         "setups": 0,
         "enough": false,
+        "enough_from_open": false,
         "outcomes": [
           {
             "horizon": 1,
@@ -4187,7 +5156,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4195,7 +5171,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4203,7 +5186,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       }
@@ -4212,7 +5202,7 @@
       {
         "code": "2",
         "passed": {
-          "setups": 25,
+          "setups": 26,
           "outcomes": [
             {
               "horizon": 1,
@@ -4220,7 +5210,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 3,
@@ -4228,7 +5225,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 5,
@@ -4236,12 +5240,19 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             }
           ]
         },
         "failed": {
-          "setups": 23,
+          "setups": 24,
           "outcomes": [
             {
               "horizon": 1,
@@ -4249,7 +5260,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 3,
@@ -4257,7 +5275,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 5,
@@ -4265,17 +5290,25 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             }
           ]
         },
         "separation": null,
-        "enough": false
+        "enough": false,
+        "enough_from_open": false
       },
       {
         "code": "L",
         "passed": {
-          "setups": 20,
+          "setups": 21,
           "outcomes": [
             {
               "horizon": 1,
@@ -4283,7 +5316,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 3,
@@ -4291,7 +5331,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 5,
@@ -4299,70 +5346,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
-            }
-          ]
-        },
-        "failed": {
-          "setups": 28,
-          "outcomes": [
-            {
-              "horizon": 1,
-              "mean": null,
-              "n": 0,
-              "best": null,
-              "worst": null,
-              "in_band": 0
-            },
-            {
-              "horizon": 3,
-              "mean": null,
-              "n": 0,
-              "best": null,
-              "worst": null,
-              "in_band": 0
-            },
-            {
-              "horizon": 5,
-              "mean": null,
-              "n": 0,
-              "best": null,
-              "worst": null,
-              "in_band": 0
-            }
-          ]
-        },
-        "separation": null,
-        "enough": false
-      },
-      {
-        "code": "Y",
-        "passed": {
-          "setups": 19,
-          "outcomes": [
-            {
-              "horizon": 1,
-              "mean": null,
-              "n": 0,
-              "best": null,
-              "worst": null,
-              "in_band": 0
-            },
-            {
-              "horizon": 3,
-              "mean": null,
-              "n": 0,
-              "best": null,
-              "worst": null,
-              "in_band": 0
-            },
-            {
-              "horizon": 5,
-              "mean": null,
-              "n": 0,
-              "best": null,
-              "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             }
           ]
         },
@@ -4375,7 +5366,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 3,
@@ -4383,7 +5381,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 5,
@@ -4391,12 +5396,126 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             }
           ]
         },
         "separation": null,
-        "enough": false
+        "enough": false,
+        "enough_from_open": false
+      },
+      {
+        "code": "Y",
+        "passed": {
+          "setups": 20,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
+            }
+          ]
+        },
+        "failed": {
+          "setups": 30,
+          "outcomes": [
+            {
+              "horizon": 1,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
+            },
+            {
+              "horizon": 3,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
+            },
+            {
+              "horizon": 5,
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
+            }
+          ]
+        },
+        "separation": null,
+        "enough": false,
+        "enough_from_open": false
       },
       {
         "code": "N",
@@ -4409,7 +5528,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 3,
@@ -4417,7 +5543,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 5,
@@ -4425,12 +5558,19 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             }
           ]
         },
         "failed": {
-          "setups": 34,
+          "setups": 36,
           "outcomes": [
             {
               "horizon": 1,
@@ -4438,7 +5578,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 3,
@@ -4446,7 +5593,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 5,
@@ -4454,17 +5608,25 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             }
           ]
         },
         "separation": null,
-        "enough": false
+        "enough": false,
+        "enough_from_open": false
       },
       {
         "code": "C",
         "passed": {
-          "setups": 22,
+          "setups": 23,
           "outcomes": [
             {
               "horizon": 1,
@@ -4472,7 +5634,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 3,
@@ -4480,7 +5649,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 5,
@@ -4488,12 +5664,19 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             }
           ]
         },
         "failed": {
-          "setups": 26,
+          "setups": 27,
           "outcomes": [
             {
               "horizon": 1,
@@ -4501,7 +5684,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 3,
@@ -4509,7 +5699,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 5,
@@ -4517,17 +5714,25 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             }
           ]
         },
         "separation": null,
-        "enough": false
+        "enough": false,
+        "enough_from_open": false
       },
       {
         "code": "H",
         "passed": {
-          "setups": 35,
+          "setups": 36,
           "outcomes": [
             {
               "horizon": 1,
@@ -4535,7 +5740,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 3,
@@ -4543,7 +5755,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 5,
@@ -4551,12 +5770,19 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             }
           ]
         },
         "failed": {
-          "setups": 13,
+          "setups": 14,
           "outcomes": [
             {
               "horizon": 1,
@@ -4564,7 +5790,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 3,
@@ -4572,7 +5805,14 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             },
             {
               "horizon": 5,
@@ -4580,12 +5820,20 @@
               "n": 0,
               "best": null,
               "worst": null,
-              "in_band": 0
+              "in_band": 0,
+              "from_open": {
+                "mean": null,
+                "n": 0,
+                "best": null,
+                "worst": null,
+                "in_band": 0
+              }
             }
           ]
         },
         "separation": null,
-        "enough": false
+        "enough": false,
+        "enough_from_open": false
       }
     ],
     "by_day": [
@@ -4593,6 +5841,7 @@
         "day": null,
         "appearances": 25,
         "enough": false,
+        "enough_from_open": false,
         "outcomes": [
           {
             "horizon": 1,
@@ -4600,7 +5849,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4608,7 +5864,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4616,7 +5879,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       }
@@ -4626,6 +5896,7 @@
         "month": "2026-09",
         "setups": 25,
         "enough": false,
+        "enough_from_open": false,
         "outcomes": [
           {
             "horizon": 1,
@@ -4633,7 +5904,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4641,7 +5919,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4649,7 +5934,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       }
@@ -4668,7 +5960,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4676,7 +5975,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4684,7 +5990,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4701,7 +6014,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4709,7 +6029,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4717,7 +6044,68 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          }
+        ]
+      },
+      {
+        "ticker": "ADI",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4734,7 +6122,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4742,7 +6137,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4750,7 +6152,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4767,7 +6176,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4775,7 +6191,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4783,7 +6206,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4800,7 +6230,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4808,7 +6245,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4816,7 +6260,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4833,7 +6284,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4841,7 +6299,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4849,7 +6314,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4866,7 +6338,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4874,7 +6353,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4882,7 +6368,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4899,7 +6392,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4907,7 +6407,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4915,7 +6422,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4932,7 +6446,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4940,7 +6461,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4948,7 +6476,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4965,7 +6500,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -4973,7 +6515,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -4981,7 +6530,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -4998,7 +6554,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5006,7 +6569,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5014,7 +6584,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5031,7 +6608,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5039,7 +6623,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5047,7 +6638,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5064,7 +6662,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5072,7 +6677,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5080,7 +6692,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5097,7 +6716,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5105,7 +6731,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5113,7 +6746,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5130,7 +6770,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5138,7 +6785,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5146,7 +6800,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5163,7 +6824,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5171,7 +6839,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5179,7 +6854,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5196,7 +6878,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5204,7 +6893,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5212,7 +6908,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5229,7 +6932,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5237,7 +6947,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5245,7 +6962,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5262,7 +6986,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5270,7 +7001,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5278,7 +7016,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5295,7 +7040,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5303,7 +7055,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5311,7 +7070,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5328,7 +7094,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5336,7 +7109,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5344,7 +7124,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5361,7 +7148,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5369,7 +7163,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5377,7 +7178,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5394,7 +7202,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5402,7 +7217,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5410,7 +7232,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5427,7 +7256,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5435,7 +7271,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5443,7 +7286,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5452,7 +7302,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 8.3,
+        "best_score": 7.0,
         "outcomes": [
           {
             "horizon": 1,
@@ -5460,7 +7310,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5468,7 +7325,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5476,7 +7340,68 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          }
+        ]
+      },
+      {
+        "ticker": "MRVL",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5485,7 +7410,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 5.0,
+        "best_score": 3.0,
         "outcomes": [
           {
             "horizon": 1,
@@ -5493,7 +7418,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5501,7 +7433,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5509,7 +7448,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5526,7 +7472,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5534,7 +7487,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5542,7 +7502,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5559,7 +7526,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5567,7 +7541,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5575,7 +7556,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5592,7 +7580,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5600,7 +7595,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5608,7 +7610,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5625,7 +7634,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5633,7 +7649,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5641,7 +7664,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5658,7 +7688,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5666,7 +7703,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5674,7 +7718,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5683,7 +7734,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 5.0,
+        "best_score": 3.0,
         "outcomes": [
           {
             "horizon": 1,
@@ -5691,7 +7742,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5699,7 +7757,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5707,7 +7772,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5724,7 +7796,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5732,7 +7811,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5740,7 +7826,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5757,7 +7850,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5765,7 +7865,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5773,7 +7880,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5790,7 +7904,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5798,7 +7919,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5806,7 +7934,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5823,7 +7958,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5831,7 +7973,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5839,7 +7988,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5856,7 +8012,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5864,7 +8027,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5872,7 +8042,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5889,7 +8066,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5897,7 +8081,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5905,7 +8096,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5922,7 +8120,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5930,7 +8135,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5938,7 +8150,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5955,7 +8174,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5963,7 +8189,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -5971,7 +8204,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -5988,7 +8228,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -5996,7 +8243,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -6004,7 +8258,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -6021,7 +8282,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -6029,7 +8297,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -6037,7 +8312,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -6054,7 +8336,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -6062,7 +8351,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -6070,7 +8366,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -6087,7 +8390,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -6095,7 +8405,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -6103,7 +8420,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -6120,7 +8444,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -6128,7 +8459,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -6136,7 +8474,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -6145,7 +8490,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 6.7,
+        "best_score": 5.0,
         "outcomes": [
           {
             "horizon": 1,
@@ -6153,7 +8498,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -6161,7 +8513,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -6169,7 +8528,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -6186,7 +8552,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -6194,7 +8567,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -6202,7 +8582,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       },
@@ -6219,7 +8606,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 3,
@@ -6227,7 +8621,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           },
           {
             "horizon": 5,
@@ -6235,7 +8636,14 @@
             "n": 0,
             "best": null,
             "worst": null,
-            "in_band": 0
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
           }
         ]
       }
@@ -6249,7 +8657,14 @@
           "n": 0,
           "best": null,
           "worst": null,
-          "in_band": 0
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
         },
         {
           "horizon": 3,
@@ -6257,7 +8672,14 @@
           "n": 0,
           "best": null,
           "worst": null,
-          "in_band": 0
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
         },
         {
           "horizon": 5,
@@ -6265,9 +8687,18 @@
           "n": 0,
           "best": null,
           "worst": null,
-          "in_band": 0
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
         }
-      ]
+      ],
+      "enough": false,
+      "enough_from_open": false
     },
     "rest": {
       "setups": 20,
@@ -6278,7 +8709,14 @@
           "n": 0,
           "best": null,
           "worst": null,
-          "in_band": 0
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
         },
         {
           "horizon": 3,
@@ -6286,7 +8724,14 @@
           "n": 0,
           "best": null,
           "worst": null,
-          "in_band": 0
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
         },
         {
           "horizon": 5,
@@ -6294,9 +8739,263 @@
           "n": 0,
           "best": null,
           "worst": null,
-          "in_band": 0
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
         }
-      ]
+      ],
+      "enough": false,
+      "enough_from_open": false
+    },
+    "refused": {
+      "setups": 17,
+      "outcomes": [
+        {
+          "horizon": 1,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        },
+        {
+          "horizon": 3,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        },
+        {
+          "horizon": 5,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        }
+      ],
+      "enough": false,
+      "enough_from_open": false
+    },
+    "crowded_out": {
+      "setups": 6,
+      "outcomes": [
+        {
+          "horizon": 1,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        },
+        {
+          "horizon": 3,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        },
+        {
+          "horizon": 5,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        }
+      ],
+      "enough": false,
+      "enough_from_open": false
+    },
+    "illiquid": {
+      "setups": 2,
+      "outcomes": [
+        {
+          "horizon": 1,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        },
+        {
+          "horizon": 3,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        },
+        {
+          "horizon": 5,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        }
+      ],
+      "enough": false,
+      "enough_from_open": false
+    },
+    "universe": {
+      "setups": 25,
+      "outcomes": [
+        {
+          "horizon": 1,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        },
+        {
+          "horizon": 3,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        },
+        {
+          "horizon": 5,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        }
+      ],
+      "enough": false,
+      "enough_from_open": false
+    },
+    "rules": {
+      "current": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
+      "sets": 1,
+      "differ": [],
+      "runs_without": 0
     }
   }
 }

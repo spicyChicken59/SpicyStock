@@ -50,6 +50,7 @@ INVARIANTS = (
     "streak",              # day N of this setup, internally consistent, or null
     "returns_shape",       # d1/d3/d5/as_of, null when unknown
     "numbers_or_null",     # no NaN, no "n/a", no 0 standing in for unknown
+    "liquidity",           # run.liquidity agrees with the rows and the populations are disjoint
 )
 
 _RUN_KEYS = ("date", "type", "bursts", "passed_gate", "scored", "score_cap",
@@ -292,6 +293,34 @@ def contract_violations(data: dict, docs_dir=None) -> set[str]:
     for row in data["runs"]:
         if not _returns_ok(row.get("forward_returns"), run_level=True):
             bad.add("returns_shape")
+
+    # Round 5's sentences. run.liquidity.refused is the count of the rows that
+    # carry the word; every such row sits below the floor and every other
+    # gated row at or above it; and the five evidence populations are
+    # disjoint and together are every setup. The checker every end-to-end
+    # test asserts "the whole contract" through did not check any of these,
+    # so a run that published the block and dropped the rows was clean.
+    liquidity = run.get("liquidity")
+    if liquidity is not None:
+        refused = [g for g in gated if g.get("reason") == ledger.LIQUIDITY_REASON]
+        floor = liquidity.get("floor") if isinstance(liquidity, dict) else None
+        if not isinstance(liquidity, dict) or liquidity.get("refused") != len(refused):
+            bad.add("liquidity")
+        elif isinstance(floor, (int, float)):
+            if any(not isinstance(g.get("dollar_volume"), (int, float)) or g["dollar_volume"] >= floor
+                   for g in refused):
+                bad.add("liquidity")
+            if any(isinstance(g.get("dollar_volume"), (int, float)) and g["dollar_volume"] < floor
+                   for g in gated if g.get("reason") != ledger.LIQUIDITY_REASON):
+                bad.add("liquidity")
+        elif refused:
+            bad.add("liquidity")   # refusals under a floor the run says it never had
+    ev = data.get("evidence")
+    if isinstance(ev, dict) and isinstance(ev.get("record"), dict):
+        populations = ("shortlist", "rest", "refused", "crowded_out", "illiquid")
+        if all(isinstance(ev.get(k), dict) for k in populations):
+            if sum(ev[k]["setups"] for k in populations) != ev["record"]["setups"]:
+                bad.add("liquidity")
 
     found: list = []
     _walk(data, found)
@@ -634,6 +663,68 @@ def test_a_run_that_could_not_read_its_history_is_still_a_valid_document(documen
     assert contract_violations(document) == set()
 
 
+def _history_with_one_refusal() -> dict:
+    """The thirty-run fixture's headline (contract-clean, and its headline
+    night refused nothing) with one liquidity refusal planted: a gated row
+    under the floor, the block's count raised with it."""
+    import pathlib as _pathlib
+    doc = json.loads((_pathlib.Path(__file__).resolve().parent / "fixtures" / "history" / "data.json").read_text())
+    floor = doc["run"]["liquidity"]["floor"]
+    donor = next(g for g in doc["gated_out"] if g["reason"] != ledger.LIQUIDITY_REASON)
+    thin = json.loads(json.dumps(donor))
+    thin.update(ticker="THIN", reason=ledger.LIQUIDITY_REASON, dollar_volume=floor / 2)
+    doc["gated_out"].append(thin)
+    doc["run"]["bursts"] += 1
+    doc["run"]["liquidity"]["refused"] += 1
+    assert contract_violations(doc) == set(), contract_violations(doc)
+    return doc
+
+
+def test_a_liquidity_block_that_disagrees_with_its_rows_is_caught():
+    """The count the block states, the floor the rows sit against, and the
+    populations that must sum to the record: each broken alone, each named.
+    The checker every end-to-end test asserts "the whole contract" through
+    did not check any of round 5's sentences, so a run that published the
+    block and dropped the rows was clean."""
+    doc = _history_with_one_refusal()
+    doc["run"]["liquidity"]["refused"] += 1
+    _only(doc, "liquidity")
+
+    doc = _history_with_one_refusal()
+    thin = next(g for g in doc["gated_out"] if g["reason"] == ledger.LIQUIDITY_REASON)
+    thin["dollar_volume"] = doc["run"]["liquidity"]["floor"] + 1
+    _only(doc, "liquidity")
+
+    doc = _history_with_one_refusal()
+    fat = next(g for g in doc["gated_out"] if g["reason"] != ledger.LIQUIDITY_REASON)
+    fat["dollar_volume"] = doc["run"]["liquidity"]["floor"] - 1
+    _only(doc, "liquidity")
+
+    doc = _history_with_one_refusal()
+    doc["evidence"]["illiquid"]["setups"] += 1
+    _only(doc, "liquidity")
+
+    doc = _history_with_one_refusal()
+    del doc["run"]["liquidity"]
+    assert "liquidity" not in contract_violations(doc), "a snapshot from before the block is not held to it"
+
+
+def test_a_scored_row_with_no_usable_rank_is_still_one_of_the_five_populations():
+    """A scored lead with no rank fell out of both `shortlist` and `rest`, so
+    the five populations did not add up to the record. No writer produces
+    such a row; a hand-edited or older file can, and the contract walker's
+    sum check is what found it. Not shown to be on the shortlist is `rest`."""
+    runs = _record([("2026-08-24", ("AAA", "BBB"))],
+                   returns={("AAA", "2026-08-24"): {"d5": 4.0}, ("BBB", "2026-08-24"): {"d5": 2.0}})
+    del runs[0]["candidates"][0]["rank"]
+
+    ev = ledger.evidence(runs)
+
+    assert ev["shortlist"]["setups"] + ev["rest"]["setups"] == ev["overall"]["setups"] == 2
+    assert (ev["shortlist"]["setups"] + ev["rest"]["setups"] + ev["refused"]["setups"]
+            + ev["crowded_out"]["setups"] + ev["illiquid"]["setups"]) == ev["record"]["setups"]
+
+
 def test_a_forward_return_of_zero_for_unknown_is_caught(document):
     """`0` is a return, not an absence, and it would be averaged in as a flat
     session that never happened."""
@@ -686,6 +777,8 @@ def test_forward_returns_are_sessions_after_the_burst_not_calendar_days():
     assert ledger.forward_returns(df, burst) == {
         "d1": 1.0, "d3": 3.0, "d5": 10.0,
         "as_of": df.index[5].date().isoformat(),
+        # no Open column in this frame, so the open basis is pending
+        "from_open": {"d1": None, "d3": None, "d5": None},
     }
 
 
@@ -727,6 +820,201 @@ def test_a_gap_in_the_closes_does_not_become_a_return():
     assert out["d3"] == 3.0
 
 
+def frame_with_opens(closes: list[float], opens: list[float], end: str = "2026-08-31") -> pd.DataFrame:
+    index = pd.bdate_range(end=end, periods=len(closes), name="timestamp")
+    return pd.DataFrame({"Open": [float(o) for o in opens], "Close": [float(c) for c in closes],
+                         "Volume": [1_000_000] * len(closes)}, index=index)
+
+
+def test_the_open_basis_divides_the_same_closes_by_the_next_sessions_open():
+    """The example that motivated the second basis, measured rather than
+    argued: burst close 100, next open 110, next close 111. The close basis
+    records d1 = +11.0% -- what the setup did -- while the price a reader of
+    an 18:16 ET email could actually have paid returns +0.91%. Same later
+    closes, two denominators, and both are kept."""
+    df = frame_with_opens(closes=[100, 111, 112, 113, 114, 121],
+                          opens=[99, 110, 111, 112, 113, 114])
+    burst = df.index[0].date().isoformat()
+
+    out = ledger.forward_returns(df, burst)
+
+    assert (out["d1"], out["d3"], out["d5"]) == (11.0, 13.0, 21.0)
+    assert out["from_open"] == {"d1": 0.91, "d3": 2.73, "d5": 10.0}
+    assert out["as_of"] == df.index[5].date().isoformat()
+
+
+def test_a_frame_with_no_usable_open_measures_the_close_basis_alone():
+    """No Open column, a NaN open, or a zero open: the close basis is still
+    a measurement and the open basis is null -- never a guess taken from the
+    burst close, which would silently make the two bases one."""
+    df = frame([100, 101, 102, 103, 104, 110])
+    burst = df.index[0].date().isoformat()
+    assert ledger.forward_returns(df, burst)["d1"] == 1.0
+    assert ledger.forward_returns(df, burst)["from_open"] == {"d1": None, "d3": None, "d5": None}
+
+    for bad in (float("nan"), 0.0, -1.0):
+        df = frame_with_opens(closes=[100, 101, 102, 103, 104, 110],
+                              opens=[100, bad, 101, 102, 103, 104])
+        out = ledger.forward_returns(df, df.index[0].date().isoformat())
+        assert out["d5"] == 10.0 and out["from_open"] == {"d1": None, "d3": None, "d5": None}, bad
+
+
+def test_a_horizon_the_open_basis_cannot_reach_is_null_on_that_basis_too():
+    df = frame_with_opens(closes=[100, 101, 102, 103], opens=[100, 100.5, 101, 102])
+    out = ledger.forward_returns(df, df.index[0].date().isoformat())
+    assert out["from_open"]["d1"] == 0.5 and out["from_open"]["d3"] == 2.49
+    assert out["from_open"]["d5"] is None and out["d5"] is None
+
+
+def test_the_universe_benchmark_is_the_equal_weight_mean_over_the_frames_that_carry_the_session():
+    """Two names whose returns from the session are known by construction,
+    a third that does not trade the session and so is absent from the mean
+    rather than a zero in it, on both bases, with n per horizon."""
+    aaa = frame_with_opens(closes=[100, 101, 102, 103, 104, 110], opens=[99, 100, 101, 102, 103, 104])
+    bbb = frame_with_opens(closes=[50, 51.5, 52, 52.5, 53, 56], opens=[49, 50.5, 51, 52, 52.5, 53])
+    session = aaa.index[0].date().isoformat()
+    ccc = frame_with_opens(closes=[10, 11, 12], opens=[10, 10.5, 11.5], end="2026-08-20")   # before the session
+
+    # A fourth name with NO Open column: it has a close-basis return and no
+    # open-basis one, so the two n's differ and neither can borrow the other.
+    # With both at 2 the mutant that reads len(close_values) for the open
+    # basis was invisible, which is how this test first shipped.
+    ddd = frame([200, 202, 204, 206, 208, 220])
+
+    bench = ledger.universe_returns({"AAA": aaa, "BBB": bbb, "CCC": ccc, "DDD": ddd}, session)
+
+    # AAA 1/3/10, BBB 3/5/12, DDD 1/3/10; CCC does not trade the session.
+    assert (bench["d1"], bench["d3"], bench["d5"]) == (
+        round(5 / 3, 2), round(11 / 3, 2), round(32 / 3, 2))
+    assert (bench["n1"], bench["n3"], bench["n5"]) == (3, 3, 3), "three frames carry the session"
+    assert bench["from_open"]["d1"] == round((1.0 + round((51.5 / 50.5 - 1) * 100, 2)) / 2, 2)
+    assert (bench["from_open"]["n1"], bench["from_open"]["n5"]) == (2, 2), (
+        "and only two of them carry a usable open")
+    assert ledger.universe_returns({"CCC": ccc}, session) == ledger.empty_benchmark()
+    assert ledger.universe_returns({}, session) == ledger.empty_benchmark()
+
+
+def test_the_universe_mean_is_summed_the_way_every_other_mean_here_is():
+    """math.fsum, not sum(). CPython 3.12 made the builtin compensated for
+    floats, so the same frames read by two interpreters published two
+    different benchmarks -- the defect mean_returns() already carries this
+    argument for, one function further out. These four returns are the ones
+    CLAUDE.md records: sum() gives 22.099999999999998 on 3.11 and 22.1 on
+    3.12, and the mean either side of that lands on opposite sides of
+    round(x, 2). On 3.12 the two are indistinguishable and this test is
+    documentation; on 3.11 it is load-bearing."""
+    wanted = [9.93, 6.9, 2.86, 2.41]
+    frames = {f"T{i}": frame([100.0, 100.0 * (1 + v / 100)]) for i, v in enumerate(wanted)}
+    session = next(iter(frames.values())).index[0].date().isoformat()
+
+    bench = ledger.universe_returns(frames, session)
+
+    assert [ledger.forward_returns(f, session)["d1"] for f in frames.values()] == wanted
+    assert bench["d1"] == round(math.fsum(wanted) / 4, 2)
+    if sum(wanted) != math.fsum(wanted):        # true on 3.11, false on 3.12
+        assert bench["d1"] != round(sum(wanted) / 4, 2), "sum() and fsum() disagree here and fsum wins"
+
+
+def test_fill_benchmarks_fills_the_window_once_and_never_before_the_sessions_exist(tmp_path):
+    """Same window and same idempotence as the forward returns: a run in the
+    window gains its benchmark from tonight's frames, keeps a horizon once
+    measured, and a run whose session is not behind `through` stays pending."""
+    book = ledger.Ledger(tmp_path / "docs")
+    universe = {"label": "data/symbols.txt (checked in)", "size": 2}
+    for session in ("2026-08-24", "2026-08-31"):
+        run, cands, gated = _run(session, tickers=("AAA",))
+        run["universe"] = dict(universe)
+        book.add_run(run, cands, gated)
+    assert all(r["benchmark"] == ledger.empty_benchmark() for r in book.runs)
+    aaa = frame_with_opens(closes=[100, 101, 102, 103, 104, 110], opens=[99, 100, 101, 102, 103, 104],
+                           end="2026-08-31")   # sessions 24..31 Aug
+    bbb = frame_with_opens(closes=[10, 10, 10, 10, 10, 10], opens=[10] * 6, end="2026-08-31")
+
+    # A caller with no universe to offer fills nothing at all: a --tickers run
+    # scanned a handful of names it was handed, and that is not a market.
+    assert book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 9, 4), universe=None) == 0
+    assert book.runs[0]["benchmark"]["d1"] is None
+    # Nor does a scan of a DIFFERENT universe fill this one's.
+    assert book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 9, 4),
+                                universe={"label": "somewhere else", "size": 2}) == 0
+    assert book.runs[0]["benchmark"]["d1"] is None
+
+    moved = book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 9, 4), universe=universe)
+
+    older = next(r for r in book.runs if r["date"] == "2026-08-24")
+    newer = next(r for r in book.runs if r["date"] == "2026-08-31")
+    assert moved == 1
+    assert (older["benchmark"]["d1"], older["benchmark"]["d5"], older["benchmark"]["n5"]) == (0.5, 5.0, 2)
+    assert older["benchmark"]["universe"] == universe, "stamped with the basket it is over"
+    assert older["benchmark"]["from_open"]["d1"] == round((round((101 / 100 - 1) * 100, 2) + 0.0) / 2, 2)
+    assert newer["benchmark"]["d1"] is None, "the sessions after it are in no frame yet"
+    # A later, different frame restates nothing already measured -- and the
+    # run has to be INCOMPLETE for that to be the rule under test: a run whose
+    # horizons are all filled is skipped by the early return above, so a
+    # restating fill was invisible until this row had a horizon still open.
+    partial = next(r for r in book.runs if r["date"] == "2026-08-31")
+    partial["benchmark"]["d1"], partial["benchmark"]["n1"] = 99.0, 7
+    partial["benchmark"]["from_open"]["d1"], partial["benchmark"]["from_open"]["n1"] = 88.0, 7
+    aaa2 = frame_with_opens(closes=[100, 150, 150, 150, 150, 150], opens=[99, 100, 101, 102, 103, 104],
+                            end="2026-09-07")   # carries 31 Aug and the sessions after it
+    bbb2 = frame_with_opens(closes=[10] * 6, opens=[10] * 6, end="2026-09-07")
+
+    assert book.fill_benchmarks({"AAA": aaa2, "BBB": bbb2}, date(2026, 9, 8), universe=universe) == 1
+    assert (partial["benchmark"]["d1"], partial["benchmark"]["n1"]) == (99.0, 7), (
+        "the horizon already measured keeps the value it was given")
+    assert partial["benchmark"]["from_open"]["d1"] == 88.0
+    assert partial["benchmark"]["d3"] is not None, "and the horizons still open were filled"
+    assert older["benchmark"]["d1"] == 0.5, "a complete run is untouched"
+
+    # Not behind `through`: pending, on a run with nothing measured yet, or
+    # the completed rows above would hide the rule by short-circuiting first.
+    fresh_book = ledger.Ledger(tmp_path / "docs2")
+    run, cands, gated = _run("2026-08-24", tickers=("AAA",))
+    run["universe"] = dict(universe)
+    fresh_book.add_run(run, cands, gated)
+    assert fresh_book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 8, 24), universe=universe) == 0
+    assert fresh_book.runs[0]["benchmark"] == ledger.empty_benchmark()
+    assert fresh_book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 9, 4), universe=universe) == 1
+
+
+def test_the_evidence_pairs_every_scored_setup_with_its_own_sessions_benchmark():
+    """The universe rung is the alternative "buy anything in the universe that
+    day", paired setup by setup so both sides span the same sessions in the
+    same proportions: a session with three picks weighs three times a
+    session with one. A setup whose run has no benchmark contributes nothing
+    and n says how many did."""
+    runs = _record([("2026-08-24", ("AAA", "BBB", "CCC")), ("2026-08-31", ("DDD",))],
+                   returns={(t, "2026-08-24"): {"d5": 10.0} for t in ("AAA", "BBB", "CCC")}
+                   | {("DDD", "2026-08-31"): {"d5": 4.0}})
+    for run in runs:
+        run["benchmark"] = ledger.empty_benchmark()
+    first = next(r for r in runs if r["date"] == "2026-08-24")
+    first["benchmark"].update(d5=1.0, n5=200)
+    first["benchmark"]["from_open"].update(d5=0.5, n5=199)
+    next(r for r in runs if r["date"] == "2026-08-31")["benchmark"].update(d5=4.0, n5=200)
+
+    ev = ledger.evidence(runs)
+    d5 = ledger.at_horizon(ev["universe"]["outcomes"], 5)
+
+    assert ev["universe"]["setups"] == 4 and d5["n"] == 4
+    assert d5["mean"] == round((1.0 * 3 + 4.0) / 4, 2), "three picks on the first session, one on the second"
+    # The rung carries the benchmark's OWN open basis, paired the same way,
+    # with its own n: only the first session recorded one, and its three
+    # picks are what weigh it. Asserting n == 0 here (which it was, before
+    # any run carried an open-basis benchmark) could not see the rung
+    # dropping the block.
+    assert d5["from_open"]["mean"] == 0.5 and d5["from_open"]["n"] == 3
+    assert not ev["universe"]["enough"]
+    next(r for r in runs if r["date"] == "2026-08-31")["benchmark"] = None
+    assert ledger.at_horizon(ledger.evidence(runs)["universe"]["outcomes"], 5)["n"] == 3
+    assert "universe" not in ("shortlist", "rest", "refused", "crowded_out", "illiquid")
+
+
+def test_the_pending_shape_is_pending_on_both_bases():
+    assert ledger.empty_returns() == {"d1": None, "d3": None, "d5": None, "as_of": None,
+                                      "from_open": {"d1": None, "d3": None, "d5": None}}
+
+
 def _row(ticker: str, session: str, **returns) -> dict:
     """One ledger row, with whatever forward returns the test gives it."""
     return {"ticker": ticker, "date": session,
@@ -742,7 +1030,8 @@ def test_the_mean_of_no_measurements_is_null_not_zero():
     rows = [_row(t, "2026-08-31") for t in ("AAA", "BBB", "CCC")]
 
     assert ledger.mean_returns(rows, _every_row_leads(rows)) == {
-        "d1": None, "d3": None, "d5": None, "n": 0, "rows": 0}
+        "d1": None, "d3": None, "d5": None, "n": 0, "rows": 0,
+        "from_open": {"d1": None, "d3": None, "d5": None, "n": 0}}
 
 
 def test_the_mean_counts_only_the_names_that_have_one():
@@ -751,7 +1040,8 @@ def test_the_mean_counts_only_the_names_that_have_one():
             _row("CCC", "2026-08-31")]
 
     assert ledger.mean_returns(rows, _every_row_leads(rows)) == {
-        "d1": 0.5, "d3": 4.0, "d5": None, "n": 2, "rows": 2}
+        "d1": 0.5, "d3": 4.0, "d5": None, "n": 2, "rows": 2,
+        "from_open": {"d1": None, "d3": None, "d5": None, "n": 0}}
 
 
 def test_a_row_that_continues_a_setup_is_not_a_second_observation():
@@ -1355,9 +1645,11 @@ def test_forward_returns_are_filled_into_an_earlier_run(tmp_path):
     old = [r for r in book.runs if r["date"] == "2026-08-24"][0]
     assert filled == 2, "the scored row and the gated one"
     assert old["candidates"][0]["forward_returns"] == {
-        "d1": 1.0, "d3": 3.0, "d5": 10.0, "as_of": "2026-08-31"}
+        "d1": 1.0, "d3": 3.0, "d5": 10.0, "as_of": "2026-08-31",
+        "from_open": {"d1": None, "d3": None, "d5": None}}
     assert old["forward_returns"] == {"d1": 1.0, "d3": 3.0, "d5": 10.0,
-                                      "n": 1, "rows": 1}, (
+                                      "n": 1, "rows": 1,
+                                      "from_open": {"d1": None, "d3": None, "d5": None, "n": 0}}, (
         "the run mean covers the scored candidates, one setup from one row")
 
 
@@ -1385,7 +1677,8 @@ def test_a_backfill_of_a_session_older_than_the_history_still_publishes_its_own(
 
     (published,) = [c for c in book.latest["candidates"] if c["ticker"] == "AAA"]
     assert published["forward_returns"] == {"d1": 1.0, "d3": 3.0, "d5": 10.0,
-                                            "as_of": "2026-08-31"}
+                                            "as_of": "2026-08-31",
+                                            "from_open": {"d1": None, "d3": None, "d5": None}}
     assert book.dashboard()["candidates"][0]["forward_returns"]["d1"] == 1.0
 
 
@@ -1435,13 +1728,46 @@ def test_a_return_already_recorded_is_not_rewritten(tmp_path):
 
 def test_a_run_older_than_the_fill_window_is_left_alone(tmp_path, monkeypatch):
     """A row still incomplete after this many runs is a name that stopped
-    trading; re-requesting it every night forever buys nothing."""
+    trading; re-requesting it every night forever buys nothing.
+
+    The run outside the window carries a ticker the runs inside it do not:
+    every run used to hold the same two names, pending_tickers() de-duplicates
+    by name, and so the expected list was the same whether the window existed
+    or not -- the whole window could be deleted with this test green, and the
+    backfill defect below lived under it.
+    """
     monkeypatch.setattr(ledger, "FILL_WINDOW_RUNS", 2)
     book = ledger.Ledger(tmp_path).load()
-    for day in (24, 25, 26):
+    book.add_run(*_run("2026-08-24", ("OLDIE",)))
+    for day in (25, 26):
         book.add_run(*_run(f"2026-08-{day}"))
 
-    assert book.pending_tickers(through=date(2026, 8, 31)) == ["AAA", "ZZZ"]
+    pending = book.pending_tickers(through=date(2026, 8, 31))
+
+    assert "OLDIE" not in pending, "the run outside the window was offered"
+    assert set(pending) == {"AAA", "ZZZ"}
+
+
+def test_a_backfill_older_than_the_window_still_resolves_its_own_outcomes(tmp_path, monkeypatch):
+    """README: "a run pinned to an old session resolves its own outcomes". It
+    did not, from the eleventh session back: the window is the newest runs by
+    SESSION, a SCAN_SESSION_DATE backfill of an older one landed outside it on
+    the very run that scored it, and its rows stayed pending forever. The run
+    just added is always in the window."""
+    monkeypatch.setattr(ledger, "FILL_WINDOW_RUNS", 2)
+    book = ledger.Ledger(tmp_path).load()
+    for day in (25, 26, 27):
+        book.add_run(*_run(f"2026-08-{day}"))
+    book.add_run(*_run("2026-08-18", ("BACKFILL",)))     # older than every run in the window
+    assert [r["date"] for r in book.runs][-1] == "2026-08-18", "precondition: it sorts last"
+
+    assert "BACKFILL" in book.pending_tickers(through=date(2026, 8, 31))
+    # And only because it is the run just added: the same entry loaded from
+    # disk on a later night is outside the window again, as designed.
+    book.write()
+    later = ledger.Ledger(tmp_path).load()
+    later.add_run(*_run("2026-08-28"))
+    assert "BACKFILL" not in later.pending_tickers(through=date(2026, 8, 31))
 
 
 # ===========================================================================
@@ -2414,6 +2740,180 @@ def _record(sessions: list[tuple[str, tuple[str, ...]]], returns: dict | None = 
     return book.runs
 
 
+def test_run_means_and_evidence_outcomes_carry_the_open_basis_with_its_own_n():
+    """Every mean the file publishes carries both bases, and the open
+    basis's n is its own: a row whose frame had no usable open has a
+    close-basis return and no open-basis one, and the two counts must not
+    be read as one. `enough` and `enough_from_open` are each basis's own
+    licence to be read as a rate -- the page must not borrow one for the
+    other."""
+    # One open-basis d5 inside the claimed band, so in_band is load-bearing.
+    rows = [_row("AAA", "2026-08-31", d1=2.0, d5=6.0, as_of="x", from_open={"d1": 1.0, "d3": None, "d5": 9.0}),
+            _row("BBB", "2026-08-31", d1=4.0, d5=8.0, as_of="x", from_open={"d1": 3.0, "d3": None, "d5": 6.0}),
+            _row("CCC", "2026-08-31", d1=-1.0, d5=2.0, as_of="x"),   # no open basis at all
+            _row("DDD", "2026-08-31")]
+
+    means = ledger.mean_returns(rows, _every_row_leads(rows))
+    assert (means["d1"], means["d5"], means["n"]) == (round(5 / 3, 2), round(16 / 3, 2), 3)
+    assert means["from_open"] == {"d1": 2.0, "d3": None, "d5": 7.5, "n": 2}
+
+    summary = ledger.outcome_summary(rows)
+    d5 = ledger.at_horizon(summary, 5)
+    assert (d5["mean"], d5["n"]) == (round(16 / 3, 2), 3)
+    assert d5["from_open"] == {"mean": 7.5, "n": 2, "best": 9.0, "worst": 6.0, "in_band": 1}
+    assert ledger.at_horizon(summary, 3)["from_open"]["n"] == 0
+
+    many = [_row(f"T{i}", "2026-08-31", d5=9.0, as_of="x",
+                 from_open={"d1": None, "d3": None, "d5": 9.0} if i % 2 == 0 else None)
+            for i in range(2 * ledger.MIN_SETUPS_FOR_A_RATE - 2)]
+    ev = ledger.evidence([{"date": "2026-08-31", "type": "evening", "shortlist_size": 5,
+                           "candidates": [dict(r, rank=i + 1, score=8.0, source="claude", checks={})
+                                          for i, r in enumerate(many)], "gated": []}])
+    assert ev["overall"]["outcomes"][2]["n"] == 2 * ledger.MIN_SETUPS_FOR_A_RATE - 2
+    assert ev["overall"]["outcomes"][2]["from_open"]["n"] == ledger.MIN_SETUPS_FOR_A_RATE - 1
+    band = next(b for b in ev["by_score"] if b["verdict"] == "A")
+    assert band["enough"] and not band["enough_from_open"], (
+        "the close basis clears the floor and the open basis does not; the file says both")
+    assert "enough_from_open" in ev["shortlist"] and "enough_from_open" in ev["by_check"][0] if ev["by_check"] else True
+
+
+@pytest.mark.parametrize("bad", [
+    "x", ["d1"], 3,
+    {"d1": "1.0", "n1": 0, "from_open": {}},
+    {"d1": 1.0, "n1": "5", "from_open": {}},
+    {"d1": 1.0, "n1": 5, "from_open": "x"},
+    {"d1": 1.0, "n1": 5, "from_open": {"d1": [1.0]}},
+    # JSON true, which Python calls an int: without the bool clause it loads
+    # and every mean over it silently counts the horizon as +1%.
+    {"d1": True, "n1": 5, "from_open": {}},
+    {"d1": 1.0, "n1": 5, "from_open": {"n1": False}},
+])
+def test_a_benchmark_block_of_the_wrong_shape_is_refused_at_load(tmp_path, bad):
+    """The eighth instance of the one-level-short class, and the first found
+    by two audit lenses independently. fill_benchmarks() and evidence() both
+    index into this block inside publish(), after the scan and every Claude
+    call are paid for; round 7 added it and did not extend the check round 6
+    had added for exactly this shape."""
+    docs = tmp_path / f"docs-{abs(hash(str(bad)))}"
+    docs.mkdir()
+    (docs / ledger.LEDGER_NAME).write_text(json.dumps({
+        "schema_version": ledger.SCHEMA_VERSION, "app": "SpicyStock", "generated": "x",
+        "runs": [{"date": "2026-08-24", "type": "evening", "benchmark": bad,
+                  "candidates": [], "gated": []}]}))
+
+    book = ledger.Ledger(docs).load()
+
+    assert book.runs == [] and book.load_error and "benchmark" in book.load_error, bad
+    assert ledger.quarantined(docs), "the unreadable file is set aside, not overwritten"
+
+
+def test_a_run_from_before_the_benchmark_loads_clean(tmp_path):
+    """Absent is not broken: a run written before round 7 has no benchmark
+    key, loads, and is simply one the rung cannot pair."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / ledger.LEDGER_NAME).write_text(json.dumps({
+        "schema_version": ledger.SCHEMA_VERSION, "app": "SpicyStock", "generated": "x",
+        "runs": [{"date": "2026-08-24", "type": "evening", "candidates": [], "gated": []}]}))
+
+    book = ledger.Ledger(docs).load()
+
+    assert len(book.runs) == 1 and not book.load_error
+
+
+@pytest.mark.parametrize("bad", ["x", ["gate.min_lynch_passes"], 3, None])
+def test_a_rules_block_of_the_wrong_shape_is_refused_at_load(tmp_path, bad):
+    """rules_view() indexes into this block inside evidence(), which publish()
+    calls after the scan and every Claude call are paid for -- the
+    one-level-short class, refused at load rather than waited for. Null is in
+    the list on purpose: the contract says a run from before the fingerprint
+    carries NO key, so a null is a shape no writer produces, and this module
+    briefly wrote one itself and then refused the file it had written."""
+    docs = tmp_path / f"docs-{abs(hash(str(bad)))}"
+    docs.mkdir()
+    (docs / ledger.LEDGER_NAME).write_text(json.dumps({
+        "schema_version": ledger.SCHEMA_VERSION, "app": "SpicyStock", "generated": "x",
+        "runs": [{"date": "2026-08-24", "type": "evening", "rules": bad,
+                  "candidates": [], "gated": []}]}))
+
+    book = ledger.Ledger(docs).load()
+
+    assert book.runs == [] and book.load_error and "rules" in book.load_error, bad
+    assert ledger.quarantined(docs), "the unreadable file is set aside, not overwritten"
+
+
+def test_a_run_from_before_the_fingerprint_loads_clean(tmp_path):
+    """Absent is not the same as broken: a run written before round 8 has no
+    rules key and must load, count as one the record cannot attribute, and
+    take nothing down."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / ledger.LEDGER_NAME).write_text(json.dumps({
+        "schema_version": ledger.SCHEMA_VERSION, "app": "SpicyStock", "generated": "x",
+        "runs": [{"date": "2026-08-24", "type": "evening", "candidates": [], "gated": []}]}))
+
+    book = ledger.Ledger(docs).load()
+
+    assert len(book.runs) == 1 and not book.load_error
+    assert ledger.rules_view(book.runs) == {"current": None, "sets": 0,
+                                            "differ": [], "runs_without": 1}
+
+
+def test_a_from_open_block_of_the_wrong_shape_is_refused_at_load(tmp_path):
+    """The seventh instance of the one-level-short class, closed before it
+    could open: a stored row whose from_open is a string, or whose from_open
+    d5 is a string, would load clean and take the evening run down inside
+    fill_forward_returns() or outcome_summary() after every Claude call had
+    been paid for. Refused at load and set aside instead, like the six
+    before it."""
+    for bad in ("x", ["d1"], 3, {"d1": "1.0", "d3": None, "d5": None}):
+        docs = tmp_path / f"docs-{abs(hash(str(bad)))}"
+        docs.mkdir()
+        row = {"ticker": "AAA", "date": "2026-08-24", "reason": "lynch_gate", "close": 9.0,
+               "gain_pct": 4.4, "volume_ratio": 1.8, "lynch_passes": 3, "lynch_total": 6,
+               "checks": {}, "context": {},
+               "forward_returns": {"d1": None, "d3": None, "d5": None, "as_of": None, "from_open": bad}}
+        (docs / ledger.LEDGER_NAME).write_text(json.dumps({
+            "schema_version": ledger.SCHEMA_VERSION, "app": "SpicyStock", "generated": "x",
+            "runs": [{"date": "2026-08-24", "type": "evening", "candidates": [], "gated": [row]}]}))
+
+        book = ledger.Ledger(docs).load()
+
+        assert book.runs == [] and book.load_error and "from_open" in book.load_error, bad
+        assert ledger.quarantined(docs), "the unreadable file is set aside, not overwritten"
+
+
+def test_an_older_row_gains_the_open_basis_when_its_bars_are_fetched(tmp_path):
+    """A row written before the basis existed carries no from_open. The fill
+    window still picks it up while a horizon is open on EITHER basis, and
+    fills the block key by key, never restating the close basis it already
+    holds."""
+    book = ledger.Ledger(tmp_path / "docs")
+    run, cands, gated = _run("2026-08-24", tickers=("AAA", "BBB"))
+    book.add_run(run, cands, gated)
+    old, done = book.runs[0]["candidates"][:2]
+    old["forward_returns"] = {"d1": 1.0, "d3": None, "d5": None, "as_of": "2026-08-25"}   # pre-basis shape
+    # And a row COMPLETE on the close basis in the pre-basis shape: the fill
+    # window used to stop at "every d is filled", which would have left this
+    # row without an open basis forever.
+    done["forward_returns"] = {"d1": 1.0, "d3": 3.0, "d5": 10.0, "as_of": "2026-08-31"}
+
+    assert {"AAA", "BBB"} <= set(book.pending_tickers(date(2026, 9, 4)))
+    df = frame_with_opens(closes=[100, 101, 102, 103, 104, 110], opens=[99, 100.5, 101, 102, 103, 104],
+                          end="2026-08-31")
+    moved = book.fill_forward_returns({"AAA": df, "BBB": df}, date(2026, 9, 4))
+
+    assert moved == 2
+    got = book.runs[0]["candidates"][0]["forward_returns"]
+    assert got["d1"] == 1.0, "the close-basis value already recorded is never restated"
+    assert got["d3"] == 3.0 and got["d5"] == 10.0
+    assert got["from_open"] == {"d1": 0.5, "d3": 2.49, "d5": 9.45}
+    complete = book.runs[0]["candidates"][1]["forward_returns"]
+    assert (complete["d1"], complete["d3"], complete["d5"]) == (1.0, 3.0, 10.0)
+    assert complete["from_open"] == {"d1": 0.5, "d3": 2.49, "d5": 9.45}
+    assert "BBB" not in book.pending_tickers(date(2026, 9, 4)), "complete on both bases now"
+
+
 def test_the_evidence_counts_each_setup_once_however_many_sessions_it_burst_on():
     """The rule mean_returns() exists for, one level up.
 
@@ -2431,6 +2931,280 @@ def test_the_evidence_counts_each_setup_once_however_many_sessions_it_burst_on()
 
     assert overall["n"] == 2, "AAA's three sessions are one setup"
     assert overall["mean"] == 15.0, "not 22.5, which is what counting rows gives"
+
+
+def _with_reason(runs: list[dict], ticker: str, reason, returns: dict) -> list[dict]:
+    """Add one gated row to the newest run, with the reason word and outcome given.
+
+    `_run` writes a single lynch_gate refusal per session; the control block
+    splits refusals from the names the call cap crowded out, so a test of it
+    needs both kinds on one night, and a row with no reason at all."""
+    row = {"ticker": ticker, "date": runs[0]["date"], "close": 9.0, "gain_pct": 4.4,
+           "volume": 5_000_000, "volume_ratio": 1.8, "lynch": "6/6", "lynch_passes": 6,
+           "lynch_total": 6, "lynch_detail": _detail(6),
+           "forward_returns": {**ledger.empty_returns(), **returns, "as_of": "x"}}
+    if reason is not None:
+        row["reason"] = reason
+    runs[0]["gated"].append(row)
+    return runs
+
+
+def test_the_alternative_is_what_the_strategy_refused_and_not_what_the_budget_crowded_out():
+    """The north star is "its picks beat THE ALTERNATIVE", and the record has
+    always archived the alternative -- every refused burst, with the same
+    forward returns -- without ever measuring against it.
+
+    Two populations, and the split is the point. A name the checklist or a
+    rule refused is the strategy's own judgement; a name that cleared the gate
+    and was never scored because MAX_TO_SCORE filled is a fact about the
+    budget. Folding the second into the first would let a full night pad the
+    control with names the screener actually liked, which flatters the picks
+    by exactly the amount those names went on to make.
+    """
+    runs = _record([("2026-08-24", ("AAA", "BBB"))],
+                   returns={("AAA", "2026-08-24"): {"d5": 10.0}, ("BBB", "2026-08-24"): {"d5": 6.0},
+                            ("ZZZ", "2026-08-24"): {"d5": 1.0}})   # _run's own lynch_gate refusal
+    _with_reason(runs, "VVV", "veto_up_days", {"d5": 3.0})
+    _with_reason(runs, "CCC", "score_cap", {"d5": 20.0})
+    _with_reason(runs, "OLD", None, {"d5": 5.0})                      # written before reasons existed
+
+    ev = ledger.evidence(runs)
+    d5 = lambda block: ledger.at_horizon(ev[block]["outcomes"], 5)   # noqa: E731
+
+    assert d5("overall")["mean"] == 8.0 and d5("overall")["n"] == 2
+    assert ev["refused"]["setups"] == 3 and d5("refused")["mean"] == 3.0, (
+        "the gate rejection, the veto and the reason-less row, and NOT the crowded-out one")
+    assert ev["crowded_out"]["setups"] == 1 and d5("crowded_out")["mean"] == 20.0
+    assert not ev["refused"]["enough"], "three setups is not a rate"
+
+
+def test_the_ledger_row_keeps_the_dollar_volume_rule_6_judged():
+    """slim_row() wrote a fixed key set and dollar_volume was not in it, so
+    the ledger held the floor on every run entry and the number it was
+    compared against on none of its rows. A measurement taken before the
+    outcome, kept for the reason `context` is."""
+    row = {"ticker": "T", "date": "2026-09-01", "close": 9.0, "gain_pct": 5.0, "volume_ratio": 2.0,
+           "lynch_passes": 3, "lynch_total": 6, "lynch_detail": [], "context": {},
+           "reason": ledger.LIQUIDITY_REASON, "dollar_volume": 1_000_000}
+    assert ledger.slim_row(row, scored=False)["dollar_volume"] == 1_000_000
+    assert ledger.slim_row({**row, "rank": 1, "score": 8.0, "verdict": "A",
+                            "provenance": {"source": "claude"}}, scored=True)["dollar_volume"] == 1_000_000
+
+
+def test_the_illiquid_population_is_kept_beside_the_control_and_not_in_it():
+    """Rule 6's refusals get a fifth population with the same shape as the
+    other four, and they are NOT part of `refused`: their forward returns are
+    bar prices on names the rule says are too thin to trade at those prices.
+    Folding them in would let the thinnest names flatter or damn the
+    strategy on returns nobody could capture. Deleting the population, or
+    letting `refused` keep the rows, both fail here."""
+    runs = _record([("2026-08-24", ("AAA",))],
+                   returns={("AAA", "2026-08-24"): {"d5": 6.0}, ("ZZZ", "2026-08-24"): {"d5": 3.0}})
+    _with_reason(runs, "VVV", "veto_up_days", {"d5": 3.0})
+    _with_reason(runs, "CCC", "score_cap", {"d5": 20.0})
+    _with_reason(runs, "THIN", ledger.LIQUIDITY_REASON, {"d5": 40.0})
+    _with_reason(runs, "THN2", ledger.LIQUIDITY_REASON, {"d5": -10.0})
+
+    ev = ledger.evidence(runs)
+    d5 = lambda block: ledger.at_horizon(ev[block]["outcomes"], 5)   # noqa: E731
+
+    assert ev["illiquid"]["setups"] == 2 and d5("illiquid")["mean"] == 15.0
+    assert ev["refused"]["setups"] == 2 and d5("refused")["mean"] == 3.0, (
+        "the control is the checklist's and the veto's verdict, not the floor's")
+    assert ev["crowded_out"]["setups"] == 1
+    assert set(ev["illiquid"]) == set(ev["refused"]) == {"setups", "outcomes", "enough", "enough_from_open"}
+    assert not ev["illiquid"]["enough"]
+    assert (ev["shortlist"]["setups"] + ev["rest"]["setups"] + ev["refused"]["setups"]
+            + ev["crowded_out"]["setups"] + ev["illiquid"]["setups"]) == ev["record"]["setups"], (
+        "five disjoint populations that together are every setup")
+
+
+def test_a_setup_that_was_scored_once_is_a_pick_even_if_it_was_later_refused():
+    """Leading rows only, the same rule every other block follows. AAA is
+    scored on the 24th and refused by the gate on the 25th: one move, one
+    setup, and it belongs to the population that led it. Counting the refusal
+    too would put the same move on both sides of the comparison."""
+    runs = _record([("2026-08-25", ()), ("2026-08-24", ("AAA",))],
+                   returns={("AAA", "2026-08-24"): {"d5": 12.0}})
+    runs[1]["gated"] = []   # _run plants a refused ZZZ on every session; not this test's subject
+    # the 25th's run: AAA appears again, refused, with its own (later) window
+    runs[0]["gated"] = [{"ticker": "AAA", "date": "2026-08-25", "close": 9.0, "gain_pct": 4.4,
+                         "volume": 5_000_000, "volume_ratio": 1.8, "lynch": "2/6",
+                         "lynch_passes": 2, "lynch_total": 6, "lynch_detail": _detail(2),
+                         "reason": "lynch_gate",
+                         "forward_returns": {**ledger.empty_returns(), "d5": -4.0, "as_of": "x"}}]
+
+    ev = ledger.evidence(runs)
+
+    assert ev["overall"]["setups"] == 1 and ledger.at_horizon(ev["overall"]["outcomes"], 5)["mean"] == 12.0
+    assert ev["refused"]["setups"] == 0, "the 25th is the same setup, already counted as a pick"
+
+
+def test_a_setup_refused_on_day_one_and_scored_on_day_two_is_a_pick_with_its_score():
+    """The common case the veto produces -- a 6/6 name three up days into a
+    run, allowed back the next session -- was invisible to every score-keyed
+    block: the setup's LEAD is the refused row, `scored` kept only leads that
+    were candidates, so the paid-for score and its outcome were in neither
+    overall nor by_score nor by_month, by_ticker printed no best score, and
+    the run's own mean skipped it. The committed history held three of them.
+    And the same setup must be on ONE side of the control: a pick, not also
+    a refusal."""
+    runs = _record([("2026-08-25", ("AAA",)), ("2026-08-24", ())],
+                   returns={("AAA", "2026-08-25"): {"d5": 15.0}})
+    runs[1]["gated"] = [{"ticker": "AAA", "date": "2026-08-24", "close": 9.0, "gain_pct": 4.4,
+                         "volume": 5_000_000, "volume_ratio": 1.8, "lynch": "6/6",
+                         "lynch_passes": 6, "lynch_total": 6, "lynch_detail": _detail(6),
+                         "reason": "veto_up_days", "checks": {"2": True},
+                         "forward_returns": {**ledger.empty_returns(), "d5": 20.0, "as_of": "x"}}]
+    runs[0]["gated"] = []
+    runs[0]["candidates"][0]["score"] = 8.5
+
+    ev = ledger.evidence(runs)
+
+    assert ev["overall"]["setups"] == 1 and ledger.at_horizon(ev["overall"]["outcomes"], 5)["mean"] == 15.0
+    assert ev["record"]["scored_setups"] == 1 and ev["record"]["setups"] == 1
+    assert [b["verdict"] for b in ev["by_score"] if b["setups"]] == ["A"]
+    assert ev["by_ticker"][0]["best_score"] == 8.5
+    assert ev["refused"]["setups"] == 0, "the same move counted on both sides of the control"
+    passed = next(c for c in ev["by_check"] if c["code"] == "2")
+    assert passed["passed"]["setups"] == 1 and ledger.at_horizon(passed["passed"]["outcomes"], 5)["mean"] == 20.0, (
+        "by_check still judges the FIRST appearance, whose verdict was passed on that day")
+
+
+def test_a_run_scores_its_own_pick_even_when_an_earlier_refusal_led_the_setup():
+    """The run-level mean, the same rule one level down -- and through the
+    ledger's own recomputation, not with the lead set handed in by hand: the
+    first version of this test did that, and a mutant that put the caller
+    back on setup_leads() passed it."""
+    book = ledger.Ledger("unused")
+    day1, cands1, _ = _run("2026-08-24", ())
+    day2, cands2, _ = _run("2026-08-25", ("AAA",))
+    refused = {"ticker": "AAA", "date": "2026-08-24", "close": 9.0, "gain_pct": 4.4,
+               "volume": 5_000_000, "volume_ratio": 1.8, "lynch": "6/6", "lynch_passes": 6,
+               "lynch_total": 6, "lynch_detail": _detail(6), "reason": "veto_up_days",
+               "forward_returns": ledger.empty_returns()}
+    book.add_run(day1, cands1, [refused])
+    book.add_run(day2, cands2, [])
+    book.runs[0]["candidates"][0]["forward_returns"] = {**ledger.empty_returns(), "d5": 15.0, "as_of": "x"}
+
+    book._recompute_means()
+
+    assert book.runs[0]["forward_returns"]["n"] == 1
+    assert book.runs[0]["forward_returns"]["d5"] == 15.0
+
+
+@pytest.mark.parametrize("field, value, says", [
+    ("checks", ["2", "L"], "checks is a JSON list"),
+    ("checks", "2,L", "checks is a JSON str"),
+    ("ticker", ["AAA"], "ticker is a JSON list"),
+    ("ticker", 7, "ticker is a JSON int"),
+    ("date", ["2026-08-25"], "date is a JSON list"),
+    ("d5", "1.2", "d5 return is a JSON str"),
+    ("d5", [1.2], "d5 return is a JSON list"),
+    ("d5", True, "d5 return is a JSON bool"),
+])
+def test_the_sixth_instance_a_row_shape_the_readers_index_into_is_refused_at_load(
+    tmp_path, field, value, says
+):
+    """Each of these loaded clean and took the EVENING run down after the scan
+    and every Claude call were paid for -- and because the file was not set
+    aside, every night after failed the same way. Refused at load now, set
+    aside, and the run goes on over an empty history."""
+    book = ledger.Ledger(tmp_path).load()
+    book.add_run(*_run("2026-08-25"))
+    book.write()
+    saved = json.loads((tmp_path / ledger.LEDGER_NAME).read_text())
+    row = saved["runs"][0]["candidates"][0]
+    if field == "d5":
+        row["forward_returns"]["d5"] = value
+    else:
+        row[field] = value
+    (tmp_path / ledger.LEDGER_NAME).write_text(json.dumps(saved))
+
+    later = ledger.Ledger(tmp_path).load()
+
+    assert later.load_error and says in later.load_error, later.load_error
+    assert later.runs == []
+    assert len(ledger.quarantined(tmp_path)) == 1
+
+
+def test_a_claude_scored_row_lands_in_its_verdict_bucket_with_its_outcome():
+    """No test asserted that a scored row lands in a by_score bucket at all:
+    a mutant restricting by_score to fallback rows -- emptying every bucket for
+    real scores -- passed the suite, because the floor test compared an empty
+    list to an empty list."""
+    runs = _record([("2026-08-25", ("AAA",))], returns={("AAA", "2026-08-25"): {"d5": 12.0}})
+    runs[0]["candidates"][0]["score"] = 8.5
+    runs[0]["candidates"][0]["source"] = "claude"
+
+    buckets = {b["verdict"]: b for b in ledger.evidence(runs)["by_score"] if b["setups"]}
+
+    assert list(buckets) == ["A"]
+    assert ledger.at_horizon(buckets["A"]["outcomes"], 5) == {
+        "horizon": 5, "mean": 12.0, "n": 1, "best": 12.0, "worst": 12.0, "in_band": 1,
+        "from_open": {"mean": None, "n": 0, "best": None, "worst": None, "in_band": 0}}
+
+
+def test_both_edges_of_the_claimed_band_count_as_inside_it():
+    """forward_returns() writes two decimals, so exactly 8.0 and exactly 20.0
+    are values a row carries. Making either edge exclusive passed the suite."""
+    low, high = ledger.CLAIMED_BAND
+    rows = [{"forward_returns": {"d5": low}}, {"forward_returns": {"d5": high}},
+            {"forward_returns": {"d5": low - 0.01}}, {"forward_returns": {"d5": high + 0.01}}]
+    assert ledger.at_horizon(ledger.outcome_summary(rows), 5)["in_band"] == 2
+
+
+def test_top_score_is_the_best_score_of_the_run(tmp_path):
+    """Printed in the runs table; max -> min passed the suite."""
+    book = ledger.Ledger(tmp_path).load()
+    entry = book.add_run(*_run("2026-08-25", ("AAA", "BBB", "CCC")))
+    assert entry["top_score"] == max(c["score"] for c in book.latest["candidates"]) == 8.0
+
+
+def test_the_evidence_means_are_correctly_rounded_like_the_run_means():
+    """CLAUDE.md says the fsum tests are load-bearing on 3.11, and only
+    mean_returns() was pinned: outcome_summary() -- every mean in the published
+    evidence block -- could go back to sum() with the suite green. The same
+    Fraction oracle, against evidence()['overall']."""
+    from fractions import Fraction
+
+    values = [9.93, 6.9, 2.86, 2.41]
+    exact = sum((Fraction(v) for v in values), Fraction(0)) / len(values)
+    rows = [{"forward_returns": {"d5": v}} for v in values]
+
+    got = ledger.at_horizon(ledger.outcome_summary(rows), 5)["mean"]
+
+    assert got == round(float(exact), 2) == 5.53
+    assert got == round(math.fsum(values) / len(values), 2)
+
+
+def test_the_records_session_count_is_the_one_the_streaks_read():
+    """evidence.record.sessions counted run dates alone while every streak's
+    history_sessions came from Record.of(), which also counts sessions the
+    rows prove -- so one undated run entry made one page publish two counts
+    of how many sessions one file holds."""
+    runs = _record([("2026-08-25", ("AAA",)), ("2026-08-24", ("BBB",))])
+    runs[0]["date"] = None            # the entry lost its date; its rows still say 2026-08-25
+
+    ev = ledger.evidence(runs)
+
+    assert ev["record"]["sessions"] == ledger.Record.of(runs).sessions == 2
+    assert ev["record"]["from"] == "2026-08-24"
+
+
+def test_the_shortlist_split_uses_each_runs_own_size():
+    """One shortlist size -- the newest run's -- split every run in the record,
+    so a TOP_N change re-split older nights at a boundary they never used."""
+    runs = _record([("2026-08-25", ("AAA", "BBB", "CCC")), ("2026-08-24", ("DDD", "EEE", "FFF"))],
+                   returns={(t, d): {"d5": 1.0} for t, d in
+                            [("AAA", "2026-08-25"), ("BBB", "2026-08-25"), ("CCC", "2026-08-25"),
+                             ("DDD", "2026-08-24"), ("EEE", "2026-08-24"), ("FFF", "2026-08-24")]})
+    runs[0]["shortlist_size"] = 1     # the newest night mailed one name
+    runs[1]["shortlist_size"] = 3     # the night before mailed three
+
+    ev = ledger.evidence(runs)
+
+    assert ev["shortlist"]["setups"] == 4 and ev["rest"]["setups"] == 2
 
 
 def test_the_streak_view_counts_appearances_because_a_setup_lead_is_always_day_one():

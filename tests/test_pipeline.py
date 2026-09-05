@@ -237,6 +237,26 @@ def test_archive_names_the_file_by_date_and_run_type(tmp_path):
 # ===========================================================================
 
 
+def visible(html: str) -> str:
+    """What a mail client shows, through a real parser. Every free-text leaf in
+    the email is escaped now, so an apostrophe in a sentence is an entity in
+    the source; a test that greps the source for the sentence reads the
+    escaping as the sentence going missing. The reader is the standard."""
+    from html.parser import HTMLParser
+
+    class Reader(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.parts = []
+
+        def handle_data(self, data):
+            self.parts.append(data)
+
+    reader = Reader()
+    reader.feed(html)
+    return " ".join(" ".join(reader.parts).split())
+
+
 def _main(monkeypatch, *argv: str) -> int:
     """Run the real main() and return the exit code it chose."""
     monkeypatch.setattr(sys, "argv", ["pipeline", *argv])
@@ -635,11 +655,18 @@ def served(fake_alpaca, ticker: str, session: str) -> pd.DataFrame:
 
 
 def expected_returns(frame: pd.DataFrame, burst: str, horizons=(1, 3, 5)) -> dict:
+    """Both bases, recomputed by hand from the served frame: the close basis
+    divides by the burst-day close, the open basis by the NEXT session's open."""
     sessions = [stamp.date().isoformat() for stamp in frame.index]
     start = sessions.index(burst)
     base = float(frame["close"].iloc[start])
-    return {f"d{h}": round((float(frame["close"].iloc[start + h]) / base - 1) * 100, 2)
-            for h in horizons if start + h < len(sessions)}
+    out = {f"d{h}": round((float(frame["close"].iloc[start + h]) / base - 1) * 100, 2)
+           for h in horizons if start + h < len(sessions)}
+    entry = float(frame["open"].iloc[start + 1]) if start + 1 < len(sessions) else None
+    out["from_open"] = {f"d{h}": (round((float(frame["close"].iloc[start + h]) / entry - 1) * 100, 2)
+                                  if entry and start + h < len(sessions) else None)
+                        for h in (1, 3, 5)}
+    return out
 
 
 def test_the_published_run_satisfies_every_invariant_it_declares(
@@ -696,6 +723,731 @@ def test_a_burst_the_gate_rejected_is_archived_with_its_checklist(
     assert {g["reason"] for g in data["gated_out"]} == {"lynch_gate"}
     assert all(len(g["lynch_detail"]) == g["lynch_total"] for g in data["gated_out"])
     assert mocked_boundaries["anthropic"].calls == [], "and nothing was paid for"
+
+
+def test_a_night_that_scored_nothing_still_publishes_the_size_of_its_own_gate(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, tmp_path
+):
+    """`run.gate.total_checks` is what the page and the email interpolate into
+    "rejected at the >=3/6 2LYNCH gate". It was read off the SCORED rows
+    alone, so a night that scored nothing published null there -- and the page
+    concatenated it, printing a threshold against a total that does not exist
+    over rows correctly showing 5/6 beside it. The checklist was measured for
+    every one of these bursts; only the scoring was skipped."""
+    monkeypatch.setattr(pipeline, "MIN_LYNCH_PASSES", 99)
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+
+    pipeline.run("evening", dry_run=True, tickers=names)
+
+    data = clean(tmp_path)
+    assert data["run"]["scored"] == 0, "precondition: nothing reached the scorer"
+    assert data["run"]["bursts"] == 3, "and the checklist ran on all three"
+    measured = lynch.evaluate_2lynch(ohlcv("burst", variant=0))["total"]
+    assert data["run"]["gate"]["total_checks"] == measured
+    assert data["run"]["gate"]["total_checks"] == data["gated_out"][0]["lynch_total"], (
+        "the same number the rows beneath it print"
+    )
+
+
+def test_a_night_that_found_no_burst_at_all_publishes_no_gate_size(
+    fake_alpaca, mocked_boundaries, ohlcv, tmp_path
+):
+    """The other side of that fix, and the reason it is `next(..., None)` and
+    not a constant read off src.lynch. Nothing measured a checklist here, so
+    there is no measurement to report; publishing a 6 anyway would be the same
+    invention in the opposite direction. The page's job is to say the part it
+    knows -- the pass threshold -- and drop the part it does not."""
+    for i in range(3):
+        fake_alpaca.add_history(f"Q{i}", ohlcv("flat", variant=i))
+
+    pipeline.run("evening", dry_run=True, tickers=[f"Q{i}" for i in range(3)])
+
+    data = clean(tmp_path)
+    assert data["run"]["bursts"] == 0 and data["gated_out"] == []
+    assert data["run"]["gate"]["total_checks"] is None
+    assert data["run"]["gate"]["min_lynch_passes"] == pipeline.MIN_LYNCH_PASSES, (
+        "the threshold is a rule, not a measurement, and is published either way"
+    )
+
+
+def test_the_email_says_how_many_cleared_the_gate_and_were_never_looked_at(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The funnel went "Passed 2LYNCH gate: 54" straight to "Shortlisted: 1".
+
+    On any night with more survivors than the call budget, the names that
+    cleared the checklist and were never scored appeared NOWHERE -- while the
+    line beside it read "Scored by Claude: 25 of 25", which a reader takes for
+    complete coverage of the 54. The page's funnel has had this cut since step
+    9 and names the same cause; the email did not have it at all.
+
+    Asserted on the mail the real run actually sent, not on a stats block
+    written here: the numbers have to be the ones the pipeline computed, and
+    a hand-built block is a second opinion about them.
+    """
+    monkeypatch.setattr(pipeline, "MAX_TO_SCORE", 2)
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=5)
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = clean(tmp_path)
+    passed, scored = data["run"]["passed_gate"], data["run"]["scored"]
+    assert passed > scored, f"precondition: the cap must bite ({passed} through, {scored} scored)"
+
+    html = mocked_boundaries["resend"].sent[-1]["html"]
+    assert f"Passed 2LYNCH gate: {passed}" in html
+    assert f"Crowded out by the 2-call cap: {passed - scored}" in html
+    # The label carries the cap the RUN applied, not this module's constant --
+    # a morning email re-presenting an older night must not relabel it with
+    # today's budget.
+    assert data["run"]["score_cap"] == 2
+
+
+def test_the_crowded_out_count_is_the_call_cap_alone_and_not_every_unscored_burst(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """Four reasons send a burst away unscored and only ONE of them is the
+    call budget. Counting every unscored row would report names an absolute
+    rule refused as names the cap crowded out -- two of the three facts this
+    project forbids collapsing, folded into a line that states the third.
+
+    Needs a night with both kinds in it, or the wrong count and the right one
+    are the same number: with nothing vetoed, every unscored burst IS a
+    score_cap one, and the check passes on a fixture rather than on the rule.
+    """
+    names = []
+    for i in range(3):   # refused outright, whatever the checklist says
+        fake_alpaca.add_history(f"V{i}", ohlcv("burst", variant=i,
+                                               up_run=lynch.MAX_CONSECUTIVE_UP_DAYS + 1))
+        names.append(f"V{i}")
+    for i in range(4):   # clean, and more than the budget below allows
+        fake_alpaca.add_history(f"C{i}", ohlcv("burst", variant=10 + i, up_run=1))
+        names.append(f"C{i}")
+    monkeypatch.setattr(pipeline, "MAX_TO_SCORE", 2)
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = clean(tmp_path)
+    reasons = [g["reason"] for g in data["gated_out"]]
+    vetoed = sum(1 for r in reasons if r.startswith("veto_"))
+    capped = sum(1 for r in reasons if r == "score_cap")
+    assert vetoed and capped and vetoed != capped, (
+        f"precondition: the night needs both kinds, and in different "
+        f"numbers, or the two counts cannot be told apart: {reasons}")
+
+    html = mocked_boundaries["resend"].sent[-1]["html"]
+    assert f"Crowded out by the 2-call cap: {capped}" in html
+    assert f"Refused by an absolute rule: {vetoed}" in html
+    assert f"Crowded out by the 2-call cap: {len(reasons)}" not in html, (
+        "every unscored burst counted as the budget's doing")
+
+
+def test_a_night_the_cap_never_reached_says_nothing_about_it(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The other side of the same rule the refusals line follows: a night that
+    scored everything that got through reads exactly as it did before, and a
+    "Crowded out by the 25-call cap: 0" would be noise dressed as a finding."""
+    monkeypatch.setattr(pipeline, "MAX_TO_SCORE", 50)
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = clean(tmp_path)
+    assert data["run"]["passed_gate"] == data["run"]["scored"], "precondition"
+    assert "Crowded out" not in mocked_boundaries["resend"].sent[-1]["html"]
+
+
+def test_a_hole_before_the_session_and_a_raising_detector_both_degrade_the_run():
+    """The scan reports both now (src.scanner); the run must say so. A hole is
+    a symbol that could not be measured for the session, the same class as a
+    stale one, and is counted with it against the same fraction. A detector
+    that raised is a defect and is reported at any count."""
+    report = pipeline.RunReport()
+    pipeline._check_scan({"requested": 100, "with_bars": 100, "stale": {}, "no_bars": 0,
+                          "dropped": 0, "session": "2026-09-04",
+                          "gapped": {f"G{i}": "2026-09-02" for i in range(11)},
+                          "detector_errors": {}}, report)
+    assert [e["stage"] for e in report.errors] == ["scan"]
+    assert "11 had no bar for the session before it" in report.errors[0]["message"]
+
+    report = pipeline.RunReport()
+    pipeline._check_scan({"requested": 100, "with_bars": 100, "stale": {}, "no_bars": 0,
+                          "dropped": 0, "session": "2026-09-04", "gapped": {},
+                          "detector_errors": {"B3": "ValueError: a dtype surprise"}}, report)
+    assert report.status == "degraded"
+    assert "raised on 1 of 100" in report.errors[0]["message"]
+    assert "ValueError: a dtype surprise" in report.errors[0]["message"]
+
+
+def test_the_email_names_a_command_line_universe_the_way_the_archive_does(
+    fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """With --tickers the funnel line said "N checked-in US common stocks" over
+    names typed on the command line, while docs/data.json beside it correctly
+    said --tickers. One label now, read by both."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    html = mocked_boundaries["resend"].sent[-1]["html"]
+    label = clean(tmp_path)["run"]["universe"]["label"]
+    assert "named on the command line" in html and "checked-in" not in html
+    assert "named on the command line" in label, label
+
+
+def _two_bursts_one_thin(fake_alpaca, ohlcv):
+    """Two genuine bursts and a small universe to rank them against: the
+    thinner one sits below the 30th percentile of what traded."""
+    from tests.test_scanner import _thin
+
+    fake_alpaca.add_history("FAT", _thin(ohlcv, "burst", price=200.0, volume=5_000_000))
+    fake_alpaca.add_history("THIN", _thin(ohlcv, "burst", price=5.0, volume=200_000, variant=1))
+    names = ["FAT", "THIN"]
+    for i in range(8):
+        fake_alpaca.add_history(f"Q{i}", _thin(ohlcv, "flat", price=80.0,
+                                               volume=2_000_000, variant=i + 2))
+        names.append(f"Q{i}")
+    return names
+
+
+def test_a_burst_the_liquidity_floor_refused_is_in_the_record_and_says_why(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The finding two refuters confirmed by execution: a genuine burst rule 6
+    refused was in no count, no gated_out row, no ledger row and no line of
+    the email, while the funnel printed "4% bursts found: 1" over it. Every
+    surface holds it now under its own word -- neither a veto nor a gate
+    rejection, because the checklist was never consulted -- and the run
+    records the floor it applied, in dollars, beside the count."""
+    names = _two_bursts_one_thin(fake_alpaca, ohlcv)
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = published(tmp_path)
+    assert data["run"]["bursts"] == 2, "the refused burst is a burst the scan found"
+    assert [c["ticker"] for c in data["candidates"]] == ["FAT"]
+    (row,) = data["gated_out"]
+    assert row["ticker"] == "THIN" and row["reason"] == ledger.LIQUIDITY_REASON
+    assert row["lynch_detail"], "the checklist still ran on it, so its row can be judged later"
+    liquidity = data["run"]["liquidity"]
+    assert liquidity["refused"] == 1 and liquidity["pctile"] == scanner.ScanConfig().min_dollar_volume_pctile
+    assert row["dollar_volume"] < liquidity["floor"] <= data["candidates"][0]["dollar_volume"]
+    assert data["run"]["scored"] + len(data["gated_out"]) == data["run"]["bursts"]
+    # The ledger keeps the row, the floor and the population apart.
+    (entry,) = recorded(tmp_path)["runs"]
+    assert entry["liquidity"] == liquidity
+    assert [g["reason"] for g in entry["gated"]] == [ledger.LIQUIDITY_REASON]
+    assert data["evidence"]["illiquid"]["setups"] == 1
+    assert data["evidence"]["refused"]["setups"] == 0, "rule 6's refusals are not the control"
+    # And the email says so, with the floor.
+    html = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "4% bursts found: 2" in html
+    assert f"Below the liquidity floor ({emailer.compact_dollars(liquidity['floor'])}/day, the 30th percentile): 1" in html
+    assert "THIN" not in html.split("Passed 2LYNCH gate")[0].split("Below the liquidity floor")[0], (
+        "the thin name is not passed off as scored")
+
+
+def test_a_run_records_the_rules_it_applied_and_the_record_reads_them_back(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The record kept `model` and nothing about the rules, so changing the
+    gate or the 4% made every published mean an average over two screeners
+    under one label. Every run carries the numbers now, in the snapshot and
+    in the ledger entry, and the record says how many distinct sets it holds
+    and which keys differ."""
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    data, book = published(tmp_path), recorded(tmp_path)
+    rules = data["run"]["rules"]
+    assert rules == pipeline.rules_fingerprint(), "what the run applied, not a copy"
+    assert rules["gate.min_lynch_passes"] == pipeline.MIN_LYNCH_PASSES
+    assert rules["scan.min_gain_pct"] == scanner.ScanConfig().min_gain_pct
+    assert rules["check.max_consecutive_up_days"] == lynch.MAX_CONSECUTIVE_UP_DAYS
+    assert book["runs"][0]["rules"] == rules, "and the durable file keeps it"
+    view = data["evidence"]["rules"]
+    assert view["sets"] == 1 and view["differ"] == [] and view["runs_without"] == 0
+    assert view["current"] == rules
+
+
+def test_a_record_written_under_two_screeners_says_so_and_names_what_moved(tmp_path):
+    """The state this exists for. Two runs, one threshold apart, and a third
+    from before the fingerprint existed: the record must not report the third
+    as agreeing, and must name the key that moved rather than saying only
+    that something did."""
+    runs = [
+        {"date": "2026-09-02", "type": "evening", "candidates": [], "gated": [],
+         "rules": {"scan.min_gain_pct": 5.0, "gate.min_lynch_passes": 3}},
+        {"date": "2026-09-01", "type": "evening", "candidates": [], "gated": [],
+         "rules": {"scan.min_gain_pct": 4.0, "gate.min_lynch_passes": 3}},
+        {"date": "2026-08-31", "type": "evening", "candidates": [], "gated": []},
+    ]
+
+    view = ledger.rules_view(runs)
+
+    assert view["sets"] == 2 and view["runs_without"] == 1
+    assert view["differ"] == ["scan.min_gain_pct"], "the key that moved, not just that one did"
+    assert view["current"]["scan.min_gain_pct"] == 5.0, "the newest run's rules"
+
+    # `sets` counts DISTINCT rules, not runs that carry them: a month of
+    # nights under one screener is one set. Without this a record of thirty
+    # identical runs would have told the reader it spanned thirty screeners
+    # and that every mean on the page blended them.
+    same = [dict(runs[1], date="2026-09-03"), runs[1], dict(runs[1], date="2026-08-30")]
+    steady = ledger.rules_view(same)
+    assert steady["sets"] == 1 and steady["differ"] == [] and steady["runs_without"] == 0
+
+
+def _universe_file(monkeypatch, tmp_path, names) -> None:
+    """Point the scanner at a symbol file of these names, so the run is a
+    genuine UNIVERSE scan rather than a --tickers one. The difference is not
+    cosmetic: a --tickers run has no universe, so it neither gives a
+    benchmark nor gets one."""
+    path = tmp_path / "symbols.txt"
+    path.write_text("\n".join(names) + "\n", encoding="utf-8")
+    monkeypatch.setattr(scanner, "SYMBOLS_FILE", path)
+
+
+def _five_name_market(fake_alpaca, ohlcv) -> list:
+    from tests.test_scanner import _thin
+
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    names = ["BURST"]
+    # Letters only: the symbol-file parser refuses a digit, and this market
+    # has to be readable as a real universe file.
+    for i, suffix in enumerate("ABCD"):
+        fake_alpaca.add_history(f"Q{suffix}", _thin(ohlcv, "flat", price=40.0 + i,
+                                                    volume=3_000_000, variant=i + 2))
+        names.append(f"Q{suffix}")
+    return names
+
+
+def test_a_later_scan_fills_the_earlier_runs_universe_benchmark_from_its_own_frames(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The scan reads the whole universe with a year of lookback and used to
+    keep only the bursting names' frames. The evening after, those frames
+    carry every name's close on the earlier session and the sessions since,
+    so the earlier run's "buy anything in the universe that day" resolves at
+    no extra request -- and equals the equal-weight mean, recomputed here by
+    hand from the frames the double served."""
+    names = _five_name_market(fake_alpaca, ohlcv)
+    _universe_file(monkeypatch, tmp_path, names)
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
+    pipeline.run("evening", dry_run=True)
+    first_session = recorded(tmp_path)["runs"][0]["date"]
+    assert recorded(tmp_path)["runs"][0]["benchmark"] == ledger.empty_benchmark(), (
+        "nothing after that session exists yet")
+    before = len(mocked_boundaries["alpaca"].bar_requests)
+    # The frames the fill is handed, captured as it is handed them: the
+    # equal-weight mean is then recomputed BY HAND from the same inputs,
+    # which is the comparison worth making. Re-fetching them from the double
+    # afterwards is a second path with its own arithmetic, and the two
+    # disagreed by 0.03 on a synthetic market that re-dates per call.
+    used: dict = {}
+    real_fill = ledger.Ledger.fill_benchmarks
+
+    def capture(self, frames, through=None, universe=None):
+        used.update(frames)
+        return real_fill(self, frames, through, universe)
+
+    monkeypatch.setattr(ledger.Ledger, "fill_benchmarks", capture)
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    pipeline.run("evening", dry_run=True)
+
+    book = recorded(tmp_path)
+    older = next(r for r in book["runs"] if r["date"] == first_session)
+    assert set(used) == set(names), "every name the scan read, burst or not"
+    by_hand = [ledger.forward_returns(frame, first_session) for frame in used.values()]
+    closes = [r["d1"] for r in by_hand if r["d1"] is not None]
+    opens = [r["from_open"]["d1"] for r in by_hand if r["from_open"]["d1"] is not None]
+    assert older["benchmark"]["d1"] == round(sum(closes) / len(closes), 2)
+    assert older["benchmark"]["n1"] == len(names) == len(closes)
+    assert older["benchmark"]["from_open"]["d1"] == round(sum(opens) / len(opens), 2)
+    assert older["benchmark"]["d3"] is None, "three sessions have not passed"
+    assert older["benchmark"]["universe"] == older["universe"], (
+        "stamped with the basket it was measured over, which is this run's own")
+    assert len(mocked_boundaries["alpaca"].bar_requests) - before == 1 + 1, (
+        "the scan's own batch and the forward-returns fetch; the benchmark cost no request")
+    assert published(tmp_path)["evidence"]["universe"]["setups"] >= 1
+
+
+def test_a_tickers_run_neither_gives_a_benchmark_nor_gets_one(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """THE defect this rule exists for. The smoke test README documents is
+    `--tickers BURST`, and the fill took whatever the caller had scanned: it
+    measured one frame against the previous night's run, which had SCORED
+    BURST -- so the alternative the north star is measured against became
+    the pick itself, at n=1, and was never corrected, because a measured
+    horizon keeps its value. A run with no universe offers no benchmark and
+    receives none; the earlier night's stays pending until a real scan of
+    the universe IT scanned comes along, which is the honest answer."""
+    names = _five_name_market(fake_alpaca, ohlcv)
+    _universe_file(monkeypatch, tmp_path, names)
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
+    pipeline.run("evening", dry_run=True)
+    scored_that_night = [c["ticker"] for c in recorded(tmp_path)["runs"][0]["candidates"]]
+    assert "BURST" in scored_that_night, "precondition: the name the smoke test names was scored"
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    book = recorded(tmp_path)
+    older = next(r for r in book["runs"] if r["date"] == session_offset(-1))
+    assert older["benchmark"] == ledger.empty_benchmark(), (
+        "one name is not a market, and its return is not anyone's alternative")
+    smoke = next(r for r in book["runs"] if r["date"] == session_offset(0))
+    assert smoke["benchmark"] == ledger.empty_benchmark()
+    rung = published(tmp_path)["evidence"]["universe"]
+    assert all(entry["n"] == 0 for entry in rung["outcomes"]), "nothing measured, rather than the pick"
+
+    # Nor does a SECOND --tickers run on the same names benchmark the first:
+    # their universe labels match each other, so label-matching alone would
+    # let one smoke test become the other's alternative. Running the
+    # documented smoke test twice is not an exotic state.
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(1))
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+    for entry in recorded(tmp_path)["runs"]:
+        assert entry["benchmark"] == ledger.empty_benchmark(), entry["date"]
+
+    # And a genuine scan of that universe afterwards still fills it.
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(2))
+    pipeline.run("evening", dry_run=True)
+    older = next(r for r in recorded(tmp_path)["runs"] if r["date"] == session_offset(-1))
+    assert older["benchmark"]["d1"] is not None and older["benchmark"]["n1"] == len(names)
+
+
+def test_a_liquidity_refused_row_carries_the_streak_the_run_read_for_it(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The streak lookup covered the kept candidates and not the refused
+    ones, so every liquidity_floor row was archived with streak: null -- the
+    value the contract reserves for a run that could NOT read its history --
+    one line under a lynch_gate row carrying a full block from the same
+    read. The page rendered "streak unknown -- this run recorded none" for
+    a run that demonstrably read its history. Two nights: the first records
+    the honest no_history block, the second remembers the first and says
+    what became of it, in the fourth reason word."""
+    names = _two_bursts_one_thin(fake_alpaca, ohlcv)
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
+    pipeline.run("evening", dry_run=True, tickers=names)
+    (thin,) = published(tmp_path)["gated_out"]
+    assert thin["reason"] == ledger.LIQUIDITY_REASON
+    assert isinstance(thin["streak"], dict), "the row carries the block the run read, not null"
+    assert thin["streak"]["unknown_reason"] == ledger.NO_HISTORY and thin["streak"]["seen_before"] == 0
+    assert thin["dollar_volume"] == recorded(tmp_path)["runs"][0]["gated"][0]["dollar_volume"], (
+        "and the ledger row keeps the number rule 6 judged")
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    pipeline.run("evening", dry_run=True, tickers=names)
+
+    (thin,) = published(tmp_path)["gated_out"]
+    assert thin["streak"]["seen_before"] == 1 and thin["streak"]["last_outcome"] == ledger.LIQUIDITY_REASON
+    assert thin["streak"]["last_seen"] == session_offset(-1)
+
+
+def test_the_morning_re_presents_the_liquidity_refusals_the_evening_recorded(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The follow-through reads the funnel off the snapshot's own rows, and
+    the floor it prints is the one THAT run recorded."""
+    names = _two_bursts_one_thin(fake_alpaca, ohlcv)
+    pipeline.run("evening", dry_run=True, tickers=names)
+    floor = published(tmp_path)["run"]["liquidity"]["floor"]
+    market_clock.before_the_open()
+
+    pipeline.run("morning", dry_run=False)
+
+    html = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert f"Below the liquidity floor ({emailer.compact_dollars(floor)}/day" in html and "4% bursts that session: 2" in html
+
+
+def test_a_night_every_burst_was_below_the_floor_says_so_and_never_blames_the_checklist(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """One thin burst among fat non-bursting names: the scan found one burst
+    and rule 6 refused it. The note under the empty table must say that,
+    not that the checklist rejected it, and not that the market was quiet."""
+    from tests.test_scanner import _thin
+
+    fake_alpaca.add_history("THIN", _thin(ohlcv, "burst", price=5.0, volume=200_000, variant=1))
+    names = ["THIN"]
+    for i in range(8):
+        fake_alpaca.add_history(f"Q{i}", _thin(ohlcv, "flat", price=80.0, volume=2_000_000, variant=i + 2))
+        names.append(f"Q{i}")
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = published(tmp_path)
+    assert data["run"]["bursts"] == 1 and data["candidates"] == []
+    html = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "The one burst the scan found was below the liquidity floor. The checklist never got a say." in html
+    assert "No candidate passed the 2LYNCH checklist" not in html and "quiet market" not in html
+
+
+def test_the_record_says_what_each_run_scanned(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """README documents a four-ticker --tickers run as the local smoke test,
+    and that run writes docs/ledger.json like any other: one row per name,
+    read as history by the next real run on another session, committed by
+    the next `git add docs`. The row used to carry nothing that told it from
+    a scan -- data.json's headline said "named on the command line" and the
+    ledger entry beside it said nothing -- so the record could not answer
+    whether a streak, or a scored setup in the evidence, came from a night
+    that scanned the universe. Every entry carries its universe now, in the
+    ledger and in the runs table the page reads."""
+    snapshot = evening_run(tmp_path, fake_alpaca, ohlcv)
+
+    (entry,) = recorded(tmp_path)["runs"]
+    assert entry["universe"] == snapshot["run"]["universe"]
+    assert "named on the command line" in entry["universe"]["label"]
+    assert entry["universe"]["size"] == 1
+    (run,) = snapshot["runs"]
+    assert run["universe"] == entry["universe"], "the page's runs table drops the marker"
+    # And it survives a reload as the shape it was written in: a later run
+    # reads this entry back, and the marker is only useful if it is still
+    # there for a reader of the file the commit-back keeps.
+    book = ledger.Ledger(tmp_path / "docs").load()
+    assert book.runs[0]["universe"] == entry["universe"]
+
+
+def test_a_delivery_failure_is_written_into_the_record_it_leaves_behind(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """Exit 3 keeps the record -- and the record said run.status "ok" with
+    errors [], so the page and the next morning presented the night as clean
+    and nothing in it said the shortlist never arrived. Only the Actions
+    colour knew. The failure is stamped into both files before it is raised."""
+    import resend
+
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    monkeypatch.setattr(sys, "argv", ["pipeline", "evening", "--tickers", ",".join(names)])
+    monkeypatch.setattr(resend.Emails, "send", lambda *a, **k: (_ for _ in ()).throw(
+        RuntimeError("The example.invalid domain is not verified.")))
+
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+
+    assert exc.value.code == pipeline.EXIT_FAILED_AFTER_PUBLISH, "the exit code is unchanged"
+    data = clean(tmp_path)
+    assert data["run"]["status"] == "degraded"
+    assert any(e["stage"] == "email" and "not delivered" in e["message"] for e in data["run"]["errors"])
+    ledger_file = json.loads((tmp_path / "docs" / "ledger.json").read_text())
+    assert ledger_file["runs"][0]["status"] == "degraded"
+
+
+def test_a_lunchtime_evening_dispatch_re_presents_the_published_session_instead_of_re_scanning(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """A Run-workflow click before the close, to test the secrets, is an
+    evening run whose newest completed session is YESTERDAY's -- which the
+    ledger already holds as a clean run. It used to re-scan it, pay Claude
+    again, and hand add_run() a DEGRADED entry that replaced the clean one;
+    exit 2 qualifies for the commit-back, so the overwrite reached the branch.
+    Reproduced: ok -> degraded, six Claude calls for one session."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=False, tickers=names)
+    ledger_of = lambda: [(r["date"], r["status"]) for r in   # noqa: E731
+                         json.loads((tmp_path / "docs" / "ledger.json").read_text())["runs"]]
+    assert ledger_of() == [ledger_of()[0]] and ledger_of()[0][1] == "ok"
+    paid = len(mocked_boundaries["anthropic"].calls)
+
+    market_clock.before_the_open()          # the next day at lunch: not closed
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, tickers=names, report=report)
+
+    assert ledger_of()[0][1] == "ok", "the clean record was replaced by a degraded re-scan"
+    assert len(mocked_boundaries["anthropic"].calls) == paid, "and the session was paid for twice"
+    assert report.exit_code == pipeline.EXIT_DEGRADED, "the clock disagreement is still reported"
+    assert any("already published" in e["message"] for e in report.errors)
+    assert "follow-through" in mocked_boundaries["resend"].sent[-1]["subject"].lower()
+
+
+def test_a_backfill_does_not_make_the_morning_say_nothing_has_published(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """SCAN_SESSION_DATE is README's way to seed a history. It rewrote
+    docs/data.json's headline to the OLDER session while the same file's
+    `runs` still listed last night, and the next morning announced that
+    nothing had published for three sessions -- over a file naming the newer
+    run two lines further down. The record gains the backfill; the headline
+    keeps the newest session."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=True, tickers=names)
+    tonight = clean(tmp_path)["run"]["date"]
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-3))
+    pipeline.run("evening", dry_run=True, tickers=names)
+    monkeypatch.delenv("SCAN_SESSION_DATE")
+
+    data = clean(tmp_path)
+    assert data["run"]["date"] == tonight, "the headline moved to the backfilled session"
+    assert [r["date"] for r in data["runs"]] == [tonight, session_offset(-3)], "and the record has both"
+
+    market_clock.before_the_open()
+    report = pipeline.RunReport()
+    pipeline.run("morning", dry_run=False, report=report)
+
+    subject = mocked_boundaries["resend"].sent[-1]["subject"]
+    assert "NOTHING PUBLISHED" not in subject, subject
+    assert report.exit_code == pipeline.EXIT_OK, [e["message"] for e in report.errors]
+
+
+@pytest.mark.parametrize("mutation", ["checks_list", "ticker_list", "date_list", "d5_string"])
+def test_a_ledger_row_shaped_one_level_wrong_cannot_kill_the_run_after_claude_was_paid(
+    mutation, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The sixth instance of the class, driven through the real evening path
+    the way the fifth was: publish a run, bend ONE stored row on disk, run
+    again. Each of these loaded clean and crashed at archive -- after the scan
+    and every Claude call -- and was never set aside, so the next night died
+    the same way. Now: refused at load, set aside, exit 2, record written."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=2)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=True, tickers=names)
+    path = tmp_path / "docs" / "ledger.json"
+    led = json.loads(path.read_text())
+    run = led["runs"][0]
+    run["date"] = session_offset(-5)
+    for row in run["candidates"] + run["gated"]:
+        row["date"] = session_offset(-5)
+    row = run["candidates"][0]
+    {"checks_list": lambda: row.__setitem__("checks", ["2", "L"]),
+     "ticker_list": lambda: row.__setitem__("ticker", ["F0"]),
+     "date_list": lambda: row.__setitem__("date", [session_offset(-5)]),
+     "d5_string": lambda: row["forward_returns"].__setitem__("d5", "1.2")}[mutation]()
+    path.write_text(json.dumps(led))
+    report = pipeline.RunReport()
+
+    pipeline.run("evening", dry_run=True, tickers=names, report=report)   # must not raise
+
+    assert report.exit_code == pipeline.EXIT_DEGRADED
+    assert any("set aside" in e["message"] or "could not be read" in e["message"] for e in report.errors)
+    assert len(ledger.quarantined(tmp_path / "docs")) == 1
+    assert json.loads(path.read_text())["runs"], "and tonight's record was written"
+
+
+def test_a_morning_with_nothing_to_read_invents_no_market_counts(
+    market_clock, mocked_boundaries, tmp_path
+):
+    """The guaranteed state of the first production morning: docs/data.json
+    is the fixture (refused by name) or absent. The funnel printed "4% bursts
+    that session: 0 | Passed 2LYNCH gate: 0" under a session it called "not
+    recorded" -- two invented counts three lines above a cell saying this is
+    not a statement about the market."""
+    market_clock.before_the_open()
+
+    pipeline.run("morning", dry_run=False)
+
+    text = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "4% bursts that session: not recorded" in text
+    assert "Passed 2LYNCH gate: not recorded" in text
+    assert "4% bursts that session: 0" not in text
+
+
+def test_the_morning_email_shows_a_candidate_exactly_as_the_evening_one_did(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """One name, two emails a night apart, and the checklist lines and the
+    three numbers read differently: the evening path prints src.lynch's own
+    lines and raw floats, the morning rebuilt the lines off disk with the
+    code and label split ("PASS  2 first or second burst") and printed values
+    ledger._num() had turned to ints ("+12%", "8x", "7/10"). The reader who
+    gets both sees two vocabularies for one judgement."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=2)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=False, tickers=names)
+    evening = visible(mocked_boundaries["resend"].sent[-1]["html"])
+
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+    morning = visible(mocked_boundaries["resend"].sent[-1]["html"])
+
+    def cells(text: str, ticker: str) -> str:
+        # from the ticker to the next candidate's rank marker or the table's end
+        start = text.index(f"1. {ticker}") if f"1. {ticker}" in text else text.index(ticker)
+        chunk = text[start:start + 700]
+        return chunk.split(" 2. ")[0]
+
+    for ticker in names[:1]:
+        e, m = cells(evening, ticker), cells(morning, ticker)
+        for line in ("PASS  2_", "FAIL  2_", "PASS  L_", "FAIL  L_"):
+            assert (line in e) == (line in m), (line, e[:200], m[:200])
+        for token in ("_first_or_second_burst", "%", "x"):
+            assert token in e and token in m
+        import re
+        assert re.findall(r"[+-]\d+\.\d%", e)[:1] == re.findall(r"[+-]\d+\.\d%", m)[:1], "the gain"
+        assert re.findall(r"\d+\.\d\dx", e)[:1] == re.findall(r"\d+\.\d\dx", m)[:1], "the ratio"
+        assert re.findall(r"\d+\.\d/10", e)[:1] == re.findall(r"\d+\.\d/10", m)[:1], "the score"
+
+
+def test_a_delivery_failure_keeps_the_night_the_run_already_paid_for(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The record is written BEFORE the email, and 1 was hiding that.
+
+    A run that dies delivering -- an unverified RESEND_FROM domain is the
+    likely one, and the message below is the one Resend actually returns --
+    has already scanned, rendered every chart, paid for every Claude call and
+    written a complete docs/data.json and docs/ledger.json. It exited 1, the
+    same code as a preflight that spent nothing, and evening.yml reasonably
+    read 1 as "nothing trustworthy to commit" and skipped the persist step.
+
+    Exactly the defect the degraded-run fix closed, one stage later. This is
+    the code that tells the two nights apart; the workflow half is pinned in
+    tests/test_docs_are_true.py.
+    """
+    import resend
+
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    monkeypatch.setattr(sys, "argv", ["pipeline", "evening", "--tickers", ",".join(names)])
+
+    def refuse(params, options=None):
+        raise RuntimeError("The example.invalid domain is not verified. Please add "
+                           "and verify your domain on https://resend.com/domains")
+    monkeypatch.setattr(resend.Emails, "send", refuse)
+
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+
+    assert exc.value.code == pipeline.EXIT_FAILED_AFTER_PUBLISH
+    assert exc.value.code != pipeline.EXIT_OK, "the job must still go red"
+
+    data = clean(tmp_path)
+    assert data["run"]["bursts"] == 3 and len(data["candidates"]) == 3, (
+        "the night that was paid for is on disk, complete"
+    )
+    ledger_file = json.loads((tmp_path / "docs" / "ledger.json").read_text())
+    assert len(ledger_file["runs"]) == 1
+    assert len(ledger_file["runs"][0]["candidates"]) == 3
+    assert len(mocked_boundaries["anthropic"].calls) == 3, "and it was paid for"
+
+
+def test_a_failure_before_the_record_exists_is_still_a_plain_failure(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The other side, and the reason the new code is a THIRD one rather than
+    a widening of the persist condition to "any non-zero". A preflight that
+    spent nothing has no record to keep, and must not claim one -- the
+    workflow would commit whatever docs/ the checkout happened to carry and
+    call it tonight's run."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setattr(sys, "argv", ["pipeline", "evening", "--tickers", ",".join(names)])
+
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+
+    assert exc.value.code == pipeline.EXIT_FAILED
+    assert not (tmp_path / "docs" / "data.json").exists(), "nothing was published"
+    assert mocked_boundaries["anthropic"].calls == [], "and nothing was spent"
 
 
 def test_a_burst_the_call_cap_dropped_says_so_rather_than_disappearing(
@@ -898,6 +1650,9 @@ def test_a_second_run_keeps_the_first_and_fills_its_forward_returns(
                                burst_session, horizons=(1,))
     assert first["forward_returns"]["d1"] == want_d1["d1"], "one session had closed"
     assert first["forward_returns"]["d3"] is None, "the others had not"
+    assert first["forward_returns"]["from_open"]["d1"] == want_d1["from_open"]["d1"], (
+        "and the open basis closed with it, from the next session's open")
+    assert first["forward_returns"]["from_open"]["d3"] is None
 
     # ...and now it is three sessions later.
     monkeypatch.setenv("SCAN_SESSION_DATE", next_session)
@@ -916,9 +1671,15 @@ def test_a_second_run_keeps_the_first_and_fills_its_forward_returns(
     # `n` is the SETUPS the mean was taken over and `rows` is what they were
     # collapsed from -- one candidate here, so the two agree and the pair says
     # nothing was deduplicated away.
+    assert older["forward_returns"]["from_open"] == {
+        "d1": first["forward_returns"]["from_open"]["d1"],
+        "d3": want["from_open"]["d3"], "d5": want["from_open"]["d5"]}, (
+        "the open basis fills the same way: the recorded horizon kept, the rest measured")
     assert book["runs"][1]["forward_returns"] == {
         "d1": first["forward_returns"]["d1"], "d3": want["d3"], "d5": want["d5"],
-        "n": 1, "rows": 1}
+        "n": 1, "rows": 1,
+        "from_open": {"d1": first["forward_returns"]["from_open"]["d1"],
+                      "d3": want["from_open"]["d3"], "d5": want["from_open"]["d5"], "n": 1}}
     assert clean(tmp_path)["runs"][1]["forward_returns"]["d5"] == want["d5"], (
         "and the dashboard reads the same history")
 
@@ -949,10 +1710,11 @@ def test_todays_candidates_are_published_pending_rather_than_guessed(
     pipeline.run("evening", dry_run=True, tickers=universe)
 
     data = clean(tmp_path)
-    assert all(c["forward_returns"] == {"d1": None, "d3": None, "d5": None, "as_of": None}
-               for c in data["candidates"])
+    assert all(c["forward_returns"] == ledger.empty_returns() for c in data["candidates"]), (
+        "pending on both bases")
     assert data["runs"][0]["forward_returns"] == {"d1": None, "d3": None, "d5": None,
-                                                  "n": 0, "rows": 0}
+                                                  "n": 0, "rows": 0,
+                                                  "from_open": {"d1": None, "d3": None, "d5": None, "n": 0}}
     assert len(mocked_boundaries["alpaca"].bar_requests) == 1, (
         "and no second request was made for returns that cannot exist")
 
@@ -994,7 +1756,7 @@ def test_the_ledger_row_is_the_judgement_next_to_what_followed_it(
 
     (row,) = [r for r in recorded(tmp_path)["runs"][0]["candidates"]
               if r["ticker"] == "BURST"]
-    assert set(row) == {"ticker", "date", "rank", "score", "verdict", "source",
+    assert set(row) == {"ticker", "date", "rank", "score", "verdict", "source", "dollar_volume",
                         "close", "gain_pct", "volume_ratio", "lynch_passes",
                         "lynch_total", "checks", "context", "forward_returns"}
     assert set(row["checks"]) == {"2", "L", "Y", "N", "C", "H"}
@@ -1111,7 +1873,7 @@ def test_an_evening_run_before_the_close_degrades_and_says_so_everywhere(
     # the email
     (sent,) = mocked_boundaries["resend"].sent
     assert sent["subject"].startswith("[4% Burst] DEGRADED — ")
-    assert problem["message"] in sent["html"]
+    assert problem["message"] in visible(sent["html"])
     # the ledger and the dashboard snapshot
     assert published(tmp_path)["run"]["errors"] == report.errors
     assert recorded(tmp_path)["runs"][0]["status"] == "degraded"
@@ -1339,6 +2101,78 @@ def test_a_history_read_that_raises_outright_still_cannot_kill_the_run(
     assert json.loads((tmp_path / "docs" / ledger.LEDGER_NAME).read_text())["runs"]
 
 
+def test_a_quarantined_ledger_survives_the_commit_back_and_the_next_night_heals(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """Ledger.set_aside() keeps the casualty on the container's disk, which is
+    worth nothing on its own: in Actions the container is thrown away. What
+    makes it a real rescue is that `git add docs` STAGES it -- .gitignore
+    blocks docs/charts/ and nothing else under docs/ -- so the file a run
+    could not read is committed for a human to look at.
+
+    And the night after must not repeat the whole thing. The persist step
+    commits on exit 2, and an unreadable history is exactly an exit 2, so the
+    FRESH ledger reaches the branch and the next run reads it. Before that fix
+    a corrupt ledger was permanent: every night quarantined it again, wrote a
+    good one, and threw the good one away with the container.
+
+    Simulated against a real `git` in a real repository rather than reasoned
+    about, because both halves are claims about what a command does.
+    """
+    import subprocess
+
+    docs = tmp_path / "docs"
+    docs.mkdir(parents=True, exist_ok=True)
+    corrupt = "{not json at all"
+    (docs / ledger.LEDGER_NAME).write_text(corrupt)
+
+    def git(*args):
+        return subprocess.run(("git",) + args, cwd=tmp_path, capture_output=True, text=True)
+
+    git("init", "-q", "-b", "main")
+    git("config", "user.email", "t@example.invalid")
+    git("config", "user.name", "t")
+    # The one rule under docs/ that this repo's .gitignore carries, copied
+    # from it rather than invented: if a later round gitignores the casualty
+    # too, that is the change this test exists to fail on.
+    (tmp_path / ".gitignore").write_text(_docs_ignore_rules())
+    git("add", "-A")
+    git("commit", "-qm", "a ledger nothing can read")
+
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=2)
+    pipeline.run("evening", dry_run=True, tickers=names)
+
+    git("add", "docs")   # exactly what evening.yml's persist step runs
+    staged = git("diff", "--cached", "--name-only").stdout.split()
+    (kept,) = ledger.quarantined(docs)
+    assert f"docs/{kept.name}" in staged, (
+        f"the casualty is not staged, so it dies with the container: {staged}")
+    assert kept.read_text() == corrupt
+    assert not any(p.startswith("docs/charts/") for p in staged), (
+        "the charts are the one thing under docs/ that must NOT be committed")
+    git("commit", "-qm", "night one")
+
+    # Night two, over what night one committed.
+    before = set(ledger.quarantined(docs))
+    pipeline.run("evening", dry_run=True, tickers=names)
+
+    assert set(ledger.quarantined(docs)) == before, (
+        "the second night quarantined again, so nothing healed")
+    assert json.loads((docs / ledger.LEDGER_NAME).read_text())["runs"]
+
+
+def _docs_ignore_rules() -> str:
+    """This repo's own .gitignore rules that mention docs/, and only those.
+
+    Read rather than retyped: the test above is about which files under docs/
+    reach a commit, and a hand-copied rule set would go on asserting the
+    answer for rules the repo no longer has.
+    """
+    root = pathlib.Path(__file__).resolve().parents[1]
+    return "".join(line for line in root.joinpath(".gitignore").read_text().splitlines(True)
+                   if "docs" in line and not line.lstrip().startswith("#"))
+
+
 def test_the_history_is_read_once_and_the_two_files_agree_about_it(
     monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
@@ -1564,7 +2398,7 @@ def test_a_morning_run_following_a_stale_evening_run_says_which_session(
     assert session_offset(-4) in problem["message"]
     assert str(scanner.current_session()) in problem["message"]
     assert report.exit_code == pipeline.EXIT_DEGRADED
-    assert problem["message"] in mocked_boundaries["resend"].sent[0]["html"]
+    assert problem["message"] in visible(mocked_boundaries["resend"].sent[0]["html"])
 
 
 def test_a_morning_run_three_weeks_stale_says_so_in_the_subject_line(
@@ -1893,12 +2727,16 @@ def test_the_exit_codes_are_the_numbers_actions_reads():
 
     This is that place. The contract is with GitHub Actions, which reads the
     integer and knows nothing about the name: 0 is a run to trust, 1 is a run
-    that produced nothing, and 2 is the one that matters -- a run that finished
-    and must not be traded off as a complete scan. A 2 that silently became a 0
-    would turn every degraded night green, which is the failure step 5 exists
-    to end.
+    that produced nothing, 2 is the one that matters -- a run that finished
+    and must not be traded off as a complete scan -- and 3 is a run that
+    failed with its record already written, which the workflow keeps and
+    still reports red. A 2 that silently became a 0 would turn every degraded
+    night green, which is the failure step 5 exists to end; a 3 that became a
+    1 would throw away a night that was paid for, which is the failure the
+    persist condition exists to end.
     """
-    assert (pipeline.EXIT_OK, pipeline.EXIT_FAILED, pipeline.EXIT_DEGRADED) == (0, 1, 2)
+    assert (pipeline.EXIT_OK, pipeline.EXIT_FAILED, pipeline.EXIT_DEGRADED,
+            pipeline.EXIT_FAILED_AFTER_PUBLISH) == (0, 1, 2, 3)
 
 
 def test_the_three_numbers_that_decide_what_a_run_costs_and_shows():
@@ -2006,6 +2844,15 @@ MALFORMED_SNAPSHOTS = {
     # short-circuit that only opens when there is no day number, so a sweep
     # varying one field at a time reports it safe.
     "run.status is null": (_run_field(status=None), "run.status"),
+    # run.liquidity, under the same rule as the rows: absent is a snapshot
+    # from before the block, present in a shape no writer produces is refused.
+    "run.liquidity is a list": (_run_field(liquidity=[30, 1e8, 1]), "run.liquidity"),
+    "run.liquidity is a string": (_run_field(liquidity="30th"), "run.liquidity"),
+    "run.liquidity is null": (_run_field(liquidity=None), "run.liquidity"),
+    "run.liquidity.floor is a string": (_run_field(liquidity={"pctile": 30.0, "floor": "1e8", "refused": 0}), "run.liquidity.floor"),
+    "run.liquidity.pctile is a string": (_run_field(liquidity={"pctile": "30", "floor": 1e8, "refused": 0}), "run.liquidity.pctile"),
+    "run.liquidity.refused is a string": (_run_field(liquidity={"pctile": 30.0, "floor": 1e8, "refused": "1"}), "run.liquidity.refused"),
+    "run.liquidity.floor is null": (_run_field(liquidity={"pctile": 30.0, "floor": None, "refused": 0}), False),
     "run.errors is a number": (_run_field(errors=3), "run.errors"),
     "run.errors is a bool": (_run_field(errors=True), "run.errors"),
     "run.scored_by counts are strings": (

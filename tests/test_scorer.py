@@ -23,11 +23,14 @@ import pytest
 
 from src.scanner import Candidate, ScanConfig, detect_setup
 from src.scorer import (
+    KNOWLEDGE_PATH,
     MAX_TOKENS,
+    RETRY_CORRECTION,
     SAMPLING_MODELS,
     STRUCTURED_OUTPUT_MODELS,
     UNSCORED_VERDICT,
     _fallback_score,
+    cache_usage,
     is_fatal_auth_failure,
     metrics_payload,
     render_chart,
@@ -36,7 +39,7 @@ from src.scorer import (
     score_candidate,
     volume_ratio_basis,
 )
-from tests.fakes import FakeTextBlock
+from tests.fakes import FakeTextBlock, billed_usage
 
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
@@ -45,11 +48,17 @@ PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 
 class _Reply:
-    """One `messages.create` return value, with the stop_reason a real one has."""
+    """One `messages.create` return value, with the stop_reason a real one has.
+
+    `usage` is attached by _ScriptedMessages rather than here, because what a
+    reply is billed depends on the REQUEST that produced it -- whether it
+    asked for caching, and whether it was the first of the run to do so.
+    """
 
     def __init__(self, text: str, stop_reason: str = "end_turn") -> None:
         self.content = [FakeTextBlock(text=text)]
         self.stop_reason = stop_reason
+        self.usage = None
 
 
 class _ScriptedAnthropic:
@@ -73,6 +82,9 @@ class _ScriptedMessages:
         step = script[min(len(self._owner.calls) - 1, len(script) - 1)]
         if isinstance(step, BaseException):
             raise step
+        # Billed by the same rule tests/fakes.py uses, so the two doubles in
+        # this suite cannot disagree about what a cached prefix costs.
+        step.usage = billed_usage(kwargs, self._owner.calls)
         return step
 
 
@@ -225,13 +237,194 @@ def test_the_request_binds_to_the_real_sdk_signature(model):
     inspect.signature(real.messages.create).bind(**kwargs)
 
 
+def test_an_unparseable_reply_is_asked_again_differently_not_resent(candidate, claude,
+                                                                    tmp_path):
+    """The retry used to resend the request byte-for-byte at temperature 0.
+
+    Measured before the fix: a prose reply produced two IDENTICAL requests,
+    both unparseable, and the candidate fell back anyway having been paid for
+    twice. That is exactly the reasoning this function already applies to a
+    rejected credential -- "a rejected key is not transient; the retry is
+    theatre" -- and it was not applied to a reply that arrived in the wrong
+    shape, which is equally a fact about the request that produced it.
+    """
+    prose = ("I'd rate this setup around 7 out of 10 -- the base is tight and "
+             "the volume expansion is convincing.")
+    claude.replies(prose, json.dumps({"score": 7.5, "reason": "r",
+                                      "verdict": "B+", "key_risk": "k"}))
+    # With a real chart, so the assertion below that the image survives the
+    # retry is about an image that is actually there. Without one the content
+    # is a single text block and that check cannot fail.
+    chart = render_chart(candidate.ticker, candidate.history, out_dir=str(tmp_path))
+
+    out = score_candidate(candidate, make_lynch(4), CONTEXT, chart)
+
+    first, second = claude.calls
+    assert first != second, "the retry resent the same request"
+    assert RETRY_CORRECTION not in _text_of(first), "the first ask carries no correction"
+    assert RETRY_CORRECTION in _text_of(second)
+    # ADDED to the request, not substituted for it. A retry carrying the
+    # correction alone would ask the model to score a candidate it can no
+    # longer see, and the reply would parse -- so nothing downstream would
+    # notice. Found by mutation: this assertion is the only thing that does.
+    assert candidate.ticker in _text_of(second)
+    assert make_lynch(4)["summary"] in _text_of(second)
+    sent = second["messages"][0]["content"]
+    assert first["messages"][0]["content"] == sent[:-1], (
+        "the retry did not simply append the correction to what it already sent")
+    assert sent[0]["type"] == "image", "the retry dropped the chart image"
+    # The system prompt is untouched, so the cached prefix still hits -- a
+    # correction that edited it would pay a second write on every retry.
+    assert first["system"] == second["system"]
+    assert out["provenance"]["source"] == "claude", "and the second ask landed"
+
+
+def test_a_transport_failure_retries_the_request_it_already_had(candidate, claude):
+    """The other half, and the reason this is not "always add a correction":
+    an API error says nothing about the request's shape. Correcting a request
+    that was fine tells the model its own output was wrong when it never
+    produced any.
+    """
+    claude.replies(RuntimeError("overloaded_error: server is busy"),
+                   json.dumps({"score": 6.0, "reason": "r", "verdict": "B", "key_risk": "k"}))
+
+    out = score_candidate(candidate, make_lynch(4), CONTEXT, None)
+
+    first, second = claude.calls
+    assert first == second, "a transport error should resend what it had"
+    assert RETRY_CORRECTION not in _text_of(second)
+    assert out["provenance"]["source"] == "claude"
+
+
+def test_the_knowledge_base_is_sent_as_a_cacheable_block(candidate, claude):
+    """knowledge/strategy.md is byte-identical on every call of a run and is
+    59% of each request -- measured at ~1,590 system tokens against ~388 of
+    metrics and ~721 for an 869x622 chart. Without cache_control the run paid
+    full price to send the same document up to MAX_TO_SCORE times a night; a
+    write costs 1.25x and a read 0.1x, so break-even is 1.4 calls and a full
+    night is 43% cheaper.
+
+    Asserted on the block, because the saving is invisible from inside the run
+    -- the reply is identical either way -- and nothing else here would notice
+    it being dropped.
+    """
+    score_candidate(candidate, make_lynch(4), CONTEXT, None)
+
+    system = claude.calls[0]["system"]
+    assert system[0]["cache_control"] == {"type": "ephemeral"}, system[0]
+    # No explicit ttl: 5 minutes is the default and the cheap write. An hour
+    # costs 2x, and every cache READ resets the window, so a run's sequential
+    # calls hold the entry without one.
+    assert "ttl" not in system[0]["cache_control"]
+    # One block. Two would split the prefix and cache only the first.
+    assert len(system) == 1, system
+
+
+def test_the_cacheable_block_is_a_shape_the_installed_sdk_accepts():
+    """A signature bind proves `system` may be a list; it does not prove the
+    BLOCK is well formed. The SDK's own TextBlockParam is what says that, and
+    it is checkable here with no socket -- which is the only kind of check
+    this suite can make about a wire shape.
+    """
+    from anthropic.types import TextBlockParam
+
+    kwargs = request_kwargs("the knowledge base", [{"type": "text", "text": "t"}])
+    block = kwargs["system"][0]
+
+    assert set(block) <= set(TextBlockParam.__annotations__), (
+        f"the SDK does not know these keys: {set(block) - set(TextBlockParam.__annotations__)}")
+    assert "cache_control" in TextBlockParam.__annotations__, (
+        "this SDK build has no cache_control on a system block; the request "
+        "would be sending an unknown field")
+
+
+def test_cache_usage_reads_what_the_reply_reports_and_survives_one_that_does_not():
+    """The saving is invisible from inside the run, so a cache that silently
+    stopped working would cost 1.25x forever. This is the only thing that
+    would say so -- and it runs after a reply has been paid for and parsed, so
+    a missing or malformed usage block must not raise.
+    """
+    class Usage:
+        cache_creation_input_tokens = 1590
+        cache_read_input_tokens = 0
+        input_tokens = 1109
+
+    class Reply:
+        usage = Usage()
+
+    assert cache_usage(Reply()) == {"cache_write": 1590, "cache_read": 0, "uncached": 1109}
+
+    class Hit(Reply):
+        usage = type("U", (), {"cache_creation_input_tokens": 0,
+                               "cache_read_input_tokens": 1590,
+                               "input_tokens": 1109})()
+
+    assert cache_usage(Hit())["cache_read"] == 1590
+
+    # Every way a reply can fail to carry the numbers.
+    for reply in (object(),
+                  type("R", (), {"usage": None})(),
+                  type("R", (), {"usage": type("U", (), {})()})(),
+                  type("R", (), {"usage": type("U", (), {
+                      "cache_read_input_tokens": "1590",       # a string
+                      "cache_creation_input_tokens": True,     # a bool is not a count
+                      "input_tokens": None})()})()):
+        assert cache_usage(reply) == {"cache_write": 0, "cache_read": 0, "uncached": 0}, reply
+
+
+def test_a_run_totals_the_cache_across_every_call(candidate, claude):
+    """One write and N-1 reads is the whole shape of the saving, and totalling
+    is what makes it visible in a log the operator can check. The double bills
+    the way the API does -- the first call of a run writes the prefix, the
+    rest read it -- so a flat per-call number cannot make this pass."""
+    stats: dict = {}
+    lynch_result = make_lynch(4)
+    n = 3
+
+    score_all([(candidate, lynch_result, CONTEXT, None)] * n, stats=stats)
+
+    prefix = len(KNOWLEDGE_PATH.read_text()) // 4
+    assert stats["cache"] == {
+        "cache_write": prefix,               # once, on the first call
+        "cache_read": prefix * (n - 1),      # every call after
+        "uncached": 1109 * n,                # metrics and chart, per candidate
+    }, stats["cache"]
+
+
+def test_a_request_that_stops_asking_for_caching_reports_none(candidate, claude,
+                                                              monkeypatch):
+    """The inverse check, and the one that makes the test above load-bearing:
+    the double reports a cached prefix only for a block that CARRIES
+    cache_control, so dropping it shows up as zeroes rather than as the same
+    numbers."""
+    import src.scorer as scorer_mod
+
+    real = scorer_mod.request_kwargs
+
+    def uncached(system, content, model=None):
+        kwargs = real(system, content, model)
+        kwargs["system"] = system          # a bare string, the old shape
+        return kwargs
+
+    monkeypatch.setattr(scorer_mod, "request_kwargs", uncached)
+    stats: dict = {}
+
+    score_all([(candidate, make_lynch(4), CONTEXT, None)] * 3, stats=stats)
+
+    assert stats["cache"]["cache_read"] == 0 and stats["cache"]["cache_write"] == 0
+
+
 def test_the_request_carries_the_metrics_and_the_checklist(candidate, claude):
     lynch = make_lynch(4)
     score_candidate(candidate, lynch, CONTEXT, None)
     call = claude.calls[0]
 
     assert call["model"]
-    assert call["system"], "the strategy knowledge base is the system prompt"
+    # Not just truthy: `system` is a LIST of blocks now, and a bare string is
+    # truthy too -- so the old assertion passed either way and could not see
+    # the caching go away. The knowledge base has to be IN there.
+    assert isinstance(call["system"], list) and call["system"], call["system"]
+    assert KNOWLEDGE_PATH.read_text() in call["system"][0]["text"]
     text = _text_of(call)
     assert candidate.ticker in text
     assert lynch["summary"] in text
@@ -430,6 +623,34 @@ def test_an_unknown_verdict_is_derived_from_the_score(candidate, claude):
     assert result["score"] == 8.3
     assert result["verdict"] == "A"
     assert result["provenance"]["source"] == "claude"
+
+
+@pytest.mark.parametrize("score, said, band", [
+    (9.5, "skip", "A+"),   # ranked first and labelled skip, both archived
+    (3.0, "A+", "skip"),   # a kill criterion wearing the top label
+    (7.0, "B", "B+"),      # one band off, the common case
+    (8.0, "A", "A"),       # agrees: kept, and nothing is logged
+])
+def test_a_verdict_that_contradicts_its_own_score_is_the_bands(candidate, claude, caplog,
+                                                                score, said, band):
+    """knowledge/strategy.md defines the verdict AS the score's band -- "A+
+    (9-10), A (8-8.9) ... skip (<5)" -- and _validated() derived it only for
+    a word outside the rubric. A reply carrying score 9.5 and verdict "skip"
+    contradicts the rubric it was asked to apply, and both halves were kept:
+    the email ranked the name first and printed skip beside it. The score is
+    the judgement; the label is derived from it as the rubric says, and the
+    disagreement is logged so a model that keeps doing it is visible."""
+    import logging
+
+    claude.replies(json.dumps({"score": score, "reason": "r", "verdict": said, "key_risk": "k"}))
+    with caplog.at_level(logging.WARNING, logger="src.scorer"):
+        result = score_candidate(candidate, make_lynch(), CONTEXT, None)
+    assert (result["score"], result["verdict"]) == (score, band)
+    assert result["provenance"]["source"] == "claude", "a contradiction is not a format error"
+    disagreed = [r for r in caplog.records if "rubric's band" in r.getMessage()]
+    assert bool(disagreed) == (said != band)
+    if disagreed:
+        assert repr(said) in disagreed[0].getMessage() and repr(band) in disagreed[0].getMessage()
 
 
 def test_one_bad_reply_is_retried_before_anything_falls_back(candidate, claude):

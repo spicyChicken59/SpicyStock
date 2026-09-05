@@ -1,12 +1,22 @@
 """
 Layer 1 — Simplified Alpaca-based market scanner.
 
-Per-symbol conditions, all checked by detect_setup() on one frame:
-  1. Price % change >= 4% vs. yesterday's close
-  2. Today's volume >= yesterday's volume
+Per-symbol conditions:
+  1. Price % change >= 4% vs. yesterday's close        } checked by
+  2. Today's volume >= yesterday's volume              } detect_setup()
   3. Today's volume >= min_rvol x the stock's OWN trailing volume average
-  4. Not a biotech stock
-  5. Price > $4.00
+  5. Price > $4.00                                     }
+
+  4. Not a biotech stock — NOT CHECKED BY ANY CODE. detect_setup takes
+     (df, cfg) and never sees a ticker, so it structurally cannot apply a
+     sector rule; the only thing enforcing this is the hand-curated contents
+     of data/symbols.txt, whose own header says so. This list used to open
+     "all checked by detect_setup()", which was false in that one line, while
+     a comment beside rule 5 in this same file admitted the rule was curation.
+     It matters far more than a stale sentence: replacing the curated symbol
+     file with a generated universe would DELETE A NAMED STRATEGY RULE, with
+     the whole suite green and no surface reporting it. Whatever generates
+     that universe has to answer for rule 4 or say plainly that it does not.
 
 And one cross-sectional condition, applied by run_scan() over the whole batch:
   6. Dollar volume at or above the min_dollar_volume_pctile percentile of
@@ -154,7 +164,9 @@ SESSION_COMPLETE_ET = time_of_day(16, 15)
 # feeds this account may query has not been checked. If delayed_sip is refused,
 # the scan aborts with FeedNotAuthorizedError naming the feed (see run_scan) —
 # it does not degrade into an empty shortlist. Override with SCAN_FEED, or
-# ScanConfig(feed=...), for a plan that carries full SIP.
+# ScanConfig(feed=...), for a plan that carries full SIP. A rejected KEY is the
+# sibling case and aborts with CredentialsRejectedError; the two have opposite
+# fixes and _refusal_error() is where they are told apart.
 DEFAULT_FEED = DataFeed.DELAYED_SIP
 
 
@@ -169,6 +181,22 @@ class StaleDataError(RuntimeError):
 
 class FeedNotAuthorizedError(RuntimeError):
     """Alpaca refused the requested data feed for these credentials."""
+
+
+class CredentialsRejectedError(RuntimeError):
+    """Alpaca would not authenticate these credentials at all.
+
+    A SIBLING of FeedNotAuthorizedError, and the distinction is the whole
+    reason it exists: one means the key is wrong, the other means the key is
+    right and the plan does not carry the feed. They have opposite fixes, and
+    until this class existed both arrived as FeedNotAuthorizedError telling the
+    operator to "set SCAN_FEED to a feed this account carries -- or subscribe".
+    A typo in ALPACA_API_KEY therefore sent them shopping for a data plan.
+
+    The exception's own NAME reaches the failure email (src.emailer renders the
+    type), so this is not cosmetic: it is the first word the operator reads at
+    6:16pm about why nothing arrived.
+    """
 
 
 class IncompleteScanError(RuntimeError):
@@ -251,6 +279,23 @@ def session_has_closed(now: datetime | None = None) -> bool:
 
 @dataclass
 class ScanConfig:
+    #: Which of these fields are STRATEGY -- the numbers that decide what a
+    #: burst IS -- as against the operational ones (batching, the coverage
+    #: guards, the feed, a pinned session) that decide how the scan is carried
+    #: out. src.pipeline.rules_fingerprint() records the first kind on every
+    #: run, because a change to one of them makes every mean the record
+    #: publishes an average over two different screeners; a change to the
+    #: second kind does not. Neither list is a second copy of the fields: a
+    #: test asserts every dataclass field is in exactly one of them, so a
+    #: field added later cannot arrive uncategorised and silently escape the
+    #: fingerprint. Class attributes, not dataclass fields -- they carry no
+    #: annotation, so nothing constructs them per instance.
+    STRATEGY_FIELDS = ("min_price", "min_gain_pct", "min_rvol", "rvol_lookback",
+                       "min_rvol_sessions", "min_dollar_volume_pctile")
+    OPERATIONAL_FIELDS = ("max_stale_fraction", "max_dropped_fraction",
+                          "coverage_guard_min_symbols", "lookback_days",
+                          "batch_size", "feed", "session_date")
+
     min_price: float = 4.0            # price > $4
     min_gain_pct: float = 4.0         # >= 4% up from yesterday
 
@@ -284,17 +329,27 @@ class ScanConfig:
     # statement about the feed as much as about the stock. Sized to cut the
     # illiquid tail rather than to select megacaps: on today's hand-curated
     # large/mid-cap universe it removes very little, and that is correct —
-    # there is barely a tail to cut. It starts doing real work when the
-    # universe widens past data/symbols.txt, which is when "barely-liquid
-    # names where slippage eats the edge" becomes a live risk.
+    # there is barely a tail to cut.
+    #
+    # THIS COMMENT USED TO SAY IT "STARTS DOING REAL WORK WHEN THE UNIVERSE
+    # WIDENS", AND THAT IS BACKWARDS. A percentile keeps a fixed FRACTION, so
+    # widening the universe with the illiquid names curation currently removes
+    # moves the absolute bar DOWN, not up. Measured on two log-normal
+    # populations of the shape US dollar volume really has: 230 curated
+    # large/mid caps put the 30th percentile at $359M/day, and 3,000 all-cap
+    # names put it at $3.8M/day — the same 70% kept, a 94x lower bar. A
+    # $20M/day burst, which is exactly the "barely-liquid names where slippage
+    # eats the edge" that knowledge/strategy.md lists as a kill criterion, is
+    # refused today and admitted after the widening.
+    #
+    # A ratio is FEED-invariant, which is what it was built for and what the
+    # docstring above argues correctly. It is not UNIVERSE-invariant, and those
+    # are different properties. So this is the second thing the open decision
+    # has to answer for, beside rule 4: widening the universe does not merely
+    # cost more, it silently rewrites a strategy rule unless the gate gains an
+    # absolute floor too. Pinned by test_the_liquidity_floor_is_not_universe_
+    # invariant so it cannot be rediscovered.
     min_dollar_volume_pctile: float = 30.0
-
-    # NOT A STRATEGY THRESHOLD, and not read by detect_setup() any more: step
-    # 4 replaced the absolute 5,000,000-share floor with min_rvol above. The
-    # field survives only because tools/make_fixture.py still reads it to lift
-    # its hand-authored rows over the old floor, and regenerating that fixture
-    # with a different value rewrites docs/data.json. Delete it together with
-    # that use — nothing in the scan will notice.
 
     # --- how much of the universe may go missing before this is not a scan --
     # Both are fractions of what was asked for, and both are deliberately
@@ -416,7 +471,18 @@ def get_universe(symbols_file: str | Path | None = None) -> list[str]:
 
 def _download_batch(data_client, tickers, cfg: ScanConfig,
                     session: date) -> dict[str, pd.DataFrame]:
-    """One /stocks/bars call, for the window ending at `session`.
+    """One get_stock_bars() call, for the window ending at `session`.
+
+    ONE SDK CALL, NOT ONE HTTP REQUEST — the first line of this docstring said
+    "One /stocks/bars call" and that is not what happens. get_stock_bars passes
+    page_size=10_000 and alpaca-py's _get_marketdata loops on next_page_token
+    until it is null, so a 100-symbol batch over this window is ~28,600 bars
+    and three GETs. Counted, not read: a fake transport served the pages and
+    logged three requests with tokens [None, '10000', '20000'].
+
+    The consequence is worth keeping, because it inverts the obvious tuning
+    move: request count is governed by TOTAL BARS, not by batch_size, so
+    raising batch_size to cut requests buys almost nothing at this window.
 
     Four fields Alpaca would otherwise default for us, and why each is set:
 
@@ -477,6 +543,18 @@ def _download_batch(data_client, tickers, cfg: ScanConfig,
             df = df_all.loc[t]
         except KeyError:
             continue
+        # Oldest first, one bar per session. Both were assumptions: BarSet.df
+        # keeps the response's order and the request pins no `sort`, so a
+        # newest-first reply made _last_bar_date() read the OLDEST bar, every
+        # symbol read as stale, and the run died blaming a market holiday; and
+        # a bar the feed sent twice made iloc[-1] and iloc[-2] the same session,
+        # so the day's gain was 0% and a real burst was missed. Both reproduced
+        # with a genuine alpaca-py BarSet. Fixed here rather than by pinning
+        # sort on the request, because a change to what goes on the wire on an
+        # unverified lead is what this project's notes warn against; sorting
+        # what came back changes nothing about what was asked for.
+        df = df.sort_index()
+        df = df[~df.index.duplicated(keep="last")]
         df = df.dropna(how="all")
         if not df.empty:
             df = df.rename(columns={
@@ -519,12 +597,56 @@ def _drop_stale_symbols(histories: dict[str, pd.DataFrame],
     return fresh, stale
 
 
-def _is_feed_denied(exc: Exception) -> bool:
-    """Does this look like Alpaca refusing the feed rather than a hiccup?
+def previous_session(session: date) -> date:
+    """The business day before `session`. Weekends only, no holidays -- the
+    same arithmetic current_session() makes, so the two cannot disagree."""
+    prior = session - timedelta(days=1)
+    while prior.weekday() >= 5:
+        prior -= timedelta(days=1)
+    return prior
 
-    The distinction matters because the feed is a property of the run, not of
-    the batch: if it is refused once it is refused every time, so retrying and
-    dropping turns a configuration error into an empty shortlist that looks
+
+def _drop_gapped_symbols(histories: dict[str, pd.DataFrame],
+                         session: date) -> tuple[dict[str, pd.DataFrame], dict[str, date]]:
+    """Split fresh symbols into ones whose bar BEFORE the session is the
+    previous business day, and ones with a hole there.
+
+    _drop_stale_symbols checks only the newest bar. A full-day halt, or a bar
+    the feed dropped, leaves iloc[-2] two sessions old while the frame passes
+    freshness -- and detect_setup() reads iloc[-2] as "yesterday", so it
+    published a TWO-day move as the day's 4% burst, dated to the session,
+    with prev_volume and rule 2 measured against the wrong day. Reproduced
+    with a genuine alpaca-py BarSet: a 12.0% one-day move printed as 12.45%.
+
+    Dropped rather than measured across the hole, because a burst is one
+    session's move against the session before it and a frame with a hole
+    cannot say what that was. Counted, so the coverage guards and the run's
+    own report see them; a holiday inside the window is not a gap, since the
+    previous BUSINESS day is what is required and a holiday is not one (that
+    is the one case this weekend-only arithmetic gets wrong, and it errs by
+    dropping a real name for a day rather than by publishing a false burst).
+    """
+    ok: dict[str, pd.DataFrame] = {}
+    gapped: dict[str, date] = {}
+    want = previous_session(session)
+    for ticker, df in histories.items():
+        if len(df) < 2:
+            gapped[ticker] = _last_bar_date(df)
+            continue
+        before = pd.Timestamp(df.index[-2]).date()
+        if before == want:
+            ok[ticker] = df
+        else:
+            gapped[ticker] = before
+    return ok, gapped
+
+
+def _is_permanent_refusal(exc: Exception) -> bool:
+    """Does this look like Alpaca refusing us outright rather than a hiccup?
+
+    The distinction matters because a refusal is a property of the RUN, not of
+    the batch: if we are refused once we are refused every time, so retrying
+    and dropping turns a configuration error into an empty shortlist that looks
     exactly like a quiet market.
 
     Two signals, because only one of them is always present: the HTTP status
@@ -538,13 +660,39 @@ def _is_feed_denied(exc: Exception) -> bool:
     return "subscription" in text or "not permitted" in text
 
 
-def _feed_denied_error(feed: DataFeed, exc: Exception) -> FeedNotAuthorizedError:
+def _refusal_error(feed: DataFeed, exc: Exception) -> RuntimeError:
+    """WHICH refusal it was — the key, or the plan. They have opposite fixes.
+
+    This used to be one function returning one error, and 401 and 403 both
+    became "Alpaca refused the {feed} data feed ... set SCAN_FEED, or
+    subscribe". 401 does not mean that. It means Alpaca did not authenticate
+    the request at all, which on a first-time setup is overwhelmingly a wrong
+    or half-set key -- and the message sent that operator to buy a data plan.
+
+    The status is still a heuristic and this file has never seen a live
+    refusal, so NEITHER message asserts one cause and denies the other: each
+    leads with what the status says and names the alternative second. Being
+    approximately right in the right order beats being confidently wrong.
+    """
+    if getattr(exc, "status_code", None) == 401:
+        return CredentialsRejectedError(
+            f"Alpaca would not authenticate this request ({exc}). Check "
+            "ALPACA_API_KEY and ALPACA_SECRET_KEY: a 401 is what a wrong, "
+            "revoked or half-set pair looks like, and an unset GitHub secret "
+            "arrives as an empty string rather than as absent. If the pair is "
+            f"definitely right, a 401 can also mean this account may not query "
+            f"the {feed.value!r} feed — try SCAN_FEED=iex. Refusing to "
+            "continue: every batch would be refused the same way, and a scan "
+            "that dropped them all would report an empty market."
+        )
     return FeedNotAuthorizedError(
         f"Alpaca refused the {feed.value!r} data feed for these credentials "
         f"({exc}). Set SCAN_FEED to a feed this account carries — "
-        f"{', '.join(f.value for f in DataFeed)} — or subscribe. Refusing to "
-        "continue: every batch would be refused the same way, and a scan that "
-        "dropped them all would report an empty market."
+        f"{', '.join(f.value for f in DataFeed)} — or subscribe. If the feed "
+        "is definitely one this plan carries, check ALPACA_API_KEY and "
+        "ALPACA_SECRET_KEY instead. Refusing to continue: every batch would "
+        "be refused the same way, and a scan that dropped them all would "
+        "report an empty market."
     )
 
 
@@ -681,30 +829,47 @@ def liquidity_floor(dollar_volumes: list[float], cfg: ScanConfig) -> float | Non
     return float(np.percentile(dollar_volumes, cfg.min_dollar_volume_pctile))
 
 
-def apply_liquidity_gate(candidates: list["Candidate"],
-                         dollar_volumes: list[float],
-                         cfg: ScanConfig) -> list["Candidate"]:
-    """Drop candidates below the session's dollar-volume percentile.
+def liquidity_split(candidates: list["Candidate"], dollar_volumes: list[float],
+                    cfg: ScanConfig) -> tuple[list["Candidate"], list["Candidate"], float | None]:
+    """Rule 6, applied: (kept, refused, floor).
 
     Inclusive at the floor, which is what makes a one-symbol scan
     (`--tickers NVDA`) still a scan: any percentile of a single value is that
     value, and a strict comparison would reject the only name it was given.
+
+    The refused list is RETURNED, not logged and dropped. This used to build
+    `dropped`, print it at INFO and hand back `kept` alone, so a burst rule 6
+    refused was in no count, no gated_out row, no ledger row and no line of
+    the email -- the one refusal class the record's "every burst the scan
+    found, scored or refused" did not hold for, and the one whose outcomes the
+    open decision about widening the universe most needs. Reproduced twice
+    independently on the documented --tickers smoke path: a genuine 12% burst
+    on $4.5B/day, refused because the other name traded more, and the funnel
+    printed "4% bursts found: 1" over it.
     """
     floor = liquidity_floor(dollar_volumes, cfg)
     if floor is None:
-        return candidates
+        return list(candidates), [], None
     kept = [c for c in candidates if c.dollar_volume >= floor]
-    dropped = [c for c in candidates if c.dollar_volume < floor]
-    if dropped:
+    refused = [c for c in candidates if c.dollar_volume < floor]
+    if refused:
         log.info(
-            "Liquidity gate: dropped %d of %d bursts below the %gth percentile "
+            "Liquidity gate: refused %d of %d bursts below the %gth percentile "
             "of the %d names that traded (floor $%s/day): %s",
-            len(dropped), len(candidates), cfg.min_dollar_volume_pctile,
+            len(refused), len(candidates), cfg.min_dollar_volume_pctile,
             len(dollar_volumes), f"{floor:,.0f}",
-            ", ".join(f"{c.ticker} (${c.dollar_volume:,.0f})" for c in dropped[:8])
-            + ("..." if len(dropped) > 8 else ""),
+            ", ".join(f"{c.ticker} (${c.dollar_volume:,.0f})" for c in refused[:8])
+            + ("..." if len(refused) > 8 else ""),
         )
-    return kept
+    return kept, refused, floor
+
+
+def apply_liquidity_gate(candidates: list["Candidate"],
+                         dollar_volumes: list[float],
+                         cfg: ScanConfig) -> list["Candidate"]:
+    """The kept half of liquidity_split(). Kept for its callers; run_scan()
+    uses the split, because it has to hand the other half on."""
+    return liquidity_split(candidates, dollar_volumes, cfg)[0]
 
 
 # ---------------------------------------------------------------------
@@ -713,7 +878,9 @@ def apply_liquidity_gate(candidates: list["Candidate"],
 
 def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
              symbols_file: str | Path | None = None,
-             stats: dict | None = None) -> list[Candidate]:
+             stats: dict | None = None,
+             refused: list[Candidate] | None = None,
+             frames: dict | None = None) -> list[Candidate]:
     """Scan `universe` if given, else every symbol in the checked-in file.
 
     An explicit `universe` wins outright — the file is not read at all — which
@@ -727,6 +894,19 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     that lost half the market by looking at `[]`. It is filled BEFORE the
     guards below raise, so an operator (and the failure email) can still see
     the shape of the scan that failed.
+
+    `refused`, if given, receives the bursts rule 6 refused for dollar volume
+    below the session's percentile floor -- the same idiom again, because the
+    returned list is what the caller SCORES and these are bursts the scan
+    FOUND, and the record has to hold both. `stats["liquidity_floor"]` is the
+    floor in dollars, so the run can say what the bar was that night.
+
+    `frames`, if given, receives every fresh frame the scan read, burst or
+    not, keyed by symbol. The scan downloads the whole universe with a year
+    of lookback and used to keep only the bursting names' frames; the rest
+    carry, for every symbol, the closes on any recent session and the five
+    after it -- which is exactly what src.ledger's universe benchmark needs
+    on the evening five sessions later, at no extra request.
     """
     cfg = cfg or ScanConfig()
     data_client = get_clients()
@@ -737,6 +917,8 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     dropped = 0
     with_bars = 0
     stale: dict[str, date] = {}
+    gapped: dict[str, date] = {}
+    detector_errors: dict[str, str] = {}
     session_dollar_volumes: list[float] = []
 
     for i in range(0, len(tickers), cfg.batch_size):
@@ -747,15 +929,15 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             # A refused feed is not transient and is not this batch's problem:
             # every batch will be refused, and retrying each of them ends in a
             # complete scan that found nothing. Stop on the first one.
-            if _is_feed_denied(e):
-                raise _feed_denied_error(cfg.feed, e) from e
+            if _is_permanent_refusal(e):
+                raise _refusal_error(cfg.feed, e) from e
             log.warning("Batch %d failed (%s); retrying once", i, e)
             time.sleep(3)
             try:
                 histories = _download_batch(data_client, batch, cfg, session)
             except Exception as e2:
-                if _is_feed_denied(e2):
-                    raise _feed_denied_error(cfg.feed, e2) from e2
+                if _is_permanent_refusal(e2):
+                    raise _refusal_error(cfg.feed, e2) from e2
                 # The symbol list is hand-typed and sector-grouped, so one bad
                 # ticker can drop a contiguous block of names. Say so.
                 dropped += len(batch)
@@ -766,6 +948,10 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
         with_bars += len(histories)
         histories, batch_stale = _drop_stale_symbols(histories, session)
         stale.update(batch_stale)
+        histories, batch_gapped = _drop_gapped_symbols(histories, session)
+        gapped.update(batch_gapped)
+        if frames is not None:
+            frames.update(histories)
 
         for t, df in histories.items():
             # Every symbol that traded, burst or not, is part of the
@@ -775,7 +961,16 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
                 session_dollar_volumes.append(dv)
             try:
                 m = detect_setup(df, cfg)
-            except Exception:
+            except Exception as e:  # noqa: BLE001 -- counted, and fatal in bulk below
+                # One symbol's bad frame must not end the scan. But a detector
+                # that raises on EVERY symbol -- a pandas API change, a dtype
+                # the SDK started returning -- used to be swallowed here with
+                # no count, so the scan returned [] with with_bars intact and
+                # raised nothing: the "[] is also a quiet market" shape every
+                # guard below exists to prevent, on the one path none covered.
+                if not detector_errors:
+                    log.exception("detect_setup raised on %s", t)
+                detector_errors[t] = f"{type(e).__name__}: {e}"
                 continue
             if m:
                 candidates.append(Candidate(ticker=t, history=df, **m))
@@ -795,6 +990,8 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             "stale": dict(stale),
             "no_bars": len(tickers) - with_bars - dropped,
             "dropped": dropped,
+            "gapped": dict(gapped),
+            "detector_errors": dict(detector_errors),
             "candidates": len(candidates),
         })
 
@@ -841,6 +1038,13 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             "shortlist would describe the minority that did update. Pin the "
             "session with SCAN_SESSION_DATE=YYYY-MM-DD to scan a past one."
         )
+    measured = with_bars - len(stale) - len(gapped)
+    if measured and len(detector_errors) == measured:
+        raise IncompleteScanError(
+            f"detect_setup raised on every one of the {measured} symbols that carried a "
+            f"bar for {session} (first: {next(iter(detector_errors.values()))}). That is a "
+            "defect in this code or a change in the data's shape, not a quiet market."
+        )
     if (len(tickers) >= cfg.coverage_guard_min_symbols
             and dropped / len(tickers) >= cfg.max_dropped_fraction):
         raise IncompleteScanError(
@@ -854,8 +1058,14 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     # Rule 6, last, because it is the only rule that needs the whole scan.
     # Dropped symbols are missing from the distribution as well as from the
     # shortlist, which biases the floor by however many they were; the error
-    # below already says the shortlist is incomplete on that path.
-    candidates = apply_liquidity_gate(candidates, session_dollar_volumes, cfg)
+    # below already says the shortlist is incomplete on that path. So are the
+    # stale and gapped names, which leave before detect_setup() and so before
+    # session_dollar_volume() is taken: the floor a degraded run RECORDS is
+    # the percentile of the names that were fresh, and the run's degraded
+    # notice is what says how many were not.
+    candidates, illiquid, floor = liquidity_split(candidates, session_dollar_volumes, cfg)
+    if refused is not None:
+        refused.extend(sorted(illiquid, key=lambda c: c.gain_pct, reverse=True))
 
     candidates.sort(key=lambda c: c.gain_pct, reverse=True)
     if dropped:
@@ -864,6 +1074,8 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
                   dropped, len(tickers))
     if stats is not None:
         stats["candidates"] = len(candidates)
+        stats["liquidity_floor"] = floor
+        stats["liquidity_refused"] = len(illiquid)
     log.info("Scan complete: %d candidates from %d symbols", len(candidates), len(tickers))
     return candidates
 

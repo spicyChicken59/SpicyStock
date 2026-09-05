@@ -30,8 +30,10 @@ high-probability Day 1.
   line. The two numbers answer different questions and are meant to differ.
 - **Room overhead.** Near or at 52-week highs, or breaking out of a
   multi-month base with little overhead supply.
-- **Relative strength.** The stock outperformed the market over 3–6 months
-  or is emerging from a proper base after a strong prior run.
+- **Relative strength.** A strong run into the burst — `perf_3mo_pct` and
+  the distance from the 52-week high are the measures you have; no market
+  index reaches you, so judge the stock on its own record — or a name
+  emerging from a proper base after a strong prior run.
 
 # What kills a setup (score 0–4, verdict "skip")
 
@@ -43,8 +45,10 @@ high-probability Day 1.
   line measures that distance through today's burst bar, which is the price
   you would actually pay, so a large gap-up is already extended when it prints.
   20% is YOUR bar for an automatic kill and is deliberately LOOSER than the
-  checklist's: `Y` fails at 15%, so a FAIL there is a warning to weigh and not
-  by itself a skip. Read the measured number in the `Y` line, not the verdict.
+  checklist's: `Y` fails at 15% above the 20-day average, and also at a 25%
+  run-up over the past month, so a FAIL there is a warning to weigh and not
+  by itself a skip — a name can fail `Y` on the month while sitting 10% above
+  its average. The line carries both numbers; read them, not the verdict.
 - Straight down long-term downtrend where the burst is a dead-cat bounce.
 - Barely-liquid names where slippage eats the edge.
 - **A deep down day inside the base** — a FAIL on `base_breakdown` in

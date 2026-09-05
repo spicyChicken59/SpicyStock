@@ -109,7 +109,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from . import ledger, scanner
+from . import ledger, lynch as lynch_rules, scanner
 from .lynch import VETO_RULES, evaluate_2lynch, extra_context, failed_vetoes, veto_reason
 from .scanner import ScanConfig, run_scan
 from .scorer import MODEL as DEFAULT_MODEL
@@ -132,6 +132,54 @@ MAX_TO_SCORE = 25  # cap Claude calls per run
 #: say every word in here: a reason nothing can render is a row the reader is
 #: told nothing about.
 VETO_REASONS = {name: veto_reason(name) for name in VETO_RULES}
+
+
+def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
+    """Every number this screener's rules turn on, as this run applied them.
+
+    THE RECORD SPANS RUNS AND THE RULES DO NOT HAVE TO. Change
+    MIN_LYNCH_PASSES from 3 to 4, or the 4% in ScanConfig.min_gain_pct, or
+    the up-days veto, and every mean the page publishes silently averages the
+    old screener with the new one under one label -- the same class of defect
+    as a benchmark over a universe that changed mid-record, and invisible for
+    exactly the same reason: nothing in the record said which rules produced
+    a row. The entry kept `model` and nothing about the rules.
+
+    DERIVED, NOT LISTED. The three sources are walked rather than enumerated:
+    every upper-case numeric constant src.lynch names, its WINDOWS (how much
+    history each check reads), and the ScanConfig fields that config itself
+    marks as strategy. A threshold added to src.lynch is in the fingerprint
+    the moment it is named, which is the property a hand-kept list cannot
+    have -- and the trap this exists to avoid, since a fingerprint that
+    misses a number reports "same rules" across a change that altered them.
+    The one thing it cannot catch is a number left as a bare literal, which
+    is why round 8 named the six windows that were, and why a test asserts
+    the fingerprint covers what each source exposes.
+
+    NOT in it, deliberately: TOP_N and MAX_TO_SCORE (already per run as
+    shortlist_size and score_cap, and neither changes what a burst is), the
+    feed (a fact about the data, already in the scan stats), and the universe
+    (already per run in run.universe). Those are the run's own facts, not the
+    strategy's, and duplicating them here would give a reader two places to
+    look and two chances to disagree.
+    """
+    cfg = cfg or ScanConfig()
+    # Off the config's OWN class, not the imported name: a caller that builds
+    # its config through a factory (the suite does, to force a batch size)
+    # still gets the fields its object really has, and the fingerprint
+    # describes the config that was applied rather than a default one.
+    out: dict = {f"scan.{name}": getattr(cfg, name)
+                 for name in type(cfg).STRATEGY_FIELDS}
+    for name in dir(lynch_rules):
+        value = getattr(lynch_rules, name)
+        if name.isupper() and isinstance(value, (int, float)) and not isinstance(value, bool):
+            out[f"check.{name.lower()}"] = value
+    out.update({f"window.{key}": value for key, value in lynch_rules.WINDOWS.items()})
+    # The rules in force, not a number: a veto added or removed changes what a
+    # burst is as surely as moving a threshold does.
+    out["check.vetoes"] = sorted(VETO_RULES)
+    out["gate.min_lynch_passes"] = MIN_LYNCH_PASSES
+    return dict(sorted(out.items()))
 
 
 def unscored_reason(lynch: dict) -> str:
@@ -193,6 +241,18 @@ MORNING_CHART_NOTE = (
 EXIT_OK = 0
 EXIT_FAILED = 1
 EXIT_DEGRADED = 2
+# And 3 exists because "failed" was hiding two different nights. The evening
+# run writes docs/data.json and docs/ledger.json BEFORE it mails, so a run
+# that dies at the email stage -- a sender domain Resend will not accept, a
+# rate limit, a transport hiccup -- has already scanned, rendered every chart,
+# paid for up to MAX_TO_SCORE Claude calls and written a complete record. It
+# exited 1, the same code as a preflight that spent nothing, and evening.yml
+# reasonably read 1 as "there is nothing trustworthy to commit" and skipped
+# the persist step. The night died with the container, having been paid for.
+#
+# The job is still RED: any non-zero code fails the step that re-raises it,
+# and an email nobody received is a failed run. Only the record is kept.
+EXIT_FAILED_AFTER_PUBLISH = 3
 
 # When a scan stops being clean. Well below the fractions at which src.scanner
 # refuses to report a scan at all: this is the line for "say so", that one is
@@ -306,6 +366,11 @@ class RunReport:
     errors: list[dict] = field(default_factory=list)
     counts: dict = field(default_factory=dict)
     failed: bool = False
+    # Set by publish() the moment both files are on disk, and read only by
+    # exit_code. It is not "the run got far enough" -- it is the narrower
+    # claim that there is a complete record to keep, which is the only
+    # question the workflow's persist step asks.
+    published: bool = False
 
     def problem(self, stage: str, message: str) -> None:
         self.errors.append({"stage": stage, "message": message})
@@ -322,7 +387,9 @@ class RunReport:
 
     @property
     def exit_code(self) -> int:
-        return {"ok": EXIT_OK, "degraded": EXIT_DEGRADED, "failed": EXIT_FAILED}[self.status]
+        if self.failed:
+            return EXIT_FAILED_AFTER_PUBLISH if self.published else EXIT_FAILED
+        return {"ok": EXIT_OK, "degraded": EXIT_DEGRADED}[self.status]
 
     def email_stats(self, **extra) -> dict:
         """The stats block the emailer reads, with the status in it."""
@@ -523,6 +590,22 @@ def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
     return discover(mode, dry_run=dry_run, tickers=tickers, report=report)
 
 
+def _already_published(cfg: ScanConfig) -> str | None:
+    """The session an evening run started now would scan, if docs/data.json
+    already holds a real evening run of it; else None. A pinned session is a
+    deliberate re-scan and is never "already published"."""
+    if cfg.session_date is not None:
+        return None
+    snapshot, _why = ledger.read_snapshot(ledger.DOCS_DIR)
+    if not snapshot:
+        return None
+    run = snapshot.get("run") or {}
+    session = ledger.iso_date(scanner.current_session())
+    if run.get("type") == "evening" and run.get("date") == session:
+        return session
+    return None
+
+
 def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None,
              report: RunReport | None = None) -> list[dict]:
     """The evening run: scan, gate, chart, score, archive, publish, mail.
@@ -548,6 +631,23 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     disagreement = session_disagreement(mode, cfg)
     if disagreement:
         report.problem("session", disagreement)
+        # A Run-workflow click at lunch to test the secrets is an evening
+        # dispatch before the close. It used to re-scan YESTERDAY's session
+        # -- the newest completed one -- pay Claude for it again, and hand
+        # add_run() a DEGRADED entry for a session the ledger already held as
+        # clean, which replaced it; and exit 2 qualifies for the commit-back,
+        # so the overwrite reached the branch. If that session is already
+        # published, a second scan of the same daily bars can only buy the
+        # same answer, so this run re-presents it instead, the way the
+        # morning does, and says so. The clock disagreement stays in the
+        # report: the email is still marked, the exit code is still 2.
+        already = _already_published(cfg)
+        if already:
+            report.problem("session", f"{already} is already published, so this run "
+                                      "re-presents it rather than scanning it again: a second "
+                                      "scan of the same daily bars would pay for the same answer "
+                                      "and replace a clean record with a degraded one")
+            return follow_through(mode_for("morning"), dry_run, report=report)
 
     # Layer 1: scan. Alpaca returns bars only up to the session the scan
     # targets, and src.scanner drops anything that does not carry it. Which
@@ -555,8 +655,17 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     # above is what makes sure it is the one this mode said it would read.
     report.stage = "scan"
     scan_stats: dict = {}
-    candidates = run_scan(cfg, universe=tickers, stats=scan_stats)
-    n_bursts = len(candidates)
+    # Rule 6's refusals come back beside the list, not inside it: the list is
+    # what gets scored, and these are bursts the scan FOUND that the record
+    # has to hold. They used to be logged and dropped, so a burst refused for
+    # liquidity was in no count, no row and no line of the email.
+    illiquid_bursts: list = []
+    # And every frame the scan read, so publish() can fill the universe
+    # benchmark of the runs five sessions back from bars already fetched.
+    frames: dict = {}
+    candidates = run_scan(cfg, universe=tickers, stats=scan_stats, refused=illiquid_bursts,
+                          frames=frames)
+    n_bursts = len(candidates) + len(illiquid_bursts)
     _check_scan(scan_stats, report)
 
     # Layer 2: 2LYNCH checklist + context, hard gate, keep the best
@@ -565,6 +674,13 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         lynch = evaluate_2lynch(cand.history)
         ctx = extra_context(cand.history)
         prepared.append((cand, lynch, ctx))
+    # The checklist runs on the refused bursts too. Nothing about the verdict
+    # depends on it -- rule 6 refused them before the pass count was
+    # consulted -- but the contract says every burst carries lynch_detail,
+    # the page's per-check rates are computed over all of them, and a row
+    # archived without the measurements is the row that can never be judged.
+    illiquid = [(cand, evaluate_2lynch(cand.history), extra_context(cand.history))
+                for cand in illiquid_bursts]
 
     prepared.sort(key=lambda x: (x[1]["passes"], x[0].gain_pct), reverse=True)
     # A veto outranks the pass count. Bonde's up-days rule is stated as "never
@@ -584,8 +700,11 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     # was applied to.
     unscored = [(cand, lynch, ctx, unscored_reason(lynch))
                 for cand, lynch, ctx in prepared if cand.ticker not in scoring]
-    log.info("%d bursts → %d passed 2LYNCH gate (scoring top %d)",
-             n_bursts, len(passed_gate), len(to_score))
+    # After the checklist's own refusals, with the reason the scanner gave:
+    # unscored_reason() is never asked, because these never reached the gate.
+    unscored += [(cand, lynch, ctx, ledger.LIQUIDITY_REASON) for cand, lynch, ctx in illiquid]
+    log.info("%d bursts → %d below the liquidity floor, %d passed 2LYNCH gate (scoring top %d)",
+             n_bursts, len(illiquid), len(passed_gate), len(to_score))
 
     # Layers 3-5: charts + Claude scoring
     report.stage = "chart"
@@ -634,8 +753,16 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     report.stage = "history"
     session = scan_stats.get("session")
     book = load_history(report)
+    # Over EVERY burst, the refused ones included: this read `prepared`
+    # alone, so every liquidity_floor row was archived with streak: null --
+    # the value the contract reserves for a run that could not read its
+    # history -- one line under a lynch_gate row on the same table carrying
+    # a full block from the same read. Found by an audit driving two nights
+    # through the real path; the round's own 29 mutants never read the
+    # refused row's streak.
     marks = streaks_for(book, session,
-                        [c.ticker for c, _lynch, _ctx in prepared])
+                        [c.ticker for c, _lynch, _ctx in prepared]
+                        + [c.ticker for c in illiquid_bursts])
     for row in scored:
         # The email reads this off the scored row; docs/data.json gets it from
         # the same dict below. One lookup, two audiences, no second rule.
@@ -663,7 +790,7 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
                           "claude": score_stats.get("claude", 0),
                           "fallback": score_stats.get("fallback", 0)})
     stats = report.email_stats(
-        universe=f"{scanned} checked-in US common stocks",
+        universe=universe_label(scan_stats, tickers),
         # How many CLEARED the gate, not how many fitted under the call cap
         # afterwards. The email prints this as "Passed 2LYNCH gate", and on any
         # night with more than MAX_TO_SCORE survivors the capped number was a
@@ -675,6 +802,29 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         # is the one collapse this project forbids by name.
         vetoed=sum(1 for _c, _l, _x, reason in unscored
                    if reason in VETO_REASONS.values()),
+        # And how many rule 6 refused before the checklist saw them, with the
+        # floor it applied: "4% bursts found" counts them, so the funnel has
+        # to say where they went, and a reader of the number needs the bar.
+        illiquid=len(illiquid),
+        liquidity_floor=scan_stats.get("liquidity_floor"),
+        liquidity_pctile=cfg.min_dollar_volume_pctile,
+        # And how many CLEARED the gate and were never looked at anyway. The
+        # email's funnel went "Passed 2LYNCH gate: 54" straight to
+        # "Shortlisted: 1", so on any night with more survivors than the call
+        # budget the 29 nobody scored appeared nowhere -- while the line beside
+        # it read "Scored by Claude: 25 of 25", which a reader takes for
+        # complete coverage of the 54. The page's funnel has had this stage
+        # since step 9; the email did not.
+        #
+        # Counted from the reason word rather than as gated - scored. The two
+        # agree today and mutation says so -- score_all() returns a row for
+        # every input, so len(scored) is always len(to_score) -- which makes
+        # this a choice about which fact the number IS, not a bug fix. It is
+        # the same field the gated table prints and the page's funnel reads,
+        # so a burst dropped for some future reason gets reported as that
+        # reason instead of being counted against the call budget.
+        crowded_out=sum(1 for _c, _l, _x, reason in unscored if reason == "score_cap"),
+        score_cap=MAX_TO_SCORE,
         scored_by={"claude": score_stats.get("claude", 0),
                    "fallback": score_stats.get("fallback", 0)},
         # The session that was actually read, in the subject line and above the
@@ -692,7 +842,7 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
                         scored=scored, unscored=unscored, to_score=to_score,
                         n_bursts=n_bursts, n_passed=len(passed_gate),
                         shortlist_size=len(shortlist), chart_errors=chart_errors,
-                        explicit_tickers=tickers, book=book, marks=marks)
+                        explicit_tickers=tickers, book=book, marks=marks, frames=frames)
     log.info("Published %s (%d candidates, %d not scored) and %s (%d runs, %d "
              "forward return(s) filled this run)",
              published["data"], len(scored), len(unscored),
@@ -710,11 +860,45 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
             log.info("  %s  %s/10 (%s) %s", r["ticker"], r["score"], r["verdict"], r["reason"])
     else:
         from .emailer import send_email
-        send_email(shortlist, run_type, stats)
+        try:
+            send_email(shortlist, run_type, stats)
+        except Exception as e:  # noqa: BLE001 -- recorded, then re-raised for main()
+            # The record was complete and committed (exit 3) with run.status
+            # "ok" and errors [], so the page and the next morning presented
+            # the night as clean and nothing in the record said the shortlist
+            # was never delivered; only the Actions colour knew. Stamp the
+            # failure into both files first. The exit code is unchanged.
+            report.problem("email", f"the shortlist was not delivered ({type(e).__name__}: {e})")
+            _restamp(book, report, published.get("headline"))
+            raise
 
     report.stage = "complete"
     report.log_summary(run_type)
     return scored
+
+
+def _restamp(book: ledger.Ledger, report: RunReport, headline: dict | None) -> None:
+    """Write the report's current problems and status into the run just
+    published, in both files, keeping whatever headline publish() chose."""
+    key = (book.latest["run"]["date"], book.latest["run"]["type"])
+    book.latest["run"]["errors"] = list(report.errors)
+    book.latest["run"]["status"] = report.status
+    for entry in book.runs:
+        if (entry.get("date"), entry.get("type")) == key:
+            entry["status"] = report.status
+            break
+    book.write(headline)
+
+
+def universe_label(scan_stats: dict, explicit_tickers: list[str] | None) -> str:
+    """What was scanned, in words. ONE rule, read by the email's funnel line
+    and by docs/data.json's universe block. The email built its own -- "N
+    checked-in US common stocks" -- and printed it over names typed on the
+    command line, while the archive beside it correctly said "--tickers"."""
+    size = scan_stats.get("requested", len(explicit_tickers or []))
+    if explicit_tickers is not None:
+        return f"{size} named on the command line (--tickers)"
+    return f"{size} checked-in US common stocks"
 
 
 def email_row(row: dict) -> dict:
@@ -737,8 +921,13 @@ def email_row(row: dict) -> dict:
                     apart, and this row then paired Monday's numbers with
                     Tuesday's picture with nothing anywhere saying so.
     """
-    detail = [f"{'PASS' if d.get('pass') else 'FAIL'}  {d.get('code')} "
-              f"{d.get('label')}: {d.get('value')}"
+    # The SAME line src.lynch writes for the evening email -- "PASS  2_first_
+    # or_second_burst: ..." -- rebuilt from the code and label the dashboard
+    # row keeps. This printed "PASS  2 first or second burst: ..." instead, so
+    # one name's checklist read two ways in two emails a night apart, which
+    # is the two-vocabularies drift this project has recorded three times.
+    detail = [f"{'PASS' if d.get('pass') else 'FAIL'}  {d.get('code')}_"
+              f"{str(d.get('label', '')).replace(' ', '_')}: {d.get('value')}"
               for d in (row.get("lynch_detail") or [])]
     return dict(row, lynch_detail=detail, chart=None, chart_note=MORNING_CHART_NOTE)
 
@@ -989,13 +1178,36 @@ def follow_through(mode: Mode, dry_run: bool = False,
     # nothing — is the funnel line naming the run being followed instead.
     stats = report.email_stats(
         session=session,
-        bursts=source.get("bursts", 0), gated=source.get("passed_gate", 0),
+        # Only when there was a run to read them off. With no snapshot -- the
+        # guaranteed state of the first production morning, and of every one
+        # until evening.yml's commit-back succeeds -- these were 0 and 0, and
+        # the funnel printed "4% bursts that session: 0 | Passed 2LYNCH gate:
+        # 0" under a session it called "not recorded": two invented market
+        # counts three lines above a cell saying this is not a statement
+        # about the market. Absent, the funnel prints "not recorded" for both.
+        **({"bursts": source.get("bursts", 0), "gated": source.get("passed_gate", 0)}
+           if source else {}),
         # Counted off the snapshot's own rows, since the run block records no
         # veto total. A snapshot written before the rule existed has none, and
         # reports 0, which is the truth about that run.
         vetoed=sum(1 for row in ((snapshot or {}).get("gated_out") or [])
                    if isinstance(row, dict)
                    and str(row.get("reason") or "").startswith("veto_")),
+        # Same rule, same source, for the cut the funnel used to skip. The
+        # cap that applied is the one THAT run recorded, not this module's
+        # constant: a snapshot written under a different budget must not be
+        # re-labelled with today's.
+        crowded_out=sum(1 for row in ((snapshot or {}).get("gated_out") or [])
+                        if isinstance(row, dict) and row.get("reason") == "score_cap"),
+        # And the liquidity refusals, same source; the floor is the one THAT
+        # run recorded, and a snapshot from before the block existed has none.
+        illiquid=sum(1 for row in ((snapshot or {}).get("gated_out") or [])
+                     if isinstance(row, dict) and row.get("reason") == ledger.LIQUIDITY_REASON),
+        liquidity_floor=(source.get("liquidity") or {}).get("floor")
+        if isinstance(source.get("liquidity"), dict) else None,
+        liquidity_pctile=(source.get("liquidity") or {}).get("pctile")
+        if isinstance(source.get("liquidity"), dict) else None,
+        score_cap=source.get("score_cap") or 0,
         scored_by=source.get("scored_by") or {},
         # How far behind, in sessions, so the SUBJECT LINE can escalate. Every
         # staleness read DEGRADED before this, and a screener dead for three
@@ -1054,7 +1266,7 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
             unscored: list[tuple], to_score: list[tuple], n_bursts: int,
             n_passed: int, shortlist_size: int, chart_errors: dict,
             explicit_tickers: list[str] | None, book: ledger.Ledger,
-            marks: dict[str, dict]) -> dict:
+            marks: dict[str, dict], frames: dict | None = None) -> dict:
     """Write docs/data.json and docs/ledger.json for the run that just ran.
 
     Everything the run knows, in the two shapes it is worth keeping: the
@@ -1089,8 +1301,21 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     session = scan_stats.get("session")
     # The gate's own size, read off the checklist this run computed rather
     # than copied from src.lynch as a number that could drift out of step.
-    # None on a night with no bursts, because then nothing measured it.
-    total_checks = next((lynch["total"] for _c, lynch, _x in to_score), None)
+    #
+    # Off EVERY burst that was measured, not just the scored ones. It read
+    # `to_score` alone, so any night where nothing reached the scorer published
+    # total_checks: null — and docs/index.html concatenates it straight into
+    # prose, so the page said "rejected at the >=3/null 2LYNCH gate" and "under
+    # 3 of null checks" while the rows beneath it correctly printed 5/6. A
+    # confidently false sentence about the screener's own rule, on its only
+    # published surface, with every check green. The checklist was computed for
+    # all of them; only the scoring was skipped.
+    #
+    # Still None on a night with NO BURSTS AT ALL, because then nothing
+    # measured it and inventing a 6 would be the same class of lie. The page
+    # has to handle that, and now does.
+    measured = list(to_score) + [(c, lynch, x) for c, lynch, x, _reason in unscored]
+    total_checks = next((lynch["total"] for _c, lynch, _x in measured), None)
     run = {
         "date": ledger.iso_date(session) or ledger.iso_date(datetime.now(timezone.utc)),
         "type": run_type,
@@ -1098,7 +1323,7 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         "fixture": False,
         "universe": {
             "label": ("data/symbols.txt (checked in)" if explicit_tickers is None
-                      else f"--tickers, {len(explicit_tickers)} named on the command line"),
+                      else universe_label(scan_stats, explicit_tickers)),
             "size": scan_stats.get("requested", len(explicit_tickers or [])),
         },
         "bursts": n_bursts,
@@ -1112,6 +1337,18 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
                  # happened to a row. Both vocabularies are in one file, so the
                  # difference is stated here rather than left to be inferred.
                  "vetoes": list(VETO_REASONS)},
+        # Every number the rules turned on, so a later reader can tell whether
+        # two runs in this record were produced by the same screener. See
+        # rules_fingerprint().
+        "rules": rules_fingerprint(cfg),
+        # Rule 6 as this run applied it. The floor is the session's number --
+        # a percentile of every name that traded, in dollars -- and it is the
+        # one figure the open decision about widening the universe turns on,
+        # so it is kept per run rather than left in a log line.
+        "liquidity": {"pctile": cfg.min_dollar_volume_pctile,
+                      "floor": ledger._num(scan_stats.get("liquidity_floor")),
+                      "refused": sum(1 for _c, _l, _x, reason in unscored
+                                     if reason == ledger.LIQUIDITY_REASON)},
         "scored_by": {"claude": score_stats.get("claude", 0),
                       "fallback": score_stats.get("fallback", 0)},
         "model": next((r["provenance"]["model"] for r in scored
@@ -1127,6 +1364,7 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     through = max(scanner.current_session(), session) if session else scanner.current_session()
     pending = book.pending_tickers(through)
     filled = 0
+    frames_read = frames
     try:
         frames = forward_bars(cfg, pending, through)
     except Exception as e:  # noqa: BLE001 — reported, not raised: see the docstring
@@ -1137,6 +1375,14 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
                        "pending in docs/ledger.json and will be retried next run")
     else:
         filled = book.fill_forward_returns(frames, through)
+    # The universe benchmark, from the frames THIS scan already read: no
+    # request, and the one alternative the north star was missing.
+    # The universe these frames ARE -- and None for a --tickers run, which
+    # scanned a handful of names it was handed and has no market to offer as
+    # anyone's alternative. See Ledger.fill_benchmarks().
+    benchmarked = (book.fill_benchmarks(frames_read or {}, through,
+                                        universe=run["universe"] if explicit_tickers is None else None)
+                   if frames_read else 0)
 
     # Re-read the report AFTER the fetch: a problem raised in the two lines
     # above is one of the run's problems, and the file that renders them must
@@ -1147,9 +1393,30 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     book.latest["run"]["errors"] = list(report.errors)
     book.latest["run"]["status"] = entry["status"] = report.status
 
-    written = book.write()
-    return {"data": written["data"], "ledger": written["ledger"],
-            "runs": len(book.runs), "pending": len(pending), "filled": filled}
+    # A SCAN_SESSION_DATE backfill adds an OLDER session to the record. It
+    # used to become the headline of docs/data.json too -- the top-level run
+    # last week's, while `runs` two lines down still listed last night -- and
+    # the next morning read the top block, found it three sessions old and
+    # announced that nothing had published, over a file naming the newer run
+    # itself. If a newer real run is already published, keep its headline;
+    # the record still gains the backfill, and the evidence is rebuilt over
+    # the whole ledger either way.
+    headline = None
+    if book.runs and book.runs[0] is not entry:
+        previous, _why = ledger.read_snapshot(book.docs_dir)
+        if previous and str(previous["run"].get("date")) > str(run["date"]):
+            headline = {k: previous[k] for k in ("run", "candidates", "gated_out")}
+            log.info("Backfilled %s behind the published %s; the headline stays %s",
+                     run["date"], previous["run"].get("date"), previous["run"].get("date"))
+
+    written = book.write(headline)
+    # Both files are on disk and complete. Everything after this point in the
+    # run -- the email, and nothing else -- can fail without the night's
+    # record being worthless, and the exit code has to be able to say so.
+    report.published = True
+    return {"data": written["data"], "ledger": written["ledger"], "headline": headline,
+            "runs": len(book.runs), "pending": len(pending), "filled": filled,
+            "benchmarked": benchmarked}
 
 
 def _check_scan(scan_stats: dict, report: RunReport) -> None:
@@ -1170,9 +1437,17 @@ def _check_scan(scan_stats: dict, report: RunReport) -> None:
         report.problem("scan", f"{dropped} of {requested} symbols were dropped after "
                                "their batch failed twice — they were never examined, "
                                "and an empty shortlist does not mean a quiet market")
-    if with_bars and stale / with_bars > DEGRADED_STALE_FRACTION:
-        report.problem("scan", f"{stale} of {with_bars} symbols with data ({stale / with_bars:.0%}) "
-                               f"carried no bar for {session} and were skipped")
+    gapped = len(scan_stats.get("gapped", {}))
+    if with_bars and (stale + gapped) / with_bars > DEGRADED_STALE_FRACTION:
+        report.problem("scan", f"{stale + gapped} of {with_bars} symbols with data "
+                               f"({(stale + gapped) / with_bars:.0%}) could not be measured for "
+                               f"{session} and were skipped: {stale} carried no bar for it and "
+                               f"{gapped} had no bar for the session before it")
+    errors = scan_stats.get("detector_errors") or {}
+    if errors:
+        first = next(iter(errors.items()))
+        report.problem("scan", f"the burst detector raised on {len(errors)} of {with_bars} symbols "
+                               f"and they were skipped (first: {first[0]}: {first[1]})")
     if requested and no_bars / requested > DEGRADED_NO_BARS_FRACTION:
         report.problem("scan", f"{no_bars} of {requested} symbols returned no bars at all "
                                "— check the symbol file against what the feed carries")
@@ -1273,7 +1548,10 @@ def main() -> None:
         report.fail(report.stage, e)
         report.log_summary(args.run_type)
         notify_failure(args.run_type, report, dry_run=args.dry_run)
-        sys.exit(EXIT_FAILED)
+        # EXIT_FAILED, or EXIT_FAILED_AFTER_PUBLISH when the record survived
+        # the failure. report.exit_code holds that one rule; this line used to
+        # hold a second copy of it that could only ever say 1.
+        sys.exit(report.exit_code)
     # Exit 2 when the run finished but cannot be trusted as a complete scan.
     # Actions has no other way to tell the difference, and a green tick on a
     # half-scanned market is how this project went a rebuild without noticing.

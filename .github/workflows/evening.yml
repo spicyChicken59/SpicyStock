@@ -37,9 +37,23 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             GO=true   # primary path: external scheduler or manual run
           elif [ "$FIRED" = "$BACKUP" ]; then
-            TODAY=$(date -u +%Y-%m-%d)
+            # "Already ran today" used to mean "any evening-* artifact was
+            # CREATED on today's UTC date", and both halves of that were wrong.
+            # The artifact step uploads on failure too -- so a preflight
+            # failure, or a Run-workflow click at lunch to test the secrets,
+            # left an artifact that silenced that night's cron. And an EST
+            # night starts at 23:16 UTC, so a run over ~44 minutes uploaded
+            # under TOMORROW's UTC date and silenced the following night. Both
+            # traced through this exact shell against real artifact payloads.
+            #
+            # A run that published names its artifact after the SESSION it
+            # scanned (see "Keep the run's artifacts"); one that did not is
+            # named evening-failed-<id> and counts for nothing here. The
+            # session a run tonight would scan is today's date in market
+            # time, which is what current_session() answers at this hour.
+            SESSION=$(TZ=America/New_York date +%Y-%m-%d)
             DONE=$(gh api "repos/${{ github.repository }}/actions/artifacts?per_page=100" \
-              -q "[.artifacts[] | select((.name|startswith(\"evening-\")) and (.created_at|startswith(\"$TODAY\")))] | length" \
+              -q "[.artifacts[] | select(.name|startswith(\"evening-$SESSION-\"))] | length" \
               2>/dev/null || echo "0")
             if [ "$DONE" = "0" ]; then
               GO=true
@@ -59,6 +73,7 @@ jobs:
         if: steps.guard.outputs.go == 'true'
         run: pip install -r requirements.txt
       - name: Run evening pipeline
+        id: pipeline
         if: steps.guard.outputs.go == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -75,9 +90,60 @@ jobs:
           # -- and an unset one expands to '', which _feed_from_env() already
           # treats as "use the default".
           SCAN_FEED: ${{ vars.SCAN_FEED }}
-        run: python -m src.pipeline evening
+        # THE EXIT CODE IS CAPTURED HERE AND RE-RAISED AT THE END OF THE JOB,
+        # so that "Persist the run" can tell a DEGRADED night from a broken one.
+        # It could not before, and the cost was the whole point of the project:
+        # exit 2 means the run scanned, rendered, paid for up to MAX_TO_SCORE
+        # Claude calls, wrote a complete docs/data.json and docs/ledger.json and
+        # MAILED the shortlist -- and then noted a problem. A `run:` step fails
+        # on any non-zero code, and the persist step's `if:` carries no status
+        # function, so Actions ANDs success() into it and skipped it. The
+        # night's record died with the container, having been paid for.
+        #
+        # Not a rare corner: one chart that will not render degrades a run, and
+        # so does one Claude fallback, >10% stale symbols, an unreadable history
+        # or a mode/clock disagreement. This project's own 30-session fixture,
+        # written by driving this same pipeline, is 2 degraded in 30 -- and its
+        # NEWEST run is one of them. src.pipeline's own test is named
+        # test_a_failed_forward_return_fetch_degrades_the_run_but_still_publishes:
+        # publishing while degraded is the code's deliberate contract, and this
+        # workflow was throwing the publication away.
+        #
+        # The job's COLOUR is unchanged -- "Report the pipeline's verdict" below
+        # re-raises the same code, so a degraded night is still red. Only the
+        # record is rescued. Whether red is right for exit 2 is a separate
+        # question and deliberately not answered here.
+        run: |
+          set +e
+          python -m src.pipeline evening
+          code=$?
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          # The session this run PUBLISHED, for the artifact's name below; empty
+          # when nothing was published, which the name expression reads as
+          # "a failed run". The persist step reads the same field again for the
+          # commit message -- two one-line reads of one file, each pinned by
+          # its own test, rather than one read threaded through three steps.
+          session=$(python -c 'import json;print(json.load(open("docs/data.json"))["run"]["date"])' 2>/dev/null || true)
+          echo "session=$session" >> "$GITHUB_OUTPUT"
+          echo "pipeline exited ${code}"
       - name: Persist the run
-        if: steps.guard.outputs.go == 'true'
+        # 0 is clean, 2 is DEGRADED-but-published, 3 is FAILED-after-publishing.
+        # Only 1 means there is nothing trustworthy to commit. Compared as
+        # strings because step outputs are strings.
+        #
+        # 3 is here because 1 was covering two different nights. The record is
+        # written BEFORE the email, so a run that dies sending it -- an
+        # unverified RESEND_FROM domain is the likely one -- has already paid
+        # for the scan, the charts and every Claude call and has a complete
+        # docs/ to show for it. It exited 1, this step skipped, and the night
+        # died with the container: the same defect as the degraded one above,
+        # one stage later, found by sweeping for it rather than by waiting.
+        # src.pipeline's EXIT_FAILED_AFTER_PUBLISH is the other half.
+        if: >-
+          steps.guard.outputs.go == 'true'
+          && (steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2'
+              || steps.pipeline.outputs.code == '3')
         # Without this the ledger cannot accumulate: docs/ is written inside the
         # container and dies with it, so every CI run would start a fresh
         # history and the forward returns step 9 exists to collect would never
@@ -87,13 +153,16 @@ jobs:
         #
         # `git add docs` — NOT `git add docs results`. results/ is gitignored on
         # purpose (README, "Notes"), and `git add` on an ignored path exits 1,
-        # which under Actions' `bash -e` aborted this step before the commit on
-        # every single run. docs/ was staged and never committed, the container
-        # took it, and the history this exists to accumulate restarted every
-        # night while the workflow reported it was being kept. Step 10 found it
-        # by running `git add` against these rules rather than reading them:
-        # both the streaks and the morning follow-through are built on this
-        # step actually working.
+        # which under Actions' `bash -e` would have aborted this step before
+        # the commit: docs/ staged and never committed, the container taking
+        # it, and the history this exists to accumulate restarting every night
+        # while the workflow reported it was being kept. Step 10 found it by
+        # running `git add` against these rules rather than reading them, and
+        # before any scheduled run reached this step (every one so far has
+        # stopped at preflight), so it never fired once — an earlier version
+        # of this comment said it had. Both the streaks and the morning
+        # follow-through are built on this step actually working, and it has
+        # still never executed.
         #
         # docs/charts/*.png is NOT committed either, and that is now a rule in
         # .gitignore rather than an accident of this step failing: ~57 KB a
@@ -114,7 +183,25 @@ jobs:
           git config user.email "actions@github.com"
           git add docs
           git diff --staged --quiet && exit 0
-          git commit -m "run $(date -u +%F)"
+          # The SESSION this run read, not the UTC day it happened to finish on.
+          # Step 10 made "name the session you really read" a rule for the
+          # subject line, the table heading and the CSV filename; the commit
+          # message was the one artifact still naming a clock. Two ways they
+          # differ: an EST evening starts at 23:16 UTC, so a run over ~44
+          # minutes commits under TOMORROW's date, and a SCAN_SESSION_DATE
+          # backfill scans an old session and labels it today. Both are the
+          # silent relabelling step 10 exists to end.
+          #
+          # The pipeline has already written docs/data.json by here -- this
+          # step only runs on 0, 2 or 3, and all three publish. If it somehow
+          # cannot be read, the message says the date is a commit time rather
+          # than quietly passing one off as the other.
+          SESSION=$(python -c 'import json;print(json.load(open("docs/data.json"))["run"]["date"])' 2>/dev/null || true)
+          if [ -n "$SESSION" ]; then
+            git commit -m "run $SESSION"
+          else
+            git commit -m "run (session unknown; committed $(date -u +%F))"
+          fi
           for attempt in 1 2 3; do
             if git push; then exit 0; fi
             echo "push $attempt was rejected — rebasing onto what landed during the run"
@@ -147,9 +234,25 @@ jobs:
         if: (success() || failure()) && steps.guard.outputs.go == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: evening-${{ github.run_id }}
+          # evening-<session>-<id> when the run published (exit 0, 2 or 3 --
+          # the same three the persist step keeps), evening-failed-<id>
+          # otherwise. The guard counts only the first shape, so a failed
+          # run or a test click no longer silences that night's cron, and a
+          # session is a session whatever UTC day the upload landed on.
+          name: ${{ (steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2' || steps.pipeline.outputs.code == '3') && steps.pipeline.outputs.session != '' && format('evening-{0}-{1}', steps.pipeline.outputs.session, github.run_id) || format('evening-failed-{0}', github.run_id) }}
           path: |
             docs/data.json
             docs/ledger.json
             results/
           retention-days: 30
+      - name: Report the pipeline's verdict
+        # The exit code the pipeline step captured rather than raised, raised
+        # here instead — LAST, so that the persist and the artifact upload have
+        # both already happened. Without this the job would go green on a run
+        # that failed, which is the opposite of the mistake being fixed above.
+        #
+        # No status function on purpose: if the persist step failed, the job is
+        # already red for a reason that matters more than this one, and this
+        # step is skipped rather than overwriting it.
+        if: steps.guard.outputs.go == 'true'
+        run: exit ${{ steps.pipeline.outputs.code }}

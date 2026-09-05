@@ -324,6 +324,24 @@ def user_text(metrics: dict) -> str:
     )
 
 
+#: Appended to the request when a reply could not be parsed, and ONLY then.
+#: The retry used to resend the request byte-for-byte at temperature 0, which
+#: is the same reasoning score_candidate() already applies to a rejected
+#: credential -- "the retry is theatre" -- and did not apply here. Measured: a
+#: prose reply produced two identical requests, both unparseable, and the
+#: candidate fell back anyway having been paid for twice.
+#:
+#: temperature 0 is not a guarantee of an identical reply, so the second call
+#: was not certain to be wasted; it just had no reason to go differently. This
+#: gives it one, at the cost of a few dozen tokens, and leaves the system
+#: prompt untouched so the cached prefix still hits.
+RETRY_CORRECTION = (
+    "Your previous reply could not be parsed. Reply with ONLY the JSON object "
+    "described above: no prose before or after it, no markdown fences, no "
+    "explanation. The object itself is the entire reply."
+)
+
+
 def request_kwargs(system: str, content: list[dict], model: str | None = None) -> dict:
     """Exactly what goes to `messages.create`, built where a test can read it.
 
@@ -336,7 +354,26 @@ def request_kwargs(system: str, content: list[dict], model: str | None = None) -
     kwargs: dict = {
         "model": model,
         "max_tokens": MAX_TOKENS,
-        "system": system,
+        # A LIST, not a string, so the knowledge base can carry cache_control.
+        # knowledge/strategy.md is byte-identical on every call of a run and is
+        # 59% of each request -- measured: ~1,590 tokens of system against ~388
+        # of metrics and ~721 for an 869x622 chart. Without this the run paid
+        # full price to send the same document up to MAX_TO_SCORE times a
+        # night. A cache write costs 1.25x and a read 0.1x, so break-even is
+        # the second call (1.28 calls -- the write costs 0.25x more than the
+        # uncached call it replaces, each read saves 0.9x): a night that
+        # scores two candidates is already ahead, and a full one is 41%
+        # cheaper.
+        #
+        # No `ttl`: the default 5-minute window is the cheap one (an hour costs
+        # 2x to write), and every read RESETS it, so a run's sequential calls
+        # hold the entry as long as no two are five minutes apart. The system
+        # prompt clears Sonnet's 1,024-token minimum cacheable prefix with room
+        # to spare; a shorter one would silently cache nothing, which is why
+        # cache_usage() exists to report what actually happened rather than
+        # leaving this comment as the only evidence.
+        "system": [{"type": "text", "text": system,
+                    "cache_control": {"type": "ephemeral"}}],
         "messages": [{"role": "user", "content": content}],
     }
     if model in STRUCTURED_OUTPUT_MODELS:
@@ -408,6 +445,16 @@ def _validated(obj: dict) -> dict:
     A verdict outside the rubric is DERIVED from the score rather than
     rejected: the score is the thing that ranks, and losing a real one over a
     cosmetic label would hand the slot to a candidate nobody reviewed.
+
+    So is a verdict INSIDE the rubric that disagrees with the score's own
+    band. knowledge/strategy.md defines the verdict as a function of the
+    score -- "A+ (9-10), A (8-8.9) ... skip (<5)" -- so a reply carrying
+    score 9.5 and verdict "skip" contradicts the rubric it was asked to
+    apply, and this used to keep both: the email then ranked the name first
+    and labelled it skip, and the ledger archived the pair. The score is
+    the judgement the model was asked for; the label is derived from it
+    here exactly as the rubric says, and the disagreement is logged rather
+    than lost, because a model that keeps doing it is worth knowing about.
     """
     try:
         score = float(obj["score"])
@@ -418,8 +465,12 @@ def _validated(obj: dict) -> dict:
 
     score = round(score, 1)
     verdict = str(obj.get("verdict", "")).strip()
-    if verdict not in VERDICTS:
-        verdict = _verdict_for(score)
+    expected = _verdict_for(score)
+    if verdict != expected:
+        if verdict in VERDICTS:
+            log.warning("Reply scored %.1f and said %r; the rubric's band for that score "
+                        "is %r, which is what is kept", score, verdict, expected)
+        verdict = expected
     return {
         "score": score,
         "reason": str(obj.get("reason", "")).strip(),
@@ -475,8 +526,35 @@ def _fallback(cand, lynch_result: dict, error: str) -> dict:
     }
 
 
+def cache_usage(resp) -> dict:
+    """What the prompt cache did on one reply, as two numbers.
+
+    The saving from cache_control is invisible from inside the run -- the
+    reply is identical either way -- so a cache that silently stopped working
+    would cost 1.25x forever with nothing to say so, and the comment in
+    request_kwargs would be the only evidence it was ever meant to. There are
+    real ways for it to stop: a system prompt edited below the 1,024-token
+    minimum caches nothing at all, and two calls more than the TTL apart each
+    pay a write.
+
+    Absent or malformed usage counts as zeroes rather than raising. This runs
+    after a reply has been paid for and parsed; an accounting field is not
+    worth losing a score over, and a double that does not model usage must not
+    fail the run either.
+    """
+    usage = getattr(resp, "usage", None)
+
+    def _n(name: str) -> int:
+        value = getattr(usage, name, None)
+        return value if isinstance(value, int) and not isinstance(value, bool) else 0
+
+    return {"cache_write": _n("cache_creation_input_tokens"),
+            "cache_read": _n("cache_read_input_tokens"),
+            "uncached": _n("input_tokens")}
+
+
 def score_candidate(cand, lynch_result: dict, context: dict, chart_path: str | None,
-                    attempts: int = 2) -> dict:
+                    attempts: int = 2, usage: dict | None = None) -> dict:
     """Ask Claude to score one candidate.
 
     Returns score/reason/verdict/key_risk plus `provenance`, which says who
@@ -509,7 +587,19 @@ def score_candidate(cand, lynch_result: dict, context: dict, chart_path: str | N
                         attempt, attempts, cand.ticker, _error_text(e))
             if is_fatal_auth_failure(_error_text(e)):
                 break  # a rejected key is not transient; the retry is theatre
+            if isinstance(e, ScoreFormatError):
+                # The reply arrived and was the wrong SHAPE, which is a fact
+                # about this request -- so resending it unchanged, at
+                # temperature 0, is the theatre the line above refuses for a
+                # rejected key. Ask again, differently. A transport error is
+                # the opposite case and keeps the original request: there was
+                # nothing wrong with it.
+                kwargs = request_kwargs(
+                    system, [*content, {"type": "text", "text": RETRY_CORRECTION}])
             continue
+        if usage is not None:
+            for key, value in cache_usage(resp).items():
+                usage[key] = usage.get(key, 0) + value
         parsed["provenance"] = {
             "source": "claude",
             "model": kwargs["model"],
@@ -552,6 +642,7 @@ def score_all(scored_inputs: list[tuple], top_n: int = 5, min_lynch: int = 3,
     exactly the rows `top_n` cuts away.
     """
     results = []
+    cache: dict = {}
     outage: str | None = None
     for cand, lynch_result, context, chart_path in scored_inputs:
         if lynch_result["passes"] < min_lynch:
@@ -563,7 +654,7 @@ def score_all(scored_inputs: list[tuple], top_n: int = 5, min_lynch: int = 3,
             # another doomed request.
             ai = _fallback(cand, lynch_result, outage)
         else:
-            ai = score_candidate(cand, lynch_result, context, chart_path)
+            ai = score_candidate(cand, lynch_result, context, chart_path, usage=cache)
             error = ai["provenance"]["error"]
             if ai["provenance"]["source"] != "claude" and is_fatal_auth_failure(error):
                 outage = error
@@ -594,8 +685,16 @@ def score_all(scored_inputs: list[tuple], top_n: int = 5, min_lynch: int = 3,
         log.error("%d of %d candidates were NOT scored by Claude and carry a "
                   "checklist fallback: %s", len(failures), len(results),
                   ", ".join(f"{t} ({e})" for t, e in failures[:5]))
+    # One line saying whether the prompt cache actually did anything. Written
+    # even when it did nothing, because "no line" and "no hits" are the states
+    # worth telling apart -- the first means this code did not run.
+    if cache:
+        log.info("Prompt cache: %d tokens read from cache, %d written, %d sent "
+                 "uncached", cache.get("cache_read", 0), cache.get("cache_write", 0),
+                 cache.get("uncached", 0))
     if stats is not None:
         stats.update({
+            "cache": cache,
             "scored": len(results),
             "claude": len(results) - len(failures),
             "fallback": len(failures),
