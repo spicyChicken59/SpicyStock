@@ -1202,6 +1202,19 @@ ok('the streak view says it counts appearances, and why it must',
 ok('a burst the record cannot place is a row of its own, never a day 1',
   (await page.locator('#streak-table tbody tr', { hasText: 'not known' }).count())
     === HEV.by_day.filter((d) => d.day === null).length);
+// FOUR reasons put a burst in that bucket -- no_history, history_undated,
+// history_unreadable and window_not_covered -- and the note under it named
+// one: the only one any available source carries. A run whose history could
+// not be READ lands every burst here and was told the record did not reach
+// back far enough, which is a different fault with a different fix. The row
+// notes carry the specific reason; the bucket may only say what is true of
+// all four, so the check is that it does NOT pick one.
+const bucketNote = await page.locator('#streak-table tbody tr', { hasText: 'not known' })
+  .locator('.sc-note').first().textContent();
+ok('and the bucket does not blame one of the four reasons it cannot tell apart',
+  !/reach back|no history|could not read|undated/i.test(bucketNote)
+  && /each row above says why/.test(bucketNote),
+  bucketNote);
 ok('the record is broken down by month so a change over time is visible',
   (await page.locator('#trend-table tbody tr').count()) === HEV.by_month.length,
   `${HEV.by_month.length} months`);

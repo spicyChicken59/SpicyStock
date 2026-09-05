@@ -776,6 +776,32 @@ def test_the_empty_shortlist_note_never_prints_a_negative_count():
         assert "-" not in html.split("colspan=\"7\"")[1].split("</td>")[0], stats
 
 
+def test_the_email_and_the_page_disclose_what_a_streak_counts_the_same_way():
+    """One disclosure, two surfaces, and a reader gets both.
+
+    The page's version named the 2LYNCH gate ALONE -- under a comment saying
+    "same disclosure the email prints, same words". That stopped being true
+    when the veto arrived: a 6/6 name refused by an absolute rule is counted in
+    `seen_before`, and the tooltip told the reader it was not. The email was
+    swept for exactly this in the 3.3 audit and the page was not.
+
+    Asserted on both files, because a comment claiming they match is what
+    carried the drift for a whole round.
+    """
+    import pathlib
+
+    html = build_html(_with_streak(day=2, first_seen="2026-08-28"), "evening", DATED)
+    page = pathlib.Path(__file__).resolve().parents[1].joinpath("docs/index.html").read_text()
+
+    for reason in ("the checklist rejected", "an absolute rule refused",
+                   "the call cap crowded"):
+        assert reason in html, f"the email dropped {reason!r}"
+        assert reason in page, f"the page dropped {reason!r}"
+    # And the wording it drifted TO is gone from both, not merely joined.
+    assert "including the ones the 2LYNCH gate rejected" not in page
+    assert "including the ones the 2LYNCH gate rejected" not in html
+
+
 def test_the_email_and_the_page_name_the_call_cap_the_same_way():
     """One mechanism, two surfaces, and a reader gets both. The page's funnel
     has said "outside the 25-call cap" since step 9; the email's funnel had no

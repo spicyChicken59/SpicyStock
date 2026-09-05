@@ -159,7 +159,25 @@ jobs:
           git config user.email "actions@github.com"
           git add docs
           git diff --staged --quiet && exit 0
-          git commit -m "run $(date -u +%F)"
+          # The SESSION this run read, not the UTC day it happened to finish on.
+          # Step 10 made "name the session you really read" a rule for the
+          # subject line, the table heading and the CSV filename; the commit
+          # message was the one artifact still naming a clock. Two ways they
+          # differ: an EST evening starts at 23:16 UTC, so a run over ~44
+          # minutes commits under TOMORROW's date, and a SCAN_SESSION_DATE
+          # backfill scans an old session and labels it today. Both are the
+          # silent relabelling step 10 exists to end.
+          #
+          # The pipeline has already written docs/data.json by here -- this
+          # step only runs on 0, 2 or 3, and all three publish. If it somehow
+          # cannot be read, the message says the date is a commit time rather
+          # than quietly passing one off as the other.
+          SESSION=$(python -c 'import json;print(json.load(open("docs/data.json"))["run"]["date"])' 2>/dev/null || true)
+          if [ -n "$SESSION" ]; then
+            git commit -m "run $SESSION"
+          else
+            git commit -m "run (session unknown; committed $(date -u +%F))"
+          fi
           for attempt in 1 2 3; do
             if git push; then exit 0; fi
             echo "push $attempt was rejected — rebasing onto what landed during the run"

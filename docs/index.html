@@ -618,13 +618,24 @@
     var s = c.streak || {};
     return el('div', {
       'class': 'sc-note',
-      // Same disclosure the email prints under its table, same words: the
-      // count includes gate rejections, and it covers the earlier bursts a row
-      // with no day number reports as well as the day number itself.
+      // Same disclosure the email prints under its table, same words -- and
+      // this comment said so while the words had stopped matching. It named
+      // the 2LYNCH gate alone, which stopped being the only way a burst goes
+      // unscored when the veto arrived: a 6/6 name refused by an absolute rule
+      // is counted in seen_before, and this told the reader it was not. All
+      // three reasons, in src/emailer.py's _streak_footnote()'s words, pinned
+      // by a test that reads both files rather than by another comment.
+      // Each reason phrase is kept whole on its own line: the test that pins
+      // this against the email searches for them, and a break mid-phrase makes
+      // it fail on the concatenation rather than on the words.
       title: '"day N of this setup", and the earlier bursts a row with no day number '
            + 'counts, are every session the scan found a burst on for that name — '
-           + 'including the ones the 2LYNCH gate rejected. Neither is N nights of '
-           + 'confirmation. ' + (s.seen_before || 0) + ' earlier session(s) in the ledger.',
+           + 'including the ones that were never scored, whether '
+           + 'the checklist rejected them, '
+           + 'an absolute rule refused them, or '
+           + 'the call cap crowded them out. '
+           + 'Neither is N nights of confirmation. '
+           + (s.seen_before || 0) + ' earlier session(s) in the ledger.',
       text: streakText(c)
     });
   }
@@ -1251,8 +1262,15 @@
         var longest = at(r.outcomes, h);
         return el('tr', null, [
           el('td', null, r.day === null || r.day === undefined
+            // FOUR reasons put a burst in this bucket and this named one of
+            // them -- the one the only available fixture happens to carry. A
+            // run whose history could not be READ lands every burst here, and
+            // was told the record did not reach back far enough, which is a
+            // different fault with a different fix. The bucket has no reason
+            // field to narrow it, so it says the part that is true of all four
+            // and points at the rows, which do carry the specific reason.
             ? [el('span', { text: 'not known' }),
-               el('span', { 'class': 'sc-note', text: 'the record does not reach back far enough to place these' })]
+               el('span', { 'class': 'sc-note', text: 'the record could not place these — each row above says why' })]
             : [el('span', { text: 'day ' + r.day }),
                el('span', { 'class': 'sc-note', text: r.day === 1 ? 'the first burst of a setup' : 'a repeat inside the same setup' })]),
           el('td', { 'class': 'sc-num', text: commas(r.appearances) })

@@ -13,6 +13,8 @@ from __future__ import annotations
 import pathlib
 import re
 
+import pytest
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
@@ -551,3 +553,75 @@ def test_the_ledgers_projected_size_is_what_measuring_it_says():
     assert abs(float(gz) - measured["gzip_mb"]) < 0.01, (
         f"README says {gz} MB gzipped; measuring says {measured['gzip_mb']:.2f}. "
         "Run python tools/measure_ledger.py and sweep it.")
+
+
+def _persist_message_fragment() -> str:
+    """The lines of evening.yml's persist step that choose the commit message.
+
+    Cut out of the real workflow rather than retyped, so the test runs what
+    Actions runs. Bounded by the `SESSION=` assignment and the `fi` that ends
+    the branch it feeds.
+    """
+    import yaml
+
+    workflow = yaml.safe_load(_read(".github/workflows/evening.yml"))
+    step = {s.get("name"): s for s in workflow["jobs"]["scan"]["steps"]}["Persist the run"]
+    lines = step["run"].splitlines()
+    start = next(i for i, line in enumerate(lines) if "SESSION=$(" in line)
+    end = next(i for i, line in enumerate(lines) if line.strip() == "fi")
+    return "\n".join(lines[start:end + 1])
+
+
+@pytest.mark.parametrize("snapshot, expected", [
+    # The ordinary night. Under EST the evening run starts at 23:16 UTC, so a
+    # run over ~44 minutes used to commit under TOMORROW's date.
+    ('{"run": {"date": "2026-01-05", "type": "evening"}}', "run 2026-01-05"),
+    # The case that made this worth fixing rather than noting: a
+    # SCAN_SESSION_DATE backfill scans an old session, and the commit labelled
+    # it with today. That is the silent relabelling step 10 exists to end, in
+    # the one artifact step 10 did not reach.
+    ('{"run": {"date": "2025-11-14", "type": "evening"}}', "run 2025-11-14"),
+])
+def test_the_commit_back_names_the_session_it_scanned(tmp_path, snapshot, expected):
+    """Run the workflow's own lines against a stub `git`, the way this repo
+    traced the push loop -- reading them proves nothing about what `sh` does
+    with `$(...)` and `[ -n ]`."""
+    import subprocess
+
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "data.json").write_text(snapshot)
+    stub = tmp_path / "bin"
+    stub.mkdir()
+    (stub / "git").write_text('#!/bin/sh\necho "GIT $*"\n')
+    (stub / "git").chmod(0o755)
+
+    out = subprocess.run(["sh", "-c", _persist_message_fragment()], cwd=tmp_path, text=True,
+                         capture_output=True,
+                         env={"PATH": f"{stub}:/usr/bin:/bin", "HOME": str(tmp_path)})
+
+    assert out.stdout.strip() == f"GIT commit -m {expected}", (out.stdout, out.stderr)
+
+
+def test_a_snapshot_it_cannot_read_says_the_date_is_a_commit_time(tmp_path):
+    """The fallback must not quietly pass a clock off as a session -- which is
+    the whole defect, one level down. Exercised on both ways the read fails."""
+    import datetime
+    import subprocess
+
+    stub = tmp_path / "bin"
+    stub.mkdir()
+    (stub / "git").write_text('#!/bin/sh\necho "GIT $*"\n')
+    (stub / "git").chmod(0o755)
+    (tmp_path / "docs").mkdir()
+    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+
+    for broken in ("not json at all", None):
+        if broken is None:
+            (tmp_path / "docs" / "data.json").unlink()
+        else:
+            (tmp_path / "docs" / "data.json").write_text(broken)
+        out = subprocess.run(["sh", "-c", _persist_message_fragment()], cwd=tmp_path,
+                             text=True, capture_output=True,
+                             env={"PATH": f"{stub}:/usr/bin:/bin", "HOME": str(tmp_path)})
+        assert out.stdout.strip() == f"GIT commit -m run (session unknown; committed {today})", (
+            f"broken={broken!r}: {out.stdout!r}")
