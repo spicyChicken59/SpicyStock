@@ -743,6 +743,68 @@ def test_a_night_that_found_no_burst_at_all_publishes_no_gate_size(
     )
 
 
+def test_a_delivery_failure_keeps_the_night_the_run_already_paid_for(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The record is written BEFORE the email, and 1 was hiding that.
+
+    A run that dies delivering -- an unverified RESEND_FROM domain is the
+    likely one, and the message below is the one Resend actually returns --
+    has already scanned, rendered every chart, paid for every Claude call and
+    written a complete docs/data.json and docs/ledger.json. It exited 1, the
+    same code as a preflight that spent nothing, and evening.yml reasonably
+    read 1 as "nothing trustworthy to commit" and skipped the persist step.
+
+    Exactly the defect the degraded-run fix closed, one stage later. This is
+    the code that tells the two nights apart; the workflow half is pinned in
+    tests/test_docs_are_true.py.
+    """
+    import resend
+
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    monkeypatch.setattr(sys, "argv", ["pipeline", "evening", "--tickers", ",".join(names)])
+
+    def refuse(params, options=None):
+        raise RuntimeError("The example.invalid domain is not verified. Please add "
+                           "and verify your domain on https://resend.com/domains")
+    monkeypatch.setattr(resend.Emails, "send", refuse)
+
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+
+    assert exc.value.code == pipeline.EXIT_FAILED_AFTER_PUBLISH
+    assert exc.value.code != pipeline.EXIT_OK, "the job must still go red"
+
+    data = clean(tmp_path)
+    assert data["run"]["bursts"] == 3 and len(data["candidates"]) == 3, (
+        "the night that was paid for is on disk, complete"
+    )
+    ledger_file = json.loads((tmp_path / "docs" / "ledger.json").read_text())
+    assert len(ledger_file["runs"]) == 1
+    assert len(ledger_file["runs"][0]["candidates"]) == 3
+    assert len(mocked_boundaries["anthropic"].calls) == 3, "and it was paid for"
+
+
+def test_a_failure_before_the_record_exists_is_still_a_plain_failure(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The other side, and the reason the new code is a THIRD one rather than
+    a widening of the persist condition to "any non-zero". A preflight that
+    spent nothing has no record to keep, and must not claim one -- the
+    workflow would commit whatever docs/ the checkout happened to carry and
+    call it tonight's run."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setattr(sys, "argv", ["pipeline", "evening", "--tickers", ",".join(names)])
+
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+
+    assert exc.value.code == pipeline.EXIT_FAILED
+    assert not (tmp_path / "docs" / "data.json").exists(), "nothing was published"
+    assert mocked_boundaries["anthropic"].calls == [], "and nothing was spent"
+
+
 def test_a_burst_the_call_cap_dropped_says_so_rather_than_disappearing(
     monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
@@ -1938,12 +2000,16 @@ def test_the_exit_codes_are_the_numbers_actions_reads():
 
     This is that place. The contract is with GitHub Actions, which reads the
     integer and knows nothing about the name: 0 is a run to trust, 1 is a run
-    that produced nothing, and 2 is the one that matters -- a run that finished
-    and must not be traded off as a complete scan. A 2 that silently became a 0
-    would turn every degraded night green, which is the failure step 5 exists
-    to end.
+    that produced nothing, 2 is the one that matters -- a run that finished
+    and must not be traded off as a complete scan -- and 3 is a run that
+    failed with its record already written, which the workflow keeps and
+    still reports red. A 2 that silently became a 0 would turn every degraded
+    night green, which is the failure step 5 exists to end; a 3 that became a
+    1 would throw away a night that was paid for, which is the failure the
+    persist condition exists to end.
     """
-    assert (pipeline.EXIT_OK, pipeline.EXIT_FAILED, pipeline.EXIT_DEGRADED) == (0, 1, 2)
+    assert (pipeline.EXIT_OK, pipeline.EXIT_FAILED, pipeline.EXIT_DEGRADED,
+            pipeline.EXIT_FAILED_AFTER_PUBLISH) == (0, 1, 2, 3)
 
 
 def test_the_three_numbers_that_decide_what_a_run_costs_and_shows():

@@ -199,7 +199,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 740 tests, no network or API keys needed
+pytest tests/                   # 742 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -468,6 +468,21 @@ rejected push by rebasing onto whatever landed during the run — three attempts
 then it fails the step loudly rather than pretending. Market data is live-only,
 so a discarded snapshot cannot be re-fetched; the run's 30-day artifact holds a
 copy of `docs/data.json` and `docs/ledger.json` either way.
+
+**Which nights get kept is the exit code, and 1 was hiding two of them.** A
+`run:` step fails on any non-zero code, and an `if:` with no status function has
+`success()` ANDed into it — so the persist step originally ran on clean nights
+only. Exit 2 is a run that WORKED and noted a problem: it scanned, rendered,
+paid for up to 25 Claude calls, wrote both files complete and mailed the
+shortlist. One chart that will not render is enough to earn it, as is one Claude
+fallback, a mode/clock disagreement or >10% stale symbols — this repo's own
+30-session fixture is 2 degraded in 30. Every one of those nights was thrown
+away. And the record is written *before* the email, so a run that dies
+delivering — an unverified `RESEND_FROM` domain is the likely one — is in the
+same position and exited 1 for it, the same code as a preflight that spent
+nothing. It exits 3 now. The step captures the code and re-raises it last, after
+the persist and the artifact upload, so the job's colour is unchanged: 2 and 3
+are still red. Only the record is rescued.
 
 That retry only started existing in this round. `git pull --rebase` sat bare in
 the loop, and under Actions' `bash -e` a failing pull ends the step — so the

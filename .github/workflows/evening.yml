@@ -107,12 +107,22 @@ jobs:
           echo "code=$code" >> "$GITHUB_OUTPUT"
           echo "pipeline exited ${code}"
       - name: Persist the run
-        # 0 is clean, 2 is DEGRADED-but-published; 1 is FAILED and there is
-        # nothing trustworthy to commit. Compared as strings because step
-        # outputs are strings.
+        # 0 is clean, 2 is DEGRADED-but-published, 3 is FAILED-after-publishing.
+        # Only 1 means there is nothing trustworthy to commit. Compared as
+        # strings because step outputs are strings.
+        #
+        # 3 is here because 1 was covering two different nights. The record is
+        # written BEFORE the email, so a run that dies sending it -- an
+        # unverified RESEND_FROM domain is the likely one -- has already paid
+        # for the scan, the charts and every Claude call and has a complete
+        # docs/ to show for it. It exited 1, this step skipped, and the night
+        # died with the container: the same defect as the degraded one above,
+        # one stage later, found by sweeping for it rather than by waiting.
+        # src.pipeline's EXIT_FAILED_AFTER_PUBLISH is the other half.
         if: >-
           steps.guard.outputs.go == 'true'
-          && (steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2')
+          && (steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2'
+              || steps.pipeline.outputs.code == '3')
         # Without this the ledger cannot accumulate: docs/ is written inside the
         # container and dies with it, so every CI run would start a fresh
         # history and the forward returns step 9 exists to collect would never

@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 740 tests with no network
+- **There is a regression net.** `pytest tests/` runs 742 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -236,6 +236,26 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   artifact upload, so the job's COLOUR is unchanged and only the record is
   rescued. Whether red is right for exit 2 is a separate question, deliberately
   not answered.
+
+  **And the same defect was one stage further on, found by sweeping for it
+  rather than by waiting for it.** The fix above asserted that exit 1 means
+  "there is nothing trustworthy to commit", and that was false: `publish()`
+  runs BEFORE the email, so a run that dies delivering has scanned, rendered
+  every chart, paid for every Claude call and written both files complete --
+  and exited 1, the same code as a preflight that spent nothing. Reproduced by
+  driving the real evening path with a Resend double raising the message an
+  unverified sender domain actually returns: exit 1, `data.json` with three
+  candidates, `ledger.json` with three rows, three Claude calls paid for,
+  three charts on disk. `EXIT_FAILED_AFTER_PUBLISH` is 3 now, set by a
+  `report.published` flag that `publish()` raises the moment `book.write()`
+  returns, and the persist condition keeps 0, 2 and 3. A THIRD code rather
+  than widening the condition to "any non-zero", because a preflight failure
+  must not claim a record: the workflow would commit whatever `docs/` the
+  checkout carried and call it tonight's run. Six mutants over the new rule,
+  all six killed; the workflow test reads the constant rather than the digit,
+  so renumbering cannot pass one half while the other keeps the old number.
+  This is the sweep this file's "check that a fix did not introduce a new
+  defect of the same class" rule asks for, and it found one.
 
   **And `evening.yml`'s commit-back has still never executed** — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on

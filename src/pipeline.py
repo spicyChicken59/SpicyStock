@@ -193,6 +193,18 @@ MORNING_CHART_NOTE = (
 EXIT_OK = 0
 EXIT_FAILED = 1
 EXIT_DEGRADED = 2
+# And 3 exists because "failed" was hiding two different nights. The evening
+# run writes docs/data.json and docs/ledger.json BEFORE it mails, so a run
+# that dies at the email stage -- a sender domain Resend will not accept, a
+# rate limit, a transport hiccup -- has already scanned, rendered every chart,
+# paid for up to MAX_TO_SCORE Claude calls and written a complete record. It
+# exited 1, the same code as a preflight that spent nothing, and evening.yml
+# reasonably read 1 as "there is nothing trustworthy to commit" and skipped
+# the persist step. The night died with the container, having been paid for.
+#
+# The job is still RED: any non-zero code fails the step that re-raises it,
+# and an email nobody received is a failed run. Only the record is kept.
+EXIT_FAILED_AFTER_PUBLISH = 3
 
 # When a scan stops being clean. Well below the fractions at which src.scanner
 # refuses to report a scan at all: this is the line for "say so", that one is
@@ -306,6 +318,11 @@ class RunReport:
     errors: list[dict] = field(default_factory=list)
     counts: dict = field(default_factory=dict)
     failed: bool = False
+    # Set by publish() the moment both files are on disk, and read only by
+    # exit_code. It is not "the run got far enough" -- it is the narrower
+    # claim that there is a complete record to keep, which is the only
+    # question the workflow's persist step asks.
+    published: bool = False
 
     def problem(self, stage: str, message: str) -> None:
         self.errors.append({"stage": stage, "message": message})
@@ -322,7 +339,9 @@ class RunReport:
 
     @property
     def exit_code(self) -> int:
-        return {"ok": EXIT_OK, "degraded": EXIT_DEGRADED, "failed": EXIT_FAILED}[self.status]
+        if self.failed:
+            return EXIT_FAILED_AFTER_PUBLISH if self.published else EXIT_FAILED
+        return {"ok": EXIT_OK, "degraded": EXIT_DEGRADED}[self.status]
 
     def email_stats(self, **extra) -> dict:
         """The stats block the emailer reads, with the status in it."""
@@ -1161,6 +1180,10 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     book.latest["run"]["status"] = entry["status"] = report.status
 
     written = book.write()
+    # Both files are on disk and complete. Everything after this point in the
+    # run -- the email, and nothing else -- can fail without the night's
+    # record being worthless, and the exit code has to be able to say so.
+    report.published = True
     return {"data": written["data"], "ledger": written["ledger"],
             "runs": len(book.runs), "pending": len(pending), "filled": filled}
 
@@ -1286,7 +1309,10 @@ def main() -> None:
         report.fail(report.stage, e)
         report.log_summary(args.run_type)
         notify_failure(args.run_type, report, dry_run=args.dry_run)
-        sys.exit(EXIT_FAILED)
+        # EXIT_FAILED, or EXIT_FAILED_AFTER_PUBLISH when the record survived
+        # the failure. report.exit_code holds that one rule; this line used to
+        # hold a second copy of it that could only ever say 1.
+        sys.exit(report.exit_code)
     # Exit 2 when the run finished but cannot be trusted as a complete scan.
     # Actions has no other way to tell the difference, and a green tick on a
     # half-scanned market is how this project went a rebuild without noticing.

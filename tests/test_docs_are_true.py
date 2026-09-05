@@ -499,6 +499,17 @@ def test_a_degraded_evening_run_still_commits_the_night_it_paid_for():
     assert "'1'" not in condition, (
         f"a FAILED run has nothing trustworthy to commit: {condition!r}")
 
+    # The same defect one stage later. The record is written BEFORE the email,
+    # so a run that dies delivering it has scanned, rendered, paid for every
+    # Claude call and written a complete docs/ -- and used to exit 1 for it,
+    # the same code as a preflight that spent nothing. Read off src.pipeline's
+    # constant rather than written as "3", so renumbering the code cannot make
+    # this pass while the workflow keeps the old number.
+    from src import pipeline as pipe
+    assert f"steps.pipeline.outputs.code == '{pipe.EXIT_FAILED_AFTER_PUBLISH}'" in condition, (
+        f"the persist step throws away a night that failed only at the email: "
+        f"{condition!r}")
+
     # And the colour must be unchanged — a job that goes green on a failed run
     # is the opposite of the mistake being fixed.
     assert "steps.pipeline.outputs.code" in str(verdict["run"]), verdict["run"]
