@@ -1534,6 +1534,78 @@ def test_a_history_read_that_raises_outright_still_cannot_kill_the_run(
     assert json.loads((tmp_path / "docs" / ledger.LEDGER_NAME).read_text())["runs"]
 
 
+def test_a_quarantined_ledger_survives_the_commit_back_and_the_next_night_heals(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """Ledger.set_aside() keeps the casualty on the container's disk, which is
+    worth nothing on its own: in Actions the container is thrown away. What
+    makes it a real rescue is that `git add docs` STAGES it -- .gitignore
+    blocks docs/charts/ and nothing else under docs/ -- so the file a run
+    could not read is committed for a human to look at.
+
+    And the night after must not repeat the whole thing. The persist step
+    commits on exit 2, and an unreadable history is exactly an exit 2, so the
+    FRESH ledger reaches the branch and the next run reads it. Before that fix
+    a corrupt ledger was permanent: every night quarantined it again, wrote a
+    good one, and threw the good one away with the container.
+
+    Simulated against a real `git` in a real repository rather than reasoned
+    about, because both halves are claims about what a command does.
+    """
+    import subprocess
+
+    docs = tmp_path / "docs"
+    docs.mkdir(parents=True, exist_ok=True)
+    corrupt = "{not json at all"
+    (docs / ledger.LEDGER_NAME).write_text(corrupt)
+
+    def git(*args):
+        return subprocess.run(("git",) + args, cwd=tmp_path, capture_output=True, text=True)
+
+    git("init", "-q", "-b", "main")
+    git("config", "user.email", "t@example.invalid")
+    git("config", "user.name", "t")
+    # The one rule under docs/ that this repo's .gitignore carries, copied
+    # from it rather than invented: if a later round gitignores the casualty
+    # too, that is the change this test exists to fail on.
+    (tmp_path / ".gitignore").write_text(_docs_ignore_rules())
+    git("add", "-A")
+    git("commit", "-qm", "a ledger nothing can read")
+
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=2)
+    pipeline.run("evening", dry_run=True, tickers=names)
+
+    git("add", "docs")   # exactly what evening.yml's persist step runs
+    staged = git("diff", "--cached", "--name-only").stdout.split()
+    (kept,) = ledger.quarantined(docs)
+    assert f"docs/{kept.name}" in staged, (
+        f"the casualty is not staged, so it dies with the container: {staged}")
+    assert kept.read_text() == corrupt
+    assert not any(p.startswith("docs/charts/") for p in staged), (
+        "the charts are the one thing under docs/ that must NOT be committed")
+    git("commit", "-qm", "night one")
+
+    # Night two, over what night one committed.
+    before = set(ledger.quarantined(docs))
+    pipeline.run("evening", dry_run=True, tickers=names)
+
+    assert set(ledger.quarantined(docs)) == before, (
+        "the second night quarantined again, so nothing healed")
+    assert json.loads((docs / ledger.LEDGER_NAME).read_text())["runs"]
+
+
+def _docs_ignore_rules() -> str:
+    """This repo's own .gitignore rules that mention docs/, and only those.
+
+    Read rather than retyped: the test above is about which files under docs/
+    reach a commit, and a hand-copied rule set would go on asserting the
+    answer for rules the repo no longer has.
+    """
+    root = pathlib.Path(__file__).resolve().parents[1]
+    return "".join(line for line in root.joinpath(".gitignore").read_text().splitlines(True)
+                   if "docs" in line and not line.lstrip().startswith("#"))
+
+
 def test_the_history_is_read_once_and_the_two_files_agree_about_it(
     monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):

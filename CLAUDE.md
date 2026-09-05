@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 760 tests with no network
+- **There is a regression net.** `pytest tests/` runs 761 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -343,6 +343,32 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   carrying the correction ALONE, which asks the model to score a candidate it
   can no longer see and returns a reply that parses. Nothing downstream would
   have noticed.
+
+  **Two findings about the quarantine, and one of them was wrong.** The claim
+  was that `Ledger.set_aside()`'s casualty dies with the container because it
+  is not gitignored. Both halves are checkable and the conclusion is the
+  opposite of the premise: `git check-ignore` says the casualty is NOT
+  ignored, which is exactly why `git add docs` stages it and the commit-back
+  keeps it. Simulated end to end against a real `git` in a real repository --
+  a corrupt ledger committed, a night run over it, `git add docs`, and the
+  night after -- and the second night quarantines nothing, because the fresh
+  ledger reached the branch on exit 2. **That is the persist fix paying for
+  itself twice**: before it, a corrupt ledger was permanent, since every night
+  set it aside, wrote a good one, and threw the good one away with the
+  container. Both halves are pinned now, and the test reads this repo's own
+  docs/ rules out of `.gitignore` rather than retyping them, so a later round
+  that gitignores the casualty fails here instead of silently reinstating the
+  bug that was never there.
+
+  What IS true and stays open: nothing ever prunes the casualties.
+  `quarantined()` returns them oldest-first and is called by no production
+  code, so repeated corruption commits an unbounded number of ~1.5 MB files
+  (172 KB per 30 runs, at MAX_RUNS 260) into a directory GitHub Pages serves.
+  Deliberately not "fixed" here: every pruning rule destroys the data
+  `set_aside()` exists to keep, the oldest casualty holds the most history and
+  the newest is the most diagnostic, and inventing a policy to answer a
+  failure mode nobody has seen is how this project's notes record two fixes
+  being worse than their bugs. Written down instead.
 
   **And `evening.yml`'s commit-back has still never executed** — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on
