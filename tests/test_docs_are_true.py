@@ -452,3 +452,57 @@ def test_the_feed_override_reaches_the_scheduled_run():
         "then only be fixed by editing the workflow"
     )
     assert "SCAN_FEED" in _read(".env.example")
+
+
+def test_a_degraded_evening_run_still_commits_the_night_it_paid_for():
+    """Exit 2 means the run WORKED and noted a problem. The record must survive.
+
+    A `run:` step fails on any non-zero code, and the persist step's `if:`
+    carried no status function — so Actions ANDed success() into it and skipped
+    the commit-back on every degraded night. The cost is the whole point of the
+    project: exit 2 means the scan ran, the charts rendered, up to MAX_TO_SCORE
+    Claude calls were PAID FOR, docs/data.json and docs/ledger.json were written
+    complete, and the shortlist was mailed — and then the record died with the
+    container. src.pipeline's own contract is that a degraded run publishes;
+    there is a test named for it.
+
+    Not a corner case. One chart that will not render is enough, as is one
+    Claude fallback, >10% stale symbols, an unreadable history, or a mode/clock
+    disagreement. This repo's own 30-session fixture is 2 degraded in 30, and
+    its newest run is one of them — so the canonical picture of "what docs/
+    holds after a month" contains two nights this workflow could not have kept.
+
+    Asserted on the PARSED yaml rather than on the text, because the thing that
+    went wrong is a structural property of the condition, not a spelling.
+    """
+    import yaml
+
+    workflow = yaml.safe_load(_read(".github/workflows/evening.yml"))
+    steps = workflow["jobs"]["scan"]["steps"]
+    by_name = {s.get("name"): s for s in steps}
+
+    pipeline = by_name["Run evening pipeline"]
+    persist = by_name["Persist the run"]
+    verdict = by_name["Report the pipeline's verdict"]
+
+    assert pipeline.get("id") == "pipeline", (
+        "the pipeline step needs an id for the persist step to read its code")
+    # It must NOT raise: a raising step makes success() false and skips persist.
+    assert "$GITHUB_OUTPUT" in pipeline["run"], (
+        "the pipeline step must capture its exit code, not raise it")
+
+    condition = " ".join(str(persist["if"]).split())
+    assert "steps.pipeline.outputs.code == '2'" in condition, (
+        f"the persist step does not run on a DEGRADED night: {condition!r}. "
+        "A night that was paid for and published would be thrown away.")
+    assert "steps.pipeline.outputs.code == '0'" in condition, condition
+    assert "'1'" not in condition, (
+        f"a FAILED run has nothing trustworthy to commit: {condition!r}")
+
+    # And the colour must be unchanged — a job that goes green on a failed run
+    # is the opposite of the mistake being fixed.
+    assert "steps.pipeline.outputs.code" in str(verdict["run"]), verdict["run"]
+    assert list(by_name).index("Report the pipeline's verdict") > \
+        list(by_name).index("Keep the run's artifacts"), (
+        "the verdict must be raised AFTER the artifact upload, or a degraded "
+        "night loses its 30-day backup copy too")

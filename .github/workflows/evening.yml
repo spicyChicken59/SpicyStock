@@ -59,6 +59,7 @@ jobs:
         if: steps.guard.outputs.go == 'true'
         run: pip install -r requirements.txt
       - name: Run evening pipeline
+        id: pipeline
         if: steps.guard.outputs.go == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -75,9 +76,43 @@ jobs:
           # -- and an unset one expands to '', which _feed_from_env() already
           # treats as "use the default".
           SCAN_FEED: ${{ vars.SCAN_FEED }}
-        run: python -m src.pipeline evening
+        # THE EXIT CODE IS CAPTURED HERE AND RE-RAISED AT THE END OF THE JOB,
+        # so that "Persist the run" can tell a DEGRADED night from a broken one.
+        # It could not before, and the cost was the whole point of the project:
+        # exit 2 means the run scanned, rendered, paid for up to MAX_TO_SCORE
+        # Claude calls, wrote a complete docs/data.json and docs/ledger.json and
+        # MAILED the shortlist -- and then noted a problem. A `run:` step fails
+        # on any non-zero code, and the persist step's `if:` carries no status
+        # function, so Actions ANDs success() into it and skipped it. The
+        # night's record died with the container, having been paid for.
+        #
+        # Not a rare corner: one chart that will not render degrades a run, and
+        # so does one Claude fallback, >10% stale symbols, an unreadable history
+        # or a mode/clock disagreement. This project's own 30-session fixture,
+        # written by driving this same pipeline, is 2 degraded in 30 -- and its
+        # NEWEST run is one of them. src.pipeline's own test is named
+        # test_a_failed_forward_return_fetch_degrades_the_run_but_still_publishes:
+        # publishing while degraded is the code's deliberate contract, and this
+        # workflow was throwing the publication away.
+        #
+        # The job's COLOUR is unchanged -- "Report the pipeline's verdict" below
+        # re-raises the same code, so a degraded night is still red. Only the
+        # record is rescued. Whether red is right for exit 2 is a separate
+        # question and deliberately not answered here.
+        run: |
+          set +e
+          python -m src.pipeline evening
+          code=$?
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "pipeline exited ${code}"
       - name: Persist the run
-        if: steps.guard.outputs.go == 'true'
+        # 0 is clean, 2 is DEGRADED-but-published; 1 is FAILED and there is
+        # nothing trustworthy to commit. Compared as strings because step
+        # outputs are strings.
+        if: >-
+          steps.guard.outputs.go == 'true'
+          && (steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2')
         # Without this the ledger cannot accumulate: docs/ is written inside the
         # container and dies with it, so every CI run would start a fresh
         # history and the forward returns step 9 exists to collect would never
@@ -153,3 +188,14 @@ jobs:
             docs/ledger.json
             results/
           retention-days: 30
+      - name: Report the pipeline's verdict
+        # The exit code the pipeline step captured rather than raised, raised
+        # here instead — LAST, so that the persist and the artifact upload have
+        # both already happened. Without this the job would go green on a run
+        # that failed, which is the opposite of the mistake being fixed above.
+        #
+        # No status function on purpose: if the persist step failed, the job is
+        # already red for a reason that matters more than this one, and this
+        # step is skipped rather than overwriting it.
+        if: steps.guard.outputs.go == 'true'
+        run: exit ${{ steps.pipeline.outputs.code }}

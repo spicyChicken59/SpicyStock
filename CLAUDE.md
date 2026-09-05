@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 732 tests with no network
+- **There is a regression net.** `pytest tests/` runs 733 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -210,6 +210,32 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   `docs/ledger.json` will never exist, the forward returns cannot be measured,
   the page's evidence block stays empty and correct, and the morning run has
   nothing to follow through on.
+
+  **A DEGRADED night could not commit its record, and that was the biggest
+  thing standing between this project and its own north star.** Exit 2 means
+  the run WORKED and noted a problem: the scan ran, the charts rendered, up to
+  MAX_TO_SCORE Claude calls were paid for, `docs/data.json` and
+  `docs/ledger.json` were written complete, the shortlist was mailed — and then
+  the record died with the container, because a `run:` step fails on any
+  non-zero code and the persist step's `if:` carried no status function, so
+  Actions ANDed `success()` into it and skipped the commit-back. The artifact
+  step right below it carries an explicit `(success() || failure())` and its
+  own comment reasons about exactly that asymmetry; the persist step did not.
+  Verified from the Actions API on run 33927201865: step 6 failure, step 7
+  SKIPPED, step 8 success.
+
+  Not a corner case — one chart that will not render is enough, as is one
+  Claude fallback, >10% stale symbols, an unreadable history, or a mode/clock
+  disagreement. **This repo's own 30-session fixture is 2 degraded in 30, and
+  its newest run is one of them**, so the canonical picture of "what `docs/`
+  holds after a month" contains two nights this workflow could not have kept.
+  `src.pipeline`'s contract is that a degraded run publishes — there is a test
+  named `..._degrades_the_run_but_still_publishes` — and the workflow was
+  throwing the publication away. The pipeline step captures its code now and
+  `Report the pipeline's verdict` re-raises it last, after the persist and the
+  artifact upload, so the job's COLOUR is unchanged and only the record is
+  rescued. Whether red is right for exit 2 is a separate question, deliberately
+  not answered.
 
   **And `evening.yml`'s commit-back has still never executed** — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on
