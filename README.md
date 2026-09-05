@@ -144,6 +144,27 @@ what `.github/workflows/evening.yml` reads, and `.env.example` explains each:
 `ANTHROPIC_API_KEY`, `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`,
 `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_TO`
 
+**Then, before the first scheduled night, rehearse the boundaries once from
+your own machine:**
+
+```bash
+set -a; . ./.env; set +a
+python tools/live_check.py            # ~$0.02 and one test email
+python tools/live_check.py --no-spend # the free checks only
+```
+
+It asks each boundary exactly one question through the pipeline's OWN code —
+`_download_batch()` for Alpaca, `score_candidate()` over a chart `render_chart()`
+drew for Claude, `deliver()` for Resend — so a pass means the nightly run's own
+calls work. It tells a wrong key from a wrong feed (401 vs 403, the way
+`run_scan()` does), reports whether the feed carries today's session, whether
+Claude honours `cache_control` and whether the cache actually hits on a second
+call, and whether Resend accepts `RESEND_FROM`. Every check is exercised offline
+in `tests/test_live_check.py`, including the one where `--no-spend` must NOT
+print READY over boundaries it never tried. The one thing it cannot try is the
+commit-back push, which only Actions can run: watch the first evening run's
+"Persist the run" step for that.
+
 Both pipeline workflows then fire on weekdays and can be triggered manually
 from the Actions tab. `morning.yml` is passed only the three delivery secrets,
 because the follow-through pass runs neither the scanner nor the scorer and
@@ -199,7 +220,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 767 tests, no network or API keys needed
+pytest tests/                   # 788 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the

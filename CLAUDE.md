@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 767 tests with no network
+- **There is a regression net.** `pytest tests/` runs 788 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -158,9 +158,16 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   `tests/test_sdk_contract.py` builds a genuine `StockBarsRequest` and a genuine
   `BarSet` offline and runs one scan through both the real object and the
   double, so a shape change in alpaca-py fails here rather than passing.
-  Still untested: anything needing a socket — that the credentials can query the
-  feed, that Resend delivers, that Claude returns what the parser expects from a
-  real chart.
+  Still untested HERE: anything needing a socket — that the credentials can
+  query the feed, that Resend delivers, that Claude returns what the parser
+  expects from a real chart. `tools/live_check.py` now asks each of those once,
+  through the pipeline's own calls, from a machine that has the keys; the
+  owner runs it before the first scheduled night (README, "One-time setup").
+  Its own logic is exercised offline in `tests/test_live_check.py` through the
+  same doubles the pipeline tests use — and that suite caught its first
+  version printing READY under `--no-spend` over boundaries it had never
+  tried, which is the confidently false sentence in the tool meant to prevent
+  one.
 
   **The interpreter is part of the environment, and it changed an answer.**
   CPython 3.12 made the builtin `sum()` compensated for floats, so the same

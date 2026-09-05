@@ -802,38 +802,53 @@ def _required(name: str) -> str:
     return value
 
 
-def send_email(results: list[dict], run_type: str, scan_stats: dict) -> None:
+def sender_address() -> str:
+    """Who the mail is from: RESEND_FROM, or Resend's sandbox sender.
+
+    EMPTY COUNTS AS ABSENT, the same rule src.pipeline's _absent() applies to
+    every other variable, and here it is the difference between a fallback
+    and a rejected send. os.environ.get's default fires only on a MISSING
+    key -- but evening.yml always sets `RESEND_FROM: ${{ secrets.RESEND_FROM }}`
+    and GitHub expands an unset secret to '', so the variable is present and
+    empty and the documented fallback was unreachable in the one place it
+    was written for. Reproduced: absent gave onboarding@resend.dev, '' gave
+    a sender of '', which Resend refuses -- so setting the other five
+    secrets and leaving this one out sent nothing, and the run reported
+    itself clean.
+    """
+    return os.environ.get("RESEND_FROM", "").strip() or "onboarding@resend.dev"
+
+
+def deliver(subject: str, html: str, attachments: list[dict] | None = None) -> dict:
+    """Hand one message to Resend and return its reply. The ONLY send path.
+
+    Split out of send_email() so that tools/live_check.py can push a plainly
+    labelled test message through the same key, the same sender rule and the
+    same recipient parsing the nightly run uses -- rather than carrying a
+    second copy of those four lines that would drift from this one. A live
+    check that exercised a different send path would prove that path works.
+    """
     to = [addr.strip() for addr in _required("EMAIL_TO").split(",")]
-    # EMPTY COUNTS AS ABSENT, the same rule src.pipeline's _absent() applies to
-    # every other variable, and here it is the difference between a fallback
-    # and a rejected send. os.environ.get's default fires only on a MISSING
-    # key -- but evening.yml always sets `RESEND_FROM: ${{ secrets.RESEND_FROM }}`
-    # and GitHub expands an unset secret to '', so the variable is present and
-    # empty and the documented fallback was unreachable in the one place it
-    # was written for. Reproduced: absent gave onboarding@resend.dev, '' gave
-    # a sender of '', which Resend refuses -- so setting the other five
-    # secrets and leaving this one out sent nothing, and the run reported
-    # itself clean.
-    sender = os.environ.get("RESEND_FROM", "").strip() or "onboarding@resend.dev"
-
     resend.api_key = _required("RESEND_API_KEY")
-
-    params = {
-        "from": sender,
+    response = resend.Emails.send({
+        "from": sender_address(),
         "to": to,
-        "subject": subject_for(results, run_type, scan_stats),
-        "html": build_html(results, run_type, scan_stats),
-        "attachments": _build_attachments(results),
-    }
-
-    response = resend.Emails.send(params)
-
+        "subject": subject,
+        "html": html,
+        "attachments": list(attachments or []),
+    })
     # Log the count, not the addresses. EMAIL_TO is a repository secret, and
     # Actions masks only exact occurrences of it. A single-recipient value
     # still matches and is masked, but split() breaks the contiguous string
     # for multi-recipient values, so those printed in plaintext to the run log.
-    log.info("Email sent via Resend to %d recipient(s) (%d candidates), id=%s",
-              len(to), len(results), response.get("id"))
+    log.info("Email sent via Resend to %d recipient(s), id=%s", len(to), response.get("id"))
+    return response
+
+
+def send_email(results: list[dict], run_type: str, scan_stats: dict) -> None:
+    deliver(subject_for(results, run_type, scan_stats),
+            build_html(results, run_type, scan_stats),
+            _build_attachments(results))
 
 
 def send_failure_notice(run_type: str, errors: list[dict], scan_stats: dict | None = None) -> None:
