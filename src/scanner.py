@@ -279,6 +279,23 @@ def session_has_closed(now: datetime | None = None) -> bool:
 
 @dataclass
 class ScanConfig:
+    #: Which of these fields are STRATEGY -- the numbers that decide what a
+    #: burst IS -- as against the operational ones (batching, the coverage
+    #: guards, the feed, a pinned session) that decide how the scan is carried
+    #: out. src.pipeline.rules_fingerprint() records the first kind on every
+    #: run, because a change to one of them makes every mean the record
+    #: publishes an average over two different screeners; a change to the
+    #: second kind does not. Neither list is a second copy of the fields: a
+    #: test asserts every dataclass field is in exactly one of them, so a
+    #: field added later cannot arrive uncategorised and silently escape the
+    #: fingerprint. Class attributes, not dataclass fields -- they carry no
+    #: annotation, so nothing constructs them per instance.
+    STRATEGY_FIELDS = ("min_price", "min_gain_pct", "min_rvol", "rvol_lookback",
+                       "min_rvol_sessions", "min_dollar_volume_pctile")
+    OPERATIONAL_FIELDS = ("max_stale_fraction", "max_dropped_fraction",
+                          "coverage_guard_min_symbols", "lookback_days",
+                          "batch_size", "feed", "session_date")
+
     min_price: float = 4.0            # price > $4
     min_gain_pct: float = 4.0         # >= 4% up from yesterday
 

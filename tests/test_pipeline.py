@@ -948,6 +948,58 @@ def test_a_burst_the_liquidity_floor_refused_is_in_the_record_and_says_why(
         "the thin name is not passed off as scored")
 
 
+def test_a_run_records_the_rules_it_applied_and_the_record_reads_them_back(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The record kept `model` and nothing about the rules, so changing the
+    gate or the 4% made every published mean an average over two screeners
+    under one label. Every run carries the numbers now, in the snapshot and
+    in the ledger entry, and the record says how many distinct sets it holds
+    and which keys differ."""
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    data, book = published(tmp_path), recorded(tmp_path)
+    rules = data["run"]["rules"]
+    assert rules == pipeline.rules_fingerprint(), "what the run applied, not a copy"
+    assert rules["gate.min_lynch_passes"] == pipeline.MIN_LYNCH_PASSES
+    assert rules["scan.min_gain_pct"] == scanner.ScanConfig().min_gain_pct
+    assert rules["check.max_consecutive_up_days"] == lynch.MAX_CONSECUTIVE_UP_DAYS
+    assert book["runs"][0]["rules"] == rules, "and the durable file keeps it"
+    view = data["evidence"]["rules"]
+    assert view["sets"] == 1 and view["differ"] == [] and view["runs_without"] == 0
+    assert view["current"] == rules
+
+
+def test_a_record_written_under_two_screeners_says_so_and_names_what_moved(tmp_path):
+    """The state this exists for. Two runs, one threshold apart, and a third
+    from before the fingerprint existed: the record must not report the third
+    as agreeing, and must name the key that moved rather than saying only
+    that something did."""
+    runs = [
+        {"date": "2026-09-02", "type": "evening", "candidates": [], "gated": [],
+         "rules": {"scan.min_gain_pct": 5.0, "gate.min_lynch_passes": 3}},
+        {"date": "2026-09-01", "type": "evening", "candidates": [], "gated": [],
+         "rules": {"scan.min_gain_pct": 4.0, "gate.min_lynch_passes": 3}},
+        {"date": "2026-08-31", "type": "evening", "candidates": [], "gated": []},
+    ]
+
+    view = ledger.rules_view(runs)
+
+    assert view["sets"] == 2 and view["runs_without"] == 1
+    assert view["differ"] == ["scan.min_gain_pct"], "the key that moved, not just that one did"
+    assert view["current"]["scan.min_gain_pct"] == 5.0, "the newest run's rules"
+
+    # `sets` counts DISTINCT rules, not runs that carry them: a month of
+    # nights under one screener is one set. Without this a record of thirty
+    # identical runs would have told the reader it spanned thirty screeners
+    # and that every mean on the page blended them.
+    same = [dict(runs[1], date="2026-09-03"), runs[1], dict(runs[1], date="2026-08-30")]
+    steady = ledger.rules_view(same)
+    assert steady["sets"] == 1 and steady["differ"] == [] and steady["runs_without"] == 0
+
+
 def test_a_later_scan_fills_the_earlier_runs_universe_benchmark_from_its_own_frames(
     monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):

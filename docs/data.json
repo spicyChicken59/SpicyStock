@@ -17,6 +17,7 @@
       "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
       "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
       "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'liquidity_floor' (rule 6 refused it in the scan, for dollar volume below the session's percentile floor, before the checklist was consulted), 'veto_up_days' (an absolute rule refused it before the pass count was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same four words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and neither a veto nor a liquidity refusal is ever published as a gate rejection.",
+      "runs[].rules is every number this screener's rules turned on when that run was made — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. A run from before it carries no rules block, and no surface may read that as agreement.",
       "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when no name traded or the rule is off), refused (how many bursts sat below it). run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
       "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
       "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
@@ -45,6 +46,38 @@
       "vetoes": [
         "up_days"
       ]
+    },
+    "rules": {
+      "check.breakdown_lookback": 20,
+      "check.breakdown_pct": -4.0,
+      "check.max_consecutive_up_days": 2,
+      "check.max_d1_move": 2.0,
+      "check.max_d1_range_ratio": 1.0,
+      "check.max_d1_vol_ratio": 1.2,
+      "check.max_ext_vs_sma20": 15.0,
+      "check.max_prior_bursts": 1,
+      "check.max_run_up_1mo": 25.0,
+      "check.max_tightness": 1.0,
+      "check.min_close_pos": 0.7,
+      "check.min_linear_r2": 0.55,
+      "check.min_linear_slope": 0.0,
+      "check.prior_burst_pct": 4.0,
+      "check.vetoes": [
+        "up_days"
+      ],
+      "gate.min_lynch_passes": 3,
+      "scan.min_dollar_volume_pctile": 30.0,
+      "scan.min_gain_pct": 4.0,
+      "scan.min_price": 4.0,
+      "scan.min_rvol": 1.5,
+      "scan.min_rvol_sessions": 20,
+      "scan.rvol_lookback": 50,
+      "window.linear_fit_sessions": 30,
+      "window.norm_sessions": 60,
+      "window.prior_burst_lookback": 20,
+      "window.run_up_sessions": 20,
+      "window.sma_sessions": 20,
+      "window.tight_sessions": 7
     },
     "liquidity": {
       "pctile": 30.0,
@@ -4155,6 +4188,38 @@
         "label": "data/symbols.txt (checked in)",
         "size": 230
       },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 12400000,
@@ -4202,6 +4267,38 @@
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
+      },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
       },
       "liquidity": {
         "pctile": 30.0,
@@ -4251,6 +4348,38 @@
         "label": "data/symbols.txt (checked in)",
         "size": 230
       },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 13200000,
@@ -4298,6 +4427,38 @@
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
+      },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
       },
       "liquidity": {
         "pctile": 30.0,
@@ -4347,6 +4508,38 @@
         "label": "data/symbols.txt (checked in)",
         "size": 230
       },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 12800000,
@@ -4394,6 +4587,38 @@
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
+      },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
       },
       "liquidity": {
         "pctile": 30.0,
@@ -4443,6 +4668,38 @@
         "label": "data/symbols.txt (checked in)",
         "size": 230
       },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 12400000,
@@ -4490,6 +4747,38 @@
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
+      },
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
       },
       "liquidity": {
         "pctile": 30.0,
@@ -8661,6 +8950,43 @@
       ],
       "enough": false,
       "enough_from_open": false
+    },
+    "rules": {
+      "current": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
+      "sets": 1,
+      "differ": [],
+      "runs_without": 0
     }
   }
 }

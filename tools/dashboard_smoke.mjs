@@ -413,6 +413,29 @@ const VARIANTS = {
     d.evidence.universe.enough_from_open = false;
     return d;
   },
+  // A record written under two screeners: the gate moved. Every mean on the
+  // page then averages both, and the page has to say which key moved rather
+  // than only that something did.
+  rulesdrift() {
+    const d = clone(REAL);
+    const ev = d.evidence;
+    const current = JSON.parse(JSON.stringify(ev.rules.current));
+    const older = JSON.parse(JSON.stringify(current));
+    older['gate.min_lynch_passes'] = 4;
+    older['scan.min_gain_pct'] = 5.0;
+    ev.rules = { current, sets: 2, differ: ['gate.min_lynch_passes', 'scan.min_gain_pct'], runs_without: 0 };
+    d.runs[0].rules = current;
+    d.runs.slice(1).forEach((r) => { r.rules = older; });
+    return d;
+  },
+  // And one whose runs predate the fingerprint: not knowing which rules made
+  // a row is a different sentence from knowing they were these.
+  norules() {
+    const d = clone(REAL);
+    d.evidence.rules = { current: null, sets: 0, differ: [], runs_without: d.runs.length };
+    d.runs.forEach((r) => delete r.rules);
+    return d;
+  },
   nodata() { return null; }
 };
 
@@ -780,6 +803,27 @@ ok('a benchmark under the floor is shown on the rung and refused as a rate in th
   `verdict: ${thinBench.slice(0, 60)} | rung: ${thinRung.slice(0, 90)}`);
 // The clause joiner, on the two nights the fixture's own ordering hid.
 const floorClause = `(${floorDollars}/day, the ${REAL.run.liquidity.pctile}th percentile)`;
+// Round 8. A mean across runs is a mean over one strategy only while the
+// record holds one set of rules, and the page says so when it does not.
+const restNote = await page.textContent('#rules-note');
+// The hidden PROPERTY, not isHidden(): an empty paragraph has no box either
+// way, so a note left permanently shown-but-empty passed a visibility check.
+const restHidden = await page.$eval('#rules-note', (n) => n.hidden);
+ok('a record made under one set of rules says nothing about blended screeners',
+  restNote.trim() === '' && restHidden === true,
+  `${JSON.stringify(restNote)} hidden=${restHidden}`);
+await open('/v/rulesdrift/');
+const driftNote = await page.textContent('#rules-note');
+ok('a record spanning two sets of rules says so and names the keys that moved',
+  /spans 2 sets of rules/.test(driftNote) && driftNote.includes('gate.min_lynch_passes')
+  && driftNote.includes('scan.min_gain_pct') && /averages more than one screener/.test(driftNote),
+  driftNote.slice(0, 150));
+await open('/v/norules/');
+const noRulesNote = await page.textContent('#rules-note');
+ok('and runs from before the fingerprint are counted apart, not as agreement',
+  new RegExp(VARIANTS.norules().runs.length + ' runs in the record predate').test(noRulesNote)
+  && !/spans/.test(noRulesNote) && /not the same as knowing it was this one/.test(noRulesNote),
+  noRulesNote.slice(0, 150));
 await open('/v/newreason/');
 const newWhy = await page.$eval('#gated-table tbody tr:first-child td.col-why', (td) => td.textContent.trim());
 ok('a reason word this page does not know is said as that, never as a gate rejection',

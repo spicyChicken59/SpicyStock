@@ -197,6 +197,7 @@
           <button class="sc-tab sc-tab--case" type="button" data-basis="open" aria-pressed="false">from the next session's open</button>
         </div>
         <p class="sc-note" id="basis-note"></p>
+        <p class="sc-note" id="rules-note"></p>
       </div>
     </div>
     <p class="sc-empty" id="evidence-empty" hidden></p>
@@ -1398,6 +1399,32 @@
     });
   })();
 
+  // Every mean on this page is a mean over ONE strategy only while the
+  // record holds one set of rules. When it holds two, the page has to say so
+  // and name what moved: "the rules changed" is not actionable and
+  // "scan.min_gain_pct and gate.min_lynch_passes changed" is. Runs from
+  // before the fingerprint existed are counted apart, because not knowing
+  // which rules made a row is not the same as knowing they were these.
+  function renderRulesNote(ev) {
+    var note = $('rules-note');
+    if (!note) return;
+    var r = ev && ev.rules;
+    if (!r || typeof r !== 'object') { note.textContent = ''; note.hidden = true; return; }
+    var parts = [];
+    if (r.sets > 1) {
+      var differ = (r.differ || []).slice(0, 6).join(', ');
+      parts.push('This record spans ' + plural(r.sets, 'set') + ' of rules, so every mean below averages ' +
+        'more than one screener. What moved: ' + (differ || 'not recorded') +
+        ((r.differ || []).length > 6 ? ', and ' + ((r.differ || []).length - 6) + ' more' : '') + '.');
+    }
+    if (r.runs_without) {
+      parts.push(plural(r.runs_without, 'run') + ' in the record predate the rules fingerprint, ' +
+        'so which screener made those rows is not known — which is not the same as knowing it was this one.');
+    }
+    note.textContent = parts.join(' ');
+    note.hidden = !parts.length;
+  }
+
   function renderEvidence(ev) {
     // A data.json with NO evidence block at all is a real state — a snapshot
     // published before this page learned to ask the question — and hiding the
@@ -1405,6 +1432,7 @@
     // to read and no way to tell an absent view from an empty one. Same rule
     // as the streak line: say which kind of nothing it is.
     $('evidence-card').hidden = false;
+    renderRulesNote(ev);
     if (!ev || !ev.by_score) {
       $('evidence-hint').textContent = 'The one question that judges this screener rather than describing it.';
       $('evidence-body').hidden = true;

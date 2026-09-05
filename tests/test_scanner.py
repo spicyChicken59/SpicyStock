@@ -496,6 +496,25 @@ def test_the_liquidity_gate_drops_the_thinnest_burst_of_the_session(fake_alpaca,
     assert [c.ticker for c in found] == ["BIG"]
 
 
+def test_every_config_field_is_either_strategy_or_plumbing():
+    """A field that is in neither list escapes the rules fingerprint in
+    silence: the run would record "these are the rules" over a number that
+    changed what a burst is and was never written down. Both lists are
+    checked against the dataclass rather than against each other, so a field
+    added later cannot arrive uncategorised, and neither can a list keep
+    naming a field that was deleted."""
+    import dataclasses
+
+    fields = {f.name for f in dataclasses.fields(ScanConfig)}
+    strategy, operational = set(ScanConfig.STRATEGY_FIELDS), set(ScanConfig.OPERATIONAL_FIELDS)
+
+    assert not (strategy & operational), sorted(strategy & operational)
+    assert strategy | operational == fields, (
+        f"uncategorised: {sorted(fields - strategy - operational)}; "
+        f"named but not fields: {sorted((strategy | operational) - fields)}")
+    assert "STRATEGY_FIELDS" not in fields, "the lists are class attributes, not fields"
+
+
 def test_the_scan_hands_back_what_the_floor_refused_and_the_floor_itself(fake_alpaca, ohlcv):
     """A burst rule 6 refused used to leave through a log line and nothing
     else: apply_liquidity_gate() built `dropped`, printed it at INFO and

@@ -2764,6 +2764,44 @@ def test_run_means_and_evidence_outcomes_carry_the_open_basis_with_its_own_n():
     assert "enough_from_open" in ev["shortlist"] and "enough_from_open" in ev["by_check"][0] if ev["by_check"] else True
 
 
+@pytest.mark.parametrize("bad", ["x", ["gate.min_lynch_passes"], 3, None])
+def test_a_rules_block_of_the_wrong_shape_is_refused_at_load(tmp_path, bad):
+    """rules_view() indexes into this block inside evidence(), which publish()
+    calls after the scan and every Claude call are paid for -- the
+    one-level-short class, refused at load rather than waited for. Null is in
+    the list on purpose: the contract says a run from before the fingerprint
+    carries NO key, so a null is a shape no writer produces, and this module
+    briefly wrote one itself and then refused the file it had written."""
+    docs = tmp_path / f"docs-{abs(hash(str(bad)))}"
+    docs.mkdir()
+    (docs / ledger.LEDGER_NAME).write_text(json.dumps({
+        "schema_version": ledger.SCHEMA_VERSION, "app": "SpicyStock", "generated": "x",
+        "runs": [{"date": "2026-08-24", "type": "evening", "rules": bad,
+                  "candidates": [], "gated": []}]}))
+
+    book = ledger.Ledger(docs).load()
+
+    assert book.runs == [] and book.load_error and "rules" in book.load_error, bad
+    assert ledger.quarantined(docs), "the unreadable file is set aside, not overwritten"
+
+
+def test_a_run_from_before_the_fingerprint_loads_clean(tmp_path):
+    """Absent is not the same as broken: a run written before round 8 has no
+    rules key and must load, count as one the record cannot attribute, and
+    take nothing down."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / ledger.LEDGER_NAME).write_text(json.dumps({
+        "schema_version": ledger.SCHEMA_VERSION, "app": "SpicyStock", "generated": "x",
+        "runs": [{"date": "2026-08-24", "type": "evening", "candidates": [], "gated": []}]}))
+
+    book = ledger.Ledger(docs).load()
+
+    assert len(book.runs) == 1 and not book.load_error
+    assert ledger.rules_view(book.runs) == {"current": None, "sets": 0,
+                                            "differ": [], "runs_without": 1}
+
+
 def test_a_from_open_block_of_the_wrong_shape_is_refused_at_load(tmp_path):
     """The seventh instance of the one-level-short class, closed before it
     could open: a stored row whose from_open is a string, or whose from_open

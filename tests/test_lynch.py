@@ -35,6 +35,7 @@ from src.lynch import (
     MAX_D1_VOL_RATIO,
     MAX_EXT_VS_SMA20,
     MAX_PRIOR_BURSTS,
+    PRIOR_BURST_PCT,
     MAX_RUN_UP_1MO,
     MAX_TIGHTNESS,
     MIN_CLOSE_POS,
@@ -458,14 +459,25 @@ def test_a_leg_that_has_already_burst_twice_fails_the_first_or_second_check():
 
 
 def test_a_day_short_of_the_burst_size_is_not_counted_as_a_prior_burst():
-    """The 4% in `rets >= 4.0` is a bare literal inside evaluate_2lynch, not
-    one of the named constants -- the only copy of the scanner's min_gain_pct
-    that no other layer can see. Two 3.5% days are the same shape of frame as
-    the rejection above and must still be a first burst."""
-    result = evaluate_2lynch(_frame(prior_burst_pct=3.5, prior_burst_offsets=(3, 5)))
-    assert result["passes"] == 6, "\n".join(result["detail_lines"])
-    assert _reported(result["checks"]["2_first_or_second_burst"]["value"],
+    """What counts as an EARLIER burst is its own number, and it used to be a
+    bare 4.0 inside evaluate_2lynch -- the only copy of the scanner's
+    min_gain_pct that no other layer could see, and invisible to the rules
+    fingerprint. It is PRIOR_BURST_PCT now, and this is its canary: two days
+    just under it are the same shape of frame as the rejection above and must
+    still be a first burst, while two days ON it are not. The check reports
+    the threshold it applied, so the number the model is told moves with it."""
+    under = evaluate_2lynch(_frame(prior_burst_pct=PRIOR_BURST_PCT - 0.5,
+                                   prior_burst_offsets=(3, 5)))
+    assert under["passes"] == 6, "\n".join(under["detail_lines"])
+    assert _reported(under["checks"]["2_first_or_second_burst"]["value"],
                      r"^(\d+) prior") == 0
+    assert f"{PRIOR_BURST_PCT:g}% bursts" in under["checks"]["2_first_or_second_burst"]["value"]
+
+    on_it = evaluate_2lynch(_frame(prior_burst_pct=PRIOR_BURST_PCT,
+                                   prior_burst_offsets=(3, 5)))
+    _only_failure_is(on_it, "2")
+    assert _reported(on_it["checks"]["2_first_or_second_burst"]["value"],
+                     r"^(\d+) prior") > MAX_PRIOR_BURSTS, "inclusive at the threshold"
 
 
 def test_a_burst_older_than_the_lookback_is_not_held_against_the_leg():
@@ -1053,6 +1065,50 @@ def test_every_threshold_still_holds_the_value_it_was_tuned_to():
     # first refuses a burst outright and the second is handed to the model.
     assert MAX_CONSECUTIVE_UP_DAYS == 2
     assert (BREAKDOWN_PCT, BREAKDOWN_LOOKBACK) == (-4.0, 20)
+
+
+def test_the_rules_fingerprint_covers_every_number_this_module_names():
+    """THE TRAP this fingerprint exists to avoid, made checkable.
+
+    A fingerprint that misses a number reports "same rules" across a change
+    that altered them -- worse than no fingerprint, because the record then
+    states agreement it never checked. It is derived rather than listed for
+    that reason, and this asserts the derivation actually reaches all three
+    sources: every upper-case numeric constant src.lynch names, every window
+    it groups, and the vetoes in force. A threshold added later is covered
+    the moment it is named; the one thing neither can catch is a number left
+    as a bare literal, which is why the windows were named at all.
+    """
+    import src.lynch as lynch_mod
+    from src.pipeline import rules_fingerprint
+
+    fingerprint = rules_fingerprint()
+    scalars = {n for n in dir(lynch_mod)
+               if n.isupper() and isinstance(getattr(lynch_mod, n), (int, float))
+               and not isinstance(getattr(lynch_mod, n), bool)}
+    assert scalars, "src.lynch exposes no threshold constants"
+    missing = sorted(n for n in scalars if f"check.{n.lower()}" not in fingerprint)
+    assert not missing, f"the fingerprint does not carry {missing}"
+    assert all(fingerprint[f"check.{n.lower()}"] == getattr(lynch_mod, n) for n in scalars), (
+        "a value in the fingerprint is not the value the module holds")
+
+    missing_windows = sorted(k for k in lynch_mod.WINDOWS if f"window.{k}" not in fingerprint)
+    assert not missing_windows, f"the fingerprint does not carry the windows {missing_windows}"
+    assert fingerprint["check.vetoes"] == sorted(lynch_mod.VETO_RULES)
+
+
+def test_every_window_this_module_names_is_one_it_actually_measures_over():
+    """The inverse: a window in the dict that no check reads is a number the
+    fingerprint would report as part of the strategy while nothing applied
+    it. Read off the source, because that is where the slicing is."""
+    import inspect
+
+    import src.lynch as lynch_mod
+
+    source = inspect.getsource(lynch_mod)
+    unused = sorted(k for k in lynch_mod.WINDOWS if f'WINDOWS["{k}"]' not in source
+                    and f"WINDOWS['{k}']" not in source)
+    assert not unused, f"{unused} is named as a window and never measured over"
 
 
 def test_no_threshold_constant_is_left_without_a_canary():

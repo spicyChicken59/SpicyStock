@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 894 tests with no network
+- **There is a regression net.** `pytest tests/` runs 904 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -680,6 +680,70 @@ exercised its headline. Nine mutants across them, all killed.
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Round 8 — the record says which screener made each row
+
+The ledger entry kept `model` and nothing about the rules. Change
+`MIN_LYNCH_PASSES` from 3 to 4, or the 4% in `ScanConfig.min_gain_pct`, or the
+up-days veto, and every mean the page publishes silently averages the old
+screener with the new one under one label — the same defect as a benchmark
+over a universe that changed mid-record, invisible for the same reason:
+nothing in the record said which rules produced a row.
+
+`rules_fingerprint()` is DERIVED, not listed. It walks every upper-case
+numeric constant `src.lynch` names, its `WINDOWS`, and the `ScanConfig`
+fields that config itself marks as strategy, so a threshold added later is
+recorded the moment it is named — the property a hand-kept list cannot have,
+and the trap this exists to avoid, since a fingerprint that misses a number
+reports "same rules" across a change that altered them and is worse than no
+fingerprint at all. 28 numbers today. `MAX_TO_SCORE`, `TOP_N`, the feed and
+the universe are deliberately out: each is already a fact of the run block,
+and none of them changes what a burst is.
+
+**The one thing a fingerprint of named constants cannot catch is a number
+left as a bare literal, and six of them were.** `iloc[-20:]`, `iloc[-30:]`,
+`iloc[-21]`, `iloc[-7:]`, `iloc[-60:-7]` and the `4.0` inside `rets >= 4.0`
+were the windows each check reads and what counts as an earlier burst — every
+one a strategy number no other layer could see. They are `lynch.WINDOWS` and
+`PRIOR_BURST_PCT` now. The windows are GROUPED rather than left as module
+scalars because two existing guards are written against the scalars and are
+right to be: `tools/make_fixture.py` starts from hand-authored measurements
+and never slices a frame, so it can carry a threshold and cannot carry a
+window. Putting that distinction in the code beat adding an exemption list to
+the guards — and the guard that demanded it caught a real drift on the way,
+since the generator's own check lines hard-coded "20 days", "30 days" and
+"20SMA" while the module named them. Both fixtures regenerate byte-identically
+across the whole restructure, which is what says it changed no behaviour.
+
+`ScanConfig` now says which of its fields are strategy and which are
+plumbing, and a test asserts every dataclass field is in exactly one of the
+two lists — so a field added later cannot arrive uncategorised and escape the
+fingerprint in silence. `evidence.rules` reports `sets`, the keys that
+`differ`, and `runs_without` (entries predating the fingerprint, counted
+apart, because not knowing which rules made a row is not the same as knowing
+they were these). The page says so and names what moved, since "the rules
+changed" is not actionable and "scan.min_gain_pct and gate.min_lynch_passes
+changed" is.
+
+**Twenty-one mutants, four of them real holes.** `sets` could count runs
+rather than distinct rule sets, because no test had two runs SHARING a
+fingerprint; the ledger's shape check for a broken `rules` block had no test
+at all; and the page's "one screener" check asserted `isHidden()`, which an
+empty paragraph satisfies either way, so a note left permanently shown-but-
+empty passed — the hidden PROPERTY is what the code sets and what the check
+reads now. The fourth was this module's own doing: `add_run` wrote
+`"rules": null` for a run with no fingerprint and the shape check then
+refused the file it had just written, which two existing tests caught
+immediately. Absent is absent; null is a shape no writer produces. Two
+"survivors" in the harness runs were the harness — a `-k` selector that did
+not match the test's own name — and both die when actually selected.
+
+Left as a lead, not a finding: one smoke run reported 2 page errors with
+187/187 checks passing, immediately after a full pytest run, and did not
+reproduce on two repeats of the same sequence. Most likely a 404 on a chart
+image whose presence under `docs/charts/` depends on what the suite last did.
+Written down rather than dropped, because an unexplained two is how a real
+one starts.
 
 ## Round 7 — the other alternative, from frames the scan already had
 

@@ -176,6 +176,7 @@ CONTRACT_INVARIANTS = [
     "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
     "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
     "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'liquidity_floor' (rule 6 refused it in the scan, for dollar volume below the session's percentile floor, before the checklist was consulted), 'veto_up_days' (an absolute rule refused it before the pass count was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same four words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and neither a veto nor a liquidity refusal is ever published as a gate rejection.",
+    "runs[].rules is every number this screener's rules turned on when that run was made — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. A run from before it carries no rules block, and no surface may read that as agreement.",
     "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when no name traded or the rule is off), refused (how many bursts sat below it). run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
     "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
     "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
@@ -1499,7 +1500,37 @@ def evidence(runs: list[dict]) -> dict:
         "crowded_out": _population(crowded),
         "illiquid": _population(illiquid),
         "universe": _population(universe_rows),
+        "rules": rules_view(runs),
     }
+
+
+def rules_view(runs: list[dict]) -> dict:
+    """Which screeners this record spans, and where they differ.
+
+    A mean over runs is only a mean over ONE strategy if the rules did not
+    move under it. `current` is the newest run's fingerprint, `sets` how many
+    distinct ones the record holds, `differ` the exact keys that are not the
+    same in all of them -- named, because "the rules changed" is not
+    actionable and "min_gain_pct and gate.min_lynch_passes changed" is -- and
+    `runs_without` how many entries predate the fingerprint, which is a
+    different thing from agreeing with it and must not be counted as
+    agreement.
+    """
+    seen: list[dict] = []
+    without = 0
+    for run in runs:
+        block = run.get("rules") if isinstance(run, dict) else None
+        if not isinstance(block, dict):
+            without += 1
+            continue
+        if block not in seen:
+            seen.append(block)
+    keys = sorted({key for block in seen for key in block})
+    differ = sorted(
+        key for key in keys
+        if len({json.dumps(block.get(key), sort_keys=True) for block in seen}) > 1)
+    return {"current": dict(seen[0]) if seen else None, "sets": len(seen),
+            "differ": differ, "runs_without": without}
 
 
 def _population(rows: list[dict]) -> dict:
@@ -1553,6 +1584,14 @@ def _malformed_rows(runs: list[dict]) -> str | None:
     parse stays a row this module can hold, count and rewrite, and the streak
     layer reports it in words (see HISTORY_UNDATED) instead of crashing over it.
     """
+    for run in runs:
+        # The rules block is indexed into by rules_view() inside evidence(),
+        # which publish() calls after the scan and every Claude call are paid
+        # for: the one-level-short class again, refused at load rather than
+        # waited for. Absent is a run from before the fingerprint existed.
+        if "rules" in run and not isinstance(run["rules"], dict):
+            return (f"holds a run for {run.get('date')!r} whose rules is a JSON "
+                    f"{type(run['rules']).__name__} rather than an object")
     for key in ("candidates", "gated"):
         for run in runs:
             rows = run.get(key)
@@ -1897,6 +1936,17 @@ class Ledger:
             "candidates": [slim_row(c, scored=True) for c in candidates],
             "gated": [slim_row(g, scored=False) for g in gated],
         }
+        # The rules that produced these rows, and ONLY when the run carried
+        # them: without this block every mean computed across the record
+        # averages whatever screeners it spans under one label (see
+        # src.pipeline.rules_fingerprint()). Written as an absent key rather
+        # than a null, because the contract distinguishes the two -- a run
+        # from before the fingerprint existed carries no block, and null is a
+        # shape no writer produces, which _malformed_rows() refuses. Writing
+        # the key unconditionally made this module refuse the file it had
+        # just written, on any run whose caller had no fingerprint.
+        if isinstance(run.get("rules"), dict):
+            entry["rules"] = dict(run["rules"])
         self.runs = [r for r in self.runs
                      if (r.get("date"), r.get("type")) != (entry["date"], entry["type"])]
         self.runs.insert(0, entry)

@@ -109,7 +109,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from . import ledger, scanner
+from . import ledger, lynch as lynch_rules, scanner
 from .lynch import VETO_RULES, evaluate_2lynch, extra_context, failed_vetoes, veto_reason
 from .scanner import ScanConfig, run_scan
 from .scorer import MODEL as DEFAULT_MODEL
@@ -132,6 +132,54 @@ MAX_TO_SCORE = 25  # cap Claude calls per run
 #: say every word in here: a reason nothing can render is a row the reader is
 #: told nothing about.
 VETO_REASONS = {name: veto_reason(name) for name in VETO_RULES}
+
+
+def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
+    """Every number this screener's rules turn on, as this run applied them.
+
+    THE RECORD SPANS RUNS AND THE RULES DO NOT HAVE TO. Change
+    MIN_LYNCH_PASSES from 3 to 4, or the 4% in ScanConfig.min_gain_pct, or
+    the up-days veto, and every mean the page publishes silently averages the
+    old screener with the new one under one label -- the same class of defect
+    as a benchmark over a universe that changed mid-record, and invisible for
+    exactly the same reason: nothing in the record said which rules produced
+    a row. The entry kept `model` and nothing about the rules.
+
+    DERIVED, NOT LISTED. The three sources are walked rather than enumerated:
+    every upper-case numeric constant src.lynch names, its WINDOWS (how much
+    history each check reads), and the ScanConfig fields that config itself
+    marks as strategy. A threshold added to src.lynch is in the fingerprint
+    the moment it is named, which is the property a hand-kept list cannot
+    have -- and the trap this exists to avoid, since a fingerprint that
+    misses a number reports "same rules" across a change that altered them.
+    The one thing it cannot catch is a number left as a bare literal, which
+    is why round 8 named the six windows that were, and why a test asserts
+    the fingerprint covers what each source exposes.
+
+    NOT in it, deliberately: TOP_N and MAX_TO_SCORE (already per run as
+    shortlist_size and score_cap, and neither changes what a burst is), the
+    feed (a fact about the data, already in the scan stats), and the universe
+    (already per run in run.universe). Those are the run's own facts, not the
+    strategy's, and duplicating them here would give a reader two places to
+    look and two chances to disagree.
+    """
+    cfg = cfg or ScanConfig()
+    # Off the config's OWN class, not the imported name: a caller that builds
+    # its config through a factory (the suite does, to force a batch size)
+    # still gets the fields its object really has, and the fingerprint
+    # describes the config that was applied rather than a default one.
+    out: dict = {f"scan.{name}": getattr(cfg, name)
+                 for name in type(cfg).STRATEGY_FIELDS}
+    for name in dir(lynch_rules):
+        value = getattr(lynch_rules, name)
+        if name.isupper() and isinstance(value, (int, float)) and not isinstance(value, bool):
+            out[f"check.{name.lower()}"] = value
+    out.update({f"window.{key}": value for key, value in lynch_rules.WINDOWS.items()})
+    # The rules in force, not a number: a veto added or removed changes what a
+    # burst is as surely as moving a threshold does.
+    out["check.vetoes"] = sorted(VETO_RULES)
+    out["gate.min_lynch_passes"] = MIN_LYNCH_PASSES
+    return dict(sorted(out.items()))
 
 
 def unscored_reason(lynch: dict) -> str:
@@ -1289,6 +1337,10 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
                  # happened to a row. Both vocabularies are in one file, so the
                  # difference is stated here rather than left to be inferred.
                  "vetoes": list(VETO_REASONS)},
+        # Every number the rules turned on, so a later reader can tell whether
+        # two runs in this record were produced by the same screener. See
+        # rules_fingerprint().
+        "rules": rules_fingerprint(cfg),
         # Rule 6 as this run applied it. The floor is the session's number --
         # a percentile of every name that traded, in dollars -- and it is the
         # one figure the open decision about widening the universe turns on,

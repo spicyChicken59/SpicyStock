@@ -222,7 +222,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 894 tests, no network or API keys needed
+pytest tests/                   # 904 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -319,9 +319,13 @@ screener liked) and `evidence.illiquid` (what rule 6 refused for dollar volume
 below the session's floor — kept apart from the refusals for the opposite
 reason: those forward returns are bar prices on names the rule says are too
 thin to be bought at them, so they are shown beside the control and never in
-it) — — plus `evidence.universe`, the benchmark rung (not a
-population of setups but the whole universe's move paired with each of them)
-— `evidence.horizons` (which sessions after the
+it) — plus `evidence.universe`, the benchmark rung (not a population of
+setups but the whole universe's move paired with each of them) and
+`evidence.rules`, which says how many distinct sets of rules the record spans,
+which keys differ between them, and how many runs predate the fingerprint
+entirely: **a mean across runs is a mean over one strategy only while `sets`
+is 1**, and a run carrying no fingerprint is not a run that agrees with this
+one — `evidence.horizons` (which sessions after the
 burst were measured) and `evidence.band` (the range the strategy claims).
 
 **`+3d` and `+5d` are the horizons that matter, and the page says so on every
@@ -363,8 +367,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 13.71 MB raw
-and **0.99 MB gzipped** after a full year. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 13.99 MB raw
+and **1.07 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -492,6 +496,20 @@ from. The page prints both, and calls neither of them "names".
 - `d1`, `d3`, `d5` are the percentage change from the burst-day close to the
   close 1, 3 and 5 **sessions** later — positions in the frame, not calendar
   days, so a holiday cannot quietly shift a horizon.
+- `runs[].rules` is **every number this screener's rules turned on when that
+  run was made**: the scan's strategy thresholds, every threshold and window
+  the checklist names, the vetoes in force and the gate. It is derived rather
+  than listed — `src.pipeline.rules_fingerprint()` walks what `src.lynch`
+  names, its `WINDOWS`, and the `ScanConfig` fields that config itself marks
+  as strategy — so a threshold added later is recorded the moment it is named.
+  The trap it exists to avoid is a fingerprint that misses a number and so
+  reports "same rules" across a change that altered them, which is worse than
+  no fingerprint; the six checklist windows were bare literals until round 8
+  named them for that reason. `MAX_TO_SCORE`, `TOP_N`, the feed and the
+  universe are deliberately not in it: each is already a fact of the run block
+  and none of them changes what a burst is. A run from before the fingerprint
+  carries no `rules` key at all — absent, never null, because the contract
+  distinguishes "this run had none" from a shape no writer produces.
 - `runs[].benchmark` is the **whole universe's equal-weight return from that
   session** — `d1`, `d3`, `d5` from the close and `from_open` from the next
   open, with `n1`/`n3`/`n5` the number of symbols behind each — filled by a
@@ -644,14 +662,14 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 184 checks, and which file each one
+**Three data sources, one page.** It runs 187 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 25 mutated copies of it are served
+  night can hold at once. 27 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now

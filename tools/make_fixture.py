@@ -25,10 +25,11 @@ from src.scanner import ScanConfig            # the real floors, not a copy
 from src.lynch import (                       # the real thresholds, not a copy
     MAX_PRIOR_BURSTS, MIN_LINEAR_R2, MIN_LINEAR_SLOPE, MAX_RUN_UP_1MO,
     MAX_EXT_VS_SMA20, MAX_TIGHTNESS, MAX_D1_MOVE, MAX_D1_VOL_RATIO,
-    MAX_D1_RANGE_RATIO, MIN_CLOSE_POS,
+    MAX_D1_RANGE_RATIO, MIN_CLOSE_POS, PRIOR_BURST_PCT,
     MAX_CONSECUTIVE_UP_DAYS, BREAKDOWN_PCT, BREAKDOWN_LOOKBACK,
+    WINDOWS,                                  # and the windows its lines print
 )
-from src.pipeline import VETO_REASONS
+from src.pipeline import VETO_REASONS, rules_fingerprint
 _CFG = ScanConfig()
 
 def _universe():
@@ -168,13 +169,16 @@ def lynch(prior_bursts, r2, run_up, ext, recent_range, tightness, d1_move, d1_ra
     d1_range_ratio = (d1_range / norm_range) if norm_range else 0.0
     return [
         {"code": "2", "label": LABELS["2"], "pass": prior_bursts <= MAX_PRIOR_BURSTS,
-         "value": f"{prior_bursts} prior 4% bursts in last 20 days"},
+         "value": (f"{prior_bursts} prior {PRIOR_BURST_PCT:g}% bursts in last "
+                   f"{WINDOWS['prior_burst_lookback']} days")},
         {"code": "L", "label": LABELS["L"],
          "pass": r2 >= MIN_LINEAR_R2 and fitted >= MIN_LINEAR_SLOPE,
-         "value": f"R²={r2:.2f}, fitted trend {fitted:+.1f}% over prior 30 days"},
+         "value": (f"R²={r2:.2f}, fitted trend {fitted:+.1f}% over prior "
+                   f"{WINDOWS['linear_fit_sessions']} days")},
         {"code": "Y", "label": LABELS["Y"],
          "pass": run_up_through < MAX_RUN_UP_1MO and ext_through < MAX_EXT_VS_SMA20,
-         "value": f"{run_up_through:+.1f}% past month, {ext_through:+.1f}% vs 20SMA (through today's burst)"},
+         "value": (f"{run_up_through:+.1f}% past month, {ext_through:+.1f}% vs "
+                   f"{WINDOWS['sma_sessions']}SMA (through today's burst)")},
         {"code": "N", "label": LABELS["N"], "pass": tightness <= MAX_TIGHTNESS,
          "value": f"pre-burst range {recent_range:.1f}%/day = {tightness:.2f}x its norm"},
         {"code": "C", "label": LABELS["C"],
@@ -699,6 +703,11 @@ for _i, _run in enumerate(runs):
             _bench["from_open"]["n" + _h[1:]] = _bench["n" + _h[1:]] - 1
     _run["benchmark"] = _bench
     _run["universe"] = {"label": "data/symbols.txt (checked in)", "size": len(UNIVERSE)}
+    # One screener across the whole file: these eight sessions were scanned by
+    # the rules this checkout holds, so evidence.rules reports one set and
+    # nothing on the page warns about a blended record. The drifted state is a
+    # smoke variant, because a fixture cannot hold both.
+    _run["rules"] = rules_fingerprint()
     # And the floor each night applied (src.ledger.add_run keeps it): the
     # headline run's is FLOOR; the older ones vary the way a percentile of
     # the day's tape would, with a refusal count that goes with it.
@@ -724,6 +733,10 @@ for _i, _run in enumerate(runs):
 # ledger there -- and the history fixture is where the two agree.
 _LEDGER_RUNS = [{
     "date": SESSION, "type": "evening", "shortlist_size": 5,
+    # The same rules the run block names, so evidence.rules reports one set
+    # rather than a run that predates the fingerprint -- which is what this
+    # file would otherwise describe, and is not true of it.
+    "rules": rules_fingerprint(),
     "candidates": [ledger.slim_row(c, scored=True) for c in candidates],
     "gated": [ledger.slim_row(g, scored=False) for g in gated_out],
 }]
@@ -757,6 +770,7 @@ data = {
         "shortlist_size": 5,
         "gate": {"min_lynch_passes": 3, "total_checks": 6,
                  "vetoes": list(VETO_REASONS)},
+        "rules": rules_fingerprint(),
         "liquidity": {"pctile": PCTILE, "floor": FLOOR, "refused": ILLIQUID},
         "scored_by": {"claude": by_src["claude"], "fallback": by_src["fallback"]},
         "model": MODEL,
