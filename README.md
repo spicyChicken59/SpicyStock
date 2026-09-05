@@ -56,7 +56,7 @@ Layer 6  Email ....................... HTML table, top 5, with the charts this
 |---|---|---|
 | what it does | **discovery** — scans the session that closed today | **follow-through** — re-presents the evening run before the open |
 | scans | yes, every layer above | no |
-| costs | ~25 Claude calls, a few cents | nothing |
+| costs | ~25 Claude calls, ~$0.25 | nothing |
 | writes | `docs/data.json`, `docs/ledger.json`, `docs/charts/` (gitignored), `results/*.csv` | nothing |
 | charts | attached inline — the PNGs it just rendered | none, and the email says why |
 | workflow | `.github/workflows/evening.yml` | `.github/workflows/morning.yml` |
@@ -616,14 +616,34 @@ against a hand-made `data.json` and agree, but that check is not committed.
   taking the plan default, so it reads consolidated volume instead of IEX's
   single-venue slice — see `.env.example`, and note this is unconfirmed against
   a live account. If the account cannot serve that feed the run aborts with a
-  named error rather than returning an empty shortlist. A 230-symbol scan takes
-  under a second inside
-  the Actions runner; well within the 55-min timeout. Step 9 adds one more bars
-  request per 100 candidates still waiting on a forward return — in practice one
-  or two a run, on the same free feed.
-- Claude: ≤25 scoring calls/run with one chart image each — a few cents/day
-  on Sonnet, and only on the evening run. The morning follow-through makes no
-  model call and no data request at all.
+  named error rather than returning an empty shortlist. A 230-symbol scan is
+  seconds, not minutes, and is nowhere near the 55-min timeout — but "under a
+  second", which this said, is not supported: 0.97s is what the scan costs
+  driven through the offline doubles, and those do strictly LESS work than
+  alpaca-py, with no HTTP, no JSON decode and no BarSet construction. That is a
+  floor on the real cost, measured, and the real path adds a network round trip
+  and the SDK's own decode on top of it. Step 9 adds one more bars request per
+  100 candidates still waiting on a forward return — in practice one or two a
+  run, on the same free feed.
+- **One bars request per 100 names is wrong, and already is.** alpaca-py sends
+  `page_size=10_000` and loops on `next_page_token`, so the request count is set
+  by TOTAL BARS rather than by `batch_size`: a 100-symbol batch over the scan's
+  own 297-session window is ~28,600 bars and three GETs. Counted through a fake
+  transport, not read. The practical consequence is that raising `batch_size`
+  to cut requests — the obvious move when the universe widens — buys almost
+  nothing at this window.
+- Claude: ≤25 scoring calls/run with one chart image each — **about $0.25 a
+  run, so roughly $60 a year** at 252 sessions, and only on the evening run.
+  This said "a few cents/day", which is out by about 10x. Measured rather than
+  guessed: a real `render_chart()` PNG is 869x622, which is 721 image tokens by
+  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~1,590
+  tokens of system prompt and the metrics block ~390, so ~2,700 input tokens
+  and ~120 out per call, at claude-sonnet-4-6's $3/$15 per Mtok. The text
+  halves are chars/4 estimates — `count_tokens` needs a network call this
+  sandbox cannot make — so treat the figure as ±30%, which does not rescue "a
+  few cents". The cap is what keeps this flat: it does NOT grow when the
+  universe widens, because MAX_TO_SCORE bounds the calls and not the scan.
+  The morning follow-through makes no model call and no data request at all.
 - GitHub Actions: free tier covers both daily runs comfortably (private repos
   get 2,000 min/month). The evening scan is the long one; the morning job is a
   file read and an email.

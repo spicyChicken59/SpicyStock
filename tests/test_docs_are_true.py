@@ -85,6 +85,16 @@ def test_the_documented_universe_size_is_the_real_one():
         r"\b(\d{2,5})\s+checked-in\b",
     ]
     claimed = {int(n) for p in patterns for n in re.findall(p, readme)}
+    # ScanConfig.batch_size is a DIFFERENT real quantity that legitimately takes
+    # the same suffix — "a 100-symbol batch" is a true sentence about the bars
+    # request, not a stale claim about the universe — and this guard flagged it
+    # the first time anyone wrote one down. Exempted by VALUE read off the real
+    # config, not by pattern, so it stops exempting the moment the two numbers
+    # coincide and the phrase really would be ambiguous.
+    from src.scanner import ScanConfig
+    batch = ScanConfig().batch_size
+    if batch != actual:
+        claimed.discard(batch)
     wrong = sorted(n for n in claimed if n != actual)
     assert not wrong, f"README quotes {wrong} for the universe; data/symbols.txt has {actual}"
 
