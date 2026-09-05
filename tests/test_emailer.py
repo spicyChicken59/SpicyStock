@@ -776,6 +776,27 @@ def test_the_empty_shortlist_note_never_prints_a_negative_count():
         assert "-" not in html.split("colspan=\"7\"")[1].split("</td>")[0], stats
 
 
+def test_the_email_and_the_page_name_the_call_cap_the_same_way():
+    """One mechanism, two surfaces, and a reader gets both. The page's funnel
+    has said "outside the 25-call cap" since step 9; the email's funnel had no
+    such stage at all until this round, and when it got one the phrase had to
+    be the page's rather than a second wording for the same cut.
+
+    Asserted against docs/index.html's own source, because that is where the
+    other half lives and a comment claiming they match is exactly what this
+    project has been caught by before.
+    """
+    import pathlib
+
+    html = build_html([], "evening", dict(DATED, bursts=40, gated=30, crowded_out=5,
+                                          score_cap=25))
+    page = pathlib.Path(__file__).resolve().parents[1].joinpath("docs/index.html").read_text()
+
+    assert "the 25-call cap" in html
+    assert "'-call cap'" in page, (
+        "the page stopped building the same phrase; the two surfaces have drifted")
+
+
 def test_what_day_n_counts_is_disclosed_once_under_the_table():
     """A streak counts every session the scan found a burst on, every unscored
     one included — the right call, and one no reader can infer from "day 2 of

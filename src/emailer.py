@@ -492,12 +492,27 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     refused = ([("Refused by an absolute rule", vetoed)]
                if isinstance(vetoed, (int, float)) and not isinstance(vetoed, bool) and vetoed
                else [])
+    # The stage the email did not have. It went "Passed 2LYNCH gate: 54"
+    # straight to "Shortlisted: 1", so the 29 names that cleared the checklist
+    # and were never looked at appeared nowhere -- next to "Scored by Claude:
+    # 25 of 25", which a reader takes for complete coverage of the 54. The
+    # page's funnel has had this cut since step 9 and names the same cause.
+    #
+    # Printed only when the cap actually bit, the same rule the refusals
+    # follow: a night that scored everything that got through reads as it
+    # always did, and a caller that does not report the number says nothing.
+    crowded = _count(scan_stats, "crowded_out")
+    cap = _count(scan_stats, "score_cap")
+    capped = ([(f"Crowded out by the {cap}-call cap" if cap
+                else "Crowded out by the call cap", crowded)]
+              if crowded else [])
     if run_type == "morning":
         parts = [("Session it should have followed" if failed
                   else "Following through on the session of", session),
                  ("4% bursts that session", scan_stats.get("bursts", unknown)),
                  *refused,
                  ("Passed 2LYNCH gate", scan_stats.get("gated", unknown)),
+                 *capped,
                  ("Watching", len(results))]
     else:
         parts = [("Session it was scanning" if failed else "Session scanned", session),
@@ -505,6 +520,7 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
                  ("4% bursts found", scan_stats.get("bursts", unknown)),
                  *refused,
                  ("Passed 2LYNCH gate", scan_stats.get("gated", unknown)),
+                 *capped,
                  ("Shortlisted", len(results))]
     return " &nbsp;|&nbsp;\n      ".join(f"{label}: {value}" for label, value in parts)
 

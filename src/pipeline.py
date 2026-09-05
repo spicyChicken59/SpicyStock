@@ -694,6 +694,23 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         # is the one collapse this project forbids by name.
         vetoed=sum(1 for _c, _l, _x, reason in unscored
                    if reason in VETO_REASONS.values()),
+        # And how many CLEARED the gate and were never looked at anyway. The
+        # email's funnel went "Passed 2LYNCH gate: 54" straight to
+        # "Shortlisted: 1", so on any night with more survivors than the call
+        # budget the 29 nobody scored appeared nowhere -- while the line beside
+        # it read "Scored by Claude: 25 of 25", which a reader takes for
+        # complete coverage of the 54. The page's funnel has had this stage
+        # since step 9; the email did not.
+        #
+        # Counted from the reason word rather than as gated - scored. The two
+        # agree today and mutation says so -- score_all() returns a row for
+        # every input, so len(scored) is always len(to_score) -- which makes
+        # this a choice about which fact the number IS, not a bug fix. It is
+        # the same field the gated table prints and the page's funnel reads,
+        # so a burst dropped for some future reason gets reported as that
+        # reason instead of being counted against the call budget.
+        crowded_out=sum(1 for _c, _l, _x, reason in unscored if reason == "score_cap"),
+        score_cap=MAX_TO_SCORE,
         scored_by={"claude": score_stats.get("claude", 0),
                    "fallback": score_stats.get("fallback", 0)},
         # The session that was actually read, in the subject line and above the
@@ -1015,6 +1032,13 @@ def follow_through(mode: Mode, dry_run: bool = False,
         vetoed=sum(1 for row in ((snapshot or {}).get("gated_out") or [])
                    if isinstance(row, dict)
                    and str(row.get("reason") or "").startswith("veto_")),
+        # Same rule, same source, for the cut the funnel used to skip. The
+        # cap that applied is the one THAT run recorded, not this module's
+        # constant: a snapshot written under a different budget must not be
+        # re-labelled with today's.
+        crowded_out=sum(1 for row in ((snapshot or {}).get("gated_out") or [])
+                        if isinstance(row, dict) and row.get("reason") == "score_cap"),
+        score_cap=source.get("score_cap") or 0,
         scored_by=source.get("scored_by") or {},
         # How far behind, in sessions, so the SUBJECT LINE can escalate. Every
         # staleness read DEGRADED before this, and a screener dead for three

@@ -743,6 +743,94 @@ def test_a_night_that_found_no_burst_at_all_publishes_no_gate_size(
     )
 
 
+def test_the_email_says_how_many_cleared_the_gate_and_were_never_looked_at(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The funnel went "Passed 2LYNCH gate: 54" straight to "Shortlisted: 1".
+
+    On any night with more survivors than the call budget, the names that
+    cleared the checklist and were never scored appeared NOWHERE -- while the
+    line beside it read "Scored by Claude: 25 of 25", which a reader takes for
+    complete coverage of the 54. The page's funnel has had this cut since step
+    9 and names the same cause; the email did not have it at all.
+
+    Asserted on the mail the real run actually sent, not on a stats block
+    written here: the numbers have to be the ones the pipeline computed, and
+    a hand-built block is a second opinion about them.
+    """
+    monkeypatch.setattr(pipeline, "MAX_TO_SCORE", 2)
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=5)
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = clean(tmp_path)
+    passed, scored = data["run"]["passed_gate"], data["run"]["scored"]
+    assert passed > scored, f"precondition: the cap must bite ({passed} through, {scored} scored)"
+
+    html = mocked_boundaries["resend"].sent[-1]["html"]
+    assert f"Passed 2LYNCH gate: {passed}" in html
+    assert f"Crowded out by the 2-call cap: {passed - scored}" in html
+    # The label carries the cap the RUN applied, not this module's constant --
+    # a morning email re-presenting an older night must not relabel it with
+    # today's budget.
+    assert data["run"]["score_cap"] == 2
+
+
+def test_the_crowded_out_count_is_the_call_cap_alone_and_not_every_unscored_burst(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """Three reasons send a burst away unscored and only ONE of them is the
+    call budget. Counting every unscored row would report names an absolute
+    rule refused as names the cap crowded out -- two of the three facts this
+    project forbids collapsing, folded into a line that states the third.
+
+    Needs a night with both kinds in it, or the wrong count and the right one
+    are the same number: with nothing vetoed, every unscored burst IS a
+    score_cap one, and the check passes on a fixture rather than on the rule.
+    """
+    names = []
+    for i in range(3):   # refused outright, whatever the checklist says
+        fake_alpaca.add_history(f"V{i}", ohlcv("burst", variant=i,
+                                               up_run=lynch.MAX_CONSECUTIVE_UP_DAYS + 1))
+        names.append(f"V{i}")
+    for i in range(4):   # clean, and more than the budget below allows
+        fake_alpaca.add_history(f"C{i}", ohlcv("burst", variant=10 + i, up_run=1))
+        names.append(f"C{i}")
+    monkeypatch.setattr(pipeline, "MAX_TO_SCORE", 2)
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = clean(tmp_path)
+    reasons = [g["reason"] for g in data["gated_out"]]
+    vetoed = sum(1 for r in reasons if r.startswith("veto_"))
+    capped = sum(1 for r in reasons if r == "score_cap")
+    assert vetoed and capped and vetoed != capped, (
+        f"precondition: the night needs both kinds, and in different "
+        f"numbers, or the two counts cannot be told apart: {reasons}")
+
+    html = mocked_boundaries["resend"].sent[-1]["html"]
+    assert f"Crowded out by the 2-call cap: {capped}" in html
+    assert f"Refused by an absolute rule: {vetoed}" in html
+    assert f"Crowded out by the 2-call cap: {len(reasons)}" not in html, (
+        "every unscored burst counted as the budget's doing")
+
+
+def test_a_night_the_cap_never_reached_says_nothing_about_it(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The other side of the same rule the refusals line follows: a night that
+    scored everything that got through reads exactly as it did before, and a
+    "Crowded out by the 25-call cap: 0" would be noise dressed as a finding."""
+    monkeypatch.setattr(pipeline, "MAX_TO_SCORE", 50)
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = clean(tmp_path)
+    assert data["run"]["passed_gate"] == data["run"]["scored"], "precondition"
+    assert "Crowded out" not in mocked_boundaries["resend"].sent[-1]["html"]
+
+
 def test_a_delivery_failure_keeps_the_night_the_run_already_paid_for(
     monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):

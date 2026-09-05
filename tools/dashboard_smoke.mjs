@@ -529,6 +529,15 @@ ok('and that clause does not fold the vetoed rows into the checklist count',
   hint);
 
 const caption = (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent))).join(' ');
+// The email's funnel gained this cut in the same round -- it went "Passed
+// 2LYNCH gate: 54" straight to "Shortlisted: 1" and never said the 29 names
+// that cleared the checklist were not looked at. Both surfaces name it "the
+// N-call cap" with the run's own number, and neither had that phrase pinned,
+// which is how two vocabularies for one mechanism get here in the first place.
+ok('the funnel names the call cap with the number the run actually applied',
+  caption.includes(REAL.run.score_cap + '-call cap'),
+  `score_cap = ${REAL.run.score_cap}`);
+
 ok('the funnel says an absolute rule can cut a name at the gate stage, when the run applied one',
   ((REAL.run.gate || {}).vetoes || []).length && caption.includes('refused by an absolute rule'),
   `gate.vetoes = ${JSON.stringify((REAL.run.gate || {}).vetoes)}`);

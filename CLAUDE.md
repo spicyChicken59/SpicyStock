@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 749 tests with no network
+- **There is a regression net.** `pytest tests/` runs 753 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -284,6 +284,21 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   `innerText` is what a reader sees; `textContent` inside this page is source.
   That is the "asserting the page's own source" shape from the 3.3 audit,
   caught this time by the check failing rather than by it passing.
+
+  **The email's funnel had no scoring stage, so the names the call budget
+  never reached appeared nowhere.** It went "Passed 2LYNCH gate: 54" straight
+  to "Shortlisted: 1", with "Scored by Claude: 25 of 25" beside it -- which a
+  reader takes for complete coverage of the 54, and 29 names that cleared the
+  checklist were never looked at by anything. The page has had that cut since
+  step 9. The email has it now, counted off the archived reason word and
+  printed only when the cap actually bit, the same rule the refusals line
+  follows. Six mutants, all killed -- but only after the fifth survived and
+  showed the tests were shaped: with nothing vetoed, every unscored burst IS a
+  score_cap one, so counting them all gave the same number. The test that
+  distinguishes them needs a night with both kinds in it, in different
+  numbers, and says so in a precondition. Neither surface had the phrase "the
+  N-call cap" pinned, which is how one mechanism grows two vocabularies; both
+  do now, each asserting against the other's source.
 
   **And `evening.yml`'s commit-back has still never executed** — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on
