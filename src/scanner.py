@@ -533,6 +533,18 @@ def _download_batch(data_client, tickers, cfg: ScanConfig,
             df = df_all.loc[t]
         except KeyError:
             continue
+        # Oldest first, one bar per session. Both were assumptions: BarSet.df
+        # keeps the response's order and the request pins no `sort`, so a
+        # newest-first reply made _last_bar_date() read the OLDEST bar, every
+        # symbol read as stale, and the run died blaming a market holiday; and
+        # a bar the feed sent twice made iloc[-1] and iloc[-2] the same session,
+        # so the day's gain was 0% and a real burst was missed. Both reproduced
+        # with a genuine alpaca-py BarSet. Fixed here rather than by pinning
+        # sort on the request, because a change to what goes on the wire on an
+        # unverified lead is what this project's notes warn against; sorting
+        # what came back changes nothing about what was asked for.
+        df = df.sort_index()
+        df = df[~df.index.duplicated(keep="last")]
         df = df.dropna(how="all")
         if not df.empty:
             df = df.rename(columns={
@@ -573,6 +585,50 @@ def _drop_stale_symbols(histories: dict[str, pd.DataFrame],
         else:
             stale[ticker] = last
     return fresh, stale
+
+
+def previous_session(session: date) -> date:
+    """The business day before `session`. Weekends only, no holidays -- the
+    same arithmetic current_session() makes, so the two cannot disagree."""
+    prior = session - timedelta(days=1)
+    while prior.weekday() >= 5:
+        prior -= timedelta(days=1)
+    return prior
+
+
+def _drop_gapped_symbols(histories: dict[str, pd.DataFrame],
+                         session: date) -> tuple[dict[str, pd.DataFrame], dict[str, date]]:
+    """Split fresh symbols into ones whose bar BEFORE the session is the
+    previous business day, and ones with a hole there.
+
+    _drop_stale_symbols checks only the newest bar. A full-day halt, or a bar
+    the feed dropped, leaves iloc[-2] two sessions old while the frame passes
+    freshness -- and detect_setup() reads iloc[-2] as "yesterday", so it
+    published a TWO-day move as the day's 4% burst, dated to the session,
+    with prev_volume and rule 2 measured against the wrong day. Reproduced
+    with a genuine alpaca-py BarSet: a 12.0% one-day move printed as 12.45%.
+
+    Dropped rather than measured across the hole, because a burst is one
+    session's move against the session before it and a frame with a hole
+    cannot say what that was. Counted, so the coverage guards and the run's
+    own report see them; a holiday inside the window is not a gap, since the
+    previous BUSINESS day is what is required and a holiday is not one (that
+    is the one case this weekend-only arithmetic gets wrong, and it errs by
+    dropping a real name for a day rather than by publishing a false burst).
+    """
+    ok: dict[str, pd.DataFrame] = {}
+    gapped: dict[str, date] = {}
+    want = previous_session(session)
+    for ticker, df in histories.items():
+        if len(df) < 2:
+            gapped[ticker] = _last_bar_date(df)
+            continue
+        before = pd.Timestamp(df.index[-2]).date()
+        if before == want:
+            ok[ticker] = df
+        else:
+            gapped[ticker] = before
+    return ok, gapped
 
 
 def _is_permanent_refusal(exc: Exception) -> bool:
@@ -819,6 +875,8 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     dropped = 0
     with_bars = 0
     stale: dict[str, date] = {}
+    gapped: dict[str, date] = {}
+    detector_errors: dict[str, str] = {}
     session_dollar_volumes: list[float] = []
 
     for i in range(0, len(tickers), cfg.batch_size):
@@ -848,6 +906,8 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
         with_bars += len(histories)
         histories, batch_stale = _drop_stale_symbols(histories, session)
         stale.update(batch_stale)
+        histories, batch_gapped = _drop_gapped_symbols(histories, session)
+        gapped.update(batch_gapped)
 
         for t, df in histories.items():
             # Every symbol that traded, burst or not, is part of the
@@ -857,7 +917,16 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
                 session_dollar_volumes.append(dv)
             try:
                 m = detect_setup(df, cfg)
-            except Exception:
+            except Exception as e:  # noqa: BLE001 -- counted, and fatal in bulk below
+                # One symbol's bad frame must not end the scan. But a detector
+                # that raises on EVERY symbol -- a pandas API change, a dtype
+                # the SDK started returning -- used to be swallowed here with
+                # no count, so the scan returned [] with with_bars intact and
+                # raised nothing: the "[] is also a quiet market" shape every
+                # guard below exists to prevent, on the one path none covered.
+                if not detector_errors:
+                    log.exception("detect_setup raised on %s", t)
+                detector_errors[t] = f"{type(e).__name__}: {e}"
                 continue
             if m:
                 candidates.append(Candidate(ticker=t, history=df, **m))
@@ -877,6 +946,8 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             "stale": dict(stale),
             "no_bars": len(tickers) - with_bars - dropped,
             "dropped": dropped,
+            "gapped": dict(gapped),
+            "detector_errors": dict(detector_errors),
             "candidates": len(candidates),
         })
 
@@ -922,6 +993,13 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             f"this scan will tolerate (newest seen {max(stale.values())}). The "
             "shortlist would describe the minority that did update. Pin the "
             "session with SCAN_SESSION_DATE=YYYY-MM-DD to scan a past one."
+        )
+    measured = with_bars - len(stale) - len(gapped)
+    if measured and len(detector_errors) == measured:
+        raise IncompleteScanError(
+            f"detect_setup raised on every one of the {measured} symbols that carried a "
+            f"bar for {session} (first: {next(iter(detector_errors.values()))}). That is a "
+            "defect in this code or a change in the data's shape, not a quiet market."
         )
     if (len(tickers) >= cfg.coverage_guard_min_symbols
             and dropped / len(tickers) >= cfg.max_dropped_fraction):

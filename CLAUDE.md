@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 790 tests with no network
+- **There is a regression net.** `pytest tests/` runs 813 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -188,6 +188,81 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   over 14 and 74 -- which is the "only one side can be read" sentence, and
   the page says exactly that. The three verdict branches are pinned on three
   sources, because no real source can hold more than one of them yet.
+
+## Findings from the round-4 audit — the first-run and scanner lenses
+
+Five auditors over disjoint lenses, three refuters per finding, all by
+execution against `git archive` copies (the first attempt died on a session
+limit, all fourteen agents, the way the 3.1 verifiers did; the second ran).
+The first two lenses back returned sixteen findings; every one below was
+reproduced HERE before it was fixed, and one of the reproductions caught the
+harness rather than the code — the synthetic burst pins the same final close
+on every seed, so "raise on B3's close" raised on ten frames.
+
+**Two the first real night would have hit.** The backup-cron guard counted
+any `evening-*` artifact created on today's UTC date as "already ran", and
+the artifact step uploads on failure too: a preflight failure, or a
+Run-workflow click at lunch to test the secrets, silenced that night's cron
+— read off the Actions API, both failed 4 Sep runs left one. And an EST
+night starts at 23:16 UTC, so a run over ~44 minutes uploaded under
+tomorrow's date and silenced the following night. A run that published
+names its artifact after the SESSION now, a failed one is `evening-failed-`,
+and the guard counts only the first shape; six scenarios traced through the
+guard's own shell against a stub `gh` running its real `jq` filter.
+
+**A lunchtime dispatch re-scanned yesterday, paid Claude again, and replaced
+the clean record with a degraded one — committed, since exit 2 persists.**
+If the session an evening run would scan is already published, it
+re-presents it the way the morning does and says why; the clock
+disagreement stays in the report and the exit code stays 2.
+
+**A backfill made the morning announce that nothing had published.**
+`SCAN_SESSION_DATE` of last week rewrote `docs/data.json`'s headline to last
+week while `runs` two lines down still listed last night; the morning read
+the top block and escalated to NOTHING PUBLISHED IN 3 SESSIONS over a file
+naming the newer run itself. `publish()` keeps the newer headline when the
+run just added is older; the record still gains the backfill.
+
+**Exit 3 committed a record that said `ok`.** A night whose email failed
+kept its record — and the record carried `status: ok, errors: []`, so the
+page and the next morning presented it as clean and only the Actions colour
+knew. The delivery failure is stamped into both files before it is raised.
+
+**The scanner assumed bars arrive oldest-first and once each.** Neither is
+promised: `BarSet.df` keeps the response's order and the request pins no
+`sort`. A newest-first reply made every symbol read as stale and killed the
+run blaming a holiday; a bar sent twice hid a real burst behind a 0% gain.
+Sorted and de-duplicated on the way in, with genuine `BarSet`s in the tests
+— not by pinning `sort` on the request, which would change the wire on an
+unverified lead.
+
+**A hole before the session published a two-day move as the day's burst.**
+Freshness checked only the newest bar, so a halt or a dropped bar the
+session before left `iloc[-2]` two sessions old: 12.0% printed as 12.45%,
+dated to the session. `_drop_gapped_symbols()` requires the bar before the
+session to be the previous business day (weekend-only, the same arithmetic
+`current_session()` makes), counts the rest, and the run degrades on them
+with the stale ones. **And a detector that raised on every symbol was a
+quiet market**: `detect_setup`'s per-symbol `except: continue` had no count,
+so a pandas change would have returned `[]` with `with_bars` intact — the
+shape every coverage guard exists to prevent, on the one path none covered.
+Counted now, degraded at any count, fatal when it is every symbol.
+
+**Smaller, each reproduced:** Y printed `+0.0% past month` to the model when
+it had fewer than 21 closes to measure one (the real run-up over the sessions
+it had was +16.9%) — it says it could not measure now, and the half it did
+measure decides alone; H passed a close ABOVE its own high at "145% of day's
+range" — the same class of bad bar as an inverted one, refused the same way;
+the email's funnel said "N checked-in US common stocks" over names typed with
+`--tickers` while the archive beside it said `--tickers` — one label now;
+`.env.example` omitted the CSV an evening run writes; and two boundaries no
+test sat on (`>=` on `coverage_guard_min_symbols`, the "not permitted"
+clause) are pinned. **One class of finding was about the record's own
+contract and is not fixed yet:** a burst rule 6 refuses for liquidity vanishes
+from every surface — not in `bursts`, not in `gated_out`, not in the ledger —
+so on a two-name `--tickers` smoke test the thinner of two $5B names is
+refused and the email reads "4% bursts found: 1". A fourth reason word
+touches every surface that enumerates the three, which is its own round.
 
 
   **The interpreter is part of the environment, and it changed an answer.**

@@ -1078,3 +1078,36 @@ def test_no_threshold_constant_is_left_without_a_canary():
         "canary. Add a frame that puts it over its line and asserts, through "
         "_only_failure_is(), that exactly one check changed verdict."
     )
+
+
+
+def test_a_month_that_cannot_be_measured_is_not_reported_as_a_flat_one():
+    """Fewer than 21 closes survive the cleaning, so there is no month to
+    measure over -- and the Y line used to print "+0.0% past month" to the
+    scoring model as if it had been measured, on a frame whose run-up over the
+    sessions it DID have was well into double digits. A number that was not
+    measured is not zero; the line says it could not measure, and the half
+    that was measured decides alone."""
+    frame = make_ohlcv("burst", seed=7).iloc[-20:]      # one short of a month
+    real_run_up = (frame["Close"].iloc[-1] / frame["Close"].iloc[0] - 1) * 100
+    assert real_run_up > 5, "precondition: the sessions it has are not flat"
+
+    check = evaluate_2lynch(frame)["checks"]["Y_young_trend"]
+
+    assert "+0.0% past month" not in check["value"]
+    assert "no 20-session history" in check["value"]
+    assert "vs 20SMA" in check["value"], "the half that was measured is still there"
+
+
+def test_a_close_outside_its_own_range_fails_h_instead_of_passing_at_145_percent():
+    """The rng <= 0 branch caught an inverted bar; nothing caught a close the
+    range does not contain, which printed "closed at 145% of day's range"
+    and PASSED. Same class of bad bar, same verdict now."""
+    frame = make_ohlcv("burst", seed=7).copy()
+    frame.iloc[-1, frame.columns.get_loc("Close")] = frame["High"].iloc[-1] * 1.05
+
+    check = evaluate_2lynch(frame)["checks"]["H_close_near_high"]
+
+    assert check["pass"] is False
+    assert "outside its own range" in check["value"]
+    assert "145%" in check["value"] or "%" in check["value"], "and it still says what it saw"

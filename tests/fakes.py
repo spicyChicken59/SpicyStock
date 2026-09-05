@@ -72,12 +72,27 @@ class FakeAlpaca:
         #: report the scan at all for the first -- and a double that can only
         #: fail everything cannot tell the two apart.
         self.fail_symbols: set[str] = set()
+        #: symbols whose bar before the newest one is missing -- see add_history
+        self.gapped: set[str] = set()
 
     # -- registration -------------------------------------------------
-    def add_history(self, ticker: str, df: pd.DataFrame, *, stale_sessions: int = 0) -> None:
-        """Register bars for `ticker`, whose newest bar is `stale_sessions` old."""
+    def add_history(self, ticker: str, df: pd.DataFrame, *, stale_sessions: int = 0,
+                    gap_before_session: bool = False) -> None:
+        """Register bars for `ticker`, whose newest bar is `stale_sessions` old.
+
+        `gap_before_session` removes the bar BEFORE the newest one after the
+        frame has been re-dated -- a full-day halt, or a bar the feed dropped.
+        It has to be an option here rather than a row deleted from the frame
+        handed in, because _align_to_end rebuilds the index as contiguous
+        business days: a hole in the input is closed on the way out, which is
+        right for every other test and wrong for the one about holes.
+        """
         self.history[ticker] = df
         self.stale_sessions[ticker] = stale_sessions
+        if gap_before_session:
+            self.gapped.add(ticker)
+        else:
+            self.gapped.discard(ticker)
 
     def add_split(self, ticker: str, ratio: float, *, sessions_ago: int = 0) -> None:
         """Record a forward split of `ratio`-for-1 with this ex-date.
@@ -102,6 +117,8 @@ class FakeAlpaca:
             if sym in self.splits and not self._splits_applied(adjustment):
                 lower = self._unadjust(lower, *self.splits[sym])
             lower = self._align_to_end(lower, end, self.stale_sessions.get(sym, 0))
+            if sym in self.gapped and len(lower) >= 2:
+                lower = pd.concat([lower.iloc[:-2], lower.iloc[-1:]])
             if lower.empty:
                 continue
             frames.append(lower)

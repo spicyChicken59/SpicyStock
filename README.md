@@ -220,7 +220,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 790 tests, no network or API keys needed
+pytest tests/                   # 813 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -564,11 +564,22 @@ comment claimed the history was being kept. It is
 workflow stages is one `.gitignore` blocks, because reading the two files side
 by side is exactly what missed it the first time. The `results/` artifact upload
 now runs on every scan that finished, pass or fail, rather than only on a failed
-push — which is what the note below has always claimed, and which is also the
-signal the workflow's own duplicate-run guard reads. Finished, not `always()`:
-a cancelled run would otherwise upload the same artifact and tell that guard an
-evening run had already happened today, so cancelling one run would silently
-suppress the backup cron that exists to catch a missing one.
+push — which is what the note below has always claimed. Finished, not `always()`:
+a cancelled run would otherwise upload an artifact too, and a cancelled run did
+not happen.
+
+**The backup-cron guard counts published sessions, not uploads.** It used to
+count any `evening-*` artifact created on today's UTC date, and both halves of
+that were wrong: the artifact step uploads on failure too, so a preflight
+failure — or a Run-workflow click at lunch to test the secrets — silenced that
+night's cron (read off the Actions API: both failed 4 Sep runs left one); and
+an EST night starts at 23:16 UTC, so a run over ~44 minutes uploaded under
+tomorrow's UTC date and silenced the following night. A run that published
+names its artifact `evening-<session>-<id>`, a run that did not is
+`evening-failed-<id>`, and the guard counts only the first shape against the
+session a run tonight would scan. Traced through the guard's own shell against
+a stub `gh` running its real `jq` filter, six scenarios, in
+`tests/test_docs_are_true.py`.
 
 
 ### Checking it

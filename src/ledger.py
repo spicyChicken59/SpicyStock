@@ -1692,7 +1692,7 @@ class Ledger:
                     full["forward_returns"] = dict(slim_row["forward_returns"])
 
     # -- output ---------------------------------------------------------
-    def dashboard(self) -> dict:
+    def dashboard(self, headline: dict | None = None) -> dict:
         """docs/data.json: the newest run, plus the history's headline numbers."""
         if self.latest is None:
             raise ValueError("no run has been added, so there is nothing to publish")
@@ -1705,9 +1705,18 @@ class Ledger:
                 "documented_in": "README.md, 'The data contract'",
                 "invariants": list(CONTRACT_INVARIANTS),
             },
-            "run": self.latest["run"],
-            "candidates": self.latest["candidates"],
-            "gated_out": self.latest["gated_out"],
+            # `headline` is the top block to publish INSTEAD of the run just
+            # added: the previous file's own run, candidates and gated_out,
+            # handed back by publish() when the run just added is a BACKFILL
+            # of an older session. Without it a SCAN_SESSION_DATE run of last
+            # week rewrote the headline to last week while `runs` two lines
+            # down still listed last night, and the next morning announced
+            # that nothing had published for three sessions over a file that
+            # named the newer run itself. The record gains the backfill; the
+            # page and the morning keep the newest session.
+            "run": (headline or self.latest)["run"],
+            "candidates": (headline or self.latest)["candidates"],
+            "gated_out": (headline or self.latest)["gated_out"],
             "runs": [{k: v for k, v in run.items()
                       if k not in ("candidates", "gated")} for run in self.runs],
             # Step 11. The answers to the questions the page exists to ask,
@@ -1718,7 +1727,7 @@ class Ledger:
             "evidence": evidence(self.runs),
         }
 
-    def write(self) -> dict:
+    def write(self, headline: dict | None = None) -> dict:
         """Write both files. Returns {"data": path, "ledger": path}.
 
         `allow_nan=False` on purpose: json.dump's default writes NaN and
@@ -1730,7 +1739,7 @@ class Ledger:
         ledger = {"schema_version": SCHEMA_VERSION, "app": "SpicyStock",
                   "generated": _now_iso(), "runs": self.runs}
         _write_json(self.path, ledger)
-        _write_json(self.data_path, self.dashboard())
+        _write_json(self.data_path, self.dashboard(headline))
         return {"data": self.data_path, "ledger": self.path}
 
 

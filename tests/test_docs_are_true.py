@@ -683,3 +683,107 @@ def test_every_module_this_repo_imports_is_a_dependency_it_declares():
         f"imported but declared in neither requirements file: {missing}. "
         "CI installs requirements-dev.txt and nothing else, so these error there "
         "while passing here.")
+
+
+def _guard_shell() -> str:
+    """The backup-cron guard's own lines, cut out of evening.yml, with the three
+    Actions expressions it reads turned into environment variables."""
+    import yaml
+
+    workflow = yaml.safe_load(_read(".github/workflows/evening.yml"))
+    step = next(s for s in workflow["jobs"]["scan"]["steps"] if s.get("id") == "guard")
+    return (step["run"]
+            .replace("${{ github.event.schedule }}", "$EVENT_SCHEDULE")
+            .replace("${{ github.event_name }}", "$EVENT_NAME")
+            .replace("${{ github.repository }}", "x/y"))
+
+
+def _run_guard(tmp_path, *, artifacts: list[dict], event: str, schedule: str,
+               today_et: str, offset: str) -> str:
+    """Run the real guard under bash with a stub gh (real jq over a canned
+    payload) and a stub date, and return the go= line it printed."""
+    import json
+    import shutil
+    import subprocess
+
+    assert shutil.which("jq"), "the guard's own filter needs jq; the runner has it"
+    stub = tmp_path / "bin"
+    stub.mkdir(exist_ok=True)
+    (stub / "gh").write_text(
+        "#!/bin/sh\nwhile [ $# -gt 0 ]; do [ \"$1\" = -q ] && { shift; F=\"$1\"; }; shift; done\n"
+        "jq -r \"$F\" \"$PAYLOAD\"\n")
+    (stub / "date").write_text(
+        "#!/bin/sh\ncase \"$*\" in *%z*) echo \"$FAKE_OFFSET\";; *) echo \"$FAKE_TODAY\";; esac\n")
+    for f in (stub / "gh", stub / "date"):
+        f.chmod(0o755)
+    payload = tmp_path / "artifacts.json"
+    payload.write_text(json.dumps({"artifacts": artifacts}))
+    out = subprocess.run(["bash", "-c", _guard_shell()], cwd=tmp_path, text=True, capture_output=True,
+                         env={"PATH": f"{stub}:/usr/bin:/bin", "HOME": str(tmp_path),
+                              "PAYLOAD": str(payload), "EVENT_NAME": event, "EVENT_SCHEDULE": schedule,
+                              "FAKE_TODAY": today_et, "FAKE_OFFSET": offset,
+                              "GITHUB_OUTPUT": str(tmp_path / "out")})
+    assert out.returncode == 0, out.stderr
+    return (tmp_path / "out").read_text().strip()
+
+
+EDT_CRON, EST_CRON = "16 22 * * 1-5", "16 23 * * 1-5"
+
+
+@pytest.mark.parametrize("label, artifacts, schedule, today, offset, expected", [
+    ("nothing ran today: the cron fires",
+     [], EDT_CRON, "2026-09-04", "-0400", "go=true"),
+    # A preflight failure, or a Run-workflow click at lunch to test the
+    # secrets, uploads an artifact too. It used to count as "evening run
+    # already completed today" and silence that night's cron -- read off the
+    # Actions API: both failed 4 Sep runs left an 11,675-byte evening-<id>.
+    ("a FAILED run today left an artifact: the cron still fires",
+     [{"name": "evening-failed-33927201865", "created_at": "2026-09-04T22:51:27Z"}],
+     EDT_CRON, "2026-09-04", "-0400", "go=true"),
+    ("a run PUBLISHED today's session: the backup stands down",
+     [{"name": "evening-2026-09-04-33927201865", "created_at": "2026-09-04T22:51:27Z"}],
+     EDT_CRON, "2026-09-04", "-0400", "go=false"),
+    # Under EST the night starts at 23:16 UTC, so a run over ~44 minutes
+    # uploads under TOMORROW's UTC date. Keyed on the UTC creation date, that
+    # artifact silenced the following night's cron; keyed on the session in
+    # its name, it does not.
+    ("last night's EST run uploaded after midnight UTC: tonight's cron fires",
+     [{"name": "evening-2026-12-01-999", "created_at": "2026-12-02T00:03:11Z"}],
+     EST_CRON, "2026-12-02", "-0500", "go=true"),
+    ("a manual dispatch always runs, whatever the artifacts say",
+     [{"name": "evening-2026-09-04-1"}], "", "2026-09-04", "-0400", "go=true"),
+    ("the cron for the OTHER offset is the no-op",
+     [], EST_CRON, "2026-09-04", "-0400", "go=false"),
+])
+def test_the_backup_cron_guard_counts_published_sessions_not_uploads(
+    tmp_path, label, artifacts, schedule, today, offset, expected
+):
+    """Traced through the guard's own shell against a stub gh that runs the
+    guard's own jq filter, the way the persist step was traced: reading the
+    step proves nothing about what bash and jq do with it."""
+    event = "workflow_dispatch" if schedule == "" else "schedule"
+    assert _run_guard(tmp_path, artifacts=artifacts, event=event, schedule=schedule,
+                      today_et=today, offset=offset) == expected, label
+
+
+def test_the_artifact_is_named_after_the_session_only_when_the_run_published():
+    """The other half of the guard: the name it counts must be one a failed
+    run cannot produce. Asserted on the parsed YAML's expression."""
+    import yaml
+
+    from src import pipeline as pipe
+
+    workflow = yaml.safe_load(_read(".github/workflows/evening.yml"))
+    steps = {s.get("name"): s for s in workflow["jobs"]["scan"]["steps"]}
+    name = " ".join(str(steps["Keep the run's artifacts"]["with"]["name"]).split())
+    pipeline_step = steps["Run evening pipeline"]["run"]
+
+    assert "steps.pipeline.outputs.session" in name
+    assert "evening-failed-" in name
+    for code in (pipe.EXIT_OK, pipe.EXIT_DEGRADED, pipe.EXIT_FAILED_AFTER_PUBLISH):
+        assert f"steps.pipeline.outputs.code == '{code}'" in name, (
+            f"a run that exits {code} published and must be named by its session")
+    assert f"steps.pipeline.outputs.code == '{pipe.EXIT_FAILED}'" not in name, (
+        "a preflight failure published nothing and must not claim a session")
+    assert 'echo "session=$session" >> "$GITHUB_OUTPUT"' in pipeline_step, (
+        "the pipeline step must export the session the artifact is named after")

@@ -831,6 +831,128 @@ def test_a_night_the_cap_never_reached_says_nothing_about_it(
     assert "Crowded out" not in mocked_boundaries["resend"].sent[-1]["html"]
 
 
+def test_a_hole_before_the_session_and_a_raising_detector_both_degrade_the_run():
+    """The scan reports both now (src.scanner); the run must say so. A hole is
+    a symbol that could not be measured for the session, the same class as a
+    stale one, and is counted with it against the same fraction. A detector
+    that raised is a defect and is reported at any count."""
+    report = pipeline.RunReport()
+    pipeline._check_scan({"requested": 100, "with_bars": 100, "stale": {}, "no_bars": 0,
+                          "dropped": 0, "session": "2026-09-04",
+                          "gapped": {f"G{i}": "2026-09-02" for i in range(11)},
+                          "detector_errors": {}}, report)
+    assert [e["stage"] for e in report.errors] == ["scan"]
+    assert "11 had no bar for the session before it" in report.errors[0]["message"]
+
+    report = pipeline.RunReport()
+    pipeline._check_scan({"requested": 100, "with_bars": 100, "stale": {}, "no_bars": 0,
+                          "dropped": 0, "session": "2026-09-04", "gapped": {},
+                          "detector_errors": {"B3": "ValueError: a dtype surprise"}}, report)
+    assert report.status == "degraded"
+    assert "raised on 1 of 100" in report.errors[0]["message"]
+    assert "ValueError: a dtype surprise" in report.errors[0]["message"]
+
+
+def test_the_email_names_a_command_line_universe_the_way_the_archive_does(
+    fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """With --tickers the funnel line said "N checked-in US common stocks" over
+    names typed on the command line, while docs/data.json beside it correctly
+    said --tickers. One label now, read by both."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    html = mocked_boundaries["resend"].sent[-1]["html"]
+    label = clean(tmp_path)["run"]["universe"]["label"]
+    assert "named on the command line" in html and "checked-in" not in html
+    assert "named on the command line" in label, label
+
+
+def test_a_delivery_failure_is_written_into_the_record_it_leaves_behind(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """Exit 3 keeps the record -- and the record said run.status "ok" with
+    errors [], so the page and the next morning presented the night as clean
+    and nothing in it said the shortlist never arrived. Only the Actions
+    colour knew. The failure is stamped into both files before it is raised."""
+    import resend
+
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    monkeypatch.setattr(sys, "argv", ["pipeline", "evening", "--tickers", ",".join(names)])
+    monkeypatch.setattr(resend.Emails, "send", lambda *a, **k: (_ for _ in ()).throw(
+        RuntimeError("The example.invalid domain is not verified.")))
+
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+
+    assert exc.value.code == pipeline.EXIT_FAILED_AFTER_PUBLISH, "the exit code is unchanged"
+    data = clean(tmp_path)
+    assert data["run"]["status"] == "degraded"
+    assert any(e["stage"] == "email" and "not delivered" in e["message"] for e in data["run"]["errors"])
+    ledger_file = json.loads((tmp_path / "docs" / "ledger.json").read_text())
+    assert ledger_file["runs"][0]["status"] == "degraded"
+
+
+def test_a_lunchtime_evening_dispatch_re_presents_the_published_session_instead_of_re_scanning(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """A Run-workflow click before the close, to test the secrets, is an
+    evening run whose newest completed session is YESTERDAY's -- which the
+    ledger already holds as a clean run. It used to re-scan it, pay Claude
+    again, and hand add_run() a DEGRADED entry that replaced the clean one;
+    exit 2 qualifies for the commit-back, so the overwrite reached the branch.
+    Reproduced: ok -> degraded, six Claude calls for one session."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=False, tickers=names)
+    ledger_of = lambda: [(r["date"], r["status"]) for r in   # noqa: E731
+                         json.loads((tmp_path / "docs" / "ledger.json").read_text())["runs"]]
+    assert ledger_of() == [ledger_of()[0]] and ledger_of()[0][1] == "ok"
+    paid = len(mocked_boundaries["anthropic"].calls)
+
+    market_clock.before_the_open()          # the next day at lunch: not closed
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, tickers=names, report=report)
+
+    assert ledger_of()[0][1] == "ok", "the clean record was replaced by a degraded re-scan"
+    assert len(mocked_boundaries["anthropic"].calls) == paid, "and the session was paid for twice"
+    assert report.exit_code == pipeline.EXIT_DEGRADED, "the clock disagreement is still reported"
+    assert any("already published" in e["message"] for e in report.errors)
+    assert "follow-through" in mocked_boundaries["resend"].sent[-1]["subject"].lower()
+
+
+def test_a_backfill_does_not_make_the_morning_say_nothing_has_published(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """SCAN_SESSION_DATE is README's way to seed a history. It rewrote
+    docs/data.json's headline to the OLDER session while the same file's
+    `runs` still listed last night, and the next morning announced that
+    nothing had published for three sessions -- over a file naming the newer
+    run two lines further down. The record gains the backfill; the headline
+    keeps the newest session."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=True, tickers=names)
+    tonight = clean(tmp_path)["run"]["date"]
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-3))
+    pipeline.run("evening", dry_run=True, tickers=names)
+    monkeypatch.delenv("SCAN_SESSION_DATE")
+
+    data = clean(tmp_path)
+    assert data["run"]["date"] == tonight, "the headline moved to the backfilled session"
+    assert [r["date"] for r in data["runs"]] == [tonight, session_offset(-3)], "and the record has both"
+
+    market_clock.before_the_open()
+    report = pipeline.RunReport()
+    pipeline.run("morning", dry_run=False, report=report)
+
+    subject = mocked_boundaries["resend"].sent[-1]["subject"]
+    assert "NOTHING PUBLISHED" not in subject, subject
+    assert report.exit_code == pipeline.EXIT_OK, [e["message"] for e in report.errors]
+
+
 def test_a_delivery_failure_keeps_the_night_the_run_already_paid_for(
     monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):

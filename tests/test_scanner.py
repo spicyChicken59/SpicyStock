@@ -15,6 +15,7 @@ import time
 from datetime import date, datetime, time as time_of_day, timedelta, timezone
 
 import numpy as np
+import pandas as pd
 import pytest
 import requests
 from alpaca.common.exceptions import APIError
@@ -22,6 +23,10 @@ from alpaca.data.enums import Adjustment, DataFeed
 from requests.exceptions import HTTPError
 
 from src.scanner import (
+    previous_session,
+    _drop_gapped_symbols,
+    _download_batch,
+    _last_bar_date,
     MARKET_TZ,
     SESSION_COMPLETE_ET,
     Candidate,
@@ -1567,3 +1572,174 @@ def test_the_readme_describes_the_filter_the_code_applies():
             "Sweep the docs (CLAUDE.md: a step is not done until they are true)."
         )
 
+
+
+
+def _genuine_barset(symbol: str, rows: list[dict]):
+    """A real alpaca-py BarSet, the shape the SDK hands _download_batch."""
+    from alpaca.data.models import BarSet
+
+    class Client:
+        def get_stock_bars(self, request):
+            return BarSet({symbol: rows})
+
+    return Client()
+
+
+def _bar_rows(frame, session: date) -> list[dict]:
+    """The wire rows for `frame`, ending on `session`, oldest first."""
+    idx = pd.bdate_range(end=pd.Timestamp(session), periods=len(frame))
+    return [{"t": (t.normalize() + pd.Timedelta(hours=4)).tz_localize("UTC").isoformat(),
+             "o": float(r.Open), "h": float(r.High), "l": float(r.Low), "c": float(r.Close),
+             "v": float(r.Volume), "n": 1.0, "vw": float(r.Close)}
+            for t, (_, r) in zip(idx, frame.iterrows())]
+
+
+def test_a_newest_first_response_is_not_read_as_a_stale_symbol(ohlcv):
+    """BarSet.df keeps the response's order and the request pins no `sort`, so
+    this was an assumption: a newest-first reply made _last_bar_date() read the
+    OLDEST bar, every symbol read as stale, and the run died blaming a market
+    holiday. Reproduced with a genuine BarSet, fixed by sorting what came back
+    rather than by changing what is asked for."""
+    session = date(2026, 6, 24)
+    rows = _bar_rows(ohlcv("burst"), session)
+
+    df = _download_batch(_genuine_barset("X", list(reversed(rows))), ["X"], ScanConfig(), session)["X"]
+
+    assert _last_bar_date(df) == session
+    assert df.index.is_monotonic_increasing
+    assert detect_setup(df, ScanConfig()) is not None, "and the burst on the newest bar is still found"
+
+
+def test_a_bar_the_feed_sent_twice_does_not_hide_the_burst(ohlcv):
+    """A duplicated newest bar made iloc[-1] and iloc[-2] the same session, so
+    the day's gain read as 0% and a real 4% burst was silently missed."""
+    session = date(2026, 6, 24)
+    rows = _bar_rows(ohlcv("burst"), session)
+
+    df = _download_batch(_genuine_barset("X", rows + [rows[-1]]), ["X"], ScanConfig(), session)["X"]
+
+    assert not df.index.has_duplicates
+    assert len(df) == len(rows)
+    assert detect_setup(df, ScanConfig()) is not None
+
+
+
+def test_a_hole_before_the_session_does_not_publish_a_two_day_move_as_a_burst(ohlcv):
+    """_drop_stale_symbols checks only the newest bar. A halt or a dropped bar
+    the session before leaves iloc[-2] two sessions old while the frame passes
+    freshness, and detect_setup() then reads the TWO-day move as the day's 4%
+    burst. Reproduced with a genuine BarSet: 12.0% printed as 12.45%."""
+    session = date(2026, 6, 24)
+    rows = _bar_rows(ohlcv("burst"), session)
+    cfg = ScanConfig()
+    whole = _download_batch(_genuine_barset("X", rows), ["X"], cfg, session)
+    holed = _download_batch(_genuine_barset("X", rows[:-2] + rows[-1:]), ["X"], cfg, session)
+    assert _last_bar_date(holed["X"]) == session, "precondition: the hole passes freshness"
+
+    kept, gapped = _drop_gapped_symbols(holed, session)
+    assert kept == {} and gapped == {"X": pd.Timestamp(rows[-3]["t"]).date()}
+    kept, gapped = _drop_gapped_symbols(whole, session)
+    assert list(kept) == ["X"] and gapped == {}
+
+
+def test_previous_session_is_weekend_only_arithmetic_like_current_session():
+    assert previous_session(date(2026, 6, 24)) == date(2026, 6, 23)   # Wed -> Tue
+    assert previous_session(date(2026, 6, 22)) == date(2026, 6, 19)   # Mon -> Fri
+    assert previous_session(date(2026, 6, 20)) == date(2026, 6, 19)   # Sat -> Fri
+
+
+def test_a_gapped_symbol_is_counted_and_not_scanned(fake_alpaca, ohlcv):
+    """Through run_scan: the name is reported under `gapped`, not published as
+    a burst and not silently dropped."""
+    names = [f"G{i}" for i in range(12)]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i))
+    # The double re-dates every frame contiguously, so a hole has to be asked
+    # for by name rather than cut out of the frame handed in.
+    fake_alpaca.add_history("HOLE", ohlcv("burst", variant=99), gap_before_session=True)
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(), universe=names + ["HOLE"], stats=stats)
+
+    assert "HOLE" in stats["gapped"]
+    assert "HOLE" not in [c.ticker for c in found]
+    assert len(found) == 12
+
+
+def test_a_detector_that_raises_on_every_symbol_is_not_a_quiet_market(fake_alpaca, ohlcv, monkeypatch):
+    """The one path the coverage guards did not cover. A pandas API change
+    that makes detect_setup raise on every frame used to be swallowed per
+    symbol with no count, so the scan returned [] and raised nothing -- the
+    exact shape every guard in this module exists to prevent."""
+    import src.scanner as scanner_mod
+
+    names = [f"B{i}" for i in range(12)]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i))
+    stats: dict = {}
+    assert len(run_scan(ScanConfig(), universe=names, stats=stats)) == 12, "precondition: healthy"
+
+    def boom(df, cfg):
+        raise AttributeError("'Series' object has no attribute 'iloc'")
+    monkeypatch.setattr(scanner_mod, "detect_setup", boom)
+
+    with pytest.raises(IncompleteScanError, match="raised on every one"):
+        run_scan(ScanConfig(), universe=names, stats=stats)
+    assert len(stats["detector_errors"]) == 12
+
+
+def test_one_symbol_the_detector_cannot_read_is_counted_and_the_scan_goes_on(fake_alpaca, ohlcv, monkeypatch):
+    """The other half: a single bad frame is one symbol's problem, reported
+    in the stats and not fatal."""
+    import src.scanner as scanner_mod
+
+    names = [f"B{i}" for i in range(12)]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i))
+    real = scanner_mod.detect_setup
+    calls = []
+
+    # The FIRST frame only. Not "the frame whose close is B3's": the synthetic
+    # burst pins the same final close on every seed, so that raised on ten of
+    # twelve and the test asserted a number the harness had invented.
+    def one_bad(df, cfg):
+        calls.append(1)
+        if len(calls) == 1:
+            raise ValueError("a dtype surprise")
+        return real(df, cfg)
+    monkeypatch.setattr(scanner_mod, "detect_setup", one_bad)
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(), universe=names, stats=stats)
+
+    assert len(found) == 11
+    assert len(stats["detector_errors"]) == 1
+    assert "ValueError: a dtype surprise" in next(iter(stats["detector_errors"].values()))
+
+
+# --- the two boundaries the last audit found unpinned --------------------
+
+def test_the_coverage_guard_fires_at_exactly_its_minimum_universe(fake_alpaca, ohlcv):
+    """`>=` on coverage_guard_min_symbols, and no test sat on the boundary:
+    changing it to `>` left the whole suite green, so a scan of exactly the
+    minimum that was half stale would silently have stopped raising."""
+    cfg = ScanConfig()
+    n = cfg.coverage_guard_min_symbols
+    names = [f"S{i}" for i in range(n)]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i),
+                                stale_sessions=1 if i < n // 2 else 0)
+
+    with pytest.raises(StaleDataError):
+        run_scan(cfg, universe=names)
+
+
+def test_a_status_less_refusal_whose_body_says_not_permitted_is_permanent():
+    """The `or "not permitted" in text` clause was exercised by no test, so
+    it was a claim about Alpaca's wording nobody had checked and nothing
+    would notice being deleted."""
+    from src.scanner import _is_permanent_refusal
+
+    assert _is_permanent_refusal(_alpaca_error(None, "this endpoint is not permitted for your plan"))
+    assert not _is_permanent_refusal(_alpaca_error(None, "internal server error"))

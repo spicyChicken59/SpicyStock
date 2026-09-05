@@ -37,9 +37,23 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             GO=true   # primary path: external scheduler or manual run
           elif [ "$FIRED" = "$BACKUP" ]; then
-            TODAY=$(date -u +%Y-%m-%d)
+            # "Already ran today" used to mean "any evening-* artifact was
+            # CREATED on today's UTC date", and both halves of that were wrong.
+            # The artifact step uploads on failure too -- so a preflight
+            # failure, or a Run-workflow click at lunch to test the secrets,
+            # left an artifact that silenced that night's cron. And an EST
+            # night starts at 23:16 UTC, so a run over ~44 minutes uploaded
+            # under TOMORROW's UTC date and silenced the following night. Both
+            # traced through this exact shell against real artifact payloads.
+            #
+            # A run that published names its artifact after the SESSION it
+            # scanned (see "Keep the run's artifacts"); one that did not is
+            # named evening-failed-<id> and counts for nothing here. The
+            # session a run tonight would scan is today's date in market
+            # time, which is what current_session() answers at this hour.
+            SESSION=$(TZ=America/New_York date +%Y-%m-%d)
             DONE=$(gh api "repos/${{ github.repository }}/actions/artifacts?per_page=100" \
-              -q "[.artifacts[] | select((.name|startswith(\"evening-\")) and (.created_at|startswith(\"$TODAY\")))] | length" \
+              -q "[.artifacts[] | select(.name|startswith(\"evening-$SESSION-\"))] | length" \
               2>/dev/null || echo "0")
             if [ "$DONE" = "0" ]; then
               GO=true
@@ -105,6 +119,13 @@ jobs:
           code=$?
           set -e
           echo "code=$code" >> "$GITHUB_OUTPUT"
+          # The session this run PUBLISHED, for the artifact's name below; empty
+          # when nothing was published, which the name expression reads as
+          # "a failed run". The persist step reads the same field again for the
+          # commit message -- two one-line reads of one file, each pinned by
+          # its own test, rather than one read threaded through three steps.
+          session=$(python -c 'import json;print(json.load(open("docs/data.json"))["run"]["date"])' 2>/dev/null || true)
+          echo "session=$session" >> "$GITHUB_OUTPUT"
           echo "pipeline exited ${code}"
       - name: Persist the run
         # 0 is clean, 2 is DEGRADED-but-published, 3 is FAILED-after-publishing.
@@ -210,7 +231,12 @@ jobs:
         if: (success() || failure()) && steps.guard.outputs.go == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: evening-${{ github.run_id }}
+          # evening-<session>-<id> when the run published (exit 0, 2 or 3 --
+          # the same three the persist step keeps), evening-failed-<id>
+          # otherwise. The guard counts only the first shape, so a failed
+          # run or a test click no longer silences that night's cron, and a
+          # session is a session whatever UTC day the upload landed on.
+          name: ${{ (steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2' || steps.pipeline.outputs.code == '3') && steps.pipeline.outputs.session != '' && format('evening-{0}-{1}', steps.pipeline.outputs.session, github.run_id) || format('evening-failed-{0}', github.run_id) }}
           path: |
             docs/data.json
             docs/ledger.json

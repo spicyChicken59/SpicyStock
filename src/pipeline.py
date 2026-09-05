@@ -542,6 +542,22 @@ def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
     return discover(mode, dry_run=dry_run, tickers=tickers, report=report)
 
 
+def _already_published(cfg: ScanConfig) -> str | None:
+    """The session an evening run started now would scan, if docs/data.json
+    already holds a real evening run of it; else None. A pinned session is a
+    deliberate re-scan and is never "already published"."""
+    if cfg.session_date is not None:
+        return None
+    snapshot, _why = ledger.read_snapshot(ledger.DOCS_DIR)
+    if not snapshot:
+        return None
+    run = snapshot.get("run") or {}
+    session = ledger.iso_date(scanner.current_session())
+    if run.get("type") == "evening" and run.get("date") == session:
+        return session
+    return None
+
+
 def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None,
              report: RunReport | None = None) -> list[dict]:
     """The evening run: scan, gate, chart, score, archive, publish, mail.
@@ -567,6 +583,23 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     disagreement = session_disagreement(mode, cfg)
     if disagreement:
         report.problem("session", disagreement)
+        # A Run-workflow click at lunch to test the secrets is an evening
+        # dispatch before the close. It used to re-scan YESTERDAY's session
+        # -- the newest completed one -- pay Claude for it again, and hand
+        # add_run() a DEGRADED entry for a session the ledger already held as
+        # clean, which replaced it; and exit 2 qualifies for the commit-back,
+        # so the overwrite reached the branch. If that session is already
+        # published, a second scan of the same daily bars can only buy the
+        # same answer, so this run re-presents it instead, the way the
+        # morning does, and says so. The clock disagreement stays in the
+        # report: the email is still marked, the exit code is still 2.
+        already = _already_published(cfg)
+        if already:
+            report.problem("session", f"{already} is already published, so this run "
+                                      "re-presents it rather than scanning it again: a second "
+                                      "scan of the same daily bars would pay for the same answer "
+                                      "and replace a clean record with a degraded one")
+            return follow_through(mode_for("morning"), dry_run, report=report)
 
     # Layer 1: scan. Alpaca returns bars only up to the session the scan
     # targets, and src.scanner drops anything that does not carry it. Which
@@ -682,7 +715,7 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
                           "claude": score_stats.get("claude", 0),
                           "fallback": score_stats.get("fallback", 0)})
     stats = report.email_stats(
-        universe=f"{scanned} checked-in US common stocks",
+        universe=universe_label(scan_stats, tickers),
         # How many CLEARED the gate, not how many fitted under the call cap
         # afterwards. The email prints this as "Passed 2LYNCH gate", and on any
         # night with more than MAX_TO_SCORE survivors the capped number was a
@@ -746,11 +779,45 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
             log.info("  %s  %s/10 (%s) %s", r["ticker"], r["score"], r["verdict"], r["reason"])
     else:
         from .emailer import send_email
-        send_email(shortlist, run_type, stats)
+        try:
+            send_email(shortlist, run_type, stats)
+        except Exception as e:  # noqa: BLE001 -- recorded, then re-raised for main()
+            # The record was complete and committed (exit 3) with run.status
+            # "ok" and errors [], so the page and the next morning presented
+            # the night as clean and nothing in the record said the shortlist
+            # was never delivered; only the Actions colour knew. Stamp the
+            # failure into both files first. The exit code is unchanged.
+            report.problem("email", f"the shortlist was not delivered ({type(e).__name__}: {e})")
+            _restamp(book, report, published.get("headline"))
+            raise
 
     report.stage = "complete"
     report.log_summary(run_type)
     return scored
+
+
+def _restamp(book: ledger.Ledger, report: RunReport, headline: dict | None) -> None:
+    """Write the report's current problems and status into the run just
+    published, in both files, keeping whatever headline publish() chose."""
+    key = (book.latest["run"]["date"], book.latest["run"]["type"])
+    book.latest["run"]["errors"] = list(report.errors)
+    book.latest["run"]["status"] = report.status
+    for entry in book.runs:
+        if (entry.get("date"), entry.get("type")) == key:
+            entry["status"] = report.status
+            break
+    book.write(headline)
+
+
+def universe_label(scan_stats: dict, explicit_tickers: list[str] | None) -> str:
+    """What was scanned, in words. ONE rule, read by the email's funnel line
+    and by docs/data.json's universe block. The email built its own -- "N
+    checked-in US common stocks" -- and printed it over names typed on the
+    command line, while the archive beside it correctly said "--tickers"."""
+    size = scan_stats.get("requested", len(explicit_tickers or []))
+    if explicit_tickers is not None:
+        return f"{size} named on the command line (--tickers)"
+    return f"{size} checked-in US common stocks"
 
 
 def email_row(row: dict) -> dict:
@@ -1154,7 +1221,7 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         "fixture": False,
         "universe": {
             "label": ("data/symbols.txt (checked in)" if explicit_tickers is None
-                      else f"--tickers, {len(explicit_tickers)} named on the command line"),
+                      else universe_label(scan_stats, explicit_tickers)),
             "size": scan_stats.get("requested", len(explicit_tickers or [])),
         },
         "bursts": n_bursts,
@@ -1203,12 +1270,28 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     book.latest["run"]["errors"] = list(report.errors)
     book.latest["run"]["status"] = entry["status"] = report.status
 
-    written = book.write()
+    # A SCAN_SESSION_DATE backfill adds an OLDER session to the record. It
+    # used to become the headline of docs/data.json too -- the top-level run
+    # last week's, while `runs` two lines down still listed last night -- and
+    # the next morning read the top block, found it three sessions old and
+    # announced that nothing had published, over a file naming the newer run
+    # itself. If a newer real run is already published, keep its headline;
+    # the record still gains the backfill, and the evidence is rebuilt over
+    # the whole ledger either way.
+    headline = None
+    if book.runs and book.runs[0] is not entry:
+        previous, _why = ledger.read_snapshot(book.docs_dir)
+        if previous and str(previous["run"].get("date")) > str(run["date"]):
+            headline = {k: previous[k] for k in ("run", "candidates", "gated_out")}
+            log.info("Backfilled %s behind the published %s; the headline stays %s",
+                     run["date"], previous["run"].get("date"), previous["run"].get("date"))
+
+    written = book.write(headline)
     # Both files are on disk and complete. Everything after this point in the
     # run -- the email, and nothing else -- can fail without the night's
     # record being worthless, and the exit code has to be able to say so.
     report.published = True
-    return {"data": written["data"], "ledger": written["ledger"],
+    return {"data": written["data"], "ledger": written["ledger"], "headline": headline,
             "runs": len(book.runs), "pending": len(pending), "filled": filled}
 
 
@@ -1230,9 +1313,17 @@ def _check_scan(scan_stats: dict, report: RunReport) -> None:
         report.problem("scan", f"{dropped} of {requested} symbols were dropped after "
                                "their batch failed twice — they were never examined, "
                                "and an empty shortlist does not mean a quiet market")
-    if with_bars and stale / with_bars > DEGRADED_STALE_FRACTION:
-        report.problem("scan", f"{stale} of {with_bars} symbols with data ({stale / with_bars:.0%}) "
-                               f"carried no bar for {session} and were skipped")
+    gapped = len(scan_stats.get("gapped", {}))
+    if with_bars and (stale + gapped) / with_bars > DEGRADED_STALE_FRACTION:
+        report.problem("scan", f"{stale + gapped} of {with_bars} symbols with data "
+                               f"({(stale + gapped) / with_bars:.0%}) could not be measured for "
+                               f"{session} and were skipped: {stale} carried no bar for it and "
+                               f"{gapped} had no bar for the session before it")
+    errors = scan_stats.get("detector_errors") or {}
+    if errors:
+        first = next(iter(errors.items()))
+        report.problem("scan", f"the burst detector raised on {len(errors)} of {with_bars} symbols "
+                               f"and they were skipped (first: {first[0]}: {first[1]})")
     if requested and no_bars / requested > DEGRADED_NO_BARS_FRACTION:
         report.problem("scan", f"{no_bars} of {requested} symbols returned no bars at all "
                                "— check the symbol file against what the feed carries")

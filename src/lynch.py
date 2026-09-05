@@ -313,16 +313,30 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     # same "-0.5% vs 20SMA" as the quiet day it gapped away from. Extension
     # is a fact about the price you would pay, which is today's close.
     closes = df["Close"]
-    run_up_1mo = shown((closes.iloc[-1] / closes.iloc[-21] - 1) * 100, 1) if len(closes) >= 21 else 0.0
     sma20 = closes.iloc[-20:].mean()
     ext_vs_sma20 = shown((closes.iloc[-1] / sma20 - 1) * 100, 1)
+    if len(closes) >= 21:
+        run_up_1mo = shown((closes.iloc[-1] / closes.iloc[-21] - 1) * 100, 1)
+        run_up_text = f"{run_up_1mo:+.1f}% past month"
+        run_up_ok = run_up_1mo < MAX_RUN_UP_1MO
+    else:
+        # Fewer than 21 closes survive the cleaning, so there is no month to
+        # measure over. This used to substitute 0.0 -- and print "+0.0% past
+        # month" to the scoring model as if it had been measured, on a frame
+        # whose real run-up over the sessions it did have was +16.9%. A number
+        # that was not measured is not 0; it is not a number. The same rule C
+        # already applies to a range norm it cannot compute: say so, and let
+        # the half that WAS measured decide on its own.
+        run_up_1mo = None
+        run_up_text = "no 20-session history to measure a month over"
+        run_up_ok = True
     checks["Y_young_trend"] = {
-        "pass": bool(run_up_1mo < MAX_RUN_UP_1MO and ext_vs_sma20 < MAX_EXT_VS_SMA20),
+        "pass": bool(run_up_ok and ext_vs_sma20 < MAX_EXT_VS_SMA20),
         # Spell out the frame of reference: the scorer reads this line, and
         # the same number means very different things before and after the
         # burst. (The old format hard-coded a "+", printing "+-33.8%".)
         "value": (
-            f"{run_up_1mo:+.1f}% past month, {ext_vs_sma20:+.1f}% vs 20SMA"
+            f"{run_up_text}, {ext_vs_sma20:+.1f}% vs 20SMA"
             " (through today's burst)"
         ),
     }
@@ -373,10 +387,20 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
         # one the suite never exercises near it, which is an artefact of the
         # fixture and not a property of the code.
         close_pos = shown((float(burst["Close"]) - float(burst["Low"])) / rng, 2)
-        checks["H_close_near_high"] = {
-            "pass": bool(close_pos >= MIN_CLOSE_POS),
-            "value": f"closed at {close_pos:.0%} of day's range",
-        }
+        if 0.0 <= close_pos <= 1.0:
+            checks["H_close_near_high"] = {
+                "pass": bool(close_pos >= MIN_CLOSE_POS),
+                "value": f"closed at {close_pos:.0%} of day's range",
+            }
+        else:
+            # A close OUTSIDE its own day's range is the same class of bad bar
+            # as an inverted one, and used to print "closed at 145% of day's
+            # range" and PASS -- the branch below caught rng <= 0 and nothing
+            # caught a close the range does not contain.
+            checks["H_close_near_high"] = {
+                "pass": False,
+                "value": f"close outside its own range ({close_pos:.0%}); no usable bar",
+            }
     else:
         # A bar with no high-low separation (or an inverted one, which
         # `if rng else 1.0` also let through) demonstrates no intraday demand
