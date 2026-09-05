@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 753 tests with no network
+- **There is a regression net.** `pytest tests/` runs 758 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -299,6 +299,32 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   numbers, and says so in a precondition. Neither surface had the phrase "the
   N-call cap" pinned, which is how one mechanism grows two vocabularies; both
   do now, each asserting against the other's source.
+
+  **The system prompt is 59% of every request and was paid for 25 times a
+  night.** `knowledge/strategy.md` is byte-identical on every call of a run --
+  measured at ~1,590 tokens against ~388 of metrics and ~721 for an 869x622
+  chart -- and nothing asked for it to be cached. It carries `cache_control`
+  now: a write costs 1.25x and a read 0.1x, so break-even is 1.4 calls and a
+  full night is 43% cheaper, $0.24 to $0.13. No `ttl`, because 5 minutes is
+  the cheap write and every read resets the window. The SDK's own
+  `TextBlockParam` says the block is well formed, checked offline, which is
+  the only kind of wire check this suite can make.
+
+  The saving is invisible from inside the run -- the reply is identical either
+  way -- so `cache_usage()` reads the reply's own counts and `score_all()`
+  logs one line per run. Without it a cache that quietly stopped working (a
+  system prompt edited below the 1,024-token minimum, two calls further apart
+  than the TTL) would cost 1.25x forever with a code comment as the only
+  evidence it was ever meant to. Eight mutants, all killed, including an
+  explicit `ttl: 1h` and a prefix split across two blocks.
+
+  Both test doubles in this suite bill the cached prefix by ONE shared rule
+  (`billed_usage` in `tests/fakes.py`): the first call of a run writes it,
+  every call after reads it, and only a block carrying `cache_control` counts.
+  A flat per-call number would have made the totalling test pass with the
+  caching removed, which is this file's third shape -- a test that cannot tell
+  the states apart -- and the inverse test that drops `cache_control` is what
+  proves it does.
 
   **And `evening.yml`'s commit-back has still never executed** — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on

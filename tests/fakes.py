@@ -198,9 +198,50 @@ class FakeTextBlock:
     type: str = "text"
 
 
+def billed_usage(kwargs: dict, calls: list, uncached: int = 1109) -> "FakeUsage":
+    """The token counts a reply to `kwargs` would carry, billed as the API does.
+
+    ONE rule, used by both doubles in this suite: the first call of a run
+    writes the cached prefix and every call after reads it, and the prefix is
+    only whatever carries a cache_control block. A request that stops asking
+    for caching therefore gets a reply reporting none, which is what makes the
+    test that totals them able to fail.
+
+    `calls` is the double's own log INCLUDING the call being answered, so the
+    first one sees a length of 1.
+    """
+    prefix = sum(len(str(block.get("text", ""))) // 4
+                 for block in kwargs.get("system") or []
+                 if isinstance(block, dict) and block.get("cache_control"))
+    first = sum(1 for c in calls if c.get("system") == kwargs.get("system")) <= 1
+    return FakeUsage(
+        cache_creation_input_tokens=prefix if first else 0,
+        cache_read_input_tokens=0 if first else prefix,
+        input_tokens=uncached,
+        output_tokens=90,
+    )
+
+
+@dataclass
+class FakeUsage:
+    """The token counts a real reply carries, modelled the way the API bills.
+
+    The FIRST call of a run writes the cached prefix and the rest read it,
+    which is the whole shape of the saving prompt caching buys -- so a double
+    that reported one flat number per call could not tell a working cache from
+    a broken one, and the test that totals them would pass either way.
+    """
+
+    cache_creation_input_tokens: int = 0
+    cache_read_input_tokens: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+
+
 @dataclass
 class FakeMessage:
     content: list[FakeTextBlock]
+    usage: FakeUsage | None = None
 
 
 class FakeAnthropic:
@@ -214,6 +255,9 @@ class FakeAnthropic:
     payload: dict = {"score": 7.5, "reason": "synthetic", "verdict": "B+", "key_risk": "synthetic"}
     raw: str | None = None          # verbatim reply text, overrides `payload`
     raises: Exception | None = None
+    #: what a request costs beyond the cached prefix -- the metrics text and
+    #: the chart image, which are different for every candidate
+    uncached_tokens: int = 1109
     calls: list[dict] = []
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -232,7 +276,9 @@ class _FakeMessages:
         text = self._owner.raw
         if text is None:
             text = json.dumps(self._owner.payload)
-        return FakeMessage(content=[FakeTextBlock(text=text)])
+        return FakeMessage(content=[FakeTextBlock(text=text)],
+                           usage=billed_usage(kwargs, self._owner.calls,
+                                              self._owner.uncached_tokens))
 
 
 # --------------------------------------------------------------- Resend ----
