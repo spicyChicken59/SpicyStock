@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 761 tests with no network
+- **There is a regression net.** `pytest tests/` runs 762 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -369,6 +369,20 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   the newest is the most diagnostic, and inventing a policy to answer a
   failure mode nobody has seen is how this project's notes record two fixes
   being worse than their bugs. Written down instead.
+
+  **The fourth number in this repo to rot, and the first with a tool to stop
+  it.** README quoted 8.8 MB raw and 0.59 MB gzipped for a full year of
+  `docs/ledger.json` -- and the page's whole "fetch it only when asked" design
+  is argued from those. The 3.3 audit added `context` to both row types and
+  nobody re-measured, because re-measuring meant building an eleven-megabyte
+  file by hand. It is 11.04 and 0.66. `tools/measure_ledger.py` builds one now
+  -- real rows from the generated history, real row counts from the canonical
+  one-night fixture, and `src.ledger`'s own writer, because `indent=2` is most
+  of the raw size and a compact estimate is not the file a browser fetches --
+  and `tests/test_docs_are_true.py` asserts README against what it prints.
+  Two estimates disagreed by a factor of two on the way here (968 B/row scaled,
+  against per-row-type sums at compact separators); building the actual file is
+  what settled it, which is this file's own rule about argued findings.
 
   **And `evening.yml`'s commit-back has still never executed** — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on

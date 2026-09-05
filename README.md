@@ -199,7 +199,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 761 tests, no network or API keys needed
+pytest tests/                   # 762 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -310,11 +310,19 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 8.8 MB raw
-and **0.59 MB gzipped** after a full year (measured, at ~47 rows a run over 260
-runs). That is not a thing to spend on every visit for a view most readers
-never open, so the "load every burst of every name" button is the only second
-request this page makes. A 404 there is the normal state until `evening.yml`
+and what followed — needs the whole record, which projects to about 11.04 MB raw
+and **0.66 MB gzipped** after a full year. That is not a thing to spend on every
+visit for a view most readers never open, so the "load every burst of every
+name" button is the only second request this page makes.
+
+Those two numbers were 8.8 and 0.59, and they were stale: the 3.3 audit added
+`context` to both row types and nobody re-measured, because re-measuring meant
+building an eleven-megabyte file by hand. `python tools/measure_ledger.py` builds
+one now — real rows from the generated history, real row counts from the
+canonical one-night fixture, and `src.ledger`'s own writer, since `indent=2` is
+most of the raw size and a compact estimate is not the file a browser fetches.
+`tests/test_docs_are_true.py` checks that what it prints is what this paragraph
+says, so the next person to grow a row does not have to remember. A 404 there is the normal state until `evening.yml`
 has committed a run back, and it is reported as a fact about the file.
 
 ### The data contract

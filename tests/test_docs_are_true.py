@@ -517,3 +517,37 @@ def test_a_degraded_evening_run_still_commits_the_night_it_paid_for():
         list(by_name).index("Keep the run's artifacts"), (
         "the verdict must be raised AFTER the artifact upload, or a degraded "
         "night loses its 30-day backup copy too")
+
+
+def test_the_ledgers_projected_size_is_what_measuring_it_says():
+    """README quotes a raw and a gzipped megabyte figure for a full year of
+    docs/ledger.json, and the page's "load only when asked" design is argued
+    from them. They were 8.8 and 0.59 and had been stale since the 3.3 audit
+    grew both row types -- the same class as the test count and the dashboard
+    check count, and the third number in this repo to rot the same way.
+
+    Re-measured rather than restated: tools/measure_ledger.py builds the file
+    with the real writer and the real rows. Tolerant to a hundredth, because
+    the assertion is that README is not WRONG, not that a megabyte figure is
+    quoted to the byte.
+    """
+    import importlib.util
+    import re
+
+    spec = importlib.util.spec_from_file_location(
+        "measure_ledger", ROOT / "tools" / "measure_ledger.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    measured = module.measure()
+
+    readme = _read("README.md")
+    raw, gz = re.search(
+        r"projects to about ([\d.]+) MB raw\s*\nand \*\*([\d.]+) MB gzipped\*\*", readme
+    ).groups()
+
+    assert abs(float(raw) - measured["raw_mb"]) < 0.01, (
+        f"README says {raw} MB raw; measuring says {measured['raw_mb']:.2f}. "
+        "Run python tools/measure_ledger.py and sweep it.")
+    assert abs(float(gz) - measured["gzip_mb"]) < 0.01, (
+        f"README says {gz} MB gzipped; measuring says {measured['gzip_mb']:.2f}. "
+        "Run python tools/measure_ledger.py and sweep it.")
