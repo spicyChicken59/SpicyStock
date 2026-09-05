@@ -199,7 +199,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 733 tests, no network or API keys needed
+pytest tests/                   # 740 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -527,7 +527,7 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 135 checks, and which file each one
+**Three data sources, one page.** It runs 137 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served

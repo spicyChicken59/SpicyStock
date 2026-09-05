@@ -1089,8 +1089,21 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     session = scan_stats.get("session")
     # The gate's own size, read off the checklist this run computed rather
     # than copied from src.lynch as a number that could drift out of step.
-    # None on a night with no bursts, because then nothing measured it.
-    total_checks = next((lynch["total"] for _c, lynch, _x in to_score), None)
+    #
+    # Off EVERY burst that was measured, not just the scored ones. It read
+    # `to_score` alone, so any night where nothing reached the scorer published
+    # total_checks: null — and docs/index.html concatenates it straight into
+    # prose, so the page said "rejected at the >=3/null 2LYNCH gate" and "under
+    # 3 of null checks" while the rows beneath it correctly printed 5/6. A
+    # confidently false sentence about the screener's own rule, on its only
+    # published surface, with every check green. The checklist was computed for
+    # all of them; only the scoring was skipped.
+    #
+    # Still None on a night with NO BURSTS AT ALL, because then nothing
+    # measured it and inventing a 6 would be the same class of lie. The page
+    # has to handle that, and now does.
+    measured = list(to_score) + [(c, lynch, x) for c, lynch, x, _reason in unscored]
+    total_checks = next((lynch["total"] for _c, lynch, _x in measured), None)
     run = {
         "date": ledger.iso_date(session) or ledger.iso_date(datetime.now(timezone.utc)),
         "type": run_type,

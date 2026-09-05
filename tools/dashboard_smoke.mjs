@@ -210,6 +210,18 @@ const VARIANTS = {
     }
     return d;
   },
+  // A run whose gate block never learned how many checks the checklist has.
+  // The producer emits null there when NOTHING measured a checklist that
+  // night, and every surface that mentions the gate concatenates the number
+  // into prose -- so the page published "rejected at the ≥3/null 2LYNCH gate"
+  // and "under 3 of null checks" over a run that had cleared everything, with
+  // the whole suite and every check here green. A null is not a state the
+  // canonical fixture can hold, so it needed its own source.
+  nogatetotal() {
+    const d = clone();
+    d.run.gate.total_checks = null;
+    return d;
+  },
   // The pipeline has never run, or the write failed.
   nodata() { return null; }
 };
@@ -512,6 +524,30 @@ ok('and says nothing of the kind about a run that had no absolute rule to apply'
   !oldCaption.includes('refused by an absolute rule')
   && !oldHint.includes('refused by an absolute rule'),
   oldCaption.replace(/\s+/g, ' ').slice(0, 90));
+
+// The same class one field over. `gate.total_checks` is the checklist's SIZE,
+// and the page concatenates it into three sentences: the funnel's "why" and
+// "note", and the gated table's "rejected at the ≥3/6 2LYNCH gate". The
+// producer emits null there when nothing measured a checklist that night, and
+// every one of those three read "3/null" and "under 3 of null checks" — a
+// threshold against a total that does not exist, stated as fact, with the
+// suite and every check here green because no source could hold a null.
+await open('/v/nogatetotal/');
+const nullTexts = [
+  await page.textContent('#funnel-hint'),
+  (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent))).join(' '),
+  await page.textContent('#gated-hint'),
+  await page.textContent('#checks-hint')
+];
+ok('a run that never measured the checklist prints no gate size at all',
+  nullTexts.every((t) => !/null|undefined|NaN/.test(t)),
+  nullTexts.find((t) => /null|undefined|NaN/.test(t)) || 'clean');
+// And the other half, which is what stops the fix being "delete the sentence":
+// the pass threshold IS known on such a run and must survive.
+ok('and still names the threshold it does know, which is the pass count',
+  nullTexts.slice(1).every((t) => t.includes('≥' + VARIANTS.nogatetotal().run.gate.min_lynch_passes)
+                                  || t.includes('under ' + VARIANTS.nogatetotal().run.gate.min_lynch_passes)),
+  nullTexts.slice(1).map((t) => t.replace(/\s+/g, ' ').slice(0, 60)).join(' | '));
 await open('/f/fixture/');
 
 // --- the streak line, on the one state it used to get wrong -----------------

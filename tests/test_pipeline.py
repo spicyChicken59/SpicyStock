@@ -698,6 +698,51 @@ def test_a_burst_the_gate_rejected_is_archived_with_its_checklist(
     assert mocked_boundaries["anthropic"].calls == [], "and nothing was paid for"
 
 
+def test_a_night_that_scored_nothing_still_publishes_the_size_of_its_own_gate(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, tmp_path
+):
+    """`run.gate.total_checks` is what the page and the email interpolate into
+    "rejected at the >=3/6 2LYNCH gate". It was read off the SCORED rows
+    alone, so a night that scored nothing published null there -- and the page
+    concatenated it, printing a threshold against a total that does not exist
+    over rows correctly showing 5/6 beside it. The checklist was measured for
+    every one of these bursts; only the scoring was skipped."""
+    monkeypatch.setattr(pipeline, "MIN_LYNCH_PASSES", 99)
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+
+    pipeline.run("evening", dry_run=True, tickers=names)
+
+    data = clean(tmp_path)
+    assert data["run"]["scored"] == 0, "precondition: nothing reached the scorer"
+    assert data["run"]["bursts"] == 3, "and the checklist ran on all three"
+    measured = lynch.evaluate_2lynch(ohlcv("burst", variant=0))["total"]
+    assert data["run"]["gate"]["total_checks"] == measured
+    assert data["run"]["gate"]["total_checks"] == data["gated_out"][0]["lynch_total"], (
+        "the same number the rows beneath it print"
+    )
+
+
+def test_a_night_that_found_no_burst_at_all_publishes_no_gate_size(
+    fake_alpaca, mocked_boundaries, ohlcv, tmp_path
+):
+    """The other side of that fix, and the reason it is `next(..., None)` and
+    not a constant read off src.lynch. Nothing measured a checklist here, so
+    there is no measurement to report; publishing a 6 anyway would be the same
+    invention in the opposite direction. The page's job is to say the part it
+    knows -- the pass threshold -- and drop the part it does not."""
+    for i in range(3):
+        fake_alpaca.add_history(f"Q{i}", ohlcv("flat", variant=i))
+
+    pipeline.run("evening", dry_run=True, tickers=[f"Q{i}" for i in range(3)])
+
+    data = clean(tmp_path)
+    assert data["run"]["bursts"] == 0 and data["gated_out"] == []
+    assert data["run"]["gate"]["total_checks"] is None
+    assert data["run"]["gate"]["min_lynch_passes"] == pipeline.MIN_LYNCH_PASSES, (
+        "the threshold is a rule, not a measurement, and is published either way"
+    )
+
+
 def test_a_burst_the_call_cap_dropped_says_so_rather_than_disappearing(
     monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):

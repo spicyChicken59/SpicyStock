@@ -794,10 +794,16 @@
       // when the run really had a veto to apply: a snapshot written before
       // the rule existed carries no gate.vetoes, and naming a rule that run
       // did not enforce would be the confidently-false sentence again.
+      // gate.total_checks is null on a night that measured no checklist at
+      // all, and a null concatenated into prose reads as "under 3 of null
+      // checks" and "the 3/null gate" — a rule that does not exist, printed as
+      // fact. Say the part that is known and drop the part that is not.
       { name: 'passed 2LYNCH', n: run.passed_gate || 0,
-        why: 'under ' + g.min_lynch_passes + ' of ' + g.total_checks + ' checks' +
+        why: (g.total_checks ? 'under ' + g.min_lynch_passes + ' of ' + g.total_checks + ' checks'
+                             : 'under ' + g.min_lynch_passes + ' checks passed') +
              ((g.vetoes || []).length ? ', or refused by an absolute rule' : ''),
-        note: 'the ' + g.min_lynch_passes + '/' + g.total_checks + ' gate' },
+        note: g.total_checks ? 'the ' + g.min_lynch_passes + '/' + g.total_checks + ' gate'
+                             : 'the ≥' + g.min_lynch_passes + '-pass gate' },
       { name: 'scored', n: run.scored || 0,
         why: 'outside the ' + run.score_cap + '-call cap', note: 'one scoring call each' },
       { name: 'shortlist', n: short,
@@ -1462,7 +1468,11 @@
     renderTickers(ev);
 
     // the funnel
-    var gateTxt = run.gate ? '≥' + run.gate.min_lynch_passes + '/' + run.gate.total_checks : 'the gate';
+    // Same null: this string is interpolated into the gated table's own
+    // sentence, so "≥3/null" reached the reader there too.
+    var gateTxt = run.gate && run.gate.total_checks
+      ? '≥' + run.gate.min_lynch_passes + '/' + run.gate.total_checks
+      : (run.gate ? '≥' + run.gate.min_lynch_passes + '-pass' : 'the');
     var capped = gated.filter(function (g) { return g.reason === 'score_cap'; }).length;
     var stages = funnelStages(run);
     var funnelTop = stages[0].n;

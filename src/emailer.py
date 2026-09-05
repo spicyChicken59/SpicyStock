@@ -58,6 +58,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import html
 import os
 from pathlib import Path
 
@@ -318,6 +319,29 @@ def _last_appearance(streak: dict) -> str:
     return LAST_OUTCOME.get(outcome) or "no score was recorded then"
 
 
+def esc(value) -> str:
+    """Text on its way into the email's HTML, made safe to be text.
+
+    Nothing in this file escaped anything, and the row fields it interpolates
+    are not this module's words: `reason` and `key_risk` are the SCORING
+    MODEL's, `ticker` comes off the feed, and on the morning path every one of
+    them is read back out of docs/data.json — a file a previous run wrote.
+
+    The failure is silent, which is what makes it matter. A reason of
+    "Breakout above <resistance> on 3x volume, clean base." renders in a mail
+    client as "Breakout above" — the parser takes `<resistance>` for a tag and
+    swallows the rest. Verified with a real HTML parser: the sentence the owner
+    reads to justify a trade is truncated with nothing to say it was. A `<`
+    followed by a letter is enough, and a model writing about levels, ranges
+    or comparisons produces one without trying.
+
+    Applied to LEAVES, never to the fragments this module builds — those carry
+    <br> and <span> on purpose. docs/index.html has never had this problem: it
+    builds nodes and sets textContent, so the browser escapes for it.
+    """
+    return html.escape("" if value is None else str(value), quote=True)
+
+
 def _plural(n: int, noun: str) -> str:
     return f"{n} {noun}" if n == 1 else f"{n} {noun}s"
 
@@ -382,13 +406,13 @@ def _streak_note(row: dict) -> str:
         # the record has eight bursts for reads as an absence of history.
         colour = "#a5281b" if streak.get("seen_before") else "#666"
     elif day > 1:
-        text = f"day {day} of this setup, since {streak.get('first_seen')}"
+        text = f"day {esc(day)} of this setup, since {esc(streak.get('first_seen'))}"
         colour = "#a5281b"
     else:
         text = "day 1 — new setup"
         colour = "#666"
     if streak.get("last_seen"):
-        text += f" · last seen {streak['last_seen']}, {_last_appearance(streak)}"
+        text += f" · last seen {esc(streak['last_seen'])}, {_last_appearance(streak)}"
     return _streak_span(text, colour)
 
 
@@ -528,8 +552,8 @@ def _no_chart_note(row: dict) -> str:
 
 def _chart_cell(row: dict) -> str:
     if _chart_file(row):
-        return (f'<img src="cid:chart_{row["ticker"]}" width="280" '
-                f'alt="{row["ticker"]} chart">')
+        return (f'<img src="cid:chart_{esc(row["ticker"])}" width="280" '
+                f'alt="{esc(row["ticker"])} chart">')
     return (f'<span style="color:#666;font-size:12px;">'
             f'{_no_chart_note(row)}</span>')
 
@@ -579,19 +603,19 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
         detail = "<br>".join(r["lynch_detail"])
         rows += f"""
         <tr>
-          <td style="padding:8px;border-bottom:1px solid #ddd;"><b>{i}. {r['ticker']}</b><br>
+          <td style="padding:8px;border-bottom:1px solid #ddd;"><b>{i}. {esc(r['ticker'])}</b><br>
               {_close_cell(r, scan_stats)}{_streak_note(r)}</td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">+{r['gain_pct']}%</td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">{r['volume_ratio']}x</td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">
-              <b>{r['lynch']}</b>
+              <b>{esc(r['lynch'])}</b>
               <details><summary style="cursor:pointer;color:#0066cc;font-size:12px;">detail</summary>
               <div style="font-size:11px;color:#555;font-family:monospace;">{detail}</div></details></td>
-          <td style="padding:8px;border-bottom:1px solid #ddd;">{r['reason']}<br>
-              <span style="color:#a33;font-size:12px;">Risk: {r['key_risk']}</span></td>
+          <td style="padding:8px;border-bottom:1px solid #ddd;">{esc(r['reason'])}<br>
+              <span style="color:#a33;font-size:12px;">Risk: {esc(r['key_risk'])}</span></td>
           <td style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">
               <b style="font-size:18px;">{r['score']}</b>/10<br>
-              <span style="font-size:12px;">{r['verdict']}</span></td>
+              <span style="font-size:12px;">{esc(r['verdict'])}</span></td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">
               {_chart_cell(r)}</td>
         </tr>"""

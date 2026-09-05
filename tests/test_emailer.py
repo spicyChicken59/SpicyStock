@@ -627,6 +627,51 @@ def test_a_row_carrying_no_streak_field_at_all_is_unknown_too(results):
     assert "new setup" not in html
 
 
+@pytest.mark.parametrize("field,text", [
+    ("reason", "Breakout above <resistance> on 3x volume, clean base."),
+    ("reason", "Volume <avg since the gap, so demand is unproven."),
+    ("key_risk", "earnings <5 sessions> away"),
+    ("ticker", "A<B"),
+    ("verdict", "B<+"),
+])
+def test_what_the_model_said_reaches_the_reader_whole(field, text):
+    """The email interpolated model output straight into HTML, unescaped.
+
+    A reason of "Breakout above <resistance> on 3x volume, clean base." renders
+    in a mail client as "Breakout above" — the parser takes `<resistance>` for
+    a tag and swallows the rest of the sentence. Silently: nothing marks the
+    truncation, and the page renders the same row intact, so the two surfaces
+    disagree about what the model said. `<` followed by a letter is enough, and
+    a model writing about levels, ranges or comparisons produces one unprompted.
+
+    These fields are not this module's words. `reason` and `key_risk` are the
+    scoring model's, `ticker` comes off the feed, and on the morning path all
+    of them are read back out of a docs/data.json a previous run wrote.
+
+    Asserted through a REAL HTML PARSER rather than by substring: the bug is
+    precisely that the text is present in the source and absent from the render,
+    so `text in html` passes while the reader sees nothing.
+    """
+    from html.parser import HTMLParser
+
+    class Rendered(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.text = []
+
+        def handle_data(self, data):
+            self.text.append(data)
+
+    row = dict(make_result("AAA"), **{field: text})
+    parser = Rendered()
+    parser.feed(build_html([row], "evening", DATED))
+    rendered = " ".join(parser.text)
+
+    assert text in rendered, (
+        f"{field} was truncated by the HTML parser; the reader sees "
+        f"{[t for t in parser.text if text.split('<')[0].strip()[:12] in t]}")
+
+
 def test_the_funnel_does_not_tell_a_vetoed_six_of_six_it_failed_the_checklist():
     """`gated` counts what cleared the checklist AND survived every veto.
 
