@@ -185,6 +185,18 @@
       <div>
         <h2>Does a higher score earn a higher return?</h2>
         <p class="sc-hint" id="evidence-hint"></p>
+        <!-- ONE basis for the whole page. Every return on it -- the score bands,
+             the ladder, the candidate rows, the runs table, the per-name record --
+             is measured from the burst-day close or from the next session's open,
+             and switching here switches all of them and relabels every heading.
+             Two bases side by side in one table is the "two vocabularies for one
+             mechanism" shape this project keeps finding, so there is one switch
+             and one label, not a second column. -->
+        <div class="sc-tabs" role="group" aria-label="return basis" id="basis-tabs">
+          <button class="sc-tab sc-tab--case" type="button" data-basis="close" aria-pressed="true">from the burst-day close</button>
+          <button class="sc-tab sc-tab--case" type="button" data-basis="open" aria-pressed="false">from the next session's open</button>
+        </div>
+        <p class="sc-note" id="basis-note"></p>
       </div>
     </div>
     <p class="sc-empty" id="evidence-empty" hidden></p>
@@ -436,6 +448,27 @@
     return String(v);
   }
   function commas(v) { return v === null || v === undefined ? '—' : Number(v).toLocaleString('en-US'); }
+  // 30th, 1st, 22nd, 13th. src/emailer.py's ordinal() is the same rule; both
+  // surfaces printed "the 1th percentile" before it existed.
+  function ordinal(n) {
+    if (typeof n !== 'number' || !isFinite(n)) return String(n) + 'th';
+    if (!Number.isInteger(n)) return n + 'th';
+    var mod100 = Math.abs(n) % 100, mod10 = Math.abs(n) % 10;
+    if (mod100 >= 10 && mod100 <= 13) return n + 'th';
+    return n + ({ 1: 'st', 2: 'nd', 3: 'rd' }[mod10] || 'th');
+  }
+  // "a, b and c" without a regex over the finished string: the last-comma
+  // joiner this replaced rewrote any clause carrying a comma of its own --
+  // the liquidity clause's "($12.4M/day, the 30th percentile)" became
+  // "($12.4M/day and the 30th percentile)" on every night the call cap did
+  // not bite, which on a 230-name universe is most of them, and lost its
+  // comma outright when it was the only clause. The fixture always had a
+  // score_cap clause after it, which is why 165 checks passed.
+  function joinClauses(parts) {
+    if (!parts.length) return '';
+    if (parts.length === 1) return parts[0];
+    return parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1];
+  }
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
 
   // ---- provenance ---------------------------------------------------------
@@ -588,6 +621,11 @@
   // _last_appearance() is the same rule in the same order — including the
   // VERDICT, which this surface used to drop, so one appearance read 'scored
   // 7.5/10 B+' in the email and 'scored 7.5/10' here.
+  function unknownReason(word) {
+    return word === null || word === undefined || word === ''
+      ? 'not scored \u2014 no reason was recorded'
+      : 'not scored \u2014 reason \u201c' + String(word) + '\u201d is not one this page knows';
+  }
   function lastAppearance(s) {
     var scored = s.last_score !== null && s.last_score !== undefined;
     if (scored && (!s.last_outcome || s.last_outcome === 'scored')) {
@@ -638,8 +676,10 @@
       // the 2LYNCH gate alone, which stopped being the only way a burst goes
       // unscored when the veto arrived: a 6/6 name refused by an absolute rule
       // is counted in seen_before, and this told the reader it was not. All
-      // three reasons, in src/emailer.py's _streak_footnote()'s words, pinned
-      // by a test that reads both files rather than by another comment.
+      // four reasons, in src/emailer.py's _streak_footnote()'s words, pinned
+      // by a test that reads both files and by a smoke check that reads this
+      // title off the DOM -- the test pinned three phrases for a round after
+      // the fourth arrived, so either surface could drop it green.
       // Each reason phrase is kept whole on its own line: the test that pins
       // this against the email searches for them, and a break mid-phrase makes
       // it fail on the concatenation rather than on the words.
@@ -692,7 +732,7 @@
       ['run into it', upDaysCell(c)],
       ['worst base day', pct(c.context && c.context.worst_base_day_pct)],
       ['this setup', streakText(c)],
-      ['forward return', forwardCell(c.forward_returns)]
+      ['forward return ' + basisLabel(), forwardCell(fwd(c))]
     ];
     return el('article', { 'class': 'sc-card sc-card--raised pick' }, [
       el('div', { 'class': 'pick__main' }, [
@@ -812,14 +852,22 @@
   // run.liquidity, when the run wrote one and it is the shape the pipeline
   // writes. Absent on every snapshot from before round 5, and a page that
   // read it unguarded would print "the undefinedth percentile".
+  // Null when the run recorded no block, when the block is not the shape
+  // the pipeline writes, or when the rule was OFF (pctile <= 0): a run that
+  // applied no floor must not be told it cut names at one.
   function liquidityOf(run) {
     var l = run && run.liquidity;
-    return l && typeof l === 'object' && !Array.isArray(l) ? l : null;
+    if (!l || typeof l !== 'object' || Array.isArray(l)) return null;
+    if (typeof l.pctile === 'number' && l.pctile <= 0) return null;
+    return l;
   }
+  // The contract: floor is null when no name traded (the rule on, nothing
+  // to rank), which is a different sentence from "not recorded".
   function floorText(run) {
     var l = liquidityOf(run) || {};
-    var floor = typeof l.floor === 'number' && isFinite(l.floor) ? '$' + big(l.floor) + '/day' : 'floor not recorded';
-    return typeof l.pctile === 'number' ? floor + ', the ' + l.pctile + 'th percentile' : floor;
+    var floor = typeof l.floor === 'number' && isFinite(l.floor) ? '$' + big(l.floor) + '/day'
+      : (l.floor === null ? 'no floor — nothing traded' : 'floor not recorded');
+    return typeof l.pctile === 'number' && isFinite(l.pctile) ? floor + ', the ' + ordinal(l.pctile) + ' percentile' : floor;
   }
   function funnelStages(run) {
     var g = run.gate || {};
@@ -974,12 +1022,12 @@
     return [1, 3, 5].map(function (d) {
       var k = 'd' + d;
       var have = runs.filter(function (r) {
-        var f = r.forward_returns || {};
+        var f = runFwd(r);
         return f[k] !== null && f[k] !== undefined;
       });
       var wsum = 0, setups = 0, rows = 0, vals = [];
       have.forEach(function (r) {
-        var f = r.forward_returns, w = f.n || 0;
+        var f = runFwd(r), w = f.n || 0;
         wsum += f[k] * w; setups += w; rows += (f.rows || 0); vals.push(f[k]);
       });
       var plain = vals.length ? vals.reduce(function (a, b) { return a + b; }, 0) / vals.length : null;
@@ -1005,7 +1053,7 @@
   // shape and not a hue, and the table under it carries every number.
   function measured(cands) {
     return cands.filter(function (c) {
-      var f = c.forward_returns || {};
+      var f = fwd(c);
       return f.d1 !== null && f.d1 !== undefined;
     });
   }
@@ -1016,7 +1064,7 @@
   function drawOutcome(host, rows) {
     var W = pxWidth(host), PAD_L = 46, PAD_R = 10, PAD_T = 12, PAD_B = 34, H = 250;
     var plotW = Math.max(60, W - PAD_L - PAD_R), plotH = H - PAD_T - PAD_B;
-    var ys = rows.map(function (c) { return c.forward_returns.d1; }).concat([0]);
+    var ys = rows.map(function (c) { return fwd(c).d1; }).concat([0]);
     var t = (S.ticks || function (lo, hi) { return { ticks: [lo, hi], lo: lo, hi: hi }; })(
       Math.min.apply(null, ys), Math.max.apply(null, ys), 4);
     var span = (t.hi - t.lo) || 1;
@@ -1038,7 +1086,7 @@
       var fill = isFallback(c);
       kids.push(svgEl('circle', {
         'class': 'sc-dot ' + (fill ? 'is-hollow' : 'is-filled'),
-        cx: x(c.score), cy: y(c.forward_returns.d1), r: 5,
+        cx: x(c.score), cy: y(fwd(c).d1), r: 5,
         style: (fill ? 'stroke:' : 'fill:') + 'var(--sc-chart-1)'
       }));
     });
@@ -1059,6 +1107,55 @@
   // keyed d1/d3/d5, because those three names already mean "a number, the
   // return" on every candidate row in this same file.
   var FWD_KEYS = ['d1', 'd3', 'd5'];       // forward_returns, where they ARE numbers
+  // THE BASIS. 'close' divides by the burst-day close (what the setup did);
+  // 'open' divides by the next session's open (what a reader of the 18:16
+  // email could have paid). The record carries both on every row and every
+  // mean (src.ledger's forward_returns and from_open), and this page shows
+  // ONE at a time, named in every heading. A row or a file from before the
+  // open basis existed carries no from_open, and on that basis reads as "not
+  // measured", never as the close-basis number under an open-basis label.
+  var BASIS = 'close';
+  var LAST_DATA = null;
+  function basisLabel() {
+    return BASIS === 'open' ? 'from the next session\u2019s open' : 'from the burst-day close';
+  }
+  // A row's returns on the chosen basis: {d1, d3, d5} or {} when unmeasured.
+  function fwd(row) {
+    var fr = (row && row.forward_returns) || {};
+    if (BASIS !== 'open') return fr;
+    return fr.from_open && typeof fr.from_open === 'object' ? fr.from_open : {};
+  }
+  // A run's mean returns on the chosen basis, with the n they were taken over.
+  function runFwd(run) {
+    var fr = (run && run.forward_returns) || {};
+    if (BASIS !== 'open') return fr;
+    if (!fr.from_open || typeof fr.from_open !== 'object') return {};
+    // rows is a fact about the close-basis collapse and the open basis shares it.
+    return { d1: fr.from_open.d1, d3: fr.from_open.d3, d5: fr.from_open.d5, n: fr.from_open.n, rows: fr.rows };
+  }
+  // One evidence outcome on the chosen basis, in the close basis's shape.
+  // (Named onBasis, not pick: the shortlist card builder is pick(c), and a
+  // second declaration of that name replaced it -- every card became a plain
+  // object and the shortlist rendered empty, with no error anywhere.)
+  function onBasis(entry) {
+    if (BASIS !== 'open') return entry;
+    var o = entry && entry.from_open;
+    if (!o || typeof o !== 'object') {
+      return { horizon: entry ? entry.horizon : null, mean: null, n: 0, best: null, worst: null, in_band: 0, unmeasured: true };
+    }
+    return { horizon: entry.horizon, mean: o.mean, n: o.n, best: o.best, worst: o.worst, in_band: o.in_band };
+  }
+  // A block's licence to be read as a rate, on the chosen basis. Published
+  // by the ledger for each basis; never recomputed here.
+  function enoughOf(block) {
+    return BASIS === 'open' ? !!(block && block.enough_from_open) : !!(block && block.enough);
+  }
+  function hasOpenBasis(d) {
+    var ev = d && d.evidence;
+    var rows = ((d && d.candidates) || []).concat((d && d.gated_out) || []).concat((d && d.runs) || []);
+    if (rows.some(function (r) { return r.forward_returns && r.forward_returns.from_open; })) return true;
+    return !!(ev && ev.overall && (ev.overall.outcomes || []).some(function (o) { return o && o.from_open; }));
+  }
   function at(outcomes, horizon) {
     var list = outcomes || [];
     for (var i = 0; i < list.length; i++) {
@@ -1074,6 +1171,10 @@
   // would be its own dishonesty, but it is marked and the prose never leans
   // on it.
   function rateCell(entry, enough) {
+    entry = onBasis(entry);
+    if (entry && entry.unmeasured) {
+      return el('td', { 'class': 'sc-num' }, figure('not measured', 'this record predates the open basis'));
+    }
     if (!entry || entry.mean === null || entry.mean === undefined) {
       return el('td', { 'class': 'sc-num' },
         figure('pending', entry && entry.n === 0 ? 'no session has closed' : null));
@@ -1152,22 +1253,22 @@
   // six-observation buckets is not a finding, and saying so here is the whole
   // difference between this page and a brochure.
   function scoreVerdict(ev) {
-    var readable = ev.by_score.filter(function (b) { return b.enough; });
+    var readable = ev.by_score.filter(function (b) { return enoughOf(b); });
     var h = longestOf(ev);
     if (!readable.length) {
-      return 'No score band yet has the ' + ev.min_setups + ' setups this page requires before it will read a mean as a rate, ' +
-        'so there is no answer here yet — only the counts below, shown with their n so you can watch them fill.';
+      return 'No score band yet has the ' + ev.min_setups + ' setups this page requires before it will read a mean ' +
+        basisLabel() + ' as a rate, so there is no answer here yet — only the counts below, shown with their n so you can watch them fill.';
     }
     if (readable.length === 1) {
       return 'Only the ' + readable[0].verdict + ' band has enough setups to read as a rate (' +
-        plural(at(readable[0].outcomes, h).n, 'setup') + ' at ' + hzLabel(h) + '). One band cannot show a ranking: ' +
+        plural(onBasis(at(readable[0].outcomes, h)).n, 'setup') + ' at ' + hzLabel(h) + ' ' + basisLabel() + '). One band cannot show a ranking: ' +
         'a relation needs two points that can be compared, and the rest are still filling.';
     }
-    var first = at(readable[0].outcomes, h), last = at(readable[readable.length - 1].outcomes, h);
+    var first = onBasis(at(readable[0].outcomes, h)), last = onBasis(at(readable[readable.length - 1].outcomes, h));
     var lift = last.mean - first.mean;
     var direction = lift > 0.5 ? 'higher' : (lift < -0.5 ? 'LOWER' : 'no different');
     return 'Across the bands with enough setups to read, the highest (' + readable[readable.length - 1].verdict +
-      ') returned ' + pct(last.mean, 2) + ' at ' + hzLabel(h) + ' against ' + pct(first.mean, 2) +
+      ') returned ' + pct(last.mean, 2) + ' at ' + hzLabel(h) + ' ' + basisLabel() + ' against ' + pct(first.mean, 2) +
       ' for the lowest (' + readable[0].verdict + ') — ' + direction +
       (direction === 'no different' ? '. ' : ' by ' + pct(Math.abs(lift), 2).replace('+', '') + '. ') +
       'That is ' + plural(last.n, 'setup') + ' against ' + plural(first.n, 'setup') +
@@ -1181,7 +1282,7 @@
   // returns and which are the only control that needs no new data. Same
   // honesty rules as scoreVerdict(): a direction is stated only when BOTH
   // sides clear min_setups at the longest horizon, and the sentence carries
-  // both n's either way. The four rows are disjoint, and the one the budget
+  // both n's either way. The five rows are disjoint, and the one the budget
   // crowded out is kept off the "refused" side on purpose: those names
   // cleared the gate, so counting them as the alternative would let a full
   // night pad the control with names the screener liked.
@@ -1198,9 +1299,9 @@
   ];
   function controlVerdict(ev) {
     var h = longestOf(ev);
-    var picks = at(ev.overall.outcomes, h), refused = at((ev.refused || {}).outcomes, h);
-    var picksEnough = picks.n >= ev.min_setups, refusedEnough = !!(ev.refused && ev.refused.enough);
-    var counts = plural(picks.n, 'scored setup') + ' and ' + plural(refused.n, 'refused one') + ' have closed at ' + hzLabel(h);
+    var picks = onBasis(at(ev.overall.outcomes, h)), refused = onBasis(at((ev.refused || {}).outcomes, h));
+    var picksEnough = picks.n >= ev.min_setups, refusedEnough = enoughOf(ev.refused);
+    var counts = plural(picks.n, 'scored setup') + ' and ' + plural(refused.n, 'refused one') + ' have closed at ' + hzLabel(h) + ' ' + basisLabel();
     if (!picksEnough && !refusedEnough) {
       return 'No comparison yet: ' + counts + ', and this page needs ' + ev.min_setups +
         ' of each before it will read the difference between them as a rate.';
@@ -1211,7 +1312,7 @@
     }
     var lift = picks.mean - refused.mean;
     var direction = lift > 0.5 ? 'better' : (lift < -0.5 ? 'WORSE' : 'no differently');
-    return 'Names this screener scored returned ' + pct(picks.mean, 2) + ' at ' + hzLabel(h) + ' over ' +
+    return 'Names this screener scored returned ' + pct(picks.mean, 2) + ' at ' + hzLabel(h) + ' ' + basisLabel() + ' over ' +
       plural(picks.n, 'setup') + '; names it refused returned ' + pct(refused.mean, 2) + ' over ' +
       plural(refused.n, 'setup') + ' — the picks did ' + direction +
       (direction === 'no differently' ? '. ' : ', by ' + pct(Math.abs(lift), 2).replace('+', '') + '. ') +
@@ -1222,6 +1323,7 @@
     var h = longestOf(ev);
     $('control-hint').textContent =
       'The one comparison the record can make without a benchmark it does not hold: every burst the scan found, ' +
+      'measured ' + basisLabel() + ', ' +
       'split by what this screener did with it, against what the next sessions did. Refusals are the strategy\u2019s ' +
       'own judgement; the crowded-out row is the call budget\u2019s, and is kept off that side for that reason. ' +
       'The illiquid row is rule 6\u2019s, kept off it for the opposite reason: those returns are bar prices on names ' +
@@ -1230,19 +1332,50 @@
     table($('control-table'),
       ['what the screener did', 'setups'].concat(ev.horizons.map(hzLabel)).concat(['in the claimed band', 'reads as']),
       POPULATIONS.filter(function (p) { return ev[p[0]]; }).map(function (p) {
-        var block = ev[p[0]], longest = at(block.outcomes, h);
+        var block = ev[p[0]], longest = onBasis(at(block.outcomes, h));
         return el('tr', null, [
           el('td', null, [el('span', { text: p[2] }), el('span', { 'class': 'sc-note', text: p[1] })]),
           el('td', { 'class': 'sc-num', text: commas(block.setups) })
-        ].concat(ev.horizons.map(function (hh) { return rateCell(at(block.outcomes, hh), !!block.enough); }))
+        ].concat(ev.horizons.map(function (hh) { return rateCell(at(block.outcomes, hh), enoughOf(block)); }))
          .concat([
           el('td', { 'class': 'sc-num' }, figure(commas(longest.in_band),
             longest.n ? 'of ' + plural(longest.n, 'measured setup') : null)),
-          el('td', null, enoughChip(!!block.enough, longest.n, ev.min_setups))
+          el('td', null, enoughChip(enoughOf(block), longest.n, ev.min_setups))
         ]));
       }), [1, 2, 3, 4, 5]);
     clipWatch($('control-scroll'), 'What the screener did against the outcome');
   }
+
+  // The switch. One control for the whole page: pressing a basis re-renders
+  // everything from the same data, so no table can be left on the other
+  // basis. A record from before the open basis existed keeps the control,
+  // greyed, with a note saying why -- the choice is real and this file
+  // cannot honour it, which is different from there being no choice.
+  function renderBasisControl(d) {
+    var tabs = $('basis-tabs');
+    if (!tabs) return;
+    var available = hasOpenBasis(d);
+    Array.prototype.forEach.call(tabs.querySelectorAll('.sc-tab'), function (button) {
+      button.setAttribute('aria-pressed', button.dataset.basis === BASIS ? 'true' : 'false');
+      button.disabled = button.dataset.basis === 'open' && !available;
+    });
+    if (!available && BASIS === 'open') BASIS = 'close';   // never show a basis this file cannot honour
+    $('basis-note').textContent = !available
+      ? 'Every return on this page is measured from the burst-day close \u2014 what the setup did. This record predates the open basis: nothing in it was measured from the next session\u2019s open, so that choice is greyed rather than shown as close-basis numbers under an open-basis label.'
+      : (BASIS === 'open'
+        ? 'Every return on this page is now measured from the next session\u2019s open \u2014 the earliest price a reader of the evening email could have paid. Still a paper price, one venue\u2019s official open print, no slippage.'
+        : 'Every return on this page is measured from the burst-day close \u2014 what the setup did. The other basis is what acting on it could have had.');
+  }
+  (function wireBasis() {
+    var tabs = document.getElementById('basis-tabs');
+    if (!tabs) return;
+    tabs.addEventListener('click', function (event) {
+      var button = event.target.closest('.sc-tab');
+      if (!button || !button.dataset.basis || button.dataset.basis === BASIS) return;
+      BASIS = button.dataset.basis;
+      if (LAST_DATA) render(LAST_DATA);
+    });
+  })();
 
   function renderEvidence(ev) {
     // A data.json with NO evidence block at all is a real state — a snapshot
@@ -1263,7 +1396,8 @@
     }
     var anyOutcome = ev.horizons.some(function (h) { return at(ev.overall.outcomes, h).n > 0; });
     $('evidence-hint').textContent =
-      'Every candidate this screener has scored, grouped by the score it gave, against what the next sessions did. ' +
+      'Every candidate this screener has scored, grouped by the score it gave, against what the next sessions did, ' +
+      'measured ' + basisLabel() + '. ' +
       'One observation per setup — a name that bursts on consecutive sessions is one move, counted once. ' +
       '+3d and +5d are the horizons this strategy trades: the burst is held three to five sessions and exited, so ' +
       '+1d is an early read rather than the result.';
@@ -1304,16 +1438,16 @@
     table($('evidence-table'),
       ['score band', 'setups'].concat(ev.horizons.map(hzLabel)).concat(['in the claimed band', 'reads as']),
       ev.by_score.map(function (b) {
-        var longest = at(b.outcomes, h);
+        var longest = onBasis(at(b.outcomes, h));
         return el('tr', null, [
           el('td', null, [el('span', { 'class': 'sc-chip sc-chip--neutral sc-chip--case', text: b.verdict }),
                           el('span', { 'class': 'sc-note', text: num(b.low, 0) + '–' + num(b.high, 0) + ' out of 10' })]),
           el('td', { 'class': 'sc-num', text: commas(b.setups) })
-        ].concat(ev.horizons.map(function (hh) { return rateCell(at(b.outcomes, hh), b.enough); }))
+        ].concat(ev.horizons.map(function (hh) { return rateCell(at(b.outcomes, hh), enoughOf(b)); }))
          .concat([
           el('td', { 'class': 'sc-num' }, figure(commas(longest.in_band),
             longest.n ? 'of ' + plural(longest.n, 'measured setup') : null)),
-          el('td', null, enoughChip(b.enough, longest.n, ev.min_setups))
+          el('td', null, enoughChip(enoughOf(b), longest.n, ev.min_setups))
         ]));
       }), [1, 2, 3, 4, 5]);
     clipWatch($('evidence-scroll'), 'Score band against forward return');
@@ -1431,7 +1565,7 @@
       commas(rows.length) + ' names have burst since ' + day(ev.record.from) + '. ' +
       commas(repeats.length) + ' of them more than once. Means are over setups, so a name that burst on ' +
       'consecutive sessions counts once for that move; “appearances” is every session the scan found a burst on, ' +
-      'the ones the gate rejected included.';
+      'the ones that were never scored included.';
     var shown = record.rows ? ranked : ranked.slice(0, TICKERS_SHOWN);
     var mid = ev.horizons.filter(function (x) { return x > 1; });
     table($('ticker-table'),
@@ -1473,11 +1607,11 @@
     if (!mine.length) return 'no rows in the record';
     mine.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
     return mine.slice(0, 6).map(function (r) {
-      // forward_returns, where d1/d3/d5 really are numbers.
-      var out = r.forward_returns || {};
+      // forward_returns, where d1/d3/d5 really are numbers -- on the basis chosen.
+      var out = fwd(r);
       var got = FWD_KEYS.filter(function (k) { return out[k] !== null && out[k] !== undefined; });
       return day(r.date) + ' ' + (r.score === null || r.score === undefined
-        ? (OUTCOME_SHORT[r.reason] || OUTCOME_SHORT.lynch_gate)
+        ? (OUTCOME_SHORT[r.reason] || unknownReason(r.reason))
         : num(r.score, 1) + '/10') +
         (got.length ? ' → +' + got[got.length - 1].slice(1) + 'd ' + pct(out[got[got.length - 1]], 1) : ' → pending');
     }).join(' · ');
@@ -1538,6 +1672,8 @@
 
   // ---- render -------------------------------------------------------------
   function render(d) {
+    LAST_DATA = d;
+    renderBasisControl(d);
     var run = d.run || {};
     var cands = d.candidates || [];
     var gated = d.gated_out || [];
@@ -1656,7 +1792,7 @@
     table($('scores-table'),
       ['ticker', 'score', 'source', 'verdict', '2LYNCH', 'burst', 'vol x', 'close', '+1d', '+3d', '+5d', 'why'],
       cands.map(function (c) {
-        var fr = c.forward_returns || {};
+        var fr = fwd(c);
         return el('tr', null, [
           el('td', null, [el('div', { 'class': 'sc-eyebrow', text: '#' + c.rank }),
                           el('span', { 'class': 'sc-case', text: c.ticker }),
@@ -1699,9 +1835,12 @@
     // The one place the limit gets a NUMBER. The cells below and the streak
     // line say what it is in words; this says how big it was on this run.
     $('gated-hint').textContent = plural(gated.length, 'burst') + ' the scan found but no score exists for: ' +
-      why.join(', ').replace(/, ([^,]*)$/, why.length > 1 ? ' and $1' : '$1') +
+      joinClauses(why) +
       '. ' + (run.scored || 0) + ' scored plus ' + gated.length + ' here accounts for all ' + (run.bursts || 0) + ' bursts.';
-    table($('gated-table'), ['ticker', 'why', '2LYNCH', 'burst', 'vol x', 'close'],
+    // $ vol/day is the number rule 6 judged, beside the floor the hint
+    // names: without it a refused row could be read against the floor in
+    // the JSON and nowhere a reader looks.
+    table($('gated-table'), ['ticker', 'why', '2LYNCH', 'burst', 'vol x', 'close', '$ vol/day'],
       gated.map(function (g) {
         return el('tr', null, [
           el('td', null, [el('span', { 'class': 'sc-case', text: g.ticker }),
@@ -1711,14 +1850,18 @@
           // line on the same page rendering "2LYNCH gate".
           el('td', { 'class': 'col-why' }, el('span', {
             'class': 'sc-chip sc-chip--neutral sc-chip--case',
-            text: LAST_OUTCOME[g.reason] || LAST_OUTCOME.lynch_gate
+            // A word this page does not know is said as that, never as the
+            // gate rejection it used to fall back to -- the one collapse the
+            // contract forbids by name, silent, on a row from a newer writer.
+            text: LAST_OUTCOME[g.reason] || unknownReason(g.reason)
           })),
           el('td', { 'class': 'sc-mono', text: g.lynch }),
           el('td', { 'class': 'sc-num', text: pct(g.gain_pct) }),
           el('td', { 'class': 'sc-num', text: num(g.volume_ratio) + 'x' }),
-          el('td', { 'class': 'sc-num', text: '$' + num(g.close) })
+          el('td', { 'class': 'sc-num', text: '$' + num(g.close) }),
+          el('td', { 'class': 'sc-num', text: typeof g.dollar_volume === 'number' ? '$' + big(g.dollar_volume) : '—' })
         ]);
-      }), [2, 3, 4, 5]);
+      }), [2, 3, 4, 5, 6]);
     clipWatch($('gated-scroll'), 'Found but not scored');
 
     // which check is doing the gating
@@ -1780,6 +1923,7 @@
     $('outcome-plot').hidden = !done.length;
     $('outcome-empty').hidden = !!done.length;
     $('outcome-hint').textContent = 'One dot per scored candidate: the score this run gave it, ' +
+      'against its return ' + basisLabel() + ' \u2014 ' +
       'against what the next session actually did. This is the only view on the page that can ' +
       'tell you the ranking is worth anything.';
     if (!done.length) {
@@ -1790,8 +1934,8 @@
     } else {
       var topPicks = done.filter(function (c) { return c.rank <= shortN; });
       var others = done.filter(function (c) { return c.rank > shortN; });
-      var ms = mean(topPicks.map(function (c) { return c.forward_returns.d1; }));
-      var mr = mean(others.map(function (c) { return c.forward_returns.d1; }));
+      var ms = mean(topPicks.map(function (c) { return fwd(c).d1; }));
+      var mr = mean(others.map(function (c) { return fwd(c).d1; }));
       // The key has to BE the mark. Two identical squares beside the words
       // "filled" and "hollow" is a legend that contradicts its own chart, and
       // it is the shape — not the hue, which is one tone for both — that keeps
@@ -1815,7 +1959,7 @@
         'says how many are in.';
       table($('outcome-table'), ['ticker', 'score', 'source', '+1d', '+3d', '+5d'],
         done.map(function (c) {
-          var f = c.forward_returns;
+          var f = fwd(c);
           var cell = function (k) {
             return el('td', { 'class': 'sc-num',
               text: f[k] === null || f[k] === undefined ? 'pending' : pct(f[k], 2) });
@@ -1889,11 +2033,11 @@
 
     // history
     $('runs-card').hidden = !runs.length;
-    $('runs-hint').textContent = 'Mean forward return across every scored candidate in each run — ' +
+    $('runs-hint').textContent = 'Mean forward return ' + basisLabel() + ' across every scored candidate in each run — ' +
       'not just its shortlist. A cell reads pending until that session has happened.';
     table($('runs-table'), ['session', 'run', 'bursts', 'scored', 'fallbacks', 'top score', '+1d', '+3d', '+5d', 'over'],
       runs.map(function (r, i) {
-        var fr = r.forward_returns || {};
+        var fr = runFwd(r);
         var cell = function (k) {
           return el('td', { 'class': 'sc-num', text: fr[k] === null || fr[k] === undefined ? 'pending' : pct(fr[k], 2) });
         };

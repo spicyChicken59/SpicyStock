@@ -115,9 +115,13 @@ const VARIANTS = {
       [-1.84, -2.48, -1.29], [0.26, 0.73, 1.02]
     ];
     d.candidates.slice(0, vals.length).forEach((c, i) => {
-      c.forward_returns = { d1: vals[i][0], d3: vals[i][1], d5: vals[i][2], as_of: '2026-09-08' };
+      // The open basis a fixed step below the close basis, so a check can
+      // tell which one a cell is showing without knowing which row it is.
+      c.forward_returns = { d1: vals[i][0], d3: vals[i][1], d5: vals[i][2], as_of: '2026-09-08',
+        from_open: { d1: +(vals[i][0] - 0.5).toFixed(2), d3: +(vals[i][1] - 0.5).toFixed(2), d5: +(vals[i][2] - 0.5).toFixed(2) } };
     });
-    d.runs[0].forward_returns = { d1: 0.52, d3: 1.33, d5: 1.71, n: d.candidates.length };
+    d.runs[0].forward_returns = { d1: 0.52, d3: 1.33, d5: 1.71, n: d.candidates.length,
+      from_open: { d1: 0.02, d3: 0.83, d5: 1.21, n: d.candidates.length } };
     return d;
   },
   // A file that recorded a checklist only for the candidates it scored — which
@@ -307,6 +311,61 @@ const VARIANTS = {
     d.gated_out = d.gated_out.filter((g) => g.reason !== 'liquidity_floor');
     d.run.bursts -= REAL.gated_out.filter((g) => g.reason === 'liquidity_floor').length;
     delete d.evidence.illiquid;
+    return d;
+  },
+  // A snapshot from before the open basis existed: no from_open on any row,
+  // any run mean or any evidence outcome. The open tab must say the record
+  // predates it, and no close-basis number may appear under the open label.
+  noopen() {
+    const d = clone(REAL);
+    const strip = (fr) => { if (fr && typeof fr === 'object') delete fr.from_open; };
+    d.candidates.forEach((c) => strip(c.forward_returns));
+    d.gated_out.forEach((g) => strip(g.forward_returns));
+    d.runs.forEach((r) => strip(r.forward_returns));
+    const stripBlock = (b) => {
+      if (!b) return;
+      (b.outcomes || []).forEach((o) => delete o.from_open);
+      delete b.enough_from_open;
+    };
+    const ev = d.evidence;
+    ['overall', 'shortlist', 'rest', 'refused', 'crowded_out', 'illiquid'].forEach((k) => stripBlock(ev[k]));
+    ['by_score', 'by_day', 'by_month', 'by_ticker'].forEach((k) => (ev[k] || []).forEach(stripBlock));
+    (ev.by_check || []).forEach((c) => { stripBlock(c.passed); stripBlock(c.failed); delete c.enough_from_open; });
+    return d;
+  },
+  // The common night on a 230-name universe: the call cap did not bite, so
+  // the liquidity clause is the LAST clause of the gated hint. And the night
+  // whose only unscored bursts are rule 6's, one clause alone. Both hid a
+  // joiner that rewrote the clause's own comma.
+  nocap() {
+    const d = clone(REAL);
+    const capped = d.gated_out.filter((g) => g.reason === 'score_cap').length;
+    d.gated_out = d.gated_out.filter((g) => g.reason !== 'score_cap');
+    d.run.bursts -= capped;
+    return d;
+  },
+  onlyfloor() {
+    const d = clone(REAL);
+    const kept = d.gated_out.filter((g) => g.reason === 'liquidity_floor');
+    d.run.bursts -= d.gated_out.length - kept.length;
+    d.run.passed_gate = d.run.scored;
+    d.gated_out = kept;
+    return d;
+  },
+  // The ladder half of the pre-round-5 state, on a source whose ladder
+  // renders: the one-night fixture shows no ladder at all (nothing has an
+  // outcome), so a check that read its rows could not fail.
+  noliquidityladder() {
+    const d = VARIANTS.fullcontrol();
+    delete d.evidence.illiquid;
+    return d;
+  },
+  // A reason word from a newer writer than this page. It used to render as
+  // "rejected at the 2LYNCH gate" -- the one collapse the contract forbids by
+  // name, silent, on every such row.
+  newreason() {
+    const d = clone(REAL);
+    d.gated_out[0].reason = 'veto_gap_too_wide';
     return d;
   },
   nodata() { return null; }
@@ -635,9 +694,46 @@ const noLiqCaption = (await page.$$eval('#funnel-table tbody tr', (rows) => rows
 const noLiqHint = await page.textContent('#gated-hint');
 const noLiqLadder = await page.$$eval('#control-table tbody tr', (rows) => rows.map((r) => r.textContent));
 ok('a snapshot from before rule 6 was archived is not told it enforced a floor',
-  !noLiqCaption.includes('liquidity floor') && !noLiqHint.includes('liquidity floor')
-  && !noLiqLadder.some((l) => /illiquid/.test(l)),
-  `caption: ${noLiqCaption.includes('liquidity floor')}, hint: ${noLiqHint.includes('liquidity floor')}, ladder rows: ${noLiqLadder.length}`);
+  !noLiqCaption.includes('liquidity floor') && !noLiqHint.includes('liquidity floor'),
+  `caption: ${noLiqCaption.includes('liquidity floor')}, hint: ${noLiqHint.includes('liquidity floor')}`);
+await open('/v/noliquidityladder/');
+const ladderWithout = await page.$$eval('#control-table tbody tr', (rows) => rows.map((r) => r.textContent));
+ok('and its ladder has four rows, not a fifth for a population the file does not hold',
+  ladderWithout.length === 4 && !ladderWithout.some((l) => /illiquid/.test(l)) && !noLiqLadder.some((l) => /illiquid/.test(l)),
+  `${ladderWithout.length} rows on a rendered ladder`);
+// The clause joiner, on the two nights the fixture's own ordering hid.
+const floorClause = `(${floorDollars}/day, the ${REAL.run.liquidity.pctile}th percentile)`;
+await open('/v/newreason/');
+const newWhy = await page.$eval('#gated-table tbody tr:first-child td.col-why', (td) => td.textContent.trim());
+ok('a reason word this page does not know is said as that, never as a gate rejection',
+  /not one this page knows/.test(newWhy) && newWhy.includes('veto_gap_too_wide') && !/2LYNCH gate/.test(newWhy),
+  newWhy);
+await open('/v/nocap/');
+const noCapHint = await page.textContent('#gated-hint');
+ok('with no crowded-out rows the liquidity clause is last and keeps its own comma',
+  noCapHint.includes(`2 below the liquidity floor ${floorClause} and never measured against it.`)
+  && / whatever the checklist said and 2 below/.test(noCapHint),
+  noCapHint.slice(0, 220));
+await open('/v/onlyfloor/');
+const onlyFloorHint = await page.textContent('#gated-hint');
+ok('and alone it is one clause, comma and space intact',
+  onlyFloorHint.includes(`2 bursts the scan found but no score exists for: 2 below the liquidity floor ${floorClause} and never measured against it.`),
+  onlyFloorHint.slice(0, 220));
+await open('/f/fixture/');
+const streakTitle = await page.$eval('#gated-table .sc-note[title]', (n) => n.getAttribute('title'));
+ok('the streak disclosure on the page names all four ways a burst goes unscored',
+  ['the checklist rejected', 'an absolute rule refused', 'the liquidity floor refused', 'the call cap crowded']
+    .every((phrase) => streakTitle.includes(phrase)),
+  streakTitle.slice(0, 160));
+const dollarCells = await page.$$eval('#gated-table tbody tr', (rows) => rows.map((r) => [r.querySelector('td .sc-case').textContent, r.querySelectorAll('td')[6].textContent.trim()]));
+// The page's big() rule, mirrored: the same rule src/emailer.py's
+// compact_dollars() follows, and tests/test_docs_are_true.py holds the two
+// to each other by executing the page's own function.
+const bigJs = (v) => (v >= 1e9 ? (v / 1e9).toFixed(1) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(0) + 'k' : String(v));
+ok('every gated row prints the dollar volume rule 6 judged, beside the floor the hint names',
+  dollarCells.length === REAL.gated_out.length
+  && dollarCells.every(([t, cell]) => cell === '$' + bigJs(REAL.gated_out.find((g) => g.ticker === t).dollar_volume)),
+  dollarCells.slice(0, 3).map((c) => c.join(' ')).join(' | '));
 await open('/v/novetoes/');
 const oldCaption = (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent))).join(' ');
 const oldHint = await page.textContent('#gated-hint');
@@ -1356,9 +1452,70 @@ ok('with neither side at the floor the control refuses a direction and prints bo
 await open('/v/fullcontrol/');
 const full = await page.textContent('#control-verdict');
 ok('with both sides at the floor it states the direction, by how much, over which n\'s',
-  /the picks did better, by 3\.00%/.test(full) && full.includes('+6.00% at +5d over 40 setups')
+  /the picks did better, by 3\.00%/.test(full) && full.includes('+6.00% at +5d from the burst-day close over 40 setups')
   && full.includes('refused returned +3.00% over 45 setups'),
   full.slice(0, 160));
+// --- the return basis: one switch, every number, every heading --------------
+// Round 6. The record carries two measurements of every return -- from the
+// burst-day close (what the setup did) and from the next session's open (what
+// a reader of the 18:16 email could have paid) -- and the page shows ONE at a
+// time. The checks below read the same block off the ledger's own file for
+// each basis and compare, so a cell that showed a close-basis number under the
+// open-basis label would fail here.
+await open('/f/history/');
+const tabs = await page.$$eval('#basis-tabs .sc-tab', (b) => b.map((t) => [t.dataset.basis, t.getAttribute('aria-pressed'), t.textContent.trim()]));
+ok('the return basis is one control with two named choices, the burst close pressed by default',
+  tabs.length === 2 && tabs[0][0] === 'close' && tabs[0][1] === 'true' && tabs[1][0] === 'open' && tabs[1][1] === 'false'
+  && /burst-day close/.test(tabs[0][2]) && /next session/.test(tabs[1][2]),
+  JSON.stringify(tabs));
+const hRef5 = HEV.refused.outcomes.find((o) => o.horizon === hH);
+const ladderCloseRefused = countIn('what it refused');
+const cellText = async (sel) => (await page.locator(sel).textContent()).replace(/\s+/g, ' ').trim();
+const refusedRowCells = async () => page.$$eval('#control-table tbody tr', (rows) => {
+  const r = rows.find((x) => x.textContent.startsWith('what it refused'));
+  return r ? [...r.querySelectorAll('td')].map((td) => td.textContent.replace(/\s+/g, ' ').trim()) : [];
+});
+const closeCells = await refusedRowCells();
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const openCells = await refusedRowCells();
+const pctOf = (v) => (v === null || v === undefined ? null : (v > 0 ? '+' : '') + v.toFixed(2) + '%');
+ok('switching to the open basis changes the ladder to the ledger\'s own from_open means',
+  closeCells.length === openCells.length && openCells.length > 0
+  && closeCells[4].startsWith(pctOf(hRef5.mean)) && openCells[4].startsWith(pctOf(hRef5.from_open.mean))
+  && hRef5.mean !== hRef5.from_open.mean,
+  `close ${closeCells[4]} vs open ${openCells[4]}; ledger ${hRef5.mean} / ${hRef5.from_open.mean}`);
+const openHints = await page.$$eval('#evidence-hint, #control-hint, #runs-hint, #control-verdict, #evidence-verdict', (ps) => ps.map((p) => p.textContent));
+ok('and every heading that carries a return names the basis it is on',
+  openHints.every((t) => /next session.s open/.test(t)) && !openHints.some((t) => /burst-day close/.test(t)),
+  openHints.map((t) => t.slice(0, 60)).join(' | '));
+const openRunIndex = HIST.runs.findIndex((r) => r.forward_returns && r.forward_returns.from_open && r.forward_returns.from_open.d5 !== null);
+const openRun = HIST.runs[openRunIndex];
+// The table lists runs in the file's order, so the row is found by position:
+// the session cell prints a formatted day, not the ISO date.
+const openRunRow = await page.$$eval('#runs-table tbody tr', (rows, i) => {
+  const r = rows[i];
+  return r ? [...r.querySelectorAll('td')].map((td) => td.textContent.replace(/\s+/g, ' ').trim()) : [];
+}, openRunIndex);
+ok('the runs table follows the switch too, reading each run\'s own from_open mean',
+  openRunRow.length > 0 && openRunRow[8] === pctOf(openRun.forward_returns.from_open.d5)
+  && openRunRow[8] !== pctOf(openRun.forward_returns.d5),
+  `row ${openRunRow[8]}; ledger open ${openRun.forward_returns.from_open.d5}, close ${openRun.forward_returns.d5}`);
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+ok('and switching back restores every close-basis number',
+  JSON.stringify(await refusedRowCells()) === JSON.stringify(closeCells) && countIn('what it refused') === ladderCloseRefused);
+await open('/v/forward/');
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const fwdOpenCell = (await page.locator('#scores-table tbody tr:first-child td:nth-child(9)').textContent()).trim();
+const FWD0 = VARIANTS.forward().candidates[0].forward_returns;
+ok('a candidate row shows its own open-basis return under the open label, not the close one',
+  fwdOpenCell === pctOf(FWD0.from_open.d1) && fwdOpenCell !== pctOf(FWD0.d1), `cell ${fwdOpenCell}; open ${FWD0.from_open.d1}, close ${FWD0.d1}`);
+await open('/v/noopen/');
+const noOpenTab = await page.$eval('#basis-tabs .sc-tab[data-basis="open"]', (b) => ({ disabled: b.disabled, pressed: b.getAttribute('aria-pressed') }));
+const noOpenNote = await page.textContent('#basis-note');
+ok('a record from before the open basis greys that choice and says why, rather than showing close numbers under it',
+  noOpenTab.disabled && noOpenTab.pressed === 'false' && /predates the open basis/.test(noOpenNote)
+  && /burst-day close/.test(await page.textContent('#runs-hint')),
+  `disabled ${noOpenTab.disabled}, pressed ${noOpenTab.pressed}; ${noOpenNote.slice(0, 90)}`);
 await open('/f/history/');
 ok('a burst the record cannot place is a row of its own, never a day 1',
   (await page.locator('#streak-table tbody tr', { hasText: 'not known' }).count())

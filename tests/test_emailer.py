@@ -17,6 +17,12 @@ from src.scorer import render_chart
 
 STATS = {"universe": "230 checked-in US common stocks", "bursts": 42, "gated": 12}
 
+#: Every way a burst goes unscored, in the footnote's own words. ONE tuple for
+#: the two tests that pin the footnote on both surfaces, derived from the
+#: reason vocabulary so a fifth reason cannot arrive without a phrase.
+STREAK_REASON_PHRASES = ("the checklist rejected", "an absolute rule refused",
+                         "the liquidity floor refused", "the call cap crowded")
+
 
 def _visible_text(html: str) -> str:
     """What a mail client shows, through a real parser -- the only honest
@@ -724,8 +730,11 @@ def test_a_run_with_no_refusals_reads_exactly_as_it_did_before():
 
 @pytest.mark.parametrize("stats, label", [
     (dict(illiquid=2, liquidity_floor=359_000_000.0, liquidity_pctile=30.0),
-     "Below the liquidity floor ($359,000,000/day, the 30th percentile): 2"),
-    (dict(illiquid=1, liquidity_floor=12_400_000), "Below the liquidity floor ($12,400,000/day): 1"),
+     "Below the liquidity floor ($359.0M/day, the 30th percentile): 2"),
+    (dict(illiquid=1, liquidity_floor=12_400_000), "Below the liquidity floor ($12.4M/day): 1"),
+    (dict(illiquid=1, liquidity_floor=4.5e9, liquidity_pctile=1), "Below the liquidity floor ($4.5B/day, the 1st percentile): 1"),
+    (dict(illiquid=1, liquidity_floor=850_000, liquidity_pctile=22), "Below the liquidity floor ($850k/day, the 22nd percentile): 1"),
+    (dict(illiquid=1, liquidity_floor=1e6, liquidity_pctile=13), "Below the liquidity floor ($1.0M/day, the 13th percentile): 1"),
     (dict(illiquid=3), "Below the liquidity floor: 3"),
 ])
 def test_the_funnel_names_the_floor_it_applied_when_the_run_recorded_one(stats, label):
@@ -737,6 +746,21 @@ def test_the_funnel_names_the_floor_it_applied_when_the_run_recorded_one(stats, 
     html = _visible_text(build_html([make_result("AAA")], "evening", dict(DATED, bursts=6, gated=3, **stats)))
     assert label in html
     assert html.index("4% bursts found") < html.index("Below the liquidity floor") < html.index("Passed 2LYNCH gate")
+
+
+def test_a_count_that_is_not_a_count_reaches_no_sentence():
+    """A negative count is not a count and a float is not the int the
+    pipeline writes. Unclamped, illiquid=-2 printed "Below the liquidity
+    floor: -2" in the funnel and "-2 below the liquidity floor and 7 rejected"
+    in the note -- seven of five bursts -- and vetoed=2.0 printed "Refused by
+    an absolute rule: 2.0" over a note that counted it as 0. Every count goes
+    through one clamp now and the funnel and the note read one number."""
+    html = _visible_text(build_html([], "evening", dict(DATED, bursts=5, vetoed=0, illiquid=-2, gated=0)))
+    assert "liquidity floor" not in html and "5 bursts measured, none cleared it" in html
+    html = _visible_text(build_html([], "evening", dict(DATED, bursts=5, vetoed=2.0, illiquid=0, gated=0)))
+    assert "absolute rule" not in html and "5 bursts measured, none cleared it" in html
+    html = _visible_text(build_html([], "evening", dict(DATED, bursts=5, vetoed=-1, illiquid=0, gated=0)))
+    assert "-1" not in html and "6 rejected" not in html
 
 
 def test_the_funnel_says_nothing_about_a_floor_on_a_night_nothing_sat_below_it():
@@ -858,8 +882,7 @@ def test_the_email_and_the_page_disclose_what_a_streak_counts_the_same_way():
     html = build_html(_with_streak(day=2, first_seen="2026-08-28"), "evening", DATED)
     page = pathlib.Path(__file__).resolve().parents[1].joinpath("docs/index.html").read_text()
 
-    for reason in ("the checklist rejected", "an absolute rule refused",
-                   "the call cap crowded"):
+    for reason in STREAK_REASON_PHRASES:
         assert reason in html, f"the email dropped {reason!r}"
         assert reason in page, f"the page dropped {reason!r}"
     # And the wording it drifted TO is gone from both, not merely joined.
@@ -913,10 +936,10 @@ def test_what_day_n_counts_is_disclosed_once_under_the_table():
     assert disclosure in no_day
     assert disclosure not in single, (
         "and it is not printed under a table with no streak to explain")
-    # All three reasons, named. A disclosure that lists two of them tells the
-    # reader the count is smaller than it is.
-    for reason in ("the checklist rejected", "an absolute rule refused",
-                   "the call cap crowded"):
+    # All four reasons, named. A disclosure that lists three of them tells the
+    # reader the count is smaller than it is -- and this loop listed three for
+    # a round after the fourth arrived, so the clause could be deleted green.
+    for reason in STREAK_REASON_PHRASES:
         assert reason in counted, reason
 
 

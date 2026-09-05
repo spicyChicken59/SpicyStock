@@ -1031,7 +1031,11 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     # Rule 6, last, because it is the only rule that needs the whole scan.
     # Dropped symbols are missing from the distribution as well as from the
     # shortlist, which biases the floor by however many they were; the error
-    # below already says the shortlist is incomplete on that path.
+    # below already says the shortlist is incomplete on that path. So are the
+    # stale and gapped names, which leave before detect_setup() and so before
+    # session_dollar_volume() is taken: the floor a degraded run RECORDS is
+    # the percentile of the names that were fresh, and the run's degraded
+    # notice is what says how many were not.
     candidates, illiquid, floor = liquidity_split(candidates, session_dollar_volumes, cfg)
     if refused is not None:
         refused.extend(sorted(illiquid, key=lambda c: c.gain_pct, reverse=True))

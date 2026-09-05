@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 865 tests with no network
+- **There is a regression net.** `pytest tests/` runs 889 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -173,10 +173,11 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   other, and never against the alternative.** The north star is "its picks
   beat the alternative", and the ledger has archived the alternative since
   3.3 -- every refused burst, with the same forward returns -- without one
-  block ever comparing them. `evidence()` carries four disjoint populations
+  block ever comparing them. `evidence()` carries five disjoint populations
   now, each with its own `enough`: `shortlist`, `rest`, `refused` (what the
-  checklist or an absolute rule said no to) and `crowded_out` (cleared the
-  gate, never scored because MAX_TO_SCORE filled). The split is the point: a
+  checklist or an absolute rule said no to), `crowded_out` (cleared the
+  gate, never scored because MAX_TO_SCORE filled) and, since round 5,
+  `illiquid` (what rule 6 refused, kept beside the control and not in it). The split is the point: a
   crowded-out name is one the screener LIKED, and folding it into the
   refusals would let a full night pad the control by exactly what those names
   went on to make. A row with no reason word predates the reasons and counts
@@ -568,10 +569,14 @@ exercised its headline. Nine mutants across them, all killed.
   is argued from those. The 3.3 audit added `context` to both row types and
   nobody re-measured, because re-measuring meant building an eleven-megabyte
   file by hand. It was 11.04 and 0.66 when measured, 11.07 and 0.68 once
-  the round-4 prose sweep put a universe block on every run entry, and 11.54
-  and 0.72 once round 5 put a liquidity block on every entry and a dollar
-  volume on every gated row -- the guard below caught both moves on the
-  commits that made them. `tools/measure_ledger.py` builds one now
+  the round-4 prose sweep put a universe block on every run entry, 11.54
+  and 0.72 once round 5 put a liquidity block on every entry, and 13.63 and
+  0.97 once round 6 put the open basis on every row and every mean and the
+  round-5 audit put the dollar volume on every ledger row -- the guard below
+  caught every move on the commit that made it. The gzipped figure has
+  grown faster than the raw one, because a block of nulls compresses worse
+  than a run of numbers; the page's fetch-on-demand argument still holds at
+  a megabyte. `tools/measure_ledger.py` builds one now
   -- real rows from the generated history, real row counts from the canonical
   one-night fixture, and `src.ledger`'s own writer, because `indent=2` is most
   of the raw size and a compact estimate is not the file a browser fetches --
@@ -674,6 +679,82 @@ exercised its headline. Nine mutants across them, all killed.
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Round 6 — every return measured twice, from the close and from the open
+
+The wild ideator's first proposal, verified by execution before it was
+adopted: `forward_returns()` divided every later close by the BURST-DAY
+CLOSE, which is the price the screener measured and the price nobody reading
+an 18:16 ET email can buy. Burst close 100, next open 110, next close 111:
+the record said d1 = +11.0% while the price a reader could actually have paid
+returned +0.91%. The overnight gap is where a 4% burst's momentum shows up
+first, and the record was crediting the strategy with it.
+
+Every row, every run mean and every evidence outcome now carries a second
+measurement, `from_open` — the same later closes divided by the next
+session's open — with its own n and its own `enough_from_open`, because a
+frame with no usable open has a close-basis return and no open-basis one and
+the two counts must not be read as one. The contract says which basis
+answers which question (what the setup did; what acting on it could have
+had) and that both are paper prices from one venue's prints with no
+slippage. `_malformed_rows()` refuses a `from_open` that is not an object or
+holds a string where a number belongs — the seventh instance of the
+one-level-short class, closed before it could open. A row from before the
+basis existed gains the block, pending, when its bars are next fetched, and
+the fill window keeps a row while a horizon is open on EITHER basis.
+
+**The page shows one basis at a time, chosen by one control, and names it in
+every heading that carries a return.** Two bases side by side in one table is
+the "two vocabularies for one mechanism" shape this project keeps finding,
+so there is a segmented control in the evidence card and no second column:
+pressing a basis re-renders the whole page from the same data, every rate
+cell, verdict sentence, candidate row, runs-table mean and per-name record
+goes through one accessor, and a record from before the basis existed greys
+the open choice and says why rather than showing close-basis numbers under
+an open-basis label. The smoke checks read the ledger's own `from_open`
+block for each surface and compare after switching, then switch back.
+
+**Two things the round found on the way.** The basis accessor was first
+named `pick()`, which is also the shortlist card builder's name; the later
+declaration won, every card became a plain object and the shortlist rendered
+empty with no error anywhere — found because a pre-existing smoke check
+timed out waiting for a card, not by any check of the new work. And a scored
+lead with no usable rank fell out of BOTH `shortlist` and `rest`, so the five
+populations did not add up to the record: no writer produces such a row, a
+hand-edited or older file can, and the contract walker's new sum check found
+it on a test that plants one. Not shown to be on the shortlist is `rest`.
+
+**The round-5 audit, worked in the same commit.** Three lenses by execution
+over the round-5 tree, sixteen findings, every one reproduced here before
+it was touched. Four were real defects: the gated hint's clause joiner
+found the LAST comma in the finished sentence, so on any night the call cap
+did not bite — most nights on 230 names — the liquidity clause's own
+parenthetical was rewritten to "($12.4M/day and the 30th percentile)", and
+alone it lost its comma outright; the fixture always had a score_cap clause
+after it, which is why every check passed. Every liquidity_floor row was
+archived with `streak: null` — the value the contract reserves for a run
+that could not read its history — because the streak lookup covered the
+kept candidates and not the refused ones; the round's 29 mutants never read
+the refused row's streak. `slim_row()` dropped `dollar_volume`, so the
+ledger held the floor on every entry and the number it was compared against
+on no row. And the footnote test looped over three phrases for a round after
+the fourth clause arrived, so the clause could be deleted from either
+surface green — the "test that cannot fail" shape, on the sentence the
+round's commit message named as swept. Smaller: `_count()` let a negative
+count reach the funnel ("Below the liquidity floor: -2") and a float vetoed
+count contradict the note beside it; both surfaces printed "the 1th
+percentile" for any percentile ending in 1, 2 or 3; the email printed
+"$12,400,000/day" beside a page printing "$12.4M/day" for one floor, and a
+docs test now executes the page's own formatter through node against the
+email's; a reason word the page did not know rendered as a gate rejection,
+the one collapse the contract forbids; `snapshot_problem()` accepted a
+`run.liquidity` in shapes no writer produces; the page told a run with the
+rule off that it had enforced a floor; the noliquidity smoke check's ladder
+half ran against a page whose ladder is never rendered; and seven sentences
+still enumerated three reasons. The contract walker checks round 5's
+sentences now — the block's count against the rows, the rows against the
+floor, the five populations against the record — and a test breaks each
+one alone.
 
 ## Round 5 — rule 6's refusals reach every surface
 

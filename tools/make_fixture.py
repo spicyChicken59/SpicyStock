@@ -399,7 +399,8 @@ def build_candidate(s, i):
                     "perf_3mo_pct": p3, "perf_6mo_pct": p6,
                     "consecutive_up_days": up_days, "worst_base_day_pct": worst_base},
         "streak": streak(i),
-        "forward_returns": {"d1": None, "d3": None, "d5": None, "as_of": None},
+        # Pending on both bases, in the shape the ledger writes.
+        "forward_returns": ledger.empty_returns(),
     }
 
 candidates = [build_candidate(s, i) for i, s in enumerate(SPEC)]
@@ -612,7 +613,7 @@ assert len(candidates) == CAP
 assert PASSED - CAP == sum(1 for g in gated_out if g["reason"] == "score_cap")
 # A vetoed burst never reached the gate, so it is not part of PASSED -- and
 # this last sum used to be written as "everything that is not score_cap",
-# which counted a veto as a checklist rejection. Three reasons, three counts.
+# which counted a veto as a checklist rejection. Four reasons, four counts.
 assert VETOED == sum(1 for g in gated_out if g["reason"] in VETO_REASONS.values())
 # The invariant the comment in build_candidate() states, now asserted rather
 # than described. An audit set the scored rows' up-day counts to 0-4, and the
@@ -676,6 +677,15 @@ runs = [
 # src.ledger.add_run keeps the universe on every entry, so a --tickers smoke
 # test can be told from a scan; these were all "scans" of the checked-in file.
 for _i, _run in enumerate(runs):
+    # The open basis beside the close basis on every run mean (src.ledger's
+    # mean_returns), with its own n. Hand-authored a little below the close
+    # basis, which is what an overnight gap in the direction of the burst
+    # does to the price a reader could have paid; the headline run has
+    # nothing on either basis yet.
+    _fr = _run["forward_returns"]
+    _fr["from_open"] = {k: (None if _fr[k] is None else round(_fr[k] - 0.6 - 0.05 * _i, 2))
+                        for k in ("d1", "d3", "d5")}
+    _fr["from_open"]["n"] = 0 if _fr["n"] == 0 else _fr["n"] - (1 if _i % 3 == 0 else 0)
     _run["universe"] = {"label": "data/symbols.txt (checked in)", "size": len(UNIVERSE)}
     # And the floor each night applied (src.ledger.add_run keeps it): the
     # headline run's is FLOOR; the older ones vary the way a percentile of

@@ -701,8 +701,16 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     report.stage = "history"
     session = scan_stats.get("session")
     book = load_history(report)
+    # Over EVERY burst, the refused ones included: this read `prepared`
+    # alone, so every liquidity_floor row was archived with streak: null --
+    # the value the contract reserves for a run that could not read its
+    # history -- one line under a lynch_gate row on the same table carrying
+    # a full block from the same read. Found by an audit driving two nights
+    # through the real path; the round's own 29 mutants never read the
+    # refused row's streak.
     marks = streaks_for(book, session,
-                        [c.ticker for c, _lynch, _ctx in prepared])
+                        [c.ticker for c, _lynch, _ctx in prepared]
+                        + [c.ticker for c in illiquid_bursts])
     for row in scored:
         # The email reads this off the scored row; docs/data.json gets it from
         # the same dict below. One lookup, two audiences, no second rule.

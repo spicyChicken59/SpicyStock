@@ -170,6 +170,7 @@ CONTRACT_INVARIANTS = [
     "Every candidate carries provenance.source: 'claude' when the model actually returned a score, 'fallback' when the offline checklist produced it. A fallback is never labelled claude.",
     "provenance.chart_seen is true only when the scoring model actually received the chart image.",
     "forward_returns and runs[].forward_returns are null until the sessions exist. Absent is null, never 0 and never a string.",
+    "d1/d3/d5 divide the close 1, 3 and 5 sessions after the burst by the BURST-DAY CLOSE: what the setup did. forward_returns.from_open divides the same later closes by the NEXT session's open, the earliest price a reader of the evening email could have paid: what acting on it could have had. Both are paper prices from one venue's official prints with no slippage. Every mean and every evidence outcome carries both, the open basis nested under from_open with its own n, and enough_from_open is the open basis's own licence to be read as a rate -- a surface that shows a number says which basis it is on, and never shows a close-basis number under an open-basis label or the reverse. A row or a run from before this basis existed carries no from_open, which is not a measurement of zero.",
     "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
     "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
     "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
@@ -563,7 +564,9 @@ def streak(history: list[dict], session, *, record: Record = EMPTY_RECORD) -> di
                    or null when it was a burst the gate rejected. They
                    describe the appearance `last_seen` names and no other.
       last_outcome what happened to that appearance: "scored", or the reason
-                   it never was ("lynch_gate" — the checklist rejected it;
+                   it never was ("liquidity_floor" — rule 6 refused it before
+                   the checklist saw it; "veto_up_days" — an absolute rule
+                   refused it; "lynch_gate" — the checklist rejected it;
                    "score_cap" — it passed and better names filled the night's
                    calls). Null with last_seen. A null last_score means "no
                    number"; it took this field to say WHY, and until it
@@ -885,9 +888,10 @@ def gated_record(cand, lynch_result: dict, context: dict, reason: str,
 # ---------------------------------------------------------- ledger rows --
 
 def empty_returns() -> dict:
-    """Pending, spelled the one way the contract allows."""
+    """Pending, spelled the one way the contract allows -- on both bases."""
     out = {f"d{h}": None for h in HORIZONS}
     out["as_of"] = None
+    out["from_open"] = {f"d{h}": None for h in HORIZONS}
     return out
 
 
@@ -922,6 +926,13 @@ def slim_row(row: dict, lynch_result: dict | None = None, *, scored: bool) -> di
         # `context` rather than the two: choosing a subset here would be
         # choosing which hypotheses may ever be tested.
         "context": dict(row.get("context") or {}),
+        # The number rule 6 judged, kept for the reason `context` is: a
+        # measurement taken before the outcome. It was written into the
+        # one-night file and dropped here, so the ledger -- the only durable
+        # file, and the only one with forward returns -- held the floor on
+        # every run entry and the dollar volume on none of its rows, and no
+        # past refusal could be read against the floor it was refused under.
+        "dollar_volume": row.get("dollar_volume"),
         "forward_returns": dict(row.get("forward_returns") or empty_returns()),
     }
     verdict = ({"rank": row["rank"], "score": row["score"], "verdict": row["verdict"],
@@ -959,6 +970,26 @@ def forward_returns(df: pd.DataFrame | None, burst_date) -> dict:
     if not math.isfinite(base) or base <= 0:
         return out
 
+    # THE SECOND BASIS. d1/d3/d5 divide by the burst-day CLOSE, which is the
+    # price the screener measured and the price nobody reading an 18:16 ET
+    # email can buy: the earliest a reader can act is the next session's
+    # open, and the overnight gap is where a 4% burst's momentum shows up
+    # first. Measured here rather than argued: burst close 100, next open
+    # 110, next close 111 -- the close basis records d1 = +11.0% while the
+    # price a reader could have paid returns +0.91%. from_open divides the
+    # SAME later closes by that next open, so the two bases answer two
+    # questions about one move: what the setup did, and what a reader who
+    # acted on it could have had. Still a paper price -- one venue's official
+    # open print, no slippage -- so a better upper bound, not a fill; and
+    # null, never a guess from the burst close, when the frame carries no
+    # usable open for that session.
+    opens = df["Open"].to_numpy(dtype=float) if "Open" in df else None
+    entry = None
+    if opens is not None and start + 1 < len(opens):
+        candidate = float(opens[start + 1])
+        if math.isfinite(candidate) and candidate > 0:
+            entry = candidate
+
     measured_at = None
     for horizon in HORIZONS:
         position = start + horizon
@@ -968,9 +999,19 @@ def forward_returns(df: pd.DataFrame | None, burst_date) -> dict:
         if not math.isfinite(later):
             continue
         out[f"d{horizon}"] = _num((later / base - 1) * 100, 2)
+        if entry is not None:
+            out["from_open"][f"d{horizon}"] = _num((later / entry - 1) * 100, 2)
         measured_at = sessions[position]
     out["as_of"] = iso_date(measured_at)
     return out
+
+
+def _from_open(returns: dict | None) -> dict:
+    """A row's from_open block, or the pending one for a row from before it
+    existed. Shape only: a block that is present and not an object is the
+    one-level-short class, and _malformed_rows() refuses it at load."""
+    block = (returns or {}).get("from_open")
+    return block if isinstance(block, dict) else {f"d{h}": None for h in HORIZONS}
 
 
 def _measured(row: dict) -> bool:
@@ -1021,6 +1062,19 @@ def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
         out[key] = round(math.fsum(values) / len(values), 2) if values else None
     out["n"] = sum(1 for row in counted if _measured(row))
     out["rows"] = sum(1 for row in rows if _measured(row))
+    # The same means from the next open, over the same setups, with their
+    # own n: a row whose frame carried no usable open has a close-basis
+    # return and no open-basis one, and the two counts must not be one.
+    from_open: dict = {}
+    for horizon in HORIZONS:
+        key = f"d{horizon}"
+        values = [_from_open(row.get("forward_returns"))[key] for row in counted
+                  if _from_open(row.get("forward_returns")).get(key) is not None]
+        from_open[key] = round(math.fsum(values) / len(values), 2) if values else None
+    from_open["n"] = sum(1 for row in counted
+                         if any(_from_open(row.get("forward_returns")).get(f"d{h}") is not None
+                                for h in HORIZONS))
+    out["from_open"] = from_open
     return out
 
 
@@ -1097,22 +1151,33 @@ def outcome_summary(rows: list[dict]) -> list[dict]:
 
     fsum for the same reason mean_returns uses it -- see there.
     """
-    out = []
-    for horizon in HORIZONS:
-        key = f"d{horizon}"
-        values = [row["forward_returns"][key] for row in rows
-                  if isinstance(row.get("forward_returns"), dict)
-                  and isinstance(row["forward_returns"].get(key), (int, float))
-                  and not isinstance(row["forward_returns"].get(key), bool)]
-        out.append({
-            "horizon": horizon,
+    def summary(values: list) -> dict:
+        return {
             "mean": round(math.fsum(values) / len(values), 2) if values else None,
             "n": len(values),
             "best": max(values) if values else None,
             "worst": min(values) if values else None,
             "in_band": sum(1 for v in values
                            if CLAIMED_BAND[0] <= v <= CLAIMED_BAND[1]),
-        })
+        }
+
+    def numbers(key: str, basis) -> list:
+        return [basis(row)[key] for row in rows
+                if isinstance(basis(row).get(key), (int, float))
+                and not isinstance(basis(row).get(key), bool)]
+
+    out = []
+    for horizon in HORIZONS:
+        key = f"d{horizon}"
+        entry = {"horizon": horizon}
+        entry.update(summary(numbers(key, lambda row: row.get("forward_returns")
+                                     if isinstance(row.get("forward_returns"), dict) else {})))
+        # The same five numbers from the next open. Nested under its own key
+        # rather than spread as d1_from_open and friends, so a reader of
+        # either basis walks one shape; the page picks the block by name and
+        # labels every number with the basis it came from.
+        entry["from_open"] = summary(numbers(key, lambda row: _from_open(row.get("forward_returns"))))
+        out.append(entry)
     return out
 
 
@@ -1134,6 +1199,15 @@ def _enough(outcomes: list[dict]) -> bool:
     horizon nobody has measured yet.
     """
     return at_horizon(outcomes, max(HORIZONS))["n"] >= MIN_SETUPS_FOR_A_RATE
+
+
+def _enough_from_open(outcomes: list[dict]) -> bool:
+    """The same floor, on the open basis, whose n can be smaller. Published
+    beside `enough` for the reason `enough` is published at all: a page must
+    not decide for itself whether a number may be read as a rate, and it must
+    not borrow the close basis's licence for the open one."""
+    block = at_horizon(outcomes, max(HORIZONS)).get("from_open") or {}
+    return (block.get("n") or 0) >= MIN_SETUPS_FOR_A_RATE
 
 
 def _leading_rows(runs: list[dict], leads: set, *, gated: bool) -> list[dict]:
@@ -1192,7 +1266,8 @@ def evidence(runs: list[dict]) -> dict:
         summary = outcome_summary(rows)
         by_score.append({"low": low, "high": round(min(high, 10.0), 2),
                          "verdict": verdict, "setups": len(rows),
-                         "enough": _enough(summary), "outcomes": summary})
+                         "enough": _enough(summary), "enough_from_open": _enough_from_open(summary),
+                         "outcomes": summary})
 
     # Which checks predict anything, over every burst the scan found -- scored
     # AND gated. A rate over the survivors alone is survivorship bias with a
@@ -1218,6 +1293,7 @@ def evidence(runs: list[dict]) -> dict:
             "failed": {"setups": len(failed), "outcomes": lost},
             "separation": separation,
             "enough": _enough(won) and _enough(lost),
+            "enough_from_open": _enough_from_open(won) and _enough_from_open(lost),
         })
 
     # DOES A STREAK PAY -- and this one counts APPEARANCES, not setups, which
@@ -1249,7 +1325,8 @@ def evidence(runs: list[dict]) -> dict:
     for day in sorted(by_number, key=lambda d: (d is None, d)):
         summary = outcome_summary(by_number[day])
         by_day.append({"day": day, "appearances": len(by_number[day]),
-                       "enough": _enough(summary), "outcomes": summary})
+                       "enough": _enough(summary), "enough_from_open": _enough_from_open(summary),
+                         "outcomes": summary})
 
     # Is it getting better or worse? By calendar month, which is the coarsest
     # bucket a year of runs gives more than a handful of, and the one a reader
@@ -1262,7 +1339,8 @@ def evidence(runs: list[dict]) -> dict:
     for month in sorted(months):
         summary = outcome_summary(months[month])
         by_month.append({"month": month, "setups": len(months[month]),
-                         "enough": _enough(summary), "outcomes": summary})
+                         "enough": _enough(summary), "enough_from_open": _enough_from_open(summary),
+                         "outcomes": summary})
 
     # What happened the last times THIS ticker burst. One row per name, so the
     # page can answer it without the reader fetching the whole record -- and
@@ -1304,7 +1382,13 @@ def evidence(runs: list[dict]) -> dict:
                 if isinstance(row, dict):
                     size_of[id(row)] = n if isinstance(n, int) and not isinstance(n, bool) else 0
     shortlisted = [r for r in scored if isinstance(r.get("rank"), int) and r["rank"] <= size_of.get(id(r), 0)]
-    others = [r for r in scored if isinstance(r.get("rank"), int) and r["rank"] > size_of.get(id(r), 0)]
+    # Everything scored that was not shortlisted -- including a row with no
+    # usable rank, which no version of the writer produces but a hand-edited
+    # or older file can hold. It used to fall out of BOTH lists, so the five
+    # populations did not add up to the record and the contract walker's sum
+    # check found it on a test that plants exactly such a row. A row this
+    # module cannot place on the shortlist was not shown to be on it.
+    others = [r for r in scored if r not in shortlisted]
 
     # THE ALTERNATIVE. The north star is "its picks beat the alternative", and
     # until this block the record measured the picks against the claimed band
@@ -1364,7 +1448,8 @@ def _population(rows: list[dict]) -> dict:
     decide for itself, and cannot then decide differently from a later reader
     of the same file."""
     summary = outcome_summary(rows)
-    return {"setups": len(rows), "outcomes": summary, "enough": _enough(summary)}
+    return {"setups": len(rows), "outcomes": summary, "enough": _enough(summary),
+            "enough_from_open": _enough_from_open(summary)}
 
 
 def _shortlist_size(runs: list[dict]) -> int:
@@ -1460,6 +1545,25 @@ def _malformed_rows(runs: list[dict]) -> str | None:
                         return (f"holds a run for {run.get('date')!r} with a {key} row "
                                 f"({row['ticker']!r}) whose d{horizon} return is a JSON "
                                 f"{type(value).__name__} rather than a number")
+                # THE SEVENTH INSTANCE, pre-empted rather than found: the open
+                # basis is one object further in, read by fill_forward_returns()
+                # inside publish() and by outcome_summary() inside evidence(),
+                # both after the scan and every Claude call have been paid for.
+                # Absent is a row from before the basis existed and is fine;
+                # present and not an object, or holding a string where a number
+                # belongs, is a file that did not come out of write().
+                block = returns.get("from_open")
+                if block is not None and not isinstance(block, dict):
+                    return (f"holds a run for {run.get('date')!r} with a {key} row "
+                            f"({row['ticker']!r}) whose from_open is a JSON "
+                            f"{type(block).__name__} rather than an object")
+                for horizon in HORIZONS:
+                    value = (block or {}).get(f"d{horizon}")
+                    if value is not None and (isinstance(value, bool)
+                                              or not isinstance(value, (int, float))):
+                        return (f"holds a run for {run.get('date')!r} with a {key} row "
+                                f"({row['ticker']!r}) whose from_open d{horizon} return is a "
+                                f"JSON {type(value).__name__} rather than a number")
     return None
 
 
@@ -1780,7 +1884,8 @@ class Ledger:
         for run in window:
             for row in list(run.get("candidates", [])) + list(run.get("gated", [])):
                 returns = row.get("forward_returns") or {}
-                if all(returns.get(f"d{h}") is not None for h in HORIZONS):
+                if (all(returns.get(f"d{h}") is not None for h in HORIZONS)
+                        and all(_from_open(returns).get(f"d{h}") is not None for h in HORIZONS)):
                     continue
                 burst = _as_date(row.get("date"))
                 if burst is None or (limit is not None and burst >= limit):
@@ -1810,11 +1915,21 @@ class Ledger:
                 continue
             fresh = forward_returns(frame, row["date"])
             current = row.setdefault("forward_returns", empty_returns())
+            # A row from before the open basis existed gains the block here,
+            # pending, and fills it the same way: each key once, never
+            # restated. A block that is present and not an object never
+            # reaches this line -- _malformed_rows() refused the file.
+            if not isinstance(current.get("from_open"), dict):
+                current["from_open"] = {f"d{h}": None for h in HORIZONS}
             changed = False
             for horizon in HORIZONS:
                 key = f"d{horizon}"
                 if current.get(key) is None and fresh[key] is not None:
                     current[key] = fresh[key]
+                    changed = True
+                if (current["from_open"].get(key) is None
+                        and fresh["from_open"][key] is not None):
+                    current["from_open"][key] = fresh["from_open"][key]
                     changed = True
             if changed:
                 current["as_of"] = fresh["as_of"]
@@ -2023,6 +2138,23 @@ def snapshot_problem(data: dict) -> str | None:
         if not isinstance(value, wanted) or isinstance(value, bool):
             return (f"run.{field_name} is {type(value).__name__}, not the "
                     f"{wanted.__name__} publish() writes")
+    # run.liquidity, under the row rule stated above: absent is a snapshot
+    # from before the block existed and is fine; present in a shape no
+    # writer produces is refused, even though every reader of it is
+    # type-guarded and the morning would have survived. The audit that found
+    # it tolerated drove fourteen shapes through the real morning path and
+    # none crashed -- the point is the rule, not a crash.
+    liquidity = run.get("liquidity", None) if "liquidity" in run else "absent"
+    if liquidity != "absent":
+        if not isinstance(liquidity, dict):
+            return f"run.liquidity is {type(liquidity).__name__}, not the object publish() writes"
+        pctile, floor, refused = liquidity.get("pctile"), liquidity.get("floor"), liquidity.get("refused")
+        if isinstance(pctile, bool) or not isinstance(pctile, (int, float)):
+            return f"run.liquidity.pctile is {type(pctile).__name__}, not a number"
+        if floor is not None and (isinstance(floor, bool) or not isinstance(floor, (int, float))):
+            return f"run.liquidity.floor is {type(floor).__name__}, not a number or null"
+        if isinstance(refused, bool) or not isinstance(refused, int):
+            return f"run.liquidity.refused is {type(refused).__name__}, not a count"
     # One level into scored_by, because the email does ARITHMETIC on these two.
     # It does not crash on strings: "5" + "1" is "51", so the provenance line
     # rendered "Scored by Claude: 5 of 51" -- a fabricated count, which is

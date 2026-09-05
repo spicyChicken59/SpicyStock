@@ -222,7 +222,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 865 tests, no network or API keys needed
+pytest tests/                   # 889 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -361,8 +361,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 11.54 MB raw
-and **0.72 MB gzipped** after a full year. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 13.63 MB raw
+and **0.97 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -490,6 +490,19 @@ from. The page prints both, and calls neither of them "names".
 - `d1`, `d3`, `d5` are the percentage change from the burst-day close to the
   close 1, 3 and 5 **sessions** later — positions in the frame, not calendar
   days, so a holiday cannot quietly shift a horizon.
+- `forward_returns.from_open` is the **same three closes divided by the next
+  session's open** — the earliest price a reader of the 18:16 ET email could
+  have paid. The two bases answer two questions about one move: what the
+  setup did, and what acting on it could have had. Measured, not argued: burst
+  close 100, next open 110, next close 111 records `d1` +11.0% and
+  `from_open.d1` +0.91%. Both are paper prices from one venue's official
+  prints with no slippage, so the open basis is a better upper bound and not a
+  fill. Every run mean and every evidence outcome carries both, the open basis
+  nested under `from_open` with its own `n` and its own `enough_from_open`; the
+  page shows one basis at a time, chosen by one control, and names it in every
+  heading that carries a return. A row or a run from before this basis existed
+  has no `from_open`, which the page reads as "not measured", never as zero and
+  never as the close-basis number under an open-basis label.
 - Both closes come out of the **same** freshly fetched frame. The archived
   `close` is deliberately not the denominator: a split between the burst and
   today restates every price before its ex-date, and an as-traded close divided
@@ -620,14 +633,14 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 165 checks, and which file each one
+**Three data sources, one page.** It runs 178 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 17 mutated copies of it are served
+  night can hold at once. 22 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now

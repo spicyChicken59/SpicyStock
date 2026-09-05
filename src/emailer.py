@@ -452,8 +452,9 @@ def _streak_footnote(results: list[dict]) -> str:
     """What "day N" counts, said once under the table.
 
     A streak counts every session the scan found a burst on, INCLUDING the
-    ones that were never scored — the checklist rejected them, the call cap
-    crowded them out, or an absolute rule refused them. That is the right call,
+    ones that were never scored — the checklist rejected them, an absolute
+    rule refused them, the liquidity floor refused them, or the call cap
+    crowded them out. That is the right call,
     because the setup was running whether or not the screener let it through to
     a score, and it is a thing no reader can infer from "day 2 of this setup",
     which reads as two nights of agreement. Disclosed here rather than in every
@@ -461,7 +462,10 @@ def _streak_footnote(results: list[dict]) -> str:
 
     This used to say "including the ones the 2LYNCH gate rejected", which
     became false when a third reason arrived and stayed false three lines under
-    a row printing that third reason's own words.
+    a row printing that third reason's own words. The fourth arrived in round
+    5 and the sentence was swept on both surfaces while the test that pins
+    them still looped over three phrases -- so the clause could be deleted
+    from either surface with everything green, which an audit did.
 
     That is TWO shapes of row, not one. "day 3 of this setup" is the obvious
     one; "burst on 8 of the 8 sessions in the record" is the other, and it is
@@ -517,10 +521,11 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     # collapse CLAUDE.md forbids by name. The refusals get their own line, and
     # only when there are some: a run with none reads exactly as it always did,
     # and a snapshot written before the rule existed reports 0 and says nothing.
-    vetoed = scan_stats.get("vetoed")
-    refused = ([("Refused by an absolute rule", vetoed)]
-               if isinstance(vetoed, (int, float)) and not isinstance(vetoed, bool) and vetoed
-               else [])
+    # Through _count(), like every count below it: a float here printed
+    # "Refused by an absolute rule: 2.0" over a note that counted it as 0,
+    # so one email contradicted itself on one screen.
+    vetoed = _count(scan_stats, "vetoed")
+    refused = [("Refused by an absolute rule", vetoed)] if vetoed else []
     # Rule 6's refusals, the same way: only when there were some, and with
     # the floor the run applied when it recorded one, because "below the
     # liquidity floor: 3" is not readable without the number the floor was.
@@ -559,6 +564,35 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     return " &nbsp;|&nbsp;\n      ".join(f"{label}: {esc(value)}" for label, value in parts)
 
 
+def compact_dollars(value: float) -> str:
+    """$12.4M, $1.3B, $850k: the SAME rule as docs/index.html's big(), so the
+    email and the page print one figure for one floor. The email printed
+    "$12,400,000/day" beside a page printing "$12.4M/day" for the same
+    run.liquidity.floor -- both true, and the "$0.24 in one file, $0.25 in
+    the other" shape this project counts. A test executes the page's own
+    function through node and compares."""
+    if value >= 1e9:
+        return f"${value / 1e9:.1f}B"
+    if value >= 1e6:
+        return f"${value / 1e6:.1f}M"
+    if value >= 1e3:
+        return f"${value / 1e3:.0f}k"
+    return f"${value:g}"
+
+
+def ordinal(n) -> str:
+    """30th, 1st, 22nd, 13th. Both surfaces built the ordinal as `{n}th`, so a
+    percentile ending in 1, 2 or 3 read "the 1th percentile" -- the same wrong
+    word on the email and the page, which at least kept them in one
+    vocabulary. docs/index.html's ordinal() is this rule."""
+    whole = int(n) if float(n).is_integer() else None
+    if whole is None:
+        return f"{n:g}th"
+    if 10 <= whole % 100 <= 13:
+        return f"{whole}th"
+    return f"{whole}{ {1: 'st', 2: 'nd', 3: 'rd'}.get(whole % 10, 'th') }"
+
+
 def _liquidity_label(scan_stats: dict) -> str:
     """The funnel's label for rule 6's refusals, carrying the floor in dollars
     and the percentile it sits at when the run recorded them. A snapshot from
@@ -567,9 +601,9 @@ def _liquidity_label(scan_stats: dict) -> str:
     floor, pctile = scan_stats.get("liquidity_floor"), scan_stats.get("liquidity_pctile")
     known = isinstance(floor, (int, float)) and not isinstance(floor, bool)
     if known and isinstance(pctile, (int, float)) and not isinstance(pctile, bool):
-        return f"Below the liquidity floor (${floor:,.0f}/day, the {pctile:g}th percentile)"
+        return f"Below the liquidity floor ({compact_dollars(floor)}/day, the {ordinal(pctile)} percentile)"
     if known:
-        return f"Below the liquidity floor (${floor:,.0f}/day)"
+        return f"Below the liquidity floor ({compact_dollars(floor)}/day)"
     return "Below the liquidity floor"
 
 
@@ -807,7 +841,10 @@ def _count(scan_stats: dict, key: str) -> int:
     "10 bursts refused and -10 rejected".
     """
     value = scan_stats.get(key)
-    return value if isinstance(value, int) and not isinstance(value, bool) else 0
+    # Clamped: a negative count is not a count, and unclamped it reached the
+    # funnel as "Below the liquidity floor: -2" and the note as "-2 below the
+    # liquidity floor and 7 rejected" -- seven of five bursts.
+    return max(value, 0) if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
 def _build_attachments(results: list[dict]) -> list[dict]:

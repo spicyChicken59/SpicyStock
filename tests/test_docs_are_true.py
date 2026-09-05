@@ -372,6 +372,61 @@ def test_every_reason_a_streak_can_carry_has_words_on_every_surface():
     )
 
 
+def test_the_documented_return_bases_are_the_ones_the_ledger_writes():
+    """README's data-contract bullets name both bases and the example the
+    second one was measured on. The example is recomputed here from the
+    ledger's own function, so the sentence cannot drift from the code."""
+    import pandas as pd
+    from src import ledger
+
+    readme = _read("README.md")
+    bullet = readme[readme.index("- `forward_returns.from_open`"):]
+    bullet = bullet[:bullet.index("\n\n")]
+    example = re.search(r"burst\s+close (\d+), next open (\d+), next close (\d+) records `d1` ([+-][\d.]+)% and\s+`from_open.d1` ([+-][\d.]+)%", bullet)
+    assert example, "README no longer states the worked example"
+    close0, open1, close1, d1, o1 = example.groups()
+    index = pd.bdate_range(end="2026-08-31", periods=2, name="timestamp")
+    df = pd.DataFrame({"Open": [float(close0), float(open1)], "Close": [float(close0), float(close1)],
+                       "Volume": [1, 1]}, index=index)
+    got = ledger.forward_returns(df, index[0].date().isoformat())
+    assert (got["d1"], got["from_open"]["d1"]) == (float(d1), float(o1)), (got, example.groups())
+    assert "enough_from_open" in bullet and "one basis at a time" in bullet
+    contract = "\n".join(ledger.CONTRACT_INVARIANTS)
+    assert "from_open" in contract and "enough_from_open" in contract
+
+
+def test_the_email_and_the_page_print_one_figure_for_one_floor():
+    """The email said "$12,400,000/day" beside a page saying "$12.4M/day" for
+    the same run.liquidity.floor. Both true, and the shape this project counts
+    as a defect. The page's big() and ordinal() are cut out of docs/index.html
+    and executed through node against the same values src.emailer formats, so
+    the two rules cannot drift apart silently."""
+    import json
+    import shutil
+    import subprocess
+    from src import emailer
+
+    if not shutil.which("node"):
+        pytest.skip("node is not on this machine; the smoke test runs the page")
+    page = _read("docs/index.html")
+    fns = []
+    for name in ("big", "ordinal"):
+        start = page.index(f"function {name}(")
+        end = page.index("\n  }\n", start) + 4
+        fns.append(page[start:end])
+    values = [12_400_000, 190_247_596.4, 4.5e9, 850_000, 999, 1e6, 359_000_000.0]
+    pctiles = [30, 1, 2, 3, 11, 12, 13, 21, 22, 23, 30.0]
+    script = "\n".join(fns) + f"""
+    console.log(JSON.stringify({{
+      dollars: {json.dumps(values)}.map((v) => '$' + big(v)),
+      ordinals: {json.dumps(pctiles)}.map(ordinal),
+    }}));"""
+    out = json.loads(subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True).stdout)
+    assert out["dollars"] == [emailer.compact_dollars(v) for v in values]
+    assert out["ordinals"] == [emailer.ordinal(p) for p in pctiles]
+    assert emailer.ordinal(1) == "1st" and emailer.ordinal(22) == "22nd" and emailer.ordinal(13) == "13th"
+
+
 def test_the_published_contract_names_every_outcome_a_row_can_carry():
     """docs/data.json carries its own `_contract`, and README says its
     `last_outcome` bullet is what that block documents.

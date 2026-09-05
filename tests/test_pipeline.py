@@ -655,11 +655,18 @@ def served(fake_alpaca, ticker: str, session: str) -> pd.DataFrame:
 
 
 def expected_returns(frame: pd.DataFrame, burst: str, horizons=(1, 3, 5)) -> dict:
+    """Both bases, recomputed by hand from the served frame: the close basis
+    divides by the burst-day close, the open basis by the NEXT session's open."""
     sessions = [stamp.date().isoformat() for stamp in frame.index]
     start = sessions.index(burst)
     base = float(frame["close"].iloc[start])
-    return {f"d{h}": round((float(frame["close"].iloc[start + h]) / base - 1) * 100, 2)
-            for h in horizons if start + h < len(sessions)}
+    out = {f"d{h}": round((float(frame["close"].iloc[start + h]) / base - 1) * 100, 2)
+           for h in horizons if start + h < len(sessions)}
+    entry = float(frame["open"].iloc[start + 1]) if start + 1 < len(sessions) else None
+    out["from_open"] = {f"d{h}": (round((float(frame["close"].iloc[start + h]) / entry - 1) * 100, 2)
+                                  if entry and start + h < len(sessions) else None)
+                        for h in (1, 3, 5)}
+    return out
 
 
 def test_the_published_run_satisfies_every_invariant_it_declares(
@@ -799,7 +806,7 @@ def test_the_email_says_how_many_cleared_the_gate_and_were_never_looked_at(
 def test_the_crowded_out_count_is_the_call_cap_alone_and_not_every_unscored_burst(
     monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
-    """Three reasons send a burst away unscored and only ONE of them is the
+    """Four reasons send a burst away unscored and only ONE of them is the
     call budget. Counting every unscored row would report names an absolute
     rule refused as names the cap crowded out -- two of the three facts this
     project forbids collapsing, folded into a line that states the third.
@@ -936,9 +943,38 @@ def test_a_burst_the_liquidity_floor_refused_is_in_the_record_and_says_why(
     # And the email says so, with the floor.
     html = visible(mocked_boundaries["resend"].sent[-1]["html"])
     assert "4% bursts found: 2" in html
-    assert f"Below the liquidity floor (${liquidity['floor']:,.0f}/day, the {liquidity['pctile']:g}th percentile): 1" in html
+    assert f"Below the liquidity floor ({emailer.compact_dollars(liquidity['floor'])}/day, the 30th percentile): 1" in html
     assert "THIN" not in html.split("Passed 2LYNCH gate")[0].split("Below the liquidity floor")[0], (
         "the thin name is not passed off as scored")
+
+
+def test_a_liquidity_refused_row_carries_the_streak_the_run_read_for_it(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The streak lookup covered the kept candidates and not the refused
+    ones, so every liquidity_floor row was archived with streak: null -- the
+    value the contract reserves for a run that could NOT read its history --
+    one line under a lynch_gate row carrying a full block from the same
+    read. The page rendered "streak unknown -- this run recorded none" for
+    a run that demonstrably read its history. Two nights: the first records
+    the honest no_history block, the second remembers the first and says
+    what became of it, in the fourth reason word."""
+    names = _two_bursts_one_thin(fake_alpaca, ohlcv)
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
+    pipeline.run("evening", dry_run=True, tickers=names)
+    (thin,) = published(tmp_path)["gated_out"]
+    assert thin["reason"] == ledger.LIQUIDITY_REASON
+    assert isinstance(thin["streak"], dict), "the row carries the block the run read, not null"
+    assert thin["streak"]["unknown_reason"] == ledger.NO_HISTORY and thin["streak"]["seen_before"] == 0
+    assert thin["dollar_volume"] == recorded(tmp_path)["runs"][0]["gated"][0]["dollar_volume"], (
+        "and the ledger row keeps the number rule 6 judged")
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    pipeline.run("evening", dry_run=True, tickers=names)
+
+    (thin,) = published(tmp_path)["gated_out"]
+    assert thin["streak"]["seen_before"] == 1 and thin["streak"]["last_outcome"] == ledger.LIQUIDITY_REASON
+    assert thin["streak"]["last_seen"] == session_offset(-1)
 
 
 def test_the_morning_re_presents_the_liquidity_refusals_the_evening_recorded(
@@ -954,7 +990,7 @@ def test_the_morning_re_presents_the_liquidity_refusals_the_evening_recorded(
     pipeline.run("morning", dry_run=False)
 
     html = visible(mocked_boundaries["resend"].sent[-1]["html"])
-    assert f"Below the liquidity floor (${floor:,.0f}/day" in html and "4% bursts that session: 2" in html
+    assert f"Below the liquidity floor ({emailer.compact_dollars(floor)}/day" in html and "4% bursts that session: 2" in html
 
 
 def test_a_night_every_burst_was_below_the_floor_says_so_and_never_blames_the_checklist(
@@ -1441,6 +1477,9 @@ def test_a_second_run_keeps_the_first_and_fills_its_forward_returns(
                                burst_session, horizons=(1,))
     assert first["forward_returns"]["d1"] == want_d1["d1"], "one session had closed"
     assert first["forward_returns"]["d3"] is None, "the others had not"
+    assert first["forward_returns"]["from_open"]["d1"] == want_d1["from_open"]["d1"], (
+        "and the open basis closed with it, from the next session's open")
+    assert first["forward_returns"]["from_open"]["d3"] is None
 
     # ...and now it is three sessions later.
     monkeypatch.setenv("SCAN_SESSION_DATE", next_session)
@@ -1459,9 +1498,15 @@ def test_a_second_run_keeps_the_first_and_fills_its_forward_returns(
     # `n` is the SETUPS the mean was taken over and `rows` is what they were
     # collapsed from -- one candidate here, so the two agree and the pair says
     # nothing was deduplicated away.
+    assert older["forward_returns"]["from_open"] == {
+        "d1": first["forward_returns"]["from_open"]["d1"],
+        "d3": want["from_open"]["d3"], "d5": want["from_open"]["d5"]}, (
+        "the open basis fills the same way: the recorded horizon kept, the rest measured")
     assert book["runs"][1]["forward_returns"] == {
         "d1": first["forward_returns"]["d1"], "d3": want["d3"], "d5": want["d5"],
-        "n": 1, "rows": 1}
+        "n": 1, "rows": 1,
+        "from_open": {"d1": first["forward_returns"]["from_open"]["d1"],
+                      "d3": want["from_open"]["d3"], "d5": want["from_open"]["d5"], "n": 1}}
     assert clean(tmp_path)["runs"][1]["forward_returns"]["d5"] == want["d5"], (
         "and the dashboard reads the same history")
 
@@ -1492,10 +1537,11 @@ def test_todays_candidates_are_published_pending_rather_than_guessed(
     pipeline.run("evening", dry_run=True, tickers=universe)
 
     data = clean(tmp_path)
-    assert all(c["forward_returns"] == {"d1": None, "d3": None, "d5": None, "as_of": None}
-               for c in data["candidates"])
+    assert all(c["forward_returns"] == ledger.empty_returns() for c in data["candidates"]), (
+        "pending on both bases")
     assert data["runs"][0]["forward_returns"] == {"d1": None, "d3": None, "d5": None,
-                                                  "n": 0, "rows": 0}
+                                                  "n": 0, "rows": 0,
+                                                  "from_open": {"d1": None, "d3": None, "d5": None, "n": 0}}
     assert len(mocked_boundaries["alpaca"].bar_requests) == 1, (
         "and no second request was made for returns that cannot exist")
 
@@ -1537,7 +1583,7 @@ def test_the_ledger_row_is_the_judgement_next_to_what_followed_it(
 
     (row,) = [r for r in recorded(tmp_path)["runs"][0]["candidates"]
               if r["ticker"] == "BURST"]
-    assert set(row) == {"ticker", "date", "rank", "score", "verdict", "source",
+    assert set(row) == {"ticker", "date", "rank", "score", "verdict", "source", "dollar_volume",
                         "close", "gain_pct", "volume_ratio", "lynch_passes",
                         "lynch_total", "checks", "context", "forward_returns"}
     assert set(row["checks"]) == {"2", "L", "Y", "N", "C", "H"}
@@ -2625,6 +2671,15 @@ MALFORMED_SNAPSHOTS = {
     # short-circuit that only opens when there is no day number, so a sweep
     # varying one field at a time reports it safe.
     "run.status is null": (_run_field(status=None), "run.status"),
+    # run.liquidity, under the same rule as the rows: absent is a snapshot
+    # from before the block, present in a shape no writer produces is refused.
+    "run.liquidity is a list": (_run_field(liquidity=[30, 1e8, 1]), "run.liquidity"),
+    "run.liquidity is a string": (_run_field(liquidity="30th"), "run.liquidity"),
+    "run.liquidity is null": (_run_field(liquidity=None), "run.liquidity"),
+    "run.liquidity.floor is a string": (_run_field(liquidity={"pctile": 30.0, "floor": "1e8", "refused": 0}), "run.liquidity.floor"),
+    "run.liquidity.pctile is a string": (_run_field(liquidity={"pctile": "30", "floor": 1e8, "refused": 0}), "run.liquidity.pctile"),
+    "run.liquidity.refused is a string": (_run_field(liquidity={"pctile": 30.0, "floor": 1e8, "refused": "1"}), "run.liquidity.refused"),
+    "run.liquidity.floor is null": (_run_field(liquidity={"pctile": 30.0, "floor": None, "refused": 0}), False),
     "run.errors is a number": (_run_field(errors=3), "run.errors"),
     "run.errors is a bool": (_run_field(errors=True), "run.errors"),
     "run.scored_by counts are strings": (
