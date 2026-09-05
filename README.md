@@ -222,7 +222,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 904 tests, no network or API keys needed
+pytest tests/                   # 916 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -367,8 +367,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 13.99 MB raw
-and **1.07 MB gzipped** after a full year. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 14.03 MB raw
+and **1.08 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -662,14 +662,14 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 187 checks, and which file each one
+**Three data sources, one page.** It runs 190 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 27 mutated copies of it are served
+  night can hold at once. 29 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now

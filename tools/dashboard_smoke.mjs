@@ -436,6 +436,39 @@ const VARIANTS = {
     d.runs.forEach((r) => delete r.rules);
     return d;
   },
+  // The state the FIRST real ledger spanning round 6 produces: rows written
+  // before the open basis existed sit beside new ones, so a block clears the
+  // floor on the close basis and not on the open one. No source had it, which
+  // is how three cards shipped reading the close basis's licence for both.
+  halfmeasured() {
+    const d = clone(REAL);
+    d.evidence = JSON.parse(JSON.stringify(HIST.evidence));
+    const thin = (block) => {
+      if (!block) return;
+      block.enough = true;
+      block.enough_from_open = false;
+      (block.outcomes || []).forEach((o) => { if (o.from_open) o.from_open.n = 5; });
+    };
+    (d.evidence.by_check || []).forEach((c) => { thin(c); });
+    (d.evidence.by_day || []).forEach(thin);
+    (d.evidence.by_month || []).forEach(thin);
+    return d;
+  },
+  // A band whose CLOSE mean runs past the claimed band and whose open mean
+  // does not. The chart's x-scale is otherwise pinned by 0 and band.high,
+  // which dwarf every real mean -- so a chart reading the wrong basis for
+  // its scale is invisible until one basis leaves the band. That is exactly
+  // the state a single huge winner produces.
+  widemean() {
+    const d = clone(REAL);
+    d.evidence = JSON.parse(JSON.stringify(HIST.evidence));
+    const h = d.evidence.horizons[d.evidence.horizons.length - 1];
+    const band = d.evidence.by_score.find((b) => b.outcomes.some((o) => o.horizon === h && o.mean !== null));
+    const cell = band.outcomes.find((o) => o.horizon === h);
+    cell.mean = 45.0;
+    cell.from_open = Object.assign({}, cell.from_open, { mean: 5.0 });
+    return d;
+  },
   nodata() { return null; }
 };
 
@@ -778,7 +811,7 @@ ok('a record from before the benchmark shows no universe rung and its verdict sa
 await open('/v/fullbenchmark/');
 const benchVerdict = await page.textContent('#control-verdict');
 ok('with enough paired setups the verdict compares the picks to the universe, over the sessions they came from',
-  /Against buying anything in the universe on the same days — \+2\.00% equal-weight over the 40 sessions those picks came from/.test(benchVerdict)
+  /Against buying anything in the universe on the same days — \+2\.00% equal-weight, paired with the 40 setups those picks are/.test(benchVerdict)
   && /the picks did better, by 4\.00%/.test(benchVerdict) && /flatters the benchmark/.test(benchVerdict),
   benchVerdict.slice(benchVerdict.indexOf('Against'), benchVerdict.indexOf('Against') + 140));
 // The benchmark is on the SAME basis as the picks it is compared with. Its
@@ -787,7 +820,7 @@ ok('with enough paired setups the verdict compares the picks to the universe, ov
 await page.click('#basis-tabs .sc-tab[data-basis="open"]');
 const benchOpen = await page.textContent('#control-verdict');
 ok('and it follows the basis switch, naming the benchmark measured the same way as the picks',
-  /equal-weight over the 39 sessions/.test(benchOpen) && /\+0\.50% equal-weight/.test(benchOpen)
+  /paired with the 39 setups/.test(benchOpen) && /\+0\.50% equal-weight/.test(benchOpen)
   && !/\+2\.00% equal-weight/.test(benchOpen) && /next session.s open/.test(benchOpen),
   benchOpen.slice(benchOpen.indexOf('Against'), benchOpen.indexOf('Against') + 120));
 await page.click('#basis-tabs .sc-tab[data-basis="close"]');
@@ -1648,6 +1681,64 @@ const fwdOpenCell = (await page.locator('#scores-table tbody tr:first-child td:n
 const FWD0 = VARIANTS.forward().candidates[0].forward_returns;
 ok('a candidate row shows its own open-basis return under the open label, not the close one',
   fwdOpenCell === pctOf(FWD0.from_open.d1) && fwdOpenCell !== pctOf(FWD0.d1), `cell ${fwdOpenCell}; open ${FWD0.from_open.d1}, close ${FWD0.d1}`);
+// Round 6 said one basis at a time, named in every heading. The score-band
+// CHART is the most prominent number on the page and read the close basis
+// whatever the switch said, so it printed one figure over a table row
+// printing another.
+await open('/f/history/');
+const chartLabels = async () => page.$$eval('#evidence-chart text.s-drop', (t) => t.map((x) => x.textContent.trim()));
+// The BARS as well as the labels: reverting only the x-scale read leaves the
+// labels right and draws them against a scale built from the other basis,
+// which a label-only check cannot see.
+const chartBars = async () => page.$$eval('#evidence-chart .sc-bar, #evidence-chart rect', (r) => r.map((x) => x.getAttribute('width')).filter(Boolean));
+const chartClose = await chartLabels();
+const barsClose = await chartBars();
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const chartOpen = await chartLabels();
+const barsOpen = await chartBars();
+// The chart labels one decimal, so the comparison does too.
+const one = (v) => (v > 0 ? '+' : '') + v.toFixed(1) + '%';
+const chartHz = HIST.evidence.horizons[HIST.evidence.horizons.length - 1];
+const bandWithBoth = HIST.evidence.by_score.find((b) => {
+  const o = b.outcomes.find((x) => x.horizon === chartHz);
+  return o && o.mean !== null && o.from_open && o.from_open.mean !== null && o.mean !== o.from_open.mean;
+});
+const bandClose = bandWithBoth.outcomes.find((x) => x.horizon === chartHz);
+ok('the score-band chart follows the basis switch, like the table under it',
+  chartClose.length > 0 && chartOpen.length === chartClose.length
+  && JSON.stringify(chartOpen) !== JSON.stringify(chartClose)
+  && chartOpen.includes('+' + chartHz + 'd ' + one(bandClose.from_open.mean) + ' (n=' + bandClose.from_open.n + ')')
+  && chartClose.includes('+' + chartHz + 'd ' + one(bandClose.mean) + ' (n=' + bandClose.n + ')')
+  && barsClose.length > 0 && JSON.stringify(barsOpen) !== JSON.stringify(barsClose),
+  `close ${chartClose.slice(0, 2).join(' | ')} :: open ${chartOpen.slice(0, 2).join(' | ')}`);
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+// And three cards read `enough` where the ledger publishes a licence per
+// basis, so an open-basis mean was chipped "measured" on the close basis's n.
+await open('/v/halfmeasured/');
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const basisChips = await page.$$eval('#predict-table tbody tr td:last-child, #streak-table tbody tr td:last-child, #trend-table tbody tr td:last-child',
+  (tds) => tds.map((t) => t.textContent.trim()));
+const rateNotes = await page.$$eval('#predict-table tbody tr, #streak-table tbody tr, #trend-table tbody tr',
+  (rows) => rows.map((r) => r.textContent).join(' '));
+ok('a card whose open basis is under the floor is not chipped measured on the close basis\'s licence',
+  basisChips.length > 0 && basisChips.every((c) => /not enough data/.test(c))
+  && /too few to read as a rate/.test(rateNotes),
+  `${basisChips.length} chips, first: ${basisChips[0]}`);
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+// The x-scale, not just the labels. On any record whose means all sit inside
+// the claimed band the scale is pinned by 0 and band.high and a chart reading
+// the wrong basis for it draws identically; this source has one band past the
+// band's top on the close basis alone, so the two scales must differ.
+await open('/v/widemean/');
+const wideClose = await page.$$eval('#evidence-chart text', (t) => t.map((x) => x.textContent.trim()).filter((x) => /^[+-]\d+%$/.test(x)));
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const wideOpen = await page.$$eval('#evidence-chart text', (t) => t.map((x) => x.textContent.trim()).filter((x) => /^[+-]\d+%$/.test(x)));
+ok('and its x-axis is built from the basis being shown, not the other one',
+  wideClose.length > 0 && wideOpen.length > 0
+  && JSON.stringify(wideOpen) !== JSON.stringify(wideClose)
+  && Math.max(...wideClose.map((t) => parseInt(t, 10))) > Math.max(...wideOpen.map((t) => parseInt(t, 10))),
+  `close axis ${wideClose.join(' ')} :: open axis ${wideOpen.join(' ')}`);
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
 await open('/v/noopen/');
 const noOpenTab = await page.$eval('#basis-tabs .sc-tab[data-basis="open"]', (b) => ({ disabled: b.disabled, pressed: b.getAttribute('aria-pressed') }));
 const noOpenNote = await page.textContent('#basis-note');

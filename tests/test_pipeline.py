@@ -1000,42 +1000,125 @@ def test_a_record_written_under_two_screeners_says_so_and_names_what_moved(tmp_p
     assert steady["sets"] == 1 and steady["differ"] == [] and steady["runs_without"] == 0
 
 
+def _universe_file(monkeypatch, tmp_path, names) -> None:
+    """Point the scanner at a symbol file of these names, so the run is a
+    genuine UNIVERSE scan rather than a --tickers one. The difference is not
+    cosmetic: a --tickers run has no universe, so it neither gives a
+    benchmark nor gets one."""
+    path = tmp_path / "symbols.txt"
+    path.write_text("\n".join(names) + "\n", encoding="utf-8")
+    monkeypatch.setattr(scanner, "SYMBOLS_FILE", path)
+
+
+def _five_name_market(fake_alpaca, ohlcv) -> list:
+    from tests.test_scanner import _thin
+
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    names = ["BURST"]
+    # Letters only: the symbol-file parser refuses a digit, and this market
+    # has to be readable as a real universe file.
+    for i, suffix in enumerate("ABCD"):
+        fake_alpaca.add_history(f"Q{suffix}", _thin(ohlcv, "flat", price=40.0 + i,
+                                                    volume=3_000_000, variant=i + 2))
+        names.append(f"Q{suffix}")
+    return names
+
+
 def test_a_later_scan_fills_the_earlier_runs_universe_benchmark_from_its_own_frames(
     monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
     """The scan reads the whole universe with a year of lookback and used to
     keep only the bursting names' frames. The evening after, those frames
     carry every name's close on the earlier session and the sessions since,
-    so the earlier run's "buy anything in the universe that day" resolves
-    at no extra request -- and equals the equal-weight mean, recomputed here
-    by hand from the frames the double served."""
-    from tests.test_scanner import _thin
-
-    fake_alpaca.add_history("BURST", ohlcv("burst"))
-    names = ["BURST"]
-    for i in range(4):
-        fake_alpaca.add_history(f"Q{i}", _thin(ohlcv, "flat", price=40.0 + i, volume=3_000_000, variant=i + 2))
-        names.append(f"Q{i}")
+    so the earlier run's "buy anything in the universe that day" resolves at
+    no extra request -- and equals the equal-weight mean, recomputed here by
+    hand from the frames the double served."""
+    names = _five_name_market(fake_alpaca, ohlcv)
+    _universe_file(monkeypatch, tmp_path, names)
     monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
-    pipeline.run("evening", dry_run=True, tickers=names)
-    first = recorded(tmp_path)["runs"][0]
-    assert first["benchmark"] == ledger.empty_benchmark(), "nothing after that session exists yet"
+    pipeline.run("evening", dry_run=True)
+    first_session = recorded(tmp_path)["runs"][0]["date"]
+    assert recorded(tmp_path)["runs"][0]["benchmark"] == ledger.empty_benchmark(), (
+        "nothing after that session exists yet")
     before = len(mocked_boundaries["alpaca"].bar_requests)
+    # The frames the fill is handed, captured as it is handed them: the
+    # equal-weight mean is then recomputed BY HAND from the same inputs,
+    # which is the comparison worth making. Re-fetching them from the double
+    # afterwards is a second path with its own arithmetic, and the two
+    # disagreed by 0.03 on a synthetic market that re-dates per call.
+    used: dict = {}
+    real_fill = ledger.Ledger.fill_benchmarks
+
+    def capture(self, frames, through=None, universe=None):
+        used.update(frames)
+        return real_fill(self, frames, through, universe)
+
+    monkeypatch.setattr(ledger.Ledger, "fill_benchmarks", capture)
 
     monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
-    pipeline.run("evening", dry_run=True, tickers=names)
+    pipeline.run("evening", dry_run=True)
 
     book = recorded(tmp_path)
-    older = next(r for r in book["runs"] if r["date"] == session_offset(-1))
-    frames = {t: served(fake_alpaca, t, session_offset(0)) for t in names}
-    want = [expected_returns(frames[t], session_offset(-1), horizons=(1,)) for t in names]
-    assert older["benchmark"]["d1"] == round(sum(w["d1"] for w in want) / len(want), 2)
-    assert older["benchmark"]["n1"] == len(names)
-    assert older["benchmark"]["from_open"]["d1"] == round(sum(w["from_open"]["d1"] for w in want) / len(want), 2)
+    older = next(r for r in book["runs"] if r["date"] == first_session)
+    assert set(used) == set(names), "every name the scan read, burst or not"
+    by_hand = [ledger.forward_returns(frame, first_session) for frame in used.values()]
+    closes = [r["d1"] for r in by_hand if r["d1"] is not None]
+    opens = [r["from_open"]["d1"] for r in by_hand if r["from_open"]["d1"] is not None]
+    assert older["benchmark"]["d1"] == round(sum(closes) / len(closes), 2)
+    assert older["benchmark"]["n1"] == len(names) == len(closes)
+    assert older["benchmark"]["from_open"]["d1"] == round(sum(opens) / len(opens), 2)
     assert older["benchmark"]["d3"] is None, "three sessions have not passed"
+    assert older["benchmark"]["universe"] == older["universe"], (
+        "stamped with the basket it was measured over, which is this run's own")
     assert len(mocked_boundaries["alpaca"].bar_requests) - before == 1 + 1, (
         "the scan's own batch and the forward-returns fetch; the benchmark cost no request")
     assert published(tmp_path)["evidence"]["universe"]["setups"] >= 1
+
+
+def test_a_tickers_run_neither_gives_a_benchmark_nor_gets_one(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """THE defect this rule exists for. The smoke test README documents is
+    `--tickers BURST`, and the fill took whatever the caller had scanned: it
+    measured one frame against the previous night's run, which had SCORED
+    BURST -- so the alternative the north star is measured against became
+    the pick itself, at n=1, and was never corrected, because a measured
+    horizon keeps its value. A run with no universe offers no benchmark and
+    receives none; the earlier night's stays pending until a real scan of
+    the universe IT scanned comes along, which is the honest answer."""
+    names = _five_name_market(fake_alpaca, ohlcv)
+    _universe_file(monkeypatch, tmp_path, names)
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
+    pipeline.run("evening", dry_run=True)
+    scored_that_night = [c["ticker"] for c in recorded(tmp_path)["runs"][0]["candidates"]]
+    assert "BURST" in scored_that_night, "precondition: the name the smoke test names was scored"
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    book = recorded(tmp_path)
+    older = next(r for r in book["runs"] if r["date"] == session_offset(-1))
+    assert older["benchmark"] == ledger.empty_benchmark(), (
+        "one name is not a market, and its return is not anyone's alternative")
+    smoke = next(r for r in book["runs"] if r["date"] == session_offset(0))
+    assert smoke["benchmark"] == ledger.empty_benchmark()
+    rung = published(tmp_path)["evidence"]["universe"]
+    assert all(entry["n"] == 0 for entry in rung["outcomes"]), "nothing measured, rather than the pick"
+
+    # Nor does a SECOND --tickers run on the same names benchmark the first:
+    # their universe labels match each other, so label-matching alone would
+    # let one smoke test become the other's alternative. Running the
+    # documented smoke test twice is not an exotic state.
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(1))
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+    for entry in recorded(tmp_path)["runs"]:
+        assert entry["benchmark"] == ledger.empty_benchmark(), entry["date"]
+
+    # And a genuine scan of that universe afterwards still fills it.
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(2))
+    pipeline.run("evening", dry_run=True)
+    older = next(r for r in recorded(tmp_path)["runs"] if r["date"] == session_offset(-1))
+    assert older["benchmark"]["d1"] is not None and older["benchmark"]["n1"] == len(names)
 
 
 def test_a_liquidity_refused_row_carries_the_streak_the_run_read_for_it(

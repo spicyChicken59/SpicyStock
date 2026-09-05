@@ -925,6 +925,36 @@ def test_every_module_this_repo_imports_is_a_dependency_it_declares():
         "while passing here.")
 
 
+def test_no_module_defines_the_same_name_twice():
+    """A shadowed definition is the fourth shape of test that cannot fail, and
+    the cheapest to produce: Python keeps the LAST one silently, so a test
+    defined twice runs once and a test moved rather than copied stops running
+    with nothing to see. It happened twice in this project's rebuild, both
+    times while relocating a test near work that was rewriting it, and both
+    times the only symptom was a failure message that did not change after an
+    edit that should have changed it.
+
+    Walks every top-level def and class in src/, tests/ and tools/, because
+    the same shape in a module is a function that silently is not the one its
+    callers were written against.
+    """
+    import ast
+
+    clashes = {}
+    for path in sorted(ROOT.glob("src/*.py")) + sorted(ROOT.glob("tests/**/*.py")) \
+            + sorted(ROOT.glob("tools/*.py")):
+        seen: dict[str, list[int]] = {}
+        for node in ast.parse(path.read_text()).body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                seen.setdefault(node.name, []).append(node.lineno)
+        for name, at in seen.items():
+            if len(at) > 1:
+                clashes[f"{path.relative_to(ROOT)}::{name}"] = at
+
+    assert not clashes, (
+        f"defined more than once, so only the last one exists: {clashes}")
+
+
 def _guard_shell() -> str:
     """The backup-cron guard's own lines, cut out of evening.yml, with the three
     Actions expressions it reads turned into environment variables."""

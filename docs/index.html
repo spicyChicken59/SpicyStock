@@ -1203,7 +1203,12 @@
     var plotW = Math.max(80, W - PAD_L - PAD_R);
     var vals = [0, band.high];
     buckets.forEach(function (b) {
-      shown.forEach(function (h) { var e = at(b.outcomes, h); if (e.mean !== null) vals.push(e.mean); });
+      // onBasis, like the table three inches below it: the chart's bars, its
+      // x-axis and its twelve labels used to stay on the close basis while
+      // everything around them switched, so the flagship graphic said
+      // "+5d +12.5%" over a row reading "+12.25%" and the chart's number was
+      // the one the reader had not asked for.
+      shown.forEach(function (h) { var e = onBasis(at(b.outcomes, h)); if (e.mean !== null) vals.push(e.mean); });
     });
     var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
     var t = (S.ticks || function (a, b2) { return { ticks: [a, b2], lo: a, hi: b2 }; })(lo, hi, 5);
@@ -1230,7 +1235,7 @@
       kids.push(svgEl('text', { 'class': 's-name', x: 0, y: top + 13 }, b.verdict));
       kids.push(svgEl('text', { 'class': 's-share', x: 0, y: top + 27 }, num(b.low, 0) + '–' + num(b.high, 0)));
       shown.forEach(function (h, j) {
-        var cell = at(b.outcomes, h), yy = top + j * ROW + (j ? 2 : 0);
+        var cell = onBasis(at(b.outcomes, h)), yy = top + j * ROW + (j ? 2 : 0);
         if (cell.mean === null) {
           kids.push(svgEl('text', { 'class': 's-drop', x: PAD_L + 4, y: yy + 11 }, hzLabel(h) + ' pending'));
           return;
@@ -1335,8 +1340,12 @@
     if (!bench || !enoughOf(ev.universe) || bench.mean === null || bench.mean === undefined) return '';
     var gap = picks.mean - bench.mean;
     var word = gap > 0.5 ? 'better' : (gap < -0.5 ? 'WORSE' : 'no differently');
-    return 'Against buying anything in the universe on the same days — ' + pct(bench.mean, 2) + ' equal-weight over the ' +
-      plural(bench.n, 'session') + ' those picks came from — the picks did ' + word +
+    // SETUPS, not sessions: bench.n is how many scored setups had a
+    // benchmark, and the picks are paired with their own session's move, so a
+    // session with three picks weighs three times one with a single pick.
+    // Printing it as a session count states a number the record cannot have.
+    return 'Against buying anything in the universe on the same days — ' + pct(bench.mean, 2) + ' equal-weight, paired with the ' +
+      plural(bench.n, 'setup') + ' those picks are — the picks did ' + word +
       (word === 'no differently' ? '. ' : ', by ' + pct(Math.abs(gap), 2).replace('+', '') + '. ') +
       'The universe is a curated large-cap list as it stands today, which flatters the benchmark. ';
   }
@@ -1508,7 +1517,7 @@
     $('predict-card').hidden = !rows.length;
     if (!rows.length) return;
     var h = longestOf(ev);
-    var measurable = rows.filter(function (c) { return c.enough; });
+    var measurable = rows.filter(function (c) { return enoughOf(c); });
     var best = measurable.slice().sort(function (a, b) { return (b.separation || 0) - (a.separation || 0); })[0];
     $('predict-hint').textContent =
       'Each check against what happened next, over every burst the scan found — the ones it rejected included, because a rate over the survivors describes the survivors. ' +
@@ -1523,11 +1532,11 @@
         return el('tr', null, [
           el('td', null, el('span', { 'class': 'sc-chip sc-chip--neutral sc-chip--case', text: c.code })),
           el('td', { 'class': 'sc-num', text: commas(c.passed.setups) }),
-          rateCell(won, c.enough),
+          rateCell(won, enoughOf(c)),
           el('td', { 'class': 'sc-num', text: commas(c.failed.setups) }),
-          rateCell(lost, c.enough),
+          rateCell(lost, enoughOf(c)),
           el('td', { 'class': 'sc-num', text: c.separation === null || c.separation === undefined ? '—' : pct(c.separation, 2) }),
-          el('td', null, enoughChip(c.enough, Math.min(won.n, lost.n), ev.min_setups))
+          el('td', null, enoughChip(enoughOf(c), Math.min(onBasis(won).n, onBasis(lost).n), ev.min_setups))
         ]);
       }), [1, 2, 3, 4, 5]);
     clipWatch($('predict-scroll'), 'Each 2LYNCH check against the outcome');
@@ -1567,10 +1576,10 @@
             : [el('span', { text: 'day ' + r.day }),
                el('span', { 'class': 'sc-note', text: r.day === 1 ? 'the first burst of a setup' : 'a repeat inside the same setup' })]),
           el('td', { 'class': 'sc-num', text: commas(r.appearances) })
-        ].concat(ev.horizons.map(function (hh) { return rateCell(at(r.outcomes, hh), r.enough); }))
+        ].concat(ev.horizons.map(function (hh) { return rateCell(at(r.outcomes, hh), enoughOf(r)); }))
          .concat([
           el('td', { 'class': 'sc-num', text: commas(longest.in_band) }),
-          el('td', null, enoughChip(r.enough, longest.n, ev.min_setups))
+          el('td', null, enoughChip(enoughOf(r), onBasis(longest).n, ev.min_setups))
         ]));
       }), [1, 2, 3, 4, 5]);
     clipWatch($('streak-scroll'), 'Outcome by day of the setup');
@@ -1581,7 +1590,7 @@
     $('trend-card').hidden = !rows.length;
     if (!rows.length) return;
     var h = longestOf(ev);
-    var readable = rows.filter(function (r) { return r.enough; });
+    var readable = rows.filter(function (r) { return enoughOf(r); });
     $('trend-hint').textContent =
       'The same measurement by calendar month, so a screener that worked in one regime and stopped working in the next does not average into a flat line. ' +
       (readable.length >= 2
@@ -1592,8 +1601,8 @@
         return el('tr', null, [
           el('td', { text: r.month }),
           el('td', { 'class': 'sc-num', text: commas(r.setups) })
-        ].concat(ev.horizons.map(function (hh) { return rateCell(at(r.outcomes, hh), r.enough); }))
-         .concat([el('td', null, enoughChip(r.enough, at(r.outcomes, h).n, ev.min_setups))]));
+        ].concat(ev.horizons.map(function (hh) { return rateCell(at(r.outcomes, hh), enoughOf(r)); }))
+         .concat([el('td', null, enoughChip(enoughOf(r), onBasis(at(r.outcomes, h)).n, ev.min_setups))]));
       }), [1, 2, 3, 4]);
     clipWatch($('trend-scroll'), 'Outcome by month');
   }

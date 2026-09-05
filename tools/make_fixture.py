@@ -737,6 +737,13 @@ _LEDGER_RUNS = [{
     # rather than a run that predates the fingerprint -- which is what this
     # file would otherwise describe, and is not true of it.
     "rules": rules_fingerprint(),
+    # And the benchmark Ledger.add_run() would have written for this run:
+    # pending, because nothing after this session has happened. Without it
+    # evidence.universe.setups was 0 where the pipeline writes 25 for the
+    # same record -- the fixture describing a file the pipeline cannot
+    # produce, which is the one thing this generator exists to prevent.
+    "benchmark": {**ledger.empty_benchmark(),
+                  "universe": {"label": "data/symbols.txt (checked in)", "size": len(UNIVERSE)}},
     "candidates": [ledger.slim_row(c, scored=True) for c in candidates],
     "gated": [ledger.slim_row(g, scored=False) for g in gated_out],
 }]

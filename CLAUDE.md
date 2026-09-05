@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 904 tests with no network
+- **There is a regression net.** `pytest tests/` runs 916 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -572,8 +572,10 @@ exercised its headline. Nine mutants across them, all killed.
   the round-4 prose sweep put a universe block on every run entry, 11.54
   and 0.72 once round 5 put a liquidity block on every entry, 13.63 and
   0.97 once round 6 put the open basis on every row and every mean and the
-  round-5 audit put the dollar volume on every ledger row, and 13.71 and
-  0.99 once round 7 put a benchmark on every run entry -- the guard below
+  round-5 audit put the dollar volume on every ledger row, 13.71 and
+  0.99 once round 7 put a benchmark on every run entry, and 14.03 and 1.08
+  once the rounds 6-7 audit stamped each benchmark with the universe it was
+  measured over -- the guard below
   caught every move on the commit that made it. The gzipped figure has
   grown faster than the raw one, because a block of nulls compresses worse
   than a run of numbers; the page's fetch-on-demand argument still holds at
@@ -680,6 +682,116 @@ exercised its headline. Nine mutants across them, all killed.
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Findings from the rounds 6-7 audit — the basis and the benchmark
+
+Rounds 6 and 7 added the two things the north star was missing — a second
+return basis, and the alternative — and each was audited on its own lens
+after it landed. Three HIGHs, every one reproduced HERE by execution before
+it was touched, and one of them is the worst defect this project has produced.
+
+**The `--tickers` smoke test made the strategy its own benchmark.** README
+documents `--tickers BURST` as the way to check a change without a full scan,
+and `fill_benchmarks()` took whatever the caller had scanned and measured it
+against every earlier run in the window. So the smoke test measured ONE frame
+against the previous night's run — the night that had SCORED BURST — and the
+"buy anything in the universe that day" rung became the pick itself: `d1`
+12.0 over `n1` 1, where the honest equal-weight move over that night's five
+names was +2.45% — the number the test now recomputes by hand. It is never corrected either, because a measured horizon
+keeps its value: one smoke run poisons that run's alternative permanently.
+Two rules close it. A caller with no universe to offer passes `None` and
+fills nothing, and a run is filled only from a scan of the universe IT
+scanned, matched on the label the entry already carries. The block is stamped
+with that universe (`benchmark.universe`), so a reader sees which basket the
+number is over instead of inferring it — the same argument as round 8's
+fingerprint, one field down. Label-matching alone is not enough and the test
+says why: two `--tickers` runs on the same names carry the same label, so
+running the documented smoke test twice would have let one become the other's
+alternative.
+
+The same defect was in the history generator, which is how it stayed
+invisible: `tools/make_history.py` drove thirty sessions through `--tickers`,
+so its universe rung was empty where the real path fills it, and the fixture
+every page check reads described a file the pipeline does not produce. It
+writes a symbol file and points `scanner.SYMBOLS_FILE` at it now — a real
+universe scan, the way the pipeline runs. A generator that takes a different
+path from the code it is a fixture FOR can only be checked against itself.
+
+**The flagship graphic stayed on the close basis while the page switched.**
+Round 6's rule is one basis at a time, through one accessor; `drawEvidence()`
+read `at(b.outcomes, h)` raw for its bars, its x-axis and its twelve labels,
+so pressing "from the open" left the chart saying "+5d +12.5%" three inches
+above a table row reading "+12.25%" — and the chart's number is the one the
+reader had not asked for. Four more surfaces read `c.enough` where the basis
+had its own `enough_from_open`: the per-check table's chips and its "best
+separator" sentence, the streak-pay table, and the by-month trend. Each said
+"enough setups to read" on the open basis off a close-basis count. All six go
+through `onBasis()` and `enoughOf()` now.
+
+**The eighth instance of the one-level-short class, and the first found by
+two lenses independently.** Round 7 added `benchmark` — a nested object with
+`from_open` one level inside it — to every run entry, and did not extend the
+shape check round 6 had added for exactly this class. `fill_benchmarks()` and
+`evidence()` both index into it inside `publish()`, after the scan and every
+Claude call are paid for. Seven shapes are refused at load now and an absent
+block still loads clean, because absent is a run from before round 7 and a
+string where a number belongs is a file no writer produces.
+
+**Three more from the record lens.** The benchmark sentence printed
+`bench.n` — how many scored setups had a benchmark — under the noun
+"sessions", which is a number the record cannot have: the rung pairs each
+pick with its own session's move, so a session with three picks weighs three
+times a session with one. It says "paired with the N setups those picks are"
+now. `_LEDGER_RUNS` in `tools/make_fixture.py` carried no `benchmark`, so the
+canonical fixture's `evidence.universe.setups` was 0 where the pipeline
+writes 25 for the same record — the generator describing a file the pipeline
+cannot produce, which is the one thing it exists to prevent. And
+`tools/make_history.py` still explained its relabelling with "every one of
+these was driven through `--tickers`", a sentence the same round had made
+false.
+
+**Sixteen mutants over the fixes, three of which were real gaps.** The
+open-basis `n` on the benchmark could borrow the close basis's, because every
+frame in the only test carrying it had an open — a frame without one had to
+be added. A JSON `true` where a benchmark number belongs loaded clean, since
+`isinstance(True, int)`, and every mean over it would have counted the
+horizon as +1%. And `drawEvidence`'s x-scale mutant is provably invisible on
+normal data: `vals` seeds with `[0, band.high]`, and a band's high dominates
+every mean the fixture holds, so the axis is identical whichever basis the
+bars are read on. It needs a mean OUTSIDE the band on one basis and inside it
+on the other; the `widemean` variant is that, and the check asserts the two
+axes' extents differ rather than asserting the bars do.
+
+**And a defect of the harness, found twice in two rounds, now guarded.** Both
+times a test was relocated near work that was rewriting it, the old copy was
+left behind, and Python silently kept the LAST definition — so the test that
+ran was not the test that had been edited. The only symptom is a failure
+message that does not change after an edit that should have changed it, which
+is how it was caught the first time. That is a fourth shape of test that
+cannot fail, and the cheapest of the four to produce.
+`test_no_module_defines_the_same_name_twice` walks every top-level `def` and
+`class` in `src/`, `tests/` and `tools/`; the tree is clean, and planting a
+duplicate turns it red.
+
+**Left open, and named rather than quietly dropped.** The medium and low
+findings from these lenses that this round did not work: `separation` in the
+per-check view is computed from close-basis means only, so the column the
+"best separator" sentence sorts on does not switch with the basis; the
+streak-pay table's "in the claimed band" column is likewise close-basis; no
+row-level surface distinguishes "this horizon is pending" from "this record
+predates the open basis", which are different facts with the same em dash;
+four surfaces that show a return name no basis in their heading;
+`forward_returns()` does not check the open against its own bar's high and
+low the way the scanner refuses an inverted bar; the ten-run benchmark window
+is not pinned by any test of its own; the benchmark's frames exclude the
+stale and gapped names the scan dropped, so it is really "the names that
+traded cleanly that day" and no surface says so; and the rung averages over every name
+that traded, rule 6's refusals included — which is 30% of them by
+construction, since the floor IS the 30th percentile of that session's dollar
+volume, so the benchmark is measurably not "what you could have bought".
+Also unswept: `tests/fixtures/README.md` for rounds 6 and 7, and one
+surviving mutant on the defensive `from_open` coercion inside
+`fill_benchmarks()`, which no writer can reach today.
 
 ## Round 8 — the record says which screener made each row
 

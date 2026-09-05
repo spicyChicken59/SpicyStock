@@ -920,20 +920,32 @@ def test_fill_benchmarks_fills_the_window_once_and_never_before_the_sessions_exi
     window gains its benchmark from tonight's frames, keeps a horizon once
     measured, and a run whose session is not behind `through` stays pending."""
     book = ledger.Ledger(tmp_path / "docs")
+    universe = {"label": "data/symbols.txt (checked in)", "size": 2}
     for session in ("2026-08-24", "2026-08-31"):
         run, cands, gated = _run(session, tickers=("AAA",))
+        run["universe"] = dict(universe)
         book.add_run(run, cands, gated)
     assert all(r["benchmark"] == ledger.empty_benchmark() for r in book.runs)
     aaa = frame_with_opens(closes=[100, 101, 102, 103, 104, 110], opens=[99, 100, 101, 102, 103, 104],
                            end="2026-08-31")   # sessions 24..31 Aug
     bbb = frame_with_opens(closes=[10, 10, 10, 10, 10, 10], opens=[10] * 6, end="2026-08-31")
 
-    moved = book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 9, 4))
+    # A caller with no universe to offer fills nothing at all: a --tickers run
+    # scanned a handful of names it was handed, and that is not a market.
+    assert book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 9, 4), universe=None) == 0
+    assert book.runs[0]["benchmark"]["d1"] is None
+    # Nor does a scan of a DIFFERENT universe fill this one's.
+    assert book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 9, 4),
+                                universe={"label": "somewhere else", "size": 2}) == 0
+    assert book.runs[0]["benchmark"]["d1"] is None
+
+    moved = book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 9, 4), universe=universe)
 
     older = next(r for r in book.runs if r["date"] == "2026-08-24")
     newer = next(r for r in book.runs if r["date"] == "2026-08-31")
     assert moved == 1
     assert (older["benchmark"]["d1"], older["benchmark"]["d5"], older["benchmark"]["n5"]) == (0.5, 5.0, 2)
+    assert older["benchmark"]["universe"] == universe, "stamped with the basket it is over"
     assert older["benchmark"]["from_open"]["d1"] == round((round((101 / 100 - 1) * 100, 2) + 0.0) / 2, 2)
     assert newer["benchmark"]["d1"] is None, "the sessions after it are in no frame yet"
     # A later, different frame restates nothing already measured -- and the
@@ -947,7 +959,7 @@ def test_fill_benchmarks_fills_the_window_once_and_never_before_the_sessions_exi
                             end="2026-09-07")   # carries 31 Aug and the sessions after it
     bbb2 = frame_with_opens(closes=[10] * 6, opens=[10] * 6, end="2026-09-07")
 
-    assert book.fill_benchmarks({"AAA": aaa2, "BBB": bbb2}, date(2026, 9, 8)) == 1
+    assert book.fill_benchmarks({"AAA": aaa2, "BBB": bbb2}, date(2026, 9, 8), universe=universe) == 1
     assert (partial["benchmark"]["d1"], partial["benchmark"]["n1"]) == (99.0, 7), (
         "the horizon already measured keeps the value it was given")
     assert partial["benchmark"]["from_open"]["d1"] == 88.0
@@ -958,10 +970,11 @@ def test_fill_benchmarks_fills_the_window_once_and_never_before_the_sessions_exi
     # the completed rows above would hide the rule by short-circuiting first.
     fresh_book = ledger.Ledger(tmp_path / "docs2")
     run, cands, gated = _run("2026-08-24", tickers=("AAA",))
+    run["universe"] = dict(universe)
     fresh_book.add_run(run, cands, gated)
-    assert fresh_book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 8, 24)) == 0
+    assert fresh_book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 8, 24), universe=universe) == 0
     assert fresh_book.runs[0]["benchmark"] == ledger.empty_benchmark()
-    assert fresh_book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 9, 4)) == 1
+    assert fresh_book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 9, 4), universe=universe) == 1
 
 
 def test_the_evidence_pairs_every_scored_setup_with_its_own_sessions_benchmark():
@@ -2762,6 +2775,50 @@ def test_run_means_and_evidence_outcomes_carry_the_open_basis_with_its_own_n():
     assert band["enough"] and not band["enough_from_open"], (
         "the close basis clears the floor and the open basis does not; the file says both")
     assert "enough_from_open" in ev["shortlist"] and "enough_from_open" in ev["by_check"][0] if ev["by_check"] else True
+
+
+@pytest.mark.parametrize("bad", [
+    "x", ["d1"], 3,
+    {"d1": "1.0", "n1": 0, "from_open": {}},
+    {"d1": 1.0, "n1": "5", "from_open": {}},
+    {"d1": 1.0, "n1": 5, "from_open": "x"},
+    {"d1": 1.0, "n1": 5, "from_open": {"d1": [1.0]}},
+    # JSON true, which Python calls an int: without the bool clause it loads
+    # and every mean over it silently counts the horizon as +1%.
+    {"d1": True, "n1": 5, "from_open": {}},
+    {"d1": 1.0, "n1": 5, "from_open": {"n1": False}},
+])
+def test_a_benchmark_block_of_the_wrong_shape_is_refused_at_load(tmp_path, bad):
+    """The eighth instance of the one-level-short class, and the first found
+    by two audit lenses independently. fill_benchmarks() and evidence() both
+    index into this block inside publish(), after the scan and every Claude
+    call are paid for; round 7 added it and did not extend the check round 6
+    had added for exactly this shape."""
+    docs = tmp_path / f"docs-{abs(hash(str(bad)))}"
+    docs.mkdir()
+    (docs / ledger.LEDGER_NAME).write_text(json.dumps({
+        "schema_version": ledger.SCHEMA_VERSION, "app": "SpicyStock", "generated": "x",
+        "runs": [{"date": "2026-08-24", "type": "evening", "benchmark": bad,
+                  "candidates": [], "gated": []}]}))
+
+    book = ledger.Ledger(docs).load()
+
+    assert book.runs == [] and book.load_error and "benchmark" in book.load_error, bad
+    assert ledger.quarantined(docs), "the unreadable file is set aside, not overwritten"
+
+
+def test_a_run_from_before_the_benchmark_loads_clean(tmp_path):
+    """Absent is not broken: a run written before round 7 has no benchmark
+    key, loads, and is simply one the rung cannot pair."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / ledger.LEDGER_NAME).write_text(json.dumps({
+        "schema_version": ledger.SCHEMA_VERSION, "app": "SpicyStock", "generated": "x",
+        "runs": [{"date": "2026-08-24", "type": "evening", "candidates": [], "gated": []}]}))
+
+    book = ledger.Ledger(docs).load()
+
+    assert len(book.runs) == 1 and not book.load_error
 
 
 @pytest.mark.parametrize("bad", ["x", ["gate.min_lynch_passes"], 3, None])

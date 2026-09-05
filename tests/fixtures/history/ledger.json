@@ -20,38 +20,6 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
-      "rules": {
-        "check.breakdown_lookback": 20,
-        "check.breakdown_pct": -4.0,
-        "check.max_consecutive_up_days": 2,
-        "check.max_d1_move": 2.0,
-        "check.max_d1_range_ratio": 1.0,
-        "check.max_d1_vol_ratio": 1.2,
-        "check.max_ext_vs_sma20": 15.0,
-        "check.max_prior_bursts": 1,
-        "check.max_run_up_1mo": 25.0,
-        "check.max_tightness": 1.0,
-        "check.min_close_pos": 0.7,
-        "check.min_linear_r2": 0.55,
-        "check.min_linear_slope": 0.0,
-        "check.prior_burst_pct": 4.0,
-        "check.vetoes": [
-          "up_days"
-        ],
-        "gate.min_lynch_passes": 3,
-        "scan.min_dollar_volume_pctile": 30.0,
-        "scan.min_gain_pct": 4.0,
-        "scan.min_price": 4.0,
-        "scan.min_rvol": 1.5,
-        "scan.min_rvol_sessions": 20,
-        "scan.rvol_lookback": 50,
-        "window.linear_fit_sessions": 30,
-        "window.norm_sessions": 60,
-        "window.prior_burst_lookback": 20,
-        "window.run_up_sessions": 20,
-        "window.sma_sessions": 20,
-        "window.tight_sessions": 7
-      },
       "benchmark": {
         "d1": null,
         "d3": null,
@@ -66,7 +34,8 @@
           "n1": 0,
           "n3": 0,
           "n5": 0
-        }
+        },
+        "universe": null
       },
       "liquidity": {
         "pctile": 30.0,
@@ -437,37 +406,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": null,
-        "d3": null,
-        "d5": null,
-        "n": 0,
-        "rows": 0,
-        "from_open": {
-          "d1": null,
-          "d3": null,
-          "d5": null,
-          "n": 0
-        }
-      }
-    },
-    {
-      "date": "2026-08-31",
-      "type": "evening",
-      "bursts": 5,
-      "passed_gate": 3,
-      "scored": 3,
-      "shortlist_size": 3,
-      "score_cap": 25,
-      "top_score": 6,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -500,6 +438,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n": 0,
+        "rows": 0,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null,
+          "n": 0
+        }
+      }
+    },
+    {
+      "date": "2026-08-31",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 6,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.73,
         "d3": null,
@@ -514,6 +483,10 @@
           "n1": 77,
           "n3": 0,
           "n5": 0
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -724,37 +697,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 1.72,
-        "d3": null,
-        "d5": null,
-        "n": 3,
-        "rows": 3,
-        "from_open": {
-          "d1": 1.76,
-          "d3": null,
-          "d5": null,
-          "n": 3
-        }
-      }
-    },
-    {
-      "date": "2026-08-28",
-      "type": "evening",
-      "bursts": 6,
-      "passed_gate": 2,
-      "scored": 2,
-      "shortlist_size": 2,
-      "score_cap": 25,
-      "top_score": 4.1,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -787,6 +729,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 1.72,
+        "d3": null,
+        "d5": null,
+        "n": 3,
+        "rows": 3,
+        "from_open": {
+          "d1": 1.76,
+          "d3": null,
+          "d5": null,
+          "n": 3
+        }
+      }
+    },
+    {
+      "date": "2026-08-28",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 4.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.68,
         "d3": null,
@@ -801,6 +774,10 @@
           "n1": 77,
           "n3": 0,
           "n5": 0
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -1046,37 +1023,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 1.1,
-        "d3": null,
-        "d5": null,
-        "n": 1,
-        "rows": 2,
-        "from_open": {
-          "d1": 0.14,
-          "d3": null,
-          "d5": null,
-          "n": 1
-        }
-      }
-    },
-    {
-      "date": "2026-08-27",
-      "type": "evening",
-      "bursts": 8,
-      "passed_gate": 7,
-      "scored": 7,
-      "shortlist_size": 5,
-      "score_cap": 25,
-      "top_score": 8.3,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -1109,6 +1055,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 1.1,
+        "d3": null,
+        "d5": null,
+        "n": 1,
+        "rows": 2,
+        "from_open": {
+          "d1": 0.14,
+          "d3": null,
+          "d5": null,
+          "n": 1
+        }
+      }
+    },
+    {
+      "date": "2026-08-27",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 7,
+      "scored": 7,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 8.3,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.78,
         "d3": 2.21,
@@ -1123,6 +1100,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 0
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -1459,37 +1440,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 3.16,
-        "d3": 5.15,
-        "d5": null,
-        "n": 5,
-        "rows": 7,
-        "from_open": {
-          "d1": 3.1,
-          "d3": 5.07,
-          "d5": null,
-          "n": 5
-        }
-      }
-    },
-    {
-      "date": "2026-08-26",
-      "type": "evening",
-      "bursts": 8,
-      "passed_gate": 6,
-      "scored": 6,
-      "shortlist_size": 5,
-      "score_cap": 25,
-      "top_score": 6.9,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -1522,6 +1472,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 3.16,
+        "d3": 5.15,
+        "d5": null,
+        "n": 5,
+        "rows": 7,
+        "from_open": {
+          "d1": 3.1,
+          "d3": 5.07,
+          "d5": null,
+          "n": 5
+        }
+      }
+    },
+    {
+      "date": "2026-08-26",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 6,
+      "scored": 6,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 6.9,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.9,
         "d3": 2.4,
@@ -1536,6 +1517,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 0
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -1869,37 +1854,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 3.69,
-        "d3": 4.79,
-        "d5": null,
-        "n": 4,
-        "rows": 6,
-        "from_open": {
-          "d1": 3.64,
-          "d3": 4.73,
-          "d5": null,
-          "n": 4
-        }
-      }
-    },
-    {
-      "date": "2026-08-25",
-      "type": "evening",
-      "bursts": 6,
-      "passed_gate": 4,
-      "scored": 4,
-      "shortlist_size": 4,
-      "score_cap": 25,
-      "top_score": 6.5,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -1932,6 +1886,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 3.69,
+        "d3": 4.79,
+        "d5": null,
+        "n": 4,
+        "rows": 6,
+        "from_open": {
+          "d1": 3.64,
+          "d3": 4.73,
+          "d5": null,
+          "n": 4
+        }
+      }
+    },
+    {
+      "date": "2026-08-25",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 6.5,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.7,
         "d3": 2.44,
@@ -1946,6 +1931,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -2197,37 +2186,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 1.11,
-        "d3": 1.23,
-        "d5": 0.7,
-        "n": 3,
-        "rows": 4,
-        "from_open": {
-          "d1": 1.04,
-          "d3": 1.17,
-          "d5": 0.64,
-          "n": 3
-        }
-      }
-    },
-    {
-      "date": "2026-08-24",
-      "type": "evening",
-      "bursts": 4,
-      "passed_gate": 1,
-      "scored": 1,
-      "shortlist_size": 1,
-      "score_cap": 25,
-      "top_score": 4.9,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -2260,6 +2218,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 1.11,
+        "d3": 1.23,
+        "d5": 0.7,
+        "n": 3,
+        "rows": 4,
+        "from_open": {
+          "d1": 1.04,
+          "d3": 1.17,
+          "d5": 0.64,
+          "n": 3
+        }
+      }
+    },
+    {
+      "date": "2026-08-24",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 1,
+      "scored": 1,
+      "shortlist_size": 1,
+      "score_cap": 25,
+      "top_score": 4.9,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.7,
         "d3": 2.34,
@@ -2274,6 +2263,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -2440,37 +2433,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 6.0,
-        "d3": 5.44,
-        "d5": 3.41,
-        "n": 1,
-        "rows": 1,
-        "from_open": {
-          "d1": 6.09,
-          "d3": 5.52,
-          "d5": 3.5,
-          "n": 1
-        }
-      }
-    },
-    {
-      "date": "2026-08-21",
-      "type": "evening",
-      "bursts": 9,
-      "passed_gate": 4,
-      "scored": 4,
-      "shortlist_size": 4,
-      "score_cap": 25,
-      "top_score": 8,
-      "fallbacks": 4,
-      "model": "claude-sonnet-4-6",
-      "status": "degraded",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -2503,6 +2465,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 6.0,
+        "d3": 5.44,
+        "d5": 3.41,
+        "n": 1,
+        "rows": 1,
+        "from_open": {
+          "d1": 6.09,
+          "d3": 5.52,
+          "d5": 3.5,
+          "n": 1
+        }
+      }
+    },
+    {
+      "date": "2026-08-21",
+      "type": "evening",
+      "bursts": 9,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 8,
+      "fallbacks": 4,
+      "model": "claude-sonnet-4-6",
+      "status": "degraded",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.34,
         "d3": 1.77,
@@ -2517,6 +2510,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -2882,37 +2879,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 0.36,
-        "d3": 3.73,
-        "d5": 6.92,
-        "n": 4,
-        "rows": 4,
-        "from_open": {
-          "d1": 0.12,
-          "d3": 3.48,
-          "d5": 6.65,
-          "n": 4
-        }
-      }
-    },
-    {
-      "date": "2026-08-20",
-      "type": "evening",
-      "bursts": 4,
-      "passed_gate": 2,
-      "scored": 2,
-      "shortlist_size": 2,
-      "score_cap": 25,
-      "top_score": 6.3,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -2945,6 +2911,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 0.36,
+        "d3": 3.73,
+        "d5": 6.92,
+        "n": 4,
+        "rows": 4,
+        "from_open": {
+          "d1": 0.12,
+          "d3": 3.48,
+          "d5": 6.65,
+          "n": 4
+        }
+      }
+    },
+    {
+      "date": "2026-08-20",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 6.3,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 1.26,
         "d3": 2.33,
@@ -2959,6 +2956,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -3128,37 +3129,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 2.82,
-        "d3": 2.83,
-        "d5": 8.21,
-        "n": 2,
-        "rows": 2,
-        "from_open": {
-          "d1": 1.19,
-          "d3": 1.2,
-          "d5": 6.59,
-          "n": 2
-        }
-      }
-    },
-    {
-      "date": "2026-08-19",
-      "type": "evening",
-      "bursts": 5,
-      "passed_gate": 2,
-      "scored": 2,
-      "shortlist_size": 2,
-      "score_cap": 25,
-      "top_score": 5.6,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -3191,6 +3161,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 2.82,
+        "d3": 2.83,
+        "d5": 8.21,
+        "n": 2,
+        "rows": 2,
+        "from_open": {
+          "d1": 1.19,
+          "d3": 1.2,
+          "d5": 6.59,
+          "n": 2
+        }
+      }
+    },
+    {
+      "date": "2026-08-19",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 5.6,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.25,
         "d3": 1.88,
@@ -3205,6 +3206,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -3412,37 +3417,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": null,
-        "d3": null,
-        "d5": null,
-        "n": 0,
-        "rows": 2,
-        "from_open": {
-          "d1": null,
-          "d3": null,
-          "d5": null,
-          "n": 0
-        }
-      }
-    },
-    {
-      "date": "2026-08-18",
-      "type": "evening",
-      "bursts": 5,
-      "passed_gate": 2,
-      "scored": 2,
-      "shortlist_size": 2,
-      "score_cap": 25,
-      "top_score": 4.6,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -3475,6 +3449,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n": 0,
+        "rows": 2,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null,
+          "n": 0
+        }
+      }
+    },
+    {
+      "date": "2026-08-18",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 4.6,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.46,
         "d3": 2.02,
@@ -3489,6 +3494,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -3696,37 +3705,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 0.48,
-        "d3": 5.02,
-        "d5": 3.35,
-        "n": 2,
-        "rows": 2,
-        "from_open": {
-          "d1": 0.1,
-          "d3": 4.53,
-          "d5": 2.85,
-          "n": 2
-        }
-      }
-    },
-    {
-      "date": "2026-08-17",
-      "type": "evening",
-      "bursts": 7,
-      "passed_gate": 5,
-      "scored": 5,
-      "shortlist_size": 5,
-      "score_cap": 25,
-      "top_score": 8.7,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -3759,6 +3737,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 0.48,
+        "d3": 5.02,
+        "d5": 3.35,
+        "n": 2,
+        "rows": 2,
+        "from_open": {
+          "d1": 0.1,
+          "d3": 4.53,
+          "d5": 2.85,
+          "n": 2
+        }
+      }
+    },
+    {
+      "date": "2026-08-17",
+      "type": "evening",
+      "bursts": 7,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 8.7,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.56,
         "d3": 1.32,
@@ -3773,6 +3782,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -4065,37 +4078,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 3.17,
-        "d3": 9.88,
-        "d5": 16.93,
-        "n": 4,
-        "rows": 5,
-        "from_open": {
-          "d1": 2.81,
-          "d3": 9.5,
-          "d5": 16.53,
-          "n": 4
-        }
-      }
-    },
-    {
-      "date": "2026-08-14",
-      "type": "evening",
-      "bursts": 4,
-      "passed_gate": 3,
-      "scored": 3,
-      "shortlist_size": 3,
-      "score_cap": 25,
-      "top_score": 6.4,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -4128,6 +4110,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 3.17,
+        "d3": 9.88,
+        "d5": 16.93,
+        "n": 4,
+        "rows": 5,
+        "from_open": {
+          "d1": 2.81,
+          "d3": 9.5,
+          "d5": 16.53,
+          "n": 4
+        }
+      }
+    },
+    {
+      "date": "2026-08-14",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 6.4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.32,
         "d3": 1.39,
@@ -4142,6 +4155,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -4314,37 +4331,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 1.07,
-        "d3": 1.72,
-        "d5": 2.61,
-        "n": 3,
-        "rows": 3,
-        "from_open": {
-          "d1": 0.66,
-          "d3": 1.27,
-          "d5": 2.13,
-          "n": 3
-        }
-      }
-    },
-    {
-      "date": "2026-08-13",
-      "type": "evening",
-      "bursts": 5,
-      "passed_gate": 3,
-      "scored": 3,
-      "shortlist_size": 3,
-      "score_cap": 25,
-      "top_score": 6.5,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -4377,6 +4363,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 1.07,
+        "d3": 1.72,
+        "d5": 2.61,
+        "n": 3,
+        "rows": 3,
+        "from_open": {
+          "d1": 0.66,
+          "d3": 1.27,
+          "d5": 2.13,
+          "n": 3
+        }
+      }
+    },
+    {
+      "date": "2026-08-13",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 6.5,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.11,
         "d3": 1.03,
@@ -4391,6 +4408,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -4601,37 +4622,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 4.05,
-        "d3": 2.67,
-        "d5": 4.64,
-        "n": 2,
-        "rows": 3,
-        "from_open": {
-          "d1": 2.59,
-          "d3": 1.2,
-          "d5": 3.08,
-          "n": 2
-        }
-      }
-    },
-    {
-      "date": "2026-08-12",
-      "type": "evening",
-      "bursts": 5,
-      "passed_gate": 5,
-      "scored": 5,
-      "shortlist_size": 5,
-      "score_cap": 25,
-      "top_score": 7.1,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -4664,6 +4654,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 4.05,
+        "d3": 2.67,
+        "d5": 4.64,
+        "n": 2,
+        "rows": 3,
+        "from_open": {
+          "d1": 2.59,
+          "d3": 1.2,
+          "d5": 3.08,
+          "n": 2
+        }
+      }
+    },
+    {
+      "date": "2026-08-12",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 7.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.44,
         "d3": 0.88,
@@ -4678,6 +4699,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -4893,37 +4918,6 @@
         }
       ],
       "gated": [],
-      "forward_returns": {
-        "d1": 3.58,
-        "d3": 2.49,
-        "d5": 6.5,
-        "n": 4,
-        "rows": 5,
-        "from_open": {
-          "d1": 3.19,
-          "d3": 2.09,
-          "d5": 6.09,
-          "n": 4
-        }
-      }
-    },
-    {
-      "date": "2026-08-11",
-      "type": "evening",
-      "bursts": 6,
-      "passed_gate": 4,
-      "scored": 4,
-      "shortlist_size": 4,
-      "score_cap": 25,
-      "top_score": 6.2,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -4956,6 +4950,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 3.58,
+        "d3": 2.49,
+        "d5": 6.5,
+        "n": 4,
+        "rows": 5,
+        "from_open": {
+          "d1": 3.19,
+          "d3": 2.09,
+          "d5": 6.09,
+          "n": 4
+        }
+      }
+    },
+    {
+      "date": "2026-08-11",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 6.2,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.42,
         "d3": 1.01,
@@ -4970,6 +4995,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -5221,37 +5250,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 0.52,
-        "d3": -1.53,
-        "d5": -1.42,
-        "n": 3,
-        "rows": 4,
-        "from_open": {
-          "d1": -0.13,
-          "d3": -2.22,
-          "d5": -2.18,
-          "n": 3
-        }
-      }
-    },
-    {
-      "date": "2026-08-10",
-      "type": "evening",
-      "bursts": 4,
-      "passed_gate": 3,
-      "scored": 3,
-      "shortlist_size": 3,
-      "score_cap": 25,
-      "top_score": 5.6,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -5284,6 +5282,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 0.52,
+        "d3": -1.53,
+        "d5": -1.42,
+        "n": 3,
+        "rows": 4,
+        "from_open": {
+          "d1": -0.13,
+          "d3": -2.22,
+          "d5": -2.18,
+          "n": 3
+        }
+      }
+    },
+    {
+      "date": "2026-08-10",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 5.6,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.87,
         "d3": 1.78,
@@ -5298,6 +5327,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -5470,37 +5503,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 6.81,
-        "d3": 4.81,
-        "d5": 3.76,
-        "n": 3,
-        "rows": 3,
-        "from_open": {
-          "d1": 5.96,
-          "d3": 3.92,
-          "d5": 2.86,
-          "n": 3
-        }
-      }
-    },
-    {
-      "date": "2026-08-07",
-      "type": "evening",
-      "bursts": 4,
-      "passed_gate": 2,
-      "scored": 2,
-      "shortlist_size": 2,
-      "score_cap": 25,
-      "top_score": 4,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -5533,6 +5535,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 6.81,
+        "d3": 4.81,
+        "d5": 3.76,
+        "n": 3,
+        "rows": 3,
+        "from_open": {
+          "d1": 5.96,
+          "d3": 3.92,
+          "d5": 2.86,
+          "n": 3
+        }
+      }
+    },
+    {
+      "date": "2026-08-07",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 4,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.64,
         "d3": 1.97,
@@ -5547,6 +5580,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -5716,37 +5753,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": -1.38,
-        "d3": -1.06,
-        "d5": -1.02,
-        "n": 2,
-        "rows": 2,
-        "from_open": {
-          "d1": -1.08,
-          "d3": -0.78,
-          "d5": -0.74,
-          "n": 2
-        }
-      }
-    },
-    {
-      "date": "2026-08-06",
-      "type": "evening",
-      "bursts": 4,
-      "passed_gate": 2,
-      "scored": 2,
-      "shortlist_size": 2,
-      "score_cap": 25,
-      "top_score": 6.9,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -5779,6 +5785,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": -1.38,
+        "d3": -1.06,
+        "d5": -1.02,
+        "n": 2,
+        "rows": 2,
+        "from_open": {
+          "d1": -1.08,
+          "d3": -0.78,
+          "d5": -0.74,
+          "n": 2
+        }
+      }
+    },
+    {
+      "date": "2026-08-06",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 6.9,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.87,
         "d3": 2.41,
@@ -5793,6 +5830,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -5962,37 +6003,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 6.88,
-        "d3": 7.82,
-        "d5": 6.71,
-        "n": 2,
-        "rows": 2,
-        "from_open": {
-          "d1": 6.09,
-          "d3": 7.04,
-          "d5": 5.96,
-          "n": 2
-        }
-      }
-    },
-    {
-      "date": "2026-08-05",
-      "type": "evening",
-      "bursts": 4,
-      "passed_gate": 0,
-      "scored": 0,
-      "shortlist_size": 0,
-      "score_cap": 25,
-      "top_score": null,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -6025,6 +6035,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 6.88,
+        "d3": 7.82,
+        "d5": 6.71,
+        "n": 2,
+        "rows": 2,
+        "from_open": {
+          "d1": 6.09,
+          "d3": 7.04,
+          "d5": 5.96,
+          "n": 2
+        }
+      }
+    },
+    {
+      "date": "2026-08-05",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 0,
+      "scored": 0,
+      "shortlist_size": 0,
+      "score_cap": 25,
+      "top_score": null,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.89,
         "d3": 2.43,
@@ -6039,6 +6080,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -6201,37 +6246,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": null,
-        "d3": null,
-        "d5": null,
-        "n": 0,
-        "rows": 0,
-        "from_open": {
-          "d1": null,
-          "d3": null,
-          "d5": null,
-          "n": 0
-        }
-      }
-    },
-    {
-      "date": "2026-08-04",
-      "type": "evening",
-      "bursts": 8,
-      "passed_gate": 5,
-      "scored": 5,
-      "shortlist_size": 5,
-      "score_cap": 25,
-      "top_score": 6.8,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -6264,6 +6278,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n": 0,
+        "rows": 0,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null,
+          "n": 0
+        }
+      }
+    },
+    {
+      "date": "2026-08-04",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 6.8,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 1.18,
         "d3": 2.99,
@@ -6278,6 +6323,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -6608,37 +6657,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 2.24,
-        "d3": 2.77,
-        "d5": 1.82,
-        "n": 4,
-        "rows": 5,
-        "from_open": {
-          "d1": 1.55,
-          "d3": 2.09,
-          "d5": 1.15,
-          "n": 4
-        }
-      }
-    },
-    {
-      "date": "2026-08-03",
-      "type": "evening",
-      "bursts": 9,
-      "passed_gate": 5,
-      "scored": 5,
-      "shortlist_size": 5,
-      "score_cap": 25,
-      "top_score": 7.1,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -6671,6 +6689,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 2.24,
+        "d3": 2.77,
+        "d5": 1.82,
+        "n": 4,
+        "rows": 5,
+        "from_open": {
+          "d1": 1.55,
+          "d3": 2.09,
+          "d5": 1.15,
+          "n": 4
+        }
+      }
+    },
+    {
+      "date": "2026-08-03",
+      "type": "evening",
+      "bursts": 9,
+      "passed_gate": 5,
+      "scored": 5,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 7.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.89,
         "d3": 3.03,
@@ -6685,6 +6734,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -7053,37 +7106,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": -0.46,
-        "d3": -2.62,
-        "d5": 0.3,
-        "n": 2,
-        "rows": 5,
-        "from_open": {
-          "d1": -0.44,
-          "d3": -2.6,
-          "d5": 0.32,
-          "n": 2
-        }
-      }
-    },
-    {
-      "date": "2026-07-31",
-      "type": "evening",
-      "bursts": 5,
-      "passed_gate": 3,
-      "scored": 3,
-      "shortlist_size": 3,
-      "score_cap": 25,
-      "top_score": 8.1,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -7116,6 +7138,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": -0.46,
+        "d3": -2.62,
+        "d5": 0.3,
+        "n": 2,
+        "rows": 5,
+        "from_open": {
+          "d1": -0.44,
+          "d3": -2.6,
+          "d5": 0.32,
+          "n": 2
+        }
+      }
+    },
+    {
+      "date": "2026-07-31",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 8.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.68,
         "d3": 2.8,
@@ -7130,6 +7183,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -7340,37 +7397,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 5.85,
-        "d3": 12.92,
-        "d5": 19.1,
-        "n": 2,
-        "rows": 3,
-        "from_open": {
-          "d1": 5.95,
-          "d3": 13.0,
-          "d5": 19.17,
-          "n": 2
-        }
-      }
-    },
-    {
-      "date": "2026-07-30",
-      "type": "evening",
-      "bursts": 9,
-      "passed_gate": 6,
-      "scored": 6,
-      "shortlist_size": 5,
-      "score_cap": 25,
-      "top_score": 7.9,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -7403,6 +7429,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 5.85,
+        "d3": 12.92,
+        "d5": 19.1,
+        "n": 2,
+        "rows": 3,
+        "from_open": {
+          "d1": 5.95,
+          "d3": 13.0,
+          "d5": 19.17,
+          "n": 2
+        }
+      }
+    },
+    {
+      "date": "2026-07-30",
+      "type": "evening",
+      "bursts": 9,
+      "passed_gate": 6,
+      "scored": 6,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 7.9,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.98,
         "d3": 2.61,
@@ -7417,6 +7474,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -7788,37 +7849,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 0.72,
-        "d3": 3.54,
-        "d5": 7.75,
-        "n": 3,
-        "rows": 6,
-        "from_open": {
-          "d1": 0.43,
-          "d3": 3.24,
-          "d5": 7.43,
-          "n": 3
-        }
-      }
-    },
-    {
-      "date": "2026-07-29",
-      "type": "evening",
-      "bursts": 10,
-      "passed_gate": 9,
-      "scored": 9,
-      "shortlist_size": 5,
-      "score_cap": 25,
-      "top_score": 7.2,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -7851,6 +7881,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 0.72,
+        "d3": 3.54,
+        "d5": 7.75,
+        "n": 3,
+        "rows": 6,
+        "from_open": {
+          "d1": 0.43,
+          "d3": 3.24,
+          "d5": 7.43,
+          "n": 3
+        }
+      }
+    },
+    {
+      "date": "2026-07-29",
+      "type": "evening",
+      "bursts": 10,
+      "passed_gate": 9,
+      "scored": 9,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 7.2,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.8,
         "d3": 2.51,
@@ -7865,6 +7926,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -8283,37 +8348,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 0.92,
-        "d3": 3.23,
-        "d5": 8.97,
-        "n": 9,
-        "rows": 9,
-        "from_open": {
-          "d1": 1.08,
-          "d3": 3.4,
-          "d5": 9.14,
-          "n": 9
-        }
-      }
-    },
-    {
-      "date": "2026-07-28",
-      "type": "evening",
-      "bursts": 8,
-      "passed_gate": 3,
-      "scored": 3,
-      "shortlist_size": 3,
-      "score_cap": 25,
-      "top_score": 7.8,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -8346,6 +8380,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 0.92,
+        "d3": 3.23,
+        "d5": 8.97,
+        "n": 9,
+        "rows": 9,
+        "from_open": {
+          "d1": 1.08,
+          "d3": 3.4,
+          "d5": 9.14,
+          "n": 9
+        }
+      }
+    },
+    {
+      "date": "2026-07-28",
+      "type": "evening",
+      "bursts": 8,
+      "passed_gate": 3,
+      "scored": 3,
+      "shortlist_size": 3,
+      "score_cap": 25,
+      "top_score": 7.8,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.79,
         "d3": 2.62,
@@ -8360,6 +8425,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -8684,37 +8753,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 0.3,
-        "d3": 5.12,
-        "d5": 5.96,
-        "n": 3,
-        "rows": 3,
-        "from_open": {
-          "d1": 0.32,
-          "d3": 5.13,
-          "d5": 5.98,
-          "n": 3
-        }
-      }
-    },
-    {
-      "date": "2026-07-27",
-      "type": "evening",
-      "bursts": 5,
-      "passed_gate": 2,
-      "scored": 2,
-      "shortlist_size": 2,
-      "score_cap": 25,
-      "top_score": 6.2,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -8747,6 +8785,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 0.3,
+        "d3": 5.12,
+        "d5": 5.96,
+        "n": 3,
+        "rows": 3,
+        "from_open": {
+          "d1": 0.32,
+          "d3": 5.13,
+          "d5": 5.98,
+          "n": 3
+        }
+      }
+    },
+    {
+      "date": "2026-07-27",
+      "type": "evening",
+      "bursts": 5,
+      "passed_gate": 2,
+      "scored": 2,
+      "shortlist_size": 2,
+      "score_cap": 25,
+      "top_score": 6.2,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.82,
         "d3": 2.42,
@@ -8761,6 +8830,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -8968,37 +9041,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": -0.56,
-        "d3": 2.97,
-        "d5": 6.17,
-        "n": 2,
-        "rows": 2,
-        "from_open": {
-          "d1": -0.43,
-          "d3": 3.1,
-          "d5": 6.31,
-          "n": 2
-        }
-      }
-    },
-    {
-      "date": "2026-07-24",
-      "type": "evening",
-      "bursts": 10,
-      "passed_gate": 8,
-      "scored": 8,
-      "shortlist_size": 5,
-      "score_cap": 25,
-      "top_score": 6.9,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -9031,6 +9073,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": -0.56,
+        "d3": 2.97,
+        "d5": 6.17,
+        "n": 2,
+        "rows": 2,
+        "from_open": {
+          "d1": -0.43,
+          "d3": 3.1,
+          "d5": 6.31,
+          "n": 2
+        }
+      }
+    },
+    {
+      "date": "2026-07-24",
+      "type": "evening",
+      "bursts": 10,
+      "passed_gate": 8,
+      "scored": 8,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 6.9,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.44,
         "d3": 2.06,
@@ -9045,6 +9118,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -9460,37 +9537,6 @@
           }
         }
       ],
-      "forward_returns": {
-        "d1": 0.94,
-        "d3": 2.05,
-        "d5": 3.84,
-        "n": 7,
-        "rows": 8,
-        "from_open": {
-          "d1": 0.59,
-          "d3": 1.69,
-          "d5": 3.47,
-          "n": 7
-        }
-      }
-    },
-    {
-      "date": "2026-07-23",
-      "type": "evening",
-      "bursts": 6,
-      "passed_gate": 6,
-      "scored": 6,
-      "shortlist_size": 5,
-      "score_cap": 25,
-      "top_score": 9.1,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -9523,6 +9569,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 0.94,
+        "d3": 2.05,
+        "d5": 3.84,
+        "n": 7,
+        "rows": 8,
+        "from_open": {
+          "d1": 0.59,
+          "d3": 1.69,
+          "d5": 3.47,
+          "n": 7
+        }
+      }
+    },
+    {
+      "date": "2026-07-23",
+      "type": "evening",
+      "bursts": 6,
+      "passed_gate": 6,
+      "scored": 6,
+      "shortlist_size": 5,
+      "score_cap": 25,
+      "top_score": 9.1,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 1.62,
         "d3": 2.93,
@@ -9537,6 +9614,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -9793,37 +9874,6 @@
         }
       ],
       "gated": [],
-      "forward_returns": {
-        "d1": 2.89,
-        "d3": 5.97,
-        "d5": 7.25,
-        "n": 5,
-        "rows": 6,
-        "from_open": {
-          "d1": 2.5,
-          "d3": 5.57,
-          "d5": 6.85,
-          "n": 5
-        }
-      }
-    },
-    {
-      "date": "2026-07-22",
-      "type": "evening",
-      "bursts": 4,
-      "passed_gate": 4,
-      "scored": 4,
-      "shortlist_size": 4,
-      "score_cap": 25,
-      "top_score": 6.5,
-      "fallbacks": 0,
-      "model": "claude-sonnet-4-6",
-      "status": "ok",
-      "dry_run": true,
-      "universe": {
-        "label": "synthetic fixture universe (77 invented histories)",
-        "size": 77
-      },
       "rules": {
         "check.breakdown_lookback": 20,
         "check.breakdown_pct": -4.0,
@@ -9856,6 +9906,37 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "forward_returns": {
+        "d1": 2.89,
+        "d3": 5.97,
+        "d5": 7.25,
+        "n": 5,
+        "rows": 6,
+        "from_open": {
+          "d1": 2.5,
+          "d3": 5.57,
+          "d5": 6.85,
+          "n": 5
+        }
+      }
+    },
+    {
+      "date": "2026-07-22",
+      "type": "evening",
+      "bursts": 4,
+      "passed_gate": 4,
+      "scored": 4,
+      "shortlist_size": 4,
+      "score_cap": 25,
+      "top_score": 6.5,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "ok",
+      "dry_run": true,
+      "universe": {
+        "label": "synthetic fixture universe (77 invented histories)",
+        "size": 77
+      },
       "benchmark": {
         "d1": 0.91,
         "d3": 3.0,
@@ -9870,6 +9951,10 @@
           "n1": 77,
           "n3": 77,
           "n5": 77
+        },
+        "universe": {
+          "label": "synthetic fixture universe (77 invented histories)",
+          "size": 77
         }
       },
       "liquidity": {
@@ -10044,6 +10129,38 @@
         }
       ],
       "gated": [],
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
       "forward_returns": {
         "d1": 0.9,
         "d3": 3.71,

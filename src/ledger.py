@@ -176,6 +176,7 @@ CONTRACT_INVARIANTS = [
     "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
     "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
     "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'liquidity_floor' (rule 6 refused it in the scan, for dollar volume below the session's percentile floor, before the checklist was consulted), 'veto_up_days' (an absolute rule refused it before the pass count was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same four words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and neither a veto nor a liquidity refusal is ever published as a gate rejection.",
+    "runs[].benchmark.universe is the universe the benchmark was measured over, and it is always the one that run's own universe block names: a run is benchmarked only from a later scan of the same universe, so a --tickers run contributes no benchmark to anything and receives none. A run whose universe no later scan has read keeps a null benchmark forever, which is the honest answer and not a zero.",
     "runs[].rules is every number this screener's rules turned on when that run was made — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. A run from before it carries no rules block, and no surface may read that as agreement.",
     "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when no name traded or the rule is off), refused (how many bursts sat below it). run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
     "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
@@ -1035,14 +1036,22 @@ def universe_returns(frames: dict, session) -> dict:
         from_open[key] = round(math.fsum(open_values) / len(open_values), 2) if open_values else None
         from_open[f"n{horizon}"] = len(open_values)
     out["from_open"] = from_open
+    # The same key empty_benchmark() carries, so the pending block and a
+    # measured one are one shape. Which universe these frames were is the
+    # caller's fact, not this function's; fill_benchmarks() stamps it.
+    out["universe"] = None
     return out
 
 
 def empty_benchmark() -> dict:
-    """Pending on both bases, with zero names behind every horizon."""
+    """Pending on both bases, with zero names behind every horizon, and no
+    universe yet: `universe` is the block the filling scan was measured over,
+    stamped when a horizon is first filled. A benchmark whose universe is not
+    the one the run itself scanned is not that run's alternative."""
     out = {f"d{h}": None for h in HORIZONS}
     out.update({f"n{h}": 0 for h in HORIZONS})
     out["from_open"] = {**{f"d{h}": None for h in HORIZONS}, **{f"n{h}": 0 for h in HORIZONS}}
+    out["universe"] = None
     return out
 
 
@@ -1592,6 +1601,31 @@ def _malformed_rows(runs: list[dict]) -> str | None:
         if "rules" in run and not isinstance(run["rules"], dict):
             return (f"holds a run for {run.get('date')!r} whose rules is a JSON "
                     f"{type(run['rules']).__name__} rather than an object")
+        # THE EIGHTH INSTANCE. Round 7 added a nested object to every entry --
+        # benchmark, with from_open one level inside it -- and did not extend
+        # the check round 6 added for exactly this class. fill_benchmarks()
+        # and evidence() both index into it, inside publish(), after the scan
+        # and every Claude call are paid for. Absent is a run from before the
+        # benchmark existed; present in a shape no writer produces is refused.
+        # Two audit lenses found this independently, which is the argument for
+        # sweeping a class rather than closing its instances one at a time.
+        bench = run.get("benchmark")
+        if "benchmark" in run and not isinstance(bench, dict):
+            return (f"holds a run for {run.get('date')!r} whose benchmark is a JSON "
+                    f"{type(bench).__name__} rather than an object")
+        if isinstance(bench, dict):
+            inner = bench.get("from_open")
+            if inner is not None and not isinstance(inner, dict):
+                return (f"holds a run for {run.get('date')!r} whose benchmark.from_open "
+                        f"is a JSON {type(inner).__name__} rather than an object")
+            for block, where in ((bench, "benchmark"), (inner or {}, "benchmark.from_open")):
+                for horizon in HORIZONS:
+                    for key in (f"d{horizon}", f"n{horizon}"):
+                        value = block.get(key)
+                        if value is not None and (isinstance(value, bool)
+                                                  or not isinstance(value, (int, float))):
+                            return (f"holds a run for {run.get('date')!r} whose {where}.{key} "
+                                    f"is a JSON {type(value).__name__} rather than a number")
     for key in ("candidates", "gated"):
         for run in runs:
             rows = run.get(key)
@@ -2055,18 +2089,38 @@ class Ledger:
             self._copy_returns_into_latest()
         return moved
 
-    def fill_benchmarks(self, frames: dict, through: date | None = None) -> int:
+    def fill_benchmarks(self, frames: dict, through: date | None = None,
+                        universe: dict | None = None) -> int:
         """Fill the universe benchmark of every run in the fill window whose
-        horizons the frames make knowable. Returns how many runs moved.
+        horizons the frames make knowable, from the universe `frames` came
+        from. Returns how many runs moved.
+
+        `universe` IS THE QUESTION, not decoration. The fill used to take
+        whatever the caller had scanned and measure it against every earlier
+        run, so the documented `--tickers BURST` smoke test filled the
+        previous night's benchmark from one frame -- and that night had
+        SCORED BURST, so the alternative the north star is measured against
+        became the pick itself: d1 12.0 over n1 1, where the honest
+        equal-weight move over that night's five names was +2.45%. Never
+        corrected either, since a measured horizon keeps its value. Two
+        rules close it: a caller with no universe to offer (a --tickers run)
+        passes None and fills nothing, and a run is filled only from a scan
+        of the universe IT scanned, compared on the label the run entry
+        already carries. The block is stamped with that universe, so a
+        reader can see which basket the number is over rather than infer it.
 
         Same window and same idempotence as fill_forward_returns(): a horizon
         already measured keeps its value, because two nights' frames are the
         same feed's arithmetic over the same bars. The `n` per horizon is
-        how many of tonight's frames carried that run's session, which is the
-        universe as tonight's scan holds it -- a name added or dropped from
-        data/symbols.txt since that night is counted as tonight has it, and
-        the count is what says how many that was.
+        how many of tonight's frames carried that run's session -- the
+        universe as tonight's scan holds it, so a name added to or dropped
+        from the symbol file since that night is counted as tonight has it,
+        and the count is what says how many that was.
         """
+        # No universe, nothing to benchmark WITH. A --tickers run scanned a
+        # handful of names it was handed, which is not a market.
+        if not isinstance(universe, dict) or not universe.get("label"):
+            return 0
         limit = _as_date(through)
         moved = 0
         window = list(self.runs[:FILL_WINDOW_RUNS])
@@ -2076,6 +2130,12 @@ class Ledger:
                 if (run.get("date"), run.get("type")) == key:
                     window.append(run)
         for run in window:
+            # Only from a scan of the universe this run itself scanned. A run
+            # written before universes were recorded cannot be matched, so it
+            # is left pending rather than filled from an assumption.
+            scanned = run.get("universe")
+            if not isinstance(scanned, dict) or scanned.get("label") != universe["label"]:
+                continue
             current = run.get("benchmark")
             if not isinstance(current, dict):
                 current = run["benchmark"] = empty_benchmark()
@@ -2099,6 +2159,7 @@ class Ledger:
                     current["from_open"][count] = fresh["from_open"][count]
                     changed = True
             if changed:
+                current["universe"] = dict(universe)
                 moved += 1
         return moved
 
