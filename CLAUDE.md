@@ -384,6 +384,32 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   against per-row-type sums at compact separators); building the actual file is
   what settled it, which is this file's own rule about argued findings.
 
+  **The commit-back was the last artifact still naming a clock.** Step 10 made
+  "name the session you really read" a rule for the subject line, the table
+  heading and the CSV filename; `evening.yml` committed `run $(date -u +%F)`.
+  Two ways they differ: an EST evening starts at 23:16 UTC, so a run over ~44
+  minutes commits under TOMORROW's date, and a `SCAN_SESSION_DATE` backfill
+  scans an old session and labels it today -- the silent relabelling step 10
+  exists to end. It reads `docs/data.json`'s own `run.date` now, and when it
+  cannot, the message SAYS the date is a commit time rather than passing one
+  off as the other. The test cuts those lines out of the real workflow and runs
+  them against a stub `git`, the way the push loop was traced: reading them
+  proves nothing about what `sh` does with `$(...)` and `[ -n ]`.
+
+  **And the page's streak tooltip named the 2LYNCH gate alone, under a comment
+  saying it matched the email.** The 3.3 audit swept that sentence in
+  `_streak_footnote()` -- three reasons, because a veto is not a gate rejection
+  -- and did not sweep the page. A 6/6 name refused by an absolute rule is
+  counted in `seen_before`, and the tooltip told the reader it was not. Same
+  round, a second one: the streak table's null bucket said "the record does not
+  reach back far enough", which is ONE of the four reasons that put a burst
+  there, and the only one any available fixture carries -- so a run whose
+  history could not be READ was told a different fault with a different fix.
+  The bucket has no reason field to narrow it, so it now says what is true of
+  all four and points at the rows, which do. Both pinned by tests that read
+  both files, because a comment claiming two surfaces match is exactly what
+  carried this for a round.
+
   **And `evening.yml`'s commit-back has still never executed** — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on
   it; the `git add` bug that would have voided it is fixed and guarded by a
