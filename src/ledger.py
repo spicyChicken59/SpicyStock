@@ -166,6 +166,7 @@ CONTRACT_INVARIANTS = [
     "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was ('lynch_gate' rejected by the checklist, 'score_cap' passed but out of calls). Null exactly with last_seen. A gate rejection is never published as an absence of judgement.",
     "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
     "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
+    "evidence.shortlist, evidence.rest, evidence.refused and evidence.crowded_out are four disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, and the names that cleared the gate and were never scored because the call budget filled. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked.",
     "Numbers are numbers or null. No 'n/a' strings.",
 ]
 
@@ -1208,6 +1209,24 @@ def evidence(runs: list[dict]) -> dict:
 
     shortlisted = [r for r in scored if isinstance(r.get("rank"), int) and r["rank"] <= _shortlist_size(runs)]
     others = [r for r in scored if isinstance(r.get("rank"), int) and r["rank"] > _shortlist_size(runs)]
+
+    # THE ALTERNATIVE. The north star is "its picks beat the alternative", and
+    # until this block the record measured the picks against the claimed band
+    # and against each other -- never against the names the strategy said no
+    # to, which it archives with the same forward returns and which are the
+    # only control that needs no new data. Two populations, kept apart on
+    # purpose: `refused` is what the checklist or an absolute rule rejected,
+    # which is the strategy's own judgement and the comparison that judges it;
+    # `crowded_out` cleared the gate and was never scored because the call
+    # budget filled, which is a fact about MAX_TO_SCORE and not about the
+    # strategy, and folding it into the refusals would let a full night pad the
+    # control with names the screener actually liked. A row with no reason
+    # word was written before the reasons existed, when the gate was the only
+    # way out, so it counts as refused. Leading rows only, as everywhere.
+    scored_keys = {(r.get("ticker"), r.get("date")) for r in scored}
+    unscored = [r for r in every if (r.get("ticker"), r.get("date")) not in scored_keys]
+    crowded = [r for r in unscored if r.get("reason") == "score_cap"]
+    refused = [r for r in unscored if r.get("reason") != "score_cap"]
     return {
         "min_setups": MIN_SETUPS_FOR_A_RATE,
         "band": {"low": CLAIMED_BAND[0], "high": CLAIMED_BAND[1]},
@@ -1228,9 +1247,21 @@ def evidence(runs: list[dict]) -> dict:
         "by_day": by_day,
         "by_month": by_month,
         "by_ticker": by_ticker,
-        "shortlist": {"setups": len(shortlisted), "outcomes": outcome_summary(shortlisted)},
-        "rest": {"setups": len(others), "outcomes": outcome_summary(others)},
+        "shortlist": _population(shortlisted),
+        "rest": _population(others),
+        "refused": _population(refused),
+        "crowded_out": _population(crowded),
     }
+
+
+def _population(rows: list[dict]) -> dict:
+    """One comparable population: its size, its outcomes, and whether the
+    longest horizon has enough behind it to read as a rate. `enough` travels
+    with the block for the same reason by_score carries it -- a page must not
+    decide for itself, and cannot then decide differently from a later reader
+    of the same file."""
+    summary = outcome_summary(rows)
+    return {"setups": len(rows), "outcomes": summary, "enough": _enough(summary)}
 
 
 def _shortlist_size(runs: list[dict]) -> int:

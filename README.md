@@ -220,7 +220,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 788 tests, no network or API keys needed
+pytest tests/                   # 790 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -284,12 +284,24 @@ It leads the page now, above the funnel, with four more views under it:
 | Does a streak pay — is day 3 worth more than day 1? | `evidence.by_day` | **appearances** |
 | Is it getting better or worse? | `evidence.by_month` | setups |
 | What happened the last times this name burst? | `evidence.by_ticker`, plus `docs/ledger.json` on request | setups |
+| **Did the picks beat what the strategy refused?** | `evidence.refused` against `evidence.overall`, under the score-band table | setups |
 
-Alongside those five, the block carries what a reader needs to interpret them:
+The last row is the north star's own question — "proven from its own record
+that its picks beat the alternative" — and until it existed the page measured
+the picks against the claimed band and against each other, never against the
+names the strategy said no to, which the ledger has archived with the same
+forward returns since 3.3. The page states a direction only when BOTH sides
+clear `min_setups` at the longest horizon, and always prints both n's.
+
+Alongside those six, the block carries what a reader needs to interpret them:
 `evidence.record` (how many runs, sessions and setups are behind everything
-here), `evidence.overall` (the same measurement over every scored setup),
-`evidence.shortlist` and `evidence.rest` (the names that went out by email
-against the ones that did not), `evidence.horizons` (which sessions after the
+here), `evidence.overall` (the same measurement over every scored setup), four
+disjoint populations — `evidence.shortlist` and `evidence.rest` (the names that
+went out by email against the scored ones that did not), `evidence.refused`
+(what the checklist or an absolute rule rejected) and `evidence.crowded_out`
+(cleared the gate, never scored because the call budget filled — kept apart
+from the refusals so a full night cannot pad the control with names the
+screener liked) — `evidence.horizons` (which sessions after the
 burst were measured) and `evidence.band` (the range the strategy claims).
 
 **`+3d` and `+5d` are the horizons that matter, and the page says so on every
@@ -571,7 +583,7 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 146 checks, and which file each one
+**Three data sources, one page.** It runs 152 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served

@@ -18,6 +18,7 @@
       "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was ('lynch_gate' rejected by the checklist, 'score_cap' passed but out of calls). Null exactly with last_seen. A gate rejection is never published as an absence of judgement.",
       "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
       "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
+      "evidence.shortlist, evidence.rest, evidence.refused and evidence.crowded_out are four disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, and the names that cleared the gate and were never scored because the call budget filled. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked.",
       "Numbers are numbers or null. No 'n/a' strings."
     ]
   },
@@ -6267,7 +6268,8 @@
           "worst": null,
           "in_band": 0
         }
-      ]
+      ],
+      "enough": false
     },
     "rest": {
       "setups": 20,
@@ -6296,7 +6298,68 @@
           "worst": null,
           "in_band": 0
         }
-      ]
+      ],
+      "enough": false
+    },
+    "refused": {
+      "setups": 17,
+      "outcomes": [
+        {
+          "horizon": 1,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        },
+        {
+          "horizon": 3,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        },
+        {
+          "horizon": 5,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        }
+      ],
+      "enough": false
+    },
+    "crowded_out": {
+      "setups": 6,
+      "outcomes": [
+        {
+          "horizon": 1,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        },
+        {
+          "horizon": 3,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        },
+        {
+          "horizon": 5,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0
+        }
+      ],
+      "enough": false
     }
   }
 }

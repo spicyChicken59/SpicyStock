@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 788 tests with no network
+- **There is a regression net.** `pytest tests/` runs 790 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -168,6 +168,27 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   version printing READY under `--no-spend` over boundaries it had never
   tried, which is the confidently false sentence in the tool meant to prevent
   one.
+
+  **The record measured the picks against the claimed band and against each
+  other, and never against the alternative.** The north star is "its picks
+  beat the alternative", and the ledger has archived the alternative since
+  3.3 -- every refused burst, with the same forward returns -- without one
+  block ever comparing them. `evidence()` carries four disjoint populations
+  now, each with its own `enough`: `shortlist`, `rest`, `refused` (what the
+  checklist or an absolute rule said no to) and `crowded_out` (cleared the
+  gate, never scored because MAX_TO_SCORE filled). The split is the point: a
+  crowded-out name is one the screener LIKED, and folding it into the
+  refusals would let a full night pad the control by exactly what those names
+  went on to make. A row with no reason word predates the reasons and counts
+  as refused. The page renders the ladder under the score-band table and
+  states a direction only when BOTH sides clear `min_setups` at the longest
+  horizon, always with both n's -- the same rule `scoreVerdict()` follows.
+  Read off the thirty-run history before any page existed to show it: the
+  refusals returned 3.63% at five sessions against 5.9% for what was scored,
+  over 14 and 74 -- which is the "only one side can be read" sentence, and
+  the page says exactly that. The three verdict branches are pinned on three
+  sources, because no real source can hold more than one of them yet.
+
 
   **The interpreter is part of the environment, and it changed an answer.**
   CPython 3.12 made the builtin `sum()` compensated for floats, so the same

@@ -2433,6 +2433,72 @@ def test_the_evidence_counts_each_setup_once_however_many_sessions_it_burst_on()
     assert overall["mean"] == 15.0, "not 22.5, which is what counting rows gives"
 
 
+def _with_reason(runs: list[dict], ticker: str, reason, returns: dict) -> list[dict]:
+    """Add one gated row to the newest run, with the reason word and outcome given.
+
+    `_run` writes a single lynch_gate refusal per session; the control block
+    splits refusals from the names the call cap crowded out, so a test of it
+    needs both kinds on one night, and a row with no reason at all."""
+    row = {"ticker": ticker, "date": runs[0]["date"], "close": 9.0, "gain_pct": 4.4,
+           "volume": 5_000_000, "volume_ratio": 1.8, "lynch": "6/6", "lynch_passes": 6,
+           "lynch_total": 6, "lynch_detail": _detail(6),
+           "forward_returns": {**ledger.empty_returns(), **returns, "as_of": "x"}}
+    if reason is not None:
+        row["reason"] = reason
+    runs[0]["gated"].append(row)
+    return runs
+
+
+def test_the_alternative_is_what_the_strategy_refused_and_not_what_the_budget_crowded_out():
+    """The north star is "its picks beat THE ALTERNATIVE", and the record has
+    always archived the alternative -- every refused burst, with the same
+    forward returns -- without ever measuring against it.
+
+    Two populations, and the split is the point. A name the checklist or a
+    rule refused is the strategy's own judgement; a name that cleared the gate
+    and was never scored because MAX_TO_SCORE filled is a fact about the
+    budget. Folding the second into the first would let a full night pad the
+    control with names the screener actually liked, which flatters the picks
+    by exactly the amount those names went on to make.
+    """
+    runs = _record([("2026-08-24", ("AAA", "BBB"))],
+                   returns={("AAA", "2026-08-24"): {"d5": 10.0}, ("BBB", "2026-08-24"): {"d5": 6.0},
+                            ("ZZZ", "2026-08-24"): {"d5": 1.0}})   # _run's own lynch_gate refusal
+    _with_reason(runs, "VVV", "veto_up_days", {"d5": 3.0})
+    _with_reason(runs, "CCC", "score_cap", {"d5": 20.0})
+    _with_reason(runs, "OLD", None, {"d5": 5.0})                      # written before reasons existed
+
+    ev = ledger.evidence(runs)
+    d5 = lambda block: ledger.at_horizon(ev[block]["outcomes"], 5)   # noqa: E731
+
+    assert d5("overall")["mean"] == 8.0 and d5("overall")["n"] == 2
+    assert ev["refused"]["setups"] == 3 and d5("refused")["mean"] == 3.0, (
+        "the gate rejection, the veto and the reason-less row, and NOT the crowded-out one")
+    assert ev["crowded_out"]["setups"] == 1 and d5("crowded_out")["mean"] == 20.0
+    assert not ev["refused"]["enough"], "three setups is not a rate"
+
+
+def test_a_setup_that_was_scored_once_is_a_pick_even_if_it_was_later_refused():
+    """Leading rows only, the same rule every other block follows. AAA is
+    scored on the 24th and refused by the gate on the 25th: one move, one
+    setup, and it belongs to the population that led it. Counting the refusal
+    too would put the same move on both sides of the comparison."""
+    runs = _record([("2026-08-25", ()), ("2026-08-24", ("AAA",))],
+                   returns={("AAA", "2026-08-24"): {"d5": 12.0}})
+    runs[1]["gated"] = []   # _run plants a refused ZZZ on every session; not this test's subject
+    # the 25th's run: AAA appears again, refused, with its own (later) window
+    runs[0]["gated"] = [{"ticker": "AAA", "date": "2026-08-25", "close": 9.0, "gain_pct": 4.4,
+                         "volume": 5_000_000, "volume_ratio": 1.8, "lynch": "2/6",
+                         "lynch_passes": 2, "lynch_total": 6, "lynch_detail": _detail(2),
+                         "reason": "lynch_gate",
+                         "forward_returns": {**ledger.empty_returns(), "d5": -4.0, "as_of": "x"}}]
+
+    ev = ledger.evidence(runs)
+
+    assert ev["overall"]["setups"] == 1 and ledger.at_horizon(ev["overall"]["outcomes"], 5)["mean"] == 12.0
+    assert ev["refused"]["setups"] == 0, "the 25th is the same setup, already counted as a pick"
+
+
 def test_the_streak_view_counts_appearances_because_a_setup_lead_is_always_day_one():
     """by_day is the one block per appearance, and the reason is structural.
 

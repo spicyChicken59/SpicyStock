@@ -195,6 +195,10 @@
       <div class="sc-chart" id="evidence-chart" role="group" tabindex="0"
            aria-label="Mean forward return at three and five sessions for each score band, with the 8 to 20 percent range the strategy claims marked. The same numbers are in the table below."></div>
       <div class="sc-table-scroll" id="evidence-scroll"><table class="sc-table sc-table--compact" id="evidence-table"></table></div>
+      <h3 id="control-title">Against the alternative</h3>
+      <p class="sc-hint" id="control-hint"></p>
+      <p id="control-verdict"></p>
+      <div class="sc-table-scroll" id="control-scroll"><table class="sc-table sc-table--compact" id="control-table"></table></div>
     </div>
   </section>
 
@@ -1135,6 +1139,68 @@
       'Read it as the record so far, not as a result.';
   }
 
+  // THE ALTERNATIVE. Until this block the page measured the picks against the
+  // claimed band and against each other -- never against the names the
+  // strategy said no to, which the record archives with the same forward
+  // returns and which are the only control that needs no new data. Same
+  // honesty rules as scoreVerdict(): a direction is stated only when BOTH
+  // sides clear min_setups at the longest horizon, and the sentence carries
+  // both n's either way. The four rows are disjoint, and the one the budget
+  // crowded out is kept off the "refused" side on purpose: those names
+  // cleared the gate, so counting them as the alternative would let a full
+  // night pad the control with names the screener liked.
+  var POPULATIONS = [
+    ['shortlist', 'went out by email', 'the shortlist'],
+    ['rest', 'scored, ranked below the shortlist', 'the rest of the scored'],
+    ['refused', 'refused by the checklist or an absolute rule', 'what it refused'],
+    ['crowded_out', 'cleared the gate; never scored, the call cap had filled', 'the crowded-out']
+  ];
+  function controlVerdict(ev) {
+    var h = longestOf(ev);
+    var picks = at(ev.overall.outcomes, h), refused = at((ev.refused || {}).outcomes, h);
+    var picksEnough = picks.n >= ev.min_setups, refusedEnough = !!(ev.refused && ev.refused.enough);
+    var counts = plural(picks.n, 'scored setup') + ' and ' + plural(refused.n, 'refused one') + ' have closed at ' + hzLabel(h);
+    if (!picksEnough && !refusedEnough) {
+      return 'No comparison yet: ' + counts + ', and this page needs ' + ev.min_setups +
+        ' of each before it will read the difference between them as a rate.';
+    }
+    if (!picksEnough || !refusedEnough) {
+      return 'Only one side can be read yet: ' + counts + '. A comparison needs both, and the ' +
+        (picksEnough ? 'refused' : 'scored') + ' side is still filling.';
+    }
+    var lift = picks.mean - refused.mean;
+    var direction = lift > 0.5 ? 'better' : (lift < -0.5 ? 'WORSE' : 'no differently');
+    return 'Names this screener scored returned ' + pct(picks.mean, 2) + ' at ' + hzLabel(h) + ' over ' +
+      plural(picks.n, 'setup') + '; names it refused returned ' + pct(refused.mean, 2) + ' over ' +
+      plural(refused.n, 'setup') + ' — the picks did ' + direction +
+      (direction === 'no differently' ? '. ' : ', by ' + pct(Math.abs(lift), 2).replace('+', '') + '. ') +
+      'Same market, same sessions, and overlapping bursts are not independent draws. ' +
+      'Read it as the record so far, not as a result.';
+  }
+  function renderControl(ev) {
+    var h = longestOf(ev);
+    $('control-hint').textContent =
+      'The one comparison the record can make without a benchmark it does not hold: every burst the scan found, ' +
+      'split by what this screener did with it, against what the next sessions did. Refusals are the strategy\u2019s ' +
+      'own judgement; the crowded-out row is the call budget\u2019s, and is kept off that side for that reason.';
+    $('control-verdict').textContent = controlVerdict(ev);
+    table($('control-table'),
+      ['what the screener did', 'setups'].concat(ev.horizons.map(hzLabel)).concat(['in the claimed band', 'reads as']),
+      POPULATIONS.filter(function (p) { return ev[p[0]]; }).map(function (p) {
+        var block = ev[p[0]], longest = at(block.outcomes, h);
+        return el('tr', null, [
+          el('td', null, [el('span', { text: p[2] }), el('span', { 'class': 'sc-note', text: p[1] })]),
+          el('td', { 'class': 'sc-num', text: commas(block.setups) })
+        ].concat(ev.horizons.map(function (hh) { return rateCell(at(block.outcomes, hh), !!block.enough); }))
+         .concat([
+          el('td', { 'class': 'sc-num' }, figure(commas(longest.in_band),
+            longest.n ? 'of ' + plural(longest.n, 'measured setup') : null)),
+          el('td', null, enoughChip(!!block.enough, longest.n, ev.min_setups))
+        ]));
+      }), [1, 2, 3, 4, 5]);
+    clipWatch($('control-scroll'), 'What the screener did against the outcome');
+  }
+
   function renderEvidence(ev) {
     // A data.json with NO evidence block at all is a real state — a snapshot
     // published before this page learned to ask the question — and hiding the
@@ -1208,6 +1274,7 @@
         ]));
       }), [1, 2, 3, 4, 5]);
     clipWatch($('evidence-scroll'), 'Score band against forward return');
+    renderControl(ev);
   }
 
   function renderPredict(ev) {

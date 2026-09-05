@@ -229,6 +229,36 @@ const VARIANTS = {
     d.gated_out = [];
     return d;
   },
+  // The control ladder's other two sentences. The history source has 74
+  // scored setups closed and 14 refused, which is the "only one side can be
+  // read" branch; a direction may only be stated when BOTH clear min_setups,
+  // and "no comparison yet" when neither does. Neither state exists in any
+  // real source yet, so both are built from the history's own block with the
+  // n's moved and the means kept -- the sentence is what is under test, not
+  // the arithmetic behind the numbers, which tests/test_ledger.py pins.
+  thincontrol() {
+    const d = clone();
+    d.evidence = JSON.parse(JSON.stringify(HIST.evidence));
+    for (const block of [d.evidence.overall, d.evidence.refused]) {
+      block.outcomes.forEach((o) => { if (o.n) o.n = 5; });
+      block.enough = false;
+    }
+    return d;
+  },
+  fullcontrol() {
+    const d = clone();
+    d.evidence = JSON.parse(JSON.stringify(HIST.evidence));
+    const h = d.evidence.horizons[d.evidence.horizons.length - 1];
+    const picks = d.evidence.overall.outcomes.find((o) => o.horizon === h);
+    const ref = d.evidence.refused.outcomes.find((o) => o.horizon === h);
+    // DIFFERENT n's on the two sides. With both at 40 a verdict that printed
+    // the picks' n for the refused side too read identically, and the check
+    // that was meant to catch that passed with it in place.
+    picks.n = 40; picks.mean = 6.0;
+    ref.n = 45; ref.mean = 3.0;              // three points worse than the picks
+    d.evidence.refused.enough = true;
+    return d;
+  },
   // A run whose gate block never learned how many checks the checklist has.
   // The producer emits null there when NOTHING measured a checklist that
   // night, and every surface that mentions the gate concatenates the number
@@ -997,6 +1027,15 @@ ok('the legend keys are the two marks, not two identical squares',
 ok('a fallback score is a hollow dot, so the split is not only a colour',
   plot.dots.filter((d) => d.hollow).length === fwdDone.filter((c) => c.provenance.source !== 'claude').length,
   `${plot.dots.filter((d) => d.hollow).length} hollow of ${plot.dots.length}`);
+// THE ALTERNATIVE. The one-night fixture has no closed horizon, so the
+// evidence body -- and the control ladder inside it -- must stay hidden
+// together: a ladder of four "pending" rows under an empty-state note would
+// be the page saying two things about one state. The ladder itself is
+// checked on the history source and on two variants built from it below.
+ok('and the control ladder is hidden with the body it belongs to, not rendered under the empty note',
+  (await page.locator('#control-table tbody tr').count()) === 0
+  && await page.locator('#evidence-body').isHidden());
+
 ok('one session is not reported as evidence that the ranking works',
   /one session/.test(plot.verdict) && /not evidence/.test(plot.verdict), plot.verdict.slice(-120));
 await shot('forward-returns');
@@ -1199,6 +1238,47 @@ const streak = await page.evaluate(() => ({
 ok('the streak view says it counts appearances, and why it must',
   streak.rows === HEV.by_day.length && /APPEARANCE/.test(streak.hint) && /overlap/.test(streak.hint),
   streak.hint.slice(0, 100));
+// On the history source both sides of the control have closed outcomes, so
+// this is where the direction sentence is checked -- against the ledger's own
+// numbers, not against a rendered label. Whether it says better or worse is
+// the record's business; that it says one of them, with both n's, is this
+// check's.
+const hv = await page.textContent('#control-verdict');
+const hEv = HIST.evidence, hH = hEv.horizons[hEv.horizons.length - 1];
+const hPicks = hEv.overall.outcomes.find((o) => o.horizon === hH), hRef = hEv.refused.outcomes.find((o) => o.horizon === hH);
+const hLadder = await page.$$eval('#control-table tbody tr', (rows) => rows.map((r) => r.textContent.replace(/\s+/g, ' ')));
+// A missing row must FAIL these, not crash the runner: an earlier version
+// indexed hLadder[3] unguarded, so a ladder short by one row threw before any
+// FAIL line printed and read, to a count of failures, as a pass.
+const rowFor = (label) => hLadder.find((l) => l.startsWith(label)) || '';
+const countIn = (label) => Number((rowFor(label).match(new RegExp(label + '.*?(\\d+)')) || [])[1]);
+ok('the alternative is on the page as four disjoint populations, and says which is which',
+  hLadder.length === 4 && rowFor('the shortlist') && rowFor('what it refused')
+  && /call cap/.test(rowFor('the crowded-out')),
+  hLadder.map((l) => l.slice(0, 36)).join(' | ') || 'no ladder rendered');
+ok('and each row prints the setup count the ledger computed for that population',
+  countIn('what it refused') === HIST.evidence.refused.setups
+  && countIn('the crowded-out') === HIST.evidence.crowded_out.setups
+  && countIn('the shortlist') === HIST.evidence.shortlist.setups,
+  `refused ${HIST.evidence.refused.setups}, crowded ${HIST.evidence.crowded_out.setups}, shortlist ${HIST.evidence.shortlist.setups}`);
+ok('over thirty runs the control sentence carries both sides\' n and says which did better',
+  (hPicks.n >= hEv.min_setups && hEv.refused.enough)
+    ? (/did (better|WORSE|no differently)/.test(hv) && hv.includes(`over ${hPicks.n} setup`) && hv.includes(`over ${hRef.n} setup`))
+    : (/(No comparison yet|Only one side can be read yet)/.test(hv) && hv.includes(`${hPicks.n} scored setup`) && hv.includes(`${hRef.n} refused one`)),
+  hv.slice(0, 120));
+await open('/v/thincontrol/');
+const thin = await page.textContent('#control-verdict');
+ok('with neither side at the floor the control refuses a direction and prints both n\'s',
+  /^No comparison yet: 5 scored setups and 5 refused ones have closed/.test(thin)
+  && !/did (better|WORSE|no differently)/.test(thin),
+  thin.slice(0, 90));
+await open('/v/fullcontrol/');
+const full = await page.textContent('#control-verdict');
+ok('with both sides at the floor it states the direction, by how much, over which n\'s',
+  /the picks did better, by 3\.00%/.test(full) && full.includes('+6.00% at +5d over 40 setups')
+  && full.includes('refused returned +3.00% over 45 setups'),
+  full.slice(0, 160));
+await open('/f/history/');
 ok('a burst the record cannot place is a row of its own, never a day 1',
   (await page.locator('#streak-table tbody tr', { hasText: 'not known' }).count())
     === HEV.by_day.filter((d) => d.day === null).length);
