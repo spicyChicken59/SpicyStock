@@ -1295,7 +1295,12 @@
     ['rest', 'scored, ranked below the shortlist', 'the rest of the scored'],
     ['refused', 'refused by the checklist or an absolute rule', 'what it refused'],
     ['crowded_out', 'cleared the gate; never scored, the call cap had filled', 'the crowded-out'],
-    ['illiquid', 'below the liquidity floor; bar returns a thin name could not capture', 'the illiquid']
+    ['illiquid', 'below the liquidity floor; bar returns a thin name could not capture', 'the illiquid'],
+    // Not a population of setups but the benchmark paired with them: for
+    // every scored setup, the whole universe's equal-weight return from the
+    // same session's close (or the same next open). One curated list as it
+    // stands today, so the bias runs in the benchmark's favour.
+    ['universe', 'the whole universe from the same sessions, equal-weight; one curated list, survivorship bias in its favour', 'the universe']
   ];
   function controlVerdict(ev) {
     var h = longestOf(ev);
@@ -1316,8 +1321,23 @@
       plural(picks.n, 'setup') + '; names it refused returned ' + pct(refused.mean, 2) + ' over ' +
       plural(refused.n, 'setup') + ' — the picks did ' + direction +
       (direction === 'no differently' ? '. ' : ', by ' + pct(Math.abs(lift), 2).replace('+', '') + '. ') +
+      benchmarkSentence(ev, picks, h) +
       'Same market, same sessions, and overlapping bursts are not independent draws. ' +
       'Read it as the record so far, not as a result.';
+  }
+  // The second alternative, said only when the record can pair enough of
+  // the picks with their sessions' universe move on this basis. The
+  // benchmark's n is how many scored setups had a benchmark, not how many
+  // names are in the universe.
+  function benchmarkSentence(ev, picks, h) {
+    var bench = ev.universe ? onBasis(at(ev.universe.outcomes, h)) : null;
+    if (!bench || !enoughOf(ev.universe) || bench.mean === null || bench.mean === undefined) return '';
+    var gap = picks.mean - bench.mean;
+    var word = gap > 0.5 ? 'better' : (gap < -0.5 ? 'WORSE' : 'no differently');
+    return 'Against buying anything in the universe on the same days — ' + pct(bench.mean, 2) + ' equal-weight over the ' +
+      plural(bench.n, 'session') + ' those picks came from — the picks did ' + word +
+      (word === 'no differently' ? '. ' : ', by ' + pct(Math.abs(gap), 2).replace('+', '') + '. ') +
+      'The universe is a curated large-cap list as it stands today, which flatters the benchmark. ';
   }
   function renderControl(ev) {
     var h = longestOf(ev);
@@ -1327,7 +1347,8 @@
       'split by what this screener did with it, against what the next sessions did. Refusals are the strategy\u2019s ' +
       'own judgement; the crowded-out row is the call budget\u2019s, and is kept off that side for that reason. ' +
       'The illiquid row is rule 6\u2019s, kept off it for the opposite reason: those returns are bar prices on names ' +
-      'the rule says are too thin to be bought at them.';
+      'the rule says are too thin to be bought at them. The universe row is the other alternative — buying anything ' +
+      'in the universe on the same days — paired setup by setup with the picks, from frames the scan already fetched.';
     $('control-verdict').textContent = controlVerdict(ev);
     table($('control-table'),
       ['what the screener did', 'setups'].concat(ev.horizons.map(hzLabel)).concat(['in the claimed band', 'reads as']),

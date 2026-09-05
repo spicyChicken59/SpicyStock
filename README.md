@@ -222,7 +222,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 889 tests, no network or API keys needed
+pytest tests/                   # 894 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -319,7 +319,9 @@ screener liked) and `evidence.illiquid` (what rule 6 refused for dollar volume
 below the session's floor — kept apart from the refusals for the opposite
 reason: those forward returns are bar prices on names the rule says are too
 thin to be bought at them, so they are shown beside the control and never in
-it) — `evidence.horizons` (which sessions after the
+it) — — plus `evidence.universe`, the benchmark rung (not a
+population of setups but the whole universe's move paired with each of them)
+— `evidence.horizons` (which sessions after the
 burst were measured) and `evidence.band` (the range the strategy claims).
 
 **`+3d` and `+5d` are the horizons that matter, and the page says so on every
@@ -361,8 +363,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 13.63 MB raw
-and **0.97 MB gzipped** after a full year. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 13.71 MB raw
+and **0.99 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -490,6 +492,15 @@ from. The page prints both, and calls neither of them "names".
 - `d1`, `d3`, `d5` are the percentage change from the burst-day close to the
   close 1, 3 and 5 **sessions** later — positions in the frame, not calendar
   days, so a holiday cannot quietly shift a horizon.
+- `runs[].benchmark` is the **whole universe's equal-weight return from that
+  session** — `d1`, `d3`, `d5` from the close and `from_open` from the next
+  open, with `n1`/`n3`/`n5` the number of symbols behind each — filled by a
+  later run from the frames its own scan already read, at no extra request.
+  `evidence.universe` pairs every scored setup with its own session's
+  benchmark, so its outcomes are the alternative "buy anything in the universe
+  that day" over the same sessions in the same proportions as the picks. It is
+  a curated large-cap list as it stands today, so the comparison carries
+  survivorship bias in the benchmark's favour, and the page's rung says so.
 - `forward_returns.from_open` is the **same three closes divided by the next
   session's open** — the earliest price a reader of the 18:16 ET email could
   have paid. The two bases answer two questions about one move: what the
@@ -633,14 +644,14 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 178 checks, and which file each one
+**Three data sources, one page.** It runs 184 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 22 mutated copies of it are served
+  night can hold at once. 25 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now

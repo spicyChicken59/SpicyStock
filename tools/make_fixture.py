@@ -686,6 +686,18 @@ for _i, _run in enumerate(runs):
     _fr["from_open"] = {k: (None if _fr[k] is None else round(_fr[k] - 0.6 - 0.05 * _i, 2))
                         for k in ("d1", "d3", "d5")}
     _fr["from_open"]["n"] = 0 if _fr["n"] == 0 else _fr["n"] - (1 if _i % 3 == 0 else 0)
+    # The universe's own return from each session (src.ledger.add_run writes
+    # the pending shape; fill_benchmarks fills it on the evening five sessions
+    # later). Hand-authored where the run's own returns are in: a little
+    # below the picks, over most of the 230 names.
+    _bench = ledger.empty_benchmark()
+    for _h in ("d1", "d3", "d5"):
+        if _fr[_h] is not None:
+            _bench[_h] = round(_fr[_h] - 0.9 + 0.1 * (_i % 3), 2)
+            _bench["n" + _h[1:]] = len(UNIVERSE) - 2 - (_i % 4)
+            _bench["from_open"][_h] = round(_bench[_h] - 0.3, 2)
+            _bench["from_open"]["n" + _h[1:]] = _bench["n" + _h[1:]] - 1
+    _run["benchmark"] = _bench
     _run["universe"] = {"label": "data/symbols.txt (checked in)", "size": len(UNIVERSE)}
     # And the floor each night applied (src.ledger.add_run keeps it): the
     # headline run's is FLOOR; the older ones vary the way a percentile of

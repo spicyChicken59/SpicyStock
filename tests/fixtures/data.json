@@ -21,6 +21,7 @@
       "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
       "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
       "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
+      "runs[].benchmark is the whole universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), with nN the number of symbols behind each horizon; null until a later run's scan carried the sessions, and null forever for a run whose universe later scans never fetched. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks; it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
       "Numbers are numbers or null. No 'n/a' strings."
     ]
   },
@@ -4134,6 +4135,22 @@
           "n": 0
         }
       },
+      "benchmark": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n1": 0,
+        "n3": 0,
+        "n5": 0,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null,
+          "n1": 0,
+          "n3": 0,
+          "n5": 0
+        }
+      },
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
@@ -4164,6 +4181,22 @@
           "d3": null,
           "d5": null,
           "n": 19
+        }
+      },
+      "benchmark": {
+        "d1": 0.32,
+        "d3": null,
+        "d5": null,
+        "n1": 227,
+        "n3": 0,
+        "n5": 0,
+        "from_open": {
+          "d1": 0.02,
+          "d3": null,
+          "d5": null,
+          "n1": 226,
+          "n3": 0,
+          "n5": 0
         }
       },
       "universe": {
@@ -4198,6 +4231,22 @@
           "n": 23
         }
       },
+      "benchmark": {
+        "d1": -1.33,
+        "d3": null,
+        "d5": null,
+        "n1": 226,
+        "n3": 0,
+        "n5": 0,
+        "from_open": {
+          "d1": -1.63,
+          "d3": null,
+          "d5": null,
+          "n1": 225,
+          "n3": 0,
+          "n5": 0
+        }
+      },
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
@@ -4228,6 +4277,22 @@
           "d3": 0.69,
           "d5": null,
           "n": 21
+        }
+      },
+      "benchmark": {
+        "d1": 1.17,
+        "d3": 0.54,
+        "d5": null,
+        "n1": 225,
+        "n3": 225,
+        "n5": 0,
+        "from_open": {
+          "d1": 0.87,
+          "d3": 0.24,
+          "d5": null,
+          "n1": 224,
+          "n3": 224,
+          "n5": 0
         }
       },
       "universe": {
@@ -4262,6 +4327,22 @@
           "n": 17
         }
       },
+      "benchmark": {
+        "d1": 0.08,
+        "d3": 1.51,
+        "d5": null,
+        "n1": 228,
+        "n3": 228,
+        "n5": 0,
+        "from_open": {
+          "d1": -0.22,
+          "d3": 1.21,
+          "d5": null,
+          "n1": 227,
+          "n3": 227,
+          "n5": 0
+        }
+      },
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
@@ -4292,6 +4373,22 @@
           "d3": 2.12,
           "d5": -1.27,
           "n": 21
+        }
+      },
+      "benchmark": {
+        "d1": 1.14,
+        "d3": 2.27,
+        "d5": -1.12,
+        "n1": 227,
+        "n3": 227,
+        "n5": 227,
+        "from_open": {
+          "d1": 0.84,
+          "d3": 1.97,
+          "d5": -1.42,
+          "n1": 226,
+          "n3": 226,
+          "n5": 226
         }
       },
       "universe": {
@@ -4326,6 +4423,22 @@
           "n": 21
         }
       },
+      "benchmark": {
+        "d1": -1.97,
+        "d3": 0.04,
+        "d5": 0.72,
+        "n1": 226,
+        "n3": 226,
+        "n5": 226,
+        "from_open": {
+          "d1": -2.27,
+          "d3": -0.26,
+          "d5": 0.42,
+          "n1": 225,
+          "n3": 225,
+          "n5": 225
+        }
+      },
       "universe": {
         "label": "data/symbols.txt (checked in)",
         "size": 230
@@ -4356,6 +4469,22 @@
           "d3": 0.23,
           "d5": 1.1,
           "n": 20
+        }
+      },
+      "benchmark": {
+        "d1": -0.39,
+        "d3": 0.38,
+        "d5": 1.25,
+        "n1": 225,
+        "n3": 225,
+        "n5": 225,
+        "from_open": {
+          "d1": -0.69,
+          "d3": 0.08,
+          "d5": 0.95,
+          "n1": 224,
+          "n3": 224,
+          "n5": 224
         }
       },
       "universe": {
@@ -8431,6 +8560,58 @@
     },
     "illiquid": {
       "setups": 2,
+      "outcomes": [
+        {
+          "horizon": 1,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        },
+        {
+          "horizon": 3,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        },
+        {
+          "horizon": 5,
+          "mean": null,
+          "n": 0,
+          "best": null,
+          "worst": null,
+          "in_band": 0,
+          "from_open": {
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0
+          }
+        }
+      ],
+      "enough": false,
+      "enough_from_open": false
+    },
+    "universe": {
+      "setups": 0,
       "outcomes": [
         {
           "horizon": 1,

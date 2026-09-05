@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 889 tests with no network
+- **There is a regression net.** `pytest tests/` runs 894 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -570,9 +570,10 @@ exercised its headline. Nine mutants across them, all killed.
   nobody re-measured, because re-measuring meant building an eleven-megabyte
   file by hand. It was 11.04 and 0.66 when measured, 11.07 and 0.68 once
   the round-4 prose sweep put a universe block on every run entry, 11.54
-  and 0.72 once round 5 put a liquidity block on every entry, and 13.63 and
+  and 0.72 once round 5 put a liquidity block on every entry, 13.63 and
   0.97 once round 6 put the open basis on every row and every mean and the
-  round-5 audit put the dollar volume on every ledger row -- the guard below
+  round-5 audit put the dollar volume on every ledger row, and 13.71 and
+  0.99 once round 7 put a benchmark on every run entry -- the guard below
   caught every move on the commit that made it. The gzipped figure has
   grown faster than the raw one, because a block of nulls compresses worse
   than a run of numbers; the page's fetch-on-demand argument still holds at
@@ -679,6 +680,57 @@ exercised its headline. Nine mutants across them, all killed.
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Round 7 — the other alternative, from frames the scan already had
+
+`evidence.refused` compares the picks against OTHER BURSTS the gate refused,
+which judges the gate and not the strategy: a momentum burst the checklist
+said no to is still a momentum burst. The other honest alternative is "buy
+anything in the universe on the same day", and the data for it was fetched
+and thrown away every night — `run_scan()` downloads all 230 frames with a
+year of lookback and kept only the bursting names'. It hands every fresh
+frame back now (`frames=`, the same idiom as `stats=` and `refused=`), and
+on the evening five sessions later those frames carry, for every symbol,
+the closes on the earlier session and the five after it.
+
+`universe_returns()` is the equal-weight mean over the frames that carry the
+session, on both bases, with `n` per horizon; `Ledger.fill_benchmarks()`
+fills every run entry's `benchmark` inside the same ten-run window forward
+returns use, once per horizon, never before the sessions exist. `evidence()`
+pairs every scored setup with its own session's benchmark — a session with
+three picks weighs three times a session with one — so the rung spans the
+same sessions in the same proportions as the picks, and n says how many
+setups had one. The pipeline test recomputes the mean by hand from the
+frames the double served and counts the requests: the scan's own and the
+forward-returns fetch, none for the benchmark.
+
+**Twenty-five mutants, and seven of them found holes rather than confirming
+the tests.** Five on the Python side: the benchmark's open-basis `n` could
+borrow the close basis's (both were 2 in a test whose frames all carried an
+open, so a frame with no open had to be added); `fill_benchmarks()` could
+restate a measured horizon or ignore the session limit, invisibly, because
+the run under test was already COMPLETE and the early return skipped the
+rule entirely — both needed a partially-filled run; and the rung could drop
+the benchmark's own open basis, because the only test of it asserted the
+open-basis n was zero. Two on the page: a benchmark below `min_setups` was
+never rendered, so the verdict could read it as a rate; and the sentence
+could read the close basis under the open label, because no check read the
+verdict after switching. The last survivor was the harness rather than the
+code — the fsum pin ran under a `-k` selector that did not match its own
+name, and it kills the mutant when actually selected. That one is
+load-bearing on 3.11 and documentation on CI, like the two before it.
+
+What the rung is NOT, said on the page and in the contract: the universe is
+a curated large-cap list as it stands TODAY, so the bias runs in the
+benchmark's favour — a name that was small and is large now is in it, a
+name that was large and is gone is not — and the rung is beside the
+control, never inside `refused`. It is equal-weight and on the same basis
+as the picks, which is the basis switch's business; a benchmark on the
+close basis beside picks on the open basis would be two answers to one
+question, and the one accessor every rate cell goes through is what
+prevents it. When the universe is generated rather than curated (the open
+decision), the benchmark changes with it, which is what the rules
+fingerprint in the next round exists to make visible.
 
 ## Round 6 — every return measured twice, from the close and from the open
 

@@ -328,7 +328,7 @@ const VARIANTS = {
       delete b.enough_from_open;
     };
     const ev = d.evidence;
-    ['overall', 'shortlist', 'rest', 'refused', 'crowded_out', 'illiquid'].forEach((k) => stripBlock(ev[k]));
+    ['overall', 'shortlist', 'rest', 'refused', 'crowded_out', 'illiquid', 'universe'].forEach((k) => stripBlock(ev[k]));
     ['by_score', 'by_day', 'by_month', 'by_ticker'].forEach((k) => (ev[k] || []).forEach(stripBlock));
     (ev.by_check || []).forEach((c) => { stripBlock(c.passed); stripBlock(c.failed); delete c.enough_from_open; });
     return d;
@@ -366,6 +366,51 @@ const VARIANTS = {
   newreason() {
     const d = clone(REAL);
     d.gated_out[0].reason = 'veto_gap_too_wide';
+    return d;
+  },
+  // A record from before the benchmark: no runs[].benchmark, no evidence.universe.
+  nobenchmark() {
+    const d = VARIANTS.fullcontrol();
+    delete d.evidence.universe;
+    d.runs.forEach((r) => delete r.benchmark);
+    return d;
+  },
+  // And one with enough paired setups to say something: the picks +6.00% at
+  // +5d over 40 (fullcontrol's numbers), the universe +2.00% over 40 from the
+  // close and +0.50% over 39 from the next open, so the two bases cannot be
+  // read as one and the sentence has to name the one it is on.
+  fullbenchmark() {
+    const d = VARIANTS.fullcontrol();
+    const h = d.evidence.horizons[d.evidence.horizons.length - 1];
+    const bench = d.evidence.universe.outcomes.find((o) => o.horizon === h);
+    bench.n = 40; bench.mean = 2.0;
+    bench.from_open = { mean: 0.5, n: 39, best: 9, worst: -9, in_band: 0 };
+    d.evidence.universe.setups = 40;
+    d.evidence.universe.enough = true;
+    d.evidence.universe.enough_from_open = true;
+    // The picks and the refusals are complete on BOTH bases here, because a
+    // verdict is only reached when both sides clear the floor on the basis
+    // being read: without this the open tab fell to "no comparison yet" and
+    // the sentence under test was never rendered at all.
+    const picks = d.evidence.overall.outcomes.find((o) => o.horizon === h);
+    const ref = d.evidence.refused.outcomes.find((o) => o.horizon === h);
+    picks.from_open = { mean: 5.0, n: 38, best: 30, worst: -20, in_band: 0 };
+    ref.from_open = { mean: 2.5, n: 43, best: 25, worst: -22, in_band: 0 };
+    d.evidence.refused.enough_from_open = true;
+    d.evidence.overall.enough_from_open = true;
+    return d;
+  },
+  // A benchmark with a mean and too few setups behind it. The rung still
+  // shows the number, marked; the verdict must NOT read it as a rate. Every
+  // other block on this page carries that rule and nothing checked it here.
+  thinbenchmark() {
+    const d = VARIANTS.fullbenchmark();
+    const h = d.evidence.horizons[d.evidence.horizons.length - 1];
+    const bench = d.evidence.universe.outcomes.find((o) => o.horizon === h);
+    bench.n = 4;
+    d.evidence.universe.setups = 4;
+    d.evidence.universe.enough = false;
+    d.evidence.universe.enough_from_open = false;
     return d;
   },
   nodata() { return null; }
@@ -698,9 +743,41 @@ ok('a snapshot from before rule 6 was archived is not told it enforced a floor',
   `caption: ${noLiqCaption.includes('liquidity floor')}, hint: ${noLiqHint.includes('liquidity floor')}`);
 await open('/v/noliquidityladder/');
 const ladderWithout = await page.$$eval('#control-table tbody tr', (rows) => rows.map((r) => r.textContent));
-ok('and its ladder has four rows, not a fifth for a population the file does not hold',
-  ladderWithout.length === 4 && !ladderWithout.some((l) => /illiquid/.test(l)) && !noLiqLadder.some((l) => /illiquid/.test(l)),
+ok('and its ladder has five rows, not a sixth for a population the file does not hold',
+  ladderWithout.length === 5 && !ladderWithout.some((l) => /illiquid/.test(l)) && !noLiqLadder.some((l) => /illiquid/.test(l)),
   `${ladderWithout.length} rows on a rendered ladder`);
+await open('/v/nobenchmark/');
+const ladderNoBench = await page.$$eval('#control-table tbody tr', (rows) => rows.map((r) => r.textContent));
+ok('a record from before the benchmark shows no universe rung and its verdict says nothing about one',
+  ladderNoBench.length === 5 && !ladderNoBench.some((l) => /universe/.test(l))
+  && !/buying anything in the universe/.test(await page.textContent('#control-verdict')),
+  `${ladderNoBench.length} rows`);
+await open('/v/fullbenchmark/');
+const benchVerdict = await page.textContent('#control-verdict');
+ok('with enough paired setups the verdict compares the picks to the universe, over the sessions they came from',
+  /Against buying anything in the universe on the same days — \+2\.00% equal-weight over the 40 sessions those picks came from/.test(benchVerdict)
+  && /the picks did better, by 4\.00%/.test(benchVerdict) && /flatters the benchmark/.test(benchVerdict),
+  benchVerdict.slice(benchVerdict.indexOf('Against'), benchVerdict.indexOf('Against') + 140));
+// The benchmark is on the SAME basis as the picks it is compared with. Its
+// open-basis mean is deliberately different here, so a sentence reading the
+// close basis under the open label fails rather than merely looking odd.
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const benchOpen = await page.textContent('#control-verdict');
+ok('and it follows the basis switch, naming the benchmark measured the same way as the picks',
+  /equal-weight over the 39 sessions/.test(benchOpen) && /\+0\.50% equal-weight/.test(benchOpen)
+  && !/\+2\.00% equal-weight/.test(benchOpen) && /next session.s open/.test(benchOpen),
+  benchOpen.slice(benchOpen.indexOf('Against'), benchOpen.indexOf('Against') + 120));
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+await open('/v/thinbenchmark/');
+const thinBench = await page.textContent('#control-verdict');
+const thinRung = await page.$$eval('#control-table tbody tr', (rows) => {
+  const r = rows.find((x) => x.textContent.startsWith('the universe'));
+  return r ? r.textContent.replace(/\s+/g, ' ') : '';
+});
+ok('a benchmark under the floor is shown on the rung and refused as a rate in the verdict',
+  !/Against buying anything/.test(thinBench) && /the picks did better/.test(thinBench)
+  && /\+2\.00%/.test(thinRung) && /too few to read as a rate|not enough data/.test(thinRung),
+  `verdict: ${thinBench.slice(0, 60)} | rung: ${thinRung.slice(0, 90)}`);
 // The clause joiner, on the two nights the fixture's own ordering hid.
 const floorClause = `(${floorDollars}/day, the ${REAL.run.liquidity.pctile}th percentile)`;
 await open('/v/newreason/');
@@ -1418,10 +1495,29 @@ const hLadder = await page.$$eval('#control-table tbody tr', (rows) => rows.map(
 // FAIL line printed and read, to a count of failures, as a pass.
 const rowFor = (label) => hLadder.find((l) => l.startsWith(label)) || '';
 const countIn = (label) => Number((rowFor(label).match(new RegExp(label + '.*?(\\d+)')) || [])[1]);
-ok('the alternative is on the page as five disjoint populations, and says which is which',
-  hLadder.length === 5 && rowFor('the shortlist') && rowFor('what it refused')
-  && /call cap/.test(rowFor('the crowded-out')) && /liquidity floor/.test(rowFor('the illiquid')),
+ok('the alternative is on the page as five disjoint populations and a benchmark rung, and says which is which',
+  hLadder.length === 6 && rowFor('the shortlist') && rowFor('what it refused')
+  && /call cap/.test(rowFor('the crowded-out')) && /liquidity floor/.test(rowFor('the illiquid'))
+  && /survivorship/.test(rowFor('the universe')),
   hLadder.map((l) => l.slice(0, 36)).join(' | ') || 'no ladder rendered');
+// The benchmark pairs every scored setup with its session's universe move,
+// so its n is bounded by the scored setups and, over thirty runs where every
+// session but the last week has a benchmark, is most of them. Read off the
+// ledger's own block, and the rung's number must be that block's.
+// One formatter for every rendered percentage this file compares against
+// the ledger's own numbers; declared before its first use.
+const pctOf = (v) => (v === null || v === undefined ? null : (v > 0 ? '+' : '') + v.toFixed(2) + '%');
+const hBench = HIST.evidence.universe;
+const hBench5 = hBench.outcomes.find((o) => o.horizon === hH);
+ok('the universe rung holds a benchmark for most scored setups and prints the ledger\'s own mean',
+  hBench.setups > 0 && hBench.setups <= HIST.evidence.overall.setups && hBench5.n > 0
+  && countIn('the universe') === hBench.setups && rowFor('the universe').includes(pctOf(hBench5.mean)),
+  `${hBench.setups} of ${HIST.evidence.overall.setups} setups paired; +5d ${hBench5.mean} over ${hBench5.n}`);
+ok('and the run entries carry the benchmark the rung was built from, pending only for the last week',
+  HIST.runs.filter((r) => r.benchmark && r.benchmark.d5 !== null).length >= HIST.runs.length - 6
+  && HIST.runs.every((r) => r.benchmark && typeof r.benchmark.n5 === 'number')
+  && HIST.runs.filter((r) => r.benchmark && r.benchmark.d5 !== null).every((r) => r.benchmark.n5 > 1),
+  `${HIST.runs.filter((r) => r.benchmark && r.benchmark.d5 !== null).length} of ${HIST.runs.length} runs benchmarked`);
 ok('and each row prints the setup count the ledger computed for that population',
   countIn('what it refused') === HIST.evidence.refused.setups
   && countIn('the crowded-out') === HIST.evidence.crowded_out.setups
@@ -1478,7 +1574,6 @@ const refusedRowCells = async () => page.$$eval('#control-table tbody tr', (rows
 const closeCells = await refusedRowCells();
 await page.click('#basis-tabs .sc-tab[data-basis="open"]');
 const openCells = await refusedRowCells();
-const pctOf = (v) => (v === null || v === undefined ? null : (v > 0 ? '+' : '') + v.toFixed(2) + '%');
 ok('switching to the open basis changes the ladder to the ledger\'s own from_open means',
   closeCells.length === openCells.length && openCells.length > 0
   && closeCells[4].startsWith(pctOf(hRef5.mean)) && openCells[4].startsWith(pctOf(hRef5.from_open.mean))

@@ -866,6 +866,137 @@ def test_a_horizon_the_open_basis_cannot_reach_is_null_on_that_basis_too():
     assert out["from_open"]["d5"] is None and out["d5"] is None
 
 
+def test_the_universe_benchmark_is_the_equal_weight_mean_over_the_frames_that_carry_the_session():
+    """Two names whose returns from the session are known by construction,
+    a third that does not trade the session and so is absent from the mean
+    rather than a zero in it, on both bases, with n per horizon."""
+    aaa = frame_with_opens(closes=[100, 101, 102, 103, 104, 110], opens=[99, 100, 101, 102, 103, 104])
+    bbb = frame_with_opens(closes=[50, 51.5, 52, 52.5, 53, 56], opens=[49, 50.5, 51, 52, 52.5, 53])
+    session = aaa.index[0].date().isoformat()
+    ccc = frame_with_opens(closes=[10, 11, 12], opens=[10, 10.5, 11.5], end="2026-08-20")   # before the session
+
+    # A fourth name with NO Open column: it has a close-basis return and no
+    # open-basis one, so the two n's differ and neither can borrow the other.
+    # With both at 2 the mutant that reads len(close_values) for the open
+    # basis was invisible, which is how this test first shipped.
+    ddd = frame([200, 202, 204, 206, 208, 220])
+
+    bench = ledger.universe_returns({"AAA": aaa, "BBB": bbb, "CCC": ccc, "DDD": ddd}, session)
+
+    # AAA 1/3/10, BBB 3/5/12, DDD 1/3/10; CCC does not trade the session.
+    assert (bench["d1"], bench["d3"], bench["d5"]) == (
+        round(5 / 3, 2), round(11 / 3, 2), round(32 / 3, 2))
+    assert (bench["n1"], bench["n3"], bench["n5"]) == (3, 3, 3), "three frames carry the session"
+    assert bench["from_open"]["d1"] == round((1.0 + round((51.5 / 50.5 - 1) * 100, 2)) / 2, 2)
+    assert (bench["from_open"]["n1"], bench["from_open"]["n5"]) == (2, 2), (
+        "and only two of them carry a usable open")
+    assert ledger.universe_returns({"CCC": ccc}, session) == ledger.empty_benchmark()
+    assert ledger.universe_returns({}, session) == ledger.empty_benchmark()
+
+
+def test_the_universe_mean_is_summed_the_way_every_other_mean_here_is():
+    """math.fsum, not sum(). CPython 3.12 made the builtin compensated for
+    floats, so the same frames read by two interpreters published two
+    different benchmarks -- the defect mean_returns() already carries this
+    argument for, one function further out. These four returns are the ones
+    CLAUDE.md records: sum() gives 22.099999999999998 on 3.11 and 22.1 on
+    3.12, and the mean either side of that lands on opposite sides of
+    round(x, 2). On 3.12 the two are indistinguishable and this test is
+    documentation; on 3.11 it is load-bearing."""
+    wanted = [9.93, 6.9, 2.86, 2.41]
+    frames = {f"T{i}": frame([100.0, 100.0 * (1 + v / 100)]) for i, v in enumerate(wanted)}
+    session = next(iter(frames.values())).index[0].date().isoformat()
+
+    bench = ledger.universe_returns(frames, session)
+
+    assert [ledger.forward_returns(f, session)["d1"] for f in frames.values()] == wanted
+    assert bench["d1"] == round(math.fsum(wanted) / 4, 2)
+    if sum(wanted) != math.fsum(wanted):        # true on 3.11, false on 3.12
+        assert bench["d1"] != round(sum(wanted) / 4, 2), "sum() and fsum() disagree here and fsum wins"
+
+
+def test_fill_benchmarks_fills_the_window_once_and_never_before_the_sessions_exist(tmp_path):
+    """Same window and same idempotence as the forward returns: a run in the
+    window gains its benchmark from tonight's frames, keeps a horizon once
+    measured, and a run whose session is not behind `through` stays pending."""
+    book = ledger.Ledger(tmp_path / "docs")
+    for session in ("2026-08-24", "2026-08-31"):
+        run, cands, gated = _run(session, tickers=("AAA",))
+        book.add_run(run, cands, gated)
+    assert all(r["benchmark"] == ledger.empty_benchmark() for r in book.runs)
+    aaa = frame_with_opens(closes=[100, 101, 102, 103, 104, 110], opens=[99, 100, 101, 102, 103, 104],
+                           end="2026-08-31")   # sessions 24..31 Aug
+    bbb = frame_with_opens(closes=[10, 10, 10, 10, 10, 10], opens=[10] * 6, end="2026-08-31")
+
+    moved = book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 9, 4))
+
+    older = next(r for r in book.runs if r["date"] == "2026-08-24")
+    newer = next(r for r in book.runs if r["date"] == "2026-08-31")
+    assert moved == 1
+    assert (older["benchmark"]["d1"], older["benchmark"]["d5"], older["benchmark"]["n5"]) == (0.5, 5.0, 2)
+    assert older["benchmark"]["from_open"]["d1"] == round((round((101 / 100 - 1) * 100, 2) + 0.0) / 2, 2)
+    assert newer["benchmark"]["d1"] is None, "the sessions after it are in no frame yet"
+    # A later, different frame restates nothing already measured -- and the
+    # run has to be INCOMPLETE for that to be the rule under test: a run whose
+    # horizons are all filled is skipped by the early return above, so a
+    # restating fill was invisible until this row had a horizon still open.
+    partial = next(r for r in book.runs if r["date"] == "2026-08-31")
+    partial["benchmark"]["d1"], partial["benchmark"]["n1"] = 99.0, 7
+    partial["benchmark"]["from_open"]["d1"], partial["benchmark"]["from_open"]["n1"] = 88.0, 7
+    aaa2 = frame_with_opens(closes=[100, 150, 150, 150, 150, 150], opens=[99, 100, 101, 102, 103, 104],
+                            end="2026-09-07")   # carries 31 Aug and the sessions after it
+    bbb2 = frame_with_opens(closes=[10] * 6, opens=[10] * 6, end="2026-09-07")
+
+    assert book.fill_benchmarks({"AAA": aaa2, "BBB": bbb2}, date(2026, 9, 8)) == 1
+    assert (partial["benchmark"]["d1"], partial["benchmark"]["n1"]) == (99.0, 7), (
+        "the horizon already measured keeps the value it was given")
+    assert partial["benchmark"]["from_open"]["d1"] == 88.0
+    assert partial["benchmark"]["d3"] is not None, "and the horizons still open were filled"
+    assert older["benchmark"]["d1"] == 0.5, "a complete run is untouched"
+
+    # Not behind `through`: pending, on a run with nothing measured yet, or
+    # the completed rows above would hide the rule by short-circuiting first.
+    fresh_book = ledger.Ledger(tmp_path / "docs2")
+    run, cands, gated = _run("2026-08-24", tickers=("AAA",))
+    fresh_book.add_run(run, cands, gated)
+    assert fresh_book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 8, 24)) == 0
+    assert fresh_book.runs[0]["benchmark"] == ledger.empty_benchmark()
+    assert fresh_book.fill_benchmarks({"AAA": aaa, "BBB": bbb}, date(2026, 9, 4)) == 1
+
+
+def test_the_evidence_pairs_every_scored_setup_with_its_own_sessions_benchmark():
+    """The universe rung is the alternative "buy anything in the universe that
+    day", paired setup by setup so both sides span the same sessions in the
+    same proportions: a session with three picks weighs three times a
+    session with one. A setup whose run has no benchmark contributes nothing
+    and n says how many did."""
+    runs = _record([("2026-08-24", ("AAA", "BBB", "CCC")), ("2026-08-31", ("DDD",))],
+                   returns={(t, "2026-08-24"): {"d5": 10.0} for t in ("AAA", "BBB", "CCC")}
+                   | {("DDD", "2026-08-31"): {"d5": 4.0}})
+    for run in runs:
+        run["benchmark"] = ledger.empty_benchmark()
+    first = next(r for r in runs if r["date"] == "2026-08-24")
+    first["benchmark"].update(d5=1.0, n5=200)
+    first["benchmark"]["from_open"].update(d5=0.5, n5=199)
+    next(r for r in runs if r["date"] == "2026-08-31")["benchmark"].update(d5=4.0, n5=200)
+
+    ev = ledger.evidence(runs)
+    d5 = ledger.at_horizon(ev["universe"]["outcomes"], 5)
+
+    assert ev["universe"]["setups"] == 4 and d5["n"] == 4
+    assert d5["mean"] == round((1.0 * 3 + 4.0) / 4, 2), "three picks on the first session, one on the second"
+    # The rung carries the benchmark's OWN open basis, paired the same way,
+    # with its own n: only the first session recorded one, and its three
+    # picks are what weigh it. Asserting n == 0 here (which it was, before
+    # any run carried an open-basis benchmark) could not see the rung
+    # dropping the block.
+    assert d5["from_open"]["mean"] == 0.5 and d5["from_open"]["n"] == 3
+    assert not ev["universe"]["enough"]
+    next(r for r in runs if r["date"] == "2026-08-31")["benchmark"] = None
+    assert ledger.at_horizon(ledger.evidence(runs)["universe"]["outcomes"], 5)["n"] == 3
+    assert "universe" not in ("shortlist", "rest", "refused", "crowded_out", "illiquid")
+
+
 def test_the_pending_shape_is_pending_on_both_bases():
     assert ledger.empty_returns() == {"d1": None, "d3": None, "d5": None, "as_of": None,
                                       "from_open": {"d1": None, "d3": None, "d5": None}}

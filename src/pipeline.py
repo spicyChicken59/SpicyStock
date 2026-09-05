@@ -612,7 +612,11 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     # has to hold. They used to be logged and dropped, so a burst refused for
     # liquidity was in no count, no row and no line of the email.
     illiquid_bursts: list = []
-    candidates = run_scan(cfg, universe=tickers, stats=scan_stats, refused=illiquid_bursts)
+    # And every frame the scan read, so publish() can fill the universe
+    # benchmark of the runs five sessions back from bars already fetched.
+    frames: dict = {}
+    candidates = run_scan(cfg, universe=tickers, stats=scan_stats, refused=illiquid_bursts,
+                          frames=frames)
     n_bursts = len(candidates) + len(illiquid_bursts)
     _check_scan(scan_stats, report)
 
@@ -790,7 +794,7 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
                         scored=scored, unscored=unscored, to_score=to_score,
                         n_bursts=n_bursts, n_passed=len(passed_gate),
                         shortlist_size=len(shortlist), chart_errors=chart_errors,
-                        explicit_tickers=tickers, book=book, marks=marks)
+                        explicit_tickers=tickers, book=book, marks=marks, frames=frames)
     log.info("Published %s (%d candidates, %d not scored) and %s (%d runs, %d "
              "forward return(s) filled this run)",
              published["data"], len(scored), len(unscored),
@@ -1214,7 +1218,7 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
             unscored: list[tuple], to_score: list[tuple], n_bursts: int,
             n_passed: int, shortlist_size: int, chart_errors: dict,
             explicit_tickers: list[str] | None, book: ledger.Ledger,
-            marks: dict[str, dict]) -> dict:
+            marks: dict[str, dict], frames: dict | None = None) -> dict:
     """Write docs/data.json and docs/ledger.json for the run that just ran.
 
     Everything the run knows, in the two shapes it is worth keeping: the
@@ -1308,6 +1312,7 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     through = max(scanner.current_session(), session) if session else scanner.current_session()
     pending = book.pending_tickers(through)
     filled = 0
+    frames_read = frames
     try:
         frames = forward_bars(cfg, pending, through)
     except Exception as e:  # noqa: BLE001 — reported, not raised: see the docstring
@@ -1318,6 +1323,9 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
                        "pending in docs/ledger.json and will be retried next run")
     else:
         filled = book.fill_forward_returns(frames, through)
+    # The universe benchmark, from the frames THIS scan already read: no
+    # request, and the one alternative the north star was missing.
+    benchmarked = book.fill_benchmarks(frames_read or {}, through) if frames_read else 0
 
     # Re-read the report AFTER the fetch: a problem raised in the two lines
     # above is one of the run's problems, and the file that renders them must
@@ -1350,7 +1358,8 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     # record being worthless, and the exit code has to be able to say so.
     report.published = True
     return {"data": written["data"], "ledger": written["ledger"], "headline": headline,
-            "runs": len(book.runs), "pending": len(pending), "filled": filled}
+            "runs": len(book.runs), "pending": len(pending), "filled": filled,
+            "benchmarked": benchmarked}
 
 
 def _check_scan(scan_stats: dict, report: RunReport) -> None:

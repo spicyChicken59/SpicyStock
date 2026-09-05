@@ -948,6 +948,44 @@ def test_a_burst_the_liquidity_floor_refused_is_in_the_record_and_says_why(
         "the thin name is not passed off as scored")
 
 
+def test_a_later_scan_fills_the_earlier_runs_universe_benchmark_from_its_own_frames(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The scan reads the whole universe with a year of lookback and used to
+    keep only the bursting names' frames. The evening after, those frames
+    carry every name's close on the earlier session and the sessions since,
+    so the earlier run's "buy anything in the universe that day" resolves
+    at no extra request -- and equals the equal-weight mean, recomputed here
+    by hand from the frames the double served."""
+    from tests.test_scanner import _thin
+
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    names = ["BURST"]
+    for i in range(4):
+        fake_alpaca.add_history(f"Q{i}", _thin(ohlcv, "flat", price=40.0 + i, volume=3_000_000, variant=i + 2))
+        names.append(f"Q{i}")
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
+    pipeline.run("evening", dry_run=True, tickers=names)
+    first = recorded(tmp_path)["runs"][0]
+    assert first["benchmark"] == ledger.empty_benchmark(), "nothing after that session exists yet"
+    before = len(mocked_boundaries["alpaca"].bar_requests)
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    pipeline.run("evening", dry_run=True, tickers=names)
+
+    book = recorded(tmp_path)
+    older = next(r for r in book["runs"] if r["date"] == session_offset(-1))
+    frames = {t: served(fake_alpaca, t, session_offset(0)) for t in names}
+    want = [expected_returns(frames[t], session_offset(-1), horizons=(1,)) for t in names]
+    assert older["benchmark"]["d1"] == round(sum(w["d1"] for w in want) / len(want), 2)
+    assert older["benchmark"]["n1"] == len(names)
+    assert older["benchmark"]["from_open"]["d1"] == round(sum(w["from_open"]["d1"] for w in want) / len(want), 2)
+    assert older["benchmark"]["d3"] is None, "three sessions have not passed"
+    assert len(mocked_boundaries["alpaca"].bar_requests) - before == 1 + 1, (
+        "the scan's own batch and the forward-returns fetch; the benchmark cost no request")
+    assert published(tmp_path)["evidence"]["universe"]["setups"] >= 1
+
+
 def test_a_liquidity_refused_row_carries_the_streak_the_run_read_for_it(
     monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):

@@ -20,6 +20,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n1": 0,
+        "n3": 0,
+        "n5": 0,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null,
+          "n1": 0,
+          "n3": 0,
+          "n5": 0
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 190247596.4,
@@ -420,6 +436,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 0.73,
+        "d3": null,
+        "d5": null,
+        "n1": 77,
+        "n3": 0,
+        "n5": 0,
+        "from_open": {
+          "d1": 0.74,
+          "d3": null,
+          "d5": null,
+          "n1": 77,
+          "n3": 0,
+          "n5": 0
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 187495350,
@@ -658,6 +690,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.68,
+        "d3": null,
+        "d5": null,
+        "n1": 77,
+        "n3": 0,
+        "n5": 0,
+        "from_open": {
+          "d1": 0.47,
+          "d3": null,
+          "d5": null,
+          "n1": 77,
+          "n3": 0,
+          "n5": 0
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -932,6 +980,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.78,
+        "d3": 2.21,
+        "d5": null,
+        "n1": 77,
+        "n3": 77,
+        "n5": 0,
+        "from_open": {
+          "d1": 0.64,
+          "d3": 2.06,
+          "d5": null,
+          "n1": 77,
+          "n3": 77,
+          "n5": 0
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -1298,6 +1362,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 0.9,
+        "d3": 2.4,
+        "d5": null,
+        "n1": 77,
+        "n3": 77,
+        "n5": 0,
+        "from_open": {
+          "d1": 0.77,
+          "d3": 2.26,
+          "d5": null,
+          "n1": 77,
+          "n3": 77,
+          "n5": 0
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 210146671.8,
@@ -1660,6 +1740,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 0.7,
+        "d3": 2.44,
+        "d5": 3.87,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.53,
+          "d3": 2.25,
+          "d5": 3.69,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 211054539,
@@ -1940,6 +2036,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 0.7,
+        "d3": 2.34,
+        "d5": 3.86,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.52,
+          "d3": 2.16,
+          "d5": 3.67,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 193721823.8,
@@ -2134,6 +2246,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.34,
+        "d3": 1.77,
+        "d5": 3.53,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.28,
+          "d3": 1.71,
+          "d5": 3.47,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -2529,6 +2657,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 1.26,
+        "d3": 2.33,
+        "d5": 4.01,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 1.0,
+          "d3": 2.07,
+          "d5": 3.73,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 161887274.6,
@@ -2726,6 +2870,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.25,
+        "d3": 1.88,
+        "d5": 3.36,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.26,
+          "d3": 1.9,
+          "d5": 3.36,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -2963,6 +3123,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 0.46,
+        "d3": 2.02,
+        "d5": 3.13,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.36,
+          "d3": 1.92,
+          "d5": 3.02,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 166255999,
@@ -3198,6 +3374,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.56,
+        "d3": 1.32,
+        "d5": 3.0,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.46,
+          "d3": 1.22,
+          "d5": 2.9,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -3520,6 +3712,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 0.32,
+        "d3": 1.39,
+        "d5": 3.03,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.37,
+          "d3": 1.44,
+          "d5": 3.07,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 155884278,
@@ -3720,6 +3928,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.11,
+        "d3": 1.03,
+        "d5": 1.81,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.14,
+          "d3": 1.06,
+          "d5": 1.84,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -3959,6 +4183,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.44,
+        "d3": 0.88,
+        "d5": 1.98,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.33,
+          "d3": 0.78,
+          "d5": 1.88,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -4203,6 +4443,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.42,
+        "d3": 1.01,
+        "d5": 1.97,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.3,
+          "d3": 0.88,
+          "d5": 1.84,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -4484,6 +4740,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 0.87,
+        "d3": 1.78,
+        "d5": 2.24,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.77,
+          "d3": 1.67,
+          "d5": 2.13,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 212691449.8,
@@ -4685,6 +4957,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 0.64,
+        "d3": 1.97,
+        "d5": 2.56,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.39,
+          "d3": 1.71,
+          "d5": 2.31,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 166194170,
@@ -4882,6 +5170,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.87,
+        "d3": 2.41,
+        "d5": 3.33,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.65,
+          "d3": 2.2,
+          "d5": 3.11,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -5081,6 +5385,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 0.89,
+        "d3": 2.43,
+        "d5": 3.76,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.66,
+          "d3": 2.2,
+          "d5": 3.53,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 176022991.8,
@@ -5271,6 +5591,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 1.18,
+        "d3": 2.99,
+        "d5": 4.54,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.91,
+          "d3": 2.71,
+          "d5": 4.27,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -5630,6 +5966,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.89,
+        "d3": 3.03,
+        "d5": 4.59,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.89,
+          "d3": 3.04,
+          "d5": 4.59,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -6028,6 +6380,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 0.68,
+        "d3": 2.8,
+        "d5": 4.65,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.61,
+          "d3": 2.72,
+          "d5": 4.57,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 144648934.2,
@@ -6266,6 +6634,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.98,
+        "d3": 2.61,
+        "d5": 4.81,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.68,
+          "d3": 2.3,
+          "d5": 4.49,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -6666,6 +7050,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.8,
+        "d3": 2.51,
+        "d5": 4.71,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.73,
+          "d3": 2.45,
+          "d5": 4.64,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -7114,6 +7514,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 0.79,
+        "d3": 2.62,
+        "d5": 4.29,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.77,
+          "d3": 2.6,
+          "d5": 4.26,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 145024717.20000002,
@@ -7467,6 +7883,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 0.82,
+        "d3": 2.42,
+        "d5": 4.15,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.52,
+          "d3": 2.12,
+          "d5": 3.86,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 151707698.4,
@@ -7702,6 +8134,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.44,
+        "d3": 2.06,
+        "d5": 3.9,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.33,
+          "d3": 1.95,
+          "d5": 3.8,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
       },
       "liquidity": {
         "pctile": 30.0,
@@ -8147,6 +8595,22 @@
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
       },
+      "benchmark": {
+        "d1": 1.62,
+        "d3": 2.93,
+        "d5": 4.56,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 1.22,
+          "d3": 2.52,
+          "d5": 4.14,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
+      },
       "liquidity": {
         "pctile": 30.0,
         "floor": 160537948.20000002,
@@ -8431,6 +8895,22 @@
       "universe": {
         "label": "synthetic fixture universe (77 invented histories)",
         "size": 77
+      },
+      "benchmark": {
+        "d1": 0.91,
+        "d3": 3.0,
+        "d5": 4.67,
+        "n1": 77,
+        "n3": 77,
+        "n5": 77,
+        "from_open": {
+          "d1": 0.85,
+          "d3": 2.95,
+          "d5": 4.61,
+          "n1": 77,
+          "n3": 77,
+          "n5": 77
+        }
       },
       "liquidity": {
         "pctile": 30.0,

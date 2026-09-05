@@ -180,6 +180,7 @@ CONTRACT_INVARIANTS = [
     "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
     "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
     "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
+    "runs[].benchmark is the whole universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), with nN the number of symbols behind each horizon; null until a later run's scan carried the sessions, and null forever for a run whose universe later scans never fetched. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks; it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
     "Numbers are numbers or null. No 'n/a' strings.",
 ]
 
@@ -1006,6 +1007,44 @@ def forward_returns(df: pd.DataFrame | None, burst_date) -> dict:
     return out
 
 
+def universe_returns(frames: dict, session) -> dict:
+    """The equal-weight universe return from `session`'s close, and from the
+    next open, over every frame that carries the session: the benchmark the
+    north star was missing.
+
+    evidence.refused compares the picks against OTHER BURSTS the gate
+    refused, which judges the gate and not the strategy -- a momentum burst
+    the checklist said no to is still a momentum burst. The other honest
+    alternative is "buy anything in the universe on the same day", and the
+    data for it was fetched and thrown away every night. One number per
+    horizon, the mean over symbols of forward_returns(); `n` per horizon is
+    how many symbols carried that horizon, and a horizon nobody has a value
+    for is null, never 0. Names that did not trade the session are absent
+    from the mean, not zeros in it.
+    """
+    per_symbol = [forward_returns(df, session) for df in frames.values()]
+    out: dict = {}
+    from_open: dict = {}
+    for horizon in HORIZONS:
+        key = f"d{horizon}"
+        close_values = [r[key] for r in per_symbol if r[key] is not None]
+        open_values = [r["from_open"][key] for r in per_symbol if r["from_open"][key] is not None]
+        out[key] = round(math.fsum(close_values) / len(close_values), 2) if close_values else None
+        out[f"n{horizon}"] = len(close_values)
+        from_open[key] = round(math.fsum(open_values) / len(open_values), 2) if open_values else None
+        from_open[f"n{horizon}"] = len(open_values)
+    out["from_open"] = from_open
+    return out
+
+
+def empty_benchmark() -> dict:
+    """Pending on both bases, with zero names behind every horizon."""
+    out = {f"d{h}": None for h in HORIZONS}
+    out.update({f"n{h}": 0 for h in HORIZONS})
+    out["from_open"] = {**{f"d{h}": None for h in HORIZONS}, **{f"n{h}": 0 for h in HORIZONS}}
+    return out
+
+
 def _from_open(returns: dict | None) -> dict:
     """A row's from_open block, or the pending one for a row from before it
     existed. Shape only: a block that is present and not an object is the
@@ -1403,6 +1442,27 @@ def evidence(runs: list[dict]) -> dict:
     # control with names the screener actually liked. A row with no reason
     # word was written before the reasons existed, when the gate was the only
     # way out, so it counts as refused. Leading rows only, as everywhere.
+    # THE BENCHMARK. For every scored setup, the universe's own return from
+    # the SAME session's close (and from the same next open), read off the
+    # run entry that session belongs to: "buy anything in the universe that
+    # day" as the alternative, paired setup by setup so the two sides span
+    # the same sessions in the same proportions. A setup whose run has no
+    # benchmark yet contributes nothing, and n says how many did. The mean is
+    # equal-weight over a curated large-cap list that is what it is NOW, so
+    # it carries survivorship bias in the benchmark's favour, and the page
+    # says so on the rung.
+    benchmark_of = {}
+    for run in runs:
+        if isinstance(run, dict) and isinstance(run.get("benchmark"), dict):
+            benchmark_of[str(run.get("date"))] = run["benchmark"]
+    universe_rows = []
+    for row in scored:
+        bench = benchmark_of.get(str(row.get("date")))
+        if not isinstance(bench, dict):
+            continue
+        universe_rows.append({"forward_returns": {
+            **{f"d{h}": bench.get(f"d{h}") for h in HORIZONS},
+            "from_open": {f"d{h}": (bench.get("from_open") or {}).get(f"d{h}") for h in HORIZONS}}})
     unscored = [chain[0] for chain in chains.values() if not any(_scored(r) for r in chain)]
     crowded = [r for r in unscored if r.get("reason") == "score_cap"]
     # Rule 6's refusals are a population of their own, and NOT part of the
@@ -1438,6 +1498,7 @@ def evidence(runs: list[dict]) -> dict:
         "refused": _population(refused),
         "crowded_out": _population(crowded),
         "illiquid": _population(illiquid),
+        "universe": _population(universe_rows),
     }
 
 
@@ -1824,6 +1885,11 @@ class Ledger:
             # record could not be tested for what it records -- but it says
             # what it is, and README says how to put the file back.
             "universe": run.get("universe"),
+            # The universe's own return from this session, filled by a later
+            # run from the frames its scan read (fill_benchmarks). Pending
+            # until then, and pending forever for a run whose universe the
+            # later scans never fetched -- a --tickers run's, for one.
+            "benchmark": empty_benchmark(),
             # And the liquidity floor it applied, in dollars: the one number
             # the open decision about widening the universe turns on, and the
             # one a row refused under it has to be read against.
@@ -1937,6 +2003,53 @@ class Ledger:
         if moved:
             self._recompute_means()
             self._copy_returns_into_latest()
+        return moved
+
+    def fill_benchmarks(self, frames: dict, through: date | None = None) -> int:
+        """Fill the universe benchmark of every run in the fill window whose
+        horizons the frames make knowable. Returns how many runs moved.
+
+        Same window and same idempotence as fill_forward_returns(): a horizon
+        already measured keeps its value, because two nights' frames are the
+        same feed's arithmetic over the same bars. The `n` per horizon is
+        how many of tonight's frames carried that run's session, which is the
+        universe as tonight's scan holds it -- a name added or dropped from
+        data/symbols.txt since that night is counted as tonight has it, and
+        the count is what says how many that was.
+        """
+        limit = _as_date(through)
+        moved = 0
+        window = list(self.runs[:FILL_WINDOW_RUNS])
+        if self.latest is not None:
+            key = (self.latest["run"].get("date"), self.latest["run"].get("type"))
+            for run in self.runs[FILL_WINDOW_RUNS:]:
+                if (run.get("date"), run.get("type")) == key:
+                    window.append(run)
+        for run in window:
+            current = run.get("benchmark")
+            if not isinstance(current, dict):
+                current = run["benchmark"] = empty_benchmark()
+            if not isinstance(current.get("from_open"), dict):
+                current["from_open"] = empty_benchmark()["from_open"]
+            if all(current.get(f"d{h}") is not None for h in HORIZONS) and \
+                    all(current["from_open"].get(f"d{h}") is not None for h in HORIZONS):
+                continue
+            session = _as_date(run.get("date"))
+            if session is None or (limit is not None and session >= limit) or not frames:
+                continue
+            fresh = universe_returns(frames, session)
+            changed = False
+            for horizon in HORIZONS:
+                key, count = f"d{horizon}", f"n{horizon}"
+                if current.get(key) is None and fresh[key] is not None:
+                    current[key], current[count] = fresh[key], fresh[count]
+                    changed = True
+                if current["from_open"].get(key) is None and fresh["from_open"][key] is not None:
+                    current["from_open"][key] = fresh["from_open"][key]
+                    current["from_open"][count] = fresh["from_open"][count]
+                    changed = True
+            if changed:
+                moved += 1
         return moved
 
     def _copy_returns_into_latest(self) -> None:
