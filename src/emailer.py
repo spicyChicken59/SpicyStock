@@ -632,12 +632,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
         elif run_type == "morning":
             empty = "The run this follows through on scored no candidates."
         else:
-            # A night whose every burst was refused outright did not fail the
-            # checklist, and saying so would state the opposite of what the
-            # rows beneath it record.
-            refused_all = (scan_stats.get("vetoed") or 0) and not (scan_stats.get("gated") or 0)
-            empty = ("Every burst the scan found was refused outright by an absolute rule."
-                     if refused_all else "No candidates passed the quality gate today.")
+            empty = _empty_evening_note(scan_stats)
         rows = f'<tr><td colspan="7" style="padding:16px;color:#666;">{empty}</td></tr>'
 
 
@@ -662,6 +657,77 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
       Automated screening output for human review — not trading advice.
       Verify charts and news before acting.</p>
     </body></html>"""
+
+
+def _empty_evening_note(scan_stats: dict) -> str:
+    """Why an evening run has nothing to show, said from the counts.
+
+    This was a two-way flag and neither way was reliably true.
+
+    `refused_all` read `vetoed and not gated` -- but `gated` is how many
+    PASSED the checklist, not how many it rejected, so the flag meant "some
+    name was vetoed and nobody got through". One veto in ten bursts set it,
+    and the cell then said "EVERY burst the scan found was refused outright by
+    an absolute rule" three lines under a funnel reading "Refused by an
+    absolute rule: 1". The email contradicted itself on one screen.
+
+    Its other branch said "No candidates passed the quality gate today" on a
+    night the scan found NO BURST AT ALL -- printed directly under "4% bursts
+    found: 0". Nothing was measured against the checklist, so nothing failed
+    it; the market was quiet, which is a different fact and the one the reader
+    needs. That is also the collapse this project forbids by name, arriving
+    from the opposite direction: the gate gets blamed for an outcome it had no
+    part in.
+
+    So the note is computed rather than chosen. `bursts - vetoed - passed` is
+    what the checklist actually rejected, clamped because a malformed stats
+    block must not produce a negative count in a sentence.
+    """
+    bursts = _count(scan_stats, "bursts")
+    vetoed = _count(scan_stats, "vetoed")
+    passed = _count(scan_stats, "gated")
+    # Dropping `- passed` here is provably equivalent, and the term stays
+    # anyway: every branch that reads by_checklist sits below `if passed:`,
+    # so passed is 0 by then. It is kept because it is what the number MEANS
+    # -- the bursts that were neither refused outright nor let through -- and
+    # a later edit that moves the early return would otherwise be wrong
+    # silently. Noted because mutation testing finds it and there is nothing
+    # to fix.
+    by_checklist = max(bursts - vetoed - passed, 0)
+
+    if not bursts:
+        return ("No 4% burst anywhere in the universe today. Nothing reached the "
+                "checklist, so nothing failed it — this is a quiet market, not a "
+                "rejection.")
+    if passed:
+        # Names got through and still produced no row. Rare, and the sentence
+        # must not say the checklist rejected them -- it did the opposite.
+        return (f"{_plural(passed, 'burst')} cleared the 2LYNCH checklist and none "
+                "produced a score. See the run's log; this is not a verdict on "
+                "the market.")
+    if vetoed and by_checklist:
+        return (f"{_plural(vetoed, 'burst')} refused outright by an absolute rule and "
+                f"{by_checklist} rejected by the 2LYNCH checklist. Two different "
+                "verdicts, and neither is the other.")
+    if vetoed:
+        found = ("The one burst the scan found was" if bursts == 1
+                 else f"All {bursts} bursts the scan found were")
+        return (f"{found} refused outright by an absolute rule. "
+                "The checklist never got a say.")
+    return (f"No candidate passed the 2LYNCH checklist today — "
+            f"{_plural(bursts, 'burst')} measured, none cleared it.")
+
+
+def _count(scan_stats: dict, key: str) -> int:
+    """One stats number as an int, or 0 for anything that is not one.
+
+    Every other reader of these keys goes through `or 0`, which turns a string
+    into itself and lets it reach arithmetic. This is a note about how many
+    names were refused; a stats block carrying "10" must not make it read
+    "10 bursts refused and -10 rejected".
+    """
+    value = scan_stats.get(key)
+    return value if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
 def _build_attachments(results: list[dict]) -> list[dict]:

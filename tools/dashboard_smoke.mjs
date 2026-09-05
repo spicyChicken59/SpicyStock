@@ -210,6 +210,25 @@ const VARIANTS = {
     }
     return d;
   },
+  // The quietest real night there is: the scan ran clean and found no 4%
+  // burst at all. Every candidate-facing card has nothing to hold, and the
+  // question is whether the page SAYS that or just goes blank -- the email's
+  // version of this said "No candidates passed the quality gate today" under
+  // a funnel reading "4% bursts found: 0", blaming the checklist for an
+  // outcome it had no part in.
+  quietmarket() {
+    const d = clone();
+    d.run.fixture = false;
+    d.run.bursts = 0;
+    d.run.passed_gate = 0;
+    d.run.scored = 0;
+    d.run.shortlist_size = 0;
+    d.run.scored_by = { claude: 0, fallback: 0 };
+    d.run.gate.total_checks = null;   // nothing measured a checklist either
+    d.candidates = [];
+    d.gated_out = [];
+    return d;
+  },
   // A run whose gate block never learned how many checks the checklist has.
   // The producer emits null there when NOTHING measured a checklist that
   // night, and every surface that mentions the gate concatenates the number
@@ -1286,6 +1305,33 @@ await setTheme('dark');
 await page.waitForTimeout(200);
 await checksForAnyRun(VARIANTS.quietnight(), 'a one-burst night');
 await shot('quiet-night-dark');
+
+// And the quietest real night there is: the scan ran clean and found no 4%
+// burst at all. The EMAIL's version of this said "No candidates passed the
+// quality gate today" directly under "4% bursts found: 0" -- blaming the
+// checklist for an outcome it had no part in, which is this project's named
+// collapse arriving from the opposite direction. The page is checked for the
+// same sentence rather than assumed clear of it.
+await open('/v/quietmarket/');
+await setTheme('dark');
+await page.waitForTimeout(200);
+await checksForAnyRun(VARIANTS.quietmarket(), 'a night with no burst at all');
+// innerText, not textContent: this page's <script> lives inside <body>, so
+// textContent hands back the source too -- and its comments discuss the very
+// sentences being searched for. The first version of this check failed on its
+// own commentary, which is the "asserting the page's own source" shape this
+// project has already been caught by once.
+const quietBody = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
+ok('a night with no burst at all blames nothing on the checklist',
+  !/passed the (quality|2LYNCH) gate today/i.test(quietBody)
+  && !/rejected at the/i.test(quietBody),
+  (quietBody.match(/.{0,90}(passed the (quality|2LYNCH) gate today|rejected at the).{0,60}/i) || [''])[0]);
+// And it still says what DID happen, in the one place left that can: the
+// funnel's widest cut is the burst filter, and it names it.
+ok('and says where every name was cut, which is the burst filter itself',
+  (await page.textContent('#funnel-hint')).includes('at "4% bursts"'),
+  (await page.textContent('#funnel-hint')).replace(/\s+/g, ' '));
+await shot('quiet-market-dark');
 
 await browser.close();
 server.close();

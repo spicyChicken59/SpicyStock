@@ -70,7 +70,9 @@ def test_html_reports_the_scan_stats_and_the_run_type(results):
 
 def test_html_survives_an_empty_shortlist():
     html = build_html([], "evening", STATS)
-    assert "No candidates" in html
+    # STATS says 12 bursts CLEARED the checklist, so the note may not say the
+    # checklist rejected them -- it is the sentence for the opposite outcome.
+    assert "cleared the 2LYNCH checklist and none produced a score" in html
     assert "<table" in html
 
 
@@ -283,8 +285,8 @@ def test_an_empty_shortlist_does_not_claim_a_quiet_market_when_the_run_broke():
     """Both are empty tables. Only one of them is a statement about stocks."""
     clean = build_html([], "evening", STATS)
     broken = build_html([], "evening", DEGRADED)
-    assert "No candidates passed the quality gate" in clean
-    assert "No candidates passed the quality gate" not in broken
+    assert "cleared the 2LYNCH checklist" in clean
+    assert "cleared the 2LYNCH checklist" not in broken
     assert "not a statement about the market" in broken
 
 
@@ -713,6 +715,67 @@ def test_a_night_every_burst_was_refused_does_not_blame_the_checklist():
     assert "No candidates passed the quality gate" not in html
 
 
+# The empty-shortlist note used to be a two-way flag, and NEITHER way was
+# reliably true. `refused_all` read `vetoed and not gated` -- but `gated` is
+# how many PASSED, not how many the checklist rejected. Every case below was
+# rendered and read before it was written down; three of the five were wrong.
+@pytest.mark.parametrize("label, stats, must_say, must_not_say", [
+    # The one that made the email contradict itself on a single screen: the
+    # funnel two lines above said "Refused by an absolute rule: 1" while the
+    # cell said EVERY burst had been.
+    ("one veto among nine checklist rejections",
+     dict(bursts=10, vetoed=1, gated=0),
+     ["1 burst refused outright by an absolute rule", "9 rejected by the 2LYNCH checklist"],
+     ["Every burst", "All 10 bursts"]),
+    ("nine vetoes and one checklist rejection",
+     dict(bursts=10, vetoed=9, gated=0),
+     ["9 bursts refused outright", "1 rejected by the 2LYNCH checklist"],
+     ["Every burst", "All 10 bursts"]),
+    # Nothing was measured against the checklist, so nothing failed it. This
+    # printed "No candidates passed the quality gate today" directly under a
+    # funnel line reading "4% bursts found: 0" -- the project's named collapse,
+    # arriving from the other direction: the gate blamed for an outcome it had
+    # no part in.
+    ("a quiet market with no burst at all",
+     dict(bursts=0, vetoed=0, gated=0),
+     ["No 4% burst anywhere in the universe today", "quiet market, not a rejection"],
+     ["passed the quality gate", "2LYNCH checklist", "absolute rule"]),
+    ("every burst refused outright",
+     dict(bursts=4, vetoed=4, gated=0),
+     ["All 4 bursts the scan found were refused outright"],
+     ["rejected by the 2LYNCH checklist"]),
+    ("the single-burst night, which reads wrong in the plural",
+     dict(bursts=1, vetoed=1, gated=0),
+     ["The one burst the scan found was refused outright"],
+     ["All 1", "1 bursts"]),
+    ("nothing vetoed: the checklist really did reject them",
+     dict(bursts=7, vetoed=0, gated=0),
+     ["No candidate passed the 2LYNCH checklist today", "7 bursts measured"],
+     ["absolute rule"]),
+])
+def test_the_empty_shortlist_note_says_what_actually_happened(
+    label, stats, must_say, must_not_say
+):
+    html = build_html([], "evening", dict(DATED, **stats))
+
+    for phrase in must_say:
+        assert phrase in html, f"{label}: missing {phrase!r}"
+    for phrase in must_not_say:
+        assert phrase not in html, f"{label}: should not say {phrase!r}"
+
+
+def test_the_empty_shortlist_note_never_prints_a_negative_count():
+    """`bursts - vetoed - passed` is arithmetic on numbers a caller supplies,
+    and a stats block that does not add up must not produce "-3 rejected by
+    the 2LYNCH checklist". Clamped, and a non-number counts as zero rather
+    than reaching the subtraction at all."""
+    for stats in [dict(bursts=2, vetoed=9, gated=0),
+                  dict(bursts=2, vetoed=0, gated=9),
+                  dict(bursts="10", vetoed=None, gated=True)]:
+        html = build_html([], "evening", dict(DATED, **stats))
+        assert "-" not in html.split("colspan=\"7\"")[1].split("</td>")[0], stats
+
+
 def test_what_day_n_counts_is_disclosed_once_under_the_table():
     """A streak counts every session the scan found a burst on, every unscored
     one included — the right call, and one no reader can infer from "day 2 of
@@ -750,7 +813,8 @@ def test_a_morning_run_with_nothing_to_show_does_not_blame_the_market():
     stocks: a morning pass has nothing of its own to find."""
     assert "The run this follows through on scored no candidates." in build_html(
         [], "morning", DATED)
-    assert "No candidates passed the quality gate" in build_html([], "evening", DATED)
+    assert "The run this follows through on scored no candidates." not in build_html(
+        [], "evening", DATED), "and an evening run says what its own scan found"
 
 
 # _headline() knew the mode and the staleness, and neither of the two other

@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 742 tests with no network
+- **There is a regression net.** `pytest tests/` runs 749 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -256,6 +256,34 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   so renumbering cannot pass one half while the other keeps the old number.
   This is the sweep this file's "check that a fix did not introduce a new
   defect of the same class" rule asks for, and it found one.
+
+  **The empty-shortlist note was a two-way flag and NEITHER way was reliably
+  true.** `refused_all` read `vetoed and not gated` -- but `gated` is how many
+  PASSED the checklist, not how many it rejected, so the flag actually meant
+  "something was vetoed and nobody got through". ONE veto among ten bursts set
+  it, and the cell then read "Every burst the scan found was refused outright
+  by an absolute rule" three lines under a funnel line reading "Refused by an
+  absolute rule: 1". The email contradicted itself on one screen. Its other
+  branch printed "No candidates passed the quality gate today" on a night the
+  scan found NO BURST AT ALL, directly under "4% bursts found: 0" -- the named
+  collapse arriving from the opposite direction, with the gate blamed for an
+  outcome it had no part in. The note is computed from the counts now, one
+  sentence per state, and every state was rendered and read before it was
+  written down; three of the six were wrong. Nine mutants, eight killed; the
+  ninth drops `- passed` from `by_checklist`, which is provably equivalent
+  because every branch that reads it sits below the `passed` early return, and
+  the argument is written beside the code rather than here.
+
+  **The page did not have that defect, and checking cost one shaped test.**
+  On a zero-burst night it hides every candidate card and lets the funnel say
+  it: "The widest cut is 230 names at '4% bursts' -- no 4% gain on the day".
+  Both facts are pinned by a `quietmarket` variant now, because "the page is
+  fine here" was an unchecked claim until one existed. The first version of
+  that check read `textContent('body')` and failed -- on the page's own
+  `<script>`, whose comments discuss the very sentences it was searching for.
+  `innerText` is what a reader sees; `textContent` inside this page is source.
+  That is the "asserting the page's own source" shape from the 3.3 audit,
+  caught this time by the check failing rather than by it passing.
 
   **And `evening.yml`'s commit-back has still never executed** — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on
