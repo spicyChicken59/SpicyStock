@@ -319,6 +319,28 @@ def _last_appearance(streak: dict) -> str:
     return LAST_OUTCOME.get(outcome) or "no score was recorded then"
 
 
+def _as_float(value):
+    return value if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+
+
+def fmt_gain(value) -> str:
+    """"+12.0%" on both paths. The evening path hands a float, the morning path
+    a value that came off disk through ledger._num(), which turns 12.0 into 12
+    -- so the same burst read "+12.0%" at 6:30pm and "+12%" at 8:30am."""
+    v = _as_float(value)
+    return f"{v:+.1f}%" if v is not None else str(value)
+
+
+def fmt_ratio(value) -> str:
+    v = _as_float(value)
+    return f"{v:.2f}x" if v is not None else str(value)
+
+
+def fmt_score(value) -> str:
+    v = _as_float(value)
+    return f"{v:.1f}" if v is not None else str(value)
+
+
 def esc(value) -> str:
     """Text on its way into the email's HTML, made safe to be text.
 
@@ -406,7 +428,8 @@ def _streak_note(row: dict) -> str:
         # the record has eight bursts for reads as an absence of history.
         colour = "#a5281b" if streak.get("seen_before") else "#666"
     elif day > 1:
-        text = f"day {esc(day)} of this setup, since {esc(streak.get('first_seen'))}"
+        text = f"day {esc(day)} of this setup" + (
+            f", since {esc(streak.get('first_seen'))}" if streak.get("first_seen") else "")
         colour = "#a5281b"
     else:
         text = "day 1 — new setup"
@@ -623,8 +646,8 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
         <tr>
           <td style="padding:8px;border-bottom:1px solid #ddd;"><b>{i}. {esc(r['ticker'])}</b><br>
               {_close_cell(r, scan_stats)}{_streak_note(r)}</td>
-          <td style="padding:8px;border-bottom:1px solid #ddd;">+{esc(r['gain_pct'])}%</td>
-          <td style="padding:8px;border-bottom:1px solid #ddd;">{esc(r['volume_ratio'])}x</td>
+          <td style="padding:8px;border-bottom:1px solid #ddd;">{esc(fmt_gain(r['gain_pct']))}</td>
+          <td style="padding:8px;border-bottom:1px solid #ddd;">{esc(fmt_ratio(r['volume_ratio']))}</td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">
               <b>{esc(r['lynch'])}</b>
               <details><summary style="cursor:pointer;color:#0066cc;font-size:12px;">detail</summary>
@@ -632,7 +655,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
           <td style="padding:8px;border-bottom:1px solid #ddd;">{esc(r['reason'])}<br>
               <span style="color:#a33;font-size:12px;">Risk: {esc(r['key_risk'])}</span></td>
           <td style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">
-              <b style="font-size:18px;">{r['score']}</b>/10<br>
+              <b style="font-size:18px;">{esc(fmt_score(r['score']))}</b>/10<br>
               <span style="font-size:12px;">{esc(r['verdict'])}</span></td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">
               {_chart_cell(r)}</td>

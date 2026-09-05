@@ -259,6 +259,32 @@ const VARIANTS = {
     d.evidence.refused.enough = true;
     return d;
   },
+  // A run entry whose date will not parse. The pipeline KEEPS such an entry
+  // (load_history degrades on it rather than refusing the file), the email
+  // says the history holds runs none of which carry a date, and the page
+  // printed "NaN undefined not" into the runs table's session column.
+  undated() {
+    const d = clone();
+    d.runs = [{ ...d.runs[0], date: 'not-a-date' }].concat(d.runs.slice(1));
+    return d;
+  },
+  // A snapshot written before the gate block, the cap, the provenance count
+  // or the shortlist size existed. The nogatetotal round guarded a null total
+  // and stopped one field short of a missing block: "under undefined checks
+  // passed" and "outside the undefined-call cap" reached the funnel.
+  oldsnap() {
+    const d = clone();
+    delete d.run.gate; delete d.run.score_cap; delete d.run.scored_by; delete d.run.shortlist_size;
+    return d;
+  },
+  // A day number with no first_seen beside it. src.ledger never writes the
+  // pair, so it is an off-disk shape -- and "day 2 of this setup, since —"
+  // is what the page made of it, the email "since " with nothing after.
+  nosince() {
+    const d = clone();
+    d.candidates[0].streak = { ...(d.candidates[0].streak || {}), day: 2, first_seen: null, seen_before: 1 };
+    return d;
+  },
   // A run whose gate block never learned how many checks the checklist has.
   // The producer emits null there when NOTHING measured a checklist that
   // night, and every surface that mentions the gate concatenates the number
@@ -1293,7 +1319,7 @@ const bucketNote = await page.locator('#streak-table tbody tr', { hasText: 'not 
   .locator('.sc-note').first().textContent();
 ok('and the bucket does not blame one of the four reasons it cannot tell apart',
   !/reach back|no history|could not read|undated/i.test(bucketNote)
-  && /each row above says why/.test(bucketNote),
+  && /rows in the ledger carry the specific reason/.test(bucketNote),
   bucketNote);
 ok('the record is broken down by month so a change over time is visible',
   (await page.locator('#trend-table tbody tr').count()) === HEV.by_month.length,
@@ -1397,6 +1423,37 @@ async function checksForAnyRun(data, where) {
 await open('/');
 await setTheme('dark');
 await page.waitForTimeout(200);
+// --- the reader lens's smaller findings, each on the state it named --------
+await open('/v/undated/');
+const runsCol = await page.$$eval('#runs-table tbody tr td:first-child', (tds) => tds.map((t) => t.textContent.trim()));
+ok('a run whose date will not parse is shown as it is, never as NaN or undefined',
+  runsCol.length > 0 && !runsCol.some((t) => /NaN|undefined/.test(t)) && runsCol.some((t) => t.includes('not-a-date')),
+  runsCol.slice(0, 2).join(' | '));
+await open('/v/oldsnap/');
+const oldFunnel = (await page.textContent('#funnel-hint')) + ' '
+  + (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent).join(' ')))
+  + ' ' + (await page.textContent('#gated-hint'));
+ok('a snapshot with no gate block and no cap prints neither undefined nor a number it does not have',
+  !/undefined|NaN|null/.test(oldFunnel) && /the gate/.test(oldFunnel) && /the call cap/.test(oldFunnel),
+  oldFunnel.replace(/\s+/g, ' ').slice(0, 120));
+await open('/v/nosince/');
+const firstStreak = await page.locator('#scores-table tbody tr').first().locator('.sc-note').first().textContent();
+ok('a day number with no first_seen beside it drops the "since" clause rather than printing a dash',
+  /day 2 of this setup/.test(firstStreak) && !/since/.test(firstStreak),
+  firstStreak.slice(0, 80));
+await open('/f/fixture/');
+ok('the weakest-check sentence names the denominator its number was taken over',
+  /of the bursts that failed the checklist/.test(await page.textContent('#checks-hint'))
+  && !/of the ones that failed it/.test(await page.textContent('#checks-hint')),
+  (await page.textContent('#checks-hint')).slice(0, 100));
+await open('/v/quietmarket/');
+ok('the empty evidence note states the horizons as they are, not five sessions for all of them',
+  /at least one more session to close for \+1d and five for \+5d/.test(await page.textContent('#evidence-empty')),
+  (await page.textContent('#evidence-empty')).slice(0, 120));
+// Back to the source the any-run checks below were opened on.
+await open('/');
+await page.waitForTimeout(200);
+
 await checksForAnyRun(LIVE, 'docs/');
 await shot('live-desktop-dark');
 

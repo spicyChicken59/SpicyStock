@@ -419,7 +419,12 @@
   function day(iso) {
     if (!iso) return '—';
     var p = String(iso).slice(0, 10).split('-');
-    return p.length === 3 ? Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + p[0] : iso;
+    // Validated, not assumed: a run entry whose date will not parse is a
+    // state the pipeline keeps rather than refuses (load_history degrades on
+    // it), and this printed "NaN undefined not" for it while the email said
+    // the history holds runs none of which carry a date to count from.
+    var ok = p.length === 3 && p.every(function (x) { return /^\d+$/.test(x); }) && MONTHS[Number(p[1]) - 1];
+    return ok ? Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + p[0] : String(iso);
   }
   function num(v, dp) { return v === null || v === undefined ? '—' : Number(v).toFixed(dp === undefined ? 2 : dp); }
   function pct(v, dp) { return v === null || v === undefined ? '—' : (v > 0 ? '+' : '') + Number(v).toFixed(dp === undefined ? 1 : dp) + '%'; }
@@ -609,7 +614,7 @@
     if (!s) return 'streak unknown — this run recorded none';
     var text = (s.day === null || s.day === undefined)
       ? noDayText(s)
-      : (s.day > 1 ? 'day ' + s.day + ' of this setup, since ' + day(s.first_seen)
+      : (s.day > 1 ? 'day ' + s.day + ' of this setup' + (s.first_seen ? ', since ' + day(s.first_seen) : '')
                    : 'day 1 — new setup');
     if (s.last_seen) text += ' · last seen ' + day(s.last_seen) + ', ' + lastAppearance(s);
     return text;
@@ -814,13 +819,21 @@
       // checks" and "the 3/null gate" — a rule that does not exist, printed as
       // fact. Say the part that is known and drop the part that is not.
       { name: 'passed 2LYNCH', n: run.passed_gate || 0,
-        why: (g.total_checks ? 'under ' + g.min_lynch_passes + ' of ' + g.total_checks + ' checks'
-                             : 'under ' + g.min_lynch_passes + ' checks passed') +
+        // A snapshot written before the gate block or the cap existed carries
+        // neither; the nogatetotal round guarded a null total and stopped one
+        // field short of a missing block, and "under undefined checks passed"
+        // reached the funnel. Same rule as gateTxt: say the part that is
+        // known and drop the part that is not.
+        why: (g.total_checks && g.min_lynch_passes ? 'under ' + g.min_lynch_passes + ' of ' + g.total_checks + ' checks'
+              : g.min_lynch_passes ? 'under ' + g.min_lynch_passes + ' checks passed'
+              : 'below the gate') +
              ((g.vetoes || []).length ? ', or refused by an absolute rule' : ''),
-        note: g.total_checks ? 'the ' + g.min_lynch_passes + '/' + g.total_checks + ' gate'
-                             : 'the ≥' + g.min_lynch_passes + '-pass gate' },
+        note: g.total_checks && g.min_lynch_passes ? 'the ' + g.min_lynch_passes + '/' + g.total_checks + ' gate'
+              : g.min_lynch_passes ? 'the ≥' + g.min_lynch_passes + '-pass gate'
+              : 'the gate' },
       { name: 'scored', n: run.scored || 0,
-        why: 'outside the ' + run.score_cap + '-call cap', note: 'one scoring call each' },
+        why: run.score_cap ? 'outside the ' + run.score_cap + '-call cap' : 'outside the call cap',
+        note: 'one scoring call each' },
       { name: 'shortlist', n: short,
         why: 'ranked below the top ' + short, note: 'the names that went out by email' }
     ];
@@ -1229,7 +1242,7 @@
     if (!anyOutcome) {
       $('evidence-empty').textContent =
         'Nothing has an outcome yet. The record holds ' + plural(ev.record.scored_setups, 'scored setup') +
-        ' over ' + plural(ev.record.sessions, 'session') + ', and a burst needs five more sessions to close before ' +
+        ' over ' + plural(ev.record.sessions, 'session') + ', and a burst needs at least one more session to close for +1d and five for +5d before ' +
         'it can be measured — so this view is correct and empty, which is not the same as a flat line at zero. ' +
         'It fills in on its own as later runs record what happened.';
       return;
@@ -1337,7 +1350,7 @@
             // field to narrow it, so it says the part that is true of all four
             // and points at the rows, which do carry the specific reason.
             ? [el('span', { text: 'not known' }),
-               el('span', { 'class': 'sc-note', text: 'the record could not place these — each row above says why' })]
+               el('span', { 'class': 'sc-note', text: 'the record could not place these — the rows in the ledger carry the specific reason' })]
             : [el('span', { text: 'day ' + r.day }),
                el('span', { 'class': 'sc-note', text: r.day === 1 ? 'the first burst of a setup' : 'a repeat inside the same setup' })]),
           el('td', { 'class': 'sc-num', text: commas(r.appearances) })
@@ -1647,7 +1660,7 @@
     var why = [];
     if (byGate) why.push(byGate + ' rejected at the ' + gateTxt + ' 2LYNCH gate');
     if (vetoed) why.push(vetoed + ' refused by an absolute rule whatever the checklist said');
-    if (capped) why.push(capped + ' passed the gate but ranked below the ' + run.score_cap +
+    if (capped) why.push(capped + ' passed the gate but ranked below the ' + (run.score_cap || 'capped number of') +
                          ' candidates this run sent to Claude');
     // The one place the limit gets a NUMBER. The cells below and the streak
     // line say what it is in words; this says how big it was on this run.
@@ -1696,7 +1709,7 @@
         ' that cleared the ' + gateTxt + ' checklist and ' + cs.failed + ' that did not. ' +
         (cs.weakest && cs.harshest
           ? cs.weakest.code + ' passes ' + rate(cs.weakest.rate) + ' of every burst, including ' +
-            rate(cs.weakest.frate) + ' of the ones that failed it, so it separates least; ' +
+            rate(cs.weakest.frate) + ' of the bursts that failed the checklist, so it separates least; ' +
             cs.harshest.code + ' passes ' + rate(cs.harshest.rate) + ' and is the hardest of the ' +
             cs.checks.length + '.'
           : '');

@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 835 tests with no network
+- **There is a regression net.** `pytest tests/` runs 843 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -327,6 +327,27 @@ Two design choices fixed with them: `record.sessions` now comes from
 `Record.of()`, the rule every streak reads, so one undated run entry no
 longer makes one page publish two session counts; and the shortlist split
 uses each run's own `shortlist_size` rather than the newest run's.
+
+**The reader lens's smaller findings, each reproduced and each pinned on the
+state it named.** A morning with nothing to read printed "4% bursts that
+session: 0 | Passed 2LYNCH gate: 0" under a session it called "not recorded"
+— the guaranteed state of the first production morning — and prints "not
+recorded" for both now. One name's checklist read two ways in two emails a
+night apart: the evening prints `src.lynch`'s own lines and raw floats, the
+morning rebuilt the lines off disk with the code and label split and printed
+values `_num()` had turned to ints ("+12%", "8x", "7/10"); one formatter for
+the three numbers on both paths, and `email_row()` rebuilds the line in the
+scorer's exact shape, pinned by a test that mails the same candidate both
+ways and compares. The page's `day()` printed "NaN undefined not" for a run
+entry whose date will not parse, a state the pipeline keeps rather than
+refuses; its weakest-check sentence said "of the ones that failed it" for a
+rate taken over the bursts that failed the CHECKLIST; a snapshot with no gate
+block reached the funnel as "under undefined checks passed", one field past
+where the nogatetotal round stopped; a day number with no `first_seen` read
+"since —" on the page and "since " in the email; and two sentences were not
+quite true of their own data. Fixed with three smoke variants (`undated`,
+`oldsnap`, `nosince`) and one test whose name promised the monitor and
+exercised its headline. Nine mutants across them, all killed.
 
 
   **The interpreter is part of the environment, and it changed an answer.**

@@ -840,8 +840,13 @@ def email_row(row: dict) -> dict:
                     apart, and this row then paired Monday's numbers with
                     Tuesday's picture with nothing anywhere saying so.
     """
-    detail = [f"{'PASS' if d.get('pass') else 'FAIL'}  {d.get('code')} "
-              f"{d.get('label')}: {d.get('value')}"
+    # The SAME line src.lynch writes for the evening email -- "PASS  2_first_
+    # or_second_burst: ..." -- rebuilt from the code and label the dashboard
+    # row keeps. This printed "PASS  2 first or second burst: ..." instead, so
+    # one name's checklist read two ways in two emails a night apart, which
+    # is the two-vocabularies drift this project has recorded three times.
+    detail = [f"{'PASS' if d.get('pass') else 'FAIL'}  {d.get('code')}_"
+              f"{str(d.get('label', '')).replace(' ', '_')}: {d.get('value')}"
               for d in (row.get("lynch_detail") or [])]
     return dict(row, lynch_detail=detail, chart=None, chart_note=MORNING_CHART_NOTE)
 
@@ -1092,7 +1097,15 @@ def follow_through(mode: Mode, dry_run: bool = False,
     # nothing — is the funnel line naming the run being followed instead.
     stats = report.email_stats(
         session=session,
-        bursts=source.get("bursts", 0), gated=source.get("passed_gate", 0),
+        # Only when there was a run to read them off. With no snapshot -- the
+        # guaranteed state of the first production morning, and of every one
+        # until evening.yml's commit-back succeeds -- these were 0 and 0, and
+        # the funnel printed "4% bursts that session: 0 | Passed 2LYNCH gate:
+        # 0" under a session it called "not recorded": two invented market
+        # counts three lines above a cell saying this is not a statement
+        # about the market. Absent, the funnel prints "not recorded" for both.
+        **({"bursts": source.get("bursts", 0), "gated": source.get("passed_gate", 0)}
+           if source else {}),
         # Counted off the snapshot's own rows, since the run block records no
         # veto total. A snapshot written before the rule existed has none, and
         # reports 0, which is the truth about that run.

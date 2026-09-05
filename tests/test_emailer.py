@@ -1009,3 +1009,30 @@ def test_the_checklist_lines_are_escaped_line_by_line():
     html = build_html([row], "evening", DATED)
     assert "0 prior bursts <tight base>" in _visible_text(html)
     assert "<tight base>" not in html
+
+
+def test_a_day_number_with_no_first_seen_drops_the_since_clause():
+    """src.ledger never writes the pair, so it is an off-disk shape -- and
+    "day 2 of this setup, since " with nothing after it is what the email
+    made of it (the page printed "since —")."""
+    html = build_html(_with_streak(day=2, first_seen=None), "evening", DATED)
+    text = _visible_text(html)
+    assert "day 2 of this setup" in text
+    assert "since" not in text.split("day 2 of this setup")[1][:20]
+
+
+@pytest.mark.parametrize("value, gain, ratio, score", [
+    (12.0, "+12.0%", "12.00x", "12.0"),
+    (12, "+12.0%", "12.00x", "12.0"),      # what ledger._num() hands the morning path
+    (8.39, "+8.4%", "8.39x", "8.4"),
+    (-0.5, "-0.5%", "-0.50x", "-0.5"),
+    ("n/a", "n/a", "n/a", "n/a"),           # a value that is not a number passes through
+])
+def test_the_three_numbers_read_the_same_on_both_paths(value, gain, ratio, score):
+    """The evening path hands floats and the morning path hands values that
+    came off disk through ledger._num(), which turns 12.0 into 12 -- so one
+    burst read "+12.0% | 8.39x | 7.0/10" at 6:30pm and "+12% | 8x | 7/10" at
+    8:30am. One rule, both paths."""
+    from src.emailer import fmt_gain, fmt_ratio, fmt_score
+
+    assert (fmt_gain(value), fmt_ratio(value), fmt_score(value)) == (gain, ratio, score)

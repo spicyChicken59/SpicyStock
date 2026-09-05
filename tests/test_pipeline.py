@@ -1007,6 +1007,60 @@ def test_a_ledger_row_shaped_one_level_wrong_cannot_kill_the_run_after_claude_wa
     assert json.loads(path.read_text())["runs"], "and tonight's record was written"
 
 
+def test_a_morning_with_nothing_to_read_invents_no_market_counts(
+    market_clock, mocked_boundaries, tmp_path
+):
+    """The guaranteed state of the first production morning: docs/data.json
+    is the fixture (refused by name) or absent. The funnel printed "4% bursts
+    that session: 0 | Passed 2LYNCH gate: 0" under a session it called "not
+    recorded" -- two invented counts three lines above a cell saying this is
+    not a statement about the market."""
+    market_clock.before_the_open()
+
+    pipeline.run("morning", dry_run=False)
+
+    text = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "4% bursts that session: not recorded" in text
+    assert "Passed 2LYNCH gate: not recorded" in text
+    assert "4% bursts that session: 0" not in text
+
+
+def test_the_morning_email_shows_a_candidate_exactly_as_the_evening_one_did(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """One name, two emails a night apart, and the checklist lines and the
+    three numbers read differently: the evening path prints src.lynch's own
+    lines and raw floats, the morning rebuilt the lines off disk with the
+    code and label split ("PASS  2 first or second burst") and printed values
+    ledger._num() had turned to ints ("+12%", "8x", "7/10"). The reader who
+    gets both sees two vocabularies for one judgement."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=2)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=False, tickers=names)
+    evening = visible(mocked_boundaries["resend"].sent[-1]["html"])
+
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+    morning = visible(mocked_boundaries["resend"].sent[-1]["html"])
+
+    def cells(text: str, ticker: str) -> str:
+        # from the ticker to the next candidate's rank marker or the table's end
+        start = text.index(f"1. {ticker}") if f"1. {ticker}" in text else text.index(ticker)
+        chunk = text[start:start + 700]
+        return chunk.split(" 2. ")[0]
+
+    for ticker in names[:1]:
+        e, m = cells(evening, ticker), cells(morning, ticker)
+        for line in ("PASS  2_", "FAIL  2_", "PASS  L_", "FAIL  L_"):
+            assert (line in e) == (line in m), (line, e[:200], m[:200])
+        for token in ("_first_or_second_burst", "%", "x"):
+            assert token in e and token in m
+        import re
+        assert re.findall(r"[+-]\d+\.\d%", e)[:1] == re.findall(r"[+-]\d+\.\d%", m)[:1], "the gain"
+        assert re.findall(r"\d+\.\d\dx", e)[:1] == re.findall(r"\d+\.\d\dx", m)[:1], "the ratio"
+        assert re.findall(r"\d+\.\d/10", e)[:1] == re.findall(r"\d+\.\d/10", m)[:1], "the score"
+
+
 def test_a_delivery_failure_keeps_the_night_the_run_already_paid_for(
     monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
