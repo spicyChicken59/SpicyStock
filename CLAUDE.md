@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 758 tests with no network
+- **There is a regression net.** `pytest tests/` runs 760 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -325,6 +325,24 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   caching removed, which is this file's third shape -- a test that cannot tell
   the states apart -- and the inverse test that drops `cache_control` is what
   proves it does.
+
+  **And the retry for an unparseable reply resent the request byte for byte,
+  at temperature 0.** Measured, not argued: a prose reply produced two
+  IDENTICAL requests, both unparseable, and the candidate fell back anyway
+  having been paid for twice. That is the reasoning `score_candidate()`
+  already applies to a rejected credential -- "a rejected key is not
+  transient; the retry is theatre" -- three lines above, and it was not
+  applied to a reply that arrived in the wrong shape, which is equally a fact
+  about the request that produced it. temperature 0 is not a guarantee of an
+  identical reply, so the second call was not certain to be wasted; it just
+  had no reason to go differently. It has one now: `RETRY_CORRECTION` is
+  APPENDED to the content, the system prompt untouched so the cached prefix
+  still hits, and a transport error still resends what it had -- correcting a
+  request that was fine tells the model its own output was wrong when it never
+  produced any. Five mutants; the fourth survived and was a real hole, a retry
+  carrying the correction ALONE, which asks the model to score a candidate it
+  can no longer see and returns a reply that parses. Nothing downstream would
+  have noticed.
 
   **And `evening.yml`'s commit-back has still never executed** — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on

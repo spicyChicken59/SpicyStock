@@ -25,6 +25,7 @@ from src.scanner import Candidate, ScanConfig, detect_setup
 from src.scorer import (
     KNOWLEDGE_PATH,
     MAX_TOKENS,
+    RETRY_CORRECTION,
     SAMPLING_MODELS,
     STRUCTURED_OUTPUT_MODELS,
     UNSCORED_VERDICT,
@@ -234,6 +235,65 @@ def test_the_request_binds_to_the_real_sdk_signature(model):
     real = anthropic.Anthropic(api_key="unused-by-a-signature-check")
     kwargs = request_kwargs("sys", [{"type": "text", "text": "t"}], model=model)
     inspect.signature(real.messages.create).bind(**kwargs)
+
+
+def test_an_unparseable_reply_is_asked_again_differently_not_resent(candidate, claude,
+                                                                    tmp_path):
+    """The retry used to resend the request byte-for-byte at temperature 0.
+
+    Measured before the fix: a prose reply produced two IDENTICAL requests,
+    both unparseable, and the candidate fell back anyway having been paid for
+    twice. That is exactly the reasoning this function already applies to a
+    rejected credential -- "a rejected key is not transient; the retry is
+    theatre" -- and it was not applied to a reply that arrived in the wrong
+    shape, which is equally a fact about the request that produced it.
+    """
+    prose = ("I'd rate this setup around 7 out of 10 -- the base is tight and "
+             "the volume expansion is convincing.")
+    claude.replies(prose, json.dumps({"score": 7.5, "reason": "r",
+                                      "verdict": "B+", "key_risk": "k"}))
+    # With a real chart, so the assertion below that the image survives the
+    # retry is about an image that is actually there. Without one the content
+    # is a single text block and that check cannot fail.
+    chart = render_chart(candidate.ticker, candidate.history, out_dir=str(tmp_path))
+
+    out = score_candidate(candidate, make_lynch(4), CONTEXT, chart)
+
+    first, second = claude.calls
+    assert first != second, "the retry resent the same request"
+    assert RETRY_CORRECTION not in _text_of(first), "the first ask carries no correction"
+    assert RETRY_CORRECTION in _text_of(second)
+    # ADDED to the request, not substituted for it. A retry carrying the
+    # correction alone would ask the model to score a candidate it can no
+    # longer see, and the reply would parse -- so nothing downstream would
+    # notice. Found by mutation: this assertion is the only thing that does.
+    assert candidate.ticker in _text_of(second)
+    assert make_lynch(4)["summary"] in _text_of(second)
+    sent = second["messages"][0]["content"]
+    assert first["messages"][0]["content"] == sent[:-1], (
+        "the retry did not simply append the correction to what it already sent")
+    assert sent[0]["type"] == "image", "the retry dropped the chart image"
+    # The system prompt is untouched, so the cached prefix still hits -- a
+    # correction that edited it would pay a second write on every retry.
+    assert first["system"] == second["system"]
+    assert out["provenance"]["source"] == "claude", "and the second ask landed"
+
+
+def test_a_transport_failure_retries_the_request_it_already_had(candidate, claude):
+    """The other half, and the reason this is not "always add a correction":
+    an API error says nothing about the request's shape. Correcting a request
+    that was fine tells the model its own output was wrong when it never
+    produced any.
+    """
+    claude.replies(RuntimeError("overloaded_error: server is busy"),
+                   json.dumps({"score": 6.0, "reason": "r", "verdict": "B", "key_risk": "k"}))
+
+    out = score_candidate(candidate, make_lynch(4), CONTEXT, None)
+
+    first, second = claude.calls
+    assert first == second, "a transport error should resend what it had"
+    assert RETRY_CORRECTION not in _text_of(second)
+    assert out["provenance"]["source"] == "claude"
 
 
 def test_the_knowledge_base_is_sent_as_a_cacheable_block(candidate, claude):

@@ -324,6 +324,24 @@ def user_text(metrics: dict) -> str:
     )
 
 
+#: Appended to the request when a reply could not be parsed, and ONLY then.
+#: The retry used to resend the request byte-for-byte at temperature 0, which
+#: is the same reasoning score_candidate() already applies to a rejected
+#: credential -- "the retry is theatre" -- and did not apply here. Measured: a
+#: prose reply produced two identical requests, both unparseable, and the
+#: candidate fell back anyway having been paid for twice.
+#:
+#: temperature 0 is not a guarantee of an identical reply, so the second call
+#: was not certain to be wasted; it just had no reason to go differently. This
+#: gives it one, at the cost of a few dozen tokens, and leaves the system
+#: prompt untouched so the cached prefix still hits.
+RETRY_CORRECTION = (
+    "Your previous reply could not be parsed. Reply with ONLY the JSON object "
+    "described above: no prose before or after it, no markdown fences, no "
+    "explanation. The object itself is the entire reply."
+)
+
+
 def request_kwargs(system: str, content: list[dict], model: str | None = None) -> dict:
     """Exactly what goes to `messages.create`, built where a test can read it.
 
@@ -553,6 +571,15 @@ def score_candidate(cand, lynch_result: dict, context: dict, chart_path: str | N
                         attempt, attempts, cand.ticker, _error_text(e))
             if is_fatal_auth_failure(_error_text(e)):
                 break  # a rejected key is not transient; the retry is theatre
+            if isinstance(e, ScoreFormatError):
+                # The reply arrived and was the wrong SHAPE, which is a fact
+                # about this request -- so resending it unchanged, at
+                # temperature 0, is the theatre the line above refuses for a
+                # rejected key. Ask again, differently. A transport error is
+                # the opposite case and keeps the original request: there was
+                # nothing wrong with it.
+                kwargs = request_kwargs(
+                    system, [*content, {"type": "text", "text": RETRY_CORRECTION}])
             continue
         if usage is not None:
             for key, value in cache_usage(resp).items():
