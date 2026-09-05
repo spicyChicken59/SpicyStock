@@ -163,8 +163,8 @@ def _headline(scan_stats: dict, run_type: str, results: list[dict] | None = None
         # gap of two or more, while unscheduled closures have run to
         # consecutive sessions and the band below names them.
         published = scan_stats.get("session") or "an older session"
-        where = (f"the rows below are {published}'s" if rows
-                 else f"the newest run anything published is {published}'s")
+        where = (f"the rows below are {esc(published)}'s" if rows
+                 else f"the newest run anything published is {esc(published)}'s")
         return (f"NOTHING HAS PUBLISHED FOR {_plural(stale, 'SESSION').upper()} — {where}, "
                 "and no market holiday is that long. The evening run has stopped "
                 "publishing.")
@@ -204,8 +204,8 @@ def _banner(scan_stats: dict, run_type: str = "evening",
         return ""
     headline = _headline(scan_stats, run_type, results)
     items = "".join(
-        f'<li style="margin:2px 0;"><b>{e.get("stage", "?")}</b>: {e.get("message", "")}</li>'
-        for e in errors
+        f'<li style="margin:2px 0;"><b>{esc(e.get("stage", "?"))}</b>: {esc(e.get("message", ""))}</li>'
+        for e in [x for x in errors if isinstance(x, dict)]
     )
     return (
         '<div style="border-left:6px solid #c0392b;background:#fdf3f2;'
@@ -522,7 +522,7 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
                  ("Passed 2LYNCH gate", scan_stats.get("gated", unknown)),
                  *capped,
                  ("Shortlisted", len(results))]
-    return " &nbsp;|&nbsp;\n      ".join(f"{label}: {value}" for label, value in parts)
+    return " &nbsp;|&nbsp;\n      ".join(f"{label}: {esc(value)}" for label, value in parts)
 
 
 def _chart_file(row: dict) -> Path | None:
@@ -561,7 +561,7 @@ def _no_chart_note(row: dict) -> str:
     if row.get("chart_note"):
         return row["chart_note"]
     if row.get("chart"):
-        return (f'no chart — one was rendered for this candidate, but {row["chart"]} '
+        return (f'no chart — one was rendered for this candidate, but {esc(row["chart"])} '
                 f"is not there now, so there was nothing to attach")
     return NO_CHART
 
@@ -583,8 +583,8 @@ def _close_cell(row: dict, scan_stats: dict) -> str:
     price is read as this morning's, and it is last night's close.
     """
     session = scan_stats.get("session")
-    stamped = f" (close {session})" if session else ""
-    return f'<span style="color:#666;font-size:12px;">${row["close"]}{stamped}</span>'
+    stamped = f" (close {esc(session)})" if session else ""
+    return f'<span style="color:#666;font-size:12px;">${esc(row["close"])}{stamped}</span>'
 
 
 def _title(run_type: str, scan_stats: dict, results: list[dict]) -> str:
@@ -608,21 +608,23 @@ def _title(run_type: str, scan_stats: dict, results: list[dict]) -> str:
     if not session:
         return "Momentum Bursts — follow-through, with nothing to follow"
     if not results:
-        return f"Momentum Bursts — following through on {session}, at today&rsquo;s open"
-    return f"Momentum Bursts — {session}&rsquo;s shortlist, at today&rsquo;s open"
+        return f"Momentum Bursts — following through on {esc(session)}, at today&rsquo;s open"
+    return f"Momentum Bursts — {esc(session)}&rsquo;s shortlist, at today&rsquo;s open"
 
 
 def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
     title = _title(run_type, scan_stats, results)
     rows = ""
     for i, r in enumerate(results, 1):
-        detail = "<br>".join(r["lynch_detail"])
+        # Escaped line by line: these are src.lynch's own sentences today,
+        # and off disk tomorrow, and a `<` in either is markup to a mail client.
+        detail = "<br>".join(esc(line) for line in r["lynch_detail"])
         rows += f"""
         <tr>
           <td style="padding:8px;border-bottom:1px solid #ddd;"><b>{i}. {esc(r['ticker'])}</b><br>
               {_close_cell(r, scan_stats)}{_streak_note(r)}</td>
-          <td style="padding:8px;border-bottom:1px solid #ddd;">+{r['gain_pct']}%</td>
-          <td style="padding:8px;border-bottom:1px solid #ddd;">{r['volume_ratio']}x</td>
+          <td style="padding:8px;border-bottom:1px solid #ddd;">+{esc(r['gain_pct'])}%</td>
+          <td style="padding:8px;border-bottom:1px solid #ddd;">{esc(r['volume_ratio'])}x</td>
           <td style="padding:8px;border-bottom:1px solid #ddd;">
               <b>{esc(r['lynch'])}</b>
               <details><summary style="cursor:pointer;color:#0066cc;font-size:12px;">detail</summary>

@@ -117,7 +117,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
   consolidated volume, which is why the absolute share threshold has to become
   a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 813 tests with no network
+- **There is a regression net.** `pytest tests/` runs 835 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -263,6 +263,70 @@ from every surface — not in `bursts`, not in `gated_out`, not in the ledger �
 so on a two-name `--tickers` smoke test the thinner of two $5B names is
 refused and the email reads "4% bursts found: 1". A fourth reason word
 touches every surface that enumerates the three, which is its own round.
+
+## Findings from the round-4 audit — the reader and ledger lenses
+
+Twenty-one more, three HIGH, every one reproduced here before it was fixed.
+
+**The red band was the one leaf carrying free text from OUTSIDE the codebase
+on the first real night, and it was raw.** anthropic's SDK sets the exception
+message to the raw response body when it is not JSON, so an edge 5xx HTML
+page landed in `_check_scoring()`'s sentence and the band interpolated it as
+markup: the operator read "502 Bad Gateway 502 Bad Gateway cloudflare" with
+the tags swallowed. The escaping round before this one swept eight leaves and
+missed the band, the checklist lines, the chart note, the close cell, the
+session in the title and funnel, and the stale note — all escaped now, each
+pinned through a real parser. Two existing tests then broke, and correctly:
+they grepped the mail SOURCE for a sentence with an apostrophe in it, which
+is an entity now, and the reader is the standard.
+
+**The page, the code and the fixture held three different fallback rules.**
+The page said a fallback score is "passes ÷ checks × 10"; `_fallback_score()`
+has mapped the pass count to the LOW end of its rubric band since step 8; and
+`tools/make_fixture.py` typed the old arithmetic under a comment reading
+"src/scorer.py's own fallback formula, verbatim", which is why the page's
+sentence and the fixture agreed and nothing noticed. A real 5/6 fallback
+printed 7.0 under a sentence whose formula gives 8.3. The generator calls the
+scorer's own function now, the sentence states the map, and a docs test reads
+the sentence's numbers back against the function.
+
+**The sixth instance of the class, one level further than the fifth.** A
+stored row whose `checks` is a list, whose `ticker` is not a string, whose
+`date` is a list or whose `d5` is a string loaded CLEAN and took the evening
+run down at archive — after the scan and every Claude call — and, not having
+been set aside, took every following night down the same way. Driven through
+the real evening path, all four shapes: exit 2 now, set aside, record written.
+
+**A setup refused on day one and scored on day two was invisible to every
+score-keyed block.** The common case the veto produces — a 6/6 name three up
+days into a run, allowed back the next session. `setup_leads()` made the
+refused row the lead, `scored` kept only leads that were candidates, and so
+the paid-for score and its realised outcome were in neither `overall` nor
+`by_score` nor `by_month`; `by_ticker` printed an em dash for a name with a
+score; the run's own mean skipped it. The committed thirty-run history held
+THREE. Setups are chains now (`setup_chains()`): `by_check` still judges the
+first appearance, whose verdict was passed that day, and every score-keyed
+block judges the first SCORED appearance; a setup is on one side of the
+control only. The history's scored setups went 92 → 94 and refusals 18 → 16.
+
+**A backfill older than the fill window never got its outcomes.** The window
+is the ten newest runs by session, so a `SCAN_SESSION_DATE` run of an older
+one landed outside it on the very run that scored it, and README's "a run
+pinned to an old session resolves its own outcomes" was false from the
+eleventh session back. The run just added is always in the window. The only
+test named for the window could not see it — every run held the same two
+names and `pending_tickers()` de-duplicates — so the window could be deleted
+green, and this lived under it.
+
+**Four rules no test could fail on:** a scored row landing in its `by_score`
+bucket (a mutant keeping fallbacks only passed, the floor test comparing
+empty to empty), both edges of the 8–20% band, `top_score` (max → min
+passed), and `outcome_summary`'s `fsum` (only `mean_returns` was pinned, so
+every published evidence mean could go back to `sum()` green). All pinned.
+Two design choices fixed with them: `record.sessions` now comes from
+`Record.of()`, the rule every streak reads, so one undated run entry no
+longer makes one page publish two session counts; and the shortlist split
+uses each run's own `shortlist_size` rather than the newest run's.
 
 
   **The interpreter is part of the environment, and it changed an answer.**

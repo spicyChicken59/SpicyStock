@@ -18,6 +18,7 @@ import collections, json, pathlib, sys
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 from src.pipeline import MIN_LYNCH_PASSES
+from src.scorer import _fallback_score
 from src import ledger                        # the real evidence block, not a copy
 from src.ledger import CONTRACT_INVARIANTS    # the real contract, not a copy
 from src.scanner import ScanConfig            # the real floors, not a copy
@@ -341,7 +342,14 @@ def build_candidate(s, i):
     assert passes >= 3, f"{s.t} would have been gated out at {passes}/6"
     if s.src == "fallback":
         # src/scorer.py's own fallback formula, verbatim
-        score = round(passes / len(detail) * 10, 1)
+        # THE SCORER'S OWN RULE, not a formula typed here. This was
+        # `round(passes / len(detail) * 10, 1)`, which is the pre-step-8
+        # arithmetic: src.scorer._fallback_score() has mapped the pass count
+        # to the LOW end of its rubric band since then (5/6 is 7.0, not 8.3),
+        # so the fixture, the page's sentence about the fallback and the code
+        # were three different rules -- and the sentence and the fixture
+        # agreed, which is why nothing noticed.
+        score = _fallback_score({"passes": passes, "total": len(detail), "summary": ""})
         verdict = "B" if score >= 6 else "skip"
         reason = f"AI unavailable; checklist score {passes}/{len(detail)}."
         risk = "not AI-reviewed"

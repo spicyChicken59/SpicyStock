@@ -1435,13 +1435,46 @@ def test_a_return_already_recorded_is_not_rewritten(tmp_path):
 
 def test_a_run_older_than_the_fill_window_is_left_alone(tmp_path, monkeypatch):
     """A row still incomplete after this many runs is a name that stopped
-    trading; re-requesting it every night forever buys nothing."""
+    trading; re-requesting it every night forever buys nothing.
+
+    The run outside the window carries a ticker the runs inside it do not:
+    every run used to hold the same two names, pending_tickers() de-duplicates
+    by name, and so the expected list was the same whether the window existed
+    or not -- the whole window could be deleted with this test green, and the
+    backfill defect below lived under it.
+    """
     monkeypatch.setattr(ledger, "FILL_WINDOW_RUNS", 2)
     book = ledger.Ledger(tmp_path).load()
-    for day in (24, 25, 26):
+    book.add_run(*_run("2026-08-24", ("OLDIE",)))
+    for day in (25, 26):
         book.add_run(*_run(f"2026-08-{day}"))
 
-    assert book.pending_tickers(through=date(2026, 8, 31)) == ["AAA", "ZZZ"]
+    pending = book.pending_tickers(through=date(2026, 8, 31))
+
+    assert "OLDIE" not in pending, "the run outside the window was offered"
+    assert set(pending) == {"AAA", "ZZZ"}
+
+
+def test_a_backfill_older_than_the_window_still_resolves_its_own_outcomes(tmp_path, monkeypatch):
+    """README: "a run pinned to an old session resolves its own outcomes". It
+    did not, from the eleventh session back: the window is the newest runs by
+    SESSION, a SCAN_SESSION_DATE backfill of an older one landed outside it on
+    the very run that scored it, and its rows stayed pending forever. The run
+    just added is always in the window."""
+    monkeypatch.setattr(ledger, "FILL_WINDOW_RUNS", 2)
+    book = ledger.Ledger(tmp_path).load()
+    for day in (25, 26, 27):
+        book.add_run(*_run(f"2026-08-{day}"))
+    book.add_run(*_run("2026-08-18", ("BACKFILL",)))     # older than every run in the window
+    assert [r["date"] for r in book.runs][-1] == "2026-08-18", "precondition: it sorts last"
+
+    assert "BACKFILL" in book.pending_tickers(through=date(2026, 8, 31))
+    # And only because it is the run just added: the same entry loaded from
+    # disk on a later night is outside the window again, as designed.
+    book.write()
+    later = ledger.Ledger(tmp_path).load()
+    later.add_run(*_run("2026-08-28"))
+    assert "BACKFILL" not in later.pending_tickers(through=date(2026, 8, 31))
 
 
 # ===========================================================================
@@ -2497,6 +2530,172 @@ def test_a_setup_that_was_scored_once_is_a_pick_even_if_it_was_later_refused():
 
     assert ev["overall"]["setups"] == 1 and ledger.at_horizon(ev["overall"]["outcomes"], 5)["mean"] == 12.0
     assert ev["refused"]["setups"] == 0, "the 25th is the same setup, already counted as a pick"
+
+
+def test_a_setup_refused_on_day_one_and_scored_on_day_two_is_a_pick_with_its_score():
+    """The common case the veto produces -- a 6/6 name three up days into a
+    run, allowed back the next session -- was invisible to every score-keyed
+    block: the setup's LEAD is the refused row, `scored` kept only leads that
+    were candidates, so the paid-for score and its outcome were in neither
+    overall nor by_score nor by_month, by_ticker printed no best score, and
+    the run's own mean skipped it. The committed history held three of them.
+    And the same setup must be on ONE side of the control: a pick, not also
+    a refusal."""
+    runs = _record([("2026-08-25", ("AAA",)), ("2026-08-24", ())],
+                   returns={("AAA", "2026-08-25"): {"d5": 15.0}})
+    runs[1]["gated"] = [{"ticker": "AAA", "date": "2026-08-24", "close": 9.0, "gain_pct": 4.4,
+                         "volume": 5_000_000, "volume_ratio": 1.8, "lynch": "6/6",
+                         "lynch_passes": 6, "lynch_total": 6, "lynch_detail": _detail(6),
+                         "reason": "veto_up_days", "checks": {"2": True},
+                         "forward_returns": {**ledger.empty_returns(), "d5": 20.0, "as_of": "x"}}]
+    runs[0]["gated"] = []
+    runs[0]["candidates"][0]["score"] = 8.5
+
+    ev = ledger.evidence(runs)
+
+    assert ev["overall"]["setups"] == 1 and ledger.at_horizon(ev["overall"]["outcomes"], 5)["mean"] == 15.0
+    assert ev["record"]["scored_setups"] == 1 and ev["record"]["setups"] == 1
+    assert [b["verdict"] for b in ev["by_score"] if b["setups"]] == ["A"]
+    assert ev["by_ticker"][0]["best_score"] == 8.5
+    assert ev["refused"]["setups"] == 0, "the same move counted on both sides of the control"
+    passed = next(c for c in ev["by_check"] if c["code"] == "2")
+    assert passed["passed"]["setups"] == 1 and ledger.at_horizon(passed["passed"]["outcomes"], 5)["mean"] == 20.0, (
+        "by_check still judges the FIRST appearance, whose verdict was passed on that day")
+
+
+def test_a_run_scores_its_own_pick_even_when_an_earlier_refusal_led_the_setup():
+    """The run-level mean, the same rule one level down -- and through the
+    ledger's own recomputation, not with the lead set handed in by hand: the
+    first version of this test did that, and a mutant that put the caller
+    back on setup_leads() passed it."""
+    book = ledger.Ledger("unused")
+    day1, cands1, _ = _run("2026-08-24", ())
+    day2, cands2, _ = _run("2026-08-25", ("AAA",))
+    refused = {"ticker": "AAA", "date": "2026-08-24", "close": 9.0, "gain_pct": 4.4,
+               "volume": 5_000_000, "volume_ratio": 1.8, "lynch": "6/6", "lynch_passes": 6,
+               "lynch_total": 6, "lynch_detail": _detail(6), "reason": "veto_up_days",
+               "forward_returns": ledger.empty_returns()}
+    book.add_run(day1, cands1, [refused])
+    book.add_run(day2, cands2, [])
+    book.runs[0]["candidates"][0]["forward_returns"] = {**ledger.empty_returns(), "d5": 15.0, "as_of": "x"}
+
+    book._recompute_means()
+
+    assert book.runs[0]["forward_returns"]["n"] == 1
+    assert book.runs[0]["forward_returns"]["d5"] == 15.0
+
+
+@pytest.mark.parametrize("field, value, says", [
+    ("checks", ["2", "L"], "checks is a JSON list"),
+    ("checks", "2,L", "checks is a JSON str"),
+    ("ticker", ["AAA"], "ticker is a JSON list"),
+    ("ticker", 7, "ticker is a JSON int"),
+    ("date", ["2026-08-25"], "date is a JSON list"),
+    ("d5", "1.2", "d5 return is a JSON str"),
+    ("d5", [1.2], "d5 return is a JSON list"),
+    ("d5", True, "d5 return is a JSON bool"),
+])
+def test_the_sixth_instance_a_row_shape_the_readers_index_into_is_refused_at_load(
+    tmp_path, field, value, says
+):
+    """Each of these loaded clean and took the EVENING run down after the scan
+    and every Claude call were paid for -- and because the file was not set
+    aside, every night after failed the same way. Refused at load now, set
+    aside, and the run goes on over an empty history."""
+    book = ledger.Ledger(tmp_path).load()
+    book.add_run(*_run("2026-08-25"))
+    book.write()
+    saved = json.loads((tmp_path / ledger.LEDGER_NAME).read_text())
+    row = saved["runs"][0]["candidates"][0]
+    if field == "d5":
+        row["forward_returns"]["d5"] = value
+    else:
+        row[field] = value
+    (tmp_path / ledger.LEDGER_NAME).write_text(json.dumps(saved))
+
+    later = ledger.Ledger(tmp_path).load()
+
+    assert later.load_error and says in later.load_error, later.load_error
+    assert later.runs == []
+    assert len(ledger.quarantined(tmp_path)) == 1
+
+
+def test_a_claude_scored_row_lands_in_its_verdict_bucket_with_its_outcome():
+    """No test asserted that a scored row lands in a by_score bucket at all:
+    a mutant restricting by_score to fallback rows -- emptying every bucket for
+    real scores -- passed the suite, because the floor test compared an empty
+    list to an empty list."""
+    runs = _record([("2026-08-25", ("AAA",))], returns={("AAA", "2026-08-25"): {"d5": 12.0}})
+    runs[0]["candidates"][0]["score"] = 8.5
+    runs[0]["candidates"][0]["source"] = "claude"
+
+    buckets = {b["verdict"]: b for b in ledger.evidence(runs)["by_score"] if b["setups"]}
+
+    assert list(buckets) == ["A"]
+    assert ledger.at_horizon(buckets["A"]["outcomes"], 5) == {
+        "horizon": 5, "mean": 12.0, "n": 1, "best": 12.0, "worst": 12.0, "in_band": 1}
+
+
+def test_both_edges_of_the_claimed_band_count_as_inside_it():
+    """forward_returns() writes two decimals, so exactly 8.0 and exactly 20.0
+    are values a row carries. Making either edge exclusive passed the suite."""
+    low, high = ledger.CLAIMED_BAND
+    rows = [{"forward_returns": {"d5": low}}, {"forward_returns": {"d5": high}},
+            {"forward_returns": {"d5": low - 0.01}}, {"forward_returns": {"d5": high + 0.01}}]
+    assert ledger.at_horizon(ledger.outcome_summary(rows), 5)["in_band"] == 2
+
+
+def test_top_score_is_the_best_score_of_the_run(tmp_path):
+    """Printed in the runs table; max -> min passed the suite."""
+    book = ledger.Ledger(tmp_path).load()
+    entry = book.add_run(*_run("2026-08-25", ("AAA", "BBB", "CCC")))
+    assert entry["top_score"] == max(c["score"] for c in book.latest["candidates"]) == 8.0
+
+
+def test_the_evidence_means_are_correctly_rounded_like_the_run_means():
+    """CLAUDE.md says the fsum tests are load-bearing on 3.11, and only
+    mean_returns() was pinned: outcome_summary() -- every mean in the published
+    evidence block -- could go back to sum() with the suite green. The same
+    Fraction oracle, against evidence()['overall']."""
+    from fractions import Fraction
+
+    values = [9.93, 6.9, 2.86, 2.41]
+    exact = sum((Fraction(v) for v in values), Fraction(0)) / len(values)
+    rows = [{"forward_returns": {"d5": v}} for v in values]
+
+    got = ledger.at_horizon(ledger.outcome_summary(rows), 5)["mean"]
+
+    assert got == round(float(exact), 2) == 5.53
+    assert got == round(math.fsum(values) / len(values), 2)
+
+
+def test_the_records_session_count_is_the_one_the_streaks_read():
+    """evidence.record.sessions counted run dates alone while every streak's
+    history_sessions came from Record.of(), which also counts sessions the
+    rows prove -- so one undated run entry made one page publish two counts
+    of how many sessions one file holds."""
+    runs = _record([("2026-08-25", ("AAA",)), ("2026-08-24", ("BBB",))])
+    runs[0]["date"] = None            # the entry lost its date; its rows still say 2026-08-25
+
+    ev = ledger.evidence(runs)
+
+    assert ev["record"]["sessions"] == ledger.Record.of(runs).sessions == 2
+    assert ev["record"]["from"] == "2026-08-24"
+
+
+def test_the_shortlist_split_uses_each_runs_own_size():
+    """One shortlist size -- the newest run's -- split every run in the record,
+    so a TOP_N change re-split older nights at a boundary they never used."""
+    runs = _record([("2026-08-25", ("AAA", "BBB", "CCC")), ("2026-08-24", ("DDD", "EEE", "FFF"))],
+                   returns={(t, d): {"d5": 1.0} for t, d in
+                            [("AAA", "2026-08-25"), ("BBB", "2026-08-25"), ("CCC", "2026-08-25"),
+                             ("DDD", "2026-08-24"), ("EEE", "2026-08-24"), ("FFF", "2026-08-24")]})
+    runs[0]["shortlist_size"] = 1     # the newest night mailed one name
+    runs[1]["shortlist_size"] = 3     # the night before mailed three
+
+    ev = ledger.evidence(runs)
+
+    assert ev["shortlist"]["setups"] == 4 and ev["rest"]["setups"] == 2
 
 
 def test_the_streak_view_counts_appearances_because_a_setup_lead_is_always_day_one():

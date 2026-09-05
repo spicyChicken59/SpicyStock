@@ -237,6 +237,26 @@ def test_archive_names_the_file_by_date_and_run_type(tmp_path):
 # ===========================================================================
 
 
+def visible(html: str) -> str:
+    """What a mail client shows, through a real parser. Every free-text leaf in
+    the email is escaped now, so an apostrophe in a sentence is an entity in
+    the source; a test that greps the source for the sentence reads the
+    escaping as the sentence going missing. The reader is the standard."""
+    from html.parser import HTMLParser
+
+    class Reader(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.parts = []
+
+        def handle_data(self, data):
+            self.parts.append(data)
+
+    reader = Reader()
+    reader.feed(html)
+    return " ".join(" ".join(reader.parts).split())
+
+
 def _main(monkeypatch, *argv: str) -> int:
     """Run the real main() and return the exit code it chose."""
     monkeypatch.setattr(sys, "argv", ["pipeline", *argv])
@@ -953,6 +973,40 @@ def test_a_backfill_does_not_make_the_morning_say_nothing_has_published(
     assert report.exit_code == pipeline.EXIT_OK, [e["message"] for e in report.errors]
 
 
+@pytest.mark.parametrize("mutation", ["checks_list", "ticker_list", "date_list", "d5_string"])
+def test_a_ledger_row_shaped_one_level_wrong_cannot_kill_the_run_after_claude_was_paid(
+    mutation, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The sixth instance of the class, driven through the real evening path
+    the way the fifth was: publish a run, bend ONE stored row on disk, run
+    again. Each of these loaded clean and crashed at archive -- after the scan
+    and every Claude call -- and was never set aside, so the next night died
+    the same way. Now: refused at load, set aside, exit 2, record written."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=2)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=True, tickers=names)
+    path = tmp_path / "docs" / "ledger.json"
+    led = json.loads(path.read_text())
+    run = led["runs"][0]
+    run["date"] = session_offset(-5)
+    for row in run["candidates"] + run["gated"]:
+        row["date"] = session_offset(-5)
+    row = run["candidates"][0]
+    {"checks_list": lambda: row.__setitem__("checks", ["2", "L"]),
+     "ticker_list": lambda: row.__setitem__("ticker", ["F0"]),
+     "date_list": lambda: row.__setitem__("date", [session_offset(-5)]),
+     "d5_string": lambda: row["forward_returns"].__setitem__("d5", "1.2")}[mutation]()
+    path.write_text(json.dumps(led))
+    report = pipeline.RunReport()
+
+    pipeline.run("evening", dry_run=True, tickers=names, report=report)   # must not raise
+
+    assert report.exit_code == pipeline.EXIT_DEGRADED
+    assert any("set aside" in e["message"] or "could not be read" in e["message"] for e in report.errors)
+    assert len(ledger.quarantined(tmp_path / "docs")) == 1
+    assert json.loads(path.read_text())["runs"], "and tonight's record was written"
+
+
 def test_a_delivery_failure_keeps_the_night_the_run_already_paid_for(
     monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
@@ -1428,7 +1482,7 @@ def test_an_evening_run_before_the_close_degrades_and_says_so_everywhere(
     # the email
     (sent,) = mocked_boundaries["resend"].sent
     assert sent["subject"].startswith("[4% Burst] DEGRADED — ")
-    assert problem["message"] in sent["html"]
+    assert problem["message"] in visible(sent["html"])
     # the ledger and the dashboard snapshot
     assert published(tmp_path)["run"]["errors"] == report.errors
     assert recorded(tmp_path)["runs"][0]["status"] == "degraded"
@@ -1953,7 +2007,7 @@ def test_a_morning_run_following_a_stale_evening_run_says_which_session(
     assert session_offset(-4) in problem["message"]
     assert str(scanner.current_session()) in problem["message"]
     assert report.exit_code == pipeline.EXIT_DEGRADED
-    assert problem["message"] in mocked_boundaries["resend"].sent[0]["html"]
+    assert problem["message"] in visible(mocked_boundaries["resend"].sent[0]["html"])
 
 
 def test_a_morning_run_three_weeks_stale_says_so_in_the_subject_line(

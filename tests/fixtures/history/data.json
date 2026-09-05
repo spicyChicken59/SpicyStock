@@ -930,10 +930,10 @@
       "status": "ok",
       "dry_run": true,
       "forward_returns": {
-        "d1": -1.32,
-        "d3": -0.43,
-        "d5": -0.72,
-        "n": 2,
+        "d1": 1.11,
+        "d3": 1.23,
+        "d5": 0.7,
+        "n": 3,
         "rows": 4
       }
     },
@@ -1245,10 +1245,10 @@
       "status": "ok",
       "dry_run": true,
       "forward_returns": {
-        "d1": 2.88,
-        "d3": 3.64,
-        "d5": 2.07,
-        "n": 3,
+        "d1": 2.24,
+        "d3": 2.77,
+        "d5": 1.82,
+        "n": 4,
         "rows": 5
       }
     },
@@ -1459,32 +1459,32 @@
       "from": "2026-07-22",
       "to": "2026-09-01",
       "setups": 110,
-      "scored_setups": 92,
+      "scored_setups": 94,
       "rows": 178
     },
     "overall": {
-      "setups": 92,
+      "setups": 94,
       "outcomes": [
         {
           "horizon": 1,
-          "mean": 2.0,
-          "n": 87,
+          "mean": 2.02,
+          "n": 89,
           "best": 9.03,
           "worst": -4.76,
           "in_band": 3
         },
         {
           "horizon": 3,
-          "mean": 3.79,
-          "n": 83,
+          "mean": 3.76,
+          "n": 85,
           "best": 25.85,
           "worst": -10.96,
           "in_band": 13
         },
         {
           "horizon": 5,
-          "mean": 5.9,
-          "n": 74,
+          "mean": 5.8,
+          "n": 76,
           "best": 34.21,
           "worst": -17.71,
           "in_band": 22
@@ -1496,29 +1496,29 @@
         "low": 0.0,
         "high": 5.0,
         "verdict": "skip",
-        "setups": 39,
+        "setups": 40,
         "enough": true,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 1.96,
-            "n": 38,
+            "mean": 1.91,
+            "n": 39,
             "best": 8.03,
             "worst": -4.76,
             "in_band": 1
           },
           {
             "horizon": 3,
-            "mean": 3.03,
-            "n": 35,
+            "mean": 2.95,
+            "n": 36,
             "best": 23.38,
             "worst": -10.96,
             "in_band": 5
           },
           {
             "horizon": 5,
-            "mean": 3.92,
-            "n": 30,
+            "mean": 3.83,
+            "n": 31,
             "best": 34.21,
             "worst": -17.71,
             "in_band": 6
@@ -1529,29 +1529,29 @@
         "low": 5.0,
         "high": 6.0,
         "verdict": "C",
-        "setups": 17,
+        "setups": 18,
         "enough": false,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 2.09,
-            "n": 16,
+            "mean": 2.32,
+            "n": 17,
             "best": 7.59,
             "worst": -2.21,
             "in_band": 0
           },
           {
             "horizon": 3,
-            "mean": 3.58,
-            "n": 16,
+            "mean": 3.64,
+            "n": 17,
             "best": 15.2,
             "worst": -4.16,
             "in_band": 3
           },
           {
             "horizon": 5,
-            "mean": 5.71,
-            "n": 15,
+            "mean": 5.58,
+            "n": 16,
             "best": 19.15,
             "worst": -8.37,
             "in_band": 4
@@ -2231,29 +2231,29 @@
       },
       {
         "month": "2026-08",
-        "setups": 52,
+        "setups": 54,
         "enough": true,
         "outcomes": [
           {
             "horizon": 1,
-            "mean": 2.45,
-            "n": 52,
+            "mean": 2.47,
+            "n": 54,
             "best": 8.15,
             "worst": -4.76,
             "in_band": 2
           },
           {
             "horizon": 3,
-            "mean": 3.52,
-            "n": 48,
+            "mean": 3.48,
+            "n": 50,
             "best": 23.38,
             "worst": -10.96,
             "in_band": 7
           },
           {
             "horizon": 5,
-            "mean": 4.84,
-            "n": 39,
+            "mean": 4.72,
+            "n": 41,
             "best": 34.2,
             "worst": -17.71,
             "in_band": 13
@@ -2298,7 +2298,7 @@
         "setups": 2,
         "appearances": 5,
         "last_seen": "2026-09-01",
-        "best_score": 7,
+        "best_score": 7.1,
         "outcomes": [
           {
             "horizon": 1,
@@ -2463,7 +2463,7 @@
         "setups": 1,
         "appearances": 4,
         "last_seen": "2026-08-06",
-        "best_score": 6.1,
+        "best_score": 6.8,
         "outcomes": [
           {
             "horizon": 1,
@@ -2496,7 +2496,7 @@
         "setups": 1,
         "appearances": 3,
         "last_seen": "2026-08-26",
-        "best_score": null,
+        "best_score": 5.4,
         "outcomes": [
           {
             "horizon": 1,
@@ -2595,7 +2595,7 @@
         "setups": 2,
         "appearances": 3,
         "last_seen": "2026-08-27",
-        "best_score": 4.2,
+        "best_score": 4.3,
         "outcomes": [
           {
             "horizon": 1,
@@ -2925,7 +2925,7 @@
         "setups": 1,
         "appearances": 2,
         "last_seen": "2026-08-26",
-        "best_score": 2.9,
+        "best_score": 6.9,
         "outcomes": [
           {
             "horizon": 1,
@@ -3024,7 +3024,7 @@
         "setups": 2,
         "appearances": 3,
         "last_seen": "2026-08-07",
-        "best_score": 5.4,
+        "best_score": 5.9,
         "outcomes": [
           {
             "horizon": 1,
@@ -3057,7 +3057,7 @@
         "setups": 1,
         "appearances": 2,
         "last_seen": "2026-07-30",
-        "best_score": 3,
+        "best_score": 7.9,
         "outcomes": [
           {
             "horizon": 1,
@@ -3717,7 +3717,7 @@
         "setups": 1,
         "appearances": 2,
         "last_seen": "2026-08-03",
-        "best_score": 4.9,
+        "best_score": 6.4,
         "outcomes": [
           {
             "horizon": 1,
@@ -4278,7 +4278,7 @@
         "setups": 1,
         "appearances": 2,
         "last_seen": "2026-08-25",
-        "best_score": 4.9,
+        "best_score": 6.5,
         "outcomes": [
           {
             "horizon": 1,
@@ -4410,7 +4410,7 @@
         "setups": 1,
         "appearances": 3,
         "last_seen": "2026-08-19",
-        "best_score": 4,
+        "best_score": 5.6,
         "outcomes": [
           {
             "horizon": 1,
@@ -4506,28 +4506,28 @@
       }
     ],
     "shortlist": {
-      "setups": 80,
+      "setups": 82,
       "outcomes": [
         {
           "horizon": 1,
-          "mean": 2.16,
-          "n": 76,
+          "mean": 2.19,
+          "n": 78,
           "best": 9.03,
           "worst": -4.76,
           "in_band": 3
         },
         {
           "horizon": 3,
-          "mean": 3.75,
-          "n": 72,
+          "mean": 3.71,
+          "n": 74,
           "best": 25.85,
           "worst": -10.96,
           "in_band": 11
         },
         {
           "horizon": 5,
-          "mean": 5.67,
-          "n": 65,
+          "mean": 5.57,
+          "n": 67,
           "best": 34.2,
           "worst": -17.71,
           "in_band": 20
@@ -4566,31 +4566,31 @@
       "enough": false
     },
     "refused": {
-      "setups": 18,
+      "setups": 16,
       "outcomes": [
         {
           "horizon": 1,
-          "mean": 1.12,
-          "n": 17,
+          "mean": 1.33,
+          "n": 15,
           "best": 6.63,
           "worst": -5.71,
           "in_band": 0
         },
         {
           "horizon": 3,
-          "mean": 2.46,
-          "n": 15,
+          "mean": 2.75,
+          "n": 13,
           "best": 9.44,
           "worst": -11.88,
           "in_band": 3
         },
         {
           "horizon": 5,
-          "mean": 3.63,
-          "n": 14,
+          "mean": 2.46,
+          "n": 12,
           "best": 13.65,
           "worst": -18.09,
-          "in_band": 4
+          "in_band": 3
         }
       ],
       "enough": false

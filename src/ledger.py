@@ -703,15 +703,75 @@ def setup_leads(runs: list[dict]) -> set[tuple[str, str]]:
     everywhere: it under-claims that two bursts are one episode rather than
     inventing continuity the market did not have.
     """
-    leads: set[tuple[str, str]] = set()
-    for ticker, appearances in appearance_index(runs).items():
-        previous = None
-        for row in appearances:
-            gap = sessions_between(previous, row["date"]) if previous else None
+    return set(setup_chains(runs))
+
+
+def setup_chains(runs: list[dict]) -> dict[tuple[str, str], list[dict]]:
+    """(ticker, session) of every lead -> the appearances of that setup, in
+    session order, both kinds. setup_leads() is its key set; this is the rule
+    itself, kept in one place because two questions read it differently.
+
+    by_check asks whether the checks' verdict on a burst predicted its
+    outcome, and the verdict was passed on the FIRST appearance, so that row
+    represents the setup there. by_score asks whether the SCORE predicted it,
+    and a name refused on day 1 and scored on day 2 -- a 6/6 name three up
+    days into a run, allowed back the next session, which is the common case
+    the veto produces -- was scored on day 2, so that is the row with a score
+    to judge. Keying every block on the lead made that setup invisible to
+    every score-keyed view: the paid-for score and its realised outcome were
+    in neither overall nor by_score nor by_month, by_ticker printed no best
+    score for a name that had one, and the run's own mean skipped it. The
+    committed thirty-run history held three such rows.
+    """
+    # The ORIGINAL rows, not appearance_index()'s reduced view of them: the
+    # blocks that read a chain need checks, rank, score and forward_returns.
+    # Same rule as appearance_index for one name on one session -- a scored
+    # appearance wins over a gated one -- so the two cannot disagree about
+    # what counts as an appearance.
+    rows_of: dict[str, dict[str, dict]] = {}
+    for run in runs:
+        if not isinstance(run, dict):
+            continue
+        for scored, rows in ((True, run.get("candidates") or []),
+                             (False, run.get("gated") or [])):
+            for row in rows:
+                if not isinstance(row, dict) or not isinstance(row.get("ticker"), str):
+                    continue
+                day = iso_date(row.get("date"))
+                if day is None:
+                    continue
+                by_session = rows_of.setdefault(row["ticker"], {})
+                if day in by_session and not (scored and not _scored(by_session[day])):
+                    continue
+                by_session[day] = row
+    chains: dict[tuple[str, str], list[dict]] = {}
+    for ticker, by_session in rows_of.items():
+        previous, lead = None, None
+        for day in sorted(by_session):
+            row = by_session[day]
+            gap = sessions_between(previous, day) if previous else None
             if gap is None or gap > MAX_STREAK_GAP_SESSIONS:
-                leads.add((ticker, iso_date(row["date"])))
-            previous = row["date"]
-    return leads
+                lead = (ticker, day)
+                chains[lead] = []
+            chains[lead].append(row)
+            previous = day
+    return chains
+
+
+def _scored(row: dict) -> bool:
+    return (isinstance(row.get("score"), (int, float)) and not isinstance(row.get("score"), bool))
+
+
+def scored_leads(runs: list[dict]) -> set[tuple[str, str]]:
+    """(ticker, session) of the first SCORED appearance of every setup that
+    was scored at all -- what the score-keyed blocks and the run-level means
+    count over. A setup never scored contributes nothing here."""
+    out = set()
+    for chain in setup_chains(runs).values():
+        first = next((r for r in chain if _scored(r)), None)
+        if first is not None:
+            out.add((first["ticker"], iso_date(first["date"])))
+    return out
 
 
 # ------------------------------------------------------- dashboard rows --
@@ -918,7 +978,7 @@ def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
                 the pair is what lets a label say which of the two it is
                 showing instead of calling rows "names".
 
-    `leads` comes from setup_leads() over the WHOLE ledger, not this run:
+    `leads` comes from scored_leads() over the WHOLE ledger, not this run:
     whether a row starts a setup is a question about the sessions around it,
     and a run cannot answer it about itself.
 
@@ -956,7 +1016,7 @@ def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
 #
 # WHY THIS IS COMPUTED HERE AND NOT IN THE BROWSER. Every number below is an
 # average over SETUPS rather than rows, which is mean_returns()' rule and the
-# reason setup_leads() exists: a name that bursts on five consecutive sessions
+# reason scored_leads() exists: a name that bursts on five consecutive sessions
 # is one move measured five times, and counting each row weights that one move
 # five times against a name that burst once. That rule is a definition, it
 # lives in this module, and a second copy of it in JavaScript is precisely the
@@ -1093,9 +1153,17 @@ def evidence(runs: list[dict]) -> dict:
     whether a number is worth printing as a rate -- and cannot decide
     differently from the email or from a later reader of the same file.
     """
-    leads = setup_leads(runs)
-    scored = _leading_rows(runs, leads, gated=False)
-    every = _leading_rows(runs, leads, gated=True)
+    chains = setup_chains(runs)
+    leads = set(chains)
+    # `every`: one row per setup, its FIRST appearance -- the row whose
+    # checklist verdict by_check judges. `scored`: one row per setup that was
+    # scored at all, its first SCORED appearance -- the row with a score for
+    # the score-keyed blocks to judge. A setup is on ONE side of the control
+    # below: refused only if no appearance of it was ever scored.
+    every = [chain[0] for chain in chains.values()]
+    scored = [next(r for r in chain if _scored(r)) for chain in chains.values()
+              if any(_scored(r) for r in chain)]
+    record = Record.of(runs)
     sessions = session_dates(runs)
 
     by_score = []
@@ -1149,7 +1217,6 @@ def evidence(runs: list[dict]) -> dict:
     # on the page rather than hidden, and it is why this block is the only one
     # that says "appearances".
     index = appearance_index(runs)
-    record = Record.of(runs)
     day_of: dict[tuple, int | None] = {}
     for ticker, appearances in index.items():
         for row in appearances:
@@ -1193,10 +1260,12 @@ def evidence(runs: list[dict]) -> dict:
     for row in every:
         per_ticker.setdefault(row["ticker"], []).append(row)
     by_ticker = []
-    for ticker in sorted(per_ticker):
+    for ticker in sorted(per_ticker, key=str):
         seen = appearances_of.get(ticker, [])
-        scores = [r["score"] for r in per_ticker[ticker]
-                  if isinstance(r.get("score"), (int, float)) and not isinstance(r.get("score"), bool)]
+        # best_score over EVERY scored appearance of the name, not over its
+        # leads: a name refused on day 1 and scored 8.5 on day 2 printed an
+        # em dash here.
+        scores = [r["score"] for r in seen if _scored(r)]
         by_ticker.append({
             "ticker": ticker,
             "setups": len(per_ticker[ticker]),
@@ -1207,8 +1276,18 @@ def evidence(runs: list[dict]) -> dict:
             "outcomes": outcome_summary(per_ticker[ticker]),
         })
 
-    shortlisted = [r for r in scored if isinstance(r.get("rank"), int) and r["rank"] <= _shortlist_size(runs)]
-    others = [r for r in scored if isinstance(r.get("rank"), int) and r["rank"] > _shortlist_size(runs)]
+    # Split by the size of the run each row went out in, not by the newest
+    # run's: one TOP_N across a record written under two values would put
+    # older rows at a boundary their nights never used.
+    size_of = {}
+    for run in runs:
+        if isinstance(run, dict):
+            n = run.get("shortlist_size")
+            for row in list(run.get("candidates") or []):
+                if isinstance(row, dict):
+                    size_of[id(row)] = n if isinstance(n, int) and not isinstance(n, bool) else 0
+    shortlisted = [r for r in scored if isinstance(r.get("rank"), int) and r["rank"] <= size_of.get(id(r), 0)]
+    others = [r for r in scored if isinstance(r.get("rank"), int) and r["rank"] > size_of.get(id(r), 0)]
 
     # THE ALTERNATIVE. The north star is "its picks beat the alternative", and
     # until this block the record measured the picks against the claimed band
@@ -1223,8 +1302,7 @@ def evidence(runs: list[dict]) -> dict:
     # control with names the screener actually liked. A row with no reason
     # word was written before the reasons existed, when the gate was the only
     # way out, so it counts as refused. Leading rows only, as everywhere.
-    scored_keys = {(r.get("ticker"), r.get("date")) for r in scored}
-    unscored = [r for r in every if (r.get("ticker"), r.get("date")) not in scored_keys]
+    unscored = [chain[0] for chain in chains.values() if not any(_scored(r) for r in chain)]
     crowded = [r for r in unscored if r.get("reason") == "score_cap"]
     refused = [r for r in unscored if r.get("reason") != "score_cap"]
     return {
@@ -1233,8 +1311,11 @@ def evidence(runs: list[dict]) -> dict:
         "horizons": list(HORIZONS),
         "record": {
             "runs": len(runs),
-            "sessions": len(sessions),
-            "from": iso_date(sessions[0]) if sessions else None,
+            # Record.of() is what every streak's history_sessions reads; this
+            # used to count run dates alone, so one undated run entry made the
+            # same page publish two counts of how many sessions one file holds.
+            "sessions": record.sessions,
+            "from": iso_date(record.first) if record.first else None,
             "to": iso_date(sessions[-1]) if sessions else None,
             "setups": len(every),
             "scored_setups": len(scored),
@@ -1330,6 +1411,33 @@ def _malformed_rows(runs: list[dict]) -> str | None:
                     return (f"holds a run for {run.get('date')!r} with a {key} row "
                             f"({row.get('ticker')!r}) whose forward_returns is a JSON "
                             f"{type(row['forward_returns']).__name__} rather than an object")
+                # THE SIXTH INSTANCE of the class, found by sweeping one level
+                # further than the fifth. Each of these loaded clean and took
+                # the EVENING run down after the scan and every Claude call
+                # were paid for: an unhashable ticker in streaks(), an
+                # unhashable date in add_run(), a string return under
+                # math.fsum, a list-shaped `checks` under .get() in
+                # evidence(). And because the file was not set aside, every
+                # night after failed the same way until someone edited it.
+                if not isinstance(row.get("ticker"), str):
+                    return (f"holds a run for {run.get('date')!r} with a {key} row whose "
+                            f"ticker is a JSON {type(row.get('ticker')).__name__} rather than a string")
+                if row.get("date") is not None and not isinstance(row.get("date"), str):
+                    return (f"holds a run for {run.get('date')!r} with a {key} row "
+                            f"({row['ticker']!r}) whose date is a JSON "
+                            f"{type(row['date']).__name__} rather than a string")
+                if row.get("checks") is not None and not isinstance(row["checks"], dict):
+                    return (f"holds a run for {run.get('date')!r} with a {key} row "
+                            f"({row['ticker']!r}) whose checks is a JSON "
+                            f"{type(row['checks']).__name__} rather than an object")
+                returns = row.get("forward_returns") or {}
+                for horizon in HORIZONS:
+                    value = returns.get(f"d{horizon}")
+                    if value is not None and (isinstance(value, bool)
+                                              or not isinstance(value, (int, float))):
+                        return (f"holds a run for {run.get('date')!r} with a {key} row "
+                                f"({row['ticker']!r}) whose d{horizon} return is a JSON "
+                                f"{type(value).__name__} rather than a number")
     return None
 
 
@@ -1592,7 +1700,7 @@ class Ledger:
         # this hands back still has to describe itself. Alone in the ledger,
         # every appearance in it starts its own setup.
         entry.setdefault("forward_returns",
-                         mean_returns(entry["candidates"], setup_leads([entry])))
+                         mean_returns(entry["candidates"], scored_leads([entry])))
         return entry
 
     def _recompute_means(self) -> None:
@@ -1606,7 +1714,11 @@ class Ledger:
         refuses to ship in a streak, and it would be worse here, because a
         mean is what somebody reads to decide whether any of this works.
         """
-        leads = setup_leads(self.runs)
+        # scored_leads, not setup_leads: a pick whose setup was LED by an
+        # earlier refusal -- the veto's common case -- is still this run's
+        # pick, and keying on the setup's first appearance dropped it from the
+        # run's own mean while the score and the outcome sat in the row.
+        leads = scored_leads(self.runs)
         for run in self.runs:
             run["forward_returns"] = mean_returns(run.get("candidates", []), leads)
 
@@ -1615,7 +1727,19 @@ class Ledger:
         """Rows that could still gain a horizon, newest FILL_WINDOW_RUNS runs."""
         limit = _as_date(through)
         out = []
-        for run in self.runs[:FILL_WINDOW_RUNS]:
+        # The window is the newest runs BY SESSION, so a SCAN_SESSION_DATE
+        # backfill of a session older than the ten newest landed outside it
+        # -- on the run that scored it and on every run after -- and its rows
+        # stayed pending forever, while README promised a backfill resolves
+        # its own outcomes. The run just added is always in the window: it is
+        # the one whose outcomes this run was started to collect.
+        window = list(self.runs[:FILL_WINDOW_RUNS])
+        if self.latest is not None:
+            key = (self.latest["run"].get("date"), self.latest["run"].get("type"))
+            for run in self.runs[FILL_WINDOW_RUNS:]:
+                if (run.get("date"), run.get("type")) == key:
+                    window.append(run)
+        for run in window:
             for row in list(run.get("candidates", [])) + list(run.get("gated", [])):
                 returns = row.get("forward_returns") or {}
                 if all(returns.get(f"d{h}") is not None for h in HORIZONS):

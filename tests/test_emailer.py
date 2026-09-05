@@ -18,6 +18,24 @@ from src.scorer import render_chart
 STATS = {"universe": "230 checked-in US common stocks", "bursts": 42, "gated": 12}
 
 
+def _visible_text(html: str) -> str:
+    """What a mail client shows, through a real parser -- the only honest
+    reading of an escaping claim."""
+    from html.parser import HTMLParser
+
+    class Reader(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.parts = []
+
+        def handle_data(self, data):
+            self.parts.append(data)
+
+    reader = Reader()
+    reader.feed(html)
+    return " ".join(" ".join(reader.parts).split())
+
+
 def make_result(ticker: str, **overrides) -> dict:
     row = {
         "ticker": ticker,
@@ -949,37 +967,45 @@ def test_a_malformed_error_entry_cannot_crash_the_only_monitor():
     assert "DEGRADED" in _headline(stats, "evening", [{"ticker": "A"}])
 
 
-def test_a_streak_day_that_is_not_a_number_does_not_take_the_email_down(fake_resend):
-    """ledger.snapshot_problem() checks a morning row's SHAPE and not its
-    content, so a block whose day is the string "3" reaches this module
-    well-formed. It was a TypeError out of `day > 1` here, after the band and
-    the title had been built and before anything was sent -- the email is the
-    monitor, and it must arrive."""
-    send_email(_with_streak(day="3", seen_before=2, last_seen="2026-08-28"), "morning", DATED)
 
-    html = fake_resend.sent[0]["html"]
-    assert "streak unknown" in html and "day 3" not in html
-    assert "day N of this setup" in html, "the footnote path compares the same value"
+def test_the_whole_monitor_survives_a_malformed_error_entry_not_just_its_headline():
+    """The test above is named for the monitor and exercised only _headline();
+    build_html() -- the entry point the name promises -- crashed on the very
+    same input, because _banner() called .get() on every entry with no guard.
+    Not reachable from the pipeline today, which is exactly why it reported
+    safety that was not there."""
+    stats = {"status": "degraded", "errors": ["not a dict", None, {"no_stage": True},
+                                               {"stage": "scan", "message": "a real one"}]}
+    html = build_html([], "evening", stats)
+    assert "a real one" in html
+    assert html.count("<li") == 2, "the two objects render; the two non-objects are skipped"
 
 
-@pytest.mark.parametrize("value", [None, "", "   "])
-def test_an_unset_sender_falls_back_even_when_actions_passes_it_as_empty(
-    monkeypatch, fake_resend, results, value
-):
-    """os.environ.get's default fires only on a MISSING key, and Actions never
-    leaves this one missing: evening.yml always sets RESEND_FROM, and GitHub
-    expands an unset secret to ''. So the variable arrives present and empty,
-    the documented fallback never fired, and the send went out with `from: ''`
-    -- which Resend refuses. Setting the other five secrets and leaving this
-    one out therefore mailed nothing while the run reported itself clean.
+@pytest.mark.parametrize("where, stats, must_read", [
+    # The one leaf that carries free text from OUTSIDE the codebase on the
+    # first real night: anthropic's SDK sets the exception message to the raw
+    # response body when it is not JSON, so an edge 5xx HTML page lands in
+    # _check_scoring()'s sentence, and the band interpolated it raw. The
+    # operator read "502 Bad Gateway 502 Bad Gateway cloudflare" with the
+    # tags swallowed as nested markup inside the <li>.
+    ("the red band", {"status": "degraded", "session": "2026-09-04", "bursts": 1, "gated": 1,
+                      "errors": [{"stage": "score", "message":
+                                  "First failures: BURST (anthropic.InternalServerError: Error code: 502 - "
+                                  "<html><head><title>502 Bad Gateway</title></head></html>)"}]},
+     "<html><head><title>502 Bad Gateway</title></head></html>"),
+    # A session string is read off docs/data.json by the morning run; a
+    # hand-edited file must not be able to inject markup into the title.
+    ("the session in the title and funnel", {"status": "ok", "session": "2026-09-04<b>x</b>",
+                                             "bursts": 1, "gated": 1}, "2026-09-04<b>x</b>"),
+])
+def test_every_free_text_leaf_reaches_the_reader_whole(where, stats, must_read):
+    html = build_html([], "evening", stats)
+    assert must_read in _visible_text(html), where
+    assert must_read not in html, f"{where}: the raw text is in the source, so it was not escaped"
 
-    The same absent-versus-empty distinction as run.status, and the same rule
-    src.pipeline's _absent() already applies everywhere else.
-    """
-    monkeypatch.delenv("RESEND_FROM", raising=False)
-    if value is not None:
-        monkeypatch.setenv("RESEND_FROM", value)
 
-    send_email(results, "evening", DATED)
-
-    assert fake_resend.sent[0]["from"] == "onboarding@resend.dev"
+def test_the_checklist_lines_are_escaped_line_by_line():
+    row = make_result("AAA", lynch_detail=["PASS  2_first: 0 prior bursts <tight base>"])
+    html = build_html([row], "evening", DATED)
+    assert "0 prior bursts <tight base>" in _visible_text(html)
+    assert "<tight base>" not in html

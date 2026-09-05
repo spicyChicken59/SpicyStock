@@ -787,3 +787,22 @@ def test_the_artifact_is_named_after_the_session_only_when_the_run_published():
         "a preflight failure published nothing and must not claim a session")
     assert 'echo "session=$session" >> "$GITHUB_OUTPUT"' in pipeline_step, (
         "the pipeline step must export the session the artifact is named after")
+
+
+def test_the_pages_fallback_sentence_states_the_scorers_own_map():
+    """The page said a fallback score is "passes ÷ checks × 10". The code has
+    mapped the pass count to the LOW end of its rubric band since step 8, and
+    the fixture was hand-typed to the old arithmetic -- so a real 5/6 fallback
+    printed 7.0 directly under a sentence whose formula gives 8.3. The sentence
+    now states the map, and this reads its numbers back against the scorer."""
+    from src.scorer import _fallback_score
+
+    page = _read("docs/index.html")
+    sentence = re.search(r"When a scoring call fails[^;]*?\(([^)]*)\)", page)
+    assert sentence, "the fallback sentence is gone from the page"
+    stated = dict(re.findall(r"(\d)/6 scores (\d+)", sentence.group(1)))
+    assert stated, sentence.group(1)
+    for passes, score in stated.items():
+        real = _fallback_score({"passes": int(passes), "total": 6, "summary": ""})
+        assert float(score) == real, f"{passes}/6: page says {score}, the scorer gives {real}"
+    assert "÷" not in page.split("When a scoring call fails")[1][:400]

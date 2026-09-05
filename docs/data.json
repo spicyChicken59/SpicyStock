@@ -143,96 +143,6 @@
     },
     {
       "rank": 2,
-      "ticker": "META",
-      "date": "2026-09-01",
-      "close": 7.41,
-      "gain_pct": 6.18,
-      "volume": 18420100,
-      "prev_volume": 7106400,
-      "volume_ratio": 2.59,
-      "dollar_volume": 136492941,
-      "lynch": "5/6",
-      "lynch_passes": 5,
-      "lynch_total": 6,
-      "lynch_detail": [
-        {
-          "code": "2",
-          "label": "first or second burst",
-          "pass": false,
-          "value": "2 prior 4% bursts in last 20 days"
-        },
-        {
-          "code": "L",
-          "label": "linear prior move",
-          "pass": true,
-          "value": "R²=0.68, fitted trend +11.9% over prior 30 days"
-        },
-        {
-          "code": "Y",
-          "label": "young trend",
-          "pass": true,
-          "value": "+18.8% past month, +11.3% vs 20SMA (through today's burst)"
-        },
-        {
-          "code": "N",
-          "label": "narrow consolidation",
-          "pass": true,
-          "value": "pre-burst range 2.9%/day = 0.83x its norm"
-        },
-        {
-          "code": "C",
-          "label": "calm pre-burst day",
-          "pass": true,
-          "value": "prior day 1.1% move, 2.6% range = 0.74x its norm, 1.04x volume"
-        },
-        {
-          "code": "H",
-          "label": "closed near the high",
-          "pass": true,
-          "value": "closed at 88% of day's range"
-        }
-      ],
-      "score": 8.3,
-      "verdict": "B",
-      "reason": "AI unavailable; checklist score 5/6.",
-      "key_risk": "not AI-reviewed",
-      "provenance": {
-        "source": "fallback",
-        "model": null,
-        "chart_seen": false,
-        "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
-      },
-      "chart": "charts/META.png",
-      "chart_error": null,
-      "context": {
-        "pct_off_52w_high": -11.7,
-        "pct_above_52w_low": 94.2,
-        "perf_3mo_pct": 38.6,
-        "perf_6mo_pct": 21.4,
-        "consecutive_up_days": 1,
-        "worst_base_day_pct": -2.6
-      },
-      "streak": {
-        "day": 3,
-        "unknown_reason": null,
-        "first_seen": "2026-08-28",
-        "last_seen": "2026-08-31",
-        "last_score": 7.4,
-        "last_verdict": "B",
-        "last_outcome": "scored",
-        "seen_before": 2,
-        "history_from": "2026-08-21",
-        "history_sessions": 7
-      },
-      "forward_returns": {
-        "d1": null,
-        "d3": null,
-        "d5": null,
-        "as_of": null
-      }
-    },
-    {
-      "rank": 3,
       "ticker": "NFLX",
       "date": "2026-09-01",
       "close": 31.06,
@@ -322,7 +232,7 @@
       }
     },
     {
-      "rank": 4,
+      "rank": 3,
       "ticker": "DIS",
       "date": "2026-09-01",
       "close": 48.22,
@@ -412,7 +322,7 @@
       }
     },
     {
-      "rank": 5,
+      "rank": 4,
       "ticker": "CMCSA",
       "date": "2026-09-01",
       "close": 92.44,
@@ -502,7 +412,7 @@
       }
     },
     {
-      "rank": 6,
+      "rank": 5,
       "ticker": "CHTR",
       "date": "2026-09-01",
       "close": 41.18,
@@ -592,59 +502,59 @@
       }
     },
     {
-      "rank": 7,
-      "ticker": "WBD",
+      "rank": 6,
+      "ticker": "META",
       "date": "2026-09-01",
-      "close": 14.73,
-      "gain_pct": 6.87,
-      "volume": 12994100,
-      "prev_volume": 5218700,
-      "volume_ratio": 2.49,
-      "dollar_volume": 191403093,
-      "lynch": "4/6",
-      "lynch_passes": 4,
+      "close": 7.41,
+      "gain_pct": 6.18,
+      "volume": 18420100,
+      "prev_volume": 7106400,
+      "volume_ratio": 2.59,
+      "dollar_volume": 136492941,
+      "lynch": "5/6",
+      "lynch_passes": 5,
       "lynch_total": 6,
       "lynch_detail": [
         {
           "code": "2",
           "label": "first or second burst",
-          "pass": true,
-          "value": "1 prior 4% bursts in last 20 days"
+          "pass": false,
+          "value": "2 prior 4% bursts in last 20 days"
         },
         {
           "code": "L",
           "label": "linear prior move",
-          "pass": false,
-          "value": "R²=0.48, fitted trend +27.4% over prior 30 days"
+          "pass": true,
+          "value": "R²=0.68, fitted trend +11.9% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
-          "pass": false,
-          "value": "+36.2% past month, +20.9% vs 20SMA (through today's burst)"
+          "pass": true,
+          "value": "+18.8% past month, +11.3% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
           "label": "narrow consolidation",
           "pass": true,
-          "value": "pre-burst range 4.1%/day = 0.91x its norm"
+          "value": "pre-burst range 2.9%/day = 0.83x its norm"
         },
         {
           "code": "C",
           "label": "calm pre-burst day",
           "pass": true,
-          "value": "prior day 1.4% move, 3.2% range = 0.71x its norm, 1.09x volume"
+          "value": "prior day 1.1% move, 2.6% range = 0.74x its norm, 1.04x volume"
         },
         {
           "code": "H",
           "label": "closed near the high",
           "pass": true,
-          "value": "closed at 78% of day's range"
+          "value": "closed at 88% of day's range"
         }
       ],
-      "score": 6.7,
+      "score": 7.0,
       "verdict": "B",
-      "reason": "AI unavailable; checklist score 4/6.",
+      "reason": "AI unavailable; checklist score 5/6.",
       "key_risk": "not AI-reviewed",
       "provenance": {
         "source": "fallback",
@@ -652,25 +562,25 @@
         "chart_seen": false,
         "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
       },
-      "chart": "charts/WBD.png",
+      "chart": "charts/META.png",
       "chart_error": null,
       "context": {
-        "pct_off_52w_high": -22.4,
-        "pct_above_52w_low": 118.9,
-        "perf_3mo_pct": 29.7,
-        "perf_6mo_pct": 12.8,
-        "consecutive_up_days": 0,
-        "worst_base_day_pct": -4.6
+        "pct_off_52w_high": -11.7,
+        "pct_above_52w_low": 94.2,
+        "perf_3mo_pct": 38.6,
+        "perf_6mo_pct": 21.4,
+        "consecutive_up_days": 1,
+        "worst_base_day_pct": -2.6
       },
       "streak": {
-        "day": 1,
+        "day": 3,
         "unknown_reason": null,
-        "first_seen": "2026-09-01",
-        "last_seen": null,
-        "last_score": null,
-        "last_verdict": null,
-        "last_outcome": null,
-        "seen_before": 0,
+        "first_seen": "2026-08-28",
+        "last_seen": "2026-08-31",
+        "last_score": 7.4,
+        "last_verdict": "B",
+        "last_outcome": "scored",
+        "seen_before": 2,
         "history_from": "2026-08-21",
         "history_sessions": 7
       },
@@ -682,7 +592,7 @@
       }
     },
     {
-      "rank": 8,
+      "rank": 7,
       "ticker": "TMUS",
       "date": "2026-09-01",
       "close": 9.62,
@@ -772,7 +682,7 @@
       }
     },
     {
-      "rank": 9,
+      "rank": 8,
       "ticker": "T",
       "date": "2026-09-01",
       "close": 58.91,
@@ -862,7 +772,7 @@
       }
     },
     {
-      "rank": 10,
+      "rank": 9,
       "ticker": "VZ",
       "date": "2026-09-01",
       "close": 112.37,
@@ -952,7 +862,7 @@
       }
     },
     {
-      "rank": 11,
+      "rank": 10,
       "ticker": "EA",
       "date": "2026-09-01",
       "close": 34.55,
@@ -1042,7 +952,7 @@
       }
     },
     {
-      "rank": 12,
+      "rank": 11,
       "ticker": "TTWO",
       "date": "2026-09-01",
       "close": 11.84,
@@ -1132,17 +1042,17 @@
       }
     },
     {
-      "rank": 13,
-      "ticker": "MSFT",
+      "rank": 12,
+      "ticker": "WBD",
       "date": "2026-09-01",
-      "close": 68.19,
-      "gain_pct": 4.34,
-      "volume": 16482300,
-      "prev_volume": 7913600,
-      "volume_ratio": 2.08,
-      "dollar_volume": 1123928037,
-      "lynch": "3/6",
-      "lynch_passes": 3,
+      "close": 14.73,
+      "gain_pct": 6.87,
+      "volume": 12994100,
+      "prev_volume": 5218700,
+      "volume_ratio": 2.49,
+      "dollar_volume": 191403093,
+      "lynch": "4/6",
+      "lynch_passes": 4,
       "lynch_total": 6,
       "lynch_detail": [
         {
@@ -1154,37 +1064,37 @@
         {
           "code": "L",
           "label": "linear prior move",
-          "pass": true,
-          "value": "R²=0.61, fitted trend +31.2% over prior 30 days"
+          "pass": false,
+          "value": "R²=0.48, fitted trend +27.4% over prior 30 days"
         },
         {
           "code": "Y",
           "label": "young trend",
           "pass": false,
-          "value": "+36.9% past month, +22.9% vs 20SMA (through today's burst)"
+          "value": "+36.2% past month, +20.9% vs 20SMA (through today's burst)"
         },
         {
           "code": "N",
           "label": "narrow consolidation",
-          "pass": false,
-          "value": "pre-burst range 5.9%/day = 1.18x its norm"
+          "pass": true,
+          "value": "pre-burst range 4.1%/day = 0.91x its norm"
         },
         {
           "code": "C",
           "label": "calm pre-burst day",
-          "pass": false,
-          "value": "prior day 1.9% move, 4.0% range = 0.80x its norm, 1.22x volume"
+          "pass": true,
+          "value": "prior day 1.4% move, 3.2% range = 0.71x its norm, 1.09x volume"
         },
         {
           "code": "H",
           "label": "closed near the high",
           "pass": true,
-          "value": "closed at 79% of day's range"
+          "value": "closed at 78% of day's range"
         }
       ],
       "score": 5.0,
       "verdict": "skip",
-      "reason": "AI unavailable; checklist score 3/6.",
+      "reason": "AI unavailable; checklist score 4/6.",
       "key_risk": "not AI-reviewed",
       "provenance": {
         "source": "fallback",
@@ -1192,105 +1102,15 @@
         "chart_seen": false,
         "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
       },
-      "chart": "charts/MSFT.png",
+      "chart": "charts/WBD.png",
       "chart_error": null,
       "context": {
-        "pct_off_52w_high": -5.4,
-        "pct_above_52w_low": 264.8,
-        "perf_3mo_pct": 63.2,
-        "perf_6mo_pct": 108.4,
+        "pct_off_52w_high": -22.4,
+        "pct_above_52w_low": 118.9,
+        "perf_3mo_pct": 29.7,
+        "perf_6mo_pct": 12.8,
         "consecutive_up_days": 0,
         "worst_base_day_pct": -4.6
-      },
-      "streak": {
-        "day": 1,
-        "unknown_reason": null,
-        "first_seen": "2026-09-01",
-        "last_seen": "2026-08-21",
-        "last_score": 5.2,
-        "last_verdict": "skip",
-        "last_outcome": "scored",
-        "seen_before": 1,
-        "history_from": "2026-08-21",
-        "history_sessions": 7
-      },
-      "forward_returns": {
-        "d1": null,
-        "d3": null,
-        "d5": null,
-        "as_of": null
-      }
-    },
-    {
-      "rank": 14,
-      "ticker": "ORCL",
-      "date": "2026-09-01",
-      "close": 6.28,
-      "gain_pct": 5.62,
-      "volume": 22947100,
-      "prev_volume": 9184200,
-      "volume_ratio": 2.5,
-      "dollar_volume": 144107788,
-      "lynch": "3/6",
-      "lynch_passes": 3,
-      "lynch_total": 6,
-      "lynch_detail": [
-        {
-          "code": "2",
-          "label": "first or second burst",
-          "pass": false,
-          "value": "3 prior 4% bursts in last 20 days"
-        },
-        {
-          "code": "L",
-          "label": "linear prior move",
-          "pass": true,
-          "value": "R²=0.58, fitted trend +12.4% over prior 30 days"
-        },
-        {
-          "code": "Y",
-          "label": "young trend",
-          "pass": true,
-          "value": "+18.7% past month, +12.1% vs 20SMA (through today's burst)"
-        },
-        {
-          "code": "N",
-          "label": "narrow consolidation",
-          "pass": false,
-          "value": "pre-burst range 6.3%/day = 1.32x its norm"
-        },
-        {
-          "code": "C",
-          "label": "calm pre-burst day",
-          "pass": false,
-          "value": "prior day 2.6% move, 5.1% range = 1.07x its norm, 1.47x volume"
-        },
-        {
-          "code": "H",
-          "label": "closed near the high",
-          "pass": true,
-          "value": "closed at 72% of day's range"
-        }
-      ],
-      "score": 5.0,
-      "verdict": "skip",
-      "reason": "AI unavailable; checklist score 3/6.",
-      "key_risk": "not AI-reviewed",
-      "provenance": {
-        "source": "fallback",
-        "model": null,
-        "chart_seen": false,
-        "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
-      },
-      "chart": "charts/ORCL.png",
-      "chart_error": null,
-      "context": {
-        "pct_off_52w_high": -41.7,
-        "pct_above_52w_low": 38.2,
-        "perf_3mo_pct": 9.4,
-        "perf_6mo_pct": -6.8,
-        "consecutive_up_days": 1,
-        "worst_base_day_pct": -2.6
       },
       "streak": {
         "day": 1,
@@ -1312,7 +1132,7 @@
       }
     },
     {
-      "rank": 15,
+      "rank": 13,
       "ticker": "CRM",
       "date": "2026-09-01",
       "close": 5.25,
@@ -1402,7 +1222,7 @@
       }
     },
     {
-      "rank": 16,
+      "rank": 14,
       "ticker": "ADBE",
       "date": "2026-09-01",
       "close": 27.41,
@@ -1492,7 +1312,7 @@
       }
     },
     {
-      "rank": 17,
+      "rank": 15,
       "ticker": "INTU",
       "date": "2026-09-01",
       "close": 12.06,
@@ -1582,7 +1402,7 @@
       }
     },
     {
-      "rank": 18,
+      "rank": 16,
       "ticker": "NOW",
       "date": "2026-09-01",
       "close": 15.72,
@@ -1672,7 +1492,7 @@
       }
     },
     {
-      "rank": 19,
+      "rank": 17,
       "ticker": "WDAY",
       "date": "2026-09-01",
       "close": 4.87,
@@ -1762,7 +1582,7 @@
       }
     },
     {
-      "rank": 20,
+      "rank": 18,
       "ticker": "PANW",
       "date": "2026-09-01",
       "close": 5.34,
@@ -1852,7 +1672,7 @@
       }
     },
     {
-      "rank": 21,
+      "rank": 19,
       "ticker": "CRWD",
       "date": "2026-09-01",
       "close": 18.62,
@@ -1942,7 +1762,7 @@
       }
     },
     {
-      "rank": 22,
+      "rank": 20,
       "ticker": "ZS",
       "date": "2026-09-01",
       "close": 8.19,
@@ -2032,7 +1852,7 @@
       }
     },
     {
-      "rank": 23,
+      "rank": 21,
       "ticker": "FTNT",
       "date": "2026-09-01",
       "close": 22.14,
@@ -2111,6 +1931,186 @@
         "last_verdict": "B",
         "last_outcome": "scored",
         "seen_before": 2,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 22,
+      "ticker": "MSFT",
+      "date": "2026-09-01",
+      "close": 68.19,
+      "gain_pct": 4.34,
+      "volume": 16482300,
+      "prev_volume": 7913600,
+      "volume_ratio": 2.08,
+      "dollar_volume": 1123928037,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": true,
+          "value": "1 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.61, fitted trend +31.2% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": false,
+          "value": "+36.9% past month, +22.9% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 5.9%/day = 1.18x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 1.9% move, 4.0% range = 0.80x its norm, 1.22x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 79% of day's range"
+        }
+      ],
+      "score": 3.0,
+      "verdict": "skip",
+      "reason": "AI unavailable; checklist score 3/6.",
+      "key_risk": "not AI-reviewed",
+      "provenance": {
+        "source": "fallback",
+        "model": null,
+        "chart_seen": false,
+        "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
+      },
+      "chart": "charts/MSFT.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -5.4,
+        "pct_above_52w_low": 264.8,
+        "perf_3mo_pct": 63.2,
+        "perf_6mo_pct": 108.4,
+        "consecutive_up_days": 0,
+        "worst_base_day_pct": -4.6
+      },
+      "streak": {
+        "day": 1,
+        "unknown_reason": null,
+        "first_seen": "2026-09-01",
+        "last_seen": "2026-08-21",
+        "last_score": 5.2,
+        "last_verdict": "skip",
+        "last_outcome": "scored",
+        "seen_before": 1,
+        "history_from": "2026-08-21",
+        "history_sessions": 7
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "as_of": null
+      }
+    },
+    {
+      "rank": 23,
+      "ticker": "ORCL",
+      "date": "2026-09-01",
+      "close": 6.28,
+      "gain_pct": 5.62,
+      "volume": 22947100,
+      "prev_volume": 9184200,
+      "volume_ratio": 2.5,
+      "dollar_volume": 144107788,
+      "lynch": "3/6",
+      "lynch_passes": 3,
+      "lynch_total": 6,
+      "lynch_detail": [
+        {
+          "code": "2",
+          "label": "first or second burst",
+          "pass": false,
+          "value": "3 prior 4% bursts in last 20 days"
+        },
+        {
+          "code": "L",
+          "label": "linear prior move",
+          "pass": true,
+          "value": "R²=0.58, fitted trend +12.4% over prior 30 days"
+        },
+        {
+          "code": "Y",
+          "label": "young trend",
+          "pass": true,
+          "value": "+18.7% past month, +12.1% vs 20SMA (through today's burst)"
+        },
+        {
+          "code": "N",
+          "label": "narrow consolidation",
+          "pass": false,
+          "value": "pre-burst range 6.3%/day = 1.32x its norm"
+        },
+        {
+          "code": "C",
+          "label": "calm pre-burst day",
+          "pass": false,
+          "value": "prior day 2.6% move, 5.1% range = 1.07x its norm, 1.47x volume"
+        },
+        {
+          "code": "H",
+          "label": "closed near the high",
+          "pass": true,
+          "value": "closed at 72% of day's range"
+        }
+      ],
+      "score": 3.0,
+      "verdict": "skip",
+      "reason": "AI unavailable; checklist score 3/6.",
+      "key_risk": "not AI-reviewed",
+      "provenance": {
+        "source": "fallback",
+        "model": null,
+        "chart_seen": false,
+        "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
+      },
+      "chart": "charts/ORCL.png",
+      "chart_error": null,
+      "context": {
+        "pct_off_52w_high": -41.7,
+        "pct_above_52w_low": 38.2,
+        "perf_3mo_pct": 9.4,
+        "perf_6mo_pct": -6.8,
+        "consecutive_up_days": 1,
+        "worst_base_day_pct": -2.6
+      },
+      "streak": {
+        "day": 1,
+        "unknown_reason": null,
+        "first_seen": "2026-09-01",
+        "last_seen": null,
+        "last_score": null,
+        "last_verdict": null,
+        "last_outcome": null,
+        "seen_before": 0,
         "history_from": "2026-08-21",
         "history_sessions": 7
       },
@@ -4014,7 +4014,7 @@
         "low": 0.0,
         "high": 5.0,
         "verdict": "skip",
-        "setups": 11,
+        "setups": 13,
         "enough": false,
         "outcomes": [
           {
@@ -4047,7 +4047,7 @@
         "low": 5.0,
         "high": 6.0,
         "verdict": "C",
-        "setups": 4,
+        "setups": 3,
         "enough": false,
         "outcomes": [
           {
@@ -4080,7 +4080,7 @@
         "low": 6.0,
         "high": 7.0,
         "verdict": "B",
-        "setups": 4,
+        "setups": 3,
         "enough": false,
         "outcomes": [
           {
@@ -4113,7 +4113,7 @@
         "low": 7.0,
         "high": 8.0,
         "verdict": "B+",
-        "setups": 3,
+        "setups": 4,
         "enough": false,
         "outcomes": [
           {
@@ -4146,7 +4146,7 @@
         "low": 8.0,
         "high": 9.0,
         "verdict": "A",
-        "setups": 3,
+        "setups": 2,
         "enough": false,
         "outcomes": [
           {
@@ -5453,7 +5453,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 8.3,
+        "best_score": 7.0,
         "outcomes": [
           {
             "horizon": 1,
@@ -5486,7 +5486,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 5.0,
+        "best_score": 3.0,
         "outcomes": [
           {
             "horizon": 1,
@@ -5684,7 +5684,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 5.0,
+        "best_score": 3.0,
         "outcomes": [
           {
             "horizon": 1,
@@ -6146,7 +6146,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 6.7,
+        "best_score": 5.0,
         "outcomes": [
           {
             "horizon": 1,

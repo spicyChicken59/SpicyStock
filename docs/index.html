@@ -1535,7 +1535,7 @@
       $('fallback-figure').textContent = fb + ' of ' + (run.scored || 0) + ' scores are not AI scores';
       var top = cands.filter(function (c) { return isFallback(c) && c.rank <= shortN; });
       $('fallback-body').textContent =
-        'When a scoring call fails the pipeline falls back to checklist arithmetic — passes ÷ checks × 10 — ' +
+        'When a scoring call fails the pipeline falls back to the checklist: the score is the LOW end of the rubric band for that pass count (3/6 scores 3, 4/6 scores 5, 5/6 scores 7, 6/6 scores 8; src/scorer.py holds the map) — ' +
         'and the result is ranked beside real scores. ' +
         (top.length
           ? top.map(function (c) { return c.ticker + ' (#' + c.rank + ')'; }).join(', ') +
