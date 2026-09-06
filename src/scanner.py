@@ -648,9 +648,9 @@ def _last_bar_date(df: pd.DataFrame) -> date | None:
     return _as_date(df.index[-1])
 
 
-def _stale_hint(cfg: "ScanConfig", session) -> str:
-    """What to do about a session no symbol printed for -- which depends on
-    whether the caller already pinned it.
+def _stale_hint(cfg: "ScanConfig", session, *, partial: bool) -> str:
+    """What to do about a session the feed did not print -- which depends on
+    whether the caller already pinned it, and on whether ANY name printed.
 
     The one sentence both StaleDataError branches used to end on advised
     SCAN_SESSION_DATE=YYYY-MM-DD, and it was mailed to the operator in the
@@ -665,13 +665,36 @@ def _stale_hint(cfg: "ScanConfig", session) -> str:
     Labor Day, so the closure is named rather than left to "may not have
     traded that day": this module carries no calendar (see current_session)
     and the possibility is exactly what it cannot rule out.
+
+    `partial` IS WHAT MAKES THAT DIAGNOSIS AVAILABLE, and it was not asked.
+    run_scan() ends both raises with this sentence, and the majority-stale one
+    fires while a minority DID print: mailed over a scan where 4 of 12 names
+    carried the session, the unpinned form offered a closure and an open
+    session two clauses after the scanner's own sentence saying the minority
+    updated, and the pinned form stated as fact that the feed holds no bar for
+    a session it holds bars for. One name that printed is the disproof of a
+    closure -- the same argument the gap rule makes about the session before
+    -- so when some did, the causes left are a feed writing part of the tape
+    and a halt across the rest.
     """
+    if partial:
+        if cfg.session_date is not None:
+            return (f"SCAN_SESSION_DATE pinned {session} and the feed holds bars for it — "
+                    "some names printed, so a closure cannot explain this. What the rest "
+                    "are missing is a feed that wrote part of the tape, or a halt across "
+                    "those names. Asking again for the same session repeats it until the "
+                    "feed fills them in.")
+        return (f"Some names did print for {session}, so a closure cannot explain this. "
+                "What the rest are missing is a feed writing part of the tape, a session "
+                "still open for the names that have not printed yet, or a halt across "
+                "them. SCAN_SESSION_DATE=YYYY-MM-DD scans a different session "
+                f"deliberately; pinning {session} repeats this.")
     if cfg.session_date is not None:
-        return (f"SCAN_SESSION_DATE pinned {session}, and the feed holds no bar for it -- "
+        return (f"SCAN_SESSION_DATE pinned {session}, and the feed holds no bar for it — "
                 "so the market held no session that day, or the feed has not written it "
                 "yet. Asking again for the same session cannot answer differently.")
-    return ("The market may have held no session that day -- a holiday is never a quiet "
-            "market -- or today's session may still be open, or the feed may have stopped "
+    return ("The market may have held no session that day — a holiday is never a quiet "
+            "market — or today's session may still be open, or the feed may have stopped "
             f"updating. SCAN_SESSION_DATE=YYYY-MM-DD scans a different session "
             f"deliberately; pinning {session} repeats this.")
 
@@ -1399,7 +1422,7 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
         # from "nothing burst today".
         raise StaleDataError(
             f"no symbol carried a bar for {session}: all {with_bars} symbols with "
-            f"data are behind it ({seen}). {_stale_hint(cfg, session)}"
+            f"data are behind it ({seen}). {_stale_hint(cfg, session, partial=False)}"
         )
     if (with_bars >= cfg.coverage_guard_min_symbols
             and len(stale) / with_bars >= cfg.max_stale_fraction):
@@ -1412,7 +1435,8 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             f"{len(stale)} of {with_bars} symbols with data ({len(stale) / with_bars:.0%}) "
             f"carry no bar for {session}, at or above the {cfg.max_stale_fraction:.0%} "
             f"this scan will tolerate ({seen}). The "
-            f"shortlist would describe the minority that did update. {_stale_hint(cfg, session)}"
+            f"shortlist would describe the minority that did update. "
+            f"{_stale_hint(cfg, session, partial=True)}"
         )
     measured = with_bars - len(stale) - len(gapped)
     if measured and len(detector_errors) == measured:

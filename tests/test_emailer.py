@@ -29,9 +29,10 @@ def _visible_text(html: str) -> str:
     """What a mail client shows, through a real parser -- the only honest
     reading of an escaping claim.
 
-    The typographic apostrophe &rsquo; renders as is folded to a plain one, so
-    an assertion that a sentence is GONE cannot pass merely by having been
-    typed with the other quote. Nothing in this file asserts a curly one.
+    The typographic apostrophe &rsquo; renders as a curly one and is folded to
+    a plain one here, so an assertion that a sentence is GONE cannot pass
+    merely by having been typed with the other quote. Nothing in this file
+    asserts a curly one.
     """
     from html.parser import HTMLParser
 
@@ -1551,7 +1552,8 @@ def test_the_email_names_what_stopped_printing_and_says_nothing_when_nothing_did
     # Every clause, in the shape the Monday-after-a-holiday scan produces.
     ({"requested": 228, "with_bars": 228, "fresh": 0, "session": "2026-09-07",
       "newest_seen": "2026-09-04"},
-     "228 asked, 228 answered, none with a bar for 2026-09-07 (newest seen 2026-09-04)"),
+     "228 asked, 228 answered, none with a bar for 2026-09-07, "
+     "the newest bar among the names that missed the session is 2026-09-04"),
     # A partial scan: some names did print for the session.
     ({"requested": 228, "with_bars": 220, "fresh": 30, "session": "2026-09-07"},
      "228 asked, 220 answered, 30 with a bar for 2026-09-07"),
@@ -1617,6 +1619,23 @@ def test_a_failed_run_prints_the_coverage_where_the_universe_goes():
     ({"dispatch": "evening", "after_the_close": True},
      "re-presented by an evening dispatch",
      "by an evening dispatch that found the session already published"),
+    # THE FOURTH OCCASION. `after_the_close` is False on a Saturday by design
+    # -- src.scanner.session_has_closed() ANDs is_trading_weekday() -- so a
+    # weekend morning dispatch (morning.yml carries a workflow_dispatch box,
+    # and CLAUDE.md records the owner making several) fell into the state
+    # written for the 8:30 cron and promised an open there is no open for.
+    ({"trading_weekday": False}, "re-presented on a day the market does not open",
+     "on a day the market does not open"),
+    ({"trading_weekday": False, "after_the_close": False},
+     "re-presented on a day the market does not open",
+     "on a day the market does not open"),
+    # A weekend dispatch that asked for an EVENING run still names the click:
+    # that is what the reader did, and it is the fact they can act on.
+    ({"trading_weekday": False, "dispatch": "evening"},
+     "re-presented by an evening dispatch",
+     "by an evening dispatch that found the session already published"),
+    # And a caller that does not say keeps the wording it had.
+    ({"trading_weekday": True}, "at today's open", "before the open"),
 ])
 def test_a_follow_through_says_when_it_is_being_read(results, stats, clause, phrase):
     """One rule for the heading and the band, so the two cannot drift: the
@@ -1631,3 +1650,144 @@ def test_a_follow_through_says_when_it_is_being_read(results, stats, clause, phr
                                       {**base, "status": "degraded",
                                        "errors": [{"stage": "session", "message": "why"}]}))
     assert f"re-presented {phrase}" in banded
+
+
+# --- the counts a notice carries are about the names they say they are ------
+# Three auditors reproduced the same sentence: "(newest seen 2026-09-03)" was
+# appended to whatever coverage clause came last, and src.pipeline's
+# scan_coverage() fills `newest_seen` from the STALE names alone. Beside "none
+# with a bar for X" it read correctly; beside "5 with a bar for X" it told the
+# operator the feed had stopped four days ago on the same line as five names
+# printing for the session. The failure notice is what an operator diagnoses a
+# feed outage from.
+
+
+@pytest.mark.parametrize("coverage,expected", [
+    # The state every earlier case of this phrase was in: nothing printed.
+    ({"requested": 228, "with_bars": 228, "fresh": 0, "session": "2026-09-07",
+      "newest_seen": "2026-09-04"},
+     "228 asked, 228 answered, none with a bar for 2026-09-07, "
+     "the newest bar among the names that missed the session is 2026-09-04"),
+    # And the one no case built: a stale MINORITY. The majority-stale
+    # StaleDataError branch and any failure after a completed scan reach it.
+    ({"requested": 12, "with_bars": 12, "fresh": 5, "session": "2026-09-04",
+      "newest_seen": "2026-09-03"},
+     "12 asked, 12 answered, 5 with a bar for 2026-09-04, "
+     "the newest bar among the names that missed the session is 2026-09-03"),
+])
+def test_the_newest_bar_is_reported_over_the_names_it_was_measured_over(coverage, expected):
+    """One wording for both, because the number is the same number: the newest
+    date among the names that did NOT carry the session. Glued to the fresh
+    clause it contradicted it on one line."""
+    assert emailer.coverage_phrase({"coverage": coverage}) == expected
+
+
+def test_the_coverage_phrase_is_escaped_once_by_the_line_that_prints_it():
+    """Two statements of one rule: coverage_phrase() escaped its two leaves
+    and _funnel_line() escapes every finished part again, so a hostile session
+    would have reached a reader as the literal &amp;amp;. Inert today --
+    src.ledger's iso_date() gives a date or None -- and one rule anyway."""
+    hostile = {"requested": 3, "with_bars": 3, "fresh": 0, "session": "A&B<x>",
+               "newest_seen": "C&D"}
+    html = build_html([], "evening", {"status": "failed", "errors": [],
+                                      "coverage": hostile})
+    text = _visible_text(html)
+    assert "A&B<x>" in text and "C&D" in text
+    assert "&amp;" not in text and "&lt;" not in text
+
+
+def test_a_retry_leaves_the_note_of_a_row_that_had_no_chart_to_drop(fake_resend):
+    """RETRY_CHART_NOTE ends "The PNG is on disk with the run's record", and it
+    was written over EVERY row -- including a morning row, whose own note
+    exists because the PNG on disk records no session and cannot be shown to
+    belong to the numbers beside it, and an evening row whose chart never
+    rendered. The note replaces a picture that was really being attached."""
+    morning_note = pipeline.MORNING_CHART_NOTE
+    rows = [make_result("AAA", chart=None, chart_note=morning_note),
+            make_result("BBB", chart=None),
+            make_result("CCC", chart="/no/such/file.png")]
+
+    send_failure_notice("morning", [{"stage": "email", "message": "429"}], {}, results=rows)
+
+    text = _visible_text(fake_resend.sent[-1]["html"])
+    assert morning_note in text, "the morning row keeps the reason it has"
+    assert "none was rendered for this candidate" in text, "and so does a failed render"
+    assert "The PNG is on disk with the run's record" not in text
+    assert "is not there now" in text, "the third row's own reason is untouched too"
+
+
+def test_a_retry_says_where_the_picture_went_for_a_row_that_had_one(fake_resend, tmp_path):
+    """The precondition for the test above: a row whose chart really was going
+    to be attached gets the retry's note, and nothing is attached."""
+    chart = tmp_path / "AAA.png"
+    chart.write_bytes(b"\x89PNG\r\n\x1a\n")
+    rows = [make_result("AAA", chart=str(chart))]
+
+    send_failure_notice("evening", [{"stage": "email", "message": "429"}], {}, results=rows)
+
+    sent = fake_resend.sent[-1]
+    assert "The PNG is on disk with the run's record" in _visible_text(sent["html"])
+    assert sent["attachments"] == []
+
+
+def test_a_morning_notice_carrying_its_rows_does_not_say_it_never_followed_them():
+    """`published` was the only thing that turned the failed relabelling off,
+    and only an evening run can carry it -- so the morning retry printed
+    "Session it should have followed" one line under a headline saying the
+    rows below are the follow-through, with every count beside it real."""
+    stats = {"status": "failed", "errors": [{"stage": "email", "message": "429"}],
+             "session": "2026-09-04", "bursts": 3, "gated": 3, "reached_send": True}
+    text = _visible_text(build_html(results_for("morning"), "morning", stats))
+
+    assert "Following through on the session of: 2026-09-04" in text
+    assert "should have followed" not in text
+
+
+def test_a_run_that_died_after_its_scan_does_not_report_a_scan_it_completed(results):
+    """A run that scans, scores and dies in publish() carries every count on
+    the report the notice is rendered from, and the notice said "no scan was
+    completed", "4% bursts found: not recorded" and "this is a quiet market"."""
+    stats = {"status": "failed", "errors": [{"stage": "archive", "message": "RuntimeError: disk full"}],
+             "session": "2026-09-04", "scanned": True, "universe": "12 named on the command line (--tickers)",
+             "bursts": 12, "gated": 12}
+    text = _visible_text(build_html([], "evening", stats))
+
+    assert "no scan was completed" not in text
+    assert "Session scanned: 2026-09-04" in text
+    assert "4% bursts found: 12" in text
+    assert "quiet market" not in text
+    assert "cleared the 2LYNCH checklist and this mail carries no rows" in text
+
+
+def test_a_failed_run_that_never_scanned_still_says_so(results):
+    """The precondition: the sentences above are for a run that got past the
+    scan, and a preflight failure must keep the ones written for it."""
+    text = _visible_text(build_html([], "evening", {
+        "status": "failed", "errors": [{"stage": "preflight", "message": "no keys"}]}))
+
+    assert "no scan was completed" in text
+    assert "quiet market" not in text, "nothing looked for a burst, so nothing is known"
+
+
+def test_a_run_that_died_between_the_scan_and_the_counts_keeps_its_coverage():
+    """The state between the two the round was written for: the scan finished
+    and the run broke before it built a funnel -- in the scoring stage, say.
+    The universe cell printed the coverage only while the session was being
+    RELABELLED, so turning the relabel off for a completed scan took the
+    coverage with it: "Universe: not recorded" over 228 asked and 228 answered,
+    which is the sentence the coverage line exists to have ended. The label
+    when there is one, the coverage when there is not.
+
+    And it must not claim a market either: nothing counted a burst here, so
+    "this is a quiet market" is a statement about a scan whose bursts were
+    never counted."""
+    stats = {"status": "failed", "errors": [{"stage": "score", "message": "RuntimeError: boom"}],
+             "session": "2026-09-04", "scanned": True,
+             "coverage": {"requested": 228, "with_bars": 228, "fresh": 228,
+                          "session": "2026-09-04"}}
+    text = _visible_text(build_html([], "evening", stats))
+
+    assert "Universe: 228 asked, 228 answered, 228 with a bar for 2026-09-04" in text
+    assert "Session scanned: 2026-09-04" in text, "it did scan it"
+    assert "quiet market" not in text
+    assert "See the failures listed above" in text

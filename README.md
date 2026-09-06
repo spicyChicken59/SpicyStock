@@ -60,7 +60,7 @@ Layer 6  Email ....................... HTML table, top 5, with the charts this
 | scans | yes, every layer above | no |
 | costs | ~25 Claude calls, ~$0.15 | nothing |
 | writes | `docs/data.json`, `docs/ledger.json`, `docs/charts/` (gitignored), `results/*.csv` | nothing |
-| charts | attached inline — the PNGs it just rendered | none, and the email says why |
+| charts | attached inline — the PNGs it just rendered, except on a retry after a failed send | none, and the email says why |
 | an empty table | says what its own scan found, unless that scan was cut short | says what the run it follows found, unless *its* scan was |
 | workflow | `.github/workflows/evening.yml` | `.github/workflows/morning.yml` |
 
@@ -83,7 +83,9 @@ then paired last night's numbers with tonight's picture and said nothing. The
 model is told to trust the chart over the numbers and a reader will do the
 same, so the picture is dropped and the cell says why. The evening email is
 unaffected: it attaches the PNGs it rendered moments earlier, in the same
-process.
+process — except when it is the retry of a send that failed, which drops them
+and says so in the same cell, and only for the rows that really had a picture
+to drop.
 
 **A run that dies mails the same email with the failure in it, and that mail
 now says what the run did before it died.** It printed "Universe: not
@@ -91,10 +93,29 @@ recorded" over a scan that had asked every symbol and been answered by every
 one of them — the counts were in memory, and nothing had attached them to the
 report. `run_scan()` fills its stats dict in place, so the notice reports
 whatever it had reached: "Universe: 228 asked, 228 answered, none with a bar
-for 2026-09-07 (newest seen 2026-09-04)", with the dropped and no-bar-at-all
-counts when there were any. Every clause is conditional on its own count — an
-absent number prints as absent, never as 0, because "0 asked" is a claim about
-a scan that never happened.
+for 2026-09-07, the newest bar among the names that missed the session is
+2026-09-04", with the dropped and no-bar-at-all counts when there were any.
+Every clause is conditional on its own count — an absent number prints as
+absent, never as 0, because "0 asked" is a claim about a scan that never
+happened. **And the newest bar names the names it is measured over**, because
+it is the newest date among the ones that did NOT print: written as
+"(newest seen …)" glued to the clause before it, it read correctly beside
+"none with a bar for X" and contradicted itself beside "5 with a bar for X",
+which is the shape a partly stale feed and every failure after a completed
+scan produce.
+
+**A run that dies AFTER its scan says what the scan found.** It scanned,
+scored and broke in `publish()` — every count on the report — and was mailed
+the sentences written for a run that never started: "there is no shortlist
+below, and no scan was completed", "4% bursts found: not recorded", and an
+empty-table cell reading "this is a quiet market, not a rejection" over twelve
+bursts it had paid Claude for. The notice is rendered from the funnel the run
+had already built, the band says the run failed after its scan, and the market
+claim is made only by a run whose bursts were actually counted — which a
+completed scan that broke before it built a funnel is not. That state keeps
+the coverage line, because the universe cell now prints the label when the run
+has one and the coverage when it does not, rather than reading whether the
+session was being relabelled.
 
 **And a run that published and then failed to deliver is a different email
 from a run that never scanned.** The record is written before the send, so
@@ -103,7 +124,11 @@ both files — and its notice read "there is no shortlist below, and no scan was
 completed", with the one rejection listed twice, once in the email stage's own
 sentence and once as the exception that ended the run. The notice is that mail
 sent again: the rows are in it, the headline says the record is published and
-what failed was the delivery, and the exception is recorded once. The
+what failed was the delivery, and the exception is recorded once. The record
+says what is known when it is written — *this run's own send failed* — rather
+than "the shortlist was not delivered", which is an outcome still open at that
+line and false in the record, on the page and in the next morning's band as
+soon as the retry goes through. The
 attachments are dropped, because a byte-identical resend of what a server just
 refused has no reason to go differently, and each row says so where its chart
 would be. The morning pass writes no record and can never claim one, but it
@@ -184,10 +209,18 @@ than paying for the same answer twice — and the mail it sends used to say
 band and "at today's open" in the heading, three surfaces describing the 8:30
 cron on a message a lunchtime click produced hours after that open. The pass
 really is the follow-through; the dispatch is what the reader has to
-recognise, so the subject names it and the two open sentences are replaced. A
-morning dispatch made *after* the close gets the same treatment from the other
-side: it says so in its own band and then promised an open that was seven and
-a half hours earlier.
+recognise, so the subject names it and the two open sentences are replaced —
+and its failure notice is rendered as the pass that built it, not as the
+evening scan the click asked for. A morning dispatch made *after* the close
+gets the other half: its subject is untouched (there was no dispatch of
+another mode to name), and the heading and the band say it is being read after
+today's close, where they used to promise an open the run's own band said had
+already happened. A weekend dispatch is the fourth occasion and the newest: it
+is told the market does not open today, because
+`scanner.session_has_closed()` is false all weekend by design and the pass
+therefore took the 8:30 cron's wording, "at today's open", on a Saturday, with
+nothing degraded to qualify it — a morning mode and a weekend clock do not
+disagree.
 
 **The session before is read off the frames, so the day after a holiday is a
 night.** A burst is one session's move against the session before it, and the
@@ -367,7 +400,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1101 tests, no network or API keys needed
+pytest tests/                   # 1122 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
