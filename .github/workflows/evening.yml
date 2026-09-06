@@ -9,7 +9,12 @@ on:
     # the current DST offset, so the effective fire time is 6:16 PM ET.
     - cron: "16 22 * * 1-5"   # backup while US is on EDT (UTC-4)
     - cron: "16 23 * * 1-5"   # backup while US is on EST (UTC-5)
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      session:
+        description: "Backfill: the session to scan, YYYY-MM-DD. Leave empty to scan the session the clock says."
+        required: false
+        default: ""
 permissions:
   contents: write   # the run commits docs/ back; see "Persist the run" below
   actions: read
@@ -90,6 +95,14 @@ jobs:
           # -- and an unset one expands to '', which _feed_from_env() already
           # treats as "use the default".
           SCAN_FEED: ${{ vars.SCAN_FEED }}
+          # A backfill from the Run-workflow form: the `session` box above,
+          # which a scheduled run does not have, so it arrives as '' and the
+          # scanner derives the session from the clock as before. A pinned
+          # session is exempt from the mode/clock check, re-scans a session
+          # the record may already hold and replaces that entry -- which is
+          # what a backfill is for. SCAN_SESSION_DATE was documented for a
+          # shell only, and the first live day needed one from here.
+          SCAN_SESSION_DATE: ${{ inputs.session }}
         # THE EXIT CODE IS CAPTURED HERE AND RE-RAISED AT THE END OF THE JOB,
         # so that "Persist the run" can tell a DEGRADED night from a broken one.
         # It could not before, and the cost was the whole point of the project:
