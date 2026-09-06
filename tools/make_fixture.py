@@ -693,7 +693,7 @@ for _i, _run in enumerate(runs):
     # The universe's own return from each session (src.ledger.add_run writes
     # the pending shape; fill_benchmarks fills it on the evening five sessions
     # later). Hand-authored where the run's own returns are in: a little
-    # below the picks, over most of the 230 names.
+    # below the picks, over most of the names the file holds.
     # The floor each night applied (src.ledger.add_run keeps it): the
     # headline run's is FLOOR; the older ones vary the way a percentile of
     # the day's tape would, with a refusal count that goes with it.
@@ -776,14 +776,15 @@ data = {
         "dry_run": False,
         "fixture": True,
         "universe": {"label": "data/symbols.txt (checked in)", "size": len(UNIVERSE)},
-        # Two names in the file that have stopped printing, through the
-        # pipeline's own function rather than a hand-typed block, so the shape
-        # and the threshold cannot drift from what publish() writes. Chosen
-        # from the names no burst uses, so the page is not told a name both
-        # burst and stopped printing.
+        # Two names in the file that have stopped printing, and a third the
+        # feed returned no bar for at all, through the pipeline's own function
+        # rather than a hand-typed block, so the shape and the threshold cannot
+        # drift from what publish() writes. Chosen from the names no burst
+        # uses, so the page is not told a name both burst and stopped printing.
         "stopped_printing": stopped_printing({"session": SESSION, "stale": dict(zip(
             [s for s in UNIVERSE if s not in {r["ticker"] for r in candidates + gated_out}][:2],
-            ["2026-06-12", "2026-08-03"]))}),
+            ["2026-06-12", "2026-08-03"])),
+            "no_bars_names": [s for s in UNIVERSE if s not in {r["ticker"] for r in candidates + gated_out}][2:3]}),
         "bursts": BURSTS,
         "passed_gate": PASSED,
         "scored": len(candidates),

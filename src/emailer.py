@@ -237,20 +237,28 @@ def _provenance_line(scan_stats: dict) -> str:
 
 
 def _stopped_printing_line(scan_stats: dict) -> str:
-    """"Not printing: EA (since 2026-08-04), BK (since 2026-05-20)" -- or nothing.
+    """"Not printing: NOSUCH (no bar at all), EA (since 2026-08-04)" -- or nothing.
 
     A fact about data/symbols.txt rather than about the market, printed under
     the funnel because that is where a reader asks what the 230 were. Rendered
     only when the run recorded the block and it holds a name; a snapshot from
     before the block existed says nothing rather than "0 names". The threshold
     is the block's own number, and every leaf is escaped, since a ticker is a
-    string the feed sent.
+    string the feed sent. A name with no `last` is one the feed returned no
+    bar for at all, and it says so in the words docs/index.html's
+    scannedNote() uses, since "since None" is a date that does not exist.
     """
     block = scan_stats.get("stopped_printing")
     if not isinstance(block, dict) or not isinstance(block.get("count"), int) or not block["count"]:
         return ""
     names = [n for n in (block.get("names") or []) if isinstance(n, dict)]
-    shown = ", ".join(f"{esc(n.get('ticker'))} (since {esc(n.get('last'))})" for n in names)
+
+    def word(n: dict) -> str:
+        last = n.get("last")
+        return (f"{esc(n.get('ticker'))} (since {esc(last)})" if isinstance(last, str)
+                else f"{esc(n.get('ticker'))} (no bar at all)")
+
+    shown = ", ".join(word(n) for n in names)
     more = block["count"] - len(names)
     tail = f" and {_plural(more, 'more name')}" if more > 0 else ""
     return (f'\n    <p style="color:#a5281b;margin-top:0;">Not printing: {shown}{tail} — '

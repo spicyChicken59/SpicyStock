@@ -1007,6 +1007,7 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     with_bars = 0
     stale: dict[str, date] = {}
     gapped: dict[str, date] = {}
+    no_bars_names: list[str] = []
     detector_errors: dict[str, str] = {}
     session_dollar_volumes: list[float] = []
 
@@ -1034,6 +1035,16 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
                           i, e2, len(batch), ", ".join(batch[:8]) + ("..." if len(batch) > 8 else ""))
                 continue
 
+        # A symbol the feed answered with NOTHING -- one it does not know, one
+        # purged after a ticker change, a typo in the file -- is in no frame
+        # and so in no later count: not stale (that needs a bar), not dropped
+        # (that is a batch that failed), and the arithmetic `no_bars` below
+        # only degrades the run past a fraction of the universe. So one such
+        # name was visible nowhere: not this log, not the record, not the
+        # email, not the page -- found trying to read a replacement symbol's
+        # coverage off a rehearsal's log, which could only say nothing.
+        # Named here, warned below, and carried into run.stopped_printing.
+        no_bars_names.extend(t for t in batch if t not in histories)
         with_bars += len(histories)
         if frames is not None:
             frames.update(histories)
@@ -1078,6 +1089,7 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             "fresh": with_bars - len(stale),
             "stale": dict(stale),
             "no_bars": len(tickers) - with_bars - dropped,
+            "no_bars_names": sorted(no_bars_names),
             "dropped": dropped,
             "gapped": dict(gapped),
             "detector_errors": dict(detector_errors),
@@ -1090,6 +1102,18 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
                     len(stale), with_bars, session,
                     ", ".join(f"{t} (last {d})" for t, d in list(stale.items())[:8])
                     + ("..." if len(stale) > 8 else ""))
+    if no_bars_names:
+        log.warning("%d of %d symbols returned no bar at all in the window asked for and "
+                    "were skipped -- unknown to the feed, or purged: %s",
+                    len(no_bars_names), len(tickers),
+                    ", ".join(sorted(no_bars_names)[:8]) + ("..." if len(no_bars_names) > 8 else ""))
+    # Stated, not left to the absence of the two warnings above: a reader of
+    # this log -- a rehearsal checking one replacement symbol -- needs the
+    # coverage as a positive count, since no warning is also what a scan that
+    # never asked prints.
+    log.info("Coverage for %s: %d requested; %d answered with bars, %d of those with no bar for "
+             "the session; %d answered with no bar at all; %d dropped after their batch failed twice",
+             session, len(tickers), with_bars, len(stale), len(no_bars_names), dropped)
 
     # Three ways a scan can come back too empty to mean anything, in the order
     # a diagnosis would take them: nothing arrived, most of it arrived stale,

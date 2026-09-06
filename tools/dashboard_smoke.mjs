@@ -740,9 +740,16 @@ ok('the stages share one scale, so the narrowing is visible and not just stated'
 // the pipeline wrote: every name the fixture carries, the count and the
 // threshold it applied. Read off the DOM, not the fixture twice.
 const stopped = REAL.run.stopped_printing;
+// The words are src/emailer.py's: a dated name and a dateless one, which is a
+// symbol the feed returned no bar for at all.
+const stoppedWord = (n) => (typeof n.last === 'string' ? n.ticker + ' (since ' + n.last + ')' : n.ticker + ' (no bar at all)');
 ok('the universe row names the symbols that have stopped printing, and the threshold the run applied',
-  stopped && stopped.count > 0 && stopped.names.every((n) => funnel.rows[0][4].includes(n.ticker + ' (since ' + n.last + ')'))
+  stopped && stopped.count > 0 && stopped.names.every((n) => funnel.rows[0][4].includes(stoppedWord(n)))
   && funnel.rows[0][4].includes(stopped.count + ' names have not printed for more than ' + stopped.after_sessions + ' sessions'),
+  funnel.rows[0][4]);
+ok('a name the feed returned no bar for at all is printed without a date, in the email\'s words',
+  stopped.names.some((n) => n.last === null && n.sessions_behind === null)
+  && funnel.rows[0][4].includes(' (no bar at all)') && !funnel.rows[0][4].includes('since null'),
   funnel.rows[0][4]);
 const worstDrop = STAGES.slice(1).map(([name, v], i) => ({ name, lost: STAGES[i][1] - v }))
   .reduce((a, b) => (b.lost > a.lost ? b : a));

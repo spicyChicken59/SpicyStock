@@ -16,6 +16,8 @@ from datetime import date, datetime, time as time_of_day, timedelta, timezone
 
 import numpy as np
 import pandas as pd
+import logging
+
 import pytest
 import requests
 from alpaca.common.exceptions import APIError
@@ -1115,6 +1117,32 @@ def _scan_shape(universe, fake_alpaca, cfg=None) -> dict:
     return stats
 
 
+def test_run_scan_names_the_symbols_the_feed_returned_nothing_for_and_states_its_coverage(
+    fake_alpaca, ohlcv, caplog
+):
+    """A symbol the feed answers with NOTHING -- unknown to it, or purged after
+    a ticker change -- is in no frame, so it was not stale (that needs a bar),
+    not dropped (that is a failed batch), and below DEGRADED_NO_BARS_FRACTION
+    it reached no log line, no record, no email and no page. Found trying to
+    read a replacement symbol's coverage off a rehearsal's log, which could
+    only say nothing. The scan warns with the names now and states the
+    coverage as positive counts, because no warning is also what a scan that
+    never asked prints."""
+    universe = _coverage(fake_alpaca, ohlcv, fresh=8, stale=1) + ["NOSUCH", "ALSOGONE"]
+    stats: dict = {}
+    with caplog.at_level(logging.INFO, logger="src.scanner"):
+        run_scan(ScanConfig(), universe=universe, stats=stats)
+
+    assert stats["no_bars_names"] == ["ALSOGONE", "NOSUCH"] and stats["no_bars"] == 2
+    messages = [r.getMessage() for r in caplog.records]
+    warned = [r.getMessage() for r in caplog.records
+              if r.levelno == logging.WARNING and "no bar at all" in r.getMessage()]
+    assert len(warned) == 1 and "2 of 11 symbols" in warned[0] and "ALSOGONE, NOSUCH" in warned[0], messages
+    assert [m for m in messages if m.startswith("Coverage for ")] == [
+        f"Coverage for {stats['session']}: 11 requested; 9 answered with bars, 1 of those with no bar "
+        "for the session; 2 answered with no bar at all; 0 dropped after their batch failed twice"], messages
+
+
 def test_run_scan_reports_the_shape_of_the_scan_it_ran(fake_alpaca, ohlcv):
     """The counts a caller cannot read off the returned list."""
     universe = _coverage(fake_alpaca, ohlcv, fresh=8, stale=1) + ["NOSUCH"]
@@ -1127,6 +1155,8 @@ def test_run_scan_reports_the_shape_of_the_scan_it_ran(fake_alpaca, ohlcv):
     assert stats["fresh"] == 8
     assert list(stats["stale"]) == ["SS0"]
     assert stats["no_bars"] == 1
+    assert stats["no_bars_names"] == ["NOSUCH"] and len(stats["no_bars_names"]) == stats["no_bars"], \
+        "the arithmetic count and the named list are one fact"
     assert stats["dropped"] == 0
     assert stats["candidates"] == len(found)
     assert stats["session"] == current_session()

@@ -2667,16 +2667,22 @@ def snapshot_problem(data: dict) -> str | None:
     # block existed and loads clean; present, it is the object publish()
     # writes, one level in -- the email joins the tickers and the page prints
     # sessions_behind, and a string where a count belongs is the class this
-    # function exists to refuse before a later consumer meets it.
+    # function exists to refuse before a later consumer meets it. `last` and
+    # `sessions_behind` are BOTH null for a name the feed returned no bar for
+    # at all (the writer produces no other null), and a number where the
+    # date belongs is a shape no writer produces.
     if "stopped_printing" in run:
         block = run["stopped_printing"]
         if (not isinstance(block, dict) or not isinstance(block.get("names"), list)
                 or isinstance(block.get("count"), bool) or not isinstance(block.get("count"), int)):
             return f"run.stopped_printing is {type(block).__name__}, not the object publish() writes"
         for position, name in enumerate(block["names"], start=1):
+            behind = name.get("sessions_behind") if isinstance(name, dict) else None
+            last = name.get("last") if isinstance(name, dict) else None
             if (not isinstance(name, dict) or not isinstance(name.get("ticker"), str)
-                    or isinstance(name.get("sessions_behind"), bool)
-                    or not isinstance(name.get("sessions_behind"), int)):
+                    or isinstance(behind, bool)
+                    or not (behind is None or isinstance(behind, int))
+                    or not (last is None or isinstance(last, str))):
                 return (f"run.stopped_printing.names[{position}] is not "
                         "{ticker, last, sessions_behind}")
     for name, count in (run.get("scored_by") or {}).items():
