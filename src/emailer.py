@@ -932,17 +932,37 @@ def deliver(subject: str, html: str, attachments: list[dict] | None = None) -> d
     """
     to = [addr.strip() for addr in _required("EMAIL_TO").split(",")]
     resend.api_key = _required("RESEND_API_KEY")
+    payload = {
+        "from": sender_address(),
+        "to": to,
+        "subject": subject,
+        "html": html,
+        "attachments": list(attachments or []),
+    }
     try:
-        response = resend.Emails.send({
-            "from": sender_address(),
-            "to": to,
-            "subject": subject,
-            "html": html,
-            "attachments": list(attachments or []),
-        })
+        response = resend.Emails.send(payload)
     except Exception as exc:
-        _explain_test_mode_refusal(to, exc)
-        raise
+        respelt = _recipients_as_resend_spells_them(to, exc)
+        if respelt is None:
+            _explain_test_mode_refusal(to, exc)
+            raise
+        # Resend's test-mode check is an exact string match, and the first
+        # live account's EMAIL_TO differed from the address Resend named by
+        # capitalisation alone -- three dispatches of one identical refusal.
+        # Mail providers treat the local part case-insensitively in practice
+        # and the domain always is, so sending to the address as Resend
+        # spells it is the same mailbox. Not a general lowercasing: only on
+        # this refusal, only when every recipient IS the named address up to
+        # case, and said out loud. A second refusal is raised as any other.
+        log.warning("Resend's test mode named the account's address in different "
+                    "capitalisation from EMAIL_TO; sending to it as Resend spells it, "
+                    "since that check is exact. Re-save EMAIL_TO in that spelling.")
+        payload["to"] = respelt
+        try:
+            response = resend.Emails.send(payload)
+        except Exception as again:
+            _explain_test_mode_refusal(respelt, again)
+            raise
     # Log the count, not the addresses. EMAIL_TO is a repository secret, and
     # Actions masks only exact occurrences of it. A single-recipient value
     # still matches and is masked, but split() breaks the contiguous string
@@ -952,6 +972,26 @@ def deliver(subject: str, html: str, attachments: list[dict] | None = None) -> d
 
 
 _OWN_ADDRESS_IN_REFUSAL = re.compile(r"own email address \(([^)\s]+)\)")
+
+
+def _recipients_as_resend_spells_them(to: list[str], exc: Exception) -> list[str] | None:
+    """The recipient list in Resend's own spelling, if that is the only difference.
+
+    None unless the refusal is the test-mode one and EVERY recipient is the
+    address it named up to case. A second recipient that is a different
+    address, or an address that differs by more than case, stays as sent and
+    falls through to the diagnosis: a retry cannot fix those and would only
+    pay for the same refusal twice.
+    """
+    named = _OWN_ADDRESS_IN_REFUSAL.search(str(exc))
+    if not named:
+        return None
+    own = named.group(1)
+    if not to or any(addr.lower() != own.lower() for addr in to):
+        return None
+    if all(addr == own for addr in to):
+        return None
+    return [own for _ in to]
 
 
 def _explain_test_mode_refusal(to: list[str], exc: Exception) -> None:

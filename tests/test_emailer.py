@@ -1131,8 +1131,11 @@ def _resend_refuses(monkeypatch, sentence: str) -> None:
      "1 recipient(s): a different address, at example.test"),
     ("owner@example.invalid, someone.else@example.test",
      "2 recipient(s): the address Resend named, at example.invalid; a different address, at example.test"),
-    ("Owner@Example.invalid",
-     "1 recipient(s): the address Resend named in different capitalisation, at example.invalid"),
+    # A case-only mismatch ALONE is respelt and resent before it can be
+    # diagnosed (see the test below); beside a wrong address it cannot be.
+    ("Owner@Example.invalid, someone.else@example.test",
+     "2 recipient(s): the address Resend named in different capitalisation, at example.invalid; "
+     "a different address, at example.test"),
 ])
 def test_a_test_mode_refusal_says_how_the_recipients_compare_to_the_address_resend_named(
     fake_resend, monkeypatch, caplog, email_to, expected
@@ -1175,3 +1178,73 @@ def test_any_other_resend_refusal_is_left_to_speak_for_itself(fake_resend, monke
         deliver("subject", "<p>body</p>")
 
     assert "recipient(s)" not in " ".join(r.getMessage() for r in caplog.records)
+
+
+def test_a_case_only_mismatch_is_resent_in_resends_own_spelling(fake_resend, monkeypatch, caplog):
+    """The first live account: EMAIL_TO was the account's address with a
+    capital letter, Resend's test-mode check is an exact string match, and
+    three dispatches drew the same refusal. Sent again as Resend spells it --
+    the same mailbox, since providers treat the local part case-insensitively
+    in practice -- once, on this refusal only, and said out loud."""
+    import resend
+
+    monkeypatch.setenv("EMAIL_TO", "Owner@Example.invalid")
+    calls: list[list[str]] = []
+
+    def send(params, options=None):
+        calls.append(list(params["to"]))
+        if len(calls) == 1:
+            raise RuntimeError(_TEST_MODE_REFUSAL)
+        return {"id": "resent-id"}
+    monkeypatch.setattr(resend.Emails, "send", send)
+
+    with caplog.at_level(logging.WARNING, logger="src.emailer"):
+        response = deliver("subject", "<p>body</p>")
+
+    assert response == {"id": "resent-id"}
+    assert calls == [["Owner@Example.invalid"], ["owner@example.invalid"]], calls
+    said = " ".join(r.getMessage() for r in caplog.records)
+    assert "as Resend spells it" in said and "Re-save EMAIL_TO" in said
+    assert "recipient(s)" not in said, "the diagnosis is for the refusals a retry cannot fix"
+
+
+@pytest.mark.parametrize("email_to", [
+    "someone.else@example.test",                      # a different address
+    "Owner@Example.invalid, someone.else@example.test",  # the right one beside a wrong one
+    "owner@example.invalid",                          # already Resend's spelling: nothing to respell
+])
+def test_only_a_case_only_mismatch_earns_the_second_send(fake_resend, monkeypatch, caplog, email_to):
+    """Everything else is refused once and diagnosed, never sent twice: a
+    retry cannot fix a different address, and sending an exact match again
+    would pay for the same refusal twice."""
+    import resend
+
+    monkeypatch.setenv("EMAIL_TO", email_to)
+    calls: list[list[str]] = []
+
+    def send(params, options=None):
+        calls.append(list(params["to"]))
+        raise RuntimeError(_TEST_MODE_REFUSAL)
+    monkeypatch.setattr(resend.Emails, "send", send)
+
+    with caplog.at_level(logging.ERROR, logger="src.emailer"), pytest.raises(RuntimeError):
+        deliver("subject", "<p>body</p>")
+
+    assert len(calls) == 1, calls
+    assert "recipient(s)" in " ".join(r.getMessage() for r in caplog.records)
+
+
+def test_a_second_refusal_after_the_respelling_is_raised_like_any_other(fake_resend, monkeypatch):
+    import resend
+
+    monkeypatch.setenv("EMAIL_TO", "Owner@Example.invalid")
+    calls: list[list[str]] = []
+
+    def send(params, options=None):
+        calls.append(list(params["to"]))
+        raise RuntimeError(_TEST_MODE_REFUSAL)
+    monkeypatch.setattr(resend.Emails, "send", send)
+
+    with pytest.raises(RuntimeError):
+        deliver("subject", "<p>body</p>")
+    assert len(calls) == 2, "one respelling, then no third attempt"
