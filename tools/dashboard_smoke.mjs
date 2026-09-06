@@ -398,6 +398,31 @@ const VARIANTS = {
     ref.from_open = { mean: 2.5, n: 43, best: 25, worst: -22, in_band: 0 };
     d.evidence.refused.enough_from_open = true;
     d.evidence.overall.enough_from_open = true;
+    // Forty measured pairings, every one benchmarked over its night's floor.
+    // A measured pairing is floored or unfloored and never neither; the
+    // one-night fixture has neither because all of its pairings are pending.
+    d.evidence.universe.floored = 40;
+    d.evidence.universe.unfloored = 0;
+    return d;
+  },
+  // The rung over pairings benchmarked before the floor reached the
+  // benchmark: every name that traded, the thin ones in. The sentence and
+  // the row's own label both have to say so, because the row's label is a
+  // sentence about the rule and this record did not apply it.
+  unflooredbenchmark() {
+    const d = VARIANTS.fullbenchmark();
+    d.evidence.universe.floored = 0;
+    d.evidence.universe.unfloored = 40;
+    return d;
+  },
+  // And the record that straddles the change, which every real ledger
+  // spanning round 9 will be for as long as it holds a run benchmarked
+  // before it: a measured horizon keeps its value, so those pairings are
+  // never re-measured, and only MAX_RUNS retention ends the straddle.
+  mixedfloor() {
+    const d = VARIANTS.fullbenchmark();
+    d.evidence.universe.floored = 30;
+    d.evidence.universe.unfloored = 10;
     return d;
   },
   // A benchmark with a mean and too few setups behind it. The rung still
@@ -467,6 +492,40 @@ const VARIANTS = {
     const cell = band.outcomes.find((o) => o.horizon === h);
     cell.mean = 45.0;
     cell.from_open = Object.assign({}, cell.from_open, { mean: 5.0 });
+    return d;
+  },
+  // Rows and a run from before the open basis, beside rows measured on it:
+  // the row-level state of the first ledger spanning round 6. On the open
+  // basis those rows are not "pending" -- their sessions closed long ago and
+  // were never measured this way -- and the words have to say which.
+  prebasisrows() {
+    const d = VARIANTS.forward();
+    delete d.candidates[1].forward_returns.from_open;
+    d.runs[1].forward_returns = { d1: 0.4, d3: 0.9, d5: 1.3, n: 20 };
+    return d;
+  },
+  // A row refused an entry -- no usable open on the next session, or an open
+  // outside its own bar -- carries a measured close basis and an open basis
+  // null throughout; its sessions happened, and "pending" was the word it
+  // wore. And a row with no forward_returns at all, which no writer produces
+  // and a hand-edited file can: one word for it on the card and both tables.
+  noentry() {
+    const d = VARIANTS.forward();
+    d.candidates[2].forward_returns.from_open = { d1: null, d3: null, d5: null };
+    d.runs[1].forward_returns = { d1: 0.4, d3: 0.9, d5: 1.3, n: 20, from_open: { d1: null, d3: null, d5: null, n: 0 } };
+    delete d.candidates[3].forward_returns;
+    return d;
+  },
+  // A data.json written before round 9: no separation_from_open on any
+  // check, no floored/unfloored on the rung. The open tab must say the
+  // column is unmeasured there rather than that no check has enough setups,
+  // and the rung must not claim a floor the record never applied.
+  oldevidence() {
+    const d = clone(REAL);
+    d.evidence = JSON.parse(JSON.stringify(HIST.evidence));
+    d.evidence.by_check.forEach((c) => delete c.separation_from_open);
+    delete d.evidence.universe.floored;
+    delete d.evidence.universe.unfloored;
     return d;
   },
   nodata() { return null; }
@@ -544,7 +603,20 @@ page.on('console', (m) => {
   if (/\/charts\/[^/]+\.png$/.test(url)) { chart404.add(url.replace(/^.*\/charts\//, '')); return; }
   errors.push('console: ' + m.text() + (url ? ' @ ' + url : ''));
 });
-page.on('requestfailed', (r) => errors.push('request failed: ' + r.url().slice(0, 90)));
+// A chart image still loading when the next check navigates away is aborted
+// BY the navigation, not by the page -- the cards are rendered after the load
+// event, so `open()` cannot wait for them and does not. Round 8 recorded "2
+// page errors with 187/187 checks passing" and could not reproduce it; here it
+// was three, on the fullbenchmark variant's charts, and it is timing, which is
+// why it came and went. Counted apart so the summary still shows them, and so
+// that a request the page itself failed -- any other error, or an abort on
+// anything but a chart PNG -- is still a page error that fails the run.
+const aborted = [];
+page.on('requestfailed', (r) => {
+  const why = (r.failure() && r.failure().errorText) || '';
+  if (why === 'net::ERR_ABORTED' && /\/charts\/[^/]+\.png$/.test(r.url())) { aborted.push(r.url()); return; }
+  errors.push('request failed: ' + r.url().slice(0, 90) + (why ? ' (' + why + ')' : ''));
+});
 
 const results = [];
 const ok = (name, pass, detail = '') => results.push({ name, pass: !!pass, detail });
@@ -823,6 +895,50 @@ ok('and it follows the basis switch, naming the benchmark measured the same way 
   /paired with the 39 setups/.test(benchOpen) && /\+0\.50% equal-weight/.test(benchOpen)
   && !/\+2\.00% equal-weight/.test(benchOpen) && /next session.s open/.test(benchOpen),
   benchOpen.slice(benchOpen.indexOf('Against'), benchOpen.indexOf('Against') + 120));
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+ok('and says the names under each night\u2019s liquidity floor are left out of it',
+  /Names under each night\u2019s liquidity floor are left out of it\. The universe is a curated/.test(benchVerdict),
+  benchVerdict.slice(benchVerdict.indexOf('Names under'), benchVerdict.indexOf('Names under') + 80) || 'no floor sentence');
+await open('/v/unflooredbenchmark/');
+const unflooredVerdict = await page.textContent('#control-verdict');
+const universeRowOf = async () => page.$$eval('#control-table tbody tr', (rows) => {
+  const r = rows.find((x) => x.textContent.startsWith('the universe'));
+  return r ? r.textContent.replace(/\s+/g, ' ') : '';
+});
+const unflooredRow = await universeRowOf();
+const unflooredHint = await page.textContent('#control-hint');
+ok('a rung measured with no floor says the thin names are in, on the sentence, on the row and in the card\'s own hint',
+  /It counts every name that traded, the ones under the liquidity floor included/.test(unflooredVerdict)
+  && /measured with no floor/.test(unflooredRow) && !/at or above/.test(unflooredRow)
+  // and the hint no longer states the opposite three sentences up: it used
+  // to say "left out for the same reason" whatever the record held.
+  && /measured with no floor/.test(unflooredHint) && !/left out for the same reason/.test(unflooredHint)
+  // both causes, because the block cannot tell them apart
+  && /rule 6 was off/.test(unflooredRow) && /rule 6 was off/.test(unflooredVerdict),
+  unflooredHint.slice(unflooredHint.indexOf('The universe row'), unflooredHint.indexOf('The universe row') + 150));
+await open('/v/mixedfloor/');
+const mixedVerdict = await page.textContent('#control-verdict');
+const mixedRow = await universeRowOf();
+const mixedHint = await page.textContent('#control-hint');
+ok('and a record straddling the change says for how many pairings each is true, on the sentence, the row and the hint',
+  /left out of it for 30 of the 40 measured pairings; the other 10 were measured with no floor/.test(mixedVerdict)
+  && /for the 30 pairings measured with one; the other 10 were measured with no floor/.test(mixedRow)
+  && /and in for the 10 measured with none/.test(mixedHint),
+  mixedVerdict.slice(mixedVerdict.indexOf('Names under'), mixedVerdict.indexOf('Names under') + 140));
+await open('/v/oldevidence/');
+const oldEvRow = await universeRowOf();
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const oldEvHint = await page.textContent('#predict-hint');
+const oldEvSep = await page.$$eval('#predict-table tbody tr td:nth-child(6)', (tds) => tds.map((t) => t.textContent.trim()));
+ok('a record from before round 9 says its separation is unmeasured on the open basis, not that no check has enough setups',
+  /written before the separation was measured from the next session\u2019s open/.test(oldEvHint) && !/No check yet has/.test(oldEvHint)
+  && oldEvSep.length > 0 && oldEvSep.every((t) => t === 'not measured'),
+  `${oldEvSep.join('|')} :: ${oldEvHint.slice(oldEvHint.indexOf('This record'), oldEvHint.indexOf('This record') + 60)}`);
+const oldEvHintControl = await page.textContent('#control-hint');
+ok('and its universe rung does not claim a floor the record never applied, on the row or in the hint',
+  /predates the floor in the benchmark/.test(oldEvRow) && !/at or above/.test(oldEvRow)
+  && /measured with no floor/.test(oldEvHintControl) && !/left out for the same reason/.test(oldEvHintControl),
+  oldEvRow.slice(0, 120));
 await page.click('#basis-tabs .sc-tab[data-basis="close"]');
 await open('/v/thinbenchmark/');
 const thinBench = await page.textContent('#control-verdict');
@@ -1577,6 +1693,24 @@ ok('the alternative is on the page as five disjoint populations and a benchmark 
   && /call cap/.test(rowFor('the crowded-out')) && /liquidity floor/.test(rowFor('the illiquid'))
   && /survivorship/.test(rowFor('the universe')),
   hLadder.map((l) => l.slice(0, 36)).join(' | ') || 'no ladder rendered');
+// The rung is over the names at or above each night's floor, and the real
+// pipeline wrote this record with the floor on every measured pairing: the
+// row says the rule and the verdict says it was applied, both read off the
+// ledger's own counts rather than assumed.
+// And the verdict reads the picks against the universe even while the
+// refused side is thin -- which this record's is -- because the benchmark
+// is paired with the picks alone.
+ok('the universe rung names the floor it is over, and the verdict says the record applied it',
+  HIST.evidence.universe.floored > 0 && HIST.evidence.universe.unfloored === 0
+  && /at or above that night\u2019s liquidity floor/.test(rowFor('the universe'))
+  && /Against buying anything in the universe on the same days/.test(hv)
+  && /Names under each night\u2019s liquidity floor are left out of it/.test(hv)
+  && /the names under that night\u2019s floor left out for the same reason — paired/.test(await page.textContent('#control-hint'))
+  // and the picks' own figure stands before the benchmark, so the paragraph
+  // that says a control comparison needs both sides is not followed by a
+  // comparison with no first term.
+  && hv.includes('Names this screener scored returned ' + (hPicks.mean > 0 ? '+' : '') + hPicks.mean.toFixed(2) + '% at +' + hH + 'd'),
+  `floored ${HIST.evidence.universe.floored}, unfloored ${HIST.evidence.universe.unfloored}: ${rowFor('the universe').slice(0, 90)}`);
 // The benchmark pairs every scored setup with its session's universe move,
 // so its n is bounded by the scored setups and, over thirty runs where every
 // session but the last week has a benchmark, is most of them. Read off the
@@ -1656,8 +1790,11 @@ ok('switching to the open basis changes the ladder to the ledger\'s own from_ope
   && closeCells[4].startsWith(pctOf(hRef5.mean)) && openCells[4].startsWith(pctOf(hRef5.from_open.mean))
   && hRef5.mean !== hRef5.from_open.mean,
   `close ${closeCells[4]} vs open ${openCells[4]}; ledger ${hRef5.mean} / ${hRef5.from_open.mean}`);
-const openHints = await page.$$eval('#evidence-hint, #control-hint, #runs-hint, #control-verdict, #evidence-verdict', (ps) => ps.map((p) => p.textContent));
+// Nine surfaces, not five: the per-check, streak-pay, by-month and per-name
+// cards showed returns under no basis at all until round 9.
+const openHints = await page.$$eval('#evidence-hint, #control-hint, #runs-hint, #control-verdict, #evidence-verdict, #predict-hint, #streak-hint, #trend-hint, #ticker-hint', (ps) => ps.map((p) => p.textContent));
 ok('and every heading that carries a return names the basis it is on',
+  openHints.length === 9 &&
   openHints.every((t) => /next session.s open/.test(t)) && !openHints.some((t) => /burst-day close/.test(t)),
   openHints.map((t) => t.slice(0, 60)).join(' | '));
 const openRunIndex = HIST.runs.findIndex((r) => r.forward_returns && r.forward_returns.from_open && r.forward_returns.from_open.d5 !== null);
@@ -1675,12 +1812,89 @@ ok('the runs table follows the switch too, reading each run\'s own from_open mea
 await page.click('#basis-tabs .sc-tab[data-basis="close"]');
 ok('and switching back restores every close-basis number',
   JSON.stringify(await refusedRowCells()) === JSON.stringify(closeCells) && countIn('what it refused') === ladderCloseRefused);
+// Round 9. The per-check view's separation column is what its "separates
+// most" sentence sorts on, and it read the close basis whichever tab was
+// pressed; so did the streak-pay table's in-band count. Both are read off
+// the ledger's own per-basis numbers here, on a row where the bases differ.
+const sepCheck = HEV.by_check.find((c) => c.separation !== null && c.separation_from_open !== null && c.separation !== c.separation_from_open);
+const sepCell = async (code) => page.$$eval('#predict-table tbody tr', (rows, code) => {
+  const r = rows.find((x) => x.querySelector('td') && x.querySelector('td').textContent.trim() === code);
+  return r ? r.querySelectorAll('td')[5].textContent.trim() : '';
+}, code);
+const bestOn = (key, licence) => HEV.by_check.filter((c) => c[licence]).slice().sort((a, b) => (b[key] || 0) - (a[key] || 0))[0];
+const sepClose = sepCheck ? await sepCell(sepCheck.code) : '';
+const hintClose = await page.textContent('#predict-hint');
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const sepOpen = sepCheck ? await sepCell(sepCheck.code) : '';
+const hintOpen = await page.textContent('#predict-hint');
+ok('the per-check separation column follows the basis switch, reading the ledger\'s own separation_from_open',
+  !!sepCheck && sepClose === pctOf(sepCheck.separation) && sepOpen === pctOf(sepCheck.separation_from_open),
+  `${sepCheck ? sepCheck.code : 'no check differs'}: close ${sepClose}, open ${sepOpen}`);
+const bestClose = bestOn('separation', 'enough'), bestOpen = bestOn('separation_from_open', 'enough_from_open');
+const names = (hint, best, key) => !!best && hint.includes('so far ' + best.code + ' separates most, by ' + pctOf(best[key]).replace('+', ''));
+ok('and the "separates most" sentence names the check and the number on the basis being read',
+  names(hintClose, bestClose, 'separation') && names(hintOpen, bestOpen, 'separation_from_open')
+  && pctOf(bestClose.separation) !== pctOf(bestOpen.separation_from_open),
+  `close: ${hintClose.slice(hintClose.indexOf('so far'), hintClose.indexOf('so far') + 40)} | open: ${hintOpen.slice(hintOpen.indexOf('so far'), hintOpen.indexOf('so far') + 40)}`);
+const dayRow = HEV.by_day.find((r) => { const o = r.outcomes.find((x) => x.horizon === hH); return o && o.from_open && o.in_band !== o.from_open.in_band; });
+const dayLabel = dayRow ? (dayRow.day === null ? 'not known' : 'day ' + dayRow.day) : '';
+const inBandCell = async () => page.$$eval('#streak-table tbody tr', (rows, label) => {
+  const r = rows.find((x) => x.querySelector('td') && x.querySelector('td').textContent.trim().startsWith(label));
+  return r ? r.querySelectorAll('td')[5].textContent.trim() : '';
+}, dayLabel);
+const inBandOpen = await inBandCell();
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+const inBandClose = await inBandCell();
+const dayOut = dayRow ? dayRow.outcomes.find((x) => x.horizon === hH) : null;
+ok('the streak-pay table\'s in-band count follows the basis switch too',
+  !!dayRow && inBandClose === String(dayOut.in_band) && inBandOpen === String(dayOut.from_open.in_band),
+  `${dayLabel || 'no day differs'}: close ${inBandClose}, open ${inBandOpen}; ledger ${dayOut && dayOut.in_band} / ${dayOut && dayOut.from_open.in_band}`);
 await open('/v/forward/');
 await page.click('#basis-tabs .sc-tab[data-basis="open"]');
 const fwdOpenCell = (await page.locator('#scores-table tbody tr:first-child td:nth-child(9)').textContent()).trim();
 const FWD0 = VARIANTS.forward().candidates[0].forward_returns;
 ok('a candidate row shows its own open-basis return under the open label, not the close one',
   fwdOpenCell === pctOf(FWD0.from_open.d1) && fwdOpenCell !== pctOf(FWD0.d1), `cell ${fwdOpenCell}; open ${FWD0.from_open.d1}, close ${FWD0.d1}`);
+// A row from before the basis, beside one measured on it. "Pending" was the
+// word for both on the open basis, and it is false of the first: its
+// sessions closed long ago and were never measured this way.
+await open('/v/prebasisrows/');
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const preRow = (await page.locator('#scores-table tbody tr:nth-child(2) td:nth-child(9)').textContent()).trim();
+const preTitle = await page.locator('#scores-table tbody tr:nth-child(2) td:nth-child(9)').getAttribute('title');
+const measuredRow = (await page.locator('#scores-table tbody tr:first-child td:nth-child(9)').textContent()).trim();
+const preCard = await page.locator('#shortlist .pick').nth(1).textContent();
+const preRun = (await page.locator('#runs-table tbody tr:nth-child(2) td:nth-child(9)').textContent()).trim();
+ok('a row from before the open basis reads "not measured" on that basis, beside a measured one, and never "pending"',
+  preRow === 'not measured' && /predates the open basis/.test(preTitle || '') && /^[+-]\d+\.\d{2}%$/.test(measuredRow)
+  && /not measured — this row predates the open basis/.test(preCard) && !/pending — the sessions/.test(preCard)
+  && preRun === 'not measured',
+  `table ${preRow} (${preTitle}) beside ${measuredRow}; run row ${preRun}`);
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+ok('and the same row is a number on the close basis, which it does carry',
+  /^[+-]\d+\.\d{2}%$/.test((await page.locator('#scores-table tbody tr:nth-child(2) td:nth-child(9)').textContent()).trim())
+  && /^[+-]\d+\.\d{2}%$/.test((await page.locator('#runs-table tbody tr:nth-child(2) td:nth-child(9)').textContent()).trim()));
+// The fourth state: refused an entry. Its close basis is measured, its
+// sessions happened, and on the open basis it is not "pending".
+await open('/v/noentry/');
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const noEntryCell = await page.locator('#scores-table tbody tr:nth-child(3) td:nth-child(9)');
+const noEntryCard = await page.locator('#shortlist .pick').nth(2).textContent();
+const noEntryRun = await page.locator('#runs-table tbody tr:nth-child(2) td:nth-child(9)');
+const unrecordedCell = (await page.locator('#scores-table tbody tr:nth-child(4) td:nth-child(9)').textContent()).trim();
+const unrecordedCard = await page.locator('#shortlist .pick').nth(3).textContent();
+ok('a row refused an entry reads "not measured" with the reason on the open basis, on the card, the table and the run row',
+  (await noEntryCell.textContent()).trim() === 'not measured' && /no usable open/.test(await noEntryCell.getAttribute('title') || '')
+  && /not measured — no usable open on the next session/.test(noEntryCard) && !/pending — the sessions/.test(noEntryCard)
+  && (await noEntryRun.textContent()).trim() === 'not measured' && /no usable open/.test(await noEntryRun.getAttribute('title') || ''),
+  `table ${(await noEntryCell.textContent()).trim()}; run ${(await noEntryRun.textContent()).trim()}`);
+ok('and a row with no forward_returns at all is "not recorded" on the card and in the table alike, never "pending"',
+  unrecordedCell === 'not recorded' && /not recorded/.test(unrecordedCard) && !/pending/.test(unrecordedCard),
+  `table ${unrecordedCell}`);
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+ok('and on the close basis the refused row is a number and the unrecorded one is still "not recorded"',
+  /^[+-]\d+\.\d{2}%$/.test((await page.locator('#scores-table tbody tr:nth-child(3) td:nth-child(9)').textContent()).trim())
+  && (await page.locator('#scores-table tbody tr:nth-child(4) td:nth-child(9)').textContent()).trim() === 'not recorded');
 // Round 6 said one basis at a time, named in every heading. The score-band
 // CHART is the most prominent number on the page and read the close basis
 // whatever the switch said, so it printed one figure over a table row
@@ -1969,6 +2183,7 @@ for (const r of results) console.log(`  ${r.pass ? 'ok  ' : 'FAIL'}  ${r.name}${
 const noise = [...new Set(errors)].filter((e) => !/HTTP 500|the pipeline has not written this|\/v\/nodata\//.test(e));
 if (noise.length) { console.log('\n  the page logged errors:'); for (const e of noise) console.log('      - ' + e); }
 const failed = results.filter((r) => !r.pass).length;
-console.log(`\ndashboard smoke: ${results.length - failed}/${results.length} checks, ${noise.length} page error${noise.length === 1 ? '' : 's'}`);
+console.log(`\ndashboard smoke: ${results.length - failed}/${results.length} checks, ${noise.length} page error${noise.length === 1 ? '' : 's'}`
+  + (aborted.length ? ` (${aborted.length} chart request${aborted.length === 1 ? '' : 's'} aborted by navigation, not counted)` : ''));
 if (SHOTS) console.log(`screenshots: ${SHOTS}`);
 process.exit(failed || noise.length ? 1 : 0);

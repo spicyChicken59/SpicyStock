@@ -19,7 +19,7 @@ no Google Sheet, no n8n.
 
 ```
 checked-in universe (data/symbols.txt, 230 names)
-        │  Alpaca daily OHLCV, split-adjusted, delayed SIP, batched
+        │  Alpaca daily OHLCV, split-adjusted, SIP, batched
         ▼
 Layer 1  4% burst filter ............. ≥4% gain, vol ≥ yesterday, ≥1.5x its own
         │                              50-session average, price > $4, and in the
@@ -146,6 +146,19 @@ what `.github/workflows/evening.yml` reads, and `.env.example` explains each:
 `ANTHROPIC_API_KEY`, `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`,
 `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_TO`
 
+Two more things the first live run turned up, both settings rather than code:
+
+- **GitHub Pages is off until you switch it on.** The dashboard is served from
+  the `docs/` folder of `main`, and the repository has never had a Pages
+  build, so the address 404s. Settings → Pages → Build and deployment →
+  "Deploy from a branch" → branch `main`, folder `/docs`, Save; the first
+  deploy takes a minute or two, and every commit-back after that redeploys.
+- **Resend in test mode only delivers to the account's own address.** Until a
+  domain is verified at resend.com/domains and `RESEND_FROM` is an address on
+  it, Resend refuses any other recipient — the first live run failed its email
+  on exactly that sentence. Either set `EMAIL_TO` to the address the Resend
+  account is registered under, or verify a domain and set `RESEND_FROM`.
+
 **Then, before the first scheduled night, rehearse the boundaries once from
 your own machine:**
 
@@ -222,7 +235,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 916 tests, no network or API keys needed
+pytest tests/                   # 953 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -320,7 +333,8 @@ below the session's floor — kept apart from the refusals for the opposite
 reason: those forward returns are bar prices on names the rule says are too
 thin to be bought at them, so they are shown beside the control and never in
 it) — plus `evidence.universe`, the benchmark rung (not a population of
-setups but the whole universe's move paired with each of them) and
+setups but the universe's move, over the names at or above that night's
+liquidity floor, paired with each of them) and
 `evidence.rules`, which says how many distinct sets of rules the record spans,
 which keys differ between them, and how many runs predate the fingerprint
 entirely: **a mean across runs is a mean over one strategy only while `sets`
@@ -367,7 +381,7 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 14.03 MB raw
+and what followed — needs the whole record, which projects to about 14.04 MB raw
 and **1.08 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
@@ -510,15 +524,50 @@ from. The page prints both, and calls neither of them "names".
   and none of them changes what a burst is. A run from before the fingerprint
   carries no `rules` key at all — absent, never null, because the contract
   distinguishes "this run had none" from a shape no writer produces.
-- `runs[].benchmark` is the **whole universe's equal-weight return from that
+- `runs[].benchmark` is the **universe's equal-weight return from that
   session** — `d1`, `d3`, `d5` from the close and `from_open` from the next
   open, with `n1`/`n3`/`n5` the number of symbols behind each — filled by a
-  later run from the frames its own scan already read, at no extra request.
+  later run from the frames its own scan already read, at no extra request,
+  over every name whose frame carries the session **at or above the run's own
+  liquidity floor**: rule 6's bar that night, kept in `run.liquidity.floor`, so
+  the names the rule says cannot be bought at those prints are out of the
+  alternative the way `evidence.illiquid` is out of the control. Before that
+  the rung averaged every name that traded, the refused ones included — 30% of
+  them by construction, since the floor IS the 30th percentile of the
+  session's dollar volume. `benchmark.liquidity_floor` is the floor applied
+  (null for a run recorded without one, when every name that traded counts)
+  and `benchmark.below_floor` how many names it left out. The frames are
+  handed over before the scan's stale and gap rules, which are about tonight's
+  session, so a name halted tonight still benchmarks the session it traded.
   `evidence.universe` pairs every scored setup with its own session's
   benchmark, so its outcomes are the alternative "buy anything in the universe
-  that day" over the same sessions in the same proportions as the picks. It is
-  a curated large-cap list as it stands today, so the comparison carries
-  survivorship bias in the benchmark's favour, and the page's rung says so.
+  that day" over the same sessions in the same proportions as the picks, and
+  `evidence.universe.floored` / `unfloored` say how many measured pairings
+  applied a floor and how many were measured with none — recorded before the
+  floor reached the benchmark, or on a night rule 6 was off, which the block
+  cannot tell apart, so every surface names both. It is a curated large-cap list as
+  it stands today, so the comparison carries survivorship bias in the
+  benchmark's favour, and the page's rung says so.
+- A horizon is the bar of the session 1, 3 or 5 sessions after the burst, the
+  sessions read **across every frame the run fetched** (`session_calendar()`)
+  rather than counted along one frame's bars, and measured only while the
+  frame carries every session from the burst to it: a bar the feed dropped,
+  or a full-day halt, leaves that horizon and every later one null on that
+  row instead of sliding them onto the next bar the frame has. Reproduced
+  before it was fixed: with the 27 Aug bar missing, `d3` printed the 28 Aug
+  close and `as_of` dated it a session late. A date is a session when at
+  least half of the frames spanning it carry a bar on it, so one frame's hole
+  removes nothing and one frame's phantom bar adds nothing -- and a phantom a
+  few frames voted in ends the measurement for the frames that lack it, the
+  same way a hole does, rather than sliding their later horizons. Fewer than
+  two frames is no calendar: the documented `--tickers BURST` smoke test
+  fetches one frame, and alone a frame is walked from the burst and stops at
+  the first step that is not the next business day, since it cannot tell its
+  own hole from a holiday; the next universe scan, with a calendar, measures
+  what that left open. The open basis's entry must also lie within its own
+  bar's low and high, the standard the checklist holds a close to; an open
+  outside its range, or on a bar whose high or low cannot be read, is null on
+  that row, and the close basis is untouched.
 - `forward_returns.from_open` is the **same three closes divided by the next
   session's open** — the earliest price a reader of the 18:16 ET email could
   have paid. The two bases answer two questions about one move: what the
@@ -541,7 +590,10 @@ from. The page prints both, and calls neither of them "names".
   claims data this pipeline does not have.
 - A horizon is filled once and never restated. A name that stops trading is
   retried for ten runs and then left pending forever, which is the honest
-  answer for a delisting.
+  answer for a delisting -- and so is a row whose horizon bar the feed never
+  carried, or whose entry open sat outside its own bar: that horizon, or the
+  open basis, stays null, and the row is asked for again on each of those
+  ten runs in case a later fetch carries what the last one did not.
 - Filling costs one extra bars request per 100 pending names, on the same free
   feed and through the same `_download_batch` the scan uses. If it fails, the
   run is marked **degraded** rather than quietly stopping to accumulate.
@@ -662,14 +714,14 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 190 checks, and which file each one
+**Three data sources, one page.** It runs 204 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 29 mutated copies of it are served
+  night can hold at once. 34 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now
@@ -748,11 +800,15 @@ against a hand-made `data.json` and agree, but that check is not committed.
 
 ## Costs and limits
 
-- Market data: free (Alpaca). The scan now asks for `delayed_sip` rather than
-  taking the plan default, so it reads consolidated volume instead of IEX's
-  single-venue slice — see `.env.example`, and note this is unconfirmed against
-  a live account. If the account cannot serve that feed the run aborts with a
-  named error rather than returning an empty shortlist. A 230-symbol scan is
+- Market data: free (Alpaca). The scan asks for `sip` rather than taking the
+  plan default, so it reads consolidated volume instead of IEX's single-venue
+  slice, and holds the request window sixteen minutes behind the clock, which
+  is what a plan without a real-time subscription needs for SIP — see
+  `.env.example`. It asked for `delayed_sip` for nine rounds, and the first
+  run past preflight (6 Sep 2026) showed the bars endpoint refuses that name
+  outright; a feed the endpoint or the plan refuses aborts the run with a
+  named error on the first batch rather than returning an empty shortlist,
+  and `SCAN_FEED=iex` is the fallback. A 230-symbol scan is
   seconds, not minutes, and is nowhere near the 55-min timeout — but "under a
   second", which this said, is not supported: 0.97s is what the scan costs
   driven through the offline doubles, and those do strictly LESS work than

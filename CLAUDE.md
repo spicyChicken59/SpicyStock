@@ -114,10 +114,13 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **No live market data.** The sandbox proxy blocks Yahoo and Alpaca. Anything
   requiring a real trading day has to be validated by the user locally. Reason
   from the SDK and synthetic frames instead; do not fake a result.
-- **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
-  consolidated volume, which is why the absolute share threshold has to become
-  a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 916 tests with no network
+- **Free Alpaca plan.** No real-time SIP subscription. The IEX feed carries a
+  fraction of consolidated volume, which is why the absolute share threshold
+  has to become a relative one (step 4). The scan reads `sip` with the request
+  window held back sixteen minutes, which is the free plan's consolidated
+  route; `delayed_sip`, the default for nine rounds, is a name the bars
+  endpoint refuses -- observed on the first live run, round 9 below.
+- **There is a regression net.** `pytest tests/` runs 953 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -400,6 +403,22 @@ exercised its headline. Nine mutants across them, all killed.
   the page's evidence block stays empty and correct, and the morning run has
   nothing to follow through on.
 
+  **Two of the six are in now.** Read off the Actions log for the owner's
+  manual dispatch of `evening.yml` on 5 Sep at 11:42 UTC (run 10, on the
+  rebuild branch, before PR #5 merged), not inferred: the job's env block
+  shows `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` masked and
+  `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `RESEND_FROM` and `EMAIL_TO` empty,
+  and the preflight message names exactly the three it still needs --
+  `ANTHROPIC_API_KEY, RESEND_API_KEY, EMAIL_TO` -- which is the composition
+  rule above doing its job on a partial set. The same log is the first real
+  run of the round-4 persist fix on the exit-1 path: the pipeline step
+  captured the code and reported success, the persist step was SKIPPED (a
+  preflight failure has nothing trustworthy to commit), the artifact was
+  named `evening-failed-33964059424` and held `docs/data.json` alone, and
+  the verdict step re-raised the 1. Every one of those is the designed
+  behaviour, observed on Actions rather than traced against a stub. The
+  scheduled crons keep failing the same way until the other three are set.
+
   **A DEGRADED night could not commit its record, and that was the biggest
   thing standing between this project and its own north star.** Exit 2 means
   the run WORKED and noted a problem: the scan ran, the charts rendered, up to
@@ -631,10 +650,13 @@ exercised its headline. Nine mutants across them, all killed.
   **And `evening.yml`'s commit-back has still never executed** — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on
   it; the `git add` bug that would have voided it is fixed and guarded by a
-  test. But read from the Actions API: `evening.yml` has fired SIX times ever,
-  all scheduled — three DST-guard no-ops and three preflight failures — and a
-  failed pipeline step skips the persist step entirely, so nothing has reached
-  the add, the commit or the push under any version. The buggy `git add docs
+  test. But read from the Actions API: `evening.yml` had fired SIX times when
+  this was written, all scheduled — three DST-guard no-ops and three preflight
+  failures — and ten by 5 Sep, two of them manual dispatches (runs 8 and 10)
+  that reached the pipeline step and failed preflight like the rest; a failed
+  pipeline step skips the persist step entirely (the round-4 fix made that
+  explicit for exit 1), so nothing has reached the add, the commit or the
+  push under any version. The buggy `git add docs
   results` lived only on the rebuild branch and was fixed before that branch
   merged, so no scheduled run ever checked it out either. An earlier draft of
   this note, and two paragraphs of README, described that bug as failing
@@ -682,6 +704,292 @@ exercised its headline. Nine mutants across them, all killed.
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Round 9 — the ten items the rounds 6-7 audit left open, and what working them turned up
+
+The medium and low findings named at the end of "Findings from the rounds
+6-7 audit", every one of them worked, plus round 8's one lead and two findings
+this round made on the way. Every one reproduced HERE by execution before it
+was touched.
+
+**The horizon was a bar, not a session, on every row the record holds.**
+`forward_returns()` measured d1/d3/d5 at `start + h` along ONE frame's bars,
+so a bar the feed dropped, or a full-day halt, between the burst and its
+horizons slid every later horizon one session late. Reproduced before it was
+touched: with the 27 Aug bar missing from a frame, d3 read the 28 Aug close
+(+4.0%, for a session whose bar does not exist) and d5 the 1 Sep close where
+31 Aug's +5.0% was the answer, `as_of` dated to the wrong session, and
+nothing said so. That is the class `_drop_gapped_symbols()` closed for the
+scan in round 4, one stage on, on every row the ledger holds -- the sweep
+that round's note asked for, found while working the "frames exclude the
+stale and gapped names" item below, because handing the fill frames with
+holes in them made the question of what a hole DOES unavoidable.
+`session_calendar()` reads the sessions across every frame the night fetched
+-- a date is a session when at least half of the frames spanning it carry a
+bar on it, so one frame's hole removes nothing and one frame's phantom bar
+adds nothing -- and `forward_returns()` finds each horizon's bar by DATE: a
+frame with a hole there is null at that horizon, never the next bar it has.
+`publish()` hands both fills one calendar, the scan's frames plus the
+fetched ones. A horizon is measured only while the frame carries EVERY
+session from the burst to it, so a hole on the way ends the measurement --
+d5 is lost after a one-day halt at d3, and that is the price of not
+guessing, since a calendar date a frame lacks is that frame's hole or the
+calendar's phantom and past it the two readings disagree. Fewer than two
+frames is no calendar at all (the audit's R9-A, below), and alone a frame
+is walked from the burst and stops at the first step that is not the next
+business day, which cannot tell its own hole from a holiday and so refuses
+both; the next scan of the universe, with a calendar, measures what that
+left open.
+
+**The open basis accepted an open outside its own bar.** H refuses a close
+above its own high as a bad bar; `forward_returns()` took an open of 150 on
+a bar whose high was 112 as the price a reader paid and published -26.67%
+at d1 from it. The entry has to sit inside that bar's low and high now, the
+edge included; the close basis is untouched either way.
+
+**The benchmark was measurably not what a reader could have bought.**
+`universe_returns()` averaged every name that traded, rule 6's refusals
+included -- 30% of them by construction, since the floor IS the 30th
+percentile of the session's dollar volume -- so the alternative the north
+star is measured against was padded with the names the strategy says cannot
+be bought at those prints, which is word for word the argument that keeps
+`evidence.illiquid` out of the control. The fill applies the RUN's own floor
+now (`run.liquidity.floor`, rule 6's bar that night) to each frame's dollar
+volume ON the session, rounded the way `session_dollar_volume()` rounds the
+scan's own so a name is on the same side of the floor here as it was that
+night, and stamps the block with `liquidity_floor` and `below_floor`. On the
+thirty-run history that is 23 of 77 names out of every measured benchmark.
+A run recorded before the floor existed is benchmarked over every name and
+stamped null, and `evidence.universe.floored` / `unfloored` count MEASURED
+pairings, so a pending pairing is never called a fact about the floor. The
+rung says which it is on the row and in the verdict, in three states, each
+rendered and read before it was written down.
+
+**And the frames were handed over AFTER tonight's stale and gap rules**, so
+the benchmark for a session five nights back left out any name halted
+tonight -- "the names that traded cleanly tonight" wearing the universe's
+name. `run_scan()` hands them over before the rules now, which is what made
+the calendar necessary.
+
+**The verdict never stated the benchmark on the thirty-run history.**
+`controlVerdict()` returned from its "only one side can be read" branch
+before `benchmarkSentence()` was reached, and the history's refused side is
+16 against a floor of 30 -- so the one comparison that record CAN make, its
+94 paired setups (76 of them with a five-session outcome on each side,
+which is the n the sentence prints) against their benchmarks, was never
+printed, and the smoke check that found it was one I wrote expecting the
+sentence to be there. The benchmark is paired with the picks alone and does
+not wait on the refused side now, and the paragraph states the picks' own
+figure before it, so "a comparison needs both" is not followed by one with
+no first term.
+
+**The page's four basis findings.** `separation` sorted the "separates
+most" sentence on the close basis whichever tab was pressed (the ledger
+publishes `separation_from_open` beside it, and the page reads the one for
+the basis being shown); the streak-pay table's in-band count read the close
+basis (through `onBasis()` now); a row from before the open basis said
+"pending -- the sessions have not happened yet" on the open basis over
+sessions that closed long ago (`fwdState()` tells `unrecorded`, `predates`
+and `measured` apart on the cards, the scores table, the runs table and the
+per-name appearance line); and the per-check, streak-pay, by-month and
+per-name hints named no basis at all -- nine surfaces name it now, and the
+smoke check counts them rather than testing whichever it finds.
+
+**Round 8's lead was real, and it was a red CI waiting on a slow runner.**
+"2 page errors with 187/187 checks passing" reproduced here as three
+`request failed` lines on the fullbenchmark variant's chart PNGs. The cards
+render after the load event, `open()` cannot wait for them, and the next
+check's navigation aborts whatever is still in flight -- `net::ERR_ABORTED`,
+timing, which is why it came and went. The smoke script exits 1 on any page
+error and `tests.yml` runs it under `set -o pipefail`, so the first runner
+slow enough to leave a PNG in flight would have failed the dashboard job on
+a change that touched nothing. My own first run printed the three errors
+and reported exit 0, because it was piped through `tail` and the exit code
+was tail's -- the "no-answer is not all-clear" shape that workflow's own
+comment describes, one step further out. An abort on a chart PNG is counted
+apart and printed in the summary now; every other failure is still an error.
+
+**Pinned, that were not.** The ten-run benchmark window with a test of its
+own (a run outside it stays pending; the run just added is always in it,
+backfill or not); the `from_open` coercion in `fill_benchmarks()` -- the
+rounds 6-7 audit's one surviving mutant -- on the hand-edited shape the load
+check accepts; the two new benchmark keys in `_malformed_rows()`; the
+dollar-volume rounding at a hair under the floor; `tests/fixtures/README.md`
+swept for rounds 6 to 9.
+
+**Twenty-six mutants over the round's rules, twenty-five killed on the first
+pass.** The survivor was the `measured` clause on `floored`, which no writer
+can reach -- the fill stamps a floor only together with a measurement -- and
+rather than argue it equivalent the test plants the one shape the count's
+definition excludes and reads the count. Every mutant is a named edit in a
+harness that restores the file, run against the test files that own the
+rule and, for the six pipeline-level ones, against the end-to-end test that
+drives two nights through the doubles with a hole in one name's frame.
+
+**Then five auditors over disjoint lenses, by execution, and twenty-one
+findings, three of them high.** Each lens worked in its own copy of the
+tree with the round's diff beside it, under the rule that a finding argued
+rather than run is a lead; every finding below was reproduced HERE before it
+was touched, and three were found by two or three lenses independently,
+which is the argument for lenses over one reader.
+
+- **R9-A (high).** README's own `--tickers BURST` smoke test handed the fill
+  a calendar of ONE frame -- the positional reading the round exists to end
+  -- and a hole on the session after the burst wrote the two-session move
+  into d1 of the earlier universe run's row, for good, since a horizon is
+  filled once. Fewer than two frames is no calendar now; alone, a frame is
+  walked from the burst and stops at the first step that is not the next
+  business day; and with a calendar a horizon is measured only while the
+  frame carries every session from the burst to it, so a phantom date a
+  thin calendar voted in ends the measurement rather than sliding it. Driven
+  end to end: the smoke test leaves the row pending, and the next universe
+  scan measures d1 on the right bar and refuses d3 across the hole.
+- **F1 (high).** A row refused an entry -- no usable open, or an open
+  outside its bar -- carried a measured close basis and an open basis null
+  throughout, and on the open basis every surface said "pending -- the
+  sessions have not happened yet". A fourth row state (`noentry`), with one
+  vocabulary for the cards and both tables (`FWD_WORDS`), which also closed
+  F5: a row with no `forward_returns` at all read "not recorded" on its card
+  and "pending" in the tables.
+- **R9P-1 (high).** The control card's hint said the thin names were left
+  out, statically, while its verdict and the rung's row said they were in on
+  an unfloored record -- three sentences apart. The hint reads the same
+  counts as the other two now, and the smoke reads all three.
+- **Three lenses on one defect (R9-C, L1, F2).** A block measured over every
+  name before round 9 had its later horizons filled over the floor and the
+  whole block stamped floored -- the state the first week of any real ledger
+  spanning the deploy would be in -- and a block's `below_floor` was
+  restamped by every fill while each n froze the night it filled, so a name
+  dropped from the symbol file since put n1 3 beside below_floor 1 for a
+  session on which five traded and two were under. One block is one
+  population now: the fill that first measures a block fixes its floor, its
+  universe and its count, and every later fill measures the horizons still
+  open over the same set.
+- **Three lenses on another (R9-D, L3, R9P-3).** A session bar that printed
+  nothing -- zero or NaN volume -- was in a floored mean and not in
+  `below_floor`, while the scan keeps the same bar out of the distribution
+  the floor is drawn from. Under any floor now.
+- **R9-B.** The contract walker every end-to-end test asserts "the whole
+  contract" through checked nothing under the benchmark: n1 9999 under a
+  null mean, below_floor -5, a stamped floor the run never applied and a
+  rung claiming 999 floored pairings all returned the same set. A
+  `benchmark` invariant now, with its checker-can-fail test, and the
+  hand-written document carries a block for it to read.
+- **L2.** `pd.Timestamp(NaT).date()` is NaT again, so one NaT in a frame's
+  index took `session_calendar()` down inside `publish()`, after the scan and
+  every Claude call. `_as_date()` refuses it, everywhere it is read.
+- **L4.** A NaN high or low on the entry bar skipped the envelope check and
+  published an out-of-range open. An envelope that cannot be read refuses
+  the open, the one-bar version of the bad bar the checklist drops.
+- **The older-file states (F3, R9P-2, F4, F6).** A data.json from before the
+  round printed "No check yet has 30 setups on both sides" on the open tab
+  over a table showing 54 and 38, and labelled the rung "at or above that
+  night's floor" for a record that never applied one -- both say the record
+  predates the measurement now. An unfloored pairing was given one cause on
+  four surfaces, "before the floor reached the benchmark", when a night rule
+  6 is switched off writes the same null and the block cannot tell them
+  apart, so every surface names both. The one-side verdict said a comparison
+  needs both sides and then made one with no first term; it states the picks'
+  own figure first. And the straddle a mixed record shows is permanent, not
+  ten runs, because a measured horizon keeps its value; the row's label says
+  for how many pairings each is true.
+- **Prose and harness.** The module docstring still said "positionally within
+  the frame" (R9P-4); this section's heading counted eleven items where the
+  list has ten (R9P-5); the older secrets paragraph still said the workflow
+  had fired six times, two screens above the new paragraph citing run 10
+  (R9P-6); README's retry sentence covered a delisting and not a permanent
+  hole (L5); and `expected_returns()`, the pipeline tests' hand recomputation
+  of every forward return, counted bars along the frame -- right on the
+  doubles' contiguous frames and wrong on the one input the round is about
+  -- and looks bars up by date now. The load check refuses a negative or
+  zero floor and a fractional or negative count, which no writer produces
+  and the fill applied as given when an auditor planted them. **The harness
+  lens then ran its own mutants and found six survivors the twenty-six
+  above had not tried** -- five of them holes in the tests and one (R9-5)
+  the zero-volume defect three lenses found: an open exactly at the bar's
+  LOW was pinned nowhere while the high edge was (R9-2); a phantom bar that
+  is the last bar of one frame was not in the calendar test, so the spanning
+  rule could be made strict green (R9-6); the entry index had moved onto the
+  calendar with the horizons and no frame in any test had both an Open
+  column and a bar the calendar did not know (R9-1); the twin `measured`
+  clause on `unfloored` was deletable because the only pending pairing in
+  the test carried a floor (R9-3); and `_floor_of()`'s documented defence
+  was dead to the suite (R9-4) -- and turned out to be a defect too, since
+  it applied a NEGATIVE floor as given and stamped it, and the load check
+  would have refused that file the night after. Each closed with the test
+  it showed missing, and each mutant re-run here before it was written down.
+
+**The first run ever past preflight, 6 Sep 2026, on this branch.** The owner
+set the last three secrets and asked for a deploy; the sandbox cannot reach
+Alpaca or Resend, so the confirmation was a manual dispatch of `evening.yml`
+on the branch (run 34013173587) and its log. Preflight passed. Then two
+boundaries no round could have seen: Alpaca's historical-bars endpoint
+answered `delayed_sip` -- the default since step 3, chosen on the argument
+that a delay the scan does not care about was the free plan's consolidated
+route -- with `{"message":"invalid feed: delayed_sip"}` on every batch, both
+attempts, and because that message carried no status the classifier knew it
+was retried and dropped six times over until the coverage guard called the
+result an empty market. And Resend, asked to mail the failure notice, refused
+the recipient: a test-mode account delivers only to the address it is
+registered under until a domain is verified, which is the owner's setting
+and not this repo's. The default feed is `sip` with the request window held
+back sixteen minutes behind the clock, Alpaca's documented rule for a plan
+without a real-time subscription, applied to that feed alone; a feed name
+the endpoint refuses is a permanent refusal now, named on the first batch,
+with both routes that exist in the message. The dispatch that followed is
+what says whether the hold-back is right, and it is recorded below this
+paragraph, not assumed above it. One wording lead from the same log: a
+weekend dispatch is told "today's session has not closed yet" by the
+mode/clock check, when there is no session today to close -- true of the
+scheduled weekday runs, and worth a clause for a Saturday.
+
+**The dispatch that followed: run 34014332161, 05:34 UTC on Sunday 6 Sep
+2026, on the commit that made the change.** Read off its log, not inferred.
+Preflight passed; `Scanning session 2026-09-04 from the sip feed`; every one
+of the 230 symbols answered, 227 with a bar for the session and three
+without -- EA (last 4 Aug), BK (last 20 May) and FI (last 10 Nov 2025),
+which are three names in `data/symbols.txt` that have not printed for a
+month or more and are a lead against the file, not the feed; 0 bursts,
+which on the Friday before Labor Day is the quiet market the coverage
+guards exist to tell apart from an empty one, and the funnel says so. So
+`sip` is a feed this key may query. What that run did NOT test: the
+hold-back. The session's own day-end was already behind the clock, so
+`min()` kept it and the wire differed from the round-9 request in the feed
+name alone; the first request whose window reaches past the clock is the
+first scheduled weekday evening, and it is Tuesday 8 Sep, because Monday 7
+Sep is Labor Day -- the cron will fire, find no bar for the 7th, and fail by
+design with `StaleDataError` (a holiday is never a quiet market), mailing
+nothing, since the mail cannot go out either. Then the email stage: Resend's
+test mode delivers only to the address the account is registered under,
+`EMAIL_TO` is not it, and the run exited 3 -- and **the persist step ran, for
+the first time in this project's history**: commit f0780c7 `run 2026-09-04`,
+`docs/ledger.json` created, `docs/data.json` a real run for the first time,
+the record stamped `degraded` with both problems (the Sunday clock
+disagreement and the delivery failure) in `run.errors`, the artifact named
+`evening-2026-09-04-34014332161`. Every step of that is the round-4 design
+observed rather than traced against a stub. Two settings remain the owner's
+and neither is code: `EMAIL_TO` has to be the Resend account's own address
+until a domain is verified at resend.com/domains and `RESEND_FROM` is on it,
+and GitHub Pages has never built -- the Actions workflow list holds no
+`pages-build-deployment`, which is what enabling it creates -- so the page
+is a click away (README, "One-time setup") and not a commit away.
+
+**Leads written down, not worked.** A feed-wide missing day -- more than
+half the frames lacking a session -- is not a session under the majority
+rule and every frame reads the next bar, which is the pre-round behaviour
+and the right one for a holiday. The scanner's own `session_dollar_volume()`
+reads the last non-NaN bar for a session bar with NaN volume, and
+`detect_setup()` measures the same bar as "today", so both would date the
+previous session's move to the session -- a shape no daily bar from the feed
+takes, noted as the pre-round question it is. On a night a batch fails twice
+the benchmark is over fewer names than the universe and only n says so. A
+`--tickers` run of exactly two names keeps a session one of them lacks, by
+the tie rule, which is the conservative side. The requestfailed filter also
+swallows an abort the page itself causes when a basis switch re-renders the
+shortlist under an in-flight PNG, which is not a defect either. And the
+mutation harness that produced the counts here is a scratch script, as in
+every round before this one, so the counts are taken on trust from this
+file; the tests it left behind are not.
 
 ## Findings from the rounds 6-7 audit — the basis and the benchmark
 
@@ -773,7 +1081,8 @@ cannot fail, and the cheapest of the four to produce.
 `class` in `src/`, `tests/` and `tools/`; the tree is clean, and planting a
 duplicate turns it red.
 
-**Left open, and named rather than quietly dropped.** The medium and low
+**Left open, and named rather than quietly dropped -- and worked in round 9,
+below, every item of it.** The medium and low
 findings from these lenses that this round did not work: `separation` in the
 per-check view is computed from close-basis means only, so the column the
 "best separator" sentence sorts on does not switch with the basis; the
@@ -1337,3 +1646,18 @@ minutes. That is a real strategy narrowing, not just a speed fix: 4% momentum
 bursts are most common in the small- and mid-caps this list excludes. The list is
 a scaffold. Replacing it with a generated, screened universe is required before
 this is a real screener, and it is not one of the ten steps above.
+
+One fact for that decision, checked by execution rather than remembered:
+alpaca-py 0.44's `Asset` model -- what `GetAssetsRequest` returns for each
+of the roughly eleven thousand tradable names -- carries `exchange`, `name`, `status`,
+`tradable`, `marginable`, `shortable`, `easy_to_borrow`, `fractionable` and a
+`ptp_*` attribute, and NO sector, industry or SIC code (`Asset.model_fields`,
+read off the installed package). So a generator built from the asset list
+alone cannot enforce rule 4 at all; it can only exclude ETFs and OTC names by
+`exchange` and non-common shares by `name` heuristics. Enforcing the rule needs
+a second source that this sandbox cannot reach to validate -- SEC's submissions
+API carries a SIC code per CIK (2834 and 2836 are, FROM MEMORY and
+unverifiable from here, the pharmaceutical-preparations and
+biological-products codes) -- or a maintained exclusion list, which is the
+curated file again with the sign flipped. Either way the generator has to say which it
+does, in the file it writes, in words a later reader can check.

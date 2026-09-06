@@ -23,6 +23,7 @@ from alpaca.data.enums import Adjustment, DataFeed
 from requests.exceptions import HTTPError
 
 from src.scanner import (
+    DEFAULT_FEED,
     previous_session,
     _drop_gapped_symbols,
     _download_batch,
@@ -787,12 +788,15 @@ def test_the_bars_request_asks_for_split_adjusted_prices(fake_alpaca, ohlcv):
 def test_the_bars_request_names_a_feed_instead_of_taking_the_plan_default(fake_alpaca, ohlcv):
     """Unset, the feed is whatever the account happens to have -- IEX on the
     free plan, a single venue's slice of consolidated volume."""
-    assert _wire_fields(fake_alpaca, ohlcv)["feed"] == DataFeed.DELAYED_SIP
+    assert _wire_fields(fake_alpaca, ohlcv)["feed"] == DataFeed.SIP
 
 
-def test_the_feed_is_overridable_for_an_account_that_carries_full_sip(fake_alpaca, ohlcv):
-    fields = _wire_fields(fake_alpaca, ohlcv, ScanConfig(feed=DataFeed.SIP))
-    assert fields["feed"] == DataFeed.SIP
+def test_the_feed_is_overridable_to_the_single_venue_fallback(fake_alpaca, ohlcv):
+    """This used to override to SIP, which is the default now, so it proved
+    nothing; IEX is the fallback README and .env.example name for a plan that
+    cannot query SIP, and it is the one feed the free plan is known to carry."""
+    fields = _wire_fields(fake_alpaca, ohlcv, ScanConfig(feed=DataFeed.IEX))
+    assert fields["feed"] == DataFeed.IEX
 
 
 def test_the_request_window_ends_at_the_session_being_scanned(fake_alpaca, ohlcv):
@@ -983,7 +987,7 @@ def test_a_refused_feed_aborts_the_scan_instead_of_emptying_it(fake_alpaca, ohlc
     fake_alpaca.add_history("AAA", ohlcv("burst"))
     fake_alpaca.raise_on_bars = _alpaca_error(403, DENIAL)
 
-    with pytest.raises(FeedNotAuthorizedError, match="delayed_sip"):
+    with pytest.raises(FeedNotAuthorizedError, match=DEFAULT_FEED.value):
         run_scan(ScanConfig(), universe=["AAA"])
 
     assert len(fake_alpaca.bar_requests) == 1, "a refusal is not transient; do not retry it"
@@ -1029,7 +1033,7 @@ def test_a_refused_feed_still_says_feed_and_not_credentials(fake_alpaca, ohlcv):
     with pytest.raises(FeedNotAuthorizedError) as caught:
         run_scan(ScanConfig(), universe=["AAA"])
 
-    assert "delayed_sip" in str(caught.value)
+    assert DEFAULT_FEED.value in str(caught.value)
     assert not isinstance(caught.value, CredentialsRejectedError)
 
 
@@ -1471,7 +1475,7 @@ def test_a_feed_refusal_that_only_arrives_on_the_retry_still_aborts_the_scan(
         1: _alpaca_error(403, DENIAL),
     })
 
-    with pytest.raises(FeedNotAuthorizedError, match="delayed_sip"):
+    with pytest.raises(FeedNotAuthorizedError, match=DEFAULT_FEED.value):
         run_scan(ScanConfig(), universe=universe)
 
 
@@ -1604,7 +1608,7 @@ def test_the_scan_filter_still_holds_the_thresholds_it_was_tuned_to():
     assert (cfg.max_stale_fraction, cfg.max_dropped_fraction) == (0.5, 0.5)
     assert cfg.coverage_guard_min_symbols == 10
     assert (cfg.lookback_days, cfg.batch_size) == (260, 100)
-    assert cfg.feed == DataFeed.DELAYED_SIP
+    assert cfg.feed == DataFeed.SIP
     assert SESSION_COMPLETE_ET == time_of_day(16, 15)
 
 
@@ -1811,3 +1815,109 @@ def test_a_status_less_refusal_whose_body_says_not_permitted_is_permanent():
 
     assert _is_permanent_refusal(_alpaca_error(None, "this endpoint is not permitted for your plan"))
     assert not _is_permanent_refusal(_alpaca_error(None, "internal server error"))
+
+
+def test_the_frames_handed_back_include_the_names_the_session_rules_dropped(fake_alpaca, ohlcv):
+    """`frames=` used to receive the frames AFTER the stale and gap rules,
+    so the universe benchmark five sessions later was "the names that traded
+    cleanly tonight" wearing the universe's name: a name halted today, or
+    with a hole before today's session, traded the earlier session like any
+    other and was left out of its alternative. The rules are about tonight;
+    the frames are handed back before them, and the ledger reads each
+    horizon by its session so a hole there is null rather than borrowed."""
+    names = [f"F{i}" for i in range(12)]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i))
+    fake_alpaca.add_history("STALE", ohlcv("base", variant=90), stale_sessions=3)
+    fake_alpaca.add_history("HOLE", ohlcv("base", variant=91), gap_before_session=True)
+    stats: dict = {}
+    frames: dict = {}
+
+    found = run_scan(ScanConfig(), universe=names + ["STALE", "HOLE"], stats=stats, frames=frames)
+
+    assert "STALE" in stats["stale"] and "HOLE" in stats["gapped"], "precondition: both were dropped tonight"
+    assert {c.ticker for c in found} == set(names)
+    assert set(frames) == set(names) | {"STALE", "HOLE"}, "every frame with bars, dropped or not"
+    assert len(frames["STALE"]) > 0 and len(frames["HOLE"]) > 0
+
+
+# --- the first live run: the feed name, and the free plan's hold-back --------
+
+
+def test_a_feed_name_the_endpoint_does_not_take_is_refused_on_the_first_batch(fake_alpaca, ohlcv):
+    """Observed on Actions on 6 Sep 2026, the first run ever past preflight:
+    {"message":"invalid feed: delayed_sip"} on every batch, both attempts,
+    for a key the endpoint had just accepted. It carried no status the
+    classifier knew, so it was retried and dropped six times over and the
+    coverage guard then called the result an empty market. A feed NAME the
+    endpoint refuses is a property of the run, like a plan that lacks it."""
+    fake_alpaca.add_history("AAA", ohlcv("burst"))
+    fake_alpaca.raise_on_bars = _alpaca_error(None, "invalid feed: delayed_sip")
+
+    with pytest.raises(FeedNotAuthorizedError) as caught:
+        run_scan(ScanConfig(feed=DataFeed.DELAYED_SIP), universe=["AAA"])
+
+    said = str(caught.value)
+    assert "delayed_sip" in said and "does not take the feed name" in said
+    assert "'sip'" in said and "'iex'" in said, "both routes that are known to exist"
+    assert "subscribe" not in said, "no plan carries a name the endpoint refuses"
+    assert len(fake_alpaca.bar_requests) == 1, "not retried, not dropped: refused once"
+
+
+def test_the_default_feed_is_the_consolidated_tape_and_not_the_name_the_endpoint_refused():
+    assert DEFAULT_FEED is DataFeed.SIP
+    assert ScanConfig().feed is DataFeed.SIP
+
+
+def test_a_sip_request_for_todays_session_is_held_back_behind_the_clock(fake_alpaca, ohlcv):
+    """Alpaca's rule for a plan without a real-time subscription: a SIP
+    query's end must be at least fifteen minutes old. An evening run at
+    18:16 ET used to ask through 23:59 UTC, hours in the future; on `sip`
+    it asks through SIP_HOLDBACK_MINUTES before now. A backfill of an older
+    session is untouched, and so is every other feed."""
+    from src.scanner import SIP_HOLDBACK_MINUTES
+
+    fake_alpaca.add_history("AAA", ohlcv("burst"))
+    client = get_clients()
+    session = date(2026, 6, 24)
+    evening = datetime(2026, 6, 24, 22, 16, tzinfo=timezone.utc)          # 18:16 ET, the cron
+    # The double records the SDK's own to_request_fields(), where `end` is
+    # the ISO string that goes on the wire.
+    wire_end = lambda: datetime.fromisoformat(fake_alpaca.request_fields[-1]["end"])   # noqa: E731
+
+    _download_batch(client, ["AAA"], ScanConfig(feed=DataFeed.SIP), session, now=evening)
+    assert wire_end() == evening - timedelta(minutes=SIP_HOLDBACK_MINUTES), wire_end()
+    assert wire_end() > datetime(2026, 6, 24, 20, 0, tzinfo=timezone.utc), "still after the 16:00 ET close"
+
+    _download_batch(client, ["AAA"], ScanConfig(feed=DataFeed.SIP), date(2026, 6, 17), now=evening)
+    assert wire_end() == datetime(2026, 6, 17, 23, 59, 59, tzinfo=timezone.utc), (
+        "a session already behind the clock keeps its own day's end")
+
+    _download_batch(client, ["AAA"], ScanConfig(feed=DataFeed.IEX), session, now=evening)
+    assert wire_end() == datetime(2026, 6, 24, 23, 59, 59, tzinfo=timezone.utc), (
+        "no other feed was observed to need the hold-back, so none gets it")
+
+
+def test_a_sip_request_for_a_session_the_clock_has_not_reached_goes_out_as_written(fake_alpaca, ohlcv):
+    """No schedule produces this -- a session pinned AHEAD of the clock -- but
+    the offline suite does, on purpose: every end-to-end test that stands in
+    for a later night pins a session days ahead of the wall clock, and the
+    double re-dates each frame to the request's `end`. A hold-back that read
+    the real clock there ended the window on the day before the session and
+    five pipeline tests failed on any date before the one they pinned, which
+    is the clock-dependent test this project names as the worst kind. So the
+    window is held back only once the clock has reached the session's day;
+    before it, the request goes out as written and the endpoint answers for
+    the session it names."""
+    fake_alpaca.add_history("AAA", ohlcv("burst"))
+    client = get_clients()
+    evening = datetime(2026, 6, 24, 22, 16, tzinfo=timezone.utc)
+    wire_end = lambda: datetime.fromisoformat(fake_alpaca.request_fields[-1]["end"])   # noqa: E731
+
+    _download_batch(client, ["AAA"], ScanConfig(feed=DataFeed.SIP), date(2026, 6, 25), now=evening)
+    assert wire_end() == datetime(2026, 6, 25, 23, 59, 59, tzinfo=timezone.utc), wire_end()
+
+    # The day itself, reached: held back like any other.
+    _download_batch(client, ["AAA"], ScanConfig(feed=DataFeed.SIP), date(2026, 6, 25),
+                    now=datetime(2026, 6, 25, 22, 16, tzinfo=timezone.utc))
+    assert wire_end() == datetime(2026, 6, 25, 22, 0, tzinfo=timezone.utc), wire_end()

@@ -694,11 +694,23 @@ for _i, _run in enumerate(runs):
     # the pending shape; fill_benchmarks fills it on the evening five sessions
     # later). Hand-authored where the run's own returns are in: a little
     # below the picks, over most of the 230 names.
+    # The floor each night applied (src.ledger.add_run keeps it): the
+    # headline run's is FLOOR; the older ones vary the way a percentile of
+    # the day's tape would, with a refusal count that goes with it.
+    _run["liquidity"] = ({"pctile": PCTILE, "floor": FLOOR, "refused": ILLIQUID} if _i == 0
+                         else {"pctile": PCTILE, "floor": FLOOR + 400_000 * ((_i * 7) % 5 - 2),
+                               "refused": (_i * 3) % 4})
     _bench = ledger.empty_benchmark()
     for _h in ("d1", "d3", "d5"):
         if _fr[_h] is not None:
             _bench[_h] = round(_fr[_h] - 0.9 + 0.1 * (_i % 3), 2)
-            _bench["n" + _h[1:]] = len(UNIVERSE) - 2 - (_i % 4)
+            # Over the names at or above that night's floor: the fill leaves
+            # out the ones under it (universe_returns), and stamps both the
+            # floor and the count, so n is the universe less those and less
+            # a couple that did not carry the session.
+            _bench["liquidity_floor"] = _run["liquidity"]["floor"]
+            _bench["below_floor"] = 60 + (_i * 5) % 11
+            _bench["n" + _h[1:]] = len(UNIVERSE) - _bench["below_floor"] - 2 - (_i % 4)
             _bench["from_open"][_h] = round(_bench[_h] - 0.3, 2)
             _bench["from_open"]["n" + _h[1:]] = _bench["n" + _h[1:]] - 1
     _run["benchmark"] = _bench
@@ -708,12 +720,6 @@ for _i, _run in enumerate(runs):
     # nothing on the page warns about a blended record. The drifted state is a
     # smoke variant, because a fixture cannot hold both.
     _run["rules"] = rules_fingerprint()
-    # And the floor each night applied (src.ledger.add_run keeps it): the
-    # headline run's is FLOOR; the older ones vary the way a percentile of
-    # the day's tape would, with a refusal count that goes with it.
-    _run["liquidity"] = ({"pctile": PCTILE, "floor": FLOOR, "refused": ILLIQUID} if _i == 0
-                         else {"pctile": PCTILE, "floor": FLOOR + 400_000 * ((_i * 7) % 5 - 2),
-                               "refused": (_i * 3) % 4})
 
 # The evidence block, computed by the REAL src/ledger.py over this fixture's
 # own rows rather than hand-authored. One run, whose forward returns have not

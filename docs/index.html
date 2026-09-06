@@ -697,11 +697,47 @@
     });
   }
 
-  function forwardCell(fr) {
-    if (!fr) return 'not recorded';
+  // Three states a row's return can be in on the chosen basis, and the
+  // middle one used to print as the first: on the open basis a row measured
+  // before the basis existed said "pending — the sessions have not happened
+  // yet" over sessions that happened long ago and were never measured this
+  // way. Different facts, different fixes, and now different words.
+  // Four states, and the fourth is the one the round-9 audit found still
+  // wearing the first's words: a row whose close basis is measured and
+  // whose open basis is null throughout was refused an entry -- no usable
+  // open on the next session, or an open outside its own bar -- and its
+  // sessions have very much happened.
+  function fwdState(row) {
+    var fr = row && row.forward_returns;
+    if (!fr || typeof fr !== 'object') return 'unrecorded';
+    if (BASIS !== 'open') return 'measured';
+    if (!(fr.from_open && typeof fr.from_open === 'object')) return 'predates';
+    var closeIn = FWD_KEYS.some(function (k) { return fr[k] !== null && fr[k] !== undefined; });
+    var openIn = FWD_KEYS.some(function (k) { return fr.from_open[k] !== null && fr.from_open[k] !== undefined; });
+    return closeIn && !openIn ? 'noentry' : 'measured';
+  }
+  // The words for each state, one place, read by the cards and both tables.
+  var FWD_WORDS = {
+    unrecorded: ['not recorded', null],
+    predates: ['not measured', 'this row predates the open basis'],
+    noentry: ['not measured', 'no usable open on the next session, so no price a reader could have paid']
+  };
+  function forwardCell(row) {
+    var state = fwdState(row);
+    if (FWD_WORDS[state]) return FWD_WORDS[state][0] + (FWD_WORDS[state][1] ? ' — ' + FWD_WORDS[state][1] : '');
+    var fr = fwd(row);
     var have = ['d1', 'd3', 'd5'].filter(function (k) { return fr[k] !== null && fr[k] !== undefined; });
     if (!have.length) return 'pending — the sessions have not happened yet';
     return have.map(function (k) { return '+' + k.slice(1) + 'd ' + pct(fr[k], 2); }).join(' · ');
+  }
+  // A horizon cell in the scores table or the runs table: the state's words
+  // when the row has a state, the number or "pending" otherwise.
+  function horizonCell(row, value) {
+    var state = fwdState(row);
+    if (FWD_WORDS[state]) {
+      return el('td', { 'class': 'sc-num', text: FWD_WORDS[state][0], title: FWD_WORDS[state][1] || null });
+    }
+    return el('td', { 'class': 'sc-num', text: value === null || value === undefined ? 'pending' : pct(value, 2) });
   }
 
   // 0 is a real answer here and null is not, so this cannot go through num():
@@ -733,7 +769,7 @@
       ['run into it', upDaysCell(c)],
       ['worst base day', pct(c.context && c.context.worst_base_day_pct)],
       ['this setup', streakText(c)],
-      ['forward return ' + basisLabel(), forwardCell(fwd(c))]
+      ['forward return ' + basisLabel(), forwardCell(c)]
     ];
     return el('article', { 'class': 'sc-card sc-card--raised pick' }, [
       el('div', { 'class': 'pick__main' }, [
@@ -1303,11 +1339,62 @@
     ['crowded_out', 'cleared the gate; never scored, the call cap had filled', 'the crowded-out'],
     ['illiquid', 'below the liquidity floor; bar returns a thin name could not capture', 'the illiquid'],
     // Not a population of setups but the benchmark paired with them: for
-    // every scored setup, the whole universe's equal-weight return from the
-    // same session's close (or the same next open). One curated list as it
-    // stands today, so the bias runs in the benchmark's favour.
-    ['universe', 'the whole universe from the same sessions, equal-weight; one curated list, survivorship bias in its favour', 'the universe']
+    // every scored setup, the universe's equal-weight return from the same
+    // session's close (or the same next open), over the names at or above
+    // that night's liquidity floor -- rule 6's own bar, which keeps the
+    // names it says cannot be bought at those prints out of the alternative
+    // the way it keeps the illiquid row out of the control. One curated list
+    // as it stands today, so the bias runs in the benchmark's favour. The
+    // label is a function because a record benchmarked before the floor
+    // reached it counts every name that traded, and must say so.
+    ['universe', universeLabel, 'the universe']
   ];
+  function universeLabel(ev) {
+    var u = ev.universe || {};
+    var every = 'every name in the universe that traded, from the same sessions, equal-weight';
+    var above = 'every name in the universe at or above that night\u2019s liquidity floor, from the same sessions, equal-weight';
+    var tail = '; one curated list, survivorship bias in its favour';
+    // A file from before the keys existed was benchmarked over every name
+    // that traded, and the floored label would claim a rule it never applied.
+    if (typeof u.floored !== 'number' || typeof u.unfloored !== 'number') {
+      return every + ' \u2014 this record predates the floor in the benchmark, so the names under it are in' + tail;
+    }
+    // TWO causes put a pairing here and the block has no reason field to
+    // tell them apart: a benchmark measured before the floor reached it, and
+    // a night rule 6 was switched off for, which records no floor to apply.
+    // Said as what is true of both, like the streak table's null bucket.
+    var without = 'measured with no floor \u2014 before the floor reached the benchmark, or on a night rule 6 was off \u2014 so the names under it are in';
+    if (u.unfloored > 0 && !u.floored) return every + ' \u2014 ' + without + tail;
+    if (u.unfloored > 0) {
+      return above + ' for the ' + u.floored + ' pairings measured with one; the other ' +
+        u.unfloored + ' were ' + without + tail;
+    }
+    return above + tail;
+  }
+  // The control card's own sentence about the rung, which used to be static
+  // and said the thin names were out on a record whose verdict, three
+  // sentences down, said they were in. Same counts, same three states.
+  function rungClause(ev) {
+    var u = (ev && ev.universe) || {};
+    if (typeof u.floored !== 'number' || typeof u.unfloored !== 'number') {
+      return 'measured with no floor, so the names under that night\u2019s floor are in';
+    }
+    if (!u.floored && !u.unfloored) return 'the names under that night\u2019s floor to be left out for the same reason, once a pairing is measured';
+    if (!u.unfloored) return 'the names under that night\u2019s floor left out for the same reason';
+    if (!u.floored) return 'measured with no floor \u2014 before the floor reached the benchmark, or on a night rule 6 was off \u2014 so the names under it are in';
+    return 'the names under that night\u2019s floor left out for the same reason where a pairing was measured with one, and in for the ' + u.unfloored + ' measured with none';
+  }
+  // What the rung leaves out, said only once the record has measured
+  // pairings to say it of: `floored` and `unfloored` count MEASURED
+  // pairings, so a pending one is never called a fact about the floor.
+  function floorSentence(ev) {
+    var u = ev.universe || {};
+    if (typeof u.floored !== 'number' || typeof u.unfloored !== 'number' || !(u.floored + u.unfloored)) return '';
+    if (!u.unfloored) return 'Names under each night\u2019s liquidity floor are left out of it. ';
+    if (!u.floored) return 'It counts every name that traded, the ones under the liquidity floor included: these pairings were measured with no floor, before the floor reached the benchmark or on a night rule 6 was off. ';
+    return 'Names under each night\u2019s liquidity floor are left out of it for ' + u.floored + ' of the ' + (u.floored + u.unfloored) +
+      ' measured pairings; the other ' + u.unfloored + ' were measured with no floor, before it reached the benchmark or on a night rule 6 was off, and count every name that traded. ';
+  }
   function controlVerdict(ev) {
     var h = longestOf(ev);
     var picks = onBasis(at(ev.overall.outcomes, h)), refused = onBasis(at((ev.refused || {}).outcomes, h));
@@ -1318,8 +1405,16 @@
         ' of each before it will read the difference between them as a rate.';
     }
     if (!picksEnough || !refusedEnough) {
-      return 'Only one side can be read yet: ' + counts + '. A comparison needs both, and the ' +
-        (picksEnough ? 'refused' : 'scored') + ' side is still filling.';
+      // The benchmark is paired with the PICKS alone, so it does not wait
+      // on the refused side: the thirty-run history could read its picks
+      // against the universe for a round while this branch said nothing,
+      // because its refused side was thin.
+      return 'Only one side can be read yet: ' + counts + '. A comparison against what it refused needs both, and the ' +
+        (picksEnough ? 'refused' : 'scored') + ' side is still filling. ' +
+        (picksEnough
+          ? 'Names this screener scored returned ' + pct(picks.mean, 2) + ' at ' + hzLabel(h) + ' ' + basisLabel() + ' over ' +
+            plural(picks.n, 'setup') + '. ' + benchmarkSentence(ev, picks, h)
+          : '');
     }
     var lift = picks.mean - refused.mean;
     var direction = lift > 0.5 ? 'better' : (lift < -0.5 ? 'WORSE' : 'no differently');
@@ -1347,6 +1442,7 @@
     return 'Against buying anything in the universe on the same days — ' + pct(bench.mean, 2) + ' equal-weight, paired with the ' +
       plural(bench.n, 'setup') + ' those picks are — the picks did ' + word +
       (word === 'no differently' ? '. ' : ', by ' + pct(Math.abs(gap), 2).replace('+', '') + '. ') +
+      floorSentence(ev) +
       'The universe is a curated large-cap list as it stands today, which flatters the benchmark. ';
   }
   function renderControl(ev) {
@@ -1358,14 +1454,15 @@
       'own judgement; the crowded-out row is the call budget\u2019s, and is kept off that side for that reason. ' +
       'The illiquid row is rule 6\u2019s, kept off it for the opposite reason: those returns are bar prices on names ' +
       'the rule says are too thin to be bought at them. The universe row is the other alternative — buying anything ' +
-      'in the universe on the same days — paired setup by setup with the picks, from frames the scan already fetched.';
+      'in the universe on the same days, ' + rungClause(ev) + ' — paired setup by ' +
+      'setup with the picks, from frames the scan already fetched.';
     $('control-verdict').textContent = controlVerdict(ev);
     table($('control-table'),
       ['what the screener did', 'setups'].concat(ev.horizons.map(hzLabel)).concat(['in the claimed band', 'reads as']),
       POPULATIONS.filter(function (p) { return ev[p[0]]; }).map(function (p) {
         var block = ev[p[0]], longest = onBasis(at(block.outcomes, h));
         return el('tr', null, [
-          el('td', null, [el('span', { text: p[2] }), el('span', { 'class': 'sc-note', text: p[1] })]),
+          el('td', null, [el('span', { text: p[2] }), el('span', { 'class': 'sc-note', text: typeof p[1] === 'function' ? p[1](ev) : p[1] })]),
           el('td', { 'class': 'sc-num', text: commas(block.setups) })
         ].concat(ev.horizons.map(function (hh) { return rateCell(at(block.outcomes, hh), enoughOf(block)); }))
          .concat([
@@ -1517,13 +1614,29 @@
     $('predict-card').hidden = !rows.length;
     if (!rows.length) return;
     var h = longestOf(ev);
+    // The separation on the chosen basis. The ledger publishes one per basis
+    // (separation and separation_from_open) because this column is what the
+    // sentence below sorts on, and it did not switch: the check named as
+    // separating most was the close basis's while every cell beside it read
+    // from the open.
+    var separationOf = function (c) {
+      var v = BASIS === 'open' ? c.separation_from_open : c.separation;
+      return v === null || v === undefined ? null : v;
+    };
+    // A file written before the separation was measured on the open basis
+    // has no separation_from_open at all: that is not "no check has enough
+    // setups", which the sentence below used to say of it.
+    var unmeasuredHere = BASIS === 'open' && !rows.some(function (c) { return 'separation_from_open' in c; });
     var measurable = rows.filter(function (c) { return enoughOf(c); });
-    var best = measurable.slice().sort(function (a, b) { return (b.separation || 0) - (a.separation || 0); })[0];
+    var best = measurable.slice().sort(function (a, b) { return (separationOf(b) || 0) - (separationOf(a) || 0); })[0];
     $('predict-hint').textContent =
       'Each check against what happened next, over every burst the scan found — the ones it rejected included, because a rate over the survivors describes the survivors. ' +
-      'Separation is what a check is FOR: how much better the bursts that passed it did at ' + hzLabel(h) + ' than the ones that failed. ' +
-      (best ? 'On the record so far ' + best.code + ' separates most, by ' + pct(best.separation, 2).replace('+', '') + '. '
-            : 'No check yet has ' + ev.min_setups + ' setups on both sides, so none of these separations can be read as a rate. ') +
+      'Separation is what a check is FOR: how much better the bursts that passed it did at ' + hzLabel(h) + ' ' + basisLabel() + ' than the ones that failed. ' +
+      (unmeasuredHere
+        ? 'This record was written before the separation was measured from the next session\u2019s open, so that column is not measured on this basis. '
+        : (best && separationOf(best) !== null
+          ? 'On the record so far ' + best.code + ' separates most, by ' + pct(separationOf(best), 2).replace('+', '') + '. '
+          : 'No check yet has ' + ev.min_setups + ' setups on both sides, so none of these separations can be read as a rate. ')) +
       'A check that separates by nothing is not gating on anything a return can see.';
     table($('predict-table'),
       ['check', 'passed', hzLabel(h) + ' when passed', 'failed', hzLabel(h) + ' when failed', 'separation', 'reads as'],
@@ -1535,7 +1648,7 @@
           rateCell(won, enoughOf(c)),
           el('td', { 'class': 'sc-num', text: commas(c.failed.setups) }),
           rateCell(lost, enoughOf(c)),
-          el('td', { 'class': 'sc-num', text: c.separation === null || c.separation === undefined ? '—' : pct(c.separation, 2) }),
+          el('td', { 'class': 'sc-num', text: unmeasuredHere ? 'not measured' : (separationOf(c) === null ? '—' : pct(separationOf(c), 2)) }),
           el('td', null, enoughChip(enoughOf(c), Math.min(onBasis(won).n, onBasis(lost).n), ev.min_setups))
         ]);
       }), [1, 2, 3, 4, 5]);
@@ -1557,7 +1670,8 @@
       'Every burst, grouped by which day of its setup it was. This is the one view on the page counted per APPEARANCE rather than per setup — ' +
       'a setup’s first burst is day 1 by definition, so grouping setups by day would put them all in one row. ' +
       'That means a name bursting on consecutive sessions appears more than once here, and its windows overlap; ' +
-      'no correction is made for it. A day with no number is one the record cannot place, never a day 1.';
+      'no correction is made for it. A day with no number is one the record cannot place, never a day 1. ' +
+      'Returns are measured ' + basisLabel() + '.';
     table($('streak-table'),
       ['day of the setup', 'appearances'].concat(ev.horizons.map(hzLabel)).concat(['in the claimed band', 'reads as']),
       rows.map(function (r) {
@@ -1578,7 +1692,9 @@
           el('td', { 'class': 'sc-num', text: commas(r.appearances) })
         ].concat(ev.horizons.map(function (hh) { return rateCell(at(r.outcomes, hh), enoughOf(r)); }))
          .concat([
-          el('td', { 'class': 'sc-num', text: commas(longest.in_band) }),
+          // On the chosen basis, like every other number in this row: this
+          // cell read the close basis's count whichever tab was pressed.
+          el('td', { 'class': 'sc-num', text: commas(onBasis(longest).in_band) }),
           el('td', null, enoughChip(enoughOf(r), onBasis(longest).n, ev.min_setups))
         ]));
       }), [1, 2, 3, 4, 5]);
@@ -1595,7 +1711,8 @@
       'The same measurement by calendar month, so a screener that worked in one regime and stopped working in the next does not average into a flat line. ' +
       (readable.length >= 2
         ? readable.length + ' months have enough setups to read as rates.'
-        : 'No month yet has ' + ev.min_setups + ' measured setups, so these are counts rather than rates — a month is about twenty sessions, and most of a month’s bursts are still open.');
+        : 'No month yet has ' + ev.min_setups + ' measured setups, so these are counts rather than rates — a month is about twenty sessions, and most of a month’s bursts are still open.') +
+      ' Returns are measured ' + basisLabel() + '.';
     table($('trend-table'), ['month', 'setups'].concat(ev.horizons.map(hzLabel)).concat(['reads as']),
       rows.map(function (r) {
         return el('tr', null, [
@@ -1623,7 +1740,7 @@
       commas(rows.length) + ' names have burst since ' + day(ev.record.from) + '. ' +
       commas(repeats.length) + ' of them more than once. Means are over setups, so a name that burst on ' +
       'consecutive sessions counts once for that move; “appearances” is every session the scan found a burst on, ' +
-      'the ones that were never scored included.';
+      'the ones that were never scored included. Returns are measured ' + basisLabel() + '.';
     var shown = record.rows ? ranked : ranked.slice(0, TICKERS_SHOWN);
     var mid = ev.horizons.filter(function (x) { return x > 1; });
     table($('ticker-table'),
@@ -1671,7 +1788,8 @@
       return day(r.date) + ' ' + (r.score === null || r.score === undefined
         ? (OUTCOME_SHORT[r.reason] || unknownReason(r.reason))
         : num(r.score, 1) + '/10') +
-        (got.length ? ' → +' + got[got.length - 1].slice(1) + 'd ' + pct(out[got[got.length - 1]], 1) : ' → pending');
+        (got.length ? ' → +' + got[got.length - 1].slice(1) + 'd ' + pct(out[got[got.length - 1]], 1)
+          : (FWD_WORDS[fwdState(r)] ? ' → ' + FWD_WORDS[fwdState(r)][0] : ' → pending'));
     }).join(' · ');
   }
 
@@ -1851,6 +1969,7 @@
       ['ticker', 'score', 'source', 'verdict', '2LYNCH', 'burst', 'vol x', 'close', '+1d', '+3d', '+5d', 'why'],
       cands.map(function (c) {
         var fr = fwd(c);
+        var hz = function (k) { return horizonCell(c, fr[k]); };
         return el('tr', null, [
           el('td', null, [el('div', { 'class': 'sc-eyebrow', text: '#' + c.rank }),
                           el('span', { 'class': 'sc-case', text: c.ticker }),
@@ -1862,9 +1981,7 @@
           el('td', { 'class': 'sc-num', text: pct(c.gain_pct) }),
           el('td', { 'class': 'sc-num', text: num(c.volume_ratio) + 'x' }),
           el('td', { 'class': 'sc-num', text: '$' + num(c.close) }),
-          el('td', { 'class': 'sc-num', text: fr.d1 === null || fr.d1 === undefined ? 'pending' : pct(fr.d1, 2) }),
-          el('td', { 'class': 'sc-num', text: fr.d3 === null || fr.d3 === undefined ? 'pending' : pct(fr.d3, 2) }),
-          el('td', { 'class': 'sc-num', text: fr.d5 === null || fr.d5 === undefined ? 'pending' : pct(fr.d5, 2) }),
+          hz('d1'), hz('d3'), hz('d5'),
           el('td', { 'class': 'col-reason', text: c.reason || '' })
         ]);
       }), [1, 5, 6, 7, 8, 9, 10]);
@@ -2096,9 +2213,10 @@
     table($('runs-table'), ['session', 'run', 'bursts', 'scored', 'fallbacks', 'top score', '+1d', '+3d', '+5d', 'over'],
       runs.map(function (r, i) {
         var fr = runFwd(r);
-        var cell = function (k) {
-          return el('td', { 'class': 'sc-num', text: fr[k] === null || fr[k] === undefined ? 'pending' : pct(fr[k], 2) });
-        };
+        // The same four states as the candidate rows, on the run's mean: on
+        // the open basis a run whose mean predates the basis is not
+        // "pending", nor is one none of whose rows had a usable open.
+        var cell = function (k) { return horizonCell(r, fr[k]); };
         return el('tr', { 'class': i === 0 ? 'runs-now' : null }, [
           el('td', null, [day(r.date), i === 0 ? ' ' : null,
             i === 0 ? el('span', { 'class': 'sc-chip sc-chip--brand', text: 'this run' }) : null]),

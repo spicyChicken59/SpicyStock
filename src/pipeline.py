@@ -1374,14 +1374,21 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
                        f"could not be updated ({type(e).__name__}: {e}); their outcomes stay "
                        "pending in docs/ledger.json and will be retried next run")
     else:
-        filled = book.fill_forward_returns(frames, through)
+        # The sessions this run knows happened, read across every frame it
+        # fetched -- the scan's own and the ones just requested -- so a hole
+        # in one name's frame leaves its horizon null rather than measured on
+        # the next bar it has. See ledger.session_calendar(). ONE calendar
+        # for both fills below, which is what the contract sentence says.
+        calendar = ledger.session_calendar({**(frames_read or {}), **frames})
+        filled = book.fill_forward_returns(frames, through, calendar)
     # The universe benchmark, from the frames THIS scan already read: no
     # request, and the one alternative the north star was missing.
     # The universe these frames ARE -- and None for a --tickers run, which
     # scanned a handful of names it was handed and has no market to offer as
     # anyone's alternative. See Ledger.fill_benchmarks().
     benchmarked = (book.fill_benchmarks(frames_read or {}, through,
-                                        universe=run["universe"] if explicit_tickers is None else None)
+                                        universe=run["universe"] if explicit_tickers is None else None,
+                                        calendar=ledger.session_calendar({**(frames_read or {}), **frames}))
                    if frames_read else 0)
 
     # Re-read the report AFTER the fetch: a problem raised in the two lines
