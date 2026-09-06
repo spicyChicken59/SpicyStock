@@ -921,8 +921,16 @@
       return typeof n.last === 'string' ? n.ticker + ' (since ' + n.last + ')' : n.ticker + ' (no bar at all)';
     }).join(', ');
     var more = sp.count - sp.names.length;
+    // The threshold the whole clause turns on. src/ledger.py's
+    // snapshot_problem() refuses a block without it, but that check guards the
+    // MORNING EMAIL and this page reads whatever docs/ holds, so a hand-edited
+    // file printed 'for more than undefined sessions' here. Without a number
+    // the names are still worth showing and the threshold is simply not stated.
+    var after = typeof sp.after_sessions === 'number' && isFinite(sp.after_sessions)
+      ? ' not printed for more than ' + sp.after_sessions + ' sessions: '
+      : ' stopped printing: ';
     return base + ' · ' + sp.count + (sp.count === 1 ? ' name has' : ' names have') +
-      ' not printed for more than ' + sp.after_sessions + ' sessions: ' + names +
+      after + names +
       (more > 0 ? ' and ' + more + ' more' : '') + ' — check the symbol list';
   }
 

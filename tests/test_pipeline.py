@@ -2620,6 +2620,34 @@ def test_a_morning_run_with_nothing_published_says_so_and_still_mails(
     assert "not a statement about the market" in sent["html"]
 
 
+def test_a_record_that_does_not_say_how_many_bursts_is_not_read_as_none(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, tmp_path
+):
+    """`source.get("bursts", 0)` applies its default to a MISSING key, which is
+    the distinction follow_through()'s own absent-vs-null comment turns on --
+    so a run block that says nothing about bursts manufactured a market claim:
+    "found no 4% burst to score", out of a record that does not say. Absent is
+    absent, on both surfaces: "not recorded" in the funnel and the failures
+    sentence in the cell, which is what a record that cannot answer deserves.
+    A snapshot missing the key loads clean by design (MALFORMED_SNAPSHOTS
+    keeps "run.bursts is absent" tolerated), so nothing else refuses it."""
+    fake_alpaca.add_history("QUIET", ohlcv("flat"))
+    pipeline.run("evening", dry_run=True, tickers=["QUIET"])
+    snapshot = tmp_path / "docs" / "data.json"
+    data = json.loads(snapshot.read_text())
+    assert data["run"].pop("bursts") == 0, "the precondition: it did say, and said 0"
+    snapshot.write_text(json.dumps(data))
+
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+
+    text = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "4% bursts that session: not recorded" in text
+    assert "found no 4% burst to score" not in text, (
+        "which would be a market claim built out of a default")
+    assert "not a statement about the market" in text
+
+
 def test_the_morning_mail_over_a_clean_zero_burst_run_says_what_that_run_found(
     monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, tmp_path
 ):
@@ -2655,42 +2683,137 @@ def test_the_morning_mail_over_a_clean_zero_burst_run_says_what_that_run_found(
     assert "4% bursts that session: 0" in text, "and the funnel still reports it"
 
 
-def test_the_morning_mail_over_a_degraded_run_will_not_read_its_counts_as_a_market(
+def test_the_morning_mail_over_a_run_degraded_by_the_clock_still_reads_its_count(
     market_clock, fake_alpaca, mocked_boundaries, ohlcv, tmp_path
 ):
-    """The other half of the rule, and the one that says why the SOURCE run's
-    status has to be handed over: a run that could not finish still published
-    counts, and they are not a reading of the session. Here the evening run is
-    degraded by the clock alone -- it scanned before the close -- so the
-    morning is not stale and the only thing separating this from the test
-    above is what the run it follows says about itself."""
+    """DEGRADED IS ONE WORD FOR REASONS THAT DO AND DO NOT COMPROMISE A SCAN,
+    and the first version of this rule deferred on the word. The evening run
+    here is degraded by the clock alone -- it scanned before the close -- and
+    its scan of the session is complete: 1 requested, 1 answered, 0 stale, 0
+    dropped. That is main's own 4 Sep record, which carries the Sunday clock
+    disagreement and the Resend refusal over a clean scan of 228 names, and
+    the morning after it retracted the count that scan produced.
+
+    The reasons still reach the band, in that run's own words, through
+    carried_problems(). What must not happen is the COUNT being withdrawn."""
     fake_alpaca.add_history("QUIET", ohlcv("flat"))
     market_clock.before_the_open()
     evening = pipeline.RunReport()
     pipeline.run("evening", dry_run=True, tickers=["QUIET"], report=evening)
     source = published(tmp_path)["run"]
     assert (evening.status, source["bursts"]) == ("degraded", 0)
+    assert [e["stage"] for e in source["errors"]] == ["session"], (
+        "the precondition: nothing in the SCAN stage, so the count is a reading")
 
     pipeline.run("morning", dry_run=False)
 
     text = visible(mocked_boundaries["resend"].sent[-1]["html"])
     assert f"The {source['date']} run this follows through on found no 4% burst" in text
-    assert "That run was itself DEGRADED" in text
+    assert "not a statement about the market" not in text
+    assert "cut short" not in text
+    assert "was itself a DEGRADED run" in text, "the band still says what it was"
+
+
+def test_the_morning_mail_over_a_run_whose_scan_was_cut_short_refuses_its_counts(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, tmp_path
+):
+    """The other half, and the state the rule is FOR: an evening run whose
+    coverage guard fired, so its burst count is a reading of the names that
+    answered and not of the session. One name of two returns nothing at all,
+    which is over DEGRADED_NO_BARS_FRACTION."""
+    fake_alpaca.add_history("QUIET", ohlcv("flat"))
+    evening = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, tickers=["QUIET", "NOSUCH"], report=evening)
+    source = published(tmp_path)["run"]
+    assert (evening.status, source["bursts"]) == ("degraded", 0)
+    assert "scan" in [e["stage"] for e in source["errors"]], (
+        "the precondition: the scan itself was cut short")
+
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+
+    text = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert f"The {source['date']} run this follows through on found no 4% burst" in text
+    assert "that run's own scan was cut short" in text
     assert "not a statement about the market" in text
 
 
-def test_the_morning_mail_names_what_stopped_printing_the_way_the_page_does(
-    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+def test_the_morning_mail_says_when_the_run_it_follows_scanned_named_tickers(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, tmp_path
 ):
-    """run.stopped_printing is a fact about data/symbols.txt, not about the
-    market, so it is as true at 8:30 as it was at 18:16 -- and the page has
+    """The empty cell makes a claim about the MARKET, and README documents
+    --tickers as the way to check a change without a full scan: such a run
+    writes docs/data.json like any other, and the morning read its 0 bursts as
+    a statement about the universe with nothing on the mail saying the scan
+    was two names. The evening funnel names its universe for this reason; the
+    morning's deliberately does not, because THIS pass scanned none."""
+    fake_alpaca.add_history("QUIET", ohlcv("flat"))
+    fake_alpaca.add_history("WALK", ohlcv("flat", variant=3))
+    pipeline.run("evening", dry_run=True, tickers=["QUIET", "WALK"])
+    source = published(tmp_path)["run"]
+    assert source["universe"]["label"] == "2 named on the command line (--tickers)"
+
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+
+    text = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert ("That run scanned 2 named on the command line (--tickers), not the "
+            "checked-in universe.") in text
+
+
+def test_the_morning_mail_over_a_scan_of_the_checked_in_file_names_no_universe(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, monkeypatch, tmp_path
+):
+    """The inverse, and the one that says the clause is the exception: a real
+    universe scan is what the mail is written for, and naming a universe THIS
+    pass did not scan is what step 10 removed from the morning funnel.
+
+    A QUIET universe, so the empty cell is the one that renders. The first
+    version of this scanned a market with a burst in it, so the morning had
+    rows and the cell never ran at all -- a mutant handing over EVERY universe
+    label survived it, which is this file's own shape of a test that cannot
+    fail."""
+    quiet = ["AAA", "BBB", "CCC"]
+    for i, name in enumerate(quiet):
+        fake_alpaca.add_history(name, ohlcv("flat", variant=i))
+    _universe_file(monkeypatch, tmp_path, quiet)
+    evening = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, report=evening)
+    source = published(tmp_path)["run"]
+    assert (evening.status, source["bursts"]) == ("ok", 0), (
+        "the precondition: a clean universe scan with nothing to show")
+    assert source["universe"]["label"] == pipeline.UNIVERSE_FILE_LABEL
+
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+
+    text = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "found no 4% burst to score" in text, "the cell that carries the clause"
+    assert "That run scanned" not in text
+
+
+def test_the_morning_mail_names_what_stopped_printing_the_way_the_page_does(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, monkeypatch, tmp_path
+):
+    """run.stopped_printing is a fact about data/symbols.txt, and the page has
     printed it off this block since it existed while the morning mail dropped
     it, because follow_through() never handed it over. Main's own record
-    carries three such names."""
+    carries three such names.
+
+    AS THAT RUN READ THE FILE, which is not the same as the file now: this
+    repo retired FI, BK and EA the day after the record that names them, so
+    the first morning cron would have told its reader that three names it no
+    longer holds are in it, in the present tense, with an instruction to act.
+    The morning pass reads no symbol file at all -- its whole contract is that
+    it reads the snapshot -- so the clause is what makes the sentence true,
+    and the test removes the name from the file to say that the mail's claim
+    does not depend on what the file holds this morning."""
     names = _wide_universe(fake_alpaca, ohlcv, fresh=24)
     fake_alpaca.add_history("GONE", ohlcv("burst", variant=90), stale_sessions=30)
     pipeline.run("evening", dry_run=True, tickers=names + ["GONE", "NOSUCH"])
-    assert published(tmp_path)["run"]["stopped_printing"]["count"] == 2
+    source = published(tmp_path)["run"]
+    assert source["stopped_printing"]["count"] == 2
+    _universe_file(monkeypatch, tmp_path, names)  # GONE and NOSUCH retired since
 
     market_clock.before_the_open()
     pipeline.run("morning", dry_run=False)
@@ -2698,6 +2821,9 @@ def test_the_morning_mail_names_what_stopped_printing_the_way_the_page_does(
     text = visible(mocked_boundaries["resend"].sent[-1]["html"])
     assert "Not printing: NOSUCH (no bar at all), GONE (since " in text
     assert f"more than {pipeline.STOPPED_PRINTING_SESSIONS} sessions" in text
+    assert f"in the symbol file as the {source['date']} run read it" in text
+    assert "in the symbol file with no bar" not in text, (
+        "which is what the evening says, of a file it had just read")
 
 
 def test_a_morning_run_refuses_to_mail_the_hand_authored_fixture(
@@ -3159,6 +3285,26 @@ MALFORMED_SNAPSHOTS = {
     "a stopped name's last is a number": (lambda d: d["run"].update(
         stopped_printing={"after_sessions": 5, "count": 1,
                           "names": [{"ticker": "EA", "last": 20260804, "sessions_behind": 23}]}), NOT_A_RUN),
+    # `after_sessions` is the number the whole sentence turns on -- "no bar for
+    # more than 5 sessions" -- and it was the one key of this block the check
+    # never read while the email and the page both index it. With it gone the
+    # mail read "for more than  sessions" and the page "for more than undefined
+    # sessions", and nothing said so. The block is one round old, so "absent is
+    # what an older writer produced" does not apply to it.
+    "stopped_printing has no after_sessions": (lambda d: d["run"].update(
+        stopped_printing={"count": 1, "names": [
+            {"ticker": "EA", "last": "2026-08-04", "sessions_behind": 23}]}), NOT_A_RUN),
+    "stopped_printing's after_sessions is a bool": (lambda d: d["run"].update(
+        stopped_printing={"after_sessions": True, "count": 1, "names": [
+            {"ticker": "EA", "last": "2026-08-04", "sessions_behind": 23}]}), NOT_A_RUN),
+    "stopped_printing's after_sessions is negative": (lambda d: d["run"].update(
+        stopped_printing={"after_sessions": -5, "count": 1, "names": [
+            {"ticker": "EA", "last": "2026-08-04", "sessions_behind": 23}]}), NOT_A_RUN),
+    "stopped_printing's after_sessions is a string": (lambda d: d["run"].update(
+        stopped_printing={"after_sessions": "5", "count": 1, "names": [
+            {"ticker": "EA", "last": "2026-08-04", "sessions_behind": 23}]}), NOT_A_RUN),
+    "stopped_printing's count is negative": (lambda d: d["run"].update(
+        stopped_printing={"after_sessions": 5, "count": -2, "names": []}), NOT_A_RUN),
     "a candidate is null": (lambda d: d.update(candidates=[None]), NOT_A_RUN),
     "a candidate is a number": (lambda d: d.update(candidates=[7]), NOT_A_RUN),
     "a candidate is a list": (lambda d: d.update(candidates=[["AAPL"]]), NOT_A_RUN),
@@ -3191,8 +3337,22 @@ MALFORMED_SNAPSHOTS = {
     "run.status is a number": (_run_field(status=5), NOT_A_RUN),
     "run.scored_by is a string": (_run_field(scored_by="x"), NOT_A_RUN),
     "run.scored_by is a list": (_run_field(scored_by=[1, 2]), NOT_A_RUN),
-    "run.bursts is a string": (_run_field(bursts="many"), False),
-    "run.passed_gate is a list": (_run_field(passed_gate=[1]), False),
+    # The two counts the morning funnel prints as facts about the SESSION, and
+    # the only inputs to its empty-table sentence. Tolerated until round 10,
+    # which is how "4% bursts that session: -3" reached a mail beside a
+    # sentence about what the market held, and how a run block with no `bursts`
+    # at all became a manufactured "found no 4% burst to score" -- the emailer
+    # guarded the value and follow_through() defaulted it to 0 first. Absent is
+    # a record that says nothing about them and reads "not recorded"; a bool, a
+    # string or a negative is a file no writer produces.
+    "run.bursts is absent": (lambda d: d["run"].pop("bursts", None), False),
+    "run.passed_gate is absent": (lambda d: d["run"].pop("passed_gate", None), False),
+    "run.bursts is a string": (_run_field(bursts="many"), "run.bursts"),
+    "run.bursts is a bool": (_run_field(bursts=True), "run.bursts"),
+    "run.bursts is negative": (_run_field(bursts=-3), "run.bursts"),
+    "run.bursts is a float": (_run_field(bursts=2.5), "run.bursts"),
+    "run.passed_gate is a list": (_run_field(passed_gate=[1]), "run.passed_gate"),
+    "run.passed_gate is negative": (_run_field(passed_gate=-1), "run.passed_gate"),
     "gated_out is a string": (lambda d: d.update(gated_out="x"), False),
     "gated_out rows are strings": (lambda d: d.update(gated_out=["x"]), False),
     "runs is a string": (lambda d: d.update(runs="x"), False),

@@ -313,6 +313,17 @@ const VARIANTS = {
     delete d.evidence.illiquid;
     return d;
   },
+  // The one key of run.stopped_printing the page indexes and the load check
+  // never read. src/ledger.py's snapshot_problem() refuses this block now, but
+  // that guard runs on the MORNING EMAIL's path and the page reads whatever
+  // docs/ holds -- so a hand-edited file printed "for more than undefined
+  // sessions" and nothing said so. The names are still worth showing; the
+  // threshold is simply not stated.
+  nothreshold() {
+    const d = clone(REAL);
+    delete d.run.stopped_printing.after_sessions;
+    return d;
+  },
   // A snapshot from before the open basis existed: no from_open on any row,
   // any run mean or any evidence outcome. The open tab must say the record
   // predates it, and no close-basis number may appear under the open label.
@@ -877,6 +888,13 @@ ok('the funnel says an absolute rule can cut a name at the gate stage, when the 
 ok('the funnel caption names the floor at the stage it cuts, with the same dollar figure',
   caption.includes(`below the liquidity floor (${floorDollars}/day`),
   caption.slice(0, 200));
+await open('/v/nothreshold/');
+const noThresholdNote = (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent)))[0];
+ok('a stopped-printing block with no threshold names its symbols and states no number',
+  stopped.names.every((n) => noThresholdNote.includes(stoppedWord(n)))
+  && noThresholdNote.includes(stopped.count + ' names have stopped printing')
+  && !/undefined|NaN/.test(noThresholdNote),
+  noThresholdNote.slice(0, 200));
 await open('/v/noliquidity/');
 const noLiqCaption = (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent))).join(' ');
 const noLiqHint = await page.textContent('#gated-hint');

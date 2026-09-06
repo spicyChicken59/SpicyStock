@@ -2628,6 +2628,19 @@ def snapshot_problem(data: dict) -> str | None:
     and src.pipeline guards its single comparison against it instead.
     """
     run = data.get("run")
+    # The two counts the morning email prints as facts about the session, and
+    # the only inputs to its empty-table sentence. Absent is a record that
+    # says nothing about them, which the funnel prints as "not recorded" and
+    # the cell defers on; present, they are counts, and a bool, a string or a
+    # negative is a file no writer produces -- so the run exits 2 naming the
+    # field instead of mailing "4% bursts that session: -3" beside a sentence
+    # about what the market held. The class this function exists for, on the
+    # one field the round that added the sentence did not widen it to.
+    for field_name in ("bursts", "passed_gate"):
+        if field_name in run:
+            value = run[field_name]
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                return (f"run.{field_name} is {value!r}, not the count publish() writes")
     for field_name, wanted in (("status", str), ("scored_by", dict), ("errors", list)):
         value = run.get(field_name)
         if field_name not in run:
@@ -2673,9 +2686,20 @@ def snapshot_problem(data: dict) -> str | None:
     # date belongs is a shape no writer produces.
     if "stopped_printing" in run:
         block = run["stopped_printing"]
+        count = block.get("count") if isinstance(block, dict) else None
+        after = block.get("after_sessions") if isinstance(block, dict) else None
         if (not isinstance(block, dict) or not isinstance(block.get("names"), list)
-                or isinstance(block.get("count"), bool) or not isinstance(block.get("count"), int)):
-            return f"run.stopped_printing is {type(block).__name__}, not the object publish() writes"
+                or isinstance(count, bool) or not isinstance(count, int) or count < 0
+                # `after_sessions` is the number the whole sentence turns on --
+                # "no bar for more than 5 sessions" -- and it was checked
+                # nowhere while `count` was: with the key deleted the email
+                # read "for more than  sessions" and the page "for more than
+                # undefined sessions", and nothing said so. The block is one
+                # round old, so "absent is what an older writer produced" does
+                # not apply to it: every writer emits both.
+                or isinstance(after, bool) or not isinstance(after, int) or after < 0):
+            return ("run.stopped_printing is not the "
+                    "{after_sessions, count, names} object publish() writes")
         for position, name in enumerate(block["names"], start=1):
             behind = name.get("sessions_behind") if isinstance(name, dict) else None
             last = name.get("last") if isinstance(name, dict) else None

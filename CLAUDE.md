@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1035 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1069 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -287,15 +287,22 @@ markup: the operator read "502 Bad Gateway 502 Bad Gateway cloudflare" with
 the tags swallowed. The escaping round before this one swept eight leaves and
 missed the band, the checklist lines, the chart note, the close cell, the
 session in the title and funnel, and the stale note — all escaped now, each
-pinned through a real parser. **And that sweep was one table short of
-complete**, which round 10 found by mutating it: every leaf it pinned renders
-on `build_html([], "evening", stats)`, so the four that need a ROW or the
-morning mode were neither escaped nor pinned — a streak's `last_score` and
-`last_verdict`, the `history_from` a no-day-number streak prints as "which
-begins …", and the row's own `chart_note` — and a fifth, the session in the
-stale headline, was escaped and pinned nowhere, so dropping its `esc()` was a
-survivor. The parser table has a second half now, parametrised over the rows
-and the mode as well as the stats. Two existing tests then broke, and correctly:
+pinned through a real parser. **And that sweep was two tables short of
+complete**, which round 10 found by mutating it. The parametrised table it
+left rendered no rows at all, and its one row-borne sibling
+(`test_the_checklist_lines_are_escaped_line_by_line`, added by the same
+commit) covered only the checklist lines — so every leaf needing a ROW, or the
+morning mode, or both was out of reach. Four were neither escaped nor pinned:
+a streak's `last_score` and `last_verdict`, the `history_from` a
+no-day-number streak prints as "which begins …", and the row's own
+`chart_note` (which is `_no_chart_note()`'s FIRST branch — its missing-PNG
+sentence, the second, was escaped in round 4 and is a different leaf of the
+same function). Four more were escaped and pinned nowhere, so dropping each
+`esc()` was a survivor of the round-10 sweep as well: the session in both
+branches of the stale headline, the session and the price in the close cell,
+and the session in the morning shortlist heading. The parser table has a
+second half now, parametrised over the rows and the mode as well as the stats,
+and every one of the eight dies on it. Two existing tests then broke, and correctly:
 they grepped the mail SOURCE for a sentence with an apostrophe in it, which
 is an entity now, and the reader is the standard.
 
@@ -721,6 +728,103 @@ exercised its headline. Nine mutants across them, all killed.
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Round 10 — one rule decides both empty cells, and it is the STAGE
+
+Three auditors over the morning-mail-truth commit, twelve findings and four
+lows, every one reproduced HERE by execution before it was touched. They
+converge on one sentence: **that commit fixed the morning and left the evening,
+and README's own new row said otherwise.**
+
+**The defect was fixed for one mode and shipped in the other.**
+`build_html()` asked the mode first on the morning path and still tested
+`scan_stats.get("errors")` on the evening one, so a complete evening scan of a
+quiet session that carried ANY problem printed "No shortlist. See the failures
+listed above — this is not a statement about the market" three lines under "4%
+bursts found: 0" — while `_headline()`, two inches above it, told the same
+reader "the scan below is complete, but something in the run that judged it was
+not". One email, two answers, on one screen. That is the shape of the first
+mail this project ever delivered (run 34018706843: Sunday clock, 0 bursts,
+exit 2). The module already held the discriminator and only the band read it:
+`SHORTENING_STAGES` is `{"scan"}` and `_shortened()` exists because a chart
+that failed to render printed "the list below is incomplete" over a complete
+scan. Both cells go through it now.
+
+**And the fix reintroduced it one field over.** `_empty_morning_note()`
+deferred on the SOURCE run's status WORD, and "degraded" is one word for
+reasons that do and do not compromise a scan: of the five ways an evening run
+degrades, only the scan guards cut it short. main's own 4 Sep record carries
+two of the others — the Sunday clock disagreement and the Resend refusal — over
+a clean scan of 228 names that found no burst, and the morning after it
+retracted that count. Worse, the round's own two tests PINNED the defect: both
+made their source run degraded by the clock alone, the clearest case of the
+sentence being false. `follow_through()` hands over the source run's raw stage
+words now (`carried_problems()` rewrites them to "2026-09-04 evening · scan"
+for the band, so they cannot be recovered from `errors`), and one rule applies
+`SHORTENING_STAGES` to both. The status word is gone from the cell: the band
+already says "the 2026-09-04 run this follows through on was itself a DEGRADED
+run", which is where a verdict about a run belongs.
+
+**A pointer to a band that is not there, and a market claim with no scope.**
+Two smaller ones from the same lens, both rendered before they were written
+down. The failures sentence names a red band, and one of the states that
+reaches it — a snapshot whose `bursts` cannot be read — needs no problem of its
+own, so a mail with no band told its reader to go and read one; it says "no
+failures to point at" in that state. And the cell's claim is about the MARKET
+while a `--tickers` run writes `docs/data.json` like any other, so over a
+two-name smoke record it said no 4% burst reached the checklist with nothing
+anywhere naming the scope. The morning funnel carries no universe line by
+design — THIS pass scanned none — so the scope goes in the sentence that needs
+it, and only when the run scanned something other than the checked-in file.
+
+**The ninth instance of the one-level-short class, on the field the round
+before had just made a consumer of.** `run.stopped_printing.after_sessions` is
+the number its whole sentence turns on and was the one key of that block the
+shape check never read; the same round put the block on the morning email, so
+a snapshot missing it mailed "no bar for more than  sessions" and the page
+printed "undefined". Refused at load now, with the page — which has no load
+check and reads whatever `docs/` holds — stating the names and no threshold
+instead. `run.bursts` and `run.passed_gate` were in the same state one field
+over: unchecked, printed as facts about the session, and `follow_through()`
+defaulted a MISSING `bursts` to 0, which manufactured "found no 4% burst to
+score" out of a record that says nothing about bursts. Both are counts at load
+now, absent still loads clean, and the default is gone.
+
+**A fact about the file is a fact about the file AS THAT RUN READ IT.** The
+morning re-asserted `stopped_printing` in the present tense under a comment
+saying it was "still true this morning" — and this repo falsified that in one
+day: the 4 Sep record names FI, BK and EA, and all three were retired on the
+5th, so the first morning cron would have told its reader to check three names
+the file no longer holds. The sentence is scoped to the run on that path and
+the imperative is conditional. Acting on the line is what changes the file,
+which is why the unscoped wording could not stay.
+
+**The escaping sweep was two tables short, not one, and the round-10 note
+about it was itself wrong.** The round-4 sweep did render a row — its
+`test_the_checklist_lines_are_escaped_line_by_line` — so "every leaf it pinned
+renders on `build_html([], "evening", stats)`" was false; what it never
+rendered was a row AND the morning mode together. Four more `esc()` calls were
+therefore load-bearing and pinned nowhere: both branches of the stale headline,
+the session and the price in the close cell, and the session in the morning
+shortlist heading. All eight die on the second parser table now.
+
+**Thirty-seven mutants, thirty-three killed on the first pass, and one of the
+four survivors was the harness eating its own tail.** M17 -- the pipeline
+handing over EVERY universe label, not just a `--tickers` one -- reported
+"pattern not found", because the first harness run was killed mid-mutant
+(its `finally:` restore never ran) and left that mutant in `src/pipeline.py`;
+I then verified the tree pristine with greps that did not cover that line and
+copied the mutated file into the snapshot the second run restored from. So
+the second run's "original" was the mutant. Caught by the pattern miss, not
+by the greps. When it was really applied it survived, and that was a real
+hole: the test scanned a market with a burst in it, so the morning had ROWS
+and the empty cell -- the only thing that carries the clause -- never
+rendered. It scans a quiet universe now. The other three were holes too: the
+failures sentence was asserted only on the clause both of its two strings
+share, so the pointer could be dropped; the `bursts` default could come back
+because no test published a run block WITHOUT the key; and `after_sessions`
+could be a bool because no malformed row planted one. Each closed with the
+test it showed missing, and all thirty-seven killed on the re-run.
 
 ## Round 9 — the ten items the rounds 6-7 audit left open, and what working them turned up
 

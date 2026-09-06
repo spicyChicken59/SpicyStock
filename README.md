@@ -61,7 +61,7 @@ Layer 6  Email ....................... HTML table, top 5, with the charts this
 | costs | ~25 Claude calls, ~$0.15 | nothing |
 | writes | `docs/data.json`, `docs/ledger.json`, `docs/charts/` (gitignored), `results/*.csv` | nothing |
 | charts | attached inline — the PNGs it just rendered | none, and the email says why |
-| an empty table | says what its own scan found | says what the run it follows found |
+| an empty table | says what its own scan found, unless that scan was cut short | says what the run it follows found, unless *its* scan was |
 | workflow | `.github/workflows/evening.yml` | `.github/workflows/morning.yml` |
 
 **Why the morning run does not scan.** Before the open it has no market data
@@ -108,24 +108,34 @@ That is designed: a calendar approximate enough to be wrong would say more
 than the record can support, and the evening cron on the holiday itself is
 what finds no bar and says so.
 
-**And when there is nothing to show, the cell reads the run it followed, not
-this pass's own band.** A follow-through is degraded by things that are not
-faults in it: how stale the record is, and the problems it carries forward
-from the run it read. The cell tested for problems before it tested the mode,
-so any of those printed "No shortlist. See the failures listed above — this is
-not a statement about the market" over a source run that had scanned its
-session cleanly and found no burst — three lines under a funnel reading "4%
-bursts that session: 0", which *is* a statement about the market. It names the
-session and what that run found now ("The 2026-09-04 run this follows through
-on found no 4% burst to score", or "…scored no candidates"), the band keeps
-the staleness, and the failures sentence is kept for the two states where it
-is true: a morning that read no published run at all — the state every one of
-them is in until `evening.yml`'s commit-back succeeds — and one whose source
-run was itself DEGRADED or FAILED, where both facts go in one sentence,
-because a run that could not finish still published counts and they are not a
-reading of the session. The names that stopped printing are on both emails for
-the same reason the morning shows anything at all: `run.stopped_printing` is a
-fact about `data/symbols.txt`, so it is as true at 8:30 as it was at 18:16.
+**And when there is nothing to show, the cell asks whether the SCAN was cut
+short — not whether anything went wrong.** Only a `scan`-stage problem makes
+the list shorter than the session deserved; a clock disagreement, a chart that
+would not render, a Claude fallback, an unreadable history and a delivery that
+failed all leave the counts a complete reading. The cell asked "were there any
+errors?", so every one of those printed "No shortlist. See the failures listed
+above — this is not a statement about the market" three lines under a funnel
+reading "4% bursts that session: 0", which *is* a statement about the market —
+and under a band whose own sentence for those stages is "the scan below is
+complete". One email, two answers, on one screen; the first mail this project
+ever delivered was that shape, and so was the morning that would have followed
+it. Both modes ask the stage now. An evening run with a complete scan says
+what it found ("No 4% burst anywhere in the universe today…"), and a morning
+one names the session and what that run found ("The 2026-09-04 run this
+follows through on found no 4% burst to score", or "…scored no candidates"),
+adding what that run scanned when it was not the checked-in file, since the
+morning funnel names no universe. The failures sentence is what is left for
+three states: a morning that read no published run at all — the state every
+morning was in until `evening.yml`'s commit-back first succeeded, and the
+state a fresh clone is in — a snapshot whose burst count cannot be read, which
+is not a run this pass can report either, and a run whose own scan was cut
+short, where the counts are printed and then not read as the session. With no
+red band to point at, the sentence does not point at one. The names that
+stopped printing are on both emails now — `run.stopped_printing` is a fact
+about `data/symbols.txt` **as that run read it**, so the morning scopes it to
+the run and softens the instruction: this repo retired `FI`, `BK` and `EA` the
+day after the record that names them, and the unscoped sentence would have
+sent the next morning's reader to check three names the file no longer holds.
 
 **The mode is a promise about the clock, and it is checked.** An evening run
 declares that today's session has closed; a morning run declares that it has
@@ -322,7 +332,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1035 tests, no network or API keys needed
+pytest tests/                   # 1069 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -519,8 +529,11 @@ invariants live in the file rather than only here. The load-bearing ones:
   rename once purged -- comes first, with `last` and `sessions_behind` null;
   below the fraction that degrades a run, such a name used to reach no
   surface, the log included. The email and the page print it; the ledger entry
-  does not carry it. The first live scan found three in the list, which held 230
-  names then and 228 since they were retired.
+  does not carry it. It is a fact about the file **as that run read it**, which
+  is why the morning mail scopes the sentence to the run rather than repeating
+  the evening's "check the list": acting on the line is what changes the file,
+  and this repo retired all three names the first live scan found -- the list
+  held 230 then and 228 since.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
@@ -830,14 +843,14 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 206 checks, and which file each one
+**Three data sources, one page.** It runs 207 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 34 mutated copies of it are served
+  night can hold at once. 35 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now

@@ -980,6 +980,13 @@ def _restamp(book: ledger.Ledger, report: RunReport, headline: dict | None) -> N
     book.write(headline)
 
 
+#: What `run.universe.label` says for a scan of the checked-in file. Named
+#: because two readers now compare against it: publish(), which writes it, and
+#: follow_through(), which tells "the whole file" from a --tickers record so
+#: the morning cell can name the scope of the market claim it makes.
+UNIVERSE_FILE_LABEL = "data/symbols.txt (checked in)"
+
+
 def universe_label(scan_stats: dict, explicit_tickers: list[str] | None) -> str:
     """What was scanned, in words. ONE rule, read by the email's funnel line
     and by docs/data.json's universe block. The email built its own -- "N
@@ -1224,7 +1231,6 @@ def follow_through(mode: Mode, dry_run: bool = False,
     rows: list[dict] = []
     source: dict = {}
     session = None
-    status: str | None = None
     behind: int | None = None
     if snapshot is None:
         report.problem("history",
@@ -1261,6 +1267,10 @@ def follow_through(mode: Mode, dry_run: bool = False,
         report.errors.extend(carried)
 
     shortlist = rows[:TOP_N]
+    scanned = (source.get("universe") or {}).get("label") if isinstance(
+        source.get("universe"), dict) else None
+    followed_universe = (scanned if isinstance(scanned, str)
+                         and scanned != UNIVERSE_FILE_LABEL else None)
     # No `universe` in this block. src.emailer._funnel_line's morning branch
     # prints none, because this pass scanned none; a sentence saying so was
     # built here for a whole step and never rendered anywhere, which reads as
@@ -1269,15 +1279,24 @@ def follow_through(mode: Mode, dry_run: bool = False,
     # nothing — is the funnel line naming the run being followed instead.
     stats = report.email_stats(
         session=session,
-        # Only when there was a run to read them off. With no snapshot -- the
-        # guaranteed state of the first production morning, and of every one
-        # until evening.yml's commit-back succeeds -- these were 0 and 0, and
-        # the funnel printed "4% bursts that session: 0 | Passed 2LYNCH gate:
-        # 0" under a session it called "not recorded": two invented market
-        # counts three lines above a cell saying this is not a statement
-        # about the market. Absent, the funnel prints "not recorded" for both.
-        **({"bursts": source.get("bursts", 0), "gated": source.get("passed_gate", 0)}
-           if source else {}),
+        # Only when the run being read actually reported them. With no
+        # snapshot -- the state every morning was in until evening.yml's
+        # commit-back first succeeded, and the state a fresh clone is in --
+        # these were 0 and 0, and the funnel printed "4% bursts that session:
+        # 0 | Passed 2LYNCH gate: 0" under a session it called "not recorded":
+        # two invented market counts three lines above a cell saying this is
+        # not a statement about the market.
+        # PRESENT OR NOT AT ALL, never a default: `.get(key, 0)` applies only
+        # to a MISSING key, and a run block with no `bursts` is a record that
+        # says nothing about what the session held -- so the 0 was a market
+        # count this pass invented, and the emailer's own "no run was read"
+        # branch was unreachable from the real path whenever a snapshot
+        # existed. Absent here reads "not recorded" in the funnel and sends
+        # the empty cell to the failures, which is what a record that does not
+        # say deserves.
+        **{key: source[field] for key, field in (("bursts", "bursts"),
+                                                 ("gated", "passed_gate"))
+           if field in source},
         # Counted off the snapshot's own rows, since the run block records no
         # veto total. A snapshot written before the rule existed has none, and
         # reports 0, which is the truth about that run.
@@ -1301,16 +1320,35 @@ def follow_through(mode: Mode, dry_run: bool = False,
         score_cap=source.get("score_cap") or 0,
         scored_by=source.get("scored_by") or {},
         # The names in data/symbols.txt the feed had stopped answering for
-        # when that run scanned. A fact about the FILE, so it is still true
-        # this morning; the page has printed it off the same block since it
-        # existed and the email dropped it on this path alone.
+        # WHEN THAT RUN SCANNED. The page has printed it off the same block
+        # since it existed and the email dropped it on this path alone. The
+        # comment here used to say "a fact about the FILE, so it is still true
+        # this morning", and this repo falsified that in a day: the 4 Sep
+        # record names FI, BK and EA, all three retired on the 5th. Acting on
+        # the line is what changes the file, so the emailer scopes the
+        # sentence to the run on this path rather than re-asserting it.
         stopped_printing=source.get("stopped_printing"),
-        # The status word of the run being followed, which is NOT this run's:
-        # a follow-through is degraded by staleness alone, and the empty-cell
-        # note has to tell "a clean scan found nothing" from "a run that could
-        # not finish reported nothing". src.emailer._empty_morning_note()
-        # is the only reader.
-        followed_status=str(status) if status is not None else None,
+        # WHICH STAGE BROKE IN THE RUN BEING FOLLOWED, in that run's own stage
+        # words. Not its status: "degraded" covers a clock disagreement, a
+        # chart that would not render, a Claude fallback, an unreadable
+        # history and a delivery that failed as well as a scan that was cut
+        # short, and only the last of those makes its burst count anything
+        # other than what the session held. main's own 4 Sep record is two of
+        # them over a clean scan of 228 names. carried_problems() rewrites
+        # these stages to "2026-09-04 evening · scan" so one band can carry
+        # two runs', so the raw words go over separately;
+        # src.emailer._followed_shortened() applies SHORTENING_STAGES to them,
+        # which is the same rule the band applies to this run's.
+        followed_stages=[str(p.get("stage")) for p in (source.get("errors") or [])
+                         if isinstance(p, dict) and p.get("stage")],
+        # And WHAT that run scanned, when it was not the checked-in file. The
+        # empty cell makes a claim about the market ("found no 4% burst to
+        # score"), and a --tickers run writes docs/data.json like any other:
+        # over a two-name smoke record that claim covered two names, with
+        # nothing on the mail saying so. Only the exception is handed over --
+        # the ordinary case is the whole file, and a morning funnel line
+        # naming a universe THIS pass did not scan is what step 10 removed.
+        followed_universe=followed_universe,
         # How far behind, in sessions, so the SUBJECT LINE can escalate. Every
         # staleness read DEGRADED before this, and a screener dead for three
         # weeks is not the Tuesday after Presidents' Day. src.emailer._prefix()
@@ -1424,7 +1462,7 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         "dry_run": bool(dry_run),
         "fixture": False,
         "universe": {
-            "label": ("data/symbols.txt (checked in)" if explicit_tickers is None
+            "label": (UNIVERSE_FILE_LABEL if explicit_tickers is None
                       else universe_label(scan_stats, explicit_tickers)),
             "size": scan_stats.get("requested", len(explicit_tickers or [])),
         },

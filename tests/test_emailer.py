@@ -12,7 +12,7 @@ import base64
 
 import pytest
 
-from src import pipeline
+from src import emailer, pipeline
 from src.emailer import build_html, deliver, send_email, send_failure_notice, subject_for
 from src.scorer import render_chart
 
@@ -307,12 +307,51 @@ def test_a_heading_with_no_session_to_name_does_not_invent_one():
 
 
 def test_an_empty_shortlist_does_not_claim_a_quiet_market_when_the_run_broke():
-    """Both are empty tables. Only one of them is a statement about stocks."""
+    """Both are empty tables. Only one of them is a statement about stocks.
+
+    DEGRADED's first problem is a `scan` one -- 138 of 230 symbols with no bar
+    -- which is the only stage that makes the list shorter than the session
+    deserved, and the precondition below says so, because the whole point of
+    the test beneath this one is that the OTHER stages must not reach here.
+    """
+    assert any(e["stage"] in emailer.SHORTENING_STAGES for e in DEGRADED["errors"]), (
+        "the precondition: this run's scan really was cut short")
     clean = build_html([], "evening", STATS)
     broken = build_html([], "evening", DEGRADED)
     assert "cleared the 2LYNCH checklist" in clean
     assert "cleared the 2LYNCH checklist" not in broken
     assert "not a statement about the market" in broken
+
+
+#: A complete evening scan of a quiet session that carries a problem which did
+#: NOT cut it short. The shape of the first mail this project ever delivered:
+#: run 34018706843, a Sunday dispatch, the mode/clock disagreement alone, 0
+#: bursts, exit 2.
+@pytest.mark.parametrize("stage, message", [
+    ("session", "this evening run was started before the 16:15 ET close"),
+    ("history", "the history could not be read and was set aside"),
+    ("chart", "1 of 3 charts failed to render"),
+    ("score", "4 of 12 candidates were not scored by Claude"),
+])
+def test_an_evening_scan_that_completed_says_what_it_found_whatever_else_broke(
+    stage, message
+):
+    """The evening half of the same defect, and the discriminator is the one
+    the band two inches above already applies: SHORTENING_STAGES. Testing
+    `errors` sent every one of these to "this is not a statement about the
+    market" over a scan that read every symbol asked for and found no burst --
+    while _headline() told the same reader, in the band, that "the scan below
+    is complete". One email, two answers, on one screen."""
+    stats = dict(STATS, status="degraded", session="2026-09-04", bursts=0, gated=0,
+                 errors=[{"stage": stage, "message": message}])
+
+    text = _visible_text(build_html([], "evening", stats))
+
+    assert "No 4% burst anywhere in the universe today" in text
+    assert "this is a quiet market, not a rejection" in text
+    assert "not a statement about the market" not in text, (
+        f"a {stage} problem spoils the run; it does not shorten the scan")
+    assert message in text, "and the reason is still in the band"
 
 
 def test_the_body_counts_how_many_scores_are_not_ai_scores(results):
@@ -984,6 +1023,33 @@ def test_a_morning_over_a_clean_run_that_found_nothing_says_what_that_run_found(
         "cleanly and found no burst. The staleness is the band's business")
 
 
+#: One name the feed stopped answering for, as a run recorded it.
+STOPPED = {"after_sessions": 5, "count": 1,
+           "names": [{"ticker": "EA", "last": "2026-08-04", "sessions_behind": 23}]}
+
+
+def test_the_stopped_printing_line_is_scoped_to_the_run_that_read_the_file():
+    """A fact about data/symbols.txt AS THAT RUN READ IT, which is not a fact
+    about the file now. The evening sentence was written for the run that had
+    just read the file and ends in "check the list"; the morning renders a
+    record hours or days old, and acting on the line is exactly what changes
+    the file underneath it. This repo did that between its own two runs -- the
+    4 Sep record names FI, BK and EA and all three were retired the next day --
+    so the first morning cron would have told its reader that three names it no
+    longer holds are in it, in the present tense, with an instruction to act."""
+    stats = dict(DATED, stopped_printing=STOPPED)
+
+    evening = _visible_text(build_html([], "evening", stats))
+    morning = _visible_text(build_html([], "morning", stats))
+
+    assert "1 name in the symbol file with no bar" in evening
+    assert evening.rstrip().count("check the list.") == 1
+    assert "1 name in the symbol file as the 2026-08-31 run read it" in morning
+    assert "check the list if they are still in it" in morning
+    assert "in the symbol file with no bar" not in morning, (
+        "the morning cannot say what the file holds now: it never read one")
+
+
 def test_a_morning_with_no_published_run_to_read_still_defers_to_the_failures():
     """The state every morning is in until evening.yml's commit-back succeeds:
     no counts were read, so there is nothing to say about the market."""
@@ -991,8 +1057,30 @@ def test_a_morning_with_no_published_run_to_read_still_defers_to_the_failures():
         status="degraded",
         errors=[{"stage": "history", "message": "there is nothing to follow through on"}])))
 
+    assert "See the failures listed above" in text, (
+        "and it points at the band, which is the half the no-band twin drops")
     assert "not a statement about the market" in text
     assert "found no 4% burst" not in text
+
+
+@pytest.mark.parametrize("bursts", [True, -3, "0"])
+def test_the_funnel_prints_not_recorded_for_the_same_values_the_cell_refuses(bursts):
+    """ONE RULE FOR ONE FIELD. The cell refused a bool, a string and a negative
+    and explained that the bursts could not be counted; the funnel three lines
+    above it printed the same value raw -- "4% bursts that session: -3" over a
+    sentence saying it could not be read, and "Below the liquidity floor: -2"
+    is the same defect round 5 fixed one column over. Both go through
+    is_count() now."""
+    stats = dict(STATS, status="degraded", session="2026-09-04", bursts=bursts,
+                 gated=bursts, errors=[{"stage": "history", "message": "unreadable"}])
+
+    text = _visible_text(build_html([], "morning", stats))
+
+    assert "4% bursts that session: not recorded" in text
+    assert "Passed 2LYNCH gate: not recorded" in text
+    assert f"4% bursts that session: {bursts}" not in text
+    evening = _visible_text(build_html([], "evening", dict(stats, universe="2 names")))
+    assert "4% bursts found: not recorded" in evening, "and the evening funnel too"
 
 
 @pytest.mark.parametrize("bursts", [None, True, -3, "0"])
@@ -1010,18 +1098,74 @@ def test_a_morning_whose_burst_count_is_not_a_count_says_nothing_about_the_marke
     text = _visible_text(build_html([], "morning", stats))
 
     assert "not a statement about the market" in text
+    assert "See the failures listed above" in text, "there IS a band here"
     assert "found no 4% burst" not in text and "scored no candidates" not in text
 
 
-def test_a_morning_over_a_degraded_run_reports_its_counts_and_refuses_to_trust_them():
-    """A source run that could not finish its scan still published counts, and
+def test_a_morning_over_a_run_whose_scan_was_cut_short_refuses_to_trust_its_counts():
+    """A source run that could not finish its SCAN still published counts, and
     they are not a reading of the session. Both facts, in one sentence."""
     text = _visible_text(build_html([], "morning", dict(
-        FOLLOWED_CLEAN, followed_status="degraded")))
+        FOLLOWED_CLEAN, followed_stages=["scan"])))
 
     assert "The 2026-09-04 run this follows through on found no 4% burst" in text
+    assert "that run's own scan was cut short" in text
     assert "not a statement about the market" in text
     assert "4% bursts that session: 0" in text, "and the funnel still reports what it read"
+
+
+@pytest.mark.parametrize("stage", ["session", "history", "chart", "score", "email"])
+def test_a_morning_over_a_run_degraded_after_a_complete_scan_reads_its_counts(stage):
+    """THE SAME FALSE SENTENCE, ONE BRANCH OVER. The first version of this rule
+    deferred on the source run's STATUS word, and "degraded" is one word for
+    reasons that do and do not compromise a scan: of the five ways an evening
+    run degrades, only the scan guards cut it short. main's own 4 Sep record is
+    two of the others -- the Sunday clock disagreement and the Resend refusal --
+    over a clean scan of 228 names that found no burst, and the morning after
+    it retracted that count.
+
+    The source run's reasons are still carried into the band by
+    src.pipeline's carried_problems(), and the band still says the run it
+    follows was DEGRADED. What must not happen is the COUNT being withdrawn."""
+    text = _visible_text(build_html([], "morning", dict(
+        FOLLOWED_CLEAN, followed_stages=[stage])))
+
+    assert "The 2026-09-04 run this follows through on found no 4% burst" in text
+    assert "not a statement about the market" not in text, (
+        f"a {stage} problem in that run did not stop it reading the session")
+    assert "cut short" not in text
+
+
+def test_a_morning_over_a_named_ticker_run_says_what_that_run_scanned():
+    """The cell makes a claim about the MARKET, and a --tickers run writes
+    docs/data.json like any other: over a two-name smoke record it said no 4%
+    burst reached the checklist, with nothing anywhere on the mail saying the
+    scan was two names. The morning funnel carries no universe line, by
+    design -- THIS pass scanned none -- so the scope goes in the sentence that
+    needs it."""
+    named = _visible_text(build_html([], "morning", dict(
+        FOLLOWED_CLEAN, followed_universe="2 named on the command line (--tickers)")))
+    whole_file = _visible_text(build_html([], "morning", FOLLOWED_CLEAN))
+
+    assert ("That run scanned 2 named on the command line (--tickers), not the "
+            "checked-in universe.") in named
+    assert "That run scanned" not in whole_file, (
+        "and a scan of the checked-in file needs no clause: it is the ordinary case")
+
+
+def test_a_morning_that_cannot_count_the_bursts_does_not_point_at_a_band_that_is_absent():
+    """The pointer and the band are two halves of one mechanism. A snapshot
+    whose `bursts` cannot be read is refused at load by snapshot_problem() and
+    refused here, and neither state requires the run to have a problem of its
+    own -- so the cell sent a reader to "the failures listed above" over a mail
+    with no red band at all."""
+    stats = dict(STATS, status="ok", session="2026-09-04", bursts="0", errors=[])
+
+    text = _visible_text(build_html([], "morning", stats))
+
+    assert "See the failures listed above" not in text
+    assert "no failures to point at" in text
+    assert "not a statement about the market" in text
 
 
 # _headline() knew the mode and the staleness, and neither of the two other
@@ -1165,13 +1309,29 @@ def test_every_free_text_leaf_reaches_the_reader_whole(where, stats, must_read):
     ("the row's own reason for carrying no chart",
      [make_result("AAA", chart=None, chart_note="no chart — <b>this pass</b> cannot date it")],
      "morning", DATED, "no chart — <b>this pass</b> cannot date it"),
-    # The one leaf here that was already escaped and pinned nowhere: a mutant
-    # dropping esc() from the stale headline survived the sweep above, because
-    # that sentence needs the morning mode AND a gap of two.
-    ("the session in the stale headline", [], "morning",
+    # The leaves here that were already escaped and pinned nowhere: a mutant
+    # dropping esc() from each survived the sweep above, because every one of
+    # them needs the morning mode, or a row, or both -- which is one level
+    # further in than "needs a row" and is why the round that added the half
+    # above still left four. Both stale-headline branches, because they are
+    # two sentences and only one of them renders without rows.
+    ("the session in the stale headline, with nothing to show", [], "morning",
      dict(STATS, status="degraded", session="2026-09-04<b>x</b>", stale_sessions=3,
           errors=[{"stage": "session", "message": "nothing has published"}]),
      "2026-09-04<b>x</b>"),
+    ("the session in the stale headline, over rows",
+     [make_result("AAA")], "morning",
+     dict(STATS, status="degraded", session="2026-09-04<i>y</i>", stale_sessions=3,
+          errors=[{"stage": "session", "message": "nothing has published"}]),
+     "2026-09-04<i>y</i>"),
+    ("the session stamped on the close cell", [make_result("AAA")], "morning",
+     dict(STATS, session="2026-08-31<b>z</b>"), "2026-08-31<b>z</b>"),
+    ("the close price itself", [make_result("AAA", close="44.8<b>q</b>")], "morning",
+     DATED, "44.8<b>q</b>"),
+    # _title()'s morning shortlist branch, which needs rows AND a session;
+    # its no-rows twin is the case two rows above.
+    ("the session in the morning shortlist heading", [make_result("AAA")], "morning",
+     dict(STATS, session="2026-08-31<em>t</em>"), "2026-08-31<em>t</em>"),
 ])
 def test_every_free_text_leaf_a_row_carries_reaches_the_reader_whole(
     where, rows, run_type, stats, must_read
