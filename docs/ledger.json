@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "app": "SpicyStock",
-  "generated": "2026-09-06T05:35:08Z",
+  "generated": "2026-09-06T07:28:07Z",
   "runs": [
     {
       "date": "2026-09-04",
@@ -14,7 +14,7 @@
       "top_score": null,
       "fallbacks": 0,
       "model": "claude-sonnet-4-6",
-      "status": "degraded",
+      "status": "ok",
       "dry_run": false,
       "universe": {
         "label": "data/symbols.txt (checked in)",

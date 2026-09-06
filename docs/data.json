@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "app": "SpicyStock",
-  "generated": "2026-09-06T05:35:08Z",
+  "generated": "2026-09-06T07:28:07Z",
   "_contract": {
     "about": "Written by src/pipeline.py at the end of a run (see src/ledger.py) and read by docs/index.html at runtime. run.fixture is false: every number here came out of the run named in `run`. The per-candidate record with forward returns filled in by later runs is docs/ledger.json. This block is documentation, not data; consumers ignore it.",
     "documented_in": "README.md, 'The data contract'",
@@ -91,17 +91,8 @@
       "fallback": 0
     },
     "model": "claude-sonnet-4-6",
-    "status": "degraded",
-    "errors": [
-      {
-        "stage": "session",
-        "message": "an evening run is the discovery pass over the session that closed today, so it expects to start after the 16:15 ET close, but today's session has not closed yet. The newest completed session is 2026-09-04, so that is what was read — it is yesterday's market, not tonight's. Everything below is labelled 2026-09-04 and nothing has been relabelled as today."
-      },
-      {
-        "stage": "email",
-        "message": "the shortlist was not delivered (ResendError: You can only send testing emails to your own email address (motahir.madni59@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain.)"
-      }
-    ]
+    "status": "ok",
+    "errors": []
   },
   "candidates": [],
   "gated_out": [],
@@ -117,7 +108,7 @@
       "top_score": null,
       "fallbacks": 0,
       "model": "claude-sonnet-4-6",
-      "status": "degraded",
+      "status": "ok",
       "dry_run": false,
       "universe": {
         "label": "data/symbols.txt (checked in)",
