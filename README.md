@@ -274,7 +274,12 @@ has published anything.
 
 `docs/index.html` is a static page served by GitHub Pages from `docs/`. It fetches
 `docs/data.json` in the browser and renders it — no server, no build step, no
-framework. **An evening run writes that file at the end of every run** (step 9,
+framework. The SpicyChicken visual system is vendored in `docs/design-system/`,
+with its exact source commit and file hashes in `provenance.json`. `docs/stock.css`
+arranges the branded cover, run summary, research panels and responsive pick cards;
+the shared system supplies the original chick, themes, surfaces and reduced-motion
+aware transitions. These design files are checked in directly and the pipeline does
+not regenerate them. **An evening run writes that data file at the end of every run** (step 9,
 `src/ledger.py`), together with `docs/ledger.json` and the chart PNGs — which
 are **not** committed (`.gitignore` blocks `/docs/charts/`), so the published
 page has no images and every chart slot explains that instead. Open the page
@@ -736,13 +741,12 @@ a stub `gh` running its real `jq` filter, six scenarios, in
 ### Checking it
 
 ```bash
-git clone --branch v2.4.0 https://github.com/spicyChicken59/design-system /tmp/design-system
-node tools/dashboard_smoke.mjs        # /tmp/design-system is on its search path
+node tools/dashboard_smoke.mjs
 ```
 
 Opens the real page in headless Chromium and asserts what it promises. Offline by
-construction: `docs/` is served locally and every CDN request is answered from a
-design-system checkout on disk. Needs playwright's chromium; it is not a repo
+construction: `docs/` and its exact design-system snapshot are served locally,
+and external requests are blocked. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
 **Three data sources, one page.** It runs 206 checks, and which file each one
@@ -907,3 +911,5 @@ against a hand-made `data.json` and agree, but that check is not committed.
   accumulate?" above for how it survives a CI container — and for the one thing
   about that step nothing has ever exercised.
 - Output is screening for human review, not trading advice.
+
+For local design review, run `npm run dev` (Node only, no dependencies) and open the preview address it serves. The production pages remain static.

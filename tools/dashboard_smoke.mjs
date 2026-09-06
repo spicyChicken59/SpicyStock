@@ -1,6 +1,6 @@
 // Does the dashboard still work? The one check that opens it.
 //
-//   node tools/dashboard_smoke.mjs [design-system-checkout] [--shots <dir>]
+//   node tools/dashboard_smoke.mjs [--shots <dir>]
 //
 // docs/index.html is a static shell: the Python pipeline writes docs/data.json
 // and the page fetches it in the browser. Nothing in the Python suite can fail
@@ -17,8 +17,8 @@
 //
 // Offline by construction, so CI has nothing new to reach for: docs/ is served
 // from a local http server (the page fetches data.json, which file:// blocks),
-// every cdn.jsdelivr.net request is answered from a design-system checkout on
-// disk, and every other host is answered with an empty body.
+// the exact design-system snapshot ships inside docs/design-system, and every
+// external host is answered with an empty body.
 //
 // THREE DATA SOURCES, ONE PAGE. docs/data.json is whatever the last run wrote
 // -- the fixture on a fresh clone, last night's real run once evening.yml has
@@ -54,19 +54,11 @@ const SOURCES = { fixture: FIXTURES, history: join(FIXTURES, 'history') };
 const argv = process.argv.slice(2);
 const SHOTS = argv.includes('--shots') ? argv[argv.indexOf('--shots') + 1] : null;
 
-// The checkout the page's pinned CDN requests are answered from. CI passes the
-// clone it already made for the linter; locally the first of these that has
-// sc.css in it wins.
-const DS = [
-  argv.find((a) => !a.startsWith('--') && a !== SHOTS),
-  process.env.SC_DESIGN_SYSTEM,
-  '/tmp/design-system',
-  resolve(REPO, '..', 'design-system'),
-  join(REPO, 'design-system')
-].filter(Boolean).find((d) => existsSync(join(d, 'sc.css')));
-if (!DS) {
-  console.error('usage: node tools/dashboard_smoke.mjs [design-system-checkout] [--shots <dir>]');
-  console.error('       no checkout with sc.css found — pass one, or set SC_DESIGN_SYSTEM');
+// Exercise the same snapshot GitHub Pages serves. Falling back to a sibling
+// checkout could pass against styles that the published page does not have.
+const DS = join(ROOT, 'design-system');
+if (!existsSync(join(DS, 'sc.css'))) {
+  console.error('docs/design-system/sc.css is missing — restore the recorded local snapshot');
   process.exit(2);
 }
 
@@ -578,13 +570,6 @@ const PIXEL = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQ
 await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => (/\.(png|jpe?g|webp|gif|svg)/i.test(r.request().url())
   ? r.fulfill({ status: 200, contentType: 'image/png', body: PIXEL })
   : r.fulfill({ status: 200, contentType: 'text/plain', body: '' })));
-await ctx.route('**://cdn.jsdelivr.net/**', (route) => {
-  const path = new URL(route.request().url()).pathname;
-  const file = join(DS, path.replace(/^\/gh\/spicyChicken59\/design-system@[^/]+\//, ''));
-  return existsSync(file)
-    ? route.fulfill({ path: file, contentType: TYPES[extname(file)] })
-    : route.fulfill({ status: 404, body: 'not in the checkout: ' + path });
-});
 
 const errors = [];
 const chart404 = new Set();
