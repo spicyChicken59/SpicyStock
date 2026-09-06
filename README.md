@@ -61,6 +61,7 @@ Layer 6  Email ....................... HTML table, top 5, with the charts this
 | costs | ~25 Claude calls, ~$0.15 | nothing |
 | writes | `docs/data.json`, `docs/ledger.json`, `docs/charts/` (gitignored), `results/*.csv` | nothing |
 | charts | attached inline — the PNGs it just rendered | none, and the email says why |
+| an empty table | says what its own scan found | says what the run it follows found |
 | workflow | `.github/workflows/evening.yml` | `.github/workflows/morning.yml` |
 
 **Why the morning run does not scan.** Before the open it has no market data
@@ -106,6 +107,25 @@ saying the market is closed today, because nothing in this project knows that.
 That is designed: a calendar approximate enough to be wrong would say more
 than the record can support, and the evening cron on the holiday itself is
 what finds no bar and says so.
+
+**And when there is nothing to show, the cell reads the run it followed, not
+this pass's own band.** A follow-through is degraded by things that are not
+faults in it: how stale the record is, and the problems it carries forward
+from the run it read. The cell tested for problems before it tested the mode,
+so any of those printed "No shortlist. See the failures listed above — this is
+not a statement about the market" over a source run that had scanned its
+session cleanly and found no burst — three lines under a funnel reading "4%
+bursts that session: 0", which *is* a statement about the market. It names the
+session and what that run found now ("The 2026-09-04 run this follows through
+on found no 4% burst to score", or "…scored no candidates"), the band keeps
+the staleness, and the failures sentence is kept for the two states where it
+is true: a morning that read no published run at all — the state every one of
+them is in until `evening.yml`'s commit-back succeeds — and one whose source
+run was itself DEGRADED or FAILED, where both facts go in one sentence,
+because a run that could not finish still published counts and they are not a
+reading of the session. The names that stopped printing are on both emails for
+the same reason the morning shows anything at all: `run.stopped_printing` is a
+fact about `data/symbols.txt`, so it is as true at 8:30 as it was at 18:16.
 
 **The mode is a promise about the clock, and it is checked.** An evening run
 declares that today's session has closed; a morning run declares that it has
@@ -302,7 +322,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1020 tests, no network or API keys needed
+pytest tests/                   # 1035 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the

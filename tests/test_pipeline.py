@@ -2533,7 +2533,10 @@ def test_the_morning_email_attaches_no_chart_and_says_why(
     morning_mail = mocked_boundaries["resend"].sent[1]
     assert morning_mail["attachments"] == [], "no picture this pass cannot date"
     assert "cid:chart_BURST" not in morning_mail["html"], "and nothing referencing one"
-    assert pipeline.MORNING_CHART_NOTE in morning_mail["html"], (
+    # Through the parser: the note carries an apostrophe, which is an entity
+    # in the source now that this leaf is escaped like every other one. The
+    # reader is the standard.
+    assert pipeline.MORNING_CHART_NOTE in visible(morning_mail["html"]), (
         "the cell where the chart was says what happened")
     assert pipeline.email_row(row)["chart"] is None, (
         "and the rule itself: the row the morning pass renders names no chart")
@@ -2615,6 +2618,86 @@ def test_a_morning_run_with_nothing_published_says_so_and_still_mails(
     (sent,) = mocked_boundaries["resend"].sent
     assert sent["subject"].startswith("[4% Burst] DEGRADED — ")
     assert "not a statement about the market" in sent["html"]
+
+
+def test_the_morning_mail_over_a_clean_zero_burst_run_says_what_that_run_found(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, tmp_path
+):
+    """THE MAIL THE FIRST WEEKDAY CRON WOULD HAVE SENT, reproduced first over
+    main's own docs/data.json with the clock at 2026-09-08 12:30 UTC: a clean
+    evening run that scanned its session and found no burst, one session
+    stale, and the 8:30 cell read "See the failures listed above -- this is
+    not a statement about the market" three lines under "4% bursts that
+    session: 0", which IS one. The only "failure" was the staleness band.
+
+    The pin is what makes the source run CLEAN while the morning is degraded:
+    a pinned session is exempt from the mode/clock check, so the evening run
+    carries no problems of its own and the gap of one is the morning's.
+    """
+    fake_alpaca.add_history("QUIET", ohlcv("flat"))
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
+    evening = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, tickers=["QUIET"], report=evening)
+    monkeypatch.delenv("SCAN_SESSION_DATE")
+    source = published(tmp_path)["run"]
+    assert (evening.status, source["bursts"], source["status"]) == ("ok", 0, "ok"), (
+        "the precondition: a clean scan of that session that found no burst")
+
+    market_clock.before_the_open()
+    report = pipeline.RunReport()
+    pipeline.run("morning", dry_run=False, report=report)
+
+    text = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert report.exit_code == pipeline.EXIT_DEGRADED, "the staleness still degrades it"
+    assert f"The {source['date']} run this follows through on found no 4% burst" in text
+    assert "not a statement about the market" not in text, (
+        "the run it follows through on was one: it scanned the session and found nothing")
+    assert "4% bursts that session: 0" in text, "and the funnel still reports it"
+
+
+def test_the_morning_mail_over_a_degraded_run_will_not_read_its_counts_as_a_market(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, tmp_path
+):
+    """The other half of the rule, and the one that says why the SOURCE run's
+    status has to be handed over: a run that could not finish still published
+    counts, and they are not a reading of the session. Here the evening run is
+    degraded by the clock alone -- it scanned before the close -- so the
+    morning is not stale and the only thing separating this from the test
+    above is what the run it follows says about itself."""
+    fake_alpaca.add_history("QUIET", ohlcv("flat"))
+    market_clock.before_the_open()
+    evening = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, tickers=["QUIET"], report=evening)
+    source = published(tmp_path)["run"]
+    assert (evening.status, source["bursts"]) == ("degraded", 0)
+
+    pipeline.run("morning", dry_run=False)
+
+    text = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert f"The {source['date']} run this follows through on found no 4% burst" in text
+    assert "That run was itself DEGRADED" in text
+    assert "not a statement about the market" in text
+
+
+def test_the_morning_mail_names_what_stopped_printing_the_way_the_page_does(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """run.stopped_printing is a fact about data/symbols.txt, not about the
+    market, so it is as true at 8:30 as it was at 18:16 -- and the page has
+    printed it off this block since it existed while the morning mail dropped
+    it, because follow_through() never handed it over. Main's own record
+    carries three such names."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=24)
+    fake_alpaca.add_history("GONE", ohlcv("burst", variant=90), stale_sessions=30)
+    pipeline.run("evening", dry_run=True, tickers=names + ["GONE", "NOSUCH"])
+    assert published(tmp_path)["run"]["stopped_printing"]["count"] == 2
+
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+
+    text = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "Not printing: NOSUCH (no bar at all), GONE (since " in text
+    assert f"more than {pipeline.STOPPED_PRINTING_SESSIONS} sessions" in text
 
 
 def test_a_morning_run_refuses_to_mail_the_hand_authored_fixture(

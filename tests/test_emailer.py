@@ -946,11 +946,82 @@ def test_what_day_n_counts_is_disclosed_once_under_the_table():
 
 def test_a_morning_run_with_nothing_to_show_does_not_blame_the_market():
     """Three empty tables now, and only one of them is a statement about
-    stocks: a morning pass has nothing of its own to find."""
-    assert "The run this follows through on scored no candidates." in build_html(
+    stocks: a morning pass has nothing of its own to find. The sentence names
+    the session it is about, because the run it follows through on is not
+    today's and every other surface of this mode says which one it is."""
+    assert "The 2026-08-31 run this follows through on scored no candidates." in build_html(
         [], "morning", DATED)
-    assert "The run this follows through on scored no candidates." not in build_html(
+    assert "scored no candidates" not in build_html(
         [], "evening", DATED), "and an evening run says what its own scan found"
+
+
+# --- the morning empty cell reads the run it follows, not this pass's band ---
+#
+# THE MAIL THE TUESDAY CRON WOULD HAVE SENT. build_html() tested `errors`
+# before the mode, so any problem at all -- including the staleness band, which
+# is a fact about publishing and not about the market -- printed "See the
+# failures listed above" over a source run that was clean and simply found
+# nothing. Reproduced over main's real docs/data.json (0 bursts, status ok)
+# with the clock at 2026-09-08 12:30 UTC: "this is not a statement about the
+# market" three lines under "4% bursts that session: 0", which IS one.
+
+#: The stale morning run over main's real 4 Sep record, as of Tuesday 8 Sep.
+FOLLOWED_CLEAN = dict(
+    STATS, status="degraded", session="2026-09-04", bursts=0, gated=0,
+    stale_sessions=1, followed_status="ok",
+    errors=[{"stage": "session", "message":
+             "the newest published run is the evening run of 2026-09-04, and nothing "
+             "has published a later session — that is 1 session ago"}],
+)
+
+
+def test_a_morning_over_a_clean_run_that_found_nothing_says_what_that_run_found():
+    text = _visible_text(build_html([], "morning", FOLLOWED_CLEAN))
+
+    assert "The 2026-09-04 run this follows through on found no 4% burst" in text
+    assert "not a statement about the market" not in text, (
+        "the source run WAS a statement about the market: it scanned the session "
+        "cleanly and found no burst. The staleness is the band's business")
+
+
+def test_a_morning_with_no_published_run_to_read_still_defers_to_the_failures():
+    """The state every morning is in until evening.yml's commit-back succeeds:
+    no counts were read, so there is nothing to say about the market."""
+    text = _visible_text(build_html([], "morning", dict(
+        status="degraded",
+        errors=[{"stage": "history", "message": "there is nothing to follow through on"}])))
+
+    assert "not a statement about the market" in text
+    assert "found no 4% burst" not in text
+
+
+@pytest.mark.parametrize("bursts", [None, True, -3, "0"])
+def test_a_morning_whose_burst_count_is_not_a_count_says_nothing_about_the_market(bursts):
+    """`bursts` is the same fact the funnel reads to decide whether there was
+    a run to read at all, and it is not shape-checked at load: absent is the
+    morning that read nothing, and a bool, a negative or a string is a file no
+    writer produces. One branch for all four -- a cell that cannot count the
+    bursts cannot report what the session held."""
+    stats = dict(status="degraded", session="2026-09-04",
+                 errors=[{"stage": "history", "message": "unreadable"}])
+    if bursts is not None:
+        stats["bursts"] = bursts
+
+    text = _visible_text(build_html([], "morning", stats))
+
+    assert "not a statement about the market" in text
+    assert "found no 4% burst" not in text and "scored no candidates" not in text
+
+
+def test_a_morning_over_a_degraded_run_reports_its_counts_and_refuses_to_trust_them():
+    """A source run that could not finish its scan still published counts, and
+    they are not a reading of the session. Both facts, in one sentence."""
+    text = _visible_text(build_html([], "morning", dict(
+        FOLLOWED_CLEAN, followed_status="degraded")))
+
+    assert "The 2026-09-04 run this follows through on found no 4% burst" in text
+    assert "not a statement about the market" in text
+    assert "4% bursts that session: 0" in text, "and the funnel still reports what it read"
 
 
 # _headline() knew the mode and the staleness, and neither of the two other
@@ -1071,6 +1142,41 @@ def test_the_whole_monitor_survives_a_malformed_error_entry_not_just_its_headlin
 ])
 def test_every_free_text_leaf_reaches_the_reader_whole(where, stats, must_read):
     html = build_html([], "evening", stats)
+    assert must_read in _visible_text(html), where
+    assert must_read not in html, f"{where}: the raw text is in the source, so it was not escaped"
+
+
+#: The same claim over the leaves that need a ROW or the morning mode to
+#: render at all -- which is why the sweep above missed all five. Each is read
+#: off docs/data.json by the morning pass, so a hand-edited or truncated
+#: snapshot is the shape that reaches them.
+@pytest.mark.parametrize("where, rows, run_type, stats, must_read", [
+    ("the last score in a streak line",
+     _with_streak(last_seen="2026-08-31", last_score="8<b>x</b>", last_outcome="scored"),
+     "evening", DATED, "8<b>x</b>"),
+    ("the last verdict in a streak line",
+     _with_streak(last_seen="2026-08-31", last_score=8.4, last_verdict="A<i>y</i>",
+                  last_outcome="scored"),
+     "evening", DATED, "A<i>y</i>"),
+    ("the session the record begins on, in a streak with no day number",
+     _with_streak(day=None, first_seen=None, unknown_reason="window_not_covered",
+                  history_from="2026-08-20<b>x</b>", history_sessions=8, seen_before=3),
+     "evening", DATED, "2026-08-20<b>x</b>"),
+    ("the row's own reason for carrying no chart",
+     [make_result("AAA", chart=None, chart_note="no chart — <b>this pass</b> cannot date it")],
+     "morning", DATED, "no chart — <b>this pass</b> cannot date it"),
+    # The one leaf here that was already escaped and pinned nowhere: a mutant
+    # dropping esc() from the stale headline survived the sweep above, because
+    # that sentence needs the morning mode AND a gap of two.
+    ("the session in the stale headline", [], "morning",
+     dict(STATS, status="degraded", session="2026-09-04<b>x</b>", stale_sessions=3,
+          errors=[{"stage": "session", "message": "nothing has published"}]),
+     "2026-09-04<b>x</b>"),
+])
+def test_every_free_text_leaf_a_row_carries_reaches_the_reader_whole(
+    where, rows, run_type, stats, must_read
+):
+    html = build_html(rows, run_type, stats)
     assert must_read in _visible_text(html), where
     assert must_read not in html, f"{where}: the raw text is in the source, so it was not escaped"
 

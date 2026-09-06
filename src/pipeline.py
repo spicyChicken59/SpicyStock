@@ -1224,6 +1224,7 @@ def follow_through(mode: Mode, dry_run: bool = False,
     rows: list[dict] = []
     source: dict = {}
     session = None
+    status: str | None = None
     behind: int | None = None
     if snapshot is None:
         report.problem("history",
@@ -1299,6 +1300,17 @@ def follow_through(mode: Mode, dry_run: bool = False,
         if isinstance(source.get("liquidity"), dict) else None,
         score_cap=source.get("score_cap") or 0,
         scored_by=source.get("scored_by") or {},
+        # The names in data/symbols.txt the feed had stopped answering for
+        # when that run scanned. A fact about the FILE, so it is still true
+        # this morning; the page has printed it off the same block since it
+        # existed and the email dropped it on this path alone.
+        stopped_printing=source.get("stopped_printing"),
+        # The status word of the run being followed, which is NOT this run's:
+        # a follow-through is degraded by staleness alone, and the empty-cell
+        # note has to tell "a clean scan found nothing" from "a run that could
+        # not finish reported nothing". src.emailer._empty_morning_note()
+        # is the only reader.
+        followed_status=str(status) if status is not None else None,
         # How far behind, in sessions, so the SUBJECT LINE can escalate. Every
         # staleness read DEGRADED before this, and a screener dead for three
         # weeks is not the Tuesday after Presidents' Day. src.emailer._prefix()

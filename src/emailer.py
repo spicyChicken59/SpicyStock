@@ -351,7 +351,9 @@ def _last_appearance(streak: dict) -> str:
     """
     outcome, score = streak.get("last_outcome"), streak.get("last_score")
     if score is not None and outcome in (None, "scored"):
-        return f"scored {score}/10 {streak.get('last_verdict') or ''}".rstrip()
+        # Both escaped: they are read straight off docs/data.json by the
+        # morning pass, and a score of "<b>9" is markup to a mail client.
+        return f"scored {esc(score)}/10 {esc(streak.get('last_verdict') or '')}".rstrip()
     return LAST_OUTCOME.get(outcome) or "no score was recorded then"
 
 
@@ -426,7 +428,8 @@ def _no_day_note(streak: dict) -> str:
     reason, begins = streak.get("unknown_reason"), streak.get("history_from")
     sessions, seen = streak.get("history_sessions") or 0, streak.get("seen_before") or 0
     if reason == "window_not_covered" and begins and sessions:
-        span = f"the {_plural(sessions, 'session')} in the record, which begins {begins}"
+        span = (f"the {_plural(sessions, 'session')} in the record, which begins "
+                f"{esc(begins)}")
         if seen:
             return (f"day unknown — burst on {seen} of {span}; this setup may have "
                     f"started before it")
@@ -672,7 +675,10 @@ def _no_chart_note(row: dict) -> str:
     is a different fact with a different fix.
     """
     if row.get("chart_note"):
-        return row["chart_note"]
+        # src.pipeline's MORNING_CHART_NOTE on the morning path -- but the row
+        # it arrives on came off disk, and this module escapes leaves rather
+        # than trusting the writer of the field.
+        return esc(row["chart_note"])
     if row.get("chart"):
         return (f'no chart — one was rendered for this candidate, but {esc(row["chart"])} '
                 f"is not there now, so there was nothing to attach")
@@ -757,11 +763,17 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
         # step 10: a morning pass has nothing of its own to find, so "no
         # candidates passed the quality gate" would be a sentence about a scan
         # that never ran.
-        if scan_stats.get("errors"):
-            empty = ("No shortlist. See the failures listed above — this is not "
-                     "a statement about the market.")
-        elif run_type == "morning":
-            empty = "The run this follows through on scored no candidates."
+        #
+        # THE MODE IS ASKED FIRST, because `errors` answers a different
+        # question on the morning path: a follow-through is degraded by
+        # staleness and by the problems it CARRIES FORWARD from the run it
+        # reads, neither of which is a fault in this pass, and both of which
+        # used to send the cell to "see the failures listed above" over a
+        # source run that had scanned its session cleanly and found nothing.
+        if run_type == "morning":
+            empty = _empty_morning_note(scan_stats)
+        elif scan_stats.get("errors"):
+            empty = NO_SHORTLIST_SEE_FAILURES
         else:
             empty = _empty_evening_note(scan_stats)
         rows = f'<tr><td colspan="7" style="padding:16px;color:#666;">{empty}</td></tr>'
@@ -788,6 +800,55 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
       Automated screening output for human review — not trading advice.
       Verify charts and news before acting.</p>
     </body></html>"""
+
+
+#: The cell for a run whose own failures are why there is nothing to show.
+#: One string, because the morning path reaches it from two different states
+#: and an evening one from a third, and three copies of a sentence is how the
+#: two-vocabularies drift starts.
+NO_SHORTLIST_SEE_FAILURES = ("No shortlist. See the failures listed above — this is "
+                             "not a statement about the market.")
+
+
+def _empty_morning_note(scan_stats: dict) -> str:
+    """Why a morning table is empty — read off the run it follows, not this pass.
+
+    THE MAIL THE FIRST WEEKDAY CRON WOULD HAVE SENT. build_html() tested
+    `errors` before the mode, and a morning run is degraded by things that are
+    not faults in it at all: the staleness band (a fact about what has
+    published) and the problems it carries forward from the run it read. So
+    over main's real 4 Sep record — a clean scan of the session that found no
+    burst — the Tuesday 8:30 mail printed "this is not a statement about the
+    market" three lines under a funnel reading "4% bursts that session: 0",
+    which IS one. Rendered before it was written down, through a real parser.
+
+    The counts are the same ones the funnel prints, and the presence of
+    `bursts` is the same test _funnel_line() makes for "was there a run to
+    read at all": a stats block without it is a pass that read nothing, and
+    then the failures above are the only honest answer. Its own staleness is
+    NOT mentioned here — the band and the subject line carry that, and a cell
+    that repeated it would be the second vocabulary for one mechanism.
+
+    A source run that was itself degraded or failed published counts that are
+    not a reading of the session, so both facts go in one sentence: what it
+    found, and that the run reporting it could not finish. `followed_status`
+    is the word src.pipeline's follow_through() read off the snapshot; absent,
+    the caller offered no run to judge.
+    """
+    bursts = scan_stats.get("bursts")
+    if not isinstance(bursts, int) or isinstance(bursts, bool) or bursts < 0:
+        return NO_SHORTLIST_SEE_FAILURES
+    session = scan_stats.get("session")
+    named = (f"The {esc(session)} run this follows through on" if session
+             else "The run this follows through on")
+    found = (f"{named} scored no candidates." if bursts
+             else f"{named} found no 4% burst to score: nothing reached the checklist, "
+                  "so nothing failed it.")
+    status = scan_stats.get("followed_status")
+    if isinstance(status, str) and status != "ok":
+        return (f"{found} That run was itself {esc(status.upper())}, so its own reasons "
+                "are listed above and this is not a statement about the market.")
+    return found
 
 
 def _empty_evening_note(scan_stats: dict) -> str:

@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1020 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1035 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -287,7 +287,15 @@ markup: the operator read "502 Bad Gateway 502 Bad Gateway cloudflare" with
 the tags swallowed. The escaping round before this one swept eight leaves and
 missed the band, the checklist lines, the chart note, the close cell, the
 session in the title and funnel, and the stale note — all escaped now, each
-pinned through a real parser. Two existing tests then broke, and correctly:
+pinned through a real parser. **And that sweep was one table short of
+complete**, which round 10 found by mutating it: every leaf it pinned renders
+on `build_html([], "evening", stats)`, so the four that need a ROW or the
+morning mode were neither escaped nor pinned — a streak's `last_score` and
+`last_verdict`, the `history_from` a no-day-number streak prints as "which
+begins …", and the row's own `chart_note` — and a fifth, the session in the
+stale headline, was escaped and pinned nowhere, so dropping its `esc()` was a
+survivor. The parser table has a second half now, parametrised over the rows
+and the mode as well as the stats. Two existing tests then broke, and correctly:
 they grepped the mail SOURCE for a sentence with an apostrophe in it, which
 is an entity now, and the reader is the standard.
 
