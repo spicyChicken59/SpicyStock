@@ -15,6 +15,11 @@ on:
         description: "Backfill: the session to scan, YYYY-MM-DD. Leave empty to scan the session the clock says."
         required: false
         default: ""
+      dry_run:
+        description: "Rehearse: scan, score and write the record into this run's artifact, but mail nothing and commit nothing back."
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: write   # the run commits docs/ back; see "Persist the run" below
   actions: read
@@ -103,6 +108,15 @@ jobs:
           # what a backfill is for. SCAN_SESSION_DATE was documented for a
           # shell only, and the first live day needed one from here.
           SCAN_SESSION_DATE: ${{ inputs.session }}
+          # A rehearsal from the same form. --dry-run skips only the email (and
+          # the failure notice), so a rehearsal still scans, scores and writes
+          # docs/ -- into this run's artifact, since the persist step below
+          # skips a dry run and the artifact is named so the backup-cron guard
+          # does not count it as the night's run. It is how the first request
+          # whose window reaches past the clock was tried before the first
+          # scheduled evening asked for one. A scheduled run has no box, so
+          # this expands to '' and the command is the plain one.
+          DRY_RUN_FLAG: ${{ inputs.dry_run == true && '--dry-run' || '' }}
         # THE EXIT CODE IS CAPTURED HERE AND RE-RAISED AT THE END OF THE JOB,
         # so that "Persist the run" can tell a DEGRADED night from a broken one.
         # It could not before, and the cost was the whole point of the project:
@@ -128,7 +142,7 @@ jobs:
         # question and deliberately not answered here.
         run: |
           set +e
-          python -m src.pipeline evening
+          python -m src.pipeline evening $DRY_RUN_FLAG
           code=$?
           set -e
           echo "code=$code" >> "$GITHUB_OUTPUT"
@@ -153,8 +167,12 @@ jobs:
         # died with the container: the same defect as the degraded one above,
         # one stage later, found by sweeping for it rather than by waiting.
         # src.pipeline's EXIT_FAILED_AFTER_PUBLISH is the other half.
+        # And never a rehearsal: a dry run writes a record it must not commit,
+        # which is what makes it safe to click at lunch. A scheduled run has
+        # no dry_run input, and a null is not true.
         if: >-
           steps.guard.outputs.go == 'true'
+          && inputs.dry_run != true
           && (steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2'
               || steps.pipeline.outputs.code == '3')
         # Without this the ledger cannot accumulate: docs/ is written inside the
@@ -249,10 +267,13 @@ jobs:
         with:
           # evening-<session>-<id> when the run published (exit 0, 2 or 3 --
           # the same three the persist step keeps), evening-failed-<id>
-          # otherwise. The guard counts only the first shape, so a failed
-          # run or a test click no longer silences that night's cron, and a
-          # session is a session whatever UTC day the upload landed on.
-          name: ${{ (steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2' || steps.pipeline.outputs.code == '3') && steps.pipeline.outputs.session != '' && format('evening-{0}-{1}', steps.pipeline.outputs.session, github.run_id) || format('evening-failed-{0}', github.run_id) }}
+          # otherwise, and evening-dryrun-<id> for a rehearsal whatever it
+          # exited, because a rehearsal that published would otherwise wear
+          # the night's name and silence the backup cron. The guard counts
+          # only the first shape, so a failed run, a rehearsal or a test click
+          # never silences that night's cron, and a session is a session
+          # whatever UTC day the upload landed on.
+          name: ${{ inputs.dry_run == true && format('evening-dryrun-{0}', github.run_id) || ((steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2' || steps.pipeline.outputs.code == '3') && steps.pipeline.outputs.session != '' && format('evening-{0}-{1}', steps.pipeline.outputs.session, github.run_id) || format('evening-failed-{0}', github.run_id)) }}
           path: |
             docs/data.json
             docs/ledger.json

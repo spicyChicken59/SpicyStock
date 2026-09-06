@@ -1048,6 +1048,11 @@ EDT_CRON, EST_CRON = "16 22 * * 1-5", "16 23 * * 1-5"
      EST_CRON, "2026-12-02", "-0500", "go=true"),
     ("a manual dispatch always runs, whatever the artifacts say",
      [{"name": "evening-2026-09-04-1"}], "", "2026-09-04", "-0400", "go=true"),
+    # A rehearsal from the form scans and writes a record into its artifact,
+    # and the guard must not read that as the night having run.
+    ("a dry run today left its artifact: the cron still fires",
+     [{"name": "evening-dryrun-34021000000", "created_at": "2026-09-04T16:02:00Z"}],
+     EDT_CRON, "2026-09-04", "-0400", "go=true"),
     ("the cron for the OTHER offset is the no-op",
      [], EST_CRON, "2026-09-04", "-0400", "go=false"),
 ])
@@ -1116,13 +1121,38 @@ def test_the_evening_workflow_takes_a_session_to_backfill_from_the_run_workflow_
     evening = yaml.safe_load(_read(".github/workflows/evening.yml"))
     on = evening.get("on", evening.get(True))       # PyYAML reads a bare `on:` as True
     inputs = on["workflow_dispatch"]["inputs"]
-    assert set(inputs) == {"session"} and inputs["session"]["required"] is False
+    assert set(inputs) == {"session", "dry_run"} and inputs["session"]["required"] is False
     (step,) = [s for s in evening["jobs"]["scan"]["steps"] if s.get("id") == "pipeline"]
     assert step["env"]["SCAN_SESSION_DATE"] == "${{ inputs.session }}"
 
     morning = yaml.safe_load(_read(".github/workflows/morning.yml"))
     on_m = morning.get("on", morning.get(True))
     assert not on_m["workflow_dispatch"], "the morning scans nothing and takes no session"
+
+
+def test_the_evening_workflow_can_rehearse_from_the_run_workflow_form_without_mailing_or_committing():
+    """The form's `dry_run` box. Three things have to hold together, and
+    each is asserted on the parsed YAML rather than grepped: the flag reaches
+    the pipeline as --dry-run and a scheduled run, which has no box, sends
+    nothing; the persist step skips a rehearsal, or a lunchtime click would
+    commit a record the night's cron then re-scans; and the artifact wears
+    a name the backup-cron guard does not count, or a rehearsal that
+    published would silence that night's cron -- the round-4 defect, one
+    input over. Its shell half is the guard test below."""
+    import yaml
+
+    evening = yaml.safe_load(_read(".github/workflows/evening.yml"))
+    on = evening.get("on", evening.get(True))
+    box = on["workflow_dispatch"]["inputs"]["dry_run"]
+    assert box["type"] == "boolean" and box["default"] is False and box["required"] is False
+    steps = {s.get("name"): s for s in evening["jobs"]["scan"]["steps"]}
+    pipeline_step = steps["Run evening pipeline"]
+    assert pipeline_step["env"]["DRY_RUN_FLAG"] == "${{ inputs.dry_run == true && '--dry-run' || '' }}"
+    assert "python -m src.pipeline evening $DRY_RUN_FLAG" in pipeline_step["run"]
+    persist = " ".join(str(steps["Persist the run"]["if"]).split())
+    assert "inputs.dry_run != true" in persist
+    name = " ".join(str(steps["Keep the run's artifacts"]["with"]["name"]).split())
+    assert name.startswith("${{ inputs.dry_run == true && format('evening-dryrun-{0}', github.run_id) ||"), name
 
 
 def test_the_documented_stopped_printing_numbers_are_the_ones_the_code_applies():

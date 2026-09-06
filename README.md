@@ -240,11 +240,12 @@ python -m src.pipeline morning --dry-run
 
 # Seed the history from a past session (its forward returns resolve at once):
 SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
-# From GitHub: Actions -> "Evening scan" -> Run workflow, and fill the "session" box.
+# From GitHub: Actions -> "Evening scan" -> Run workflow, and fill the "session" box;
+# tick "dry_run" to rehearse -- it mails nothing and commits nothing back.
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 985 tests, no network or API keys needed
+pytest tests/                   # 987 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -624,7 +625,12 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 From GitHub, the same backfill is the evening workflow's **Run workflow**
 button with the `session` box filled: the run is exempt from the clock check,
 replaces that session's entry in the record if one exists, mails, and commits
-back like any night.
+back like any night. The same form has a `dry_run` box: ticked, the run still
+scans, scores and writes its record — into the run's artifact, named
+`evening-dryrun-<id>` so the backup cron does not count it as the night's run
+— but mails nothing and commits nothing back, which is what makes it safe to
+click at lunch, and how a request whose window reaches past the clock was
+tried before the first scheduled evening asked for one.
 
 That is also the only way the dashboard's score-against-outcome plot can carry a
 point today: on a normal evening run, tonight's candidates are pending by
