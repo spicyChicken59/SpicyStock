@@ -85,6 +85,30 @@ same, so the picture is dropped and the cell says why. The evening email is
 unaffected: it attaches the PNGs it rendered moments earlier, in the same
 process.
 
+**A run that dies mails the same email with the failure in it, and that mail
+now says what the run did before it died.** It printed "Universe: not
+recorded" over a scan that had asked every symbol and been answered by every
+one of them — the counts were in memory, and nothing had attached them to the
+report. `run_scan()` fills its stats dict in place, so the notice reports
+whatever it had reached: "Universe: 228 asked, 228 answered, none with a bar
+for 2026-09-07 (newest seen 2026-09-04)", with the dropped and no-bar-at-all
+counts when there were any. Every clause is conditional on its own count — an
+absent number prints as absent, never as 0, because "0 asked" is a claim about
+a scan that never happened.
+
+**And a run that published and then failed to deliver is a different email
+from a run that never scanned.** The record is written before the send, so
+exit 3 is a night that scanned, rendered, paid for every Claude call and wrote
+both files — and its notice read "there is no shortlist below, and no scan was
+completed", with the one rejection listed twice, once in the email stage's own
+sentence and once as the exception that ended the run. The notice is that mail
+sent again: the rows are in it, the headline says the record is published and
+what failed was the delivery, and the exception is recorded once. The
+attachments are dropped, because a byte-identical resend of what a server just
+refused has no reason to go differently, and each row says so where its chart
+would be. The morning pass writes no record and can never claim one, but it
+can still fail on the send, and its notice is the same retry.
+
 **A morning run that has nothing fresh to show says how stale it is, in the
 subject line.** Its whole input is the snapshot the last evening run published,
 so the interesting failure is that nothing published — and "nothing published
@@ -153,6 +177,17 @@ on the evening run, which is the only one that writes a CSV, in that file's
 name too. The label cannot quietly become a different day.
 `SCAN_SESSION_DATE` is exempt: a pinned session is you overruling the clock on
 purpose, and a deliberate backfill is not a mistake.
+
+An evening dispatch whose session is already published re-presents it rather
+than paying for the same answer twice — and the mail it sends used to say
+"Morning follow-through" in the subject, "re-presented before the open" in the
+band and "at today's open" in the heading, three surfaces describing the 8:30
+cron on a message a lunchtime click produced hours after that open. The pass
+really is the follow-through; the dispatch is what the reader has to
+recognise, so the subject names it and the two open sentences are replaced. A
+morning dispatch made *after* the close gets the same treatment from the other
+side: it says so in its own band and then promised an open that was seven and
+a half hours earlier.
 
 **The session before is read off the frames, so the day after a holiday is a
 night.** A burst is one session's move against the session before it, and the
@@ -332,7 +367,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1069 tests, no network or API keys needed
+pytest tests/                   # 1101 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -772,7 +807,9 @@ delivering — an unverified `RESEND_FROM` domain is the likely one — is in th
 same position and exited 1 for it, the same code as a preflight that spent
 nothing. It exits 3 now. The step captures the code and re-raises it last, after
 the persist and the artifact upload, so the job's colour is unchanged: 2 and 3
-are still red. Only the record is rescued.
+are still red. Only the record is rescued — and the mail that goes out on that
+path says so, rather than reporting a scan that never happened (see "The two
+runs").
 
 That retry only started existing in this round. `git pull --rebase` sat bare in
 the loop, and under Actions' `bash -e` a failing pull ends the step — so the

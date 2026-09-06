@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1069 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1101 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -233,6 +233,15 @@ run just added is older; the record still gains the backfill.
 kept its record — and the record carried `status: ok, errors: []`, so the
 page and the next morning presented it as clean and only the Actions colour
 knew. The delivery failure is stamped into both files before it is raised.
+Round 10 found the third surface: the FAILURE NOTICE that went out in the
+shortlist's place read "there is no shortlist below, and no scan was
+completed" over a night whose record was already on disk, and listed the one
+rejection twice — once in the email stage's own sentence and once as main()'s
+recording of the same exception. The notice is that mail sent again now
+(`send_failure_notice(..., results=)`), with the rows in it, a headline that
+says the record published and the delivery failed, and the attachments dropped
+so it is not the message the server just refused; `RunReport.fail()` skips an
+exception the last recorded problem already carries.
 
 **The scanner assumed bars arrive oldest-first and once each.** Neither is
 promised: `BarSet.df` keeps the response's order and the request pins no

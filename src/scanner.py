@@ -648,6 +648,34 @@ def _last_bar_date(df: pd.DataFrame) -> date | None:
     return _as_date(df.index[-1])
 
 
+def _stale_hint(cfg: "ScanConfig", session) -> str:
+    """What to do about a session no symbol printed for -- which depends on
+    whether the caller already pinned it.
+
+    The one sentence both StaleDataError branches used to end on advised
+    SCAN_SESSION_DATE=YYYY-MM-DD, and it was mailed to the operator in the
+    failure notice. On a backfill it advised the thing the run had just done:
+    pinning a session with no bar again asks the same feed the same question
+    and gets the same refusal. And unpinned it named two causes -- a day the
+    market did not trade, a session still open -- while offering a pin, which
+    is a fix for neither: the first needs a DIFFERENT session, and the second
+    needs the clock.
+
+    A holiday is the case Tuesday 8 Sep 2026 reaches first, the day after
+    Labor Day, so the closure is named rather than left to "may not have
+    traded that day": this module carries no calendar (see current_session)
+    and the possibility is exactly what it cannot rule out.
+    """
+    if cfg.session_date is not None:
+        return (f"SCAN_SESSION_DATE pinned {session}, and the feed holds no bar for it -- "
+                "so the market held no session that day, or the feed has not written it "
+                "yet. Asking again for the same session cannot answer differently.")
+    return ("The market may have held no session that day -- a holiday is never a quiet "
+            "market -- or today's session may still be open, or the feed may have stopped "
+            f"updating. SCAN_SESSION_DATE=YYYY-MM-DD scans a different session "
+            f"deliberately; pinning {session} repeats this.")
+
+
 def _newest_stale(stale: dict[str, date | None]) -> date | None:
     """The newest date among symbols that carried no bar for the session.
 
@@ -1371,9 +1399,7 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
         # from "nothing burst today".
         raise StaleDataError(
             f"no symbol carried a bar for {session}: all {with_bars} symbols with "
-            f"data are behind it ({seen}). The market "
-            "may not have traded that day, or the session may still be open. Pin "
-            "the session with SCAN_SESSION_DATE=YYYY-MM-DD to scan it deliberately."
+            f"data are behind it ({seen}). {_stale_hint(cfg, session)}"
         )
     if (with_bars >= cfg.coverage_guard_min_symbols
             and len(stale) / with_bars >= cfg.max_stale_fraction):
@@ -1386,8 +1412,7 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             f"{len(stale)} of {with_bars} symbols with data ({len(stale) / with_bars:.0%}) "
             f"carry no bar for {session}, at or above the {cfg.max_stale_fraction:.0%} "
             f"this scan will tolerate ({seen}). The "
-            "shortlist would describe the minority that did update. Pin the "
-            "session with SCAN_SESSION_DATE=YYYY-MM-DD to scan a past one."
+            f"shortlist would describe the minority that did update. {_stale_hint(cfg, session)}"
         )
     measured = with_bars - len(stale) - len(gapped)
     if measured and len(detector_errors) == measured:

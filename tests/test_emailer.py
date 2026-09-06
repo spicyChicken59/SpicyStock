@@ -27,7 +27,12 @@ STREAK_REASON_PHRASES = ("the checklist rejected", "an absolute rule refused",
 
 def _visible_text(html: str) -> str:
     """What a mail client shows, through a real parser -- the only honest
-    reading of an escaping claim."""
+    reading of an escaping claim.
+
+    The typographic apostrophe &rsquo; renders as is folded to a plain one, so
+    an assertion that a sentence is GONE cannot pass merely by having been
+    typed with the other quote. Nothing in this file asserts a curly one.
+    """
     from html.parser import HTMLParser
 
     class Reader(HTMLParser):
@@ -40,7 +45,8 @@ def _visible_text(html: str) -> str:
 
     reader = Reader()
     reader.feed(html)
-    return " ".join(" ".join(reader.parts).split())
+    text = " ".join(" ".join(reader.parts).split())
+    return text.replace("\u2019", "'").replace("\u2018", "'")
 
 
 def make_result(ticker: str, **overrides) -> dict:
@@ -1536,3 +1542,92 @@ def test_the_email_names_what_stopped_printing_and_says_nothing_when_nothing_did
     assert "Not printing" not in quiet
     older = build_html(results, "evening", STATS)
     assert "Not printing" not in older, "a snapshot from before the block existed says nothing, not 0"
+
+
+# --- what a dead scan had reached, and when a follow-through is being read ---
+
+
+@pytest.mark.parametrize("coverage,expected", [
+    # Every clause, in the shape the Monday-after-a-holiday scan produces.
+    ({"requested": 228, "with_bars": 228, "fresh": 0, "session": "2026-09-07",
+      "newest_seen": "2026-09-04"},
+     "228 asked, 228 answered, none with a bar for 2026-09-07 (newest seen 2026-09-04)"),
+    # A partial scan: some names did print for the session.
+    ({"requested": 228, "with_bars": 220, "fresh": 30, "session": "2026-09-07"},
+     "228 asked, 220 answered, 30 with a bar for 2026-09-07"),
+    # HALF-WRITTEN COUNTS PRINT WHAT THEY HAVE. `with_bars` absent is not
+    # `with_bars` 0: one is a scan that did not get that far, the other is a
+    # scan that asked and heard nothing, and they have different fixes.
+    ({"requested": 228}, "228 asked"),
+    ({"requested": 228, "with_bars": 0}, "228 asked, 0 answered"),
+    # No `requested` at all -- a preflight failure asked nothing.
+    ({}, "not recorded"),
+    ({"with_bars": 12, "fresh": 0, "session": "2026-09-07"}, "not recorded"),
+    # And a shape no writer produces still says nothing rather than crashing.
+    ({"requested": "many"}, "not recorded"),
+    ({"requested": True}, "not recorded"),
+    # The tail clauses, each conditional on its own non-zero count.
+    ({"requested": 12, "with_bars": 8, "fresh": 0, "session": "2026-09-07", "dropped": 4},
+     "12 asked, 8 answered, none with a bar for 2026-09-07, "
+     "4 dropped after their batch failed twice"),
+    ({"requested": 12, "with_bars": 8, "fresh": 0, "session": "2026-09-07", "dropped": 1},
+     "12 asked, 8 answered, none with a bar for 2026-09-07, "
+     "1 dropped after its batch failed twice"),
+    ({"requested": 12, "with_bars": 10, "fresh": 0, "session": "2026-09-07", "no_bars": 2,
+      "dropped": 0},
+     "12 asked, 10 answered, none with a bar for 2026-09-07, "
+     "2 answered with no bar at all"),
+])
+def test_the_coverage_phrase_says_what_the_scan_reached_and_no_more(coverage, expected):
+    """src.pipeline.scan_coverage() collects whatever run_scan() had filled in
+    when it raised; this renders it. The rule under every case: a count that
+    is absent prints as absent, never as 0."""
+    assert emailer.coverage_phrase({"coverage": coverage}) == expected
+
+
+def test_a_failed_run_prints_the_coverage_where_the_universe_goes():
+    """And a run that published and then failed to deliver keeps its universe
+    label, because it read the session and scanned the names."""
+    dead = build_html([], "evening", {"status": "failed", "errors": [],
+                                      "session": "2026-09-07",
+                                      "coverage": {"requested": 228, "with_bars": 228,
+                                                   "fresh": 0, "session": "2026-09-07"}})
+    assert "Universe: 228 asked, 228 answered, none with a bar for 2026-09-07" in _visible_text(dead)
+    assert "Session it was scanning: 2026-09-07" in _visible_text(dead)
+
+    delivered = build_html([], "evening", {"status": "failed", "errors": [], "published": True,
+                                           "session": "2026-09-07", **STATS})
+    text = _visible_text(delivered)
+    assert "Universe: 230 checked-in US common stocks" in text
+    assert "Session scanned: 2026-09-07" in text, "it did scan it"
+    assert "no scan was completed" not in text
+
+
+@pytest.mark.parametrize("stats,clause,phrase", [
+    # The morning cron, which both sentences were written for.
+    ({}, "at today's open", "before the open"),
+    ({"after_the_close": False}, "at today's open", "before the open"),
+    # A morning dispatch after the close: the open was hours ago.
+    ({"after_the_close": True}, "re-presented after today's close", "after today's close"),
+    # An evening dispatch that found its session already published. The
+    # dispatch outranks the clock, because it is the fact the reader can act
+    # on -- and this pass is reached only while the clock disagrees anyway.
+    ({"dispatch": "evening"}, "re-presented by an evening dispatch",
+     "by an evening dispatch that found the session already published"),
+    ({"dispatch": "evening", "after_the_close": True},
+     "re-presented by an evening dispatch",
+     "by an evening dispatch that found the session already published"),
+])
+def test_a_follow_through_says_when_it_is_being_read(results, stats, clause, phrase):
+    """One rule for the heading and the band, so the two cannot drift: the
+    page and the email have already produced two vocabularies for one
+    mechanism twice in this project, and these two sentences sit an inch
+    apart."""
+    base = {"session": "2026-09-04", **stats}
+    heading = _visible_text(build_html(results, "morning", base))
+    assert clause in heading
+
+    banded = _visible_text(build_html(results, "morning",
+                                      {**base, "status": "degraded",
+                                       "errors": [{"stage": "session", "message": "why"}]}))
+    assert f"re-presented {phrase}" in banded

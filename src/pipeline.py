@@ -349,9 +349,14 @@ def session_disagreement(mode: Mode, cfg: ScanConfig,
                 f"is Friday's market, not tonight's. Everything below is labelled {session} "
                 f"and nothing has been relabelled as today.")
     if mode.after_the_close:
+        # "yesterday's market" is a weekday name for a date, and it is wrong on
+        # every Monday, on the day after every holiday, and on the first
+        # scheduled night this branch can reach -- Tuesday 8 Sep 2026, whose
+        # newest completed session is the Friday before Labor Day. The date is
+        # the fact; there is no calendar here to turn it into a word.
         return (f"{mode.expects}, but today's session has not closed yet. The newest "
                 f"completed session is {session}, so that is what was read — it is "
-                f"yesterday's market, not tonight's. Everything below is labelled "
+                f"the {session} market, not tonight's. Everything below is labelled "
                 f"{session} and nothing has been relabelled as today.")
     return (f"{mode.expects}, but today's session has already closed — the newest "
             f"completed session is now {session}. This is a follow-through pass over "
@@ -459,13 +464,38 @@ class RunReport:
     # claim that there is a complete record to keep, which is the only
     # question the workflow's persist step asks.
     published: bool = False
+    #: The scan's own counts dict, attached BEFORE run_scan() is called.
+    #: run_scan fills it in place, so whatever it had reached when it raised is
+    #: here -- which is how the failure notice can say that 228 symbols were
+    #: asked and 228 answered with nothing for the session, where it used to
+    #: print "Universe: not recorded" over counts that were sitting in memory.
+    scan_stats: dict = field(default_factory=dict)
+    #: What the run was about to mail when it died, if it got that far:
+    #: {"stats": ..., "results": ...}, the exact arguments send_email() was
+    #: given. The failure notice on the exit-3 path is a RETRY of that mail,
+    #: not a different email about it.
+    mail: dict = field(default_factory=dict)
 
     def problem(self, stage: str, message: str) -> None:
         self.errors.append({"stage": stage, "message": redact_addresses(message)})
 
     def fail(self, stage: str, exc: BaseException) -> None:
+        """Record the exception that ended the run -- unless the stage that
+        caught it has already said so in its own words.
+
+        The email stage records "the shortlist was not delivered (RuntimeError:
+        ...)" and re-raises; main() then recorded the identical exception
+        again, so the failure notice listed one 429 twice, three lines apart,
+        under two stage words. Only the LAST problem is compared, and after
+        redaction, because problem() masks addresses and Resend's refusal
+        carries one: a stage that reported one thing and then died of another
+        still says both.
+        """
         self.failed = True
-        self.problem(stage, f"{type(exc).__name__}: {exc}")
+        message = f"{type(exc).__name__}: {exc}"
+        if self.errors and redact_addresses(message) in self.errors[-1]["message"]:
+            return
+        self.problem(stage, message)
 
     @property
     def status(self) -> str:
@@ -735,14 +765,19 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
                                       "re-presents it rather than scanning it again: a second "
                                       "scan of the same daily bars would pay for the same answer "
                                       "and replace a clean record with a degraded one")
-            return follow_through(mode_for("morning"), dry_run, report=report)
+            return follow_through(mode_for("morning"), dry_run, report=report,
+                                  dispatched_as=run_type)
 
     # Layer 1: scan. Alpaca returns bars only up to the session the scan
     # targets, and src.scanner drops anything that does not carry it. Which
     # session that is comes from the clock (or SCAN_SESSION_DATE) — the check
     # above is what makes sure it is the one this mode said it would read.
     report.stage = "scan"
-    scan_stats: dict = {}
+    # Attached to the report BEFORE the scan, because run_scan() fills it in
+    # place: a scan that raises leaves behind exactly what it had reached, and
+    # that is what the failure notice reports as coverage. Assigning it after
+    # the call is assigning it only on the path where nothing went wrong.
+    scan_stats: dict = report.scan_stats
     # Rule 6's refusals come back beside the list, not inside it: the list is
     # what gets scored, and these are bursts the scan FOUND that the record
     # has to hold. They used to be logged and dropped, so a burst refused for
@@ -944,6 +979,11 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     # goes out marked instead: DEGRADED in the subject, the reasons in a band
     # above the table.
     report.stage = "email"
+    # What this run was about to mail, kept so that a delivery failure can be
+    # retried as the same email rather than reported as a run that never
+    # scanned. Set on the dry-run path too: nothing is sent, and nothing that
+    # reads it can then be exercised only by the branch that mails.
+    report.mail = {"stats": stats, "results": shortlist}
     if dry_run:
         log.info("DRY RUN — skipping email. Shortlist:")
         for r in shortlist:
@@ -1183,8 +1223,17 @@ def carried_problems(source: dict, session) -> list[dict]:
 
 
 def follow_through(mode: Mode, dry_run: bool = False,
-                   report: RunReport | None = None) -> list[dict]:
+                   report: RunReport | None = None,
+                   dispatched_as: str | None = None) -> list[dict]:
     """The morning run: last night's candidates again, before today's open.
+
+    `dispatched_as` names the mode the OPERATOR asked for, when it is not this
+    one: an evening dispatch that finds its session already published re-runs
+    this pass instead of re-scanning, and the mail it sent said "Morning
+    follow-through", "re-presented before the open" and "at today's open" —
+    three surfaces describing the 8:30 cron, on a message sent at noon by a
+    click that asked for an evening run. The pass really is this one; the
+    dispatch is what the reader has to recognise, because it is what they did.
 
     IT DOES NOT SCAN, AND THAT IS THE POINT. A morning run has no market data
     an evening run did not have — the daily bar it would read is the same
@@ -1354,6 +1403,16 @@ def follow_through(mode: Mode, dry_run: bool = False,
         # weeks is not the Tuesday after Presidents' Day. src.emailer._prefix()
         # and _headline() are what read it; the reason is in the band already.
         stale_sessions=behind,
+        # WHICH CLICK PRODUCED THIS MAIL, when it was not the morning cron.
+        dispatch=dispatched_as,
+        # AND WHICH SIDE OF THE CLOSE IT IS ON. This pass promises "at today's
+        # open" in its heading and "before the open" in its band, and a
+        # morning dispatch at 17:00 ET says in its own band that the session
+        # has already closed -- seven and a half hours after the open those
+        # two sentences point at. Read here rather than in the emailer, so the
+        # module that already owns the mode/clock check is the one that asks
+        # the clock.
+        after_the_close=scanner.session_has_closed(),
     )
 
     report.counts.update({"followed": len(rows), "shortlist": len(shortlist),
@@ -1361,6 +1420,7 @@ def follow_through(mode: Mode, dry_run: bool = False,
                           "repeats": sum(1 for r in shortlist if _day_number(r) > 1)})
 
     report.stage = "email"
+    report.mail = {"stats": stats, "results": shortlist}
     if dry_run:
         log.info("DRY RUN — skipping email. Following through on %s:",
                  session or "nothing — no run to follow")
@@ -1693,8 +1753,42 @@ def _check_scoring(score_stats: dict, report: RunReport) -> None:
                                 f"Claude and carry a checklist fallback: {first}")
 
 
-def attempted_session() -> dict:
-    """The session a dead run was going for, for the email that reports it.
+def scan_coverage(scan_stats: dict) -> dict:
+    """What the scan had asked and been answered when it stopped.
+
+    Only the counts that are THERE. run_scan() fills its stats dict in one
+    update near the end, so a failure before that leaves it empty and this
+    returns {} -- which the email renders as "not recorded". A count that is
+    absent must never arrive as 0: "0 asked" is a claim about a scan, and a
+    preflight failure asked nothing because it never got to ask. Nothing is
+    coerced or type-checked on the way out either, so src.emailer's is_count()
+    is the one rule that decides what a number is; a second copy here would be
+    a guard no input can reach and no test can fail on.
+
+    The newest date any stale symbol carried is the other half of the
+    diagnosis: "228 answered, none with a bar for 2026-09-07 (newest seen
+    2026-09-04)" is a holiday or a feed that stopped, and the two dates are
+    what tell a reader which.
+    """
+    counts = {key: scan_stats[key] for key in
+              ("requested", "with_bars", "fresh", "no_bars", "dropped") if key in scan_stats}
+    # scanner's own rule for "the newest session anything did print", not a
+    # second copy of it: a name whose stamp could not be read has no date, and
+    # max() over a mix of those and real dates is the crash that function
+    # exists to have already fixed.
+    stale = scan_stats.get("stale")
+    if isinstance(stale, dict):
+        newest = scanner._newest_stale(stale)
+        if newest is not None:
+            counts["newest_seen"] = ledger.iso_date(newest)
+    session = scan_stats.get("session")
+    if session is not None:
+        counts["session"] = ledger.iso_date(session)
+    return counts
+
+
+def attempted_stats(report: RunReport) -> dict:
+    """The stats block a dead run's email is rendered from.
 
     Both failure notices used to print "Session scanned: not recorded" and the
     morning one "4% bursts that session: ?", because notify_failure() sent no
@@ -1703,17 +1797,28 @@ def attempted_session() -> dict:
     it off the clock, or off SCAN_SESSION_DATE, and both are knowable before
     the run spends anything.
 
-    It is NOT presented as the session that was read — src.emailer._funnel_line
-    relabels it on a failed run — because nothing read it. Best effort, like
-    everything else on this path: a run that died inside ScanConfig() (a
-    malformed SCAN_SESSION_DATE is exactly that) still gets its email, with
-    the session unrecorded, rather than losing the notice to a second failure.
+    THREE STATES, and they are different emails:
+
+    * The run died before it mailed anything (the common one). The session it
+      was GOING FOR, plus whatever coverage the scan had reached — it is NOT
+      presented as the session that was read, because nothing read it, and
+      src.emailer._funnel_line relabels it.
+    * The run died DELIVERING, after publish() (exit 3). It scanned, scored,
+      and wrote both files; the notice is a retry of the mail it could not
+      send, so it is rendered from that mail's own stats and rows.
+    * It died before it could name the session at all — a malformed
+      SCAN_SESSION_DATE dies inside ScanConfig(). Best effort, like everything
+      on this path: the notice still goes, with the session unrecorded, rather
+      than being lost to a second failure.
     """
+    if report.mail.get("stats"):
+        return {**report.mail["stats"], "published": report.published}
+    stats: dict = {"coverage": scan_coverage(report.scan_stats)}
     try:
-        return {"session": ledger.iso_date(expected_session(ScanConfig()))}
+        stats["session"] = ledger.iso_date(expected_session(ScanConfig()))
     except Exception:  # noqa: BLE001 — the notice matters more than the date on it
         log.warning("Could not name the session the run was attempting", exc_info=True)
-        return {}
+    return stats
 
 
 def notify_failure(run_type: str, report: RunReport, dry_run: bool) -> None:
@@ -1734,7 +1839,8 @@ def notify_failure(run_type: str, report: RunReport, dry_run: bool) -> None:
         return
     try:
         from .emailer import send_failure_notice
-        send_failure_notice(run_type, report.errors, attempted_session())
+        send_failure_notice(run_type, report.errors, attempted_stats(report),
+                            results=report.mail.get("results") or [])
     except Exception:  # noqa: BLE001 — see the docstring
         log.exception("Could not mail the failure notice either")
 

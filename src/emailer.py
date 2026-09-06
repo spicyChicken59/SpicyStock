@@ -168,6 +168,24 @@ def _headline(scan_stats: dict, run_type: str, results: list[dict] | None = None
     morning = run_type == "morning"
     rows = bool(results) if results is not None else True
     if scan_stats.get("status") == "failed":
+        # A failure notice with ROWS in it is a run that got all the way to the
+        # send and could not make it. Both of the sentences below say the
+        # opposite -- "no scan was completed" over a night whose every Claude
+        # call was paid for and whose record is on disk, "this pass could not
+        # get that far" over the very rows it is printing -- and each is the
+        # first line a skimmer reads. `published` is the narrower fact and only
+        # the evening run can carry it: the morning pass writes nothing, so it
+        # has a delivery to report and no record to claim.
+        kept = (" the scan completed and its record is published;"
+                if scan_stats.get("published") else "")
+        if rows:
+            return ("THIS RUN FAILED AT THE LAST STAGE —" + kept + " what failed was the "
+                    "delivery of this email, and the rows below are what it could not "
+                    "deliver, sent again.")
+        if kept:
+            return ("THIS RUN FAILED AT THE LAST STAGE —" + kept + " what failed was the "
+                    "delivery of this email. There was no shortlist under it, and there "
+                    "is none below.")
         return ("THIS RUN FAILED — there is no watchlist below. A morning run "
                 "re-presents what the last evening run published, and this pass "
                 "could not get that far."
@@ -191,8 +209,9 @@ def _headline(scan_stats: dict, run_type: str, results: list[dict] | None = None
             return ("THIS FOLLOW-THROUGH IS DEGRADED — there is no watchlist below. A "
                     "morning run re-presents what the last evening run published, and "
                     "there was nothing it could show.")
+        _clause, phrase = _when(scan_stats)
         return ("THIS FOLLOW-THROUGH IS DEGRADED — the rows below are an earlier evening "
-                "run's shortlist, re-presented before the open. This pass scanned "
+                f"run's shortlist, re-presented {phrase}. This pass scanned "
                 "nothing itself, so read every reason below before acting on them.")
     if not rows:
         return ("THIS RUN WAS DEGRADED — there is no shortlist below, and the run that "
@@ -564,6 +583,37 @@ def _streak_footnote(results: list[dict]) -> str:
     )
 
 
+#: How a follow-through describes WHEN it is being read, in the heading and in
+#: the band. Three states, because the pass runs on three occasions and only
+#: the first is the one its sentences were written for.
+WHEN_CLAUSES = {
+    "open": (", at today&rsquo;s open", "before the open"),
+    "dispatch": (", re-presented by an evening dispatch",
+                 "by an evening dispatch that found the session already published"),
+    "closed": (", re-presented after today&rsquo;s close", "after today&rsquo;s close"),
+}
+
+
+def _when(scan_stats: dict) -> tuple[str, str]:
+    """Which of WHEN_CLAUSES this follow-through is in: the heading's clause
+    and the band's phrase.
+
+    The morning cron runs at 8:30 ET and both sentences are true of it. The
+    same pass also runs when an evening dispatch finds its session already
+    published (a Run-workflow click at lunch, or on a weekend), and when a
+    morning dispatch is made after the close — and in neither is the open
+    still ahead. `dispatch` is set by src.pipeline only on the first of those,
+    `after_the_close` is its own clock check, and a caller that says neither
+    gets the sentence the mode was written for, which is what keeps every
+    build_html() call that predates this on the wording it had.
+    """
+    if scan_stats.get("dispatch"):
+        return WHEN_CLAUSES["dispatch"]
+    if scan_stats.get("after_the_close"):
+        return WHEN_CLAUSES["closed"]
+    return WHEN_CLAUSES["open"]
+
+
 def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     """The counts under the title — and, since step 10, the SESSION.
 
@@ -583,7 +633,11 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     would be the same silent relabelling the session was added here to end.
     """
     session = scan_stats.get("session") or NOT_RECORDED
-    failed = scan_stats.get("status") == "failed"
+    # A run that PUBLISHED and then failed to deliver read its session and
+    # scanned its universe; only the last stage broke. Relabelling those two
+    # as "was scanning" and "not recorded" would be this line telling the
+    # reader less than the record beside it already holds.
+    failed = scan_stats.get("status") == "failed" and not scan_stats.get("published")
     unknown = NOT_RECORDED
     # "Passed 2LYNCH gate" counts the names that cleared the checklist AND were
     # not refused by an absolute rule, so on a night with a veto the number is
@@ -626,13 +680,49 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
                  ("Watching", len(results))]
     else:
         parts = [("Session it was scanning" if failed else "Session scanned", session),
-                 ("Universe", scan_stats.get("universe", unknown)),
+                 ("Universe", coverage_phrase(scan_stats) if failed
+                  else scan_stats.get("universe", unknown)),
                  ("4% bursts found", _reported_count(scan_stats, "bursts")),
                  *refused,
                  ("Passed 2LYNCH gate", _reported_count(scan_stats, "gated")),
                  *capped,
                  ("Shortlisted", len(results))]
     return " &nbsp;|&nbsp;\n      ".join(f"{label}: {esc(value)}" for label, value in parts)
+
+
+def coverage_phrase(scan_stats: dict) -> str:
+    """"228 asked, 228 answered, none with a bar for 2026-09-07 (newest seen
+    2026-09-04)" — what the dead scan had reached, or NOT_RECORDED.
+
+    The failure notice printed "Universe: not recorded" over a scan that had
+    asked every symbol and been answered by every symbol, because nothing
+    attached the counts to the report; src.pipeline's scan_coverage() collects
+    whatever run_scan() had filled in before it raised, and this says it.
+
+    EVERY CLAUSE IS CONDITIONAL ON ITS OWN COUNT. An absent number prints as
+    absent and never as 0: a preflight failure asked nothing, and "0 asked" is
+    a sentence about a scan that never happened. With no `requested` there is
+    no sentence at all.
+    """
+    counts = scan_stats.get("coverage")
+    if not isinstance(counts, dict) or not is_count(counts.get("requested")):
+        return NOT_RECORDED
+    parts = [f"{counts['requested']} asked"]
+    if is_count(counts.get("with_bars")):
+        parts.append(f"{counts['with_bars']} answered")
+        if is_count(counts.get("fresh")) and counts.get("session"):
+            fresh, session = counts["fresh"], esc(counts["session"])
+            parts.append(f"none with a bar for {session}" if not fresh
+                         else f"{fresh} with a bar for {session}")
+    if counts.get("newest_seen"):
+        parts[-1] += f" (newest seen {esc(counts['newest_seen'])})"
+    if is_count(counts.get("no_bars")) and counts["no_bars"]:
+        parts.append(f"{counts['no_bars']} answered with no bar at all")
+    if is_count(counts.get("dropped")) and counts["dropped"]:
+        dropped = counts["dropped"]
+        parts.append(f"{dropped} dropped after {'its' if dropped == 1 else 'their'} "
+                     "batch failed twice")
+    return ", ".join(parts)
 
 
 def compact_dollars(value: float) -> str:
@@ -700,6 +790,15 @@ def _chart_file(row: dict) -> Path | None:
 #: the caller did not say why. A morning row carries its own reason.
 NO_CHART = "no chart — none was rendered for this candidate"
 
+#: And what a retry after a failed delivery prints there. The chart WAS
+#: rendered and is on disk; this send deliberately leaves it off, so neither
+#: NO_CHART nor the "it is not there now" branch is true of it.
+RETRY_CHART_NOTE = (
+    "no chart — the first attempt did not go through, and this retry sends the same "
+    "rows without the attachments rather than repeating a message the server refused. "
+    "The PNG is on disk with the run's record."
+)
+
 
 def _no_chart_note(row: dict) -> str:
     """Why this cell holds words instead of a picture — checked, not assumed.
@@ -754,7 +853,7 @@ def _title(run_type: str, scan_stats: dict, results: list[dict]) -> str:
     whatever the snapshot says.
 
     The word "shortlist" needs rows under it. A failed morning run still knows
-    the session it was going for (src.pipeline's attempted_session), and naming
+    the session it was going for (src.pipeline's attempted_stats), and naming
     a shortlist over the empty-table cell would be the same promise from the
     other direction.
     """
@@ -763,9 +862,10 @@ def _title(run_type: str, scan_stats: dict, results: list[dict]) -> str:
     session = scan_stats.get("session")
     if not session:
         return "Momentum Bursts — follow-through, with nothing to follow"
+    clause, _phrase = _when(scan_stats)
     if not results:
-        return f"Momentum Bursts — following through on {esc(session)}, at today&rsquo;s open"
-    return f"Momentum Bursts — {esc(session)}&rsquo;s shortlist, at today&rsquo;s open"
+        return f"Momentum Bursts — following through on {esc(session)}{clause}"
+    return f"Momentum Bursts — {esc(session)}&rsquo;s shortlist{clause}"
 
 
 def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
@@ -1094,7 +1194,15 @@ def subject_for(results: list[dict], run_type: str, scan_stats: dict) -> str:
     word there escalates rather than reading DEGRADED for both a one-session
     gap and a screener that has been dead for three weeks.
     """
-    label = "Morning follow-through" if run_type == "morning" else "Evening candidates"
+    # The DISPATCH first, when there was one: a Run-workflow click that asked
+    # for an evening run and got a re-presentation is a mail the operator has
+    # to be able to connect to what they pressed, and "Morning follow-through"
+    # at noon is not it.
+    dispatch = scan_stats.get("dispatch")
+    if dispatch:
+        label = f"{str(dispatch).capitalize()} dispatch re-presenting"
+    else:
+        label = "Morning follow-through" if run_type == "morning" else "Evening candidates"
     prefix = _prefix(scan_stats)
     session = scan_stats.get("session")
     dated = f"{label} {session}" if session else label
@@ -1246,8 +1354,9 @@ def send_email(results: list[dict], run_type: str, scan_stats: dict) -> None:
             _build_attachments(results))
 
 
-def send_failure_notice(run_type: str, errors: list[dict], scan_stats: dict | None = None) -> None:
-    """Mail the fact that there is nothing to mail.
+def send_failure_notice(run_type: str, errors: list[dict], scan_stats: dict | None = None,
+                        results: list[dict] | None = None) -> None:
+    """Mail the fact that there is nothing to mail — or, when there is, mail it.
 
     A run that dies mid-scan sends nothing at all today, and nothing looks
     exactly like a weekend. The screener could be dead for a fortnight before
@@ -1255,9 +1364,25 @@ def send_failure_notice(run_type: str, errors: list[dict], scan_stats: dict | No
     FAILED subject and the exception in the band — deliberately the same
     artifact, so the daily habit of reading it is the monitor.
 
+    `results` is the shortlist the run had already produced, and it is only
+    ever non-empty on the exit-3 path: publish() ran, the record is on disk,
+    and what failed was the delivery. Then this notice IS that mail, sent
+    again — the rows are the point, and a notice reading "there is no
+    shortlist below" over five names the run paid Claude for was the defect.
+
+    THE ATTACHMENTS ARE DROPPED. A byte-identical resend of what a mail server
+    just refused has no reason to go differently, which is the argument
+    src.scorer's RETRY_CORRECTION already applies to a reply in the wrong
+    shape; the charts are the heavy part of the message and the likeliest
+    reason a send is refused. Dropping the row's `chart` is the WHOLE of that
+    rule -- _chart_file() is what both the <img> and the attachment list are
+    built from, so there is nothing to say twice -- and the note replaces the
+    picture, rather than a broken image or a claim that none was rendered.
+
     Best effort by construction: the caller is already handling a failure, and
     a second one here must not replace the first in the log.
     """
     stats = dict(scan_stats or {})
     stats.update({"status": "failed", "errors": errors})
-    send_email([], run_type, stats)
+    rows = [{**row, "chart": None, "chart_note": RETRY_CHART_NOTE} for row in (results or [])]
+    send_email(rows, run_type, stats)
