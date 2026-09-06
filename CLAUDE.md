@@ -943,6 +943,37 @@ weekend dispatch is told "today's session has not closed yet" by the
 mode/clock check, when there is no session today to close -- true of the
 scheduled weekday runs, and worth a clause for a Saturday.
 
+**The dispatch that followed: run 34014332161, 05:34 UTC on Sunday 6 Sep
+2026, on the commit that made the change.** Read off its log, not inferred.
+Preflight passed; `Scanning session 2026-09-04 from the sip feed`; every one
+of the 230 symbols answered, 227 with a bar for the session and three
+without -- EA (last 4 Aug), BK (last 20 May) and FI (last 10 Nov 2025),
+which are three names in `data/symbols.txt` that have not printed for a
+month or more and are a lead against the file, not the feed; 0 bursts,
+which on the Friday before Labor Day is the quiet market the coverage
+guards exist to tell apart from an empty one, and the funnel says so. So
+`sip` is a feed this key may query. What that run did NOT test: the
+hold-back. The session's own day-end was already behind the clock, so
+`min()` kept it and the wire differed from the round-9 request in the feed
+name alone; the first request whose window reaches past the clock is the
+first scheduled weekday evening, and it is Tuesday 8 Sep, because Monday 7
+Sep is Labor Day -- the cron will fire, find no bar for the 7th, and fail by
+design with `StaleDataError` (a holiday is never a quiet market), mailing
+nothing, since the mail cannot go out either. Then the email stage: Resend's
+test mode delivers only to the address the account is registered under,
+`EMAIL_TO` is not it, and the run exited 3 -- and **the persist step ran, for
+the first time in this project's history**: commit f0780c7 `run 2026-09-04`,
+`docs/ledger.json` created, `docs/data.json` a real run for the first time,
+the record stamped `degraded` with both problems (the Sunday clock
+disagreement and the delivery failure) in `run.errors`, the artifact named
+`evening-2026-09-04-34014332161`. Every step of that is the round-4 design
+observed rather than traced against a stub. Two settings remain the owner's
+and neither is code: `EMAIL_TO` has to be the Resend account's own address
+until a domain is verified at resend.com/domains and `RESEND_FROM` is on it,
+and GitHub Pages has never built -- the Actions workflow list holds no
+`pages-build-deployment`, which is what enabling it creates -- so the page
+is a click away (README, "One-time setup") and not a commit away.
+
 **Leads written down, not worked.** A feed-wide missing day -- more than
 half the frames lacking a session -- is not a session under the majority
 rule and every frame reads the next bar, which is the pre-round behaviour
