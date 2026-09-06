@@ -96,15 +96,20 @@ floor got one and the call cap got one, each for exactly this reason: a count
 that vanishes reads as a count that never existed. The checklist was the last
 cut without one, and it is the cut the product is named after. It has one now
 — "Rejected by the 2LYNCH checklist: 1", between the floor and the gate, so
-the subtraction reads top to bottom — printed only when it is not zero, like
-every line above it, and computed rather than reported: no caller counts it
-and no row carries it, so it is what is left when the absolute rules, the
-floor and the survivors are taken off, through the one function the
-empty-table cell's own sentence already used. The morning mail prints the same
-number off the record it follows, because a subtraction done twice is how one
-name's checklist came to read two ways in two mails a night apart. The email
-is the only surface where this was visible at all: the page's funnel folds all
-three cuts into one stage caption. What still has no line of its own is the
+the cuts read top to bottom as the subtraction a reader does — printed only
+when it is not zero, like the other refusal lines, and **counted, not left
+over**: every refused burst has carried its own reason word in `gated_out`
+since round 5, so the evening counts the `lynch_gate` rows it is holding and
+the morning counts the same rows off the record it follows, the way both mails
+already count the vetoes and the floor's refusals. A remainder would have been
+an attribution: a burst refused for anything outside those classes — a row
+whose reason the record does not name, a reason word added in some later round
+— would be reported as a checklist rejection rather than left off, and for a
+veto that is the collapse this file forbids by name. A burst neither path can
+name is on no line, and the empty-table cell says so in words rather than
+absorbing it into a verdict. The email's funnel is where nothing said it: the
+page's funnel folds these cuts into one stage caption, though its gated card
+has counted them apart since round 5. What still has no line of its own is the
 last drop, scored → shortlisted: both ends are printed ("Scored by Claude: 25
 of 25" beside "Shortlisted: 3") but the reason, a ranking rather than a
 refusal, is named on the page and not in the mail.
@@ -422,7 +427,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1129 tests, no network or API keys needed
+pytest tests/                   # 1135 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the

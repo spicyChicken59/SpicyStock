@@ -1623,6 +1623,25 @@ def test_the_morning_re_presents_the_liquidity_refusals_the_evening_recorded(
     assert f"Below the liquidity floor ({emailer.compact_dollars(floor)}/day" in html and "4% bursts that session: 2" in html
 
 
+def _three_bursts_one_thin(fake_alpaca, ohlcv):
+    """Two bursts thick enough to clear rule 6 and one that is not, in a small
+    universe to rank the dollar volumes against: TWO refusal classes on one
+    night, in different numbers."""
+    from tests.test_scanner import _thin
+
+    fake_alpaca.add_history("FAT", _thin(ohlcv, "burst", price=200.0, volume=5_000_000))
+    fake_alpaca.add_history("FATB", _thin(ohlcv, "burst", price=150.0, volume=4_000_000,
+                                          variant=1))
+    fake_alpaca.add_history("THIN", _thin(ohlcv, "burst", price=5.0, volume=200_000,
+                                          variant=2))
+    names = ["FAT", "FATB", "THIN"]
+    for i in range(8):
+        fake_alpaca.add_history(f"Q{i}", _thin(ohlcv, "flat", price=80.0,
+                                               volume=2_000_000, variant=i + 3))
+        names.append(f"Q{i}")
+    return names
+
+
 def test_both_mails_account_for_the_burst_the_checklist_itself_rejected(
     monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
@@ -1633,25 +1652,131 @@ def test_both_mails_account_for_the_burst_the_checklist_itself_rejected(
 
     Driven through the real evening path and the real morning path over the
     record it wrote, because the morning builds its counts off the snapshot's
-    own rows and a subtraction done twice is how one name's checklist came to
-    read two ways in two mails a night apart. Two refusal classes on the
-    night, in different numbers -- one below the floor, one the checklist
-    rejected -- since with only one of them every leftover burst is that one
-    and a term dropped from the subtraction is invisible.
+    own rows and one fact rebuilt on two paths is how one name's checklist
+    line came to read two ways in two mails a night apart.
+
+    THE NIGHT NEEDS ITS TWO REFUSAL CLASSES IN DIFFERENT NUMBERS. With one of
+    each, either count can stand in for the other -- a line that printed the
+    liquidity count under the checklist's label reads the same -- so the
+    universe carries two bursts the checklist rejects and one the floor
+    refuses, and the precondition asserts they differ.
     """
     monkeypatch.setattr(pipeline, "MIN_LYNCH_PASSES", 99)
+    names = _three_bursts_one_thin(fake_alpaca, ohlcv)
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = published(tmp_path)
+    assert data["run"]["bursts"] == 3 and data["run"]["passed_gate"] == 0
+    reasons = sorted(g["reason"] for g in data["gated_out"])
+    assert reasons == ["liquidity_floor", "lynch_gate", "lynch_gate"], (
+        "PRECONDITION: the night needs both refusal classes, in different "
+        "numbers, or one count can stand in for the other")
+    evening = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "Rejected by the 2LYNCH checklist: 2" in evening
+    assert "4% bursts found: 3" in evening and "Passed 2LYNCH gate: 0" in evening
+    assert ": 1" in evening.split("Below the liquidity floor")[1][:60], "the floor's own count"
+
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+
+    morning = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "4% bursts that session: 3" in morning
+    assert "Rejected by the 2LYNCH checklist: 2" in morning, (
+        "the follow-through counts the same stage off the same record")
+
+
+def test_a_night_only_the_call_cap_cut_reports_no_checklist_rejection(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The crowded-out names are INSIDE the gate's own count -- `to_score =
+    passed_gate[:MAX_TO_SCORE]` -- so a checklist count that swept them in
+    would report them twice, once under a label that says the checklist threw
+    them out when the checklist passed them.
+
+    No test in this suite had ever made the cap bite (MAX_TO_SCORE is 25 and
+    no fixture universe is that big), so a count of `lynch_gate` and
+    `score_cap` together was indistinguishable from a count of `lynch_gate`.
+    A cap of one over two survivors is the night that tells them apart, and
+    the precondition asserts the night is really that one.
+    """
+    monkeypatch.setattr(pipeline, "MAX_TO_SCORE", 1)
+    names = _three_bursts_one_thin(fake_alpaca, ohlcv)
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = published(tmp_path)
+    assert sorted(g["reason"] for g in data["gated_out"]) == ["liquidity_floor",
+                                                              "score_cap"], (
+        "PRECONDITION: the cap has to be the only cut besides the floor, or a "
+        "count that swept the capped names in is indistinguishable")
+    html = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "Crowded out by the 1-call cap: 1" in html
+    assert "Rejected by the 2LYNCH checklist" not in html, (
+        "a name the checklist PASSED and the call budget dropped was reported "
+        "as a checklist rejection")
+
+
+def test_a_refusal_reason_the_mail_has_never_heard_of_reaches_no_line_of_it(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """A fifth reason word is a burst refused for a reason no line of the mail
+    counts, and the honest mail says nothing about it rather than assigning
+    it to the last cut in the arithmetic.
+
+    Taken as a remainder -- bursts minus the vetoed, the illiquid and the
+    survivors -- every archived word outside those classes landed on the
+    CHECKLIST's line: a positive false statement about which rule refused a
+    name, exit 0, whole suite green. That is 3.3's "a second veto added to
+    src.lynch alone left the suite green" one stage on, and the record has
+    carried the reason word per row since round 5, so the count does not have
+    to be inferred.
+    """
+    monkeypatch.setattr(pipeline, "MIN_LYNCH_PASSES", 99)
+    monkeypatch.setattr(pipeline, "unscored_reason", lambda lynch: "halted_intraday")
     names = _two_bursts_one_thin(fake_alpaca, ohlcv)
 
     pipeline.run("evening", dry_run=False, tickers=names)
 
     data = published(tmp_path)
-    assert data["run"]["bursts"] == 2 and data["run"]["passed_gate"] == 0
-    assert sorted(g["reason"] for g in data["gated_out"]) == ["liquidity_floor", "lynch_gate"], (
-        "PRECONDITION: the night needs both refusal classes, or dropping "
-        "either term from the subtraction is invisible")
+    assert sorted(g["reason"] for g in data["gated_out"]) == ["halted_intraday",
+                                                              "liquidity_floor"], (
+        "PRECONDITION: the run has to archive a reason word the mail has no "
+        "line for, or every burst is already accounted for")
     evening = visible(mocked_boundaries["resend"].sent[-1]["html"])
-    assert "Rejected by the 2LYNCH checklist: 1" in evening
-    assert "4% bursts found: 2" in evening and "Passed 2LYNCH gate: 0" in evening
+    assert "4% bursts found: 2" in evening, "what the scan found is still counted"
+    assert "hecklist: " not in evening and "rejected by the 2LYNCH checklist" not in evening, (
+        "a burst refused for a reason the mail cannot name was reported as a "
+        "checklist rejection")
+
+
+def test_the_morning_never_relabels_a_refusal_the_record_does_not_name(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """A `gated_out` row with no reason word is a refusal the record does not
+    attribute, and `ledger.snapshot_problem()` accepts it -- that walker
+    shape-checks the `candidates` rows and never these -- so the morning mail
+    has to be right about it.
+
+    Counted off the rows, it is in no cut and the funnel simply does not
+    close -- two bursts over one named refusal and no survivor. Taken as a
+    remainder it was REASSIGNED, and the morning read "4% bursts that
+    session: 2 | Rejected by the 2LYNCH checklist: 2" over a record naming
+    ONE, the second being a name rule 6 had refused before the checklist was
+    consulted, with its own reason-less row in the same file.
+    """
+    monkeypatch.setattr(pipeline, "MIN_LYNCH_PASSES", 99)
+    names = _two_bursts_one_thin(fake_alpaca, ohlcv)
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    path = tmp_path / "docs" / "data.json"
+    data = json.loads(path.read_text())
+    (row,) = [g for g in data["gated_out"] if g["reason"] == ledger.LIQUIDITY_REASON]
+    del row["reason"]
+    path.write_text(json.dumps(data))
+    assert ledger.snapshot_problem(data) is None, (
+        "PRECONDITION: the load check accepts a reason-less gated row, which "
+        "is why the mail has to be right about one")
 
     market_clock.before_the_open()
     pipeline.run("morning", dry_run=False)
@@ -1659,7 +1784,10 @@ def test_both_mails_account_for_the_burst_the_checklist_itself_rejected(
     morning = visible(mocked_boundaries["resend"].sent[-1]["html"])
     assert "4% bursts that session: 2" in morning
     assert "Rejected by the 2LYNCH checklist: 1" in morning, (
-        "the follow-through counts the same stage off the same record")
+        "the one row that names the checklist is still counted")
+    assert "Rejected by the 2LYNCH checklist: 2" not in morning, (
+        "the refusal the record does not name was published as a checklist "
+        "rejection; before this it read 2 over a record naming one")
 
 
 def test_a_night_every_burst_was_below_the_floor_says_so_and_never_blames_the_checklist(

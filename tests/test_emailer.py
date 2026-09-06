@@ -802,11 +802,17 @@ def test_a_count_that_is_not_a_count_reaches_no_sentence():
     in the note -- seven of five bursts -- and vetoed=2.0 printed "Refused by
     an absolute rule: 2.0" over a note that counted it as 0. Every count goes
     through one clamp now and the funnel and the note read one number."""
-    html = _visible_text(build_html([], "evening", dict(DATED, bursts=5, vetoed=0, illiquid=-2, gated=0)))
+    html = _visible_text(build_html([], "evening",
+                                     dict(DATED, bursts=5, vetoed=0, illiquid=-2, gated=0,
+                                          by_checklist=5)))
     assert "liquidity floor" not in html and "5 bursts measured, none cleared it" in html
-    html = _visible_text(build_html([], "evening", dict(DATED, bursts=5, vetoed=2.0, illiquid=0, gated=0)))
+    html = _visible_text(build_html([], "evening",
+                                     dict(DATED, bursts=5, vetoed=2.0, illiquid=0, gated=0,
+                                          by_checklist=5)))
     assert "absolute rule" not in html and "5 bursts measured, none cleared it" in html
-    html = _visible_text(build_html([], "evening", dict(DATED, bursts=5, vetoed=-1, illiquid=0, gated=0)))
+    html = _visible_text(build_html([], "evening",
+                                     dict(DATED, bursts=5, vetoed=-1, illiquid=0, gated=0,
+                                          by_checklist=5)))
     assert "-1" not in html and "6 rejected" not in html
 
 
@@ -843,7 +849,7 @@ def test_the_funnel_prints_the_stage_the_checklist_itself_rejected():
     The assertion is the reader's arithmetic over the rendered numbers, not
     over the inputs: what has to be true is that the mail closes.
     """
-    stats = dict(DATED, bursts=6, vetoed=2, illiquid=0, gated=3)
+    stats = dict(DATED, bursts=6, vetoed=2, illiquid=0, gated=3, by_checklist=1)
 
     counts = _funnel_counts(build_html([make_result("AAA")], "evening", stats))
 
@@ -852,22 +858,32 @@ def test_the_funnel_prints_the_stage_the_checklist_itself_rejected():
             - counts["Rejected by the 2LYNCH checklist"]) == counts["Passed 2LYNCH gate"]
 
 
-def test_the_checklist_line_counts_only_what_the_checklist_refused():
-    """Rule 6 refuses a burst before the checklist is consulted, so a name
-    below the floor is not one the checklist rejected. Subtracting the wrong
-    set makes this line the count of "everything else", which is what the
-    email already had one of."""
-    stats = dict(DATED, bursts=7, vetoed=2, illiquid=1, gated=3)
-    assert stats["illiquid"], (
-        "PRECONDITION: without a floor refusal on the night, dropping the "
-        "`- illiquid` term is invisible and this test cannot fail")
+def test_the_checklist_line_is_a_count_of_rows_and_never_what_is_left_over():
+    """The number is the run's own count of the bursts the CHECKLIST refused —
+    one per archived row carrying that reason word — and not the remainder
+    when the other cuts are taken off the total.
 
-    counts = _funnel_counts(build_html([make_result("AAA")], "evening", stats))
+    A remainder attributes every burst the funnel cannot otherwise account
+    for to whichever cut does the subtracting. A refusal the stats block does
+    not report — a reason word this mail has never heard of, a `vetoed` that
+    is not a count, a record whose rows lost their reason — was then not
+    omitted from the mail, it was REASSIGNED to the checklist: a positive
+    false statement about which rule refused a name, and the collapse
+    CLAUDE.md forbids by name whenever the reason word is a veto.
 
-    assert counts["Rejected by the 2LYNCH checklist"] == 1
-    assert (counts["4% bursts found"] - counts["Refused by an absolute rule"]
-            - counts["Below the liquidity floor"]
-            - counts["Rejected by the 2LYNCH checklist"]) == counts["Passed 2LYNCH gate"]
+    Both halves are asserted, because "prints 0" and "prints nothing" are
+    different mails and only one of them is honest here.
+    """
+    stats = dict(DATED, bursts=4, vetoed=1, illiquid=1, gated=1, by_checklist=0)
+    assert stats["bursts"] - stats["vetoed"] - stats["illiquid"] - stats["gated"] == 1, (
+        "PRECONDITION: the night needs a burst the funnel cannot account for, "
+        "or a remainder and a count agree and this test cannot fail")
+
+    text = _visible_text(build_html([make_result("AAA")], "evening", stats))
+
+    assert "4% bursts found: 4" in text and "Passed 2LYNCH gate: 1" in text
+    assert "Rejected by the 2LYNCH checklist" not in text
+    assert "rejected by the 2LYNCH checklist" not in text, "nor in the empty cell's clause"
 
 
 def test_a_night_the_checklist_rejected_nothing_reads_exactly_as_it_did_before():
@@ -875,39 +891,65 @@ def test_a_night_the_checklist_rejected_nothing_reads_exactly_as_it_did_before()
     count is not zero. A night whose every burst got through says nothing
     about a stage that cut nobody."""
     html = build_html([make_result("AAA")], "evening",
-                      dict(DATED, bursts=6, vetoed=2, illiquid=0, gated=4))
+                      dict(DATED, bursts=6, vetoed=2, illiquid=0, gated=4, by_checklist=0))
 
     assert "Rejected by the 2LYNCH checklist" not in _visible_text(html)
 
 
-def test_the_checklist_line_needs_BOTH_ends_of_its_subtraction_reported():
-    """The count is a subtraction, so a run that reported one end and not the
-    other cannot have it. The morning path builds its stats field by field
-    off the snapshot's run block -- `if field in source` -- so a record with
-    `bursts` and no `passed_gate` is not hypothetical, and the funnel prints
-    "Passed 2LYNCH gate: not recorded" for it. Deriving a checklist count
-    from the missing half would put an invented number beside the words that
-    say the number is not known.
+def test_a_record_that_does_not_report_the_cut_says_nothing_about_it_anywhere():
+    """A run that did not count this stage has no number for it, and BOTH
+    surfaces that render it have to fall silent together.
 
-    This is the class the funnel's own `_reported_count` exists for, one
-    stage on: a count computed from a field that reads "not recorded" three
-    inches away.
+    The funnel and the empty-table cell answer the same question three inches
+    apart, and the guard was written on one of them: the funnel refused to
+    state a number it could not know while the cell below it stated one
+    anyway — "Passed 2LYNCH gate: not recorded" over "2 bursts refused
+    outright by an absolute rule and 4 rejected by the 2LYNCH checklist". One
+    mail, two answers, and the invented one was the confident one.
     """
     stats = dict(DATED, bursts=6, vetoed=2, illiquid=0)
     stats.pop("gated", None)
 
-    text = _visible_text(build_html([], "morning", stats))
+    text = _visible_text(build_html([], "evening", stats))
 
     assert "Passed 2LYNCH gate: not recorded" in text
-    assert "Rejected by the 2LYNCH checklist" not in text
+    assert "4% bursts found: 6" in text, "what the run DID count is still printed"
+    assert "checklist" not in text.lower(), (
+        "a mail that cannot say how many the checklist rejected must not say it")
+
+
+def test_the_cell_states_the_cuts_it_has_and_says_the_rest_is_unattributed():
+    """A run whose counted cuts do not cover its own burst total.
+
+    Every "all of them" sentence this cell can print was true only because
+    the checklist's count used to be the REMAINDER, which made the three cuts
+    add up to the total by construction. Counted off the reason word they can
+    fall short -- a row the record does not name, a reason word the mail has
+    no line for -- and the cell then said "All 6 bursts the scan found were
+    refused outright by an absolute rule" about a night that vetoed two. The
+    shortfall is stated, and the clauses the run DID report are still stated
+    with it: a sentence that drops them answers a narrower question than the
+    reader asked.
+    """
+    two_of_six = _visible_text(build_html([], "evening",
+                                          dict(DATED, bursts=6, vetoed=2, gated=0)))
+    assert "2 bursts refused outright by an absolute rule." in two_of_six
+    assert "This run recorded no reason for the other 4 bursts." in two_of_six
+    assert "All 6 bursts" not in two_of_six, (
+        "two of six were refused outright, and the sentence used to say six")
+
+    nothing_named = _visible_text(build_html([], "evening", dict(DATED, bursts=6, gated=0)))
+    assert ("6 bursts measured and none scored, and this run recorded no reason "
+            "for any of them.") in nothing_named
 
 
 def test_the_morning_funnel_counts_the_checklist_rejections_the_same_way():
     """The follow-through reports the run it is following, so the same
-    snapshot must produce the same number on both mails. Two arithmetics for
-    one stage is how one name's checklist came to read two ways in two mails
-    a night apart."""
-    stats = dict(DATED, bursts=7, vetoed=2, illiquid=1, gated=3)
+    snapshot must produce the same number on both mails. One fact rebuilt on
+    two paths is how one name's checklist line came to read two ways in two
+    mails a night apart, and the fix there was the fix here: one function,
+    one number."""
+    stats = dict(DATED, bursts=7, vetoed=2, illiquid=1, gated=3, by_checklist=1)
 
     evening = _funnel_counts(build_html([make_result("AAA")], "evening", stats))
     morning = _funnel_counts(build_html([make_result("AAA")], "morning", stats))
@@ -917,33 +959,88 @@ def test_the_morning_funnel_counts_the_checklist_rejections_the_same_way():
             == evening["Rejected by the 2LYNCH checklist"])
 
 
-def test_the_mail_names_the_checklist_cut_once_and_the_page_names_it_the_same_way():
-    """One mail can carry both wordings of this cut -- the funnel's line and
-    the empty cell's clause -- so they are one phrase or they are two
-    vocabularies for one mechanism, which is the shape this project keeps
-    finding side by side on one screen.
+def test_the_call_cap_and_the_checklist_are_counted_apart():
+    """The crowded-out names are INSIDE the gate's own count by construction —
+    `to_score = passed_gate[:MAX_TO_SCORE]` — so a checklist count that
+    borrowed the cap's number, or subtracted it, prints a wrong figure under a
+    funnel that no longer closes.
 
-    The page's half cannot be pinned as the same string: its funnel folds all
-    three cuts into one stage caption ("under 3 of 6 checks"), and the surface
-    that separates this population is the per-check table, whose column is
-    "failed the checklist". What both files can be held to is the word: the
-    CHECKLIST rejected these names, not the gate -- a 6/6 name refused by an
-    absolute rule is in neither count, and calling either one "the gate" is
-    the collapse CLAUDE.md forbids by name.
+    The night needs both cuts in different non-zero numbers: with the cap
+    quiet, or with the two equal, either count stands in for the other and
+    the test cannot tell them apart. That is the same shaped-test hole the
+    score_cap line was found to have one round ago.
     """
-    import pathlib
+    stats = dict(DATED, bursts=10, vetoed=1, illiquid=1, gated=5,
+                 crowded_out=2, score_cap=3, by_checklist=3)
+    assert stats["crowded_out"] and stats["crowded_out"] != stats["by_checklist"], (
+        "PRECONDITION: the cap has to have bitten, in a different number from "
+        "the checklist's own rejections, or one count can stand in for the other")
 
-    html = _visible_text(build_html([], "evening",
-                                    dict(DATED, bursts=6, vetoed=2, illiquid=0, gated=0)))
-    page = pathlib.Path(__file__).resolve().parents[1].joinpath("docs/index.html").read_text()
+    counts = _funnel_counts(build_html([make_result("AAA")], "evening", stats))
 
-    assert "Rejected by the 2LYNCH checklist: 4" in html, "the funnel's line"
-    assert "4 rejected by the 2LYNCH checklist" in html, "the empty cell's clause"
-    assert "Rejected at the 2LYNCH gate" not in html and "rejected at the gate" not in html
-    assert "'failed the checklist'" in page, (
-        "the page renamed the population this line counts; the two surfaces "
-        "have drifted")
+    assert counts["Rejected by the 2LYNCH checklist"] == 3
+    assert counts["Crowded out by the 3-call cap"] == 2
+    assert (counts["4% bursts found"] - counts["Refused by an absolute rule"]
+            - counts["Below the liquidity floor"]
+            - counts["Rejected by the 2LYNCH checklist"]) == counts["Passed 2LYNCH gate"]
 
+
+def test_the_funnel_reads_top_to_bottom_as_the_subtraction_a_reader_does():
+    """Every cut is printed ABOVE the count it was taken off.
+
+    A refusal count printed after the survivors' line reads as a further cut
+    applied to the names that passed — "Passed 2LYNCH gate: 2 | Rejected by
+    the 2LYNCH checklist: 1" says one of the two survivors was then rejected,
+    when that name never passed. The order is the whole reason the numbers
+    read as an arithmetic, and it is stated in README and in the funnel's own
+    comment; every other assertion in this file reads the line into a dict or
+    tests membership, both of which are blind to it.
+    """
+    text = _visible_text(build_html([make_result("AAA")], "evening",
+                                    dict(DATED, bursts=9, vetoed=2, illiquid=1, gated=3,
+                                         by_checklist=3, crowded_out=1, score_cap=3)))
+    order = ["4% bursts found", "Refused by an absolute rule",
+             "Below the liquidity floor", "Rejected by the 2LYNCH checklist",
+             "Passed 2LYNCH gate", "Crowded out by the 3-call cap", "Shortlisted"]
+    at = [text.index(label) for label in order]
+
+    assert at == sorted(at), (
+        "the funnel's stages are out of order: " + " | ".join(sorted(order, key=text.index)))
+
+
+def test_one_mail_names_the_rule_that_rejected_these_names_with_one_word():
+    """The funnel's line and the footnote under the table describe the same
+    population, in one mail, and they are one word or they are two
+    vocabularies for one mechanism side by side on one screen.
+
+    The word is CHECKLIST, which is what the footnote has said since round 5
+    ("whether the checklist rejected them"), what src.ledger's own contract
+    says `lynch_gate` means, and what README's `last_outcome` bullet says. The
+    streak line names the STAGE instead — LAST_OUTCOME's "rejected at the
+    2LYNCH gate", which the page carries with the threshold in it ("rejected
+    at the ≥3/6 2LYNCH gate") — and that register predates this line on both
+    surfaces; what must not drift is the RULE's name, which the funnel and
+    the footnote both print, and the reason word underneath all three, which
+    the docs test pins across the email and the page.
+
+    Rendered with a row on the table, because the earlier version of this test
+    ran on an empty mail: with no rows there is no footnote and no streak
+    line, so the phrases it forbade could not appear and it could not fail.
+    """
+    html = build_html(_with_streak(day=2, first_seen="2026-08-28", last_seen="2026-08-28",
+                                   last_outcome="lynch_gate", seen_before=1),
+                      "evening", dict(DATED, bursts=6, vetoed=2, illiquid=0,
+                                      gated=3, by_checklist=1))
+    text = _visible_text(html)
+
+    assert "Rejected by the 2LYNCH checklist: 1" in text, "the funnel's line"
+    assert "whether the checklist rejected them" in text, "the footnote's clause"
+    assert "last seen 2026-08-28, rejected at the 2LYNCH gate" in text, (
+        "the streak line names the stage, with the page's own words for the "
+        "same reason word")
+    assert "Rejected at the 2LYNCH gate:" not in text, (
+        "the funnel line took the streak line's register, leaving the footnote "
+        "below it naming a rule no line of the mail counts")
 
 def test_a_night_every_burst_was_refused_does_not_blame_the_checklist():
     """"No candidates passed the quality gate today" states the opposite of
@@ -965,11 +1062,11 @@ def test_a_night_every_burst_was_refused_does_not_blame_the_checklist():
     # funnel two lines above said "Refused by an absolute rule: 1" while the
     # cell said EVERY burst had been.
     ("one veto among nine checklist rejections",
-     dict(bursts=10, vetoed=1, gated=0),
+     dict(bursts=10, vetoed=1, gated=0, by_checklist=9),
      ["1 burst refused outright by an absolute rule", "9 rejected by the 2LYNCH checklist"],
      ["Every burst", "All 10 bursts"]),
     ("nine vetoes and one checklist rejection",
-     dict(bursts=10, vetoed=9, gated=0),
+     dict(bursts=10, vetoed=9, gated=0, by_checklist=1),
      ["9 bursts refused outright", "1 rejected by the 2LYNCH checklist"],
      ["Every burst", "All 10 bursts"]),
     # Nothing was measured against the checklist, so nothing failed it. This
@@ -997,11 +1094,11 @@ def test_a_night_every_burst_was_refused_does_not_blame_the_checklist():
      ["The one burst the scan found was below the liquidity floor"],
      ["All 1", "rejected by the 2LYNCH checklist"]),
     ("two below the floor among eight the checklist rejected",
-     dict(bursts=10, vetoed=0, illiquid=2, gated=0),
+     dict(bursts=10, vetoed=0, illiquid=2, gated=0, by_checklist=8),
      ["2 below the liquidity floor and 8 rejected by the 2LYNCH checklist", "Two different verdicts"],
      ["absolute rule", "All 10 bursts"]),
     ("a veto, two below the floor, and seven the checklist rejected",
-     dict(bursts=10, vetoed=1, illiquid=2, gated=0),
+     dict(bursts=10, vetoed=1, illiquid=2, gated=0, by_checklist=7),
      ["1 burst refused outright by an absolute rule, 2 below the liquidity floor and 7 rejected by the 2LYNCH checklist",
       "Three different verdicts, and none is another"],
      ["Two different verdicts", "All 10 bursts"]),
@@ -1014,7 +1111,7 @@ def test_a_night_every_burst_was_refused_does_not_blame_the_checklist():
      ["The one burst the scan found was refused outright"],
      ["All 1", "1 bursts"]),
     ("nothing vetoed: the checklist really did reject them",
-     dict(bursts=7, vetoed=0, gated=0),
+     dict(bursts=7, vetoed=0, gated=0, by_checklist=7),
      ["No candidate passed the 2LYNCH checklist today", "7 bursts measured"],
      ["absolute rule"]),
 ])
@@ -1030,13 +1127,14 @@ def test_the_empty_shortlist_note_says_what_actually_happened(
 
 
 def test_the_empty_shortlist_note_never_prints_a_negative_count():
-    """`bursts - vetoed - passed` is arithmetic on numbers a caller supplies,
-    and a stats block that does not add up must not produce "-3 rejected by
-    the 2LYNCH checklist". Clamped, and a non-number counts as zero rather
-    than reaching the subtraction at all."""
-    for stats in [dict(bursts=2, vetoed=9, gated=0),
-                  dict(bursts=2, vetoed=0, gated=9),
-                  dict(bursts="10", vetoed=None, gated=True)]:
+    """Every count in this sentence is a number a caller supplies, and a
+    stats block that does not add up must not produce "-3 rejected by the
+    2LYNCH checklist" or "-2 below the liquidity floor and 7 rejected", seven
+    of five bursts. Clamped, and a value that is not a count reads as zero
+    rather than reaching the sentence at all."""
+    for stats in [dict(bursts=2, vetoed=9, gated=0, by_checklist=-3),
+                  dict(bursts=2, vetoed=0, gated=9, illiquid=-2, by_checklist=7),
+                  dict(bursts="10", vetoed=None, gated=True, by_checklist="4")]:
         html = build_html([], "evening", dict(DATED, **stats))
         assert "-" not in html.split("colspan=\"7\"")[1].split("</td>")[0], stats
 

@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1129 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1135 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -509,9 +509,13 @@ exercised its headline. Nine mutants across them, all killed.
   outcome it had no part in. The note is computed from the counts now, one
   sentence per state, and every state was rendered and read before it was
   written down; three of the six were wrong. Nine mutants, eight killed; the
-  ninth drops `- passed` from `by_checklist`, which is provably equivalent
-  because every branch that reads it sits below the `passed` early return, and
-  the argument is written beside the code rather than here.
+  ninth dropped `- passed` from the subtraction this cell then made for
+  itself, and was equivalent because every branch that read it sat below the
+  `passed` early return. **That subtraction is gone in round 10** -- the cut
+  is a count off the reason word now, on both paths, and the cell reads what
+  the run reported -- so the survivor is not a survivor of anything that
+  still exists, and the shortfall the counts can now leave is a sentence of
+  its own rather than a term absorbed into a verdict.
 
   **The page did not have that defect, and checking cost one shaped test.**
   On a zero-burst night it hides every candidate card and lets the funnel say
@@ -541,8 +545,9 @@ exercised its headline. Nine mutants across them, all killed.
   product is named after was still missing when that paragraph was written**
   -- "4% bursts found: 6 | Refused by an absolute rule: 2 | Passed 2LYNCH
   gate: 3" leaves one burst, the one the CHECKLIST rejected, on no line of the
-  mail. It has one in round 10, between the floor and the gate; see
-  "funnel-adds-up" there.
+  mail. It has one in the round-10 section below, between the floor and the
+  gate -- and counted off the reason word rather than left over, for the same
+  reason this paragraph's own line is.
 
   **The system prompt is 59% of every request and was paid for 25 times a
   night.** `knowledge/strategy.md` is byte-identical on every call of a run --
@@ -839,6 +844,61 @@ share, so the pointer could be dropped; the `bursts` default could come back
 because no test published a run block WITHOUT the key; and `after_sessions`
 could be a bool because no malformed row planted one. Each closed with the
 test it showed missing, and all thirty-seven killed on the re-run.
+
+**The funnel's last missing cut got a line, and closing it by subtraction
+closed it by inventing an attribution.** "4% bursts found: 6 | Refused by an
+absolute rule: 2 | Passed 2LYNCH gate: 3" leaves one burst -- the one the
+CHECKLIST itself rejected -- on no line of the mail, with its row in the same
+run's `docs/data.json` under `reason: lynch_gate`. The line that first closed
+it was `bursts - vetoed - illiquid - gated`, and three auditors reproduced
+what a remainder does: it does not omit a burst it cannot account for, it
+REASSIGNS it. A `gated_out` row whose `reason` key is missing -- a shape
+`snapshot_problem()` accepts, since that walker shape-checks the `candidates`
+rows and never these -- made the morning read "Rejected by the 2LYNCH
+checklist: 2" over a record naming ONE, the second being a name rule 6 refused
+before the checklist was consulted; a `vetoed` that is not a count does the
+same; and a reason word from any later round lands there too, which is 3.3's
+"a second veto added to `src.lynch` alone left the suite green" one stage on.
+Every refused burst has carried its reason word since round 5, so both paths
+COUNT it now -- the evening off `unscored`, the morning off the snapshot's own
+rows, beside the three cuts already counted that way -- and a burst neither
+path can name is on no line rather than on the nearest one. The load check is
+deliberately NOT tightened to refuse the reason-less row: `evidence()` reads
+one as a refusal that predates the reasons, and refusing a whole record at
+load would contradict that for a row whose only consequence is a funnel that
+does not close.
+
+**And the first fix moved a false sentence rather than removing it.** The
+empty-table cell's "All 6 bursts the scan found were refused outright by an
+absolute rule" was true only because the remainder made the three cuts add up
+to the total by construction; counted, they can fall short, and the cell then
+said "all" of six about two -- a worse sentence than the one it replaced, and
+this file's "check that a fix did not introduce a new defect of the same
+class" caught by the round's own new test rather than by an auditor. The
+shortfall is its own sentence now ("... This run recorded no reason for the
+other 4 bursts"), and all eight states of that cell were rendered and read
+before this was written down. Twenty-one mutants: sixteen of the first
+eighteen killed, both survivors real holes -- a shortfall sentence that drops
+the clauses it does have, and an evening count that sweeps the crowded-out
+names in, which no test could see because no fixture had ever made the call
+cap bite -- and three ordering mutants added because the first pass's two
+attempts at "move the line" deleted it instead, which the count tests killed
+for the wrong reason. All five killed on the re-run.
+
+**One audit finding is deliberately not fixed, and it is a vocabulary.** The
+funnel says "rejected by the 2LYNCH checklist" while the streak line beside it
+says "rejected at the 2LYNCH gate" for the same reason word. That split
+predates this line and sits on both surfaces -- rendered both in one mail on
+the pre-commit tree to check, rather than argued: the footnote under the table
+has said "whether the checklist rejected them" since round 5, `src.ledger`'s
+contract and README's `last_outcome` bullet gloss `lynch_gate` the same way,
+while `LAST_OUTCOME` and the page's gated hint name the STAGE with its
+threshold. The funnel matches the footnote three inches below it, and renaming
+either half would put one surface out of step with the other. What WAS wrong
+is the test the audit named: it ran on a mail with no rows, so neither the
+footnote nor a streak line existed to carry the phrases it forbade, and its
+page half grepped a column header out of `docs/index.html`'s own source --
+the "asserting the page's own source" shape. It renders a row now.
 
 ## Round 9 — the ten items the rounds 6-7 audit left open, and what working them turned up
 

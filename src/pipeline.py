@@ -959,6 +959,16 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         # floor it applied: "4% bursts found" counts them, so the funnel has
         # to say where they went, and a reader of the number needs the bar.
         illiquid=len(illiquid),
+        # And THE STAGE THE PRODUCT IS NAMED AFTER, counted the same way and
+        # off the same list. The email took this one as what was left when
+        # the other cuts and the survivors came off the total, and a
+        # remainder is an attribution: a burst refused for any reason outside
+        # those classes -- a fifth reason word added in a later round, a row
+        # the record cannot name -- was reported as a checklist rejection,
+        # which for a veto is the collapse this file forbids by name. The
+        # reason word is in hand right here, on every unscored burst, so the
+        # count is a count.
+        by_checklist=sum(1 for _c, _l, _x, reason in unscored if reason == "lynch_gate"),
         liquidity_floor=scan_stats.get("liquidity_floor"),
         liquidity_pctile=cfg.min_dollar_volume_pctile,
         # The names that have stopped printing, for the email's own line.
@@ -1397,6 +1407,16 @@ def follow_through(mode: Mode, dry_run: bool = False,
         vetoed=sum(1 for row in ((snapshot or {}).get("gated_out") or [])
                    if isinstance(row, dict)
                    and str(row.get("reason") or "").startswith("veto_")),
+        # The checklist's own refusals, from the same rows, because the run
+        # block records no total for these either. The email used to take
+        # this cut as bursts minus the other three, which on this path is a
+        # subtraction of row-counted numbers from run-block numbers: a row
+        # whose reason the record does not name (a shape snapshot_problem()
+        # accepts) left the cut it belonged to and arrived on the
+        # checklist's line, so the morning published a rule-6 refusal as a
+        # checklist rejection with the reason-less row in the same file.
+        by_checklist=sum(1 for row in ((snapshot or {}).get("gated_out") or [])
+                         if isinstance(row, dict) and row.get("reason") == "lynch_gate"),
         # Same rule, same source, for the cut the funnel used to skip. The
         # cap that applied is the one THAT run recorded, not this module's
         # constant: a snapshot written under a different budget must not be
