@@ -1790,9 +1790,14 @@ def test_a_session_bar_the_feed_left_none_in_is_no_dollar_volume_and_no_crash():
     frame = pd.DataFrame({"Close": [10.0, "n/a"], "Volume": [1e6, 2e6]},
                          index=pd.DatetimeIndex(["2026-09-08", "2026-09-09"])).astype(object)
     assert session_dollar_volume(frame) is None
+    # And a frame with no bar at all: unreachable while _frames_by_symbol
+    # drops the empty ones, and the guard is not decorative -- .iloc[-1] on
+    # an empty column raises IndexError, which the clause above does not
+    # catch and this call is outside the detector's try.
+    assert session_dollar_volume(pd.DataFrame(columns=["Close", "Volume"])) is None
 
 
-# --- the session before is read off the batch ------------------------------
+# --- the session before is read off the night's frames ---------------------
 #
 # A business day NO name printed is a market closure, not a hole on every
 # name. Before observed_previous_session() existed the gap rule compared
@@ -1817,7 +1822,7 @@ def _closed_market(fake_alpaca, ohlcv, n: int, *, prefix: str = "G", variant0: i
 
 def test_a_business_day_no_name_printed_is_a_closure_not_a_hole_on_every_name(fake_alpaca, ohlcv):
     """Every frame lacks Monday 7 Sep. The session before Tuesday's is Friday
-    4 Sep, read off the batch, and the twelve bursts are found."""
+    4 Sep, read off the night's frames, and the twelve bursts are found."""
     names = _closed_market(fake_alpaca, ohlcv, 12)
     stats: dict = {}
 
@@ -1921,6 +1926,14 @@ def test_a_majority_can_move_the_previous_session_back_and_never_forward():
     cfg = ScanConfig()
     phantom = _frames_whose_bar_before_the_session_is([friday, saturday], monday, 12)
     assert observed_previous_session(phantom, monday, cfg) == (friday, False)
+    # And the gap rule then refuses all twelve, which is the half this test
+    # was missing: it built the frames that expose `before >= want` and never
+    # ran them through the rule, so the phantom protection the round rests on
+    # could be widened to `>=` -- keeping every frame and measuring each burst
+    # against the Saturday -- with the whole suite green.
+    kept, gapped = _drop_gapped_symbols(phantom, monday, friday)
+    assert kept == {} and sorted(gapped) == sorted(f"P{i}" for i in range(12))
+    assert set(gapped.values()) == {saturday}
 
     earlier = _frames_whose_bar_before_the_session_is([thursday], monday, 12)
     assert observed_previous_session(earlier, monday, cfg) == (thursday, True)
@@ -1972,6 +1985,107 @@ def test_a_nat_in_a_frames_index_neither_votes_nor_takes_the_scan_down():
     assert sorted(gapped) == sorted(f"NAT{i}" for i in range(10)) and not any(k.startswith("NAT") for k in kept)
 
 
+def test_a_name_that_printed_the_session_before_is_the_disproof_of_a_closure(fake_alpaca, ohlcv):
+    """A closure is a business day NO name printed, and the batch already
+    holds the answer. Seven names halted on Tuesday and five that traded it
+    used to give the seven a bare majority: the arithmetic moved back to
+    Monday, the FIVE healthy names became holes and the seven broken ones
+    were measured across theirs -- seven Monday-to-Wednesday moves published
+    as the day's 4% burst, which is the defect the gap rule exists to
+    prevent, produced by its own vote. One frame carrying a bar for the
+    session before is the disproof, and it is decisive."""
+    session = date(2026, 9, 9)
+    healthy = [f"H{i}" for i in range(5)]
+    holed = [f"K{i}" for i in range(7)]
+    for i, name in enumerate(healthy):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i))
+    for i, name in enumerate(holed):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=20 + i), gap_before_session=True)
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(session_date=session), universe=healthy + holed, stats=stats)
+
+    assert stats["previous_session"] == date(2026, 9, 8)
+    assert stats["previous_session_observed"] is False
+    assert sorted(stats["gapped"]) == sorted(holed)
+    assert sorted(c.ticker for c in found) == sorted(healthy)
+
+
+def test_the_disproof_is_read_off_every_frame_the_scan_downloaded_and_not_only_the_voters(
+    fake_alpaca, ohlcv
+):
+    """A name that stopped printing ON the session before still printed on
+    it, so it says the market traded that day -- and it is not a voter,
+    because a stale frame's newest bar is not the bar before the session.
+    Twelve names halted on Tuesday agree on Monday among themselves; ten
+    names whose last bar IS Tuesday are the evidence that Tuesday was a
+    session, and they are in the batch."""
+    session = date(2026, 9, 9)
+    holed = [f"K{i}" for i in range(12)]
+    quit_on_tuesday = [f"S{i}" for i in range(10)]
+    for i, name in enumerate(holed):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i), gap_before_session=True)
+    for i, name in enumerate(quit_on_tuesday):
+        fake_alpaca.add_history(name, ohlcv("flat", variant=i), stale_sessions=1)
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(session_date=session), universe=holed + quit_on_tuesday, stats=stats)
+
+    assert stats["previous_session"] == date(2026, 9, 8)
+    assert stats["previous_session_observed"] is False
+    assert stats["previous_session_printed"] == 10
+    assert sorted(stats["gapped"]) == sorted(holed) and found == []
+
+
+def test_only_the_fresh_frames_vote_on_what_the_session_before_was(fake_alpaca, ohlcv):
+    """The population is the whole rule: a stale frame's evidence is about an
+    earlier week, so it cannot say what the session before THIS one was.
+    Four names that traded Tuesday after the Monday closure carry Friday as
+    the bar before it; five that stopped printing on Thursday carry Thursday.
+    Voting over every frame gives Thursday a 5-4 majority and turns the four
+    names that actually traded into holes. The two coverage fractions are
+    relaxed so the scan reports rather than raises: what is under test is
+    who votes."""
+    fresh = [f"F{i}" for i in range(4)]
+    for i, name in enumerate(fresh):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i))
+    for i, name in enumerate([f"D{i}" for i in range(5)]):
+        fake_alpaca.add_history(name, ohlcv("flat", variant=i), stale_sessions=3)
+    fake_alpaca.close_session(LABOR_DAY)
+    cfg = ScanConfig(session_date=TUESDAY_AFTER_LABOR_DAY, coverage_guard_min_symbols=3,
+                     max_stale_fraction=0.9)
+    stats: dict = {}
+
+    found = run_scan(cfg, universe=fresh + [f"D{i}" for i in range(5)], stats=stats)
+
+    assert stats["previous_session"] == date(2026, 9, 4)
+    assert stats["previous_session_observed"] is True
+    assert sorted(c.ticker for c in found) == sorted(fresh) and stats["gapped"] == {}
+    # And the minimum the run's own report cites is the one this run applied,
+    # not the default it happens to equal on most nights.
+    assert stats["closure_min_symbols"] == cfg.coverage_guard_min_symbols == 3
+
+
+def test_a_weekend_phantom_earlier_than_the_arithmetic_is_not_the_session_before():
+    """"A majority can only move the answer back, so a phantom can never
+    manufacture a session" is true only of a phantom LATER than the
+    arithmetic. The day after a weekday holiday opens a window of non-session
+    dates EARLIER than it: twelve frames whose bar before Tuesday 8 Sep is a
+    phantom Sunday 6 Sep used to elect the Sunday, and every burst was then
+    measured against a bar the market never printed. The winner has to be a
+    business day -- weekends are the only calendar this file has."""
+    from src.scanner import observed_previous_session
+
+    tuesday, sunday, friday = date(2026, 9, 8), date(2026, 9, 6), date(2026, 9, 4)
+    frames = _frames_whose_bar_before_the_session_is([friday, sunday], tuesday, 12)
+
+    assert previous_session(tuesday) == date(2026, 9, 7), "precondition: the arithmetic says Monday"
+    assert observed_previous_session(frames, tuesday, ScanConfig()) == (date(2026, 9, 7), False)
+    # The same frames with a business day in the phantom's place DO move it.
+    real = _frames_whose_bar_before_the_session_is([friday], tuesday, 12)
+    assert observed_previous_session(real, tuesday, ScanConfig()) == (friday, True)
+
+
 # --- the bar the detector measured has to be the session's ------------------
 
 
@@ -2008,6 +2122,82 @@ def test_a_nan_on_the_session_bar_does_not_publish_the_previous_sessions_burst_a
     assert stats["stale"] == {} and stats["gapped"] == {}, "neither rule sees it: the session bar is there"
     served = fake_alpaca.bars_frame(["NANV"], end=session).loc["NANV"].rename(columns=str.capitalize)
     assert session_dollar_volume(served) is None, "no readable session bar, no place in the distribution"
+
+
+def _nan_on_the_bar_before_the_session(ohlcv, column: str) -> pd.DataFrame:
+    """A 12% burst whose PREVIOUS bar carries no readable `column`."""
+    frame = ohlcv("burst").copy()
+    frame.iloc[-2, frame.columns.get_loc(column)] = float("nan")
+    return frame
+
+
+@pytest.mark.parametrize("column", ["Volume", "Close"])
+def test_a_nan_on_the_bar_before_the_session_is_a_hole_and_not_a_two_session_burst(
+    fake_alpaca, ohlcv, column
+):
+    """The sibling one bar over. The gap rule read the RAW index, so a bar
+    that is present but carries no readable close or volume passed it as a
+    bar -- while detect_setup() drops exactly those bars before reading
+    iloc[-2], and measured the session against the one TWO back. A
+    two-session move was published as the day's 4%, dated to the session,
+    with stale, gapped and off_session all empty and status ok. The rule
+    reads the frame the detector will measure now: a bar it cannot read is
+    a hole, and a frame with a hole cannot say what the session before did."""
+    session = date(2026, 9, 9)
+    fake_alpaca.add_history("NANB", _nan_on_the_bar_before_the_session(ohlcv, column))
+    quiet = [f"Q{i}" for i in range(11)]
+    for i, name in enumerate(quiet):
+        fake_alpaca.add_history(name, ohlcv("flat", variant=i))
+    stats: dict = {}
+    served = fake_alpaca.bars_frame(["NANB"], end=session).loc["NANB"]
+    assert previous_session(session) in {pd.Timestamp(t).date() for t in served.index}, (
+        "precondition: the bar IS there -- it is the reading of it that fails, "
+        "which is why an index-based hole check could not see it")
+
+    found = run_scan(ScanConfig(session_date=session), universe=["NANB"] + quiet, stats=stats)
+
+    assert found == []
+    assert stats["gapped"] == {"NANB": date(2026, 9, 7)}
+    assert stats["stale"] == {} and stats["off_session"] == {}, "the session's own bar is readable"
+
+
+def test_a_nat_on_the_newest_bar_is_a_stale_name_without_a_date_and_not_a_TypeError(
+    fake_alpaca, ohlcv, monkeypatch
+):
+    """pd.Timestamp(NaT).date() is NaT again and cannot be compared with a
+    date. _bar_before_session() refuses it and _last_bar_date() did not, so
+    a NaT on the newest bar was filed as a stale name whose date is NaT and
+    the all-stale guard's max() raised TypeError -- in place of the
+    StaleDataError whose message tells the operator the market may not have
+    traded or the session may still be open. The same shape as the guarded
+    case, one function over, on the night the guarded one fires."""
+    import src.scanner as scanner_mod
+
+    session = date(2026, 9, 9)
+    names = [f"N{i}" for i in range(20)]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("flat", variant=i), stale_sessions=3)
+    real = scanner_mod._download_batch
+
+    def _with_nat(client, tickers, cfg, session_):
+        out = real(client, tickers, cfg, session_)
+        # As many NaT frames as dated ones, so a guard that never compares
+        # them cannot pass by accident.
+        for ticker in list(out)[:10]:
+            index = list(out[ticker].index[:-1]) + [pd.NaT]
+            out[ticker] = out[ticker].set_axis(pd.DatetimeIndex(index))
+        return out
+
+    monkeypatch.setattr(scanner_mod, "_download_batch", _with_nat)
+    stats: dict = {}
+
+    with pytest.raises(StaleDataError) as raised:
+        run_scan(ScanConfig(session_date=session), universe=names, stats=stats)
+
+    assert "newest seen" in str(raised.value)
+    assert len(stats["stale"]) == 20
+    assert sum(1 for last in stats["stale"].values() if last is None) == 10, (
+        "an unreadable stamp is stale with no date, not a NaT in the record")
 
 
 def test_a_detector_that_raises_on_every_symbol_is_not_a_quiet_market(fake_alpaca, ohlcv, monkeypatch):

@@ -923,6 +923,7 @@ def test_a_scan_that_could_measure_no_name_says_the_session_before_printed_on_no
     pipeline._check_scan({"requested": 3, "with_bars": 3, "stale": {}, "no_bars": 0,
                           "dropped": 0, "session": "2026-09-08",
                           "previous_session": "2026-09-07", "closure_min_symbols": 10,
+                          "closure_voters": 3, "closure_agreed": 3, "previous_session_printed": 0,
                           "gapped": {f"G{i}": "2026-09-04" for i in range(3)},
                           "off_session": {}, "detector_errors": {}}, report)
     (problem,) = report.errors
@@ -930,7 +931,78 @@ def test_a_scan_that_could_measure_no_name_says_the_session_before_printed_on_no
     assert "3 of 3 symbols with data (100%) could not be measured for 2026-09-08" in message
     assert "the session before it, 2026-09-07, printed on no name among the 3 that did" in message
     assert "market closure" in message
-    assert "at least 10 names" in message
+    # Both conditions a closure needs, in one vocabulary with README, and
+    # which of them was not met -- the sentence used to name the count
+    # alone, so a night whose vote SPLIT was told that not enough names
+    # agreed and an operator went looking for a coverage problem.
+    assert (f"at least {scanner.ScanConfig().coverage_guard_min_symbols} of them carry a bar "
+            "before the session and more than half of those agree on one earlier date") in message
+    assert "only 3 of them carried a bar before the session" in message
+
+    # Enough voters, no majority: the other condition, said as itself.
+    report = pipeline.RunReport()
+    pipeline._check_scan({"requested": 12, "with_bars": 12, "stale": {}, "no_bars": 0,
+                          "dropped": 0, "session": "2026-09-08",
+                          "previous_session": "2026-09-07", "closure_min_symbols": 10,
+                          "closure_voters": 12, "closure_agreed": 5, "previous_session_printed": 0,
+                          "gapped": {f"G{i}": "2026-09-04" for i in range(12)},
+                          "off_session": {}, "detector_errors": {}}, report)
+    assert ("12 carried one but no single date was on more than half of them (5 at most)"
+            in report.errors[0]["message"])
+
+    # A majority that named a Sunday, or a date later than the arithmetic:
+    # the winner has to be an earlier BUSINESS day, and that is the third
+    # state, not a fourth wording of one of the first two.
+    report = pipeline.RunReport()
+    pipeline._check_scan({"requested": 12, "with_bars": 12, "stale": {}, "no_bars": 0,
+                          "dropped": 0, "session": "2026-09-08",
+                          "previous_session": "2026-09-07", "closure_min_symbols": 10,
+                          "closure_voters": 12, "closure_agreed": 12,
+                          "closure_day": "2026-09-06", "previous_session_printed": 0,
+                          "gapped": {f"G{i}": "2026-09-04" for i in range(12)},
+                          "off_session": {}, "detector_errors": {}}, report)
+    assert ("the 12 of 12 that agreed named 2026-09-06, which is not an earlier business day"
+            in report.errors[0]["message"])
+
+
+def test_a_session_before_that_other_names_did_print_on_is_holes_and_not_a_closure():
+    """The closure sentence's own disproof. Every name that carried the
+    session may have no bar for the session before it while OTHER names --
+    ones that stopped printing on that very session -- did carry one, and
+    then the market traded it and these are holes. Saying "most likely a
+    market closure" over that batch is a sentence that is not true of its
+    own data, which is what the count is here to prevent."""
+    report = pipeline.RunReport()
+    pipeline._check_scan({"requested": 22, "with_bars": 22,
+                          "stale": {f"S{i}": "2026-09-08" for i in range(10)}, "no_bars": 0,
+                          "dropped": 0, "session": "2026-09-09",
+                          "previous_session": "2026-09-08", "closure_min_symbols": 10,
+                          "closure_voters": 12, "closure_agreed": 12,
+                          "previous_session_printed": 10,
+                          "gapped": {f"G{i}": "2026-09-07" for i in range(12)},
+                          "off_session": {}, "detector_errors": {}}, report)
+    message = report.errors[0]["message"]
+    assert "market closure" not in message
+    assert ("the session before it, 2026-09-08, printed on 10 other symbols, so the market "
+            "traded it and these 12 are holes") in message
+
+
+def test_a_scan_that_was_all_stale_and_nothing_else_gets_the_plain_sentence():
+    """`gapped and gapped == with_bars - stale` with no gapped names at all:
+    0 == 0 is arithmetic, and dropping the first clause makes an all-stale
+    scan announce that the session before printed on none of the 0 names
+    that carried the session. src.scanner raises StaleDataError before
+    _check_scan sees that state, but every other branch of this function is
+    pinned on a hand-built dict and this one was pinned by nothing."""
+    report = pipeline.RunReport()
+    pipeline._check_scan({"requested": 12, "with_bars": 12,
+                          "stale": {f"S{i}": "2026-09-04" for i in range(12)}, "no_bars": 0,
+                          "dropped": 0, "session": "2026-09-08",
+                          "previous_session": "2026-09-07", "closure_min_symbols": 10,
+                          "gapped": {}, "off_session": {}, "detector_errors": {}}, report)
+    message = report.errors[0]["message"]
+    assert "printed on no name" not in message and "market closure" not in message
+    assert "12 carried no bar for it, 0 had no bar for the session before it" in message
 
     # One short of everything is still the plain sentence: a closure is what
     # NO name printing means, and eleven of twelve is not that.
@@ -1023,6 +1095,33 @@ def test_a_nan_on_the_session_bar_does_not_publish_yesterdays_burst_under_tonigh
     assert report.exit_code == pipeline.EXIT_OK, "one of twelve is a normal day"
     assert all(row["date"] == "2026-09-09" for run in recorded(tmp_path)["runs"]
                for row in run["candidates"])
+
+
+def test_a_nan_on_the_bar_before_the_session_publishes_no_burst_at_all(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The sibling one bar over, driven end to end before it was touched:
+    exit 0, status ok, errors [], and a two-session move published as the
+    day's 4% burst, dated to the session -- the record, the email and the
+    page all carrying the false number, with stale, gapped and off_session
+    all empty because the bar was PRESENT and only unreadable."""
+    from tests.test_scanner import _nan_on_the_bar_before_the_session
+
+    fake_alpaca.add_history("NANB", _nan_on_the_bar_before_the_session(ohlcv, "Volume"))
+    names = ["NANB"]
+    for i, letter in enumerate("ABCDEFGHIJK"):
+        fake_alpaca.add_history(f"Q{letter}", ohlcv("flat", variant=i))
+        names.append(f"Q{letter}")
+    _universe_file(monkeypatch, tmp_path, names)
+    monkeypatch.setenv("SCAN_SESSION_DATE", "2026-09-09")
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, report=report)
+
+    data = clean(tmp_path)
+    assert data["run"]["bursts"] == 0
+    assert data["candidates"] == [] and data["gated_out"] == []
+    assert report.exit_code == pipeline.EXIT_OK, "one hole in twelve is a normal day"
 
 
 def test_the_email_names_a_command_line_universe_the_way_the_archive_does(
@@ -3371,6 +3470,20 @@ def test_stopped_printing_puts_the_names_the_feed_returned_nothing_for_first_wit
     capped = pipeline.stopped_printing({"session": session, "stale": {},
                                         "no_bars_names": [f"N{i:02d}" for i in range(12)]})
     assert capped["count"] == 12 and len(capped["names"]) == pipeline.STOPPED_PRINTING_MAX
+
+
+def test_stopped_printing_names_a_stale_symbol_whose_newest_stamp_could_not_be_read():
+    """A NaT where a bar's timestamp belongs makes the name stale with no
+    date (src.scanner._drop_stale_symbols), and sessions_between() cannot
+    say how far behind it is. It used to be dropped here silently -- count 0,
+    names [] -- so the one name whose data is broken was in no surface at
+    all. Dateless and named, like the symbols the feed answered nothing for."""
+    block = pipeline.stopped_printing({
+        "session": date(2026, 9, 4), "stale": {"NAT": None, "HALT": date(2026, 9, 3),
+                                               "FI": date(2025, 11, 10)}})
+    assert [n["ticker"] for n in block["names"]] == ["NAT", "FI"]
+    assert block["names"][0] == {"ticker": "NAT", "last": None, "sessions_behind": None}
+    assert block["count"] == 2
 
 
 def test_stopped_printing_is_empty_and_still_an_object_on_a_clean_night():

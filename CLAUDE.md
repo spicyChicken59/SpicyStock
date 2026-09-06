@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1009 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1020 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -246,9 +246,14 @@ unverified lead.
 Freshness checked only the newest bar, so a halt or a dropped bar the
 session before left `iloc[-2]` two sessions old: 12.0% printed as 12.45%,
 dated to the session. `_drop_gapped_symbols()` requires the bar before the
-session to be the previous business day (weekend-only, the same arithmetic
-`current_session()` makes), counts the rest, and the run degrades on them
-with the stale ones. **And a detector that raised on every symbol was a
+session to be the previous session, counts the rest, and the run degrades on
+them with the stale ones. (It required the previous BUSINESS day -- the same
+weekend-only arithmetic `current_session()` makes -- until round 10, when
+that turned the day after every weekday holiday into a universe of holes;
+the session before is `observed_previous_session()`'s answer now, read off
+the night's own frames. And it reads the frame `_measurable()` hands it
+rather than the index, since a bar the detector cannot read is a hole the
+index still shows as a bar.) **And a detector that raised on every symbol was a
 quiet market**: `detect_setup`'s per-symbol `except: continue` had no count,
 so a pandas change would have returned `[]` with `with_bars` intact — the
 shape every coverage guard exists to prevent, on the one path none covered.
@@ -1078,8 +1083,8 @@ one symbol off a rehearsal.** `run.stopped_printing` was built from `stale`
 -- names with a bar, none for the session -- and a symbol the feed answers
 with NOTHING is in no frame: not stale, not dropped (that is a batch that
 failed), only the arithmetic `no_bars` count, which degrades the run past
-10% of the universe and is otherwise written nowhere; and "Scanned 228/228"
-counts what was ASKED. So the rehearsal dispatched to confirm BNY, the
+10% of the universe and is otherwise written nowhere; and the per-batch
+progress line ("Downloaded 228/228 symbols") counts what was ASKED. So the rehearsal dispatched to confirm BNY, the
 symbol BK's listing moved to, could not: its log read the same whether BNY
 had answered or not, and the artifact holding the answer sits on a host this
 sandbox's proxy refuses. That is the state the old symbol of every rename
@@ -1110,11 +1115,12 @@ place to appear.
 **Leads written down, not worked.** A feed-wide missing day -- more than
 half the frames lacking a session -- is not a session under the majority
 rule and every frame reads the next bar, which is the pre-round behaviour
-and the right one for a holiday. The scanner's own `session_dollar_volume()`
-reads the last non-NaN bar for a session bar with NaN volume, and
-`detect_setup()` measures the same bar as "today", so both would date the
-previous session's move to the session -- a shape no daily bar from the feed
-takes, noted as the pre-round question it is. On a night a batch fails twice
+and the right one for a holiday. (The lead this paragraph used to carry
+beside it -- `session_dollar_volume()` and `detect_setup()` both reading the
+last non-NaN bar, and so dating the previous session's move to the session --
+was worked in round 10's own commit, not left open: the detector's measured
+date is compared to the session, and the bar before it is read the same way.)
+On a night a batch fails twice
 the benchmark is over fewer names than the universe and only n says so. A
 `--tickers` run of exactly two names keeps a session one of them lacks, by
 the tie rule, which is the conservative side. The requestfailed filter also

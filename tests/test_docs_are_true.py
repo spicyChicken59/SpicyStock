@@ -163,7 +163,7 @@ def test_the_documented_sip_hold_back_is_the_one_the_scanner_applies():
 
 def test_the_closure_vote_readme_describes_is_the_one_the_scanner_makes():
     """README says how many fresh frames the scan needs before it reads the
-    session before off the batch, and that number is ScanConfig's, not the
+    session before off the night's frames, and that number is ScanConfig's, not the
     README's -- a count in prose beside a constant is the citation shape this
     repo has watched rot four times."""
     from src import scanner
@@ -172,8 +172,9 @@ def test_the_closure_vote_readme_describes_is_the_one_the_scanner_makes():
     found = re.search(r"`coverage_guard_min_symbols` \((\d+)\) fresh frames vote", readme)
     assert found, "README no longer states the minimum beside the constant's name"
     assert int(found.group(1)) == scanner.ScanConfig().coverage_guard_min_symbols
-    assert "more than half share one date earlier than the arithmetic" in readme, (
-        "the rule README states is the majority rule, and it says so in those words")
+    assert "more than half share one business day earlier than the arithmetic" in readme, (
+        "the rule README states is the majority rule, and it says so in those words -- "
+        "on a BUSINESS day, since a weekend phantom earlier than the arithmetic used to win")
 
 
 def test_the_documented_thresholds_are_the_ones_the_code_applies(ohlcv):

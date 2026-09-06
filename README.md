@@ -128,24 +128,48 @@ purpose, and a deliberate backfill is not a mistake.
 night.** A burst is one session's move against the session before it, and the
 scan refuses a name whose bar before the session is not that session — a
 full-day halt, or a bar the feed dropped, would otherwise print a two-day move
-as the day's 4%. "The session before" was weekend-only arithmetic, and on the
-day after every weekday holiday the arithmetic names the holiday: every frame
+as the day's 4%. A bar that is *present but unreadable* — a NaN where its close
+or volume belongs — is a hole too, and used to pass: the rule read the index
+while `detect_setup()` drops exactly those bars before it measures, so the
+session was measured against the bar two back and the two-session move was
+published under the session's date with status ok. Both now read the same
+frame (`_measurable()`).
+
+"The session before" was weekend-only arithmetic, and on the day after every
+weekday holiday the arithmetic names the holiday: every frame
 lacked it, every name was refused as a hole, and the run published DEGRADED
 with 0 bursts, a null floor and a record `evening.yml` would have committed as
 the night's — reproduced end to end on Tuesday 8 Sep 2026, the day after Labor
-Day and the first scheduled night. The scan now reads the session before off
-the batch (`observed_previous_session()`): when at least
+Day and the first scheduled night. The scan reads the session before off the
+night's frames now (`observed_previous_session()`). **One name that printed on
+the arithmetic's date is the disproof, and it settles it**: every frame the
+scan downloaded is searched first, the stale ones included, because a name
+that stopped printing *on* that session still printed on it. Without that
+clause a bare majority decided against evidence the scan already held — seven
+names halted on Tuesday outvoted five that traded it, the five healthy names
+became the holes and the seven broken ones were measured across theirs.
+Only when nothing printed does the vote decide: when at least
 `coverage_guard_min_symbols` (10) fresh frames vote and **more than half share
-one date earlier than the arithmetic's**, that date is the previous session.
-A majority can only move the answer back, never forward, so a phantom bar can
-never manufacture a session; a split vote moves nothing; one name's own hole
-on the week of a closure is still a hole. No holiday calendar, still: the
-frames are the evidence, and this is the same majority rule the forward
-returns already read their sessions by. Below the minimum — the documented
-`--tickers` smoke test on the day after a holiday — the arithmetic stands, and
-the degraded sentence says the session before printed on no name rather than
-counting the universe as holes. The stated cost: a genuine feed-wide dropped
-business day, never observed, is read as a closure and measured across it.
+one business day earlier than the arithmetic's**, that date is the previous
+session. Only the *fresh* frames vote — a stale frame's newest bar is not the
+bar before this session, so it answers a question about an earlier week.
+A majority can only move the answer back, and only onto a weekday, so no
+phantom bar can manufacture a session: a Saturday later than the arithmetic
+loses on the first clause, and the window of non-session dates *earlier* than
+it that the day after a holiday opens loses on the second. A split vote moves
+nothing; one name's own hole on the week of a closure is still a hole. No
+holiday calendar, still: the frames are the evidence, and this is the same
+evidence and the same shape of vote the forward returns read their sessions by
+— with one deliberate difference, at a tie: `session_calendar()` admits a date
+carried by exactly half its frames, because a session missing from half the
+frames is still a session, while moving *this* answer back takes a strict
+majority. Below the minimum — the documented `--tickers` smoke test on the day
+after a holiday — the arithmetic stands, and the degraded sentence names both
+conditions a closure needs and says which of them was not met, rather than
+counting the universe as holes; when other names *did* print on that session
+it says so and calls these holes. The stated cost: a genuine feed-wide dropped
+business day, one no name in the universe printed on, never observed, is read
+as a closure and measured across it.
 The bar the detector measured must also be the session's: a session bar with
 no readable close or volume used to make it measure the bar before and publish
 the *previous* session's burst under the session's date with status ok, and
@@ -278,7 +302,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1009 tests, no network or API keys needed
+pytest tests/                   # 1020 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the

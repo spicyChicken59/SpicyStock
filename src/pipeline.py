@@ -403,6 +403,9 @@ def stopped_printing(scan_stats: dict) -> dict:
     block, so the page and the email print the number this run applied rather
     than one retyped in two other files.
 
+    A `stale` entry whose date is None is a symbol whose newest stamp could
+    not be read at all; it is listed dateless, with the ones below.
+
     `scan_stats["no_bars_names"]` is every symbol the feed answered with no bar
     AT ALL in the window the scan asked for -- a symbol it does not know, or
     one purged after a ticker change, which is the state the old symbol of
@@ -414,6 +417,13 @@ def stopped_printing(scan_stats: dict) -> dict:
     session = scan_stats.get("session")
     names = []
     for ticker, last in (scan_stats.get("stale") or {}).items():
+        if last is None:
+            # A name whose newest stamp could not be read: stale with no date
+            # (src.scanner._drop_stale_symbols), so how far behind it is
+            # cannot be said. Named dateless rather than dropped -- the one
+            # name whose data is broken reached no surface at all before.
+            names.append({"ticker": str(ticker), "last": None, "sessions_behind": None})
+            continue
         behind = ledger.sessions_between(last, session)
         if behind is None or behind <= STOPPED_PRINTING_SESSIONS:
             continue
@@ -1511,6 +1521,33 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
             "benchmarked": benchmarked}
 
 
+def _closure_vote(scan_stats: dict) -> str:
+    """WHICH of the two conditions a closure needs was not met.
+
+    The rule is two conditions and the sentence used to quote one -- the
+    minimum -- so a night whose vote SPLIT was told that not enough names
+    agreed, and an operator would go looking for a coverage problem that is
+    not there. Three states, because those are the three ways
+    src.scanner.observed_previous_session() can decline: too few frames
+    carried a bar before the session, they carried one and agreed on
+    nothing, or they agreed on a date that is not an earlier business day
+    (a weekend phantom, or one later than the arithmetic).
+    """
+    voters, agreed = scan_stats.get("closure_voters"), scan_stats.get("closure_agreed")
+    minimum = scan_stats.get("closure_min_symbols")
+    if voters is None or agreed is None or minimum is None:
+        # A run from before the vote was counted, or a caller that did not
+        # scan. Absent is absent: say what is certain and no more.
+        return "and this scan could not"
+    if voters < minimum:
+        return f"and only {voters} of them carried a bar before the session"
+    if agreed * 2 <= voters:
+        return (f"and {voters} carried one but no single date was on more than half of "
+                f"them ({agreed} at most)")
+    return (f"and the {agreed} of {voters} that agreed named "
+            f"{scan_stats.get('closure_day')}, which is not an earlier business day")
+
+
 def _check_scan(scan_stats: dict, report: RunReport) -> None:
     """Turn what the scan saw into what the run is worth.
 
@@ -1533,7 +1570,21 @@ def _check_scan(scan_stats: dict, report: RunReport) -> None:
     off_session = len(scan_stats.get("off_session") or {})
     unmeasured = stale + gapped + off_session
     if with_bars and unmeasured / with_bars > DEGRADED_STALE_FRACTION:
-        if gapped and gapped == with_bars - stale:
+        printed_before = scan_stats.get("previous_session_printed") or 0
+        if gapped and gapped == with_bars - stale and printed_before:
+            # Every name that carried the session had no bar for the session
+            # before it -- and other names, ones that stopped printing on
+            # that very session, did carry one. Then the market traded it and
+            # these are holes: calling it "most likely a market closure"
+            # would be a sentence that is not true of its own data.
+            report.problem("scan", f"{unmeasured} of {with_bars} symbols with data "
+                                   f"({unmeasured / with_bars:.0%}) could not be measured for "
+                                   f"{session} and were skipped: {stale} carried no bar for it, "
+                                   f"and the session before it, "
+                                   f"{scan_stats.get('previous_session')}, printed on "
+                                   f"{printed_before} other symbols, so the market traded it "
+                                   f"and these {gapped} are holes in what the feed answered")
+        elif gapped and gapped == with_bars - stale:
             # Every name that had a bar for the session had none for the
             # session before it. That is not `gapped` holes: it is a business
             # day on which nothing printed, which the scan reads as a market
@@ -1549,9 +1600,10 @@ def _check_scan(scan_stats: dict, report: RunReport) -> None:
                                    f"the session before it, {scan_stats.get('previous_session')}, "
                                    f"printed on no name among the {gapped} that did. That is most "
                                    "likely a market closure, which the feed carries as nothing at "
-                                   "all; the scan reads one off the batch only when at least "
-                                   f"{scan_stats.get('closure_min_symbols')} names agree on an "
-                                   "earlier bar, and this batch could not")
+                                   "all; the scan reads one off the night's frames only when at "
+                                   f"least {scan_stats.get('closure_min_symbols')} of them carry "
+                                   "a bar before the session and more than half of those agree "
+                                   f"on one earlier date, {_closure_vote(scan_stats)}")
         else:
             report.problem("scan", f"{unmeasured} of {with_bars} symbols with data "
                                    f"({unmeasured / with_bars:.0%}) could not be measured for "
