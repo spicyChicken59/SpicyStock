@@ -18,6 +18,7 @@
 <script src="design-system/sc-theme.js"></script>
 <script src="design-system/sc-charts.js"></script>
 <script src="design-system/sc-motion.js" defer></script>
+<script src="design-system/sc-reading.js" defer></script>
 <link rel="stylesheet" href="stock.css">
 </head>
 <body>
@@ -49,7 +50,6 @@
       <div class="sc-cover__meta" id="meta"></div>
     </div>
     <div class="sc-cover__art stock-cover__art sc-reveal" data-sc-motion="scale" aria-hidden="true">
-      <div class="stock-cover__orbits"><i></i><i></i><i></i></div>
       <img class="stock-cover__mark" src="design-system/assets/sc-mark-mono-cream.svg" alt="" width="172" height="200">
       <span class="sc-cover__caption">a SpicyChicken project<br>4% momentum burst screener</span>
     </div>
@@ -62,12 +62,12 @@
     <div class="sc-stat sc-stat--lead"><dt class="sc-stat__label">shortlist</dt><dd class="sc-stat__value" id="stat-shortlist">—</dd><dd class="sc-stat__note">sent for human review</dd></div>
   </dl>
 
-  <nav class="stock-index" id="page-index" aria-label="On this page" hidden>
+  <nav class="stock-index sc-chapter-nav" data-sc-reading id="page-index" aria-label="On this page" hidden>
     <span class="sc-eyebrow sc-eyebrow--muted">in this report</span>
-    <a class="sc-press" href="#evidence-card"><span>01</span> The evidence</a>
-    <a class="sc-press" href="#funnel-card" id="nav-funnel"><span>02</span> This session</a>
-    <a class="sc-press" href="#predict-card" id="nav-record"><span>03</span> The record</a>
-    <a class="sc-press" href="#runs-card" id="nav-runs"><span>04</span> Recent runs</a>
+    <a class="sc-press" href="#evidence-card"><span class="sc-chapter-nav__index">01</span> The evidence</a>
+    <a class="sc-press" href="#funnel-card" id="nav-funnel"><span class="sc-chapter-nav__index">02</span> This session</a>
+    <a class="sc-press" href="#predict-card" id="nav-record"><span class="sc-chapter-nav__index">03</span> The record</a>
+    <a class="sc-press" href="#runs-card" id="nav-runs"><span class="sc-chapter-nav__index">04</span> Recent runs</a>
   </nav>
 
   <!-- Sample data. Hidden unless run.fixture is true. Shown ABOVE the run
@@ -130,15 +130,15 @@
     <p class="sc-empty sc-empty--brand stock-empty" id="evidence-empty" hidden></p>
     <div id="evidence-body" hidden>
       <div class="sc-grid sc-grid--3 stock-metrics sc-stagger" id="evidence-tiles"></div>
-      <p id="evidence-verdict"></p>
+      <p class="sc-insight" id="evidence-verdict"></p>
       <div class="sc-legend" id="evidence-legend"></div>
-      <div class="sc-chart" id="evidence-chart" role="group" tabindex="0"
-           aria-label="Mean forward return at three and five sessions for each score band, with the 8 to 20 percent range the strategy claims marked. The same numbers are in the table below."></div>
-      <div class="sc-table-scroll" id="evidence-scroll"><table class="sc-table sc-table--compact" id="evidence-table"></table></div>
+      <div class="sc-evidence__plot"><div class="sc-chart" id="evidence-chart" role="group" tabindex="0"
+           aria-label="Mean forward return at three and five sessions for each score band, with the 8 to 20 percent range the strategy claims marked. The same numbers are in the table below."></div></div>
+      <div class="sc-table-scroll" id="evidence-scroll"><table class="sc-table sc-table--compact sc-table--research" id="evidence-table"></table></div>
       <h3 id="control-title">Against the alternative</h3>
       <p class="sc-hint" id="control-hint"></p>
-      <p id="control-verdict"></p>
-      <div class="sc-table-scroll" id="control-scroll"><table class="sc-table sc-table--compact" id="control-table"></table></div>
+      <p class="sc-insight" id="control-verdict"></p>
+      <div class="sc-table-scroll" id="control-scroll"><table class="sc-table sc-table--compact sc-table--research" id="control-table"></table></div>
     </div>
   </section>
 
@@ -154,9 +154,9 @@
       </div>
     </div>
     <div class="sc-legend" id="funnel-legend"></div>
-    <div class="sc-chart" id="funnel-chart" role="group" tabindex="0"
-         aria-label="How many names reached each stage of the run, from the universe scanned down to the shortlist. The same numbers are in the table below."></div>
-    <div class="sc-table-scroll" id="funnel-scroll"><table class="sc-table sc-table--compact" id="funnel-table"></table></div>
+    <div class="sc-evidence__plot"><div class="sc-chart" id="funnel-chart" role="group" tabindex="0"
+         aria-label="How many names reached each stage of the run, from the universe scanned down to the shortlist. The same numbers are in the table below."></div></div>
+    <div class="sc-table-scroll" id="funnel-scroll"><table class="sc-table sc-table--compact sc-table--research" id="funnel-table"></table></div>
   </section>
 
   <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="shortlist-card" hidden>
@@ -179,9 +179,9 @@
       </div>
     </div>
     <div class="sc-legend" id="scores-legend"></div>
-    <div class="sc-chart" id="scores-chart" role="group" tabindex="0"
-         aria-label="Score out of ten for every scored candidate, ranked. The same numbers are in the table below."></div>
-    <div class="sc-table-scroll" id="scores-scroll"><table class="sc-table sc-table--compact" id="scores-table"></table></div>
+    <div class="sc-evidence__plot"><div class="sc-chart" id="scores-chart" role="group" tabindex="0"
+         aria-label="Score out of ten for every scored candidate, ranked. The same numbers are in the table below."></div></div>
+    <div class="sc-table-scroll" id="scores-scroll"><table class="sc-table sc-table--compact sc-table--research" id="scores-table"></table></div>
   </section>
 
   <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="gated-card" hidden>
@@ -192,7 +192,7 @@
         <p class="sc-hint" id="gated-hint"></p>
       </div>
     </div>
-    <div class="sc-table-scroll" id="gated-scroll"><table class="sc-table sc-table--compact" id="gated-table"></table></div>
+    <div class="sc-table-scroll" id="gated-scroll"><table class="sc-table sc-table--compact sc-table--research" id="gated-table"></table></div>
   </section>
 
   <!-- Which check is doing the gating. Computed over every burst that recorded
@@ -211,9 +211,9 @@
       <p id="checks-bias-body"></p>
     </div>
     <div class="sc-legend" id="checks-legend"></div>
-    <div class="sc-chart" id="checks-chart" role="group" tabindex="0"
-         aria-label="Pass rate for each of the six 2LYNCH checks across every burst the scan found. The same numbers are in the table below."></div>
-    <div class="sc-table-scroll" id="checks-scroll"><table class="sc-table sc-table--compact" id="checks-table"></table></div>
+    <div class="sc-evidence__plot"><div class="sc-chart" id="checks-chart" role="group" tabindex="0"
+         aria-label="Pass rate for each of the six 2LYNCH checks across every burst the scan found. The same numbers are in the table below."></div></div>
+    <div class="sc-table-scroll" id="checks-scroll"><table class="sc-table sc-table--compact sc-table--research" id="checks-table"></table></div>
   </section>
 
   <!-- Which check predicts anything, ACROSS THE RECORD -- as against the card
@@ -230,7 +230,7 @@
       </div>
     </div>
     <p class="sc-empty sc-empty--brand stock-empty" id="predict-empty" hidden></p>
-    <div class="sc-table-scroll" id="predict-scroll"><table class="sc-table sc-table--compact" id="predict-table"></table></div>
+    <div class="sc-table-scroll" id="predict-scroll"><table class="sc-table sc-table--compact sc-table--research" id="predict-table"></table></div>
   </section>
 
   <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="streak-card" hidden>
@@ -242,7 +242,7 @@
       </div>
     </div>
     <p class="sc-empty sc-empty--brand stock-empty" id="streak-empty" hidden></p>
-    <div class="sc-table-scroll" id="streak-scroll"><table class="sc-table sc-table--compact" id="streak-table"></table></div>
+    <div class="sc-table-scroll" id="streak-scroll"><table class="sc-table sc-table--compact sc-table--research" id="streak-table"></table></div>
   </section>
 
   <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="trend-card" hidden>
@@ -254,7 +254,7 @@
       </div>
     </div>
     <p class="sc-empty sc-empty--brand stock-empty" id="trend-empty" hidden></p>
-    <div class="sc-table-scroll" id="trend-scroll"><table class="sc-table sc-table--compact" id="trend-table"></table></div>
+    <div class="sc-table-scroll" id="trend-scroll"><table class="sc-table sc-table--compact sc-table--research" id="trend-table"></table></div>
   </section>
 
   <!-- What happened the last times THIS name burst. The summary comes out of
@@ -271,7 +271,7 @@
       </div>
     </div>
     <p class="sc-empty sc-empty--brand stock-empty" id="ticker-empty" hidden></p>
-    <div class="sc-table-scroll" id="ticker-scroll"><table class="sc-table sc-table--compact" id="ticker-table"></table></div>
+    <div class="sc-table-scroll" id="ticker-scroll"><table class="sc-table sc-table--compact sc-table--research" id="ticker-table"></table></div>
     <div class="sc-show-more" id="ticker-more" hidden></div>
   </section>
 
@@ -290,10 +290,10 @@
     <p class="sc-empty sc-empty--brand stock-empty" id="outcome-empty" hidden></p>
     <div id="outcome-plot" hidden>
       <div class="sc-legend" id="outcome-legend"></div>
-      <div class="sc-chart" id="outcome-chart" role="group" tabindex="0"
-           aria-label="Each scored candidate as a dot: its score across, its next-day return up. The same numbers are in the table below."></div>
-      <p id="outcome-verdict"></p>
-      <div class="sc-table-scroll" id="outcome-scroll"><table class="sc-table sc-table--compact" id="outcome-table"></table></div>
+      <div class="sc-evidence__plot"><div class="sc-chart" id="outcome-chart" role="group" tabindex="0"
+           aria-label="Each scored candidate as a dot: its score across, its next-day return up. The same numbers are in the table below."></div></div>
+      <p class="sc-insight" id="outcome-verdict"></p>
+      <div class="sc-table-scroll" id="outcome-scroll"><table class="sc-table sc-table--compact sc-table--research" id="outcome-table"></table></div>
     </div>
   </section>
 
@@ -308,7 +308,7 @@
       </div>
     </div>
     <div class="sc-grid sc-grid--3 stock-metrics sc-stagger" id="returns-tiles"></div>
-    <div class="sc-table-scroll" id="returns-scroll"><table class="sc-table sc-table--compact" id="returns-table"></table></div>
+    <div class="sc-table-scroll" id="returns-scroll"><table class="sc-table sc-table--compact sc-table--research" id="returns-table"></table></div>
   </section>
 
   <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="runs-card" hidden>
@@ -319,7 +319,7 @@
         <p class="sc-hint" id="runs-hint"></p>
       </div>
     </div>
-    <div class="sc-table-scroll" id="runs-scroll"><table class="sc-table sc-table--compact" id="runs-table"></table></div>
+    <div class="sc-table-scroll" id="runs-scroll"><table class="sc-table sc-table--compact sc-table--research" id="runs-table"></table></div>
   </section>
 
   <div class="sc-callout sc-callout--spice stock-next sc-reveal" data-sc-motion="rise" id="next-callout">
@@ -448,9 +448,9 @@
       ]);
     });
     if (!rows.length) return el('p', { 'class': 'sc-empty', text: 'No checklist detail was recorded for this candidate.' });
-    return el('details', { 'class': 'sc-details' }, [
+    return el('details', { 'class': 'sc-details sc-disclosure' }, [
       el('summary', { text: 'The 2LYNCH checks in full' }),
-      el('div', { 'class': 'sc-table-scroll' }, el('table', { 'class': 'sc-table sc-table--compact' }, [
+      el('div', { 'class': 'sc-table-scroll' }, el('table', { 'class': 'sc-table sc-table--compact sc-table--research' }, [
         el('caption', { 'class': 'sc-sr-only', text: '2LYNCH checklist for ' + c.ticker }),
         el('thead', null, el('tr', null, [
           el('th', { 'class': 'sc-case', text: '2LYNCH' }), el('th', { text: 'check' }),
@@ -473,7 +473,7 @@
     var why = c.chart
       ? 'the pipeline rendered one beside this file and deliberately does not commit it, so the published page carries no copy. Open this page from a checkout that has just run the pipeline to see it.'
       : (c.chart_error || 'The chart failed to render for this candidate.');
-    var empty = el('div', { 'class': 'sc-frame sc-frame--empty shot--empty' }, [
+    var empty = el('div', { 'class': 'sc-frame sc-frame--empty shot--empty sc-empty--inline' }, [
       el('img', {
         'class': 'sc-frame__mark mark-cream', alt: '',
         src: 'design-system/assets/sc-mark-mono-cream.svg'
@@ -742,7 +742,7 @@
         })),
         lynchTable(c)
       ]),
-      el('div', null, chartSlot(c))
+      el('div', { 'class': 'pick__visual' }, chartSlot(c))
     ]);
   }
 
@@ -2207,6 +2207,7 @@
     $('nav-record').hidden = $('predict-card').hidden;
     $('nav-funnel').hidden = $('funnel-card').hidden;
     $('nav-runs').hidden = $('runs-card').hidden;
+    if (window.SC && SC.reading) SC.reading.refresh($('page-index'));
 
     $('foot-left').textContent = 'Run ' + day(run.date) + ' (' + (run.type || '') + ') · schema v' +
       (d.schema_version === undefined ? '?' : d.schema_version) +
