@@ -697,6 +697,24 @@
     return plural(n, 'up day');
   }
 
+  function scoreRail(c) {
+    // Presentation only: the exact score remains written in the heading. The
+    // point simply locates that existing 0–10 value on its declared scale.
+    var position = Math.max(0, Math.min(100, Number(c.score) * 10));
+    var tone = isFallback(c) ? 'var(--sc-chart-2)' : 'var(--sc-chart-1)';
+    return el('figure', {
+      'class': 'sc-benchmark pick__benchmark',
+      style: '--sc-benchmark-position:' + position + '%;--sc-benchmark-tone:' + tone
+    }, [
+      el('figcaption', { 'class': 'sc-sr-only', text: 'Score ' + num(c.score, 1) + ' out of 10' }),
+      el('div', { 'class': 'sc-benchmark__track', 'aria-hidden': 'true' },
+        el('span', { 'class': 'sc-benchmark__point' })),
+      el('div', { 'class': 'sc-benchmark__scale', 'aria-hidden': 'true' }, [
+        el('span', { text: '0' }), el('span', { text: 'score' }), el('span', { text: '10' })
+      ])
+    ]);
+  }
+
   function pick(c) {
     var facts = [
       ['close', '$' + num(c.close)],
@@ -724,6 +742,7 @@
           el('span', { 'class': 'pick__rank', text: '#' + c.rank }),
           el('span', { 'class': 'pick__ticker sc-case', text: c.ticker }),
           el('span', { 'class': 'pick__score' }, [String(num(c.score, 1)), el('span', { text: ' / 10' })]),
+          scoreRail(c),
           el('div', { 'class': 'pick__chips' }, [
             el('span', { 'class': 'sc-chip sc-chip--neutral sc-chip--case', text: c.verdict || '?' }),
             el('span', { 'class': 'sc-chip sc-chip--neutral sc-chip--case', title: 'Passed ' + c.lynch_passes + ' of the ' + c.lynch_total + ' 2LYNCH checks', text: '2LYNCH ' + c.lynch }),
