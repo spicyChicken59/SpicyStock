@@ -42,8 +42,10 @@
 #     FI  -- no bar after 10 Nov 2025. Whatever Fiserv trades as now was not
 #            verified from the sandbox, so it is retired rather than renamed.
 #     BK  -- no bar after 20 May 2026; BNY Mellon's listing moved to BNY,
-#            which is in the list below in its place and was checked by a
-#            rehearsal dispatch that returned its bars.
+#            which is in the list below in its place. Checked by rehearsal
+#            run 34035518295 on 6 Sep 2026, read off its log's coverage
+#            line: 228 requested, 228 answered with bars, none without a
+#            bar for the session, none with no bar at all.
 #
 # FORMAT
 #   One ticker per line, A-Z, 1 to 5 characters. Blank lines are ignored.

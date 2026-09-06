@@ -1091,8 +1091,15 @@ the malformed-snapshot table's TOLERATED branch asserted exit 0 or 2, and a
 refusal exits 2, so every tolerated row in that table, back to
 "stopped_printing is absent", could have been refused with the suite green.
 It asserts the inverse of the refused branch now, and the mutant that
-refused the null pair dies on it. The rehearsal that reads BNY's coverage
-off the new line is recorded below, not assumed here.
+refused the null pair dies on it. Then the rehearsal again, on the commit
+that made the line: run 34035518295, 13:15 UTC on Sunday 6 Sep 2026, dry
+run, session pinned to 4 Sep, read off its log -- `Coverage for
+2026-09-04: 228 requested; 228 answered with bars, 0 of those with no bar
+for the session; 0 answered with no bar at all; 0 dropped after their batch
+failed twice`. So BNY is a symbol the feed serves and it printed on the
+session, said by a count and not by a silence; the 228-name file is what
+the crons scan from here, and a name that later stops answering has a
+place to appear.
 
 **Leads written down, not worked.** A feed-wide missing day -- more than
 half the frames lacking a session -- is not a session under the majority
