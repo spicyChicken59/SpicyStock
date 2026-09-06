@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "app": "SpicyStock",
+  "generated": "2026-09-06T05:35:08Z",
+  "runs": [
+    {
+      "date": "2026-09-04",
+      "type": "evening",
+      "bursts": 0,
+      "passed_gate": 0,
+      "scored": 0,
+      "shortlist_size": 0,
+      "score_cap": 25,
+      "top_score": null,
+      "fallbacks": 0,
+      "model": "claude-sonnet-4-6",
+      "status": "degraded",
+      "dry_run": false,
+      "universe": {
+        "label": "data/symbols.txt (checked in)",
+        "size": 230
+      },
+      "benchmark": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n1": 0,
+        "n3": 0,
+        "n5": 0,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null,
+          "n1": 0,
+          "n3": 0,
+          "n5": 0
+        },
+        "universe": null,
+        "liquidity_floor": null,
+        "below_floor": 0
+      },
+      "liquidity": {
+        "pctile": 30.0,
+        "floor": 378670748,
+        "refused": 0
+      },
+      "candidates": [],
+      "gated": [],
+      "rules": {
+        "check.breakdown_lookback": 20,
+        "check.breakdown_pct": -4.0,
+        "check.max_consecutive_up_days": 2,
+        "check.max_d1_move": 2.0,
+        "check.max_d1_range_ratio": 1.0,
+        "check.max_d1_vol_ratio": 1.2,
+        "check.max_ext_vs_sma20": 15.0,
+        "check.max_prior_bursts": 1,
+        "check.max_run_up_1mo": 25.0,
+        "check.max_tightness": 1.0,
+        "check.min_close_pos": 0.7,
+        "check.min_linear_r2": 0.55,
+        "check.min_linear_slope": 0.0,
+        "check.prior_burst_pct": 4.0,
+        "check.vetoes": [
+          "up_days"
+        ],
+        "gate.min_lynch_passes": 3,
+        "scan.min_dollar_volume_pctile": 30.0,
+        "scan.min_gain_pct": 4.0,
+        "scan.min_price": 4.0,
+        "scan.min_rvol": 1.5,
+        "scan.min_rvol_sessions": 20,
+        "scan.rvol_lookback": 50,
+        "window.linear_fit_sessions": 30,
+        "window.norm_sessions": 60,
+        "window.prior_burst_lookback": 20,
+        "window.run_up_sessions": 20,
+        "window.sma_sessions": 20,
+        "window.tight_sessions": 7
+      },
+      "forward_returns": {
+        "d1": null,
+        "d3": null,
+        "d5": null,
+        "n": 0,
+        "rows": 0,
+        "from_open": {
+          "d1": null,
+          "d3": null,
+          "d5": null,
+          "n": 0
+        }
+      }
+    }
+  ]
+}
