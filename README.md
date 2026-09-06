@@ -222,7 +222,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 916 tests, no network or API keys needed
+pytest tests/                   # 929 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -320,7 +320,8 @@ below the session's floor — kept apart from the refusals for the opposite
 reason: those forward returns are bar prices on names the rule says are too
 thin to be bought at them, so they are shown beside the control and never in
 it) — plus `evidence.universe`, the benchmark rung (not a population of
-setups but the whole universe's move paired with each of them) and
+setups but the universe's move, over the names at or above that night's
+liquidity floor, paired with each of them) and
 `evidence.rules`, which says how many distinct sets of rules the record spans,
 which keys differ between them, and how many runs predate the fingerprint
 entirely: **a mean across runs is a mean over one strategy only while `sets`
@@ -367,7 +368,7 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 14.03 MB raw
+and what followed — needs the whole record, which projects to about 14.04 MB raw
 and **1.08 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
@@ -510,15 +511,39 @@ from. The page prints both, and calls neither of them "names".
   and none of them changes what a burst is. A run from before the fingerprint
   carries no `rules` key at all — absent, never null, because the contract
   distinguishes "this run had none" from a shape no writer produces.
-- `runs[].benchmark` is the **whole universe's equal-weight return from that
+- `runs[].benchmark` is the **universe's equal-weight return from that
   session** — `d1`, `d3`, `d5` from the close and `from_open` from the next
   open, with `n1`/`n3`/`n5` the number of symbols behind each — filled by a
-  later run from the frames its own scan already read, at no extra request.
+  later run from the frames its own scan already read, at no extra request,
+  over every name whose frame carries the session **at or above the run's own
+  liquidity floor**: rule 6's bar that night, kept in `run.liquidity.floor`, so
+  the names the rule says cannot be bought at those prints are out of the
+  alternative the way `evidence.illiquid` is out of the control. Before that
+  the rung averaged every name that traded, the refused ones included — 30% of
+  them by construction, since the floor IS the 30th percentile of the
+  session's dollar volume. `benchmark.liquidity_floor` is the floor applied
+  (null for a run recorded without one, when every name that traded counts)
+  and `benchmark.below_floor` how many names it left out. The frames are
+  handed over before the scan's stale and gap rules, which are about tonight's
+  session, so a name halted tonight still benchmarks the session it traded.
   `evidence.universe` pairs every scored setup with its own session's
   benchmark, so its outcomes are the alternative "buy anything in the universe
-  that day" over the same sessions in the same proportions as the picks. It is
-  a curated large-cap list as it stands today, so the comparison carries
-  survivorship bias in the benchmark's favour, and the page's rung says so.
+  that day" over the same sessions in the same proportions as the picks, and
+  `evidence.universe.floored` / `unfloored` say how many measured pairings
+  applied a floor and how many predate it. It is a curated large-cap list as
+  it stands today, so the comparison carries survivorship bias in the
+  benchmark's favour, and the page's rung says so.
+- A horizon is the bar of the session 1, 3 or 5 sessions after the burst, the
+  sessions read **across every frame the run fetched** (`session_calendar()`)
+  rather than counted along one frame's bars: a bar the feed dropped, or a
+  full-day halt, leaves that horizon null on that row instead of sliding it
+  onto the next bar the frame has. Reproduced before it was fixed: with the
+  27 Aug bar missing, `d3` printed the 28 Aug close and `as_of` dated it a
+  session late. A date is a session when at least half of the frames spanning
+  it carry a bar on it, so one frame's hole removes nothing and one frame's
+  phantom bar adds nothing. The open basis's entry must also lie within its
+  own bar's low and high, the standard the checklist holds a close to; an open
+  outside its range is null on that row, and the close basis is untouched.
 - `forward_returns.from_open` is the **same three closes divided by the next
   session's open** — the earliest price a reader of the 18:16 ET email could
   have paid. The two bases answer two questions about one move: what the
@@ -662,14 +687,14 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 190 checks, and which file each one
+**Three data sources, one page.** It runs 199 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 29 mutated copies of it are served
+  night can hold at once. 32 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now

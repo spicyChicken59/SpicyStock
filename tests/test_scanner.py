@@ -1811,3 +1811,27 @@ def test_a_status_less_refusal_whose_body_says_not_permitted_is_permanent():
 
     assert _is_permanent_refusal(_alpaca_error(None, "this endpoint is not permitted for your plan"))
     assert not _is_permanent_refusal(_alpaca_error(None, "internal server error"))
+
+
+def test_the_frames_handed_back_include_the_names_the_session_rules_dropped(fake_alpaca, ohlcv):
+    """`frames=` used to receive the frames AFTER the stale and gap rules,
+    so the universe benchmark five sessions later was "the names that traded
+    cleanly tonight" wearing the universe's name: a name halted today, or
+    with a hole before today's session, traded the earlier session like any
+    other and was left out of its alternative. The rules are about tonight;
+    the frames are handed back before them, and the ledger reads each
+    horizon by its session so a hole there is null rather than borrowed."""
+    names = [f"F{i}" for i in range(12)]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i))
+    fake_alpaca.add_history("STALE", ohlcv("base", variant=90), stale_sessions=3)
+    fake_alpaca.add_history("HOLE", ohlcv("base", variant=91), gap_before_session=True)
+    stats: dict = {}
+    frames: dict = {}
+
+    found = run_scan(ScanConfig(), universe=names + ["STALE", "HOLE"], stats=stats, frames=frames)
+
+    assert "STALE" in stats["stale"] and "HOLE" in stats["gapped"], "precondition: both were dropped tonight"
+    assert {c.ticker for c in found} == set(names)
+    assert set(frames) == set(names) | {"STALE", "HOLE"}, "every frame with bars, dropped or not"
+    assert len(frames["STALE"]) > 0 and len(frames["HOLE"]) > 0

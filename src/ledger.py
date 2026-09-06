@@ -182,7 +182,8 @@ CONTRACT_INVARIANTS = [
     "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
     "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
     "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
-    "runs[].benchmark is the whole universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), with nN the number of symbols behind each horizon; null until a later run's scan carried the sessions, and null forever for a run whose universe later scans never fetched. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks; it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
+    "runs[].benchmark is the universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), over every name whose frame carries the session and whose dollar volume that session was at or above the run's own liquidity floor -- rule 6's bar that night, run.liquidity.floor -- with nN the number of symbols behind each horizon. benchmark.liquidity_floor is the floor the fill applied, null for a run recorded without one, when every name that traded counts, and benchmark.below_floor is how many names it left out under it. Null until a later run's scan carried the sessions, and null forever for a run whose universe later scans never fetched. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks, and evidence.universe.floored is how many of those pairings were measured over a floor and evidence.universe.unfloored how many were measured before the floor reached the benchmark, over every name that traded (a pending pairing is in neither); it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
+    "d1/d3/d5 and from_open are measured on the bar of the session 1, 3 and 5 sessions after the burst, the sessions being read across every frame the run fetched rather than counted along one frame's bars: a frame with a hole at a horizon carries null there, never the next bar it happens to have, and as_of names the session of the last bar actually used. from_open's entry is the next session's open only where it lies within that bar's own low and high, the standard the checklist holds a close to; outside it the open basis is null on that row.",
     "Numbers are numbers or null. No 'n/a' strings.",
 ]
 
@@ -949,13 +950,79 @@ def slim_row(row: dict, lynch_result: dict | None = None, *, scored: bool) -> di
 
 # ------------------------------------------------------- forward returns --
 
-def forward_returns(df: pd.DataFrame | None, burst_date) -> dict:
+def session_calendar(frames: dict) -> list[date]:
+    """The sessions these frames agree happened, oldest first.
+
+    forward_returns() measures horizon h on the bar of the h-th SESSION after
+    the burst, and one frame cannot say which sessions those were: alone, it
+    can only count its own bars, so a bar the feed dropped or a full-day halt
+    put the third session on the fourth bar the frame had. Reproduced before
+    it was touched: with 27 Aug missing from a frame, d3 read the 28 Aug close
+    and d5 the 1 Sep close, each one session late, `as_of` dated to the wrong
+    session, and nothing said so. That is the class _drop_gapped_symbols()
+    closed for the scan, one stage further on, on every row the record holds.
+
+    The calendar is read ACROSS frames instead. A date is a session when at
+    least half of the frames that span it -- first bar on or before it, last
+    bar on or after -- carry a bar on it, so one frame's hole does not remove
+    a session and one frame's phantom bar does not add one. A single frame is
+    its own calendar, which is the positional reading again and all a caller
+    holding one frame can know; the pipeline hands the fills the calendar of
+    every frame the night fetched, which is the whole universe.
+    """
+    carrying: dict[date, int] = {}
+    spans: list[tuple[date, date]] = []
+    for df in (frames or {}).values():
+        if df is None or len(df) == 0:
+            continue
+        days = sorted({d for d in (_as_date(stamp) for stamp in df.index) if d is not None})
+        if not days:
+            continue
+        spans.append((days[0], days[-1]))
+        for day in days:
+            carrying[day] = carrying.get(day, 0) + 1
+    out: list[date] = []
+    for day in sorted(carrying):
+        spanning = sum(1 for lo, hi in spans if lo <= day <= hi)
+        if carrying[day] * 2 >= spanning:
+            out.append(day)
+    return out
+
+
+def _open_within_its_bar(df: pd.DataFrame, at: int, value: float) -> bool:
+    """Is this open inside its own bar's low and high?
+
+    The checklist's H refuses a close ABOVE its own high as a bad bar rather
+    than reading it as a strong close; the open basis holds its entry price
+    to the same standard, since an open printed outside the day's range is a
+    price nobody paid. A frame with no High or Low (the test frames) cannot
+    be checked and is taken as given.
+    """
+    if "High" in df:
+        high = float(df["High"].iloc[at])
+        if math.isfinite(high) and value > high:
+            return False
+    if "Low" in df:
+        low = float(df["Low"].iloc[at])
+        if math.isfinite(low) and value < low:
+            return False
+    return True
+
+
+def forward_returns(df: pd.DataFrame | None, burst_date,
+                    calendar: list[date] | None = None) -> dict:
     """d1/d3/d5 for one candidate, measured inside one frame.
 
     Returns the pending shape when the frame does not carry the burst session
     at all — a name that stopped trading, or a symbol the feed no longer
     knows. A missing measurement is null; it is never zero, and never a guess
     taken from the nearest bar, which would silently move the horizon.
+
+    `calendar` is the sessions the run knows happened (session_calendar()).
+    With one, horizon h is the bar on the h-th calendar session after the
+    burst, and a frame that lacks that bar measures NOTHING at that horizon
+    rather than the next bar it happens to have. Without one the frame's own
+    bars are the calendar, which is what a caller holding one frame can know.
     """
     out = empty_returns()
     burst = _as_date(burst_date)
@@ -973,6 +1040,20 @@ def forward_returns(df: pd.DataFrame | None, burst_date) -> dict:
     if not math.isfinite(base) or base <= 0:
         return out
 
+    # WHICH BAR IS THE h-TH SESSION. Along the calendar when the run has one
+    # and it knows the burst; along the frame's own bars otherwise. A bar is
+    # then found by its DATE, never by its offset, so a hole in the frame
+    # leaves a horizon null instead of sliding it onto a later session.
+    days = list(calendar) if calendar and burst in set(calendar) else sessions
+    origin = days.index(burst)
+    position = {day: i for i, day in enumerate(sessions)}
+
+    def bar(steps: int) -> tuple[date | None, int | None]:
+        if origin + steps >= len(days):
+            return None, None
+        target = days[origin + steps]
+        return target, position.get(target)
+
     # THE SECOND BASIS. d1/d3/d5 divide by the burst-day CLOSE, which is the
     # price the screener measured and the price nobody reading an 18:16 ET
     # email can buy: the earliest a reader can act is the next session's
@@ -985,34 +1066,54 @@ def forward_returns(df: pd.DataFrame | None, burst_date) -> dict:
     # acted on it could have had. Still a paper price -- one venue's official
     # open print, no slippage -- so a better upper bound, not a fill; and
     # null, never a guess from the burst close, when the frame carries no
-    # usable open for that session.
+    # usable open for that session, or an open outside that bar's own range.
     opens = df["Open"].to_numpy(dtype=float) if "Open" in df else None
     entry = None
-    if opens is not None and start + 1 < len(opens):
-        candidate = float(opens[start + 1])
-        if math.isfinite(candidate) and candidate > 0:
+    _next_session, at_entry = bar(1)
+    if opens is not None and at_entry is not None:
+        candidate = float(opens[at_entry])
+        if (math.isfinite(candidate) and candidate > 0
+                and _open_within_its_bar(df, at_entry, candidate)):
             entry = candidate
 
     measured_at = None
     for horizon in HORIZONS:
-        position = start + horizon
-        if position >= len(closes):
+        target, at = bar(horizon)
+        if at is None:
             continue
-        later = float(closes[position])
+        later = float(closes[at])
         if not math.isfinite(later):
             continue
         out[f"d{horizon}"] = _num((later / base - 1) * 100, 2)
         if entry is not None:
             out["from_open"][f"d{horizon}"] = _num((later / entry - 1) * 100, 2)
-        measured_at = sessions[position]
+        measured_at = target
     out["as_of"] = iso_date(measured_at)
     return out
 
 
-def universe_returns(frames: dict, session) -> dict:
+def _dollar_volume_on(df: pd.DataFrame, session: date) -> float | None:
+    """Close x volume on `session`'s bar, rounded the way the scan's own
+    session_dollar_volume() rounds tonight's -- the same product on an
+    earlier bar, so a name is on the same side of a floor here as it was
+    the night the floor was set. None when the frame cannot supply one."""
+    if df is None or "Close" not in df or "Volume" not in df:
+        return None
+    for stamp, close, volume in zip(df.index, df["Close"].to_numpy(dtype=float),
+                                    df["Volume"].to_numpy(dtype=float)):
+        if _as_date(stamp) == session:
+            if not (math.isfinite(close) and math.isfinite(volume)):
+                return None
+            value = round(close * volume)
+            return float(value) if value > 0 else None
+    return None
+
+
+def universe_returns(frames: dict, session, floor: float | None = None,
+                     calendar: list[date] | None = None) -> dict:
     """The equal-weight universe return from `session`'s close, and from the
-    next open, over every frame that carries the session: the benchmark the
-    north star was missing.
+    next open, over every frame that carries the session at or above `floor`:
+    the benchmark the north star was missing.
 
     evidence.refused compares the picks against OTHER BURSTS the gate
     refused, which judges the gate and not the strategy -- a momentum burst
@@ -1023,8 +1124,27 @@ def universe_returns(frames: dict, session) -> dict:
     how many symbols carried that horizon, and a horizon nobody has a value
     for is null, never 0. Names that did not trade the session are absent
     from the mean, not zeros in it.
+
+    `floor` is rule 6's bar THAT night, in dollars (run.liquidity.floor), and
+    a name whose dollar volume on the session sat under it is left out and
+    counted in `below_floor`. Without it the rung averaged over every name
+    that traded, the refused ones included -- 30% of them by construction,
+    since the floor IS the 30th percentile of that session's dollar volume --
+    so the alternative it printed was measurably not what a reader could
+    have bought, on the very names rule 6 says cannot be bought at those
+    prints. The same argument keeps evidence.illiquid out of the control.
+    None means no floor was applied, which is what a run recorded before
+    the block existed can say; it is stamped on the benchmark either way.
     """
-    per_symbol = [forward_returns(df, session) for df in frames.values()]
+    session = _as_date(session)
+    per_symbol, excluded = [], 0
+    for df in frames.values():
+        if floor is not None:
+            traded = _dollar_volume_on(df, session)
+            if traded is not None and traded < floor:
+                excluded += 1
+                continue
+        per_symbol.append(forward_returns(df, session, calendar))
     out: dict = {}
     from_open: dict = {}
     for horizon in HORIZONS:
@@ -1036,10 +1156,12 @@ def universe_returns(frames: dict, session) -> dict:
         from_open[key] = round(math.fsum(open_values) / len(open_values), 2) if open_values else None
         from_open[f"n{horizon}"] = len(open_values)
     out["from_open"] = from_open
-    # The same key empty_benchmark() carries, so the pending block and a
+    # The same keys empty_benchmark() carries, so the pending block and a
     # measured one are one shape. Which universe these frames were is the
     # caller's fact, not this function's; fill_benchmarks() stamps it.
     out["universe"] = None
+    out["liquidity_floor"] = _num(floor)
+    out["below_floor"] = excluded
     return out
 
 
@@ -1052,7 +1174,16 @@ def empty_benchmark() -> dict:
     out.update({f"n{h}": 0 for h in HORIZONS})
     out["from_open"] = {**{f"d{h}": None for h in HORIZONS}, **{f"n{h}": 0 for h in HORIZONS}}
     out["universe"] = None
+    # The floor the fill applied (null: none, every name that traded counts)
+    # and how many names it left out under it.
+    out["liquidity_floor"] = None
+    out["below_floor"] = 0
     return out
+
+
+def _is_number(value) -> bool:
+    """A JSON number: int or float, and not the bool JSON also spells as one."""
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
 def _from_open(returns: dict | None) -> dict:
@@ -1336,11 +1467,20 @@ def evidence(runs: list[dict]) -> dict:
         lose_mean = at_horizon(lost, longest)["mean"]
         separation = (None if win_mean is None or lose_mean is None
                       else round(win_mean - lose_mean, 2))
+        # And the same difference on the open basis, because the page sorts
+        # its "best separator" on this column and the column did not switch
+        # with the basis: the sentence named the check that separated most
+        # from the close while every cell beside it read from the open.
+        open_win = (at_horizon(won, longest).get("from_open") or {}).get("mean")
+        open_lose = (at_horizon(lost, longest).get("from_open") or {}).get("mean")
+        separation_from_open = (None if open_win is None or open_lose is None
+                                else round(open_win - open_lose, 2))
         by_check.append({
             "code": code,
             "passed": {"setups": len(passed), "outcomes": won},
             "failed": {"setups": len(failed), "outcomes": lost},
             "separation": separation,
+            "separation_from_open": separation_from_open,
             "enough": _enough(won) and _enough(lost),
             "enough_from_open": _enough_from_open(won) and _enough_from_open(lost),
         })
@@ -1472,7 +1612,14 @@ def evidence(runs: list[dict]) -> dict:
             continue
         universe_rows.append({"forward_returns": {
             **{f"d{h}": bench.get(f"d{h}") for h in HORIZONS},
-            "from_open": {f"d{h}": (bench.get("from_open") or {}).get(f"d{h}") for h in HORIZONS}}})
+            "from_open": {f"d{h}": (bench.get("from_open") or {}).get(f"d{h}") for h in HORIZONS}},
+            # Whether THIS pairing's benchmark has measured anything yet, and
+            # whether it left out the names under its night's floor -- so the
+            # rung can say over which names it is, and a pending pairing is
+            # neither floored nor unfloored.
+            "measured": any(_is_number(bench.get(f"d{h}")) for h in HORIZONS)
+                        or any(_is_number((bench.get("from_open") or {}).get(f"d{h}")) for h in HORIZONS),
+            "floored": _is_number(bench.get("liquidity_floor"))})
     unscored = [chain[0] for chain in chains.values() if not any(_scored(r) for r in chain)]
     crowded = [r for r in unscored if r.get("reason") == "score_cap"]
     # Rule 6's refusals are a population of their own, and NOT part of the
@@ -1508,7 +1655,14 @@ def evidence(runs: list[dict]) -> dict:
         "refused": _population(refused),
         "crowded_out": _population(crowded),
         "illiquid": _population(illiquid),
-        "universe": _population(universe_rows),
+        # floored: measured pairings whose benchmark left out the names under
+        # that night's floor; unfloored: measured pairings benchmarked before
+        # the floor reached the benchmark, over every name that traded. A
+        # pending pairing is in neither, so the page never calls "not yet"
+        # a fact about the floor.
+        "universe": {**_population(universe_rows),
+                     "floored": sum(1 for row in universe_rows if row["measured"] and row["floored"]),
+                     "unfloored": sum(1 for row in universe_rows if row["measured"] and not row["floored"])},
         "rules": rules_view(runs),
     }
 
@@ -1626,6 +1780,13 @@ def _malformed_rows(runs: list[dict]) -> str | None:
                                                   or not isinstance(value, (int, float))):
                             return (f"holds a run for {run.get('date')!r} whose {where}.{key} "
                                     f"is a JSON {type(value).__name__} rather than a number")
+            # The floor the fill applied and the count it left out: read by
+            # evidence() and by the page, so a string there is the same class.
+            for key in ("liquidity_floor", "below_floor"):
+                value = bench.get(key)
+                if value is not None and not _is_number(value):
+                    return (f"holds a run for {run.get('date')!r} whose benchmark.{key} "
+                            f"is a JSON {type(value).__name__} rather than a number")
     for key in ("candidates", "gated"):
         for run in runs:
             rows = run.get(key)
@@ -2050,8 +2211,13 @@ class Ledger:
             seen.setdefault(row["ticker"], None)
         return list(seen)
 
-    def fill_forward_returns(self, frames: dict, through: date | None = None) -> int:
+    def fill_forward_returns(self, frames: dict, through: date | None = None,
+                             calendar: list[date] | None = None) -> int:
         """Fill every horizon these frames make knowable. Returns how many rows moved.
+
+        `calendar` is the sessions the run knows happened (session_calendar()
+        over every frame it fetched), so a hole in one name's frame leaves a
+        horizon null rather than measuring it on the next bar the frame has.
 
         Idempotent: a row already carrying d1 keeps the value it was given,
         because the frame it came from and the frame here are the same
@@ -2063,7 +2229,7 @@ class Ledger:
             frame = frames.get(row["ticker"])
             if frame is None:
                 continue
-            fresh = forward_returns(frame, row["date"])
+            fresh = forward_returns(frame, row["date"], calendar)
             current = row.setdefault("forward_returns", empty_returns())
             # A row from before the open basis existed gains the block here,
             # pending, and fills it the same way: each key once, never
@@ -2090,7 +2256,8 @@ class Ledger:
         return moved
 
     def fill_benchmarks(self, frames: dict, through: date | None = None,
-                        universe: dict | None = None) -> int:
+                        universe: dict | None = None,
+                        calendar: list[date] | None = None) -> int:
         """Fill the universe benchmark of every run in the fill window whose
         horizons the frames make knowable, from the universe `frames` came
         from. Returns how many runs moved.
@@ -2116,6 +2283,13 @@ class Ledger:
         universe as tonight's scan holds it, so a name added to or dropped
         from the symbol file since that night is counted as tonight has it,
         and the count is what says how many that was.
+
+        Every name under the run's OWN liquidity floor that session -- the
+        bar rule 6 set that night, kept in run.liquidity -- is left out of
+        the mean and counted in `below_floor`, and the floor is stamped on
+        the block; a run recorded before the floor existed is benchmarked
+        over every name that traded and stamped null, which is the truth
+        about it. See universe_returns().
         """
         # No universe, nothing to benchmark WITH. A --tickers run scanned a
         # handful of names it was handed, which is not a market.
@@ -2147,7 +2321,7 @@ class Ledger:
             session = _as_date(run.get("date"))
             if session is None or (limit is not None and session >= limit) or not frames:
                 continue
-            fresh = universe_returns(frames, session)
+            fresh = universe_returns(frames, session, floor=_floor_of(run), calendar=calendar)
             changed = False
             for horizon in HORIZONS:
                 key, count = f"d{horizon}", f"n{horizon}"
@@ -2160,6 +2334,8 @@ class Ledger:
                     changed = True
             if changed:
                 current["universe"] = dict(universe)
+                current["liquidity_floor"] = fresh["liquidity_floor"]
+                current["below_floor"] = fresh["below_floor"]
                 moved += 1
         return moved
 
@@ -2242,6 +2418,18 @@ class Ledger:
         _write_json(self.path, ledger)
         _write_json(self.data_path, self.dashboard(headline))
         return {"data": self.data_path, "ledger": self.path}
+
+
+def _floor_of(run: dict) -> float | None:
+    """The liquidity floor a run entry recorded, in dollars, or None for a
+    run that recorded none. Defensive about the block's shape rather than
+    trusting it: the snapshot check refuses a malformed run.liquidity and
+    the ledger's does not, and a run benchmarked over every name is a
+    truthful answer for a block this cannot read, where a crash after the
+    scan and every Claude call is not."""
+    block = run.get("liquidity")
+    floor = block.get("floor") if isinstance(block, dict) else None
+    return float(floor) if _is_number(floor) and math.isfinite(floor) else None
 
 
 def _quarantine_key(path: Path) -> tuple[str, int]:

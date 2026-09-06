@@ -901,12 +901,18 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     FOUND, and the record has to hold both. `stats["liquidity_floor"]` is the
     floor in dollars, so the run can say what the bar was that night.
 
-    `frames`, if given, receives every fresh frame the scan read, burst or
-    not, keyed by symbol. The scan downloads the whole universe with a year
-    of lookback and used to keep only the bursting names' frames; the rest
-    carry, for every symbol, the closes on any recent session and the five
-    after it -- which is exactly what src.ledger's universe benchmark needs
-    on the evening five sessions later, at no extra request.
+    `frames`, if given, receives every frame the scan read with bars in it,
+    burst or not, keyed by symbol -- BEFORE the stale and gap rules, which
+    are about tonight's session and not about the earlier ones. The scan
+    downloads the whole universe with a year of lookback and used to keep
+    only the bursting names' frames; the rest carry, for every symbol, the
+    closes on any recent session and the five after it -- which is exactly
+    what src.ledger's universe benchmark needs on the evening five sessions
+    later, at no extra request. A name that did not print tonight, or has a
+    hole before tonight's session, still traded the session five nights
+    back, and a benchmark that left it out would be "the names that traded
+    cleanly tonight" wearing the universe's name; src.ledger reads each
+    horizon by its session (session_calendar) and a hole there is null.
     """
     cfg = cfg or ScanConfig()
     data_client = get_clients()
@@ -946,12 +952,12 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
                 continue
 
         with_bars += len(histories)
+        if frames is not None:
+            frames.update(histories)
         histories, batch_stale = _drop_stale_symbols(histories, session)
         stale.update(batch_stale)
         histories, batch_gapped = _drop_gapped_symbols(histories, session)
         gapped.update(batch_gapped)
-        if frames is not None:
-            frames.update(histories)
 
         for t, df in histories.items():
             # Every symbol that traded, burst or not, is part of the

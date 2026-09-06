@@ -23,7 +23,8 @@
       "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
       "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
       "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
-      "runs[].benchmark is the whole universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), with nN the number of symbols behind each horizon; null until a later run's scan carried the sessions, and null forever for a run whose universe later scans never fetched. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks; it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
+      "runs[].benchmark is the universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), over every name whose frame carries the session and whose dollar volume that session was at or above the run's own liquidity floor -- rule 6's bar that night, run.liquidity.floor -- with nN the number of symbols behind each horizon. benchmark.liquidity_floor is the floor the fill applied, null for a run recorded without one, when every name that traded counts, and benchmark.below_floor is how many names it left out under it. Null until a later run's scan carried the sessions, and null forever for a run whose universe later scans never fetched. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks, and evidence.universe.floored is how many of those pairings were measured over a floor and evidence.universe.unfloored how many were measured before the floor reached the benchmark, over every name that traded (a pending pairing is in neither); it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
+      "d1/d3/d5 and from_open are measured on the bar of the session 1, 3 and 5 sessions after the burst, the sessions being read across every frame the run fetched rather than counted along one frame's bars: a frame with a hole at a horizon carries null there, never the next bar it happens to have, and as_of names the session of the last bar actually used. from_open's entry is the next session's open only where it lies within that bar's own low and high, the standard the checklist holds a close to; outside it the open basis is null on that row.",
       "Numbers are numbers or null. No 'n/a' strings."
     ]
   },
@@ -918,7 +919,9 @@
           "n3": 0,
           "n5": 0
         },
-        "universe": null
+        "universe": null,
+        "liquidity_floor": null,
+        "below_floor": 0
       },
       "liquidity": {
         "pctile": 30.0,
@@ -989,24 +992,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.73,
+        "d1": 0.89,
         "d3": null,
         "d5": null,
-        "n1": 77,
+        "n1": 54,
         "n3": 0,
         "n5": 0,
         "from_open": {
-          "d1": 0.74,
+          "d1": 0.86,
           "d3": null,
           "d5": null,
-          "n1": 77,
+          "n1": 54,
           "n3": 0,
           "n5": 0
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 187495350,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -1077,24 +1082,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.68,
+        "d1": 0.76,
         "d3": null,
         "d5": null,
-        "n1": 77,
+        "n1": 54,
         "n3": 0,
         "n5": 0,
         "from_open": {
-          "d1": 0.47,
+          "d1": 0.58,
           "d3": null,
           "d5": null,
-          "n1": 77,
+          "n1": 54,
           "n3": 0,
           "n5": 0
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 204469510.6,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -1165,24 +1172,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.78,
-        "d3": 2.21,
+        "d1": 0.71,
+        "d3": 2.43,
         "d5": null,
-        "n1": 77,
-        "n3": 77,
+        "n1": 54,
+        "n3": 54,
         "n5": 0,
         "from_open": {
-          "d1": 0.64,
-          "d3": 2.06,
+          "d1": 0.61,
+          "d3": 2.32,
           "d5": null,
-          "n1": 77,
-          "n3": 77,
+          "n1": 54,
+          "n3": 54,
           "n5": 0
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 270157178.6,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -1253,24 +1262,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.9,
-        "d3": 2.4,
+        "d1": 0.81,
+        "d3": 2.22,
         "d5": null,
-        "n1": 77,
-        "n3": 77,
+        "n1": 54,
+        "n3": 54,
         "n5": 0,
         "from_open": {
-          "d1": 0.77,
-          "d3": 2.26,
+          "d1": 0.73,
+          "d3": 2.12,
           "d5": null,
-          "n1": 77,
-          "n3": 77,
+          "n1": 54,
+          "n3": 54,
           "n5": 0
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 210146671.8,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -1341,24 +1352,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.7,
-        "d3": 2.44,
-        "d5": 3.87,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.57,
+        "d3": 1.81,
+        "d5": 3.32,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.53,
-          "d3": 2.25,
-          "d5": 3.69,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.41,
+          "d3": 1.64,
+          "d5": 3.15,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 211054539,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -1429,24 +1442,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.7,
-        "d3": 2.34,
-        "d5": 3.86,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.76,
+        "d3": 1.9,
+        "d5": 3.33,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.52,
-          "d3": 2.16,
-          "d5": 3.67,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.56,
+          "d3": 1.69,
+          "d5": 3.12,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 193721823.8,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -1517,24 +1532,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.34,
-        "d3": 1.77,
-        "d5": 3.53,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.44,
+        "d3": 1.9,
+        "d5": 3.28,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.28,
-          "d3": 1.71,
-          "d5": 3.47,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.34,
+          "d3": 1.79,
+          "d5": 3.16,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 223775606.6,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -1605,24 +1622,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 1.26,
-        "d3": 2.33,
-        "d5": 4.01,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 1.36,
+        "d3": 2.43,
+        "d5": 3.96,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 1.0,
-          "d3": 2.07,
-          "d5": 3.73,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 1.02,
+          "d3": 2.08,
+          "d5": 3.6,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 161887274.6,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -1693,24 +1712,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.25,
-        "d3": 1.88,
-        "d5": 3.36,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.24,
+        "d3": 1.75,
+        "d5": 3.13,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.26,
-          "d3": 1.9,
-          "d5": 3.36,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.21,
+          "d3": 1.73,
+          "d5": 3.1,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 149343306.2,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -1781,24 +1802,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.46,
-        "d3": 2.02,
-        "d5": 3.13,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.44,
+        "d3": 2.07,
+        "d5": 3.08,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.36,
-          "d3": 1.92,
-          "d5": 3.02,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.33,
+          "d3": 1.94,
+          "d5": 2.95,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 166255999,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -1869,24 +1892,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.56,
-        "d3": 1.32,
-        "d5": 3.0,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.44,
+        "d3": 1.37,
+        "d5": 3.13,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.46,
-          "d3": 1.22,
-          "d5": 2.9,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.3,
+          "d3": 1.23,
+          "d5": 2.99,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 169311660.6,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -1957,24 +1982,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.32,
-        "d3": 1.39,
-        "d5": 3.03,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.18,
+        "d3": 0.75,
+        "d5": 1.73,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.37,
-          "d3": 1.44,
-          "d5": 3.07,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.32,
+          "d3": 0.89,
+          "d5": 1.86,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 155884278,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -2045,24 +2072,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.11,
-        "d3": 1.03,
-        "d5": 1.81,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.21,
+        "d3": 0.85,
+        "d5": 1.29,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.14,
-          "d3": 1.06,
-          "d5": 1.84,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.21,
+          "d3": 0.83,
+          "d5": 1.28,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 134251181.8,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -2133,24 +2162,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.44,
-        "d3": 0.88,
-        "d5": 1.98,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.77,
+        "d3": 1.16,
+        "d5": 1.83,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.33,
-          "d3": 0.78,
-          "d5": 1.88,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.55,
+          "d3": 0.94,
+          "d5": 1.61,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 192993291.60000002,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -2221,24 +2252,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.42,
-        "d3": 1.01,
-        "d5": 1.97,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.62,
+        "d3": 1.43,
+        "d5": 1.89,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.3,
-          "d3": 0.88,
-          "d5": 1.84,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.41,
+          "d3": 1.21,
+          "d5": 1.66,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 176002148.4,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -2309,24 +2342,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.87,
-        "d3": 1.78,
-        "d5": 2.24,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 1.01,
+        "d3": 1.93,
+        "d5": 2.06,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.77,
-          "d3": 1.67,
-          "d5": 2.13,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.85,
+          "d3": 1.77,
+          "d5": 1.9,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 212691449.8,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -2397,24 +2432,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.64,
-        "d3": 1.97,
-        "d5": 2.56,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.79,
+        "d3": 2.27,
+        "d5": 3.1,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.39,
-          "d3": 1.71,
-          "d5": 2.31,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.55,
+          "d3": 2.02,
+          "d5": 2.86,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 166194170,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -2485,24 +2522,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.87,
-        "d3": 2.41,
-        "d5": 3.33,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.88,
+        "d3": 2.67,
+        "d5": 4.01,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.65,
-          "d3": 2.2,
-          "d5": 3.11,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.69,
+          "d3": 2.49,
+          "d5": 3.83,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 170293802.20000002,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -2573,24 +2612,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.89,
-        "d3": 2.43,
-        "d5": 3.76,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.69,
+        "d3": 1.97,
+        "d5": 3.51,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.66,
-          "d3": 2.2,
-          "d5": 3.53,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.51,
+          "d3": 1.8,
+          "d5": 3.34,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 176022991.8,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -2661,24 +2702,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 1.18,
-        "d3": 2.99,
-        "d5": 4.54,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.95,
+        "d3": 2.35,
+        "d5": 4.14,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.91,
-          "d3": 2.71,
-          "d5": 4.27,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.69,
+          "d3": 2.07,
+          "d5": 3.86,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 197150178.4,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -2749,24 +2792,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.89,
-        "d3": 3.03,
-        "d5": 4.59,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 1.0,
+        "d3": 2.64,
+        "d5": 4.39,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.89,
-          "d3": 3.04,
-          "d5": 4.59,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.95,
+          "d3": 2.59,
+          "d5": 4.34,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 191448670.20000002,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -2837,24 +2882,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.68,
-        "d3": 2.8,
-        "d5": 4.65,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.7,
+        "d3": 2.7,
+        "d5": 4.51,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.61,
-          "d3": 2.72,
-          "d5": 4.57,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.65,
+          "d3": 2.65,
+          "d5": 4.44,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 144648934.2,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -2925,24 +2972,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.98,
-        "d3": 2.61,
-        "d5": 4.81,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 1.28,
+        "d3": 2.99,
+        "d5": 4.97,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.68,
-          "d3": 2.3,
-          "d5": 4.49,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.88,
+          "d3": 2.57,
+          "d5": 4.54,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 162117771.6,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -3013,24 +3062,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.8,
-        "d3": 2.51,
-        "d5": 4.71,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.85,
+        "d3": 2.56,
+        "d5": 4.9,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.73,
-          "d3": 2.45,
-          "d5": 4.64,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.71,
+          "d3": 2.41,
+          "d5": 4.76,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 146821119.8,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -3101,24 +3152,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.79,
-        "d3": 2.62,
-        "d5": 4.29,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.8,
+        "d3": 2.53,
+        "d5": 4.0,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.77,
-          "d3": 2.6,
-          "d5": 4.26,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.81,
+          "d3": 2.54,
+          "d5": 4.0,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 145024717.20000002,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -3189,24 +3242,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.82,
-        "d3": 2.42,
-        "d5": 4.15,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 1.11,
+        "d3": 2.46,
+        "d5": 4.19,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.52,
-          "d3": 2.12,
-          "d5": 3.86,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.7,
+          "d3": 2.05,
+          "d5": 3.78,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 151707698.4,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -3278,23 +3333,25 @@
       },
       "benchmark": {
         "d1": 0.44,
-        "d3": 2.06,
-        "d5": 3.9,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d3": 2.17,
+        "d5": 3.92,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.33,
-          "d3": 1.95,
-          "d5": 3.8,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.42,
+          "d3": 2.15,
+          "d5": 3.91,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 179566162.2,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -3365,24 +3422,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 1.62,
-        "d3": 2.93,
-        "d5": 4.56,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 1.67,
+        "d3": 3.47,
+        "d5": 4.92,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 1.22,
-          "d3": 2.52,
-          "d5": 4.14,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 1.35,
+          "d3": 3.14,
+          "d5": 4.58,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 160537948.20000002,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -3453,24 +3512,26 @@
         "size": 77
       },
       "benchmark": {
-        "d1": 0.91,
-        "d3": 3.0,
-        "d5": 4.67,
-        "n1": 77,
-        "n3": 77,
-        "n5": 77,
+        "d1": 0.66,
+        "d3": 2.99,
+        "d5": 5.13,
+        "n1": 54,
+        "n3": 54,
+        "n5": 54,
         "from_open": {
-          "d1": 0.85,
-          "d3": 2.95,
-          "d5": 4.61,
-          "n1": 77,
-          "n3": 77,
-          "n5": 77
+          "d1": 0.6,
+          "d3": 2.92,
+          "d5": 5.07,
+          "n1": 54,
+          "n3": 54,
+          "n5": 54
         },
         "universe": {
           "label": "synthetic fixture universe (77 invented histories)",
           "size": 77
-        }
+        },
+        "liquidity_floor": 140296815.20000002,
+        "below_floor": 23
       },
       "liquidity": {
         "pctile": 30.0,
@@ -4030,6 +4091,7 @@
           ]
         },
         "separation": 3.11,
+        "separation_from_open": 3.06,
         "enough": true,
         "enough_from_open": true
       },
@@ -4136,6 +4198,7 @@
           ]
         },
         "separation": -0.07,
+        "separation_from_open": -0.29,
         "enough": false,
         "enough_from_open": false
       },
@@ -4242,6 +4305,7 @@
           ]
         },
         "separation": -0.21,
+        "separation_from_open": 0.02,
         "enough": true,
         "enough_from_open": true
       },
@@ -4348,6 +4412,7 @@
           ]
         },
         "separation": -0.28,
+        "separation_from_open": -0.48,
         "enough": false,
         "enough_from_open": false
       },
@@ -4454,6 +4519,7 @@
           ]
         },
         "separation": -0.4,
+        "separation_from_open": -0.8,
         "enough": false,
         "enough_from_open": false
       },
@@ -4560,6 +4626,7 @@
           ]
         },
         "separation": 1.85,
+        "separation_from_open": 1.77,
         "enough": true,
         "enough_from_open": true
       }
@@ -8878,52 +8945,54 @@
       "outcomes": [
         {
           "horizon": 1,
-          "mean": 0.75,
+          "mean": 0.78,
           "n": 89,
-          "best": 1.62,
-          "worst": 0.11,
+          "best": 1.67,
+          "worst": 0.18,
           "in_band": 0,
           "from_open": {
-            "mean": 0.62,
+            "mean": 0.64,
             "n": 89,
-            "best": 1.22,
-            "worst": 0.14,
+            "best": 1.35,
+            "worst": 0.21,
             "in_band": 0
           }
         },
         {
           "horizon": 3,
-          "mean": 2.19,
+          "mean": 2.21,
           "n": 85,
-          "best": 3.03,
-          "worst": 0.88,
+          "best": 3.47,
+          "worst": 0.75,
           "in_band": 0,
           "from_open": {
-            "mean": 2.05,
+            "mean": 2.06,
             "n": 85,
-            "best": 3.04,
-            "worst": 0.78,
+            "best": 3.14,
+            "worst": 0.83,
             "in_band": 0
           }
         },
         {
           "horizon": 5,
-          "mean": 3.74,
+          "mean": 3.69,
           "n": 76,
-          "best": 4.81,
-          "worst": 1.81,
+          "best": 5.13,
+          "worst": 1.29,
           "in_band": 0,
           "from_open": {
-            "mean": 3.6,
+            "mean": 3.53,
             "n": 76,
-            "best": 4.64,
-            "worst": 1.84,
+            "best": 5.07,
+            "worst": 1.28,
             "in_band": 0
           }
         }
       ],
       "enough": true,
-      "enough_from_open": true
+      "enough_from_open": true,
+      "floored": 89,
+      "unfloored": 0
     },
     "rules": {
       "current": {

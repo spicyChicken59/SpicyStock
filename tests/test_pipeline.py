@@ -1049,9 +1049,9 @@ def test_a_later_scan_fills_the_earlier_runs_universe_benchmark_from_its_own_fra
     used: dict = {}
     real_fill = ledger.Ledger.fill_benchmarks
 
-    def capture(self, frames, through=None, universe=None):
+    def capture(self, frames, through=None, universe=None, calendar=None):
         used.update(frames)
-        return real_fill(self, frames, through, universe)
+        return real_fill(self, frames, through, universe, calendar)
 
     monkeypatch.setattr(ledger.Ledger, "fill_benchmarks", capture)
 
@@ -1061,12 +1061,26 @@ def test_a_later_scan_fills_the_earlier_runs_universe_benchmark_from_its_own_fra
     book = recorded(tmp_path)
     older = next(r for r in book["runs"] if r["date"] == first_session)
     assert set(used) == set(names), "every name the scan read, burst or not"
-    by_hand = [ledger.forward_returns(frame, first_session) for frame in used.values()]
+    # Over the names at or above THAT night's floor: rule 6's bar, kept in
+    # the run entry, applied to each frame's own dollar volume on the session
+    # -- recomputed here from the bars rather than asked of the module.
+    floor = older["liquidity"]["floor"]
+    traded = {name: float(f.loc[first_session, "Close"]) * float(f.loc[first_session, "Volume"])
+              for name, f in used.items()}
+    kept = [name for name, dv in traded.items() if round(dv) >= floor]
+    # The double re-dates every frame per request, so tonight's bar for the
+    # earlier session is not the bar the floor was set against, and how many
+    # fall under it is the market's business; that some do and not all is
+    # the precondition, and the mean over the rest is the claim.
+    assert 1 <= len(names) - len(kept) < len(names), "precondition: the floor bites and spares someone"
+    by_hand = [ledger.forward_returns(used[name], first_session) for name in kept]
     closes = [r["d1"] for r in by_hand if r["d1"] is not None]
     opens = [r["from_open"]["d1"] for r in by_hand if r["from_open"]["d1"] is not None]
     assert older["benchmark"]["d1"] == round(sum(closes) / len(closes), 2)
-    assert older["benchmark"]["n1"] == len(names) == len(closes)
+    assert older["benchmark"]["n1"] == len(kept) == len(closes)
     assert older["benchmark"]["from_open"]["d1"] == round(sum(opens) / len(opens), 2)
+    assert older["benchmark"]["liquidity_floor"] == floor, "stamped with the floor it applied"
+    assert older["benchmark"]["below_floor"] == len(names) - len(kept)
     assert older["benchmark"]["d3"] is None, "three sessions have not passed"
     assert older["benchmark"]["universe"] == older["universe"], (
         "stamped with the basket it was measured over, which is this run's own")
@@ -1118,7 +1132,9 @@ def test_a_tickers_run_neither_gives_a_benchmark_nor_gets_one(
     monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(2))
     pipeline.run("evening", dry_run=True)
     older = next(r for r in recorded(tmp_path)["runs"] if r["date"] == session_offset(-1))
-    assert older["benchmark"]["d1"] is not None and older["benchmark"]["n1"] == len(names)
+    assert older["benchmark"]["d1"] is not None
+    assert older["benchmark"]["n1"] == len(names) - older["benchmark"]["below_floor"] < len(names), (
+        "over the names at or above that night's floor")
 
 
 def test_a_liquidity_refused_row_carries_the_streak_the_run_read_for_it(
@@ -2927,3 +2943,78 @@ def test_a_malformed_snapshot_degrades_the_morning_run_instead_of_failing_it(
         assert "No shortlist" in sent["html"]
     else:
         assert report.exit_code in (pipeline.EXIT_OK, pipeline.EXIT_DEGRADED)
+
+
+def test_the_fill_reads_each_horizon_by_its_session_across_every_frame_the_run_fetched(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """forward_returns() counted bars along one frame, so a bar the feed
+    dropped between the burst and its horizons slid every later horizon one
+    session late and dated it wrong -- the class _drop_gapped_symbols()
+    closed for the scan, one stage on, on every row the record holds. The
+    fill reads the calendar off every frame the night fetched now: a name
+    with a hole on its first session after the burst has NO d1, rather than
+    the two-session move the next bar it holds would have printed."""
+    from tests.test_scanner import _thin
+
+    # BURST on ten times the usual volume, so that on the SECOND night --
+    # when the double has re-dated its frame and the bar on the burst
+    # session is an ordinary pre-burst one -- it still clears the floor the
+    # first night set, and the benchmark half of this test is about the
+    # hole and not about rule 6.
+    fake_alpaca.add_history("BURST", ohlcv("burst", base_volume=30_000_000.0))
+    names = ["BURST"]
+    for i, suffix in enumerate("ABCD"):
+        fake_alpaca.add_history(f"Q{suffix}", _thin(ohlcv, "flat", price=40.0 + i,
+                                                    volume=3_000_000, variant=i + 2))
+        names.append(f"Q{suffix}")
+    _universe_file(monkeypatch, tmp_path, names)
+    # Tonight, so nothing after the burst exists yet: a run pinned to an
+    # OLDER session resolves its own outcomes at once, from bars the hole
+    # below has not yet been registered in.
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    pipeline.run("evening", dry_run=True)
+    burst_session = recorded(tmp_path)["runs"][0]["date"]
+    row = next(c for c in recorded(tmp_path)["runs"][0]["candidates"] if c["ticker"] == "BURST")
+    assert row["forward_returns"]["d1"] is None, "precondition: the session after has not happened"
+
+    # Two sessions on, the feed serves BURST with the bar before the newest
+    # one missing -- the session right after the burst. The other four
+    # names carry it, so the calendar does.
+    fake_alpaca.add_history("BURST", ohlcv("burst", base_volume=30_000_000.0), gap_before_session=True)
+    used: dict = {}
+    real_fill = ledger.Ledger.fill_benchmarks
+
+    def capture(self, frames, through=None, universe=None, calendar=None):
+        used.update(frames)
+        return real_fill(self, frames, through, universe, calendar)
+
+    monkeypatch.setattr(ledger.Ledger, "fill_benchmarks", capture)
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(2))
+    pipeline.run("evening", dry_run=True)
+
+    book = recorded(tmp_path)
+    older = next(r for r in book["runs"] if r["date"] == burst_session)
+    row = next(c for c in older["candidates"] if c["ticker"] == "BURST")
+    assert row["forward_returns"]["d1"] is None, (
+        "the first session's bar is missing from this frame; the next bar is not it")
+    assert row["forward_returns"]["as_of"] is None
+    assert row["forward_returns"]["from_open"]["d1"] is None
+    # And the positional reading it replaced would have printed a number:
+    # the burst-day close against the bar two sessions on, called +1d. The
+    # benchmark reads the same calendar, over whoever cleared the floor:
+    # recomputed by hand from the frames the fill was handed, because the
+    # double re-dates every frame per request and which names sit under
+    # the floor on tonight's bars is the market's business, not the test's.
+    first_after = date.fromisoformat(session_offset(1))
+    days_of = {name: {stamp.date() for stamp in frame.index} for name, frame in used.items()}
+    assert first_after not in days_of["BURST"], "precondition: the hole is the first session after the burst"
+    assert all(first_after in days for name, days in days_of.items() if name != "BURST")
+    floor = older["liquidity"]["floor"]
+    kept = [name for name, frame in used.items()
+            if round(float(frame.loc[burst_session, "Close"]) * float(frame.loc[burst_session, "Volume"])) >= floor]
+    assert "BURST" in kept, "precondition: the holed name is above the floor, so only the hole can drop it"
+    bench = older["benchmark"]
+    assert bench["d1"] is not None, "the whole names still benchmark the session"
+    assert bench["below_floor"] == len(names) - len(kept)
+    assert bench["n1"] == len(kept) - 1, "every kept name but the holed one, which has no bar on that session"
