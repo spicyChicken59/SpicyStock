@@ -1530,11 +1530,35 @@ def _check_scan(scan_stats: dict, report: RunReport) -> None:
                                "their batch failed twice — they were never examined, "
                                "and an empty shortlist does not mean a quiet market")
     gapped = len(scan_stats.get("gapped", {}))
-    if with_bars and (stale + gapped) / with_bars > DEGRADED_STALE_FRACTION:
-        report.problem("scan", f"{stale + gapped} of {with_bars} symbols with data "
-                               f"({(stale + gapped) / with_bars:.0%}) could not be measured for "
-                               f"{session} and were skipped: {stale} carried no bar for it and "
-                               f"{gapped} had no bar for the session before it")
+    off_session = len(scan_stats.get("off_session") or {})
+    unmeasured = stale + gapped + off_session
+    if with_bars and unmeasured / with_bars > DEGRADED_STALE_FRACTION:
+        if gapped and gapped == with_bars - stale:
+            # Every name that had a bar for the session had none for the
+            # session before it. That is not `gapped` holes: it is a business
+            # day on which nothing printed, which the scan reads as a market
+            # closure when enough names agree on an earlier bar and could not
+            # here -- the `--tickers` smoke test on the day after a holiday.
+            # The sentence used to describe a holiday as "12 of 12 ... had no
+            # bar for the session before it" and stop. Keyed on the names
+            # that carried the session, not on with_bars, so one halted name
+            # beside eleven closure-shaped ones is still the closure.
+            report.problem("scan", f"{unmeasured} of {with_bars} symbols with data "
+                                   f"({unmeasured / with_bars:.0%}) could not be measured for "
+                                   f"{session} and were skipped: {stale} carried no bar for it, and "
+                                   f"the session before it, {scan_stats.get('previous_session')}, "
+                                   f"printed on no name among the {gapped} that did. That is most "
+                                   "likely a market closure, which the feed carries as nothing at "
+                                   "all; the scan reads one off the batch only when at least "
+                                   f"{scan_stats.get('closure_min_symbols')} names agree on an "
+                                   "earlier bar, and this batch could not")
+        else:
+            report.problem("scan", f"{unmeasured} of {with_bars} symbols with data "
+                                   f"({unmeasured / with_bars:.0%}) could not be measured for "
+                                   f"{session} and were skipped: {stale} carried no bar for it, "
+                                   f"{gapped} had no bar for the session before it and "
+                                   f"{off_session} had a bar for it whose close or volume could "
+                                   "not be read")
     errors = scan_stats.get("detector_errors") or {}
     if errors:
         first = next(iter(errors.items()))

@@ -100,6 +100,12 @@ Day) and is news the reader already has — and the subject escalates
 from `DEGRADED — ` to `NOTHING PUBLISHED IN 15 SESSIONS — `. The heading names
 the session the rows are actually from, for the same reason: it used to read
 "follow-through watchlist for TODAY" over a snapshot fifteen sessions old.
+A morning run on a holiday — Labor Day Monday at 8:30 AM ET — reads Friday's
+evening record like any Monday morning and mails it clean, with nothing in it
+saying the market is closed today, because nothing in this project knows that.
+That is designed: a calendar approximate enough to be wrong would say more
+than the record can support, and the evening cron on the holiday itself is
+what finds no bar and says so.
 
 **The mode is a promise about the clock, and it is checked.** An evening run
 declares that today's session has closed; a morning run declares that it has
@@ -117,6 +123,33 @@ on the evening run, which is the only one that writes a CSV, in that file's
 name too. The label cannot quietly become a different day.
 `SCAN_SESSION_DATE` is exempt: a pinned session is you overruling the clock on
 purpose, and a deliberate backfill is not a mistake.
+
+**The session before is read off the frames, so the day after a holiday is a
+night.** A burst is one session's move against the session before it, and the
+scan refuses a name whose bar before the session is not that session — a
+full-day halt, or a bar the feed dropped, would otherwise print a two-day move
+as the day's 4%. "The session before" was weekend-only arithmetic, and on the
+day after every weekday holiday the arithmetic names the holiday: every frame
+lacked it, every name was refused as a hole, and the run published DEGRADED
+with 0 bursts, a null floor and a record `evening.yml` would have committed as
+the night's — reproduced end to end on Tuesday 8 Sep 2026, the day after Labor
+Day and the first scheduled night. The scan now reads the session before off
+the batch (`observed_previous_session()`): when at least
+`coverage_guard_min_symbols` (10) fresh frames vote and **more than half share
+one date earlier than the arithmetic's**, that date is the previous session.
+A majority can only move the answer back, never forward, so a phantom bar can
+never manufacture a session; a split vote moves nothing; one name's own hole
+on the week of a closure is still a hole. No holiday calendar, still: the
+frames are the evidence, and this is the same majority rule the forward
+returns already read their sessions by. Below the minimum — the documented
+`--tickers` smoke test on the day after a holiday — the arithmetic stands, and
+the degraded sentence says the session before printed on no name rather than
+counting the universe as holes. The stated cost: a genuine feed-wide dropped
+business day, never observed, is read as a closure and measured across it.
+The bar the detector measured must also be the session's: a session bar with
+no readable close or volume used to make it measure the bar before and publish
+the *previous* session's burst under the session's date with status ok, and
+such a name is refused and counted with the ones that could not be measured.
 
 **Day N of this setup.** Every burst the evening run reports carries a
 `streak`: whether this name has appeared before, when it last did, what it
@@ -245,7 +278,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 992 tests, no network or API keys needed
+pytest tests/                   # 1009 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -529,8 +562,11 @@ sessions by — and `forward_returns.rows` is what those setups were collapsed
 from. The page prints both, and calls neither of them "names".
 
 - `d1`, `d3`, `d5` are the percentage change from the burst-day close to the
-  close 1, 3 and 5 **sessions** later — positions in the frame, not calendar
-  days, so a holiday cannot quietly shift a horizon.
+  close 1, 3 and 5 **sessions** later — sessions read off the calendar the
+  run's frames agree on (the bullet below says how), not calendar days and
+  not positions in one frame, so neither a holiday nor a hole can quietly
+  shift a horizon. This bullet said "positions in the frame" for a round
+  after round 9 made that false.
 - `runs[].rules` is **every number this screener's rules turned on when that
   run was made**: the scan's strategy thresholds, every threshold and window
   the checklist names, the vetoes in force and the gate. It is derived rather
@@ -626,6 +662,11 @@ happened:
 ```bash
 SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 ```
+
+A pin on the session after a holiday works the same way, because the session
+before it is read off the frames and not off a calendar (see "The session
+before is read off the frames" above); a pin on the holiday itself still finds
+no bar carrying it and stops with `StaleDataError`, by design.
 
 From GitHub, the same backfill is the evening workflow's **Run workflow**
 button with the `session` box filled: the run is exempt from the clock check,

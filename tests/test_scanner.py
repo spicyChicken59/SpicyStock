@@ -1772,6 +1772,242 @@ def test_a_gapped_symbol_is_counted_and_not_scanned(fake_alpaca, ohlcv):
     assert "HOLE" in stats["gapped"]
     assert "HOLE" not in [c.ticker for c in found]
     assert len(found) == 12
+    # An ordinary day: twelve frames agree with the arithmetic, and agreeing
+    # with it is not "observed" -- `<=` on the guard below called it that.
+    assert stats["previous_session"] == previous_session(stats["session"])
+    assert stats["previous_session_observed"] is False
+
+
+def test_a_session_bar_the_feed_left_none_in_is_no_dollar_volume_and_no_crash():
+    """The old dropna tolerated a None where a number belongs; a float() on
+    the session's own bar would not, and that call sits outside the
+    detector's try in run_scan(), so the fix for the NaN case would have
+    made a None the one shape that ends the scan."""
+    frame = pd.DataFrame({"Close": [10.0, None], "Volume": [1e6, None]},
+                         index=pd.DatetimeIndex(["2026-09-08", "2026-09-09"]), dtype=object)
+    assert frame["Close"].iloc[-1] is None, "precondition: a real None, not the NaN pandas coerces it to"
+    assert session_dollar_volume(frame) is None
+    frame = pd.DataFrame({"Close": [10.0, "n/a"], "Volume": [1e6, 2e6]},
+                         index=pd.DatetimeIndex(["2026-09-08", "2026-09-09"])).astype(object)
+    assert session_dollar_volume(frame) is None
+
+
+# --- the session before is read off the batch ------------------------------
+#
+# A business day NO name printed is a market closure, not a hole on every
+# name. Before observed_previous_session() existed the gap rule compared
+# every frame against weekend-only arithmetic, so the session after every
+# weekday holiday -- Tuesday 8 Sep 2026, the first scheduled night, the day
+# after Labor Day -- gapped the whole universe, scanned nothing, and
+# published DEGRADED with 0 bursts. Reproduced with the double and with a
+# genuine BarSet before it was touched (tests/test_sdk_contract.py holds the
+# BarSet one).
+
+TUESDAY_AFTER_LABOR_DAY = date(2026, 9, 8)
+LABOR_DAY = date(2026, 9, 7)
+
+
+def _closed_market(fake_alpaca, ohlcv, n: int, *, prefix: str = "G", variant0: int = 0) -> list[str]:
+    names = [f"{prefix}{i}" for i in range(n)]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=variant0 + i))
+    fake_alpaca.close_session(LABOR_DAY)
+    return names
+
+
+def test_a_business_day_no_name_printed_is_a_closure_not_a_hole_on_every_name(fake_alpaca, ohlcv):
+    """Every frame lacks Monday 7 Sep. The session before Tuesday's is Friday
+    4 Sep, read off the batch, and the twelve bursts are found."""
+    names = _closed_market(fake_alpaca, ohlcv, 12)
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(session_date=TUESDAY_AFTER_LABOR_DAY), universe=names, stats=stats)
+
+    assert stats["gapped"] == {}
+    assert len(found) == 12
+    assert stats["previous_session"] == date(2026, 9, 4)
+    assert stats["previous_session_observed"] is True
+    assert stats["liquidity_floor"] is not None, "the floor is drawn from names that were measured"
+    assert all(c.date == "2026-09-08" for c in found)
+
+
+def test_a_closure_read_off_the_batch_does_not_excuse_one_names_own_hole(fake_alpaca, ohlcv):
+    """The inverse: a name halted on Friday 4 Sep, on the week of the
+    closure, is still a hole -- its bar before the session is Thursday, and
+    the batch says the session before was Friday."""
+    names = _closed_market(fake_alpaca, ohlcv, 12)
+    fake_alpaca.add_history("HOLE", ohlcv("burst", variant=99), gap_before_session=True)
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(session_date=TUESDAY_AFTER_LABOR_DAY), universe=names + ["HOLE"], stats=stats)
+
+    assert stats["gapped"] == {"HOLE": date(2026, 9, 3)}
+    assert "HOLE" not in [c.ticker for c in found]
+    assert len(found) == 12
+
+
+def test_a_closure_is_read_only_from_the_coverage_minimum_of_voting_names(fake_alpaca, ohlcv):
+    """Below coverage_guard_min_symbols the arithmetic stands unchanged --
+    every `--tickers` smoke test -- so exactly one fewer than the minimum
+    stays gapped on a closure and exactly the minimum votes it through.
+    Pinned on the boundary because `>=` and `>` are one character apart."""
+    n = ScanConfig().coverage_guard_min_symbols
+    names = _closed_market(fake_alpaca, ohlcv, n)
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(session_date=TUESDAY_AFTER_LABOR_DAY), universe=names[:n - 1], stats=stats)
+    assert len(stats["gapped"]) == n - 1 and found == []
+    assert stats["previous_session"] == LABOR_DAY and stats["previous_session_observed"] is False
+
+    found = run_scan(ScanConfig(session_date=TUESDAY_AFTER_LABOR_DAY), universe=names, stats=stats)
+    assert stats["gapped"] == {} and len(found) == n
+    assert stats["previous_session_observed"] is True
+
+
+def test_a_split_vote_moves_the_previous_session_nowhere(fake_alpaca, ohlcv):
+    """MORE than half, not half: ten names whose bar before the session is
+    Friday and ten whose is Thursday (halted Friday) agree on nothing, so the
+    arithmetic stands and every one of them is a hole. One more on Friday's
+    side and it is a closure with nine holes."""
+    friday = _closed_market(fake_alpaca, ohlcv, 10, prefix="F")
+    thursday = [f"T{i}" for i in range(10)]
+    for i, name in enumerate(thursday):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=20 + i), gap_before_session=True)
+    cfg = ScanConfig(session_date=TUESDAY_AFTER_LABOR_DAY)
+    stats: dict = {}
+
+    found = run_scan(cfg, universe=friday + thursday, stats=stats)
+    assert found == [] and len(stats["gapped"]) == 20
+    assert stats["previous_session_observed"] is False
+
+    fake_alpaca.add_history("F10", ohlcv("burst", variant=40))
+    found = run_scan(cfg, universe=friday + ["F10"] + thursday, stats=stats)
+    assert sorted(c.ticker for c in found) == sorted(friday + ["F10"])
+    assert set(stats["gapped"]) == set(thursday)
+
+
+def test_the_vote_is_over_the_whole_scan_and_not_each_batch(fake_alpaca, ohlcv):
+    """A closure is a fact about the market, so the last batch of a universe
+    -- three names when the file is 103 long -- must not fall below the
+    minimum and be read as three holes while the batches before it read the
+    closure."""
+    names = _closed_market(fake_alpaca, ohlcv, 13)
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(session_date=TUESDAY_AFTER_LABOR_DAY, batch_size=10),
+                     universe=names, stats=stats)
+
+    assert stats["gapped"] == {} and len(found) == 13
+
+
+def _frames_whose_bar_before_the_session_is(days: list[date], session: date, n: int) -> dict:
+    """`n` frames indexed on `days` then `session`, one row each."""
+    out = {}
+    for i in range(n):
+        index = pd.DatetimeIndex([pd.Timestamp(d) for d in days] + [pd.Timestamp(session)])
+        out[f"P{i}"] = pd.DataFrame({"Close": 10.0, "Volume": 1e6}, index=index)
+    return out
+
+
+def test_a_majority_can_move_the_previous_session_back_and_never_forward():
+    """A phantom bar -- a Saturday every frame carries -- is LATER than the
+    arithmetic, and must not become the previous session: a majority can
+    only push the answer back, so a phantom can never manufacture one. The
+    same frames with an earlier shared bar do move it."""
+    from src.scanner import observed_previous_session
+
+    monday, saturday, friday, thursday = (date(2026, 9, 14), date(2026, 9, 12),
+                                          date(2026, 9, 11), date(2026, 9, 10))
+    cfg = ScanConfig()
+    phantom = _frames_whose_bar_before_the_session_is([friday, saturday], monday, 12)
+    assert observed_previous_session(phantom, monday, cfg) == (friday, False)
+
+    earlier = _frames_whose_bar_before_the_session_is([thursday], monday, 12)
+    assert observed_previous_session(earlier, monday, cfg) == (thursday, True)
+    assert previous_session(monday) == friday, "precondition: the arithmetic says Friday"
+
+
+def test_a_frame_with_one_bar_has_no_vote_and_stays_a_hole():
+    """A single-bar frame carries no bar before the session, so it says
+    nothing about what that session was: ten such frames beside ten that
+    agree on Thursday are ten of ten voting, not ten of twenty. And each of
+    them is still refused by the gap rule, as before."""
+    from src.scanner import observed_previous_session
+
+    monday, thursday = date(2026, 9, 14), date(2026, 9, 10)
+    cfg = ScanConfig()
+    frames = _frames_whose_bar_before_the_session_is([thursday], monday, 10)
+    for i in range(10):
+        frames[f"S{i}"] = pd.DataFrame({"Close": 10.0, "Volume": 1e6},
+                                       index=pd.DatetimeIndex([pd.Timestamp(monday)]))
+
+    assert observed_previous_session(frames, monday, cfg) == (thursday, True)
+    kept, gapped = _drop_gapped_symbols(frames, monday, thursday)
+    assert sorted(kept) == sorted(f"P{i}" for i in range(10))
+    assert sorted(gapped) == sorted(f"S{i}" for i in range(10))
+    # And with NO voter at all and the minimum switched off, the arithmetic
+    # stands rather than max() raising over an empty vote.
+    alone = {k: v for k, v in frames.items() if k.startswith("S")}
+    assert observed_previous_session(alone, monday, ScanConfig(coverage_guard_min_symbols=0)) == (
+        previous_session(monday), False)
+
+
+def test_a_nat_in_a_frames_index_neither_votes_nor_takes_the_scan_down():
+    """pd.Timestamp(NaT).date() is NaT again and cannot be compared with a
+    date -- the L2 shape from round 9, one function over."""
+    from src.scanner import observed_previous_session
+
+    monday, thursday = date(2026, 9, 14), date(2026, 9, 10)
+    frames = _frames_whose_bar_before_the_session_is([thursday], monday, 10)
+    # As many NaT frames as voters: a NaT that counted would be half the
+    # electorate and turn ten of ten into ten of twenty, which is how the
+    # first version of this test, with one NaT frame, let the check be
+    # deleted green -- the NaT was never compared and never tipped a vote.
+    for i in range(10):
+        frames[f"NAT{i}"] = pd.DataFrame({"Close": 10.0, "Volume": 1e6},
+                                         index=pd.DatetimeIndex([pd.NaT, pd.Timestamp(monday)]))
+
+    assert observed_previous_session(frames, monday, ScanConfig()) == (thursday, True)
+    kept, gapped = _drop_gapped_symbols(frames, monday, thursday)
+    assert sorted(gapped) == sorted(f"NAT{i}" for i in range(10)) and not any(k.startswith("NAT") for k in kept)
+
+
+# --- the bar the detector measured has to be the session's ------------------
+
+
+def _nan_on_the_session_bar(ohlcv, column: str) -> pd.DataFrame:
+    """A 12% burst, then one more ordinary bar whose `column` is NaN."""
+    burst = ohlcv("burst")
+    after = burst.iloc[[-1]].copy()
+    after.index = pd.DatetimeIndex([burst.index[-1] + pd.offsets.BDay(1)], name=burst.index.name)
+    after[column] = float("nan")
+    return pd.concat([burst, after])
+
+
+@pytest.mark.parametrize("column", ["Volume", "Close"])
+def test_a_nan_on_the_session_bar_does_not_publish_the_previous_sessions_burst_as_tonights(
+    fake_alpaca, ohlcv, column
+):
+    """detect_setup() drops the NaN bar and measures the one before it, so
+    the burst of 8 Sep came back dated 8 Sep on a scan of 9 Sep, with stale
+    and gapped both empty, and the pipeline published it under the session
+    with status ok. The scan refuses a candidate whose measured date is not
+    the session and counts it, and session_dollar_volume() reads the
+    session's own bar rather than the last one it can read."""
+    session = date(2026, 9, 9)
+    fake_alpaca.add_history("NANV", _nan_on_the_session_bar(ohlcv, column))
+    quiet = [f"Q{i}" for i in range(11)]
+    for i, name in enumerate(quiet):
+        fake_alpaca.add_history(name, ohlcv("flat", variant=i))
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(session_date=session), universe=["NANV"] + quiet, stats=stats)
+
+    assert found == []
+    assert stats["off_session"] == {"NANV": "2026-09-08"}
+    assert stats["stale"] == {} and stats["gapped"] == {}, "neither rule sees it: the session bar is there"
+    served = fake_alpaca.bars_frame(["NANV"], end=session).loc["NANV"].rename(columns=str.capitalize)
+    assert session_dollar_volume(served) is None, "no readable session bar, no place in the distribution"
 
 
 def test_a_detector_that_raises_on_every_symbol_is_not_a_quiet_market(fake_alpaca, ohlcv, monkeypatch):

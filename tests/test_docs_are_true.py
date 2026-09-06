@@ -161,6 +161,21 @@ def test_the_documented_sip_hold_back_is_the_one_the_scanner_applies():
         f".env.example says {env.group(1)} minutes; SIP_HOLDBACK_MINUTES is {SIP_HOLDBACK_MINUTES}")
 
 
+def test_the_closure_vote_readme_describes_is_the_one_the_scanner_makes():
+    """README says how many fresh frames the scan needs before it reads the
+    session before off the batch, and that number is ScanConfig's, not the
+    README's -- a count in prose beside a constant is the citation shape this
+    repo has watched rot four times."""
+    from src import scanner
+
+    readme = " ".join(_read("README.md").split())
+    found = re.search(r"`coverage_guard_min_symbols` \((\d+)\) fresh frames vote", readme)
+    assert found, "README no longer states the minimum beside the constant's name"
+    assert int(found.group(1)) == scanner.ScanConfig().coverage_guard_min_symbols
+    assert "more than half share one date earlier than the arithmetic" in readme, (
+        "the rule README states is the majority rule, and it says so in those words")
+
+
 def test_the_documented_thresholds_are_the_ones_the_code_applies(ohlcv):
     """README's pipeline diagram and schedule quote the numbers the code runs
     on; .env.example quotes the close it keys the session on.

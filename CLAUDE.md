@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 992 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1009 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -964,7 +964,8 @@ name alone; the first request whose window reaches past the clock is the
 first scheduled weekday evening, and it is Tuesday 8 Sep, because Monday 7
 Sep is Labor Day -- the cron will fire, find no bar for the 7th, and fail by
 design with `StaleDataError` (a holiday is never a quiet market), mailing
-nothing, since the mail cannot go out either. Then the email stage: Resend's
+the FAILED notice, since #10 below made the mail go out (this said "mailing
+nothing" for a round after that). Then the email stage: Resend's
 test mode delivers only to the address the account is registered under,
 `EMAIL_TO` is not it, and the run exited 3 -- and **the persist step ran, for
 the first time in this project's history**: commit f0780c7 `run 2026-09-04`,
@@ -994,8 +995,13 @@ a request whose `end` sat sixteen minutes behind the clock, every one of the
 session with no bar, by design. `DRY RUN -- not mailing the failure
 notice`, the persist step SKIPPED, the artifact `evening-dryrun-34034039799`
 -- the three things the box promises, each read off the job rather than
-assumed. So the free plan's consolidated route is the one this code takes,
-and Tuesday's cron is the first night, not the first experiment.
+assumed. So the free plan's consolidated route is the one this code takes.
+This sentence went on "and Tuesday's cron is the first night, not the
+first experiment", and it was not: Tuesday is the day after Labor Day, and
+the gap rule read the session before it off weekend arithmetic, so every
+name was a hole and the night would have published DEGRADED with 0 bursts
+-- the first round-10 item, worked before the cron fired (README, "The
+session before is read off the frames").
 
 **Then three dispatches of one identical refusal, and the sentence that
 ended them.** The owner enabled Pages (the first build published the

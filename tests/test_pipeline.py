@@ -913,6 +913,118 @@ def test_a_hole_before_the_session_and_a_raising_detector_both_degrade_the_run()
     assert "ValueError: a dtype surprise" in report.errors[0]["message"]
 
 
+def test_a_scan_that_could_measure_no_name_says_the_session_before_printed_on_none():
+    """100% gapped used to print "12 of 12 ... could not be measured ... 12
+    had no bar for the session before it" and nothing else, which is a
+    holiday described as twelve holes. When every name is gapped the
+    sentence says the session before printed on no name and that the scan
+    could not read a closure off this batch."""
+    report = pipeline.RunReport()
+    pipeline._check_scan({"requested": 3, "with_bars": 3, "stale": {}, "no_bars": 0,
+                          "dropped": 0, "session": "2026-09-08",
+                          "previous_session": "2026-09-07", "closure_min_symbols": 10,
+                          "gapped": {f"G{i}": "2026-09-04" for i in range(3)},
+                          "off_session": {}, "detector_errors": {}}, report)
+    (problem,) = report.errors
+    message = problem["message"]
+    assert "3 of 3 symbols with data (100%) could not be measured for 2026-09-08" in message
+    assert "the session before it, 2026-09-07, printed on no name among the 3 that did" in message
+    assert "market closure" in message
+    assert "at least 10 names" in message
+
+    # One short of everything is still the plain sentence: a closure is what
+    # NO name printing means, and eleven of twelve is not that.
+    report = pipeline.RunReport()
+    pipeline._check_scan({"requested": 12, "with_bars": 12, "stale": {}, "no_bars": 0,
+                          "dropped": 0, "session": "2026-09-08",
+                          "previous_session": "2026-09-07", "closure_min_symbols": 10,
+                          "gapped": {f"G{i}": "2026-09-04" for i in range(11)},
+                          "off_session": {}, "detector_errors": {}}, report)
+    assert "printed on no name" not in report.errors[0]["message"]
+    assert "11 had no bar for the session before it" in report.errors[0]["message"]
+
+    # But a name halted on the session itself does not turn the closure
+    # back into holes: the rule is over the names that carried the session.
+    report = pipeline.RunReport()
+    pipeline._check_scan({"requested": 12, "with_bars": 12, "stale": {"HALT": "2026-09-04"},
+                          "no_bars": 0, "dropped": 0, "session": "2026-09-08",
+                          "previous_session": "2026-09-07", "closure_min_symbols": 10,
+                          "gapped": {f"G{i}": "2026-09-04" for i in range(11)},
+                          "off_session": {}, "detector_errors": {}}, report)
+    assert "1 carried no bar for it, and the session before it, 2026-09-07, printed on no name among the 11 that did" in report.errors[0]["message"]
+
+
+def test_a_candidate_measured_off_the_session_degrades_the_run_with_the_stale_ones():
+    """The same class as a stale or gapped name -- the session bar could not
+    be measured -- counted against the same fraction, and named."""
+    report = pipeline.RunReport()
+    pipeline._check_scan({"requested": 100, "with_bars": 100, "stale": {}, "no_bars": 0,
+                          "dropped": 0, "session": "2026-09-09", "gapped": {},
+                          "off_session": {f"N{i}": "2026-09-08" for i in range(11)},
+                          "detector_errors": {}}, report)
+    assert [e["stage"] for e in report.errors] == ["scan"]
+    assert "11 of 100 symbols with data (11%) could not be measured" in report.errors[0]["message"]
+    assert "11 had a bar for it whose close or volume could not be read" in report.errors[0]["message"]
+
+
+def test_the_evening_after_a_market_closure_is_a_night_and_not_twelve_holes(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The first scheduled night is Tuesday 8 Sep 2026, the day after Labor
+    Day. Driven end to end with the session before the pinned one closed on
+    every frame: it exited 2, degraded, 0 bursts, 0 Claude calls, a null
+    floor, and evening.yml would have persisted that as the night's record.
+    It is a clean night now."""
+    names = [f"G{letter}" for letter in "ABCDEFGHIJKL"]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i))
+    _universe_file(monkeypatch, tmp_path, names)
+    session = date.fromisoformat(session_offset(1))
+    fake_alpaca.close_session(scanner.previous_session(session))
+    monkeypatch.setenv("SCAN_SESSION_DATE", session.isoformat())
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, report=report)
+
+    assert report.exit_code == pipeline.EXIT_OK, report.errors
+    data = clean(tmp_path)
+    assert data["run"]["date"] == session.isoformat()
+    assert data["run"]["bursts"] == 12
+    assert data["run"]["liquidity"]["floor"] is not None
+    assert len(mocked_boundaries["anthropic"].calls) == 12
+
+
+def test_a_nan_on_the_session_bar_does_not_publish_yesterdays_burst_under_tonights_date(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """Reproduced before it was touched: exit 0, run.date 2026-09-09, the
+    candidate dated 2026-09-08, the ledger row dated 2026-09-08 under run
+    2026-09-09, the email row "(close 2026-09-09)". Every row the run
+    publishes is dated to the session it scanned now, and the name is
+    counted with the ones that could not be measured."""
+    from tests.test_scanner import _nan_on_the_session_bar
+
+    fake_alpaca.add_history("NANV", _nan_on_the_session_bar(ohlcv, "Volume"))
+    names = ["NANV"]
+    for i, letter in enumerate("ABCDEFGHIJK"):
+        fake_alpaca.add_history(f"Q{letter}", ohlcv("flat", variant=i))
+        names.append(f"Q{letter}")
+    _universe_file(monkeypatch, tmp_path, names)
+    monkeypatch.setenv("SCAN_SESSION_DATE", "2026-09-09")
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, report=report)
+
+    data = clean(tmp_path)
+    assert data["run"]["date"] == "2026-09-09"
+    dated = [row["date"] for row in data["candidates"] + data["gated_out"]]
+    assert dated == [], f"a burst the session bar cannot support was published: {dated}"
+    assert data["run"]["bursts"] == 0
+    assert report.exit_code == pipeline.EXIT_OK, "one of twelve is a normal day"
+    assert all(row["date"] == "2026-09-09" for run in recorded(tmp_path)["runs"]
+               for row in run["candidates"])
+
+
 def test_the_email_names_a_command_line_universe_the_way_the_archive_does(
     fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):

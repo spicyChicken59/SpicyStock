@@ -132,7 +132,9 @@ _SYMBOL_RE = re.compile(r"^[A-Z]{1,5}$")
 # US equity sessions, for deciding which one a run can honestly scan. Nothing
 # here is a market calendar: weekends are arithmetic, but holidays are not, and
 # a holiday is meant to surface as a loud StaleDataError rather than as a scan
-# that quietly re-reads the previous session as "today".
+# that quietly re-reads the previous session as "today". The DAY AFTER a
+# holiday is the other half of that: the session before it is read off the
+# frames the scan fetched (observed_previous_session), not off the arithmetic.
 try:
     MARKET_TZ = ZoneInfo("America/New_York")
 except Exception as e:  # pragma: no cover - depends on the host's tz database
@@ -666,10 +668,74 @@ def previous_session(session: date) -> date:
     return prior
 
 
-def _drop_gapped_symbols(histories: dict[str, pd.DataFrame],
-                         session: date) -> tuple[dict[str, pd.DataFrame], dict[str, date]]:
-    """Split fresh symbols into ones whose bar BEFORE the session is the
-    previous business day, and ones with a hole there.
+def _bar_before_session(df: pd.DataFrame) -> date | None:
+    """The session of a fresh frame's second-newest bar, or None when the
+    frame has no such bar or its stamp is NaT -- which pd.Timestamp().date()
+    hands back as NaT again, and NaT cannot be compared with a date."""
+    if len(df) < 2:
+        return None
+    stamp = pd.Timestamp(df.index[-2])
+    if stamp is pd.NaT:
+        return None
+    return stamp.date()
+
+
+def observed_previous_session(histories: dict[str, pd.DataFrame], session: date,
+                              cfg: ScanConfig) -> tuple[date, bool]:
+    """The session before `session`, read off the batch: (date, observed).
+
+    previous_session() is weekend-only arithmetic, and the one case it gets
+    wrong is the session after a weekday holiday -- Tuesday 8 Sep 2026, the
+    first scheduled night, the day after Labor Day. The gap rule below used
+    to compare every frame against that arithmetic, so on such a day EVERY
+    name had "no bar for the session before it", the scan measured nothing,
+    the floor was null, and the run published DEGRADED with 0 bursts -- a
+    holiday described as 230 holes. Reproduced with the double and with a
+    genuine BarSet before this existed.
+
+    A business day NO name printed is a closure, and the frames are the
+    evidence: this is the majority rule src.ledger.session_calendar() already
+    applies to forward returns, one stage earlier. Each fresh frame votes
+    with the date of its bar before the session. When at least
+    cfg.coverage_guard_min_symbols frames vote -- below that, every
+    `--tickers` smoke test, the arithmetic stands unchanged -- and MORE THAN
+    HALF of the voters share one date that is strictly EARLIER than the
+    arithmetic's, that date is the previous session. A majority can only
+    move the answer BACK, never forward, so a phantom bar every frame
+    carries (a Saturday) can never manufacture a session; a split vote moves
+    nothing; a frame with one bar, or a NaT where its stamp belongs, has no
+    bar before the session and does not vote. Not a holiday calendar: an
+    approximate one making a confident claim is the defect this project
+    refuses to build, and this reads what the run already trusts.
+
+    The cost, stated: a genuine feed-wide DROPPED business day -- more than
+    half the universe missing a session the market held, never observed --
+    is read as a closure and measured across it, the same way every frame
+    was before the gap rule existed. Only the frames could say otherwise,
+    and on that day they do not.
+    """
+    want = previous_session(session)
+    votes: dict[date, int] = {}
+    for df in histories.values():
+        before = _bar_before_session(df)
+        if before is not None:
+            votes[before] = votes.get(before, 0) + 1
+    voters = sum(votes.values())
+    if not votes or voters < cfg.coverage_guard_min_symbols:
+        # `not votes` guards max() below when nothing voted at all, which the
+        # minimum covers today and would not if it were ever set to zero.
+        return want, False
+    day, count = max(votes.items(), key=lambda item: item[1])
+    if count * 2 > voters and day < want:
+        return day, True
+    return want, False
+
+
+def _drop_gapped_symbols(histories: dict[str, pd.DataFrame], session: date,
+                         want: date | None = None) -> tuple[dict[str, pd.DataFrame], dict[str, date]]:
+    """Split fresh symbols into ones whose bar BEFORE the session is `want`
+    -- the previous session, observed_previous_session()'s answer, or the
+    arithmetic's when none is given -- and ones with a hole there.
 
     _drop_stale_symbols checks only the newest bar. A full-day halt, or a bar
     the feed dropped, leaves iloc[-2] two sessions old while the frame passes
@@ -681,19 +747,20 @@ def _drop_gapped_symbols(histories: dict[str, pd.DataFrame],
     Dropped rather than measured across the hole, because a burst is one
     session's move against the session before it and a frame with a hole
     cannot say what that was. Counted, so the coverage guards and the run's
-    own report see them; a holiday inside the window is not a gap, since the
-    previous BUSINESS day is what is required and a holiday is not one (that
-    is the one case this weekend-only arithmetic gets wrong, and it errs by
-    dropping a real name for a day rather than by publishing a false burst).
+    own report see them. This docstring used to say a holiday was the one
+    case the arithmetic got wrong and that it "erred by dropping a real name
+    for a day"; it was every name, for the whole day after every weekday
+    holiday, which is why the previous session is read off the batch now.
     """
     ok: dict[str, pd.DataFrame] = {}
     gapped: dict[str, date] = {}
-    want = previous_session(session)
+    if want is None:
+        want = previous_session(session)
     for ticker, df in histories.items():
-        if len(df) < 2:
+        before = _bar_before_session(df)
+        if before is None:
             gapped[ticker] = _last_bar_date(df)
             continue
-        before = pd.Timestamp(df.index[-2]).date()
         if before == want:
             ok[ticker] = df
         else:
@@ -888,10 +955,23 @@ def session_dollar_volume(df: pd.DataFrame) -> float | None:
     scans; the obvious repair — rounding here too, but from the rounded close —
     disagreed by about $24 instead of about $1. One function, called by both.
     """
-    tail = df.dropna(subset=["Close", "Volume"])
-    if tail.empty:
+    if df.empty:
         return None
-    value = round(float(tail["Close"].iloc[-1]) * float(tail["Volume"].iloc[-1]))
+    # The LAST bar, not the last bar with a readable close and volume. This
+    # used to dropna first, so a session bar whose volume was NaN put the
+    # bar before it into the session's distribution under the session's
+    # name -- the same misdating detect_setup() made on that frame, which
+    # run_scan() refuses now by comparing the measured date to the session.
+    try:
+        close, volume = float(df["Close"].iloc[-1]), float(df["Volume"].iloc[-1])
+    except (TypeError, ValueError):
+        # A None or a string where a number belongs: the dropna this replaced
+        # tolerated it, and this call sits outside run_scan()'s per-symbol
+        # try, so it must too.
+        return None
+    if not (np.isfinite(close) and np.isfinite(volume)):
+        return None
+    value = round(close * volume)
     return float(value) if value > 0 else None
 
 
@@ -1005,8 +1085,10 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     candidates: list[Candidate] = []
     dropped = 0
     with_bars = 0
+    fresh: dict[str, pd.DataFrame] = {}
     stale: dict[str, date] = {}
     gapped: dict[str, date] = {}
+    off_session: dict[str, str] = {}
     no_bars_names: list[str] = []
     detector_errors: dict[str, str] = {}
     session_dollar_volumes: list[float] = []
@@ -1050,33 +1132,58 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             frames.update(histories)
         histories, batch_stale = _drop_stale_symbols(histories, session)
         stale.update(batch_stale)
-        histories, batch_gapped = _drop_gapped_symbols(histories, session)
-        gapped.update(batch_gapped)
+        fresh.update(histories)
+        log.info("Downloaded %d/%d symbols", min(i + cfg.batch_size, len(tickers)), len(tickers))
 
-        for t, df in histories.items():
-            # Every symbol that traded, burst or not, is part of the
-            # distribution rule 6 ranks against — see liquidity_floor().
-            dv = session_dollar_volume(df)
-            if dv is not None:
-                session_dollar_volumes.append(dv)
-            try:
-                m = detect_setup(df, cfg)
-            except Exception as e:  # noqa: BLE001 -- counted, and fatal in bulk below
-                # One symbol's bad frame must not end the scan. But a detector
-                # that raises on EVERY symbol -- a pandas API change, a dtype
-                # the SDK started returning -- used to be swallowed here with
-                # no count, so the scan returned [] with with_bars intact and
-                # raised nothing: the "[] is also a quiet market" shape every
-                # guard below exists to prevent, on the one path none covered.
-                if not detector_errors:
-                    log.exception("detect_setup raised on %s", t)
-                detector_errors[t] = f"{type(e).__name__}: {e}"
-                continue
-            if m:
-                candidates.append(Candidate(ticker=t, history=df, **m))
+    # The gap rule waits for the whole scan: the session before is read off
+    # EVERY fresh frame, once, because a closure is a fact about the market
+    # and not about a batch -- a per-batch vote would read the closure on the
+    # first hundred names and call the three in the last batch holes.
+    before, observed = observed_previous_session(fresh, session, cfg)
+    if observed:
+        log.warning("The session before %s printed on no name: %d of %d fresh frames "
+                    "carry %s as the bar before it, so the scan reads %s as a market "
+                    "closure and measures against %s",
+                    session, sum(1 for df in fresh.values() if _bar_before_session(df) == before),
+                    len(fresh), before, previous_session(session), before)
+    fresh, gapped = _drop_gapped_symbols(fresh, session, before)
 
-        log.info("Scanned %d/%d — %d candidates so far",
-                  min(i + cfg.batch_size, len(tickers)), len(tickers), len(candidates))
+    for t, df in fresh.items():
+        # Every symbol that traded, burst or not, is part of the
+        # distribution rule 6 ranks against — see liquidity_floor().
+        dv = session_dollar_volume(df)
+        if dv is not None:
+            session_dollar_volumes.append(dv)
+        try:
+            m = detect_setup(df, cfg)
+        except Exception as e:  # noqa: BLE001 -- counted, and fatal in bulk below
+            # One symbol's bad frame must not end the scan. But a detector
+            # that raises on EVERY symbol -- a pandas API change, a dtype
+            # the SDK started returning -- used to be swallowed here with
+            # no count, so the scan returned [] with with_bars intact and
+            # raised nothing: the "[] is also a quiet market" shape every
+            # guard below exists to prevent, on the one path none covered.
+            if not detector_errors:
+                log.exception("detect_setup raised on %s", t)
+            detector_errors[t] = f"{type(e).__name__}: {e}"
+            continue
+        if not m:
+            continue
+        if m["date"] != str(session):
+            # The bar the detector measured has to be the session's. It drops
+            # bars with no close or volume before reading iloc[-1], so a NaN
+            # on the session bar made it measure the bar before and hand back
+            # the PREVIOUS session's burst -- which passed freshness (the
+            # session bar is there) and the gap rule (so is the one before),
+            # and was published dated a day early under the session, status
+            # ok. One comparison, here rather than in the detector, because
+            # this is the guard for ANY path that dates a burst to the wrong
+            # session, whatever produced it.
+            off_session[t] = m["date"]
+            continue
+        candidates.append(Candidate(ticker=t, history=df, **m))
+    log.info("Scanned %d symbols for %s — %d candidates before rule 6",
+             len(fresh), session, len(candidates))
 
     # Everything the caller cannot read off the returned list. Set before the
     # guards so a raise still leaves the numbers behind it visible.
@@ -1092,6 +1199,13 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             "no_bars_names": sorted(no_bars_names),
             "dropped": dropped,
             "gapped": dict(gapped),
+            # The session the gap rule compared against, and whether it was
+            # read off the batch (a closure) or is the weekend arithmetic; the
+            # minimum is what the run's own report cites when it could not.
+            "previous_session": before,
+            "previous_session_observed": observed,
+            "closure_min_symbols": cfg.coverage_guard_min_symbols,
+            "off_session": dict(off_session),
             "detector_errors": dict(detector_errors),
             "candidates": len(candidates),
         })
@@ -1102,6 +1216,12 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
                     len(stale), with_bars, session,
                     ", ".join(f"{t} (last {d})" for t, d in list(stale.items())[:8])
                     + ("..." if len(stale) > 8 else ""))
+    if off_session:
+        log.warning("%d of %d symbols carried a bar for %s whose close or volume could not be "
+                    "read, so the detector measured an earlier session; refused: %s",
+                    len(off_session), with_bars, session,
+                    ", ".join(f"{t} (measured {d})" for t, d in list(off_session.items())[:8])
+                    + ("..." if len(off_session) > 8 else ""))
     if no_bars_names:
         log.warning("%d of %d symbols returned no bar at all in the window asked for and "
                     "were skipped -- unknown to the feed, or purged: %s",

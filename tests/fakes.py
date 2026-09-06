@@ -74,6 +74,8 @@ class FakeAlpaca:
         self.fail_symbols: set[str] = set()
         #: symbols whose bar before the newest one is missing -- see add_history
         self.gapped: set[str] = set()
+        #: sessions NO frame carries -- see close_session
+        self.closed_sessions: set = set()
 
     # -- registration -------------------------------------------------
     def add_history(self, ticker: str, df: pd.DataFrame, *, stale_sessions: int = 0,
@@ -93,6 +95,21 @@ class FakeAlpaca:
             self.gapped.add(ticker)
         else:
             self.gapped.discard(ticker)
+
+    def close_session(self, day) -> None:
+        """Serve every frame WITHOUT a bar on `day` -- a market holiday as the
+        wire shows it, which is nothing at all: no bar on any name, and no
+        field anywhere saying why.
+
+        The feed-wide sibling of `gap_before_session`, and a separate knob
+        for the same reason that one is: _align_to_end rebuilds every index as
+        contiguous business days, so a holiday cannot be handed in as a
+        frame, and a per-name hole is a different fact from a day nobody
+        printed. No test in the suite could hold a business day every frame
+        lacked before this existed, which is how the scan's gap rule read the
+        session after Labor Day as 230 holes.
+        """
+        self.closed_sessions.add(pd.Timestamp(day).date())
 
     def add_split(self, ticker: str, ratio: float, *, sessions_ago: int = 0) -> None:
         """Record a forward split of `ratio`-for-1 with this ex-date.
@@ -117,6 +134,14 @@ class FakeAlpaca:
             if sym in self.splits and not self._splits_applied(adjustment):
                 lower = self._unadjust(lower, *self.splits[sym])
             lower = self._align_to_end(lower, end, self.stale_sessions.get(sym, 0))
+            # The closure first, then a name's own hole: on a week with a
+            # holiday, `gap_before_session` removes the bar before the
+            # newest one that IS there, so the two knobs together are a
+            # halted name on the day after a holiday and not the holiday
+            # twice.
+            if self.closed_sessions:
+                lower = lower[[pd.Timestamp(t).date() not in self.closed_sessions
+                               for t in lower.index]]
             if sym in self.gapped and len(lower) >= 2:
                 lower = pd.concat([lower.iloc[:-2], lower.iloc[-1:]])
             if lower.empty:
