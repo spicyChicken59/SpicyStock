@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 959 tests with no network
+- **There is a regression net.** `pytest tests/` runs 964 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -973,6 +973,27 @@ until a domain is verified at resend.com/domains and `RESEND_FROM` is on it,
 and GitHub Pages has never built -- the Actions workflow list holds no
 `pages-build-deployment`, which is what enabling it creates -- so the page
 is a click away (README, "One-time setup") and not a commit away.
+
+**Then three dispatches of one identical refusal, and the sentence that
+ended them.** The owner enabled Pages (the first build published the
+repository root and rendered README as the site until the folder was set to
+`/docs`; the second build's artifact was the four dashboard files) and
+reported setting `EMAIL_TO` to the address Resend named; runs 34016952072,
+34017727995 and 34018201551 all drew `You can only send testing emails to
+your own email address (...)` regardless. Nothing in the log could tell a
+second recipient, a typo and a secret saved where the workflow does not read
+it apart -- the `github-pages` environment appears beside the repository
+secrets the moment Pages is on -- so `deliver()` reads the address out of
+Resend's own refusal and says how `EMAIL_TO` compares to it, without
+printing a recipient (#9). The third run answered: one recipient, at
+gmail.com, the address Resend named in different capitalisation. Resend's
+test-mode check is an exact string match. On exactly that refusal, and only
+when every recipient is the named address up to case, the emailer sends once
+more in Resend's own spelling and says to re-save the secret that way (#10):
+providers treat the local part case-insensitively in practice and the
+domain always is, so it is the same mailbox; a mixed list or a second
+refusal is diagnosed and raised like any other. Three mutants over the
+respelling and two over the diagnosis, all killed.
 
 **Leads written down, not worked.** A feed-wide missing day -- more than
 half the frames lacking a session -- is not a session under the majority
