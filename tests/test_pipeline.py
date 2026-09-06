@@ -2857,6 +2857,14 @@ MALFORMED_SNAPSHOTS = {
     "a stopped name's sessions_behind is a string": (lambda d: d["run"].update(
         stopped_printing={"after_sessions": 5, "count": 1,
                           "names": [{"ticker": "EA", "last": "2026-08-04", "sessions_behind": "23"}]}), NOT_A_RUN),
+    # A name the feed returned no bar for at all: the one null pair the writer
+    # produces, tolerated; a number where the date belongs is not.
+    "a stopped name the feed returned nothing for": (lambda d: d["run"].update(
+        stopped_printing={"after_sessions": 5, "count": 1,
+                          "names": [{"ticker": "NOSUCH", "last": None, "sessions_behind": None}]}), False),
+    "a stopped name's last is a number": (lambda d: d["run"].update(
+        stopped_printing={"after_sessions": 5, "count": 1,
+                          "names": [{"ticker": "EA", "last": 20260804, "sessions_behind": 23}]}), NOT_A_RUN),
     "a candidate is null": (lambda d: d.update(candidates=[None]), NOT_A_RUN),
     "a candidate is a number": (lambda d: d.update(candidates=[7]), NOT_A_RUN),
     "a candidate is a list": (lambda d: d.update(candidates=[["AAPL"]]), NOT_A_RUN),
@@ -2985,7 +2993,14 @@ def test_a_malformed_snapshot_degrades_the_morning_run_instead_of_failing_it(
         assert sent["subject"].startswith("[4% Burst] DEGRADED — ")
         assert "No shortlist" in sent["html"]
     else:
+        # A tolerated shape is READ, not refused. This branch used to assert
+        # exit 0 or 2 alone, and a refusal exits 2 -- so every tolerated row
+        # in the table could be refused with the suite green, which a mutant
+        # that refused the null pair a dateless name carries showed. The
+        # inverse of the refused branch is what tells the two states apart.
         assert report.exit_code in (pipeline.EXIT_OK, pipeline.EXIT_DEGRADED)
+        assert not [e for e in report.errors if e["stage"] == "history"], (
+            "a tolerated shape was refused: " + str(report.errors))
 
 
 def test_the_fill_reads_each_horizon_by_its_session_across_every_frame_the_run_fetched(
@@ -3230,6 +3245,22 @@ def test_stopped_printing_names_at_most_the_cap_and_counts_the_rest():
     assert behinds == sorted(behinds, reverse=True)
 
 
+def test_stopped_printing_puts_the_names_the_feed_returned_nothing_for_first_with_no_date():
+    """A symbol the feed answered with no bar at all -- unknown to it, or the
+    old symbol of a rename once purged -- is behind by more than any date can
+    say: first, dateless, counted, and still under the cap."""
+    session = date(2026, 9, 4)
+    block = pipeline.stopped_printing({
+        "session": session, "stale": {"FI": date(2025, 11, 10), "HALT": date(2026, 9, 3)},
+        "no_bars_names": ["ZZZ", "AAA"]})
+    assert [n["ticker"] for n in block["names"]] == ["AAA", "ZZZ", "FI"]
+    assert block["names"][0] == {"ticker": "AAA", "last": None, "sessions_behind": None}
+    assert block["count"] == 3
+    capped = pipeline.stopped_printing({"session": session, "stale": {},
+                                        "no_bars_names": [f"N{i:02d}" for i in range(12)]})
+    assert capped["count"] == 12 and len(capped["names"]) == pipeline.STOPPED_PRINTING_MAX
+
+
 def test_stopped_printing_is_empty_and_still_an_object_on_a_clean_night():
     assert pipeline.stopped_printing({"session": date(2026, 9, 4), "stale": {}}) == {
         "after_sessions": pipeline.STOPPED_PRINTING_SESSIONS, "count": 0, "names": []}
@@ -3248,16 +3279,22 @@ def test_a_name_that_stopped_printing_reaches_the_record_and_the_email(
     names = _wide_universe(fake_alpaca, ohlcv, fresh=24)
     fake_alpaca.add_history("GONE", ohlcv("burst", variant=90), stale_sessions=30)
     fake_alpaca.add_history("HALT", ohlcv("burst", variant=91), stale_sessions=1)
+    # ...and one the double was never given, so the feed answers nothing for
+    # it: the state a rename leaves its old symbol in once purged, which
+    # reached no surface until it had a place in this block.
     report = pipeline.RunReport()
 
-    pipeline.run("evening", dry_run=False, tickers=names + ["GONE", "HALT"], report=report)
+    pipeline.run("evening", dry_run=False, tickers=names + ["GONE", "HALT", "NOSUCH"], report=report)
 
     data = clean(tmp_path)
     block = data["run"]["stopped_printing"]
-    assert [n["ticker"] for n in block["names"]] == ["GONE"], block
-    assert block["names"][0]["sessions_behind"] == 30 and block["count"] == 1
+    assert [n["ticker"] for n in block["names"]] == ["NOSUCH", "GONE"], block
+    assert block["names"][0] == {"ticker": "NOSUCH", "last": None, "sessions_behind": None}
+    assert block["names"][1]["sessions_behind"] == 30 and block["count"] == 2
     assert block["after_sessions"] == pipeline.STOPPED_PRINTING_SESSIONS
     (sent,) = mocked_boundaries["resend"].sent
-    assert "Not printing: GONE (since " in sent["html"] and "HALT" not in sent["html"].split("Not printing")[1].split("</p>")[0]
+    assert "Not printing: NOSUCH (no bar at all), GONE (since " in sent["html"]
+    assert "HALT" not in sent["html"].split("Not printing")[1].split("</p>")[0]
+    assert "since None" not in sent["html"]
     assert f"more than {pipeline.STOPPED_PRINTING_SESSIONS} sessions" in sent["html"]
     assert report.status == "ok", report.errors

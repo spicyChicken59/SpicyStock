@@ -402,6 +402,14 @@ def stopped_printing(scan_stats: dict) -> dict:
     says how many there were before the cap. The threshold is written INTO the
     block, so the page and the email print the number this run applied rather
     than one retyped in two other files.
+
+    `scan_stats["no_bars_names"]` is every symbol the feed answered with no bar
+    AT ALL in the window the scan asked for -- a symbol it does not know, or
+    one purged after a ticker change, which is the state the old symbol of
+    every rename ends in. That is behind by more than any date can say, so
+    those come FIRST, with `last` and `sessions_behind` null, and the count
+    includes them. Until they did, such a name was in no log line, no record,
+    no email and no page below the fraction that degrades a run.
     """
     session = scan_stats.get("session")
     names = []
@@ -410,7 +418,9 @@ def stopped_printing(scan_stats: dict) -> dict:
         if behind is None or behind <= STOPPED_PRINTING_SESSIONS:
             continue
         names.append({"ticker": str(ticker), "last": ledger.iso_date(last), "sessions_behind": behind})
-    names.sort(key=lambda n: (-n["sessions_behind"], n["ticker"]))
+    for ticker in scan_stats.get("no_bars_names") or []:
+        names.append({"ticker": str(ticker), "last": None, "sessions_behind": None})
+    names.sort(key=lambda n: (n["sessions_behind"] is not None, -(n["sessions_behind"] or 0), n["ticker"]))
     return {"after_sessions": STOPPED_PRINTING_SESSIONS, "count": len(names),
             "names": names[:STOPPED_PRINTING_MAX]}
 

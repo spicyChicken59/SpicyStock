@@ -915,7 +915,11 @@
     var base = 'nothing dropped — this is what was scanned';
     var sp = run.stopped_printing;
     if (!sp || typeof sp !== 'object' || !Array.isArray(sp.names) || !sp.count) return base;
-    var names = sp.names.map(function (n) { return n.ticker + ' (since ' + n.last + ')'; }).join(', ');
+    var names = sp.names.map(function (n) {
+      // No date is a name the feed returned no bar for at all; the words are
+      // src/emailer.py's _stopped_printing_line(), and 'since null' is not a date.
+      return typeof n.last === 'string' ? n.ticker + ' (since ' + n.last + ')' : n.ticker + ' (no bar at all)';
+    }).join(', ');
     var more = sp.count - sp.names.length;
     return base + ' · ' + sp.count + (sp.count === 1 ? ' name has' : ' names have') +
       ' not printed for more than ' + sp.after_sessions + ' sessions: ' + names +

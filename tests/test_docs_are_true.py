@@ -1155,6 +1155,17 @@ def test_the_evening_workflow_can_rehearse_from_the_run_workflow_form_without_ma
     assert name.startswith("${{ inputs.dry_run == true && format('evening-dryrun-{0}', github.run_id) ||"), name
 
 
+def test_a_name_the_feed_returned_nothing_for_is_worded_the_same_in_the_email_and_on_the_page():
+    """One mechanism, one vocabulary: the dateless case of run.stopped_printing
+    is printed by src.emailer and docs/index.html in the same words, each
+    pinned here against the other's source, and README's contract bullet says
+    the state exists and what its two nulls mean."""
+    phrase = " (no bar at all)"
+    assert phrase in _read("src/emailer.py"), "the email's words"
+    assert phrase in _read("docs/index.html"), "the page's words"
+    assert "`last` and `sessions_behind` null" in _read("README.md")
+
+
 def test_the_documented_stopped_printing_numbers_are_the_ones_the_code_applies():
     """README's contract bullet quotes the threshold and the cap in digits;
     both are read off src.pipeline so a change there turns this red."""

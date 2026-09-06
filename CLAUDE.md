@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 987 tests with no network
+- **There is a regression net.** `pytest tests/` runs 992 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -1066,6 +1066,33 @@ fixture carries two such names through the pipeline's own function, the
 history fixture regenerated with the empty block, the shape check refuses the
 block one level in (five malformed shapes; absent loads clean), and the smoke
 reads the note off the DOM. Six mutants, all killed.
+
+**And the sibling state was in no log line at all, found by trying to read
+one symbol off a rehearsal.** `run.stopped_printing` was built from `stale`
+-- names with a bar, none for the session -- and a symbol the feed answers
+with NOTHING is in no frame: not stale, not dropped (that is a batch that
+failed), only the arithmetic `no_bars` count, which degrades the run past
+10% of the universe and is otherwise written nowhere; and "Scanned 228/228"
+counts what was ASKED. So the rehearsal dispatched to confirm BNY, the
+symbol BK's listing moved to, could not: its log read the same whether BNY
+had answered or not, and the artifact holding the answer sits on a host this
+sandbox's proxy refuses. That is the state the old symbol of every rename
+ends in once purged, and a typo in the file, invisible below the fraction.
+The scanner names them now (`no_bars_names`, pinned equal to the arithmetic
+count), warns with the names, and prints the coverage as POSITIVE counts --
+requested, answered with bars, of those none for the session, answered with
+no bar at all, dropped -- because no warning is also what a scan that never
+asked prints. `stopped_printing()` carries them first and dateless, `last`
+and `sessions_behind` null; the shape check accepts that one pair and
+refuses a number where the date belongs; the email and the page print
+"(no bar at all)" in one wording, each pinned against the other's source.
+Eleven mutants, ten killed on the first pass. The survivor was the harness:
+the malformed-snapshot table's TOLERATED branch asserted exit 0 or 2, and a
+refusal exits 2, so every tolerated row in that table, back to
+"stopped_printing is absent", could have been refused with the suite green.
+It asserts the inverse of the refused branch now, and the mutant that
+refused the null pair dies on it. The rehearsal that reads BNY's coverage
+off the new line is recorded below, not assumed here.
 
 **Leads written down, not worked.** A feed-wide missing day -- more than
 half the frames lacking a session -- is not a session under the majority

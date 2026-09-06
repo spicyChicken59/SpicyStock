@@ -776,14 +776,15 @@ data = {
         "dry_run": False,
         "fixture": True,
         "universe": {"label": "data/symbols.txt (checked in)", "size": len(UNIVERSE)},
-        # Two names in the file that have stopped printing, through the
-        # pipeline's own function rather than a hand-typed block, so the shape
-        # and the threshold cannot drift from what publish() writes. Chosen
-        # from the names no burst uses, so the page is not told a name both
-        # burst and stopped printing.
+        # Two names in the file that have stopped printing, and a third the
+        # feed returned no bar for at all, through the pipeline's own function
+        # rather than a hand-typed block, so the shape and the threshold cannot
+        # drift from what publish() writes. Chosen from the names no burst
+        # uses, so the page is not told a name both burst and stopped printing.
         "stopped_printing": stopped_printing({"session": SESSION, "stale": dict(zip(
             [s for s in UNIVERSE if s not in {r["ticker"] for r in candidates + gated_out}][:2],
-            ["2026-06-12", "2026-08-03"]))}),
+            ["2026-06-12", "2026-08-03"])),
+            "no_bars_names": [s for s in UNIVERSE if s not in {r["ticker"] for r in candidates + gated_out}][2:3]}),
         "bursts": BURSTS,
         "passed_gate": PASSED,
         "scored": len(candidates),

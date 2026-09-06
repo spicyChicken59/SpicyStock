@@ -245,7 +245,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 987 tests, no network or API keys needed
+pytest tests/                   # 992 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -437,7 +437,11 @@ invariants live in the file rather than only here. The load-bearing ones:
   market: the names in it with no bar for more than 5 sessions -- a halt is
   a day or two, a delisting never comes back -- as `after_sessions`, an exact
   `count`, and `names[]` of `ticker`, `last` and `sessions_behind`, most-behind
-  first, at most 10 named. The email and the page print it; the ledger entry
+  first, at most 10 named. A name the feed returned no bar for at all in the
+  window the scan asked for -- one it does not know, or the old symbol of a
+  rename once purged -- comes first, with `last` and `sessions_behind` null;
+  below the fraction that degrades a run, such a name used to reach no
+  surface, the log included. The email and the page print it; the ledger entry
   does not carry it. The first live scan found three in the list, which held 230
   names then and 228 since they were retired.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
@@ -741,7 +745,7 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 205 checks, and which file each one
+**Three data sources, one page.** It runs 206 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served

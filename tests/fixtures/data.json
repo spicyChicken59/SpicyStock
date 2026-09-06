@@ -39,8 +39,13 @@
     },
     "stopped_printing": {
       "after_sessions": 5,
-      "count": 2,
+      "count": 3,
       "names": [
+        {
+          "ticker": "TER",
+          "last": null,
+          "sessions_behind": null
+        },
         {
           "ticker": "MCHP",
           "last": "2026-06-12",
