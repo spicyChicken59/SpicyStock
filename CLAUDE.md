@@ -114,10 +114,13 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
 - **No live market data.** The sandbox proxy blocks Yahoo and Alpaca. Anything
   requiring a real trading day has to be validated by the user locally. Reason
   from the SDK and synthetic frames instead; do not fake a result.
-- **Free Alpaca plan.** No SIP subscription. The IEX feed carries a fraction of
-  consolidated volume, which is why the absolute share threshold has to become
-  a relative one (step 4).
-- **There is a regression net.** `pytest tests/` runs 949 tests with no network
+- **Free Alpaca plan.** No real-time SIP subscription. The IEX feed carries a
+  fraction of consolidated volume, which is why the absolute share threshold
+  has to become a relative one (step 4). The scan reads `sip` with the request
+  window held back sixteen minutes, which is the free plan's consolidated
+  route; `delayed_sip`, the default for nine rounds, is a name the bars
+  endpoint refuses -- observed on the first live run, round 9 below.
+- **There is a regression net.** `pytest tests/` runs 953 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -915,6 +918,30 @@ which is the argument for lenses over one reader.
   it applied a NEGATIVE floor as given and stamped it, and the load check
   would have refused that file the night after. Each closed with the test
   it showed missing, and each mutant re-run here before it was written down.
+
+**The first run ever past preflight, 6 Sep 2026, on this branch.** The owner
+set the last three secrets and asked for a deploy; the sandbox cannot reach
+Alpaca or Resend, so the confirmation was a manual dispatch of `evening.yml`
+on the branch (run 34013173587) and its log. Preflight passed. Then two
+boundaries no round could have seen: Alpaca's historical-bars endpoint
+answered `delayed_sip` -- the default since step 3, chosen on the argument
+that a delay the scan does not care about was the free plan's consolidated
+route -- with `{"message":"invalid feed: delayed_sip"}` on every batch, both
+attempts, and because that message carried no status the classifier knew it
+was retried and dropped six times over until the coverage guard called the
+result an empty market. And Resend, asked to mail the failure notice, refused
+the recipient: a test-mode account delivers only to the address it is
+registered under until a domain is verified, which is the owner's setting
+and not this repo's. The default feed is `sip` with the request window held
+back sixteen minutes behind the clock, Alpaca's documented rule for a plan
+without a real-time subscription, applied to that feed alone; a feed name
+the endpoint refuses is a permanent refusal now, named on the first batch,
+with both routes that exist in the message. The dispatch that followed is
+what says whether the hold-back is right, and it is recorded below this
+paragraph, not assumed above it. One wording lead from the same log: a
+weekend dispatch is told "today's session has not closed yet" by the
+mode/clock check, when there is no session today to close -- true of the
+scheduled weekday runs, and worth a clause for a Saturday.
 
 **Leads written down, not worked.** A feed-wide missing day -- more than
 half the frames lacking a session -- is not a session under the majority

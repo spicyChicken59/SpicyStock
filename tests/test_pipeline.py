@@ -371,7 +371,7 @@ def test_a_run_that_could_not_scan_exits_failed_and_mails_the_reason(
     assert code == pipeline.EXIT_FAILED
     (sent,) = mocked_boundaries["resend"].sent
     assert sent["subject"].startswith("[4% Burst] FAILED — ")
-    assert "FeedNotAuthorizedError" in sent["html"] and "delayed_sip" in sent["html"]
+    assert "FeedNotAuthorizedError" in sent["html"] and scanner.DEFAULT_FEED.value in sent["html"]
 
 
 def test_a_failure_notice_names_the_session_the_run_was_going_for(

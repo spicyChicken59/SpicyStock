@@ -154,20 +154,37 @@ SESSION_COMPLETE_ET = time_of_day(16, 15)
 
 # A daily end-of-day scan has no use for real-time data, and the free plan's
 # IEX feed is one venue's slice of consolidated volume — roughly a few percent.
-# delayed_sip is consolidated tape on a delay the scan does not care about.
-# Since step 4 both volume gates are ratios rather than absolute counts, so a
-# thin feed no longer empties the shortlist on its own; a fuller feed is still
-# the better input, because a few percent of the tape is a noisier estimate of
-# a stock's own average than the whole of it.
+# `sip` is the consolidated tape. Since step 4 both volume gates are ratios
+# rather than absolute counts, so a thin feed no longer empties the shortlist
+# on its own; a fuller feed is still the better input, because a few percent
+# of the tape is a noisier estimate of a stock's own average than the whole of
+# it, and the dollar-volume floor the record keeps is in dollars.
 #
-# UNVERIFIED AGAINST A LIVE ACCOUNT: the sandbox cannot reach Alpaca, so which
-# feeds this account may query has not been checked. If delayed_sip is refused,
-# the scan aborts with FeedNotAuthorizedError naming the feed (see run_scan) —
-# it does not degrade into an empty shortlist. Override with SCAN_FEED, or
-# ScanConfig(feed=...), for a plan that carries full SIP. A rejected KEY is the
-# sibling case and aborts with CredentialsRejectedError; the two have opposite
-# fixes and _refusal_error() is where they are told apart.
-DEFAULT_FEED = DataFeed.DELAYED_SIP
+# OBSERVED AGAINST A LIVE ACCOUNT, 6 Sep 2026, on the first run ever to get
+# past preflight (Actions run 34013173587): the historical-bars endpoint
+# answered `delayed_sip` -- the value this defaulted to for nine rounds, on the
+# argument that a delay the scan does not care about was the free plan's
+# consolidated route -- with {"message":"invalid feed: delayed_sip"} on every
+# batch, both attempts, for a key it had just accepted. alpaca-py's DataFeed
+# lists the name; the bars endpoint does not take it, whatever the plan. The
+# consolidated tape on a free plan is `sip` with the request window held back
+# SIP_HOLDBACK_MINUTES behind the clock, Alpaca's documented rule for a plan
+# without a real-time subscription (see _download_batch), and the dispatch
+# that followed the change is the record of whether that is right -- it is
+# written up in CLAUDE.md under round 9. If `sip` is refused, the scan aborts
+# with FeedNotAuthorizedError naming it (see run_scan) rather than degrading
+# into an empty shortlist, and SCAN_FEED=iex is the single-venue fallback the
+# free plan is known to carry. A rejected KEY is the sibling case and aborts
+# with CredentialsRejectedError; the two have opposite fixes and
+# _refusal_error() is where they are told apart.
+DEFAULT_FEED = DataFeed.SIP
+
+#: How far behind the clock a SIP request's `end` is held on a plan without a
+#: real-time subscription. Alpaca documents fifteen minutes; one more is
+#: margin for the two clocks. Applied only to `sip`, since the other feeds
+#: were never observed to need it and a change to the wire on a guess is what
+#: this project's notes warn against.
+SIP_HOLDBACK_MINUTES = 16
 
 
 
@@ -470,7 +487,7 @@ def get_universe(symbols_file: str | Path | None = None) -> list[str]:
 
 
 def _download_batch(data_client, tickers, cfg: ScanConfig,
-                    session: date) -> dict[str, pd.DataFrame]:
+                    session: date, now: datetime | None = None) -> dict[str, pd.DataFrame]:
     """One get_stock_bars() call, for the window ending at `session`.
 
     ONE SDK CALL, NOT ONE HTTP REQUEST — the first line of this docstring said
@@ -509,22 +526,42 @@ def _download_batch(data_client, tickers, cfg: ScanConfig,
 
         `end` is the END of the target session, so on an evening run scanning
         today it is HOURS IN THE FUTURE -- measured at 18:30 UTC, the request
-        asks for data up to 23:59 UTC. That is deliberate and left alone.
-        Alpaca documents that a SIP query's `end` must be at least 15 minutes
-        old on a plan without a real-time subscription, and clamping `end` back
-        to now-16min was tried: it is unnecessary if the rule applies to the
-        `sip` feed rather than the `delayed_sip` one this scan names, and it
-        breaks any run whose target session is not yet over. The sandbox cannot
-        reach Alpaca, so which of those is true is UNVERIFIED -- and a
-        behavioural change to the data request on an unverified lead is exactly
-        what this project's notes warn against. If the first live run dies with
-        FeedNotAuthorizedError naming delayed_sip, this window is the first
-        suspect and SCAN_FEED=iex is the immediate workaround; evening.yml
-        forwards it now for that reason.
+        asks for data up to 23:59 UTC. On the `sip` feed it is held back to
+        SIP_HOLDBACK_MINUTES behind `now` instead, because Alpaca documents
+        that a SIP query's `end` must be at least fifteen minutes old on a plan
+        without a real-time subscription: an evening run at 18:16 ET then asks
+        through 18:00 ET, two hours after the daily bar it wants was final,
+        and a backfill of an older session is untouched, since its day's end
+        is already behind the clock. This was tried once before and removed
+        on the argument that `delayed_sip` made it unnecessary; the first live
+        run showed the bars endpoint does not take that feed name at all (see
+        DEFAULT_FEED), so the hold-back is the free plan's only consolidated
+        route. Left off every other feed, which none was observed to need.
+
+        The one run this changes is a scan DURING the session, whose bar is
+        partial either way; the mode/clock check is what says so, and the
+        hold-back does not make that bar any more or less final.
+
+        And it is applied only once the clock has reached the session's day.
+        Before that -- a session pinned AHEAD of the clock, which no schedule
+        produces -- holding the window back would end it on the day before the
+        session named, a different question from the one asked, so the window
+        goes out as written and the endpoint answers for the session it names.
+        This is also what keeps the offline suite deterministic: its
+        end-to-end tests stand in for a later night by pinning a session days
+        ahead of the wall clock, and the double re-dates every frame to the
+        request's `end`, so a hold-back that read the real clock there made
+        five of them fail on any day before the session they pinned and pass
+        on any day after -- the clock-dependent test CLAUDE.md names as the
+        worst kind.
     """
     day_start = datetime(session.year, session.month, session.day, tzinfo=timezone.utc)
     start = day_start - timedelta(days=int(cfg.lookback_days * 1.6))
     end = day_start + timedelta(hours=23, minutes=59, seconds=59)
+    if cfg.feed is DataFeed.SIP:
+        latest = (now or datetime.now(timezone.utc)) - timedelta(minutes=SIP_HOLDBACK_MINUTES)
+        if latest >= day_start:
+            end = min(end, latest)
     request = StockBarsRequest(
         symbol_or_symbols=tickers,
         timeframe=TimeFrame.Day,
@@ -657,7 +694,11 @@ def _is_permanent_refusal(exc: Exception) -> bool:
     if getattr(exc, "status_code", None) in (401, 403):
         return True
     text = str(exc).lower()
-    return "subscription" in text or "not permitted" in text
+    # "invalid feed: delayed_sip" -- observed on the first live run, on every
+    # batch, both attempts: a feed NAME the endpoint does not take is a
+    # property of the run too, and it used to be retried and dropped six
+    # times over before the coverage guard said "empty market".
+    return "subscription" in text or "not permitted" in text or "invalid feed" in text
 
 
 def _refusal_error(feed: DataFeed, exc: Exception) -> RuntimeError:
@@ -674,6 +715,17 @@ def _refusal_error(feed: DataFeed, exc: Exception) -> RuntimeError:
     leads with what the status says and names the alternative second. Being
     approximately right in the right order beats being confidently wrong.
     """
+    if "invalid feed" in str(exc).lower():
+        return FeedNotAuthorizedError(
+            f"Alpaca's historical-bars endpoint does not take the feed name "
+            f"{feed.value!r} at all ({exc}) -- alpaca-py's DataFeed lists it, the "
+            "endpoint refuses it, whatever the plan. Set SCAN_FEED to 'sip' (the "
+            f"consolidated tape; a free plan's request window is held back "
+            f"{SIP_HOLDBACK_MINUTES} minutes for it, which the scan does) or to 'iex' "
+            "(one venue, no hold-back). Refusing to continue: every batch would be "
+            "refused the same way, and a scan that dropped them all would report an "
+            "empty market."
+        )
     if getattr(exc, "status_code", None) == 401:
         return CredentialsRejectedError(
             f"Alpaca would not authenticate this request ({exc}). Check "

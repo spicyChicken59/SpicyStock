@@ -83,7 +83,7 @@ jobs:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
           # The one knob a failing feed needs, and CI could not reach it: the
-          # scan asks for delayed SIP, and if an account may not query it the
+          # scan asks for sip, and if an account may not query it the
           # run aborts with FeedNotAuthorizedError naming the feed. Without
           # this the only way to switch to 'iex' was to edit this file. A
           # repository VARIABLE rather than a secret -- it is not a credential

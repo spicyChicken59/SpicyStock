@@ -19,7 +19,7 @@ no Google Sheet, no n8n.
 
 ```
 checked-in universe (data/symbols.txt, 230 names)
-        │  Alpaca daily OHLCV, split-adjusted, delayed SIP, batched
+        │  Alpaca daily OHLCV, split-adjusted, SIP, batched
         ▼
 Layer 1  4% burst filter ............. ≥4% gain, vol ≥ yesterday, ≥1.5x its own
         │                              50-session average, price > $4, and in the
@@ -146,6 +146,19 @@ what `.github/workflows/evening.yml` reads, and `.env.example` explains each:
 `ANTHROPIC_API_KEY`, `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`,
 `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_TO`
 
+Two more things the first live run turned up, both settings rather than code:
+
+- **GitHub Pages is off until you switch it on.** The dashboard is served from
+  the `docs/` folder of `main`, and the repository has never had a Pages
+  build, so the address 404s. Settings → Pages → Build and deployment →
+  "Deploy from a branch" → branch `main`, folder `/docs`, Save; the first
+  deploy takes a minute or two, and every commit-back after that redeploys.
+- **Resend in test mode only delivers to the account's own address.** Until a
+  domain is verified at resend.com/domains and `RESEND_FROM` is an address on
+  it, Resend refuses any other recipient — the first live run failed its email
+  on exactly that sentence. Either set `EMAIL_TO` to the address the Resend
+  account is registered under, or verify a domain and set `RESEND_FROM`.
+
 **Then, before the first scheduled night, rehearse the boundaries once from
 your own machine:**
 
@@ -222,7 +235,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 949 tests, no network or API keys needed
+pytest tests/                   # 953 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -787,11 +800,15 @@ against a hand-made `data.json` and agree, but that check is not committed.
 
 ## Costs and limits
 
-- Market data: free (Alpaca). The scan now asks for `delayed_sip` rather than
-  taking the plan default, so it reads consolidated volume instead of IEX's
-  single-venue slice — see `.env.example`, and note this is unconfirmed against
-  a live account. If the account cannot serve that feed the run aborts with a
-  named error rather than returning an empty shortlist. A 230-symbol scan is
+- Market data: free (Alpaca). The scan asks for `sip` rather than taking the
+  plan default, so it reads consolidated volume instead of IEX's single-venue
+  slice, and holds the request window sixteen minutes behind the clock, which
+  is what a plan without a real-time subscription needs for SIP — see
+  `.env.example`. It asked for `delayed_sip` for nine rounds, and the first
+  run past preflight (6 Sep 2026) showed the bars endpoint refuses that name
+  outright; a feed the endpoint or the plan refuses aborts the run with a
+  named error on the first batch rather than returning an empty shortlist,
+  and `SCAN_FEED=iex` is the fallback. A 230-symbol scan is
   seconds, not minutes, and is nowhere near the 55-min timeout — but "under a
   second", which this said, is not supported: 0.97s is what the scan costs
   driven through the offline doubles, and those do strictly LESS work than
