@@ -24,7 +24,7 @@
 <body>
 <a class="sc-skip" href="#main">Skip to content</a>
 
-<header class="sc-masthead">
+<header class="sc-masthead sc-screen-only">
   <a class="sc-brand" href="./">
     <img class="sc-mark" src="design-system/assets/sc-mark-color-dark.svg" alt="" width="22" height="26">
     <span><span class="sc-brand__name">SpicyStock</span><span class="sc-brand__sub">4% momentum burst screener</span></span>
@@ -40,7 +40,9 @@
   </div>
 </header>
 
-<main class="sc-wrap sc-wrap--wide sc-stack" id="main">
+<main class="sc-wrap sc-wrap--wide sc-stack sc-print-report" id="main">
+  <div class="sc-print-head" aria-hidden="true"><span class="sc-signature sc-signature--small"><img src="design-system/assets/sc-mark-color-light.svg" alt="" width="342" height="405"><span class="sc-signature__name">SpicyStock</span></span><span>market research / current run</span></div>
+  <div class="sc-print-foot" aria-hidden="true"><span>SpicyChicken / market research</span><span>Screening output for human review</span></div>
   <section class="sc-cover sc-on-ink stock-cover" aria-labelledby="h1">
     <div class="sc-cover__content sc-reveal" data-sc-motion="rise">
       <p class="sc-eyebrow stock-cover__brand">SpicyStock / market research</p>
@@ -330,7 +332,7 @@
   </div>
 </main>
 
-<footer class="sc-foot">
+<footer class="sc-foot sc-screen-only">
   <span id="foot-left">Screening output for human review, not trading advice.</span>
   <a class="sc-watermark" href="https://github.com/spicyChicken59" rel="author" aria-label="SpicyChicken">
     <img class="sc-lockup" src="design-system/assets/sc-lockup-cream.svg" alt="SpicyChicken">
