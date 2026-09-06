@@ -1940,3 +1940,18 @@ def test_a_sip_request_for_a_session_the_clock_has_not_reached_goes_out_as_writt
     _download_batch(client, ["AAA"], ScanConfig(feed=DataFeed.SIP), date(2026, 6, 25),
                     now=datetime(2026, 6, 25, 22, 16, tzinfo=timezone.utc))
     assert wire_end() == datetime(2026, 6, 25, 22, 0, tzinfo=timezone.utc), wire_end()
+
+
+def test_a_trading_weekday_is_monday_to_friday_in_market_time():
+    """The weekday half of session_has_closed(), pinned on real instants the
+    way the close is. Market time, not UTC: Friday 23:30 ET is Saturday in
+    UTC and is still a trading weekday. Labor Day is a Monday and a trading
+    weekday to this arithmetic; the scan is what finds no bar for it."""
+    from src.scanner import is_trading_weekday, session_has_closed
+
+    assert is_trading_weekday(datetime(2026, 9, 5, 22, 16, tzinfo=timezone.utc)) is False   # Saturday
+    assert is_trading_weekday(datetime(2026, 9, 6, 5, 34, tzinfo=timezone.utc)) is False    # Sunday
+    assert is_trading_weekday(datetime(2026, 9, 7, 22, 16, tzinfo=timezone.utc)) is True    # Labor Day
+    assert is_trading_weekday(datetime(2026, 9, 5, 3, 30, tzinfo=timezone.utc)) is True     # Fri 23:30 ET
+    assert session_has_closed(datetime(2026, 9, 5, 3, 30, tzinfo=timezone.utc)) is True
+    assert session_has_closed(datetime(2026, 9, 5, 22, 16, tzinfo=timezone.utc)) is False

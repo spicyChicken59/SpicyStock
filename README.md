@@ -158,9 +158,9 @@ Two more things the first live run turned up, both settings rather than code:
   it, Resend refuses any other recipient — the first live run failed its email
   on exactly that sentence. Either set `EMAIL_TO` to the address the Resend
   account is registered under, or verify a domain and set `RESEND_FROM`.
-  Until one of those is done, every failed delivery writes Resend's refusal,
-  which names the account's own address, into `docs/data.json` -- and so onto
-  the public page and into this repository's history.
+  Until one of those is done, every failed delivery writes Resend's refusal
+  into `docs/data.json` and so onto the public page, with the address it
+  names masked to its domain; the Actions log keeps the whole sentence.
 
 **Then, before the first scheduled night, rehearse the boundaries once from
 your own machine:**
@@ -238,7 +238,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 964 tests, no network or API keys needed
+pytest tests/                   # 973 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the

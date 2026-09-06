@@ -291,7 +291,21 @@ def session_has_closed(now: datetime | None = None) -> bool:
     about the calendar.
     """
     now_et = (now or datetime.now(timezone.utc)).astimezone(MARKET_TZ)
-    return now_et.weekday() < 5 and now_et.time() >= SESSION_COMPLETE_ET
+    return is_trading_weekday(now) and now_et.time() >= SESSION_COMPLETE_ET
+
+
+def is_trading_weekday(now: datetime | None = None) -> bool:
+    """Monday to Friday in market time -- the weekday half of session_has_closed().
+
+    A function rather than an inline comparison so that a caller which needs
+    the weekday ALONE reads the same clock: src.pipeline's mode/clock check
+    used to tell a Saturday dispatch that "today's session has not closed
+    yet", when there is no session today to close, because the only fact it
+    had was the boolean. Weekends only, like everything here: Labor Day is a
+    trading weekday to this function, and the scan is what finds no bar.
+    """
+    now_et = (now or datetime.now(timezone.utc)).astimezone(MARKET_TZ)
+    return now_et.weekday() < 5
 
 
 @dataclass

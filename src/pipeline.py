@@ -104,6 +104,7 @@ import argparse
 import csv
 import logging
 import os
+import re
 import sys
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
@@ -337,6 +338,16 @@ def session_disagreement(mode: Mode, cfg: ScanConfig,
     if scanner.session_has_closed(now) == mode.after_the_close:
         return None
     session = scanner.current_session(now)
+    if mode.after_the_close and not scanner.is_trading_weekday(now):
+        # A Saturday or Sunday dispatch. "Has not closed yet" was true of the
+        # scheduled weekday runs this sentence was written for and false of
+        # the weekend clicks that actually produced it: there is no session
+        # today to close, and the run read Friday's.
+        day = (now or datetime.now(timezone.utc)).astimezone(scanner.MARKET_TZ).strftime("%A")
+        return (f"{mode.expects}, but today is a {day} and there is no session to close. "
+                f"The newest completed session is {session}, so that is what was read — it "
+                f"is Friday's market, not tonight's. Everything below is labelled {session} "
+                f"and nothing has been relabelled as today.")
     if mode.after_the_close:
         return (f"{mode.expects}, but today's session has not closed yet. The newest "
                 f"completed session is {session}, so that is what was read — it is "
@@ -345,6 +356,25 @@ def session_disagreement(mode: Mode, cfg: ScanConfig,
     return (f"{mode.expects}, but today's session has already closed — the newest "
             f"completed session is now {session}. This is a follow-through pass over "
             f"a run that is no longer the latest one, however the subject line reads.")
+
+
+_ADDRESS = re.compile(r"[A-Za-z0-9._%+\-]+@((?:[A-Za-z0-9\-]+\.)+[A-Za-z]{2,})")
+
+
+def redact_addresses(text: str) -> str:
+    """An email address inside a recorded sentence becomes its domain alone.
+
+    `run.errors` is the one place free text from OUTSIDE the codebase enters
+    the record, and the record is public: docs/data.json is served by GitHub
+    Pages and committed to a public repository. Resend's test-mode refusal
+    names the address the account is registered under -- the owner's
+    personal one -- and the first live night put it on the page. The domain
+    is kept, because "…@gmail.com" still says which account it is about; the
+    Actions log keeps the whole sentence, since the traceback is printed
+    before this ever runs. Applied in RunReport.problem() so every stage's
+    message, and fail()'s, goes through one rule.
+    """
+    return _ADDRESS.sub(lambda m: "…@" + m.group(1), text)
 
 
 @dataclass
@@ -373,7 +403,7 @@ class RunReport:
     published: bool = False
 
     def problem(self, stage: str, message: str) -> None:
-        self.errors.append({"stage": stage, "message": message})
+        self.errors.append({"stage": stage, "message": redact_addresses(message)})
 
     def fail(self, stage: str, exc: BaseException) -> None:
         self.failed = True
