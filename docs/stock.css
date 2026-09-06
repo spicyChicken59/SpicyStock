@@ -168,6 +168,10 @@
 .shot--empty { min-height: 230px; border-style: solid; background: var(--sc-bg); padding: var(--sc-s3); }
 .shot--empty .sc-frame__mark { height: 44px; opacity: .55; }
 .stock-section .sc-table-scroll { border-radius: var(--sc-r-md); }
+.pick [data-sc-matrix-controls] { margin-bottom: var(--sc-s2); }
+.pick .sc-signal-matrix :is(thead, tbody) th:first-child {
+  width: 72px; min-width: 72px; padding: var(--sc-s2); box-sizing: border-box;
+}
 #funnel-chart, #checks-chart, #outcome-chart, #evidence-chart { margin-block: var(--sc-s2); }
 .stock-next { margin-top: var(--sc-s4); padding: var(--sc-s4); }
 .stock-next .sc-callout__figure { font: 700 clamp(24px, 3vw, 36px)/1.13 var(--sc-font-display);
@@ -231,6 +235,7 @@
 .stock-index a[aria-current="location"] { color: var(--sc-heading); border-bottom-color: var(--sc-brand-line); }
 @media (max-width: 720px) { .pick { grid-template-columns: minmax(0, 1fr); } .stock-index a { font-size: 14px; } }
 @media (max-width: 540px) {
+  .pick .sc-disclosure > :is(.sc-table-scroll, [data-sc-matrix-controls]) { margin-inline: var(--sc-s2); }
   .pick .shot--empty { flex-direction: column; align-items: flex-start; gap: var(--sc-s2); padding: var(--sc-s2) 0; border: 0; background: transparent; }
   .pick .shot--empty .sc-note { max-width: none; width: 100%; }
 }
