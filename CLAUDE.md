@@ -165,7 +165,9 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   query the feed, that Resend delivers, that Claude returns what the parser
   expects from a real chart. `tools/live_check.py` now asks each of those once,
   through the pipeline's own calls, from a machine that has the keys; the
-  owner runs it before the first scheduled night (README, "One-time setup").
+  owner can run it (README, "One-time setup"); the first live day crossed
+  each boundary from Actions dispatches instead, and round 9 below records
+  what each one found.
   Its own logic is exercised offline in `tests/test_live_check.py` through the
   same doubles the pipeline tests use — and that suite caught its first
   version printing READY under `--no-spend` over boundaries it had never
@@ -647,7 +649,9 @@ exercised its headline. Nine mutants across them, all killed.
   first way this machine differed from CI and the installed packages are the
   second; assume there is a third.**
 
-  **And `evening.yml`'s commit-back has still never executed** — nor has the
+  **And `evening.yml`'s commit-back has still never executed** (written before
+  6 Sep 2026; it executed that day, run 34014332161, commit f0780c7, and every
+  dispatch since -- round 9 below) — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on
   it; the `git add` bug that would have voided it is fixed and guarded by a
   test. But read from the Actions API: `evening.yml` had fired SIX times when
@@ -941,7 +945,8 @@ what says whether the hold-back is right, and it is recorded below this
 paragraph, not assumed above it. One wording lead from the same log: a
 weekend dispatch is told "today's session has not closed yet" by the
 mode/clock check, when there is no session today to close -- true of the
-scheduled weekday runs, and worth a clause for a Saturday.
+scheduled weekday runs, and worth a clause for a Saturday -- written the same
+night, two paragraphs down.
 
 **The dispatch that followed: run 34014332161, 05:34 UTC on Sunday 6 Sep
 2026, on the commit that made the change.** Read off its log, not inferred.

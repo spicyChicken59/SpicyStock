@@ -166,8 +166,9 @@ Two more things the first live day turned up, both settings rather than code:
   refusal that does reach `docs/data.json` has the address it names masked to
   its domain; the Actions log keeps the whole sentence.
 
-**Then, before the first scheduled night, rehearse the boundaries once from
-your own machine:**
+**The boundaries were first crossed from Actions on 6 Sep 2026, by dispatching
+`evening.yml` (README's round-9 notes in CLAUDE.md say what each crossing
+found). To rehearse them again from your own machine:**
 
 ```bash
 set -a; . ./.env; set +a
