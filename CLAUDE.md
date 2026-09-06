@@ -28,8 +28,8 @@ Known scheduled falsifications:
 | ~~The first commit-back replaces `docs/data.json` with a real run~~ swept before it happened (3.1) | ~~`check_fixture_fresh.py` compared `docs/data.json` to the generator, so the pipeline working would have turned CI red on the next push; README's "regenerate … `docs/data.json`" and "pinned to the fixture" smoke-test section~~ — the canonical fixture is `tests/fixtures/data.json` now, `docs/data.json` is whatever the last run wrote, and the guard only checks a `docs/` copy that still *claims* to be the fixture |
 | ~~`evening.yml` keeps `docs/` between runs~~ done in step 9 | ~~README's "Does the history actually accumulate?" section and the stale `charts/` path in that workflow's upload step~~ both swept; step 10 added why that commit-back now also feeds the morning run and every streak |
 | ~~Step 10 makes the mode mean something and reads the ledger back~~ done | ~~README's "morning has no workflow and no distinct behaviour" note, the workflow inventory, `.env.example`'s required-variable list~~ all swept; `morning.yml` now exists |
-| The universe widens past `data/symbols.txt` | **TWO STRATEGY RULES, not just prose.** (a) Rule 4, "not a biotech stock", is enforced by nothing but the curated contents of that file — `detect_setup(df, cfg)` never sees a ticker — so replacing it DELETES a named rule with the suite green. (b) The dollar-volume percentile is feed-invariant but NOT universe-invariant: measured on log-normal populations of the shape US dollar volume has, 230 curated names put the 30th percentile at $359M/day and 3,000 all-cap names at $3.8M/day, the same 70% kept and a 94x lower bar — so a $20M/day burst, `strategy.md`'s own "slippage eats the edge" kill criterion, is refused today and admitted after. The percentile half is pinned by a test; rule 4 cannot be, because nothing in the code sees a ticker — which is the point. The generator has to answer for both or say plainly that it does not. |
-| The universe widens past `data/symbols.txt` | the four 230-name figures in README: its opening line, the diagram's universe box, the diagram's Layer-1 caption, and the Costs section's scan-time note. (This row named a Tuning section that holds none, and missed the opening line — checked by grepping, since a list of places is exactly the kind of claim that rots.) |
+| The universe widens past `data/symbols.txt` | **TWO STRATEGY RULES, not just prose.** (a) Rule 4, "not a biotech stock", is enforced by nothing but the curated contents of that file — `detect_setup(df, cfg)` never sees a ticker — so replacing it DELETES a named rule with the suite green. (b) The dollar-volume percentile is feed-invariant but NOT universe-invariant: measured on log-normal populations of the shape US dollar volume has, the 230 names the file then held put the 30th percentile at $359M/day and 3,000 all-cap names at $3.8M/day, the same 70% kept and a 94x lower bar — so a $20M/day burst, `strategy.md`'s own "slippage eats the edge" kill criterion, is refused today and admitted after. The percentile half is pinned by a test; rule 4 cannot be, because nothing in the code sees a ticker — which is the point. The generator has to answer for both or say plainly that it does not. |
+| The universe widens past `data/symbols.txt` | the four universe-size figures in README (230 when this row was written, 228 since the first live day retired three names): its opening line, the diagram's universe box, the diagram's Layer-1 caption, and the Costs section's scan-time note. (This row named a Tuning section that holds none, and missed the opening line — checked by grepping, since a list of places is exactly the kind of claim that rots.) |
 
 Nothing else is scheduled to go stale: step 10 was the last of the ten. The two
 rows left are one decision — the open one at the bottom of this file — not a step.
@@ -979,6 +979,24 @@ and GitHub Pages has never built -- the Actions workflow list holds no
 `pages-build-deployment`, which is what enabling it creates -- so the page
 is a click away (README, "One-time setup") and not a commit away.
 
+**The hold-back, tried before Tuesday asked for it: run 34034039799, 12:45
+UTC on Sunday 6 Sep 2026, from the form's new `dry_run` box (#15) with the
+session pinned to that Sunday.** The one request no dispatch had made was a
+`sip` request whose window reaches past the clock -- every earlier pin was a
+session already behind it, so `min()` kept the day's end -- and the first
+scheduled weekday evening on Tuesday 8 Sep would have been the first to make
+it, with a lost night as the cost of the documented rule being wrong. Read
+off the log: `Scanning session 2026-09-06 from the sip feed`, then
+`StaleDataError: no symbol carried a bar for 2026-09-06: all 230 symbols
+with data are behind it (newest seen 2026-09-04)` -- which is Alpaca SERVING
+a request whose `end` sat sixteen minutes behind the clock, every one of the
+230 names with a bar through Friday, and the scanner refusing a Sunday as a
+session with no bar, by design. `DRY RUN -- not mailing the failure
+notice`, the persist step SKIPPED, the artifact `evening-dryrun-34034039799`
+-- the three things the box promises, each read off the job rather than
+assumed. So the free plan's consolidated route is the one this code takes,
+and Tuesday's cron is the first night, not the first experiment.
+
 **Then three dispatches of one identical refusal, and the sentence that
 ended them.** The owner enabled Pages (the first build published the
 repository root and rendered README as the site until the folder was set to
@@ -1034,7 +1052,7 @@ fails when the env line is removed, and the morning workflow is asserted to
 take no such box, since it scans nothing.
 
 **The names that have stopped printing reach the record, the email and the
-page.** The first live scan found three names in the 230-name file with no
+page.** The first live scan found three names in the file's 230 with no
 bar for a month or more, and the only trace was a WARNING line: EA (since 4
 Aug), BK (since 20 May), FI (since 10 Nov 2025). `stopped_printing()` keeps
 the stale names more than `STOPPED_PRINTING_SESSIONS` behind -- five, a
@@ -1715,7 +1733,7 @@ page asks whether outcomes land in it, not merely whether they are positive
 audit, which asked why one unverified constant carried the warning and its
 sibling did not.
 
-**Open decision — the universe is now 230 names.** Step 2 traded ~11,000 symbols
+**Open decision — the universe is now 228 names.** Step 2 traded ~11,000 symbols
 for a hand-curated list to make steps 3-8 testable in seconds instead of twenty
 minutes. That is a real strategy narrowing, not just a speed fix: 4% momentum
 bursts are most common in the small- and mid-caps this list excludes. The list is

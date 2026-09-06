@@ -35,19 +35,19 @@
     "fixture": true,
     "universe": {
       "label": "data/symbols.txt (checked in)",
-      "size": 230
+      "size": 228
     },
     "stopped_printing": {
       "after_sessions": 5,
       "count": 2,
       "names": [
         {
-          "ticker": "ON",
+          "ticker": "MCHP",
           "last": "2026-06-12",
           "sessions_behind": 57
         },
         {
-          "ticker": "MCHP",
+          "ticker": "SWKS",
           "last": "2026-08-03",
           "sessions_behind": 21
         }
@@ -967,7 +967,7 @@
     },
     {
       "rank": 10,
-      "ticker": "EA",
+      "ticker": "TTWO",
       "date": "2026-09-01",
       "close": 34.55,
       "gain_pct": 4.21,
@@ -1026,7 +1026,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/EA.png",
+      "chart": "charts/TTWO.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -16.2,
@@ -1062,7 +1062,7 @@
     },
     {
       "rank": 11,
-      "ticker": "TTWO",
+      "ticker": "MSFT",
       "date": "2026-09-01",
       "close": 11.84,
       "gain_pct": 4.73,
@@ -1121,7 +1121,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/TTWO.png",
+      "chart": "charts/MSFT.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -7.8,
@@ -1252,7 +1252,7 @@
     },
     {
       "rank": 13,
-      "ticker": "CRM",
+      "ticker": "ADBE",
       "date": "2026-09-01",
       "close": 5.25,
       "gain_pct": 6.49,
@@ -1311,7 +1311,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/CRM.png",
+      "chart": "charts/ADBE.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -52.3,
@@ -1347,7 +1347,7 @@
     },
     {
       "rank": 14,
-      "ticker": "ADBE",
+      "ticker": "INTU",
       "date": "2026-09-01",
       "close": 27.41,
       "gain_pct": 4.09,
@@ -1406,7 +1406,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/ADBE.png",
+      "chart": "charts/INTU.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -24.1,
@@ -1442,7 +1442,7 @@
     },
     {
       "rank": 15,
-      "ticker": "INTU",
+      "ticker": "NOW",
       "date": "2026-09-01",
       "close": 12.06,
       "gain_pct": 5.18,
@@ -1501,7 +1501,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/INTU.png",
+      "chart": "charts/NOW.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -19.8,
@@ -1537,7 +1537,7 @@
     },
     {
       "rank": 16,
-      "ticker": "NOW",
+      "ticker": "WDAY",
       "date": "2026-09-01",
       "close": 15.72,
       "gain_pct": 4.46,
@@ -1596,7 +1596,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/NOW.png",
+      "chart": "charts/WDAY.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -13.6,
@@ -1632,7 +1632,7 @@
     },
     {
       "rank": 17,
-      "ticker": "WDAY",
+      "ticker": "PANW",
       "date": "2026-09-01",
       "close": 4.87,
       "gain_pct": 7.21,
@@ -1691,7 +1691,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/WDAY.png",
+      "chart": "charts/PANW.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -63.4,
@@ -1727,7 +1727,7 @@
     },
     {
       "rank": 18,
-      "ticker": "PANW",
+      "ticker": "CRWD",
       "date": "2026-09-01",
       "close": 5.34,
       "gain_pct": 8.96,
@@ -1786,7 +1786,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/PANW.png",
+      "chart": "charts/CRWD.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -58.9,
@@ -1822,7 +1822,7 @@
     },
     {
       "rank": 19,
-      "ticker": "CRWD",
+      "ticker": "ZS",
       "date": "2026-09-01",
       "close": 18.62,
       "gain_pct": 5.77,
@@ -1881,7 +1881,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/CRWD.png",
+      "chart": "charts/ZS.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -11.2,
@@ -1917,7 +1917,7 @@
     },
     {
       "rank": 20,
-      "ticker": "ZS",
+      "ticker": "FTNT",
       "date": "2026-09-01",
       "close": 8.19,
       "gain_pct": 4.92,
@@ -1976,7 +1976,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/ZS.png",
+      "chart": "charts/FTNT.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -31.4,
@@ -2012,7 +2012,7 @@
     },
     {
       "rank": 21,
-      "ticker": "FTNT",
+      "ticker": "NET",
       "date": "2026-09-01",
       "close": 22.14,
       "gain_pct": 4.18,
@@ -2071,7 +2071,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/FTNT.png",
+      "chart": "charts/NET.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -27.6,
@@ -2107,7 +2107,7 @@
     },
     {
       "rank": 22,
-      "ticker": "MSFT",
+      "ticker": "ORCL",
       "date": "2026-09-01",
       "close": 68.19,
       "gain_pct": 4.34,
@@ -2166,7 +2166,7 @@
         "chart_seen": false,
         "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
       },
-      "chart": "charts/MSFT.png",
+      "chart": "charts/ORCL.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -5.4,
@@ -2202,7 +2202,7 @@
     },
     {
       "rank": 23,
-      "ticker": "ORCL",
+      "ticker": "CRM",
       "date": "2026-09-01",
       "close": 6.28,
       "gain_pct": 5.62,
@@ -2261,7 +2261,7 @@
         "chart_seen": false,
         "error": "anthropic.APIStatusError: 529 overloaded_error (3 retries exhausted)"
       },
-      "chart": "charts/ORCL.png",
+      "chart": "charts/CRM.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -41.7,
@@ -2297,7 +2297,7 @@
     },
     {
       "rank": 24,
-      "ticker": "NET",
+      "ticker": "DDOG",
       "date": "2026-09-01",
       "close": 13.47,
       "gain_pct": 6.03,
@@ -2356,7 +2356,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/NET.png",
+      "chart": "charts/DDOG.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -36.2,
@@ -2392,7 +2392,7 @@
     },
     {
       "rank": 25,
-      "ticker": "DDOG",
+      "ticker": "SNOW",
       "date": "2026-09-01",
       "close": 7.95,
       "gain_pct": 9.47,
@@ -2451,7 +2451,7 @@
         "chart_seen": true,
         "error": null
       },
-      "chart": "charts/DDOG.png",
+      "chart": "charts/SNOW.png",
       "chart_error": null,
       "context": {
         "pct_off_52w_high": -71.8,
@@ -2488,7 +2488,7 @@
   ],
   "gated_out": [
     {
-      "ticker": "SNOW",
+      "ticker": "MDB",
       "date": "2026-09-01",
       "close": 8.94,
       "gain_pct": 5.12,
@@ -2555,7 +2555,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "MDB",
+      "ticker": "HUBS",
       "date": "2026-09-01",
       "close": 19.83,
       "gain_pct": 4.71,
@@ -2622,7 +2622,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "HUBS",
+      "ticker": "VEEV",
       "date": "2026-09-01",
       "close": 14.26,
       "gain_pct": 6.38,
@@ -2689,7 +2689,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "VEEV",
+      "ticker": "PLTR",
       "date": "2026-09-01",
       "close": 11.07,
       "gain_pct": 4.29,
@@ -2756,7 +2756,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "PLTR",
+      "ticker": "APP",
       "date": "2026-09-01",
       "close": 27.61,
       "gain_pct": 5.84,
@@ -2823,7 +2823,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "APP",
+      "ticker": "TTD",
       "date": "2026-09-01",
       "close": 6.42,
       "gain_pct": 8.13,
@@ -2890,7 +2890,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "TTD",
+      "ticker": "RBLX",
       "date": "2026-09-01",
       "close": 142.9,
       "gain_pct": 4.06,
@@ -2957,7 +2957,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "RBLX",
+      "ticker": "IBM",
       "date": "2026-09-01",
       "close": 38.74,
       "gain_pct": 4.92,
@@ -3024,7 +3024,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "IBM",
+      "ticker": "ADSK",
       "date": "2026-09-01",
       "close": 16.38,
       "gain_pct": 7.44,
@@ -3091,7 +3091,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "ADSK",
+      "ticker": "CDNS",
       "date": "2026-09-01",
       "close": 34.12,
       "gain_pct": 6.71,
@@ -3158,7 +3158,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "CDNS",
+      "ticker": "SNPS",
       "date": "2026-09-01",
       "close": 4.18,
       "gain_pct": 11.62,
@@ -3225,7 +3225,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "SNPS",
+      "ticker": "AAPL",
       "date": "2026-09-01",
       "close": 8.85,
       "gain_pct": 9.88,
@@ -3292,7 +3292,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "AAPL",
+      "ticker": "NVDA",
       "date": "2026-09-01",
       "close": 9.75,
       "gain_pct": 14.21,
@@ -3359,7 +3359,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "NVDA",
+      "ticker": "AVGO",
       "date": "2026-09-01",
       "close": 12.83,
       "gain_pct": 5.47,
@@ -3426,7 +3426,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "AVGO",
+      "ticker": "AMD",
       "date": "2026-09-01",
       "close": 17.29,
       "gain_pct": 4.83,
@@ -3493,7 +3493,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "AMD",
+      "ticker": "INTC",
       "date": "2026-09-01",
       "close": 41.62,
       "gain_pct": 4.11,
@@ -3560,7 +3560,7 @@
       "reason": "lynch_gate"
     },
     {
-      "ticker": "INTC",
+      "ticker": "QCOM",
       "date": "2026-09-01",
       "close": 7.83,
       "gain_pct": 4.07,
@@ -3627,7 +3627,7 @@
       "reason": "score_cap"
     },
     {
-      "ticker": "QCOM",
+      "ticker": "TXN",
       "date": "2026-09-01",
       "close": 48.16,
       "gain_pct": 4.05,
@@ -3694,7 +3694,7 @@
       "reason": "score_cap"
     },
     {
-      "ticker": "TXN",
+      "ticker": "MU",
       "date": "2026-09-01",
       "close": 61.94,
       "gain_pct": 4.04,
@@ -3761,7 +3761,7 @@
       "reason": "score_cap"
     },
     {
-      "ticker": "MU",
+      "ticker": "AMAT",
       "date": "2026-09-01",
       "close": 28.37,
       "gain_pct": 4.03,
@@ -3828,7 +3828,7 @@
       "reason": "score_cap"
     },
     {
-      "ticker": "AMAT",
+      "ticker": "LRCX",
       "date": "2026-09-01",
       "close": 9.16,
       "gain_pct": 4.02,
@@ -3895,7 +3895,7 @@
       "reason": "score_cap"
     },
     {
-      "ticker": "LRCX",
+      "ticker": "KLAC",
       "date": "2026-09-01",
       "close": 4.71,
       "gain_pct": 4.01,
@@ -3962,7 +3962,7 @@
       "reason": "score_cap"
     },
     {
-      "ticker": "KLAC",
+      "ticker": "ADI",
       "date": "2026-09-01",
       "close": 178.4,
       "gain_pct": 4.62,
@@ -4029,7 +4029,7 @@
       "reason": "veto_up_days"
     },
     {
-      "ticker": "ADI",
+      "ticker": "MRVL",
       "date": "2026-09-01",
       "close": 9.84,
       "gain_pct": 6.27,
@@ -4096,7 +4096,7 @@
       "reason": "liquidity_floor"
     },
     {
-      "ticker": "MRVL",
+      "ticker": "ON",
       "date": "2026-09-01",
       "close": 14.62,
       "gain_pct": 4.38,
@@ -4212,7 +4212,7 @@
       },
       "universe": {
         "label": "data/symbols.txt (checked in)",
-        "size": 230
+        "size": 228
       },
       "rules": {
         "check.breakdown_lookback": 20,
@@ -4278,14 +4278,14 @@
         "d1": 0.32,
         "d3": null,
         "d5": null,
-        "n1": 162,
+        "n1": 160,
         "n3": 0,
         "n5": 0,
         "from_open": {
           "d1": 0.02,
           "d3": null,
           "d5": null,
-          "n1": 161,
+          "n1": 159,
           "n3": 0,
           "n5": 0
         },
@@ -4295,7 +4295,7 @@
       },
       "universe": {
         "label": "data/symbols.txt (checked in)",
-        "size": 230
+        "size": 228
       },
       "rules": {
         "check.breakdown_lookback": 20,
@@ -4361,14 +4361,14 @@
         "d1": -1.33,
         "d3": null,
         "d5": null,
-        "n1": 156,
+        "n1": 154,
         "n3": 0,
         "n5": 0,
         "from_open": {
           "d1": -1.63,
           "d3": null,
           "d5": null,
-          "n1": 155,
+          "n1": 153,
           "n3": 0,
           "n5": 0
         },
@@ -4378,7 +4378,7 @@
       },
       "universe": {
         "label": "data/symbols.txt (checked in)",
-        "size": 230
+        "size": 228
       },
       "rules": {
         "check.breakdown_lookback": 20,
@@ -4444,15 +4444,15 @@
         "d1": 1.17,
         "d3": 0.54,
         "d5": null,
-        "n1": 161,
-        "n3": 161,
+        "n1": 159,
+        "n3": 159,
         "n5": 0,
         "from_open": {
           "d1": 0.87,
           "d3": 0.24,
           "d5": null,
-          "n1": 160,
-          "n3": 160,
+          "n1": 158,
+          "n3": 158,
           "n5": 0
         },
         "universe": null,
@@ -4461,7 +4461,7 @@
       },
       "universe": {
         "label": "data/symbols.txt (checked in)",
-        "size": 230
+        "size": 228
       },
       "rules": {
         "check.breakdown_lookback": 20,
@@ -4527,15 +4527,15 @@
         "d1": 0.08,
         "d3": 1.51,
         "d5": null,
-        "n1": 159,
-        "n3": 159,
+        "n1": 157,
+        "n3": 157,
         "n5": 0,
         "from_open": {
           "d1": -0.22,
           "d3": 1.21,
           "d5": null,
-          "n1": 158,
-          "n3": 158,
+          "n1": 156,
+          "n3": 156,
           "n5": 0
         },
         "universe": null,
@@ -4544,7 +4544,7 @@
       },
       "universe": {
         "label": "data/symbols.txt (checked in)",
-        "size": 230
+        "size": 228
       },
       "rules": {
         "check.breakdown_lookback": 20,
@@ -4610,16 +4610,16 @@
         "d1": 1.14,
         "d3": 2.27,
         "d5": -1.12,
-        "n1": 164,
-        "n3": 164,
-        "n5": 164,
+        "n1": 162,
+        "n3": 162,
+        "n5": 162,
         "from_open": {
           "d1": 0.84,
           "d3": 1.97,
           "d5": -1.42,
-          "n1": 163,
-          "n3": 163,
-          "n5": 163
+          "n1": 161,
+          "n3": 161,
+          "n5": 161
         },
         "universe": null,
         "liquidity_floor": 11600000,
@@ -4627,7 +4627,7 @@
       },
       "universe": {
         "label": "data/symbols.txt (checked in)",
-        "size": 230
+        "size": 228
       },
       "rules": {
         "check.breakdown_lookback": 20,
@@ -4693,16 +4693,16 @@
         "d1": -1.97,
         "d3": 0.04,
         "d5": 0.72,
-        "n1": 158,
-        "n3": 158,
-        "n5": 158,
+        "n1": 156,
+        "n3": 156,
+        "n5": 156,
         "from_open": {
           "d1": -2.27,
           "d3": -0.26,
           "d5": 0.42,
-          "n1": 157,
-          "n3": 157,
-          "n5": 157
+          "n1": 155,
+          "n3": 155,
+          "n5": 155
         },
         "universe": null,
         "liquidity_floor": 12400000,
@@ -4710,7 +4710,7 @@
       },
       "universe": {
         "label": "data/symbols.txt (checked in)",
-        "size": 230
+        "size": 228
       },
       "rules": {
         "check.breakdown_lookback": 20,
@@ -4776,16 +4776,16 @@
         "d1": -0.39,
         "d3": 0.38,
         "d5": 1.25,
-        "n1": 163,
-        "n3": 163,
-        "n5": 163,
+        "n1": 161,
+        "n3": 161,
+        "n5": 161,
         "from_open": {
           "d1": -0.69,
           "d3": 0.08,
           "d5": 0.95,
-          "n1": 162,
-          "n3": 162,
-          "n5": 162
+          "n1": 160,
+          "n3": 160,
+          "n5": 160
         },
         "universe": null,
         "liquidity_floor": 13200000,
@@ -4793,7 +4793,7 @@
       },
       "universe": {
         "label": "data/symbols.txt (checked in)",
-        "size": 230
+        "size": 228
       },
       "rules": {
         "check.breakdown_lookback": 20,
@@ -6045,7 +6045,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 4.7,
+        "best_score": 4.9,
         "outcomes": [
           {
             "horizon": 1,
@@ -6585,7 +6585,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 4.9,
+        "best_score": 3.0,
         "outcomes": [
           {
             "horizon": 1,
@@ -6639,7 +6639,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 3.6,
+        "best_score": 3.9,
         "outcomes": [
           {
             "horizon": 1,
@@ -6693,7 +6693,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 2.8,
+        "best_score": 3.0,
         "outcomes": [
           {
             "horizon": 1,
@@ -6797,65 +6797,11 @@
         ]
       },
       {
-        "ticker": "EA",
-        "setups": 1,
-        "appearances": 1,
-        "last_seen": "2026-09-01",
-        "best_score": 5.9,
-        "outcomes": [
-          {
-            "horizon": 1,
-            "mean": null,
-            "n": 0,
-            "best": null,
-            "worst": null,
-            "in_band": 0,
-            "from_open": {
-              "mean": null,
-              "n": 0,
-              "best": null,
-              "worst": null,
-              "in_band": 0
-            }
-          },
-          {
-            "horizon": 3,
-            "mean": null,
-            "n": 0,
-            "best": null,
-            "worst": null,
-            "in_band": 0,
-            "from_open": {
-              "mean": null,
-              "n": 0,
-              "best": null,
-              "worst": null,
-              "in_band": 0
-            }
-          },
-          {
-            "horizon": 5,
-            "mean": null,
-            "n": 0,
-            "best": null,
-            "worst": null,
-            "in_band": 0,
-            "from_open": {
-              "mean": null,
-              "n": 0,
-              "best": null,
-              "worst": null,
-              "in_band": 0
-            }
-          }
-        ]
-      },
-      {
         "ticker": "FTNT",
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 3.2,
+        "best_score": 3.4,
         "outcomes": [
           {
             "horizon": 1,
@@ -7125,7 +7071,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 4.5,
+        "best_score": 4.7,
         "outcomes": [
           {
             "horizon": 1,
@@ -7449,7 +7395,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 3.0,
+        "best_score": 5.7,
         "outcomes": [
           {
             "horizon": 1,
@@ -7557,7 +7503,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 3.0,
+        "best_score": 3.2,
         "outcomes": [
           {
             "horizon": 1,
@@ -7665,7 +7611,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 4.3,
+        "best_score": 4.5,
         "outcomes": [
           {
             "horizon": 1,
@@ -7716,6 +7662,60 @@
       },
       {
         "ticker": "NVDA",
+        "setups": 1,
+        "appearances": 1,
+        "last_seen": "2026-09-01",
+        "best_score": null,
+        "outcomes": [
+          {
+            "horizon": 1,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          },
+          {
+            "horizon": 3,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          },
+          {
+            "horizon": 5,
+            "mean": null,
+            "n": 0,
+            "best": null,
+            "worst": null,
+            "in_band": 0,
+            "from_open": {
+              "mean": null,
+              "n": 0,
+              "best": null,
+              "worst": null,
+              "in_band": 0
+            }
+          }
+        ]
+      },
+      {
+        "ticker": "ON",
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
@@ -7827,7 +7827,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 3.9,
+        "best_score": 4.1,
         "outcomes": [
           {
             "horizon": 1,
@@ -8043,7 +8043,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": null,
+        "best_score": 2.8,
         "outcomes": [
           {
             "horizon": 1,
@@ -8313,7 +8313,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 5.7,
+        "best_score": 5.9,
         "outcomes": [
           {
             "horizon": 1,
@@ -8583,7 +8583,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 4.1,
+        "best_score": 4.3,
         "outcomes": [
           {
             "horizon": 1,
@@ -8637,7 +8637,7 @@
         "setups": 1,
         "appearances": 1,
         "last_seen": "2026-09-01",
-        "best_score": 3.4,
+        "best_score": 3.6,
         "outcomes": [
           {
             "horizon": 1,

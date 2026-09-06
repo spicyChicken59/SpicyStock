@@ -693,7 +693,7 @@ for _i, _run in enumerate(runs):
     # The universe's own return from each session (src.ledger.add_run writes
     # the pending shape; fill_benchmarks fills it on the evening five sessions
     # later). Hand-authored where the run's own returns are in: a little
-    # below the picks, over most of the 230 names.
+    # below the picks, over most of the names the file holds.
     # The floor each night applied (src.ledger.add_run keeps it): the
     # headline run's is FLOOR; the older ones vary the way a percentile of
     # the day's tape would, with a refusal count that goes with it.

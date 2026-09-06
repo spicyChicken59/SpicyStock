@@ -72,14 +72,31 @@ SEED = 20260901
 #: The newest session in the fixture, and how many sessions of runs precede it.
 LAST_SESSION = "2026-09-01"
 SESSIONS = 30
-#: Every third name in data/symbols.txt -- real symbols, as make_fixture.py
-#: uses, because a fixture naming a symbol the scanner cannot see describes a
-#: run this pipeline could not produce. Nothing about their histories is real.
-#: 77 names: dense enough for repeats, sparse enough that one name bursts about
-#: twice in six weeks rather than five times, which is what made the first
+#: Seventy-seven real symbols, as make_fixture.py uses real ones, because a
+#: fixture naming a symbol the scanner cannot see describes a run this
+#: pipeline could not produce. Nothing about their histories is real. 77:
+#: dense enough for repeats, sparse enough that one name bursts about twice
+#: in six weeks rather than five times, which is what made the first
 #: generation's shaping windows overlap and every forward return come out
 #: positive.
-UNIVERSE_STRIDE = 3
+#:
+#: FROZEN, not read off data/symbols.txt. They used to be every third line of
+#: that file, and retiring three dead names from it (6 Sep 2026) shifted the
+#: stride onto seventy-six different names and re-rolled thirty sessions of
+#: fixture -- 10,000 changed lines, and every number CLAUDE.md quotes from
+#: this history with them. A fixture's market must not follow the live
+#: universe's maintenance. universe() still requires each of these to be in
+#: the file, so a name retired from the universe is retired here on purpose,
+#: by hand, with the re-roll that costs made visible in the diff.
+FIXTURE_NAMES = [
+    "GOOGL", "DIS", "WBD", "VZ", "MSFT", "ADBE", "WDAY", "ZS", "DDOG", "HUBS", "APP",
+    "IBM", "SNPS", "AVGO", "QCOM", "AMAT", "ADI", "MCHP", "ENTG", "CSCO", "HPE", "GLW",
+    "FSLR", "TSLA", "TGT", "DG", "AZO", "F", "DHI", "DECK", "SBUX", "HLT", "MGM",
+    "CCL", "UBER", "WMT", "PEP", "KR", "STZ", "CL", "BAC", "GS", "BLK", "APO",
+    "AIG", "MCO", "MA", "USB", "ALLY", "PYPL", "JNJ", "PFE", "UNH", "ELV", "ABT",
+    "ISRG", "IDXX", "BA", "DE", "RTX", "GD", "PH", "ODFL", "FDX", "WM", "XOM",
+    "EOG", "MPC", "SLB", "OKE", "SHW", "LYB", "FCX", "DUK", "CEG", "PLD", "O",
+]
 #: Sessions of price history behind the first run: src.lynch wants 67 for its
 #: range norm and extra_context 126 for six-month performance, and ScanConfig
 #: asks for 260.
@@ -140,12 +157,17 @@ def _png_1x1() -> bytes:
 
 
 def universe() -> list[str]:
-    names = []
+    """FIXTURE_NAMES, each checked to still be a name the live file holds."""
+    live = set()
     for line in (_ROOT / "data" / "symbols.txt").read_text().splitlines():
         sym = line.split("#")[0].strip()
         if sym:
-            names.append(sym)
-    return names[::UNIVERSE_STRIDE]
+            live.add(sym)
+    missing = [name for name in FIXTURE_NAMES if name not in live]
+    if missing:
+        raise SystemExit(f"FIXTURE_NAMES holds names data/symbols.txt no longer does: {missing}. "
+                         "Retire them here too, and expect the fixture to re-roll.")
+    return list(FIXTURE_NAMES)
 
 
 # ------------------------------------------------------------ the market --

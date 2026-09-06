@@ -33,6 +33,18 @@
 #       spelling for those could not be checked from this sandbox, and one
 #       unrecognised symbol takes down its whole 100-name request batch.
 #
+# RETIRED
+#   Names the first live scans (6 Sep 2026) found with no bar for a month or
+#   more on the sip feed, read off run.stopped_printing rather than assumed,
+#   and taken out so they stop being asked for every night:
+#     EA  -- no bar after 4 Aug 2026 (a take-private was announced in 2025
+#            and is the likely reason; not verified from the sandbox).
+#     FI  -- no bar after 10 Nov 2025. Whatever Fiserv trades as now was not
+#            verified from the sandbox, so it is retired rather than renamed.
+#     BK  -- no bar after 20 May 2026; BNY Mellon's listing moved to BNY,
+#            which is in the list below in its place and was checked by a
+#            rehearsal dispatch that returned its bars.
+#
 # FORMAT
 #   One ticker per line, A-Z, 1 to 5 characters. Blank lines are ignored.
 #   `#` starts a comment, on its own line or trailing after a symbol.
@@ -51,7 +63,6 @@ WBD
 TMUS
 T
 VZ
-EA
 TTWO
 
 # --- Software and IT services ---
@@ -196,8 +207,7 @@ USB
 PNC
 TFC
 ALLY
-BK
-FI
+BNY     # was BK: no bar under that symbol after 20 May 2026 on the sip feed
 PYPL
 COIN
 HOOD

@@ -1,6 +1,6 @@
 # 4% Momentum Burst — Fully Automated Scanner
 
-Scans a checked-in universe of 230 US common stocks each trading day, applies the
+Scans a checked-in universe of 228 US common stocks each trading day, applies the
 Stockbee/Qullamaggie 4% Momentum Burst strategy with the 2LYNCH quality
 checklist, has Claude score the survivors (numbers + chart image), and
 emails a ranked top-5 shortlist. **Zero manual steps** — no DeepVue paste,
@@ -18,7 +18,7 @@ no Google Sheet, no n8n.
 ## Pipeline
 
 ```
-checked-in universe (data/symbols.txt, 230 names)
+checked-in universe (data/symbols.txt, 228 names)
         │  Alpaca daily OHLCV, split-adjusted, SIP, batched
         ▼
 Layer 1  4% burst filter ............. ≥4% gain, vol ≥ yesterday, ≥1.5x its own
@@ -26,7 +26,7 @@ Layer 1  4% burst filter ............. ≥4% gain, vol ≥ yesterday, ≥1.5x it
         │                              top 70% of the day's dollar volume —
         │                              the bottom 30% are ARCHIVED as refused,
         │                              not dropped (round 5)
-        ▼  (a handful on a 230-name universe)
+        ▼  (a handful on a 228-name universe)
 Layer 2  2LYNCH checklist (code) ..... 2 first/second burst · L linear prior move
         │                              Y young trend · N narrow consolidation
         │                              C calm pre-burst day · H close near high
@@ -438,7 +438,8 @@ invariants live in the file rather than only here. The load-bearing ones:
   a day or two, a delisting never comes back -- as `after_sessions`, an exact
   `count`, and `names[]` of `ticker`, `last` and `sessions_behind`, most-behind
   first, at most 10 named. The email and the page print it; the ledger entry
-  does not carry it. The first live scan found three in the 230-name list.
+  does not carry it. The first live scan found three in the list, which held 230
+  names then and 228 since they were retired.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
@@ -831,11 +832,15 @@ against a hand-made `data.json` and agree, but that check is not committed.
   slice, and ends the request window no later than sixteen minutes behind the
   clock, which is what a plan without a real-time subscription needs for SIP
   (an older session's window ends earlier on its own and is untouched) — see
-  `.env.example`. It asked for `delayed_sip` for nine rounds, and the first
+  `.env.example`. Both halves are observed, not documented: the feed on the
+  first run past preflight, and the hold-back on a rehearsal from the form's
+  `dry_run` box, session pinned to a Sunday, whose window reached past the
+  clock and was served every symbol's bars through the Friday before. It
+  asked for `delayed_sip` for nine rounds, and the first
   run past preflight (6 Sep 2026) showed the bars endpoint refuses that name
   outright; a feed the endpoint or the plan refuses aborts the run with a
   named error on the first batch rather than returning an empty shortlist,
-  and `SCAN_FEED=iex` is the fallback. A 230-symbol scan is
+  and `SCAN_FEED=iex` is the fallback. A 228-symbol scan is
   seconds, not minutes, and is nowhere near the 55-min timeout — but "under a
   second", which this said, is not supported: 0.97s is what the scan costs
   driven through the offline doubles, and those do strictly LESS work than
