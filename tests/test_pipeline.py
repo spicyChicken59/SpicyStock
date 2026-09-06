@@ -18,7 +18,7 @@ import csv
 import json
 import pathlib
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -75,19 +75,31 @@ def market_clock(monkeypatch):
     this file is an evening run.
     """
     real = scanner.session_has_closed
-    state = {"closed": True}
+    real_weekday = scanner.is_trading_weekday
+    state = {"closed": True, "weekday": True}
 
     def pinned(now=None):
         return real(now) if now is not None else state["closed"]
 
+    # The weekday is pinned by the same rule, or the sentence the clock check
+    # writes would depend on whether the suite ran on a Saturday: a weekend
+    # dispatch is told there is no session today, a weekday one that the
+    # session has not closed yet, and the check reads the weekday alone.
+    def pinned_weekday(now=None):
+        return real_weekday(now) if now is not None else state["weekday"]
+
     monkeypatch.setattr(scanner, "session_has_closed", pinned)
+    monkeypatch.setattr(scanner, "is_trading_weekday", pinned_weekday)
 
     class Clock:
         def after_the_close(self) -> None:
-            state["closed"] = True
+            state["closed"], state["weekday"] = True, True
 
         def before_the_open(self) -> None:
-            state["closed"] = False
+            state["closed"], state["weekday"] = False, True
+
+        def weekend(self) -> None:
+            state["closed"], state["weekday"] = False, False
 
     return Clock()
 
@@ -3085,3 +3097,95 @@ def test_the_documented_smoke_test_cannot_write_a_slid_horizon_into_a_universe_r
     assert row["forward_returns"]["d1"] is not None
     assert row["forward_returns"]["as_of"] == session_offset(1), "the bar the calendar names, not the next one"
     assert row["forward_returns"]["d3"] is None, "across the hole is refused"
+
+
+# --- the public record carries no email address ------------------------------
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("You can only send testing emails to your own email address (owner@example.invalid). Verify",
+     "You can only send testing emails to your own email address (…@example.invalid). Verify"),
+    ("first.last+tag@mail.example.co.uk and Second_One@Example.ORG refused",
+     "…@mail.example.co.uk and …@Example.ORG refused"),
+    ("no address here, only 4% and an @ sign alone", "no address here, only 4% and an @ sign alone"),
+])
+def test_a_recorded_problem_masks_addresses_to_their_domain(text, expected):
+    """run.errors is the one leaf of free text from outside the codebase, and
+    the record is public. The domain stays, because "…@gmail.com" still says
+    which account a refusal is about."""
+    report = pipeline.RunReport()
+    report.problem("email", text)
+    assert report.errors == [{"stage": "email", "message": expected}]
+
+
+def test_the_resend_refusal_reaches_the_record_without_the_accounts_address(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The first live night, driven here: Resend named the owner's address
+    in its refusal, the pipeline stamped the sentence into docs/data.json,
+    and GitHub Pages served it. The log keeps the sentence; the record and
+    the page get the domain."""
+    import resend
+
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    monkeypatch.setattr(sys, "argv", ["pipeline", "evening", "--tickers", ",".join(names)])
+
+    def refuse(params, options=None):
+        raise RuntimeError("You can only send testing emails to your own email address "
+                           "(owner@example.invalid). To send emails to other recipients, "
+                           "please verify a domain at resend.com/domains")
+    monkeypatch.setattr(resend.Emails, "send", refuse)
+
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+    assert exc.value.code == pipeline.EXIT_FAILED_AFTER_PUBLISH
+
+    data = clean(tmp_path)
+    (email_problem,) = [e for e in data["run"]["errors"] if e["stage"] == "email"]
+    assert "…@example.invalid" in email_problem["message"], email_problem
+    assert "owner@" not in json.dumps(data), "the address is in no leaf of the public record"
+
+
+# --- a weekend dispatch is told there is no session today ------------------
+
+
+SATURDAY = datetime(2026, 9, 5, 22, 16, tzinfo=timezone.utc)   # 18:16 ET, the cron's hour
+SUNDAY = datetime(2026, 9, 6, 5, 34, tzinfo=timezone.utc)      # the first live dispatch, 01:34 ET
+
+
+@pytest.mark.parametrize("instant, day", [(SATURDAY, "Saturday"), (SUNDAY, "Sunday")])
+def test_a_weekend_evening_dispatch_is_told_there_is_no_session_today(instant, day):
+    """Three weekend dispatches on the first live day were told "today's
+    session has not closed yet" -- true of the weekday cron the sentence was
+    written for, false on a Saturday, and carried into run.errors and onto
+    the page. Real instants, so the real arithmetic is what is tested."""
+    said = pipeline.session_disagreement(EVENING, ScanConfig(), now=instant)
+
+    assert said is not None
+    assert day in said and "no session to close" in said, said
+    assert "has not closed yet" not in said
+    assert "2026-09-04" in said, "and it still names the session it read"
+
+
+def test_a_weekday_evening_run_before_the_close_keeps_its_own_sentence():
+    said = pipeline.session_disagreement(EVENING, ScanConfig(), now=BEFORE)
+    assert "has not closed yet" in said and "no session to close" not in said
+
+
+def test_a_weekend_evening_run_still_degrades_and_says_so_on_every_surface(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The wording changes; nothing else does. Exit 2, the session problem
+    alone, the DEGRADED subject."""
+    universe = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    market_clock.weekend()
+    report = pipeline.RunReport()
+
+    scored = pipeline.run("evening", dry_run=False, tickers=universe, report=report)
+
+    assert scored
+    assert report.status == "degraded" and report.exit_code == pipeline.EXIT_DEGRADED
+    assert [e["stage"] for e in report.errors] == ["session"], report.errors
+    assert "no session to close" in report.errors[0]["message"]
+    (sent,) = mocked_boundaries["resend"].sent
+    assert sent["subject"].startswith("[4% Burst] DEGRADED — ")

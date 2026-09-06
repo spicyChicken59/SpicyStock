@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 964 tests with no network
+- **There is a regression net.** `pytest tests/` runs 973 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -994,6 +994,29 @@ providers treat the local part case-insensitively in practice and the
 domain always is, so it is the same mailbox; a mixed list or a second
 refusal is diagnosed and raised like any other. Three mutants over the
 respelling and two over the diagnosis, all killed.
+Run 34018706843, the first dispatch after #10 merged, read off its log:
+the respelling warning, then `Email sent via Resend to 1 recipient(s)`,
+exit 2 for the Sunday clock alone -- the first mail this project has ever
+delivered, and with it every stage live end to end: scan, record,
+commit-back, page, mail.
+
+**Two things the weekend's dispatches wrote into the public record, fixed
+in one round.** Resend's refusal names the owner's personal address,
+`report.problem()` stored the sentence verbatim in `run.errors`, and the
+first Pages build served it: `redact_addresses()` masks every address in a
+recorded problem to its domain (`…@gmail.com`), applied in the one method
+every stage's message and `fail()`'s go through, and the Actions log keeps
+the sentence because the traceback prints before it. And every weekend
+dispatch was told "today's session has not closed yet" -- true of the
+weekday cron the sentence was written for, false on a Saturday. The check
+reads the weekday alone now (`scanner.is_trading_weekday()`, the weekday
+half of `session_has_closed()`, pinned on real instants including Friday
+23:30 ET, which is Saturday in UTC and still a trading weekday), and a
+weekend dispatch is told there is no session to close and that it read
+Friday's market. The `market_clock` fixture pins the weekday beside the
+close, because a clause that read the real weekday would have made the
+"has not closed yet" tests red every Saturday and Sunday -- the
+clock-dependent test again, one field over. Four mutants, all killed.
 
 **Leads written down, not worked.** A feed-wide missing day -- more than
 half the frames lacking a session -- is not a session under the majority
