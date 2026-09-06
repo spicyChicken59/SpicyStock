@@ -699,6 +699,38 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     # liquidity floor: 3" is not readable without the number the floor was.
     illiquid = _count(scan_stats, "illiquid")
     refused += [(_liquidity_label(scan_stats), illiquid)] if illiquid else []
+    # THE STAGE THE PRODUCT IS NAMED AFTER, and the last cut that had no line.
+    # "4% bursts found: 6 | Refused by an absolute rule: 2 | Passed 2LYNCH
+    # gate: 3 | Shortlisted: 3" -- six minus two minus three is one, and that
+    # one burst, rejected by the checklist itself, was on no line of the mail.
+    # The refusals and the crowded-out got their own lines in earlier rounds
+    # for exactly this reason: a count that vanishes reads as a count that
+    # never existed, and this is the only surface where a reader could notice,
+    # because the page's funnel folds all three cuts into one stage.
+    #
+    # Not reported by the caller and not counted from rows: it is what is left
+    # over, the same subtraction _empty_evening_note() states in its own
+    # sentence, through one function so the funnel and the cell cannot answer
+    # one question twice. Printed only when it is not zero, the rule every
+    # line above it follows -- and only when BOTH ends of the subtraction are
+    # numbers the run reported, because a record with `bursts` and no
+    # `passed_gate` (the morning path builds its stats field by field, `if
+    # field in source`) prints "Passed 2LYNCH gate: not recorded" and a
+    # difference taken from the missing half is an invented number sitting
+    # beside the words that say the number is not known.
+    #
+    # The `bursts` half of that guard is provably unreachable and is written
+    # anyway, because it is half of what the rule MEANS: _count() reads a
+    # non-count as 0 and clamps every subtrahend to at least 0, so a stats
+    # block with no readable `bursts` has a minuend of 0 and can never produce
+    # a positive difference (checked over 4,608 blocks as well as argued). The
+    # `gated` half is the load-bearing one and a mutant dropping it dies. A
+    # later edit to the arithmetic -- one that stops subtracting `gated`, say
+    # -- makes the unreachable half reachable, and it is here for that edit.
+    by_checklist = (_by_checklist(scan_stats)
+                    if is_count(scan_stats.get("bursts")) and is_count(scan_stats.get("gated"))
+                    else 0)
+    refused += [(CHECKLIST_LINE, by_checklist)] if by_checklist else []
     # The stage the email did not have. It went "Passed 2LYNCH gate: 54"
     # straight to "Shortlisted: 1", so the 29 names that cleared the checklist
     # and were never looked at appeared nowhere -- next to "Scored by Claude:
@@ -1161,22 +1193,18 @@ def _empty_evening_note(scan_stats: dict) -> str:
     from the opposite direction: the gate gets blamed for an outcome it had no
     part in.
 
-    So the note is computed rather than chosen. `bursts - vetoed - passed` is
-    what the checklist actually rejected, clamped because a malformed stats
-    block must not produce a negative count in a sentence.
+    So the note is computed rather than chosen, and the number it counts --
+    what the checklist itself rejected -- comes from _by_checklist(), which
+    the funnel line prints too. That subtraction was stated here alone for a
+    round, and the funnel three lines above this cell had no line for the
+    stage at all: six bursts, two refused, three through, and the sixth
+    nowhere.
     """
     bursts = _count(scan_stats, "bursts")
     vetoed = _count(scan_stats, "vetoed")
     illiquid = _count(scan_stats, "illiquid")
     passed = _count(scan_stats, "gated")
-    # Dropping `- passed` here is provably equivalent, and the term stays
-    # anyway: every branch that reads by_checklist sits below `if passed:`,
-    # so passed is 0 by then. It is kept because it is what the number MEANS
-    # -- the bursts that were neither refused outright nor let through -- and
-    # a later edit that moves the early return would otherwise be wrong
-    # silently. Noted because mutation testing finds it and there is nothing
-    # to fix.
-    by_checklist = max(bursts - vetoed - illiquid - passed, 0)
+    by_checklist = _by_checklist(scan_stats)
 
     if not bursts:
         return ("No 4% burst anywhere in the universe today. Nothing reached the "
@@ -1195,7 +1223,7 @@ def _empty_evening_note(scan_stats: dict) -> str:
     # sentence that folds two of them into one word is wrong about one.
     clauses = ([f"{_plural(vetoed, 'burst')} refused outright by an absolute rule"] if vetoed else []) \
         + ([f"{illiquid} below the liquidity floor"] if illiquid else []) \
-        + ([f"{by_checklist} rejected by the 2LYNCH checklist"] if by_checklist else [])
+        + ([f"{by_checklist} {CHECKLIST_REFUSED}"] if by_checklist else [])
     if len(clauses) > 1:
         verdicts = "Two different verdicts, and neither is the other." if len(clauses) == 2 \
             else "Three different verdicts, and none is another."
@@ -1212,6 +1240,39 @@ def _empty_evening_note(scan_stats: dict) -> str:
                 "The checklist never got a say.")
     return (f"No candidate passed the 2LYNCH checklist today — "
             f"{_plural(bursts, 'burst')} measured, none cleared it.")
+
+
+#: The checklist's own refusals, in one phrase, because one mail can carry
+#: both of its sentences: the funnel's line and the empty cell's clause, three
+#: inches apart. Two wordings for one mechanism side by side on one screen is
+#: a shape this project has now found four times. The word is CHECKLIST and
+#: never "gate": a 6/6 name an absolute rule refused is in neither count, and
+#: "rejected at the 2LYNCH gate" states the opposite of what happened to it.
+CHECKLIST_REFUSED = "rejected by the 2LYNCH checklist"
+#: The same phrase as a funnel label. Not .capitalize(), which lowercases
+#: 2LYNCH.
+CHECKLIST_LINE = CHECKLIST_REFUSED[0].upper() + CHECKLIST_REFUSED[1:]
+
+
+def _by_checklist(scan_stats: dict) -> int:
+    """How many bursts the CHECKLIST itself rejected — what is left when the
+    absolute rules, the liquidity floor and the survivors are taken off.
+
+    No caller reports this number and no row carries it, so it is a
+    subtraction, and one function does it for the funnel line and for the
+    empty cell's clause. They stated the same fact from two arithmetics for a
+    round; one of them had no line at all.
+
+    Clamped, because a malformed stats block must not produce a negative count
+    in a sentence -- unclamped it read "-2 below the liquidity floor and 7
+    rejected", seven of five bursts. `- passed` is load-bearing HERE and was
+    not when this lived inside the note: every branch of the note that reads
+    it sits below an early return on `passed`, so a mutant dropping the term
+    was equivalent there; the funnel reads it on a night that shortlisted
+    names, where the term is the whole difference.
+    """
+    return max(_count(scan_stats, "bursts") - _count(scan_stats, "vetoed")
+               - _count(scan_stats, "illiquid") - _count(scan_stats, "gated"), 0)
 
 
 def _count(scan_stats: dict, key: str) -> int:

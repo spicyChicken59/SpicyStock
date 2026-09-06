@@ -87,6 +87,28 @@ process — except when it is the retry of a send that failed, which drops them
 and says so in the same cell, and only for the rows that really had a picture
 to drop.
 
+**The funnel adds up.** It read "4% bursts found: 6 | Refused by an absolute
+rule: 2 | Passed 2LYNCH gate: 3 | Shortlisted: 3" — six minus two minus three
+is one, and that one burst, the one the *checklist itself* rejected, was on no
+line of the mail while its row sat in the same run's `docs/data.json` under
+`reason: lynch_gate`. The absolute rules got their own line, the liquidity
+floor got one and the call cap got one, each for exactly this reason: a count
+that vanishes reads as a count that never existed. The checklist was the last
+cut without one, and it is the cut the product is named after. It has one now
+— "Rejected by the 2LYNCH checklist: 1", between the floor and the gate, so
+the subtraction reads top to bottom — printed only when it is not zero, like
+every line above it, and computed rather than reported: no caller counts it
+and no row carries it, so it is what is left when the absolute rules, the
+floor and the survivors are taken off, through the one function the
+empty-table cell's own sentence already used. The morning mail prints the same
+number off the record it follows, because a subtraction done twice is how one
+name's checklist came to read two ways in two mails a night apart. The email
+is the only surface where this was visible at all: the page's funnel folds all
+three cuts into one stage caption. What still has no line of its own is the
+last drop, scored → shortlisted: both ends are printed ("Scored by Claude: 25
+of 25" beside "Shortlisted: 3") but the reason, a ranking rather than a
+refusal, is named on the page and not in the mail.
+
 **A run that dies mails the same email with the failure in it, and that mail
 now says what the run did before it died.** It printed "Universe: not
 recorded" over a scan that had asked every symbol and been answered by every
@@ -400,7 +422,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1122 tests, no network or API keys needed
+pytest tests/                   # 1129 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the

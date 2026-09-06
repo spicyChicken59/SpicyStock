@@ -1623,6 +1623,45 @@ def test_the_morning_re_presents_the_liquidity_refusals_the_evening_recorded(
     assert f"Below the liquidity floor ({emailer.compact_dollars(floor)}/day" in html and "4% bursts that session: 2" in html
 
 
+def test_both_mails_account_for_the_burst_the_checklist_itself_rejected(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The funnel's stages have to add up on the mail a person opens, and one
+    stage had no line: the checklist's own rejections. Six bursts, two refused
+    outright, three through, and the sixth appeared nowhere on the mail while
+    its row sat in the same run's data.json under `reason: lynch_gate`.
+
+    Driven through the real evening path and the real morning path over the
+    record it wrote, because the morning builds its counts off the snapshot's
+    own rows and a subtraction done twice is how one name's checklist came to
+    read two ways in two mails a night apart. Two refusal classes on the
+    night, in different numbers -- one below the floor, one the checklist
+    rejected -- since with only one of them every leftover burst is that one
+    and a term dropped from the subtraction is invisible.
+    """
+    monkeypatch.setattr(pipeline, "MIN_LYNCH_PASSES", 99)
+    names = _two_bursts_one_thin(fake_alpaca, ohlcv)
+
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    data = published(tmp_path)
+    assert data["run"]["bursts"] == 2 and data["run"]["passed_gate"] == 0
+    assert sorted(g["reason"] for g in data["gated_out"]) == ["liquidity_floor", "lynch_gate"], (
+        "PRECONDITION: the night needs both refusal classes, or dropping "
+        "either term from the subtraction is invisible")
+    evening = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "Rejected by the 2LYNCH checklist: 1" in evening
+    assert "4% bursts found: 2" in evening and "Passed 2LYNCH gate: 0" in evening
+
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+
+    morning = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "4% bursts that session: 2" in morning
+    assert "Rejected by the 2LYNCH checklist: 1" in morning, (
+        "the follow-through counts the same stage off the same record")
+
+
 def test_a_night_every_burst_was_below_the_floor_says_so_and_never_blames_the_checklist(
     market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):

@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1122 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1129 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -537,7 +537,12 @@ exercised its headline. Nine mutants across them, all killed.
   distinguishes them needs a night with both kinds in it, in different
   numbers, and says so in a precondition. Neither surface had the phrase "the
   N-call cap" pinned, which is how one mechanism grows two vocabularies; both
-  do now, each asserting against the other's source.
+  do now, each asserting against the other's source. **And the stage the
+  product is named after was still missing when that paragraph was written**
+  -- "4% bursts found: 6 | Refused by an absolute rule: 2 | Passed 2LYNCH
+  gate: 3" leaves one burst, the one the CHECKLIST rejected, on no line of the
+  mail. It has one in round 10, between the floor and the gate; see
+  "funnel-adds-up" there.
 
   **The system prompt is 59% of every request and was paid for 25 times a
   night.** `knowledge/strategy.md` is byte-identical on every call of a run --

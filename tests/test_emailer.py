@@ -816,6 +816,135 @@ def test_the_funnel_says_nothing_about_a_floor_on_a_night_nothing_sat_below_it()
     assert "liquidity floor" not in html
 
 
+def _funnel_counts(html: str) -> dict:
+    """The funnel as a reader adds it up: every "label: N" pair in the line,
+    read back off the RENDERED mail rather than off the stats that built it.
+
+    A funnel that does not close is only visible from the numbers a person
+    sees, which is how this defect survived: every count on the line was
+    right and one stage had no line at all.
+    """
+    import re
+
+    return {label: int(n) for label, n in
+            re.findall(r"([A-Za-z0-9%][^:|]*?): (\d+)", _visible_text(html))}
+
+
+def test_the_funnel_prints_the_stage_the_checklist_itself_rejected():
+    """"4% bursts found: 6 | Refused by an absolute rule: 2 | Passed 2LYNCH
+    gate: 3 | Shortlisted: 3" — six minus two minus three is one, and that one
+    burst, rejected by the checklist itself, appeared on no line of the mail.
+
+    The refusals and the crowded-out got their own lines in earlier rounds for
+    exactly this reason: a count that vanishes reads as a count that never
+    existed. The checklist's own rejection was the last stage that still did,
+    and it is the stage the product is named after.
+
+    The assertion is the reader's arithmetic over the rendered numbers, not
+    over the inputs: what has to be true is that the mail closes.
+    """
+    stats = dict(DATED, bursts=6, vetoed=2, illiquid=0, gated=3)
+
+    counts = _funnel_counts(build_html([make_result("AAA")], "evening", stats))
+
+    assert counts["Rejected by the 2LYNCH checklist"] == 1
+    assert (counts["4% bursts found"] - counts["Refused by an absolute rule"]
+            - counts["Rejected by the 2LYNCH checklist"]) == counts["Passed 2LYNCH gate"]
+
+
+def test_the_checklist_line_counts_only_what_the_checklist_refused():
+    """Rule 6 refuses a burst before the checklist is consulted, so a name
+    below the floor is not one the checklist rejected. Subtracting the wrong
+    set makes this line the count of "everything else", which is what the
+    email already had one of."""
+    stats = dict(DATED, bursts=7, vetoed=2, illiquid=1, gated=3)
+    assert stats["illiquid"], (
+        "PRECONDITION: without a floor refusal on the night, dropping the "
+        "`- illiquid` term is invisible and this test cannot fail")
+
+    counts = _funnel_counts(build_html([make_result("AAA")], "evening", stats))
+
+    assert counts["Rejected by the 2LYNCH checklist"] == 1
+    assert (counts["4% bursts found"] - counts["Refused by an absolute rule"]
+            - counts["Below the liquidity floor"]
+            - counts["Rejected by the 2LYNCH checklist"]) == counts["Passed 2LYNCH gate"]
+
+
+def test_a_night_the_checklist_rejected_nothing_reads_exactly_as_it_did_before():
+    """The same rule the refusal and cap lines follow: printed only when the
+    count is not zero. A night whose every burst got through says nothing
+    about a stage that cut nobody."""
+    html = build_html([make_result("AAA")], "evening",
+                      dict(DATED, bursts=6, vetoed=2, illiquid=0, gated=4))
+
+    assert "Rejected by the 2LYNCH checklist" not in _visible_text(html)
+
+
+def test_the_checklist_line_needs_BOTH_ends_of_its_subtraction_reported():
+    """The count is a subtraction, so a run that reported one end and not the
+    other cannot have it. The morning path builds its stats field by field
+    off the snapshot's run block -- `if field in source` -- so a record with
+    `bursts` and no `passed_gate` is not hypothetical, and the funnel prints
+    "Passed 2LYNCH gate: not recorded" for it. Deriving a checklist count
+    from the missing half would put an invented number beside the words that
+    say the number is not known.
+
+    This is the class the funnel's own `_reported_count` exists for, one
+    stage on: a count computed from a field that reads "not recorded" three
+    inches away.
+    """
+    stats = dict(DATED, bursts=6, vetoed=2, illiquid=0)
+    stats.pop("gated", None)
+
+    text = _visible_text(build_html([], "morning", stats))
+
+    assert "Passed 2LYNCH gate: not recorded" in text
+    assert "Rejected by the 2LYNCH checklist" not in text
+
+
+def test_the_morning_funnel_counts_the_checklist_rejections_the_same_way():
+    """The follow-through reports the run it is following, so the same
+    snapshot must produce the same number on both mails. Two arithmetics for
+    one stage is how one name's checklist came to read two ways in two mails
+    a night apart."""
+    stats = dict(DATED, bursts=7, vetoed=2, illiquid=1, gated=3)
+
+    evening = _funnel_counts(build_html([make_result("AAA")], "evening", stats))
+    morning = _funnel_counts(build_html([make_result("AAA")], "morning", stats))
+
+    assert morning["Rejected by the 2LYNCH checklist"] == 1
+    assert (morning["Rejected by the 2LYNCH checklist"]
+            == evening["Rejected by the 2LYNCH checklist"])
+
+
+def test_the_mail_names_the_checklist_cut_once_and_the_page_names_it_the_same_way():
+    """One mail can carry both wordings of this cut -- the funnel's line and
+    the empty cell's clause -- so they are one phrase or they are two
+    vocabularies for one mechanism, which is the shape this project keeps
+    finding side by side on one screen.
+
+    The page's half cannot be pinned as the same string: its funnel folds all
+    three cuts into one stage caption ("under 3 of 6 checks"), and the surface
+    that separates this population is the per-check table, whose column is
+    "failed the checklist". What both files can be held to is the word: the
+    CHECKLIST rejected these names, not the gate -- a 6/6 name refused by an
+    absolute rule is in neither count, and calling either one "the gate" is
+    the collapse CLAUDE.md forbids by name.
+    """
+    import pathlib
+
+    html = _visible_text(build_html([], "evening",
+                                    dict(DATED, bursts=6, vetoed=2, illiquid=0, gated=0)))
+    page = pathlib.Path(__file__).resolve().parents[1].joinpath("docs/index.html").read_text()
+
+    assert "Rejected by the 2LYNCH checklist: 4" in html, "the funnel's line"
+    assert "4 rejected by the 2LYNCH checklist" in html, "the empty cell's clause"
+    assert "Rejected at the 2LYNCH gate" not in html and "rejected at the gate" not in html
+    assert "'failed the checklist'" in page, (
+        "the page renamed the population this line counts; the two surfaces "
+        "have drifted")
+
+
 def test_a_night_every_burst_was_refused_does_not_blame_the_checklist():
     """"No candidates passed the quality gate today" states the opposite of
     what happened when the checklist passed them and a rule refused them."""
