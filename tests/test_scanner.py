@@ -1893,9 +1893,13 @@ def test_a_sip_request_for_todays_session_is_held_back_behind_the_clock(fake_alp
     assert wire_end() == datetime(2026, 6, 17, 23, 59, 59, tzinfo=timezone.utc), (
         "a session already behind the clock keeps its own day's end")
 
-    _download_batch(client, ["AAA"], ScanConfig(feed=DataFeed.IEX), session, now=evening)
-    assert wire_end() == datetime(2026, 6, 24, 23, 59, 59, tzinfo=timezone.utc), (
-        "no other feed was observed to need the hold-back, so none gets it")
+    # Every feed alpaca-py names except sip, not IEX alone: the rule is "sip
+    # alone", and a check that sampled one other member let a mutant holding
+    # back every feed but IEX through the whole file green.
+    for other in (f for f in DataFeed if f is not DataFeed.SIP):
+        _download_batch(client, ["AAA"], ScanConfig(feed=other), session, now=evening)
+        assert wire_end() == datetime(2026, 6, 24, 23, 59, 59, tzinfo=timezone.utc), (
+            f"{other.value}: no other feed was observed to need the hold-back, so none gets it")
 
 
 def test_a_sip_request_for_a_session_the_clock_has_not_reached_goes_out_as_written(fake_alpaca, ohlcv):
@@ -1907,8 +1911,8 @@ def test_a_sip_request_for_a_session_the_clock_has_not_reached_goes_out_as_writt
     five pipeline tests failed on any date before the one they pinned, which
     is the clock-dependent test this project names as the worst kind. So the
     window is held back only once the clock has reached the session's day;
-    before it, the request goes out as written and the endpoint answers for
-    the session it names."""
+    before it, the request goes out as written -- what the endpoint then
+    says is _download_batch's docstring's business, and it is not flattering."""
     fake_alpaca.add_history("AAA", ohlcv("burst"))
     client = get_clients()
     evening = datetime(2026, 6, 24, 22, 16, tzinfo=timezone.utc)

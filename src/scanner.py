@@ -546,7 +546,16 @@ def _download_batch(data_client, tickers, cfg: ScanConfig,
         Before that -- a session pinned AHEAD of the clock, which no schedule
         produces -- holding the window back would end it on the day before the
         session named, a different question from the one asked, so the window
-        goes out as written and the endpoint answers for the session it names.
+        goes out as written. What the endpoint says to it is NOT verified
+        here, and on a plan without a real-time subscription this repo's own
+        DENIAL string says what to expect: an `end` in the future is inside
+        the last fifteen minutes, so the request is refused as recent SIP
+        data and _refusal_error() reports a feed this plan lacks, when the
+        pin is the fault. A future pin can never have a bar, so nothing is
+        lost but the accuracy of one sentence; refusing such a pin before any
+        request is made would be the honest fix, and it is not made here
+        because the offline suite's later nights ARE future pins, driven
+        through the pipeline. Written down as the lead it is.
         This is also what keeps the offline suite deterministic: its
         end-to-end tests stand in for a later night by pinning a session days
         ahead of the wall clock, and the double re-dates every frame to the
