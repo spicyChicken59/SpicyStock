@@ -236,6 +236,28 @@ def _provenance_line(scan_stats: dict) -> str:
             f"{claude} of {total}</span>")
 
 
+def _stopped_printing_line(scan_stats: dict) -> str:
+    """"Not printing: EA (since 2026-08-04), BK (since 2026-05-20)" -- or nothing.
+
+    A fact about data/symbols.txt rather than about the market, printed under
+    the funnel because that is where a reader asks what the 230 were. Rendered
+    only when the run recorded the block and it holds a name; a snapshot from
+    before the block existed says nothing rather than "0 names". The threshold
+    is the block's own number, and every leaf is escaped, since a ticker is a
+    string the feed sent.
+    """
+    block = scan_stats.get("stopped_printing")
+    if not isinstance(block, dict) or not isinstance(block.get("count"), int) or not block["count"]:
+        return ""
+    names = [n for n in (block.get("names") or []) if isinstance(n, dict)]
+    shown = ", ".join(f"{esc(n.get('ticker'))} (since {esc(n.get('last'))})" for n in names)
+    more = block["count"] - len(names)
+    tail = f" and {_plural(more, 'more name')}" if more > 0 else ""
+    return (f'\n    <p style="color:#a5281b;margin-top:0;">Not printing: {shown}{tail} — '
+            f"{_plural(block['count'], 'name')} in the symbol file with no bar for more than "
+            f"{esc(block.get('after_sessions'))} sessions; check the list.</p>")
+
+
 #: What a streak's `unknown_reason` says to a reader when the record can say
 #: nothing narrower. `day: null` is the state this whole mechanism cares most
 #: about — UNKNOWN, which is not day 1 — and it used to render here as nothing
@@ -743,7 +765,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
     <h2 style="margin-bottom:4px;">{title}</h2>
     <p style="color:#666;margin-top:0;">
       {_funnel_line(results, run_type, scan_stats)}{_provenance_line(scan_stats)}
-    </p>
+    </p>{_stopped_printing_line(scan_stats)}
     <table style="border-collapse:collapse;width:100%;max-width:1100px;">
       <tr style="background:#1a1a2e;color:#fff;text-align:left;">
         <th style="padding:8px;">Ticker</th><th style="padding:8px;">Gain</th>

@@ -239,7 +239,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 974 tests, no network or API keys needed
+pytest tests/                   # 985 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -427,6 +427,12 @@ invariants live in the file rather than only here. The load-bearing ones:
   the record did not hold until round 5: `apply_liquidity_gate()` logged them
   and dropped them, so on the documented four-name smoke test the thinnest
   name vanished and the funnel counted the other three as everything found.
+- `run.stopped_printing` is a fact about the symbol FILE rather than the
+  market: the names in it with no bar for more than 5 sessions -- a halt is
+  a day or two, a delisting never comes back -- as `after_sessions`, an exact
+  `count`, and `names[]` of `ticker`, `last` and `sessions_behind`, most-behind
+  first, at most 10 named. The email and the page print it; the ledger entry
+  does not carry it. The first live scan found three in the 230-name list.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
@@ -723,7 +729,7 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 204 checks, and which file each one
+**Three data sources, one page.** It runs 205 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served

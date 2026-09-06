@@ -1248,3 +1248,22 @@ def test_a_second_refusal_after_the_respelling_is_raised_like_any_other(fake_res
     with pytest.raises(RuntimeError):
         deliver("subject", "<p>body</p>")
     assert len(calls) == 2, "one respelling, then no third attempt"
+
+
+# --- the names that have stopped printing ------------------------------------
+
+
+def test_the_email_names_what_stopped_printing_and_says_nothing_when_nothing_did(results):
+    block = {"after_sessions": 5, "count": 12,
+             "names": [{"ticker": "FI", "last": "2025-11-10", "sessions_behind": 213},
+                       {"ticker": "B<K", "last": "2026-05-20", "sessions_behind": 76}]}
+    html_out = build_html(results, "evening", {**STATS, "stopped_printing": block})
+    text = _visible_text(html_out)
+    assert "Not printing: FI (since 2025-11-10), B<K (since 2026-05-20) and 10 more names" in text
+    assert "12 names in the symbol file with no bar for more than 5 sessions" in text
+    assert "B&lt;K" in html_out, "a ticker is a string the feed sent, and it is escaped"
+
+    quiet = build_html(results, "evening", {**STATS, "stopped_printing": {"after_sessions": 5, "count": 0, "names": []}})
+    assert "Not printing" not in quiet
+    older = build_html(results, "evening", STATS)
+    assert "Not printing" not in older, "a snapshot from before the block existed says nothing, not 0"

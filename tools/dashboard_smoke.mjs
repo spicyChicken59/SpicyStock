@@ -736,6 +736,14 @@ ok('the stages share one scale, so the narrowing is visible and not just stated'
   scale.every((f, i) => i === 0 || f <= scale[i - 1] + 0.001)
   && STAGES.every(([, v], i) => (v / STAGES[0][1]) * funnel.kept[0] < 4 || near(scale[i], v / STAGES[0][1], 0.02)),
   scale.map((f) => f.toFixed(3)).join(' '));
+// The universe row's own note names what stopped printing, from the block
+// the pipeline wrote: every name the fixture carries, the count and the
+// threshold it applied. Read off the DOM, not the fixture twice.
+const stopped = REAL.run.stopped_printing;
+ok('the universe row names the symbols that have stopped printing, and the threshold the run applied',
+  stopped && stopped.count > 0 && stopped.names.every((n) => funnel.rows[0][4].includes(n.ticker + ' (since ' + n.last + ')'))
+  && funnel.rows[0][4].includes(stopped.count + ' names have not printed for more than ' + stopped.after_sessions + ' sessions'),
+  funnel.rows[0][4]);
 const worstDrop = STAGES.slice(1).map(([name, v], i) => ({ name, lost: STAGES[i][1] - v }))
   .reduce((a, b) => (b.lost > a.lost ? b : a));
 ok('the page names where the attrition actually is',
