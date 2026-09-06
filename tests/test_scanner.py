@@ -24,6 +24,7 @@ from requests.exceptions import HTTPError
 
 from src.scanner import (
     DEFAULT_FEED,
+    SIP_HOLDBACK_MINUTES,
     previous_session,
     _drop_gapped_symbols,
     _download_batch,
@@ -987,7 +988,10 @@ def test_a_refused_feed_aborts_the_scan_instead_of_emptying_it(fake_alpaca, ohlc
     fake_alpaca.add_history("AAA", ohlcv("burst"))
     fake_alpaca.raise_on_bars = _alpaca_error(403, DENIAL)
 
-    with pytest.raises(FeedNotAuthorizedError, match=DEFAULT_FEED.value):
+    # The phrase, not the bare feed name: the notice also lists EVERY feed the
+    # SDK knows, so `match="sip"` was satisfied with the refused feed dropped
+    # from the sentence.
+    with pytest.raises(FeedNotAuthorizedError, match=f"refused the {DEFAULT_FEED.value!r} data feed"):
         run_scan(ScanConfig(), universe=["AAA"])
 
     assert len(fake_alpaca.bar_requests) == 1, "a refusal is not transient; do not retry it"
@@ -1033,7 +1037,7 @@ def test_a_refused_feed_still_says_feed_and_not_credentials(fake_alpaca, ohlcv):
     with pytest.raises(FeedNotAuthorizedError) as caught:
         run_scan(ScanConfig(), universe=["AAA"])
 
-    assert DEFAULT_FEED.value in str(caught.value)
+    assert f"refused the {DEFAULT_FEED.value!r} data feed" in str(caught.value)
     assert not isinstance(caught.value, CredentialsRejectedError)
 
 
@@ -1475,7 +1479,7 @@ def test_a_feed_refusal_that_only_arrives_on_the_retry_still_aborts_the_scan(
         1: _alpaca_error(403, DENIAL),
     })
 
-    with pytest.raises(FeedNotAuthorizedError, match=DEFAULT_FEED.value):
+    with pytest.raises(FeedNotAuthorizedError, match=f"refused the {DEFAULT_FEED.value!r} data feed"):
         run_scan(ScanConfig(), universe=universe)
 
 
@@ -1609,6 +1613,7 @@ def test_the_scan_filter_still_holds_the_thresholds_it_was_tuned_to():
     assert cfg.coverage_guard_min_symbols == 10
     assert (cfg.lookback_days, cfg.batch_size) == (260, 100)
     assert cfg.feed == DataFeed.SIP
+    assert SIP_HOLDBACK_MINUTES == 16
     assert SESSION_COMPLETE_ET == time_of_day(16, 15)
 
 
@@ -1875,8 +1880,6 @@ def test_a_sip_request_for_todays_session_is_held_back_behind_the_clock(fake_alp
     18:16 ET used to ask through 23:59 UTC, hours in the future; on `sip`
     it asks through SIP_HOLDBACK_MINUTES before now. A backfill of an older
     session is untouched, and so is every other feed."""
-    from src.scanner import SIP_HOLDBACK_MINUTES
-
     fake_alpaca.add_history("AAA", ohlcv("burst"))
     client = get_clients()
     session = date(2026, 6, 24)
@@ -1886,7 +1889,10 @@ def test_a_sip_request_for_todays_session_is_held_back_behind_the_clock(fake_alp
     wire_end = lambda: datetime.fromisoformat(fake_alpaca.request_fields[-1]["end"])   # noqa: E731
 
     _download_batch(client, ["AAA"], ScanConfig(feed=DataFeed.SIP), session, now=evening)
-    assert wire_end() == evening - timedelta(minutes=SIP_HOLDBACK_MINUTES), wire_end()
+    # The instant in digits, not `evening - SIP_HOLDBACK_MINUTES`: that compared
+    # the value against the name it came from, and passed with the constant
+    # at 0. The constant itself is pinned beside the other thresholds.
+    assert wire_end() == datetime(2026, 6, 24, 22, 0, tzinfo=timezone.utc), wire_end()
     assert wire_end() > datetime(2026, 6, 24, 20, 0, tzinfo=timezone.utc), "still after the 16:00 ET close"
 
     _download_batch(client, ["AAA"], ScanConfig(feed=DataFeed.SIP), date(2026, 6, 17), now=evening)
@@ -1919,6 +1925,15 @@ def test_a_sip_request_for_a_session_the_clock_has_not_reached_goes_out_as_writt
     wire_end = lambda: datetime.fromisoformat(fake_alpaca.request_fields[-1]["end"])   # noqa: E731
 
     _download_batch(client, ["AAA"], ScanConfig(feed=DataFeed.SIP), date(2026, 6, 25), now=evening)
+    assert wire_end() == datetime(2026, 6, 25, 23, 59, 59, tzinfo=timezone.utc), wire_end()
+
+    # The first sixteen minutes of the session's UTC day -- 20:00 to 20:16 ET
+    # the evening before: the raw clock has reached the day and the held-back
+    # one has not, and a guard on the raw clock would clamp the window onto
+    # the day BEFORE the session. A test in this suite that pins the next
+    # session would then flicker for those minutes every night.
+    _download_batch(client, ["AAA"], ScanConfig(feed=DataFeed.SIP), date(2026, 6, 25),
+                    now=datetime(2026, 6, 25, 0, 5, tzinfo=timezone.utc))
     assert wire_end() == datetime(2026, 6, 25, 23, 59, 59, tzinfo=timezone.utc), wire_end()
 
     # The day itself, reached: held back like any other.

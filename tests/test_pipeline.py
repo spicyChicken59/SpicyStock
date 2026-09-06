@@ -371,7 +371,12 @@ def test_a_run_that_could_not_scan_exits_failed_and_mails_the_reason(
     assert code == pipeline.EXIT_FAILED
     (sent,) = mocked_boundaries["resend"].sent
     assert sent["subject"].startswith("[4% Burst] FAILED — ")
-    assert "FeedNotAuthorizedError" in sent["html"] and scanner.DEFAULT_FEED.value in sent["html"]
+    from html import unescape
+    # The phrase, unescaped, because the quotes are entities in the source and
+    # the notice also lists every feed the SDK knows, so a bare "sip" matched
+    # with the refused feed dropped from the sentence.
+    assert "FeedNotAuthorizedError" in sent["html"]
+    assert f"refused the {scanner.DEFAULT_FEED.value!r} data feed" in unescape(sent["html"])
 
 
 def test_a_failure_notice_names_the_session_the_run_was_going_for(

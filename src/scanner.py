@@ -698,7 +698,12 @@ def _is_permanent_refusal(exc: Exception) -> bool:
     Two signals, because only one of them is always present: the HTTP status
     (alpaca-py's APIError carries it only when it was built from an HTTPError)
     and the message body, which reads "subscription does not permit querying
-    recent SIP data". Heuristic, and unconfirmed against a live refusal.
+    recent SIP data". Heuristic. The one live refusal this file has met
+    carried NO status and matched neither signal -- `invalid feed:
+    delayed_sip`, on the first run past preflight, retried and dropped six
+    times over before the coverage guard called the market empty -- which is
+    why the third clause below exists. The subscription clause is still
+    unconfirmed against a live refusal.
     """
     if getattr(exc, "status_code", None) in (401, 403):
         return True
@@ -719,8 +724,11 @@ def _refusal_error(feed: DataFeed, exc: Exception) -> RuntimeError:
     the request at all, which on a first-time setup is overwhelmingly a wrong
     or half-set key -- and the message sent that operator to buy a data plan.
 
-    The status is still a heuristic and this file has never seen a live
-    refusal, so NEITHER message asserts one cause and denies the other: each
+    The status is still a heuristic. The one live refusal this file has
+    seen was neither of these -- `invalid feed`, with no status at all,
+    which has its own branch below and does assert its cause, because the
+    endpoint said it in words -- so for the 401/403 pair NEITHER message
+    asserts one cause and denies the other: each
     leads with what the status says and names the alternative second. Being
     approximately right in the right order beats being confidently wrong.
     """

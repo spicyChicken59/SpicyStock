@@ -64,12 +64,19 @@ SESSION = date(2026, 6, 24)
 # --------------------------------------------------------------------------
 
 
-def _request_kwargs(cfg: ScanConfig | None = None, session: date = SESSION) -> dict:
+def _request_kwargs(cfg: ScanConfig | None = None, session: date = SESSION,
+                    end: datetime | None = None) -> dict:
     """The kwargs _download_batch() passes, rebuilt from its own arithmetic.
 
     Written out rather than captured so this test still says what the request
     IS when the module changes; the capture test below then proves the module
     really sends these.
+
+    `end` is the session's own day-end for a session behind the clock. On the
+    sip feed on the session's own evening it is sixteen minutes behind the
+    clock instead -- the free plan's rule -- and the capture test states that
+    instant in digits and proves it too, since a description of the backfill
+    request alone said nothing about the one the cron sends.
     """
     cfg = cfg or ScanConfig()
     day_start = datetime(session.year, session.month, session.day, tzinfo=timezone.utc)
@@ -77,7 +84,7 @@ def _request_kwargs(cfg: ScanConfig | None = None, session: date = SESSION) -> d
         "symbol_or_symbols": ["NVDA", "AMD"],
         "timeframe": TimeFrame.Day,
         "start": day_start - timedelta(days=int(cfg.lookback_days * 1.6)),
-        "end": day_start + timedelta(hours=23, minutes=59, seconds=59),
+        "end": end or day_start + timedelta(hours=23, minutes=59, seconds=59),
         "adjustment": Adjustment.SPLIT,
         "feed": cfg.feed,
     }
@@ -111,16 +118,25 @@ def test_the_request_the_scanner_really_builds_is_that_request():
             captured.append(request)
             return BarSet({})
 
-    _download_batch(Capturing(), ["NVDA", "AMD"], ScanConfig(), SESSION)
+    def same(sent: dict, expected: dict) -> None:
+        # TimeFrame has no __eq__, so two equal timeframes are different
+        # objects. Compare it by the string the SDK would put on the wire, and
+        # the rest of the query field by field.
+        assert sent.pop("timeframe").value == expected.pop("timeframe").value == "1Day"
+        assert sent == expected
 
+    # A session behind the clock: the window is the session's own day.
+    _download_batch(Capturing(), ["NVDA", "AMD"], ScanConfig(), SESSION)
     assert len(captured) == 1
-    sent = captured[0].to_request_fields()
-    expected = StockBarsRequest(**_request_kwargs()).to_request_fields()
-    # TimeFrame has no __eq__, so two equal timeframes are different objects.
-    # Compare it by the string the SDK would put on the wire, and the rest of
-    # the query field by field.
-    assert sent.pop("timeframe").value == expected.pop("timeframe").value == "1Day"
-    assert sent == expected
+    same(captured[0].to_request_fields(), StockBarsRequest(**_request_kwargs()).to_request_fields())
+
+    # The session's own evening, the request the cron sends: 22:16 UTC is
+    # 18:16 ET in June, and on sip the window ends sixteen minutes earlier.
+    _download_batch(Capturing(), ["NVDA", "AMD"], ScanConfig(), SESSION,
+                    now=datetime(2026, 6, 24, 22, 16, tzinfo=timezone.utc))
+    assert len(captured) == 2
+    same(captured[1].to_request_fields(),
+         StockBarsRequest(**_request_kwargs(end=datetime(2026, 6, 24, 22, 0, tzinfo=timezone.utc))).to_request_fields())
 
 
 def test_get_stock_bars_still_takes_the_request_object():

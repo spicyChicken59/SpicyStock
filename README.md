@@ -158,6 +158,9 @@ Two more things the first live run turned up, both settings rather than code:
   it, Resend refuses any other recipient — the first live run failed its email
   on exactly that sentence. Either set `EMAIL_TO` to the address the Resend
   account is registered under, or verify a domain and set `RESEND_FROM`.
+  Until one of those is done, every failed delivery writes Resend's refusal,
+  which names the account's own address, into `docs/data.json` -- and so onto
+  the public page and into this repository's history.
 
 **Then, before the first scheduled night, rehearse the boundaries once from
 your own machine:**
@@ -235,7 +238,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 953 tests, no network or API keys needed
+pytest tests/                   # 954 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -802,8 +805,9 @@ against a hand-made `data.json` and agree, but that check is not committed.
 
 - Market data: free (Alpaca). The scan asks for `sip` rather than taking the
   plan default, so it reads consolidated volume instead of IEX's single-venue
-  slice, and holds the request window sixteen minutes behind the clock, which
-  is what a plan without a real-time subscription needs for SIP — see
+  slice, and ends the request window no later than sixteen minutes behind the
+  clock, which is what a plan without a real-time subscription needs for SIP
+  (an older session's window ends earlier on its own and is untouched) — see
   `.env.example`. It asked for `delayed_sip` for nine rounds, and the first
   run past preflight (6 Sep 2026) showed the bars endpoint refuses that name
   outright; a feed the endpoint or the plan refuses aborts the run with a
