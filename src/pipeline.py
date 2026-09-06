@@ -1377,7 +1377,8 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         # The sessions this run knows happened, read across every frame it
         # fetched -- the scan's own and the ones just requested -- so a hole
         # in one name's frame leaves its horizon null rather than measured on
-        # the next bar it has. See ledger.session_calendar().
+        # the next bar it has. See ledger.session_calendar(). ONE calendar
+        # for both fills below, which is what the contract sentence says.
         calendar = ledger.session_calendar({**(frames_read or {}), **frames})
         filled = book.fill_forward_returns(frames, through, calendar)
     # The universe benchmark, from the frames THIS scan already read: no
@@ -1387,7 +1388,7 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     # anyone's alternative. See Ledger.fill_benchmarks().
     benchmarked = (book.fill_benchmarks(frames_read or {}, through,
                                         universe=run["universe"] if explicit_tickers is None else None,
-                                        calendar=ledger.session_calendar(frames_read))
+                                        calendar=ledger.session_calendar({**(frames_read or {}), **frames}))
                    if frames_read else 0)
 
     # Re-read the report AFTER the fetch: a problem raised in the two lines

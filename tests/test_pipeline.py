@@ -18,7 +18,7 @@ import csv
 import json
 import pathlib
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -656,15 +656,31 @@ def served(fake_alpaca, ticker: str, session: str) -> pd.DataFrame:
 
 def expected_returns(frame: pd.DataFrame, burst: str, horizons=(1, 3, 5)) -> dict:
     """Both bases, recomputed by hand from the served frame: the close basis
-    divides by the burst-day close, the open basis by the NEXT session's open."""
-    sessions = [stamp.date().isoformat() for stamp in frame.index]
-    start = sessions.index(burst)
-    base = float(frame["close"].iloc[start])
-    out = {f"d{h}": round((float(frame["close"].iloc[start + h]) / base - 1) * 100, 2)
-           for h in horizons if start + h < len(sessions)}
-    entry = float(frame["open"].iloc[start + 1]) if start + 1 < len(sessions) else None
-    out["from_open"] = {f"d{h}": (round((float(frame["close"].iloc[start + h]) / entry - 1) * 100, 2)
-                                  if entry and start + h < len(sessions) else None)
+    divides by the burst-day close, the open basis by the NEXT session's open.
+
+    By DATE -- the h-th business day after the burst, weekend-only, looked up
+    in the frame -- and not by offset along the frame's bars. The doubles
+    serve contiguous frames, so the two readings agree here; counting bars
+    would agree with the code by accident and stop agreeing with it on the
+    one input round 9 is about, a frame with a hole in it.
+    """
+    by_date = {stamp.date(): row for stamp, row in frame.iterrows()}
+    start = date.fromisoformat(burst)
+
+    def session(n: int) -> date:
+        day = start
+        for _ in range(n):
+            day += timedelta(days=1)
+            while day.weekday() >= 5:
+                day += timedelta(days=1)
+        return day
+
+    base = float(by_date[start]["close"])
+    out = {f"d{h}": round((float(by_date[session(h)]["close"]) / base - 1) * 100, 2)
+           for h in horizons if session(h) in by_date}
+    entry = float(by_date[session(1)]["open"]) if session(1) in by_date else None
+    out["from_open"] = {f"d{h}": (round((float(by_date[session(h)]["close"]) / entry - 1) * 100, 2)
+                                  if entry and session(h) in by_date else None)
                         for h in (1, 3, 5)}
     return out
 
@@ -3018,3 +3034,49 @@ def test_the_fill_reads_each_horizon_by_its_session_across_every_frame_the_run_f
     assert bench["d1"] is not None, "the whole names still benchmark the session"
     assert bench["below_floor"] == len(names) - len(kept)
     assert bench["n1"] == len(kept) - 1, "every kept name but the holed one, which has no bar on that session"
+
+
+def test_the_documented_smoke_test_cannot_write_a_slid_horizon_into_a_universe_row(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """R9-A, the round-9 audit's high finding: README's `--tickers BURST`
+    smoke test handed the fill a calendar of ONE frame, which is the
+    positional reading round 9 exists to end, so a hole on the session after
+    the burst put the two-session move into d1 of the earlier universe run's
+    row -- for good, since a horizon is filled once. One frame is no
+    calendar; alone, the frame's walk stops at the hole; and the next scan
+    of the universe, with a calendar, measures what that left open."""
+    from tests.test_scanner import _thin
+
+    fake_alpaca.add_history("BURST", ohlcv("burst", base_volume=30_000_000.0))
+    names = ["BURST"]
+    for i, suffix in enumerate("ABCD"):
+        fake_alpaca.add_history(f"Q{suffix}", _thin(ohlcv, "flat", price=40.0 + i,
+                                                    volume=3_000_000, variant=i + 2))
+        names.append(f"Q{suffix}")
+    _universe_file(monkeypatch, tmp_path, names)
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    pipeline.run("evening", dry_run=True)
+    burst_session = recorded(tmp_path)["runs"][0]["date"]
+
+    fake_alpaca.add_history("BURST", ohlcv("burst", base_volume=30_000_000.0), gap_before_session=True)
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(2))
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    older = next(r for r in recorded(tmp_path)["runs"] if r["date"] == burst_session)
+    row = next(c for c in older["candidates"] if c["ticker"] == "BURST")
+    assert row["forward_returns"]["d1"] is None, "the two-session move is not d1, and one frame cannot say what is"
+    assert row["forward_returns"]["as_of"] is None
+
+    # The next universe scan has a calendar. The double's hole sits on the
+    # bar before the newest one, so on this scan it has moved to the second
+    # session after the burst: the first is there, and d1 is measured on
+    # that bar -- by date -- while d3, which would have to be read across
+    # the hole, is refused.
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(3))
+    pipeline.run("evening", dry_run=True)
+    older = next(r for r in recorded(tmp_path)["runs"] if r["date"] == burst_session)
+    row = next(c for c in older["candidates"] if c["ticker"] == "BURST")
+    assert row["forward_returns"]["d1"] is not None
+    assert row["forward_returns"]["as_of"] == session_offset(1), "the bar the calendar names, not the next one"
+    assert row["forward_returns"]["d3"] is None, "across the hole is refused"

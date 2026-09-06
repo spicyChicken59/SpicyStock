@@ -222,7 +222,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 929 tests, no network or API keys needed
+pytest tests/                   # 949 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -530,20 +530,31 @@ from. The page prints both, and calls neither of them "names".
   benchmark, so its outcomes are the alternative "buy anything in the universe
   that day" over the same sessions in the same proportions as the picks, and
   `evidence.universe.floored` / `unfloored` say how many measured pairings
-  applied a floor and how many predate it. It is a curated large-cap list as
+  applied a floor and how many were measured with none — recorded before the
+  floor reached the benchmark, or on a night rule 6 was off, which the block
+  cannot tell apart, so every surface names both. It is a curated large-cap list as
   it stands today, so the comparison carries survivorship bias in the
   benchmark's favour, and the page's rung says so.
 - A horizon is the bar of the session 1, 3 or 5 sessions after the burst, the
   sessions read **across every frame the run fetched** (`session_calendar()`)
-  rather than counted along one frame's bars: a bar the feed dropped, or a
-  full-day halt, leaves that horizon null on that row instead of sliding it
-  onto the next bar the frame has. Reproduced before it was fixed: with the
-  27 Aug bar missing, `d3` printed the 28 Aug close and `as_of` dated it a
-  session late. A date is a session when at least half of the frames spanning
-  it carry a bar on it, so one frame's hole removes nothing and one frame's
-  phantom bar adds nothing. The open basis's entry must also lie within its
-  own bar's low and high, the standard the checklist holds a close to; an open
-  outside its range is null on that row, and the close basis is untouched.
+  rather than counted along one frame's bars, and measured only while the
+  frame carries every session from the burst to it: a bar the feed dropped,
+  or a full-day halt, leaves that horizon and every later one null on that
+  row instead of sliding them onto the next bar the frame has. Reproduced
+  before it was fixed: with the 27 Aug bar missing, `d3` printed the 28 Aug
+  close and `as_of` dated it a session late. A date is a session when at
+  least half of the frames spanning it carry a bar on it, so one frame's hole
+  removes nothing and one frame's phantom bar adds nothing -- and a phantom a
+  few frames voted in ends the measurement for the frames that lack it, the
+  same way a hole does, rather than sliding their later horizons. Fewer than
+  two frames is no calendar: the documented `--tickers BURST` smoke test
+  fetches one frame, and alone a frame is walked from the burst and stops at
+  the first step that is not the next business day, since it cannot tell its
+  own hole from a holiday; the next universe scan, with a calendar, measures
+  what that left open. The open basis's entry must also lie within its own
+  bar's low and high, the standard the checklist holds a close to; an open
+  outside its range, or on a bar whose high or low cannot be read, is null on
+  that row, and the close basis is untouched.
 - `forward_returns.from_open` is the **same three closes divided by the next
   session's open** — the earliest price a reader of the 18:16 ET email could
   have paid. The two bases answer two questions about one move: what the
@@ -566,7 +577,10 @@ from. The page prints both, and calls neither of them "names".
   claims data this pipeline does not have.
 - A horizon is filled once and never restated. A name that stops trading is
   retried for ten runs and then left pending forever, which is the honest
-  answer for a delisting.
+  answer for a delisting -- and so is a row whose horizon bar the feed never
+  carried, or whose entry open sat outside its own bar: that horizon, or the
+  open basis, stays null, and the row is asked for again on each of those
+  ten runs in case a later fetch carries what the last one did not.
 - Filling costs one extra bars request per 100 pending names, on the same free
   feed and through the same `_download_batch` the scan uses. If it fails, the
   run is marked **degraded** rather than quietly stopping to accumulate.
@@ -687,14 +701,14 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 199 checks, and which file each one
+**Three data sources, one page.** It runs 204 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 32 mutated copies of it are served
+  night can hold at once. 34 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now

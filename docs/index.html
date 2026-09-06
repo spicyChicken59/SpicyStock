@@ -702,20 +702,42 @@
   // before the basis existed said "pending — the sessions have not happened
   // yet" over sessions that happened long ago and were never measured this
   // way. Different facts, different fixes, and now different words.
+  // Four states, and the fourth is the one the round-9 audit found still
+  // wearing the first's words: a row whose close basis is measured and
+  // whose open basis is null throughout was refused an entry -- no usable
+  // open on the next session, or an open outside its own bar -- and its
+  // sessions have very much happened.
   function fwdState(row) {
     var fr = row && row.forward_returns;
     if (!fr || typeof fr !== 'object') return 'unrecorded';
-    if (BASIS === 'open' && !(fr.from_open && typeof fr.from_open === 'object')) return 'predates';
-    return 'measured';
+    if (BASIS !== 'open') return 'measured';
+    if (!(fr.from_open && typeof fr.from_open === 'object')) return 'predates';
+    var closeIn = FWD_KEYS.some(function (k) { return fr[k] !== null && fr[k] !== undefined; });
+    var openIn = FWD_KEYS.some(function (k) { return fr.from_open[k] !== null && fr.from_open[k] !== undefined; });
+    return closeIn && !openIn ? 'noentry' : 'measured';
   }
+  // The words for each state, one place, read by the cards and both tables.
+  var FWD_WORDS = {
+    unrecorded: ['not recorded', null],
+    predates: ['not measured', 'this row predates the open basis'],
+    noentry: ['not measured', 'no usable open on the next session, so no price a reader could have paid']
+  };
   function forwardCell(row) {
     var state = fwdState(row);
-    if (state === 'unrecorded') return 'not recorded';
-    if (state === 'predates') return 'not measured — this row predates the open basis';
+    if (FWD_WORDS[state]) return FWD_WORDS[state][0] + (FWD_WORDS[state][1] ? ' — ' + FWD_WORDS[state][1] : '');
     var fr = fwd(row);
     var have = ['d1', 'd3', 'd5'].filter(function (k) { return fr[k] !== null && fr[k] !== undefined; });
     if (!have.length) return 'pending — the sessions have not happened yet';
     return have.map(function (k) { return '+' + k.slice(1) + 'd ' + pct(fr[k], 2); }).join(' · ');
+  }
+  // A horizon cell in the scores table or the runs table: the state's words
+  // when the row has a state, the number or "pending" otherwise.
+  function horizonCell(row, value) {
+    var state = fwdState(row);
+    if (FWD_WORDS[state]) {
+      return el('td', { 'class': 'sc-num', text: FWD_WORDS[state][0], title: FWD_WORDS[state][1] || null });
+    }
+    return el('td', { 'class': 'sc-num', text: value === null || value === undefined ? 'pending' : pct(value, 2) });
   }
 
   // 0 is a real answer here and null is not, so this cannot go through num():
@@ -1331,8 +1353,36 @@
     var u = ev.universe || {};
     var every = 'every name in the universe that traded, from the same sessions, equal-weight';
     var above = 'every name in the universe at or above that night\u2019s liquidity floor, from the same sessions, equal-weight';
-    return (u.unfloored > 0 && !u.floored ? every + ' \u2014 benchmarked before the floor reached it, so the names under it are in' : above) +
-      '; one curated list, survivorship bias in its favour';
+    var tail = '; one curated list, survivorship bias in its favour';
+    // A file from before the keys existed was benchmarked over every name
+    // that traded, and the floored label would claim a rule it never applied.
+    if (typeof u.floored !== 'number' || typeof u.unfloored !== 'number') {
+      return every + ' \u2014 this record predates the floor in the benchmark, so the names under it are in' + tail;
+    }
+    // TWO causes put a pairing here and the block has no reason field to
+    // tell them apart: a benchmark measured before the floor reached it, and
+    // a night rule 6 was switched off for, which records no floor to apply.
+    // Said as what is true of both, like the streak table's null bucket.
+    var without = 'measured with no floor \u2014 before the floor reached the benchmark, or on a night rule 6 was off \u2014 so the names under it are in';
+    if (u.unfloored > 0 && !u.floored) return every + ' \u2014 ' + without + tail;
+    if (u.unfloored > 0) {
+      return above + ' for the ' + u.floored + ' pairings measured with one; the other ' +
+        u.unfloored + ' were ' + without + tail;
+    }
+    return above + tail;
+  }
+  // The control card's own sentence about the rung, which used to be static
+  // and said the thin names were out on a record whose verdict, three
+  // sentences down, said they were in. Same counts, same three states.
+  function rungClause(ev) {
+    var u = (ev && ev.universe) || {};
+    if (typeof u.floored !== 'number' || typeof u.unfloored !== 'number') {
+      return 'measured with no floor, so the names under that night\u2019s floor are in';
+    }
+    if (!u.floored && !u.unfloored) return 'the names under that night\u2019s floor to be left out for the same reason, once a pairing is measured';
+    if (!u.unfloored) return 'the names under that night\u2019s floor left out for the same reason';
+    if (!u.floored) return 'measured with no floor \u2014 before the floor reached the benchmark, or on a night rule 6 was off \u2014 so the names under it are in';
+    return 'the names under that night\u2019s floor left out for the same reason where a pairing was measured with one, and in for the ' + u.unfloored + ' measured with none';
   }
   // What the rung leaves out, said only once the record has measured
   // pairings to say it of: `floored` and `unfloored` count MEASURED
@@ -1341,9 +1391,9 @@
     var u = ev.universe || {};
     if (typeof u.floored !== 'number' || typeof u.unfloored !== 'number' || !(u.floored + u.unfloored)) return '';
     if (!u.unfloored) return 'Names under each night\u2019s liquidity floor are left out of it. ';
-    if (!u.floored) return 'It counts every name that traded, the ones under the liquidity floor included: these pairings were benchmarked before the floor reached the benchmark. ';
+    if (!u.floored) return 'It counts every name that traded, the ones under the liquidity floor included: these pairings were measured with no floor, before the floor reached the benchmark or on a night rule 6 was off. ';
     return 'Names under each night\u2019s liquidity floor are left out of it for ' + u.floored + ' of the ' + (u.floored + u.unfloored) +
-      ' measured pairings; the other ' + u.unfloored + ' were benchmarked before the floor reached it and count every name that traded. ';
+      ' measured pairings; the other ' + u.unfloored + ' were measured with no floor, before it reached the benchmark or on a night rule 6 was off, and count every name that traded. ';
   }
   function controlVerdict(ev) {
     var h = longestOf(ev);
@@ -1359,9 +1409,12 @@
       // on the refused side: the thirty-run history could read its picks
       // against the universe for a round while this branch said nothing,
       // because its refused side was thin.
-      return 'Only one side can be read yet: ' + counts + '. A comparison needs both, and the ' +
+      return 'Only one side can be read yet: ' + counts + '. A comparison against what it refused needs both, and the ' +
         (picksEnough ? 'refused' : 'scored') + ' side is still filling. ' +
-        (picksEnough ? benchmarkSentence(ev, picks, h) : '');
+        (picksEnough
+          ? 'Names this screener scored returned ' + pct(picks.mean, 2) + ' at ' + hzLabel(h) + ' ' + basisLabel() + ' over ' +
+            plural(picks.n, 'setup') + '. ' + benchmarkSentence(ev, picks, h)
+          : '');
     }
     var lift = picks.mean - refused.mean;
     var direction = lift > 0.5 ? 'better' : (lift < -0.5 ? 'WORSE' : 'no differently');
@@ -1401,7 +1454,7 @@
       'own judgement; the crowded-out row is the call budget\u2019s, and is kept off that side for that reason. ' +
       'The illiquid row is rule 6\u2019s, kept off it for the opposite reason: those returns are bar prices on names ' +
       'the rule says are too thin to be bought at them. The universe row is the other alternative — buying anything ' +
-      'in the universe on the same days, the names under that night\u2019s floor left out for the same reason — paired setup by ' +
+      'in the universe on the same days, ' + rungClause(ev) + ' — paired setup by ' +
       'setup with the picks, from frames the scan already fetched.';
     $('control-verdict').textContent = controlVerdict(ev);
     table($('control-table'),
@@ -1570,14 +1623,20 @@
       var v = BASIS === 'open' ? c.separation_from_open : c.separation;
       return v === null || v === undefined ? null : v;
     };
+    // A file written before the separation was measured on the open basis
+    // has no separation_from_open at all: that is not "no check has enough
+    // setups", which the sentence below used to say of it.
+    var unmeasuredHere = BASIS === 'open' && !rows.some(function (c) { return 'separation_from_open' in c; });
     var measurable = rows.filter(function (c) { return enoughOf(c); });
     var best = measurable.slice().sort(function (a, b) { return (separationOf(b) || 0) - (separationOf(a) || 0); })[0];
     $('predict-hint').textContent =
       'Each check against what happened next, over every burst the scan found — the ones it rejected included, because a rate over the survivors describes the survivors. ' +
       'Separation is what a check is FOR: how much better the bursts that passed it did at ' + hzLabel(h) + ' ' + basisLabel() + ' than the ones that failed. ' +
-      (best && separationOf(best) !== null
-        ? 'On the record so far ' + best.code + ' separates most, by ' + pct(separationOf(best), 2).replace('+', '') + '. '
-        : 'No check yet has ' + ev.min_setups + ' setups on both sides, so none of these separations can be read as a rate. ') +
+      (unmeasuredHere
+        ? 'This record was written before the separation was measured from the next session\u2019s open, so that column is not measured on this basis. '
+        : (best && separationOf(best) !== null
+          ? 'On the record so far ' + best.code + ' separates most, by ' + pct(separationOf(best), 2).replace('+', '') + '. '
+          : 'No check yet has ' + ev.min_setups + ' setups on both sides, so none of these separations can be read as a rate. ')) +
       'A check that separates by nothing is not gating on anything a return can see.';
     table($('predict-table'),
       ['check', 'passed', hzLabel(h) + ' when passed', 'failed', hzLabel(h) + ' when failed', 'separation', 'reads as'],
@@ -1589,7 +1648,7 @@
           rateCell(won, enoughOf(c)),
           el('td', { 'class': 'sc-num', text: commas(c.failed.setups) }),
           rateCell(lost, enoughOf(c)),
-          el('td', { 'class': 'sc-num', text: separationOf(c) === null ? '—' : pct(separationOf(c), 2) }),
+          el('td', { 'class': 'sc-num', text: unmeasuredHere ? 'not measured' : (separationOf(c) === null ? '—' : pct(separationOf(c), 2)) }),
           el('td', null, enoughChip(enoughOf(c), Math.min(onBasis(won).n, onBasis(lost).n), ev.min_setups))
         ]);
       }), [1, 2, 3, 4, 5]);
@@ -1730,7 +1789,7 @@
         ? (OUTCOME_SHORT[r.reason] || unknownReason(r.reason))
         : num(r.score, 1) + '/10') +
         (got.length ? ' → +' + got[got.length - 1].slice(1) + 'd ' + pct(out[got[got.length - 1]], 1)
-          : (fwdState(r) === 'predates' ? ' → not measured on this basis' : ' → pending'));
+          : (FWD_WORDS[fwdState(r)] ? ' → ' + FWD_WORDS[fwdState(r)][0] : ' → pending'));
     }).join(' · ');
   }
 
@@ -1910,13 +1969,7 @@
       ['ticker', 'score', 'source', 'verdict', '2LYNCH', 'burst', 'vol x', 'close', '+1d', '+3d', '+5d', 'why'],
       cands.map(function (c) {
         var fr = fwd(c);
-        // A pre-basis row on the open basis is not pending; see fwdState.
-        var unmeasured = fwdState(c) === 'predates';
-        var hz = function (k) {
-          return el('td', unmeasured
-            ? { 'class': 'sc-num', text: 'not measured', title: 'this row predates the open basis' }
-            : { 'class': 'sc-num', text: fr[k] === null || fr[k] === undefined ? 'pending' : pct(fr[k], 2) });
-        };
+        var hz = function (k) { return horizonCell(c, fr[k]); };
         return el('tr', null, [
           el('td', null, [el('div', { 'class': 'sc-eyebrow', text: '#' + c.rank }),
                           el('span', { 'class': 'sc-case', text: c.ticker }),
@@ -2160,15 +2213,10 @@
     table($('runs-table'), ['session', 'run', 'bursts', 'scored', 'fallbacks', 'top score', '+1d', '+3d', '+5d', 'over'],
       runs.map(function (r, i) {
         var fr = runFwd(r);
-        // Same distinction as the candidate rows: on the open basis a run
-        // whose mean predates the basis is not "pending", its sessions are
-        // long closed and were never measured this way.
-        var predates = fwdState(r) === 'predates';
-        var cell = function (k) {
-          return el('td', predates
-            ? { 'class': 'sc-num', text: 'not measured', title: 'this run predates the open basis' }
-            : { 'class': 'sc-num', text: fr[k] === null || fr[k] === undefined ? 'pending' : pct(fr[k], 2) });
-        };
+        // The same four states as the candidate rows, on the run's mean: on
+        // the open basis a run whose mean predates the basis is not
+        // "pending", nor is one none of whose rows had a usable open.
+        var cell = function (k) { return horizonCell(r, fr[k]); };
         return el('tr', { 'class': i === 0 ? 'runs-now' : null }, [
           el('td', null, [day(r.date), i === 0 ? ' ' : null,
             i === 0 ? el('span', { 'class': 'sc-chip sc-chip--brand', text: 'this run' }) : null]),

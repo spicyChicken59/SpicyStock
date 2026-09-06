@@ -51,6 +51,7 @@ INVARIANTS = (
     "returns_shape",       # d1/d3/d5/as_of, null when unknown
     "numbers_or_null",     # no NaN, no "n/a", no 0 standing in for unknown
     "liquidity",           # run.liquidity agrees with the rows and the populations are disjoint
+    "benchmark",           # runs[].benchmark and evidence.universe hold together
 )
 
 _RUN_KEYS = ("date", "type", "bursts", "passed_gate", "scored", "score_cap",
@@ -322,11 +323,63 @@ def contract_violations(data: dict, docs_dir=None) -> set[str]:
             if sum(ev[k]["setups"] for k in populations) != ev["record"]["setups"]:
                 bad.add("liquidity")
 
+    # Round 7's and round 9's sentences about the benchmark. The walker
+    # checked nothing under runs[].benchmark or evidence.universe, so the
+    # sentences CONTRACT_INVARIANTS wrote into every docs/data.json were
+    # documentation only -- the round-9 audit set n1 to 9999, below_floor to
+    # -5, the stamped floor to a number the run never applied and floored to
+    # 999, and this returned the same set. Each of those is a violation now.
+    for entry in data["runs"]:
+        if not _benchmark_ok(entry):
+            bad.add("benchmark")
+    if isinstance(ev, dict) and isinstance(ev.get("universe"), dict):
+        rung = ev["universe"]
+        floored, unfloored = rung.get("floored"), rung.get("unfloored")
+        if not all(isinstance(v, int) and not isinstance(v, bool) and v >= 0 for v in (floored, unfloored)):
+            bad.add("benchmark")
+        elif floored + unfloored > rung.get("setups", -1):
+            bad.add("benchmark")
+
     found: list = []
     _walk(data, found)
     if found:
         bad.add("numbers_or_null")
     return bad
+
+
+def _benchmark_ok(entry: dict) -> bool:
+    """One run entry's benchmark block against the sentences that describe it.
+
+    Absent is a run from before the benchmark and is fine. Present: every
+    nN a count, a horizon with a mean has names behind it and one without
+    has none, the open basis's n never exceeds the close basis's (a frame
+    with a usable open has a close), below_floor a count, the stamped floor
+    null or positive -- and equal to the run's own floor when the entry
+    carries one, because the sentence says it IS that floor.
+    """
+    bench = entry.get("benchmark")
+    if bench is None:
+        return True
+    if not isinstance(bench, dict) or not isinstance(bench.get("from_open"), dict):
+        return False
+    counts = lambda v: isinstance(v, int) and not isinstance(v, bool) and v >= 0   # noqa: E731
+    for h in ledger.HORIZONS:
+        for block in (bench, bench["from_open"]):
+            n, mean = block.get(f"n{h}"), block.get(f"d{h}")
+            if not counts(n) or (mean is None) != (n == 0):
+                return False
+        if bench["from_open"][f"n{h}"] > bench[f"n{h}"]:
+            return False
+    if not counts(bench.get("below_floor", 0)):
+        return False
+    floor = bench.get("liquidity_floor")
+    if floor is not None:
+        if isinstance(floor, bool) or not isinstance(floor, (int, float)) or floor <= 0:
+            return False
+        own = (entry.get("liquidity") or {}).get("floor") if isinstance(entry.get("liquidity"), dict) else None
+        if own is not None and own != floor:
+            return False
+    return True
 
 
 # --------------------------------------------------------- a good document --
@@ -409,10 +462,18 @@ def document() -> dict:
             # The sessions the streak blocks above say the record holds. A
             # document whose rows claim a history deeper than its own `runs`
             # is describing a file that cannot exist, and now that the block
-            # carries history_from a reader can see it.
+            # carries history_from a reader can see it. Each carries the
+            # benchmark the fill would have written for a session whose d1
+            # is in: over the names at or above that night's floor, which
+            # the entry's own liquidity block names.
             {"date": day, "type": "evening", "bursts": 3, "passed_gate": 2,
              "scored": 2, "shortlist_size": 2, "top_score": 8.0, "fallbacks": 0,
-             "forward_returns": {"d1": 1.1, "d3": None, "d5": None, "n": 2, "rows": 2}}
+             "forward_returns": {"d1": 1.1, "d3": None, "d5": None, "n": 2, "rows": 2},
+             "liquidity": {"pctile": 30, "floor": 200_000_000.0, "refused": 0},
+             "benchmark": {"d1": 0.4, "d3": None, "d5": None, "n1": 150, "n3": 0, "n5": 0,
+                           "from_open": {"d1": 0.1, "d3": None, "d5": None, "n1": 148, "n3": 0, "n5": 0},
+                           "universe": {"label": "data/symbols.txt (checked in)", "size": 230},
+                           "liquidity_floor": 200_000_000.0, "below_floor": 69}}
             for day in _PAST_SESSIONS],
     }
 
@@ -435,6 +496,28 @@ def _only(document, expected):
     """
     violations = contract_violations(document)
     assert violations == {expected}, f"expected only {expected!r}, got {violations}"
+
+
+def test_a_benchmark_block_that_contradicts_its_sentences_is_caught(document):
+    """R9-B. Four edits the round-9 audit made to the fixture, none of which
+    the checker saw: a count the universe cannot hold under a null mean, a
+    negative count of names left out, a stamped floor the run never applied,
+    and a rung claiming more floored pairings than it has."""
+    def doctored(edit):
+        fresh = json.loads(json.dumps(document))
+        entry = next(r for r in fresh["runs"] if isinstance(r.get("benchmark"), dict))
+        edit(fresh, entry)
+        _only(fresh, "benchmark")
+
+    doctored(lambda d, e: e["benchmark"].update(n1=9999, d1=None))
+    doctored(lambda d, e: e["benchmark"].update(below_floor=-5))
+    doctored(lambda d, e: e["benchmark"].update(liquidity_floor=1.0))
+    doctored(lambda d, e: e["benchmark"]["from_open"].update(n1=e["benchmark"]["n1"] + 1))
+    # The rung: more floored pairings than the record has pairings. The
+    # hand-written document carries no evidence block, so the one planted
+    # here is the smallest the checker reads.
+    doctored(lambda d, e: d.update(evidence={"universe": {"setups": 2, "floored": 999, "unfloored": 0,
+                                                          "outcomes": []}}))
 
 
 def test_a_truncated_candidate_list_is_caught(document):
@@ -2791,6 +2874,13 @@ def test_run_means_and_evidence_outcomes_carry_the_open_basis_with_its_own_n():
     # out, read by evidence() and by the page.
     {"d1": 1.0, "n1": 5, "from_open": {}, "liquidity_floor": "12400000"},
     {"d1": 1.0, "n1": 5, "from_open": {}, "below_floor": True},
+    # A floor is a positive number of dollars and a count is a whole number
+    # of names: the writer produces nothing else, and the fill applied a
+    # negative floor as given when the audit planted one.
+    {"d1": 1.0, "n1": 5, "from_open": {}, "liquidity_floor": -5.0},
+    {"d1": 1.0, "n1": 5, "from_open": {}, "liquidity_floor": 0},
+    {"d1": 1.0, "n1": 5, "from_open": {}, "below_floor": -3},
+    {"d1": 1.0, "n1": 5, "from_open": {}, "below_floor": 2.5},
 ])
 def test_a_benchmark_block_of_the_wrong_shape_is_refused_at_load(tmp_path, bad):
     """The eighth instance of the one-level-short class, and the first found
@@ -3465,8 +3555,17 @@ def test_the_session_calendar_is_read_across_frames_by_majority():
     # new listing, a delisting), and the scan bounds every frame at the
     # session, so nothing it fetches reaches past the others.
     assert "2026-08-29" not in days
-    assert [d.isoformat() for d in ledger.session_calendar({"B": holed})] == _WEEK[:3] + _WEEK[4:], (
-        "a single frame is its own calendar, which is all it can know")
+    # A phantom bar that is the LAST bar of one frame, on a Saturday two
+    # other frames run past without carrying: one of three spanning frames,
+    # so out. The spanning test is inclusive of a frame's own first and last
+    # bar; a strict one would not count the frame that carries it as
+    # spanning it, and 1 of 2 would keep the phantom -- a mutant the
+    # round-9 audit's harness lens found surviving.
+    ends_on_saturday = _dated(range(6), _WEEK[:5] + ["2026-08-29"])
+    past = [d.isoformat() for d in ledger.session_calendar({"E": ends_on_saturday, "A": whole, "B": holed})]
+    assert "2026-08-29" not in past and past == _WEEK
+    assert ledger.session_calendar({"B": holed}) == [], (
+        "one frame is no calendar: it cannot vote against its own hole")
     # A frame that does not span a date has no vote on it: `late` starts on
     # 1 Sep and says nothing about 27 Aug.
     assert "2026-08-27" in [d.isoformat() for d in ledger.session_calendar({"B": holed, "A": whole, "L": late})]
@@ -3487,12 +3586,16 @@ def test_a_hole_in_a_frame_leaves_the_horizon_null_rather_than_sliding_it():
 
     assert out["d1"] == 1.0
     assert out["d3"] is None, "the frame has no bar on the third session; that is not the fourth bar"
-    assert out["d5"] == 5.0, "the fifth session is 31 Aug, whose close is 105"
-    assert out["as_of"] == "2026-08-31"
-    # Without a calendar the frame's own bars are the sessions -- the
-    # positional reading, and the limit of what one frame can know.
+    # And nothing past the hole either, though the fifth session's bar is
+    # there: a calendar date this frame lacks is a hole in the frame or a
+    # phantom in the calendar, and past it the two readings disagree about
+    # which bar is the fifth session. Refused rather than guessed.
+    assert out["d5"] is None
+    assert out["as_of"] == "2026-08-25"
+    # Without a calendar the frame's own bars are walked and the walk stops
+    # at the hole, which alone it cannot tell from a holiday: d1 and no more.
     alone = ledger.forward_returns(holed, "2026-08-24")
-    assert (alone["d3"], alone["d5"], alone["as_of"]) == (4.0, 6.0, "2026-09-01")
+    assert (alone["d1"], alone["d3"], alone["d5"], alone["as_of"]) == (1.0, None, None, "2026-08-25")
     # A calendar that does not know the burst is no calendar for this frame.
     assert ledger.forward_returns(holed, "2026-08-24", [date(2027, 1, 4)]) == alone
 
@@ -3514,6 +3617,10 @@ def test_the_entry_open_must_lie_within_its_own_bar():
     assert ledger.forward_returns(above, dates[0])["d1"] == 10.0, "the close basis is not the open's problem"
     assert ledger.forward_returns(below, dates[0])["from_open"]["d1"] is None
     assert ledger.forward_returns(edge, dates[0])["from_open"]["d1"] == round((110 / 112 - 1) * 100, 2)
+    # And at the low, the other edge: a print too. Without this the bound
+    # could be made strict green (the harness lens's open_low_inclusive).
+    at_low = _dated(closes, dates, Open=[99, 108, 110], High=highs, Low=lows)
+    assert ledger.forward_returns(at_low, dates[0])["from_open"]["d1"] == round((110 / 108 - 1) * 100, 2)
     assert ledger.forward_returns(unchecked, dates[0])["from_open"]["d1"] == round((110 / 150 - 1) * 100, 2), (
         "a frame with no envelope cannot be checked and is taken as given")
 
@@ -3673,20 +3780,223 @@ def test_the_rung_counts_floored_and_unfloored_pairings_apart_from_pending():
     reached the benchmark, one still pending. The page says over which names
     the rung is, so it needs the first two counted and the third in neither
     -- a pending pairing is not a fact about the floor."""
-    runs = _record([("2026-08-24", ("AAA",)), ("2026-08-25", ("BBB",)), ("2026-08-31", ("CCC",))],
+    runs = _record([("2026-08-24", ("AAA",)), ("2026-08-25", ("BBB",)), ("2026-08-31", ("CCC",)),
+                    ("2026-09-01", ("DDD",))],
                    returns={("AAA", "2026-08-24"): {"d5": 1.0}, ("BBB", "2026-08-25"): {"d5": 1.0}})
     for run in runs:
         run["benchmark"] = ledger.empty_benchmark()
     by_date = {r["date"]: r for r in runs}
     by_date["2026-08-24"]["benchmark"].update(d5=2.0, n5=150, liquidity_floor=200_000_000.0, below_floor=60)
     by_date["2026-08-25"]["benchmark"].update(d5=3.0, n5=210)                      # measured, no floor
-    # A pending pairing carrying a floor is a shape no writer produces --
-    # fill_benchmarks() stamps the floor only with a measurement -- but the
-    # count is DEFINED over measured pairings, and without this row the
-    # clause that says so could be deleted green.
+    # Two pending pairings. One carries a floor, which no writer produces --
+    # fill_benchmarks() stamps the floor only with a measurement -- and one
+    # is the plain empty_benchmark() every not-yet-benchmarked run carries.
+    # Both counts are DEFINED over measured pairings, and each of the two
+    # `measured` clauses could be deleted green without its own row: the
+    # stamped one pins `floored`, the plain one pins `unfloored` (the
+    # round-9 audit's R9-3, a mutant the first version of this test missed).
     by_date["2026-08-31"]["benchmark"]["liquidity_floor"] = 100.0
 
     rung = ledger.evidence(runs)["universe"]
 
-    assert rung["setups"] == 3 and (rung["floored"], rung["unfloored"]) == (1, 1)
+    assert rung["setups"] == 4 and (rung["floored"], rung["unfloored"]) == (1, 1)
     assert ledger.at_horizon(rung["outcomes"], 5)["n"] == 2
+
+
+# The round-9 audit's findings, each reproduced here before it was fixed.
+
+def test_one_frame_is_no_calendar_and_alone_a_frame_stops_at_the_first_gap():
+    """README's own `--tickers BURST` smoke test handed the fill a calendar
+    of ONE frame, which is the positional reading round 9 exists to end: a
+    hole on the session after the burst put the two-session move into d1 of
+    the earlier universe run's row, for good. One frame is no calendar now,
+    and without one the walk stops at the first gap wider than a weekend --
+    a hole or a holiday, and one frame cannot say which, so both are refused
+    and the next scan with a calendar measures what that left open."""
+    holed = _dated([100, 101, 102, 104, 105, 106], _WEEK[:3] + _WEEK[4:])   # 27 Aug missing
+    assert ledger.session_calendar({"HOLED": holed}) == []
+
+    out = ledger.forward_returns(holed, "2026-08-24")
+    assert (out["d1"], out["d3"], out["d5"], out["as_of"]) == (1.0, None, None, "2026-08-25")
+
+    # A Fri -> Tue gap is a holiday or a hole; alone, the frame refuses both.
+    holiday = _dated([100, 101, 102, 103, 104, 105],
+                     ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-08", "2026-09-09"])
+    out = ledger.forward_returns(holiday, "2026-09-01")
+    assert (out["d1"], out["d3"], out["d5"], out["as_of"]) == (1.0, 3.0, None, "2026-09-04")
+    # And a weekend is not a gap: Fri -> Mon measures.
+    weekend = _dated([100, 101, 102], ["2026-08-28", "2026-08-31", "2026-09-01"])
+    assert ledger.forward_returns(weekend, "2026-08-28")["d1"] == 1.0
+
+
+def test_a_calendar_date_the_frame_lacks_ends_the_measurement_rather_than_sliding_it():
+    """A phantom bar a few frames voted into the calendar sits between the
+    burst and its horizons; a frame that lacks it must not have its later
+    horizons moved onto the wrong session, which is what indexing the
+    calendar past it would do. It measures up to the phantom and stops."""
+    whole = _dated([100, 101, 102, 103, 104, 110, 111], _WEEK)
+    calendar = [date.fromisoformat(d) for d in _WEEK[:5] + ["2026-08-29"] + _WEEK[5:]]    # a Saturday between 28 and 31 Aug
+
+    out = ledger.forward_returns(whole, "2026-08-24", calendar)
+
+    assert (out["d1"], out["d3"]) == (1.0, 3.0), "up to the phantom, the calendar and the frame agree"
+    assert out["d5"] is None, "past it the calendar's fifth session is the frame's fourth; refused, not slid"
+    assert out["as_of"] == "2026-08-27"
+    # And a hole ON THE WAY ends it too, even where the target bar exists:
+    # this frame lacks 26 Aug and carries 31 Aug, and d5 stays null.
+    gapped = _dated([100, 101, 103, 104, 110, 111], _WEEK[:2] + _WEEK[3:])
+    out = ledger.forward_returns(gapped, "2026-08-24", [date.fromisoformat(d) for d in _WEEK])
+    assert (out["d1"], out["d3"], out["d5"]) == (1.0, None, None)
+
+
+def test_a_block_measured_over_every_name_keeps_that_population_when_its_later_horizons_fill(tmp_path):
+    """R9-C. A benchmark from before round 9 holds d1 over every name and no
+    floor. When a later night fills d3 and d5, applying the run's floor to
+    those alone would stamp the WHOLE block 'floored' over a d1 that was
+    not, and the rung would count the pairing as measured over a floor.
+    One block is one population: the horizons still open are measured over
+    the set the block started with, and the stamp stays null."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    universe = {"label": "u", "size": 2}
+    (docs / ledger.LEDGER_NAME).write_text(json.dumps({
+        "schema_version": ledger.SCHEMA_VERSION, "app": "SpicyStock", "generated": "x",
+        "runs": [{"date": "2026-08-24", "type": "evening", "universe": universe,
+                  "liquidity": {"pctile": 30, "floor": 2_000_000.0, "refused": 0},
+                  "benchmark": {"d1": 50.5, "d3": None, "d5": None, "n1": 2, "n3": 0, "n5": 0,
+                                "from_open": {"d1": None, "d3": None, "d5": None, "n1": 0, "n3": 0, "n5": 0}},
+                  "candidates": [], "gated": []}]}))
+    book = ledger.Ledger(docs).load()
+    assert not book.load_error
+    thick = _traded([100, 101, 102, 103, 104, 110], 5_000_000)
+    thin = _traded([10, 20, 20, 20, 20, 20], 100_000)
+
+    assert book.fill_benchmarks({"THICK": thick, "THIN": thin}, date(2026, 9, 4), universe=universe) == 1
+    bench = book.runs[0]["benchmark"]
+    assert (bench["d1"], bench["n1"]) == (50.5, 2), "the measured horizon keeps its value"
+    assert (bench["d3"], bench["n3"]) == (round((3.0 + 100.0) / 2, 2), 2), "over the same two names, not one"
+    assert (bench["liquidity_floor"], bench["below_floor"]) == (None, 0)
+    assert ledger.evidence([dict(book.runs[0], candidates=[{"ticker": "AAA", "date": "2026-08-24", "score": 8.0,
+                                                             "source": "claude", "rank": 1, "checks": {},
+                                                             "forward_returns": ledger.empty_returns()}])]
+                           )["universe"]["unfloored"] == 1
+
+
+def test_a_session_bar_that_printed_nothing_is_under_any_floor():
+    """R9-D. The scan keeps a bar with no usable dollar volume OUT of the
+    distribution the floor is drawn from; the benchmark was keeping the
+    same bar IN the mean, on the argument that None is not below the floor.
+    A name that traded nothing on the session is under any floor."""
+    thick = _traded([100, 101, 102, 103, 104, 110], 5_000_000)
+    halt = _traded([10, 20, 20, 20, 20, 20], 0)                      # a +100% d1 on no volume
+    session = thick.index[0].date().isoformat()
+
+    out = ledger.universe_returns({"THICK": thick, "HALT": halt}, session, floor=2_000_000.0)
+
+    assert (out["d1"], out["n1"], out["below_floor"]) == (1.0, 1, 1)
+    # Without a floor the bar still counts: no rule said it should not.
+    assert ledger.universe_returns({"THICK": thick, "HALT": halt}, session)["n1"] == 2
+
+
+def test_a_nat_in_a_frames_index_is_not_a_session_and_does_not_end_the_run():
+    """L2. pd.Timestamp(NaT).date() is NaT again, not None, so a NaT in one
+    frame's index took session_calendar() down on "Cannot compare NaT with
+    date" -- inside publish(), after the scan and every Claude call. It is
+    no date now, everywhere _as_date() is read."""
+    nat = _dated([100, 101, 102, 103, 104, 110, 111], _WEEK)
+    nat.index = pd.DatetimeIndex([pd.NaT if i == 3 else stamp for i, stamp in enumerate(nat.index)])
+    whole = _dated([50, 51, 52, 53, 54, 55, 56], _WEEK)
+
+    assert ledger._as_date(pd.NaT) is None
+    assert [d.isoformat() for d in ledger.session_calendar({"N": nat, "W": whole})] == _WEEK
+    out = ledger.forward_returns(nat, "2026-08-24", ledger.session_calendar({"N": nat, "W": whole}))
+    assert out["d1"] == 1.0 and out["d3"] is None, "the NaT bar is 27 Aug's, which this frame therefore lacks"
+
+
+def test_an_envelope_that_cannot_be_read_refuses_the_open():
+    """L4. A NaN High or Low on the entry bar skipped the check, so an open
+    outside the bar was taken as the price paid. The one-bar version of the
+    bad bar the checklist drops: an open the bar cannot vouch for is null."""
+    closes, opens, dates = [100, 110, 111], [99, 150, 110], _WEEK[:3]
+    nan_high = _dated(closes, dates, Open=opens, High=[101, float("nan"), 112], Low=[98, 108, 108])
+    assert ledger.forward_returns(nan_high, dates[0])["from_open"]["d1"] is None
+    assert ledger.forward_returns(nan_high, dates[0])["d1"] == 10.0
+    inside = _dated(closes, dates, Open=[99, 110, 110], High=[101, float("nan"), 112], Low=[98, 108, 108])
+    assert ledger.forward_returns(inside, dates[0])["from_open"]["d1"] is None, (
+        "not even an open that would have been inside: the bar cannot say so")
+
+
+def test_the_benchmarks_population_is_stamped_by_the_fill_that_first_measured_it(tmp_path):
+    """L1. below_floor was restamped by every fill that moved a horizon while
+    each n was frozen the night it filled, so a later fill over a different
+    frame set -- a name dropped from the symbol file since -- published
+    n1 3 beside below_floor 1 for a session on which five names traded and
+    two were under the floor. Stamped once now, by the first fill."""
+    book = ledger.Ledger(tmp_path / "docs")
+    universe = {"label": "data/symbols.txt (checked in)", "size": 3}
+    run, cands, gated = _run("2026-08-24", tickers=("AAA",))
+    run["universe"] = dict(universe)
+    run["liquidity"] = {"pctile": 30, "floor": 2_000_000.0, "refused": 0}
+    book.add_run(run, cands, gated)
+    thick = _traded([100, 101, 102], 5_000_000, end="2026-08-26")
+    thin = _traded([10, 20, 20], 100_000, end="2026-08-26")
+    thin_too = _traded([10, 20, 20], 150_000, end="2026-08-26")
+    assert book.fill_benchmarks({"THICK": thick, "THIN": thin, "THINTOO": thin_too},
+                                date(2026, 8, 27), universe=universe) == 1
+    first = dict(book.runs[0]["benchmark"])
+    assert (first["n1"], first["below_floor"], first["d3"]) == (1, 2, None)
+
+    # Two sessions on, one thin name is gone from the file: the horizons
+    # still open fill over what is there, and the stamp does not move.
+    thick2 = _traded([100, 101, 102, 103, 104, 110], 5_000_000)
+    thin2 = _traded([10, 20, 20, 20, 20, 20], 100_000)
+    smaller = {"label": universe["label"], "size": 2}
+    assert book.fill_benchmarks({"THICK": thick2, "THIN": thin2}, date(2026, 9, 4), universe=smaller) == 1
+    bench = book.runs[0]["benchmark"]
+    assert (bench["n1"], bench["n3"], bench["n5"]) == (1, 1, 1)
+    assert (bench["below_floor"], bench["liquidity_floor"]) == (2, 2_000_000.0), "the first fill's stamp"
+    assert bench["universe"] == universe, "and the first fill's universe"
+
+
+def test_the_entry_is_the_next_sessions_open_not_the_next_bars():
+    """R9-1. The entry index moved onto the calendar with the horizons and
+    no test could tell: a bar the calendar does not know -- a Saturday print
+    -- sits between the burst and the next session, and the entry is the
+    next SESSION's open, found by date, not the next bar's."""
+    dates = [_WEEK[4], "2026-08-29", _WEEK[5], _WEEK[6]]                  # Fri, a Saturday bar, Mon, Tue
+    frame = _dated([100, 100, 110, 111], dates, Open=[99, 150, 105, 110],
+                   High=[101, 151, 112, 112], Low=[98, 149, 104, 108])
+    whole = _dated([50, 51, 52], [_WEEK[4], _WEEK[5], _WEEK[6]])
+    calendar = ledger.session_calendar({"F": frame, "W": whole, "X": whole})
+
+    out = ledger.forward_returns(frame, _WEEK[4], calendar)
+
+    assert [d.isoformat() for d in calendar] == [_WEEK[4], _WEEK[5], _WEEK[6]], "the Saturday is one of three"
+    assert out["d1"] == 10.0, "Monday's close against Friday's"
+    assert out["from_open"]["d1"] == round((110 / 105 - 1) * 100, 2), "from Monday's open, not the Saturday bar's 150"
+
+
+@pytest.mark.parametrize("floor", ["abc", "2000000", True, float("nan"), -1.0, None])
+def test_a_floor_the_run_entry_cannot_vouch_for_is_no_floor(tmp_path, floor):
+    """R9-4. _floor_of()'s defence was documented and dead to the suite: the
+    ledger's load check does not read run.liquidity, so a string there
+    loaded clean, and a bare float() would have raised inside publish()
+    after every Claude call, while isinstance() alone would have taken JSON
+    true as a one-dollar floor. Every one of these benchmarks over every
+    name and stamps null."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    universe = {"label": "u", "size": 2}
+    (docs / ledger.LEDGER_NAME).write_text(json.dumps({
+        "schema_version": ledger.SCHEMA_VERSION, "app": "SpicyStock", "generated": "x",
+        "runs": [{"date": "2026-08-24", "type": "evening", "universe": universe,
+                  "liquidity": {"pctile": 30, "floor": floor, "refused": 0},
+                  "candidates": [], "gated": []}]}, allow_nan=True))
+    book = ledger.Ledger(docs).load()
+    assert not book.load_error, "precondition: the shape loads"
+    thick = _traded([100, 101, 102, 103, 104, 110], 5_000_000)
+    thin = _traded([10, 20, 20, 20, 20, 20], 100_000)
+
+    assert book.fill_benchmarks({"THICK": thick, "THIN": thin}, date(2026, 9, 4), universe=universe) == 1
+    bench = book.runs[0]["benchmark"]
+    assert (bench["n1"], bench["liquidity_floor"], bench["below_floor"]) == (2, None, 0)
