@@ -1046,7 +1046,7 @@ await open('/f/fixture/');
 // what makes the narrower answer sayable; assert the sentence, because the
 // email says the same one and a reader gets both.
 const unknownDay = REAL.candidates.filter((c) => (c.streak || {}).day === null);
-const streakLines = await page.$$eval('#shortlist .facts',
+const streakLines = await page.$$eval('#shortlist .sc-facts',
   (ds) => ds.map((d) => [...d.querySelectorAll('div')]
     .filter((x) => x.querySelector('dt') && x.querySelector('dt').textContent === 'this setup')
     .map((x) => x.querySelector('dd').textContent.trim())[0]));
@@ -1354,11 +1354,27 @@ const light = await page.evaluate(() => {
     .map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
     return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
   const cr = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  // The headline now sits on an ink cover even in light mode. Measure the
+  // surface painted behind it, including any translucent ancestor fills,
+  // rather than comparing it with the body outside that cover.
+  const paintedBackground = (node) => {
+    const layers = [];
+    for (let n = node; n; n = n.parentElement) {
+      const rgba = getComputedStyle(n).backgroundColor.match(/[\d.]+/g).map(Number);
+      const alpha = rgba.length > 3 ? rgba[3] : 1;
+      if (alpha > 0) layers.push({ rgb: rgba.slice(0, 3), alpha });
+      if (alpha === 1) break;
+    }
+    const rgb = layers.reverse().reduce((back, { rgb, alpha }) =>
+      rgb.map((value, i) => value * alpha + back[i] * (1 - alpha)), [255, 255, 255]);
+    return `rgb(${rgb.join(', ')})`;
+  };
   const bg = getComputedStyle(document.body).backgroundColor;
   const chip = document.querySelector('#scores-table .sc-chip--warn');
+  const headline = document.getElementById('h1');
   return {
     bg, dark: lum(bg) < 0.25,
-    h1: cr(getComputedStyle(document.getElementById('h1')).color, bg),
+    h1: cr(getComputedStyle(headline).color, paintedBackground(headline)),
     // null when there is no fallback chip to measure -- a run Claude scored
     // in full has none, and README used to list this as the other way the
     // script threw on real output.
