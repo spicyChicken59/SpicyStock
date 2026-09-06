@@ -994,6 +994,11 @@ providers treat the local part case-insensitively in practice and the
 domain always is, so it is the same mailbox; a mixed list or a second
 refusal is diagnosed and raised like any other. Three mutants over the
 respelling and two over the diagnosis, all killed.
+Run 34018706843, the first dispatch after #10 merged, read off its log:
+the respelling warning, then `Email sent via Resend to 1 recipient(s)`,
+exit 2 for the Sunday clock alone -- the first mail this project has ever
+delivered, and with it every stage live end to end: scan, record,
+commit-back, page, mail.
 
 **Two things the weekend's dispatches wrote into the public record, fixed
 in one round.** Resend's refusal names the owner's personal address,
