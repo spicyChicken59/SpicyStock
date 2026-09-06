@@ -1102,3 +1102,24 @@ def test_the_pages_fallback_sentence_states_the_scorers_own_map():
         real = _fallback_score({"passes": int(passes), "total": 6, "summary": ""})
         assert float(score) == real, f"{passes}/6: page says {score}, the scorer gives {real}"
     assert "÷" not in page.split("When a scoring call fails")[1][:400]
+
+
+def test_the_evening_workflow_takes_a_session_to_backfill_from_the_run_workflow_form():
+    """SCAN_SESSION_DATE was documented for a shell only; the first live day
+    needed a backfill and had no way to start one from Actions. The form's
+    `session` box reaches the pipeline as the same variable, and a scheduled
+    run, where the box does not exist, sends the empty string the scanner
+    already reads as unset. The morning workflow takes no such box: it scans
+    nothing. Asserted on the parsed YAML, not a grep."""
+    import yaml
+
+    evening = yaml.safe_load(_read(".github/workflows/evening.yml"))
+    on = evening.get("on", evening.get(True))       # PyYAML reads a bare `on:` as True
+    inputs = on["workflow_dispatch"]["inputs"]
+    assert set(inputs) == {"session"} and inputs["session"]["required"] is False
+    (step,) = [s for s in evening["jobs"]["scan"]["steps"] if s.get("id") == "pipeline"]
+    assert step["env"]["SCAN_SESSION_DATE"] == "${{ inputs.session }}"
+
+    morning = yaml.safe_load(_read(".github/workflows/morning.yml"))
+    on_m = morning.get("on", morning.get(True))
+    assert not on_m["workflow_dispatch"], "the morning scans nothing and takes no session"

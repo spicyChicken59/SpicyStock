@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 973 tests with no network
+- **There is a regression net.** `pytest tests/` runs 974 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -1017,6 +1017,16 @@ Friday's market. The `market_clock` fixture pins the weekday beside the
 close, because a clause that read the real weekday would have made the
 "has not closed yet" tests red every Saturday and Sunday -- the
 clock-dependent test again, one field over. Four mutants, all killed.
+
+**A backfill from the Run-workflow form.** `SCAN_SESSION_DATE` was documented
+for a shell only, and the first live day needed one from Actions: the 4 Sep
+record on main carried the Sunday clock sentence and the unmasked address
+until something republished it, and the only thing that can is a pinned
+run. `evening.yml`'s dispatch takes a `session` box now, forwarded as the
+same variable; a scheduled run has no box and sends '', which the scanner
+already read as unset. Pinned by a structure test on the parsed YAML that
+fails when the env line is removed, and the morning workflow is asserted to
+take no such box, since it scans nothing.
 
 **Leads written down, not worked.** A feed-wide missing day -- more than
 half the frames lacking a session -- is not a session under the majority
