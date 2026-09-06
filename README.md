@@ -146,21 +146,25 @@ what `.github/workflows/evening.yml` reads, and `.env.example` explains each:
 `ANTHROPIC_API_KEY`, `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`,
 `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_TO`
 
-Two more things the first live run turned up, both settings rather than code:
+Two more things the first live day turned up, both settings rather than code:
 
-- **GitHub Pages is off until you switch it on.** The dashboard is served from
-  the `docs/` folder of `main`, and the repository has never had a Pages
-  build, so the address 404s. Settings → Pages → Build and deployment →
-  "Deploy from a branch" → branch `main`, folder `/docs`, Save; the first
-  deploy takes a minute or two, and every commit-back after that redeploys.
-- **Resend in test mode only delivers to the account's own address.** Until a
-  domain is verified at resend.com/domains and `RESEND_FROM` is an address on
-  it, Resend refuses any other recipient — the first live run failed its email
-  on exactly that sentence. Either set `EMAIL_TO` to the address the Resend
-  account is registered under, or verify a domain and set `RESEND_FROM`.
-  Until one of those is done, every failed delivery writes Resend's refusal
-  into `docs/data.json` and so onto the public page, with the address it
-  names masked to its domain; the Actions log keeps the whole sentence.
+- **GitHub Pages serves the `docs/` folder of `main`, and the folder is the
+  trap.** Settings → Pages → Build and deployment → "Deploy from a branch" →
+  branch `main`, folder `/docs`, Save. With the folder left at `/ (root)` the
+  first build published the whole repository and rendered README as the site;
+  the `docs/` build ships four files and no Jekyll. The first deploy takes a
+  minute or two to reach the address, and every commit-back after that
+  redeploys on its own. The site has been on since 6 Sep 2026.
+- **Resend in test mode only delivers to the account's own address, and its
+  check is an exact string match.** Until a domain is verified at
+  resend.com/domains and `RESEND_FROM` is an address on it, Resend refuses any
+  other recipient. Set `EMAIL_TO` to the address the Resend account is
+  registered under, alone, in the spelling Resend uses: a capital letter drew
+  the same refusal three runs running, so the send path now corrects case on
+  the spot and the log says to re-save the secret that way, while a second
+  recipient or a stale value is diagnosed in the log by count and domain. A
+  refusal that does reach `docs/data.json` has the address it names masked to
+  its domain; the Actions log keeps the whole sentence.
 
 **Then, before the first scheduled night, rehearse the boundaries once from
 your own machine:**
@@ -239,7 +243,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 974 tests, no network or API keys needed
+pytest tests/                   # 985 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -427,6 +431,12 @@ invariants live in the file rather than only here. The load-bearing ones:
   the record did not hold until round 5: `apply_liquidity_gate()` logged them
   and dropped them, so on the documented four-name smoke test the thinnest
   name vanished and the funnel counted the other three as everything found.
+- `run.stopped_printing` is a fact about the symbol FILE rather than the
+  market: the names in it with no bar for more than 5 sessions -- a halt is
+  a day or two, a delisting never comes back -- as `after_sessions`, an exact
+  `count`, and `names[]` of `ticker`, `last` and `sessions_behind`, most-behind
+  first, at most 10 named. The email and the page print it; the ledger entry
+  does not carry it. The first live scan found three in the 230-name list.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
@@ -723,7 +733,7 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 204 checks, and which file each one
+**Three data sources, one page.** It runs 205 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served

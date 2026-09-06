@@ -906,6 +906,22 @@
       : (l.floor === null ? 'no floor — nothing traded' : 'floor not recorded');
     return typeof l.pctile === 'number' && isFinite(l.pctile) ? floor + ', the ' + ordinal(l.pctile) + ' percentile' : floor;
   }
+  // The universe row's own note: the names in the symbol file that have
+  // stopped printing, from run.stopped_printing -- the count exact, the
+  // names capped by the pipeline, the threshold the block's own number. A
+  // snapshot from before the block existed gets the plain sentence, not
+  // "0 names".
+  function scannedNote(run) {
+    var base = 'nothing dropped — this is what was scanned';
+    var sp = run.stopped_printing;
+    if (!sp || typeof sp !== 'object' || !Array.isArray(sp.names) || !sp.count) return base;
+    var names = sp.names.map(function (n) { return n.ticker + ' (since ' + n.last + ')'; }).join(', ');
+    var more = sp.count - sp.names.length;
+    return base + ' · ' + sp.count + (sp.count === 1 ? ' name has' : ' names have') +
+      ' not printed for more than ' + sp.after_sessions + ' sessions: ' + names +
+      (more > 0 ? ' and ' + more + ' more' : '') + ' — check the symbol list';
+  }
+
   function funnelStages(run) {
     var g = run.gate || {};
     var short = run.shortlist_size || 0;
@@ -1941,7 +1957,7 @@
             el('td', { 'class': 'sc-num', text: commas(st.n) }),
             el('td', { 'class': 'sc-num', text: shareOf(st.n, funnelTop) }),
             el('td', { 'class': 'sc-num', text: lost === null ? '—' : '−' + commas(lost) }),
-            el('td', { text: i ? st.why : 'nothing dropped — this is what was scanned' })
+            el('td', { text: i ? st.why : scannedNote(run) })
           ]);
         }), [1, 2, 3]);
       clipWatch($('funnel-scroll'), 'The funnel, stage by stage');

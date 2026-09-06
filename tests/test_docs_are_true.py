@@ -1123,3 +1123,15 @@ def test_the_evening_workflow_takes_a_session_to_backfill_from_the_run_workflow_
     morning = yaml.safe_load(_read(".github/workflows/morning.yml"))
     on_m = morning.get("on", morning.get(True))
     assert not on_m["workflow_dispatch"], "the morning scans nothing and takes no session"
+
+
+def test_the_documented_stopped_printing_numbers_are_the_ones_the_code_applies():
+    """README's contract bullet quotes the threshold and the cap in digits;
+    both are read off src.pipeline so a change there turns this red."""
+    from src.pipeline import STOPPED_PRINTING_MAX, STOPPED_PRINTING_SESSIONS
+
+    readme = _read("README.md")
+    said = re.search(r"no bar for more than (\d+) sessions", readme)
+    assert said and int(said.group(1)) == STOPPED_PRINTING_SESSIONS, said and said.group(0)
+    cap = re.search(r"at most (\d+) named", readme)
+    assert cap and int(cap.group(1)) == STOPPED_PRINTING_MAX, cap and cap.group(0)

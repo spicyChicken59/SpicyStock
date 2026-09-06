@@ -37,6 +37,11 @@
       "label": "synthetic fixture universe (77 invented histories)",
       "size": 77
     },
+    "stopped_printing": {
+      "after_sessions": 5,
+      "count": 0,
+      "names": []
+    },
     "bursts": 9,
     "passed_gate": 6,
     "scored": 6,

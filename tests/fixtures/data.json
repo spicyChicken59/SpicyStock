@@ -37,6 +37,22 @@
       "label": "data/symbols.txt (checked in)",
       "size": 230
     },
+    "stopped_printing": {
+      "after_sessions": 5,
+      "count": 2,
+      "names": [
+        {
+          "ticker": "ON",
+          "last": "2026-06-12",
+          "sessions_behind": 57
+        },
+        {
+          "ticker": "MCHP",
+          "last": "2026-08-03",
+          "sessions_behind": 21
+        }
+      ]
+    },
     "bursts": 50,
     "passed_gate": 31,
     "scored": 25,

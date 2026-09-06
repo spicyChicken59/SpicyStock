@@ -2847,6 +2847,16 @@ def _run_field(**over):
 MALFORMED_SNAPSHOTS = {
     # name: (mutation, the refusal's words -- or False when the shape is tolerated)
     "candidates are strings": (lambda d: d.update(candidates=["AAPL"]), NOT_A_RUN),
+    # The names that stopped printing: absent is an older snapshot; anything
+    # present that is not the object publish() writes is refused one level in.
+    "stopped_printing is absent": (lambda d: d["run"].pop("stopped_printing", None), False),
+    "stopped_printing is a list": (lambda d: d["run"].update(stopped_printing=["EA"]), NOT_A_RUN),
+    "stopped_printing has no count": (lambda d: d["run"].update(stopped_printing={"names": []}), NOT_A_RUN),
+    "a stopped name is a string": (lambda d: d["run"].update(
+        stopped_printing={"after_sessions": 5, "count": 1, "names": ["EA"]}), NOT_A_RUN),
+    "a stopped name's sessions_behind is a string": (lambda d: d["run"].update(
+        stopped_printing={"after_sessions": 5, "count": 1,
+                          "names": [{"ticker": "EA", "last": "2026-08-04", "sessions_behind": "23"}]}), NOT_A_RUN),
     "a candidate is null": (lambda d: d.update(candidates=[None]), NOT_A_RUN),
     "a candidate is a number": (lambda d: d.update(candidates=[7]), NOT_A_RUN),
     "a candidate is a list": (lambda d: d.update(candidates=[["AAPL"]]), NOT_A_RUN),
@@ -3189,3 +3199,65 @@ def test_a_weekend_evening_run_still_degrades_and_says_so_on_every_surface(
     assert "no session to close" in report.errors[0]["message"]
     (sent,) = mocked_boundaries["resend"].sent
     assert sent["subject"].startswith("[4% Burst] DEGRADED — ")
+
+
+# --- the names that have stopped printing ------------------------------------
+
+
+def test_stopped_printing_keeps_the_names_more_than_a_week_behind_most_behind_first():
+    """A halt is one or two sessions; a delisting never comes back. The
+    boundary is MORE than STOPPED_PRINTING_SESSIONS, so a name exactly that
+    far behind is still a halt to this list. Most-behind first, ties by
+    ticker, the count exact and the names capped."""
+    session = date(2026, 9, 4)
+    stale = {"HALT": date(2026, 9, 3), "EDGE": date(2026, 8, 28),      # 1 and 5 behind: not listed
+             "FI": date(2025, 11, 10), "EA": date(2026, 8, 4), "BK": date(2026, 5, 20)}
+    block = pipeline.stopped_printing({"session": session, "stale": stale})
+
+    assert block["after_sessions"] == pipeline.STOPPED_PRINTING_SESSIONS == 5
+    assert [n["ticker"] for n in block["names"]] == ["FI", "BK", "EA"]
+    assert block["names"][2] == {"ticker": "EA", "last": "2026-08-04", "sessions_behind": 23}
+    assert block["count"] == 3
+    assert ledger.sessions_between(stale["EDGE"], session) == 5, "the boundary case really sits on it"
+
+
+def test_stopped_printing_names_at_most_the_cap_and_counts_the_rest():
+    session = date(2026, 9, 4)
+    stale = {f"X{i:02d}": date(2026, 1, 5) - timedelta(days=i) for i in range(14)}
+    block = pipeline.stopped_printing({"session": session, "stale": stale})
+    assert block["count"] == 14 and len(block["names"]) == pipeline.STOPPED_PRINTING_MAX == 10
+    behinds = [n["sessions_behind"] for n in block["names"]]
+    assert behinds == sorted(behinds, reverse=True)
+
+
+def test_stopped_printing_is_empty_and_still_an_object_on_a_clean_night():
+    assert pipeline.stopped_printing({"session": date(2026, 9, 4), "stale": {}}) == {
+        "after_sessions": pipeline.STOPPED_PRINTING_SESSIONS, "count": 0, "names": []}
+    assert pipeline.stopped_printing({}) == {
+        "after_sessions": pipeline.STOPPED_PRINTING_SESSIONS, "count": 0, "names": []}
+
+
+def test_a_name_that_stopped_printing_reaches_the_record_and_the_email(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The first live scan: three names in the list had not printed for a
+    month or more, and the only trace was a WARNING line. Driven through the
+    real evening path with one name thirty sessions behind and one halted for
+    a day: the record names the first, the email prints it, and the halt is
+    the stale count's business as before."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=24)
+    fake_alpaca.add_history("GONE", ohlcv("burst", variant=90), stale_sessions=30)
+    fake_alpaca.add_history("HALT", ohlcv("burst", variant=91), stale_sessions=1)
+    report = pipeline.RunReport()
+
+    pipeline.run("evening", dry_run=False, tickers=names + ["GONE", "HALT"], report=report)
+
+    data = clean(tmp_path)
+    block = data["run"]["stopped_printing"]
+    assert [n["ticker"] for n in block["names"]] == ["GONE"], block
+    assert block["names"][0]["sessions_behind"] == 30 and block["count"] == 1
+    assert block["after_sessions"] == pipeline.STOPPED_PRINTING_SESSIONS
+    (sent,) = mocked_boundaries["resend"].sent
+    assert "Not printing: GONE (since " in sent["html"] and "HALT" not in sent["html"].split("Not printing")[1].split("</p>")[0]
+    assert f"more than {pipeline.STOPPED_PRINTING_SESSIONS} sessions" in sent["html"]
+    assert report.status == "ok", report.errors

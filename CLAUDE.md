@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 974 tests with no network
+- **There is a regression net.** `pytest tests/` runs 985 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -1027,6 +1027,22 @@ same variable; a scheduled run has no box and sends '', which the scanner
 already read as unset. Pinned by a structure test on the parsed YAML that
 fails when the env line is removed, and the morning workflow is asserted to
 take no such box, since it scans nothing.
+
+**The names that have stopped printing reach the record, the email and the
+page.** The first live scan found three names in the 230-name file with no
+bar for a month or more, and the only trace was a WARNING line: EA (since 4
+Aug), BK (since 20 May), FI (since 10 Nov 2025). `stopped_printing()` keeps
+the stale names more than `STOPPED_PRINTING_SESSIONS` behind -- five, a
+trading week, past any halt this project has seen -- most-behind first,
+capped at ten with an exact count, and writes the threshold into the block so
+the page and the email print the number the run applied rather than one
+retyped in two other files. `run.stopped_printing` is a fact about the FILE,
+not the market: it stays out of the ledger entry, whose size README budgets,
+and out of the rules fingerprint, since it changes no burst. The one-night
+fixture carries two such names through the pipeline's own function, the
+history fixture regenerated with the empty block, the shape check refuses the
+block one level in (five malformed shapes; absent loads clean), and the smoke
+reads the note off the DOM. Six mutants, all killed.
 
 **Leads written down, not worked.** A feed-wide missing day -- more than
 half the frames lacking a session -- is not a session under the majority

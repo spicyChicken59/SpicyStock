@@ -377,6 +377,44 @@ def redact_addresses(text: str) -> str:
     return _ADDRESS.sub(lambda m: "…@" + m.group(1), text)
 
 
+#: A name in the symbol file that has printed no bar for MORE than this many
+#: sessions is reported as having stopped printing -- in run.stopped_printing,
+#: in the email and on the page -- as distinct from the one- or two-day halt
+#: the scan's stale count already covers. Five is a trading week: no halt this
+#: project has seen runs that long, and a delisting or a ticker change never
+#: comes back. The first live scan found three such names in a 230-name list
+#: (EA, BK and FI: a month, four months and ten months without a bar) and
+#: said so in one WARNING line in a log nobody reads. Plumbing, not strategy:
+#: it changes no burst and stays out of rules_fingerprint().
+STOPPED_PRINTING_SESSIONS = 5
+#: How many of them are NAMED. `count` is always exact; the names are the
+#: most-behind ones when the list is longer, and the surfaces say "and N more".
+STOPPED_PRINTING_MAX = 10
+
+
+def stopped_printing(scan_stats: dict) -> dict:
+    """The names that have stopped printing, for the record.
+
+    `scan_stats["stale"]` is every symbol without a bar for the session, keyed
+    to the last date it had one -- a halt and a delisting alike. This keeps the
+    ones more than STOPPED_PRINTING_SESSIONS behind (weekend-only arithmetic,
+    the same `sessions_between` every streak uses), most-behind first, and
+    says how many there were before the cap. The threshold is written INTO the
+    block, so the page and the email print the number this run applied rather
+    than one retyped in two other files.
+    """
+    session = scan_stats.get("session")
+    names = []
+    for ticker, last in (scan_stats.get("stale") or {}).items():
+        behind = ledger.sessions_between(last, session)
+        if behind is None or behind <= STOPPED_PRINTING_SESSIONS:
+            continue
+        names.append({"ticker": str(ticker), "last": ledger.iso_date(last), "sessions_behind": behind})
+    names.sort(key=lambda n: (-n["sessions_behind"], n["ticker"]))
+    return {"after_sessions": STOPPED_PRINTING_SESSIONS, "count": len(names),
+            "names": names[:STOPPED_PRINTING_MAX]}
+
+
 @dataclass
 class RunReport:
     """What the run would otherwise only whisper into a log nobody reads.
@@ -838,6 +876,8 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         illiquid=len(illiquid),
         liquidity_floor=scan_stats.get("liquidity_floor"),
         liquidity_pctile=cfg.min_dollar_volume_pctile,
+        # The names that have stopped printing, for the email's own line.
+        stopped_printing=stopped_printing(scan_stats),
         # And how many CLEARED the gate and were never looked at anyway. The
         # email's funnel went "Passed 2LYNCH gate: 54" straight to
         # "Shortlisted: 1", so on any night with more survivors than the call
@@ -1356,6 +1396,11 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
                       else universe_label(scan_stats, explicit_tickers)),
             "size": scan_stats.get("requested", len(explicit_tickers or [])),
         },
+        # The names in that universe that have stopped printing: a fact about
+        # the symbol FILE, kept where its reader looks. Not copied into the
+        # ledger entry -- tonight's list is the one that matters, and the
+        # ledger's size is budgeted in README.
+        "stopped_printing": stopped_printing(scan_stats),
         "bursts": n_bursts,
         "passed_gate": n_passed,
         "scored": len(scored),

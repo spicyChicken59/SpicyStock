@@ -2663,6 +2663,22 @@ def snapshot_problem(data: dict) -> str | None:
     # It does not crash on strings: "5" + "1" is "51", so the provenance line
     # rendered "Scored by Claude: 5 of 51" -- a fabricated count, which is
     # worse than a crash because nothing anywhere says it is wrong.
+    # The names that stopped printing. Absent is a snapshot from before the
+    # block existed and loads clean; present, it is the object publish()
+    # writes, one level in -- the email joins the tickers and the page prints
+    # sessions_behind, and a string where a count belongs is the class this
+    # function exists to refuse before a later consumer meets it.
+    if "stopped_printing" in run:
+        block = run["stopped_printing"]
+        if (not isinstance(block, dict) or not isinstance(block.get("names"), list)
+                or isinstance(block.get("count"), bool) or not isinstance(block.get("count"), int)):
+            return f"run.stopped_printing is {type(block).__name__}, not the object publish() writes"
+        for position, name in enumerate(block["names"], start=1):
+            if (not isinstance(name, dict) or not isinstance(name.get("ticker"), str)
+                    or isinstance(name.get("sessions_behind"), bool)
+                    or not isinstance(name.get("sessions_behind"), int)):
+                return (f"run.stopped_printing.names[{position}] is not "
+                        "{ticker, last, sessions_behind}")
     for name, count in (run.get("scored_by") or {}).items():
         if count is not None and (isinstance(count, bool) or not isinstance(count, (int, float))):
             return (f"run.scored_by.{name} is {type(count).__name__}, not a number, "
