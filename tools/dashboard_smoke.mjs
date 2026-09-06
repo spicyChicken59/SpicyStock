@@ -1,6 +1,6 @@
 // Does the dashboard still work? The one check that opens it.
 //
-//   node tools/dashboard_smoke.mjs [design-system-checkout] [--shots <dir>]
+//   node tools/dashboard_smoke.mjs [--shots <dir>]
 //
 // docs/index.html is a static shell: the Python pipeline writes docs/data.json
 // and the page fetches it in the browser. Nothing in the Python suite can fail
@@ -17,8 +17,8 @@
 //
 // Offline by construction, so CI has nothing new to reach for: docs/ is served
 // from a local http server (the page fetches data.json, which file:// blocks),
-// every cdn.jsdelivr.net request is answered from a design-system checkout on
-// disk, and every other host is answered with an empty body.
+// the exact design-system snapshot ships inside docs/design-system, and every
+// external host is answered with an empty body.
 //
 // THREE DATA SOURCES, ONE PAGE. docs/data.json is whatever the last run wrote
 // -- the fixture on a fresh clone, last night's real run once evening.yml has
@@ -54,19 +54,11 @@ const SOURCES = { fixture: FIXTURES, history: join(FIXTURES, 'history') };
 const argv = process.argv.slice(2);
 const SHOTS = argv.includes('--shots') ? argv[argv.indexOf('--shots') + 1] : null;
 
-// The checkout the page's pinned CDN requests are answered from. CI passes the
-// clone it already made for the linter; locally the first of these that has
-// sc.css in it wins.
-const DS = [
-  argv.find((a) => !a.startsWith('--') && a !== SHOTS),
-  process.env.SC_DESIGN_SYSTEM,
-  '/tmp/design-system',
-  resolve(REPO, '..', 'design-system'),
-  join(REPO, 'design-system')
-].filter(Boolean).find((d) => existsSync(join(d, 'sc.css')));
-if (!DS) {
-  console.error('usage: node tools/dashboard_smoke.mjs [design-system-checkout] [--shots <dir>]');
-  console.error('       no checkout with sc.css found — pass one, or set SC_DESIGN_SYSTEM');
+// Exercise the same snapshot GitHub Pages serves. Falling back to a sibling
+// checkout could pass against styles that the published page does not have.
+const DS = join(ROOT, 'design-system');
+if (!existsSync(join(DS, 'sc.css'))) {
+  console.error('docs/design-system/sc.css is missing — restore the recorded local snapshot');
   process.exit(2);
 }
 
@@ -578,13 +570,6 @@ const PIXEL = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQ
 await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => (/\.(png|jpe?g|webp|gif|svg)/i.test(r.request().url())
   ? r.fulfill({ status: 200, contentType: 'image/png', body: PIXEL })
   : r.fulfill({ status: 200, contentType: 'text/plain', body: '' })));
-await ctx.route('**://cdn.jsdelivr.net/**', (route) => {
-  const path = new URL(route.request().url()).pathname;
-  const file = join(DS, path.replace(/^\/gh\/spicyChicken59\/design-system@[^/]+\//, ''));
-  return existsSync(file)
-    ? route.fulfill({ path: file, contentType: TYPES[extname(file)] })
-    : route.fulfill({ status: 404, body: 'not in the checkout: ' + path });
-});
 
 const errors = [];
 const chart404 = new Set();
@@ -1061,7 +1046,7 @@ await open('/f/fixture/');
 // what makes the narrower answer sayable; assert the sentence, because the
 // email says the same one and a reader gets both.
 const unknownDay = REAL.candidates.filter((c) => (c.streak || {}).day === null);
-const streakLines = await page.$$eval('#shortlist .facts',
+const streakLines = await page.$$eval('#shortlist .sc-facts',
   (ds) => ds.map((d) => [...d.querySelectorAll('div')]
     .filter((x) => x.querySelector('dt') && x.querySelector('dt').textContent === 'this setup')
     .map((x) => x.querySelector('dd').textContent.trim())[0]));
@@ -1369,11 +1354,27 @@ const light = await page.evaluate(() => {
     .map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
     return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
   const cr = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  // The headline now sits on an ink cover even in light mode. Measure the
+  // surface painted behind it, including any translucent ancestor fills,
+  // rather than comparing it with the body outside that cover.
+  const paintedBackground = (node) => {
+    const layers = [];
+    for (let n = node; n; n = n.parentElement) {
+      const rgba = getComputedStyle(n).backgroundColor.match(/[\d.]+/g).map(Number);
+      const alpha = rgba.length > 3 ? rgba[3] : 1;
+      if (alpha > 0) layers.push({ rgb: rgba.slice(0, 3), alpha });
+      if (alpha === 1) break;
+    }
+    const rgb = layers.reverse().reduce((back, { rgb, alpha }) =>
+      rgb.map((value, i) => value * alpha + back[i] * (1 - alpha)), [255, 255, 255]);
+    return `rgb(${rgb.join(', ')})`;
+  };
   const bg = getComputedStyle(document.body).backgroundColor;
   const chip = document.querySelector('#scores-table .sc-chip--warn');
+  const headline = document.getElementById('h1');
   return {
     bg, dark: lum(bg) < 0.25,
-    h1: cr(getComputedStyle(document.getElementById('h1')).color, bg),
+    h1: cr(getComputedStyle(headline).color, paintedBackground(headline)),
     // null when there is no fallback chip to measure -- a run Claude scored
     // in full has none, and README used to list this as the other way the
     // script threw on real output.

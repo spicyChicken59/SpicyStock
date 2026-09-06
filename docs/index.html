@@ -7,122 +7,25 @@
 <meta name="theme-color" content="#111F31">
 <title>SpicyStock</title>
 <meta name="description" content="SpicyStock — a 4% momentum burst screener. Every candidate the run scored, with its 2LYNCH checklist, and whether the score came from Claude or from the offline fallback.">
-<!-- SpicyChicken Design System v2.4.0, pinned by tag · DESIGN_SYSTEM.md §11 -->
-<link rel="icon" href="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/favicon.ico" sizes="16x16 32x32 48x48">
-<link rel="icon" href="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/sc-avatar-tile.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/apple-touch-icon.png">
+<!-- SpicyChicken Design System · exact local snapshot recorded in design-system/provenance.json -->
+<link rel="icon" href="design-system/assets/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" href="design-system/assets/sc-avatar-tile.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="design-system/assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/sc.css">
-<script src="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/sc-theme.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/sc-charts.js"></script>
-<style>
-  /* Page-specific only. Semantic tokens, never a primitive and never a hex. */
-
-  /* One shortlist entry: the chart PNG beside the numbers. The chart is the
-     first thing to give up its column — a 4-month candlestick under ~300px
-     is unreadable anyway, so below 720px it goes full width above the text. */
-  .pick { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--sc-s3); align-items: start; }
-  .pick__main { min-width: 0; }
-  @media (max-width: 720px) { .pick { grid-template-columns: minmax(0, 1fr); } }
-
-  .pick__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
-  .pick__rank { font: 600 11px/1 var(--sc-font-mono); color: var(--sc-text-3); }
-  .pick__ticker { font: 700 22px/1.1 var(--sc-font-display); color: var(--sc-heading); letter-spacing: .2px; }
-  .pick__score { font: 700 22px/1.1 var(--sc-font-body); color: var(--sc-heading); font-variant-numeric: tabular-nums; }
-  .pick__score span { font: 500 12px/1 var(--sc-font-mono); color: var(--sc-text-3); }
-  .pick__chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .pick__reason { margin: var(--sc-s2) 0 0; }
-  .pick__risk { font-size: 13px; color: var(--sc-text-2); margin: 6px 0 0; }
-
-  /* The 2LYNCH row. Six chips carry the letters; the values live in the
-     table underneath, so the checklist is readable without a hover. */
-  .lynch { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sc-s2); }
-  .lynch .sc-chip { min-width: 34px; justify-content: center; }
-
-  /* Figures under a pick: label above, number below, wrapping on a phone. */
-  .facts { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-top: var(--sc-s2);
-           border-top: 1px solid var(--sc-border); padding-top: var(--sc-s2); }
-  .facts > div { min-width: 0; }
-  .facts dt { font: 600 10.5px/1.4 var(--sc-font-mono); letter-spacing: .3px; color: var(--sc-text-3); text-transform: lowercase; }
-  .facts dd { margin: 2px 0 0; font-variant-numeric: tabular-nums; font-size: 14px; color: var(--sc-text); }
-
-  /* The chart slot. .sc-frame is a fixed-size photo well by default; a
-     candlestick needs the card's full width, and its height follows the
-     image. The empty twin keeps the same box so nothing jumps when a PNG
-     is missing — which is the normal state until the pipeline writes them. */
-  .shot { --sc-frame-w: 100%; --sc-frame-h: auto; aspect-ratio: 10 / 6; object-fit: contain; background: var(--sc-raised); }
-  .shot--empty { --sc-frame-w: 100%; --sc-frame-h: auto; aspect-ratio: 10 / 6; flex-direction: column; gap: 8px; text-align: center; padding: 10px; }
-  .shot--empty .sc-note { max-width: 30ch; }
-  /* The chick in an empty frame is a mono mark: cream on the dark surface,
-     ink on the light one. Mirrors the sheet's own three-selector shape —
-     dark is the base, light arrives by OS preference or by the toggle. */
-  .shot--empty .mark-ink { display: none; }
-  @media (prefers-color-scheme: light), print {
-    :root:not([data-theme="dark"]) .shot--empty .mark-cream { display: none; }
-    :root:not([data-theme="dark"]) .shot--empty .mark-ink { display: block; }
-  }
-  :root[data-theme="light"] .shot--empty .mark-cream { display: none; }
-  :root[data-theme="light"] .shot--empty .mark-ink { display: block; }
-
-  /* Bars wear a tone through the sheet's own channel, so a theme flip
-     re-resolves them with no JavaScript. A plain fill= would be outranked
-     by nothing here, but an inline fill: would take the property away from
-     the page stylesheet for good. */
-  #scores-chart .bar { fill: var(--sc-tone, var(--sc-chart-context)); }
-  #scores-chart .bar-label { font: 600 11px/1 var(--sc-font-mono); fill: var(--sc-text-2); }
-  #scores-chart .bar-value { font: 600 11px/1 var(--sc-font-mono); fill: var(--sc-text-3); }
-
-  /* Column hints for the wide table — the strings it actually holds. */
-  #scores-table .col-reason { min-width: 230px; white-space: normal; }
-  #scores-table tbody td:first-child { line-height: 1.3; }
-  #scores-table tbody .sc-eyebrow { margin-bottom: 1px; }
-  #scores-table td.col-reason { font-size: 13px; color: var(--sc-text-2); }
-  /* The "why" cell carries the same sentence the streak line and the email
-     use for that outcome, which is longer than the two words it used to hold;
-     a chip that cannot wrap would push the table out instead. */
-  #gated-table .col-why { min-width: 210px; }
-  #gated-table .col-why .sc-chip { white-space: normal; text-align: left; }
-  .runs-now td { font-weight: 600; }
-
-  /* The funnel, the checklist aggregate and the score/outcome plot are drawn
-     at the host's own PIXEL width — the viewBox is the measured width, so one
-     SVG unit is one CSS pixel and the type stays the size it says it is. A
-     fixed viewBox scales the whole drawing instead: the score chart's 11px
-     labels land near 5px on a 390px phone. These redraw on resize. */
-  .s-name { font: 500 12px/1 var(--sc-font-mono); fill: var(--sc-text-2); }
-  .s-value { font: 700 13px/1 var(--sc-font-body); fill: var(--sc-heading); }
-  .s-share { font: 500 11px/1 var(--sc-font-mono); fill: var(--sc-text-3); }
-  .s-drop { font: 500 11px/1 var(--sc-font-mono); fill: var(--sc-text-3); }
-  /* Kept and lost are two segments of one bar, and BOTH carry their count in
-     the row above or the caption below, so the split never rides on the fill. */
-  .seg-kept { fill: var(--sc-chart-emphasis); }
-  .seg-lost { fill: var(--sc-chart-context); }
-
-  /* The evidence bars carry their horizon through the tone channel, the way
-     #scores-chart .bar does. NOT .seg-kept: that rule hard-codes
-     --sc-chart-emphasis, so reusing it drew both series in one colour under a
-     legend naming two — a key contradicting the chart it explains, which is
-     the same defect the outcome legend already shipped once. Found by opening
-     the page and looking at it, not by a check. */
-  #evidence-chart .bar { fill: var(--sc-tone, var(--sc-chart-context)); }
-  #evidence-chart .s-drop { font-size: 10.5px; }
-
-  /* Horizon tiles: the value is the mean, the delta underneath carries the
-     spread between the best and worst session so a single number never reads
-     as a settled one. */
-  .horizon .sc-chip { margin-top: 8px; }
-  #checks-table .col-what { min-width: 170px; white-space: normal; }
-  #outcome-table .col-name { line-height: 1.3; }
-</style>
+<link rel="stylesheet" href="design-system/sc.css">
+<script src="design-system/sc-theme.js"></script>
+<script src="design-system/sc-charts.js"></script>
+<script src="design-system/sc-motion.js" defer></script>
+<link rel="stylesheet" href="stock.css">
 </head>
 <body>
 <a class="sc-skip" href="#main">Skip to content</a>
 
 <header class="sc-masthead">
   <a class="sc-brand" href="./">
-    <img class="sc-mark" src="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/sc-mark-color-dark.svg" alt="" width="22" height="26">
+    <img class="sc-mark" src="design-system/assets/sc-mark-color-dark.svg" alt="" width="22" height="26">
     <span><span class="sc-brand__name">SpicyStock</span><span class="sc-brand__sub">4% momentum burst screener</span></span>
   </a>
   <div class="sc-masthead__right">
@@ -137,12 +40,35 @@
 </header>
 
 <main class="sc-wrap sc-wrap--wide sc-stack" id="main">
-  <div class="sc-title">
-    <div class="sc-eyebrow" id="eyebrow">screener</div>
-    <h1 id="h1">Loading the latest run…</h1>
-    <p class="sc-dek" id="dek"></p>
-    <div class="sc-meta" id="meta"></div>
-  </div>
+  <section class="sc-cover sc-on-ink stock-cover" aria-labelledby="h1">
+    <div class="sc-cover__content sc-reveal" data-sc-motion="rise">
+      <p class="sc-eyebrow stock-cover__brand">SpicyStock / market research</p>
+      <div class="sc-eyebrow sc-eyebrow--muted" id="eyebrow">screener</div>
+      <h1 class="sc-cover__title" id="h1">Loading the latest run…</h1>
+      <p class="sc-cover__dek" id="dek"></p>
+      <div class="sc-cover__meta" id="meta"></div>
+    </div>
+    <div class="sc-cover__art stock-cover__art sc-reveal" data-sc-motion="scale" aria-hidden="true">
+      <div class="stock-cover__orbits"><i></i><i></i><i></i></div>
+      <img class="stock-cover__mark" src="design-system/assets/sc-mark-mono-cream.svg" alt="" width="172" height="200">
+      <span class="sc-cover__caption">a SpicyChicken project<br>4% momentum burst screener</span>
+    </div>
+  </section>
+
+  <dl class="sc-stat-strip sc-stat-strip--4 stock-run-strip sc-stagger" id="run-strip" hidden aria-label="Run at a glance">
+    <div class="sc-stat"><dt class="sc-stat__label">universe</dt><dd class="sc-stat__value" id="stat-universe">—</dd><dd class="sc-stat__note">names in the run</dd></div>
+    <div class="sc-stat"><dt class="sc-stat__label">bursts</dt><dd class="sc-stat__value" id="stat-bursts">—</dd><dd class="sc-stat__note">found by the scan</dd></div>
+    <div class="sc-stat"><dt class="sc-stat__label">scored</dt><dd class="sc-stat__value" id="stat-scored">—</dd><dd class="sc-stat__note">every candidate below</dd></div>
+    <div class="sc-stat sc-stat--lead"><dt class="sc-stat__label">shortlist</dt><dd class="sc-stat__value" id="stat-shortlist">—</dd><dd class="sc-stat__note">sent for human review</dd></div>
+  </dl>
+
+  <nav class="stock-index" id="page-index" aria-label="On this page" hidden>
+    <span class="sc-eyebrow sc-eyebrow--muted">in this report</span>
+    <a class="sc-press" href="#evidence-card"><span>01</span> The evidence</a>
+    <a class="sc-press" href="#funnel-card" id="nav-funnel"><span>02</span> This session</a>
+    <a class="sc-press" href="#predict-card" id="nav-record"><span>03</span> The record</a>
+    <a class="sc-press" href="#runs-card" id="nav-runs"><span>04</span> Recent runs</a>
+  </nav>
 
   <!-- Sample data. Hidden unless run.fixture is true. Shown ABOVE the run
        notice because "none of this happened" outranks "this run degraded". -->
@@ -180,9 +106,10 @@
        number is how two copies of a rule drift. This card answers the
        RELATION -- does a higher score earn a higher return -- and the counts
        behind it. -->
-  <section class="sc-card" id="evidence-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="evidence-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">01 / the evidence</p>
         <h2>Does a higher score earn a higher return?</h2>
         <p class="sc-hint" id="evidence-hint"></p>
         <!-- ONE basis for the whole page. Every return on it -- the score bands,
@@ -200,9 +127,9 @@
         <p class="sc-note" id="rules-note"></p>
       </div>
     </div>
-    <p class="sc-empty" id="evidence-empty" hidden></p>
+    <p class="sc-empty sc-empty--brand stock-empty" id="evidence-empty" hidden></p>
     <div id="evidence-body" hidden>
-      <div class="sc-grid sc-grid--3" id="evidence-tiles"></div>
+      <div class="sc-grid sc-grid--3 stock-metrics sc-stagger" id="evidence-tiles"></div>
       <p id="evidence-verdict"></p>
       <div class="sc-legend" id="evidence-legend"></div>
       <div class="sc-chart" id="evidence-chart" role="group" tabindex="0"
@@ -218,9 +145,10 @@
   <!-- The funnel. Four disconnected tiles could not show where the attrition
        is; one shared linear scale can, and the loss between two stages is a
        labelled segment rather than a subtraction the reader has to do. -->
-  <section class="sc-card" id="funnel-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="funnel-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">02 / this session</p>
         <h2 id="funnel-title">From the universe to the shortlist</h2>
         <p class="sc-hint" id="funnel-hint"></p>
       </div>
@@ -231,9 +159,10 @@
     <div class="sc-table-scroll" id="funnel-scroll"><table class="sc-table sc-table--compact" id="funnel-table"></table></div>
   </section>
 
-  <section class="sc-card" id="shortlist-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="shortlist-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">the shortlist</p>
         <h2 id="shortlist-title">The shortlist</h2>
         <p class="sc-hint" id="shortlist-hint"></p>
       </div>
@@ -241,9 +170,10 @@
     <div class="sc-stack" id="shortlist"></div>
   </section>
 
-  <section class="sc-card" id="scores-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="scores-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">the complete ranking</p>
         <h2>Every candidate this run scored</h2>
         <p class="sc-hint" id="scores-hint"></p>
       </div>
@@ -254,9 +184,10 @@
     <div class="sc-table-scroll" id="scores-scroll"><table class="sc-table sc-table--compact" id="scores-table"></table></div>
   </section>
 
-  <section class="sc-card" id="gated-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="gated-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">outside the ranking</p>
         <h2>What the scan found and did not score</h2>
         <p class="sc-hint" id="gated-hint"></p>
       </div>
@@ -267,9 +198,10 @@
   <!-- Which check is doing the gating. Computed over every burst that recorded
        a checklist, scored and gated alike: a rate over the scored candidates
        alone would describe only names that had already passed. -->
-  <section class="sc-card" id="checks-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="checks-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">the checklist</p>
         <h2>Which 2LYNCH check is doing the gating</h2>
         <p class="sc-hint" id="checks-hint"></p>
       </div>
@@ -288,36 +220,40 @@
        above, which asks which check is doing the gating on this one night.
        Both denominators are every burst the scan found, scored and gated, for
        the same reason: a rate over the survivors describes the survivors. -->
-  <section class="sc-card" id="predict-card" hidden>
+  <div class="stock-research-grid">
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="predict-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">03 / the record</p>
         <h2>Which 2LYNCH check predicts anything</h2>
         <p class="sc-hint" id="predict-hint"></p>
       </div>
     </div>
-    <p class="sc-empty" id="predict-empty" hidden></p>
+    <p class="sc-empty sc-empty--brand stock-empty" id="predict-empty" hidden></p>
     <div class="sc-table-scroll" id="predict-scroll"><table class="sc-table sc-table--compact" id="predict-table"></table></div>
   </section>
 
-  <section class="sc-card" id="streak-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="streak-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">repeat appearances</p>
         <h2>Does a streak pay?</h2>
         <p class="sc-hint" id="streak-hint"></p>
       </div>
     </div>
-    <p class="sc-empty" id="streak-empty" hidden></p>
+    <p class="sc-empty sc-empty--brand stock-empty" id="streak-empty" hidden></p>
     <div class="sc-table-scroll" id="streak-scroll"><table class="sc-table sc-table--compact" id="streak-table"></table></div>
   </section>
 
-  <section class="sc-card" id="trend-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="trend-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">over time</p>
         <h2>Is it getting better or worse?</h2>
         <p class="sc-hint" id="trend-hint"></p>
       </div>
     </div>
-    <p class="sc-empty" id="trend-empty" hidden></p>
+    <p class="sc-empty sc-empty--brand stock-empty" id="trend-empty" hidden></p>
     <div class="sc-table-scroll" id="trend-scroll"><table class="sc-table sc-table--compact" id="trend-table"></table></div>
   </section>
 
@@ -326,28 +262,32 @@
        record, so docs/ledger.json is fetched ONLY when a reader asks for it
        (see loadRecord). A year of it is ~0.6 MB gzipped, which is not a thing
        to spend on every visit for a view most readers never open. -->
-  <section class="sc-card" id="ticker-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="ticker-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">by ticker</p>
         <h2>What happened the last times each name burst</h2>
         <p class="sc-hint" id="ticker-hint"></p>
       </div>
     </div>
-    <p class="sc-empty" id="ticker-empty" hidden></p>
+    <p class="sc-empty sc-empty--brand stock-empty" id="ticker-empty" hidden></p>
     <div class="sc-table-scroll" id="ticker-scroll"><table class="sc-table sc-table--compact" id="ticker-table"></table></div>
     <div class="sc-show-more" id="ticker-more" hidden></div>
   </section>
 
+  </div>
+
   <!-- Did a higher score do better? The one question that judges the screener
        rather than describing it. Empty until the sessions close. -->
-  <section class="sc-card" id="outcome-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="outcome-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">score and outcome</p>
         <h2>Score against what happened next</h2>
         <p class="sc-hint" id="outcome-hint"></p>
       </div>
     </div>
-    <p class="sc-empty" id="outcome-empty" hidden></p>
+    <p class="sc-empty sc-empty--brand stock-empty" id="outcome-empty" hidden></p>
     <div id="outcome-plot" hidden>
       <div class="sc-legend" id="outcome-legend"></div>
       <div class="sc-chart" id="outcome-chart" role="group" tabindex="0"
@@ -359,20 +299,22 @@
 
   <!-- The measurement loop. Means only, never a zero standing in for a session
        that has not happened, and a stated bar for how much data is enough. -->
-  <section class="sc-card" id="returns-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="returns-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">forward returns</p>
         <h2>Has any of this made money yet</h2>
         <p class="sc-hint" id="returns-hint"></p>
       </div>
     </div>
-    <div class="sc-grid sc-grid--3" id="returns-tiles"></div>
+    <div class="sc-grid sc-grid--3 stock-metrics sc-stagger" id="returns-tiles"></div>
     <div class="sc-table-scroll" id="returns-scroll"><table class="sc-table sc-table--compact" id="returns-table"></table></div>
   </section>
 
-  <section class="sc-card" id="runs-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="runs-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">04 / recent runs</p>
         <h2>Recent runs</h2>
         <p class="sc-hint" id="runs-hint"></p>
       </div>
@@ -380,7 +322,7 @@
     <div class="sc-table-scroll" id="runs-scroll"><table class="sc-table sc-table--compact" id="runs-table"></table></div>
   </section>
 
-  <div class="sc-callout sc-callout--spice" id="next-callout">
+  <div class="sc-callout sc-callout--spice stock-next sc-reveal" data-sc-motion="rise" id="next-callout">
     <div class="sc-callout__label">next</div>
     <div class="sc-callout__figure">Read the rules the scores are made against</div>
     <p>The scan thresholds, the 2LYNCH checklist and the rubric Claude scores to are all in the repo.
@@ -391,7 +333,7 @@
 <footer class="sc-foot">
   <span id="foot-left">Screening output for human review, not trading advice.</span>
   <a class="sc-watermark" href="https://github.com/spicyChicken59" rel="author" aria-label="SpicyChicken">
-    <img class="sc-lockup" src="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/sc-lockup-cream.svg" alt="SpicyChicken">
+    <img class="sc-lockup" src="design-system/assets/sc-lockup-cream.svg" alt="SpicyChicken">
   </a>
 </footer>
 
@@ -399,7 +341,7 @@
 (function () {
   'use strict';
 
-  // sc-charts.js gives el()/svg(); if the CDN is unreachable the page still
+  // sc-charts.js gives el()/svg(); if its file is unavailable the page still
   // has to render, so fall back to the two builders it would have supplied.
   var S = window.SC || {};
   var el = S.el || function (tag, attrs, kids) { return build(document.createElement(tag), attrs, kids, false); };
@@ -534,11 +476,11 @@
     var empty = el('div', { 'class': 'sc-frame sc-frame--empty shot--empty' }, [
       el('img', {
         'class': 'sc-frame__mark mark-cream', alt: '',
-        src: 'https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/sc-mark-mono-cream.svg'
+        src: 'design-system/assets/sc-mark-mono-cream.svg'
       }),
       el('img', {
         'class': 'sc-frame__mark mark-ink', alt: '',
-        src: 'https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/sc-mark-mono-ink.svg'
+        src: 'design-system/assets/sc-mark-mono-ink.svg'
       }),
       el('span', { 'class': 'sc-note', text: 'no chart — ' + why })
     ]);
@@ -771,7 +713,7 @@
       ['this setup', streakText(c)],
       ['forward return ' + basisLabel(), forwardCell(c)]
     ];
-    return el('article', { 'class': 'sc-card sc-card--raised pick' }, [
+    return el('article', { 'class': 'sc-card sc-card--raised pick sc-reveal', 'data-sc-motion': 'rise' }, [
       el('div', { 'class': 'pick__main' }, [
         el('div', { 'class': 'pick__head' }, [
           el('span', { 'class': 'pick__rank', text: '#' + c.rank }),
@@ -795,7 +737,7 @@
             text: (d.pass ? '\u2713' : '\u2717') + d.code
           });
         })),
-        el('dl', { 'class': 'facts' }, facts.map(function (f) {
+        el('dl', { 'class': 'sc-facts' }, facts.map(function (f) {
           return el('div', null, [el('dt', { text: f[0] }), el('dd', { text: f[1] })]);
         })),
         lynchTable(c)
@@ -1893,6 +1835,13 @@
       el('span', { text: 'generated ' + day(d.generated) })
     );
     $('mast-right').textContent = day(run.date) + ' · ' + (run.type || '');
+    // Presentation only: these are the same recorded values used above.
+    $('stat-universe').textContent = commas(run.universe && run.universe.size);
+    $('stat-bursts').textContent = commas(run.bursts || 0);
+    $('stat-scored').textContent = commas(run.scored || 0);
+    $('stat-shortlist').textContent = commas(shortN);
+    $('run-strip').hidden = false;
+    $('page-index').hidden = false;
 
     // fabricated data outranks every other caveat on the page
     $('fixture-banner').hidden = !run.fixture;
@@ -2254,6 +2203,10 @@
         ]);
       }), [2, 3, 4, 5, 6, 7, 8, 9]);
     clipWatch($('runs-scroll'), 'Recent runs');
+
+    $('nav-record').hidden = $('predict-card').hidden;
+    $('nav-funnel').hidden = $('funnel-card').hidden;
+    $('nav-runs').hidden = $('runs-card').hidden;
 
     $('foot-left').textContent = 'Run ' + day(run.date) + ' (' + (run.type || '') + ') · schema v' +
       (d.schema_version === undefined ? '?' : d.schema_version) +
