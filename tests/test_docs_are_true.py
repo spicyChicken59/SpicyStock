@@ -135,6 +135,32 @@ def test_env_example_lists_the_feeds_the_sdk_accepts_and_the_default_the_scan_us
     )
 
 
+def test_the_documented_sip_hold_back_is_the_one_the_scanner_applies():
+    """README and .env.example quote the hold-back as a number in words, and
+    until this test nothing read it back: SIP_HOLDBACK_MINUTES = 45 left this
+    file green. Read off the constant, the way the feed list and the default
+    beside it are. Both files say "no later than" / "when the session's day
+    would run past that" rather than an unconditional "holds it back",
+    because the code caps the window rather than always moving it."""
+    from src.scanner import SIP_HOLDBACK_MINUTES
+
+    words = {10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen",
+             15: "fifteen", 16: "sixteen", 17: "seventeen", 18: "eighteen",
+             19: "nineteen", 20: "twenty"}
+    assert SIP_HOLDBACK_MINUTES in words, "widen the table, or write the number in digits"
+    word = words[SIP_HOLDBACK_MINUTES]
+
+    readme = re.search(r"no later than (\w+) minutes behind the\s+clock", _read("README.md"))
+    assert readme, "README no longer states the hold-back -- did the wording change?"
+    assert readme.group(1) == word, (
+        f"README says the window ends {readme.group(1)} minutes behind the clock; "
+        f"src.scanner.SIP_HOLDBACK_MINUTES is {SIP_HOLDBACK_MINUTES}")
+    env = re.search(r"ends its own window (\w+) minutes behind", _read(".env.example"))
+    assert env, ".env.example no longer states the hold-back -- did the wording change?"
+    assert env.group(1) == word, (
+        f".env.example says {env.group(1)} minutes; SIP_HOLDBACK_MINUTES is {SIP_HOLDBACK_MINUTES}")
+
+
 def test_the_documented_thresholds_are_the_ones_the_code_applies(ohlcv):
     """README's pipeline diagram and schedule quote the numbers the code runs
     on; .env.example quotes the close it keys the session on.
