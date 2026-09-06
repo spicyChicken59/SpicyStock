@@ -7,12 +7,13 @@ the test rather than read from the machine.
 
 from __future__ import annotations
 
+import logging
 import base64
 
 import pytest
 
 from src import pipeline
-from src.emailer import build_html, send_email, send_failure_notice, subject_for
+from src.emailer import build_html, deliver, send_email, send_failure_notice, subject_for
 from src.scorer import render_chart
 
 STATS = {"universe": "230 checked-in US common stocks", "bursts": 42, "gated": 12}
@@ -1106,3 +1107,71 @@ def test_the_three_numbers_read_the_same_on_both_paths(value, gain, ratio, score
     from src.emailer import fmt_gain, fmt_ratio, fmt_score
 
     assert (fmt_gain(value), fmt_ratio(value), fmt_score(value)) == (gain, ratio, score)
+
+
+# --- Resend's test-mode refusal says which of three settings it is ----------
+
+_TEST_MODE_REFUSAL = (
+    "You can only send testing emails to your own email address (owner@example.invalid). "
+    "To send emails to other recipients, please verify a domain at resend.com/domains, "
+    "and change the `from` address to an email using this domain."
+)
+
+
+def _resend_refuses(monkeypatch, sentence: str) -> None:
+    import resend
+
+    def refuse(params, options=None):
+        raise RuntimeError(sentence)
+    monkeypatch.setattr(resend.Emails, "send", refuse)
+
+
+@pytest.mark.parametrize("email_to, expected", [
+    ("someone.else@example.test",
+     "1 recipient(s): a different address, at example.test"),
+    ("owner@example.invalid, someone.else@example.test",
+     "2 recipient(s): the address Resend named, at example.invalid; a different address, at example.test"),
+    ("Owner@Example.invalid",
+     "1 recipient(s): the address Resend named in different capitalisation, at example.invalid"),
+])
+def test_a_test_mode_refusal_says_how_the_recipients_compare_to_the_address_resend_named(
+    fake_resend, monkeypatch, caplog, email_to, expected
+):
+    """The first live account went through three runs of one identical Resend
+    sentence -- a second recipient, a typo and a secret saved where the
+    workflow does not read it all produce it -- before anything said which.
+    The count and the domains say which; no recipient is printed."""
+    monkeypatch.setenv("EMAIL_TO", email_to)
+    _resend_refuses(monkeypatch, _TEST_MODE_REFUSAL)
+
+    with caplog.at_level(logging.ERROR, logger="src.emailer"), pytest.raises(RuntimeError):
+        deliver("subject", "<p>body</p>")
+
+    said = " ".join(r.getMessage() for r in caplog.records)
+    assert expected in said, said
+    assert "REPOSITORY secret" in said
+
+
+def test_the_refusal_diagnosis_never_prints_a_recipient(fake_resend, monkeypatch, caplog):
+    monkeypatch.setenv("EMAIL_TO", "someone.else@example.test, owner@example.invalid")
+    _resend_refuses(monkeypatch, _TEST_MODE_REFUSAL)
+
+    with caplog.at_level(logging.ERROR, logger="src.emailer"), pytest.raises(RuntimeError):
+        deliver("subject", "<p>body</p>")
+
+    said = " ".join(r.getMessage() for r in caplog.records)
+    assert "2 recipient(s)" in said
+    assert "someone.else@" not in said and "owner@" not in said, said
+
+
+def test_any_other_resend_refusal_is_left_to_speak_for_itself(fake_resend, monkeypatch, caplog):
+    """The diagnosis is for one sentence. An unverified sender domain, a bad
+    key or a 5xx says its own thing, and a paragraph about recipients under
+    it would send the operator to the wrong setting."""
+    _resend_refuses(monkeypatch, "The example.invalid domain is not verified. Please add "
+                                 "and verify your domain on https://resend.com/domains")
+
+    with caplog.at_level(logging.ERROR, logger="src.emailer"), pytest.raises(RuntimeError):
+        deliver("subject", "<p>body</p>")
+
+    assert "recipient(s)" not in " ".join(r.getMessage() for r in caplog.records)

@@ -60,6 +60,7 @@ import base64
 import logging
 import html
 import os
+import re
 from pathlib import Path
 
 import resend
@@ -931,19 +932,62 @@ def deliver(subject: str, html: str, attachments: list[dict] | None = None) -> d
     """
     to = [addr.strip() for addr in _required("EMAIL_TO").split(",")]
     resend.api_key = _required("RESEND_API_KEY")
-    response = resend.Emails.send({
-        "from": sender_address(),
-        "to": to,
-        "subject": subject,
-        "html": html,
-        "attachments": list(attachments or []),
-    })
+    try:
+        response = resend.Emails.send({
+            "from": sender_address(),
+            "to": to,
+            "subject": subject,
+            "html": html,
+            "attachments": list(attachments or []),
+        })
+    except Exception as exc:
+        _explain_test_mode_refusal(to, exc)
+        raise
     # Log the count, not the addresses. EMAIL_TO is a repository secret, and
     # Actions masks only exact occurrences of it. A single-recipient value
     # still matches and is masked, but split() breaks the contiguous string
     # for multi-recipient values, so those printed in plaintext to the run log.
     log.info("Email sent via Resend to %d recipient(s), id=%s", len(to), response.get("id"))
     return response
+
+
+_OWN_ADDRESS_IN_REFUSAL = re.compile(r"own email address \(([^)\s]+)\)")
+
+
+def _explain_test_mode_refusal(to: list[str], exc: Exception) -> None:
+    """Say how EMAIL_TO compares to the one address Resend's test mode allows.
+
+    Until a domain is verified, Resend delivers only to the address the
+    account is registered under, and its refusal names that address. Three
+    different settings produce that identical sentence -- a second recipient
+    beside the right one, a typo or a capital letter in it, and a secret saved
+    where the workflow does not read it, so the old value is still sent -- and
+    the first live account went through three runs of the same refusal before
+    anything said which. This says which, without printing a recipient: the
+    count, each one's domain, and whether it IS the address Resend named. The
+    rule two paragraphs up still holds -- the count, not the addresses -- and a
+    domain is not an address. Any other refusal is left to speak for itself.
+    """
+    named = _OWN_ADDRESS_IN_REFUSAL.search(str(exc))
+    if not named:
+        return
+    own = named.group(1)
+    parts = []
+    for addr in to:
+        domain = addr.rsplit("@", 1)[1].lower() if "@" in addr else "no domain"
+        if addr == own:
+            parts.append(f"the address Resend named, at {domain}")
+        elif addr.lower() == own.lower():
+            parts.append(f"the address Resend named in different capitalisation, at {domain}")
+        else:
+            parts.append(f"a different address, at {domain}")
+    log.error(
+        "Resend's test mode refused the recipients. EMAIL_TO holds %d recipient(s): %s. "
+        "Until a domain is verified at resend.com/domains, EMAIL_TO has to be exactly the "
+        "one address Resend named, alone -- and it has to be the REPOSITORY secret, since "
+        "the workflow reads no environment.",
+        len(to), "; ".join(parts),
+    )
 
 
 def send_email(results: list[dict], run_type: str, scan_stats: dict) -> None:
