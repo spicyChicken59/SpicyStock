@@ -154,6 +154,10 @@
 .pick__rank { padding: var(--sc-s1); border: 1px solid var(--sc-border-strong); border-radius: var(--sc-r-sm); }
 .pick__ticker { font-size: 32px; letter-spacing: -.04em; }
 .pick__score { margin-left: auto; font-size: 30px; letter-spacing: -.04em; }
+.pick__benchmark { flex-basis: 100%; margin-top: var(--sc-s1); }
+.pick__benchmark .sc-benchmark__track { height: 16px; }
+.pick__benchmark .sc-benchmark__point { width: 10px; height: 10px; }
+.pick__benchmark .sc-benchmark__scale { font-size: 10px; }
 .pick__chips { flex-basis: 100%; margin-top: var(--sc-s1); }
 .pick__reason { font-size: 15px; line-height: 1.65; }
 .pick__risk { padding: var(--sc-s2); background: var(--sc-surface); border-left: 2px solid var(--sc-border-strong); }
