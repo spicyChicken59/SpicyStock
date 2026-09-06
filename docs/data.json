@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "app": "SpicyStock",
-  "generated": "2026-09-06T07:28:07Z",
+  "generated": "2026-09-06T07:45:42Z",
   "_contract": {
     "about": "Written by src/pipeline.py at the end of a run (see src/ledger.py) and read by docs/index.html at runtime. run.fixture is false: every number here came out of the run named in `run`. The per-candidate record with forward returns filled in by later runs is docs/ledger.json. This block is documentation, not data; consumers ignore it.",
     "documented_in": "README.md, 'The data contract'",
@@ -36,6 +36,27 @@
     "universe": {
       "label": "data/symbols.txt (checked in)",
       "size": 230
+    },
+    "stopped_printing": {
+      "after_sessions": 5,
+      "count": 3,
+      "names": [
+        {
+          "ticker": "FI",
+          "last": "2025-11-10",
+          "sessions_behind": 214
+        },
+        {
+          "ticker": "BK",
+          "last": "2026-05-20",
+          "sessions_behind": 77
+        },
+        {
+          "ticker": "EA",
+          "last": "2026-08-04",
+          "sessions_behind": 23
+        }
+      ]
     },
     "bursts": 0,
     "passed_gate": 0,
