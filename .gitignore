@@ -76,3 +76,10 @@ __pycache__/
 .idea/
 .vscode/
 *.swp
+
+# Installed by `npm install --no-save playwright` for tools/dashboard_smoke.mjs,
+# in the repo root because that is where npm puts it and where CI installs it
+# too. Anchored, like the rules above: a bare `node_modules/` would also hide
+# one nested anywhere under docs/ or tools/, which nothing here creates and
+# nothing should quietly swallow.
+/node_modules/
