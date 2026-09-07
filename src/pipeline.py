@@ -212,8 +212,9 @@ def unscored_reason(lynch: dict) -> str:
 #:
 #:   Size. A chart is ~57 KB and a night renders up to MAX_TO_SCORE of them —
 #:   about 360 MB a year of history that does not delta-compress and cannot be
-#:   removed after the fact. Nothing had ever been committed only because the
-#:   persist step was aborting before its commit on every run.
+#:   removed after the fact. Nothing had been committed there before 6 Sep
+#:   2026 because the persist step had never run at all; since it does, this
+#:   rule is what keeps them out.
 #:
 #:   A chart here cannot say which session drew it. One file per ticker,
 #:   overwritten by every evening run, with the session nowhere in the name or
@@ -349,9 +350,14 @@ def session_disagreement(mode: Mode, cfg: ScanConfig,
                 f"is Friday's market, not tonight's. Everything below is labelled {session} "
                 f"and nothing has been relabelled as today.")
     if mode.after_the_close:
+        # "yesterday's market" is a weekday name for a date, and it is wrong on
+        # every Monday, on the day after every holiday, and on the first
+        # scheduled night this branch can reach -- Tuesday 8 Sep 2026, whose
+        # newest completed session is the Friday before Labor Day. The date is
+        # the fact; there is no calendar here to turn it into a word.
         return (f"{mode.expects}, but today's session has not closed yet. The newest "
                 f"completed session is {session}, so that is what was read — it is "
-                f"yesterday's market, not tonight's. Everything below is labelled "
+                f"the {session} market, not tonight's. Everything below is labelled "
                 f"{session} and nothing has been relabelled as today.")
     return (f"{mode.expects}, but today's session has already closed — the newest "
             f"completed session is now {session}. This is a follow-through pass over "
@@ -403,6 +409,9 @@ def stopped_printing(scan_stats: dict) -> dict:
     block, so the page and the email print the number this run applied rather
     than one retyped in two other files.
 
+    A `stale` entry whose date is None is a symbol whose newest stamp could
+    not be read at all; it is listed dateless, with the ones below.
+
     `scan_stats["no_bars_names"]` is every symbol the feed answered with no bar
     AT ALL in the window the scan asked for -- a symbol it does not know, or
     one purged after a ticker change, which is the state the old symbol of
@@ -414,6 +423,13 @@ def stopped_printing(scan_stats: dict) -> dict:
     session = scan_stats.get("session")
     names = []
     for ticker, last in (scan_stats.get("stale") or {}).items():
+        if last is None:
+            # A name whose newest stamp could not be read: stale with no date
+            # (src.scanner._drop_stale_symbols), so how far behind it is
+            # cannot be said. Named dateless rather than dropped -- the one
+            # name whose data is broken reached no surface at all before.
+            names.append({"ticker": str(ticker), "last": None, "sessions_behind": None})
+            continue
         behind = ledger.sessions_between(last, session)
         if behind is None or behind <= STOPPED_PRINTING_SESSIONS:
             continue
@@ -449,12 +465,63 @@ class RunReport:
     # claim that there is a complete record to keep, which is the only
     # question the workflow's persist step asks.
     published: bool = False
+    #: Set the moment run_scan() returns. Not "the run went well" -- the
+    #: narrower claim that the scan finished, which is what makes "no scan was
+    #: completed" and "Session it was scanning" false for everything that
+    #: happens afterwards. A run that scanned, scored and died in publish()
+    #: carried every count on this object and was mailed as one that never
+    #: started.
+    scanned: bool = False
+    #: The scan's own counts dict, attached BEFORE run_scan() is called.
+    #: run_scan fills it in place, so whatever it had reached when it raised is
+    #: here -- which is how the failure notice can say that 228 symbols were
+    #: asked and 228 answered with nothing for the session, where it used to
+    #: print "Universe: not recorded" over counts that were sitting in memory.
+    scan_stats: dict = field(default_factory=dict)
+    #: What the run was about to mail when it died, if it got that far:
+    #: {"stats": ..., "results": ..., "run_type": ...}, the arguments
+    #: send_email() was given plus the mode of the pass that built them. The
+    #: failure notice on the exit-3 path is a RETRY of that mail, not a
+    #: different email about it -- so it is rendered as the pass that built it,
+    #: which is not always the mode the operator asked for.
+    mail: dict = field(default_factory=dict)
+    #: The funnel the run had built when it died, before it reached the send:
+    #: src.emailer's own stats block. attempted_stats() prefers `mail`, then
+    #: this, then the session and the coverage alone.
+    attempted: dict = field(default_factory=dict)
+    #: The exception the LAST problem() quoted, rendered, or None. fail()'s
+    #: whole duplicate rule -- see there.
+    quoted: str | None = None
 
-    def problem(self, stage: str, message: str) -> None:
+    def problem(self, stage: str, message: str, exc: BaseException | None = None) -> None:
+        """Record a survivable problem. `exc` is the exception this sentence
+        quotes, when it quotes one, and is what fail() compares against."""
         self.errors.append({"stage": stage, "message": redact_addresses(message)})
+        self.quoted = None if exc is None else f"{type(exc).__name__}: {exc}"
 
     def fail(self, stage: str, exc: BaseException) -> None:
+        """Record the exception that ended the run -- unless the stage that
+        caught it has already said so in its own words.
+
+        The email stage records "this run's own send of the shortlist failed
+        (RuntimeError: ...)" and re-raises; main() then recorded the identical
+        exception again, so the failure notice listed one 429 twice, three
+        lines apart, under two stage words.
+
+        THE RULE IS ABOUT ONE EXCEPTION QUOTED TWICE, so it compares the
+        exception the last problem was given, not the shape of its sentence.
+        It read `rendering in errors[-1]["message"]`, and any rendering that
+        was a SUBSTRING of that sentence was dropped: an exception with no
+        message renders as "RuntimeError: ", which is inside "(RuntimeError:
+        429)", so the failure that ended the run was recorded nowhere while
+        `failed` was still set -- the exit code right, the sentence saying what
+        killed it gone. Only the LAST problem's exception counts, because the
+        pairing is one stage recording and re-raising in the same breath; an
+        older problem quoting the same exception is a different event.
+        """
         self.failed = True
+        if self.errors and self.quoted == f"{type(exc).__name__}: {exc}":
+            return
         self.problem(stage, f"{type(exc).__name__}: {exc}")
 
     @property
@@ -668,10 +735,34 @@ def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
     return discover(mode, dry_run=dry_run, tickers=tickers, report=report)
 
 
-def _already_published(cfg: ScanConfig) -> str | None:
-    """The session an evening run started now would scan, if docs/data.json
-    already holds a real evening run of it; else None. A pinned session is a
-    deliberate re-scan and is never "already published"."""
+def _already_published(cfg: ScanConfig, tickers: list[str] | None) -> dict | None:
+    """The published evening run this one would otherwise scan again, or None.
+
+    The label distinguishes a file scan from an explicit basket; the stored
+    symbols distinguish explicit baskets of the same size. Both are known
+    before the scan and are recorded by publish().
+
+    A pinned session is a deliberate re-scan and is never "already published".
+
+    THE BASKET IS PART OF THE QUESTION, and it used to not be. README's own
+    smoke test (`--dry-run --tickers`) publishes a real evening record of the
+    session it ran on, so a one-name smoke record made the cron that followed
+    re-present it: the night lost its scan, its record and its mail to a run
+    over a universe it never looked at. A published run of a DIFFERENT
+    handful of names is not this session published.
+
+    The rule is not label equality, because the two directions are not
+    symmetric. A published FILE scan does answer for a handful of names typed
+    on the command line -- and re-scanning them would replace that night's
+    record, its universe label and its filled benchmark with the smoke
+    test's, which is the harm this guard exists for -- so a --tickers run
+    against a published universe scan is still re-presented, with a reason
+    that says so rather than one about the same bars. See _republish_reason().
+
+    A published run with no `universe` block at all predates round 4 and
+    could be either; it re-presents, which is what this guard did for every
+    basket before there was a label to read.
+    """
     if cfg.session_date is not None:
         return None
     snapshot, _why = ledger.read_snapshot(ledger.DOCS_DIR)
@@ -679,9 +770,72 @@ def _already_published(cfg: ScanConfig) -> str | None:
         return None
     run = snapshot.get("run") or {}
     session = ledger.iso_date(scanner.current_session())
-    if run.get("type") == "evening" and run.get("date") == session:
-        return session
-    return None
+    if run.get("type") != "evening" or run.get("date") != session:
+        return None
+    block = run.get("universe")
+    published = block.get("label") if isinstance(block, dict) else None
+    universe = intended_universe_label(tickers)
+    if isinstance(published, str) and published not in (universe, UNIVERSE_FILE_LABEL):
+        return None
+    if tickers is not None and published == universe:
+        recorded = _recorded_tickers(block)
+        if recorded is not None and recorded != sorted(tickers):
+            return None
+        # Older explicit records held only a count. Preserve them rather
+        # than guessing the basket; _republish_reason() names the uncertainty.
+    return run
+
+
+def _recorded_tickers(universe: dict | None) -> list[str] | None:
+    """An explicit basket's identity, or unknown for an older/malformed block."""
+    tickers = universe.get("tickers") if isinstance(universe, dict) else None
+    if not isinstance(tickers, list) or not tickers or not all(
+            isinstance(ticker, str) and ticker.strip() for ticker in tickers):
+        return None
+    return sorted(tickers)
+
+
+def _republish_reason(published: dict, tickers: list[str] | None) -> str:
+    """Why this run re-presents the published session instead of scanning it,
+    in words that are true of the state it found.
+
+    One sentence used to serve three states and was false of two of them. It
+    told a --tickers run that a second scan of the same daily bars can only
+    buy the same answer, over names the published run never looked at; and it
+    told the operator re-running a night whose scan was CUT SHORT -- a dropped
+    batch, names behind the session -- the same thing, printed directly above
+    that night's own "they were never examined". The cost of re-scanning is
+    what refuses all three; the claim about the answer is not.
+    """
+    session = published.get("date")
+    head = (f"{session} is already published, so this run re-presents it rather than "
+            "scanning it again: ")
+    cost = ("paying for every Claude call a second time, mailing the same shortlist "
+            "again, and replacing the published record with the re-scan")
+    block = published.get("universe")
+    label = block.get("label") if isinstance(block, dict) else None
+    if label is None or (tickers is not None and label != UNIVERSE_FILE_LABEL
+                         and _recorded_tickers(block) is None):
+        return (head + "that older record did not record which symbols were scanned, so "
+                "this run cannot confirm that the requested basket is the same. The "
+                "published record is preserved. Pin SCAN_SESSION_DATE to a session the "
+                "record does not already hold to scan these names deliberately")
+    # A --tickers run whose names ARE the published basket really would re-read
+    # the same bars, so the difference is the label and not the flag.
+    if tickers is not None and label != intended_universe_label(tickers):
+        return (head + f"the {len(tickers)} name(s) on the command line are not the universe "
+                "that was scanned, so this is not a cheaper re-run of that scan -- it is a "
+                "narrower one, and publishing it would replace that night's record, its "
+                "universe label and its filled benchmark with this run's. Pin "
+                "SCAN_SESSION_DATE to a session the record does not already hold to scan "
+                "these names anyway")
+    status = published.get("status")
+    if isinstance(status, str) and status != "ok":
+        return (head + f"that run was itself {status.upper()}, so some of the session was "
+                "never read and a re-scan could buy a different answer -- but it would still "
+                "cost " + cost + f". Pin SCAN_SESSION_DATE to {session} to scan it again")
+    return (head + "a second scan of the same daily bars can only buy the same answer, at "
+            "the cost of " + cost)
 
 
 def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None,
@@ -709,30 +863,45 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     disagreement = session_disagreement(mode, cfg)
     if disagreement:
         report.problem("session", disagreement)
-        # A Run-workflow click at lunch to test the secrets is an evening
-        # dispatch before the close. It used to re-scan YESTERDAY's session
-        # -- the newest completed one -- pay Claude for it again, and hand
-        # add_run() a DEGRADED entry for a session the ledger already held as
-        # clean, which replaced it; and exit 2 qualifies for the commit-back,
-        # so the overwrite reached the branch. If that session is already
-        # published, a second scan of the same daily bars can only buy the
-        # same answer, so this run re-presents it instead, the way the
-        # morning does, and says so. The clock disagreement stays in the
-        # report: the email is still marked, the exit code is still 2.
-        already = _already_published(cfg)
-        if already:
-            report.problem("session", f"{already} is already published, so this run "
-                                      "re-presents it rather than scanning it again: a second "
-                                      "scan of the same daily bars would pay for the same answer "
-                                      "and replace a clean record with a degraded one")
-            return follow_through(mode_for("morning"), dry_run, report=report)
+
+    # A Run-workflow click is an evening dispatch on whatever session the
+    # clock says is newest, and the cron may already have published it: at
+    # lunch that is YESTERDAY's, after the close it is the one the 22:16 cron
+    # scanned minutes earlier. Either way a second scan of the same daily
+    # bars can only buy the same answer, at the cost of paying for every
+    # Claude call again, mailing the same shortlist again, and replacing the
+    # published record with the re-scan -- and exit 2 qualifies for the
+    # commit-back, so the overwrite reaches the branch. So this run
+    # re-presents it instead, the way the morning does, and says so.
+    #
+    # THE CHECK DOES NOT DEPEND ON THE CLOCK, and it used to: it sat inside
+    # the disagreement branch above, so the lunchtime click was defended and
+    # the post-close one -- the click a reader makes to watch the cron's own
+    # work, where the mode and the clock agree -- was not. Nothing in the
+    # reason above mentions an hour.
+    #
+    # IT DOES DEPEND ON THE BASKET. A published record of a narrower one --
+    # what README's own --tickers smoke test writes -- is not this session
+    # published, and treating it as one cost the night its scan. And which of
+    # the three sentences above is TRUE of the state this run found differs
+    # too, so the reason is composed rather than fixed: see
+    # _republish_reason().
+    already = _already_published(cfg, tickers)
+    if already:
+        report.problem("session", _republish_reason(already, tickers))
+        return follow_through(mode_for("morning"), dry_run, report=report,
+                              dispatched_as=run_type)
 
     # Layer 1: scan. Alpaca returns bars only up to the session the scan
     # targets, and src.scanner drops anything that does not carry it. Which
     # session that is comes from the clock (or SCAN_SESSION_DATE) — the check
     # above is what makes sure it is the one this mode said it would read.
     report.stage = "scan"
-    scan_stats: dict = {}
+    # Attached to the report BEFORE the scan, because run_scan() fills it in
+    # place: a scan that raises leaves behind exactly what it had reached, and
+    # that is what the failure notice reports as coverage. Assigning it after
+    # the call is assigning it only on the path where nothing went wrong.
+    scan_stats: dict = report.scan_stats
     # Rule 6's refusals come back beside the list, not inside it: the list is
     # what gets scored, and these are bursts the scan FOUND that the record
     # has to hold. They used to be logged and dropped, so a burst refused for
@@ -743,6 +912,10 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     frames: dict = {}
     candidates = run_scan(cfg, universe=tickers, stats=scan_stats, refused=illiquid_bursts,
                           frames=frames)
+    # Every sentence of the form "no scan was completed" is false from here on,
+    # whatever kills the run next. The notice for a run that died in publish()
+    # said exactly that, over a funnel it could have printed the counts of.
+    report.scanned = True
     n_bursts = len(candidates) + len(illiquid_bursts)
     _check_scan(scan_stats, report)
 
@@ -884,6 +1057,16 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         # floor it applied: "4% bursts found" counts them, so the funnel has
         # to say where they went, and a reader of the number needs the bar.
         illiquid=len(illiquid),
+        # And THE STAGE THE PRODUCT IS NAMED AFTER, counted the same way and
+        # off the same list. The email took this one as what was left when
+        # the other cuts and the survivors came off the total, and a
+        # remainder is an attribution: a burst refused for any reason outside
+        # those classes -- a fifth reason word added in a later round, a row
+        # the record cannot name -- was reported as a checklist rejection,
+        # which for a veto is the collapse this file forbids by name. The
+        # reason word is in hand right here, on every unscored burst, so the
+        # count is a count.
+        by_checklist=sum(1 for _c, _l, _x, reason in unscored if reason == "lynch_gate"),
         liquidity_floor=scan_stats.get("liquidity_floor"),
         liquidity_pctile=cfg.min_dollar_volume_pctile,
         # The names that have stopped printing, for the email's own line.
@@ -914,6 +1097,12 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         session=ledger.iso_date(session),
     )
 
+    # What this run would have mailed, attached as soon as it is known rather
+    # than at the send: a failure in archive() or publish() is a failure with
+    # every one of these counts already on the report, and the notice printed
+    # "4% bursts found: not recorded" over them.
+    report.attempted = stats
+
     report.stage = "archive"
     path = archive(scored, run_type, session=session)
     log.info("Archived %d scored candidate(s) to %s", len(scored), path)
@@ -934,6 +1123,11 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     # goes out marked instead: DEGRADED in the subject, the reasons in a band
     # above the table.
     report.stage = "email"
+    # What this run was about to mail, kept so that a delivery failure can be
+    # retried as the same email rather than reported as a run that never
+    # scanned. Set on the dry-run path too: nothing is sent, and nothing that
+    # reads it can then be exercised only by the branch that mails.
+    report.mail = {"stats": stats, "results": shortlist, "run_type": run_type}
     if dry_run:
         log.info("DRY RUN — skipping email. Shortlist:")
         for r in shortlist:
@@ -948,7 +1142,16 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
             # the night as clean and nothing in the record said the shortlist
             # was never delivered; only the Actions colour knew. Stamp the
             # failure into both files first. The exit code is unchanged.
-            report.problem("email", f"the shortlist was not delivered ({type(e).__name__}: {e})")
+            # WORDED FOR WHAT IS KNOWN WHEN IT IS WRITTEN. The notice that
+            # follows carries these very rows (src.emailer's
+            # send_failure_notice), so "the shortlist was not delivered" is an
+            # outcome still open at this line -- and on a retry that goes
+            # through, the record, the page and the next morning's band all
+            # said it never arrived while it was in the inbox.
+            report.problem("email", f"this run's own send of the shortlist failed "
+                                    f"({type(e).__name__}: {e}); the failure notice that "
+                                    "follows carries the same rows, and the log says "
+                                    "whether that one went out", exc=e)
             _restamp(book, report, published.get("headline"))
             raise
 
@@ -970,6 +1173,13 @@ def _restamp(book: ledger.Ledger, report: RunReport, headline: dict | None) -> N
     book.write(headline)
 
 
+#: What `run.universe.label` says for a scan of the checked-in file. Named
+#: because two readers now compare against it: publish(), which writes it, and
+#: follow_through(), which tells "the whole file" from a --tickers record so
+#: the morning cell can name the scope of the market claim it makes.
+UNIVERSE_FILE_LABEL = "data/symbols.txt (checked in)"
+
+
 def universe_label(scan_stats: dict, explicit_tickers: list[str] | None) -> str:
     """What was scanned, in words. ONE rule, read by the email's funnel line
     and by docs/data.json's universe block. The email built its own -- "N
@@ -979,6 +1189,21 @@ def universe_label(scan_stats: dict, explicit_tickers: list[str] | None) -> str:
     if explicit_tickers is not None:
         return f"{size} named on the command line (--tickers)"
     return f"{size} checked-in US common stocks"
+
+
+def intended_universe_label(tickers: list[str] | None) -> str:
+    """What this run will stamp into `run.universe.label`, known BEFORE the
+    scan: the checked-in file, or the names handed to --tickers.
+
+    ONE rule with publish(), which calls this rather than composing the pair
+    a second time -- the republish guard compares what this run would carry
+    against what the published record carries, and two rules that agree today
+    is exactly how a guard stops guarding. The count is len(tickers) because
+    src.scanner.run_scan() takes an explicit universe verbatim, which is what
+    makes `scan_stats["requested"]` the same number after the scan.
+    """
+    return (UNIVERSE_FILE_LABEL if tickers is None
+            else universe_label({"requested": len(tickers)}, tickers))
 
 
 def email_row(row: dict) -> dict:
@@ -1166,8 +1391,22 @@ def carried_problems(source: dict, session) -> list[dict]:
 
 
 def follow_through(mode: Mode, dry_run: bool = False,
-                   report: RunReport | None = None) -> list[dict]:
+                   report: RunReport | None = None,
+                   dispatched_as: str | None = None) -> list[dict]:
     """The morning run: last night's candidates again, before today's open.
+
+    `dispatched_as` names the mode the OPERATOR asked for, when it is not this
+    one: an evening dispatch that finds its session already published re-runs
+    this pass instead of re-scanning, and the mail it sent said "Morning
+    follow-through", "re-presented before the open" and "at today's open" —
+    three surfaces describing the 8:30 cron, on a message sent at noon by a
+    click that asked for an evening run. The pass really is this one; the
+    dispatch is what the reader has to recognise, because it is what they did.
+    It is also what decides the clock: the mode the operator asked for was
+    checked against it in discover(), and this pass is not a second occasion
+    to check the morning mode nobody requested — a click made after the 22:16
+    cron would otherwise be told it is following through on "a run that is no
+    longer the latest one" about the run published minutes before it.
 
     IT DOES NOT SCAN, AND THAT IS THE POINT. A morning run has no market data
     an evening run did not have — the daily bar it would read is the same
@@ -1205,7 +1444,14 @@ def follow_through(mode: Mode, dry_run: bool = False,
     preflight(dry_run, run_type)
 
     report.stage = "session"
-    disagreement = session_disagreement(mode, cfg)
+    # Only when the operator asked for THIS pass. A re-presentation was
+    # dispatched as an evening run and discover() has already checked that
+    # mode against the clock and reported it; checking the morning mode here
+    # too tells the reader "this is a follow-through pass over a run that is
+    # no longer the latest one" about a run published minutes earlier, which
+    # is the latest there is. One dispatch, one clock check, against the mode
+    # that was asked for.
+    disagreement = session_disagreement(mode, cfg) if dispatched_as is None else None
     if disagreement:
         report.problem("session", disagreement)
 
@@ -1250,6 +1496,10 @@ def follow_through(mode: Mode, dry_run: bool = False,
         report.errors.extend(carried)
 
     shortlist = rows[:TOP_N]
+    scanned = (source.get("universe") or {}).get("label") if isinstance(
+        source.get("universe"), dict) else None
+    followed_universe = (scanned if isinstance(scanned, str)
+                         and scanned != UNIVERSE_FILE_LABEL else None)
     # No `universe` in this block. src.emailer._funnel_line's morning branch
     # prints none, because this pass scanned none; a sentence saying so was
     # built here for a whole step and never rendered anywhere, which reads as
@@ -1258,21 +1508,42 @@ def follow_through(mode: Mode, dry_run: bool = False,
     # nothing — is the funnel line naming the run being followed instead.
     stats = report.email_stats(
         session=session,
-        # Only when there was a run to read them off. With no snapshot -- the
-        # guaranteed state of the first production morning, and of every one
-        # until evening.yml's commit-back succeeds -- these were 0 and 0, and
-        # the funnel printed "4% bursts that session: 0 | Passed 2LYNCH gate:
-        # 0" under a session it called "not recorded": two invented market
-        # counts three lines above a cell saying this is not a statement
-        # about the market. Absent, the funnel prints "not recorded" for both.
-        **({"bursts": source.get("bursts", 0), "gated": source.get("passed_gate", 0)}
-           if source else {}),
+        # Only when the run being read actually reported them. With no
+        # snapshot -- the state every morning was in until evening.yml's
+        # commit-back first succeeded on 6 Sep 2026, and the state a repo that
+        # has never published is in; a fresh clone of this one reads the run
+        # that commit-back left -- these were 0 and 0, and the funnel printed
+        # "4% bursts that session: 0 | Passed 2LYNCH gate: 0" under a session
+        # it called "not recorded":
+        # two invented market counts three lines above a cell saying this is
+        # not a statement about the market.
+        # PRESENT OR NOT AT ALL, never a default: `.get(key, 0)` applies only
+        # to a MISSING key, and a run block with no `bursts` is a record that
+        # says nothing about what the session held -- so the 0 was a market
+        # count this pass invented, and the emailer's own "no run was read"
+        # branch was unreachable from the real path whenever a snapshot
+        # existed. Absent here reads "not recorded" in the funnel and sends
+        # the empty cell to the failures, which is what a record that does not
+        # say deserves.
+        **{key: source[field] for key, field in (("bursts", "bursts"),
+                                                 ("gated", "passed_gate"))
+           if field in source},
         # Counted off the snapshot's own rows, since the run block records no
         # veto total. A snapshot written before the rule existed has none, and
         # reports 0, which is the truth about that run.
         vetoed=sum(1 for row in ((snapshot or {}).get("gated_out") or [])
                    if isinstance(row, dict)
                    and str(row.get("reason") or "").startswith("veto_")),
+        # The checklist's own refusals, from the same rows, because the run
+        # block records no total for these either. The email used to take
+        # this cut as bursts minus the other three, which on this path is a
+        # subtraction of row-counted numbers from run-block numbers: a row
+        # whose reason the record does not name (a shape snapshot_problem()
+        # accepts) left the cut it belonged to and arrived on the
+        # checklist's line, so the morning published a rule-6 refusal as a
+        # checklist rejection with the reason-less row in the same file.
+        by_checklist=sum(1 for row in ((snapshot or {}).get("gated_out") or [])
+                         if isinstance(row, dict) and row.get("reason") == "lynch_gate"),
         # Same rule, same source, for the cut the funnel used to skip. The
         # cap that applied is the one THAT run recorded, not this module's
         # constant: a snapshot written under a different budget must not be
@@ -1289,11 +1560,58 @@ def follow_through(mode: Mode, dry_run: bool = False,
         if isinstance(source.get("liquidity"), dict) else None,
         score_cap=source.get("score_cap") or 0,
         scored_by=source.get("scored_by") or {},
+        # The names in data/symbols.txt the feed had stopped answering for
+        # WHEN THAT RUN SCANNED. The page has printed it off the same block
+        # since it existed and the email dropped it on this path alone. The
+        # comment here used to say "a fact about the FILE, so it is still true
+        # this morning", and this repo falsified that in a day: the 4 Sep
+        # record names FI, BK and EA, all three retired on the 5th. Acting on
+        # the line is what changes the file, so the emailer scopes the
+        # sentence to the run on this path rather than re-asserting it.
+        stopped_printing=source.get("stopped_printing"),
+        # WHICH STAGE BROKE IN THE RUN BEING FOLLOWED, in that run's own stage
+        # words. Not its status: "degraded" covers a clock disagreement, a
+        # chart that would not render, a Claude fallback, an unreadable
+        # history and a delivery that failed as well as a scan that was cut
+        # short, and only the last of those makes its burst count anything
+        # other than what the session held. main's own 4 Sep record is two of
+        # them over a clean scan of 228 names. carried_problems() rewrites
+        # these stages to "2026-09-04 evening · scan" so one band can carry
+        # two runs', so the raw words go over separately;
+        # src.emailer._followed_shortened() applies SHORTENING_STAGES to them,
+        # which is the same rule the band applies to this run's.
+        followed_stages=[str(p.get("stage")) for p in (source.get("errors") or [])
+                         if isinstance(p, dict) and p.get("stage")],
+        # And WHAT that run scanned, when it was not the checked-in file. The
+        # empty cell makes a claim about the market ("found no 4% burst to
+        # score"), and a --tickers run writes docs/data.json like any other:
+        # over a two-name smoke record that claim covered two names, with
+        # nothing on the mail saying so. Only the exception is handed over --
+        # the ordinary case is the whole file, and a morning funnel line
+        # naming a universe THIS pass did not scan is what step 10 removed.
+        followed_universe=followed_universe,
         # How far behind, in sessions, so the SUBJECT LINE can escalate. Every
         # staleness read DEGRADED before this, and a screener dead for three
         # weeks is not the Tuesday after Presidents' Day. src.emailer._prefix()
         # and _headline() are what read it; the reason is in the band already.
         stale_sessions=behind,
+        # WHICH CLICK PRODUCED THIS MAIL, when it was not the morning cron.
+        dispatch=dispatched_as,
+        # AND WHICH SIDE OF THE CLOSE IT IS ON. This pass promises "at today's
+        # open" in its heading and "before the open" in its band, and a
+        # morning dispatch at 17:00 ET says in its own band that the session
+        # has already closed -- seven and a half hours after the open those
+        # two sentences point at. Read here rather than in the emailer, so the
+        # module that already owns the mode/clock check is the one that asks
+        # the clock.
+        after_the_close=scanner.session_has_closed(),
+        # AND WHETHER THERE IS AN OPEN TODAY AT ALL. session_has_closed() ANDs
+        # is_trading_weekday(), so a weekend pass is "not closed yet" and was
+        # given the sentence written for the 8:30 cron -- "at today's open", on
+        # a Saturday, with no band to qualify it, since a morning mode and a
+        # weekend clock do not disagree. Round 9 read the weekday alone for the
+        # mode/clock sentence; src.emailer's _when() reads it here.
+        trading_weekday=scanner.is_trading_weekday(),
     )
 
     report.counts.update({"followed": len(rows), "shortlist": len(shortlist),
@@ -1301,6 +1619,11 @@ def follow_through(mode: Mode, dry_run: bool = False,
                           "repeats": sum(1 for r in shortlist if _day_number(r) > 1)})
 
     report.stage = "email"
+    # THE MODE OF THE PASS, not of the click. An evening dispatch that finds
+    # its session already published runs this pass, and notify_failure()
+    # rendered its notice as an evening scan: "candidates for TOMORROW" and
+    # "Session it was scanning" four lines under a band saying it did not scan.
+    report.mail = {"stats": stats, "results": shortlist, "run_type": run_type}
     if dry_run:
         log.info("DRY RUN — skipping email. Following through on %s:",
                  session or "nothing — no run to follow")
@@ -1402,9 +1725,12 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         "dry_run": bool(dry_run),
         "fixture": False,
         "universe": {
-            "label": ("data/symbols.txt (checked in)" if explicit_tickers is None
-                      else universe_label(scan_stats, explicit_tickers)),
+            "label": intended_universe_label(explicit_tickers),
             "size": scan_stats.get("requested", len(explicit_tickers or [])),
+            # A count identifies no basket: AAPL/MSFT and NVDA/TSLA both
+            # have two names. Keep actual symbols for the rescan guard;
+            # ordering is irrelevant, and file scans retain their contract.
+            **({"tickers": sorted(explicit_tickers)} if explicit_tickers is not None else {}),
         },
         # The names in that universe that have stopped printing: a fact about
         # the symbol FILE, kept where its reader looks. Not copied into the
@@ -1511,6 +1837,33 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
             "benchmarked": benchmarked}
 
 
+def _closure_vote(scan_stats: dict) -> str:
+    """WHICH of the two conditions a closure needs was not met.
+
+    The rule is two conditions and the sentence used to quote one -- the
+    minimum -- so a night whose vote SPLIT was told that not enough names
+    agreed, and an operator would go looking for a coverage problem that is
+    not there. Three states, because those are the three ways
+    src.scanner.observed_previous_session() can decline: too few frames
+    carried a bar before the session, they carried one and agreed on
+    nothing, or they agreed on a date that is not an earlier business day
+    (a weekend phantom, or one later than the arithmetic).
+    """
+    voters, agreed = scan_stats.get("closure_voters"), scan_stats.get("closure_agreed")
+    minimum = scan_stats.get("closure_min_symbols")
+    if voters is None or agreed is None or minimum is None:
+        # A run from before the vote was counted, or a caller that did not
+        # scan. Absent is absent: say what is certain and no more.
+        return "and this scan could not"
+    if voters < minimum:
+        return f"and only {voters} of them carried a bar before the session"
+    if agreed * 2 <= voters:
+        return (f"and {voters} carried one but no single date was on more than half of "
+                f"them ({agreed} at most)")
+    return (f"and the {agreed} of {voters} that agreed named "
+            f"{scan_stats.get('closure_day')}, which is not an earlier business day")
+
+
 def _check_scan(scan_stats: dict, report: RunReport) -> None:
     """Turn what the scan saw into what the run is worth.
 
@@ -1530,11 +1883,53 @@ def _check_scan(scan_stats: dict, report: RunReport) -> None:
                                "their batch failed twice — they were never examined, "
                                "and an empty shortlist does not mean a quiet market")
     gapped = len(scan_stats.get("gapped", {}))
-    if with_bars and (stale + gapped) / with_bars > DEGRADED_STALE_FRACTION:
-        report.problem("scan", f"{stale + gapped} of {with_bars} symbols with data "
-                               f"({(stale + gapped) / with_bars:.0%}) could not be measured for "
-                               f"{session} and were skipped: {stale} carried no bar for it and "
-                               f"{gapped} had no bar for the session before it")
+    off_session = len(scan_stats.get("off_session") or {})
+    invalid = len(scan_stats.get("invalid_bars") or {})
+    unmeasured = stale + gapped + off_session + invalid
+    if with_bars and unmeasured / with_bars > DEGRADED_STALE_FRACTION:
+        printed_before = scan_stats.get("previous_session_printed") or 0
+        if gapped and gapped == with_bars - stale and printed_before:
+            # Every name that carried the session had no bar for the session
+            # before it -- and other names, ones that stopped printing on
+            # that very session, did carry one. Then the market traded it and
+            # these are holes: calling it "most likely a market closure"
+            # would be a sentence that is not true of its own data.
+            report.problem("scan", f"{unmeasured} of {with_bars} symbols with data "
+                                   f"({unmeasured / with_bars:.0%}) could not be measured for "
+                                   f"{session} and were skipped: {stale} carried no bar for it, "
+                                   f"and the session before it, "
+                                   f"{scan_stats.get('previous_session')}, printed on "
+                                   f"{printed_before} other symbols, so the market traded it "
+                                   f"and these {gapped} are holes in what the feed answered")
+        elif gapped and gapped == with_bars - stale:
+            # Every name that had a bar for the session had none for the
+            # session before it. That is not `gapped` holes: it is a business
+            # day on which nothing printed, which the scan reads as a market
+            # closure when enough names agree on an earlier bar and could not
+            # here -- the `--tickers` smoke test on the day after a holiday.
+            # The sentence used to describe a holiday as "12 of 12 ... had no
+            # bar for the session before it" and stop. Keyed on the names
+            # that carried the session, not on with_bars, so one halted name
+            # beside eleven closure-shaped ones is still the closure.
+            report.problem("scan", f"{unmeasured} of {with_bars} symbols with data "
+                                   f"({unmeasured / with_bars:.0%}) could not be measured for "
+                                   f"{session} and were skipped: {stale} carried no bar for it, and "
+                                   f"the session before it, {scan_stats.get('previous_session')}, "
+                                   f"printed on no name among the {gapped} that did. That is most "
+                                   "likely a market closure, which the feed carries as nothing at "
+                                   "all; the scan reads one off the night's frames only when at "
+                                   f"least {scan_stats.get('closure_min_symbols')} of them carry "
+                                   "a bar before the session and more than half of those agree "
+                                   f"on one earlier date, {_closure_vote(scan_stats)}")
+        else:
+            report.problem("scan", f"{unmeasured} of {with_bars} symbols with data "
+                                   f"({unmeasured / with_bars:.0%}) could not be measured for "
+                                   f"{session} and were skipped: {stale} carried no bar for it, "
+                                   f"{gapped} had no bar for the session before it and "
+                                   f"{off_session} had a bar for it whose close or volume could "
+                                   "not be read"
+                                   + (f"; {invalid} had unreadable required OHLCV fields on "
+                                      "the session bar" if invalid else ""))
     errors = scan_stats.get("detector_errors") or {}
     if errors:
         first = next(iter(errors.items()))
@@ -1567,8 +1962,42 @@ def _check_scoring(score_stats: dict, report: RunReport) -> None:
                                 f"Claude and carry a checklist fallback: {first}")
 
 
-def attempted_session() -> dict:
-    """The session a dead run was going for, for the email that reports it.
+def scan_coverage(scan_stats: dict) -> dict:
+    """What the scan had asked and been answered when it stopped.
+
+    Only the counts that are THERE. run_scan() fills its stats dict in one
+    update near the end, so a failure before that leaves it empty and this
+    returns {} -- which the email renders as "not recorded". A count that is
+    absent must never arrive as 0: "0 asked" is a claim about a scan, and a
+    preflight failure asked nothing because it never got to ask. Nothing is
+    coerced or type-checked on the way out either, so src.emailer's is_count()
+    is the one rule that decides what a number is; a second copy here would be
+    a guard no input can reach and no test can fail on.
+
+    The newest date any stale symbol carried is the other half of the
+    diagnosis: "228 answered, none with a bar for 2026-09-07 (newest seen
+    2026-09-04)" is a holiday or a feed that stopped, and the two dates are
+    what tell a reader which.
+    """
+    counts = {key: scan_stats[key] for key in
+              ("requested", "with_bars", "fresh", "no_bars", "dropped") if key in scan_stats}
+    # scanner's own rule for "the newest session anything did print", not a
+    # second copy of it: a name whose stamp could not be read has no date, and
+    # max() over a mix of those and real dates is the crash that function
+    # exists to have already fixed.
+    stale = scan_stats.get("stale")
+    if isinstance(stale, dict):
+        newest = scanner._newest_stale(stale)
+        if newest is not None:
+            counts["newest_seen"] = ledger.iso_date(newest)
+    session = scan_stats.get("session")
+    if session is not None:
+        counts["session"] = ledger.iso_date(session)
+    return counts
+
+
+def attempted_stats(report: RunReport) -> dict:
+    """The stats block a dead run's email is rendered from.
 
     Both failure notices used to print "Session scanned: not recorded" and the
     morning one "4% bursts that session: ?", because notify_failure() sent no
@@ -1577,17 +2006,43 @@ def attempted_session() -> dict:
     it off the clock, or off SCAN_SESSION_DATE, and both are knowable before
     the run spends anything.
 
-    It is NOT presented as the session that was read — src.emailer._funnel_line
-    relabels it on a failed run — because nothing read it. Best effort, like
-    everything else on this path: a run that died inside ScanConfig() (a
-    malformed SCAN_SESSION_DATE is exactly that) still gets its email, with
-    the session unrecorded, rather than losing the notice to a second failure.
+    FOUR STATES, and they are different emails:
+
+    * The run died DELIVERING (either mode). It built the mail and could not
+      send it, so the notice is a retry of that mail, rendered from its own
+      stats and rows. The EVENING one has published a record and can say so;
+      the MORNING one writes nothing, scans nothing, and still followed the
+      session it names — `reached_send` is what says so for both, because
+      `published` said it for one.
+    * The run died AFTER THE SCAN and before the send: it scanned, scored, and
+      broke in archive() or publish(). Every count is on the report, and the
+      notice printed "4% bursts found: not recorded" and "no scan was
+      completed" over them.
+    * The run died before it mailed or counted anything (the common one). The
+      session it was GOING FOR, plus whatever coverage the scan had reached —
+      it is NOT presented as the session that was read, because nothing read
+      it, and src.emailer._funnel_line relabels it.
+    * It died before it could name the session at all — a malformed
+      SCAN_SESSION_DATE dies inside ScanConfig(). Best effort, like everything
+      on this path: the notice still goes, with the session unrecorded, rather
+      than being lost to a second failure.
+
+    `scanned` rides on all four, because "the scan finished" is a different
+    claim from "there is a record" and from "there is a mail to retry", and
+    every sentence that used to be keyed on `published` was one of the three.
     """
+    if report.mail.get("stats"):
+        return {**report.mail["stats"], "published": report.published,
+                "scanned": report.scanned, "reached_send": True}
+    if report.attempted:
+        return {**report.attempted, "published": report.published,
+                "scanned": report.scanned}
+    stats: dict = {"coverage": scan_coverage(report.scan_stats), "scanned": report.scanned}
     try:
-        return {"session": ledger.iso_date(expected_session(ScanConfig()))}
+        stats["session"] = ledger.iso_date(expected_session(ScanConfig()))
     except Exception:  # noqa: BLE001 — the notice matters more than the date on it
         log.warning("Could not name the session the run was attempting", exc_info=True)
-        return {}
+    return stats
 
 
 def notify_failure(run_type: str, report: RunReport, dry_run: bool) -> None:
@@ -1597,6 +2052,14 @@ def notify_failure(run_type: str, report: RunReport, dry_run: bool) -> None:
     exactly like a public holiday. This is the only stage allowed to swallow
     an exception, because the caller is already reporting one and a delivery
     failure must not replace it in the log.
+
+    IT RENDERS AS THE PASS THAT BUILT THE MAIL, not as the mode the operator
+    asked for. An evening dispatch whose session is already published runs
+    follow_through(), which scans nothing -- and this notice took the evening
+    branch over its rows: "candidates for TOMORROW" and "Session it was
+    scanning" four lines under the band saying the run re-presented the
+    session instead of scanning it. `run_type` is still the fallback, for
+    every failure that never got as far as building a mail.
     """
     if dry_run:
         log.info("DRY RUN — not mailing the failure notice")
@@ -1608,7 +2071,9 @@ def notify_failure(run_type: str, report: RunReport, dry_run: bool) -> None:
         return
     try:
         from .emailer import send_failure_notice
-        send_failure_notice(run_type, report.errors, attempted_session())
+        send_failure_notice(report.mail.get("run_type") or run_type, report.errors,
+                            attempted_stats(report),
+                            results=report.mail.get("results") or [])
     except Exception:  # noqa: BLE001 — see the docstring
         log.exception("Could not mail the failure notice either")
 

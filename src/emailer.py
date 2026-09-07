@@ -3,7 +3,9 @@ Layer 6 — Email delivery via Resend (https://resend.com).
 
 Builds an HTML table of the top candidates and sends it through Resend's API
 using an API key — no OAuth, no refresh tokens, no consent screens. The
-evening email carries the chart PNGs the same run just rendered, inline; the
+evening email carries the chart PNGs the same run just rendered, inline —
+except when it is send_failure_notice() retrying a send that failed, which
+drops the attachments and says so in the cell; the
 morning email carries none and prints why in the cell where the picture would
 be, because the only image it could reach is one no file says the session of
 (src.pipeline's CHARTS_DIR has the whole argument).
@@ -114,10 +116,27 @@ SHORTENING_STAGES = frozenset({"scan"})
 
 def _shortened(scan_stats: dict) -> bool:
     """Did anything actually cut the list, as opposed to spoiling it?"""
-    return any(
-        (e.get("stage") if isinstance(e, dict) else None) in SHORTENING_STAGES
+    return _any_shortening(
+        (e.get("stage") if isinstance(e, dict) else None)
         for e in (scan_stats.get("errors") or [])
     )
+
+
+def _followed_shortened(scan_stats: dict) -> bool:
+    """The same question about the run a MORNING pass is following through on.
+
+    It cannot be asked of `errors`, which on this path holds that run's
+    problems with their stages rewritten to "2026-09-04 evening · scan" so one
+    band can carry two runs' — so src.pipeline's follow_through() hands the raw
+    stage words over as `followed_stages` and the rule stays here, where
+    SHORTENING_STAGES is.
+    """
+    return _any_shortening(scan_stats.get("followed_stages") or [])
+
+
+def _any_shortening(stages) -> bool:
+    """One rule, two readers: this run's problems and the followed run's."""
+    return any(stage in SHORTENING_STAGES for stage in stages)
 
 
 def _headline(scan_stats: dict, run_type: str, results: list[dict] | None = None) -> str:
@@ -151,6 +170,34 @@ def _headline(scan_stats: dict, run_type: str, results: list[dict] | None = None
     morning = run_type == "morning"
     rows = bool(results) if results is not None else True
     if scan_stats.get("status") == "failed":
+        # A failure notice with ROWS in it is a run that got all the way to the
+        # send and could not make it. Both of the sentences below say the
+        # opposite -- "no scan was completed" over a night whose every Claude
+        # call was paid for and whose record is on disk, "this pass could not
+        # get that far" over the very rows it is printing -- and each is the
+        # first line a skimmer reads. `published` is the narrower fact and only
+        # the evening run can carry it: the morning pass writes nothing, so it
+        # has a delivery to report and no record to claim.
+        kept = (" the scan completed and its record is published;"
+                if scan_stats.get("published") else "")
+        if rows:
+            return ("THIS RUN FAILED AT THE LAST STAGE —" + kept + " what failed was the "
+                    "delivery of this email, and the rows below are what it could not "
+                    "deliver, sent again.")
+        if kept:
+            return ("THIS RUN FAILED AT THE LAST STAGE —" + kept + " what failed was the "
+                    "delivery of this email. There was no shortlist under it, and there "
+                    "is none below.")
+        # AND THE STAGE BETWEEN THOSE TWO. A run that scanned, scored and then
+        # died in publish() has neither rows here nor a record to claim, and
+        # it was handed the sentence written for a run that never started: "no
+        # scan was completed", over a funnel printing the counts of the scan
+        # that completed. `scanned` is set the moment run_scan() returns, so
+        # whatever kills the run after it, this sentence stays true.
+        if scan_stats.get("scanned"):
+            return ("THIS RUN FAILED AFTER ITS SCAN — the scan finished and the numbers "
+                    "below are what it reached; what died came after it, so nothing was "
+                    "published and there is no shortlist below.")
         return ("THIS RUN FAILED — there is no watchlist below. A morning run "
                 "re-presents what the last evening run published, and this pass "
                 "could not get that far."
@@ -174,8 +221,9 @@ def _headline(scan_stats: dict, run_type: str, results: list[dict] | None = None
             return ("THIS FOLLOW-THROUGH IS DEGRADED — there is no watchlist below. A "
                     "morning run re-presents what the last evening run published, and "
                     "there was nothing it could show.")
+        _clause, phrase = _when(scan_stats)
         return ("THIS FOLLOW-THROUGH IS DEGRADED — the rows below are an earlier evening "
-                "run's shortlist, re-presented before the open. This pass scanned "
+                f"run's shortlist, re-presented {phrase}. This pass scanned "
                 "nothing itself, so read every reason below before acting on them.")
     if not rows:
         return ("THIS RUN WAS DEGRADED — there is no shortlist below, and the run that "
@@ -236,7 +284,7 @@ def _provenance_line(scan_stats: dict) -> str:
             f"{claude} of {total}</span>")
 
 
-def _stopped_printing_line(scan_stats: dict) -> str:
+def _stopped_printing_line(scan_stats: dict, run_type: str = "evening") -> str:
     """"Not printing: NOSUCH (no bar at all), EA (since 2026-08-04)" -- or nothing.
 
     A fact about data/symbols.txt rather than about the market, printed under
@@ -247,6 +295,18 @@ def _stopped_printing_line(scan_stats: dict) -> str:
     string the feed sent. A name with no `last` is one the feed returned no
     bar for at all, and it says so in the words docs/index.html's
     scannedNote() uses, since "since None" is a date that does not exist.
+
+    A FACT ABOUT THE FILE AS THAT RUN READ IT, which is not the same as a fact
+    about the file now, and the morning path is where the difference shows.
+    The sentence was written for the run that measured it and says "check the
+    list"; the morning renders a record hours or days old, and acting on the
+    line is exactly what changes the file underneath it. This repo did that
+    between its own two runs -- the 4 Sep record names FI, BK and EA, and all
+    three were retired the next day -- so the first morning cron would have
+    told its reader to go and check three names for work already done. On the
+    morning path the clause is scoped to the run and the imperative is
+    conditional; on the evening path the file is the one that was just read
+    and neither is needed.
     """
     block = scan_stats.get("stopped_printing")
     if not isinstance(block, dict) or not isinstance(block.get("count"), int) or not block["count"]:
@@ -261,9 +321,17 @@ def _stopped_printing_line(scan_stats: dict) -> str:
     shown = ", ".join(word(n) for n in names)
     more = block["count"] - len(names)
     tail = f" and {_plural(more, 'more name')}" if more > 0 else ""
+    session = scan_stats.get("session")
+    if run_type == "morning":
+        read_it = f"the {esc(session)} run read it" if session else "that run read it"
+        where = f"in the symbol file as {read_it}"
+        act = "check the list if they are still in it"
+    else:
+        where = "in the symbol file"
+        act = "check the list"
     return (f'\n    <p style="color:#a5281b;margin-top:0;">Not printing: {shown}{tail} — '
-            f"{_plural(block['count'], 'name')} in the symbol file with no bar for more than "
-            f"{esc(block.get('after_sessions'))} sessions; check the list.</p>")
+            f"{_plural(block['count'], 'name')} {where} with no bar for more than "
+            f"{esc(block.get('after_sessions'))} sessions; {act}.</p>")
 
 
 #: What a streak's `unknown_reason` says to a reader when the record can say
@@ -351,7 +419,9 @@ def _last_appearance(streak: dict) -> str:
     """
     outcome, score = streak.get("last_outcome"), streak.get("last_score")
     if score is not None and outcome in (None, "scored"):
-        return f"scored {score}/10 {streak.get('last_verdict') or ''}".rstrip()
+        # Both escaped: they are read straight off docs/data.json by the
+        # morning pass, and a score of "<b>9" is markup to a mail client.
+        return f"scored {esc(score)}/10 {esc(streak.get('last_verdict') or '')}".rstrip()
     return LAST_OUTCOME.get(outcome) or "no score was recorded then"
 
 
@@ -426,7 +496,8 @@ def _no_day_note(streak: dict) -> str:
     reason, begins = streak.get("unknown_reason"), streak.get("history_from")
     sessions, seen = streak.get("history_sessions") or 0, streak.get("seen_before") or 0
     if reason == "window_not_covered" and begins and sessions:
-        span = f"the {_plural(sessions, 'session')} in the record, which begins {begins}"
+        span = (f"the {_plural(sessions, 'session')} in the record, which begins "
+                f"{esc(begins)}")
         if seen:
             return (f"day unknown — burst on {seen} of {span}; this setup may have "
                     f"started before it")
@@ -524,6 +595,72 @@ def _streak_footnote(results: list[dict]) -> str:
     )
 
 
+#: How a follow-through describes WHEN it is being read, in the heading and in
+#: the band. Four states, because the pass runs on four occasions and only the
+#: first is the one its sentences were written for.
+WHEN_CLAUSES = {
+    "open": (", at today&rsquo;s open", "before the open"),
+    "dispatch": (", re-presented by an evening dispatch",
+                 "by an evening dispatch that found the session already published"),
+    "closed": (", re-presented after today&rsquo;s close", "after today&rsquo;s close"),
+    "weekend": (", re-presented on a day the market does not open",
+                "on a day the market does not open"),
+}
+
+
+def _when(scan_stats: dict) -> tuple[str, str]:
+    """Which of WHEN_CLAUSES this follow-through is in: the heading's clause
+    and the band's phrase.
+
+    The morning cron runs at 8:30 ET and both sentences are true of it. The
+    same pass also runs when an evening run finds its session already
+    published — a Run-workflow click at lunch, on a weekend or after the
+    22:16 cron, and, since the defence stopped depending on the clock,
+    whichever evening run gets there first, the cron included — and when a
+    morning dispatch is made after the close. In neither of those two is the
+    open still ahead. `dispatch` is set by src.pipeline only on the first of
+    them, `after_the_close` is its own clock check, and a caller that says
+    neither gets the sentence the mode was written for, which is what keeps
+    every build_html() call that predates this on the wording it had.
+
+    AND THE FOURTH IS A DAY WITH NO OPEN AT ALL. `after_the_close` is False on
+    a Saturday by design — src.scanner.session_has_closed() ANDs
+    is_trading_weekday() — so a weekend morning dispatch (morning.yml carries
+    a workflow_dispatch box, and the owner clicked it three times on the first
+    live Sunday) landed in the cron's state and promised "at today's open" on
+    a day there is no open, with no band to qualify it: a morning mode and a
+    weekend clock do not disagree, so nothing is degraded. Round 9 fixed this
+    class one surface over, in the mode/clock sentence, by reading the weekday
+    alone; `trading_weekday` is that same fact, carried here. A caller that
+    does not report it keeps the wording it had, which is why the test is
+    `is False` and not falsiness.
+    """
+    if scan_stats.get("dispatch"):
+        return WHEN_CLAUSES["dispatch"]
+    if scan_stats.get("after_the_close"):
+        return WHEN_CLAUSES["closed"]
+    if scan_stats.get("trading_weekday") is False:
+        return WHEN_CLAUSES["weekend"]
+    return WHEN_CLAUSES["open"]
+
+
+def _reached_the_session(scan_stats: dict) -> bool:
+    """Did this run really get to the session the funnel names?
+
+    Three facts say so and any one of them is enough. `published` is a
+    complete record on disk; `scanned` is a scan that finished, whatever
+    killed the run after it; `reached_send` is a pass that built its mail and
+    could not deliver it -- the only one of the three a MORNING run can carry,
+    because it scans nothing and writes nothing. `published` was the whole
+    rule, so the morning retry printed "Session it should have followed" one
+    line under a headline saying the rows below are the follow-through, with
+    every count beside them real: the label telling a reader less than the
+    record on the same screen already holds.
+    """
+    return any(bool(scan_stats.get(fact))
+               for fact in ("published", "scanned", "reached_send"))
+
+
 def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     """The counts under the title — and, since step 10, the SESSION.
 
@@ -537,14 +674,16 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     scanned no universe at all, so it reports the run it is following through
     on rather than a funnel it did not walk.
 
-    A FAILED run relabels the session, because it did not read it. The failure
-    notice knows which session it was going for — the clock says so even when
-    the run died on its first line — and printing that under "Session scanned"
-    would be the same silent relabelling the session was added here to end.
+    A FAILED run relabels the session UNLESS it got there — _reached_the_session()
+    is that rule. The notice knows which session the run was going for even
+    when it died on its first line, and printing that under "Session scanned"
+    would be the same silent relabelling the session was added here to end;
+    printing it under "Session it was scanning" over the counts of a scan that
+    finished is the same defect from the other side.
     """
-    session = scan_stats.get("session") or "not recorded"
-    failed = scan_stats.get("status") == "failed"
-    unknown = "not recorded"
+    session = scan_stats.get("session") or NOT_RECORDED
+    failed = scan_stats.get("status") == "failed" and not _reached_the_session(scan_stats)
+    unknown = NOT_RECORDED
     # "Passed 2LYNCH gate" counts the names that cleared the checklist AND were
     # not refused by an absolute rule, so on a night with a veto the number is
     # smaller than the checklist alone allowed -- and the label said the
@@ -562,6 +701,34 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     # liquidity floor: 3" is not readable without the number the floor was.
     illiquid = _count(scan_stats, "illiquid")
     refused += [(_liquidity_label(scan_stats), illiquid)] if illiquid else []
+    # THE STAGE THE PRODUCT IS NAMED AFTER, and the last cut that had no line.
+    # "4% bursts found: 6 | Refused by an absolute rule: 2 | Passed 2LYNCH
+    # gate: 3 | Shortlisted: 3" -- six minus two minus three is one, and that
+    # one burst, rejected by the checklist itself, was on no line of the mail.
+    # The refusals and the crowded-out got their own lines in earlier rounds
+    # for exactly this reason: a count that vanishes reads as a count that
+    # never existed, and the email's funnel is the surface where nothing said
+    # it: the page's own funnel folds the cuts into one stage caption, though
+    # its gated card has counted them apart since round 5.
+    #
+    # COUNTED BY THE CALLER OFF THE REASON WORD, like the two refusal lines
+    # above it and the crowded-out line below -- not taken as what is left
+    # when they and the survivors are subtracted from the total. A remainder
+    # attributes every burst the funnel cannot otherwise account for to
+    # whichever cut does the subtracting, and that is a positive false
+    # statement rather than a missing one: a refusal the record does not name
+    # (a reason-less row, which ledger.snapshot_problem() accepts), a veto
+    # count that is not a count, or a reason word added in some later round
+    # was REASSIGNED to the checklist, which for a veto is the one collapse
+    # CLAUDE.md forbids by name. Every burst has carried its reason word in
+    # `gated_out` since round 5, so both paths count rather than infer, and a
+    # burst neither path can name is on no line instead of on this one.
+    #
+    # Printed only when it is not zero, the rule the other refusal lines
+    # follow; a run that did not report the number says nothing about the
+    # stage, on this line and in the empty cell's clause alike.
+    by_checklist = _count(scan_stats, "by_checklist")
+    refused += [(CHECKLIST_LINE, by_checklist)] if by_checklist else []
     # The stage the email did not have. It went "Passed 2LYNCH gate: 54"
     # straight to "Shortlisted: 1", so the 29 names that cleared the checklist
     # and were never looked at appeared nowhere -- next to "Scored by Claude:
@@ -579,20 +746,77 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     if run_type == "morning":
         parts = [("Session it should have followed" if failed
                   else "Following through on the session of", session),
-                 ("4% bursts that session", scan_stats.get("bursts", unknown)),
+                 ("4% bursts that session", _reported_count(scan_stats, "bursts")),
                  *refused,
-                 ("Passed 2LYNCH gate", scan_stats.get("gated", unknown)),
+                 ("Passed 2LYNCH gate", _reported_count(scan_stats, "gated")),
                  *capped,
                  ("Watching", len(results))]
     else:
         parts = [("Session it was scanning" if failed else "Session scanned", session),
-                 ("Universe", scan_stats.get("universe", unknown)),
-                 ("4% bursts found", scan_stats.get("bursts", unknown)),
+                 # THE LABEL WHEN THERE IS ONE, THE COVERAGE WHEN THERE IS NOT.
+                 # This was keyed on the relabelling, so a completed scan that
+                 # died before it built a funnel -- in the scoring stage, say
+                 # -- lost its coverage the moment the relabel was turned off
+                 # for it, and printed "Universe: not recorded" over 228 asked
+                 # and 228 answered. Two different facts were sharing one flag.
+                 ("Universe", scan_stats.get("universe") or coverage_phrase(scan_stats)),
+                 ("4% bursts found", _reported_count(scan_stats, "bursts")),
                  *refused,
-                 ("Passed 2LYNCH gate", scan_stats.get("gated", unknown)),
+                 ("Passed 2LYNCH gate", _reported_count(scan_stats, "gated")),
                  *capped,
                  ("Shortlisted", len(results))]
     return " &nbsp;|&nbsp;\n      ".join(f"{label}: {esc(value)}" for label, value in parts)
+
+
+def coverage_phrase(scan_stats: dict) -> str:
+    """"228 asked, 228 answered, none with a bar for 2026-09-07, the newest bar
+    among the names that missed the session is 2026-09-04" — what the dead scan
+    had reached, or NOT_RECORDED.
+
+    The failure notice printed "Universe: not recorded" over a scan that had
+    asked every symbol and been answered by every symbol, because nothing
+    attached the counts to the report; src.pipeline's scan_coverage() collects
+    whatever run_scan() had filled in before it raised, and this says it.
+
+    EVERY CLAUSE IS CONDITIONAL ON ITS OWN COUNT. An absent number prints as
+    absent and never as 0: a preflight failure asked nothing, and "0 asked" is
+    a sentence about a scan that never happened. With no `requested` there is
+    no sentence at all.
+
+    THE NEWEST BAR IS ITS OWN CLAUSE, AND SAYS WHICH NAMES IT IS OVER. It was
+    appended to whatever clause came last -- "(newest seen 2026-09-03)" -- and
+    src.pipeline's scan_coverage() fills it from src.scanner._newest_stale(),
+    the newest date among the symbols that carried NO bar for the session.
+    Beside "none with a bar for X" that reads correctly; beside "5 with a bar
+    for X" it contradicts it on one line, telling an operator the feed stopped
+    days ago while five names printed today -- and this sentence is what a
+    feed outage is diagnosed from. The majority-stale StaleDataError and every
+    failure after a completed scan reach the second shape; every case that
+    existed in prose or in a test was the first.
+
+    Nothing here is escaped: _funnel_line() escapes every finished part, and
+    escaping twice is how a reader gets a literal &amp;amp;. One escaper, named.
+    """
+    counts = scan_stats.get("coverage")
+    if not isinstance(counts, dict) or not is_count(counts.get("requested")):
+        return NOT_RECORDED
+    parts = [f"{counts['requested']} asked"]
+    if is_count(counts.get("with_bars")):
+        parts.append(f"{counts['with_bars']} answered")
+        if is_count(counts.get("fresh")) and counts.get("session"):
+            fresh, session = counts["fresh"], counts["session"]
+            parts.append(f"none with a bar for {session}" if not fresh
+                         else f"{fresh} with a bar for {session}")
+    if counts.get("newest_seen"):
+        parts.append("the newest bar among the names that missed the session is "
+                     f"{counts['newest_seen']}")
+    if is_count(counts.get("no_bars")) and counts["no_bars"]:
+        parts.append(f"{counts['no_bars']} answered with no bar at all")
+    if is_count(counts.get("dropped")) and counts["dropped"]:
+        dropped = counts["dropped"]
+        parts.append(f"{dropped} dropped after {'its' if dropped == 1 else 'their'} "
+                     "batch failed twice")
+    return ", ".join(parts)
 
 
 def compact_dollars(value: float) -> str:
@@ -660,6 +884,15 @@ def _chart_file(row: dict) -> Path | None:
 #: the caller did not say why. A morning row carries its own reason.
 NO_CHART = "no chart — none was rendered for this candidate"
 
+#: And what a retry after a failed delivery prints there. The chart WAS
+#: rendered and is on disk; this send deliberately leaves it off, so neither
+#: NO_CHART nor the "it is not there now" branch is true of it.
+RETRY_CHART_NOTE = (
+    "no chart — the first attempt did not go through, and this retry sends the same "
+    "rows without the attachments rather than repeating a message the server refused. "
+    "The PNG is on disk with the run's record."
+)
+
 
 def _no_chart_note(row: dict) -> str:
     """Why this cell holds words instead of a picture — checked, not assumed.
@@ -672,7 +905,10 @@ def _no_chart_note(row: dict) -> str:
     is a different fact with a different fix.
     """
     if row.get("chart_note"):
-        return row["chart_note"]
+        # src.pipeline's MORNING_CHART_NOTE on the morning path -- but the row
+        # it arrives on came off disk, and this module escapes leaves rather
+        # than trusting the writer of the field.
+        return esc(row["chart_note"])
     if row.get("chart"):
         return (f'no chart — one was rendered for this candidate, but {esc(row["chart"])} '
                 f"is not there now, so there was nothing to attach")
@@ -711,7 +947,7 @@ def _title(run_type: str, scan_stats: dict, results: list[dict]) -> str:
     whatever the snapshot says.
 
     The word "shortlist" needs rows under it. A failed morning run still knows
-    the session it was going for (src.pipeline's attempted_session), and naming
+    the session it was going for (src.pipeline's attempted_stats), and naming
     a shortlist over the empty-table cell would be the same promise from the
     other direction.
     """
@@ -720,9 +956,10 @@ def _title(run_type: str, scan_stats: dict, results: list[dict]) -> str:
     session = scan_stats.get("session")
     if not session:
         return "Momentum Bursts — follow-through, with nothing to follow"
+    clause, _phrase = _when(scan_stats)
     if not results:
-        return f"Momentum Bursts — following through on {esc(session)}, at today&rsquo;s open"
-    return f"Momentum Bursts — {esc(session)}&rsquo;s shortlist, at today&rsquo;s open"
+        return f"Momentum Bursts — following through on {esc(session)}{clause}"
+    return f"Momentum Bursts — {esc(session)}&rsquo;s shortlist{clause}"
 
 
 def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
@@ -757,11 +994,34 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
         # step 10: a morning pass has nothing of its own to find, so "no
         # candidates passed the quality gate" would be a sentence about a scan
         # that never ran.
-        if scan_stats.get("errors"):
-            empty = ("No shortlist. See the failures listed above — this is not "
-                     "a statement about the market.")
-        elif run_type == "morning":
-            empty = "The run this follows through on scored no candidates."
+        #
+        # THE MODE IS ASKED FIRST, because `errors` answers a different
+        # question on the morning path: a follow-through is degraded by
+        # staleness and by the problems it CARRIES FORWARD from the run it
+        # reads, neither of which is a fault in this pass, and both of which
+        # used to send the cell to "see the failures listed above" over a
+        # source run that had scanned its session cleanly and found nothing.
+        if run_type == "morning":
+            empty = _empty_morning_note(scan_stats)
+        elif scan_stats.get("status") == "failed":
+            # AND THE EVENING ASKS WHETHER IT IS ALIVE, for the same reason
+            # the morning arm asks the mode: a failed run's empty table is
+            # explained by the failure first. A preflight failure printed
+            # "No 4% burst anywhere in the universe today ... this is a quiet
+            # market, not a rejection" over a run that never looked at one.
+            empty = _failed_evening_note(scan_stats)
+        elif _shortened(scan_stats):
+            # AND THE EVENING ASKS WHICH STAGE, for the reason _headline()
+            # already does one line above it: only a `scan` problem makes the
+            # list shorter than the session deserved. Testing `errors` sent a
+            # complete scan of a quiet session that carried ANY problem -- a
+            # clock disagreement, an unreadable history, a chart that would
+            # not render -- to "this is not a statement about the market",
+            # under a band whose own sentence for those stages is "the scan
+            # below is complete". One email, two answers, on one screen. The
+            # first mail this project ever delivered was that shape: run
+            # 34018706843, Sunday clock, 0 bursts.
+            empty = _no_shortlist_note(scan_stats)
         else:
             empty = _empty_evening_note(scan_stats)
         rows = f'<tr><td colspan="7" style="padding:16px;color:#666;">{empty}</td></tr>'
@@ -773,7 +1033,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
     <h2 style="margin-bottom:4px;">{title}</h2>
     <p style="color:#666;margin-top:0;">
       {_funnel_line(results, run_type, scan_stats)}{_provenance_line(scan_stats)}
-    </p>{_stopped_printing_line(scan_stats)}
+    </p>{_stopped_printing_line(scan_stats, run_type)}
     <table style="border-collapse:collapse;width:100%;max-width:1100px;">
       <tr style="background:#1a1a2e;color:#fff;text-align:left;">
         <th style="padding:8px;">Ticker</th><th style="padding:8px;">Gain</th>
@@ -788,6 +1048,138 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
       Automated screening output for human review — not trading advice.
       Verify charts and news before acting.</p>
     </body></html>"""
+
+
+#: The cell for a run whose own failures are why there is nothing to show.
+#: One string, because the morning path reaches it from two different states
+#: and an evening one from a third, and three copies of a sentence is how the
+#: two-vocabularies drift starts.
+NO_SHORTLIST_SEE_FAILURES = ("No shortlist. See the failures listed above — this is "
+                             "not a statement about the market.")
+
+#: The same claim with nothing to point at. The sentence above names a red
+#: band, and one of the states that reaches it -- a snapshot whose burst count
+#: cannot be read -- does not require the run to have any problem of its own,
+#: so a mail with no band at all told its reader to go and read one. Both end
+#: in the same clause, which is the half every test and every reader keys on.
+NO_SHORTLIST_NO_BAND = ("No shortlist, and no failures to point at — this pass could "
+                        "not read what the run it follows found, so this is not a "
+                        "statement about the market.")
+
+
+def _no_shortlist_note(scan_stats: dict) -> str:
+    """"See the failures listed above" only when there are some to see.
+
+    The second branch is reachable from the MORNING path alone, and the
+    argument is written here rather than left to a reader: build_html()'s
+    evening arm calls this only when _shortened() is true, which requires a
+    `scan` problem in `errors`, so the first branch is the only one an evening
+    run can take. The morning arm reaches it from a `bursts` that is not a
+    count, which needs no problem at all.
+    """
+    return (NO_SHORTLIST_SEE_FAILURES if scan_stats.get("errors")
+            else NO_SHORTLIST_NO_BAND)
+
+
+#: What a night that scored nothing did, in the words one mail already used
+#: for it: the morning follow-through's summary of the run it follows. The
+#: page prints the same phrase in that run's three horizon cells
+#: (docs/index.html's FWD_WORDS.unscored), because the cells used to read
+#: "pending" -- a run with no scored rows has nothing for a later run to
+#: fill, so the wait it promised could never end. One mechanism, one
+#: vocabulary; tests/test_docs_are_true.py renders this sentence and reads
+#: the page's words back against it.
+SCORED_NOTHING = "scored no candidates"
+
+
+def _empty_morning_note(scan_stats: dict) -> str:
+    """Why a morning table is empty — read off the run it follows, not this pass.
+
+    THE MAIL THE FIRST WEEKDAY CRON WOULD HAVE SENT. build_html() tested
+    `errors` before the mode, and a morning run is degraded by things that are
+    not faults in it at all: the staleness band (a fact about what has
+    published) and the problems it carries forward from the run it read. So
+    over main's real 4 Sep record — a clean scan of the session that found no
+    burst — the Tuesday 8:30 mail printed "this is not a statement about the
+    market" three lines under a funnel reading "4% bursts that session: 0",
+    which IS one. Rendered before it was written down, through a real parser.
+
+    The counts are the same ones the funnel prints, through the same predicate:
+    `bursts` absent is a pass that read no run at all, and a `bursts` that is
+    not a count is a snapshot no writer produces — refused at load by
+    src.ledger's snapshot_problem() and refused here too, because a cell that
+    cannot count the bursts cannot report what the session held. is_count() is
+    the one test, because the two surfaces disagreed: this cell explained that
+    the bursts could not be read while _funnel_line() three lines above printed
+    "4% bursts that session: -3" raw. Its own staleness is NOT mentioned here —
+    the band and the subject line carry that, and a cell that repeated it would
+    be the second vocabulary for one mechanism.
+
+    WHICH STAGE BROKE IN THE RUN IT FOLLOWS, not which word that run wore.
+    The first version of this deferred on the source's `status`, and
+    "degraded" is one word for reasons that do and do not compromise a scan:
+    of the five ways an evening run degrades, only >10% stale symbols and the
+    coverage guards cut the scan short — a clock disagreement, a chart that
+    would not render, a Claude fallback, a history it could not read and a
+    delivery that failed all leave the counts a complete reading of the
+    session. main's own 4 Sep record is two of those (the Sunday clock and the
+    Resend refusal) over a clean scan of 228 names, and it was told its own
+    count was not a statement about the market. So follow_through() hands over
+    the source run's raw stage words and _followed_shortened() applies
+    SHORTENING_STAGES to them, the same rule the band uses for this run's.
+
+    AND WHAT THAT RUN SCANNED, when it was not the checked-in file. A
+    `--tickers` run writes docs/data.json like any other, and this sentence is
+    a claim about the market: over a two-name smoke record it said no 4% burst
+    reached the checklist, with nothing anywhere on the mail saying the scan
+    was two names. The evening funnel names its universe for exactly this
+    reason; the morning funnel deliberately does not, because THIS pass
+    scanned none, so the scope goes in the sentence that needs it.
+    """
+    bursts = scan_stats.get("bursts")
+    if not is_count(bursts):
+        return _no_shortlist_note(scan_stats)
+    session = scan_stats.get("session")
+    named = (f"The {esc(session)} run this follows through on" if session
+             else "The run this follows through on")
+    found = (f"{named} {SCORED_NOTHING}." if bursts
+             else f"{named} found no 4% burst to score: nothing reached the checklist, "
+                  "so nothing failed it.")
+    universe = scan_stats.get("followed_universe")
+    if universe:
+        found += f" That run scanned {esc(universe)}, not the checked-in universe."
+    if _followed_shortened(scan_stats):
+        return (f"{found} But that run's own scan was cut short, so its reasons are "
+                "listed above and this is not a statement about the market.")
+    return found
+
+
+def _failed_evening_note(scan_stats: dict) -> str:
+    """Why a FAILED evening run has an empty table, which is a question about
+    the run before it is one about the market.
+
+    Three states, each from a fact the notice carries. A run whose BURSTS WERE
+    NEVER COUNTED knows nothing about the market, and said "this is a quiet
+    market, not a rejection" -- `bursts` was absent, and _count() reads absent
+    as 0. That is a preflight failure and equally a run that scanned and died
+    before it built a funnel, which is why the test here is the count and not
+    "did the scan finish": one of those two states has a completed scan in it
+    and still cannot say what the session held. A run that scanned and found
+    names that CLEARED the checklist has rows somewhere and none of them here,
+    and _empty_evening_note()'s sentence for that state ("none produced a
+    score") is a claim about the scoring that this run never reached.
+    Everything else is a complete reading of the session, and its own sentence
+    is the true one: the scan is what the counts describe, whatever killed the
+    run later.
+    """
+    if not is_count(scan_stats.get("bursts")):
+        return _no_shortlist_note(scan_stats)
+    passed = _count(scan_stats, "gated")
+    if passed:
+        return (f"{_plural(passed, 'burst')} cleared the 2LYNCH checklist and this mail "
+                "carries no rows for them: the run failed before it could. See the "
+                "failures listed above.")
+    return _empty_evening_note(scan_stats)
 
 
 def _empty_evening_note(scan_stats: dict) -> str:
@@ -810,22 +1202,23 @@ def _empty_evening_note(scan_stats: dict) -> str:
     from the opposite direction: the gate gets blamed for an outcome it had no
     part in.
 
-    So the note is computed rather than chosen. `bursts - vetoed - passed` is
-    what the checklist actually rejected, clamped because a malformed stats
-    block must not produce a negative count in a sentence.
+    So the note is computed rather than chosen, and the number it counts --
+    what the checklist itself rejected -- is the count the run reported, the
+    same one the funnel line three inches above prints. This cell stated it
+    for a round as a subtraction of its own while the funnel had no line for
+    the stage at all: six bursts, two refused, three through, and the sixth
+    nowhere. A run that did not report the count says nothing here either,
+    because a difference taken from a half the record does not carry is an
+    invented number sitting beside the words that say the number is not
+    known -- and the guard for that used to live at the funnel's call site,
+    so the funnel printed "Passed 2LYNCH gate: not recorded" and this cell,
+    three inches below, stated a number derived from it.
     """
     bursts = _count(scan_stats, "bursts")
     vetoed = _count(scan_stats, "vetoed")
     illiquid = _count(scan_stats, "illiquid")
     passed = _count(scan_stats, "gated")
-    # Dropping `- passed` here is provably equivalent, and the term stays
-    # anyway: every branch that reads by_checklist sits below `if passed:`,
-    # so passed is 0 by then. It is kept because it is what the number MEANS
-    # -- the bursts that were neither refused outright nor let through -- and
-    # a later edit that moves the early return would otherwise be wrong
-    # silently. Noted because mutation testing finds it and there is nothing
-    # to fix.
-    by_checklist = max(bursts - vetoed - illiquid - passed, 0)
+    by_checklist = _count(scan_stats, "by_checklist")
 
     if not bursts:
         return ("No 4% burst anywhere in the universe today. Nothing reached the "
@@ -844,7 +1237,27 @@ def _empty_evening_note(scan_stats: dict) -> str:
     # sentence that folds two of them into one word is wrong about one.
     clauses = ([f"{_plural(vetoed, 'burst')} refused outright by an absolute rule"] if vetoed else []) \
         + ([f"{illiquid} below the liquidity floor"] if illiquid else []) \
-        + ([f"{by_checklist} rejected by the 2LYNCH checklist"] if by_checklist else [])
+        + ([f"{by_checklist} {CHECKLIST_REFUSED}"] if by_checklist else [])
+    # WHAT THE COUNTS ADD UP TO IS ITSELF A FACT ABOUT THE RUN. Every sentence
+    # below this line says what happened to EVERY burst -- "All 6 bursts the
+    # scan found were refused outright", "No candidate passed the 2LYNCH
+    # checklist today" -- and each was true only because the checklist's own
+    # count used to be the remainder, which by construction made the three
+    # add up to the total. Counted off the reason words they can fall short:
+    # a row whose reason the record does not name, or one the mail has no
+    # line for, is a burst none of these clauses covers, and the "all" is
+    # then false about the ones it covers by silence. So the shortfall is
+    # stated rather than absorbed, which is the same rule as the funnel's --
+    # a burst the record cannot attribute is on no line rather than on the
+    # nearest one.
+    unnamed = bursts - vetoed - illiquid - by_checklist
+    if unnamed > 0:
+        others = "the other burst" if unnamed == 1 else f"the other {unnamed} bursts"
+        if clauses:
+            return (f"{', '.join(clauses[:-1]) + ' and ' if len(clauses) > 1 else ''}"
+                    f"{clauses[-1]}. This run recorded no reason for {others}.")
+        return (f"{_plural(bursts, 'burst')} measured and none scored, and this run "
+                "recorded no reason for any of them.")
     if len(clauses) > 1:
         verdicts = "Two different verdicts, and neither is the other." if len(clauses) == 2 \
             else "Three different verdicts, and none is another."
@@ -863,6 +1276,29 @@ def _empty_evening_note(scan_stats: dict) -> str:
             f"{_plural(bursts, 'burst')} measured, none cleared it.")
 
 
+#: The checklist's own refusals, in one phrase, because one mail can carry
+#: both of its sentences: the funnel's line and the empty cell's clause, three
+#: inches apart. Two wordings for one mechanism side by side on one screen is
+#: a shape this project has now found four times. The word is CHECKLIST and
+#: never "gate": a 6/6 name an absolute rule refused is in neither count, and
+#: "rejected at the 2LYNCH gate" states the opposite of what happened to it.
+#:
+#: The streak line on a row of the same mail says "rejected at the 2LYNCH
+#: gate" -- LAST_OUTCOME's words for `lynch_gate`, which the page carries
+#: with the threshold in them ("rejected at the >=3/6 2LYNCH gate"). That is
+#: the STAGE a past appearance was thrown out at, and the register predates
+#: this line on both surfaces. What must not drift is the RULE's name: the
+#: footnote under this table ("whether the checklist rejected them"),
+#: src.ledger's own contract and README's last_outcome bullet all say the
+#: checklist rejected these names, and this line is the fourth. A test
+#: renders a mail carrying the funnel line, the footnote and a `lynch_gate`
+#: streak line at once, because a mail with no rows has only the first.
+CHECKLIST_REFUSED = "rejected by the 2LYNCH checklist"
+#: The same phrase as a funnel label. Not .capitalize(), which lowercases
+#: 2LYNCH.
+CHECKLIST_LINE = CHECKLIST_REFUSED[0].upper() + CHECKLIST_REFUSED[1:]
+
+
 def _count(scan_stats: dict, key: str) -> int:
     """One stats number as an int, or 0 for anything that is not one.
 
@@ -876,6 +1312,34 @@ def _count(scan_stats: dict, key: str) -> int:
     # funnel as "Below the liquidity floor: -2" and the note as "-2 below the
     # liquidity floor and 7 rejected" -- seven of five bursts.
     return max(value, 0) if isinstance(value, int) and not isinstance(value, bool) else 0
+
+
+#: What the funnel prints for a fact the caller did not report. Absent has
+#: always read this way; a value that is not a count reads the same, because
+#: "not recorded" is true of both and "4% bursts that session: -3" is true of
+#: neither.
+NOT_RECORDED = "not recorded"
+
+
+def is_count(value) -> bool:
+    """The one test for "is this a number of names?", shared by the funnel and
+    by the empty-cell note.
+
+    They disagreed: the cell refused a bool, a string and a negative and said
+    so, and the funnel three lines above it printed the same value raw -- "4%
+    bursts that session: True" over a cell explaining that the bursts could
+    not be counted. One rule, so a mail cannot answer one question twice.
+    src.ledger's snapshot_problem() refuses these shapes at load, so the state
+    is reachable only from a hand-edited file or a direct build_html() call;
+    that is the same threat model every esc() in this module answers.
+    """
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
+def _reported_count(scan_stats: dict, key: str):
+    """A funnel number, or "not recorded" when it is not one."""
+    value = scan_stats.get(key, None)
+    return value if is_count(value) else NOT_RECORDED
 
 
 def _build_attachments(results: list[dict]) -> list[dict]:
@@ -914,7 +1378,15 @@ def subject_for(results: list[dict], run_type: str, scan_stats: dict) -> str:
     word there escalates rather than reading DEGRADED for both a one-session
     gap and a screener that has been dead for three weeks.
     """
-    label = "Morning follow-through" if run_type == "morning" else "Evening candidates"
+    # The DISPATCH first, when there was one: a Run-workflow click that asked
+    # for an evening run and got a re-presentation is a mail the operator has
+    # to be able to connect to what they pressed, and "Morning follow-through"
+    # at noon is not it.
+    dispatch = scan_stats.get("dispatch")
+    if dispatch:
+        label = f"{str(dispatch).capitalize()} dispatch re-presenting"
+    else:
+        label = "Morning follow-through" if run_type == "morning" else "Evening candidates"
     prefix = _prefix(scan_stats)
     session = scan_stats.get("session")
     dated = f"{label} {session}" if session else label
@@ -1066,8 +1538,9 @@ def send_email(results: list[dict], run_type: str, scan_stats: dict) -> None:
             _build_attachments(results))
 
 
-def send_failure_notice(run_type: str, errors: list[dict], scan_stats: dict | None = None) -> None:
-    """Mail the fact that there is nothing to mail.
+def send_failure_notice(run_type: str, errors: list[dict], scan_stats: dict | None = None,
+                        results: list[dict] | None = None) -> None:
+    """Mail the fact that there is nothing to mail — or, when there is, mail it.
 
     A run that dies mid-scan sends nothing at all today, and nothing looks
     exactly like a weekend. The screener could be dead for a fortnight before
@@ -1075,9 +1548,34 @@ def send_failure_notice(run_type: str, errors: list[dict], scan_stats: dict | No
     FAILED subject and the exception in the band — deliberately the same
     artifact, so the daily habit of reading it is the monitor.
 
+    `results` is the shortlist the run had already produced, and it is only
+    ever non-empty on the exit-3 path: publish() ran, the record is on disk,
+    and what failed was the delivery. Then this notice IS that mail, sent
+    again — the rows are the point, and a notice reading "there is no
+    shortlist below" over five names the run paid Claude for was the defect.
+
+    THE ATTACHMENTS ARE DROPPED. A byte-identical resend of what a mail server
+    just refused has no reason to go differently, which is the argument
+    src.scorer's RETRY_CORRECTION already applies to a reply in the wrong
+    shape; the charts are the heavy part of the message and the likeliest
+    reason a send is refused. Dropping the row's `chart` is the WHOLE of that
+    rule -- _chart_file() is what both the <img> and the attachment list are
+    built from, so there is nothing to say twice -- and the note replaces the
+    picture, rather than a broken image or a claim that none was rendered.
+
+    AND ONLY WHERE THERE WAS A PICTURE TO DROP. The note ends "The PNG is on
+    disk with the run's record", and it was written over every row: over a
+    MORNING row, whose own note exists precisely because the PNG on disk
+    records no session and cannot be shown to belong to the numbers beside it,
+    and over an evening row whose chart never rendered. Both were told a
+    picture is on disk for them. _chart_file() decides here too, so a row that
+    was not going to attach anything keeps the reason it already carries.
+
     Best effort by construction: the caller is already handling a failure, and
     a second one here must not replace the first in the log.
     """
     stats = dict(scan_stats or {})
     stats.update({"status": "failed", "errors": errors})
-    send_email([], run_type, stats)
+    rows = [{**row, "chart": None, "chart_note": RETRY_CHART_NOTE} if _chart_file(row) else row
+            for row in (results or [])]
+    send_email(rows, run_type, stats)

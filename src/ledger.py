@@ -171,7 +171,7 @@ CONTRACT_INVARIANTS = [
     "run.scored + len(gated_out) == run.bursts. Nothing a scan found may vanish without appearing in one of the two lists.",
     "Every candidate carries provenance.source: 'claude' when the model actually returned a score, 'fallback' when the offline checklist produced it. A fallback is never labelled claude.",
     "provenance.chart_seen is true only when the scoring model actually received the chart image.",
-    "forward_returns and runs[].forward_returns are null until the sessions exist. Absent is null, never 0 and never a string.",
+    "forward_returns and runs[].forward_returns are null until the sessions exist -- with one exception that no session can end: a run that scored nothing has no rows for a later run to fill, so its three horizons and its n stay null and 0 for good, and a reader must be told that rather than 'pending'. Absent is null, never 0 and never a string.",
     "d1/d3/d5 divide the close 1, 3 and 5 sessions after the burst by the BURST-DAY CLOSE: what the setup did. forward_returns.from_open divides the same later closes by the NEXT session's open, the earliest price a reader of the evening email could have paid: what acting on it could have had. Both are paper prices from one venue's official prints with no slippage. Every mean and every evidence outcome carries both, the open basis nested under from_open with its own n, and enough_from_open is the open basis's own licence to be read as a rate -- a surface that shows a number says which basis it is on, and never shows a close-basis number under an open-basis label or the reverse. A row or a run from before this basis existed carries no from_open, which is not a measurement of zero.",
     "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
     "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
@@ -2628,6 +2628,19 @@ def snapshot_problem(data: dict) -> str | None:
     and src.pipeline guards its single comparison against it instead.
     """
     run = data.get("run")
+    # The two counts the morning email prints as facts about the session, and
+    # the only inputs to its empty-table sentence. Absent is a record that
+    # says nothing about them, which the funnel prints as "not recorded" and
+    # the cell defers on; present, they are counts, and a bool, a string or a
+    # negative is a file no writer produces -- so the run exits 2 naming the
+    # field instead of mailing "4% bursts that session: -3" beside a sentence
+    # about what the market held. The class this function exists for, on the
+    # one field the round that added the sentence did not widen it to.
+    for field_name in ("bursts", "passed_gate"):
+        if field_name in run:
+            value = run[field_name]
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                return (f"run.{field_name} is {value!r}, not the count publish() writes")
     for field_name, wanted in (("status", str), ("scored_by", dict), ("errors", list)):
         value = run.get(field_name)
         if field_name not in run:
@@ -2673,9 +2686,20 @@ def snapshot_problem(data: dict) -> str | None:
     # date belongs is a shape no writer produces.
     if "stopped_printing" in run:
         block = run["stopped_printing"]
+        count = block.get("count") if isinstance(block, dict) else None
+        after = block.get("after_sessions") if isinstance(block, dict) else None
         if (not isinstance(block, dict) or not isinstance(block.get("names"), list)
-                or isinstance(block.get("count"), bool) or not isinstance(block.get("count"), int)):
-            return f"run.stopped_printing is {type(block).__name__}, not the object publish() writes"
+                or isinstance(count, bool) or not isinstance(count, int) or count < 0
+                # `after_sessions` is the number the whole sentence turns on --
+                # "no bar for more than 5 sessions" -- and it was checked
+                # nowhere while `count` was: with the key deleted the email
+                # read "for more than  sessions" and the page "for more than
+                # undefined sessions", and nothing said so. The block is one
+                # round old, so "absent is what an older writer produced" does
+                # not apply to it: every writer emits both.
+                or isinstance(after, bool) or not isinstance(after, int) or after < 0):
+            return ("run.stopped_printing is not the "
+                    "{after_sessions, count, names} object publish() writes")
         for position, name in enumerate(block["names"], start=1):
             behind = name.get("sessions_behind") if isinstance(name, dict) else None
             last = name.get("last") if isinstance(name, dict) else None

@@ -84,6 +84,12 @@ KNOWLEDGE_PATH = Path(__file__).resolve().parent.parent / "knowledge" / "strateg
 # is additionally DETECTED (see _reply_text) instead of being parsed.
 MAX_TOKENS = 4096
 
+# Fail into the existing marked fallback while the workflow still has time
+# to publish. The SDK otherwise waits ten minutes per read and retries twice
+# inside each application attempt: six wire requests for one candidate.
+SCORING_IO_TIMEOUT_SECONDS = 30.0
+SCORING_CONNECT_TIMEOUT_SECONDS = 5.0
+
 # knowledge/strategy.md: "Verdicts: A+ (9-10), A (8-8.9), B+ (7-7.9),
 # B (6-6.9), C (5-5.9), skip (<5)." Kept in the same order so _verdict_for()
 # below reads as that table does.
@@ -174,7 +180,11 @@ def render_chart(ticker: str, df: pd.DataFrame, out_dir: str = "charts") -> str:
 def _client():
     import anthropic
 
-    return anthropic.Anthropic()  # ANTHROPIC_API_KEY from env
+    return anthropic.Anthropic(
+        timeout=anthropic.Timeout(SCORING_IO_TIMEOUT_SECONDS,
+                                  connect=SCORING_CONNECT_TIMEOUT_SECONDS),
+        max_retries=0,  # score_candidate owns the one retry and the fallback
+    )  # ANTHROPIC_API_KEY from env
 
 
 def _b64(path: str) -> str:

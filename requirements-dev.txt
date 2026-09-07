@@ -7,6 +7,9 @@
 
 pytest>=8.0
 
+# Exercise Anthropic's real HTTP transport without opening sockets.
+httpx2>=2.12
+
 # tests/test_docs_are_true.py parses .github/workflows/*.yml and asserts on the
 # PARSED structure, because what went wrong there twice was a structural
 # property of an `if:` condition and not a spelling. It is here rather than in

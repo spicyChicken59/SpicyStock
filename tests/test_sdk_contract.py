@@ -319,6 +319,34 @@ def test_a_scan_reaches_the_same_verdict_through_a_real_barset_as_through_the_do
         assert real.date == double.date == str(session)
 
 
+def test_the_day_after_a_closure_is_scanned_through_a_real_barset_newest_first(
+    fake_alpaca, ohlcv, monkeypatch
+):
+    """Twelve names, none with a bar on Monday 7 Sep 2026, served newest
+    first the way the wire may: the session before Tuesday's is read off the
+    batch as Friday, and every burst is found. Before it, every one of them
+    was a hole and the scan found nothing -- reproduced on exactly this
+    BarSet."""
+    from tests.fakes import FakeDataClient
+
+    session = date(2026, 9, 8)
+    frames = {f"G{i}": ohlcv("burst", variant=i) for i in range(12)}
+    for ticker, frame in frames.items():
+        fake_alpaca.add_history(ticker, frame)
+    rows = {t: [bar for bar in _raw_bars(f, session) if not bar["t"].startswith("2026-09-07")]
+            for t, f in frames.items()}
+    assert all(len(r) == len(frames[t]) - 1 for t, r in rows.items()), "precondition: the Monday bar is gone"
+    monkeypatch.setattr(FakeDataClient, "get_stock_bars",
+                        lambda self, request: BarSet({t: list(reversed(r)) for t, r in rows.items()}))
+    stats: dict = {}
+
+    found = run_scan(ScanConfig(session_date=session), universe=list(frames), stats=stats)
+
+    assert sorted(c.ticker for c in found) == sorted(frames)
+    assert stats["gapped"] == {}
+    assert stats["previous_session"] == date(2026, 9, 4)
+
+
 def test_a_stale_symbol_is_recognised_as_stale_through_a_real_barset(
     fake_alpaca, ohlcv, monkeypatch
 ):

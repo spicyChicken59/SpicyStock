@@ -6,6 +6,9 @@ checklist, has Claude score the survivors (numbers + chart image), and
 emails a ranked top-5 shortlist. **Zero manual steps** — no DeepVue paste,
 no Google Sheet, no n8n.
 
+See the [Tuesday readiness review](READINESS-2026-09-08.md) for the verified
+operational fixes, the September 8 schedule, and the current universe/evidence limits.
+
 ## How it differs from the original spec
 
 | Original plan | This build | Why |
@@ -60,7 +63,8 @@ Layer 6  Email ....................... HTML table, top 5, with the charts this
 | scans | yes, every layer above | no |
 | costs | ~25 Claude calls, ~$0.15 | nothing |
 | writes | `docs/data.json`, `docs/ledger.json`, `docs/charts/` (gitignored), `results/*.csv` | nothing |
-| charts | attached inline — the PNGs it just rendered | none, and the email says why |
+| charts | attached inline — the PNGs it just rendered, except on a retry after a failed send | none, and the email says why |
+| an empty table | says what its own scan found, unless that scan was cut short | says what the run it follows found, unless *its* scan was |
 | workflow | `.github/workflows/evening.yml` | `.github/workflows/morning.yml` |
 
 **Why the morning run does not scan.** Before the open it has no market data
@@ -82,7 +86,83 @@ then paired last night's numbers with tonight's picture and said nothing. The
 model is told to trust the chart over the numbers and a reader will do the
 same, so the picture is dropped and the cell says why. The evening email is
 unaffected: it attaches the PNGs it rendered moments earlier, in the same
-process.
+process — except when it is the retry of a send that failed, which drops them
+and says so in the same cell, and only for the rows that really had a picture
+to drop.
+
+**The funnel adds up.** It read "4% bursts found: 6 | Refused by an absolute
+rule: 2 | Passed 2LYNCH gate: 3 | Shortlisted: 3" — six minus two minus three
+is one, and that one burst, the one the *checklist itself* rejected, was on no
+line of the mail while its row sat in the same run's `docs/data.json` under
+`reason: lynch_gate`. The absolute rules got their own line, the liquidity
+floor got one and the call cap got one, each for exactly this reason: a count
+that vanishes reads as a count that never existed. The checklist was the last
+cut without one, and it is the cut the product is named after. It has one now
+— "Rejected by the 2LYNCH checklist: 1", between the floor and the gate, so
+the cuts read top to bottom as the subtraction a reader does — printed only
+when it is not zero, like the other refusal lines, and **counted, not left
+over**: every refused burst has carried its own reason word in `gated_out`
+since round 5, so the evening counts the `lynch_gate` rows it is holding and
+the morning counts the same rows off the record it follows, the way both mails
+already count the vetoes and the floor's refusals. A remainder would have been
+an attribution: a burst refused for anything outside those classes — a row
+whose reason the record does not name, a reason word added in some later round
+— would be reported as a checklist rejection rather than left off, and for a
+veto that is the collapse this file forbids by name. A burst neither path can
+name is on no line, and the empty-table cell says so in words rather than
+absorbing it into a verdict. The email's funnel is where nothing said it: the
+page's funnel folds these cuts into one stage caption, though its gated card
+has counted them apart since round 5. What still has no line of its own is the
+last drop, scored → shortlisted: both ends are printed ("Scored by Claude: 25
+of 25" beside "Shortlisted: 3") but the reason, a ranking rather than a
+refusal, is named on the page and not in the mail.
+
+**A run that dies mails the same email with the failure in it, and that mail
+now says what the run did before it died.** It printed "Universe: not
+recorded" over a scan that had asked every symbol and been answered by every
+one of them — the counts were in memory, and nothing had attached them to the
+report. `run_scan()` fills its stats dict in place, so the notice reports
+whatever it had reached: "Universe: 228 asked, 228 answered, none with a bar
+for 2026-09-07, the newest bar among the names that missed the session is
+2026-09-04", with the dropped and no-bar-at-all counts when there were any.
+Every clause is conditional on its own count — an absent number prints as
+absent, never as 0, because "0 asked" is a claim about a scan that never
+happened. **And the newest bar names the names it is measured over**, because
+it is the newest date among the ones that did NOT print: written as
+"(newest seen …)" glued to the clause before it, it read correctly beside
+"none with a bar for X" and contradicted itself beside "5 with a bar for X",
+which is the shape a partly stale feed and every failure after a completed
+scan produce.
+
+**A run that dies AFTER its scan says what the scan found.** It scanned,
+scored and broke in `publish()` — every count on the report — and was mailed
+the sentences written for a run that never started: "there is no shortlist
+below, and no scan was completed", "4% bursts found: not recorded", and an
+empty-table cell reading "this is a quiet market, not a rejection" over twelve
+bursts it had paid Claude for. The notice is rendered from the funnel the run
+had already built, the band says the run failed after its scan, and the market
+claim is made only by a run whose bursts were actually counted — which a
+completed scan that broke before it built a funnel is not. That state keeps
+the coverage line, because the universe cell now prints the label when the run
+has one and the coverage when it does not, rather than reading whether the
+session was being relabelled.
+
+**And a run that published and then failed to deliver is a different email
+from a run that never scanned.** The record is written before the send, so
+exit 3 is a night that scanned, rendered, paid for every Claude call and wrote
+both files — and its notice read "there is no shortlist below, and no scan was
+completed", with the one rejection listed twice, once in the email stage's own
+sentence and once as the exception that ended the run. The notice is that mail
+sent again: the rows are in it, the headline says the record is published and
+what failed was the delivery, and the exception is recorded once. The record
+says what is known when it is written — *this run's own send failed* — rather
+than "the shortlist was not delivered", which is an outcome still open at that
+line and false in the record, on the page and in the next morning's band as
+soon as the retry goes through. The
+attachments are dropped, because a byte-identical resend of what a server just
+refused has no reason to go differently, and each row says so where its chart
+would be. The morning pass writes no record and can never claim one, but it
+can still fail on the send, and its notice is the same retry.
 
 **A morning run that has nothing fresh to show says how stale it is, in the
 subject line.** Its whole input is the snapshot the last evening run published,
@@ -100,6 +180,42 @@ Day) and is news the reader already has — and the subject escalates
 from `DEGRADED — ` to `NOTHING PUBLISHED IN 15 SESSIONS — `. The heading names
 the session the rows are actually from, for the same reason: it used to read
 "follow-through watchlist for TODAY" over a snapshot fifteen sessions old.
+A morning run on a holiday — Labor Day Monday at 8:30 AM ET — reads Friday's
+evening record like any Monday morning and mails it clean, with nothing in it
+saying the market is closed today, because nothing in this project knows that.
+That is designed: a calendar approximate enough to be wrong would say more
+than the record can support, and the evening cron on the holiday itself is
+what finds no bar and says so.
+
+**And when there is nothing to show, the cell asks whether the SCAN was cut
+short — not whether anything went wrong.** Only a `scan`-stage problem makes
+the list shorter than the session deserved; a clock disagreement, a chart that
+would not render, a Claude fallback, an unreadable history and a delivery that
+failed all leave the counts a complete reading. The cell asked "were there any
+errors?", so every one of those printed "No shortlist. See the failures listed
+above — this is not a statement about the market" three lines under a funnel
+reading "4% bursts that session: 0", which *is* a statement about the market —
+and under a band whose own sentence for those stages is "the scan below is
+complete". One email, two answers, on one screen; the first mail this project
+ever delivered was that shape, and so was the morning that would have followed
+it. Both modes ask the stage now. An evening run with a complete scan says
+what it found ("No 4% burst anywhere in the universe today…"), and a morning
+one names the session and what that run found ("The 2026-09-04 run this
+follows through on found no 4% burst to score", or "…scored no candidates"),
+adding what that run scanned when it was not the checked-in file, since the
+morning funnel names no universe. The failures sentence is what is left for
+three states: a morning that read no published run at all — the state every
+morning was in until `evening.yml`'s commit-back first succeeded on 6 Sep
+2026, and the state a repo that has never published is in, since a fresh clone
+of this one now reads the run that commit-back left — a snapshot whose burst
+count cannot be read, which is not a run this pass can report either, and a run whose own scan was cut
+short, where the counts are printed and then not read as the session. With no
+red band to point at, the sentence does not point at one. The names that
+stopped printing are on both emails now — `run.stopped_printing` is a fact
+about `data/symbols.txt` **as that run read it**, so the morning scopes it to
+the run and softens the instruction: this repo retired `FI`, `BK` and `EA` the
+day after the record that names them, and the unscoped sentence would have
+sent the next morning's reader to check three names the file no longer holds.
 
 **The mode is a promise about the clock, and it is checked.** An evening run
 declares that today's session has closed; a morning run declares that it has
@@ -117,6 +233,119 @@ on the evening run, which is the only one that writes a CSV, in that file's
 name too. The label cannot quietly become a different day.
 `SCAN_SESSION_DATE` is exempt: a pinned session is you overruling the clock on
 purpose, and a deliberate backfill is not a mistake.
+
+An evening dispatch whose session is already published re-presents it rather
+than paying for the same answer twice, **whatever the clock says** and
+whatever made the dispatch. The clicks are the lunchtime one, whose newest
+completed session is yesterday's, and the one made after the 22:16 cron to
+watch it work, whose newest completed session is the one that cron published
+minutes earlier — but the rule is *whichever evening run gets there first*,
+so a click made before 22:16 leaves that night's cron nothing to scan too.
+The check sat inside the clock-disagreement branch above, and the mode and
+the clock agree after the close — so the second click re-scanned the same
+daily bars, paid for every Claude call a second time, mailed the same
+shortlist again and replaced the published record with the re-scan, at exit 0
+with nothing recorded. It is consulted before the scan now, so a
+re-presentation asks the feed nothing and the run is reported and exits 2 the
+same way. A rehearsal from the form's `dry_run` box is not exempt either, and
+that is worth knowing before using one to try a change against the real feed:
+unpinned, after the cron has published, it makes no request at all.
+
+**It reads the basket as well as the session.** The documented `--tickers`
+smoke test below publishes a real evening record of the day it ran on, and a
+one-name smoke record is not that session published: the cron that follows
+still scans the file, or the night would lose its scan, its record and its
+mail to a run over a universe a fraction as wide. The reverse is not
+symmetric — a published universe scan *is* an answer about a handful of names
+typed on the command line, and re-scanning them would replace that night's
+record, its universe label and its filled benchmark with the smoke test's —
+so a `--tickers` run against a published night re-presents, and is told that,
+rather than told the bars are the same bars.
+Explicit scans also record their sorted symbol list in `run.universe.tickers`:
+two baskets containing the same number of different symbols are different scans,
+while reordering the same symbols keeps the published run. Older explicit records
+without that list are preserved with an identity-unknown explanation, rather than
+claiming the requested symbols were already scanned.
+`SCAN_SESSION_DATE` is the one exemption, for the same reason it is exempt
+from the clock check: a pinned session is a deliberate re-scan, and it is how
+the 4 Sep record was republished. Pin a session **the record does not already
+hold**, or put both files back afterwards with the `rm -f docs/ledger.json &&
+git checkout -- docs/` below: `Ledger.add_run()` keys on the session and the
+run type, so pinning a smoke test to the night the cron just published drops
+that night's rows, its universe label and its filled benchmark for the smoke
+test's, at exit 0 with nothing reported — and a measured horizon is never
+re-measured, so that session's alternative is gone for good. What keeps a
+`--tickers` run out of every benchmark is not the pin: it is that it has no
+universe to offer, so `Ledger.fill_benchmarks()`, which matches runs on the
+label the entry already carries, neither gives it one nor takes one from it.
+And the mail it sends used to say
+"Morning follow-through" in the subject, "re-presented before the open" in the
+band and "at today's open" in the heading, three surfaces describing the 8:30
+cron on a message a lunchtime click produced hours after that open. The pass
+really is the follow-through; the dispatch is what the reader has to
+recognise, so the subject names it and the two open sentences are replaced —
+and its failure notice is rendered as the pass that built it, not as the
+evening scan the click asked for. A morning dispatch made *after* the close
+gets the other half: its subject is untouched (there was no dispatch of
+another mode to name), and the heading and the band say it is being read after
+today's close, where they used to promise an open the run's own band said had
+already happened. A weekend dispatch is the fourth occasion and the newest: it
+is told the market does not open today, because
+`scanner.session_has_closed()` is false all weekend by design and the pass
+therefore took the 8:30 cron's wording, "at today's open", on a Saturday, with
+nothing degraded to qualify it — a morning mode and a weekend clock do not
+disagree.
+
+**The session before is read off the frames, so the day after a holiday is a
+night.** A burst is one session's move against the session before it, and the
+scan refuses a name whose bar before the session is not that session — a
+full-day halt, or a bar the feed dropped, would otherwise print a two-day move
+as the day's 4%. A bar that is *present but unreadable* — a NaN where its close
+or volume belongs — is a hole too, and used to pass: the rule read the index
+while `detect_setup()` drops exactly those bars before it measures, so the
+session was measured against the bar two back and the two-session move was
+published under the session's date with status ok. Both now read the same
+frame (`_measurable()`).
+
+"The session before" was weekend-only arithmetic, and on the day after every
+weekday holiday the arithmetic names the holiday: every frame
+lacked it, every name was refused as a hole, and the run published DEGRADED
+with 0 bursts, a null floor and a record `evening.yml` would have committed as
+the night's — reproduced end to end on Tuesday 8 Sep 2026, the day after Labor
+Day and the first scheduled night. The scan reads the session before off the
+night's frames now (`observed_previous_session()`). **One name that printed on
+the arithmetic's date is the disproof, and it settles it**: every frame the
+scan downloaded is searched first, the stale ones included, because a name
+that stopped printing *on* that session still printed on it. Without that
+clause a bare majority decided against evidence the scan already held — seven
+names halted on Tuesday outvoted five that traded it, the five healthy names
+became the holes and the seven broken ones were measured across theirs.
+Only when nothing printed does the vote decide: when at least
+`coverage_guard_min_symbols` (10) fresh frames vote and **more than half share
+one business day earlier than the arithmetic's**, that date is the previous
+session. Only the *fresh* frames vote — a stale frame's newest bar is not the
+bar before this session, so it answers a question about an earlier week.
+A majority can only move the answer back, and only onto a weekday, so no
+phantom bar can manufacture a session: a Saturday later than the arithmetic
+loses on the first clause, and the window of non-session dates *earlier* than
+it that the day after a holiday opens loses on the second. A split vote moves
+nothing; one name's own hole on the week of a closure is still a hole. No
+holiday calendar, still: the frames are the evidence, and this is the same
+evidence and the same shape of vote the forward returns read their sessions by
+— with one deliberate difference, at a tie: `session_calendar()` admits a date
+carried by exactly half its frames, because a session missing from half the
+frames is still a session, while moving *this* answer back takes a strict
+majority. Below the minimum — the documented `--tickers` smoke test on the day
+after a holiday — the arithmetic stands, and the degraded sentence names both
+conditions a closure needs and says which of them was not met, rather than
+counting the universe as holes; when other names *did* print on that session
+it says so and calls these holes. The stated cost: a genuine feed-wide dropped
+business day, one no name in the universe printed on, never observed, is read
+as a closure and measured across it.
+The bar the detector measured must also be the session's: a session bar with
+no readable close or volume used to make it measure the bar before and publish
+the *previous* session's burst under the session's date with status ok, and
+such a name is refused and counted with the ones that could not be measured.
 
 **Day N of this setup.** Every burst the evening run reports carries a
 `streak`: whether this name has appeared before, when it last did, what it
@@ -152,9 +381,10 @@ Two more things the first live day turned up, both settings rather than code:
   trap.** Settings → Pages → Build and deployment → "Deploy from a branch" →
   branch `main`, folder `/docs`, Save. With the folder left at `/ (root)` the
   first build published the whole repository and rendered README as the site;
-  the `docs/` build ships four files and no Jekyll. The first deploy takes a
-  minute or two to reach the address, and every commit-back after that
-  redeploys on its own. The site has been on since 6 Sep 2026.
+  the `docs/` build serves the dashboard and its checked-in assets. The first
+  deploy takes a minute or two to reach the address. The site has been on since
+  6 Sep 2026. `publish-dashboard.yml` requests subsequent builds explicitly:
+  a commit-back made with Actions' built-in token does not itself trigger Pages.
 - **Resend in test mode only delivers to the account's own address, and its
   check is an exact string match.** Until a domain is verified at
   resend.com/domains and `RESEND_FROM` is an address on it, Resend refuses any
@@ -185,16 +415,16 @@ Claude honours `cache_control` and whether the cache actually hits on a second
 call, and whether Resend accepts `RESEND_FROM`. Every check is exercised offline
 in `tests/test_live_check.py`, including the one where `--no-spend` must NOT
 print READY over boundaries it never tried. The one thing it cannot try is the
-commit-back push, which only Actions can run: watch the first evening run's
-"Persist the run" step for that.
+commit-back push, which only Actions can run — and Actions has, since 6 Sep
+2026; see "Does the history actually accumulate?" below.
 
 Both pipeline workflows then fire on weekdays and can be triggered manually
 from the Actions tab. `morning.yml` is passed only the three delivery secrets,
 because the follow-through pass runs neither the scanner nor the scorer and
 `preflight()` asks the mode which layers it will use before demanding a key.
 
-> **Note:** the four files in `.github/workflows/` are `evening.yml`,
-> `morning.yml`, `secret-scan.yml` and `tests.yml`. The evening scan fires at
+> **Note:** the five files in `.github/workflows/` are `evening.yml`,
+> `morning.yml`, `publish-dashboard.yml`, `secret-scan.yml` and `tests.yml`. The evening scan fires at
 > 6:16 PM ET — 22:16 UTC under EDT, 23:16 UTC under EST — and the morning
 > follow-through at 8:30 AM ET (12:30 / 13:30 UTC). Both crons of each pair are
 > registered and a guard no-ops the one that does not match today's ET offset,
@@ -205,7 +435,12 @@ because the follow-through pass runs neither the scanner nor the scorer and
 > `morning.yml` depends on `evening.yml` having committed `docs/` back — see
 > "Does the history actually accumulate?" below. On a repo where that has never
 > happened it finds the hand-authored fixture, refuses it by name and mails a
-> degraded notice rather than a watchlist of invented tickers.
+> degraded notice rather than a watchlist of invented tickers. That is no
+> longer this repo's state, and a fork inherits the difference: its first
+> morning run reads the last run **this** branch committed — a real scan, so
+> nothing refuses it — and follows through on someone else's night until the
+> fork's own evening run publishes one. Pin `SCAN_SESSION_DATE` and run an
+> evening first if that matters.
 >
 > An older `SETUP.md` walked through a Gmail OAuth flow this code no longer
 > uses; it was removed rather than annotated, since following it minted
@@ -229,6 +464,10 @@ set -a; . ./.env; set +a         # this runs .env as a shell script
 
 # Full evening run without sending email:
 python -m src.pipeline evening --dry-run
+# (if the session this would scan is already published, it re-presents it
+#  and scans nothing -- with or without --tickers, and whatever the clock
+#  says. Pin SCAN_SESSION_DATE below, to a session the record does not
+#  already hold, to make it scan.)
 
 # Smoke-test on a few tickers:
 python -m src.pipeline evening --dry-run --tickers NVDA,PLTR,SMCI,CRWD
@@ -245,14 +484,17 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 992 tests, no network or API keys needed
+pytest tests/                   # 1212 tests, no network or API keys needed
 ```
 
-Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
-email — rewrites `docs/data.json`, updates `docs/ledger.json` and writes PNGs
-into `docs/charts/`. A four-ticker smoke test therefore replaces whatever
-`docs/data.json` held with a four-ticker run — the hand-authored fixture on a
-fresh clone, last night's real run once `evening.yml` has committed one back.
+An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
+only the email — rewrites `docs/data.json`, updates `docs/ledger.json` and
+writes PNGs into `docs/charts/`. One that finds its session already published
+(above) scans nothing and writes none of the three, not even a chart. A
+four-ticker smoke test therefore replaces whatever `docs/data.json` held with
+a four-ticker run — the run `evening.yml` last committed back, which here is
+a real one, and the hand-authored fixture only in
+a repo that has never published.
 `docs/ledger.json` gains a run too — one row per named ticker, marked with the
 universe it scanned (`runs[].universe` says `named on the command line`) so the
 record can tell it from a real night, but a row all the same: the next evening
@@ -263,12 +505,15 @@ Put both files back with
 rm -f docs/ledger.json && git checkout -- docs/
 ```
 
-— the ledger is removed first because on a fresh clone it is untracked, so
-`git checkout` would leave it, and the first `git pull` after `evening.yml`
-commits a real one then refuses to overwrite it. A **morning** run writes
-nothing at all, so it cannot disturb either file — but it will refuse to read
-the fixture, which is what you will see if you run one before an evening run
-has published anything.
+— `git checkout -- docs/` on its own is enough here, because the first
+commit-back tracked `docs/ledger.json` along with `docs/data.json`: checkout
+puts both back. The `rm` is kept for a repo that has never published, where
+the ledger really is untracked, checkout leaves it, and the first `git pull`
+after a real commit-back then refuses to overwrite it. A **morning** run
+writes nothing at all, so it cannot disturb either file: it re-presents
+whatever `docs/data.json` holds, which here is the last run this branch
+committed back. It refuses to present the fixture — which is what a repo that
+has never published still holds, and what you would see there.
 
 ## The dashboard
 
@@ -279,23 +524,27 @@ with its exact source commit and file hashes in `provenance.json`. `docs/stock.c
 arranges the branded cover, run summary, research panels and responsive pick cards;
 the shared system supplies the original chick, themes, surfaces and reduced-motion
 aware transitions. These design files are checked in directly and the pipeline does
-not regenerate them. **An evening run writes that data file at the end of every run** (step 9,
-`src/ledger.py`), together with `docs/ledger.json` and the chart PNGs — which
-are **not** committed (`.gitignore` blocks `/docs/charts/`), so the published
+not regenerate them. **An evening run that scans writes that file at the end** (step 9,
+`src/ledger.py`) — one that re-presents an already-published session leaves it
+as the run that published it wrote it — together with `docs/ledger.json` and
+the chart PNGs — which are **not** committed (`.gitignore` blocks `/docs/charts/`), so the published
 page has no images and every chart slot explains that instead. Open the page
 from a checkout that has just run the pipeline and the same slots fill in. A
 chart is ~57 KB and a night renders up to 25 of them: committing them is about
 360 MB a year of history that does not delta-compress and cannot be taken back
 out, and one file per ticker with no session in it cannot prove which run drew
-it anyway. `docs/data.json` is whatever the last run wrote. On a fresh clone
-that is the hand-authored fixture — a byte-for-byte copy of
-`tests/fixtures/data.json`, which `tools/make_fixture.py` generates — and it
-says so in its own `run.fixture: true`, which is what raises the "sample data"
-banner at the top of the page. The first evening run `evening.yml` commits back
-replaces it with a real run, `run.fixture` goes `false`, and the banner
-disappears; nothing in CI expects the file to stay a fixture, because a guard
-that has to be defeated to ship is worse than none. The canonical fixture stays
-at `tests/fixtures/data.json`, where `tools/check_fixture_fresh.py` guards it
+it anyway. `docs/data.json` is whatever the last run wrote, and on a fresh clone
+of this repo that is the run `evening.yml` last committed back — a real run,
+no banner. (Which session that is moves with every commit-back, so this
+sentence does not name one; `run.date` in the file does.) In a repo that has
+never published it is instead the hand-authored fixture the tree shipped with, a byte-for-byte copy of
+`tests/fixtures/data.json`, which `tools/make_fixture.py` generates, and it says
+so in its own `run.fixture: true`, which is what raises the "sample data" banner
+at the top of the page. The first evening run `evening.yml` commits back
+replaces it, `run.fixture` goes `false`, and the banner disappears; nothing in
+CI expects the file to stay a fixture, because a guard that has to be defeated
+to ship is worse than none. The canonical fixture stays at
+`tests/fixtures/data.json`, where `tools/check_fixture_fresh.py` guards it
 against its generator — and, for as long as `docs/data.json` still claims to be
 the fixture, guards that copy against the canonical one.
 
@@ -308,6 +557,17 @@ Claude produced it or the offline checklist fallback did. A fallback score can n
 longer outrank a real one: `score_all` sorts on provenance before score, so every
 Claude score ranks above every fallback whatever the numbers say. It is labelled
 everywhere it appears and called out at the top of the page.
+
+The snapshot-status panel separates the **recorded session** from the time the
+browser last checked for an update. **Check for updates** reads the published
+snapshot again; it does not dispatch a scan or claim that the recorded prices
+are live. If the check fails, the last successfully loaded report stays visible
+with an explicit failure message. A changed snapshot replaces the report and
+invalidates any full-record request from the previous snapshot; an unchanged one
+keeps the selected return basis and expanded details. Both snapshot and full-record
+requests time out after 15 seconds, including a stalled response body, and offer
+a retry. The **Scan activity** link opens the evening workflow's actual run history.
+These controls need no credentials and do not change pipeline or email behavior.
 
 ### What the page answers, and what it refuses to answer
 
@@ -447,8 +707,11 @@ invariants live in the file rather than only here. The load-bearing ones:
   rename once purged -- comes first, with `last` and `sessions_behind` null;
   below the fraction that degrades a run, such a name used to reach no
   surface, the log included. The email and the page print it; the ledger entry
-  does not carry it. The first live scan found three in the list, which held 230
-  names then and 228 since they were retired.
+  does not carry it. It is a fact about the file **as that run read it**, which
+  is why the morning mail scopes the sentence to the run rather than repeating
+  the evening's "check the list": acting on the line is what changes the file,
+  and this repo retired all three names the first live scan found -- the list
+  held 230 then and 228 since.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
@@ -534,8 +797,11 @@ sessions by — and `forward_returns.rows` is what those setups were collapsed
 from. The page prints both, and calls neither of them "names".
 
 - `d1`, `d3`, `d5` are the percentage change from the burst-day close to the
-  close 1, 3 and 5 **sessions** later — positions in the frame, not calendar
-  days, so a holiday cannot quietly shift a horizon.
+  close 1, 3 and 5 **sessions** later — sessions read off the calendar the
+  run's frames agree on (the bullet below says how), not calendar days and
+  not positions in one frame, so neither a holiday nor a hole can quietly
+  shift a horizon. This bullet said "positions in the frame" for a round
+  after round 9 made that false.
 - `runs[].rules` is **every number this screener's rules turned on when that
   run was made**: the scan's strategy thresholds, every threshold and window
   the checklist names, the vetoes in force and the gate. It is derived rather
@@ -632,6 +898,11 @@ happened:
 SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 ```
 
+A pin on the session after a holiday works the same way, because the session
+before it is read off the frames and not off a calendar (see "The session
+before is read off the frames" above); a pin on the holiday itself still finds
+no bar carrying it and stops with `StaleDataError`, by design.
+
 From GitHub, the same backfill is the evening workflow's **Run workflow**
 button with the `session` box filled: the run is exempt from the clock check,
 replaces that session's entry in the record if one exists, mails, and commits
@@ -642,11 +913,19 @@ scans, scores and writes its record — into the run's artifact, named
 click at lunch, and how a request whose window reaches past the clock was
 tried before the first scheduled evening asked for one.
 
-That is also the only way the dashboard's score-against-outcome plot can carry a
-point today: on a normal evening run, tonight's candidates are pending by
-construction, and the next run replaces the snapshot rather than filling it in.
-Plotting resolved outcomes across runs needs the page to read `ledger.json`,
-which is a change to `docs/index.html` and not part of this step.
+A backfill is also how the dashboard's score-against-outcome bands gain
+resolved points before a week has passed: on a normal evening run tonight's
+candidates are pending by construction, and it is the NEXT runs that fill their
+horizons in. The bands themselves need no backfill and no change to the page —
+`evidence()` computes `by_score` at write time over the first SCORED
+appearance of every setup in `docs/ledger.json` — resolved or not, so a
+pending setup is counted in its band with an n of zero — and the bursts the
+gate refused are the control beside those bands, never in them. The page draws
+what the file carries, fetching `ledger.json` itself only for the per-name
+view. This paragraph told a reader the opposite for two rounds — that a backfill was the only way a point could ever appear,
+and that plotting outcomes across runs would take a change to the page nobody
+had made. Step 11 was that change, and the guard on this sentence reads both
+halves off the code rather than trusting the next reader to notice.
 
 ### Does the history actually accumulate?
 
@@ -666,6 +945,28 @@ then it fails the step loudly rather than pretending. Market data is live-only,
 so a discarded snapshot cannot be re-fetched; the run's 30-day artifact holds a
 copy of `docs/data.json` and `docs/ledger.json` either way.
 
+**A committed run and an updated website are separate boundaries.** GitHub's
+[built-in token does not trigger Pages builds when it pushes a commit](https://docs.github.com/en/actions/concepts/security/github_token).
+`publish-dashboard.yml` therefore starts when the evening workflow completes on
+`main`, including a failed job that already persisted an exit-2/3 record, and
+when a dashboard change is pushed to `main`. It checks out current `main` and
+uses the built-in token's `pages: write` permission to
+[request the branch-based Pages build](https://docs.github.com/en/rest/pages/pages#request-a-github-pages-build).
+It never downloads the scan's artifacts, so a rehearsal's unpublished record
+cannot become the public dashboard. A failed scan may refresh the last committed
+record; it cannot manufacture a new one. Cancelled runs and other branches do
+not trigger publication.
+
+The publication job then fetches public `index.html`, `data.json` and
+`ledger.json` without credentials, bypasses stale cache entries, and compares
+their bytes with the checkout. It retries for up to eight minutes and fails
+visibly if any file remains stale or unreachable. The record is still safe in
+`main` even when delivery to Pages fails. To retry just this boundary, run
+**Publish committed dashboard** from Actions on `main`: it scans nothing, sends
+no email and makes no paid API calls. The existing Pages setting stays
+**Deploy from a branch → main → /docs**; this workflow checks it and does not
+change hosting settings.
+
 **Which nights get kept is the exit code, and 1 was hiding two of them.** A
 `run:` step fails on any non-zero code, and an `if:` with no status function has
 `success()` ANDed into it — so the persist step originally ran on clean nights
@@ -679,7 +980,9 @@ delivering — an unverified `RESEND_FROM` domain is the likely one — is in th
 same position and exited 1 for it, the same code as a preflight that spent
 nothing. It exits 3 now. The step captures the code and re-raises it last, after
 the persist and the artifact upload, so the job's colour is unchanged: 2 and 3
-are still red. Only the record is rescued.
+are still red. Only the record is rescued — and the mail that goes out on that
+path says so, rather than reporting a scan that never happened (see "The two
+runs").
 
 That retry only started existing in this round. `git pull --rebase` sat bare in
 the loop, and under Actions' `bash -e` a failing pull ends the step — so the
@@ -688,17 +991,35 @@ git pull --rebase ...` now, with a conflicting rebase aborted and named rather
 than left half-applied. Traced with `bash -ex` against a stub `git`, which is
 how the `git add` bug below was found too.
 
-**Nothing has ever exercised it, and not for the reason this paragraph used
-to give.** The `git add` fix is real and a test now guards it. But no run has
-reached the push, or the add, or the commit-back step at all: `evening.yml`
-has fired six times, every one of them scheduled — three no-ops from the DST
-guard and three that died in preflight for want of secrets — and a failed
-pipeline step skips the persist step entirely. This said "every run before it
-aborted at the add", which describes something that has never happened once.
-The bug was real in the code and it was fixed before that code was ever the
-tip of `main`; the nightly failure it supposedly caused is invented. Streaks
-and the whole input of the morning run rest on this step working, so the first
-evening run that gets past preflight is worth watching in the Actions log.
+**It has run, and this paragraph said for ten rounds that it never had.**
+The first time was 6 Sep 2026 — Actions run 34014332161, commit `f0780c7`,
+message `run 2026-09-04` — and two more landed the same day, `932ec58` and
+`369c695`; `git log --author=spicystock` is the list, and a docs test reads it
+back against these sentences, on any checkout that carries the history (CI
+asks for all of it, for exactly this reason).
+
+What was true when
+this was written, and stayed true for ten rounds, is that nothing had reached
+the add, the commit or the push: `evening.yml` had fired six times, every one
+of them scheduled — three no-ops from the DST guard and three that died in
+preflight for want of secrets — and a failed pipeline step skips the persist
+step entirely. An earlier version of the same paragraph said instead that
+"every run before it aborted at the `git add`", which described something that
+had never happened once: the bug was real in the code and was fixed before that
+code was ever the tip of `main`, and the nightly failure it supposedly caused
+was invented. **One half of the step is still only traced against a stub**: no
+push has been rejected yet, so the rebase-and-retry loop below has never run for
+real.
+
+**A dispatch that gets past preflight does not always leave a commit**, and
+the same day showed it: run 34018706843 re-presented the already-published
+4 Sep session, mailed it and exited 2, and the persist step ran, found `docs/`
+byte-identical to what was already on the branch, and exited 0 at
+`git diff --staged --quiet` with nothing to commit. The sentence this replaces
+made that claim of all of them, which is the same universal shape as the "it
+has never executed" sentence before THAT, and it was false seventeen hours
+before it was written. A docs test reads that short-circuit out of the
+workflow and refuses the claim while the step still has it.
 
 Since step 10 that commit-back carries a second job: it is what the 8:30 AM
 follow-through reads, and it is what makes a streak possible at all. Remove it
@@ -733,9 +1054,15 @@ an EST night starts at 23:16 UTC, so a run over ~44 minutes uploaded under
 tomorrow's UTC date and silenced the following night. A run that published
 names its artifact `evening-<session>-<id>`, a run that did not is
 `evening-failed-<id>`, and the guard counts only the first shape against the
-session a run tonight would scan. Traced through the guard's own shell against
-a stub `gh` running its real `jq` filter, six scenarios, in
-`tests/test_docs_are_true.py`.
+session a run tonight would scan, from **this branch**. Even that is not enough:
+an artifact survives a rejected commit-back push, so the freshly checked-out
+`docs/data.json` must also record a real evening scan of the session over the
+checked-in universe. A rehearsal branch's artifact, an unpublished record, a
+fixture or a `--tickers` smoke snapshot cannot suppress the production cron.
+If either receipt is missing, the pipeline runs; its own duplicate-session
+guard still avoids scoring a universe run that the record already holds.
+Traced through the actual guard shell and its `jq` filters in
+`tests/test_docs_are_true.py` and `tests/test_workflow_guard.py`.
 
 
 ### Checking it
@@ -749,14 +1076,14 @@ construction: `docs/` and its exact design-system snapshot are served locally,
 and external requests are blocked. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 206 checks, and which file each one
+**Three data sources, one page.** It runs 214 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 34 mutated copies of it are served
+  night can hold at once. 37 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now
@@ -764,7 +1091,9 @@ reads is the point:
 - **`tests/fixtures/history/`** — thirty consecutive runs written by the real
   pipeline (`tools/make_history.py`, see `tests/fixtures/README.md`): forward
   returns filled in by later runs, a night the scorer was down, a chart that
-  would not render, repeats on consecutive sessions, the last week still
+  would not render, repeats on consecutive sessions, a session that scored
+  nothing at all — whose three horizon cells no later run can ever fill, and
+  which read "pending" for a round because of it — and the last week still
   pending. Every expectation is computed from the file the page is reading.
 - **`docs/`** — whatever the last run wrote, exactly as GitHub Pages serves it,
   opened last with only the checks that hold for any run: it opens, its rows
@@ -807,6 +1136,19 @@ What is still not checked is any streak state neither fixture holds —
 Those are covered on the email side in `tests/test_emailer.py` and in
 `src/ledger.py`'s own tests; on the page they were read back from the DOM
 against a hand-made `data.json` and agree, but that check is not committed.
+
+The separate recovery check requires Chromium and fails if the browser is
+unavailable; it never reports a skipped audit as a pass:
+
+```bash
+node tools/dashboard_recovery_smoke.mjs
+```
+
+It opens the same dashboard against failed requests, a stalled JSON body,
+malformed snapshots, and a ledger response arriving after the snapshot changed.
+It also checks retained data, retry controls, unchanged-refresh state, phone,
+tablet and desktop layouts in both themes, and keyboard focus. All data is local
+test fixtures. It dispatches no scan and calls no market or email service.
 
 ## Tuning
 
@@ -891,7 +1233,20 @@ against a hand-made `data.json` and agree, but that check is not committed.
 
   The cap is what keeps this flat: it does NOT grow when the universe widens,
   because MAX_TO_SCORE bounds the calls and not the scan.
+
+  Scoring uses a 5-second connection timeout and 30-second read/write/pool
+  timeouts. The SDK's hidden retries are disabled; the application makes at
+  most two attempts per candidate before recording its existing, clearly
+  marked checklist fallback. This keeps a silent scoring outage from spending
+  ten minutes per read, six requests per candidate, until the 55-minute
+  workflow kills the run before publication. These are network inactivity
+  limits, not a claim that every complete response takes at most 30 seconds.
   The morning follow-through makes no model call and no data request at all.
+  Alpaca requests use a client-scoped 5-second connection and 30-second read
+  inactivity timeout, including pagination and forward-return fills. The SDK's
+  rate-limit retry and the scanner's existing batch retry are unchanged. These
+  limits prevent a silent socket from waiting indefinitely; they do not impose
+  a total deadline on a response that keeps delivering bytes.
 - GitHub Actions: free tier covers both daily runs comfortably (private repos
   get 2,000 min/month). The evening scan is the long one; the morning job is a
   file read and an email.
@@ -908,8 +1263,8 @@ against a hand-made `data.json` and agree, but that check is not committed.
   The ledger is the dataset the AI rankings were always meant to be checked
   against — the Phase-2 item in the original doc — and reading it is how you
   find out whether the score predicts anything. See "Does the history actually
-  accumulate?" above for how it survives a CI container — and for the one thing
-  about that step nothing has ever exercised.
+  accumulate?" above for how it survives a CI container — and for the one half
+  of that step nothing has exercised yet.
 - Output is screening for human review, not trading advice.
 
 For local design review, run `npm run dev` (Node only, no dependencies) and open the preview address it serves. The production pages remain static.

@@ -40,9 +40,9 @@ nohup.out
 
 # The charts the pipeline really writes today (src/pipeline.py's CHARTS_DIR).
 # NOT covered by /charts/ above — that rule is anchored to the repo root, and
-# `git check-ignore -v docs/charts/AAPL.png` said so — and nothing was ever
-# committed there only because evening.yml's persist step was aborting before
-# its commit on every run. Once that was fixed this became ~57 KB a chart, up
+# `git check-ignore -v docs/charts/AAPL.png` said so. Nothing was committed
+# there before 6 Sep 2026 because evening.yml's persist step had never run at
+# all; since it does, this rule is what keeps them out — ~57 KB a chart, up
 # to 25 a night: about 360 MB a year of history that does not delta-compress
 # and cannot be taken back out afterwards. The page says where the image went
 # (docs/index.html's chartSlot) and the evening email still carries the PNGs

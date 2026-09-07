@@ -57,6 +57,18 @@
     </div>
   </section>
 
+  <section class="sc-card stock-snapshot" id="snapshot-panel" aria-label="Snapshot status">
+    <div>
+      <p class="sc-eyebrow sc-eyebrow--muted">recorded snapshot / daily research</p>
+      <p id="snapshot-status" role="status" aria-live="polite" aria-atomic="true">Checking the published snapshot…</p>
+      <p class="sc-note" id="snapshot-stamp">These are recorded daily results, not live quotes. Checking this page does not run a scan.</p>
+    </div>
+    <div class="stock-snapshot__actions sc-screen-only">
+      <button class="sc-btn sc-btn--secondary sc-btn--sm" id="snapshot-refresh" type="button" aria-disabled="true">Checking…</button>
+      <a class="sc-btn sc-btn--ghost sc-btn--sm" href="https://github.com/spicyChicken59/SpicyStock/actions/workflows/evening.yml" rel="noopener">Scan activity ↗</a>
+    </div>
+  </section>
+
   <dl class="sc-stat-strip sc-stat-strip--4 stock-run-strip sc-stagger" id="run-strip" hidden aria-label="Run at a glance">
     <div class="sc-stat"><dt class="sc-stat__label">universe</dt><dd class="sc-stat__value" id="stat-universe">—</dd><dd class="sc-stat__note">names in the run</dd></div>
     <div class="sc-stat"><dt class="sc-stat__label">bursts</dt><dd class="sc-stat__value" id="stat-bursts">—</dd><dd class="sc-stat__note">found by the scan</dd></div>
@@ -87,7 +99,7 @@
 
   <!-- Run-level failures. Hidden when run.errors is empty. -->
   <div class="sc-notice" id="notice" hidden>
-    <div class="sc-eyebrow">this run degraded</div>
+    <div class="sc-eyebrow" id="notice-label">this run degraded</div>
     <ul id="notice-list"></ul>
   </div>
 
@@ -262,9 +274,11 @@
   <!-- What happened the last times THIS name burst. The summary comes out of
        data.json's evidence block; the per-appearance detail needs the whole
        record, so docs/ledger.json is fetched ONLY when a reader asks for it
-       (see loadRecord). A year of it is ~0.6 MB gzipped, which is not a thing
-       to spend on every visit for a view most readers never open. -->
-  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="ticker-card" hidden>
+       (see loadRecord). A year of it is about 1.08 MB gzipped, which is not a
+       thing to spend on every visit for a view most readers never open.
+       tools/measure_ledger.py measures it and a docs test holds this comment,
+       the one above loadRecord and README to what it prints. -->
+   <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="ticker-card" hidden>
     <div class="sc-card__head">
       <div>
         <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">by ticker</p>
@@ -654,8 +668,22 @@
   // whose open basis is null throughout was refused an entry -- no usable
   // open on the next session, or an open outside its own bar -- and its
   // sessions have very much happened.
+  // Five states, and the fifth is a fact about the RUN rather than the row.
+  // A run that scored no candidates has no rows for a later run to fill, so
+  // its three horizon cells are null for ever -- and they read "pending",
+  // which is a promise the file cannot keep. main's 4 Sep run is one of
+  // these, and on the day this was written three sessions had closed since.
+  // THE PREDICATE IS `scored === 0`, NOT `forward_returns.rows === 0`: a run
+  // scored last night has rows 0 too and is genuinely waiting, so the second
+  // reading would call every fresh run's mean unfillable on the night it was
+  // written. Candidate rows carry no `scored` key at all, so this branch is
+  // reachable only from the runs table and the run-level tiles.
+  function unscoredRun(row) {
+    return !!row && row.scored === 0;
+  }
   function fwdState(row) {
     var fr = row && row.forward_returns;
+    if (unscoredRun(row)) return 'unscored';
     if (!fr || typeof fr !== 'object') return 'unrecorded';
     if (BASIS !== 'open') return 'measured';
     if (!(fr.from_open && typeof fr.from_open === 'object')) return 'predates';
@@ -667,7 +695,12 @@
   var FWD_WORDS = {
     unrecorded: ['not recorded', null],
     predates: ['not measured', 'this row predates the open basis'],
-    noentry: ['not measured', 'no usable open on the next session, so no price a reader could have paid']
+    noentry: ['not measured', 'no usable open on the next session, so no price a reader could have paid'],
+    // The email's own words for this night, so one mechanism has one
+    // vocabulary: the morning follow-through says the run it follows
+    // "scored no candidates", and tests/test_docs_are_true.py holds the
+    // two surfaces to the same phrase.
+    unscored: ['nothing scored', 'this run scored no candidates, so there is nothing to measure — the cell never becomes a number']
   };
   function forwardCell(row) {
     var state = fwdState(row);
@@ -887,8 +920,16 @@
       return typeof n.last === 'string' ? n.ticker + ' (since ' + n.last + ')' : n.ticker + ' (no bar at all)';
     }).join(', ');
     var more = sp.count - sp.names.length;
+    // The threshold the whole clause turns on. src/ledger.py's
+    // snapshot_problem() refuses a block without it, but that check guards the
+    // MORNING EMAIL and this page reads whatever docs/ holds, so a hand-edited
+    // file printed 'for more than undefined sessions' here. Without a number
+    // the names are still worth showing and the threshold is simply not stated.
+    var after = typeof sp.after_sessions === 'number' && isFinite(sp.after_sessions)
+      ? ' not printed for more than ' + sp.after_sessions + ' sessions: '
+      : ' stopped printing: ';
     return base + ' · ' + sp.count + (sp.count === 1 ? ' name has' : ' names have') +
-      ' not printed for more than ' + sp.after_sessions + ' sessions: ' + names +
+      after + names +
       (more > 0 ? ' and ' + more + ' more' : '') + ' — check the symbol list';
   }
 
@@ -1041,10 +1082,18 @@
   // over. `rows` is what those setups were collapsed FROM, and is printed
   // beside them rather than instead of them.
   var MIN_SESSIONS = 20;
+  // A run that scored nothing can never contribute a mean, so it is not in
+  // the denominator: with it there, the one-run record main published on 4
+  // Sep read "0 of 1 sessions in" under a chip saying "no session closed
+  // yet", when the sessions had closed and there was simply nothing to
+  // measure. It is out of the numerator by the same rule rather than by its
+  // nulls, so what a run's row says and what the mean counts cannot disagree
+  // on a file that carries both.
   function horizonStats(runs) {
+    var measurable = runs.filter(function (r) { return !unscoredRun(r); });
     return [1, 3, 5].map(function (d) {
       var k = 'd' + d;
-      var have = runs.filter(function (r) {
+      var have = measurable.filter(function (r) {
         var f = runFwd(r);
         return f[k] !== null && f[k] !== undefined;
       });
@@ -1058,13 +1107,17 @@
         days: d, key: k,
         mean: setups ? wsum / setups : plain,
         weighted: setups > 0,
-        setups: setups, rows: rows, sessions: have.length,
+        setups: setups, rows: rows, sessions: have.length, of: measurable.length,
+        unscored: runs.length - measurable.length,
         best: vals.length ? Math.max.apply(null, vals) : null,
         worst: vals.length ? Math.min.apply(null, vals) : null
       };
     });
   }
   function horizonState(h) {
+    // Two different nothings, and the record can be in either: no run has
+    // scored anything yet, or runs have and their sessions have not closed.
+    if (!h.of) return { chip: 'sc-chip--neutral', word: 'nothing scored yet' };
     if (!h.sessions) return { chip: 'sc-chip--neutral', word: 'no session closed yet' };
     if (h.sessions < MIN_SESSIONS) return { chip: 'sc-chip--warn', word: 'not enough data' };
     return { chip: 'sc-chip--good', word: 'measured' };
@@ -1469,11 +1522,11 @@
     var tabs = $('basis-tabs');
     if (!tabs) return;
     var available = hasOpenBasis(d);
+    if (!available && BASIS === 'open') BASIS = 'close';
     Array.prototype.forEach.call(tabs.querySelectorAll('.sc-tab'), function (button) {
       button.setAttribute('aria-pressed', button.dataset.basis === BASIS ? 'true' : 'false');
       button.disabled = button.dataset.basis === 'open' && !available;
     });
-    if (!available && BASIS === 'open') BASIS = 'close';   // never show a basis this file cannot honour
     $('basis-note').textContent = !available
       ? 'Every return on this page is measured from the burst-day close \u2014 what the setup did. This record predates the open basis: nothing in it was measured from the next session\u2019s open, so that choice is greyed rather than shown as close-basis numbers under an open-basis label.'
       : (BASIS === 'open'
@@ -1545,11 +1598,19 @@
     $('evidence-empty').hidden = !!anyOutcome;
     $('evidence-body').hidden = !anyOutcome;
     if (!anyOutcome) {
-      $('evidence-empty').textContent =
-        'Nothing has an outcome yet. The record holds ' + plural(ev.record.scored_setups, 'scored setup') +
-        ' over ' + plural(ev.record.sessions, 'session') + ', and a burst needs at least one more session to close for +1d and five for +5d before ' +
-        'it can be measured — so this view is correct and empty, which is not the same as a flat line at zero. ' +
-        'It fills in on its own as later runs record what happened.';
+      // The same distinction the runs table draws one card down, and the
+      // record main published on 4 Sep is on the second side of it: with no
+      // scored setup at all, "a burst needs one more session to close" names
+      // a wait that no session can end, because there is no burst waiting.
+      $('evidence-empty').textContent = ev.record.scored_setups
+        ? 'Nothing has an outcome yet. The record holds ' + plural(ev.record.scored_setups, 'scored setup') +
+          ' over ' + plural(ev.record.sessions, 'session') + ', and a burst needs at least one more session to close for +1d and five for +5d before ' +
+          'it can be measured — so this view is correct and empty, which is not the same as a flat line at zero. ' +
+          'It fills in on its own as later runs record what happened.'
+        : 'Nothing has been scored yet. The record holds ' + plural(ev.record.sessions, 'session') +
+          ' and no scored setup, so there is nothing for a later run to measure — this view is correct and ' +
+          'empty, which is not the same as a flat line at zero, and no session closing will change it. ' +
+          'It fills in from the first night that scores a candidate.';
       return;
     }
     clear($('evidence-tiles')).append.apply($('evidence-tiles'), ev.horizons.map(function (h) {
@@ -1713,6 +1774,7 @@
   // ---- the per-name view, and the only second fetch on this page ----------
   var TICKERS_SHOWN = 15;
   var record = { rows: null, state: 'idle' };
+  var recordRequest = 0;
 
   function renderTickers(ev) {
     var rows = (ev && ev.by_ticker) || [];
@@ -1749,9 +1811,13 @@
     } else if (record.state === 'failed') {
       more.appendChild(el('span', { 'class': 'sc-note', text: 'The full record could not be loaded: ' + record.error +
         '. The summary above still stands — it is written into this page’s own data file.' }));
+      more.appendChild(el('button', {
+        'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button',
+        onclick: function () { loadRecord(ev); }
+      }, 'Retry full record'));
     } else if (record.rows) {
       more.appendChild(el('span', { 'class': 'sc-note', text: 'Showing all ' + commas(ranked.length) +
-        ' names, each with every session it burst on, from docs/ledger.json.' }));
+        ' names, with up to six most recent appearances each, from docs/ledger.json.' }));
     } else {
       more.appendChild(el('button', {
         'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button',
@@ -1779,18 +1845,20 @@
     }).join(' · ');
   }
 
-  // The one lazy fetch. docs/ledger.json is the whole record — about 0.6 MB
-  // gzipped after a year — so it is never pulled on load; the summary above
-  // comes out of data.json, which the page has already read. A 404 here is the
+  // The one lazy fetch. docs/ledger.json is the whole record — about
+  // 1.08 MB gzipped after a year — so it is never pulled on load; the summary
+  // above comes out of data.json, which the page has already read. A 404 here is the
   // normal state until evening.yml has committed a run back, so it is reported
   // as a fact about the file rather than as a broken page.
   function loadRecord(ev) {
     if (record.state === 'loading') return;
+    var request = ++recordRequest;
     record.state = 'loading';
     renderTickers(ev);
-    fetch('ledger.json', { cache: 'no-store' })
-      .then(function (r) { if (!r.ok) throw new Error('ledger.json returned HTTP ' + r.status); return r.json(); })
+    fetchJSON('ledger.json')
       .then(function (book) {
+        if (request !== recordRequest) return;
+        if (!book || !Array.isArray(book.runs)) throw new Error('The record has no run list');
         var rows = [];
         ((book && book.runs) || []).forEach(function (run) {
           ['candidates', 'gated'].forEach(function (kind) {
@@ -1802,6 +1870,7 @@
         renderTickers(ev);
       })
       .catch(function (e) {
+        if (request !== recordRequest) return;
         record.state = 'failed';
         record.error = e.message || String(e);
         renderTickers(ev);
@@ -1826,14 +1895,19 @@
       scroll.setAttribute('aria-label', label);
       scroll.setAttribute('tabindex', '0');
     }
-    var sync = function () { scroll.classList.toggle('is-clipped', scroll.scrollWidth - scroll.clientWidth > 2); };
-    sync();
-    window.addEventListener('resize', sync);
-    scroll.addEventListener('scroll', sync);
+    if (!scroll._clipSync) {
+      scroll._clipSync = function () { scroll.classList.toggle('is-clipped', scroll.scrollWidth - scroll.clientWidth > 2); };
+      window.addEventListener('resize', scroll._clipSync);
+      scroll.addEventListener('scroll', scroll._clipSync);
+    }
+    scroll._clipSync();
   }
 
   // ---- render -------------------------------------------------------------
   function render(d) {
+    // A refresh or basis switch replaces these closures; old snapshots must
+    // not redraw over the new one when the viewport changes.
+    redraws = [];
     LAST_DATA = d;
     renderBasisControl(d);
     var run = d.run || {};
@@ -1871,6 +1945,7 @@
     $('fixture-banner').hidden = !run.fixture;
 
     // run-level failures
+    $('notice-label').textContent = 'this run degraded';
     var errs = run.errors || [];
     $('notice').hidden = !errs.length;
     clear($('notice-list')).append.apply($('notice-list'), errs.map(function (e) {
@@ -2154,6 +2229,9 @@
       'a name that bursts five sessions running is one move measured five times, and counting ' +
       'it five times would weight that move against every other name in the file. A horizon needs ' + MIN_SESSIONS +
       ' sessions before its mean is worth reading; ' +
+      (horizons[0].unscored
+        ? plural(horizons[0].unscored, 'run') + ' scored nothing, so no session of theirs can ever be in that count \u2014 '
+        : '') +
       (enough.length
         ? enough.map(function (h) { return '+' + h.days + 'd'; }).join(' and ') + ' clears that bar.'
         : 'none of the three is close, so read all of them as provisional.');
@@ -2162,9 +2240,10 @@
       var dir = h.mean === null ? 'flat' : (h.mean > 0 ? 'good' : (h.mean < 0 ? 'bad' : 'flat'));
       return el('div', { 'class': 'sc-tile horizon' }, [
         el('div', { 'class': 'sc-tile__label', text: '+' + h.days + ' day' + (h.days === 1 ? '' : 's') }),
-        el('div', { 'class': 'sc-tile__value', text: h.mean === null ? 'pending' : pct(h.mean, 2) }),
+        el('div', { 'class': 'sc-tile__value',
+          text: h.mean === null ? (h.of ? 'pending' : FWD_WORDS.unscored[0]) : pct(h.mean, 2) }),
         el('div', { 'class': 'sc-delta sc-delta--' + dir,
-          text: h.mean === null ? '— no session has closed'
+          text: h.mean === null ? (h.of ? '— no session has closed' : '— nothing scored yet')
             : (dir === 'good' ? '▲' : dir === 'bad' ? '▼' : '—') +
               (h.sessions === 1 ? ' the only session so far'
                                 : ' sessions ran ' + pct(h.worst, 2) + ' to ' + pct(h.best, 2)) }),
@@ -2176,7 +2255,7 @@
           // where the numbers diverge most and the tile went quiet about it.
           text: h.sessions ? plural(h.sessions, 'session') + ' · ' + plural(h.setups, 'setup')
                              + (h.rows ? ' from ' + plural(h.rows, 'row') : '')
-                           : 'no session has closed' }),
+                           : (h.of ? 'no session has closed' : 'no run has scored a candidate') }),
         el('span', { 'class': 'sc-chip ' + st.chip, text: st.word })
       ]);
     }));
@@ -2186,9 +2265,13 @@
         var st = horizonState(h);
         return el('tr', null, [
           el('td', { text: '+' + h.days + ' day' + (h.days === 1 ? '' : 's') }),
-          el('td', { 'class': 'sc-num' }, figure(h.mean === null ? 'pending' : pct(h.mean, 2),
+          el('td', { 'class': 'sc-num' }, figure(h.mean === null ? (h.of ? 'pending' : FWD_WORDS.unscored[0])
+                                                                  : pct(h.mean, 2),
             h.weighted ? 'weighted by setups' : (h.sessions ? 'unweighted — no setup counts' : null))),
-          el('td', { 'class': 'sc-num', text: commas(h.sessions) + ' of ' + commas(runs.length) }),
+          el('td', { 'class': 'sc-num',
+            title: h.unscored ? commas(h.unscored) + ' run(s) scored nothing and are not counted here'
+                              : null,
+            text: commas(h.sessions) + ' of ' + commas(h.of) }),
           el('td', { 'class': 'sc-num', title: h.rows ? commas(h.rows) + ' rows carry a return; repeats of one setup count once'
                                                      : null,
             text: h.setups ? commas(h.setups) : '—' }),
@@ -2202,7 +2285,9 @@
     // history
     $('runs-card').hidden = !runs.length;
     $('runs-hint').textContent = 'Mean forward return ' + basisLabel() + ' across every scored candidate in each run — ' +
-      'not just its shortlist. A cell reads pending until that session has happened.';
+      'not just its shortlist. A cell reads pending until that session has happened, and ' +
+      '“' + FWD_WORDS.unscored[0] + '” when the run scored no candidates: there is nothing for a later ' +
+      'run to fill, so that cell never becomes a number and the run is in no horizon\u2019s count.';
     table($('runs-table'), ['session', 'run', 'bursts', 'scored', 'fallbacks', 'top score', '+1d', '+3d', '+5d', 'over'],
       runs.map(function (r, i) {
         var fr = runFwd(r);
@@ -2239,28 +2324,120 @@
   }
 
   function fail(message) {
+    $('eyebrow').textContent = 'snapshot';
+    clear($('meta'));
     $('h1').textContent = 'Snapshot unavailable';
-    $('dek').textContent = 'docs/data.json did not load, so there is nothing to show. ' +
-      'The page is a static shell — the pipeline writes that file.';
+    $('dek').textContent = 'The published results could not be read. Retry the snapshot, ' +
+      'or check Scan activity for the latest run.';
+    $('notice-label').textContent = 'snapshot unavailable';
     $('mast-right').textContent = 'no data';
     $('notice').hidden = false;
     clear($('notice-list')).appendChild(el('li', { text: message }));
   }
 
-  fetch('data.json', { cache: 'no-store' })
-    .then(function (r) { if (!r.ok) throw new Error('data.json returned HTTP ' + r.status); return r.json(); })
-    .then(function (d) {
-      if (!d || typeof d !== 'object') throw new Error('data.json is not an object');
-      if (d.schema_version !== 1) {
-        // Render anyway — a reader with a newer file should still see it — but say so.
-        (d.run = d.run || {}).errors = (d.run.errors || []).concat([{
-          stage: 'dashboard',
-          message: 'This page reads schema_version 1; data.json says ' + d.schema_version + '. Fields may be missing.'
-        }]);
+  // Include the response body in the timeout: receiving headers alone is not
+  // a loaded snapshot. No retry or polling happens without the reader asking.
+  function fetchJSON(path) {
+    var controller = new AbortController();
+    var timeout;
+    return Promise.race([
+      fetch(path, { cache: 'no-store', signal: controller.signal }).then(function (response) {
+        if (!response.ok) throw new Error(path + ' returned HTTP ' + response.status);
+        return response.json();
+      }),
+      new Promise(function (_, reject) {
+        timeout = setTimeout(function () {
+          reject(new Error(path + ' timed out after 15 seconds'));
+          controller.abort();
+        }, 15000);
+      })
+    ]).finally(function () { clearTimeout(timeout); });
+  }
+
+  var snapshotLoading = false;
+  var snapshotSignature = null;
+  function checkedAt() {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+      timeZone: 'America/New_York', timeZoneName: 'short'
+    }).format(new Date());
+  }
+  function loadSnapshot() {
+    if (snapshotLoading) return;
+    snapshotLoading = true;
+    var button = $('snapshot-refresh');
+    // Keep a keyboard user's place while the request runs. Native disabled
+    // blurs an activated button; the in-flight guard above prevents repeats.
+    button.setAttribute('aria-disabled', 'true');
+    button.textContent = 'Checking…';
+    $('snapshot-status').textContent = LAST_DATA
+      ? 'Checking for updates. The recorded session below remains visible.'
+      : 'Checking the published snapshot…';
+    fetchJSON('data.json').then(function (d) {
+      if (!d || typeof d !== 'object' || Array.isArray(d) ||
+          !d.run || typeof d.run !== 'object' || Array.isArray(d.run)) {
+        throw new Error('The snapshot has no recorded run');
       }
-      render(d);
-    })
-    .catch(function (e) { fail(e.message || String(e)); });
+      if (typeof d.run.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d.run.date) ||
+          !isFinite(Date.parse(d.run.date)) || new Date(d.run.date).toISOString().slice(0, 10) !== d.run.date) {
+        throw new Error('The snapshot has no valid recorded session date');
+      }
+      ['bursts', 'scored', 'shortlist_size'].forEach(function (key) {
+        if (d.run[key] === undefined && key === 'shortlist_size') return; // older files recorded no cap
+        if (!Number.isInteger(d.run[key]) || d.run[key] < 0) throw new Error('The snapshot has an invalid ' + key + ' count');
+      });
+      ['candidates', 'gated_out', 'runs'].forEach(function (key) {
+        if (d[key] !== undefined && !Array.isArray(d[key])) throw new Error('The snapshot has an invalid ' + key + ' list');
+      });
+      var signature = JSON.stringify(d);
+      if (signature !== snapshotSignature) {
+        if (d.schema_version !== 1) {
+          // Keep the existing forward-compatible warning without mutating the
+          // identity used to decide whether a check found a new snapshot.
+          d.run.errors = (d.run.errors || []).concat([{
+            stage: 'dashboard',
+            message: 'This page reads schema_version 1; data.json says ' + d.schema_version + '. Fields may be missing.'
+          }]);
+        }
+        var previous = LAST_DATA;
+        var previousRecord = record;
+        var previousBasis = BASIS;
+        ++recordRequest; // a ledger fetch belongs only to the snapshot that requested it
+        record = { rows: null, state: 'idle' };
+        try { render(d); }
+        catch (error) {
+          LAST_DATA = previous;
+          BASIS = previousBasis;
+          record = previousRecord.state === 'loading' ? { rows: null, state: 'idle' } : previousRecord;
+          if (previous) render(previous);
+          else {
+            redraws = [];
+            document.querySelectorAll('#main > [hidden], #main .stock-section, #run-strip, #page-index, #fixture-banner, #fallback-callout')
+              .forEach(function (node) { node.hidden = true; });
+          }
+          throw error;
+        }
+        snapshotSignature = signature;
+      }
+      $('snapshot-panel').classList.remove('stock-snapshot--failed');
+      $('snapshot-status').textContent = 'Showing recorded session ' + day(d.run.date) + '. Checked ' + checkedAt() + '.';
+      $('snapshot-stamp').textContent = 'Published ' + (d.generated || 'time not recorded') +
+        ' · Daily results, not live quotes. Checking this page does not run a scan.';
+    }).catch(function (error) {
+      var message = error.message || String(error);
+      $('snapshot-panel').classList.add('stock-snapshot--failed');
+      $('snapshot-status').textContent = LAST_DATA
+        ? 'Update check failed. Still showing recorded session ' + day(LAST_DATA.run.date) + '. ' + message
+        : 'Snapshot unavailable. ' + message;
+      if (!LAST_DATA) fail(message);
+    }).finally(function () {
+      snapshotLoading = false;
+      button.setAttribute('aria-disabled', 'false');
+      button.textContent = LAST_DATA ? 'Check for updates' : 'Retry snapshot';
+    });
+  }
+  $('snapshot-refresh').addEventListener('click', loadSnapshot);
+  loadSnapshot();
 })();
 </script>
 </body>

@@ -24,7 +24,7 @@ Known scheduled falsifications:
 | ~~Step 4 replaces the 5,000,000-share floor~~ done | ~~`.env.example`'s absolute-floor note, README's Layer-1 filter description and Costs volume numbers~~ all swept |
 | ~~Step 5 makes failures loud~~ done | ~~`.env.example`'s "these fail in three different ways" block~~ swept |
 | ~~Step 6 fixes the test suite~~ done | ~~the `detect_burst` comment in `.gitignore`, the broken-test note in README~~ swept |
-| ~~Step 9 emits `docs/data.json`~~ done | ~~the "hand-authored fixture" caveat in README's dashboard section~~ swept — the committed copy is still the fixture and says so in `run.fixture`; the pipeline writes the real one |
+| ~~Step 9 emits `docs/data.json`~~ done | ~~the "hand-authored fixture" caveat in README's dashboard section~~ swept — and then falsified by the thing it was waiting for: the committed copy has been a real run since 6 Sep 2026 (`run.fixture` false), so six files saying "on a fresh clone that is the fixture" went stale on one commit and were swept in round 10, under a test that reads the flag off `docs/data.json` |
 | ~~The first commit-back replaces `docs/data.json` with a real run~~ swept before it happened (3.1) | ~~`check_fixture_fresh.py` compared `docs/data.json` to the generator, so the pipeline working would have turned CI red on the next push; README's "regenerate … `docs/data.json`" and "pinned to the fixture" smoke-test section~~ — the canonical fixture is `tests/fixtures/data.json` now, `docs/data.json` is whatever the last run wrote, and the guard only checks a `docs/` copy that still *claims* to be the fixture |
 | ~~`evening.yml` keeps `docs/` between runs~~ done in step 9 | ~~README's "Does the history actually accumulate?" section and the stale `charts/` path in that workflow's upload step~~ both swept; step 10 added why that commit-back now also feeds the morning run and every streak |
 | ~~Step 10 makes the mode mean something and reads the ledger back~~ done | ~~README's "morning has no workflow and no distinct behaviour" note, the workflow inventory, `.env.example`'s required-variable list~~ all swept; `morning.yml` now exists |
@@ -84,6 +84,30 @@ itself is pinned against real instants in `tests/test_scanner.py`.
 
 ## Verification is by execution
 
+**Tuesday readiness — a commit-back did not itself refresh Pages.** GitHub's
+built-in token deliberately does not trigger a Pages build when it pushes.
+The workflow kept the record but README claimed the website redeployed on its
+own, with no explicit publication step. `publish-dashboard.yml` now requests
+the existing branch-based build after an evening workflow completes on main
+and after dashboard pushes. Its only source is committed main, never a run's
+artifact. Exit-2/3 records can therefore reach the page while a rehearsal's
+unpublished record cannot. The job compares the public HTML, snapshot and
+ledger with the checkout, with an eight-minute deadline and a failing verdict
+when any stays stale. It uses only the built-in token and changes no Pages
+settings. Seventeen focused cases pass offline; ten mutations over build
+requests, source and permission guards, exact content checks and credential
+isolation all fail as expected. The live publication workflow must still be
+observed after merge; offline verification does not prove a deployed build.
+
+**The backup guard also mistook an artifact for a committed record.** Executing
+the real shell showed Tuesday's cron skipped when the only matching artifact
+came from a rehearsal branch. The artifact remains after a rejected persist
+push as well. Suppression now requires both a matching artifact from this
+branch and a real evening universe snapshot for that session in its freshly
+checked-out docs/. The file-scan label is held against the pipeline's constant.
+The original DST, dry-run and session-name scenarios remain, with new cases
+for absent, older, fixture, morning and smoke records and other branches.
+
 The strongest findings in this rebuild came from running the code, not reading
 it — reproducing a crash, sourcing a hostile `.env`, testing `git check-ignore`
 against real paths. A claim that was argued rather than executed is a lead, not
@@ -120,7 +144,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 992 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1212 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -220,7 +244,14 @@ guard's own shell against a stub `gh` running its real `jq` filter.
 the clean record with a degraded one — committed, since exit 2 persists.**
 If the session an evening run would scan is already published, it
 re-presents it the way the morning does and says why; the clock
-disagreement stays in the report and the exit code stays 2.
+disagreement stays in the report and the exit code stays 2. (The defence was
+written inside the clock-disagreement branch, and round 10 found the half it
+therefore missed — the click made AFTER the close, where the mode and the
+clock agree. `_already_published()` is consulted before the scan now,
+whatever the clock says, and it reads the run's BASKET as well as its
+session: a `--tickers` smoke record is not the night's universe scan
+published, and treating it as one cost the night its scan. The pointer here
+used to name a section of this file that does not exist.)
 
 **A backfill made the morning announce that nothing had published.**
 `SCAN_SESSION_DATE` of last week rewrote `docs/data.json`'s headline to last
@@ -233,6 +264,15 @@ run just added is older; the record still gains the backfill.
 kept its record — and the record carried `status: ok, errors: []`, so the
 page and the next morning presented it as clean and only the Actions colour
 knew. The delivery failure is stamped into both files before it is raised.
+Round 10 found the third surface: the FAILURE NOTICE that went out in the
+shortlist's place read "there is no shortlist below, and no scan was
+completed" over a night whose record was already on disk, and listed the one
+rejection twice — once in the email stage's own sentence and once as main()'s
+recording of the same exception. The notice is that mail sent again now
+(`send_failure_notice(..., results=)`), with the rows in it, a headline that
+says the record published and the delivery failed, and the attachments dropped
+so it is not the message the server just refused; `RunReport.fail()` skips an
+exception the last recorded problem already carries.
 
 **The scanner assumed bars arrive oldest-first and once each.** Neither is
 promised: `BarSet.df` keeps the response's order and the request pins no
@@ -246,9 +286,14 @@ unverified lead.
 Freshness checked only the newest bar, so a halt or a dropped bar the
 session before left `iloc[-2]` two sessions old: 12.0% printed as 12.45%,
 dated to the session. `_drop_gapped_symbols()` requires the bar before the
-session to be the previous business day (weekend-only, the same arithmetic
-`current_session()` makes), counts the rest, and the run degrades on them
-with the stale ones. **And a detector that raised on every symbol was a
+session to be the previous session, counts the rest, and the run degrades on
+them with the stale ones. (It required the previous BUSINESS day -- the same
+weekend-only arithmetic `current_session()` makes -- until round 10, when
+that turned the day after every weekday holiday into a universe of holes;
+the session before is `observed_previous_session()`'s answer now, read off
+the night's own frames. And it reads the frame `_measurable()` hands it
+rather than the index, since a bar the detector cannot read is a hole the
+index still shows as a bar.) **And a detector that raised on every symbol was a
 quiet market**: `detect_setup`'s per-symbol `except: continue` had no count,
 so a pandas change would have returned `[]` with `with_bars` intact — the
 shape every coverage guard exists to prevent, on the one path none covered.
@@ -282,7 +327,22 @@ markup: the operator read "502 Bad Gateway 502 Bad Gateway cloudflare" with
 the tags swallowed. The escaping round before this one swept eight leaves and
 missed the band, the checklist lines, the chart note, the close cell, the
 session in the title and funnel, and the stale note — all escaped now, each
-pinned through a real parser. Two existing tests then broke, and correctly:
+pinned through a real parser. **And that sweep was two tables short of
+complete**, which round 10 found by mutating it. The parametrised table it
+left rendered no rows at all, and its one row-borne sibling
+(`test_the_checklist_lines_are_escaped_line_by_line`, added by the same
+commit) covered only the checklist lines — so every leaf needing a ROW, or the
+morning mode, or both was out of reach. Four were neither escaped nor pinned:
+a streak's `last_score` and `last_verdict`, the `history_from` a
+no-day-number streak prints as "which begins …", and the row's own
+`chart_note` (which is `_no_chart_note()`'s FIRST branch — its missing-PNG
+sentence, the second, was escaped in round 4 and is a different leaf of the
+same function). Four more were escaped and pinned nowhere, so dropping each
+`esc()` was a survivor of the round-10 sweep as well: the session in both
+branches of the stale headline, the session and the price in the close cell,
+and the session in the morning shortlist heading. The parser table has a
+second half now, parametrised over the rows and the mode as well as the stats,
+and every one of the eight dies on it. Two existing tests then broke, and correctly:
 they grepped the mail SOURCE for a sentence with an apostrophe in it, which
 is an entity now, and the reader is the standard.
 
@@ -401,9 +461,13 @@ exercised its headline. Nine mutants across them, all killed.
   of the missing secrets are what mailing needs, and it says so.
   **It needs the six repository secrets set (README, "One-time setup"); no
   amount of further work in this repo can do it.** Until then
-  `docs/ledger.json` will never exist, the forward returns cannot be measured,
-  the page's evidence block stays empty and correct, and the morning run has
-  nothing to follow through on.
+  `docs/ledger.json` would never exist, the forward returns could not be
+  measured, the page's evidence block stayed empty and correct, and the morning
+  run had nothing to follow through on. (Written on 4 Sep and true until the
+  6th: the last three secrets went in that day, `docs/ledger.json` exists on
+  this branch with one run in it, and this paragraph is history rather than
+  the state of the repo -- kept because the composition rule it demonstrates
+  is not.)
 
   **Two of the six are in now.** Read off the Actions log for the owner's
   manual dispatch of `evening.yml` on 5 Sep at 11:42 UTC (run 10, on the
@@ -480,9 +544,13 @@ exercised its headline. Nine mutants across them, all killed.
   outcome it had no part in. The note is computed from the counts now, one
   sentence per state, and every state was rendered and read before it was
   written down; three of the six were wrong. Nine mutants, eight killed; the
-  ninth drops `- passed` from `by_checklist`, which is provably equivalent
-  because every branch that reads it sits below the `passed` early return, and
-  the argument is written beside the code rather than here.
+  ninth dropped `- passed` from the subtraction this cell then made for
+  itself, and was equivalent because every branch that read it sat below the
+  `passed` early return. **That subtraction is gone in round 10** -- the cut
+  is a count off the reason word now, on both paths, and the cell reads what
+  the run reported -- so the survivor is not a survivor of anything that
+  still exists, and the shortfall the counts can now leave is a sentence of
+  its own rather than a term absorbed into a verdict.
 
   **The page did not have that defect, and checking cost one shaped test.**
   On a zero-burst night it hides every candidate card and lets the funnel say
@@ -508,7 +576,13 @@ exercised its headline. Nine mutants across them, all killed.
   distinguishes them needs a night with both kinds in it, in different
   numbers, and says so in a precondition. Neither surface had the phrase "the
   N-call cap" pinned, which is how one mechanism grows two vocabularies; both
-  do now, each asserting against the other's source.
+  do now, each asserting against the other's source. **And the stage the
+  product is named after was still missing when that paragraph was written**
+  -- "4% bursts found: 6 | Refused by an absolute rule: 2 | Passed 2LYNCH
+  gate: 3" leaves one burst, the one the CHECKLIST rejected, on no line of the
+  mail. It has one in the round-10 section below, between the floor and the
+  gate -- and counted off the reason word rather than left over, for the same
+  reason this paragraph's own line is.
 
   **The system prompt is 59% of every request and was paid for 25 times a
   night.** `knowledge/strategy.md` is byte-identical on every call of a run --
@@ -594,7 +668,7 @@ exercised its headline. Nine mutants across them, all killed.
   and 0.72 once round 5 put a liquidity block on every entry, 13.63 and
   0.97 once round 6 put the open basis on every row and every mean and the
   round-5 audit put the dollar volume on every ledger row, 13.71 and
-  0.99 once round 7 put a benchmark on every run entry, and 14.03 and 1.08
+  0.99 once round 7 put a benchmark on every run entry, and 14.04 and 1.08
   once the rounds 6-7 audit stamped each benchmark with the universe it was
   measured over -- the guard below
   caught every move on the commit that made it. The gzipped figure has
@@ -604,7 +678,10 @@ exercised its headline. Nine mutants across them, all killed.
   -- real rows from the generated history, real row counts from the canonical
   one-night fixture, and `src.ledger`'s own writer, because `indent=2` is most
   of the raw size and a compact estimate is not the file a browser fetches --
-  and `tests/test_docs_are_true.py` asserts README against what it prints.
+  and `tests/test_docs_are_true.py` asserts README against what it prints --
+  and, since round 10's prose audit, `docs/index.html` too, which quoted 0.6 MB
+  in the two comments that ARGUE the fetch-on-demand design while README was
+  swept twice beside them: one number in three places needed one assertion.
   Two estimates disagreed by a factor of two on the way here (968 B/row scaled,
   against per-row-type sums at compact separators); building the actual file is
   what settled it, which is this file's own rule about argued findings.
@@ -650,8 +727,10 @@ exercised its headline. Nine mutants across them, all killed.
   second; assume there is a third.**
 
   **And `evening.yml`'s commit-back has still never executed** (written before
-  6 Sep 2026; it executed that day, run 34014332161, commit f0780c7, and every
-  dispatch since -- round 9 below) — nor has the
+  6 Sep 2026; it executed that day, run 34014332161, commit f0780c7, and twice
+  more the same day -- round 9 below, and round 10's prose audit for the
+  dispatch that passed preflight and committed nothing because docs/ was
+  unchanged) — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on
   it; the `git add` bug that would have voided it is fixed and guarded by a
   test. But read from the Actions API: `evening.yml` had fired SIX times when
@@ -668,8 +747,14 @@ exercised its headline. Nine mutants across them, all killed.
   the invented nightly failure was not, which is the difference this file's own
   "verification is by execution" rule exists to keep. The push-and-rebase loop
   was traced with `bash -ex` against a stub `git` — three attempts really
-  happen now, where the old loop aborted after one — but that is a simulation.
-  Watch the first evening run that gets past preflight.
+  happen now, where the old loop aborted after one — but that is a simulation,
+  and it still is: the step has run since (6 Sep 2026, commit f0780c7, and
+  two more commits that day), while no push has yet been rejected, so the retry
+  loop is the one half nothing has exercised. It has run WITHOUT committing
+  too, which the round-10 prose audit found README and the workflow both
+  claiming otherwise: `git diff --staged --quiet && exit 0` is the step's own
+  first branch, and run 34018706843 re-presented an already-published session,
+  left docs/ byte-identical and exited 0 with nothing staged.
 
   **One judgement about the calendar, written down once.** The morning email's
   staleness band needs to know whether a market closure could explain nothing
@@ -708,6 +793,200 @@ exercised its headline. Nine mutants across them, all killed.
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Round 10 — one rule decides both empty cells, and it is the STAGE
+
+Three auditors over the morning-mail-truth commit, twelve findings and four
+lows, every one reproduced HERE by execution before it was touched. They
+converge on one sentence: **that commit fixed the morning and left the evening,
+and README's own new row said otherwise.**
+
+**The defect was fixed for one mode and shipped in the other.**
+`build_html()` asked the mode first on the morning path and still tested
+`scan_stats.get("errors")` on the evening one, so a complete evening scan of a
+quiet session that carried ANY problem printed "No shortlist. See the failures
+listed above — this is not a statement about the market" three lines under "4%
+bursts found: 0" — while `_headline()`, two inches above it, told the same
+reader "the scan below is complete, but something in the run that judged it was
+not". One email, two answers, on one screen. That is the shape of the first
+mail this project ever delivered (run 34018706843: Sunday clock, 0 bursts,
+exit 2). The module already held the discriminator and only the band read it:
+`SHORTENING_STAGES` is `{"scan"}` and `_shortened()` exists because a chart
+that failed to render printed "the list below is incomplete" over a complete
+scan. Both cells go through it now.
+
+**And the fix reintroduced it one field over.** `_empty_morning_note()`
+deferred on the SOURCE run's status WORD, and "degraded" is one word for
+reasons that do and do not compromise a scan: of the five ways an evening run
+degrades, only the scan guards cut it short. main's own 4 Sep record carries
+two of the others — the Sunday clock disagreement and the Resend refusal — over
+a clean scan of 228 names that found no burst, and the morning after it
+retracted that count. Worse, the round's own two tests PINNED the defect: both
+made their source run degraded by the clock alone, the clearest case of the
+sentence being false. `follow_through()` hands over the source run's raw stage
+words now (`carried_problems()` rewrites them to "2026-09-04 evening · scan"
+for the band, so they cannot be recovered from `errors`), and one rule applies
+`SHORTENING_STAGES` to both. The status word is gone from the cell: the band
+already says "the 2026-09-04 run this follows through on was itself a DEGRADED
+run", which is where a verdict about a run belongs.
+
+**A pointer to a band that is not there, and a market claim with no scope.**
+Two smaller ones from the same lens, both rendered before they were written
+down. The failures sentence names a red band, and one of the states that
+reaches it — a snapshot whose `bursts` cannot be read — needs no problem of its
+own, so a mail with no band told its reader to go and read one; it says "no
+failures to point at" in that state. And the cell's claim is about the MARKET
+while a `--tickers` run writes `docs/data.json` like any other, so over a
+two-name smoke record it said no 4% burst reached the checklist with nothing
+anywhere naming the scope. The morning funnel carries no universe line by
+design — THIS pass scanned none — so the scope goes in the sentence that needs
+it, and only when the run scanned something other than the checked-in file.
+
+**The ninth instance of the one-level-short class, on the field the round
+before had just made a consumer of.** `run.stopped_printing.after_sessions` is
+the number its whole sentence turns on and was the one key of that block the
+shape check never read; the same round put the block on the morning email, so
+a snapshot missing it mailed "no bar for more than  sessions" and the page
+printed "undefined". Refused at load now, with the page — which has no load
+check and reads whatever `docs/` holds — stating the names and no threshold
+instead. `run.bursts` and `run.passed_gate` were in the same state one field
+over: unchecked, printed as facts about the session, and `follow_through()`
+defaulted a MISSING `bursts` to 0, which manufactured "found no 4% burst to
+score" out of a record that says nothing about bursts. Both are counts at load
+now, absent still loads clean, and the default is gone.
+
+**A fact about the file is a fact about the file AS THAT RUN READ IT.** The
+morning re-asserted `stopped_printing` in the present tense under a comment
+saying it was "still true this morning" — and this repo falsified that in one
+day: the 4 Sep record names FI, BK and EA, and all three were retired on the
+5th, so the first morning cron would have told its reader to check three names
+the file no longer holds. The sentence is scoped to the run on that path and
+the imperative is conditional. Acting on the line is what changes the file,
+which is why the unscoped wording could not stay.
+
+**The escaping sweep was two tables short, not one, and the round-10 note
+about it was itself wrong.** The round-4 sweep did render a row — its
+`test_the_checklist_lines_are_escaped_line_by_line` — so "every leaf it pinned
+renders on `build_html([], "evening", stats)`" was false; what it never
+rendered was a row AND the morning mode together. Four more `esc()` calls were
+therefore load-bearing and pinned nowhere: both branches of the stale headline,
+the session and the price in the close cell, and the session in the morning
+shortlist heading. All eight die on the second parser table now.
+
+**Thirty-seven mutants, thirty-three killed on the first pass, and one of the
+four survivors was the harness eating its own tail.** M17 -- the pipeline
+handing over EVERY universe label, not just a `--tickers` one -- reported
+"pattern not found", because the first harness run was killed mid-mutant
+(its `finally:` restore never ran) and left that mutant in `src/pipeline.py`;
+I then verified the tree pristine with greps that did not cover that line and
+copied the mutated file into the snapshot the second run restored from. So
+the second run's "original" was the mutant. Caught by the pattern miss, not
+by the greps. When it was really applied it survived, and that was a real
+hole: the test scanned a market with a burst in it, so the morning had ROWS
+and the empty cell -- the only thing that carries the clause -- never
+rendered. It scans a quiet universe now. The other three were holes too: the
+failures sentence was asserted only on the clause both of its two strings
+share, so the pointer could be dropped; the `bursts` default could come back
+because no test published a run block WITHOUT the key; and `after_sessions`
+could be a bool because no malformed row planted one. Each closed with the
+test it showed missing, and all thirty-seven killed on the re-run.
+
+**The funnel's last missing cut got a line, and closing it by subtraction
+closed it by inventing an attribution.** "4% bursts found: 6 | Refused by an
+absolute rule: 2 | Passed 2LYNCH gate: 3" leaves one burst -- the one the
+CHECKLIST itself rejected -- on no line of the mail, with its row in the same
+run's `docs/data.json` under `reason: lynch_gate`. The line that first closed
+it was `bursts - vetoed - illiquid - gated`, and three auditors reproduced
+what a remainder does: it does not omit a burst it cannot account for, it
+REASSIGNS it. A `gated_out` row whose `reason` key is missing -- a shape
+`snapshot_problem()` accepts, since that walker shape-checks the `candidates`
+rows and never these -- made the morning read "Rejected by the 2LYNCH
+checklist: 2" over a record naming ONE, the second being a name rule 6 refused
+before the checklist was consulted; a `vetoed` that is not a count does the
+same; and a reason word from any later round lands there too, which is 3.3's
+"a second veto added to `src.lynch` alone left the suite green" one stage on.
+Every refused burst has carried its reason word since round 5, so both paths
+COUNT it now -- the evening off `unscored`, the morning off the snapshot's own
+rows, beside the three cuts already counted that way -- and a burst neither
+path can name is on no line rather than on the nearest one. The load check is
+deliberately NOT tightened to refuse the reason-less row: `evidence()` reads
+one as a refusal that predates the reasons, and refusing a whole record at
+load would contradict that for a row whose only consequence is a funnel that
+does not close.
+
+**And the first fix moved a false sentence rather than removing it.** The
+empty-table cell's "All 6 bursts the scan found were refused outright by an
+absolute rule" was true only because the remainder made the three cuts add up
+to the total by construction; counted, they can fall short, and the cell then
+said "all" of six about two -- a worse sentence than the one it replaced, and
+this file's "check that a fix did not introduce a new defect of the same
+class" caught by the round's own new test rather than by an auditor. The
+shortfall is its own sentence now ("... This run recorded no reason for the
+other 4 bursts"), and all eight states of that cell were rendered and read
+before this was written down. Twenty-one mutants: sixteen of the first
+eighteen killed, both survivors real holes -- a shortfall sentence that drops
+the clauses it does have, and an evening count that sweeps the crowded-out
+names in, which no test could see because no fixture had ever made the call
+cap bite -- and three ordering mutants added because the first pass's two
+attempts at "move the line" deleted it instead, which the count tests killed
+for the wrong reason. All five killed on the re-run.
+
+**One audit finding is deliberately not fixed, and it is a vocabulary.** The
+funnel says "rejected by the 2LYNCH checklist" while the streak line beside it
+says "rejected at the 2LYNCH gate" for the same reason word. That split
+predates this line and sits on both surfaces -- rendered both in one mail on
+the pre-commit tree to check, rather than argued: the footnote under the table
+has said "whether the checklist rejected them" since round 5, `src.ledger`'s
+contract and README's `last_outcome` bullet gloss `lynch_gate` the same way,
+while `LAST_OUTCOME` and the page's gated hint name the STAGE with its
+threshold. The funnel matches the footnote three inches below it, and renaming
+either half would put one surface out of step with the other. What WAS wrong
+is the test the audit named: it ran on a mail with no rows, so neither the
+footnote nor a streak line existed to carry the phrases it forbade, and its
+page half grepped a column header out of `docs/index.html`'s own source --
+the "asserting the page's own source" shape. It renders a row now.
+
+**The prose audit: a retracted universal claim was replaced by another one,
+and the guards that were meant to stop that read the wordings that happened to
+be in the tree.** Three auditors, fourteen findings and seven lows, every one
+reproduced HERE by execution. The sentence "every dispatch that got past
+preflight since has committed too" (README and `evening.yml`) was false
+seventeen hours before it was written: run 34018706843 passed preflight,
+re-presented the already-published 4 Sep session, mailed it, exited 2 -- and
+the persist step ran, found `docs/` byte-identical and exited 0 at
+`git diff --staged --quiet` with nothing to commit. Three commits exist,
+`f0780c7`, `932ec58` and `369c695`, all on 6 Sep; both surfaces say that and
+the no-diff branch now, and a guard reads the short-circuit out of the workflow
+and refuses the universal claim while the step still has it.
+
+The same round's other two guards were pinned to a phrase rather than a claim.
+"On a fresh clone that is the fixture" was swept in six files under a test
+requiring "fresh clone" AND "fixture" in ONE sentence -- so "the state a fresh
+clone is in" (README's three-states paragraph and `follow_through()`'s comment,
+of a morning with NO SNAPSHOT) and "it will refuse to read the fixture" (README's
+"Run locally") all survived it, and a fresh clone of this repo refuses nothing:
+driven on a real clone, `morning --dry-run` follows through on 2026-09-04 and
+exits 0. Both guards read every prose file in windows of three sentences now,
+over a family of wordings, and each of the auditors' mutants dies. `.gitignore`
+and the requirements files joined `_prose_files()`, which had been claiming to
+walk "every file that carries prose" while a suffix list cannot see a file with
+no suffix -- and `.gitignore` was carrying the retracted "the persist step was
+aborting before its commit on every run", as was `src/pipeline.py`.
+
+Three more of the same class, each checked against git rather than remembered:
+`docs/ledger.json` has been tracked since `f0780c7` added it, so "on a fresh
+clone the ledger is untracked" (README, `.env.example`, this file) is false and
+`git checkout -- docs/` alone restores both files; the commit-back guard was
+SKIPPED on every CI run, because `actions/checkout` clones at depth 1 and
+`tests.yml` asked for nothing else, under a README sentence calling it a check
+that cannot rot (`fetch-depth: 0` now, asserted); and `docs/index.html` argued
+its whole fetch-on-demand design from "~0.6 MB gzipped" in two comments while
+the measured figure is 1.08 and README was swept twice beside it. Twenty-three
+mutants over the new guards, twenty killed; two survivors were shaped
+assertions closed on the spot (a window that let a true sentence beside a false
+one excuse it; a by_score check any sentence containing "setup" satisfied), and
+the third is not a hole -- `CLAUDE_MODEL`'s local-only note is stated twice, and
+deleting BOTH turns the completeness half red.
 
 ## Round 9 — the ten items the rounds 6-7 audit left open, and what working them turned up
 
@@ -964,7 +1243,8 @@ name alone; the first request whose window reaches past the clock is the
 first scheduled weekday evening, and it is Tuesday 8 Sep, because Monday 7
 Sep is Labor Day -- the cron will fire, find no bar for the 7th, and fail by
 design with `StaleDataError` (a holiday is never a quiet market), mailing
-nothing, since the mail cannot go out either. Then the email stage: Resend's
+the FAILED notice, since #10 below made the mail go out (this said "mailing
+nothing" for a round after that). Then the email stage: Resend's
 test mode delivers only to the address the account is registered under,
 `EMAIL_TO` is not it, and the run exited 3 -- and **the persist step ran, for
 the first time in this project's history**: commit f0780c7 `run 2026-09-04`,
@@ -994,8 +1274,13 @@ a request whose `end` sat sixteen minutes behind the clock, every one of the
 session with no bar, by design. `DRY RUN -- not mailing the failure
 notice`, the persist step SKIPPED, the artifact `evening-dryrun-34034039799`
 -- the three things the box promises, each read off the job rather than
-assumed. So the free plan's consolidated route is the one this code takes,
-and Tuesday's cron is the first night, not the first experiment.
+assumed. So the free plan's consolidated route is the one this code takes.
+This sentence went on "and Tuesday's cron is the first night, not the
+first experiment", and it was not: Tuesday is the day after Labor Day, and
+the gap rule read the session before it off weekend arithmetic, so every
+name was a hole and the night would have published DEGRADED with 0 bursts
+-- the first round-10 item, worked before the cron fired (README, "The
+session before is read off the frames").
 
 **Then three dispatches of one identical refusal, and the sentence that
 ended them.** The owner enabled Pages (the first build published the
@@ -1072,8 +1357,8 @@ one symbol off a rehearsal.** `run.stopped_printing` was built from `stale`
 -- names with a bar, none for the session -- and a symbol the feed answers
 with NOTHING is in no frame: not stale, not dropped (that is a batch that
 failed), only the arithmetic `no_bars` count, which degrades the run past
-10% of the universe and is otherwise written nowhere; and "Scanned 228/228"
-counts what was ASKED. So the rehearsal dispatched to confirm BNY, the
+10% of the universe and is otherwise written nowhere; and the per-batch
+progress line ("Downloaded 228/228 symbols") counts what was ASKED. So the rehearsal dispatched to confirm BNY, the
 symbol BK's listing moved to, could not: its log read the same whether BNY
 had answered or not, and the artifact holding the answer sits on a host this
 sandbox's proxy refuses. That is the state the old symbol of every rename
@@ -1104,11 +1389,12 @@ place to appear.
 **Leads written down, not worked.** A feed-wide missing day -- more than
 half the frames lacking a session -- is not a session under the majority
 rule and every frame reads the next bar, which is the pre-round behaviour
-and the right one for a holiday. The scanner's own `session_dollar_volume()`
-reads the last non-NaN bar for a session bar with NaN volume, and
-`detect_setup()` measures the same bar as "today", so both would date the
-previous session's move to the session -- a shape no daily bar from the feed
-takes, noted as the pre-round question it is. On a night a batch fails twice
+and the right one for a holiday. (The lead this paragraph used to carry
+beside it -- `session_dollar_volume()` and `detect_setup()` both reading the
+last non-NaN bar, and so dating the previous session's move to the session --
+was worked in round 10's own commit, not left open: the detector's measured
+date is compared to the session, and the bar before it is read the same way.)
+On a night a batch fails twice
 the benchmark is over fewer names than the universe and only n says so. A
 `--tickers` run of exactly two names keeps a session one of them lacks, by
 the tie rule, which is the conservative side. The requestfailed filter also
@@ -1501,8 +1787,11 @@ other run — one row per name, no marker — and the next real run on another
 session read it as history: streaks starting on a night that scanned nothing,
 scored rows counted as setups in the evidence, and `git add docs` committing
 the lot. README said `git checkout docs/data.json` put everything back; it
-never touched the ledger, which on a fresh clone is untracked, so the first
-`git pull` after `evening.yml` commits a real one refuses to overwrite it.
+never touched the ledger, which was untracked in every checkout until the
+first commit-back added it on 6 Sep 2026, so the first `git pull` after
+`evening.yml` committed a real one would have refused to overwrite it. (It is
+tracked now, and `git checkout -- docs/` restores both files; a repo that has
+never published is the case the `rm` is still for.)
 Every run entry carries its `universe` now, in the ledger and in the page's
 runs table, and README says how to put both files back. The row is still
 written — the whole test suite and `tools/make_history.py` drive the pipeline

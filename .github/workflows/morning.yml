@@ -16,10 +16,12 @@ name: Morning follow-through (8:30 AM ET)
 #     write`. A view over the record does not belong inside the record.
 #
 # It DEPENDS on evening.yml having committed docs/ — without that this reads
-# whatever data.json the checkout carries, which on a fresh clone is the
-# hand-authored fixture. That case is refused by name in src.ledger's
+# whatever data.json the checkout carries. In a repo that has never published
+# that is the hand-authored fixture, and it is refused by name in src.ledger's
 # read_snapshot(): a fixture is not a run and its invented tickers must never
-# be mailed as a watchlist.
+# be mailed as a watchlist. Here it is a real run committed back on 6 Sep 2026,
+# so nothing refuses it -- which is also what a FORK reads on its first
+# morning, until its own evening run publishes one.
 on:
   schedule:
     # 8:30 AM ET, well before the 9:30 open. Both offsets are registered and

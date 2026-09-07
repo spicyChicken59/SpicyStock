@@ -23,7 +23,8 @@ which feed; that the feed carries today's session; that Claude accepts the
 model name, returns something the parser reads, and honours cache_control;
 that the cache actually HITS on a second call; and that Resend delivers from
 RESEND_FROM. What it cannot settle: the commit-back push, which only Actions
-can exercise. Watch the first evening run's "Persist the run" step for that.
+can exercise -- and has, since 6 Sep 2026; its commits are in this branch's
+history, one per published run.
 
 Every line of this file is exercised offline in tests/test_live_check.py
 through the same doubles the pipeline tests use, so the tool that checks the

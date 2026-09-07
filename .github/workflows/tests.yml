@@ -19,6 +19,15 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The whole history, not the depth-1 default. tests/test_docs_are_true.py
+          # holds README's account of the commit-back against this repo's own git
+          # log -- the commits evening.yml's persist step made -- and with one
+          # commit in the checkout that guard SKIPPED on every CI run while
+          # README called it a check that cannot rot. A guard that is inert
+          # exactly where the suite is enforced is the "no-answer is not
+          # all-clear" shape this file's own check below describes.
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"   # same runtime as .github/workflows/evening.yml
@@ -76,6 +85,7 @@ jobs:
           npx playwright install --with-deps chromium
           set -o pipefail
           node tools/dashboard_smoke.mjs --shots /tmp/shots
+          node tools/dashboard_recovery_smoke.mjs
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

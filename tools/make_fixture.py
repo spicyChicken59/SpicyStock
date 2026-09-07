@@ -2,11 +2,12 @@
 
     python3 tools/make_fixture.py tests/fixtures/data.json
 
-docs/data.json is seeded from that file so a fresh clone renders, and it stays
-a copy of it only until evening.yml commits a real run back; after that the
-page shows the run and this fixture lives on where tools/check_fixture_fresh.py
-and tools/dashboard_smoke.mjs read it. Do not regenerate straight into docs/
-over a real run.
+docs/data.json was seeded from that file so a repo that has never published
+still renders a page, and it stays a copy of it only until evening.yml commits
+a real run back -- which in this repo happened on 6 Sep 2026, so docs/data.json
+is a run now and this fixture lives on where tools/check_fixture_fresh.py and
+tools/dashboard_smoke.mjs read it. Do not regenerate straight into docs/ over a
+real run.
 
 Every 2LYNCH pass flag is COMPUTED from its measurement using the same
 thresholds src/lynch.py applies, and every fallback score is computed with
