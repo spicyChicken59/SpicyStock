@@ -759,7 +759,16 @@ invariants live in the file rather than only here. The load-bearing ones:
   `src.ledger` writes every number through one coercion and dumps with
   `allow_nan=False`, because `json.dump` writes a NaN as a bare token no browser
   will parse — one gap would cost the whole page, not one cell.
-- `forward_returns` are `null` until those sessions have happened.
+- `forward_returns` are `null` until those sessions have happened — with
+  three exceptions no session can end, which the page names rather than
+  calling them pending: a run that scored nothing has no rows for a later run
+  to fill; a run every one of whose scored rows repeats a setup counted
+  earlier has no setup of its own to average (`rows == scored` with `n == 0`,
+  and a lead only ever moves earlier); and a run past the fill window is one
+  `runs[].fills_closed` marks true, after which nothing is re-requested for
+  it and a horizon still `null` there is `null` for good. `fills_closed` is
+  an answer about the record as it stands tonight rather than a fact about
+  the run, so it is in `data.json`'s view and not in the ledger.
 
 One invariant reads slightly stricter than the file can be: `candidates` is
 described as "ranked by score descending", while the pipeline ranks on
@@ -1076,14 +1085,14 @@ construction: `docs/` and its exact design-system snapshot are served locally,
 and external requests are blocked. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 214 checks, and which file each one
+**Three data sources, one page.** It runs 225 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 37 mutated copies of it are served
+  night can hold at once. 39 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now
@@ -1092,9 +1101,11 @@ reads is the point:
   pipeline (`tools/make_history.py`, see `tests/fixtures/README.md`): forward
   returns filled in by later runs, a night the scorer was down, a chart that
   would not render, repeats on consecutive sessions, a session that scored
-  nothing at all — whose three horizon cells no later run can ever fill, and
-  which read "pending" for a round because of it — and the last week still
-  pending. Every expectation is computed from the file the page is reading.
+  nothing at all and one whose every scored name was a repeat of a setup
+  counted earlier — neither has three horizon cells any later run can fill,
+  and both read "pending" from the day the runs table existed until round 10
+  — and the last week still pending. Every expectation is computed from the
+  file the page is reading.
 - **`docs/`** — whatever the last run wrote, exactly as GitHub Pages serves it,
   opened last with only the checks that hold for any run: it opens, its rows
   add up to its own funnel, it says whether it is sample data, and it logs no

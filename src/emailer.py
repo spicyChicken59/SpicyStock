@@ -1081,14 +1081,18 @@ def _no_shortlist_note(scan_stats: dict) -> str:
             else NO_SHORTLIST_NO_BAND)
 
 
-#: What a night that scored nothing did, in the words one mail already used
-#: for it: the morning follow-through's summary of the run it follows. The
-#: page prints the same phrase in that run's three horizon cells
-#: (docs/index.html's FWD_WORDS.unscored), because the cells used to read
-#: "pending" -- a run with no scored rows has nothing for a later run to
-#: fill, so the wait it promised could never end. One mechanism, one
-#: vocabulary; tests/test_docs_are_true.py renders this sentence and reads
-#: the page's words back against it.
+#: What a night that FOUND bursts and scored none of them did, in the words
+#: one mail already used for it: the morning follow-through's summary of the
+#: run it follows. A night with no burst at all gets the other sentence in
+#: _empty_morning_note() below -- "found no 4% burst to score" -- and main's
+#: own 4 Sep record, the one this round was written about, is that kind; the
+#: page's cell covers both nights with this phrase, which is borrowed
+#: vocabulary on one branch and the page's own words on the other, and
+#: tests/test_docs_are_true.py renders BOTH branches rather than only the one
+#: the phrase appears in. The page prints it in that run's three horizon
+#: cells (docs/index.html's FWD_WORDS.unscored), because the cells used to
+#: read "pending" -- a run with no scored rows has nothing for a later run to
+#: fill, so the wait it promised could never end.
 SCORED_NOTHING = "scored no candidates"
 
 

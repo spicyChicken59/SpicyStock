@@ -1227,21 +1227,36 @@ def test_a_run_that_scored_nothing_is_worded_the_same_in_the_email_and_on_the_pa
     its three horizon cells on docs/index.html are null for good; they read
     "pending" until round 10, and main's own 4 Sep record is one of these --
     the page it published said "0 of 1 sessions in" under a chip reading "no
-    session closed yet" while the sessions closed one after another. The mail
-    already had words for that night, in the morning follow-through's summary
-    of the run it follows, so the page borrows them rather than inventing a
-    second vocabulary for one mechanism.
+    session closed yet". Not one session has closed since that record
+    published (5-6 Sep are the weekend and 7 Sep is Labor Day), and the cell
+    would still be null after every session that does, which is what makes
+    "pending" the wrong word rather than an early one -- the chip was
+    accidentally true on the day and false about the reason.
 
-    The sentence is RENDERED here rather than grepped: a phrase constant no
+    The mail already had words for a night like it, in the morning
+    follow-through's summary of the run it follows, so the page borrows them
+    rather than inventing a second vocabulary. BOTH branches of that sentence
+    are rendered here, because the mail splits where the cell does not: a
+    night that found bursts and scored none carries the phrase, a night with
+    no burst at all -- which is what main's 4 Sep run was -- gets its own,
+    and the page's cell is true of both.
+
+    The sentences are RENDERED rather than grepped: a phrase constant no
     sentence reaches is a vocabulary of one, and this file's job is to catch
-    exactly that. The state set is a set EQUALITY, so a sixth state added to
-    fwdState() without words in FWD_WORDS turns this red rather than showing
-    a reader a bare number under a state the page cannot name.
+    exactly that. The state set is a set EQUALITY, so a seventh state added
+    to fwdState() without words in FWD_WORDS turns this red rather than
+    showing a reader a bare number under a state the page cannot name.
     """
     from src import emailer
 
     mail = emailer._empty_morning_note({"bursts": 3, "scored": 0, "session": "2026-09-04"})
     assert emailer.SCORED_NOTHING in mail, mail
+    # The other branch, and the reason the page's comment says the cell is
+    # true of both nights and borrowed from one: neither scored anything, so
+    # neither can ever be measured.
+    no_burst = emailer._empty_morning_note({"bursts": 0, "scored": 0, "session": "2026-09-04"})
+    assert emailer.SCORED_NOTHING not in no_burst, no_burst
+    assert "found no 4% burst to score" in no_burst, no_burst
 
     page = _read("docs/index.html")
     block = page[page.index("var FWD_WORDS = {"):]

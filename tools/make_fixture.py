@@ -721,6 +721,14 @@ for _i, _run in enumerate(runs):
     # nothing on the page warns about a blended record. The drifted state is a
     # smoke variant, because a fixture cannot hold both.
     _run["rules"] = rules_fingerprint()
+    # Which side of the fill window each entry is on (src.ledger.dashboard
+    # stamps it off _fill_window()). Eight runs is inside FILL_WINDOW_RUNS,
+    # so every one of them is still fetched for and none may say otherwise;
+    # the page's other state -- a run past the window whose horizon stays
+    # null for good -- needs eleven runs and is a smoke variant, because a
+    # fixture this size cannot hold it.
+    assert len(runs) <= ledger.FILL_WINDOW_RUNS, "an entry past the window would be stamped closed"
+    _run["fills_closed"] = False
 
 # The evidence block, computed by the REAL src/ledger.py over this fixture's
 # own rows rather than hand-authored. One run, whose forward returns have not

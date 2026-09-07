@@ -535,11 +535,14 @@ const VARIANTS = {
   // A run that scored nothing, with a scored run after it. Its three horizon
   // cells are null for ever -- there are no rows for a later run to fill --
   // and they read "pending" for a round, under a hint promising the cell
-  // fills when the session happens. main's own 4 Sep run is this shape and
-  // its sessions have been closing ever since. Two runs, not one, because
-  // the defect is only visible beside a run whose returns ARE in: the
-  // denominator said "1 of 2" and the number that can never arrive was
-  // counted as the one still to come.
+  // fills when the session happens. main's own 4 Sep run is this shape, and
+  // no session has closed since it published -- the weekend, then Labor Day
+  // -- which is the point: the cell would still be null after every session
+  // that does. Three runs, not one, because the defect is only visible
+  // beside a run whose returns ARE in -- the denominator said "1 of 2" when
+  // it held those two, and the number that can never arrive was counted as
+  // the one still to come -- and beside one that is genuinely waiting, which
+  // is what says the cell is decided by the rule rather than by the nulls.
   quietrun() {
     const d = VARIANTS.forward();
     const newest = { ...d.runs[0], date: '2026-09-01' };
@@ -547,7 +550,61 @@ const VARIANTS = {
       shortlist_size: 0, top_score: null, fallbacks: 0,
       forward_returns: { d1: null, d3: null, d5: null, n: 0, rows: 0,
                          from_open: { d1: null, d3: null, d5: null, n: 0 } } };
-    d.runs = [newest, zero];
+    // A third run that is genuinely WAITING and looks like the other two from
+    // one field away: three scored, one row measured, no lead among them yet.
+    // rows < scored is the whole difference, and without a source holding it
+    // the "no new setup" predicate could drop that clause green and call
+    // every partly-filled run unfillable.
+    const waiting = { ...d.runs[0], date: '2026-08-28', bursts: 4, passed_gate: 3, scored: 3,
+      shortlist_size: 3, top_score: 7.1, fallbacks: 0,
+      forward_returns: { d1: null, d3: null, d5: null, n: 0, rows: 1,
+                         from_open: { d1: null, d3: null, d5: null, n: 0 } } };
+    d.runs = [newest, zero, waiting];
+    return d;
+  },
+  // Eleven runs, so the oldest is one past FILL_WINDOW_RUNS: src.ledger
+  // stamps `fills_closed` on it, no later run ever fetches its rows again,
+  // and the +3d and +5d cells it never filled are empty for good. They read
+  // "pending" until round 10 -- the same promise a quiet run's cells were
+  // making, one cause over -- and neither fixture can hold the state,
+  // because both are inside the window. The NEWEST run here is pending on
+  // the same two horizons with the same nulls, so the page is made to tell
+  // two identical values apart on the window alone.
+  unfetched() {
+    const d = VARIANTS.forward();
+    const base = d.runs[0];
+    const both = (d1, d3, d5) => ({ d1, d3, d5, n: 2, rows: 2,
+      from_open: { d1: d1 === null ? null : +(d1 - 0.5).toFixed(2),
+                   d3: d3 === null ? null : +(d3 - 0.5).toFixed(2),
+                   d5: d5 === null ? null : +(d5 - 0.5).toFixed(2), n: 2 } });
+    d.runs = [];
+    for (let i = 0; i < 11; i += 1) {
+      d.runs.push({ ...base, date: `2026-09-${String(11 - i).padStart(2, '0')}`,
+        scored: 2, fallbacks: 0, fills_closed: i === 10,
+        // No run here measures +5d, so that horizon is a genuine wait on the
+        // same record: its tile has to say "pending" while its oldest run's
+        // cell says the opposite, which is the only source that separates
+        // the two nothings a tile can be in.
+        forward_returns: i === 0 ? both(1.5, null, null)
+          : i === 10 ? both(0.8, null, null)
+            : both(1.0 + i / 10, 2.0, null) });
+    }
+    d.run.date = d.runs[0].date;
+    return d;
+  },
+  // A record where every run scored plenty and none of it counts: two runs
+  // whose scored names were all repeats of setups counted earlier. "Nothing
+  // scored yet" is false of it -- both runs scored -- and "pending" is false
+  // too, so the horizon tiles have a third nothing to name. Rare and real: a
+  // record can arrive here after MAX_RUNS drops the runs its leads were in.
+  allrepeats() {
+    const d = VARIANTS.quietrun();
+    const repeat = (date) => ({ ...d.runs[0], date, scored: 2, bursts: 3, passed_gate: 2,
+      shortlist_size: 2, fallbacks: 0,
+      forward_returns: { d1: null, d3: null, d5: null, n: 0, rows: 2,
+                         from_open: { d1: null, d3: null, d5: null, n: 0 } } });
+    d.runs = [repeat('2026-09-01'), repeat('2026-08-31')];
+    d.run.date = d.runs[0].date;
     return d;
   },
   // And the record main is actually in: every run it holds scored nothing.
@@ -557,14 +614,20 @@ const VARIANTS = {
   // apart.
   allquiet() {
     const d = VARIANTS.quietmarket();
-    d.runs = [{ ...VARIANTS.quietrun().runs[1], date: d.run.date }];
-    // ...and its evidence record, which the pipeline writes as zeroes for a
-    // record that has scored nothing -- main's 4 Sep file, field for field.
+    // The entry describes the SAME session as the run block above it, so its
+    // counts are that block's: a run entry saying 1 burst under a run block
+    // saying 0 is a document the pipeline cannot write, and this variant's
+    // whole claim is to be the shape main is in.
+    d.runs = [{ ...VARIANTS.quietrun().runs[1], date: d.run.date,
+                bursts: d.run.bursts, passed_gate: d.run.passed_gate, scored: 0 }];
+    // ...and an evidence record of zeroes, which is what the pipeline writes
+    // for a record that has scored nothing. main's 4 Sep file is this SHAPE
+    // with two deliberate departures, both named here rather than left for a
+    // reader to find: its run entry HAS a forward_returns block (deleted just
+    // below, to pin the order of fwdState()'s first two branches, which is
+    // visible on no other source), and its evidence is zeroes throughout
+    // while this keeps the fixture's populated by_check.
     d.evidence.record = { ...d.evidence.record, setups: 0, scored_setups: 0, rows: 0, runs: 1, sessions: 1 };
-    // And no forward_returns block on the entry: a run known to have scored
-    // nothing is described by THAT, not by "not recorded", whichever way the
-    // block went missing. This is the one source where the order of
-    // fwdState()'s first two branches is visible.
     delete d.runs[0].forward_returns;
     return d;
   },
@@ -1498,9 +1561,15 @@ await open('/v/quietrun/');
 const quietRuns = await page.locator('#runs-table tbody tr').allInnerTexts();
 const quietWord = (await readFile(join(REPO, 'src', 'emailer.py'), 'utf8')).match(/^SCORED_NOTHING = "([^"]+)"/m);
 ok('a run that scored nothing does not read pending in the history for ever',
-  quietRuns.length === 2 && !quietRuns[1].includes('pending')
+  quietRuns.length === 3 && !quietRuns[1].includes('pending')
   && (quietRuns[1].match(/nothing scored/g) || []).length === 3,
   (quietRuns[1] || '').replace(/\n/g, ' | '));
+// And the run beside it whose rows are not all in yet keeps the word, on the
+// same three nulls: what separates them is rows against scored, not the value.
+ok('and a run whose rows are not all measured yet is still waiting',
+  (quietRuns[2].match(/pending/g) || []).length === 3
+  && !/nothing scored|no new setup/.test(quietRuns[2]),
+  (quietRuns[2] || '').replace(/\n/g, ' | '));
 ok('and the run whose returns are in still reads them',
   quietRuns[0].includes('+0.52%'), (quietRuns[0] || '').replace(/\n/g, ' | '));
 // One mechanism, one vocabulary: the cell's explanation is the phrase the
@@ -1516,13 +1585,87 @@ ok("and it explains itself in the email's own words",
 // in" told a reader half the record was on its way.
 const sessionsIn = (await page.locator('#returns-table tbody tr:first-child td:nth-child(3)').innerText()).trim();
 ok('and it is out of the "sessions in" count, which no run of its kind can ever join',
-  sessionsIn === '1 of 1', sessionsIn);
+  sessionsIn === '1 of 2', sessionsIn);
 // Both hints have to say it, because a number a reader cannot account for is
 // how "1 of 2" read as honest for a round.
 const quietHints = (await page.locator('#runs-hint').innerText()) + ' | ' + (await page.locator('#returns-hint').innerText());
 ok('and both hints say which runs are counted and which never can be',
   /nothing scored/.test(quietHints) && /1 run scored nothing/.test(quietHints),
   quietHints.replace(/\s+/g, ' ').slice(0, 220));
+// And the number itself carries the reason, because a hint two paragraphs
+// away is not what a reader hovering "1 of 2" is looking at. Deleting this
+// title left 214 checks green until this line existed.
+const denomTitle = await page.locator('#returns-table tbody tr:first-child td:nth-child(3)').getAttribute('title');
+ok('and the denominator itself says why it is smaller than the run count',
+  !!denomTitle && /1 run that scored nothing/.test(denomTitle) && !/run\(s\)/.test(denomTitle),
+  JSON.stringify(denomTitle));
+
+// --- a run the fills have moved past -------------------------------------
+// The same false promise one cause over: src.ledger re-requests bars only for
+// the newest FILL_WINDOW_RUNS runs -- the constant's own comment says a name
+// still incomplete after that many is a name that stopped trading -- so a
+// horizon still empty on an older run is empty for good, and the cell said
+// "pending" about it. The newest run here is pending on the same two
+// horizons with the same nulls, which is what makes this a check of the
+// window rather than of the value.
+await open('/v/unfetched/');
+const UNF = VARIANTS.unfetched();
+const unfCells = await page.$$eval('#runs-table tbody tr', (trs) => trs.map((tr) => [...tr.children].map((td) => td.textContent.trim())));
+const unfTitle = await page.locator('#runs-table tbody tr:last-child td:nth-child(8)').getAttribute('title');
+ok('a horizon on a run past the fill window says so instead of promising a number',
+  unfCells.length === UNF.runs.length
+  && unfCells[unfCells.length - 1].slice(7, 9).join('|') === 'left unfilled|left unfilled'
+  && unfCells[unfCells.length - 1][6] !== 'left unfilled'
+  && /past the fill window/.test(unfTitle || ''),
+  `${(unfCells[unfCells.length - 1] || []).join(' | ')} — title ${JSON.stringify(unfTitle)}`);
+ok('and the newest run, empty at the same two horizons, still reads pending',
+  unfCells[0].slice(7, 9).join('|') === 'pending|pending',
+  (unfCells[0] || []).join(' | '));
+// Out of the numerator AND the denominator, by the same rule: +1d counts
+// every run, +3d counts the ten still being fetched for and has nine of them
+// in, and the cell that says so names the one it dropped.
+const unfDenom = await page.$$eval('#returns-table tbody tr', (trs) => trs.map((tr) => ({
+  text: tr.children[2].textContent.trim(), title: tr.children[2].getAttribute('title') })));
+// The hint has to carry the fourth word too: a reader meeting "left
+// unfilled" in a cell has nowhere else to learn what it means.
+const unfHint = await page.locator('#runs-hint').innerText();
+ok('and the hint names all three cells that never become numbers',
+  /pending/.test(unfHint) && /nothing scored/.test(unfHint) && /no new setup/.test(unfHint)
+  && /left unfilled/.test(unfHint) && /past the fill window/.test(unfHint),
+  unfHint.replace(/\s+/g, ' ').slice(0, 240));
+// A tile with runs that could still contribute is still a wait, on the same
+// card as a cell that never can: +5d has ten runs in its denominator and no
+// session in, and "nothing scored" would be the wrong nothing there.
+const unfTiles = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')].map((t) => ({
+  value: t.querySelector('.sc-tile__value').textContent.trim(),
+  delta: t.querySelector('.sc-delta').textContent.trim(),
+  chip: t.querySelector('.sc-chip').textContent.trim() })));
+ok('and a horizon no run has reached yet is still a wait, not a nothing',
+  unfTiles[2].value === 'pending' && /no session has closed/.test(unfTiles[2].delta)
+  && unfTiles[2].chip === 'no session closed yet'
+  && !/nothing scored/.test(unfTiles.map((t) => t.value + t.delta).join(' ')),
+  unfTiles.map((t) => `${t.value} ${t.delta} (${t.chip})`).join(' | '));
+ok('and it is out of that horizon\u2019s count, while the horizon it did fill still counts it',
+  unfDenom[0].text === `${UNF.runs.length} of ${UNF.runs.length}` && unfDenom[0].title === null
+  && unfDenom[1].text === `${UNF.runs.length - 2} of ${UNF.runs.length - 1}`
+  && /1 run past the fill window/.test(unfDenom[1].title || ''),
+  unfDenom.map((d) => `${d.text} (${d.title})`).join(' | '));
+
+// The third nothing a horizon can be in, and the one no other source holds:
+// every run scored, and every name each of them scored was already counted.
+// "Nothing scored yet" is the quiet record's sentence and is false here.
+await open('/v/allrepeats/');
+const repeatsCard = await page.evaluate(() => ({
+  tiles: [...document.querySelectorAll('#returns-tiles .sc-tile')].map((t) => t.innerText.replace(/\s+/g, ' ')),
+  denom: [...document.querySelectorAll('#returns-table tbody tr td:nth-child(3)')].map((t) => t.innerText.trim()),
+  runs: [...document.querySelectorAll('#runs-table tbody tr')].map((t) => t.innerText.replace(/\s+/g, ' '))
+}));
+ok('a record whose every run scored only repeats is told which nothing that is',
+  repeatsCard.denom.every((t) => t === '0 of 0')
+  && repeatsCard.tiles.every((t) => /nothing to measure/.test(t) && /nothing left to measure/.test(t))
+  && !repeatsCard.tiles.join(' ').match(/nothing scored|pending/)
+  && repeatsCard.runs.every((r) => (r.match(/no new setup/g) || []).length === 3),
+  JSON.stringify(repeatsCard).slice(0, 260));
 
 // The record main is in TODAY: every run it holds scored nothing. "Pending"
 // and "no session has closed" are both false there -- the sessions closed --
@@ -1545,6 +1688,14 @@ ok('a record whose every run scored nothing is not told to wait for a session',
   JSON.stringify(allQuiet));
 // One card up, the same distinction: with nothing scored, the wait the empty
 // evidence note describes is not a wait for sessions to close.
+// The fourth surface of that card: the hint's tail told a record with no
+// mean at all to "read all of them as provisional", which is "pending" in
+// another word -- a number that will firm up, about three that do not exist.
+const quietTail = (await page.locator('#returns-hint').innerText()).replace(/\s+/g, ' ');
+ok('and its hint does not ask a reader to treat three absent means as provisional',
+  !/provisional/.test(quietTail) && /no mean here to read/.test(quietTail)
+  && /1 run scored nothing/.test(quietTail),
+  quietTail.slice(-160));
 const emptyEvidence = (await page.locator('#evidence-empty').innerText()).replace(/\s+/g, ' ');
 ok('and its evidence note does not blame the sessions for a record with nothing in it',
   !/needs at least one more session to close/.test(emptyEvidence)
@@ -1552,6 +1703,15 @@ ok('and its evidence note does not blame the sessions for a record with nothing 
   emptyEvidence.slice(0, 140));
 // Back to the source the score-against-outcome checks below are opened on.
 await open('/v/forward/');
+// The inverse of the two denominator checks above: on a record where every
+// run can contribute, the cell carries no note at all. A title hard-coded to
+// a sentence would pass both halves of the quiet-run check and fail here.
+const fullDenom = await page.$$eval('#returns-table tbody tr td:nth-child(3)',
+  (tds) => tds.map((td) => ({ text: td.textContent.trim(), title: td.getAttribute('title') })));
+ok('a record where every run can contribute puts no such note on the count',
+  fullDenom.length === 3 && fullDenom.every((d) => d.title === null)
+  && fullDenom.every((d) => d.text.split(' of ')[1] === String(VARIANTS.forward().runs.length)),
+  fullDenom.map((d) => `${d.text} (${d.title})`).join(' | '));
 
 // --- score against outcome, once there IS an outcome -----------------------
 // The most over-claimable view on the page. It has to plot only the candidates
@@ -1723,15 +1883,44 @@ const withD5 = hist.filter((r) => r.forward_returns && r.forward_returns.d5 !== 
 // one, written by the real pipeline over a session with no candidate to
 // score, and its row promised a number that no later run could ever fill.
 const quietHist = hist.filter((r) => r.scored === 0);
-const pendingD1 = hist.filter((r) => r.scored !== 0 && (!r.forward_returns || r.forward_returns.d1 === null));
+// A run whose every scored row is a REPEAT of a setup counted earlier is the
+// other cell no fill can ever move: mean_returns() averages the leads, and a
+// lead only moves earlier. The fixture holds one (19 Aug), and the check that
+// used to live here counted it among the pending -- so this partitions the
+// thirty runs into the four states the +1d column can be in, and asserts each
+// class is non-empty before comparing, which is what stops the arithmetic
+// passing because two of them are zero.
+const repeatHist = hist.filter((r) => {
+  const f = r.forward_returns;
+  return r.scored !== 0 && f && f.rows === r.scored && f.rows > 0 && f.n === 0;
+});
+const pendingD1 = hist.filter((r) => r.scored !== 0 && !repeatHist.includes(r)
+  && (!r.forward_returns || r.forward_returns.d1 === null));
+const measuredD1 = hist.filter((r) => r.forward_returns && r.forward_returns.d1 !== null);
 const cells = await page.$$eval('#runs-table tbody tr', (trs) => trs.map((tr) => [...tr.children].map((td) => td.textContent.trim())));
-ok('a run whose horizons have closed prints them as percentages, and a pending one says pending',
-  withD5.length > 0 && pendingD1.length > 0
+ok('a run whose horizons have closed prints them as percentages, and the three that never will each say which',
+  withD5.length > 0 && pendingD1.length > 0 && quietHist.length > 0 && repeatHist.length > 0
+  && measuredD1.length + pendingD1.length + quietHist.length + repeatHist.length === hist.length
   && cells.filter((c) => /^[+-]\d+\.\d{2}%$/.test(c[8])).length === withD5.length
   && cells.filter((c) => c[6] === 'pending').length === pendingD1.length
-  && quietHist.length > 0
-  && cells.filter((c) => c[6] === 'nothing scored').length === quietHist.length,
-  `${withD5.length} runs with +5d, ${pendingD1.length} with +1d pending, ${quietHist.length} that scored nothing`);
+  && cells.filter((c) => c[6] === 'nothing scored').length === quietHist.length
+  && cells.filter((c) => c[6] === 'no new setup').length === repeatHist.length
+  // Every run here is inside the fill window or has its horizons in, so the
+  // fourth never-fills state has no source in this fixture: /v/unfetched/ is.
+  && cells.filter((c) => c[6] === 'left unfilled').length === 0,
+  `${withD5.length} runs with +5d, ${pendingD1.length} with +1d pending, ${quietHist.length} that scored nothing, ${repeatHist.length} whose scored names were all repeats`);
+// The same partition, in the denominator of the card above: the two runs
+// that can never contribute are out of "N of M" as well as out of the mean,
+// and the count says which is which. Without this the fixture's own repeat
+// run could be counted back in with every check green -- the history is the
+// only source that holds one.
+const hDenom = await page.$$eval('#returns-table tbody tr td:nth-child(3)',
+  (tds) => tds.map((td) => ({ text: td.textContent.trim(), title: td.getAttribute('title') })));
+ok('and the runs that can never contribute are out of the horizon counts too',
+  hDenom.every((d) => Number(d.text.split(' of ')[1]) === hist.length - quietHist.length - repeatHist.length)
+  && hDenom.every((d) => /1 run that scored nothing/.test(d.title || '')
+                      && /1 run whose every scored name was already counted/.test(d.title || '')),
+  hDenom.map((d) => `${d.text} (${d.title})`).join(' | '));
 const down = hist.filter((r) => r.fallbacks > 0);
 ok('the night the scorer was down is in the table with its fallback count',
   down.length > 0 && cells.some((c) => c[0].startsWith(fmtDay(down[0].date)) && c[4] === String(down[0].fallbacks)),
