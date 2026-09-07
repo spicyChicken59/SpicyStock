@@ -432,6 +432,26 @@ because the follow-through pass runs neither the scanner nor the scorer and
 > `evening.yml`'s crons are labelled backup-only for an external trigger you
 > should not set up; the guard works standalone.
 >
+> **Every row in the Actions list says which run it is**, because four
+> different things fire the evening workflow and every row used to read
+> "Evening scan (6:16 PM ET)": `Evening cron 16 22 * * 1-5, the EDT slot`,
+> `Evening cron 16 23 * * 1-5, the EST slot` — whichever of the two the guard
+> no-ops still reports success, for a run that did nothing —
+> `Evening rehearsal`, `Evening backfill 2026-09-04` and `Evening dispatch`.
+> The morning workflow takes no inputs, so its rows are
+> `Morning cron 30 12 * * 1-5, the EDT slot`,
+> `Morning cron 30 13 * * 1-5, the EST slot` and `Morning dispatch`. A cron the label does not know renders as itself rather
+> than borrowing the other slot's name.
+>
+> **And the run's own page carries the verdict**, not just a tick or a cross:
+> the pipeline appends the email's subject line — the same string, byte for
+> byte, including its DEGRADED or FAILED prefix and the session it really read
+> — the exit code, and every problem the email's red band lists, to
+> `$GITHUB_STEP_SUMMARY`. A run that could not mail (the preflight failure
+> every scheduled run made until 6 Sep 2026, or a delivery refusal) says on
+> its own page what the email would have said. Locally the variable is unset
+> and nothing is written.
+>
 > `morning.yml` depends on `evening.yml` having committed `docs/` back — see
 > "Does the history actually accumulate?" below. On a repo where that has never
 > happened it finds the hand-authored fixture, refuses it by name and mails a

@@ -1156,6 +1156,64 @@ def test_the_pages_fallback_sentence_states_the_scorers_own_map():
     assert "÷" not in page.split("When a scoring call fails")[1][:400]
 
 
+def test_every_actions_row_says_which_run_it_is():
+    """The Actions list showed "Evening scan (6:16 PM ET)" on every row --
+    the live cron, the DST no-op that did nothing, a lunchtime rehearsal and a
+    backfill of an old session, four different things under one name, with
+    green ticks beside red ones every day and no way to tell which green one
+    had run.
+
+    `run-name` is that label, and it is asserted on the parsed YAML: EVERY
+    cron the schedule block registers has to appear in it, read from the same
+    file, so a cron edited or added without a label fails here. The raw
+    `github.event.schedule` is in there too, so a cron this expression does
+    not know renders as itself rather than wearing the other one's name --
+    the ternary's fallback would otherwise call an unregistered cron the EST
+    slot. And every input the form declares has to be read by the label:
+    a box nobody can see the effect of from the run list is the state this
+    exists to end.
+    """
+    import yaml
+
+    for name in ("evening.yml", "morning.yml"):
+        doc = yaml.safe_load(_read(f".github/workflows/{name}"))
+        label = " ".join(str(doc.get("run-name") or "").split())
+        assert label, f"{name} has no run-name, so every row of it reads alike"
+        on = doc.get("on", doc.get(True))
+        for cron in [c["cron"] for c in on["schedule"]]:
+            assert f"'{cron}'" in label, (
+                f"{name} registers the cron {cron!r} and its run-name does not name it")
+        # And it can still show a cron it does NOT enumerate. Asserted with
+        # the comparisons taken out, because the label mentions
+        # `github.event.schedule` once per cron it knows: the first version
+        # asked whether the string appears at all, and a mutant that replaced
+        # the fallback with the EST slot's own name -- so an unregistered
+        # cron would render as a row that lies about itself -- survived it.
+        fallback = re.sub(r"github\.event\.schedule == '[^']*'", "", label)
+        assert "github.event.schedule" in fallback, (
+            f"{name}'s run-name cannot show a cron it does not enumerate")
+        for box in (on["workflow_dispatch"] or {}).get("inputs", {}):
+            assert f"inputs.{box}" in label, (
+                f"{name}'s form takes a {box!r} box and the run list cannot see it")
+        assert "'dispatch'" in label, f"{name}: a plain manual run is a dispatch"
+
+    # And README's note prints those labels, so a cron that moves does not
+    # leave the docs quoting a row nobody will see.
+    readme = _read("README.md")
+    for name in ("evening.yml", "morning.yml"):
+        doc = yaml.safe_load(_read(f".github/workflows/{name}"))
+        on = doc.get("on", doc.get(True))
+        for cron in [c["cron"] for c in on["schedule"]]:
+            assert f"cron {cron}" in readme, (
+                f"README does not print the row {name}'s {cron!r} cron now shows")
+
+    evening = " ".join(str(yaml.safe_load(_read(".github/workflows/evening.yml"))["run-name"]).split())
+    assert "'rehearsal'" in evening, "a dry run must not read like the night's run"
+    assert "backfill {0}" in evening and "inputs.session" in evening, (
+        "a backfill names the session it was pinned to, which is the whole "
+        "difference between it and the run the clock would have made")
+
+
 def test_the_evening_workflow_takes_a_session_to_backfill_from_the_run_workflow_form():
     """SCAN_SESSION_DATE was documented for a shell only; the first live day
     needed a backfill and had no way to start one from Actions. The form's

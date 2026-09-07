@@ -474,6 +474,13 @@ exercised its headline. Nine mutants across them, all killed.
   live ones and they FAIL; the `16 23` and `30 13` runs report SUCCESS
   because the guard correctly no-ops them. A glance at the Actions tab shows
   green ticks next to red ones every day and the green ones did nothing.
+  **The rows say which is which now** -- `run-name` on both workflows names
+  the cron that fired, or `rehearsal` / `backfill <session>` / `dispatch` for
+  a click -- and the run's own page carries the verdict the email carries,
+  since `log_summary()` appends the mailed subject, the exit code and every
+  problem to `$GITHUB_STEP_SUMMARY`. Written for the holiday week's four red
+  rows; it changes no exit code, no artifact and no commit, so the no-op is
+  still green and the label is the whole fix for that row.
 
   Nothing in the code is wrong here -- this is step 5 working exactly as
   designed: preflight caught it before spending anything, named every missing

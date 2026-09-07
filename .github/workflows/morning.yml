@@ -22,6 +22,16 @@ name: Morning follow-through (8:30 AM ET)
 # be mailed as a watchlist. Here it is a real run committed back on 6 Sep 2026,
 # so nothing refuses it -- which is also what a FORK reads on its first
 # morning, until its own evening run publishes one.
+# Which run this row is -- see the same block in evening.yml. This workflow
+# takes no inputs, so a manual run is a dispatch and there is nothing else it
+# can be; the pair of crons is the whole reason the label exists here, since
+# one of the two no-ops every day and reports success for it.
+run-name: >-
+  Morning ${{ github.event_name == 'schedule'
+  && (github.event.schedule == '30 12 * * 1-5' && 'cron 30 12 * * 1-5, the EDT slot'
+  || (github.event.schedule == '30 13 * * 1-5' && 'cron 30 13 * * 1-5, the EST slot'
+  || format('cron {0}', github.event.schedule)))
+  || 'dispatch' }}
 on:
   schedule:
     # 8:30 AM ET, well before the 9:30 open. Both offsets are registered and
@@ -67,10 +77,13 @@ jobs:
         # Exit 2 means the run finished but is degraded — no published run to
         # follow, or the one it found is not last night's. Actions turns red
         # for it on purpose: a follow-through nobody can trust must not look
-        # like one that worked. This job cannot say WHICH of those it was, and
-        # a red tick here reads the same on the morning after a holiday as on
-        # the morning after three weeks of silence — the email is where they
-        # separate, because its subject line carries the gap in sessions.
+        # like one that worked. The red tick itself cannot say WHICH of those
+        # it was — it reads the same on the morning after a holiday as on the
+        # morning after three weeks of silence — and the subject line, which
+        # carries the gap in sessions, is what separates them. That line is on
+        # the run's own page as well as in the inbox now: log_summary() writes
+        # it to $GITHUB_STEP_SUMMARY, so a morning whose mail did not arrive
+        # is still readable from the row you clicked.
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM: ${{ secrets.RESEND_FROM }}

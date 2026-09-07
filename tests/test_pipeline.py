@@ -450,6 +450,216 @@ def test_a_failure_notice_survives_a_session_it_cannot_name(
     assert "Session it was scanning: not recorded" in sent["html"]
 
 
+# ------------------------------------------------- what Actions can read ----
+
+
+@pytest.fixture
+def step_summary(monkeypatch, tmp_path) -> Path:
+    """The file GitHub Actions renders on a run's own page.
+
+    Every runner sets GITHUB_STEP_SUMMARY and nothing else does, so the
+    variable IS "somebody is watching" and needs no flag beside it. Pointed at
+    a temporary path here, because the block is markdown a person reads and
+    the only way to know it says the right thing is to read it back.
+    """
+    path = tmp_path / "step-summary.md"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(path))
+    return path
+
+
+def _page(path: Path) -> str:
+    assert path.exists(), "no summary block was written for this run at all"
+    return path.read_text(encoding="utf-8")
+
+
+def test_a_clean_runs_summary_block_is_the_subject_it_mailed(
+    monkeypatch, universe, mocked_boundaries, open_gate, step_summary
+):
+    """The Actions run page said "Run evening pipeline" and a green tick, and
+    the night's verdict lived only in an inbox nobody had opened yet. The
+    block carries the subject line BYTE FOR BYTE -- not a second sentence
+    about the same run, which is how one mechanism grows two vocabularies."""
+    assert _main(monkeypatch, "evening", "--tickers", ",".join(universe)) == pipeline.EXIT_OK
+
+    (sent,) = mocked_boundaries["resend"].sent
+    page = _page(step_summary)
+    assert sent["subject"] in page, page
+    assert "**CLEAN** — exit 0, no problems recorded." in page, page
+
+
+def test_a_degraded_runs_summary_block_carries_every_reason_the_band_does(
+    monkeypatch, universe, mocked_boundaries, open_gate, step_summary
+):
+    """Exit 2 is the code this project's own workflow exists to keep, and the
+    Actions row for it is a red X with no reason on it. Every problem the
+    email's band lists is on the run page, in the band's own words."""
+    mocked_boundaries["anthropic"].set_error(RuntimeError("Error code: 401 - invalid x-api-key"))
+
+    assert _main(monkeypatch, "evening", "--tickers", ",".join(universe)) == pipeline.EXIT_DEGRADED
+
+    (sent,) = mocked_boundaries["resend"].sent
+    page = _page(step_summary)
+    assert sent["subject"] in page, page
+    assert "exit 2" in page
+    assert "invalid x-api-key" in page and "[score]" in page, page
+
+
+def test_a_run_that_died_before_it_scanned_still_writes_its_summary_block(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, step_summary
+):
+    """The path the whole rebuild has actually taken: exit 1, through main(),
+    where log_summary() is called by the exception handler and not by the run.
+    A failure that writes nothing to the run page is the one an operator most
+    needs to read there, since there may be no email at all."""
+    fake_alpaca.add_history("AAA", ohlcv("burst"))
+    fake_alpaca.raise_on_bars = FEED_DENIAL
+
+    assert _main(monkeypatch, "evening", "--tickers", "AAA") == pipeline.EXIT_FAILED
+
+    (sent,) = mocked_boundaries["resend"].sent
+    page = _page(step_summary)
+    assert sent["subject"] in page, page
+    assert "exit 1" in page and "FeedNotAuthorizedError" in page
+
+
+def test_the_summary_block_of_a_delivery_failure_is_the_notices_own_subject(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, step_summary
+):
+    """Exit 3: the record is on disk and the send failed. The notice that
+    follows is a retry of that same mail, so the subject on the run page is
+    the notice's -- FAILED, over the rows the run paid for -- and not the one
+    the run would have sent had it worked."""
+    import resend
+
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    monkeypatch.setattr(sys, "argv", ["pipeline", "evening", "--tickers", ",".join(names)])
+    double = mocked_boundaries["resend"]
+    calls = {"n": 0}
+
+    def flaky(params, options=None):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("Error code: 429 - Too many requests")
+        return double.send(params)
+
+    monkeypatch.setattr(resend.Emails, "send", flaky)
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+
+    assert exc.value.code == pipeline.EXIT_FAILED_AFTER_PUBLISH
+    page = _page(step_summary)
+    # The precondition: the notice went out, so there IS a mailed subject to
+    # be equal to. Without it this test would pass on a summary block written
+    # from a mail nobody ever sent.
+    assert len(double.sent) == 1, "the retry delivered, so sent[-1] is the notice"
+    assert double.sent[-1]["subject"] in page, page
+    assert "exit 3" in page and "429" in page
+
+
+def test_nothing_is_written_when_no_runner_is_watching(
+    monkeypatch, universe, mocked_boundaries, open_gate, tmp_path
+):
+    """GITHUB_STEP_SUMMARY unset is a local run. An empty one is Actions with
+    a variable it did not set, and it counts as absent -- the same rule
+    _absent() applies to every other variable this pipeline reads, and here it
+    is the difference between writing nothing and creating a file named after
+    whitespace in the working directory."""
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    assert _main(monkeypatch, "evening", "--tickers", ",".join(universe)) == pipeline.EXIT_OK
+    assert not list(tmp_path.glob("*.md")), "a local run wrote a summary file"
+
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", "   ")
+    pipeline.RunReport().log_summary("evening")
+    assert not (tmp_path / "   ").exists(), "an empty variable was taken for a path"
+
+
+def test_a_summary_block_that_cannot_be_written_does_not_cost_the_run_its_verdict(
+    monkeypatch, universe, mocked_boundaries, open_gate, tmp_path, caplog
+):
+    """Reporting a run must never be able to end one. The path Actions gives
+    is a file in a directory that exists; a path whose directory does not is
+    the only failure this can have, and it is a warning, not the run."""
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(tmp_path / "no-such-dir" / "summary.md"))
+    with caplog.at_level(logging.WARNING):
+        assert _main(monkeypatch, "evening", "--tickers", ",".join(universe)) == pipeline.EXIT_OK
+    assert any("summary" in r.message.lower() for r in caplog.records), caplog.text
+
+
+def test_a_problem_that_quotes_a_server_cannot_close_the_block_it_is_written_in(step_summary):
+    """The run page renders markdown, and the messages quote text from outside
+    this codebase -- an edge 5xx's HTML body reached the email's band raw
+    once. A message carrying a code fence must not be able to end the fence it
+    is quoted inside and turn the rest of the block into markup."""
+    report = pipeline.RunReport()
+    report.problem("scoring", "the endpoint answered ```json\n{\"oops\": true}\n``` and nothing more")
+    report.log_summary("evening")
+
+    page = _page(step_summary)
+    fence = re.search(r"^(`{3,})text$", page, re.M)
+    assert fence, page
+    body = page.split(fence.group(1) + "text\n", 1)[1]
+    assert body.startswith("[scoring] "), body
+    assert "```json" in body, "the message is quoted whole"
+    assert body.split("\n" + fence.group(1))[0].count("\n") == 2, (
+        "the message's own fence closed the block early")
+
+
+def test_two_runs_in_one_job_both_leave_their_block(
+    monkeypatch, universe, mocked_boundaries, open_gate, step_summary
+):
+    """Actions gives every step of a job the same file and expects each to
+    APPEND: a step that truncated it would delete the blocks written before
+    it. Nothing else in this repo writes one today, which is exactly why the
+    rule needs a test rather than a comment."""
+    assert _main(monkeypatch, "evening", "--tickers", ",".join(universe)) == pipeline.EXIT_OK
+    _main(monkeypatch, "morning")
+
+    page = _page(step_summary)
+    assert page.count("### [4% Burst] ") == 2, page
+
+
+def test_the_block_is_written_as_the_pass_that_built_the_mail(step_summary):
+    """The same rule notify_failure() follows: an evening dispatch whose
+    session is already published runs the follow-through pass, and the mail it
+    sends is that pass's. Asserted on the method, because every re-presenting
+    pass the pipeline can produce today ALSO stamps `dispatch` into its stats
+    -- which subject_for() reads before the mode -- so the two rules cannot be
+    told apart end to end, and this one would be deletable."""
+    report = pipeline.RunReport()
+    report.about_to_mail("morning", {"session": "2026-09-04"}, [])
+
+    assert "Morning follow-through 2026-09-04" in report.mail_subject("evening")
+
+
+def test_a_run_degraded_after_its_funnel_was_built_says_so_in_the_subject_line(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, step_summary, tmp_path
+):
+    """The email contradicting itself on one screen, again: email_stats()
+    snapshots `status` when the funnel is built, which in an evening pass is
+    before archive() and publish(). A forward-return fetch that failed there
+    degraded the run, listed the failure in the band -- and mailed a subject
+    with no DEGRADED prefix over it, so a phone showed a clean night.
+
+    Reproduced before it was fixed. The run page reads the same subject, which
+    is how a stale one would have reached two surfaces instead of one.
+    """
+    fake_alpaca.add_history("OLD", ohlcv("burst"))
+    fake_alpaca.add_history("NEW", ohlcv("burst", variant=1))
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-2))
+    pipeline.run("evening", dry_run=True, tickers=["OLD"])
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(3))
+    fake_alpaca.raise_on_bars = ConnectionError("connection reset by peer")
+    fake_alpaca.fail_symbols = {"OLD"}
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, tickers=["NEW"], report=report)
+
+    assert report.status == "degraded", "the precondition: it degraded in publish()"
+    (sent,) = mocked_boundaries["resend"].sent
+    assert sent["subject"].startswith("[4% Burst] DEGRADED — "), sent["subject"]
+    assert sent["subject"] in _page(step_summary)
+
+
 def _visible(html: str) -> str:
     """What a reader sees: tags stripped, entities resolved, whitespace one space.
 
@@ -691,13 +901,15 @@ def test_a_run_that_cannot_start_still_mails_why(monkeypatch, universe, mocked_b
 def test_nothing_is_mailed_when_the_delivery_keys_are_the_missing_ones(
     monkeypatch, universe, mocked_boundaries, caplog
 ):
-    """The inverse: there is nothing to send with, and the exit code is all
-    that is left. It must say so rather than trying and dying again."""
+    """The inverse: there is nothing to send with, so the exit code, the log
+    and -- under Actions -- the run page's summary block are what is left. It
+    must say so rather than trying and dying again."""
     monkeypatch.delenv("EMAIL_TO")
 
     assert _main(monkeypatch, "evening", "--tickers", ",".join(universe)) == pipeline.EXIT_FAILED
     assert mocked_boundaries["resend"].sent == []
-    assert "only remaining signal is this exit code" in caplog.text
+    assert "What is left is this exit code" in caplog.text
+    assert "summary block" in caplog.text
 
 
 def test_a_failure_notice_that_cannot_be_sent_does_not_replace_the_failure(

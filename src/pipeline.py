@@ -256,6 +256,12 @@ EXIT_DEGRADED = 2
 # and an email nobody received is a failed run. Only the record is kept.
 EXIT_FAILED_AFTER_PUBLISH = 3
 
+#: Where a GitHub Actions step writes the markdown block that renders on the
+#: run's own page. Every runner sets it and nothing else does, so the variable
+#: IS "somebody is watching" and needs no flag beside it; EMPTY COUNTS AS
+#: ABSENT, the rule _absent() applies to every other variable here.
+STEP_SUMMARY_ENV = "GITHUB_STEP_SUMMARY"
+
 # When a scan stops being clean. Well below the fractions at which src.scanner
 # refuses to report a scan at all: this is the line for "say so", that one is
 # for "do not say anything". A handful of halted or delisted names is a normal
@@ -531,28 +537,126 @@ class RunReport:
         return "degraded" if self.errors else "ok"
 
     @property
+    def verdict(self) -> str:
+        """CLEAN, DEGRADED or FAILED -- the one word the terminal line and the
+        Actions run page both print, so they cannot come to disagree."""
+        return "CLEAN" if self.status == "ok" else self.status.upper()
+
+    @property
     def exit_code(self) -> int:
         if self.failed:
             return EXIT_FAILED_AFTER_PUBLISH if self.published else EXIT_FAILED
         return {"ok": EXIT_OK, "degraded": EXIT_DEGRADED}[self.status]
 
     def email_stats(self, **extra) -> dict:
-        """The stats block the emailer reads, with the status in it."""
+        """The stats block the emailer reads, with the status in it.
+
+        `errors` is the LIVE list, `status` a snapshot of the verdict as it
+        stands at this call -- which is why about_to_mail() restates it.
+        """
         return {"status": self.status, "errors": self.errors, **extra}
 
+    def about_to_mail(self, run_type: str, stats: dict, results: list[dict]) -> None:
+        """Freeze what this run is sending, with the verdict AS IT STANDS.
+
+        Kept so that a delivery failure can be retried as the same email
+        rather than reported as a run that never scanned, and so that the run
+        page can carry the subject the run really mailed.
+
+        THE STATUS IS RESTATED HERE, and that is the whole reason this is a
+        method rather than three lines at each send. email_stats() snapshots
+        `status` when the funnel is built, which in an evening pass is before
+        archive() and publish() -- both of which record problems. A
+        forward-return fetch that failed there degraded the run, listed the
+        failure in the band, and mailed a subject with NO DEGRADED prefix over
+        it: the email contradicting itself on one screen, which is the shape
+        round 9 found in the empty-shortlist note, and the half a phone shows
+        was the half that was wrong. `errors` needs no restating -- the list
+        email_stats() hands out is this object's own.
+        """
+        stats["status"] = self.status
+        self.mail = {"stats": stats, "results": results, "run_type": run_type}
+
+    def mail_subject(self, run_type: str) -> str:
+        """The subject line this run mailed -- or, when it died before the
+        send, the one its failure notice is about to carry.
+
+        NOT A SECOND SENTENCE ABOUT THE SAME RUN. It is subject_for() over the
+        same three arguments send_email() and send_failure_notice() are given:
+        attempted_stats() is what the notice reads, the rows are the ones the
+        mail carries, and the mode is the PASS's, since an evening dispatch
+        that re-presents a published session mails as the pass that built it.
+        Retyping any of that is how one mechanism grows two vocabularies.
+        """
+        from .emailer import subject_for
+
+        stats = {**attempted_stats(self), "status": self.status, "errors": self.errors}
+        return subject_for(self.mail.get("results") or [],
+                           self.mail.get("run_type") or run_type, stats)
+
+    def problem_lines(self) -> list[str]:
+        """One line per recorded problem, in the band's own order. The
+        terminal summary and the run page print these same lines."""
+        return [f"[{e['stage']}] {e['message']}" for e in self.errors]
+
+    def step_summary(self, run_type: str) -> str:
+        """The markdown block Actions renders on the run's own page.
+
+        The Actions row is a tick or a cross and a step called "Run evening
+        pipeline"; the verdict lived in an inbox and in a log nobody scrolls.
+        This is the same two things the terminal summary says -- the subject
+        and every reason -- in the one place a person who clicked the red X is
+        already looking.
+        """
+        n = len(self.errors)
+        count = f"{n} problem{'' if n == 1 else 's'}" if n else "no problems"
+        head = (f"### {self.mail_subject(run_type)}\n\n"
+                f"**{self.verdict}** — exit {self.exit_code}, {count} recorded.\n\n")
+        return head + (_fenced("\n".join(self.problem_lines())) if self.errors else "")
+
+    def write_step_summary(self, run_type: str) -> None:
+        """Append the block, when a runner asked for one. Never raises:
+        reporting a run must not be able to end one."""
+        path = os.environ.get(STEP_SUMMARY_ENV, "").strip()
+        if not path:
+            return
+        try:
+            with open(path, "a", encoding="utf-8") as f:
+                f.write(self.step_summary(run_type))
+        except Exception:  # noqa: BLE001 -- see the docstring
+            log.warning("Could not write this run's summary block to %s (%s)",
+                        path, STEP_SUMMARY_ENV, exc_info=True)
+
     def log_summary(self, run_type: str) -> None:
-        """One terminal line that states the verdict, then every reason.
+        """One terminal line that states the verdict, then every reason -- and
+        the same block on the Actions run page when there is one to write to.
 
         At ERROR when the run is not clean: an INFO line saying "run complete"
         is what every one of these failures used to print.
         """
         if self.status == "ok":
-            log.info("=== %s run complete: CLEAN (exit %d) ===", run_type, self.exit_code)
-            return
-        log.error("=== %s run complete: %s — %d problem(s), exit %d ===",
-                  run_type, self.status.upper(), len(self.errors), self.exit_code)
-        for e in self.errors:
-            log.error("    [%s] %s", e["stage"], e["message"])
+            log.info("=== %s run complete: %s (exit %d) ===",
+                     run_type, self.verdict, self.exit_code)
+        else:
+            log.error("=== %s run complete: %s — %d problem(s), exit %d ===",
+                      run_type, self.verdict, len(self.errors), self.exit_code)
+            for line in self.problem_lines():
+                log.error("    %s", line)
+        self.write_step_summary(run_type)
+
+
+def _fenced(text: str) -> str:
+    """`text` in a code fence long enough that nothing inside can end it.
+
+    The run page renders markdown, and these messages quote text from outside
+    this codebase: anthropic's SDK sets the exception message to the raw
+    response body when it is not JSON, and an edge 5xx's HTML page reached the
+    email's band raw once. A message carrying its own fence must not be able
+    to close this one and turn the rest of the block into markup.
+    """
+    longest = max((len(run) for run in re.findall(r"`+", text)), default=0)
+    fence = "`" * max(3, longest + 1)
+    return f"{fence}text\n{text}\n{fence}\n"
 
 
 # --------------------------------------------------------------- preflight --
@@ -1123,11 +1227,14 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     # goes out marked instead: DEGRADED in the subject, the reasons in a band
     # above the table.
     report.stage = "email"
-    # What this run was about to mail, kept so that a delivery failure can be
+    # What this run is about to mail, kept so that a delivery failure can be
     # retried as the same email rather than reported as a run that never
-    # scanned. Set on the dry-run path too: nothing is sent, and nothing that
-    # reads it can then be exercised only by the branch that mails.
-    report.mail = {"stats": stats, "results": shortlist, "run_type": run_type}
+    # scanned, and so the run page can carry the subject it really sent. Set
+    # on the dry-run path too: nothing is sent, and nothing that reads it can
+    # then be exercised only by the branch that mails. It restates the status,
+    # which is the point at THIS call site -- publish() has run by here and
+    # can have degraded the run since `stats` was built.
+    report.about_to_mail(run_type, stats, shortlist)
     if dry_run:
         log.info("DRY RUN — skipping email. Shortlist:")
         for r in shortlist:
@@ -1631,7 +1738,7 @@ def follow_through(mode: Mode, dry_run: bool = False,
     # its session already published runs this pass, and notify_failure()
     # rendered its notice as an evening scan: "candidates for TOMORROW" and
     # "Session it was scanning" four lines under a band saying it did not scan.
-    report.mail = {"stats": stats, "results": shortlist, "run_type": run_type}
+    report.about_to_mail(run_type, stats, shortlist)
     if dry_run:
         log.info("DRY RUN — skipping email. Following through on %s:",
                  session or "nothing — no run to follow")
@@ -2110,8 +2217,9 @@ def notify_failure(run_type: str, report: RunReport, dry_run: bool) -> None:
         return
     undeliverable = missing_delivery_env()
     if undeliverable:
-        log.error("Cannot mail the failure notice: %s unset. The only remaining "
-                  "signal is this exit code.", ", ".join(undeliverable))
+        log.error("Cannot mail the failure notice: %s unset. What is left is "
+                  "this exit code, this log, and — under Actions — the summary "
+                  "block on the run's own page.", ", ".join(undeliverable))
         return
     try:
         from .emailer import send_failure_notice
