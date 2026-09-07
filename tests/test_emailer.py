@@ -1772,6 +1772,27 @@ def test_the_email_names_what_stopped_printing_and_says_nothing_when_nothing_did
     assert "Not printing" not in older, "a snapshot from before the block existed says nothing, not 0"
 
 
+def test_the_email_says_how_many_bars_the_feed_repeated_and_nothing_when_none(results):
+    """The sentinel reached docs/data.json's run block, the Actions log and no
+    surface a human reads -- not this email, not the page, not the ledger row
+    -- which is two of the four surfaces the same silence was closed on for
+    the sibling case (run.stopped_printing). One clause, printed only when the
+    count is not zero, in the words docs/index.html's scannedNote() uses."""
+    text = _visible_text(build_html(results, "evening", {**STATS, "duplicate_bars": 3}))
+    assert ("Duplicate bars: 3 dropped — the feed repeated a timestamp, and the copy that "
+            "arrived last is the one kept.") in text, text
+
+    one = _visible_text(build_html(results, "evening", {**STATS, "duplicate_bars": 1}))
+    assert "Duplicate bars: 1 dropped —" in one, one
+
+    clean = _visible_text(build_html(results, "evening", {**STATS, "duplicate_bars": 0}))
+    assert "Duplicate bars" not in clean, "a clean feed says nothing rather than 0"
+    older = _visible_text(build_html(results, "evening", STATS))
+    assert "Duplicate bars" not in older, "and so does a snapshot from before the count existed"
+    weird = _visible_text(build_html(results, "evening", {**STATS, "duplicate_bars": "lots"}))
+    assert "Duplicate bars" not in weird, "a shape no writer produces says nothing either"
+
+
 # --- what a dead scan had reached, and when a follow-through is being read ---
 
 
@@ -1806,6 +1827,19 @@ def test_the_email_names_what_stopped_printing_and_says_nothing_when_nothing_did
       "dropped": 0},
      "12 asked, 10 answered, none with a bar for 2026-09-07, "
      "2 answered with no bar at all"),
+    # The bars the feed sent under a timestamp it had already sent. The count
+    # reached docs/data.json and the Actions log and no sentence a human
+    # reads; here it is a clause like every other, conditional on its own
+    # non-zero count.
+    ({"requested": 12, "with_bars": 12, "fresh": 12, "session": "2026-09-07",
+      "duplicate_bars": 3},
+     "12 asked, 12 answered, 12 with a bar for 2026-09-07, 3 bars dropped as duplicates"),
+    ({"requested": 12, "with_bars": 12, "fresh": 12, "session": "2026-09-07",
+      "duplicate_bars": 1},
+     "12 asked, 12 answered, 12 with a bar for 2026-09-07, 1 bar dropped as a duplicate"),
+    ({"requested": 12, "with_bars": 12, "fresh": 12, "session": "2026-09-07",
+      "duplicate_bars": 0},
+     "12 asked, 12 answered, 12 with a bar for 2026-09-07"),
 ])
 def test_the_coverage_phrase_says_what_the_scan_reached_and_no_more(coverage, expected):
     """src.pipeline.scan_coverage() collects whatever run_scan() had filled in

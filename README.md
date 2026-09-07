@@ -432,6 +432,26 @@ because the follow-through pass runs neither the scanner nor the scorer and
 > `evening.yml`'s crons are labelled backup-only for an external trigger you
 > should not set up; the guard works standalone.
 >
+> **Every row in the Actions list says which run it is**, because four
+> different things fire the evening workflow and every row used to read
+> "Evening scan (6:16 PM ET)": `Evening cron 16 22 * * 1-5, the EDT slot`,
+> `Evening cron 16 23 * * 1-5, the EST slot` — whichever of the two the guard
+> no-ops still reports success, for a run that did nothing —
+> `Evening rehearsal`, `Evening backfill 2026-09-04` and `Evening dispatch`.
+> The morning workflow takes no inputs, so its rows are
+> `Morning cron 30 12 * * 1-5, the EDT slot`,
+> `Morning cron 30 13 * * 1-5, the EST slot` and `Morning dispatch`. A cron the label does not know renders as itself rather
+> than borrowing the other slot's name.
+>
+> **And the run's own page carries the verdict**, not just a tick or a cross:
+> the pipeline appends the email's subject line — the same string, byte for
+> byte, including its DEGRADED or FAILED prefix and the session it really read
+> — the exit code, and every problem the email's red band lists, to
+> `$GITHUB_STEP_SUMMARY`. A run that could not mail (the preflight failure
+> every scheduled run made until 6 Sep 2026, or a delivery refusal) says on
+> its own page what the email would have said. Locally the variable is unset
+> and nothing is written.
+>
 > `morning.yml` depends on `evening.yml` having committed `docs/` back — see
 > "Does the history actually accumulate?" below. On a repo where that has never
 > happened it finds the hand-authored fixture, refuses it by name and mails a
@@ -484,7 +504,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1212 tests, no network or API keys needed
+pytest tests/                   # 1252 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -656,7 +676,7 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 14.04 MB raw
+and what followed — needs the whole record, which projects to about 14.05 MB raw
 and **1.08 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
@@ -712,6 +732,32 @@ invariants live in the file rather than only here. The load-bearing ones:
   the evening's "check the list": acting on the line is what changes the file,
   and this repo retired all three names the first live scan found -- the list
   held 230 then and 228 since.
+- `run.duplicate_bars` is how many bars that night's scan dropped as
+  duplicates, across every symbol -- **the extra copies**, so a bar sent three
+  times counts 2, which is what every line printing this number says. A
+  duplicate here is a bar carrying **a timestamp the response had already
+  sent**, because the index is all the de-dup can see: the same session sent
+  under two different timestamps is a different shape, and this neither counts
+  nor drops it (`detect_setup` then reads the two as one session and finds no
+  gain, which is the way a same-timestamp repeat used to hide a burst --
+  measured through the real downloader, and pinned by a test rather than
+  answered with a session-level de-dup for a wire nobody has seen). The
+  scanner sorts what came back with a STABLE sort and keeps the copy that
+  arrived last, so a preliminary bar followed by a corrected one resolves to
+  the corrected one whatever order the response came in -- and the frame that
+  comes out cannot show it ever chose, which is why the count is published. It
+  is a sentinel and not a rule: it degrades nothing, because no live duplicate
+  has been seen yet and the count is what makes reading the first one
+  possible. It reaches every surface `run.stopped_printing` reaches, and the
+  record twice: the scan's log line, this run block, **the ledger entry** --
+  `docs/data.json` is rewritten by the next run, so the entry is where the
+  first live one has to survive to be read -- the failure notice's coverage
+  sentence, one line under the funnel of both the evening and the morning
+  mail, and the page's universe row, the last two in one shared sentence. The
+  forward-returns fetch uses the same downloader and warns in the log rather
+  than adding to this number, which counts the scan; so does
+  `tools/live_check.py`, the third caller, on the OK line it prints for the
+  live feed.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
@@ -759,7 +805,16 @@ invariants live in the file rather than only here. The load-bearing ones:
   `src.ledger` writes every number through one coercion and dumps with
   `allow_nan=False`, because `json.dump` writes a NaN as a bare token no browser
   will parse — one gap would cost the whole page, not one cell.
-- `forward_returns` are `null` until those sessions have happened.
+- `forward_returns` are `null` until those sessions have happened — with
+  three exceptions no session can end, which the page names rather than
+  calling them pending: a run that scored nothing has no rows for a later run
+  to fill; a run every one of whose scored rows repeats a setup counted
+  earlier has no setup of its own to average (`rows == scored` with `n == 0`,
+  and a lead only ever moves earlier); and a run past the fill window is one
+  `runs[].fills_closed` marks true, after which nothing is re-requested for
+  it and a horizon still `null` there is `null` for good. `fills_closed` is
+  an answer about the record as it stands tonight rather than a fact about
+  the run, so it is in `data.json`'s view and not in the ledger.
 
 One invariant reads slightly stricter than the file can be: `candidates` is
 described as "ranked by score descending", while the pipeline ranks on
@@ -1076,14 +1131,14 @@ construction: `docs/` and its exact design-system snapshot are served locally,
 and external requests are blocked. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 214 checks, and which file each one
+**Three data sources, one page.** It runs 227 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 37 mutated copies of it are served
+  night can hold at once. 40 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now
@@ -1092,9 +1147,11 @@ reads is the point:
   pipeline (`tools/make_history.py`, see `tests/fixtures/README.md`): forward
   returns filled in by later runs, a night the scorer was down, a chart that
   would not render, repeats on consecutive sessions, a session that scored
-  nothing at all — whose three horizon cells no later run can ever fill, and
-  which read "pending" for a round because of it — and the last week still
-  pending. Every expectation is computed from the file the page is reading.
+  nothing at all and one whose every scored name was a repeat of a setup
+  counted earlier — neither has three horizon cells any later run can fill,
+  and both read "pending" from the day the runs table existed until round 10
+  — and the last week still pending. Every expectation is computed from the
+  file the page is reading.
 - **`docs/`** — whatever the last run wrote, exactly as GitHub Pages serves it,
   opened last with only the checks that hold for any run: it opens, its rows
   add up to its own funnel, it says whether it is sample data, and it logs no

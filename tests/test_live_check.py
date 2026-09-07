@@ -215,6 +215,27 @@ def test_a_feed_behind_the_session_passes_but_says_so(live, pinned_clock, bounda
     assert c.data["fresh"] is False
 
 
+def test_the_live_check_says_when_the_feed_repeated_a_bar_and_stays_quiet_when_it_did_not(
+    live, boundaries, ohlcv
+):
+    """The third caller of the scan's downloader, and the one that touches the
+    LIVE feed from a machine with the keys -- so it is the likeliest place the
+    first real duplicate is met, and it reported "200 bars for AAPL" for a
+    202-bar response with nothing saying which copies it had dropped. The
+    count is the same out-parameter the scan and the forward-returns fetch
+    pass; here it is one clause on the OK detail."""
+    quiet = by_name(live.run_checks(only=("alpaca",), now=NOW))["alpaca"]
+    assert quiet.ok and "sent twice" not in quiet.detail and "duplicate" not in quiet.detail
+
+    boundaries["alpaca"].send_session_bar_twice("AAPL", copies=2)
+    c = by_name(live.run_checks(only=("alpaca",), now=NOW))["alpaca"]
+
+    assert c.ok, c.detail
+    assert "2 extra bar(s) dropped as duplicates, keeping the copy that arrived last" in c.detail
+    assert f"{len(quiet.data['frame'])} bars for AAPL" in c.detail, (
+        "and the bar count is still the de-duplicated frame's, which is what the rules read")
+
+
 # --------------------------------------------------------------- claude ----
 def test_a_rejected_anthropic_key_fails_claude_and_skips_the_cache_check(live, boundaries):
     boundaries["anthropic"].set_error(RuntimeError("Error code: 401 - invalid x-api-key"))

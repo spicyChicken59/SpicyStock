@@ -49,6 +49,8 @@ INVARIANTS = (
     "checklist",           # every burst carries one row per check, scored or not
     "streak",              # day N of this setup, internally consistent, or null
     "returns_shape",       # d1/d3/d5/as_of, null when unknown
+    "quiet_run",           # a run entry's `scored` against the mean it publishes
+    "fills_closed",        # which runs a later run will still fetch bars for
     "numbers_or_null",     # no NaN, no "n/a", no 0 standing in for unknown
     "liquidity",           # run.liquidity agrees with the rows and the populations are disjoint
     "benchmark",           # runs[].benchmark and evidence.universe hold together
@@ -291,9 +293,21 @@ def contract_violations(data: dict, docs_dir=None) -> set[str]:
                            run_level=False):
             bad.add("returns_shape")
 
-    for row in data["runs"]:
+    for index, row in enumerate(data["runs"]):
         if not _returns_ok(row.get("forward_returns"), run_level=True):
             bad.add("returns_shape")
+        if not _quiet_run_ok(row):
+            bad.add("quiet_run")
+        # Only one direction of the fill window is checkable from the file:
+        # the newest FILL_WINDOW_RUNS entries are in it whatever else is true,
+        # while an entry past them may be either, because the run just added
+        # is exempt wherever its session put it. Absent is a file written
+        # before the stamp existed.
+        closed = row.get("fills_closed")
+        if closed is not None and not isinstance(closed, bool):
+            bad.add("fills_closed")
+        elif closed and index < ledger.FILL_WINDOW_RUNS:
+            bad.add("fills_closed")
 
     # Round 5's sentences. run.liquidity.refused is the count of the rows that
     # carry the word; every such row sits below the floor and every other
@@ -345,6 +359,60 @@ def contract_violations(data: dict, docs_dir=None) -> set[str]:
     if found:
         bad.add("numbers_or_null")
     return bad
+
+
+def _quiet_run_ok(entry: dict) -> bool:
+    """One run entry's `scored` against the mean it publishes.
+
+    The forward-returns invariant gained an exception no session can end -- a
+    run that scored nothing has no rows for a later run to fill, so its three
+    horizons and its n stay null and 0 for good -- and this walker read
+    nothing under it. That is the R9-B shape one round on, and it costs more
+    here than it did there: docs/index.html now acts on `scored` ALONE, so an
+    entry claiming it scored nothing SUPPRESSES the measured numbers beside it
+    rather than being contradicted by them on screen, and drops that session
+    out of every horizon's denominator.
+
+    `scored` is held to a non-bool int >= 0 for the same reason, and that is
+    what makes the page's `row.scored === 0` and `row.scored == 0`
+    indistinguishable on any document this checker accepts: "0", false and []
+    are refused here, so the strict comparison is a rule about documents, not
+    a rule the page can be mutated out of. An entry with no `scored` key at
+    all is not this rule's business; a shape `_returns_ok` already refuses is
+    not either, so one doctoring names one invariant.
+    """
+    if "scored" not in entry:
+        return True
+    scored = entry["scored"]
+    if isinstance(scored, bool) or not isinstance(scored, int) or scored < 0:
+        return False
+    returns = entry.get("forward_returns")
+    if scored and isinstance(returns, dict):
+        # The other exception no session can end: every scored row measured
+        # and none of them the first scored appearance of its setup, so the
+        # run has nothing to average and never will -- a lead only ever moves
+        # EARLIER. A run still waiting for its rows has rows < scored, which
+        # is what separates the two.
+        return not (returns.get("rows") == scored and not returns.get("n")
+                    and any(block.get(f"d{h}") is not None
+                            for h in ledger.HORIZONS
+                            for block in (returns, returns.get("from_open") or {})))
+    if scored:
+        return True
+    if not isinstance(returns, dict):
+        return True
+    blocks = [returns]
+    if isinstance(returns.get("from_open"), dict):
+        blocks.append(returns["from_open"])
+    for block in blocks:
+        if any(block.get(f"d{h}") is not None for h in ledger.HORIZONS):
+            return False
+        if block.get("n"):
+            return False
+    # rows counts the rows those setups were collapsed from, and a run that
+    # scored nothing has no rows at all -- mean_returns() takes them off the
+    # run's own candidates.
+    return not returns.get("rows")
 
 
 def _benchmark_ok(entry: dict) -> bool:
@@ -842,6 +910,108 @@ def test_a_run_that_claims_more_setups_than_it_has_rows_is_caught(document):
     _only(document, "returns_shape")
 
 
+def test_a_run_that_says_it_scored_nothing_beside_a_measured_mean_is_caught(document):
+    """The exception no session can end, checked rather than described.
+
+    Round 10 gave the page a fifth state and made it act on `scored` alone,
+    which is what turned a contradiction that used to correct itself on
+    screen -- the nulls said one thing, the count another -- into three cells
+    reading "nothing scored" over three measured returns, and a session
+    dropped from every horizon's denominator. Planted on a past session
+    rather than on the newest entry, because the newest is the one the run
+    block describes and the point is a rule about entries.
+    """
+    entry = next(r for r in document["runs"] if (r.get("forward_returns") or {}).get("d1") is not None)
+    entry["scored"] = 0
+    _only(document, "quiet_run")
+    # And the horizon on its own, with the counts it should have: a mean with
+    # no rows behind it is the same lie one field over, and the first version
+    # of this test could not see it -- every plant it made tripped the row
+    # count first, so the clause that reads the horizons was deletable.
+    entry["forward_returns"].update(n=0, rows=0)
+    _only(document, "quiet_run")
+
+
+def test_a_run_that_scored_nothing_may_not_claim_setups_either(document):
+    """n is the weight the dashboard multiplies a session's mean by, rows is
+    what those setups were collapsed from, and a run with no candidates has
+    neither -- mean_returns() takes both off the run's own rows. The open
+    basis is checked with the close one, because a mean is published on both
+    and only one of them was ever read here."""
+    entry = document["runs"][0]
+    assert entry["scored"] == 2 and entry["forward_returns"]["n"] == 0
+    entry["scored"] = 0
+    entry["forward_returns"].update(n=3, rows=3)
+    _only(document, "quiet_run")
+    entry["forward_returns"].update(n=0, rows=2)
+    _only(document, "quiet_run")
+    entry["forward_returns"].update(rows=0,
+                                    from_open={"d1": 1.0, "d3": None, "d5": None, "n": 1})
+    _only(document, "quiet_run")
+    # The open basis's n with nothing measured beside it. This is the ONLY
+    # shape that reaches the setup count on its own: the close basis's n
+    # cannot exceed rows (returns_shape), so a quiet run claiming one there
+    # is caught by the row count first, and from_open carries no rows.
+    entry["forward_returns"].update(from_open={"d1": None, "d3": None, "d5": None, "n": 1})
+    _only(document, "quiet_run")
+
+
+def test_a_run_whose_every_scored_row_is_a_repeat_may_not_read_as_waiting(document):
+    """The second exception no session can end. A run all of whose scored
+    rows are repeats of setups counted on an earlier session averages an
+    empty list -- rows == scored, n == 0 -- and no later fill changes it,
+    because a lead only ever moves earlier. What the file may not do is
+    claim that state and publish a mean anyway."""
+    entry = document["runs"][0]
+    entry["forward_returns"].update(rows=entry["scored"], n=0, d1=1.2)
+    _only(document, "quiet_run")
+    # A run still WAITING is the same shape with fewer rows measured, and is
+    # not this state: the precondition that keeps the rule from swallowing it.
+    entry["forward_returns"].update(rows=entry["scored"] - 1)
+    assert contract_violations(document) == set()
+
+
+def test_a_run_inside_the_fill_window_may_not_say_its_fills_are_closed(document):
+    """The one direction of the window a file can be held to: the newest
+    FILL_WINDOW_RUNS entries are in it whatever else is true. Past them the
+    run just added is exempt wherever its session put it, so `true` there is
+    not a violation -- and a stamp that is not a boolean is."""
+    assert len(document["runs"]) <= ledger.FILL_WINDOW_RUNS
+    for entry in document["runs"]:
+        entry["fills_closed"] = False
+    assert contract_violations(document) == set()
+    document["runs"][0]["fills_closed"] = True
+    _only(document, "fills_closed")
+    document["runs"][0]["fills_closed"] = "no"
+    _only(document, "fills_closed")
+    # A FALSY non-boolean, which the index rule below it cannot catch: it is
+    # what makes the type clause load-bearing rather than a second reading of
+    # the same fact.
+    document["runs"][0]["fills_closed"] = 0
+    _only(document, "fills_closed")
+
+
+def test_a_scored_count_that_is_not_a_count_is_caught(document):
+    """What the page reads to decide a run can never contribute a mean.
+
+    "0", false and [] are each falsy or `== 0` in JavaScript and none of them
+    is a count, so refusing them here is what makes docs/index.html's strict
+    `row.scored === 0` and a loose `==` indistinguishable on any document
+    this checker accepts -- an equivalence about documents rather than a rule
+    the page could be mutated out of. Three of the five trip
+    numbers_or_null as well, which is a second true sentence about the same
+    field and not a second defect, so those are asserted as members.
+    """
+    for value in (-1, 2.5):
+        fresh = json.loads(json.dumps(document))
+        fresh["runs"][0]["scored"] = value
+        _only(fresh, "quiet_run")
+    for value in (True, "0", []):
+        fresh = json.loads(json.dumps(document))
+        fresh["runs"][0]["scored"] = value
+        assert contract_violations(fresh) == {"quiet_run", "numbers_or_null"}
+
+
 # ===========================================================================
 # Forward returns: the arithmetic, against frames whose answers are known here
 # ===========================================================================
@@ -1232,6 +1402,76 @@ def _run(date_str: str, tickers=("AAA",), run_type: str = "evening") -> tuple:
               "lynch_passes": 2, "lynch_total": 6, "lynch_detail": _detail(2),
               "reason": "lynch_gate", "forward_returns": ledger.empty_returns()}]
     return run, candidates, gated
+
+
+def test_the_run_entry_keeps_the_bars_the_feed_repeated_and_omits_what_it_was_not_told(tmp_path):
+    """docs/data.json is rewritten by every later run, so the count of bars a
+    feed repeated survived exactly one night: the durable record -- the only
+    file that keeps a year of nights and the one a reader asks "which nights
+    had duplicates?" of -- had no trace of it.
+
+    An ABSENT key and not a null for a run that carried no count, the rule
+    `rules` follows: absent is a run from before the field existed, and null
+    is a shape no writer produces (and one _malformed_rows() is free to refuse
+    later)."""
+    book = ledger.Ledger(tmp_path).load()
+    run, cands, gated = _run("2026-08-25")
+
+    older = book.add_run(run, cands, gated)
+    assert "duplicate_bars" not in older, "a run block from before the count says nothing"
+
+    entry = book.add_run({**run, "date": "2026-08-26", "duplicate_bars": 3}, cands, gated)
+    assert entry["duplicate_bars"] == 3
+    book.write()
+    stored = json.loads((tmp_path / ledger.LEDGER_NAME).read_text())["runs"]
+    assert [r.get("duplicate_bars") for r in stored] == [3, None], (
+        "on the file itself, and on the newer run alone", stored)
+
+    weird = book.add_run({**run, "date": "2026-08-27", "duplicate_bars": "lots"}, cands, gated)
+    assert "duplicate_bars" not in weird, "and a shape no writer produces is not stored either"
+
+
+def test_the_view_says_which_runs_a_later_run_will_still_fetch_for(tmp_path):
+    """`fills_closed` is _fillable()'s own window, published for the page.
+
+    A horizon still null on a run past the window is null for good -- the
+    constant's own comment says why nothing is re-requested there -- and the
+    runs table called it "pending", which is the same promise-that-cannot-be-
+    kept the quiet run's cells were making one state over. The page cannot
+    derive it: FILL_WINDOW_RUNS lives here, and the run just added is exempt
+    wherever its session put it, which is a fact about this object and not
+    about the list's order. So it is computed here, by the method the fills
+    themselves walk, and stamped on the view.
+    """
+    book = ledger.Ledger(tmp_path).load()
+    for day in range(1, ledger.FILL_WINDOW_RUNS + 3):
+        book.add_run(*_run(f"2026-08-{day:02d}"))
+    view = book.dashboard()
+
+    stamped = [(entry["date"], entry["fills_closed"]) for entry in view["runs"]]
+    assert [s for _, s in stamped[:ledger.FILL_WINDOW_RUNS]] == [False] * ledger.FILL_WINDOW_RUNS
+    assert all(closed for _, closed in stamped[ledger.FILL_WINDOW_RUNS:]), stamped
+    assert {d for d, closed in stamped if not closed} == {
+        r["date"] for r in book._fill_window()}
+
+
+def test_the_run_just_added_is_never_stamped_closed_however_old_its_session(tmp_path):
+    """A backfill lands deep in a list ordered by session, and it is the one
+    run whose outcomes this run exists to collect. _fillable() exempts it;
+    the view has to say the same thing, or the page tells a reader the
+    backfill's own horizons will never fill on the night it wrote them."""
+    book = ledger.Ledger(tmp_path).load()
+    for day in range(1, ledger.FILL_WINDOW_RUNS + 3):
+        book.add_run(*_run(f"2026-08-{day:02d}"))
+    book.write()
+
+    backfill = ledger.Ledger(tmp_path).load()
+    backfill.add_run(*_run("2026-08-02", tickers=("BBB",)))
+    view = backfill.dashboard()
+
+    entry = next(e for e in view["runs"] if e["date"] == "2026-08-02")
+    assert view["runs"].index(entry) >= ledger.FILL_WINDOW_RUNS, "not past the window"
+    assert entry["fills_closed"] is False
 
 
 def test_a_second_run_keeps_the_first(tmp_path):

@@ -1,4 +1,33 @@
 name: Evening scan (6:16 PM ET)
+# WHICH RUN THIS ROW IS, in the Actions list, before anyone opens it. Four
+# different things fire this workflow and every row read "Evening scan
+# (6:16 PM ET)": the live cron, the DST no-op that correctly did nothing (a
+# green tick for a run that never scanned), a rehearsal, and a backfill of a
+# session the clock did not pick. The holiday week is four red rows and a
+# reader needs to know which.
+#
+# The cron branch names the cron ITSELF rather than "EDT"/"EST" alone,
+# because which of the pair is the no-op depends on today's offset and this
+# label is composed before the job starts. An unregistered cron falls through
+# to its own string instead of borrowing the other slot's name -- a ternary
+# whose last branch is a guess is how a row lies about itself. The test in
+# tests/test_docs_are_true.py reads both crons out of the schedule block
+# below, so adding one without labelling it fails there.
+#
+# `inputs` on a SCHEDULED run is the empty context, and that is not an
+# assumption: the persist step below has read `inputs.dry_run != true` on
+# every scheduled run since it landed, including the ones whose guard let the
+# pipeline step run and fail preflight, and a context error there would have
+# failed the workflow rather than skipping a step. The schedule branch
+# short-circuits before it anyway.
+run-name: >-
+  Evening ${{ github.event_name == 'schedule'
+  && (github.event.schedule == '16 22 * * 1-5' && 'cron 16 22 * * 1-5, the EDT slot'
+  || (github.event.schedule == '16 23 * * 1-5' && 'cron 16 23 * * 1-5, the EST slot'
+  || format('cron {0}', github.event.schedule)))
+  || (inputs.dry_run == true && 'rehearsal'
+  || (inputs.session != '' && format('backfill {0}', inputs.session)
+  || 'dispatch')) }}
 on:
   schedule:
     # These crons ARE the trigger. An earlier design used an external scheduler

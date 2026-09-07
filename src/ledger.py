@@ -171,7 +171,7 @@ CONTRACT_INVARIANTS = [
     "run.scored + len(gated_out) == run.bursts. Nothing a scan found may vanish without appearing in one of the two lists.",
     "Every candidate carries provenance.source: 'claude' when the model actually returned a score, 'fallback' when the offline checklist produced it. A fallback is never labelled claude.",
     "provenance.chart_seen is true only when the scoring model actually received the chart image.",
-    "forward_returns and runs[].forward_returns are null until the sessions exist -- with one exception that no session can end: a run that scored nothing has no rows for a later run to fill, so its three horizons and its n stay null and 0 for good, and a reader must be told that rather than 'pending'. Absent is null, never 0 and never a string.",
+    "forward_returns and runs[].forward_returns are null until the sessions exist -- with exceptions no session can end: a run that scored nothing has no rows for a later run to fill, and a run every one of whose scored rows is a repeat of a setup counted earlier (rows == scored with n == 0) has no setup to average, so in both cases the three horizons and the n stay null and 0 for good and a reader must be told that rather than 'pending'. runs[].fills_closed says the third: false while a later run will still fetch that run's rows, true once it is past the newest FILL_WINDOW_RUNS runs by session, after which a horizon still null there is null for good too. It is a fact about the record as it stands tonight rather than about the run, so it is in this view and not in the ledger. Absent is null, never 0 and never a string.",
     "d1/d3/d5 divide the close 1, 3 and 5 sessions after the burst by the BURST-DAY CLOSE: what the setup did. forward_returns.from_open divides the same later closes by the NEXT session's open, the earliest price a reader of the evening email could have paid: what acting on it could have had. Both are paper prices from one venue's official prints with no slippage. Every mean and every evidence outcome carries both, the open basis nested under from_open with its own n, and enough_from_open is the open basis's own licence to be read as a rate -- a surface that shows a number says which basis it is on, and never shows a close-basis number under an open-basis label or the reverse. A row or a run from before this basis existed carries no from_open, which is not a measurement of zero.",
     "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
     "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
@@ -2206,6 +2206,17 @@ class Ledger:
         # just written, on any run whose caller had no fingerprint.
         if isinstance(run.get("rules"), dict):
             entry["rules"] = dict(run["rules"])
+        # How many bars the feed repeated that night -- the extra copies of a
+        # timestamp it had already sent, which src.scanner dropped keeping the
+        # copy that arrived last. docs/data.json carries it too, and every
+        # later run rewrites that file: this is the only place it survives the
+        # next night, which is the whole point of counting it, since no
+        # duplicate has been read off a live response yet and the first one
+        # has to still be there to read. Absent when the run carried none, the
+        # rule `rules` follows above: a run from before the field existed says
+        # nothing, and a null is a shape no writer produces.
+        if isinstance(run.get("duplicate_bars"), int) and not isinstance(run["duplicate_bars"], bool):
+            entry["duplicate_bars"] = run["duplicate_bars"]
         self.runs = [r for r in self.runs
                      if (r.get("date"), r.get("type")) != (entry["date"], entry["type"])]
         self.runs.insert(0, entry)
@@ -2240,23 +2251,34 @@ class Ledger:
             run["forward_returns"] = mean_returns(run.get("candidates", []), leads)
 
     # -- forward returns -----------------------------------------------
-    def _fillable(self, through: date | None) -> list[dict]:
-        """Rows that could still gain a horizon, newest FILL_WINDOW_RUNS runs."""
-        limit = _as_date(through)
-        out = []
-        # The window is the newest runs BY SESSION, so a SCAN_SESSION_DATE
-        # backfill of a session older than the ten newest landed outside it
-        # -- on the run that scored it and on every run after -- and its rows
-        # stayed pending forever, while README promised a backfill resolves
-        # its own outcomes. The run just added is always in the window: it is
-        # the one whose outcomes this run was started to collect.
+    def _fill_window(self) -> list[dict]:
+        """The runs a later run will still fetch bars for.
+
+        The window is the newest runs BY SESSION, so a SCAN_SESSION_DATE
+        backfill of a session older than the ten newest landed outside it
+        -- on the run that scored it and on every run after -- and its rows
+        stayed pending forever, while README promised a backfill resolves
+        its own outcomes. The run just added is always in the window: it is
+        the one whose outcomes this run was started to collect.
+
+        One method rather than the copy of this rule that _fillable() and
+        fill_benchmarks() each held, because dashboard() now publishes which
+        side of it every run entry is on and three copies of a window is how
+        a page ends up drawing a boundary the fills do not use.
+        """
         window = list(self.runs[:FILL_WINDOW_RUNS])
         if self.latest is not None:
             key = (self.latest["run"].get("date"), self.latest["run"].get("type"))
             for run in self.runs[FILL_WINDOW_RUNS:]:
                 if (run.get("date"), run.get("type")) == key:
                     window.append(run)
-        for run in window:
+        return window
+
+    def _fillable(self, through: date | None) -> list[dict]:
+        """Rows that could still gain a horizon, newest FILL_WINDOW_RUNS runs."""
+        limit = _as_date(through)
+        out = []
+        for run in self._fill_window():
             for row in list(run.get("candidates", [])) + list(run.get("gated", [])):
                 returns = row.get("forward_returns") or {}
                 if (all(returns.get(f"d{h}") is not None for h in HORIZONS)
@@ -2361,13 +2383,7 @@ class Ledger:
             return 0
         limit = _as_date(through)
         moved = 0
-        window = list(self.runs[:FILL_WINDOW_RUNS])
-        if self.latest is not None:
-            key = (self.latest["run"].get("date"), self.latest["run"].get("type"))
-            for run in self.runs[FILL_WINDOW_RUNS:]:
-                if (run.get("date"), run.get("type")) == key:
-                    window.append(run)
-        for run in window:
+        for run in self._fill_window():
             # Only from a scan of the universe this run itself scanned. A run
             # written before universes were recorded cannot be matched, so it
             # is left pending rather than filled from an assumption.
@@ -2461,6 +2477,7 @@ class Ledger:
         """docs/data.json: the newest run, plus the history's headline numbers."""
         if self.latest is None:
             raise ValueError("no run has been added, so there is nothing to publish")
+        open_fills = {id(run) for run in self._fill_window()}
         return {
             "schema_version": SCHEMA_VERSION,
             "app": "SpicyStock",
@@ -2482,8 +2499,21 @@ class Ledger:
             "run": (headline or self.latest)["run"],
             "candidates": (headline or self.latest)["candidates"],
             "gated_out": (headline or self.latest)["gated_out"],
-            "runs": [{k: v for k, v in run.items()
-                      if k not in ("candidates", "gated")} for run in self.runs],
+            # `fills_closed` is _fill_window()'s answer for each entry: false
+            # while a later run will still fetch that run's rows, true once it
+            # is past the window and nothing is re-requested for it. A horizon
+            # still null there is null for good, and the page said "pending"
+            # about it -- the same promise-that-cannot-be-kept as a quiet run's
+            # cells, one state over. It is stamped here rather than derived in
+            # the browser because FILL_WINDOW_RUNS lives in this module and the
+            # run just added is exempt wherever its session put it, which the
+            # list's order does not show. The ledger itself does not carry it:
+            # it is an answer about the record as it stands tonight, not a fact
+            # about the run, and README budgets that file's size.
+            "runs": [{**{k: v for k, v in run.items()
+                         if k not in ("candidates", "gated")},
+                      "fills_closed": id(run) not in open_fills}
+                     for run in self.runs],
             # Step 11. The answers to the questions the page exists to ask,
             # computed here rather than in the browser -- see evidence(). This
             # is the whole ledger's view, not this run's: `runs` above already

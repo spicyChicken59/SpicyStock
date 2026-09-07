@@ -261,6 +261,28 @@ def test_download_batch_parses_a_real_barset_into_the_frames_the_rules_read(ohlc
     assert detect_setup(out["AMD"], ScanConfig()) is None
 
 
+def test_a_real_barset_keeps_the_response_order_and_both_copies_of_a_repeated_bar(ohlcv):
+    """The two SDK facts _download_batch()'s sort and de-dup rest on.
+
+    It sorts what came back rather than pinning `sort` on the request, and it
+    keeps the copy that arrived LAST -- neither of which means anything unless
+    BarSet.df hands over the rows in the order the response listed them and
+    hands over BOTH copies of a repeated timestamp. If a later alpaca-py
+    sorted, or collapsed a duplicate itself, "the copy the feed sent last"
+    would silently become whichever one the SDK chose to keep. Asserted on an
+    object alpaca-py built, so that change fails here.
+    """
+    rows = _raw_bars(ohlcv("burst"), SESSION)
+    prelim = dict(rows[-1], v=1.0)
+    corrected = dict(rows[-1], v=2.0)
+
+    df = BarSet({"NVDA": [prelim, corrected] + list(reversed(rows[:-1]))}).df.loc["NVDA"]
+
+    assert not df.index.is_monotonic_increasing, "the SDK does not sort; the scanner does"
+    assert list(df["volume"][:2]) == [1.0, 2.0], "and it keeps both copies, in wire order"
+    assert len(df) == len(rows) + 1
+
+
 class _StaticClient:
     def __init__(self, barset: BarSet) -> None:
         self._barset = barset

@@ -1140,7 +1140,123 @@ def test_run_scan_names_the_symbols_the_feed_returned_nothing_for_and_states_its
     assert len(warned) == 1 and "2 of 11 symbols" in warned[0] and "ALSOGONE, NOSUCH" in warned[0], messages
     assert [m for m in messages if m.startswith("Coverage for ")] == [
         f"Coverage for {stats['session']}: 11 requested; 9 answered with bars, 1 of those with no bar "
-        "for the session; 2 answered with no bar at all; 0 dropped after their batch failed twice"], messages
+        "for the session; 2 answered with no bar at all; 0 dropped after their batch failed twice; "
+        "0 duplicate bar(s) dropped"], messages
+
+
+def test_run_scan_counts_the_bars_the_feed_sent_twice_and_states_them_in_its_coverage(
+    fake_alpaca, ohlcv, caplog
+):
+    """A duplicate is resolved inside _download_batch and the frame that comes
+    out cannot show it ever happened, so a feed sending a preliminary bar and
+    a corrected one was visible on no surface and in no log line -- the same
+    silence `no_bars_names` was added to end. Counted per symbol, named in a
+    warning, and stated in the coverage line as a positive count, because no
+    warning is also what a scan with nothing to say prints."""
+    universe = _coverage(fake_alpaca, ohlcv, fresh=8, stale=1)
+    fake_alpaca.send_session_bar_twice(universe[0])
+    fake_alpaca.send_session_bar_twice(universe[1], copies=2)
+    stats: dict = {}
+    with caplog.at_level(logging.INFO, logger="src.scanner"):
+        run_scan(ScanConfig(), universe=universe, stats=stats)
+
+    assert stats["duplicate_bars"] == 3, "the EXTRA copies: one name sent one, the other two"
+    messages = [r.getMessage() for r in caplog.records]
+    warned = [r.getMessage() for r in caplog.records
+              if r.levelno == logging.WARNING and "already sent" in r.getMessage()]
+    assert len(warned) == 1 and f"{universe[1]} (2)" in warned[0] and f"{universe[0]} (1)" in warned[0], messages
+    assert "2 of the 9 symbols that answered carried a timestamp the response had already " \
+        "sent (3 extra bar(s) dropped), keeping the copy that arrived last" in warned[0], warned[0]
+    assert warned[0].index(f"{universe[1]} (2)") < warned[0].index(f"{universe[0]} (1)"), (
+        "most-repeated first, the order stopped_printing's names use", warned[0])
+    assert [m for m in messages if m.startswith("Coverage for ")] == [
+        f"Coverage for {stats['session']}: 9 requested; 9 answered with bars, 1 of those with no bar "
+        "for the session; 0 answered with no bar at all; 0 dropped after their batch failed twice; "
+        "3 duplicate bar(s) dropped"], messages
+
+
+def test_a_scan_with_no_duplicate_bars_says_so_rather_than_saying_nothing(fake_alpaca, ohlcv, caplog):
+    """The inverse, and the state every night so far has been in: the count is
+    0, the warning is absent, and the coverage line still carries the clause --
+    so an operator reading the first live duplicate off an Actions log can tell
+    it from a run that never counted."""
+    universe = _coverage(fake_alpaca, ohlcv, fresh=8, stale=1)
+    stats: dict = {}
+    with caplog.at_level(logging.INFO, logger="src.scanner"):
+        run_scan(ScanConfig(), universe=universe, stats=stats)
+
+    assert stats["duplicate_bars"] == 0
+    assert not [r for r in caplog.records if "already sent" in r.getMessage()]
+    assert [m for m in (r.getMessage() for r in caplog.records) if m.startswith("Coverage for ")] == [
+        f"Coverage for {stats['session']}: 9 requested; 9 answered with bars, 1 of those with no bar "
+        "for the session; 0 answered with no bar at all; 0 dropped after their batch failed twice; "
+        "0 duplicate bar(s) dropped"]
+
+
+def _warned(caplog, phrase: str) -> str:
+    """The one WARNING carrying `phrase`, or a failure naming what was logged."""
+    hits = [r.getMessage() for r in caplog.records
+            if r.levelno == logging.WARNING and phrase in r.getMessage()]
+    assert len(hits) == 1, [r.getMessage() for r in caplog.records]
+    return hits[0]
+
+
+@pytest.mark.parametrize("names, ellipsis", [(8, False), (9, True)])
+def test_a_warning_that_caps_its_list_of_names_says_so_only_when_it_capped(
+    fake_alpaca, ohlcv, caplog, names, ellipsis
+):
+    """Both warnings that name symbols print at most eight and mark the cut
+    with "...". Making that marker unconditional left the suite green -- every
+    test of either warning had two names -- and on a feed-wide event the
+    difference is "these 8 names" against "8 of some larger number", which is
+    the whole question an operator reading it has.
+
+    Eight is the boundary in both directions: eight names must print all eight
+    with no marker, nine must print eight and the marker."""
+    universe = _coverage(fake_alpaca, ohlcv, fresh=12) + [f"NOSUCH{i}" for i in range(names)]
+    for symbol in universe[:names]:
+        fake_alpaca.send_session_bar_twice(symbol)
+    with caplog.at_level(logging.INFO, logger="src.scanner"):
+        run_scan(ScanConfig(), universe=universe)
+
+    for message, named in ((_warned(caplog, "already sent"), "SF"),
+                           (_warned(caplog, "no bar at all"), "NOSUCH")):
+        assert message.endswith("...") is ellipsis, message
+        assert message.count(named) == min(names, 8), message
+
+
+def test_a_session_sent_twice_under_two_timestamps_is_a_shape_this_does_not_count(ohlcv):
+    """WHAT THE COUNT IS KEYED ON, measured rather than described, because
+    three surfaces state it in prose.
+
+    `duplicated()` sees the index, so a duplicate here is a bar carrying a
+    timestamp the response had already sent. The same SESSION sent under two
+    different timestamps -- 04:00 and 05:00 on one date -- is a different
+    shape: it is not counted, it is not dropped, and detect_setup then reads
+    iloc[-1] and iloc[-2] as one session and returns None, which is the 0%
+    gain the de-dup exists to prevent arriving by another door. No wire has
+    been seen doing it, so this pins what IS measured rather than inventing a
+    session-level de-dup for a failure mode nobody has met; a round that adds
+    one turns this red, and the sentences in README, src/scanner.py and the
+    email have to move with it."""
+    session = date(2026, 6, 24)
+    rows = _bar_rows(ohlcv("burst"), session)
+    restated = dict(rows[-1], v=rows[-1]["v"] + 7.0)
+    cfg = ScanConfig()
+
+    same_stamp: dict[str, int] = {}
+    df = _download_batch(_genuine_barset("X", rows + [restated]), ["X"], cfg, session,
+                         duplicates=same_stamp)["X"]
+    assert same_stamp == {"X": 1} and detect_setup(df, cfg) is not None, "the shape that IS counted"
+
+    two_stamps: dict[str, int] = {}
+    later = dict(restated, t=restated["t"].replace("T04:00", "T05:00"))
+    df = _download_batch(_genuine_barset("X", rows + [later]), ["X"], cfg, session,
+                         duplicates=two_stamps)["X"]
+
+    assert two_stamps == {}, "not counted -- the timestamps differ"
+    assert len(df) == len(rows) + 1 and df.index[-1].date() == df.index[-2].date(), "and not dropped"
+    assert detect_setup(df, cfg) is None, "and the burst is missed, silently, as it was before"
 
 
 def test_run_scan_reports_the_shape_of_the_scan_it_ran(fake_alpaca, ohlcv):
@@ -1450,6 +1566,13 @@ def test_a_batch_that_fails_once_is_retried_and_keeps_its_symbols(
     """
     monkeypatch.setattr(time, "sleep", lambda *_: None)
     universe = _coverage(fake_alpaca, ohlcv, fresh=12)
+    # The retry is a SECOND call to _download_batch, and every out-parameter
+    # the first call would have filled has to be handed to it too. The
+    # duplicate count was the one nothing asserted: dropping `duplicates=`
+    # from the retry left the whole suite green while the batch that really
+    # ran counted none of its duplicates -- and the coverage line states that
+    # zero positively.
+    fake_alpaca.send_session_bar_twice(universe[0], copies=2)
     attempts = _attempt_recorder(monkeypatch, {0: ConnectionError("connection reset by peer")})
     stats: dict = {}
 
@@ -1458,6 +1581,7 @@ def test_a_batch_that_fails_once_is_retried_and_keeps_its_symbols(
     assert attempts == [universe, universe], "the retry must re-ask for the whole batch"
     assert stats["dropped"] == 0 and stats["with_bars"] == 12
     assert {c.ticker for c in found} == set(universe), "a retried batch loses nothing"
+    assert stats["duplicate_bars"] == 2, "a batch that failed once still counts its duplicates"
 
 
 def test_the_retry_waits_before_asking_again(fake_alpaca, ohlcv, monkeypatch):
@@ -1729,6 +1853,62 @@ def test_a_bar_the_feed_sent_twice_does_not_hide_the_burst(ohlcv):
     assert not df.index.has_duplicates
     assert len(df) == len(rows)
     assert detect_setup(df, ScanConfig()) is not None
+
+
+@pytest.mark.parametrize("bars", [16, 20, 60, 250])
+def test_the_copy_the_feed_sent_last_is_the_one_kept_whatever_order_it_arrived_in(ohlcv, bars):
+    """`keep="last"` means "the last copy on the wire" only if the sort in
+    front of it is stable, and `sort_index()` defaults to quicksort.
+
+    Reproduced here on pandas 3.0.5 with a genuine BarSet: a newest-first
+    response whose PRELIMINARY copy of the session bar sat earlier on the wire
+    than the corrected one kept the preliminary -- the volume the feed had
+    already restated -- and no surface said which copy it had read.
+
+    The length is load-bearing, which is why it is swept rather than picked --
+    and it is a length IN ELEMENTS ON THE WIRE, which is one more than the
+    frame that comes out because the extra copy is one of them. numpy's
+    introsort runs insertion sort at 16 elements and under, and insertion sort
+    IS stable, so a short response keeps the corrected copy under either sort:
+    swept here on pandas 3.0.5, 16 wire elements cannot fail and 17 can, so
+    the smallest FRAME that can fail is 16 bars -- which is why 16 is the
+    first case here, and why three sentences that stated this in bars were
+    each one out.
+    """
+    session = date(2026, 6, 24)
+    rows = _bar_rows(ohlcv("burst", days=bars), session)
+    prelim = dict(rows[-1], v=1.0)
+    corrected = dict(rows[-1], v=rows[-1]["v"] + 7.0)
+    wire = [prelim, corrected] + list(reversed(rows[:-1]))
+    assert len(wire) >= 17, "at 16 elements and under numpy sorts stably by accident"
+
+    df = _download_batch(_genuine_barset("X", wire), ["X"], ScanConfig(), session)["X"]
+
+    assert df.index.is_monotonic_increasing, "oldest first, whatever order it arrived in"
+    assert not df.index.has_duplicates and len(df) == len(rows)
+    assert df["Volume"].iloc[-1] == corrected["v"], (
+        "the copy the feed sent LAST is the one kept; this is the preliminary one"
+    )
+
+
+def test_the_bars_the_feed_sent_twice_are_counted_for_the_caller(ohlcv):
+    """A duplicate is resolved silently -- one of the two copies is simply
+    gone -- so nothing downstream could ever say a night had had one. Counted
+    per symbol, so the run can print the number and an operator can read the
+    first live one off an Actions log; no other policy, because no duplicate
+    has been seen yet."""
+    session = date(2026, 6, 24)
+    rows = _bar_rows(ohlcv("burst"), session)
+    cfg = ScanConfig()
+
+    clean: dict[str, int] = {}
+    _download_batch(_genuine_barset("X", rows), ["X"], cfg, session, duplicates=clean)
+    assert clean == {}, "a clean batch names no symbol"
+
+    twice: dict[str, int] = {}
+    _download_batch(_genuine_barset("X", rows + [rows[-1], rows[-1], rows[-3]]),
+                    ["X"], cfg, session, duplicates=twice)
+    assert twice == {"X": 3}, "every bar dropped as a duplicate is counted, not just the sessions"
 
 
 
@@ -2180,8 +2360,8 @@ def test_a_nat_on_the_newest_bar_is_a_stale_name_without_a_date_and_not_a_TypeEr
         fake_alpaca.add_history(name, ohlcv("flat", variant=i), stale_sessions=3)
     real = scanner_mod._download_batch
 
-    def _with_nat(client, tickers, cfg, session_):
-        out = real(client, tickers, cfg, session_)
+    def _with_nat(client, tickers, cfg, session_, **kw):
+        out = real(client, tickers, cfg, session_, **kw)
         # As many NaT frames as dated ones, so a guard that never compares
         # them cannot pass by accident.
         for ticker in list(out)[:10]:

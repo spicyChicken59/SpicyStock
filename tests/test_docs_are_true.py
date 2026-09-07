@@ -1156,6 +1156,64 @@ def test_the_pages_fallback_sentence_states_the_scorers_own_map():
     assert "÷" not in page.split("When a scoring call fails")[1][:400]
 
 
+def test_every_actions_row_says_which_run_it_is():
+    """The Actions list showed "Evening scan (6:16 PM ET)" on every row --
+    the live cron, the DST no-op that did nothing, a lunchtime rehearsal and a
+    backfill of an old session, four different things under one name, with
+    green ticks beside red ones every day and no way to tell which green one
+    had run.
+
+    `run-name` is that label, and it is asserted on the parsed YAML: EVERY
+    cron the schedule block registers has to appear in it, read from the same
+    file, so a cron edited or added without a label fails here. The raw
+    `github.event.schedule` is in there too, so a cron this expression does
+    not know renders as itself rather than wearing the other one's name --
+    the ternary's fallback would otherwise call an unregistered cron the EST
+    slot. And every input the form declares has to be read by the label:
+    a box nobody can see the effect of from the run list is the state this
+    exists to end.
+    """
+    import yaml
+
+    for name in ("evening.yml", "morning.yml"):
+        doc = yaml.safe_load(_read(f".github/workflows/{name}"))
+        label = " ".join(str(doc.get("run-name") or "").split())
+        assert label, f"{name} has no run-name, so every row of it reads alike"
+        on = doc.get("on", doc.get(True))
+        for cron in [c["cron"] for c in on["schedule"]]:
+            assert f"'{cron}'" in label, (
+                f"{name} registers the cron {cron!r} and its run-name does not name it")
+        # And it can still show a cron it does NOT enumerate. Asserted with
+        # the comparisons taken out, because the label mentions
+        # `github.event.schedule` once per cron it knows: the first version
+        # asked whether the string appears at all, and a mutant that replaced
+        # the fallback with the EST slot's own name -- so an unregistered
+        # cron would render as a row that lies about itself -- survived it.
+        fallback = re.sub(r"github\.event\.schedule == '[^']*'", "", label)
+        assert "github.event.schedule" in fallback, (
+            f"{name}'s run-name cannot show a cron it does not enumerate")
+        for box in (on["workflow_dispatch"] or {}).get("inputs", {}):
+            assert f"inputs.{box}" in label, (
+                f"{name}'s form takes a {box!r} box and the run list cannot see it")
+        assert "'dispatch'" in label, f"{name}: a plain manual run is a dispatch"
+
+    # And README's note prints those labels, so a cron that moves does not
+    # leave the docs quoting a row nobody will see.
+    readme = _read("README.md")
+    for name in ("evening.yml", "morning.yml"):
+        doc = yaml.safe_load(_read(f".github/workflows/{name}"))
+        on = doc.get("on", doc.get(True))
+        for cron in [c["cron"] for c in on["schedule"]]:
+            assert f"cron {cron}" in readme, (
+                f"README does not print the row {name}'s {cron!r} cron now shows")
+
+    evening = " ".join(str(yaml.safe_load(_read(".github/workflows/evening.yml"))["run-name"]).split())
+    assert "'rehearsal'" in evening, "a dry run must not read like the night's run"
+    assert "backfill {0}" in evening and "inputs.session" in evening, (
+        "a backfill names the session it was pinned to, which is the whole "
+        "difference between it and the run the clock would have made")
+
+
 def test_the_evening_workflow_takes_a_session_to_backfill_from_the_run_workflow_form():
     """SCAN_SESSION_DATE was documented for a shell only; the first live day
     needed a backfill and had no way to start one from Actions. The form's
@@ -1220,6 +1278,29 @@ def test_a_name_the_feed_returned_nothing_for_is_worded_the_same_in_the_email_an
     assert "`last` and `sessions_behind` null" in _read("README.md")
 
 
+def test_a_bar_the_feed_repeated_is_worded_the_same_in_the_email_and_on_the_page():
+    """One mechanism, one vocabulary, on the two surfaces a person reads.
+
+    The count reached docs/data.json and the Actions log and neither the email
+    nor the page, which is how the same silence was left half-closed for the
+    sibling case until round 9 put run.stopped_printing on all four surfaces.
+    src.emailer's DUPLICATE_BARS_NOTE is the sentence; docs/index.html's
+    duplicateNote() prints the same words, and each is pinned here against the
+    other's source, because a comment claiming two surfaces agree is exactly
+    what carried a drift for a round."""
+    from src import emailer
+
+    assert emailer.DUPLICATE_BARS_NOTE in _read("src/emailer.py"), "the email's words"
+    assert emailer.DUPLICATE_BARS_NOTE in _read("docs/index.html"), "the page's words"
+    # Whitespace-collapsed, because the bullet wraps and a phrase that lands
+    # across a line break is still the sentence a reader reads.
+    readme = " ".join(_read("README.md").split())
+    assert "the extra copies" in readme, "README says the number counts the extra copies"
+    assert "a bar sent three times counts 2" in readme, "and what that means for a triple"
+    assert "a timestamp the response had already sent" in readme, (
+        "and what a duplicate is keyed on, which is narrower than 'sent twice'")
+
+
 def test_a_run_that_scored_nothing_is_worded_the_same_in_the_email_and_on_the_page():
     """One mechanism, one vocabulary, and one state that is not "pending".
 
@@ -1227,21 +1308,36 @@ def test_a_run_that_scored_nothing_is_worded_the_same_in_the_email_and_on_the_pa
     its three horizon cells on docs/index.html are null for good; they read
     "pending" until round 10, and main's own 4 Sep record is one of these --
     the page it published said "0 of 1 sessions in" under a chip reading "no
-    session closed yet" while the sessions closed one after another. The mail
-    already had words for that night, in the morning follow-through's summary
-    of the run it follows, so the page borrows them rather than inventing a
-    second vocabulary for one mechanism.
+    session closed yet". Not one session has closed since that record
+    published (5-6 Sep are the weekend and 7 Sep is Labor Day), and the cell
+    would still be null after every session that does, which is what makes
+    "pending" the wrong word rather than an early one -- the chip was
+    accidentally true on the day and false about the reason.
 
-    The sentence is RENDERED here rather than grepped: a phrase constant no
+    The mail already had words for a night like it, in the morning
+    follow-through's summary of the run it follows, so the page borrows them
+    rather than inventing a second vocabulary. BOTH branches of that sentence
+    are rendered here, because the mail splits where the cell does not: a
+    night that found bursts and scored none carries the phrase, a night with
+    no burst at all -- which is what main's 4 Sep run was -- gets its own,
+    and the page's cell is true of both.
+
+    The sentences are RENDERED rather than grepped: a phrase constant no
     sentence reaches is a vocabulary of one, and this file's job is to catch
-    exactly that. The state set is a set EQUALITY, so a sixth state added to
-    fwdState() without words in FWD_WORDS turns this red rather than showing
-    a reader a bare number under a state the page cannot name.
+    exactly that. The state set is a set EQUALITY, so a seventh state added
+    to fwdState() without words in FWD_WORDS turns this red rather than
+    showing a reader a bare number under a state the page cannot name.
     """
     from src import emailer
 
     mail = emailer._empty_morning_note({"bursts": 3, "scored": 0, "session": "2026-09-04"})
     assert emailer.SCORED_NOTHING in mail, mail
+    # The other branch, and the reason the page's comment says the cell is
+    # true of both nights and borrowed from one: neither scored anything, so
+    # neither can ever be measured.
+    no_burst = emailer._empty_morning_note({"bursts": 0, "scored": 0, "session": "2026-09-04"})
+    assert emailer.SCORED_NOTHING not in no_burst, no_burst
+    assert "found no 4% burst to score" in no_burst, no_burst
 
     page = _read("docs/index.html")
     block = page[page.index("var FWD_WORDS = {"):]

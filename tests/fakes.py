@@ -77,6 +77,8 @@ class FakeAlpaca:
         self.gapped: set[str] = set()
         #: sessions NO frame carries -- see close_session
         self.closed_sessions: set = set()
+        #: symbols whose session bar is sent twice -- see send_session_bar_twice
+        self.duplicated: dict[str, int] = {}
 
     # -- registration -------------------------------------------------
     def add_history(self, ticker: str, df: pd.DataFrame, *, stale_sessions: int = 0,
@@ -112,6 +114,19 @@ class FakeAlpaca:
         """
         self.closed_sessions.add(pd.Timestamp(day).date())
 
+    def send_session_bar_twice(self, ticker: str, copies: int = 1) -> None:
+        """Serve `copies` extra copies of this symbol's newest bar.
+
+        A knob rather than a frame handed in, for the same reason
+        `gap_before_session` is one: _align_to_end rebuilds the index as
+        contiguous business days, so a duplicated timestamp handed in is
+        renumbered away on the way out. What the wire does with a repeated
+        bar -- which copy is preliminary and which corrected -- is unknown,
+        so the extra copies are byte-identical here and the volume the
+        scanner keeps is asserted against a genuine BarSet instead.
+        """
+        self.duplicated[ticker] = int(copies)
+
     def add_split(self, ticker: str, ratio: float, *, sessions_ago: int = 0) -> None:
         """Record a forward split of `ratio`-for-1 with this ex-date.
 
@@ -145,6 +160,8 @@ class FakeAlpaca:
                                for t in lower.index]]
             if sym in self.gapped and len(lower) >= 2:
                 lower = pd.concat([lower.iloc[:-2], lower.iloc[-1:]])
+            if self.duplicated.get(sym) and not lower.empty:
+                lower = pd.concat([lower] + [lower.iloc[-1:]] * self.duplicated[sym])
             if lower.empty:
                 continue
             frames.append(lower)
