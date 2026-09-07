@@ -75,22 +75,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # The smoke test answers every cdn.jsdelivr.net request from this
-      # checkout, at the version the page pins, so opening the dashboard
-      # reaches nothing off the runner and cannot fail on someone else's CDN.
-      - name: The design system the page pins
-        run: |
-          PIN=$(grep -oEm1 'design-system@[^/"]+' docs/index.html | cut -d@ -f2)
-          echo "page pins $PIN"
-          git clone --depth 1 --branch "$PIN" https://github.com/spicyChicken59/design-system /tmp/design-system \
-            || { git clone https://github.com/spicyChicken59/design-system /tmp/design-system \
-                 && git -C /tmp/design-system checkout "$PIN"; }
+      # The design system is an exact local snapshot inside docs/. Exercise
+      # the same files Pages will serve, with no CDN or mutable branch lookup.
+      - name: Verify the design snapshot
+        run: node tools/design_snapshot.mjs
       - name: Open the dashboard and ask whether it works
         run: |
           npm install --no-save --no-audit --no-fund playwright@1.56.1
           npx playwright install --with-deps chromium
           set -o pipefail
-          node tools/dashboard_smoke.mjs /tmp/design-system --shots /tmp/shots
+          node tools/dashboard_smoke.mjs --shots /tmp/shots
+          node tools/dashboard_recovery_smoke.mjs
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

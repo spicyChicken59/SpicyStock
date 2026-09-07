@@ -7,122 +7,26 @@
 <meta name="theme-color" content="#111F31">
 <title>SpicyStock</title>
 <meta name="description" content="SpicyStock — a 4% momentum burst screener. Every candidate the run scored, with its 2LYNCH checklist, and whether the score came from Claude or from the offline fallback.">
-<!-- SpicyChicken Design System v2.4.0, pinned by tag · DESIGN_SYSTEM.md §11 -->
-<link rel="icon" href="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/favicon.ico" sizes="16x16 32x32 48x48">
-<link rel="icon" href="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/sc-avatar-tile.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/apple-touch-icon.png">
+<!-- SpicyChicken Design System · exact local snapshot recorded in design-system/provenance.json -->
+<link rel="icon" href="design-system/assets/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" href="design-system/assets/sc-avatar-tile.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="design-system/assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/sc.css">
-<script src="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/sc-theme.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/sc-charts.js"></script>
-<style>
-  /* Page-specific only. Semantic tokens, never a primitive and never a hex. */
-
-  /* One shortlist entry: the chart PNG beside the numbers. The chart is the
-     first thing to give up its column — a 4-month candlestick under ~300px
-     is unreadable anyway, so below 720px it goes full width above the text. */
-  .pick { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--sc-s3); align-items: start; }
-  .pick__main { min-width: 0; }
-  @media (max-width: 720px) { .pick { grid-template-columns: minmax(0, 1fr); } }
-
-  .pick__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
-  .pick__rank { font: 600 11px/1 var(--sc-font-mono); color: var(--sc-text-3); }
-  .pick__ticker { font: 700 22px/1.1 var(--sc-font-display); color: var(--sc-heading); letter-spacing: .2px; }
-  .pick__score { font: 700 22px/1.1 var(--sc-font-body); color: var(--sc-heading); font-variant-numeric: tabular-nums; }
-  .pick__score span { font: 500 12px/1 var(--sc-font-mono); color: var(--sc-text-3); }
-  .pick__chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .pick__reason { margin: var(--sc-s2) 0 0; }
-  .pick__risk { font-size: 13px; color: var(--sc-text-2); margin: 6px 0 0; }
-
-  /* The 2LYNCH row. Six chips carry the letters; the values live in the
-     table underneath, so the checklist is readable without a hover. */
-  .lynch { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sc-s2); }
-  .lynch .sc-chip { min-width: 34px; justify-content: center; }
-
-  /* Figures under a pick: label above, number below, wrapping on a phone. */
-  .facts { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-top: var(--sc-s2);
-           border-top: 1px solid var(--sc-border); padding-top: var(--sc-s2); }
-  .facts > div { min-width: 0; }
-  .facts dt { font: 600 10.5px/1.4 var(--sc-font-mono); letter-spacing: .3px; color: var(--sc-text-3); text-transform: lowercase; }
-  .facts dd { margin: 2px 0 0; font-variant-numeric: tabular-nums; font-size: 14px; color: var(--sc-text); }
-
-  /* The chart slot. .sc-frame is a fixed-size photo well by default; a
-     candlestick needs the card's full width, and its height follows the
-     image. The empty twin keeps the same box so nothing jumps when a PNG
-     is missing — which is the normal state until the pipeline writes them. */
-  .shot { --sc-frame-w: 100%; --sc-frame-h: auto; aspect-ratio: 10 / 6; object-fit: contain; background: var(--sc-raised); }
-  .shot--empty { --sc-frame-w: 100%; --sc-frame-h: auto; aspect-ratio: 10 / 6; flex-direction: column; gap: 8px; text-align: center; padding: 10px; }
-  .shot--empty .sc-note { max-width: 30ch; }
-  /* The chick in an empty frame is a mono mark: cream on the dark surface,
-     ink on the light one. Mirrors the sheet's own three-selector shape —
-     dark is the base, light arrives by OS preference or by the toggle. */
-  .shot--empty .mark-ink { display: none; }
-  @media (prefers-color-scheme: light), print {
-    :root:not([data-theme="dark"]) .shot--empty .mark-cream { display: none; }
-    :root:not([data-theme="dark"]) .shot--empty .mark-ink { display: block; }
-  }
-  :root[data-theme="light"] .shot--empty .mark-cream { display: none; }
-  :root[data-theme="light"] .shot--empty .mark-ink { display: block; }
-
-  /* Bars wear a tone through the sheet's own channel, so a theme flip
-     re-resolves them with no JavaScript. A plain fill= would be outranked
-     by nothing here, but an inline fill: would take the property away from
-     the page stylesheet for good. */
-  #scores-chart .bar { fill: var(--sc-tone, var(--sc-chart-context)); }
-  #scores-chart .bar-label { font: 600 11px/1 var(--sc-font-mono); fill: var(--sc-text-2); }
-  #scores-chart .bar-value { font: 600 11px/1 var(--sc-font-mono); fill: var(--sc-text-3); }
-
-  /* Column hints for the wide table — the strings it actually holds. */
-  #scores-table .col-reason { min-width: 230px; white-space: normal; }
-  #scores-table tbody td:first-child { line-height: 1.3; }
-  #scores-table tbody .sc-eyebrow { margin-bottom: 1px; }
-  #scores-table td.col-reason { font-size: 13px; color: var(--sc-text-2); }
-  /* The "why" cell carries the same sentence the streak line and the email
-     use for that outcome, which is longer than the two words it used to hold;
-     a chip that cannot wrap would push the table out instead. */
-  #gated-table .col-why { min-width: 210px; }
-  #gated-table .col-why .sc-chip { white-space: normal; text-align: left; }
-  .runs-now td { font-weight: 600; }
-
-  /* The funnel, the checklist aggregate and the score/outcome plot are drawn
-     at the host's own PIXEL width — the viewBox is the measured width, so one
-     SVG unit is one CSS pixel and the type stays the size it says it is. A
-     fixed viewBox scales the whole drawing instead: the score chart's 11px
-     labels land near 5px on a 390px phone. These redraw on resize. */
-  .s-name { font: 500 12px/1 var(--sc-font-mono); fill: var(--sc-text-2); }
-  .s-value { font: 700 13px/1 var(--sc-font-body); fill: var(--sc-heading); }
-  .s-share { font: 500 11px/1 var(--sc-font-mono); fill: var(--sc-text-3); }
-  .s-drop { font: 500 11px/1 var(--sc-font-mono); fill: var(--sc-text-3); }
-  /* Kept and lost are two segments of one bar, and BOTH carry their count in
-     the row above or the caption below, so the split never rides on the fill. */
-  .seg-kept { fill: var(--sc-chart-emphasis); }
-  .seg-lost { fill: var(--sc-chart-context); }
-
-  /* The evidence bars carry their horizon through the tone channel, the way
-     #scores-chart .bar does. NOT .seg-kept: that rule hard-codes
-     --sc-chart-emphasis, so reusing it drew both series in one colour under a
-     legend naming two — a key contradicting the chart it explains, which is
-     the same defect the outcome legend already shipped once. Found by opening
-     the page and looking at it, not by a check. */
-  #evidence-chart .bar { fill: var(--sc-tone, var(--sc-chart-context)); }
-  #evidence-chart .s-drop { font-size: 10.5px; }
-
-  /* Horizon tiles: the value is the mean, the delta underneath carries the
-     spread between the best and worst session so a single number never reads
-     as a settled one. */
-  .horizon .sc-chip { margin-top: 8px; }
-  #checks-table .col-what { min-width: 170px; white-space: normal; }
-  #outcome-table .col-name { line-height: 1.3; }
-</style>
+<link rel="stylesheet" href="design-system/sc.css">
+<script src="design-system/sc-theme.js"></script>
+<script src="design-system/sc-charts.js"></script>
+<script src="design-system/sc-motion.js" defer></script>
+<script src="design-system/sc-reading.js" defer></script>
+<link rel="stylesheet" href="stock.css">
 </head>
 <body>
 <a class="sc-skip" href="#main">Skip to content</a>
 
-<header class="sc-masthead">
+<header class="sc-masthead sc-screen-only">
   <a class="sc-brand" href="./">
-    <img class="sc-mark" src="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/sc-mark-color-dark.svg" alt="" width="22" height="26">
+    <img class="sc-mark" src="design-system/assets/sc-mark-color-dark.svg" alt="" width="22" height="26">
     <span><span class="sc-brand__name">SpicyStock</span><span class="sc-brand__sub">4% momentum burst screener</span></span>
   </a>
   <div class="sc-masthead__right">
@@ -136,13 +40,49 @@
   </div>
 </header>
 
-<main class="sc-wrap sc-wrap--wide sc-stack" id="main">
-  <div class="sc-title">
-    <div class="sc-eyebrow" id="eyebrow">screener</div>
-    <h1 id="h1">Loading the latest run…</h1>
-    <p class="sc-dek" id="dek"></p>
-    <div class="sc-meta" id="meta"></div>
-  </div>
+<main class="sc-wrap sc-wrap--wide sc-stack sc-print-report" id="main">
+  <div class="sc-print-head" aria-hidden="true"><span class="sc-signature sc-signature--small"><img src="design-system/assets/sc-mark-color-light.svg" alt="" width="342" height="405"><span class="sc-signature__name">SpicyStock</span></span><span>market research / current run</span></div>
+  <div class="sc-print-foot" aria-hidden="true"><span>SpicyChicken / market research</span><span>Screening output for human review</span></div>
+  <section class="sc-cover sc-on-ink stock-cover" aria-labelledby="h1">
+    <div class="sc-cover__content sc-reveal" data-sc-motion="rise">
+      <p class="sc-eyebrow stock-cover__brand">SpicyStock / market research</p>
+      <div class="sc-eyebrow sc-eyebrow--muted" id="eyebrow">screener</div>
+      <h1 class="sc-cover__title" id="h1">Loading the latest run…</h1>
+      <p class="sc-cover__dek" id="dek"></p>
+      <div class="sc-cover__meta" id="meta"></div>
+    </div>
+    <div class="sc-cover__art stock-cover__art sc-brand-stage sc-brand-stage--orbit sc-reveal" data-sc-motion="scale" aria-hidden="true">
+      <img class="stock-cover__mark" src="design-system/assets/sc-mark-mono-cream.svg" alt="" width="172" height="200">
+      <span class="sc-cover__caption">a SpicyChicken project<br>4% momentum burst screener</span>
+    </div>
+  </section>
+
+  <section class="sc-card stock-snapshot" id="snapshot-panel" aria-label="Snapshot status">
+    <div>
+      <p class="sc-eyebrow sc-eyebrow--muted">recorded snapshot / daily research</p>
+      <p id="snapshot-status" role="status" aria-live="polite" aria-atomic="true">Checking the published snapshot…</p>
+      <p class="sc-note" id="snapshot-stamp">These are recorded daily results, not live quotes. Checking this page does not run a scan.</p>
+    </div>
+    <div class="stock-snapshot__actions sc-screen-only">
+      <button class="sc-btn sc-btn--secondary sc-btn--sm" id="snapshot-refresh" type="button" disabled>Checking…</button>
+      <a class="sc-btn sc-btn--ghost sc-btn--sm" href="https://github.com/spicyChicken59/SpicyStock/actions/workflows/evening.yml" rel="noopener">Scan activity ↗</a>
+    </div>
+  </section>
+
+  <dl class="sc-stat-strip sc-stat-strip--4 stock-run-strip sc-stagger" id="run-strip" hidden aria-label="Run at a glance">
+    <div class="sc-stat"><dt class="sc-stat__label">universe</dt><dd class="sc-stat__value" id="stat-universe">—</dd><dd class="sc-stat__note">names in the run</dd></div>
+    <div class="sc-stat"><dt class="sc-stat__label">bursts</dt><dd class="sc-stat__value" id="stat-bursts">—</dd><dd class="sc-stat__note">found by the scan</dd></div>
+    <div class="sc-stat"><dt class="sc-stat__label">scored</dt><dd class="sc-stat__value" id="stat-scored">—</dd><dd class="sc-stat__note">every candidate below</dd></div>
+    <div class="sc-stat sc-stat--lead"><dt class="sc-stat__label">shortlist</dt><dd class="sc-stat__value" id="stat-shortlist">—</dd><dd class="sc-stat__note">sent for human review</dd></div>
+  </dl>
+
+  <nav class="stock-index sc-chapter-nav" data-sc-reading id="page-index" aria-label="On this page" hidden>
+    <span class="sc-eyebrow sc-eyebrow--muted">in this report</span>
+    <a class="sc-press" href="#evidence-card"><span class="sc-chapter-nav__index">01</span> The evidence</a>
+    <a class="sc-press" href="#funnel-card" id="nav-funnel"><span class="sc-chapter-nav__index">02</span> This session</a>
+    <a class="sc-press" href="#predict-card" id="nav-record"><span class="sc-chapter-nav__index">03</span> The record</a>
+    <a class="sc-press" href="#runs-card" id="nav-runs"><span class="sc-chapter-nav__index">04</span> Recent runs</a>
+  </nav>
 
   <!-- Sample data. Hidden unless run.fixture is true. Shown ABOVE the run
        notice because "none of this happened" outranks "this run degraded". -->
@@ -159,7 +99,7 @@
 
   <!-- Run-level failures. Hidden when run.errors is empty. -->
   <div class="sc-notice" id="notice" hidden>
-    <div class="sc-eyebrow">this run degraded</div>
+    <div class="sc-eyebrow" id="notice-label">this run degraded</div>
     <ul id="notice-list"></ul>
   </div>
 
@@ -180,9 +120,10 @@
        number is how two copies of a rule drift. This card answers the
        RELATION -- does a higher score earn a higher return -- and the counts
        behind it. -->
-  <section class="sc-card" id="evidence-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="evidence-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">01 / the evidence</p>
         <h2>Does a higher score earn a higher return?</h2>
         <p class="sc-hint" id="evidence-hint"></p>
         <!-- ONE basis for the whole page. Every return on it -- the score bands,
@@ -200,40 +141,42 @@
         <p class="sc-note" id="rules-note"></p>
       </div>
     </div>
-    <p class="sc-empty" id="evidence-empty" hidden></p>
+    <p class="sc-empty sc-empty--brand stock-empty" id="evidence-empty" hidden></p>
     <div id="evidence-body" hidden>
-      <div class="sc-grid sc-grid--3" id="evidence-tiles"></div>
-      <p id="evidence-verdict"></p>
+      <div class="sc-grid sc-grid--3 stock-metrics sc-stagger" id="evidence-tiles"></div>
+      <p class="sc-insight" id="evidence-verdict"></p>
       <div class="sc-legend" id="evidence-legend"></div>
-      <div class="sc-chart" id="evidence-chart" role="group" tabindex="0"
-           aria-label="Mean forward return at three and five sessions for each score band, with the 8 to 20 percent range the strategy claims marked. The same numbers are in the table below."></div>
-      <div class="sc-table-scroll" id="evidence-scroll"><table class="sc-table sc-table--compact" id="evidence-table"></table></div>
+      <div class="sc-evidence__plot"><div class="sc-chart" id="evidence-chart" role="group" tabindex="0"
+           aria-label="Mean forward return at three and five sessions for each score band, with the 8 to 20 percent range the strategy claims marked. The same numbers are in the table below."></div></div>
+      <div class="sc-table-scroll" id="evidence-scroll"><table class="sc-table sc-table--compact sc-table--research" id="evidence-table"></table></div>
       <h3 id="control-title">Against the alternative</h3>
       <p class="sc-hint" id="control-hint"></p>
-      <p id="control-verdict"></p>
-      <div class="sc-table-scroll" id="control-scroll"><table class="sc-table sc-table--compact" id="control-table"></table></div>
+      <p class="sc-insight" id="control-verdict"></p>
+      <div class="sc-table-scroll" id="control-scroll"><table class="sc-table sc-table--compact sc-table--research" id="control-table"></table></div>
     </div>
   </section>
 
   <!-- The funnel. Four disconnected tiles could not show where the attrition
        is; one shared linear scale can, and the loss between two stages is a
        labelled segment rather than a subtraction the reader has to do. -->
-  <section class="sc-card" id="funnel-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="funnel-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">02 / this session</p>
         <h2 id="funnel-title">From the universe to the shortlist</h2>
         <p class="sc-hint" id="funnel-hint"></p>
       </div>
     </div>
     <div class="sc-legend" id="funnel-legend"></div>
-    <div class="sc-chart" id="funnel-chart" role="group" tabindex="0"
-         aria-label="How many names reached each stage of the run, from the universe scanned down to the shortlist. The same numbers are in the table below."></div>
-    <div class="sc-table-scroll" id="funnel-scroll"><table class="sc-table sc-table--compact" id="funnel-table"></table></div>
+    <div class="sc-evidence__plot"><div class="sc-chart" id="funnel-chart" role="group" tabindex="0"
+         aria-label="How many names reached each stage of the run, from the universe scanned down to the shortlist. The same numbers are in the table below."></div></div>
+    <div class="sc-table-scroll" id="funnel-scroll"><table class="sc-table sc-table--compact sc-table--research" id="funnel-table"></table></div>
   </section>
 
-  <section class="sc-card" id="shortlist-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="shortlist-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">the shortlist</p>
         <h2 id="shortlist-title">The shortlist</h2>
         <p class="sc-hint" id="shortlist-hint"></p>
       </div>
@@ -241,35 +184,38 @@
     <div class="sc-stack" id="shortlist"></div>
   </section>
 
-  <section class="sc-card" id="scores-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="scores-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">the complete ranking</p>
         <h2>Every candidate this run scored</h2>
         <p class="sc-hint" id="scores-hint"></p>
       </div>
     </div>
     <div class="sc-legend" id="scores-legend"></div>
-    <div class="sc-chart" id="scores-chart" role="group" tabindex="0"
-         aria-label="Score out of ten for every scored candidate, ranked. The same numbers are in the table below."></div>
-    <div class="sc-table-scroll" id="scores-scroll"><table class="sc-table sc-table--compact" id="scores-table"></table></div>
+    <div class="sc-evidence__plot"><div class="sc-chart" id="scores-chart" role="group" tabindex="0"
+         aria-label="Score out of ten for every scored candidate, ranked. The same numbers are in the table below."></div></div>
+    <div class="sc-table-scroll" id="scores-scroll"><table class="sc-table sc-table--compact sc-table--research" id="scores-table"></table></div>
   </section>
 
-  <section class="sc-card" id="gated-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="gated-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">outside the ranking</p>
         <h2>What the scan found and did not score</h2>
         <p class="sc-hint" id="gated-hint"></p>
       </div>
     </div>
-    <div class="sc-table-scroll" id="gated-scroll"><table class="sc-table sc-table--compact" id="gated-table"></table></div>
+    <div class="sc-table-scroll" id="gated-scroll"><table class="sc-table sc-table--compact sc-table--research" id="gated-table"></table></div>
   </section>
 
   <!-- Which check is doing the gating. Computed over every burst that recorded
        a checklist, scored and gated alike: a rate over the scored candidates
        alone would describe only names that had already passed. -->
-  <section class="sc-card" id="checks-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="checks-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">the checklist</p>
         <h2>Which 2LYNCH check is doing the gating</h2>
         <p class="sc-hint" id="checks-hint"></p>
       </div>
@@ -279,46 +225,50 @@
       <p id="checks-bias-body"></p>
     </div>
     <div class="sc-legend" id="checks-legend"></div>
-    <div class="sc-chart" id="checks-chart" role="group" tabindex="0"
-         aria-label="Pass rate for each of the six 2LYNCH checks across every burst the scan found. The same numbers are in the table below."></div>
-    <div class="sc-table-scroll" id="checks-scroll"><table class="sc-table sc-table--compact" id="checks-table"></table></div>
+    <div class="sc-evidence__plot"><div class="sc-chart" id="checks-chart" role="group" tabindex="0"
+         aria-label="Pass rate for each of the six 2LYNCH checks across every burst the scan found. The same numbers are in the table below."></div></div>
+    <div class="sc-table-scroll" id="checks-scroll"><table class="sc-table sc-table--compact sc-table--research" id="checks-table"></table></div>
   </section>
 
   <!-- Which check predicts anything, ACROSS THE RECORD -- as against the card
        above, which asks which check is doing the gating on this one night.
        Both denominators are every burst the scan found, scored and gated, for
        the same reason: a rate over the survivors describes the survivors. -->
-  <section class="sc-card" id="predict-card" hidden>
+  <div class="stock-research-grid">
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="predict-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">03 / the record</p>
         <h2>Which 2LYNCH check predicts anything</h2>
         <p class="sc-hint" id="predict-hint"></p>
       </div>
     </div>
-    <p class="sc-empty" id="predict-empty" hidden></p>
-    <div class="sc-table-scroll" id="predict-scroll"><table class="sc-table sc-table--compact" id="predict-table"></table></div>
+    <p class="sc-empty sc-empty--brand stock-empty" id="predict-empty" hidden></p>
+    <div class="sc-table-scroll" id="predict-scroll"><table class="sc-table sc-table--compact sc-table--research" id="predict-table"></table></div>
   </section>
 
-  <section class="sc-card" id="streak-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="streak-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">repeat appearances</p>
         <h2>Does a streak pay?</h2>
         <p class="sc-hint" id="streak-hint"></p>
       </div>
     </div>
-    <p class="sc-empty" id="streak-empty" hidden></p>
-    <div class="sc-table-scroll" id="streak-scroll"><table class="sc-table sc-table--compact" id="streak-table"></table></div>
+    <p class="sc-empty sc-empty--brand stock-empty" id="streak-empty" hidden></p>
+    <div class="sc-table-scroll" id="streak-scroll"><table class="sc-table sc-table--compact sc-table--research" id="streak-table"></table></div>
   </section>
 
-  <section class="sc-card" id="trend-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="trend-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">over time</p>
         <h2>Is it getting better or worse?</h2>
         <p class="sc-hint" id="trend-hint"></p>
       </div>
     </div>
-    <p class="sc-empty" id="trend-empty" hidden></p>
-    <div class="sc-table-scroll" id="trend-scroll"><table class="sc-table sc-table--compact" id="trend-table"></table></div>
+    <p class="sc-empty sc-empty--brand stock-empty" id="trend-empty" hidden></p>
+    <div class="sc-table-scroll" id="trend-scroll"><table class="sc-table sc-table--compact sc-table--research" id="trend-table"></table></div>
   </section>
 
   <!-- What happened the last times THIS name burst. The summary comes out of
@@ -328,61 +278,67 @@
        thing to spend on every visit for a view most readers never open.
        tools/measure_ledger.py measures it and a docs test holds this comment,
        the one above loadRecord and README to what it prints. -->
-  <section class="sc-card" id="ticker-card" hidden>
+   <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="ticker-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">by ticker</p>
         <h2>What happened the last times each name burst</h2>
         <p class="sc-hint" id="ticker-hint"></p>
       </div>
     </div>
-    <p class="sc-empty" id="ticker-empty" hidden></p>
-    <div class="sc-table-scroll" id="ticker-scroll"><table class="sc-table sc-table--compact" id="ticker-table"></table></div>
+    <p class="sc-empty sc-empty--brand stock-empty" id="ticker-empty" hidden></p>
+    <div class="sc-table-scroll" id="ticker-scroll"><table class="sc-table sc-table--compact sc-table--research" id="ticker-table"></table></div>
     <div class="sc-show-more" id="ticker-more" hidden></div>
   </section>
 
+  </div>
+
   <!-- Did a higher score do better? The one question that judges the screener
        rather than describing it. Empty until the sessions close. -->
-  <section class="sc-card" id="outcome-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="outcome-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">score and outcome</p>
         <h2>Score against what happened next</h2>
         <p class="sc-hint" id="outcome-hint"></p>
       </div>
     </div>
-    <p class="sc-empty" id="outcome-empty" hidden></p>
+    <p class="sc-empty sc-empty--brand stock-empty" id="outcome-empty" hidden></p>
     <div id="outcome-plot" hidden>
       <div class="sc-legend" id="outcome-legend"></div>
-      <div class="sc-chart" id="outcome-chart" role="group" tabindex="0"
-           aria-label="Each scored candidate as a dot: its score across, its next-day return up. The same numbers are in the table below."></div>
-      <p id="outcome-verdict"></p>
-      <div class="sc-table-scroll" id="outcome-scroll"><table class="sc-table sc-table--compact" id="outcome-table"></table></div>
+      <div class="sc-evidence__plot"><div class="sc-chart" id="outcome-chart" role="group" tabindex="0"
+           aria-label="Each scored candidate as a dot: its score across, its next-day return up. The same numbers are in the table below."></div></div>
+      <p class="sc-insight" id="outcome-verdict"></p>
+      <div class="sc-table-scroll" id="outcome-scroll"><table class="sc-table sc-table--compact sc-table--research" id="outcome-table"></table></div>
     </div>
   </section>
 
   <!-- The measurement loop. Means only, never a zero standing in for a session
        that has not happened, and a stated bar for how much data is enough. -->
-  <section class="sc-card" id="returns-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="returns-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">forward returns</p>
         <h2>Has any of this made money yet</h2>
         <p class="sc-hint" id="returns-hint"></p>
       </div>
     </div>
-    <div class="sc-grid sc-grid--3" id="returns-tiles"></div>
-    <div class="sc-table-scroll" id="returns-scroll"><table class="sc-table sc-table--compact" id="returns-table"></table></div>
+    <div class="sc-grid sc-grid--3 stock-metrics sc-stagger" id="returns-tiles"></div>
+    <div class="sc-table-scroll" id="returns-scroll"><table class="sc-table sc-table--compact sc-table--research" id="returns-table"></table></div>
   </section>
 
-  <section class="sc-card" id="runs-card" hidden>
+  <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="runs-card" hidden>
     <div class="sc-card__head">
       <div>
+        <p class="sc-eyebrow sc-eyebrow--muted stock-section__label">04 / recent runs</p>
         <h2>Recent runs</h2>
         <p class="sc-hint" id="runs-hint"></p>
       </div>
     </div>
-    <div class="sc-table-scroll" id="runs-scroll"><table class="sc-table sc-table--compact" id="runs-table"></table></div>
+    <div class="sc-table-scroll" id="runs-scroll"><table class="sc-table sc-table--compact sc-table--research" id="runs-table"></table></div>
   </section>
 
-  <div class="sc-callout sc-callout--spice" id="next-callout">
+  <div class="sc-callout sc-callout--spice stock-next sc-reveal" data-sc-motion="rise" id="next-callout">
     <div class="sc-callout__label">next</div>
     <div class="sc-callout__figure">Read the rules the scores are made against</div>
     <p>The scan thresholds, the 2LYNCH checklist and the rubric Claude scores to are all in the repo.
@@ -390,10 +346,10 @@
   </div>
 </main>
 
-<footer class="sc-foot">
+<footer class="sc-foot sc-screen-only">
   <span id="foot-left">Screening output for human review, not trading advice.</span>
   <a class="sc-watermark" href="https://github.com/spicyChicken59" rel="author" aria-label="SpicyChicken">
-    <img class="sc-lockup" src="https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/sc-lockup-cream.svg" alt="SpicyChicken">
+    <img class="sc-lockup" src="design-system/assets/sc-lockup-cream.svg" alt="SpicyChicken">
   </a>
 </footer>
 
@@ -401,7 +357,7 @@
 (function () {
   'use strict';
 
-  // sc-charts.js gives el()/svg(); if the CDN is unreachable the page still
+  // sc-charts.js gives el()/svg(); if its file is unavailable the page still
   // has to render, so fall back to the two builders it would have supplied.
   var S = window.SC || {};
   var el = S.el || function (tag, attrs, kids) { return build(document.createElement(tag), attrs, kids, false); };
@@ -501,16 +457,19 @@
   function lynchTable(c) {
     var rows = (c.lynch_detail || []).map(function (d) {
       return el('tr', null, [
-        el('td', null, el('span', { 'class': 'sc-chip ' + (d.pass ? 'sc-chip--good' : 'sc-chip--neutral') + ' sc-chip--case', text: (d.pass ? '\u2713' : '\u2717') + d.code })),
-        el('td', { text: d.label }),
-        el('td', { 'class': 'sc-mono', text: d.pass ? 'pass' : 'fail' }),
-        el('td', { text: d.value })
+        el('th', { scope: 'row' }, el('span', { 'class': 'sc-chip ' + (d.pass ? 'sc-chip--good' : 'sc-chip--neutral') + ' sc-chip--case', text: (d.pass ? '\u2713' : '\u2717') + d.code })),
+        el('td', { 'class': 'sc-signal-matrix__value', text: d.label }),
+        el('td', null, el('span', { 'class': 'sc-signal ' + (d.pass ? 'sc-signal--good' : 'sc-signal--blocked') }, [
+          el('span', { 'class': 'sc-signal__glyph', 'aria-hidden': 'true', text: d.pass ? '\u2713' : '\u00d7' }),
+          el('span', { 'class': 'sc-signal__label', text: d.pass ? 'pass' : 'fail' })
+        ])),
+        el('td', { 'class': 'sc-signal-matrix__value', text: d.value })
       ]);
     });
     if (!rows.length) return el('p', { 'class': 'sc-empty', text: 'No checklist detail was recorded for this candidate.' });
-    return el('details', { 'class': 'sc-details' }, [
+    return el('details', { 'class': 'sc-details sc-disclosure' }, [
       el('summary', { text: 'The 2LYNCH checks in full' }),
-      el('div', { 'class': 'sc-table-scroll' }, el('table', { 'class': 'sc-table sc-table--compact' }, [
+      el('div', { 'class': 'sc-table-scroll', tabindex: '0', role: 'region', 'aria-label': '2LYNCH signal matrix for ' + c.ticker }, el('table', { 'class': 'sc-table sc-table--compact sc-table--research sc-signal-matrix' }, [
         el('caption', { 'class': 'sc-sr-only', text: '2LYNCH checklist for ' + c.ticker }),
         el('thead', null, el('tr', null, [
           el('th', { 'class': 'sc-case', text: '2LYNCH' }), el('th', { text: 'check' }),
@@ -533,14 +492,14 @@
     var why = c.chart
       ? 'the pipeline rendered one beside this file and deliberately does not commit it, so the published page carries no copy. Open this page from a checkout that has just run the pipeline to see it.'
       : (c.chart_error || 'The chart failed to render for this candidate.');
-    var empty = el('div', { 'class': 'sc-frame sc-frame--empty shot--empty' }, [
+    var empty = el('div', { 'class': 'sc-frame sc-frame--empty shot--empty sc-empty--inline' }, [
       el('img', {
         'class': 'sc-frame__mark mark-cream', alt: '',
-        src: 'https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/sc-mark-mono-cream.svg'
+        src: 'design-system/assets/sc-mark-mono-cream.svg'
       }),
       el('img', {
         'class': 'sc-frame__mark mark-ink', alt: '',
-        src: 'https://cdn.jsdelivr.net/gh/spicyChicken59/design-system@v2.4.0/assets/sc-mark-mono-ink.svg'
+        src: 'design-system/assets/sc-mark-mono-ink.svg'
       }),
       el('span', { 'class': 'sc-note', text: 'no chart — ' + why })
     ]);
@@ -771,6 +730,24 @@
     return plural(n, 'up day');
   }
 
+  function scoreRail(c) {
+    // Presentation only: the exact score remains written in the heading. The
+    // point simply locates that existing 0–10 value on its declared scale.
+    var position = Math.max(0, Math.min(100, Number(c.score) * 10));
+    var tone = isFallback(c) ? 'var(--sc-chart-2)' : 'var(--sc-chart-1)';
+    return el('figure', {
+      'class': 'sc-benchmark pick__benchmark',
+      style: '--sc-benchmark-position:' + position + '%;--sc-benchmark-tone:' + tone
+    }, [
+      el('figcaption', { 'class': 'sc-sr-only', text: 'Score ' + num(c.score, 1) + ' out of 10' }),
+      el('div', { 'class': 'sc-benchmark__track', 'aria-hidden': 'true' },
+        el('span', { 'class': 'sc-benchmark__point' })),
+      el('div', { 'class': 'sc-benchmark__scale', 'aria-hidden': 'true' }, [
+        el('span', { text: '0' }), el('span', { text: 'score' }), el('span', { text: '10' })
+      ])
+    ]);
+  }
+
   function pick(c) {
     var facts = [
       ['close', '$' + num(c.close)],
@@ -792,12 +769,13 @@
       ['this setup', streakText(c)],
       ['forward return ' + basisLabel(), forwardCell(c)]
     ];
-    return el('article', { 'class': 'sc-card sc-card--raised pick' }, [
+    return el('article', { 'class': 'sc-card sc-card--raised pick sc-reveal', 'data-sc-motion': 'rise' }, [
       el('div', { 'class': 'pick__main' }, [
         el('div', { 'class': 'pick__head' }, [
           el('span', { 'class': 'pick__rank', text: '#' + c.rank }),
           el('span', { 'class': 'pick__ticker sc-case', text: c.ticker }),
           el('span', { 'class': 'pick__score' }, [String(num(c.score, 1)), el('span', { text: ' / 10' })]),
+          scoreRail(c),
           el('div', { 'class': 'pick__chips' }, [
             el('span', { 'class': 'sc-chip sc-chip--neutral sc-chip--case', text: c.verdict || '?' }),
             el('span', { 'class': 'sc-chip sc-chip--neutral sc-chip--case', title: 'Passed ' + c.lynch_passes + ' of the ' + c.lynch_total + ' 2LYNCH checks', text: '2LYNCH ' + c.lynch }),
@@ -816,12 +794,12 @@
             text: (d.pass ? '\u2713' : '\u2717') + d.code
           });
         })),
-        el('dl', { 'class': 'facts' }, facts.map(function (f) {
+        el('dl', { 'class': 'sc-facts' }, facts.map(function (f) {
           return el('div', null, [el('dt', { text: f[0] }), el('dd', { text: f[1] })]);
         })),
         lynchTable(c)
       ]),
-      el('div', null, chartSlot(c))
+      el('div', { 'class': 'pick__visual' }, chartSlot(c))
     ]);
   }
 
@@ -1544,11 +1522,11 @@
     var tabs = $('basis-tabs');
     if (!tabs) return;
     var available = hasOpenBasis(d);
+    if (!available && BASIS === 'open') BASIS = 'close';
     Array.prototype.forEach.call(tabs.querySelectorAll('.sc-tab'), function (button) {
       button.setAttribute('aria-pressed', button.dataset.basis === BASIS ? 'true' : 'false');
       button.disabled = button.dataset.basis === 'open' && !available;
     });
-    if (!available && BASIS === 'open') BASIS = 'close';   // never show a basis this file cannot honour
     $('basis-note').textContent = !available
       ? 'Every return on this page is measured from the burst-day close \u2014 what the setup did. This record predates the open basis: nothing in it was measured from the next session\u2019s open, so that choice is greyed rather than shown as close-basis numbers under an open-basis label.'
       : (BASIS === 'open'
@@ -1796,6 +1774,7 @@
   // ---- the per-name view, and the only second fetch on this page ----------
   var TICKERS_SHOWN = 15;
   var record = { rows: null, state: 'idle' };
+  var recordRequest = 0;
 
   function renderTickers(ev) {
     var rows = (ev && ev.by_ticker) || [];
@@ -1832,9 +1811,13 @@
     } else if (record.state === 'failed') {
       more.appendChild(el('span', { 'class': 'sc-note', text: 'The full record could not be loaded: ' + record.error +
         '. The summary above still stands — it is written into this page’s own data file.' }));
+      more.appendChild(el('button', {
+        'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button',
+        onclick: function () { loadRecord(ev); }
+      }, 'Retry full record'));
     } else if (record.rows) {
       more.appendChild(el('span', { 'class': 'sc-note', text: 'Showing all ' + commas(ranked.length) +
-        ' names, each with every session it burst on, from docs/ledger.json.' }));
+        ' names, with up to six most recent appearances each, from docs/ledger.json.' }));
     } else {
       more.appendChild(el('button', {
         'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button',
@@ -1869,11 +1852,13 @@
   // as a fact about the file rather than as a broken page.
   function loadRecord(ev) {
     if (record.state === 'loading') return;
+    var request = ++recordRequest;
     record.state = 'loading';
     renderTickers(ev);
-    fetch('ledger.json', { cache: 'no-store' })
-      .then(function (r) { if (!r.ok) throw new Error('ledger.json returned HTTP ' + r.status); return r.json(); })
+    fetchJSON('ledger.json')
       .then(function (book) {
+        if (request !== recordRequest) return;
+        if (!book || !Array.isArray(book.runs)) throw new Error('The record has no run list');
         var rows = [];
         ((book && book.runs) || []).forEach(function (run) {
           ['candidates', 'gated'].forEach(function (kind) {
@@ -1885,6 +1870,7 @@
         renderTickers(ev);
       })
       .catch(function (e) {
+        if (request !== recordRequest) return;
         record.state = 'failed';
         record.error = e.message || String(e);
         renderTickers(ev);
@@ -1909,14 +1895,19 @@
       scroll.setAttribute('aria-label', label);
       scroll.setAttribute('tabindex', '0');
     }
-    var sync = function () { scroll.classList.toggle('is-clipped', scroll.scrollWidth - scroll.clientWidth > 2); };
-    sync();
-    window.addEventListener('resize', sync);
-    scroll.addEventListener('scroll', sync);
+    if (!scroll._clipSync) {
+      scroll._clipSync = function () { scroll.classList.toggle('is-clipped', scroll.scrollWidth - scroll.clientWidth > 2); };
+      window.addEventListener('resize', scroll._clipSync);
+      scroll.addEventListener('scroll', scroll._clipSync);
+    }
+    scroll._clipSync();
   }
 
   // ---- render -------------------------------------------------------------
   function render(d) {
+    // A refresh or basis switch replaces these closures; old snapshots must
+    // not redraw over the new one when the viewport changes.
+    redraws = [];
     LAST_DATA = d;
     renderBasisControl(d);
     var run = d.run || {};
@@ -1942,11 +1933,19 @@
       el('span', { text: 'generated ' + day(d.generated) })
     );
     $('mast-right').textContent = day(run.date) + ' · ' + (run.type || '');
+    // Presentation only: these are the same recorded values used above.
+    $('stat-universe').textContent = commas(run.universe && run.universe.size);
+    $('stat-bursts').textContent = commas(run.bursts || 0);
+    $('stat-scored').textContent = commas(run.scored || 0);
+    $('stat-shortlist').textContent = commas(shortN);
+    $('run-strip').hidden = false;
+    $('page-index').hidden = false;
 
     // fabricated data outranks every other caveat on the page
     $('fixture-banner').hidden = !run.fixture;
 
     // run-level failures
+    $('notice-label').textContent = 'this run degraded';
     var errs = run.errors || [];
     $('notice').hidden = !errs.length;
     clear($('notice-list')).append.apply($('notice-list'), errs.map(function (e) {
@@ -2314,34 +2313,129 @@
       }), [2, 3, 4, 5, 6, 7, 8, 9]);
     clipWatch($('runs-scroll'), 'Recent runs');
 
+    $('nav-record').hidden = $('predict-card').hidden;
+    $('nav-funnel').hidden = $('funnel-card').hidden;
+    $('nav-runs').hidden = $('runs-card').hidden;
+    if (window.SC && SC.reading) SC.reading.refresh($('page-index'));
+
     $('foot-left').textContent = 'Run ' + day(run.date) + ' (' + (run.type || '') + ') · schema v' +
       (d.schema_version === undefined ? '?' : d.schema_version) +
       ' · screening output for human review, not trading advice.';
   }
 
   function fail(message) {
+    $('eyebrow').textContent = 'snapshot';
+    clear($('meta'));
     $('h1').textContent = 'Snapshot unavailable';
-    $('dek').textContent = 'docs/data.json did not load, so there is nothing to show. ' +
-      'The page is a static shell — the pipeline writes that file.';
+    $('dek').textContent = 'The published results could not be read. Retry the snapshot, ' +
+      'or check Scan activity for the latest run.';
+    $('notice-label').textContent = 'snapshot unavailable';
     $('mast-right').textContent = 'no data';
     $('notice').hidden = false;
     clear($('notice-list')).appendChild(el('li', { text: message }));
   }
 
-  fetch('data.json', { cache: 'no-store' })
-    .then(function (r) { if (!r.ok) throw new Error('data.json returned HTTP ' + r.status); return r.json(); })
-    .then(function (d) {
-      if (!d || typeof d !== 'object') throw new Error('data.json is not an object');
-      if (d.schema_version !== 1) {
-        // Render anyway — a reader with a newer file should still see it — but say so.
-        (d.run = d.run || {}).errors = (d.run.errors || []).concat([{
-          stage: 'dashboard',
-          message: 'This page reads schema_version 1; data.json says ' + d.schema_version + '. Fields may be missing.'
-        }]);
+  // Include the response body in the timeout: receiving headers alone is not
+  // a loaded snapshot. No retry or polling happens without the reader asking.
+  function fetchJSON(path) {
+    var controller = new AbortController();
+    var timeout;
+    return Promise.race([
+      fetch(path, { cache: 'no-store', signal: controller.signal }).then(function (response) {
+        if (!response.ok) throw new Error(path + ' returned HTTP ' + response.status);
+        return response.json();
+      }),
+      new Promise(function (_, reject) {
+        timeout = setTimeout(function () {
+          reject(new Error(path + ' timed out after 15 seconds'));
+          controller.abort();
+        }, 15000);
+      })
+    ]).finally(function () { clearTimeout(timeout); });
+  }
+
+  var snapshotLoading = false;
+  var snapshotSignature = null;
+  function checkedAt() {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+      timeZone: 'America/New_York', timeZoneName: 'short'
+    }).format(new Date());
+  }
+  function loadSnapshot() {
+    if (snapshotLoading) return;
+    snapshotLoading = true;
+    var button = $('snapshot-refresh');
+    button.disabled = true;
+    button.textContent = 'Checking…';
+    $('snapshot-status').textContent = LAST_DATA
+      ? 'Checking for updates. The recorded session below remains visible.'
+      : 'Checking the published snapshot…';
+    fetchJSON('data.json').then(function (d) {
+      if (!d || typeof d !== 'object' || Array.isArray(d) ||
+          !d.run || typeof d.run !== 'object' || Array.isArray(d.run)) {
+        throw new Error('The snapshot has no recorded run');
       }
-      render(d);
-    })
-    .catch(function (e) { fail(e.message || String(e)); });
+      if (typeof d.run.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d.run.date) ||
+          !isFinite(Date.parse(d.run.date)) || new Date(d.run.date).toISOString().slice(0, 10) !== d.run.date) {
+        throw new Error('The snapshot has no valid recorded session date');
+      }
+      ['bursts', 'scored', 'shortlist_size'].forEach(function (key) {
+        if (d.run[key] === undefined && key === 'shortlist_size') return; // older files recorded no cap
+        if (!Number.isInteger(d.run[key]) || d.run[key] < 0) throw new Error('The snapshot has an invalid ' + key + ' count');
+      });
+      ['candidates', 'gated_out', 'runs'].forEach(function (key) {
+        if (d[key] !== undefined && !Array.isArray(d[key])) throw new Error('The snapshot has an invalid ' + key + ' list');
+      });
+      var signature = JSON.stringify(d);
+      if (signature !== snapshotSignature) {
+        if (d.schema_version !== 1) {
+          // Keep the existing forward-compatible warning without mutating the
+          // identity used to decide whether a check found a new snapshot.
+          d.run.errors = (d.run.errors || []).concat([{
+            stage: 'dashboard',
+            message: 'This page reads schema_version 1; data.json says ' + d.schema_version + '. Fields may be missing.'
+          }]);
+        }
+        var previous = LAST_DATA;
+        var previousRecord = record;
+        var previousBasis = BASIS;
+        ++recordRequest; // a ledger fetch belongs only to the snapshot that requested it
+        record = { rows: null, state: 'idle' };
+        try { render(d); }
+        catch (error) {
+          LAST_DATA = previous;
+          BASIS = previousBasis;
+          record = previousRecord.state === 'loading' ? { rows: null, state: 'idle' } : previousRecord;
+          if (previous) render(previous);
+          else {
+            redraws = [];
+            document.querySelectorAll('#main > [hidden], #main .stock-section, #run-strip, #page-index, #fixture-banner, #fallback-callout')
+              .forEach(function (node) { node.hidden = true; });
+          }
+          throw error;
+        }
+        snapshotSignature = signature;
+      }
+      $('snapshot-panel').classList.remove('stock-snapshot--failed');
+      $('snapshot-status').textContent = 'Showing recorded session ' + day(d.run.date) + '. Checked ' + checkedAt() + '.';
+      $('snapshot-stamp').textContent = 'Published ' + (d.generated || 'time not recorded') +
+        ' · Daily results, not live quotes. Checking this page does not run a scan.';
+    }).catch(function (error) {
+      var message = error.message || String(error);
+      $('snapshot-panel').classList.add('stock-snapshot--failed');
+      $('snapshot-status').textContent = LAST_DATA
+        ? 'Update check failed. Still showing recorded session ' + day(LAST_DATA.run.date) + '. ' + message
+        : 'Snapshot unavailable. ' + message;
+      if (!LAST_DATA) fail(message);
+    }).finally(function () {
+      snapshotLoading = false;
+      button.disabled = false;
+      button.textContent = LAST_DATA ? 'Check for updates' : 'Retry snapshot';
+    });
+  }
+  $('snapshot-refresh').addEventListener('click', loadSnapshot);
+  loadSnapshot();
 })();
 </script>
 </body>

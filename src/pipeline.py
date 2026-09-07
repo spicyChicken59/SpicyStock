@@ -735,12 +735,12 @@ def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
     return discover(mode, dry_run=dry_run, tickers=tickers, report=report)
 
 
-def _already_published(cfg: ScanConfig, universe: str) -> dict | None:
+def _already_published(cfg: ScanConfig, tickers: list[str] | None) -> dict | None:
     """The published evening run this one would otherwise scan again, or None.
 
-    `universe` is the label this run will stamp into `run.universe` -- see
-    intended_universe_label(), which is the same rule publish() writes with,
-    known before the scan because it does not depend on it.
+    The label distinguishes a file scan from an explicit basket; the stored
+    symbols distinguish explicit baskets of the same size. Both are known
+    before the scan and are recorded by publish().
 
     A pinned session is a deliberate re-scan and is never "already published".
 
@@ -774,9 +774,25 @@ def _already_published(cfg: ScanConfig, universe: str) -> dict | None:
         return None
     block = run.get("universe")
     published = block.get("label") if isinstance(block, dict) else None
+    universe = intended_universe_label(tickers)
     if isinstance(published, str) and published not in (universe, UNIVERSE_FILE_LABEL):
         return None
+    if tickers is not None and published == universe:
+        recorded = _recorded_tickers(block)
+        if recorded is not None and recorded != sorted(tickers):
+            return None
+        # Older explicit records held only a count. Preserve them rather
+        # than guessing the basket; _republish_reason() names the uncertainty.
     return run
+
+
+def _recorded_tickers(universe: dict | None) -> list[str] | None:
+    """An explicit basket's identity, or unknown for an older/malformed block."""
+    tickers = universe.get("tickers") if isinstance(universe, dict) else None
+    if not isinstance(tickers, list) or not tickers or not all(
+            isinstance(ticker, str) and ticker.strip() for ticker in tickers):
+        return None
+    return sorted(tickers)
 
 
 def _republish_reason(published: dict, tickers: list[str] | None) -> str:
@@ -798,6 +814,12 @@ def _republish_reason(published: dict, tickers: list[str] | None) -> str:
             "again, and replacing the published record with the re-scan")
     block = published.get("universe")
     label = block.get("label") if isinstance(block, dict) else None
+    if label is None or (tickers is not None and label != UNIVERSE_FILE_LABEL
+                         and _recorded_tickers(block) is None):
+        return (head + "that older record did not record which symbols were scanned, so "
+                "this run cannot confirm that the requested basket is the same. The "
+                "published record is preserved. Pin SCAN_SESSION_DATE to a session the "
+                "record does not already hold to scan these names deliberately")
     # A --tickers run whose names ARE the published basket really would re-read
     # the same bars, so the difference is the label and not the flag.
     if tickers is not None and label != intended_universe_label(tickers):
@@ -864,7 +886,7 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     # the three sentences above is TRUE of the state this run found differs
     # too, so the reason is composed rather than fixed: see
     # _republish_reason().
-    already = _already_published(cfg, intended_universe_label(tickers))
+    already = _already_published(cfg, tickers)
     if already:
         report.problem("session", _republish_reason(already, tickers))
         return follow_through(mode_for("morning"), dry_run, report=report,
@@ -1705,6 +1727,10 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         "universe": {
             "label": intended_universe_label(explicit_tickers),
             "size": scan_stats.get("requested", len(explicit_tickers or [])),
+            # A count identifies no basket: AAPL/MSFT and NVDA/TSLA both
+            # have two names. Keep actual symbols for the rescan guard;
+            # ordering is irrelevant, and file scans retain their contract.
+            **({"tickers": sorted(explicit_tickers)} if explicit_tickers is not None else {}),
         },
         # The names in that universe that have stopped printing: a fact about
         # the symbol FILE, kept where its reader looks. Not copied into the
@@ -1858,7 +1884,8 @@ def _check_scan(scan_stats: dict, report: RunReport) -> None:
                                "and an empty shortlist does not mean a quiet market")
     gapped = len(scan_stats.get("gapped", {}))
     off_session = len(scan_stats.get("off_session") or {})
-    unmeasured = stale + gapped + off_session
+    invalid = len(scan_stats.get("invalid_bars") or {})
+    unmeasured = stale + gapped + off_session + invalid
     if with_bars and unmeasured / with_bars > DEGRADED_STALE_FRACTION:
         printed_before = scan_stats.get("previous_session_printed") or 0
         if gapped and gapped == with_bars - stale and printed_before:
@@ -1900,7 +1927,9 @@ def _check_scan(scan_stats: dict, report: RunReport) -> None:
                                    f"{session} and were skipped: {stale} carried no bar for it, "
                                    f"{gapped} had no bar for the session before it and "
                                    f"{off_session} had a bar for it whose close or volume could "
-                                   "not be read")
+                                   "not be read"
+                                   + (f"; {invalid} had unreadable required OHLCV fields on "
+                                      "the session bar" if invalid else ""))
     errors = scan_stats.get("detector_errors") or {}
     if errors:
         first = next(iter(errors.items()))

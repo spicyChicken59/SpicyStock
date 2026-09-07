@@ -6,6 +6,9 @@ checklist, has Claude score the survivors (numbers + chart image), and
 emails a ranked top-5 shortlist. **Zero manual steps** — no DeepVue paste,
 no Google Sheet, no n8n.
 
+See the [Tuesday readiness review](READINESS-2026-09-08.md) for the verified
+operational fixes, the September 8 schedule, and the current universe/evidence limits.
+
 ## How it differs from the original spec
 
 | Original plan | This build | Why |
@@ -258,6 +261,11 @@ typed on the command line, and re-scanning them would replace that night's
 record, its universe label and its filled benchmark with the smoke test's —
 so a `--tickers` run against a published night re-presents, and is told that,
 rather than told the bars are the same bars.
+Explicit scans also record their sorted symbol list in `run.universe.tickers`:
+two baskets containing the same number of different symbols are different scans,
+while reordering the same symbols keeps the published run. Older explicit records
+without that list are preserved with an identity-unknown explanation, rather than
+claiming the requested symbols were already scanned.
 `SCAN_SESSION_DATE` is the one exemption, for the same reason it is exempt
 from the clock check: a pinned session is a deliberate re-scan, and it is how
 the 4 Sep record was republished. Pin a session **the record does not already
@@ -373,9 +381,10 @@ Two more things the first live day turned up, both settings rather than code:
   trap.** Settings → Pages → Build and deployment → "Deploy from a branch" →
   branch `main`, folder `/docs`, Save. With the folder left at `/ (root)` the
   first build published the whole repository and rendered README as the site;
-  the `docs/` build ships four files and no Jekyll. The first deploy takes a
-  minute or two to reach the address, and every commit-back after that
-  redeploys on its own. The site has been on since 6 Sep 2026.
+  the `docs/` build serves the dashboard and its checked-in assets. The first
+  deploy takes a minute or two to reach the address. The site has been on since
+  6 Sep 2026. `publish-dashboard.yml` requests subsequent builds explicitly:
+  a commit-back made with Actions' built-in token does not itself trigger Pages.
 - **Resend in test mode only delivers to the account's own address, and its
   check is an exact string match.** Until a domain is verified at
   resend.com/domains and `RESEND_FROM` is an address on it, Resend refuses any
@@ -414,8 +423,8 @@ from the Actions tab. `morning.yml` is passed only the three delivery secrets,
 because the follow-through pass runs neither the scanner nor the scorer and
 `preflight()` asks the mode which layers it will use before demanding a key.
 
-> **Note:** the four files in `.github/workflows/` are `evening.yml`,
-> `morning.yml`, `secret-scan.yml` and `tests.yml`. The evening scan fires at
+> **Note:** the five files in `.github/workflows/` are `evening.yml`,
+> `morning.yml`, `publish-dashboard.yml`, `secret-scan.yml` and `tests.yml`. The evening scan fires at
 > 6:16 PM ET — 22:16 UTC under EDT, 23:16 UTC under EST — and the morning
 > follow-through at 8:30 AM ET (12:30 / 13:30 UTC). Both crons of each pair are
 > registered and a guard no-ops the one that does not match today's ET offset,
@@ -475,7 +484,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1152 tests, no network or API keys needed
+pytest tests/                   # 1212 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -510,7 +519,12 @@ has never published still holds, and what you would see there.
 
 `docs/index.html` is a static page served by GitHub Pages from `docs/`. It fetches
 `docs/data.json` in the browser and renders it — no server, no build step, no
-framework. **An evening run that scans writes that file at the end** (step 9,
+framework. The SpicyChicken visual system is vendored in `docs/design-system/`,
+with its exact source commit and file hashes in `provenance.json`. `docs/stock.css`
+arranges the branded cover, run summary, research panels and responsive pick cards;
+the shared system supplies the original chick, themes, surfaces and reduced-motion
+aware transitions. These design files are checked in directly and the pipeline does
+not regenerate them. **An evening run that scans writes that file at the end** (step 9,
 `src/ledger.py`) — one that re-presents an already-published session leaves it
 as the run that published it wrote it — together with `docs/ledger.json` and
 the chart PNGs — which are **not** committed (`.gitignore` blocks `/docs/charts/`), so the published
@@ -543,6 +557,17 @@ Claude produced it or the offline checklist fallback did. A fallback score can n
 longer outrank a real one: `score_all` sorts on provenance before score, so every
 Claude score ranks above every fallback whatever the numbers say. It is labelled
 everywhere it appears and called out at the top of the page.
+
+The snapshot-status panel separates the **recorded session** from the time the
+browser last checked for an update. **Check for updates** reads the published
+snapshot again; it does not dispatch a scan or claim that the recorded prices
+are live. If the check fails, the last successfully loaded report stays visible
+with an explicit failure message. A changed snapshot replaces the report and
+invalidates any full-record request from the previous snapshot; an unchanged one
+keeps the selected return basis and expanded details. Both snapshot and full-record
+requests time out after 15 seconds, including a stalled response body, and offer
+a retry. The **Scan activity** link opens the evening workflow's actual run history.
+These controls need no credentials and do not change pipeline or email behavior.
 
 ### What the page answers, and what it refuses to answer
 
@@ -920,6 +945,28 @@ then it fails the step loudly rather than pretending. Market data is live-only,
 so a discarded snapshot cannot be re-fetched; the run's 30-day artifact holds a
 copy of `docs/data.json` and `docs/ledger.json` either way.
 
+**A committed run and an updated website are separate boundaries.** GitHub's
+[built-in token does not trigger Pages builds when it pushes a commit](https://docs.github.com/en/actions/concepts/security/github_token).
+`publish-dashboard.yml` therefore starts when the evening workflow completes on
+`main`, including a failed job that already persisted an exit-2/3 record, and
+when a dashboard change is pushed to `main`. It checks out current `main` and
+uses the built-in token's `pages: write` permission to
+[request the branch-based Pages build](https://docs.github.com/en/rest/pages/pages#request-a-github-pages-build).
+It never downloads the scan's artifacts, so a rehearsal's unpublished record
+cannot become the public dashboard. A failed scan may refresh the last committed
+record; it cannot manufacture a new one. Cancelled runs and other branches do
+not trigger publication.
+
+The publication job then fetches public `index.html`, `data.json` and
+`ledger.json` without credentials, bypasses stale cache entries, and compares
+their bytes with the checkout. It retries for up to eight minutes and fails
+visibly if any file remains stale or unreachable. The record is still safe in
+`main` even when delivery to Pages fails. To retry just this boundary, run
+**Publish committed dashboard** from Actions on `main`: it scans nothing, sends
+no email and makes no paid API calls. The existing Pages setting stays
+**Deploy from a branch → main → /docs**; this workflow checks it and does not
+change hosting settings.
+
 **Which nights get kept is the exit code, and 1 was hiding two of them.** A
 `run:` step fails on any non-zero code, and an `if:` with no status function has
 `success()` ANDed into it — so the persist step originally ran on clean nights
@@ -1007,21 +1054,26 @@ an EST night starts at 23:16 UTC, so a run over ~44 minutes uploaded under
 tomorrow's UTC date and silenced the following night. A run that published
 names its artifact `evening-<session>-<id>`, a run that did not is
 `evening-failed-<id>`, and the guard counts only the first shape against the
-session a run tonight would scan. Traced through the guard's own shell against
-a stub `gh` running its real `jq` filter, six scenarios, in
-`tests/test_docs_are_true.py`.
+session a run tonight would scan, from **this branch**. Even that is not enough:
+an artifact survives a rejected commit-back push, so the freshly checked-out
+`docs/data.json` must also record a real evening scan of the session over the
+checked-in universe. A rehearsal branch's artifact, an unpublished record, a
+fixture or a `--tickers` smoke snapshot cannot suppress the production cron.
+If either receipt is missing, the pipeline runs; its own duplicate-session
+guard still avoids scoring a universe run that the record already holds.
+Traced through the actual guard shell and its `jq` filters in
+`tests/test_docs_are_true.py` and `tests/test_workflow_guard.py`.
 
 
 ### Checking it
 
 ```bash
-git clone --branch v2.4.0 https://github.com/spicyChicken59/design-system /tmp/design-system
-node tools/dashboard_smoke.mjs        # /tmp/design-system is on its search path
+node tools/dashboard_smoke.mjs
 ```
 
 Opens the real page in headless Chromium and asserts what it promises. Offline by
-construction: `docs/` is served locally and every CDN request is answered from a
-design-system checkout on disk. Needs playwright's chromium; it is not a repo
+construction: `docs/` and its exact design-system snapshot are served locally,
+and external requests are blocked. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
 **Three data sources, one page.** It runs 214 checks, and which file each one
@@ -1084,6 +1136,19 @@ What is still not checked is any streak state neither fixture holds —
 Those are covered on the email side in `tests/test_emailer.py` and in
 `src/ledger.py`'s own tests; on the page they were read back from the DOM
 against a hand-made `data.json` and agree, but that check is not committed.
+
+The separate recovery check requires Chromium and fails if the browser is
+unavailable; it never reports a skipped audit as a pass:
+
+```bash
+node tools/dashboard_recovery_smoke.mjs
+```
+
+It opens the same dashboard against failed requests, a stalled JSON body,
+malformed snapshots, and a ledger response arriving after the snapshot changed.
+It also checks retained data, retry controls, unchanged-refresh state, phone,
+tablet and desktop layouts in both themes, and keyboard focus. All data is local
+test fixtures. It dispatches no scan and calls no market or email service.
 
 ## Tuning
 
@@ -1168,7 +1233,20 @@ against a hand-made `data.json` and agree, but that check is not committed.
 
   The cap is what keeps this flat: it does NOT grow when the universe widens,
   because MAX_TO_SCORE bounds the calls and not the scan.
+
+  Scoring uses a 5-second connection timeout and 30-second read/write/pool
+  timeouts. The SDK's hidden retries are disabled; the application makes at
+  most two attempts per candidate before recording its existing, clearly
+  marked checklist fallback. This keeps a silent scoring outage from spending
+  ten minutes per read, six requests per candidate, until the 55-minute
+  workflow kills the run before publication. These are network inactivity
+  limits, not a claim that every complete response takes at most 30 seconds.
   The morning follow-through makes no model call and no data request at all.
+  Alpaca requests use a client-scoped 5-second connection and 30-second read
+  inactivity timeout, including pagination and forward-return fills. The SDK's
+  rate-limit retry and the scanner's existing batch retry are unchanged. These
+  limits prevent a silent socket from waiting indefinitely; they do not impose
+  a total deadline on a response that keeps delivering bytes.
 - GitHub Actions: free tier covers both daily runs comfortably (private repos
   get 2,000 min/month). The evening scan is the long one; the morning job is a
   file read and an email.
@@ -1188,3 +1266,5 @@ against a hand-made `data.json` and agree, but that check is not committed.
   accumulate?" above for how it survives a CI container — and for the one half
   of that step nothing has exercised yet.
 - Output is screening for human review, not trading advice.
+
+For local design review, run `npm run dev` (Node only, no dependencies) and open the preview address it serves. The production pages remain static.

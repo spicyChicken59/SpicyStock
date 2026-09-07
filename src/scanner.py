@@ -103,6 +103,7 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
+from requests.adapters import HTTPAdapter
 
 from alpaca.data.enums import Adjustment, DataFeed
 from alpaca.data.historical import StockHistoricalDataClient
@@ -187,6 +188,27 @@ DEFAULT_FEED = DataFeed.SIP
 #: were never observed to need it and a change to the wire on a guess is what
 #: this project's notes warn against.
 SIP_HOLDBACK_MINUTES = 16
+
+# Requests has no default timeout. These are connect and read-inactivity
+# limits per HTTP request, not a deadline for downloading all paginated bars.
+ALPACA_CONNECT_TIMEOUT_SECONDS = 5
+ALPACA_READ_TIMEOUT_SECONDS = 30
+
+
+class _MarketDataTimeoutAdapter(HTTPAdapter):
+    """Bound only this Alpaca client's transport without changing its retries.
+
+    StockHistoricalDataClient exposes no timeout option and its RESTClient
+    calls requests.Session.request without one. Mounting a Requests adapter
+    keeps the SDK's headers, pagination, rate-limit retries and session while
+    ensuring a silent connection cannot consume the runner's whole lifetime.
+    An explicit timeout from a future SDK is respected.
+    """
+
+    def send(self, request, **kwargs):
+        if kwargs.get("timeout") is None:
+            kwargs["timeout"] = (ALPACA_CONNECT_TIMEOUT_SECONDS, ALPACA_READ_TIMEOUT_SECONDS)
+        return super().send(request, **kwargs)
 
 
 
@@ -457,10 +479,16 @@ def get_clients() -> StockHistoricalDataClient:
     Empty keys still raise ValueError("You must supply a method of
     authentication") from the SDK constructor.
     """
-    return StockHistoricalDataClient(
+    client = StockHistoricalDataClient(
         os.environ.get("ALPACA_API_KEY", ""),
         os.environ.get("ALPACA_SECRET_KEY", ""),
     )
+    # The SDK's private session is the one integration point here. Real-SDK
+    # transport tests exercise it so a changed SDK cannot silently lose the
+    # timeout while the scanner's in-memory boundary double stays green.
+    for protocol in ("https://", "http://"):
+        client._session.mount(protocol, _MarketDataTimeoutAdapter())
+    return client
 
 
 def get_universe(symbols_file: str | Path | None = None) -> list[str]:
@@ -1091,6 +1119,30 @@ def detect_setup(df: pd.DataFrame, cfg: ScanConfig) -> dict | None:
 # Rule 6 — cross-sectional liquidity
 # ---------------------------------------------------------------------
 
+def _session_bar_problem(df: pd.DataFrame) -> str | None:
+    """Refuse an unreadable session before asking whether it contains a burst.
+
+    A missing current close or volume used to be visible only when dropping
+    that bar exposed a burst yesterday. A quiet yesterday therefore hid even
+    a whole universe of broken current bars as a clean, empty market. Zero
+    volume is a readable no-trade bar; non-finite numbers, negative volume
+    and non-positive prices cannot describe the measurements we publish.
+    Open, high and low are also required: the checklist otherwise drops a
+    broken current bar and grades yesterday under today's candidate date.
+    """
+    for column in ("Close", "Volume", "Open", "High", "Low"):
+        try:
+            raw = df[column].iloc[-1]
+            value = float(raw)
+        except (KeyError, IndexError, TypeError, ValueError, OverflowError):
+            return f"{column} is not a readable number"
+        if isinstance(raw, (bool, np.bool_)) or not np.isfinite(value):
+            return f"{column} is not a finite number"
+        if value < 0 or (column != "Volume" and value == 0):
+            return f"{column} is outside its valid range"
+    return None
+
+
 def session_dollar_volume(df: pd.DataFrame) -> float | None:
     """Last bar's close x volume, or None if the bar cannot supply one.
 
@@ -1240,6 +1292,7 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     stale: dict[str, date | None] = {}
     gapped: dict[str, date] = {}
     off_session: dict[str, str] = {}
+    invalid_bars: dict[str, str] = {}
     no_bars_names: list[str] = []
     detector_errors: dict[str, str] = {}
     session_dollar_volumes: list[float] = []
@@ -1306,6 +1359,10 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     fresh, gapped = _drop_gapped_symbols(fresh, session, before)
 
     for t, df in fresh.items():
+        problem = _session_bar_problem(df)
+        if problem is not None:
+            invalid_bars[t] = problem
+            continue
         # Every symbol that traded, burst or not, is part of the
         # distribution rule 6 ranks against — see liquidity_floor().
         dv = session_dollar_volume(df)
@@ -1371,6 +1428,7 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             "closure_agreed": vote.get("agreed"),
             "closure_day": vote.get("day"),
             "off_session": dict(off_session),
+            "invalid_bars": dict(invalid_bars),
             "detector_errors": dict(detector_errors),
             "candidates": len(candidates),
         })
@@ -1382,6 +1440,11 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
                     ", ".join(f"{t} (last {d if d else 'unreadable'})"
                               for t, d in list(stale.items())[:8])
                     + ("..." if len(stale) > 8 else ""))
+    if invalid_bars:
+        log.warning("%d of %d symbols had an unreadable bar for %s and were skipped: %s",
+                    len(invalid_bars), with_bars, session,
+                    ", ".join(f"{t} ({why})" for t, why in list(invalid_bars.items())[:8])
+                    + ("..." if len(invalid_bars) > 8 else ""))
     if off_session:
         log.warning("%d of %d symbols carried a bar for %s whose close or volume could not be "
                     "read, so the detector measured an earlier session; refused: %s",
@@ -1439,6 +1502,12 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             f"{_stale_hint(cfg, session, partial=True)}"
         )
     measured = with_bars - len(stale) - len(gapped)
+    if measured and len(invalid_bars) == measured:
+        raise IncompleteScanError(
+            f"not one of the {measured} symbols otherwise ready for {session} carried "
+            "readable required OHLCV fields on its session bar. The feed's current bars "
+            "could not be measured; an empty shortlist here is not a quiet market."
+        )
     if measured and len(detector_errors) == measured:
         raise IncompleteScanError(
             f"detect_setup raised on every one of the {measured} symbols that carried a "

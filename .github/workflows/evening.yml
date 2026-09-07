@@ -40,6 +40,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -o pipefail
           OFFSET=$(TZ=America/New_York date +%z)   # -0400 = EDT, -0500 = EST
           if [ "$OFFSET" = "-0400" ]; then BACKUP="16 22 * * 1-5"; else BACKUP="16 23 * * 1-5"; fi
           FIRED="${{ github.event.schedule }}"
@@ -62,14 +63,26 @@ jobs:
             # session a run tonight would scan is today's date in market
             # time, which is what current_session() answers at this hour.
             SESSION=$(TZ=America/New_York date +%Y-%m-%d)
-            DONE=$(gh api "repos/${{ github.repository }}/actions/artifacts?per_page=100" \
-              -q "[.artifacts[] | select(.name|startswith(\"evening-$SESSION-\"))] | length" \
-              2>/dev/null || echo "0")
-            if [ "$DONE" = "0" ]; then
+            DONE=$(gh api "repos/${{ github.repository }}/actions/artifacts?per_page=100" 2>/dev/null \
+              | jq -r --arg session "$SESSION" --arg branch "$GITHUB_REF_NAME" \
+                '[.artifacts[] | select(.name | startswith("evening-" + $session + "-"))
+                  | select(.workflow_run.head_branch == $branch)] | length') || DONE=0
+            # An artifact is a backup, not a commit receipt: a branch test or
+            # rejected persist push must not silence the real night's scan.
+            # This step runs immediately after checkout, so data.json is the
+            # branch's committed snapshot, not the earlier run's local file.
+            PUBLISHED=false
+            if jq -e --arg session "$SESSION" --arg universe 'data/symbols.txt (checked in)' \
+              '.run.date == $session and .run.type == "evening"
+                and .run.fixture != true and .run.universe.label == $universe
+                and (.candidates | type == "array")' docs/data.json > /dev/null 2>&1; then
+              PUBLISHED=true
+            fi
+            if [ "$DONE" = "0" ] || [ "$PUBLISHED" != "true" ]; then
               GO=true
-              echo "Backup trigger: no successful evening run today — running now."
+              echo "Backup trigger: no matching artifact and committed universe record — running now."
             else
-              echo "Backup trigger: evening run already completed today — skipping."
+              echo "Backup trigger: this branch already committed the session's universe run — skipping."
             fi
           fi
           echo "go=$GO" >> "$GITHUB_OUTPUT"

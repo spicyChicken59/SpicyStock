@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import pandas as pd
+from requests import Session
 
 # --------------------------------------------------------------- Alpaca ----
 
@@ -205,6 +206,7 @@ class FakeAlpaca:
 
 class FakeDataClient:
     def __init__(self, parent: FakeAlpaca, *args: Any, **kwargs: Any) -> None:
+        self._session = Session()  # the real SDK's client-scoped transport
         self._parent = parent
         self.init_args = (args, kwargs)
         parent.data_clients.append(self)

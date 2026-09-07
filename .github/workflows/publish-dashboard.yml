@@ -1,0 +1,44 @@
+name: Publish committed dashboard
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "tools/publish_dashboard.py"
+      - ".github/workflows/publish-dashboard.yml"
+  workflow_run:
+    # GITHUB_TOKEN commit-backs do not trigger a push workflow or Pages build.
+    # Completion does; exit 2/3 may have persisted a complete record too.
+    workflows: ["Evening scan (6:16 PM ET)"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  pages: write
+concurrency:
+  group: committed-dashboard-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: >-
+      github.ref == 'refs/heads/main'
+      && (github.event_name != 'workflow_run'
+          || (github.event.workflow_run.conclusion != 'cancelled'
+              && github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      # Never download a scan artifact or check out its branch: a rehearsal
+      # can contain unpublished records. Only current committed main is public.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Request Pages build and verify the public snapshot
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python tools/publish_dashboard.py

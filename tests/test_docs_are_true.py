@@ -880,11 +880,14 @@ def test_the_commit_back_names_the_session_it_scanned(tmp_path, snapshot, expect
     traced the push loop -- reading them proves nothing about what `sh` does
     with `$(...)` and `[ -n ]`."""
     import subprocess
+    import sys
 
     (tmp_path / "docs").mkdir()
     (tmp_path / "docs" / "data.json").write_text(snapshot)
     stub = tmp_path / "bin"
     stub.mkdir()
+    # Exercise the actual JSON reader even when Python lives outside /usr/bin.
+    (stub / "python").symlink_to(sys.executable)
     (stub / "git").write_text('#!/bin/sh\necho "GIT $*"\n')
     (stub / "git").chmod(0o755)
 
@@ -900,9 +903,11 @@ def test_a_snapshot_it_cannot_read_says_the_date_is_a_commit_time(tmp_path):
     the whole defect, one level down. Exercised on both ways the read fails."""
     import datetime
     import subprocess
+    import sys
 
     stub = tmp_path / "bin"
     stub.mkdir()
+    (stub / "python").symlink_to(sys.executable)
     (stub / "git").write_text('#!/bin/sh\necho "GIT $*"\n')
     (stub / "git").chmod(0o755)
     (tmp_path / "docs").mkdir()
@@ -1022,7 +1027,9 @@ def _guard_shell() -> str:
 
 
 def _run_guard(tmp_path, *, artifacts: list[dict], event: str, schedule: str,
-               today_et: str, offset: str) -> str:
+               today_et: str, offset: str, branch: str = "main",
+               published: bool = True, snapshot: dict | None = None,
+               api_error: bool | str = False) -> str:
     """Run the real guard under bash with a stub gh (real jq over a canned
     payload) and a stub date, and return the go= line it printed."""
     import json
@@ -1033,18 +1040,30 @@ def _run_guard(tmp_path, *, artifacts: list[dict], event: str, schedule: str,
     stub = tmp_path / "bin"
     stub.mkdir(exist_ok=True)
     (stub / "gh").write_text(
-        "#!/bin/sh\nwhile [ $# -gt 0 ]; do [ \"$1\" = -q ] && { shift; F=\"$1\"; }; shift; done\n"
-        "jq -r \"$F\" \"$PAYLOAD\"\n")
+        "#!/bin/sh\n[ \"$API_FAILURE\" = true ] && exit 1\nF=.\n"
+        "while [ $# -gt 0 ]; do [ \"$1\" = -q ] && { shift; F=\"$1\"; }; shift; done\n"
+        "jq -r \"$F\" \"$PAYLOAD\"\n"
+        "if [ \"$API_FAILURE\" = partial ]; then exit 1; fi\n")
     (stub / "date").write_text(
         "#!/bin/sh\ncase \"$*\" in *%z*) echo \"$FAKE_OFFSET\";; *) echo \"$FAKE_TODAY\";; esac\n")
     for f in (stub / "gh", stub / "date"):
         f.chmod(0o755)
     payload = tmp_path / "artifacts.json"
     payload.write_text(json.dumps({"artifacts": artifacts}))
+    if published:
+        (tmp_path / "docs").mkdir(exist_ok=True)
+        receipt = snapshot if snapshot is not None else {
+            "run": {"date": today_et, "type": "evening", "fixture": False,
+                    "universe": {"label": "data/symbols.txt (checked in)"}},
+            "candidates": [],
+        }
+        (tmp_path / "docs" / "data.json").write_text(json.dumps(receipt))
     out = subprocess.run(["bash", "-c", _guard_shell()], cwd=tmp_path, text=True, capture_output=True,
                          env={"PATH": f"{stub}:/usr/bin:/bin", "HOME": str(tmp_path),
                               "PAYLOAD": str(payload), "EVENT_NAME": event, "EVENT_SCHEDULE": schedule,
                               "FAKE_TODAY": today_et, "FAKE_OFFSET": offset,
+                              "GITHUB_REF_NAME": branch,
+                              "API_FAILURE": str(api_error).lower(),
                               "GITHUB_OUTPUT": str(tmp_path / "out")})
     assert out.returncode == 0, out.stderr
     return (tmp_path / "out").read_text().strip()
@@ -1064,7 +1083,8 @@ EDT_CRON, EST_CRON = "16 22 * * 1-5", "16 23 * * 1-5"
      [{"name": "evening-failed-33927201865", "created_at": "2026-09-04T22:51:27Z"}],
      EDT_CRON, "2026-09-04", "-0400", "go=true"),
     ("a run PUBLISHED today's session: the backup stands down",
-     [{"name": "evening-2026-09-04-33927201865", "created_at": "2026-09-04T22:51:27Z"}],
+     [{"name": "evening-2026-09-04-33927201865", "created_at": "2026-09-04T22:51:27Z",
+       "workflow_run": {"head_branch": "main"}}],
      EDT_CRON, "2026-09-04", "-0400", "go=false"),
     # Under EST the night starts at 23:16 UTC, so a run over ~44 minutes
     # uploads under TOMORROW's UTC date. Keyed on the UTC creation date, that
@@ -1664,7 +1684,14 @@ def test_readme_does_not_deny_the_page_reads_the_record_it_reads():
     assert "by_score" in ledger.evidence([]), "evidence() no longer publishes by_score"
     page = _read("docs/index.html")
     assert "ev.by_score" in page, "the page no longer draws the score bands"
-    assert "fetch('ledger.json'" in page, "the page no longer fetches the record"
+    # The record now uses the bounded JSON loader. Follow both sides of that
+    # call: naming ledger.json alone must not pass if the helper stops fetching.
+    record_reader = re.search(r"function loadRecord\(ev\) \{(.*?)\n  \}", page, re.S)
+    assert record_reader and "fetchJSON('ledger.json')" in record_reader.group(1), \
+        "the per-name view no longer requests the record"
+    json_loader = re.search(r"function fetchJSON\(path\) \{(.*?)\n  \}", page, re.S)
+    assert json_loader and re.search(r"\bfetch\(path\s*,", json_loader.group(1)), \
+        "the JSON loader no longer fetches the requested record"
 
     denial = re.compile(r"not part of this step|needs the page to read|cannot plot", re.I)
     wrong = [s for s in _sentences(_read("README.md"))

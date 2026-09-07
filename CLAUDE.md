@@ -84,6 +84,30 @@ itself is pinned against real instants in `tests/test_scanner.py`.
 
 ## Verification is by execution
 
+**Tuesday readiness — a commit-back did not itself refresh Pages.** GitHub's
+built-in token deliberately does not trigger a Pages build when it pushes.
+The workflow kept the record but README claimed the website redeployed on its
+own, with no explicit publication step. `publish-dashboard.yml` now requests
+the existing branch-based build after an evening workflow completes on main
+and after dashboard pushes. Its only source is committed main, never a run's
+artifact. Exit-2/3 records can therefore reach the page while a rehearsal's
+unpublished record cannot. The job compares the public HTML, snapshot and
+ledger with the checkout, with an eight-minute deadline and a failing verdict
+when any stays stale. It uses only the built-in token and changes no Pages
+settings. Seventeen focused cases pass offline; ten mutations over build
+requests, source and permission guards, exact content checks and credential
+isolation all fail as expected. The live publication workflow must still be
+observed after merge; offline verification does not prove a deployed build.
+
+**The backup guard also mistook an artifact for a committed record.** Executing
+the real shell showed Tuesday's cron skipped when the only matching artifact
+came from a rehearsal branch. The artifact remains after a rejected persist
+push as well. Suppression now requires both a matching artifact from this
+branch and a real evening universe snapshot for that session in its freshly
+checked-out docs/. The file-scan label is held against the pipeline's constant.
+The original DST, dry-run and session-name scenarios remain, with new cases
+for absent, older, fixture, morning and smoke records and other branches.
+
 The strongest findings in this rebuild came from running the code, not reading
 it — reproducing a crash, sourcing a hostile `.env`, testing `git check-ignore`
 against real paths. A claim that was argued rather than executed is a lead, not
@@ -120,7 +144,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1152 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1212 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each

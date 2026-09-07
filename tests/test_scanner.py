@@ -2105,8 +2105,8 @@ def test_a_nan_on_the_session_bar_does_not_publish_the_previous_sessions_burst_a
     """detect_setup() drops the NaN bar and measures the one before it, so
     the burst of 8 Sep came back dated 8 Sep on a scan of 9 Sep, with stale
     and gapped both empty, and the pipeline published it under the session
-    with status ok. The scan refuses a candidate whose measured date is not
-    the session and counts it, and session_dollar_volume() reads the
+    with status ok. The scan refuses and counts the unreadable current bar
+    before detection, and session_dollar_volume() reads the
     session's own bar rather than the last one it can read."""
     session = date(2026, 9, 9)
     fake_alpaca.add_history("NANV", _nan_on_the_session_bar(ohlcv, column))
@@ -2118,7 +2118,8 @@ def test_a_nan_on_the_session_bar_does_not_publish_the_previous_sessions_burst_a
     found = run_scan(ScanConfig(session_date=session), universe=["NANV"] + quiet, stats=stats)
 
     assert found == []
-    assert stats["off_session"] == {"NANV": "2026-09-08"}
+    assert stats["off_session"] == {}
+    assert list(stats["invalid_bars"]) == ["NANV"]
     assert stats["stale"] == {} and stats["gapped"] == {}, "neither rule sees it: the session bar is there"
     served = fake_alpaca.bars_frame(["NANV"], end=session).loc["NANV"].rename(columns=str.capitalize)
     assert session_dollar_volume(served) is None, "no readable session bar, no place in the distribution"
