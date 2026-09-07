@@ -573,7 +573,16 @@ with its exact source commit and file hashes in `provenance.json`. `docs/stock.c
 arranges the branded cover, run summary, research panels and responsive pick cards;
 the shared system supplies the original chick, themes, surfaces and reduced-motion
 aware transitions. These design files are checked in directly and the pipeline does
-not regenerate them. **An evening run that scans writes that file at the end** (step 9,
+not regenerate them. `stock-home.css` carries SpicyHome's map-and-notes visual
+layout into the report. `signal-map.js` plots each scored candidate's recorded
+daily gain and relative volume beside linked candidate notes. It reads the same
+snapshot, preserves the ranking and score-source labels, and leaves candidates
+with missing measurements in the list without inventing a point. It is a signal
+plot, not a geographic or sector map. Empty runs stay empty. The existing complete
+ranking, shortlist, evidence and history remain below it; selecting a point changes
+only the presentation and makes no requests or stored changes.
+
+**An evening run that scans writes that file at the end** (step 9,
 `src/ledger.py`) — one that re-presents an already-published session leaves it
 as the run that published it wrote it — together with `docs/ledger.json` and
 the chart PNGs — which are **not** committed (`.gitignore` blocks `/docs/charts/`), so the published
@@ -626,7 +635,8 @@ reached the only public surface this project has — so the question the whole
 thing exists for, *does a higher score earn a higher forward return*, could not
 be asked here at all.
 
-It leads the page now, above the funnel, with four more views under it:
+It leads the historical evidence section below the signal explorer and above
+the funnel, with four more views under it:
 
 | the question | where | counted over |
 |---|---|---|

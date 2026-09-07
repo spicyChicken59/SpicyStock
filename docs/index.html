@@ -13,13 +13,15 @@
 <link rel="apple-touch-icon" href="design-system/assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="design-system/sc.css">
 <script src="design-system/sc-theme.js"></script>
 <script src="design-system/sc-charts.js"></script>
 <script src="design-system/sc-motion.js" defer></script>
 <script src="design-system/sc-reading.js" defer></script>
 <link rel="stylesheet" href="stock.css">
+<link rel="stylesheet" href="stock-home.css">
+<script src="signal-map.js"></script>
 </head>
 <body>
 <a class="sc-skip" href="#main">Skip to content</a>
@@ -43,7 +45,7 @@
 <main class="sc-wrap sc-wrap--wide sc-stack sc-print-report" id="main">
   <div class="sc-print-head" aria-hidden="true"><span class="sc-signature sc-signature--small"><img src="design-system/assets/sc-mark-color-light.svg" alt="" width="342" height="405"><span class="sc-signature__name">SpicyStock</span></span><span>market research / current run</span></div>
   <div class="sc-print-foot" aria-hidden="true"><span>SpicyChicken / market research</span><span>Screening output for human review</span></div>
-  <section class="sc-cover sc-on-ink stock-cover" aria-labelledby="h1">
+  <section class="sc-cover stock-cover" aria-labelledby="h1">
     <div class="sc-cover__content sc-reveal" data-sc-motion="rise">
       <p class="sc-eyebrow stock-cover__brand">SpicyStock / market research</p>
       <div class="sc-eyebrow sc-eyebrow--muted" id="eyebrow">screener</div>
@@ -110,16 +112,18 @@
     <p id="fallback-body"></p>
   </div>
 
-  <!-- STEP 11. The question the whole project exists to answer, above
-       everything that merely describes a night. The ledger has been written
-       since step 9 and read for streaks since step 10, and until now none of
-       what it holds reached this page.
+  <section class="signal-workspace" id="signal-workspace" aria-labelledby="signal-title" hidden>
+    <div class="signal-heading">
+      <div><p class="sc-eyebrow sc-eyebrow--muted">Explore this session</p><h2 id="signal-title">A closer look at <em>the signals.</em></h2></div>
+      <p id="signal-count" class="sc-note"></p>
+    </div>
+    <p class="signal-description">Recorded daily gain and volume versus the 50-day average. Select a point or a candidate to connect the measurements with the score.</p>
+    <div id="signal-content"></div>
+  </section>
 
-       It carries no overall mean, deliberately: "Has any of this made money
-       yet" below already publishes one, and a second computation of one
-       number is how two copies of a rule drift. This card answers the
-       RELATION -- does a higher score earn a higher return -- and the counts
-       behind it. -->
+  <!-- Historical evidence follows the current-session explorer. Its means
+       come from the ledger; the signal map above adds no scoring or return
+       calculations. This card asks whether higher scores earn higher returns. -->
   <section class="sc-card stock-section sc-reveal" data-sc-motion="rise" id="evidence-card" hidden>
     <div class="sc-card__head">
       <div>
@@ -2267,6 +2271,7 @@
     $('shortlist-hint').textContent = 'The names that went out by email, ranked by score. ' +
       'Each carries its full 2LYNCH checklist and who produced its score.';
     clear($('shortlist')).append.apply($('shortlist'), short.map(pick));
+    if (window.SCStockSignals) window.SCStockSignals.render(d);
 
     // every scored candidate
     $('scores-card').hidden = !cands.length;
@@ -2280,10 +2285,10 @@
     drawScores($('scores-chart'), cands);
     table($('scores-table'),
       ['ticker', 'score', 'source', 'verdict', '2LYNCH', 'burst', 'vol x', 'close', '+1d', '+3d', '+5d', 'why'],
-      cands.map(function (c) {
+      cands.map(function (c, index) {
         var fr = fwd(c);
         var hz = function (k) { return horizonCell(c, fr[k]); };
-        return el('tr', null, [
+        return el('tr', { id: 'signal-record-' + index, tabindex: '-1' }, [
           el('td', null, [el('div', { 'class': 'sc-eyebrow', text: '#' + c.rank }),
                           el('span', { 'class': 'sc-case', text: c.ticker }),
                           streakNote(c)]),
@@ -2708,7 +2713,7 @@
           if (previous) render(previous);
           else {
             redraws = [];
-            document.querySelectorAll('#main > [hidden], #main .stock-section, #run-strip, #page-index, #fixture-banner, #fallback-callout')
+            document.querySelectorAll('#main > [hidden], #main .stock-section, #signal-workspace, #run-strip, #page-index, #fixture-banner, #fallback-callout')
               .forEach(function (node) { node.hidden = true; });
           }
           throw error;

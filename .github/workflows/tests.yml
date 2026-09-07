@@ -86,6 +86,7 @@ jobs:
           set -o pipefail
           node tools/dashboard_smoke.mjs --shots /tmp/shots
           node tools/dashboard_recovery_smoke.mjs
+          node tools/signal_map_smoke.mjs --shots /tmp/shots
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
