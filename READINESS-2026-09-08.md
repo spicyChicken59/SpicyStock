@@ -84,3 +84,26 @@ and delivery outcomes; the committed record remains available in the repository.
 
 No trade was placed, production email dispatched, credential changed, release
 tag published, or historical result replaced during this audit.
+
+## Deployed verification
+
+[PR #20](https://github.com/spicyChicken59/SpicyStock/pull/20) was merged as
+`7b2d1209fc93f2d95f1144a8803084266f5cefae` after the required checks passed:
+1,211 Python cases passed and one was skipped; all 214 original dashboard checks
+and 32 recovery checks passed.
+
+The [publication run](https://github.com/spicyChicken59/SpicyStock/actions/runs/34082105905)
+successfully requested a Pages build and, at 04:10:58 UTC on 7 September 2026,
+verified that the public `index.html`, `data.json` and `ledger.json` matched
+committed main byte-for-byte. This exercised the real publication permissions,
+not only the test doubles.
+
+On the [live dashboard](https://spicychicken59.github.io/SpicyStock/), activating
+**Check for updates** with Enter completed successfully and retained keyboard
+focus on the button. The recorded session remained 4 September; a successful
+refresh did not invent a newer scan. The screenshot below captures that finished
+refresh, including the visible focus ring and original SpicyChicken mark.
+Its historical universe count of 230 belongs to the preserved September record;
+the current checked-in basket contains 228 symbols.
+
+![Live dashboard after a successful keyboard refresh](docs/design-review/spicystock-readiness-live-1788754424881.jpg)
