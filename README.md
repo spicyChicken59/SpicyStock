@@ -232,21 +232,44 @@ name too. The label cannot quietly become a different day.
 purpose, and a deliberate backfill is not a mistake.
 
 An evening dispatch whose session is already published re-presents it rather
-than paying for the same answer twice, **whatever the clock says**. There are
-two such clicks and only one of them used to be defended: the lunchtime one,
-whose newest completed session is yesterday's, and the one made after the
-22:16 cron to watch it work, whose newest completed session is the one that
-cron published minutes earlier. The check sat inside the clock-disagreement
-branch above, and the mode and the clock agree after the close — so the second
-click re-scanned the same daily bars, paid for every Claude call a second
-time, mailed the same shortlist again and replaced the published record with
-the re-scan, at exit 0 with nothing recorded. It is consulted before the scan
-now, on both, and the re-presentation is reported and exits 2 the same way.
+than paying for the same answer twice, **whatever the clock says** and
+whatever made the dispatch. The clicks are the lunchtime one, whose newest
+completed session is yesterday's, and the one made after the 22:16 cron to
+watch it work, whose newest completed session is the one that cron published
+minutes earlier — but the rule is *whichever evening run gets there first*,
+so a click made before 22:16 leaves that night's cron nothing to scan too.
+The check sat inside the clock-disagreement branch above, and the mode and
+the clock agree after the close — so the second click re-scanned the same
+daily bars, paid for every Claude call a second time, mailed the same
+shortlist again and replaced the published record with the re-scan, at exit 0
+with nothing recorded. It is consulted before the scan now, so a
+re-presentation asks the feed nothing and the run is reported and exits 2 the
+same way. A rehearsal from the form's `dry_run` box is not exempt either, and
+that is worth knowing before using one to try a change against the real feed:
+unpinned, after the cron has published, it makes no request at all.
+
+**It reads the basket as well as the session.** The documented `--tickers`
+smoke test below publishes a real evening record of the day it ran on, and a
+one-name smoke record is not that session published: the cron that follows
+still scans the file, or the night would lose its scan, its record and its
+mail to a run over a universe a fraction as wide. The reverse is not
+symmetric — a published universe scan *is* an answer about a handful of names
+typed on the command line, and re-scanning them would replace that night's
+record, its universe label and its filled benchmark with the smoke test's —
+so a `--tickers` run against a published night re-presents, and is told that,
+rather than told the bars are the same bars.
 `SCAN_SESSION_DATE` is the one exemption, for the same reason it is exempt
 from the clock check: a pinned session is a deliberate re-scan, and it is how
-the 4 Sep record was republished. A `--tickers` run is not exempt, so a smoke
-test on a day the cron has already published re-presents too — pin a session
-to make it scan, which is also what keeps it out of that night's benchmark.
+the 4 Sep record was republished. Pin a session **the record does not already
+hold**, or put both files back afterwards with the `rm -f docs/ledger.json &&
+git checkout -- docs/` below: `Ledger.add_run()` keys on the session and the
+run type, so pinning a smoke test to the night the cron just published drops
+that night's rows, its universe label and its filled benchmark for the smoke
+test's, at exit 0 with nothing reported — and a measured horizon is never
+re-measured, so that session's alternative is gone for good. What keeps a
+`--tickers` run out of every benchmark is not the pin: it is that it has no
+universe to offer, so `Ledger.fill_benchmarks()`, which matches runs on the
+label the entry already carries, neither gives it one nor takes one from it.
 And the mail it sends used to say
 "Morning follow-through" in the subject, "re-presented before the open" in the
 band and "at today's open" in the heading, three surfaces describing the 8:30
@@ -432,11 +455,13 @@ set -a; . ./.env; set +a         # this runs .env as a shell script
 
 # Full evening run without sending email:
 python -m src.pipeline evening --dry-run
+# (if the session this would scan is already published, it re-presents it
+#  and scans nothing -- with or without --tickers, and whatever the clock
+#  says. Pin SCAN_SESSION_DATE below, to a session the record does not
+#  already hold, to make it scan.)
 
 # Smoke-test on a few tickers:
 python -m src.pipeline evening --dry-run --tickers NVDA,PLTR,SMCI,CRWD
-# (if the cron has already published that session, this re-presents it
-#  instead of scanning; pin SCAN_SESSION_DATE below to make it scan)
 
 # Re-present the run above, the way the 8:30 AM job would. Scans nothing,
 # reads docs/data.json, needs no Alpaca or Anthropic key. --tickers is
@@ -450,14 +475,16 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1146 tests, no network or API keys needed
+pytest tests/                   # 1151 tests, no network or API keys needed
 ```
 
-Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
-email — rewrites `docs/data.json`, updates `docs/ledger.json` and writes PNGs
-into `docs/charts/`. A four-ticker smoke test therefore replaces whatever
-`docs/data.json` held with a four-ticker run — the run `evening.yml` last
-committed back, which here is a real one, and the hand-authored fixture only in
+An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
+only the email — rewrites `docs/data.json`, updates `docs/ledger.json` and
+writes PNGs into `docs/charts/`. One that finds its session already published
+(above) scans nothing and writes none of the three, not even a chart. A
+four-ticker smoke test therefore replaces whatever `docs/data.json` held with
+a four-ticker run — the run `evening.yml` last committed back, which here is
+a real one, and the hand-authored fixture only in
 a repo that has never published.
 `docs/ledger.json` gains a run too — one row per named ticker, marked with the
 universe it scanned (`runs[].universe` says `named on the command line`) so the
@@ -483,9 +510,10 @@ has never published still holds, and what you would see there.
 
 `docs/index.html` is a static page served by GitHub Pages from `docs/`. It fetches
 `docs/data.json` in the browser and renders it — no server, no build step, no
-framework. **An evening run writes that file at the end of every run** (step 9,
-`src/ledger.py`), together with `docs/ledger.json` and the chart PNGs — which
-are **not** committed (`.gitignore` blocks `/docs/charts/`), so the published
+framework. **An evening run that scans writes that file at the end** (step 9,
+`src/ledger.py`) — one that re-presents an already-published session leaves it
+as the run that published it wrote it — together with `docs/ledger.json` and
+the chart PNGs — which are **not** committed (`.gitignore` blocks `/docs/charts/`), so the published
 page has no images and every chart slot explains that instead. Open the page
 from a checkout that has just run the pipeline and the same slots fill in. A
 chart is ~57 KB and a night renders up to 25 of them: committing them is about

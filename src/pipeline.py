@@ -735,10 +735,34 @@ def run(run_type: str, dry_run: bool = False, tickers: list[str] | None = None,
     return discover(mode, dry_run=dry_run, tickers=tickers, report=report)
 
 
-def _already_published(cfg: ScanConfig) -> str | None:
-    """The session an evening run started now would scan, if docs/data.json
-    already holds a real evening run of it; else None. A pinned session is a
-    deliberate re-scan and is never "already published"."""
+def _already_published(cfg: ScanConfig, universe: str) -> dict | None:
+    """The published evening run this one would otherwise scan again, or None.
+
+    `universe` is the label this run will stamp into `run.universe` -- see
+    intended_universe_label(), which is the same rule publish() writes with,
+    known before the scan because it does not depend on it.
+
+    A pinned session is a deliberate re-scan and is never "already published".
+
+    THE BASKET IS PART OF THE QUESTION, and it used to not be. README's own
+    smoke test (`--dry-run --tickers`) publishes a real evening record of the
+    session it ran on, so a one-name smoke record made the cron that followed
+    re-present it: the night lost its scan, its record and its mail to a run
+    over a universe it never looked at. A published run of a DIFFERENT
+    handful of names is not this session published.
+
+    The rule is not label equality, because the two directions are not
+    symmetric. A published FILE scan does answer for a handful of names typed
+    on the command line -- and re-scanning them would replace that night's
+    record, its universe label and its filled benchmark with the smoke
+    test's, which is the harm this guard exists for -- so a --tickers run
+    against a published universe scan is still re-presented, with a reason
+    that says so rather than one about the same bars. See _republish_reason().
+
+    A published run with no `universe` block at all predates round 4 and
+    could be either; it re-presents, which is what this guard did for every
+    basket before there was a label to read.
+    """
     if cfg.session_date is not None:
         return None
     snapshot, _why = ledger.read_snapshot(ledger.DOCS_DIR)
@@ -746,9 +770,50 @@ def _already_published(cfg: ScanConfig) -> str | None:
         return None
     run = snapshot.get("run") or {}
     session = ledger.iso_date(scanner.current_session())
-    if run.get("type") == "evening" and run.get("date") == session:
-        return session
-    return None
+    if run.get("type") != "evening" or run.get("date") != session:
+        return None
+    block = run.get("universe")
+    published = block.get("label") if isinstance(block, dict) else None
+    if isinstance(published, str) and published not in (universe, UNIVERSE_FILE_LABEL):
+        return None
+    return run
+
+
+def _republish_reason(published: dict, tickers: list[str] | None) -> str:
+    """Why this run re-presents the published session instead of scanning it,
+    in words that are true of the state it found.
+
+    One sentence used to serve three states and was false of two of them. It
+    told a --tickers run that a second scan of the same daily bars can only
+    buy the same answer, over names the published run never looked at; and it
+    told the operator re-running a night whose scan was CUT SHORT -- a dropped
+    batch, names behind the session -- the same thing, printed directly above
+    that night's own "they were never examined". The cost of re-scanning is
+    what refuses all three; the claim about the answer is not.
+    """
+    session = published.get("date")
+    head = (f"{session} is already published, so this run re-presents it rather than "
+            "scanning it again: ")
+    cost = ("paying for every Claude call a second time, mailing the same shortlist "
+            "again, and replacing the published record with the re-scan")
+    block = published.get("universe")
+    label = block.get("label") if isinstance(block, dict) else None
+    # A --tickers run whose names ARE the published basket really would re-read
+    # the same bars, so the difference is the label and not the flag.
+    if tickers is not None and label != intended_universe_label(tickers):
+        return (head + f"the {len(tickers)} name(s) on the command line are not the universe "
+                "that was scanned, so this is not a cheaper re-run of that scan -- it is a "
+                "narrower one, and publishing it would replace that night's record, its "
+                "universe label and its filled benchmark with this run's. Pin "
+                "SCAN_SESSION_DATE to a session the record does not already hold to scan "
+                "these names anyway")
+    status = published.get("status")
+    if isinstance(status, str) and status != "ok":
+        return (head + f"that run was itself {status.upper()}, so some of the session was "
+                "never read and a re-scan could buy a different answer -- but it would still "
+                "cost " + cost + f". Pin SCAN_SESSION_DATE to {session} to scan it again")
+    return (head + "a second scan of the same daily bars can only buy the same answer, at "
+            "the cost of " + cost)
 
 
 def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None,
@@ -792,14 +857,16 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     # the post-close one -- the click a reader makes to watch the cron's own
     # work, where the mode and the clock agree -- was not. Nothing in the
     # reason above mentions an hour.
-    already = _already_published(cfg)
+    #
+    # IT DOES DEPEND ON THE BASKET. A published record of a narrower one --
+    # what README's own --tickers smoke test writes -- is not this session
+    # published, and treating it as one cost the night its scan. And which of
+    # the three sentences above is TRUE of the state this run found differs
+    # too, so the reason is composed rather than fixed: see
+    # _republish_reason().
+    already = _already_published(cfg, intended_universe_label(tickers))
     if already:
-        report.problem("session", f"{already} is already published, so this run "
-                                  "re-presents it rather than scanning it again: a second "
-                                  "scan of the same daily bars can only buy the same answer, "
-                                  "at the cost of paying for every Claude call a second time, "
-                                  "mailing the same shortlist again, and replacing the "
-                                  "published record with the re-scan")
+        report.problem("session", _republish_reason(already, tickers))
         return follow_through(mode_for("morning"), dry_run, report=report,
                               dispatched_as=run_type)
 
@@ -1100,6 +1167,21 @@ def universe_label(scan_stats: dict, explicit_tickers: list[str] | None) -> str:
     if explicit_tickers is not None:
         return f"{size} named on the command line (--tickers)"
     return f"{size} checked-in US common stocks"
+
+
+def intended_universe_label(tickers: list[str] | None) -> str:
+    """What this run will stamp into `run.universe.label`, known BEFORE the
+    scan: the checked-in file, or the names handed to --tickers.
+
+    ONE rule with publish(), which calls this rather than composing the pair
+    a second time -- the republish guard compares what this run would carry
+    against what the published record carries, and two rules that agree today
+    is exactly how a guard stops guarding. The count is len(tickers) because
+    src.scanner.run_scan() takes an explicit universe verbatim, which is what
+    makes `scan_stats["requested"]` the same number after the scan.
+    """
+    return (UNIVERSE_FILE_LABEL if tickers is None
+            else universe_label({"requested": len(tickers)}, tickers))
 
 
 def email_row(row: dict) -> dict:
@@ -1621,8 +1703,7 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         "dry_run": bool(dry_run),
         "fixture": False,
         "universe": {
-            "label": (UNIVERSE_FILE_LABEL if explicit_tickers is None
-                      else universe_label(scan_stats, explicit_tickers)),
+            "label": intended_universe_label(explicit_tickers),
             "size": scan_stats.get("requested", len(explicit_tickers or [])),
         },
         # The names in that universe that have stopped printing: a fact about

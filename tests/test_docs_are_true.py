@@ -1172,6 +1172,13 @@ def test_the_evening_workflow_can_rehearse_from_the_run_workflow_form_without_ma
     on = evening.get("on", evening.get(True))
     box = on["workflow_dispatch"]["inputs"]["dry_run"]
     assert box["type"] == "boolean" and box["default"] is False and box["required"] is False
+    # And the box says what it does NOT do. A rehearsal of a session
+    # docs/data.json already holds re-presents it -- no scan, no score, no
+    # record, and not one request to the feed -- which is the whole boundary
+    # this box exists to try, so the description names the session box as the
+    # way to reach it.
+    assert "already published" in box["description"] and "session box" in box["description"], (
+        box["description"])
     steps = {s.get("name"): s for s in evening["jobs"]["scan"]["steps"]}
     pipeline_step = steps["Run evening pipeline"]
     assert pipeline_step["env"]["DRY_RUN_FLAG"] == "${{ inputs.dry_run == true && '--dry-run' || '' }}"

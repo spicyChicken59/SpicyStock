@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1146 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1151 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -223,7 +223,11 @@ re-presents it the way the morning does and says why; the clock
 disagreement stays in the report and the exit code stays 2. (The defence was
 written inside the clock-disagreement branch, and round 10 found the half it
 therefore missed — the click made AFTER the close, where the mode and the
-clock agree. See "republish-guard" below.)
+clock agree. `_already_published()` is consulted before the scan now,
+whatever the clock says, and it reads the run's BASKET as well as its
+session: a `--tickers` smoke record is not the night's universe scan
+published, and treating it as one cost the night its scan. The pointer here
+used to name a section of this file that does not exist.)
 
 **A backfill made the morning announce that nothing had published.**
 `SCAN_SESSION_DATE` of last week rewrote `docs/data.json`'s headline to last

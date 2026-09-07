@@ -1929,6 +1929,13 @@ def test_a_lunchtime_evening_dispatch_re_presents_the_published_session_instead_
 
     assert ledger_of()[0][1] == "ok", "the clean record was replaced by a degraded re-scan"
     assert len(mocked_boundaries["anthropic"].calls) == paid, "and the session was paid for twice"
+    # Both reasons, asserted separately and on their words. Exit 2 used to be
+    # the only assertion here, under a comment promising the clock: once the
+    # guard moved out of the disagreement branch, the already-published
+    # problem supplied exit 2 on its own, so a mutant that stopped reporting
+    # the clock on this path left the whole suite green.
+    band = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "today's session has not closed yet" in band, band
     assert report.exit_code == pipeline.EXIT_DEGRADED, "the clock disagreement is still reported"
     assert any("already published" in e["message"] for e in report.errors)
     # The subject named the MORNING follow-through until round 10; this mail
@@ -1957,15 +1964,37 @@ def test_a_second_evening_dispatch_after_the_close_re_presents_the_published_ses
     pipeline.run("evening", dry_run=False, tickers=names)
     paid = len(mocked_boundaries["anthropic"].calls)
     mailed = len(mocked_boundaries["resend"].sent)
-    assert paid and mailed == 1, "precondition: the first run really did scan and mail"
-    published = json.loads((tmp_path / "docs" / "ledger.json").read_text())["runs"]
+    fetched = len(mocked_boundaries["alpaca"].bar_requests)
+    assert paid and mailed == 1 and fetched, (
+        "precondition: the first run really did fetch, scan and mail")
+    # A marker the re-scan cannot reproduce. "The published record was
+    # replaced" is otherwise unobservable HERE: the second scan of the same
+    # bars through the same doubles builds an identical entry, so comparing
+    # the runs list against itself passes with the guard deleted. add_run()
+    # drops the entry for this (date, type) before inserting, and what that
+    # costs a real night is its universe label, its rows and its filled
+    # benchmark -- none of which a re-scan restores.
+    path = tmp_path / "docs" / "ledger.json"
+    stamped = json.loads(path.read_text())
+    stamped["runs"][0]["model"] = "stamped-by-the-test"
+    path.write_text(json.dumps(stamped))
+    published = json.loads(path.read_text())["runs"]
 
     report = pipeline.RunReport()
     pipeline.run("evening", dry_run=False, tickers=names, report=report)
 
-    assert len(mocked_boundaries["anthropic"].calls) == paid, "the session was paid for twice"
-    assert json.loads((tmp_path / "docs" / "ledger.json").read_text())["runs"] == published, (
+    assert json.loads(path.read_text())["runs"] == published, (
         "the published record was replaced by a re-scan of the same bars")
+    # "It is consulted before the scan" is what README, .env.example and the
+    # comment in discover() all say, and only this line pins it: the guard
+    # moved below run_scan() leaves every other assertion here green, because
+    # the re-presentation returns before Claude and before the ledger either
+    # way. It is load-bearing rather than cosmetic -- run_scan() raises
+    # StaleDataError on a session no name carried a bar for, so a drifted
+    # guard turns a re-presentation at exit 2 into a failed run at exit 1.
+    assert len(mocked_boundaries["alpaca"].bar_requests) == fetched, (
+        "the guard asked the feed nothing, because it ran before the scan")
+    assert len(mocked_boundaries["anthropic"].calls) == paid, "the session was paid for twice"
     assert report.exit_code == pipeline.EXIT_DEGRADED
     assert any("already published" in e["message"] for e in report.errors)
     assert len(mocked_boundaries["resend"].sent) == mailed + 1, "the re-presentation is mailed"
@@ -2049,6 +2078,152 @@ def test_only_a_published_EVENING_run_is_something_to_re_present(
         "a morning headline is not a published run, so the session was never scanned")
     assert not any("already published" in e["message"] for e in report.errors)
     assert clean(tmp_path)["run"]["type"] == "evening"
+
+
+def test_a_smoke_tests_basket_is_not_the_nights_universe_scan_published(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The guard matched the session and the type and not the BASKET, and the
+    documented smoke test (`--dry-run --tickers`) publishes a real evening
+    record of the session it ran on. So a one-name smoke record made the
+    cron that followed re-present it: the night lost its scan, its record and
+    its mail to a run over a universe four times narrower, under a sentence
+    saying a second scan could only buy the same answer -- over names the
+    published run never looked at.
+
+    The reverse is not symmetric, and the test below this one is that half: a
+    published FILE scan does answer for a handful of names typed on the
+    command line, and re-scanning them would replace the night's record with
+    the smoke test's, which is the harm this guard exists for. Round 4 put
+    `universe` on every run entry so the record could tell the two apart, and
+    round 7 adopted the same rule one level over (Ledger.fill_benchmarks()
+    matches runs on the label the entry already carries)."""
+    names = _five_name_market(fake_alpaca, ohlcv)
+    _universe_file(monkeypatch, tmp_path, names)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=True, tickers=names[:1])   # README's smoke test
+    assert clean(tmp_path)["run"]["universe"]["label"].endswith("(--tickers)"), (
+        "precondition: the smoke test really did publish a --tickers record")
+    paid = len(mocked_boundaries["anthropic"].calls)
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, report=report)       # tonight's cron: the file
+
+    assert not any("already published" in e["message"] for e in report.errors), (
+        [e["message"] for e in report.errors])
+    assert len(mocked_boundaries["anthropic"].calls) > paid, "the night was never scanned"
+    snapshot = clean(tmp_path)
+    assert snapshot["run"]["universe"]["label"] == pipeline.UNIVERSE_FILE_LABEL
+    assert snapshot["run"]["universe"]["size"] == len(names)
+    assert [r["universe"]["label"] for r in recorded(tmp_path)["runs"]] == [
+        pipeline.UNIVERSE_FILE_LABEL], "and the record for that session is the night's"
+
+
+def test_a_published_universe_scan_is_something_a_tickers_run_re_presents(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The other direction, and the reason the fix above is not label
+    equality: the night's own scan IS an answer about the names typed on the
+    command line, and scanning them again would replace that night's record
+    -- its universe label, its rows and its filled benchmark -- with a
+    smoke test's. So a --tickers run is still re-presented.
+
+    What it is NOT told is that a second scan of the same daily bars can only
+    buy the same answer: the bars are not the same bars. Reproduced with a
+    name that is not in the symbol file at all."""
+    names = _five_name_market(fake_alpaca, ohlcv)
+    _universe_file(monkeypatch, tmp_path, names)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=True)
+    paid = len(mocked_boundaries["anthropic"].calls)
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, tickers=["ZZTOP"], report=report)
+
+    assert len(mocked_boundaries["anthropic"].calls) == paid, "the smoke test was refused"
+    assert clean(tmp_path)["run"]["universe"]["label"] == pipeline.UNIVERSE_FILE_LABEL
+    (problem,) = [e["message"] for e in report.errors if "already published" in e["message"]]
+    assert "same daily bars" not in problem, problem
+    assert "replace" in problem and "SCAN_SESSION_DATE" in problem, problem
+
+
+def test_a_published_run_that_does_not_say_what_it_scanned_still_re_presents(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The basket check reads a label, and `run.universe` is absent from a
+    snapshot written before round 4 -- which read_snapshot() accepts, since
+    absent is what an older pipeline wrote. An unknown basket could be
+    either, so it re-presents: that is what this guard did for every basket
+    before there was a label to read, and the cost of guessing the other way
+    is a night's record replaced by a run nobody can identify."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=True, tickers=names)
+    paid = len(mocked_boundaries["anthropic"].calls)
+    snapshot = tmp_path / "docs" / "data.json"
+    stored = json.loads(snapshot.read_text())
+    del stored["run"]["universe"]
+    snapshot.write_text(json.dumps(stored))
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, tickers=names, report=report)
+
+    assert len(mocked_boundaries["anthropic"].calls) == paid, (
+        "an unlabelled published run of this session was re-scanned")
+    assert any("already published" in e["message"] for e in report.errors)
+
+
+def test_only_THIS_sessions_published_run_is_something_to_re_present(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The mirror of the type check above, for the date half. The mutant that
+    drops it -- re-present any published evening run, whatever session it
+    holds -- was killed by nothing that names this guard: docs/data.json holds
+    an evening run after the first night, so every night afterwards would
+    re-present the night before, forever, in a degraded email saying the
+    session is already published. Every other test that drives two evening
+    runs on different sessions pins SCAN_SESSION_DATE and is exempt."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=True, tickers=names)
+    paid = len(mocked_boundaries["anthropic"].calls)
+    snapshot = tmp_path / "docs" / "data.json"
+    stored = json.loads(snapshot.read_text())
+    stored["run"]["date"] = session_offset(-5)
+    snapshot.write_text(json.dumps(stored))
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, tickers=names, report=report)
+
+    assert len(mocked_boundaries["anthropic"].calls) > paid, (
+        "a published run of ANOTHER session is not this session published")
+    assert not any("already published" in e["message"] for e in report.errors)
+    assert clean(tmp_path)["run"]["date"] == scanner.current_session().isoformat()
+
+
+def test_a_re_presentation_of_a_cut_short_night_is_not_told_the_answer_is_the_same(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """A night that published DEGRADED did not read every bar it asked for --
+    a dropped batch, or names behind the session -- so a re-scan really could
+    buy a different answer, and the operator clicking Run workflow after the
+    feed recovers is right to expect one. The guard still refuses (whether a
+    cut-short night should be exempt is a policy call the artifact guard
+    already answers the same way, in another file), but the sentence it
+    refuses with must be true of the state it found, and it names the pin."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3, stale=1)
+    market_clock.after_the_close()
+    first = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, tickers=names, report=first)
+    assert first.exit_code == pipeline.EXIT_DEGRADED, "precondition: night one was cut short"
+    assert clean(tmp_path)["run"]["status"] == "degraded"
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, tickers=names, report=report)
+
+    (problem,) = [e["message"] for e in report.errors if "already published" in e["message"]]
+    assert "can only buy the same answer" not in problem, problem
+    assert "degraded" in problem.lower() and "SCAN_SESSION_DATE" in problem, problem
 
 
 def test_the_lunchtime_re_presentation_says_which_dispatch_made_it(
@@ -2213,7 +2388,10 @@ def test_a_ledger_row_shaped_one_level_wrong_cannot_kill_the_run_after_claude_wa
     # test is about is the NEXT night finding a corrupt history -- and a
     # second run over a session docs/data.json already holds re-presents it
     # rather than scanning, which would leave the ledger unread. Bending only
-    # the ledger described a tree no night is ever in.
+    # the ledger described a tree the NEXT night is never in -- the next
+    # night reads the previous session's snapshot. It is exactly the tree a
+    # dispatch made after tonight's cron is in, which is the guard's own
+    # subject, so the sentence had to say which night it meant.
     snapshot = tmp_path / "docs" / "data.json"
     published = json.loads(snapshot.read_text())
     published["run"]["date"] = session_offset(-5)
@@ -3310,10 +3488,24 @@ def test_a_quarantined_ledger_survives_the_commit_back_and_the_next_night_heals(
         "the charts are the one thing under docs/ that must NOT be committed")
     git("commit", "-qm", "night one")
 
-    # Night two, over what night one committed.
+    # Night two, over what night one committed -- and it has to be a night
+    # that SCANS. Night one published tonight's session, and an evening run
+    # over a session docs/data.json already holds re-presents it instead,
+    # which never reads the ledger at all: both assertions below then held
+    # for the wrong reason (nothing quarantined because nothing ran, a
+    # non-empty ledger because night one wrote it), and breaking the heal
+    # outright left them green. Backdated the way the malformed-row sweep
+    # backdates it, one screen up.
+    snapshot = docs / "data.json"
+    stored = json.loads(snapshot.read_text())
+    stored["run"]["date"] = session_offset(-5)
+    snapshot.write_text(json.dumps(stored))
     before = set(ledger.quarantined(docs))
+    fetched = len(mocked_boundaries["alpaca"].bar_requests)
     pipeline.run("evening", dry_run=True, tickers=names)
 
+    assert len(mocked_boundaries["alpaca"].bar_requests) > fetched, (
+        "the precondition: night two really scanned, so it really read the ledger")
     assert set(ledger.quarantined(docs)) == before, (
         "the second night quarantined again, so nothing healed")
     assert json.loads((docs / ledger.LEDGER_NAME).read_text())["runs"]

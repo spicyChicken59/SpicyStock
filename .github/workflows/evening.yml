@@ -16,7 +16,7 @@ on:
         required: false
         default: ""
       dry_run:
-        description: "Rehearse: scan, score and write the record into this run's artifact, but mail nothing and commit nothing back."
+        description: "Rehearse: scan, score and write the record into this run's artifact, but mail nothing and commit nothing back. Fill the session box too if that session is already published -- otherwise the run re-presents it and scans nothing."
         type: boolean
         required: false
         default: false
