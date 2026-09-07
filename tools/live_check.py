@@ -218,7 +218,7 @@ def check_claude(frame=None, ticker: str = "SYNTHETIC", out_dir: str | None = No
 def check_cache(inputs) -> Check:
     """A second identical call. The first wrote the prefix; this one must read it.
 
-    Without this the 50% cheaper a cached night is meant to be is a comment in
+    Without this the 53% cheaper a cached night is meant to be is a comment in
     request_kwargs(), not a fact: a system prompt edited below the minimum
     cacheable size, or an account the feature is off for, pays full price
     forever and nothing says so.

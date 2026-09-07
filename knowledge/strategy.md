@@ -28,6 +28,9 @@ high-probability Day 1.
   YOUR bar for an A+, and it is deliberately stricter than the checklist's:
   `H` passes at the top 30%, so a bar can pass `H` and still not be A+ on this
   line. The two numbers answer different questions and are meant to differ.
+  "Big range" is `bar_range_pct` and `range_expansion` in the metrics block —
+  see below. Read them; do not infer the bar's width from the gain, which is
+  a fact about two closes and says nothing about the day between them.
 - **Room overhead.** Near or at 52-week highs, or breaking out of a
   multi-month base with little overhead supply.
 - **Relative strength.** A strong run into the burst — `perf_3mo_pct` and
@@ -80,6 +83,22 @@ carrying what was measured and the threshold applied to it. A FAIL is a strong
 negative, not an automatic zero: one deep day at the far end of an otherwise
 tight base is weaker evidence than one three days ago, and the chart is what
 tells the two apart. Say so in the reason when a FAIL here decided the score.
+
+`gap_pct`, `bar_range_pct` and `range_expansion` describe the burst BAR, as
+against the gain, which describes two closes. `gap_pct` is where it opened
+against the previous session's close — the part of the move that happened
+before anyone reading this could act on it. `bar_range_pct` is high minus low
+over the close: how wide the session was. `range_expansion` is that width
+over the average width of the sessions immediately before it, so 3x means a
+bar three times as wide as the consolidation it broke out of and 0.5x means a
+burst narrower than its own base — a gain delivered on the open rather than
+through the day. Nothing is refused on any of these: they are measurements,
+they carry no threshold, and each is null when the bar could not supply it
+(no open, no envelope, or an open printed outside its own high and low).
+Null means not measured; it never means zero. Read them beside `H`, which
+says where in that range the close landed: a wide bar closing at its high is
+the powerful burst bar above, and a wide bar closing mid-range is the
+demand-faded kill two sections up.
 
 `consecutive_up_days` is how many sessions closed up in a row ENDING THE DAY
 BEFORE the burst — the run you would be buying into, not counting the entry.
@@ -152,6 +171,10 @@ Weight these upward:
   prior run (his flag/breakout setup).
 - Signs of an Episodic Pivot: enormous volume (3x+), huge gap or gain,
   which usually means a real catalyst (earnings, guidance, FDA, contract).
+  The gap is `gap_pct` and the gain is `gain_pct`, and they are different
+  facts: a burst that gapped and then went sideways is an entry you have
+  already missed most of, while one that opened flat and closed at its high
+  spent the session being bought.
   If volume ratio is 3x+ AND the gain is large, note possible EP in reason.
   A gain that large also fails the `Y` check by construction: that FAIL is
   the risk/reward warning, not an argument against the catalyst. Weight the

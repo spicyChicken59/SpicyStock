@@ -344,6 +344,41 @@ def _consistent_with_the_checklist(specs):
 SPEC = _consistent_with_the_checklist(_remap(SPEC, 0))
 
 
+def burst_bar(gain, close_pos, recent_range, i):
+    """The burst bar's own geometry, in src.lynch.BURST_BAR_KEYS' shape.
+
+    DERIVED FROM THE ROW'S OWN MEASUREMENTS, not invented beside them. The
+    three numbers describe one bar and cannot be chosen independently: the
+    part of the day's gain that happened overnight fixes the open, the low
+    sits a little under it, and `close_pos` -- the number the `H` line
+    already prints -- fixes the high. A row whose gap and width were authored
+    separately would describe a bar no session can produce, which is the
+    class check_fixture_fresh.py exists to close.
+
+    `range_expansion` divides by the `N` line's own pre-burst range, because
+    that is the window src.lynch.burst_bar_shape() divides by -- one window,
+    named once, in the module that owns it.
+
+    This generator holds measurements and never slices a frame, so the
+    numbers are authored rather than measured; what makes them honest is
+    that they are consistent with each other and with the rest of the row.
+    """
+    share = (i % 4) / 3.0            # how much of the move happened overnight
+    tail = 0.2 + (i % 3) * 0.35      # how far the low sat under the open, %
+    close = 1.0 + gain / 100.0
+    open_ = 1.0 + gain * share / 100.0
+    low = min(open_, close) * (1.0 - tail / 100.0)
+    high = low + (close - low) / close_pos
+    assert low <= open_ <= high, (
+        f"row {i}: an open outside its own bar is a price nobody paid")
+    width = round((high - low) / close * 100, 1)
+    return {
+        "gap_pct": round((open_ - 1.0) * 100, 1),
+        "bar_range_pct": width,
+        "range_expansion": round(width / recent_range, 2) if recent_range else None,
+    }
+
+
 def build_candidate(s, i):
     detail = lynch(*s.lm, gain=s.gain)
     passes = sum(1 for d in detail if d["pass"])
@@ -367,6 +402,17 @@ def build_candidate(s, i):
         score, verdict, reason, risk = s.score, s.verdict, s.reason, s.risk
         prov = {"source": "claude", "model": MODEL, "chart_seen": s.chart, "error": None}
     off_hi, abv_lo, p3, p6 = s.ctx
+    # The three burst-bar numbers describe ONE bar, and the expansion is the
+    # width over the `N` line's own pre-burst range -- read back OUT of the
+    # finished row rather than trusted, so a generator dividing by anything
+    # else fails here rather than shipping a row whose two printed numbers
+    # cannot be reconciled by the reader they are printed for.
+    bar = burst_bar(s.gain, s.lm[9], s.lm[4], i)
+    printed = float(next(d["value"] for d in detail if d["code"] == "N")
+                    .split("range ")[1].split("%")[0])
+    assert bar["range_expansion"] == round(bar["bar_range_pct"] / printed, 2), (
+        f"{s.t}: {bar['bar_range_pct']}% over a {printed}%/day base is not "
+        f"{bar['range_expansion']}x")
     # Bonde's two measurements. This fixture holds MEASUREMENTS and not frames,
     # so there is no walk here to count a run of up days off; they are authored
     # from the row's position, spread across every value a SCORED row can
@@ -402,7 +448,8 @@ def build_candidate(s, i):
                         "mplfinance ValueError: only 41 sessions of history, need 85"),
         "context": {"pct_off_52w_high": off_hi, "pct_above_52w_low": abv_lo,
                     "perf_3mo_pct": p3, "perf_6mo_pct": p6,
-                    "consecutive_up_days": up_days, "worst_base_day_pct": worst_base},
+                    "consecutive_up_days": up_days, "worst_base_day_pct": worst_base,
+                    **bar},
         "streak": streak(i),
         # Pending on both bases, in the shape the ledger writes.
         "forward_returns": ledger.empty_returns(),
@@ -592,7 +639,11 @@ def build_gated(g, i):
         "dollar_volume": round(g.close * g.vol),
         "lynch": f"{passes}/{len(detail)}", "lynch_passes": passes,
         "lynch_total": len(detail), "lynch_detail": detail,
-        "context": {"consecutive_up_days": up_days, "worst_base_day_pct": worst_base},
+        # The burst bar's shape on a refused row too, for the reason the two
+        # Bonde numbers are here: the record's whole use is judging what was
+        # refused, and a row archived without its measurements can never be.
+        "context": {"consecutive_up_days": up_days, "worst_base_day_pct": worst_base,
+                    **burst_bar(g.gain, g.lm[9], g.lm[4], i)},
         "streak": streak(i), "reason": g.reason,
     }
 

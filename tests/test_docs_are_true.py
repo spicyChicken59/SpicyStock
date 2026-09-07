@@ -262,12 +262,26 @@ def test_the_rulebook_instructs_on_every_field_the_request_carries():
     hand-kept copy cannot have, and this project has already paid for one: a
     second veto added to src.lynch alone left every surface green.
     """
-    from src import emailer, ledger, pipeline
+    from src import emailer, ledger, lynch, pipeline
     from src.scorer import RECORD_KEYS
 
     rulebook = _read("knowledge/strategy.md")
     for name, _key in RECORD_KEYS:
         assert f"`{name}`" in rulebook, f"the rulebook never mentions {name}"
+    # And the burst bar's own geometry, derived from src.lynch.BURST_BAR_KEYS
+    # for the same reason. Two of the rulebook's bullets asked for judgements
+    # about that bar -- a "powerful burst bar" with a big range, and a "huge
+    # gap" as the EP signal -- while the payload carried no open, no high and
+    # no low: the model could answer them from the chart image alone, and on a
+    # night the render fails there is no image.
+    for name in lynch.BURST_BAR_KEYS:
+        assert f"`{name}`" in rulebook, f"the rulebook never mentions {name}"
+    # These carry no threshold at all, so the one thing the model has to be
+    # told is what an absent one means. A null here is a bar that could not be
+    # measured, and reading it as zero is a claim about the market: 0.0%
+    # gap_pct says it opened exactly where it closed yesterday.
+    assert "Null means not measured; it never means zero." in rulebook, (
+        "the rulebook does not say what a null burst-bar measurement means")
     # Every kind of unknown the payload can carry, from the two places the
     # words are defined: the four a ROW can carry, and the fifth that no row
     # can -- src.scorer.record_context() sends NO_STREAK_RECORDED where a

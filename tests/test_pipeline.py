@@ -3441,6 +3441,14 @@ def test_the_ledger_row_is_the_judgement_next_to_what_followed_it(
     # criterion -- are justified by being evaluable later, and until this key
     # was kept there was nowhere for that evidence to accumulate.
     assert {"consecutive_up_days", "worst_base_day_pct"} <= set(row["context"])
+    # And the burst BAR's own shape, since round 11: the record is where a
+    # gapped burst and a wide-range burst can be told apart afterwards, and
+    # the payload that carried neither carried nothing to tell them apart in
+    # the archive either. Derived from src.lynch, not retyped, so a fourth
+    # measurement fails here on the commit that adds it.
+    assert set(lynch.BURST_BAR_KEYS) <= set(row["context"])
+    assert all(row["context"][key] is not None for key in lynch.BURST_BAR_KEYS), (
+        "the double's burst bar is a readable one, so nothing here is unmeasurable")
     assert all(v is None or isinstance(v, (int, float)) for v in row["context"].values())
 
 

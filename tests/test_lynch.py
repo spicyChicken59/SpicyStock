@@ -27,6 +27,7 @@ import pytest
 
 from src.lynch import (
     BREAKDOWN_LOOKBACK,
+    BURST_BAR_KEYS,
     VETO_RULES,
     BREAKDOWN_PCT,
     MAX_CONSECUTIVE_UP_DAYS,
@@ -41,6 +42,7 @@ from src.lynch import (
     MIN_CLOSE_POS,
     MIN_LINEAR_R2,
     MIN_LINEAR_SLOPE,
+    WINDOWS,
     consecutive_up_days,
     evaluate_2lynch,
     extra_context,
@@ -120,6 +122,12 @@ def test_extra_context_shape(ohlcv):
         "perf_6mo_pct",
         "consecutive_up_days",
         "worst_base_day_pct",
+        # Spread rather than typed out, which is what holds the constant and
+        # the function to each other: BURST_BAR_KEYS is what
+        # knowledge/strategy.md is required to explain and what the archive is
+        # asserted to keep, so a key renamed in one place and not the other is
+        # a rulebook instructing on a field nothing sends.
+        *BURST_BAR_KEYS,
     }
     assert all(isinstance(v, (int, float)) for v in ctx.values())
 
@@ -151,6 +159,8 @@ def _frame(
     d1_range: float | None = None,
     burst_zero_range: bool = False,
     burst_close_pos: float = 0.98,
+    burst_gap_pct: float | None = None,
+    burst_low_pct: float | None = None,
     d1_move_pct: float = 0.0,
     d1_volume_mult: float = 1.0,
     wave_pct: float = 0.0,
@@ -180,6 +190,17 @@ def _frame(
                            `30 - trend_days`, so every frame built before this
                            keyword existed is byte-identical.
       burst_close_pos      where in its own range the burst day closes (H).
+      burst_gap_pct        where the burst bar OPENED, as a % from the prior
+                           close. None keeps the +0.5% every frame built
+                           before this keyword existed opened on, so those
+                           frames stay byte-identical.
+      burst_low_pct        where its low sat, as a % from the prior close
+                           (None keeps the -0.1% it has always had). The high
+                           follows from the low and `burst_close_pos`, so
+                           this widens or narrows the bar without moving its
+                           close, its gain, its volume or where in its own
+                           range it closed -- the four things two bars of
+                           very different shape can share.
       d1_move_pct          how far the last pre-burst day moved (C).
       d1_volume_mult       that day's volume, against a flat history (C).
       wave_pct/_period     a slow sine ride superimposed on the advance, so
@@ -249,9 +270,11 @@ def _frame(
     if burst_zero_range:
         high[burst_i] = low[burst_i] = open_[burst_i] = close[burst_i]
     else:
-        low[burst_i] = prev * 0.999
+        low[burst_i] = prev * (0.999 if burst_low_pct is None
+                               else 1.0 + burst_low_pct / 100.0)
         high[burst_i] = low[burst_i] + (close[burst_i] - low[burst_i]) / burst_close_pos
-        open_[burst_i] = prev * 1.005
+        open_[burst_i] = prev * (1.005 if burst_gap_pct is None
+                                 else 1.0 + burst_gap_pct / 100.0)
 
     volume = np.full(days, 3_000_000.0)
     # Everything older than the 50 sessions C averages over. Flat at 1.0x, so
@@ -949,6 +972,238 @@ def test_the_quality_note_carries_the_threshold_the_code_applied():
     assert f"{BREAKDOWN_PCT:.0f}%" not in rulebook, (
         "the rulebook has grown its own copy of BREAKDOWN_PCT; it should name "
         "the criterion and let quality_notes carry the figure")
+
+
+# ------------------------------- round 11: the burst bar reaches the model --
+#
+# The metrics block carried the burst bar's close, its gain, its volume and
+# where in its own range it closed, and nothing about the bar's own geometry
+# -- while knowledge/strategy.md asked the model for a "powerful burst bar"
+# with a big range and named a huge GAP as the Episodic Pivot signal. Both
+# questions were answerable only from the chart image, and on a night the
+# render fails there is no image.
+
+
+def _off_its_own_high(frame: pd.DataFrame) -> pd.DataFrame:
+    """One early bar reaching above and below everything the burst bar does.
+
+    An ordinary name bursting somewhere below its own 52-week high, which is
+    what makes the pair below differ on the burst bar's shape ALONE: the two
+    variants' own highs and lows differ (that is what a wide bar is), and
+    without a historical extreme dominating them, `pct_off_52w_high` and
+    `pct_above_52w_low` would differ too and the "exactly three keys" claim
+    would be about four or five. Bar 5 of 200 sits far outside every window
+    the checklist reads, so it moves nothing else.
+    """
+    frame = frame.copy()
+    frame.iloc[5, frame.columns.get_loc("High")] = 60.0
+    frame.iloc[5, frame.columns.get_loc("Low")] = 20.0
+    return frame
+
+
+def _payload_for(frame: pd.DataFrame) -> dict:
+    """One candidate's scoring request, built the way src.pipeline builds it."""
+    from src.scanner import Candidate, ScanConfig, detect_setup
+    from src.scorer import metrics_payload
+
+    setup = detect_setup(frame, ScanConfig())
+    assert setup, "this frame does not carry a burst, so there is no payload"
+    cand = Candidate(ticker="AAA", history=frame, **setup)
+    return metrics_payload(cand, evaluate_2lynch(frame), extra_context(frame))
+
+
+def test_two_burst_bars_a_trader_would_never_confuse_reach_the_model_as_one():
+    """A +7.5% gap into a bar under 1% wide, against a flat open with a 9%+
+    range: same close, same gain, same volume, same `H`.
+
+    Those are two different setups -- the first has already made its move
+    before anyone could act on it, the second spent the whole session making
+    it -- and before this round the two produced BYTE-IDENTICAL requests.
+    Reproduced through the real Candidate path, which is the point: the
+    difference is not one this pipeline hid in a corner, it is one the
+    scoring model was never given.
+
+    The preconditions are executed rather than described, so this cannot
+    quietly become a test of two identical bars.
+    """
+    gapped = _off_its_own_high(_frame(burst_gap_pct=7.5, burst_low_pct=7.0))
+    wide = _off_its_own_high(_frame(burst_gap_pct=0.0, burst_low_pct=-2.0))
+
+    for name, frame in (("gapped", gapped), ("wide", wide)):
+        bar = frame.iloc[-1]
+        assert bar["Low"] <= bar["Open"] <= bar["High"], f"{name}: not a bar"
+    assert gapped.iloc[-1]["Open"] > wide.iloc[-1]["Open"], "the opens do not differ"
+
+    left, right = _payload_for(gapped), _payload_for(wide)
+    shared = ("close", "gain_pct", "volume", "volume_ratio", "dollar_volume",
+              "2lynch_summary", "2lynch_detail")
+    for key in shared:
+        assert left[key] == right[key], f"the pair was built to share {key}"
+    assert "of day's range" in left["2lynch_detail"][-1], "H is not the last line"
+
+    differ = {key for key in set(left) | set(right) if left.get(key) != right.get(key)}
+    assert differ == set(BURST_BAR_KEYS), (
+        "the two bars reach the model as one request but for "
+        f"{sorted(differ)}")
+
+
+def test_the_gap_and_the_width_are_the_burst_bar_s_own_arithmetic():
+    """Hand-computed off the frame's parameters, not off the code.
+
+    The burst opens 3% above the prior close P and closes 8% above it, its
+    low sits 1% below P and `burst_close_pos` puts the close at 98% of the
+    range, so the high is 0.99P + 0.09P/0.98 = 1.08184P and the bar is
+    0.09184P wide -- 8.5% of a 1.08P close. The shelf it came out of is
+    `tight_range` wide every session, which is 2.0%/day, so the bar is 4.25
+    times the width of its own consolidation.
+    """
+    ctx = extra_context(_frame(burst_gap_pct=3.0, burst_low_pct=-1.0))
+    assert ctx["gap_pct"] == 3.0
+    assert ctx["bar_range_pct"] == 8.5
+    assert ctx["range_expansion"] == 4.25
+    # The width is a share of the CLOSE, and on a bar closing at 98% of its
+    # range the close and the high are so nearly one number that both
+    # denominators round to 8.5. This one closes at 60% of a range running
+    # from 0.99P to 1.14P: 0.15P over a 1.08P close is 13.9%, and over the
+    # high it would be 13.2%.
+    mid = extra_context(_frame(burst_gap_pct=3.0, burst_low_pct=-1.0, burst_close_pos=0.6))
+    assert mid["bar_range_pct"] == 13.9
+    # And the same numbers reach the request, since src.scorer spreads the
+    # context into it -- the archive gets them from src.ledger the same way.
+    payload = _payload_for(_off_its_own_high(_frame(burst_gap_pct=3.0, burst_low_pct=-1.0)))
+    assert all(payload[key] == ctx[key] for key in BURST_BAR_KEYS), payload
+
+
+def test_the_expansion_is_measured_against_the_consolidation_the_checklist_names():
+    """WINDOWS["tight_sessions"], `N`'s own window, and deliberately not a
+    second one: a strategy number invented here would be invisible to
+    rules_fingerprint() and unfalsifiable against `N`.
+
+    The precondition is what makes this test able to fail: on this frame the
+    seven shelf sessions are 2.0%/day and everything before them is 4.0%/day,
+    so a denominator taken over `norm_sessions` instead would halve the
+    answer. The two windows have to disagree, or the assertion below passes
+    whichever one the code reads.
+    """
+    frame = _frame()
+    widths = ((frame["High"] - frame["Low"]) / frame["Close"] * 100)
+    shelf = widths.iloc[-(WINDOWS["tight_sessions"] + 1):-1]
+    before = widths.iloc[-WINDOWS["norm_sessions"]:-WINDOWS["tight_sessions"] - 1]
+    assert round(shelf.mean(), 1) == 2.0 and round(before.mean(), 1) == 4.0, (
+        "the two windows agree on this frame, so this cannot tell them apart")
+
+    ctx = extra_context(frame)
+    assert ctx["range_expansion"] == round(ctx["bar_range_pct"] / 2.0, 2)
+    assert ctx["range_expansion"] != round(ctx["bar_range_pct"] / 4.0, 2)
+    # And published at two decimals, the precision `N` prints its own
+    # tightness at, so the two ratios a reader sees are one kind of number.
+    # 2.0%/day divides the burst bar exactly, so the precision is invisible
+    # on the frame above; 2.1%/day is 3.6666... and shows it.
+    assert extra_context(_frame(tight_range=0.021))["range_expansion"] == 3.67
+
+
+@pytest.mark.parametrize("column", ["Open", "High", "Low"])
+def test_a_bar_that_cannot_be_read_measures_null_and_never_zero(column):
+    """The rule round 9 settled for the open basis (F1/L4), one layer over.
+
+    A missing Open leaves the width measurable and the gap unsayable; a
+    missing High or Low leaves nothing measurable at all, because a bar with
+    no envelope has no width and an open nothing can be checked against is
+    not a print. Zero would be a fabricated measurement, and the most
+    confident one available: 0.0% is "it opened exactly where it closed
+    yesterday", which is a claim about the market.
+    """
+    frame = _frame()
+    frame.iloc[-1, frame.columns.get_loc(column)] = float("nan")
+    ctx = extra_context(frame)
+
+    unsayable = ["gap_pct"] if column == "Open" else list(BURST_BAR_KEYS)
+    for key in unsayable:
+        assert ctx[key] is None, f"{key} was measured off a bar with no {column}"
+    for key in set(BURST_BAR_KEYS) - set(unsayable):
+        assert isinstance(ctx[key], float) and ctx[key] > 0, key
+
+
+def test_an_open_outside_its_own_bar_is_not_a_gap():
+    """src.ledger._open_within_its_bar() refuses an entry price outside the
+    day's low and high, and `H` refuses a close above its own high, for one
+    reason: a price outside the bar is one nobody paid. A gap measured from
+    it would be the same fabrication with a different name.
+
+    Reproduced on the bar's own numbers -- the open is put a hair above the
+    high the frame built, everything else untouched -- so the width and the
+    expansion still measure and only the gap goes null.
+    """
+    frame = _frame()
+    high = float(frame["High"].iloc[-1])
+    frame.iloc[-1, frame.columns.get_loc("Open")] = high * 1.001
+    ctx = extra_context(frame)
+
+    assert ctx["gap_pct"] is None
+    assert ctx["bar_range_pct"] == extra_context(_frame())["bar_range_pct"]
+    assert ctx["range_expansion"] == extra_context(_frame())["range_expansion"]
+    # And the boundary is inclusive: an open exactly AT its own high is a
+    # print, not a bad bar.
+    frame.iloc[-1, frame.columns.get_loc("Open")] = high
+    assert extra_context(frame)["gap_pct"] is not None
+
+
+def test_an_inverted_bar_has_no_width_at_all():
+    """A High below its own Low is not a bar, and a negative width is a
+    fabricated measurement rather than a small one -- the same class as the
+    close above its own high that `H` refuses. The gap goes with it: there is
+    no envelope for the open to be inside.
+    """
+    frame = _frame()
+    high = frame.columns.get_loc("High")
+    frame.iloc[-1, high] = float(frame["Low"].iloc[-1]) * 0.99
+    ctx = extra_context(frame)
+    assert [ctx[key] for key in BURST_BAR_KEYS] == [None, None, None]
+
+
+def test_a_base_with_no_width_has_no_norm_to_expand_against():
+    """Every session before the burst is a zero-width bar, so the mean the
+    expansion divides by is 0. The answer is null: an expansion against
+    nothing is not infinite, it is unmeasured, and dividing anyway raises
+    inside publish() -- after the scan and every Claude call.
+    """
+    ctx = extra_context(_frame(wide_range=0.0, tight_range=0.0))
+    assert ctx["bar_range_pct"] > 0, "the burst bar itself still has a width"
+    assert ctx["range_expansion"] is None
+
+
+def test_a_bool_where_a_price_belongs_is_not_a_price():
+    """The rule src.ledger._num() applies, for the reason it applies it: a
+    True read as $1.00 is a fabricated measurement, and this one is not
+    small -- a $40 bar's width over a $1 close is 43,000%.
+
+    CLOSE and not Open, deliberately. A True in the Open column reads as
+    $1.00, which is nowhere near a $40 bar, so the containment rule refuses
+    it whatever this guard does: a test planted there would pass with the
+    guard deleted, which is this project's third shape of shaped test. The
+    column is made object-typed because a float column cannot hold a bool to
+    begin with, which is also the only way one arrives.
+    """
+    frame = _frame()
+    frame["Close"] = frame["Close"].astype(object)
+    frame.iloc[-1, frame.columns.get_loc("Close")] = True
+    ctx = extra_context(frame)
+    assert ctx["bar_range_pct"] is None and ctx["range_expansion"] is None
+
+
+def test_a_flat_bar_has_no_width_rather_than_no_measurement():
+    """`H` refuses a bar with no high-low separation because it is being
+    asked whether the close was strong and such a bar cannot say. This is
+    being asked how WIDE the bar was, and 0.0% is that answer rather than a
+    failure to reach one -- the same distinction as a measured 0 up days
+    against a null one.
+    """
+    ctx = extra_context(_frame(burst_zero_range=True))
+    assert ctx["bar_range_pct"] == 0.0
+    assert ctx["range_expansion"] == 0.0
+    # The gap is still measurable: the open equals the close equals the high
+    # equals the low, which is inside its own (degenerate) bar.
+    assert ctx["gap_pct"] is not None
 
 
 #: Close is deliberately absent: _base() drops a bar with no Close too, so on

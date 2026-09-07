@@ -219,6 +219,147 @@ def worst_base_day(df: pd.DataFrame, lookback: int = BREAKDOWN_LOOKBACK) -> floa
     return round(float(moves.min()), 1) + 0.0
 
 
+#: The burst bar's own geometry, under the names the scoring request carries.
+#: Named here so that nothing hand-keeps a second copy of the list: a docs
+#: test holds knowledge/strategy.md to explaining every one of them, and
+#: extra_context() is asserted to produce exactly these.
+#:
+#: NOT thresholds and NOT windows. No rule reads them, nothing is compared
+#: against them, and they are strings, so rules_fingerprint() -- which walks
+#: this module's upper-case NUMBERS and its WINDOWS -- does not record them.
+#: That is right rather than an omission: the fingerprint says which screener
+#: produced a row, and a measurement that refuses nothing changes no burst.
+#: (What DOES change is the rulebook that tells the model how to read them,
+#: and that is in the fingerprint already, through `score.prompt`.)
+BURST_BAR_KEYS: tuple[str, ...] = ("gap_pct", "bar_range_pct", "range_expansion")
+
+
+def _finite(value) -> float | None:
+    """`value` as a float, or None when it is not a finite number.
+
+    Bools are refused rather than read as 1.0 and 0.0, the same rule
+    src.ledger._num() applies for the same reason: a True in a price column
+    is a shape no feed produces and reading it as a dollar is worse than
+    refusing it.
+    """
+    if isinstance(value, (bool, np.bool_)):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if np.isfinite(number) else None
+
+
+def _bar_range_pct(bar) -> float | None:
+    """One bar's high-low span as a percentage of its close, or None.
+
+    None -- never 0 -- when the envelope cannot be read: a missing High or
+    Low, a close that is not a positive number, or a High below its own Low,
+    which is not a bar at all. That is the rule `H` applies to a close
+    outside its own range and the one src.ledger._open_within_its_bar()
+    applies to an entry price, and the reason is the same in all three
+    places: a number computed from a bar that cannot be read is a fabricated
+    measurement, and 0.0 is the most confident fabrication available.
+
+    A bar whose High EQUALS its Low is 0.0% here and not null. `H` refuses
+    such a bar because it is being asked whether the close was strong and a
+    bar with no range cannot say; this is being asked how wide the bar was,
+    and "no width" is the answer rather than a failure to measure one.
+
+    Rounded to the tenth of a percent it is printed at, once, for the reason
+    every measurement in this module is: a number decided at one precision
+    and shown at another is how -4.04% came to be refused under a note
+    stating -4.0%.
+    """
+    high, low = _finite(bar.get("High")), _finite(bar.get("Low"))
+    close = _finite(bar.get("Close"))
+    if high is None or low is None or close is None or close <= 0 or high < low:
+        return None
+    return round((high - low) / close * 100, 1)
+
+
+def burst_bar_shape(df: pd.DataFrame) -> dict:
+    """The burst bar itself: the gap it opened on, how wide it was, and how
+    that width compares with the base it came out of.
+
+    THE MODEL WAS ASKED TO JUDGE A BAR IT COULD NOT SEE. knowledge/strategy.md
+    asks for a "powerful burst bar" with a big range and names a huge gap as
+    the Episodic Pivot signal, and the metrics block carried no open, no high
+    and no low -- only the close, the gain, the volume and where in its range
+    the bar closed. Reproduced through the real Candidate path before this
+    existed: a +7.5% gap into a bar 0.9% wide, and a flat open with a 9.4%
+    intraday range, on the same close, the same gain, the same volume and the
+    same `H`, produced BYTE-IDENTICAL requests. (Those are the two frames
+    tests/test_lynch.py builds; the numbers here are what they publish.) The difference lived in the
+    chart image alone -- and on a night the render fails, `chart_seen` is
+    False and it lived nowhere.
+
+    Three measurements and no rule. Nothing here refuses a burst, moves the
+    pass count or enters the fingerprint (see BURST_BAR_KEYS); the archive
+    keeps them beside the forward returns so the record can one day be asked
+    whether a gapped burst and a wide-range burst pay differently.
+
+      gap_pct          the open against the previous session's close -- the
+                       overnight move a reader of an 18:16 ET email has
+                       already missed, measured off the same two closes the
+                       scan's own gain_pct is measured off.
+      bar_range_pct    high minus low over the close: how wide the day was.
+      range_expansion  that width over the mean width of the consolidation
+                       the checklist already names -- WINDOWS["tight_sessions"]
+                       sessions, `N`'s own window, deliberately not a second
+                       one. A burst bar three times the width of the shelf it
+                       came out of is the "big range" the rulebook asks for,
+                       stated relative to the stock rather than in absolute
+                       percent, which is the same move step 4 made for volume.
+
+    NULL, NEVER 0, wherever a measurement could not be made -- the rule round 9
+    settled for the open basis (F1/L4). An open outside its own bar's high and
+    low is not a print anybody paid, so it is not a gap either; a bar whose
+    envelope cannot be read has no width; and a base with no readable bar
+    behind it has no norm to expand against.
+    """
+    out: dict = {key: None for key in BURST_BAR_KEYS}
+    if len(df) == 0:
+        return out
+    burst = df.iloc[-1]
+
+    # The gap is measured off the bar BEFORE the burst in the frame this was
+    # handed, which is the bar src.scanner.detect_setup() measures gain_pct
+    # against -- one denominator, so the two numbers in the payload cannot
+    # describe two different previous sessions.
+    prev_close = _finite(df["Close"].iloc[-2]) if len(df) >= 2 and "Close" in df else None
+    open_ = _finite(burst.get("Open"))
+    high, low = _finite(burst.get("High")), _finite(burst.get("Low"))
+    if (open_ is not None and open_ > 0 and prev_close is not None and prev_close > 0
+            and high is not None and low is not None and low <= open_ <= high):
+        out["gap_pct"] = round((open_ / prev_close - 1) * 100, 1)
+
+    bar_range = _bar_range_pct(burst)
+    out["bar_range_pct"] = bar_range
+    if bar_range is not None:
+        # The last `tight_sessions` bars before the burst that CAN be read,
+        # not the last `tight_sessions` bars: `N` measures its consolidation
+        # over a frame it has already pruned, and reaching past a hole is
+        # what that amounts to. Walked backwards so a long history costs
+        # seven rows rather than all of them.
+        base: list[float] = []
+        for i in range(len(df) - 2, -1, -1):
+            measured = _bar_range_pct(df.iloc[i])
+            if measured is not None:
+                base.append(measured)
+                if len(base) == WINDOWS["tight_sessions"]:
+                    break
+        norm = sum(base) / len(base) if base else 0.0
+        if norm > 0:
+            # The ratio is taken from the number the model is SHOWN, the same
+            # rule `N` follows for its own tightness, so a reader cannot
+            # recompute the ratio from the printed width and get another
+            # answer.
+            out["range_expansion"] = round(bar_range / norm, 2)
+    return out
+
+
 def veto_reason(name: str) -> str:
     """The reason word for an absolute rule, computed rather than looked up.
 
@@ -521,4 +662,9 @@ def extra_context(df: pd.DataFrame) -> dict:
         # forces every consumer to special-case it.
         "perf_3mo_pct": round(perf_3mo, 1) if perf_3mo is not None else None,
         "perf_6mo_pct": round(perf_6mo, 1) if perf_6mo is not None else None,
+        # The burst bar's own shape -- the one thing in the metrics block the
+        # model was asked to judge and given no number for. Measured off `df`
+        # rather than `raw` so the gap's denominator is the previous close the
+        # scan's gain_pct used; see burst_bar_shape().
+        **burst_bar_shape(df),
     }
