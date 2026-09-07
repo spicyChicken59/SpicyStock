@@ -161,7 +161,12 @@ def _candidate(ticker: str, frame) -> scanner.Candidate:
     set up tonight.
     """
     last, prev = frame.iloc[-1], frame.iloc[-2]
-    avg = float(frame["Volume"].iloc[-51:-1].mean()) or 1.0
+    # The scan's own function, not its window retyped. This stood in for
+    # detect_setup() with `iloc[-51:-1]` spelled out -- a fourth copy of a
+    # number round 11 found spelled a third time in src.lynch's C check -- and
+    # the pair it produces is what the live request carries: avg_volume beside
+    # a volume_ratio the model is told to divide back out.
+    avg = scanner.trailing_volume_mean(frame, scanner.ScanConfig()) or 1.0
     return scanner.Candidate(
         ticker=ticker, date=str(scanner._last_bar_date(frame)),
         close=float(last["Close"]),

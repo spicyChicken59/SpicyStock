@@ -521,7 +521,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1357 tests, no network or API keys needed
+pytest tests/                   # 1367 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -693,7 +693,7 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 15.45 MB raw
+and what followed — needs the whole record, which projects to about 15.46 MB raw
 and **1.24 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
@@ -987,8 +987,9 @@ own weights, and the page uses it there.
   so a threshold added later is recorded the moment it is named.
   The trap it exists to avoid is a fingerprint that misses a number and so
   reports "same rules" across a change that altered them, which is worse than
-  no fingerprint; the six checklist windows were bare literals until round 8
-  named them for that reason. `MAX_TO_SCORE`, `TOP_N`, the feed, the model and
+  no fingerprint; the checklist's windows were bare literals until round 8
+  named six of them, and round 11 the seventh — `C`'s volume norm, whose 50
+  could be changed to 30 with this fingerprint byte-identical. `MAX_TO_SCORE`, `TOP_N`, the feed, the model and
   the universe are deliberately not in it: each is already a fact of the run
   block. What it still cannot see is a measurement key added to the metrics
   payload with the rulebook left untouched — the rulebook has to explain a key
@@ -1340,7 +1341,10 @@ test fixtures. It dispatches no scan and calls no market or email service.
   override: `ScanConfig` in `src/scanner.py`. There is no share-volume floor;
   step 4 deleted it, and this bullet named the deleted knob and none of the
   three that replaced it
-- 2LYNCH pass criteria: `src/lynch.py`
+- 2LYNCH pass criteria: `src/lynch.py` — the thresholds a measurement is
+  compared against are module constants, and `WINDOWS` holds how much history
+  each check reads. Both kinds are in the rules fingerprint, and a number left
+  as a literal in `evaluate_2lynch` is not, which a test refuses
 - The two rules that are not checks, and the note beside them saying why not:
   `MAX_CONSECUTIVE_UP_DAYS` (an absolute veto) and `BREAKDOWN_PCT` /
   `BREAKDOWN_LOOKBACK` (measured, sent to the model, rejecting nothing), also

@@ -52,6 +52,16 @@ PRIOR_BURST_PCT = 4.0       # 2: what counts as an earlier burst — the scan's 
 #: threshold and cannot carry a window -- and two guards in tests/test_lynch.py
 #: are written against the scalars for exactly that reason. Putting the
 #: distinction in the code beats adding an exemption list to the guards.
+#:
+#: Round 8 named six of them and MISSED THE SEVENTH, which is the one below:
+#: `C` divided by `pre["Volume"].iloc[-51:-1].mean()`, so the sessions the
+#: calm-day rule averages over were a bare 51. Reproduced rather than argued
+#: -- changing that 50 to 30 left rules_fingerprint() BYTE-IDENTICAL and
+#: tests/test_lynch.py, tests/test_scanner.py and tests/test_docs_are_true.py
+#: all green, while C's verdict moved. A round that names six of seven is how
+#: a class gets declared closed on the instance nobody looked at, so
+#: test_no_check_reads_a_window_left_as_a_bare_number now reads the numeric
+#: literals out of evaluate_2lynch's own AST rather than trusting this list.
 WINDOWS = {
     "prior_burst_lookback": 20,   # 2: sessions searched for earlier bursts
     "linear_fit_sessions": 30,    # L: sessions of prior move the log-price fit covers
@@ -59,6 +69,20 @@ WINDOWS = {
     "run_up_sessions": 20,        # Y: sessions the month's run-up spans
     "tight_sessions": 7,          # N: the recent window called "the consolidation"
     "norm_sessions": 60,          # N: the range norm, ending where that window starts
+    # C: the volume average the day before the burst is called quiet against,
+    # ending the session before that day. Named HERE and not read off
+    # ScanConfig.rvol_lookback, which holds the same 50 for rule 3 -- and that
+    # is the decision, not an oversight. src.lynch imports numpy and pandas
+    # and nothing of this project's, which is what lets tools/make_fixture.py
+    # and the checklist's own tests take the thresholds without dragging the
+    # scanner's config in; and the two numbers answer two questions ("was the
+    # day before quiet" against "is today's volume unusual for this name"),
+    # so one of them moving is not automatically the other moving. They are
+    # held equal by a test that says so out loud rather than by a shared name,
+    # because the equality is a judgement -- ScanConfig's own comment argues
+    # it -- and a judgement with a guard on it can be revisited, while one
+    # spelled as an import cannot even be seen.
+    "volume_norm_sessions": 50,
 }
 MIN_LINEAR_R2 = 0.55        # L: fit quality of the prior move
 MIN_LINEAR_SLOPE = 0.0      # L: ...and it must be an advance, not a collapse
@@ -66,7 +90,7 @@ MAX_RUN_UP_1MO = 25.0       # Y: % run-up over the past month, through the burst
 MAX_EXT_VS_SMA20 = 15.0     # Y: % above the 20-day average, through the burst
 MAX_TIGHTNESS = 1.0         # N: pre-burst range vs the stock's own 60-day norm
 MAX_D1_MOVE = 2.0           # C: prior day's absolute move, %
-MAX_D1_VOL_RATIO = 1.2      # C: prior day's volume vs its 50-day average
+MAX_D1_VOL_RATIO = 1.2      # C: prior day's volume vs its own volume_norm_sessions average
 MAX_D1_RANGE_RATIO = 1.0    # C: prior day's range vs the same 60-day norm
 MIN_CLOSE_POS = 0.70        # H: where in the day's range the burst closed
 
@@ -127,7 +151,16 @@ MIN_CLOSE_POS = 0.70        # H: where in the day's range the burst closed
 # with curl, not assumed -- so the numbers below come from the brief that
 # specified this work and NOT from Bonde's own words. They are named constants
 # for exactly that reason: if the source says four days rather than three, or
-# names a different window for the base, this is the one place to change.
+# names a different window for the base, this is the one place the CODE reads
+# it from. It is NOT the only place the number is written, and this comment
+# said it was: knowledge/strategy.md tells the model "three or more is refused
+# before it reaches you" and "anything you are scoring is 0, 1 or 2", and
+# README states the rule in the pipeline diagram. Editing this constant alone
+# leaves the rulebook -- the system prompt, a surface a reader never sees --
+# asserting a rule the code no longer applies. What makes the sentence true is
+# a guard rather than a promise: test_the_rulebook_states_the_numbers_the_
+# checklist_applies reads all four of those sentences back against these
+# constants and turns red until they are swept with it.
 #: Every absolute rule, named once, here beside the rules themselves. The
 #: reason word an unscored burst carries is DERIVED from the name by
 #: veto_reason(), so nothing anywhere holds a second copy of this list that a
@@ -621,7 +654,10 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     # ---- C: calm day immediately before the burst ----
     d1 = pre.iloc[-1]
     d1_range = shown((d1["High"] - d1["Low"]) / d1["Close"] * 100, 1)
-    d1_vol_ratio = shown(d1["Volume"] / pre["Volume"].iloc[-51:-1].mean(), 2)
+    # The sessions before d1, not counting d1: a day cannot be quiet against a
+    # baseline it is itself part of. `+ 1` because the slice ends one short.
+    d1_norm = pre["Volume"].iloc[-(WINDOWS["volume_norm_sessions"] + 1):-1].mean()
+    d1_vol_ratio = shown(d1["Volume"] / d1_norm, 2)
     d1_move = shown(abs(pre["Close"].pct_change().iloc[-1]) * 100, 1)
     # The range was measured and printed but left out of the verdict, so a
     # day that closed unchanged after a 15%-wide swing counted as "calm".

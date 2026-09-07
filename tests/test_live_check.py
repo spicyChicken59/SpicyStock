@@ -237,6 +237,27 @@ def test_the_live_check_says_when_the_feed_repeated_a_bar_and_stays_quiet_when_i
 
 
 # --------------------------------------------------------------- claude ----
+def test_the_stand_in_candidate_carries_the_scans_own_volume_arithmetic(live, ohlcv):
+    """The one tool that reaches the real API builds its own Candidate, and
+    the pair it puts in the request is `avg_volume` beside a `volume_ratio`
+    knowledge/strategy.md tells the model to divide back out.
+
+    It retyped the scan's 50-session window as `iloc[-51:-1]`, so nothing tied
+    the two numbers together and an off-by-one here would have sent a ratio
+    over a baseline the payload did not name -- the exact sentence
+    src.scorer.volume_ratio_basis() exists to avoid printing. It calls
+    trailing_volume_mean() now, and this reads the result back through the
+    scorer's own derivation.
+    """
+    from src.scanner import ScanConfig, trailing_volume_mean
+    from src.scorer import volume_ratio_basis
+
+    frame = ohlcv("burst")
+    cand = live._candidate("AAA", frame)
+    assert cand.avg_volume == int(trailing_volume_mean(frame, ScanConfig()))
+    assert "trailing average" in volume_ratio_basis(cand)
+
+
 def test_a_rejected_anthropic_key_fails_claude_and_skips_the_cache_check(live, boundaries):
     boundaries["anthropic"].set_error(RuntimeError("Error code: 401 - invalid x-api-key"))
     checks = by_name(live.run_checks(now=NOW))

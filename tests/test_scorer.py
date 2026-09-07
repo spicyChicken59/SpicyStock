@@ -702,10 +702,19 @@ def test_the_fallback_never_scores_above_the_rubrics_own_anchor(candidate):
     """knowledge/strategy.md anchors the pass count: "6/6 ~ 8-10, 5/6 ~ 7-8,
     4/6 ~ 5-7, 3/6 ~ 3-5". `passes / total * 10` put 5/6 at 8.3 -- above the
     top of its band -- and 6/6 at a flat 10.0, the maximum of the whole scale,
-    for a candidate no model looked at."""
-    anchor_low = {3: 3.0, 4: 5.0, 5: 7.0, 6: 8.0}
-    for passes, low in anchor_low.items():
-        assert _fallback_score(make_lynch(passes)) == low
+    for a candidate no model looked at.
+
+    The four anchors themselves used to be a dict typed out here, which is a
+    THIRD copy of them beside the map and the rulebook and agrees with
+    whichever it was typed from. They are asserted against the rulebook's own
+    sentence in tests/test_docs_are_true.py's
+    test_the_fallback_anchors_are_the_rubrics_own_bands; what is left here is
+    what that parse cannot say -- that the map never rises with fewer checks
+    passed, and never reaches the top of the scale for a candidate nobody
+    looked at.
+    """
+    scores = [_fallback_score(make_lynch(passes)) for passes in range(7)]
+    assert scores == sorted(scores), f"a worse checklist scores better: {scores}"
     assert _fallback_score(make_lynch(6)) < 10.0
 
 
@@ -937,6 +946,76 @@ def test_a_previous_session_denominator_is_named_as_one():
     basis = volume_ratio_basis(cand)
     assert "PREVIOUS SESSION" in basis
     assert "not a trailing average" in basis
+
+
+def test_an_average_rounded_to_a_share_still_reproduces_its_own_ratio():
+    """The two numbers in one payload are rounded from different originals.
+
+    detect_setup() publishes `volume_ratio` as round(volume / mean, 2) off the
+    UNROUNDED trailing mean and `avg_volume` as round(mean) -- whole shares --
+    so dividing by the archived average lands a cent away whenever the
+    rounding falls badly. 1,611,825 shares over a mean of 137,234.66 is 11.75;
+    over the archived 137,235 it is 11.74. An exact comparison then told the
+    model "a baseline of about 137,220 shares, which the scanner did not name"
+    with `avg_volume: 137235` three lines above it in the same block -- a
+    false denial, on the field knowledge/strategy.md keys the Episodic Pivot
+    adjustment off. Measured at about 1 candidate in 8,000 over 200,000
+    plausible volume/average pairs: rare, and not zero, and Tuesday starts
+    writing real rows.
+    """
+    volume, mean = 1_611_825, 137_234.66
+    ratio = round(volume / mean, 2)
+    archived = round(mean)
+    assert round(volume / archived, 2) != ratio, (
+        "this pair no longer straddles the rounding step, so the test cannot fail")
+    cand = _stand_in(volume=volume, avg_volume=float(archived),
+                     prev_volume=900_000, volume_ratio=ratio)
+    basis = volume_ratio_basis(cand)
+    assert "trailing average" in basis and f"{archived:,}" in basis
+    assert "did not name" not in basis
+
+
+def test_the_slack_is_a_step_and_not_a_float_that_is_nearly_one():
+    """The straddle whose gap lands ABOVE 0.01, which is the same defect.
+
+    0.01 is not a double, so the difference between two 2dp numbers one step
+    apart is 0.00999999999999979 at one magnitude and 0.010000000000000009 at
+    another. A bare `<= 0.01` refuses the second, which is a third of the
+    cases the slack exists for: 69 of 209 one-step straddles over two million
+    plausible volume/average pairs. This is that pair, found by searching for
+    it rather than reasoned about.
+    """
+    volume, mean = 380_541, 197_683.618530932
+    ratio, archived = round(volume / mean, 2), round(mean)
+    assert abs(round(volume / archived, 2) - ratio) > 0.01, (
+        "this pair no longer lands above the step, so the test cannot fail")
+    cand = _stand_in(volume=volume, avg_volume=float(archived),
+                     prev_volume=90_000, volume_ratio=ratio)
+    assert "trailing average" in volume_ratio_basis(cand)
+
+
+def test_one_rounding_step_of_slack_does_not_let_yesterday_pose_as_the_average():
+    """Why the tolerance is one step and not two.
+
+    The average is tried first, so widening the slack costs exactly this: a
+    ratio the PREVIOUS SESSION produced, over a candidate whose trailing
+    average happens to sit a few hundredths away, would be reported as the
+    trailing average -- the mislabel this whole function exists to end, since
+    a one-day denominator is inflated by precisely the quiet day the setup
+    screens for. The average here is TWO steps out and the previous session is
+    exact, which is the smallest gap that separates one step of slack from
+    two: at 0.05 the widening-to-two-steps mutant survived.
+    """
+    volume = 3_000_000
+    cand = _stand_in(volume=volume, prev_volume=1_000_000, volume_ratio=3.0,
+                     avg_volume=volume / 3.02)
+    assert round(volume / cand.avg_volume, 2) == 3.02, "the precondition moved"
+    basis = volume_ratio_basis(cand)
+    # The previous-session sentence says "not a trailing average", so the
+    # phrase alone cannot tell the two branches apart -- what does is which
+    # number is named as the denominator.
+    assert "PREVIOUS SESSION" in basis and f"{cand.prev_volume:,}" in basis
+    assert f"{cand.avg_volume:,.0f}" not in basis
 
 
 def test_an_unrecognised_denominator_is_admitted_to_rather_than_guessed():

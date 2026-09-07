@@ -477,7 +477,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -805,7 +806,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -1171,7 +1173,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -1634,7 +1637,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -2094,7 +2098,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -2466,7 +2471,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -2747,7 +2753,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -3242,7 +3249,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -3526,7 +3534,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -3851,7 +3860,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -4176,7 +4186,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -4592,7 +4603,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -4879,7 +4891,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -5207,7 +5220,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -5540,7 +5554,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -5912,7 +5927,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -6199,7 +6215,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -6483,7 +6500,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -6767,7 +6785,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -7044,7 +7063,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -7501,7 +7521,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -7999,7 +8020,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -8327,7 +8349,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -8828,7 +8851,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -9379,7 +9403,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -9830,7 +9855,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -10155,7 +10181,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -10703,7 +10730,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -11080,7 +11108,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,
@@ -11369,7 +11398,8 @@
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
       "measured": 77,

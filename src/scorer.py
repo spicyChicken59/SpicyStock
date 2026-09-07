@@ -263,8 +263,33 @@ def volume_ratio_basis(cand) -> str:
         return "unknown — the scanner supplied no volume or no ratio"
 
     def reproduces(denominator) -> bool:
-        # detect_setup() rounds the ratio to 2dp; match at that resolution.
-        return bool(denominator) and round(volume / denominator, 2) == round(ratio, 2)
+        # detect_setup() rounds the ratio to 2dp -- so match at that
+        # resolution, and allow ONE step of it. The two numbers in the payload
+        # are rounded from different originals: `volume_ratio` is
+        # round(volume / mean, 2) off the unrounded trailing mean, while
+        # `avg_volume` is round(mean) -- whole shares. Dividing by the archived
+        # average therefore lands a cent away from the archived ratio whenever
+        # the rounding falls badly, and an exact comparison then told the model
+        # "a baseline of about 137,220 shares, which the scanner did not name"
+        # with avg_volume 137,235 sitting three lines above it in the same
+        # block. Reproduced on that pair (1,611,825 / 137,234.66 -> 11.75, and
+        # 11.74 through the archived average); measured at about 1 candidate in
+        # 8,000 over 200,000 plausible volume/average pairs, which is rare and
+        # is not zero, and the failure is a false denial rather than a wrong
+        # number. One step and not two: at 0.1 the previous session's volume
+        # starts reproducing ratios it did not produce, and this function's
+        # whole job is to tell those two denominators apart.
+        #
+        # The difference is ROUNDED before it is compared, and that is the
+        # same defect one level down rather than a flourish: 0.01 is not a
+        # double, so the gap between two 2dp numbers one step apart lands
+        # either side of it depending on their magnitude. Measured over two
+        # million plausible pairs, 69 of 209 one-step straddles came out at
+        # 0.010000000000000009 and would have been refused by a bare
+        # `<= 0.01` -- a third of the cases this exists for, failing the same
+        # way the thing it fixes does.
+        return (bool(denominator)
+                and round(abs(round(volume / denominator, 2) - round(ratio, 2)), 2) <= 0.01)
 
     average = getattr(cand, "avg_volume", None)
     if reproduces(average):
@@ -605,6 +630,16 @@ def _fallback_score(lynch_result: dict) -> float:
     scored better than most candidates somebody did. The low end is the
     conservative reading of the same table, and no chart adjustment is
     available to earn more than it.
+
+    The four anchors the rubric states are the four this map has to agree
+    with, and it is a SECOND COPY of them: nothing here reads
+    knowledge/strategy.md, because parsing the system prompt at scoring time
+    to decide a number would make a prose edit a code path. The agreement is a
+    guard instead -- test_the_fallback_anchors_are_the_rubrics_own_bands parses
+    the rubric's sentence and asserts this function against it, so an edit to
+    either half turns red. Below 3/6 the rubric says nothing (the gate refuses
+    those before a call is made, and 3 is MIN_LYNCH_PASSES), so 0-2 are this
+    function's own conservative extension and the guard leaves them alone.
     """
     anchors = {0: 0.0, 1: 1.0, 2: 2.0, 3: 3.0, 4: 5.0, 5: 7.0, 6: 8.0}
     total = lynch_result.get("total") or 6

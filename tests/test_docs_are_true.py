@@ -250,6 +250,113 @@ def test_the_documented_thresholds_are_the_ones_the_code_applies(ohlcv):
         "the session arithmetic keys on")
 
 
+def test_the_rulebook_states_the_numbers_the_checklist_applies():
+    """knowledge/strategy.md is the system prompt, and five of the checklist's
+    numbers are written out in its prose.
+
+    README's numbers have been read back against the code since the round-4
+    prose audit; the rulebook's had not been, and it is the surface that moves
+    a score. Reproduced by mutation before this existed: MIN_CLOSE_POS 0.70 ->
+    0.60, MAX_EXT_VS_SMA20 15 -> 12, MAX_RUN_UP_1MO 25 -> 35, MAX_PRIOR_BURSTS
+    1 -> 2 and PRIOR_BURST_PCT 4 -> 6 each left this whole file green, so the
+    model would have gone on being told a rule the code had stopped applying.
+    Only MAX_CONSECUTIVE_UP_DAYS failed anything, and what it failed named
+    README.
+
+    Every number is asserted at EVERY mention, by findall and set equality
+    rather than `in` -- the shaped-assertion shape the same audit found on
+    README's two "8:30 AM ET" strings, where changing one left the other to
+    satisfy the check. The rulebook's own two bars (top 25% for an A+, 20%
+    extension for an automatic kill) are NOT copies of these constants and are
+    asserted as what they claim to be: strictly stricter, and strictly looser,
+    than the checks they are written beside.
+    """
+    from src import lynch
+
+    # One line: the file wraps its prose, and a sentence is not two sentences
+    # because a paragraph reflowed.
+    book = " ".join(_read("knowledge/strategy.md").split())
+
+    def one(pattern):
+        found = re.findall(pattern, book)
+        assert found, f"knowledge/strategy.md no longer says {pattern!r}"
+        return found
+
+    # -- 2: how many earlier 4% days a fresh leg may already have --
+    (prior,) = one(r"(\w+) or (?:\w+) prior [\d.]+% day")
+    (allowed,) = one(r"(?:\w+) or (\w+) prior [\d.]+% day")
+    words = {"zero": 0, "one": 1, "two": 2, "three": 3, "four": 4}
+    assert [words[prior.lower()], words[allowed.lower()]] == [0, lynch.MAX_PRIOR_BURSTS], (
+        f"the rulebook allows {prior} or {allowed} prior bursts; "
+        f"MAX_PRIOR_BURSTS is {lynch.MAX_PRIOR_BURSTS}")
+    assert {float(n) for n in one(r"prior ([\d.]+)% day")} == {lynch.PRIOR_BURST_PCT}
+
+    # -- H: where in its range the burst closed --
+    h_bar = round((1 - lynch.MIN_CLOSE_POS) * 100)
+    assert {int(n) for n in one(r"`H` passes at the top (\d+)%")} == {h_bar}
+    # EVERY "top N%" in the file, and there are three: H's, and the A+ bar
+    # stated twice. The first version of this matched one wording of the A+
+    # bar and never the other, so changing either one alone survived -- the
+    # shaped-assertion shape, on the assertion written to avoid it.
+    tops = [int(n) for n in one(r"[Tt]op (\d+)%")]
+    a_plus = [n for n in tops if n != h_bar]
+    assert len(a_plus) == 2 and len(set(a_plus)) == 1, (
+        f"the rulebook's A+ close bar is stated twice and they disagree: {tops}")
+    assert a_plus[0] < h_bar, (
+        "the A+ bar is written as deliberately STRICTER than H's; it is not")
+
+    # -- Y: extension above the 20-day average, and the month's run-up --
+    assert {int(n) for n in one(r"`Y` fails at (\d+)% above")} == {
+        int(lynch.MAX_EXT_VS_SMA20)}
+    assert {int(n) for n in one(r"(\d+)-day average")} == {
+        lynch.WINDOWS["sma_sessions"]}
+    assert {int(n) for n in one(r"(\d+)% run-up over the past month")} == {
+        int(lynch.MAX_RUN_UP_1MO)}
+    kill = {int(n) for n in one(r"Stock (\d+)%\+ extended")}
+    assert kill == {int(n) for n in one(r"(\d+)% is YOUR bar for an automatic kill")}
+    assert min(kill) > lynch.MAX_EXT_VS_SMA20, (
+        "the kill bar is written as deliberately LOOSER than Y's; it is not")
+
+    # -- the up-days veto, which refuses before the model is asked --
+    (refused,) = one(r"(\w+) or more is refused before it reaches you")
+    assert words[refused.lower()] == lynch.MAX_CONSECUTIVE_UP_DAYS + 1, (
+        f"the rulebook tells the model {refused} or more up days are refused "
+        f"before it sees them; the veto refuses at "
+        f"{lynch.MAX_CONSECUTIVE_UP_DAYS + 1}")
+    seen = one(r"you are scoring is ([\d, ]*\d) or (\d)")
+    assert [int(n) for n in re.findall(r"\d", "".join(seen[0]))] == list(
+        range(lynch.MAX_CONSECUTIVE_UP_DAYS + 1)), (
+        "the rulebook tells the model which up-day counts it can see; the veto "
+        "admits a different set")
+
+
+def test_the_fallback_anchors_are_the_rubrics_own_bands():
+    """The checklist-only score is the LOW end of the band the rubric anchors,
+    and the map in src.scorer is a second copy of four numbers the system
+    prompt states.
+
+    Nothing reads the rulebook at scoring time -- parsing the system prompt to
+    decide a number would make a prose edit a code path -- so the agreement is
+    a guard. Before it, the map was pinned by a dict typed out in
+    tests/test_scorer.py, which is a third copy and agrees with whichever of
+    the other two it was typed from. Below 3/6 the rubric says nothing, so
+    those anchors are the scorer's own and are left to it.
+    """
+    from src.pipeline import MIN_LYNCH_PASSES
+    from src.scorer import _fallback_score
+
+    book = " ".join(_read("knowledge/strategy.md").split())
+    bands = re.findall(r"(\d)/6 ≈ (\d+)(?:[-–](\d+))?", book)
+    assert len(bands) >= 4, f"the rubric's anchor sentence is gone: {bands}"
+    for passes, low, _high in bands:
+        real = _fallback_score({"passes": int(passes), "total": 6, "summary": ""})
+        assert real == float(low), (
+            f"the rubric anchors {passes}/6 at {low}; the fallback gives {real}")
+    assert min(int(p) for p, _l, _h in bands) == MIN_LYNCH_PASSES, (
+        "the rubric anchors a pass count the gate never lets through, or stops "
+        "short of the lowest one it does")
+
+
 def test_the_rulebook_instructs_on_every_field_the_request_carries():
     """knowledge/strategy.md is the system prompt: a metrics key the rulebook
     never names is a number the model is left to interpret for itself, and a

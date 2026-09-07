@@ -145,7 +145,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1357 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1367 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -698,8 +698,10 @@ exercised its headline. Nine mutants across them, all killed.
   round-5 audit put the dollar volume on every ledger row, 13.71 and
   0.99 once round 7 put a benchmark on every run entry, 14.04 and 1.08
   once the rounds 6-7 audit stamped each benchmark with the universe it was
-  measured over, and 14.05 once round 10 put the night's duplicate-bar count
-  on every run entry -- the guard below
+  measured over, 14.05 once round 10 put the night's duplicate-bar count
+  on every run entry, and 15.46 and 1.24 by the end of round 11, whose own
+  entries added `measured`, an `n` per horizon and the seventh checklist
+  window -- the guard below
   caught every move on the commit that made it. The gzipped figure has
   grown faster than the raw one, because a block of nulls compresses worse
   than a run of numbers; the page's fetch-on-demand argument still holds at
@@ -1978,11 +1980,17 @@ averages the scorer too and this fingerprint could not see it: read the
 round-11 section below.
 
 **The one thing a fingerprint of named constants cannot catch is a number
-left as a bare literal, and six of them were.** `iloc[-20:]`, `iloc[-30:]`,
-`iloc[-21]`, `iloc[-7:]`, `iloc[-60:-7]` and the `4.0` inside `rets >= 4.0`
-were the windows each check reads and what counts as an earlier burst — every
-one a strategy number no other layer could see. They are `lynch.WINDOWS` and
-`PRIOR_BURST_PCT` now. The windows are GROUPED rather than left as module
+left as a bare literal, and SEVEN of them were — this round named six and
+declared the class closed.** `iloc[-20:]`, `iloc[-30:]`, `iloc[-21]`,
+`iloc[-7:]`, `iloc[-60:-7]` and the `4.0` inside `rets >= 4.0` were the
+windows each check reads and what counts as an earlier burst — every one a
+strategy number no other layer could see. They are `lynch.WINDOWS` and
+`PRIOR_BURST_PCT` now. The seventh was `C`'s `iloc[-51:-1]`, the volume
+average the pre-burst day is called quiet against, and it stayed a literal
+until round 11 (below): changing that 50 to 30 left the fingerprint
+byte-identical and the checklist, scanner and docs suites green while `C`'s
+verdict moved. The count in this paragraph is why the guard is now an AST
+read of `evaluate_2lynch`'s own numeric constants rather than a list. The windows are GROUPED rather than left as module
 scalars because two existing guards are written against the scalars and are
 right to be: `tools/make_fixture.py` starts from hand-authored measurements
 and never slices a frame, so it can carry a threshold and cannot carry a

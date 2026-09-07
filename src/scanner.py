@@ -368,9 +368,11 @@ class ScanConfig:
     min_rvol: float = 1.5
     # Sessions in the trailing average, EXCLUDING the burst day itself. 50 is
     # not a fresh guess: src.lynch's C check already measures the pre-burst
-    # day against `pre["Volume"].iloc[-51:-1].mean()`, and two layers of one
-    # pipeline disagreeing about what "average volume" means is how a metric
-    # ends up meaning nothing. ~10 weeks is long enough that one earnings
+    # day against its own `WINDOWS["volume_norm_sessions"]` average, and two
+    # layers of one pipeline disagreeing about what "average volume" means is
+    # how a metric ends up meaning nothing. That window was a bare literal
+    # until round 11, so the agreement this comment asserts was unenforceable;
+    # both halves are named now and a test holds them equal. ~10 weeks is long enough that one earnings
     # spike cannot set the baseline, short enough to follow a name whose
     # liquidity regime has changed.
     rvol_lookback: int = 50
@@ -1070,7 +1072,7 @@ def trailing_volume_mean(df: pd.DataFrame, cfg: ScanConfig) -> float | None:
     """Mean volume over the sessions BEFORE the last bar, or None.
 
     Exclusive of the bar being measured, matching src.lynch's C check, which
-    divides the pre-burst day by `pre["Volume"].iloc[-51:-1].mean()`. The
+    divides the pre-burst day by its own `volume_norm_sessions` average. The
     exclusion is not a detail: a burst day inside its own denominator drags
     the average up by roughly its own excess, so a genuine 10x day reports
     about 8.5x on a 50-session window and about 5x on a 20-session one. The

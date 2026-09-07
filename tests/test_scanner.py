@@ -384,14 +384,25 @@ def test_the_trailing_average_excludes_the_day_being_measured(ohlcv):
 
 
 def test_the_trailing_window_is_the_one_src_lynch_already_uses(ohlcv):
-    """src.lynch's C check divides the pre-burst day by
-    `pre["Volume"].iloc[-51:-1].mean()`. Two layers of one pipeline reporting
-    "volume vs average" against different windows is how a metric stops
-    meaning anything, so this pins them to the same arithmetic."""
+    """src.lynch's C check divides the pre-burst day by the same window. Two
+    layers of one pipeline reporting "volume vs average" against different
+    windows is how a metric stops meaning anything, so this pins them to the
+    same arithmetic.
+
+    Its name promised that and it did not do it: the window it compared
+    against was one this test wrote out itself, off `cfg.rvol_lookback`, so
+    src.lynch was never read and its 50 was a bare literal the whole time.
+    It reads `lynch.WINDOWS` now, which is where that half of the number
+    lives."""
+    from src.lynch import WINDOWS
+
     cfg = ScanConfig()
     frame = _passing(ohlcv)
     assert cfg.rvol_lookback == 50
-    lynch_window = frame["Volume"].iloc[-(cfg.rvol_lookback + 1):-1].mean()
+    assert WINDOWS["volume_norm_sessions"] == cfg.rvol_lookback, (
+        "the checklist's calm-day norm and rule 3's trailing average are "
+        "documented as one number")
+    lynch_window = frame["Volume"].iloc[-(WINDOWS["volume_norm_sessions"] + 1):-1].mean()
     assert trailing_volume_mean(frame, cfg) == pytest.approx(float(lynch_window))
 
 

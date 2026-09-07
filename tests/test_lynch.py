@@ -291,9 +291,12 @@ def _frame(
                                  else 1.0 + burst_gap_pct / 100.0)
 
     volume = np.full(days, 3_000_000.0)
-    # Everything older than the 50 sessions C averages over. Flat at 1.0x, so
+    # Everything older than the sessions C averages over. Flat at 1.0x, so
     # this is invisible unless a test asks which sessions that window holds.
-    volume[: burst_i - 51] *= old_volume_mult
+    # Read off WINDOWS rather than spelled 51, so this stays the boundary it
+    # describes; the window's VALUE is pinned by a test of its own, which is
+    # what stops the fixture from moving with a mutant and hiding it.
+    volume[: burst_i - (WINDOWS["volume_norm_sessions"] + 1)] *= old_volume_mult
     volume[burst_i] = 24_000_000.0
     volume[burst_i - 1] *= d1_volume_mult
     return pd.DataFrame(
@@ -704,7 +707,7 @@ def test_volume_exactly_on_the_calm_days_limit_is_already_too_much():
 
 
 def test_the_calm_days_volume_is_measured_over_the_fifty_sessions_before_it():
-    """Which sessions `pre["Volume"].iloc[-51:-1]` holds, pinned from both ends.
+    """Which sessions C's volume norm holds, pinned from both ends.
 
     src.scanner's trailing_volume_mean() is 50 sessions excluding the day it
     measures, and tests/test_scanner.py asserts the two windows agree -- but
@@ -713,11 +716,108 @@ def test_the_calm_days_volume_is_measured_over_the_fifty_sessions_before_it():
     a longer window drags the ratio down; the measured day is 20x, so
     including it in its own denominator drags the ratio down too.
 
+    What this CANNOT see is a SHORTER window, because everything inside the
+    window is flat: at 30 sessions the ratio is the same 20.0x. That is how
+    the bare `iloc[-51:-1]` survived round 8's sweep and stayed invisible to
+    rules_fingerprint() -- the test below is the one that sits on the number.
+
     Deliberately not a calm day: this pins the measurement, not the verdict.
     """
     result = evaluate_2lynch(_frame(old_volume_mult=10.0, d1_volume_mult=20.0))
     ratio = _reported(result["checks"]["C_calm_preburst_day"]["value"], r"([\d.]+)x volume")
     assert ratio == pytest.approx(20.0, abs=0.01)
+
+
+def test_the_calm_days_volume_norm_spans_exactly_the_window_this_module_names():
+    """C's denominator is `volume_norm_sessions` sessions ending before d1.
+
+    THE SEVENTH BARE LITERAL. Round 8 named six windows and left this one as
+    `pre["Volume"].iloc[-51:-1]`, so 50 was a strategy number no other layer
+    could see: changing it to 30 left rules_fingerprint() byte-identical and
+    tests/test_lynch.py, tests/test_scanner.py and tests/test_docs_are_true.py
+    all green while C's verdict moved. Reproduced that way before the window
+    was named.
+
+    Both edges are load-bearing here and the preconditions say so: one session
+    inside the window carries 30x volume and the session just outside it 10x,
+    so a window one shorter and a window one longer each give a different
+    ratio at the two decimals the line prints. The expected value is computed
+    from the frame THROUGH the named window, so this dies when the code slices
+    a length the dict does not name -- and the value of the window itself is
+    pinned separately, since a test that reads the constant cannot fail on it.
+    """
+    df = _reference()
+    window = WINDOWS["volume_norm_sessions"]
+    volume = df["Volume"].to_numpy(dtype=float).copy()
+    volume[-(window + 2)] *= 30.0   # the OLDEST session the window should hold
+    volume[-(window + 3)] *= 10.0   # the newest session it should not
+    df = df.assign(Volume=volume)
+
+    def ratio_over(sessions: int) -> float:
+        # d1 is df.iloc[-2]; its norm is the `sessions` bars before it.
+        norm = df["Volume"].iloc[-(sessions + 2):-2].mean()
+        return round(float(df["Volume"].iloc[-2] / norm), 2)
+
+    assert ratio_over(window - 1) != ratio_over(window) != ratio_over(window + 1), (
+        "the frame cannot tell the neighbouring windows apart, so this test "
+        "would pass whatever length the code sliced")
+    reported = _reported(evaluate_2lynch(df)["checks"]["C_calm_preburst_day"]["value"],
+                         r"([\d.]+)x volume")
+    assert reported == ratio_over(window)
+
+
+def test_the_volume_norm_and_the_scans_own_volume_window_are_one_number():
+    """50, in two layers, held equal on purpose.
+
+    src.scanner.ScanConfig's comment argues the equality ("two layers of one
+    pipeline disagreeing about what 'average volume' means is how a metric
+    ends up meaning nothing") and nothing enforced it, because the checklist's
+    half was a bare literal. Both are named now and neither imports the other,
+    so this is where the judgement is written down: change one and this asks
+    whether the other was meant to move too.
+    """
+    from src.scanner import ScanConfig
+
+    assert WINDOWS["volume_norm_sessions"] == 50
+    assert WINDOWS["volume_norm_sessions"] == ScanConfig().rvol_lookback
+
+
+def test_no_check_reads_a_window_left_as_a_bare_number():
+    """The structural half: the numbers evaluate_2lynch is allowed to spell.
+
+    A named threshold is in the fingerprint the moment it is named, and a
+    window left as a literal is not -- which is the one thing rules_fingerprint()
+    cannot catch, said in its own docstring. Round 8 answered that by naming
+    six windows and declaring the class closed; C's 50 was the seventh and
+    stayed a literal for three rounds. So this reads the constants out of the
+    function's own AST rather than trusting a list somebody remembered to
+    update: anything outside the set below is an index, a rounding place, a
+    percent conversion or a documented sentinel -- or it is a strategy number,
+    and belongs in WINDOWS or beside the thresholds.
+    """
+    import ast
+    import inspect
+
+    import src.lynch as lynch_mod
+
+    allowed = {
+        0: "list/series indices and the zero comparisons",
+        1: "iloc[-1], the +1 that turns a window into a slice, and 1.0 ratios",
+        2: "iloc[-2] and the two decimal places every ratio is shown at",
+        100: "ratio -> percent",
+        9.9: "N's documented no-usable-norm sentinel, which prints as 9.90x",
+    }
+    tree = ast.parse(inspect.getsource(lynch_mod))
+    body = next(f for f in ast.walk(tree)
+                if isinstance(f, ast.FunctionDef) and f.name == "evaluate_2lynch")
+    found = {n.value for n in ast.walk(body)
+             if isinstance(n, ast.Constant)
+             and isinstance(n.value, (int, float)) and not isinstance(n.value, bool)}
+    unnamed = sorted(found - set(allowed), key=str)
+    assert not unnamed, (
+        f"evaluate_2lynch spells {unnamed} as a bare number; a window belongs in "
+        "WINDOWS and a threshold beside the other thresholds, or rules_fingerprint() "
+        "cannot see it")
 
 
 # ---- H: where in the day's range the burst closed ------------------------
@@ -1656,6 +1756,30 @@ def test_the_rules_fingerprint_covers_every_number_this_module_names():
     missing_windows = sorted(k for k in lynch_mod.WINDOWS if f"window.{k}" not in fingerprint)
     assert not missing_windows, f"the fingerprint does not carry the windows {missing_windows}"
     assert fingerprint["check.vetoes"] == sorted(lynch_mod.VETO_RULES)
+
+
+def test_the_record_can_see_a_change_to_the_calm_days_volume_norm():
+    """The property the whole naming exercise is for, asserted directly.
+
+    A window left as a literal lets docs/ledger.json say "same rules" across a
+    change that altered them, which is worse than no fingerprint at all --
+    rules_fingerprint()'s own docstring says so. This was reproduced before
+    the window was named: C's 50 changed to 30 left the fingerprint
+    BYTE-IDENTICAL. It moves the dict at run time rather than editing a file,
+    so the assertion is about the fingerprint's reach and not about a value.
+    """
+    import src.lynch as lynch_mod
+    from src.pipeline import rules_fingerprint
+
+    before = rules_fingerprint()
+    original = lynch_mod.WINDOWS["volume_norm_sessions"]
+    try:
+        lynch_mod.WINDOWS["volume_norm_sessions"] = original + 10
+        assert rules_fingerprint() != before, (
+            "the sessions C's volume norm spans are invisible to the record")
+    finally:
+        lynch_mod.WINDOWS["volume_norm_sessions"] = original
+    assert rules_fingerprint() == before, "the fingerprint did not come back"
 
 
 def test_every_window_this_module_names_is_one_it_actually_measures_over():
