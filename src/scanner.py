@@ -531,8 +531,15 @@ def get_universe(symbols_file: str | Path | None = None) -> list[str]:
 
 
 def _download_batch(data_client, tickers, cfg: ScanConfig,
-                    session: date, now: datetime | None = None) -> dict[str, pd.DataFrame]:
+                    session: date, now: datetime | None = None,
+                    duplicates: dict[str, int] | None = None) -> dict[str, pd.DataFrame]:
     """One get_stock_bars() call, for the window ending at `session`.
+
+    `duplicates`, if given, receives one entry per symbol whose response
+    carried the same timestamp twice, counting the bars dropped -- the same
+    out-parameter idiom as run_scan(stats=...), and for the same reason: a
+    de-duplicated frame cannot show that it was ever duplicated. Symbols with
+    none are absent, so an empty dict is a clean batch.
 
     ONE SDK CALL, NOT ONE HTTP REQUEST — the first line of this docstring said
     "One /stocks/bars call" and that is not what happens. get_stock_bars passes
@@ -643,7 +650,26 @@ def _download_batch(data_client, tickers, cfg: ScanConfig,
         # sort on the request, because a change to what goes on the wire on an
         # unverified lead is what this project's notes warn against; sorting
         # what came back changes nothing about what was asked for.
-        df = df.sort_index()
+        # STABLE, because keep="last" below means "the copy the feed sent
+        # last" only if the sort in front of it leaves equal timestamps in
+        # the order they arrived. sort_index() defaults to quicksort:
+        # reproduced on pandas 3.0.5 with a genuine BarSet, a newest-first
+        # response whose PRELIMINARY copy of the session bar sat earlier on
+        # the wire than the corrected one kept the preliminary. It is a real
+        # sort either way -- numpy's introsort runs insertion sort, which is
+        # stable, below 16 elements, so a short frame agrees by accident and
+        # a 17-bar one does not.
+        df = df.sort_index(kind="stable")
+        dupes = int(df.index.duplicated().sum())
+        if dupes and duplicates is not None:
+            # COUNTED, and nothing more. Which copy a feed means by a repeated
+            # timestamp is unknown here -- no duplicate has been read off a
+            # live response yet -- so the rule stays "the last one on the
+            # wire" and the count is what makes reading the first one
+            # possible. Inventing a policy for a failure mode nobody has seen
+            # is how this project's notes record two fixes being worse than
+            # their bugs.
+            duplicates[t] = dupes
         df = df[~df.index.duplicated(keep="last")]
         df = df.dropna(how="all")
         if not df.empty:
@@ -1294,13 +1320,18 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     off_session: dict[str, str] = {}
     invalid_bars: dict[str, str] = {}
     no_bars_names: list[str] = []
+    #: symbol -> how many of its bars were dropped as duplicates. Assignment
+    #: and not addition inside _download_batch, so a batch retried after a
+    #: failure restates its symbols rather than counting them twice.
+    duplicate_bars: dict[str, int] = {}
     detector_errors: dict[str, str] = {}
     session_dollar_volumes: list[float] = []
 
     for i in range(0, len(tickers), cfg.batch_size):
         batch = tickers[i: i + cfg.batch_size]
         try:
-            histories = _download_batch(data_client, batch, cfg, session)
+            histories = _download_batch(data_client, batch, cfg, session,
+                                        duplicates=duplicate_bars)
         except Exception as e:
             # A refused feed is not transient and is not this batch's problem:
             # every batch will be refused, and retrying each of them ends in a
@@ -1310,7 +1341,8 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             log.warning("Batch %d failed (%s); retrying once", i, e)
             time.sleep(3)
             try:
-                histories = _download_batch(data_client, batch, cfg, session)
+                histories = _download_batch(data_client, batch, cfg, session,
+                                            duplicates=duplicate_bars)
             except Exception as e2:
                 if _is_permanent_refusal(e2):
                     raise _refusal_error(cfg.feed, e2) from e2
@@ -1411,6 +1443,14 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             "stale": dict(stale),
             "no_bars": len(tickers) - with_bars - dropped,
             "no_bars_names": sorted(no_bars_names),
+            # How many bars the feed sent twice, across every symbol. A
+            # duplicate is resolved inside _download_batch -- the copy sent
+            # last is kept -- and the frame that comes out cannot show it
+            # happened, so without this a preliminary bar silently replacing
+            # a corrected one would be visible on no surface at all. There is
+            # no policy beyond the count: none has been seen live, and the
+            # run block carries the number so the first one can be READ.
+            "duplicate_bars": sum(duplicate_bars.values()),
             "dropped": dropped,
             "gapped": dict(gapped),
             # The session the gap rule compared against, and whether it was
@@ -1456,13 +1496,22 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
                     "were skipped -- unknown to the feed, or purged: %s",
                     len(no_bars_names), len(tickers),
                     ", ".join(sorted(no_bars_names)[:8]) + ("..." if len(no_bars_names) > 8 else ""))
+    if duplicate_bars:
+        worst = sorted(duplicate_bars.items(), key=lambda kv: (-kv[1], kv[0]))
+        log.warning("%d of %d symbols carried a bar the feed sent twice (%d bars in all), "
+                    "de-duplicated to the copy sent last: %s",
+                    len(duplicate_bars), with_bars, sum(duplicate_bars.values()),
+                    ", ".join(f"{t} ({n})" for t, n in worst[:8])
+                    + ("..." if len(worst) > 8 else ""))
     # Stated, not left to the absence of the two warnings above: a reader of
     # this log -- a rehearsal checking one replacement symbol -- needs the
     # coverage as a positive count, since no warning is also what a scan that
     # never asked prints.
     log.info("Coverage for %s: %d requested; %d answered with bars, %d of those with no bar for "
-             "the session; %d answered with no bar at all; %d dropped after their batch failed twice",
-             session, len(tickers), with_bars, len(stale), len(no_bars_names), dropped)
+             "the session; %d answered with no bar at all; %d dropped after their batch failed "
+             "twice; %d duplicate bar(s) dropped",
+             session, len(tickers), with_bars, len(stale), len(no_bars_names), dropped,
+             sum(duplicate_bars.values()))
 
     # Three ways a scan can come back too empty to mean anything, in the order
     # a diagnosis would take them: nothing arrived, most of it arrived stale,

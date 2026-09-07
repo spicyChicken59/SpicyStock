@@ -712,6 +712,16 @@ invariants live in the file rather than only here. The load-bearing ones:
   the evening's "check the list": acting on the line is what changes the file,
   and this repo retired all three names the first live scan found -- the list
   held 230 then and 228 since.
+- `run.duplicate_bars` is how many bars the feed sent twice in that night's
+  scan, across every symbol. The scanner sorts what came back with a STABLE
+  sort and keeps the copy that arrived last, so a preliminary bar followed by
+  a corrected one resolves to the corrected one whatever order the response
+  came in -- and the frame that comes out cannot show it ever chose, which is
+  why the count is published. It is a sentinel and not a rule: it degrades
+  nothing, because no live duplicate has been seen yet and the count is what
+  makes reading the first one possible. The forward-returns fetch uses the
+  same downloader and warns in the log rather than adding to this number,
+  which counts the scan.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.

@@ -794,6 +794,10 @@ data = {
             [s for s in UNIVERSE if s not in {r["ticker"] for r in candidates + gated_out}][:2],
             ["2026-06-12", "2026-08-03"])),
             "no_bars_names": [s for s in UNIVERSE if s not in {r["ticker"] for r in candidates + gated_out}][2:3]}),
+        # A clean feed's count, which is what every night so far has had:
+        # publish() writes this key on every run, and a fixture missing it
+        # would describe a file the pipeline does not produce.
+        "duplicate_bars": 0,
         "bursts": BURSTS,
         "passed_gate": PASSED,
         "scored": len(candidates),

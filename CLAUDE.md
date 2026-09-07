@@ -280,7 +280,16 @@ promised: `BarSet.df` keeps the response's order and the request pins no
 run blaming a holiday; a bar sent twice hid a real burst behind a 0% gain.
 Sorted and de-duplicated on the way in, with genuine `BarSet`s in the tests
 — not by pinning `sort` on the request, which would change the wire on an
-unverified lead.
+unverified lead. **The de-dup keeps "the copy the feed sent last", and that
+sentence was true on one response order only** until the sort was made
+stable: `sort_index()` defaults to quicksort, so a newest-first response
+whose PRELIMINARY copy of the session bar sat earlier on the wire than the
+corrected one kept the preliminary. Reproduced on pandas 3.0.5 with a genuine
+`BarSet` at 20, 60 and 250 bars; under 17 bars numpy sorts stably by accident
+and the test cannot fail, which is written beside it. The bars a feed sends
+twice are counted now (`run.duplicate_bars`, the coverage log line, a warning
+naming the symbols) and nothing else is done with them, because no live
+duplicate has been read off an Actions log yet.
 
 **A hole before the session published a two-day move as the day's burst.**
 Freshness checked only the newest bar, so a halt or a dropped bar the

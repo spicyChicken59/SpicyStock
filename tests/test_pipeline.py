@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import csv
 import functools
+import logging
 import json
 import pathlib
 import re
@@ -2145,6 +2146,60 @@ def test_a_published_universe_scan_is_something_a_tickers_run_re_presents(
     (problem,) = [e["message"] for e in report.errors if "already published" in e["message"]]
     assert "same daily bars" not in problem, problem
     assert "replace" in problem and "SCAN_SESSION_DATE" in problem, problem
+
+
+def test_the_forward_returns_fetch_is_not_the_one_path_a_duplicate_stays_silent_on(
+    fake_alpaca, ohlcv, caplog
+):
+    """The sweep the fix above asks for. forward_bars() deliberately reuses the
+    scan's own downloader, so it inherits the stable sort -- and it inherited
+    the silence too: the bars every published forward return is measured from
+    were de-duplicated with nothing saying so.
+
+    Warned there rather than folded into `run.duplicate_bars`, which counts
+    the SCAN. The fill asks for a handful of pending names over a different
+    window, so one number over both populations would be a number no reader
+    could interpret."""
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    fake_alpaca.send_session_bar_twice("BURST", copies=2)
+    with caplog.at_level(logging.WARNING, logger="src.pipeline"):
+        frames = pipeline.forward_bars(ScanConfig(), ["BURST"], scanner.current_session())
+
+    assert not frames["BURST"].index.has_duplicates
+    warned = [r.getMessage() for r in caplog.records if "sent twice" in r.getMessage()]
+    assert len(warned) == 1 and "BURST (2)" in warned[0], [r.getMessage() for r in caplog.records]
+
+
+def test_the_run_block_says_how_many_bars_the_feed_sent_twice(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """A duplicate is resolved in the scanner -- the copy sent last is kept --
+    and the frame that comes out cannot show it happened, so the record could
+    not say a night had had one. It is a sentinel and nothing more: the run is
+    still `ok`, because no live duplicate has been seen and inventing a
+    policy for a failure mode nobody has met is what this repo's notes warn
+    against. The count is what makes reading the first one possible.
+
+    Both states in one test, on two sessions, because 0 published under a
+    clean feed is the half a reader of the first live one needs."""
+    names = _five_name_market(fake_alpaca, ohlcv)
+    _universe_file(monkeypatch, tmp_path, names)
+    market_clock.after_the_close()
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(-1))
+    pipeline.run("evening", dry_run=True)
+    assert clean(tmp_path)["run"]["duplicate_bars"] == 0, "a clean feed publishes the zero"
+
+    fake_alpaca.send_session_bar_twice("QA", copies=2)
+    fake_alpaca.send_session_bar_twice("BURST")
+    monkeypatch.delenv("SCAN_SESSION_DATE")
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=True, report=report)
+
+    snapshot = clean(tmp_path)
+    assert snapshot["run"]["duplicate_bars"] == 3
+    assert snapshot["run"]["status"] == "ok" and report.errors == [], (
+        "counted, not acted on", report.errors)
+    assert snapshot["run"]["bursts"] >= 1, "and the burst the duplicated name printed is still found"
 
 
 def test_a_published_run_that_does_not_say_what_it_scanned_still_re_presents(

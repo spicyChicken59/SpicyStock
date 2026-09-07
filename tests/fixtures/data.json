@@ -58,6 +58,7 @@
         }
       ]
     },
+    "duplicate_bars": 0,
     "bursts": 50,
     "passed_gate": 31,
     "scored": 25,

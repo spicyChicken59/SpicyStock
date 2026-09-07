@@ -1658,9 +1658,25 @@ def forward_bars(cfg: ScanConfig, tickers: list[str], through) -> dict:
         return {}
     client = scanner.get_clients()
     frames: dict = {}
+    # The scan's downloader keeps the copy of a repeated bar that arrived
+    # last and hands back a frame that cannot show it ever chose, so this
+    # path was as silent about a duplicate as the scan used to be -- and
+    # every published forward return is measured off these bars. Warned
+    # here rather than counted into `run.duplicate_bars`, which is the
+    # SCAN's number: this fetch asks for a handful of pending names over a
+    # different window, and one count over both populations would be a
+    # number no reader could interpret.
+    duplicates: dict[str, int] = {}
     for i in range(0, len(tickers), cfg.batch_size):
         frames.update(scanner._download_batch(client, tickers[i: i + cfg.batch_size],
-                                              cfg, through))
+                                              cfg, through, duplicates=duplicates))
+    if duplicates:
+        worst = sorted(duplicates.items(), key=lambda kv: (-kv[1], kv[0]))
+        log.warning("%d of %d name(s) whose forward returns are still open carried a bar the feed "
+                    "sent twice (%d bars in all), de-duplicated to the copy sent last: %s",
+                    len(duplicates), len(tickers), sum(duplicates.values()),
+                    ", ".join(f"{t} ({n})" for t, n in worst[:8])
+                    + ("..." if len(worst) > 8 else ""))
     return frames
 
 
@@ -1737,6 +1753,17 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         # ledger entry -- tonight's list is the one that matters, and the
         # ledger's size is budgeted in README.
         "stopped_printing": stopped_printing(scan_stats),
+        # How many bars the feed sent twice tonight, across the whole scan.
+        # The scanner keeps the copy that arrived last and the de-duplicated
+        # frame cannot show that it ever chose, so without this number no
+        # surface and no later reader could tell a night that had a duplicate
+        # from one that did not. A SENTINEL, not a rule: it degrades nothing,
+        # because which copy a feed means by a repeated timestamp has never
+        # been observed here, and the count is what makes observing the first
+        # one possible. A plain integer for the same reason -- a nested block
+        # nothing indexes into is how this repo's one-level-short class keeps
+        # arriving.
+        "duplicate_bars": int(scan_stats.get("duplicate_bars") or 0),
         "bursts": n_bursts,
         "passed_gate": n_passed,
         "scored": len(scored),
