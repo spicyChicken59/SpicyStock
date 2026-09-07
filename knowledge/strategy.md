@@ -89,8 +89,8 @@ against the gain, which describes two closes. `gap_pct` is where it opened
 against the previous session's close — the part of the move that happened
 before anyone reading this could act on it. `bar_range_pct` is high minus low
 over the close: how wide the session was. `range_expansion` is that width
-over the average width of the last seven sessions before it that the
-checklist could read — the same window `N` measures, and the same number the
+over the average width of the last seven sessions before it whose range
+could be read — the same window `N` measures, and the same number the
 `N` line in this request prints as its pre-burst range, so `bar_range_pct` divided by
 that %/day is this ratio. 3x means a bar three times as wide as the
 consolidation it broke out of; 0.5x means a burst narrower than its own base
@@ -101,9 +101,9 @@ the gap alone when there was no readable open or the open was printed outside
 its own high and low, which is not a price anybody paid; the width and the
 expansion when the envelope cannot be read; the expansion alone when no
 readable session before the burst had any width to expand against; and all
-three when the burst bar is missing something the checklist needs, because
-then `H` and the six checks are grading the session BEFORE it and these would
-be describing another one. Null means not measured; it never means zero. Read
+three only for a bar that is not the one the checklist graded, which is a
+state this request cannot be in: they step back onto that bar with `H`, and
+they describe it. Null means not measured; it never means zero. Read
 them beside `H`, which says where in that range the close landed: a wide bar
 closing at its high is the powerful burst bar above, and a wide bar closing
 mid-range is the demand-faded kill under What kills a setup.

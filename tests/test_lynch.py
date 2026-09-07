@@ -43,8 +43,13 @@ from src.lynch import (
     MIN_CLOSE_POS,
     MIN_LINEAR_R2,
     MIN_LINEAR_SLOPE,
+    CHECKLIST_COLUMNS,
+    RULES_REVISION,
     WINDOWS,
     _bar_width,
+    _series,
+    burst_bar_shape,
+    graded_bar_at,
     consecutive_up_days,
     evaluate_2lynch,
     extra_context,
@@ -55,6 +60,27 @@ from src.lynch import (
 from tests.synthetic import KINDS, frame_digest, make_ohlcv
 
 CHECK_LETTERS = ["2", "C", "H", "L", "N", "Y"]
+
+
+def _thresholds(module) -> set[str]:
+    """The numeric constants src.lynch names that a MEASUREMENT is compared
+    against -- which is every one of them but a version stamp.
+
+    Three guards below ask a question that only makes sense of a threshold:
+    that tools/make_fixture.py imports it rather than retyping it, that the
+    module's own code reads it, and that some frame crosses it. RULES_REVISION
+    answers none of those and is not meant to: it exists so that a change to
+    WHICH BARS a check counts -- a change no threshold expresses -- moves
+    rules_fingerprint(), and there is nothing to compare it with, no fixture
+    measurement to derive from it and no verdict for a frame to flip. The
+    exemption is a NAME RULE rather than a list, so a second stamp cannot
+    arrive needing three edits, and the fingerprint guard deliberately keeps
+    reading every numeric constant including these.
+    """
+    return {n for n in dir(module)
+            if n.isupper() and not n.endswith("_REVISION")
+            and isinstance(getattr(module, n), (int, float))
+            and not isinstance(getattr(module, n), bool)}
 
 
 @pytest.fixture
@@ -430,8 +456,7 @@ def test_the_fixture_generator_imports_the_thresholds_rather_than_copying_them()
     generator = (pathlib.Path(__file__).resolve().parent.parent
                  / "tools" / "make_fixture.py").read_text()
 
-    names = [n for n in dir(lynch_mod)
-             if n.isupper() and isinstance(getattr(lynch_mod, n), (int, float))]
+    names = sorted(_thresholds(lynch_mod))
     assert names, "src.lynch exposes no threshold constants to import"
 
     missing = [n for n in names if n not in generator]
@@ -1266,12 +1291,19 @@ def test_a_bar_that_cannot_be_read_measures_null_and_never_zero(column):
     ALL THREE, on any of the three columns, and the Open case is why this
     test exists rather than the two that follow. A bar with no Open still
     has a perfectly readable width -- the precondition below executes that
-    rather than describing it -- but `evaluate_2lynch()` has dropped that bar
-    before choosing the burst, so `H` is describing the session BEFORE. The
-    round that added these measured the width anyway, and the model was sent
-    `bar_range_pct 9.4` beside "closed at 50% of day's range" for a bar that
-    closed at 98% of its own, under a rulebook sentence telling it to read
-    the two together.
+    rather than describing it -- and it is not a bar `evaluate_2lynch()` can
+    call the burst, so measuring its geometry would describe a session `H`
+    does not. The round that added these measured the width anyway, and the
+    model was sent `bar_range_pct 9.4` beside "closed at 50% of day's range"
+    for a bar that closed at 98% of its own, under a rulebook sentence
+    telling it to read the two together.
+
+    The rule is stated where it is enforced -- of the FUNCTION, whose last
+    row is what it describes. Its caller no longer reaches this branch,
+    because extra_context() anchors on the graded bar rather than on its own
+    newest one, and the second half asserts that: the block published for a
+    frame like this carries the graded bar's real geometry rather than three
+    nulls, and is the block that frame's own last session would publish.
     """
     frame = _frame()
     frame.iloc[-1, frame.columns.get_loc(column)] = float("nan")
@@ -1286,11 +1318,16 @@ def test_a_bar_that_cannot_be_read_measures_null_and_never_zero(column):
         "the checklist is reading the same bar it reads on a clean frame, so "
         "these three cannot describe a different one")
 
-    ctx = extra_context(frame)
+    shape = burst_bar_shape(frame)
     for key in BURST_BAR_KEYS:
-        assert ctx[key] is None, (
-            f"{key} describes the burst bar while `H` describes the session "
+        assert shape[key] is None, (
+            f"{key} describes the last bar while `H` describes the session "
             f"before it, because the bar has no {column}")
+
+    ctx = extra_context(frame)
+    assert all(ctx[key] is not None for key in BURST_BAR_KEYS), (
+        "the caller anchors, so the block describes the bar H grades")
+    assert ctx == extra_context(frame.iloc[:-1])
 
 
 @pytest.mark.parametrize("column", ["Close", "Volume"])
@@ -1510,27 +1547,32 @@ def test_the_base_is_averaged_by_the_one_thing_that_prints_it():
 def test_the_expansion_averages_the_bars_the_checklist_averages():
     """The window is `N`'s window, so it holds `N`'s bars.
 
-    A bar with no Open has a perfectly readable width and is one
-    `evaluate_2lynch()` drops before it measures anything -- so counting it
-    here would put a bar in the divisor that is in no `N` line, and the two
-    printed numbers would stop reconciling on exactly the frames a feed with
-    a hole in it produces.
+    Both halves of that were true of a five-field frame and are true of a
+    range now: a bar with no Open has a perfectly readable width and `N`
+    averages it, so skipping it here would put a bar in the `N` line that is
+    not in the divisor and the two printed numbers would stop reconciling on
+    exactly the frames a feed with a hole in it produces. (It was the other
+    way round for a round: this window skipped the bar and `N`'s did not,
+    under a comment claiming they held the same bars.) A bar whose width
+    cannot be read is skipped by both, which is the test below this one.
     """
     frame = _frame(shelf_ranges=UNEVEN_SHELF)
     hole = len(frame) - 3
     frame.iloc[hole, frame.columns.get_loc("Open")] = float("nan")
     assert _bar_width(frame.iloc[hole]) is not None, (
-        "this bar's width cannot be read at all, so skipping it says nothing "
+        "this bar's width cannot be read at all, so counting it says nothing "
         "about the checklist's window")
 
     ctx = extra_context(frame)
     printed = _printed_pre_burst_range(frame)
     assert ctx["range_expansion"] == round(ctx["bar_range_pct"] / printed, 2)
-    # And the hole really did move the answer: a window that counted it would
+    # And the hole really is in the window: a divisor that skipped it would
     # publish a different ratio, so this is not two readings of one number.
-    counted = _shelf_widths(frame)
-    assert round(ctx["bar_range_pct"] / round(sum(counted) / len(counted), 1), 2) \
-        != ctx["range_expansion"], "counting the hole gives the same ratio"
+    kept = _shelf_widths(frame)
+    skipped = [w for i, w in enumerate(kept)
+               if i != len(kept) - (len(frame) - 1 - hole)]
+    assert round(ctx["bar_range_pct"] / round(sum(skipped) / len(skipped), 1), 2) \
+        != ctx["range_expansion"], "skipping the hole gives the same ratio"
 
 
 def test_the_gap_is_measured_off_the_close_the_gain_was_measured_against():
@@ -1782,9 +1824,9 @@ def test_a_hole_in_one_field_moves_no_close_only_check(column):
 
 def test_the_checks_that_read_a_bars_geometry_still_need_all_five_fields():
     """The other half, and the inverse check the rejection tests here take as
-    a precondition: N, C and H measure ranges and volume, so a bar missing one
-    of those has nothing for them to read and is still dropped. If this stops
-    being true the fix above has been applied to the wrong three checks."""
+    a precondition: N and C measure ranges, so a bar missing a High has
+    nothing for them to read and is still dropped. If this stops being true
+    the fix above has been applied to the wrong three checks."""
     clean = _steady_base(shelf_ranges=UNEVEN_SHELF)
     holed = _holed(clean, "High", offsets=(2, 3))
 
@@ -1794,6 +1836,99 @@ def test_the_checks_that_read_a_bars_geometry_still_need_all_five_fields():
         "N averaged a range it could not measure")
     for name in CLOSE_ONLY_CHECKS:
         assert after[name] == before[name]
+
+
+#: Per column, the measurements that read none of it and must not move when a
+#: bar loses it. `N`'s two windows are ranges (a high, a low and a close) and
+#: `C` is those three plus a volume, so a hole in the Open is invisible to
+#: both -- while a hole in the Volume legitimately moves C's norm, which
+#: averages the bars that PRINTED a volume and so reaches one session further
+#: back, and must still leave N alone.
+BLIND_TO = {"Open": ("N_narrow_consolidation", "C_calm_preburst_day"),
+            "Volume": ("N_narrow_consolidation",)}
+
+
+@pytest.mark.parametrize("column", sorted(BLIND_TO))
+def test_the_range_windows_count_the_bars_that_carry_a_range(column):
+    """...and the other direction, which the sentence above was read as
+    stating and did not: N reads a high, a low and a close, so a shelf bar
+    that lost only its Open -- or only its Volume -- is one N can measure and
+    must count.
+
+    Measured before this was true, on this frame: N read "pre-burst range
+    1.7%/day = 0.43x its norm" and, with two shelf bars missing their Open
+    alone, "2.3%/day = 0.58x" -- a third of the way to its own threshold, on
+    a field N does not read. C's volume norm is the same rule for the same
+    reason and moved 1.00x to 0.98x. Both windows are over-strict by exactly
+    the argument the round before this one made for the closes.
+    """
+    clean = _steady_base(shelf_ranges=UNEVEN_SHELF, old_volume_mult=1.6)
+    holed = _holed(clean, column, offsets=(2, 3))
+    pruned = holed.dropna(subset=list(CHECKLIST_COLUMNS))
+    assert len(pruned) == len(clean) - 2, (
+        "precondition: the five-field frame really loses these bars")
+    off_the_pruned_frame = evaluate_2lynch(pruned)["checks"]
+
+    before = evaluate_2lynch(clean)["checks"]
+    after = evaluate_2lynch(holed)["checks"]
+    assert any(off_the_pruned_frame[name] != before[name]
+               for name in BLIND_TO[column]), (
+        "precondition: dropping these bars moves one of them, so this test "
+        "can fail")
+    for name in BLIND_TO[column]:
+        assert after[name] == before[name], (
+            f"{name} moved because a bar missing its {column} was thrown "
+            f"away: {before[name]['value']!r} -> {after[name]['value']!r}")
+
+
+def test_the_anchor_survives_an_index_a_lookup_cannot_match():
+    """A stamp lookup has to answer something when it finds nothing, and the
+    answer the first version of this anchor gave was the WHOLE frame -- every
+    bar after the graded one included, which is the merge the anchor exists
+    to prevent, arriving by the other door.
+
+    Two shapes reach it. `NaT == NaT` is False, so a NaT in the index (round
+    9's L2 found that shape reaching this module) matched nothing; and a
+    stamp the feed sent twice matched two rows. Neither can be looked up, and
+    neither has to be: the anchor is a POSITION.
+    """
+    base = _frame(days=200)
+    for name, index in (
+        ("a NaT on the graded bar",
+         base.index[:-2].append(pd.DatetimeIndex([pd.NaT])).append(base.index[-1:])),
+        ("the graded stamp sent twice",
+         base.index[:-2].append(base.index[[-3, -1]])),
+    ):
+        frame = base.copy()
+        frame.index = index
+        # ...and the newest bar is one the checklist cannot grade, so the
+        # anchor is doing work: unanchored, Y measures through a session `H`
+        # is not describing.
+        frame.iloc[-1, frame.columns.get_loc("Open")] = float("nan")
+        stepped_back = evaluate_2lynch(base.iloc[:-1])
+
+        result = evaluate_2lynch(frame)
+
+        assert (result["checks"]["Y_young_trend"]
+                == stepped_back["checks"]["Y_young_trend"]), name
+        assert result["vetoes"] == stepped_back["vetoes"], name
+
+
+def test_a_frame_with_no_open_column_at_all_still_has_a_metrics_block():
+    """graded_bar_at() answers None rather than raising for a frame that
+    carries no Open at all -- a shape no feed produces and every hand-built
+    caller can -- and extra_context() then anchors where it always did, on
+    its own newest readable bar. The three burst-bar keys are null there,
+    because nothing can say the last bar is one the checklist would grade.
+    """
+    frame = _frame(days=60).drop(columns=["Open"])
+    assert graded_bar_at(frame) is None
+
+    ctx = extra_context(frame)
+
+    assert ctx["perf_3mo_pct"] is None and ctx["pct_off_52w_high"] is not None
+    for key in BURST_BAR_KEYS:
+        assert ctx[key] is None, key
 
 
 def test_the_prior_days_move_is_measured_against_the_session_before_it():
@@ -1879,7 +2014,7 @@ def test_the_close_only_checks_grade_the_bar_the_checklist_grades(column):
     which requires all five on the session bar; the rule is here because the
     request is unconditional.
     """
-    frame = _frame(days=200)
+    frame = _frame(days=200, up_run_days=3, base_drop_pct=-6.0, base_drop_offset=21)
     frame.iloc[-1, frame.columns.get_loc(column)] = float("nan")
 
     graded = evaluate_2lynch(frame)
@@ -1887,8 +2022,44 @@ def test_the_close_only_checks_grade_the_bar_the_checklist_grades(column):
     assert (graded["checks"]["H_close_near_high"]
             == stepped_back["checks"]["H_close_near_high"]), (
         "precondition: the checklist really is grading the earlier bar")
+    assert (consecutive_up_days(frame) != consecutive_up_days(frame.iloc[:-1])
+            and worst_base_day(frame) != worst_base_day(frame.iloc[:-1])), (
+        "precondition: unanchored, both of Bonde's measurements read a "
+        "different session's answer, so the two below can fail")
     for name in CLOSE_ONLY_CHECKS:
         assert graded["checks"][name] == stepped_back["checks"][name], name
+    # ...and the two measurements that are not checks. Both are close-only
+    # readings (_base() is the closes minus the last one), and both went on
+    # taking the whole frame after _through() was written for the six: the
+    # veto counted the graded burst itself as one of the up days it refuses
+    # bought into -- the one thing consecutive_up_days()'s own docstring says
+    # the rule must not do -- and the base breakdown's 20-session window slid
+    # one session past a -5% day and told the model there was no break.
+    assert graded["vetoes"] == stepped_back["vetoes"]
+    assert graded["context_checks"] == stepped_back["context_checks"]
+
+
+@pytest.mark.parametrize("column", ["Open", "High", "Low"])
+def test_the_metrics_block_describes_the_bar_the_checklist_graded(column):
+    """extra_context() anchored on ITS last bar, which is a later session.
+
+    It prunes on Close and Volume, because burst_bar_shape() needs the gain's
+    own denominator; evaluate_2lynch() prunes on all five. So a newest bar
+    carrying a Close and a Volume and missing an Open, a High or a Low is
+    graded by none of the six checks and was still the anchor for
+    `pct_off_52w_high`, `pct_above_52w_low`, both performance readings and
+    Bonde's two -- while burst_bar_shape(), three keys further down the SAME
+    dict, correctly refused to describe it. Reproduced: -0.6% off the year's
+    high for a bar the checklist never read, beside a null gap saying it had
+    not read it.
+    """
+    frame = _frame(days=200, up_run_days=3)
+    frame.iloc[-1, frame.columns.get_loc(column)] = float("nan")
+    assert (evaluate_2lynch(frame)["checks"]["H_close_near_high"]
+            == evaluate_2lynch(frame.iloc[:-1])["checks"]["H_close_near_high"]), (
+        "precondition: the checklist really is grading the earlier bar")
+
+    assert extra_context(frame) == extra_context(frame.iloc[:-1])
 
 
 
@@ -1910,6 +2081,206 @@ def test_the_prior_day_of_a_frame_with_no_session_before_it_has_no_move():
 
     value = evaluate_2lynch(two)["checks"]["C_calm_preburst_day"]["value"]
     assert value.startswith("prior day nan% move"), value
+
+
+@pytest.mark.parametrize("column", ["Open", "High", "Low"])
+def test_c_judges_the_session_immediately_before_the_burst(column):
+    """C names ONE session and was given whichever bar the prune left newest.
+
+    The round before this one gave C's MOVE the close-only series and left
+    C's SUBJECT alone: `pre.iloc[-1]` is the newest bar the five-field prune
+    kept, so a prior day that carried a Close and a Volume and lost its Open,
+    High or Low was thrown away and C graded the session BEFORE it -- under
+    the words "prior day", in the same request whose `prev_volume` is the
+    real prior day's. Reachable through every scanner gate: `_measurable()`
+    prunes on Close and Volume alone, so `_drop_gapped_symbols()` sees that
+    bar as the previous session and `detect_setup()` measures the gain
+    against it. Reproduced on a 3.5% 3x-volume prior day, where the hole
+    turned C's FAIL into a PASS and the pass count from 5 to 6.
+
+    A session the checklist cannot read is not a quiet day, and it is not the
+    day before it either: C says it has no bar to judge, the shape `H`
+    already uses for a burst bar it cannot read.
+    """
+    clean = _frame(days=200)
+    clean.iloc[-2, clean.columns.get_loc("Close")] *= 1.035
+    clean.iloc[-2, clean.columns.get_loc("Volume")] *= 3.0
+    holed = clean.copy()
+    holed.iloc[-2, holed.columns.get_loc(column)] = float("nan")
+
+    graded = evaluate_2lynch(clean)["checks"]["C_calm_preburst_day"]
+    assert graded["pass"] is False, (
+        "precondition: the real prior day is loud, so grading an earlier one "
+        "flips this check")
+    two_back = evaluate_2lynch(clean.drop(clean.index[-2]))["checks"]["C_calm_preburst_day"]
+    assert two_back["pass"] is True, (
+        "precondition: the session before it IS calm, which is what the "
+        "silent substitution reported")
+
+    check = evaluate_2lynch(holed)["checks"]["C_calm_preburst_day"]
+    assert check["pass"] is False, check
+    assert "no usable bar" in check["value"], check["value"]
+    assert "prior day" not in check["value"], (
+        f"C described a session that is not the prior day: {check['value']!r}")
+
+
+def test_c_still_grades_the_prior_day_when_the_feed_served_it_whole():
+    """The inverse. A rule that refused every prior day would satisfy the
+    test above and delete the check."""
+    clean = _frame(days=200, d1_move_pct=3.0)
+    check = evaluate_2lynch(clean)["checks"]["C_calm_preburst_day"]
+    assert check["value"].startswith("prior day 3.0% move"), check["value"]
+    _only_failure_is(evaluate_2lynch(clean), "C")
+
+
+def test_a_zero_close_in_the_base_leaves_the_prior_days_move_unmeasured():
+    """_move_into()'s non-positive guard, which is load-bearing against a
+    crash and not merely against a wrong number.
+
+    The move is a ratio, and the session before the prior day is its
+    denominator. Before this arithmetic existed `pct_change()` answered inf
+    there; dividing answers ZeroDivisionError, out of evaluate_2lynch(),
+    inside src.pipeline's gate loop -- which has no try around it, so the
+    whole evening run dies after the scan and every earlier candidate's
+    Claude call have been paid for. src.scanner._session_bar_problem() refuses
+    a non-positive close on the SESSION bar and nothing validates the rest of
+    a frame.
+    """
+    frame = _frame(days=200)
+    frame.iloc[-3, frame.columns.get_loc("Close")] = 0.0
+
+    result = evaluate_2lynch(frame)
+
+    value = result["checks"]["C_calm_preburst_day"]["value"]
+    assert value.startswith("prior day nan% move"), value
+    assert result["checks"]["C_calm_preburst_day"]["pass"] is False
+
+
+def test_a_blank_session_is_not_a_session_the_close_only_readings_count():
+    """The column the parametrised holes above deliberately leave out.
+
+    "A bar with no close is dropped by both rules, so on that column the two
+    readings coincide" is the sentence _series()'s own dropna makes true, and
+    nothing planted a NaN Close in a base frame to check it: the dropna could
+    be deleted with the whole suite green, and then `L` reported R²=nan, `Y`
+    read +22.0% where the closes say +23.2%, and the up-days veto counted 12
+    where the base has 137. A session the feed printed nothing for is not a
+    session, so blanking one must read exactly as removing the row does --
+    which is also the one comparison that says the 52-week windows and the
+    two performance readings count bars carrying their own field rather than
+    rows.
+    """
+    n = 300
+    # Steps that vary, so that losing a session really moves a reading: over a
+    # constant walk every window answers the same whatever it spans, and the
+    # equality below would hold for a reason that has nothing to do with the
+    # rule.
+    steps = 1.0 + 0.004 + 0.003 * np.sin(np.arange(n - 1) / 3.0)
+    close = 40 * np.cumprod(np.r_[1.0, steps])
+    frame = pd.DataFrame(
+        {"Open": close, "High": close * 1.01, "Low": close * 0.99, "Close": close,
+         "Volume": np.full(n, 3e6)},
+        index=pd.bdate_range(end="2026-07-01", periods=n, name="timestamp"))
+    # The one bar the 252-session window reaches back to once a blank session
+    # has shortened the series by one -- so the year's high is inside the
+    # window the closes give and outside the window the ROWS give.
+    spike = n - WINDOWS["high_low_sessions"] - 1
+    frame.iloc[spike, frame.columns.get_loc("High")] = float(frame["High"].max()) * 1.5
+    frame.iloc[spike, frame.columns.get_loc("Low")] = float(frame["Low"].min()) * 0.5
+
+    # Inside check 2's twenty sessions, L's thirty and Y's month, so that a
+    # session's presence is something the six checks can disagree about.
+    blank = frame.copy()
+    blank.iloc[-15] = float("nan")
+    removed = frame.drop(frame.index[-15])
+
+    assert (float(blank["High"].iloc[-WINDOWS["high_low_sessions"]:].max())
+            != float(_series(blank, "High").iloc[-WINDOWS["high_low_sessions"]:].max())), (
+        "precondition: counting rows and counting bars with a High reach "
+        "different sessions here")
+    assert evaluate_2lynch(removed)["checks"] != evaluate_2lynch(frame)["checks"], (
+        "precondition: losing this session really moves a check, so equality "
+        "below is a measurement and not a tautology")
+
+    assert evaluate_2lynch(blank) == evaluate_2lynch(removed)
+    assert extra_context(blank) == extra_context(removed)
+
+
+def test_the_month_is_measured_over_the_closes_the_frame_has():
+    """Y's own length guard counts the closes it reads, not the rows.
+
+    Both are on the frame at once: with 21 sessions of which two lost only
+    their Open, the five-field frame is 19 rows and the closes are 21, and Y
+    has a month to measure. Guarding on the rows prints "no 20-session
+    history to measure a month over" over a frame that has one -- the defect
+    round 4 fixed for Y from the other direction, reintroduced invisibly.
+    """
+    n = WINDOWS["run_up_sessions"] + 1
+    close = 40 * np.cumprod(np.r_[1.0, np.full(n - 1, 1.005)])
+    frame = pd.DataFrame(
+        {"Open": close, "High": close * 1.01, "Low": close * 0.99, "Close": close,
+         "Volume": np.full(n, 3e6)},
+        index=pd.bdate_range(end="2026-07-01", periods=n, name="timestamp"))
+    frame.iloc[3, frame.columns.get_loc("Open")] = float("nan")
+    frame.iloc[7, frame.columns.get_loc("Open")] = float("nan")
+    assert len(frame.dropna(subset=list(CHECKLIST_COLUMNS))) < n, (
+        "precondition: the five-field frame is short of a month")
+
+    value = evaluate_2lynch(frame)["checks"]["Y_young_trend"]["value"]
+    assert "past month" in value and "no 20-session history" not in value, value
+
+
+def test_the_three_month_performance_is_measured_over_the_closes_too():
+    """The same guard, in extra_context(), on a key the rulebook names to the
+    model as this name's relative strength: three bars whose Volume the feed
+    dropped left 62 rows carrying both fields and 65 closes, and a guard
+    counting rows published `perf_3mo_pct: null` for a frame that can measure
+    it."""
+    n = WINDOWS["perf_3mo_sessions"] + 2
+    close = 40 * np.cumprod(np.r_[1.0, np.full(n - 1, 1.005)])
+    frame = pd.DataFrame(
+        {"Open": close, "High": close * 1.01, "Low": close * 0.99, "Close": close,
+         "Volume": np.full(n, 3e6)},
+        index=pd.bdate_range(end="2026-07-01", periods=n, name="timestamp"))
+    for row in (5, 9, 14):
+        frame.iloc[row, frame.columns.get_loc("Volume")] = float("nan")
+    assert len(frame.dropna(subset=["Close", "Volume"])) <= WINDOWS["perf_3mo_sessions"], (
+        "precondition: the Close-and-Volume frame is too short to measure it")
+
+    assert extra_context(frame)["perf_3mo_pct"] is not None
+
+
+def test_the_record_can_see_a_change_a_threshold_cannot_express():
+    """RULES_REVISION, and why a version stamp is not a threshold.
+
+    rules_fingerprint() derives every number this module names, and the
+    commit before this one changed WHICH BARS `2`, `L`, `Y` and `C` count
+    without moving one of them: the fingerprint was byte-identical across it
+    while the same frame read +4.0% past month on one side and +7.7% on the
+    other. That is the state the fingerprint exists to prevent, arriving
+    through the one door a walk of numbers cannot see, and the record would
+    have carried both screeners under one label from the first real night.
+
+    A stamp bumped by hand in the same commit as the change is what says so.
+    It is deliberately read by no check -- there is nothing to compare it
+    against -- which is why the two structural guards below exempt a
+    `*_REVISION` name and nothing else.
+    """
+    import src.lynch as lynch_mod
+    from src.pipeline import rules_fingerprint
+
+    assert isinstance(RULES_REVISION, int) and RULES_REVISION >= 1
+    before = rules_fingerprint()
+    assert before["check.rules_revision"] == RULES_REVISION
+
+    original = lynch_mod.RULES_REVISION
+    try:
+        lynch_mod.RULES_REVISION = original + 1
+        assert rules_fingerprint() != before, (
+            "a change to what the checks read has no way into the record")
+    finally:
+        lynch_mod.RULES_REVISION = original
+    assert rules_fingerprint() == before, "the fingerprint did not come back"
 
 
 def test_every_rule_evaluate_2lynch_vetoes_on_is_named_in_VETO_RULES():
@@ -2143,9 +2514,7 @@ def test_every_threshold_this_module_names_is_one_its_own_code_reads():
     tree = ast.parse(inspect.getsource(lynch_mod))
     read = {n.id for f in ast.walk(tree) if isinstance(f, ast.FunctionDef)
             for n in ast.walk(f) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
-    named = {n for n in dir(lynch_mod)
-             if n.isupper() and isinstance(getattr(lynch_mod, n), (int, float))
-             and not isinstance(getattr(lynch_mod, n), bool)}
+    named = _thresholds(lynch_mod)
     assert named, "src.lynch exposes no threshold constants"
     unread = sorted(named - read)
     assert not unread, (
@@ -2191,8 +2560,7 @@ def test_no_threshold_constant_is_left_without_a_canary():
     """
     import src.lynch as lynch_mod
 
-    constants = [n for n in dir(lynch_mod)
-                 if n.isupper() and isinstance(getattr(lynch_mod, n), (int, float))]
+    constants = sorted(_thresholds(lynch_mod))
     assert constants, "src.lynch exposes no threshold constants"
     source = pathlib.Path(__file__).read_text()
     # Three mentions is the floor for a guarded threshold: the import, the

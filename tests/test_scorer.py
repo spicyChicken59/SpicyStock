@@ -23,6 +23,7 @@ from types import SimpleNamespace
 import pytest
 
 from src import ledger
+from src.lynch import evaluate_2lynch
 from src.scanner import Candidate, ScanConfig, detect_setup
 from src.scorer import (
     KNOWLEDGE_PATH,
@@ -207,38 +208,103 @@ def test_a_bar_missing_one_field_is_a_gap_in_the_picture_not_no_picture(ohlcv, t
         assert data.startswith(PNG_MAGIC) and len(data) > 20_000, column
 
 
-def test_the_chart_keeps_eighty_five_readable_bars_rather_than_eighty_five_rows(ohlcv,
-                                                                               tmp_path,
-                                                                               monkeypatch):
-    """Dropped BEFORE the tail is taken, not after.
-
-    Pruning after the slice would answer the crash and quietly shorten the
-    picture by however many holes the last eighty-five rows carried, which is
-    the reading the model is asked to trust most.
-    """
-    seen = {}
-
+def _plot_spy(monkeypatch, seen):
     class _Spy:
         @staticmethod
         def plot(df, **kwargs):
             seen["rows"] = len(df)
             seen["index"] = df.index
+            seen["frame"] = df
             Path(kwargs["savefig"]["fname"]).write_bytes(PNG_MAGIC + b"x" * 32)
 
     monkeypatch.setitem(sys.modules, "mplfinance", _Spy)
+
+
+def test_the_chart_keeps_eighty_five_readable_bars_rather_than_eighty_five_rows(ohlcv,
+                                                                               tmp_path,
+                                                                               monkeypatch):
+    """Eighty-five sessions a reader can read, and the holes between them.
+
+    The tail is taken over the READABLE bars, so a night with holes still
+    shows eighty-five candles -- counting rows instead would quietly shorten
+    the picture by however many holes the last eighty-five carried, which is
+    the reading the model is asked to trust most.
+    """
+    seen = {}
+    _plot_spy(monkeypatch, seen)
     frame = ohlcv("burst").copy()
     assert len(frame) > 95, "precondition: more history than the chart shows"
     for offset in (5, 30, 70):
         frame.iloc[-offset, frame.columns.get_loc("High")] = float("nan")
-    # ...and a bar whose Volume alone the feed lost stays IN the picture: it
-    # has a candle to draw and mplfinance renders it, so pruning on Volume
-    # would drop a session the reader can otherwise see.
+    # ...and a bar whose Volume alone the feed lost keeps its candle: it has
+    # one to draw and mplfinance renders it, so blanking on Volume would put
+    # a gap where the reader can otherwise see a session.
     frame.iloc[-12, frame.columns.get_loc("Volume")] = float("nan")
 
     render_chart("AAA", frame, out_dir=str(tmp_path))
-    assert seen["rows"] == 85
-    assert frame.index[-12] in seen["index"]
-    assert frame.index[-5] not in seen["index"]
+    drawn = seen["frame"].dropna(subset=["Open", "High", "Low", "Close"])
+    assert len(drawn) == 85
+    assert frame.index[-12] in drawn.index
+    for offset in (5, 30, 70):
+        assert frame.index[-offset] in seen["index"], (
+            "the session is missing from the picture rather than blank in it")
+
+
+def test_a_hole_is_a_gap_in_the_picture_and_not_a_splice(ohlcv, tmp_path):
+    """The word "gap" has to be true of the PNG, and it was not.
+
+    Dropping the row answers mplfinance's refusal and draws the neighbours
+    adjacent, because nothing asks it to keep a slot for a date it was not
+    given: rendered under one ticker, the chart of a frame with a holed bar
+    was byte-identical to the chart of a frame in which that session had been
+    DELETED -- so the picture could not tell a hole from a session that never
+    happened, on the surface knowledge/strategy.md tells the model to trust
+    MOST. Blanking all four price columns is what mplfinance's equal-missing
+    rule wants and leaves the slot empty, which is what the word means.
+
+    The identity is the assertion, because "a PNG was produced" passes either
+    way -- which is why the two chart tests of the round that wrote the word
+    did not see this.
+    """
+    frame = ohlcv("burst").copy()
+    hole = len(frame) - 40
+    holed = frame.copy()
+    holed.iloc[hole, holed.columns.get_loc("High")] = float("nan")
+    spliced = frame.drop(frame.index[hole])
+
+    gap = Path(render_chart("AAA", holed, out_dir=str(tmp_path / "gap"))).read_bytes()
+    splice = Path(render_chart("AAA", spliced, out_dir=str(tmp_path / "splice"))).read_bytes()
+
+    assert gap.startswith(PNG_MAGIC) and len(gap) > 20_000
+    assert gap != splice, (
+        "the hole is drawn as a splice: the picture of a session that "
+        "happened and could not be read is the picture of one that did not")
+
+
+def test_the_chart_ends_on_the_bar_the_checklist_grades(ohlcv, tmp_path, monkeypatch):
+    """One request, one bar -- the rule the metrics block and the checklist
+    both follow, on the third surface in the same request.
+
+    render_chart() blanks a bar missing one of O, H, L or C, and Volume is
+    deliberately not in that set because a NaN there renders. That leaves one
+    column: a NEWEST bar carrying prices and no volume draws a candle for a
+    session `evaluate_2lynch()` is not grading and every number in the
+    request describes the session before. src.scanner refuses such a
+    candidate, so no run has published one; the rule is here because the
+    rulebook's sentence about reading the chart beside `H` is unconditional.
+    """
+    seen = {}
+    _plot_spy(monkeypatch, seen)
+    frame = ohlcv("burst").copy()
+    frame.iloc[-1, frame.columns.get_loc("Volume")] = float("nan")
+    graded = evaluate_2lynch(frame)
+    assert (graded["checks"]["H_close_near_high"]
+            == evaluate_2lynch(frame.iloc[:-1])["checks"]["H_close_near_high"]), (
+        "precondition: the checklist really is grading the earlier bar")
+
+    render_chart("AAA", frame, out_dir=str(tmp_path))
+
+    assert seen["index"][-1] == frame.index[-2]
 
 
 # ----------------------------------------------------------- the request ----

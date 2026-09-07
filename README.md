@@ -41,8 +41,9 @@ Layer 2  2LYNCH checklist (code) ..... 2 first/second burst · L linear prior mo
 Layer 3  Chart render ................ 4-month candlestick + volume PNG per name,
         │                              written to docs/charts/ — gitignored, so
         │                              they stay on the machine that ran;
-        ▼                              a bar with a hole in it is a gap in the
-                                       picture, not a candidate scored blind
+        ▼                              a bar with a hole in it is drawn as a
+                                       gap — blanked, never spliced out —
+                                       not a candidate scored blind
 Layer 4  Claude scoring .............. metrics (the burst bar's own gap and
         │                              range included) + 2LYNCH detail + chart
         │                              image + what the RECORD says about this
@@ -523,7 +524,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1388 tests, no network or API keys needed
+pytest tests/                   # 1406 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -698,7 +699,7 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 15.50 MB raw
+and what followed — needs the whole record, which projects to about 15.51 MB raw
 and **1.25 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
@@ -838,9 +839,10 @@ invariants live in the file rather than only here. The load-bearing ones:
   both are measured after the scan's own cleaning, so a bar with an
   unreadable volume is a session neither is measured against),
   `bar_range_pct` (high minus low over the close) and `range_expansion`
-  (that width over the mean width of the last seven sessions before it that
-  the checklist can read — `N`'s own consolidation window, deliberately not a
-  second one, and averaged the way `N` averages it, so the ratio is
+  (that width over the mean width of the last seven sessions before it whose
+  range can be read — `N`'s own consolidation window, deliberately not a
+  second one, holding the bars `N` holds, and averaged the way `N` averages
+  it, so the ratio is
   `bar_range_pct` over the %/day the `N` line in the same row prints). It is
   on every burst row, scored or refused, and it survives into
   `docs/ledger.json` beside the forward returns, which is the only place the
@@ -850,9 +852,11 @@ invariants live in the file rather than only here. The load-bearing ones:
   open printed outside its own bar, which is not a price anybody paid; the
   width and the expansion for an envelope that cannot be read; the expansion
   alone when no readable session before the burst had any width to expand
-  against; and all three when the burst bar is missing a field the checklist
-  needs, because the six checks then grade the session BEFORE it and these
-  would describe another one. None of them is in `run.rules`: no rule reads
+  against; and all three when the LAST bar of the frame handed over is missing
+  a field the checklist needs, which is the rule and no longer a state this
+  block reaches — the metrics are anchored on the bar the checklist grades, so
+  these three step back onto it with `H` rather than describing the session
+  after. None of them is in `run.rules`: no rule reads
   them, and a measurement that refuses nothing does not make a run a
   different screener. The rulebook the model reads DOES change when their
   instructions do, and that is in the fingerprint through `score.prompt`.
@@ -1355,17 +1359,27 @@ test fixtures. It dispatches no scan and calls no market or email service.
   override: `ScanConfig` in `src/scanner.py`. There is no share-volume floor;
   step 4 deleted it, and this bullet named the deleted knob and none of the
   three that replaced it
-- 2LYNCH pass criteria: `src/lynch.py` — which BARS a check counts is decided
-  by the fields that check reads and by nothing else: `2`, `L` and `Y` are
-  closes, so they read every bar carrying one, and `N`, `C` and `H` are asked
-  for a range and a volume, so they need all five fields. All six read the
-  five-field frame until round 11, which merged the two sessions either side
-  of every hole for the first three. The thresholds a measurement is
+- 2LYNCH pass criteria: `src/lynch.py` — which BARS a MEASUREMENT counts is
+  decided by the fields that measurement reads and by nothing else. Per
+  measurement, not per check, because two checks are on both sides of the
+  split: the closes (`2`, `L`, `Y`, `C`'s prior-day move, the up-days veto and
+  the base breakdown) count every bar carrying a close, the ranges (`N`, and
+  `C`'s own width) count every bar carrying a high, a low and a close, and all
+  five fields are needed only to BE the bar graded — the burst `H` judges, and
+  the prior day `C` judges, which is the session before it in the closes and
+  not "whatever bar the prune left". All of it read one five-field frame until
+  round 11; that arrangement merged the two sessions either side of every
+  hole, which was reproduced on check 2 reporting two prior 4% bursts that
+  never happened. The thresholds a measurement is
   compared against are module constants, and `WINDOWS` holds how much history
   each check reads, plus the four windows `extra_context()` measures the
   model's relative-strength numbers over. Both kinds are in the rules
-  fingerprint; a number left as a literal in ANY of that module's functions is
-  not, and a threshold spelled out at its own value is a third state that
+  fingerprint, and `RULES_REVISION` is there for the change neither kind can
+  express — which bars a check counts, which bar it is anchored on — bumped by
+  hand in the same commit as such a change, since a walk of numbers cannot see
+  one. A number left as a literal in ANY of that module's functions is
+  not in the fingerprint, and a threshold spelled out at its own value is a
+  third state that
   looks like neither — two tests refuse them, one reading every function's
   numeric constants and one asserting every named threshold is read by the
   module's own code (`2.0` for `MAX_D1_MOVE` passed the first and not the

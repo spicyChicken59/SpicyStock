@@ -199,6 +199,25 @@ MIN_CLOSE_POS = 0.70        # H: where in the day's range the burst closed
 #: exactly that impossible.
 VETO_RULES = ("up_days",)
 
+#: WHICH BARS THE CHECKS COUNT, as a number, because that question has no
+#: other way into the record. rules_fingerprint() derives the strategy from
+#: every number this module names -- and the change that gave `2`, `L`, `Y`
+#: and `C` a close-only series left it BYTE-IDENTICAL while the same frame
+#: read "+4.0% past month" on one side of the commit and "+7.7%" on the
+#: other. A record spanning that change carries both screeners under one
+#: label, which is the exact state round 8 built the fingerprint to prevent,
+#: arriving through the one door a walk of numbers cannot see.
+#:
+#: BUMP IT IN THE SAME COMMIT as any change to what a check READS -- which
+#: bars a measurement counts, which bar it is anchored on, which session it
+#: names -- as against what a check is compared AGAINST, which is a threshold
+#: and moves the fingerprint by itself. It is read by no rule: there is
+#: nothing to compare it with, and the two structural guards over this
+#: module's constants exempt a `*_REVISION` name for that reason and for no
+#: other. 1 is every screener up to and including round 11's burst-bar
+#: commit; 2 is the close-only series and the anchors that came with it.
+RULES_REVISION = 2
+
 MAX_CONSECUTIVE_UP_DAYS = 2   # veto at 3+, counted BEFORE the burst day
 BREAKDOWN_PCT = -4.0          # a single day this bad is a break, not a pullback
 BREAKDOWN_LOOKBACK = 20       # sessions of base examined for one, before the burst
@@ -219,8 +238,23 @@ def _series(df: pd.DataFrame, column: str) -> pd.Series:
     return df.dropna(subset=[column])[column]
 
 
-def _through(df: pd.DataFrame, stamp) -> pd.DataFrame:
-    """`df` up to and including the row at `stamp`: nothing after the bar the
+def _carrying(df: pd.DataFrame, columns) -> np.ndarray:
+    """The POSITIONS of the bars in `df` that carry every one of `columns`.
+
+    Positions rather than timestamps, and that is the whole point. The first
+    version of this rule looked the anchor bar up by its stamp
+    (`df.index == stamp`) and handed back the WHOLE FRAME when it found
+    nothing -- every bar after the anchor included, which is the merge the
+    anchor exists to prevent, arriving by the other door. It finds nothing
+    for a NaT in the index (`NaT == NaT` is False; round 9's L2 found that
+    shape reaching this module) and it finds two rows for a stamp the feed
+    sent twice. A position cannot be ambiguous and cannot be absent.
+    """
+    return np.flatnonzero(df[list(columns)].notna().all(axis=1).to_numpy())
+
+
+def _through(df: pd.DataFrame, upto: int) -> pd.DataFrame:
+    """`df` up to and including position `upto`: nothing after the bar the
     checklist is grading.
 
     `evaluate_2lynch()` drops every bar missing one of CHECKLIST_COLUMNS and
@@ -228,16 +262,32 @@ def _through(df: pd.DataFrame, stamp) -> pd.DataFrame:
     Open the burst is the session BEFORE it -- and a close-only reading, which
     keeps that bar, would otherwise measure "through today's burst" on a bar
     `H` is not grading. One request, one bar: the same rule burst_bar_shape()
-    states for its three measurements, applied where the closes are read.
+    states for its three measurements, applied everywhere this module reads a
+    series rather than a bar.
     """
-    at = np.flatnonzero(df.index == stamp)
-    return df.iloc[:at[-1] + 1] if len(at) else df
+    return df.iloc[:upto + 1]
 
 
-def _move_into(closes: pd.Series, stamp) -> float:
-    """The fractional move into the session `stamp`, along a close-only series.
+def graded_bar_at(df: pd.DataFrame) -> int | None:
+    """Where in `df` the bar `evaluate_2lynch()` grades as the burst sits, or
+    None when no bar in it carries all five of CHECKLIST_COLUMNS.
 
-    The session BEFORE `stamp` is the one before it in `closes` -- the last
+    Public because the CHART is the third surface in the same request, and
+    "one request, one bar" is a rule about the request rather than about this
+    module: src.scorer.render_chart() ends the picture here, so the rightmost
+    candle is the bar `H` graded and the metrics block describes.
+    """
+    if any(name not in df.columns for name in CHECKLIST_COLUMNS):
+        return None
+    at = _carrying(df, CHECKLIST_COLUMNS)
+    return int(at[-1]) if len(at) else None
+
+
+def _move_into(closes: pd.Series, at: int) -> float:
+    """The fractional move into `closes`' position `at`, along a close-only
+    series.
+
+    The session BEFORE it is the one before it in `closes` -- the last
     session that printed a close -- and not the bar before it in whatever
     frame the caller pruned for its own fields. A hole between the two makes
     those different sessions, and the difference is two sessions' drift
@@ -245,15 +295,37 @@ def _move_into(closes: pd.Series, stamp) -> float:
 
     NaN when there is no session before it to have moved from, which is what
     `pct_change()` returned in the same position and which every comparison
-    against it is false for.
+    against it is false for. NaN too when that session closed at or below
+    zero: `pct_change()` answered inf there and dividing answers
+    ZeroDivisionError, which would come out of evaluate_2lynch() inside
+    src.pipeline's gate loop -- no try around it, so the evening run dies
+    after the scan and every earlier Claude call are paid for.
+    src.scanner._session_bar_problem() refuses a non-positive close on the
+    SESSION bar and nothing validates the rest of the frame.
     """
-    at = np.flatnonzero(closes.index == stamp)
-    if not len(at) or at[-1] == 0:
+    if at <= 0:
         return float("nan")
-    prev = float(closes.iloc[at[-1] - 1])
+    prev = float(closes.iloc[at - 1])
     if prev <= 0:
         return float("nan")
-    return float(closes.iloc[at[-1]]) / prev - 1.0
+    return float(closes.iloc[at]) / prev - 1.0
+
+
+#: The three fields a daily range is made of. `N`'s consolidation and its
+#: norm, and `C`'s range, are high-minus-low over the close -- so they count
+#: the bars carrying those three, by the same rule the closes follow, and not
+#: the bars that also carry an Open and a Volume they never read. Measured
+#: before this was true: two shelf bars losing ONLY their Open moved `N` from
+#: "1.7%/day = 0.43x its norm" to "2.3%/day = 0.58x", because the 60-session
+#: norm slid two sessions back.
+RANGE_COLUMNS: tuple[str, ...] = ("High", "Low", "Close")
+
+
+def _ranges(df: pd.DataFrame) -> pd.Series:
+    """Each bar's high-low span as a percentage of its own close, for the
+    bars that carry all three."""
+    kept = df.dropna(subset=list(RANGE_COLUMNS))
+    return (kept["High"] - kept["Low"]) / kept["Close"] * 100
 
 
 def _base(df: pd.DataFrame) -> pd.Series:
@@ -377,14 +449,22 @@ def _missing(value) -> bool:
         return False
 
 
-#: The five fields `evaluate_2lynch()` needs of every bar it reads. It drops
-#: the rest and calls the last row LEFT the burst, so a bar missing one of
-#: these is not a bar the checklist judges.
+#: The five fields a bar must carry to BE a bar the checklist grades --
+#: the burst, and the prior day `C` judges. `evaluate_2lynch()` drops the
+#: rest and calls the last row LEFT the burst.
+#:
+#: NOT "the five fields it needs of every bar it reads", which is what this
+#: said until an audit read it against the code beside it: the close-only
+#: readings (`2`, `L`, `Y`, `C`'s move, the up-days veto, the base breakdown)
+#: count every bar carrying a close, and `N`'s ranges count every bar
+#: carrying a high, a low and a close. Which bars a MEASUREMENT counts is the
+#: fields that measurement reads; this is which bars can be the SUBJECT.
 CHECKLIST_COLUMNS: tuple[str, ...] = ("Open", "High", "Low", "Close", "Volume")
 
 
 def _read_by_the_checklist(bar, columns) -> bool:
-    """Would `evaluate_2lynch()` keep this bar, or drop it before reading?"""
+    """Could `evaluate_2lynch()` grade this bar, or is it one the prune drops
+    before choosing a burst?"""
     return all(name in columns and not _missing(bar.get(name))
                for name in CHECKLIST_COLUMNS)
 
@@ -474,18 +554,23 @@ def burst_bar_shape(df: pd.DataFrame) -> dict:
     envelope cannot be read has no width; and a base with no readable bar
     behind it has no norm to expand against.
 
-    ALL THREE ARE NULL WHEN THE CHECKLIST IS READING A DIFFERENT BAR.
-    `evaluate_2lynch()` drops every bar missing any of CHECKLIST_COLUMNS and
-    calls the last row left the burst, so on a frame whose last bar has no
-    Open it grades the session BEFORE -- and these three would have described
-    the session after it, in the same request, under a rulebook sentence
-    telling the model to read the width beside `H`. Reproduced: a bar closing
-    at 98% of its own range reached the model as `bar_range_pct 9.4` beside
-    "closed at 50% of day's range", which is the previous day. The scan
-    itself refuses such a frame (src.scanner._session_bar_problem requires
-    all five on the session bar), so no run has published one; the rule is
-    here because the sentence in the rulebook is unconditional and this is
-    what makes it true.
+    ALL THREE ARE NULL WHEN THE LAST BAR HANDED OVER IS NOT ONE THE CHECKLIST
+    COULD GRADE. `evaluate_2lynch()` drops every bar missing any of
+    CHECKLIST_COLUMNS and calls the last row left the burst, so on a frame
+    whose last bar has no Open it grades the session BEFORE -- and these three
+    would have described the session after it, in the same request, under a
+    rulebook sentence telling the model to read the width beside `H`.
+    Reproduced: a bar closing at 98% of its own range reached the model as
+    `bar_range_pct 9.4` beside "closed at 50% of day's range", which is the
+    previous day.
+
+    The CALLER does not reach that branch any more, and what it does instead
+    is the better answer: extra_context() anchors on the graded bar and hands
+    over the frame cut there, so these three describe the bar `H` describes
+    and step back with it rather than going null. The rule stays stated here
+    because it is this function's own contract -- a caller handing over an
+    unanchored frame must not be given a measurement of a bar nobody graded --
+    and a test plants exactly that frame.
     """
     out: dict = {key: None for key in BURST_BAR_KEYS}
     if len(df) == 0:
@@ -512,19 +597,18 @@ def burst_bar_shape(df: pd.DataFrame) -> dict:
     bar_range = _bar_range_pct(burst)
     out["bar_range_pct"] = bar_range
     if bar_range is not None:
-        # The last `tight_sessions` bars before the burst that the CHECKLIST
-        # reads and this can measure a width from, not the last
-        # `tight_sessions` bars: `N` measures its consolidation over a frame
-        # it has already pruned, and reaching past a hole is what that
-        # amounts to. Both halves of that rule are needed for the two
-        # windows to hold the same bars -- a bar with no Open has a
-        # perfectly readable width and is one `N` never sees. Walked
-        # backwards so a long history costs seven rows rather than all of
-        # them.
+        # The last `tight_sessions` bars before the burst this can measure a
+        # width from, which is `N`'s window and not the last
+        # `tight_sessions` ROWS: `N` averages the bars carrying a high, a low
+        # and a close, and reaching past a bar it skipped would make the
+        # denominator a different set from the number printed beside it.
+        # (A bar with no Open used to be excluded HERE and included by `N`,
+        # under a comment claiming the opposite, until `N`'s own window
+        # started counting the fields it reads.) Walked backwards so a long
+        # history costs seven rows rather than all of them.
         base: list[float] = []
         for i in range(len(df) - 2, -1, -1):
-            bar = df.iloc[i]
-            measured = _bar_width(bar) if _read_by_the_checklist(bar, df.columns) else None
+            measured = _bar_width(df.iloc[i])
             if measured is not None:
                 base.append(measured)
                 if len(base) == WINDOWS["tight_sessions"]:
@@ -634,28 +718,39 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     `context_checks` is the opposite: measured, judged, and left to the
     scoring model to weigh, refusing nothing on its own.
     """
-    # Which bars a measurement counts is decided by the fields IT reads, and by
-    # nothing else. N, C and H are asked for intraday ranges and volume, so
-    # they need a bar with all five fields. 2, L and Y read closes and nothing
-    # else, and must NOT: dropping a bar whose High the feed lost does not
-    # merely lose one reading of theirs, it MERGES the two sessions either
-    # side of it and slides every reading past it. All six used to read `df`,
-    # and on a base whose largest single session was +2.5% two missing Highs
-    # made check 2 report "2 prior 4% bursts" -- the rule this product is
-    # named after, refusing a candidate on days that do not exist -- while Y
-    # measured 22 sessions under the name of 20 and read +52.6% for +45.2%.
+    # WHICH BARS A MEASUREMENT COUNTS IS DECIDED BY THE FIELDS THAT
+    # MEASUREMENT READS, and by nothing else. The closes (2, L, Y, C's move,
+    # and Bonde's two below) count every bar carrying a close; the ranges (N,
+    # and C's own width) count every bar carrying a high, a low and a close;
+    # all five fields are needed only to BE the bar graded -- the burst H
+    # judges and the prior day C judges, which are asked for a whole bar's
+    # geometry and its volume.
+    #
+    # All six used to read one five-field frame, and on a base whose largest
+    # single session was +2.5% two missing Highs made check 2 report "2 prior
+    # 4% bursts" -- the rule this product is named after, refusing a candidate
+    # on days that do not exist -- while Y measured 22 sessions under the name
+    # of 20 and read +52.6% for +45.2%. The round that fixed those three left
+    # the RANGES pruned on five fields, and two shelf bars losing only their
+    # Open moved N from "1.7%/day = 0.43x its norm" to "2.3%/day = 0.58x".
     # This is the rule _base() has applied to Bonde's two measurements since
     # the 3.3 audit found the same disagreement between two functions; it is
-    # every close-only reading in this one now.
+    # every reading in this one now.
     raw = df
-    df = raw.dropna(subset=list(CHECKLIST_COLUMNS)).copy()
+    graded = _carrying(raw, CHECKLIST_COLUMNS)
+    df = raw.iloc[graded]
     burst = df.iloc[-1]
-    pre = df.iloc[:-1]  # everything before the burst day
-    # ...and the closes are every bar with a close, up to and including THAT
-    # bar -- _base()'s rule, plus _through()'s, so the six checks never
-    # describe two different sessions in one request.
-    closes = _series(_through(raw, df.index[-1]), "Close")
+    # ...and every series is read up to and including THAT bar, so the six
+    # checks, the veto and the base breakdown never describe two different
+    # sessions in one request: the prune can take the NEWEST bar, and then H
+    # grades the session before it while an unanchored close-only reading
+    # measures "through today's burst" on the bar after.
+    through = _through(raw, graded[-1])
+    closes = _series(through, "Close")
     base = closes.iloc[:-1]
+    # Every bar before the burst, holes included -- the frame the range
+    # windows below are measured over, each pruned for what it reads.
+    pre = through.iloc[:-1]
 
     checks: dict[str, dict] = {}
 
@@ -734,10 +829,13 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     }
 
     # ---- N: narrow consolidation over the 5-10 days pre-burst ----
-    daily_range = ((pre["High"] - pre["Low"]) / pre["Close"]) * 100
+    # Every bar with a high, a low and a close, by RANGE_COLUMNS' rule: a bar
+    # whose Open or Volume the feed dropped has a range N can measure, and
+    # dropping it slid both windows a session back.
+    daily_range = _ranges(pre)
     recent_range = daily_range.iloc[-WINDOWS["tight_sessions"]:].mean()
     norm_range = (daily_range.iloc[-WINDOWS["norm_sessions"]:-WINDOWS["tight_sessions"]].mean()
-                  if len(pre) > WINDOWS["norm_sessions"] + WINDOWS["tight_sessions"]
+                  if len(daily_range) > WINDOWS["norm_sessions"] + WINDOWS["tight_sessions"]
                   else daily_range.mean())
     recent_range = shown(recent_range, 1)
     tightness = shown(recent_range / norm_range, 2) if norm_range else 9.9
@@ -747,37 +845,70 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     }
 
     # ---- C: calm day immediately before the burst ----
-    d1 = pre.iloc[-1]
-    d1_range = shown((d1["High"] - d1["Low"]) / d1["Close"] * 100, 1)
-    # The sessions before d1, not counting d1: a day cannot be quiet against a
-    # baseline it is itself part of. `+ 1` because the slice ends one short.
-    d1_norm = pre["Volume"].iloc[-(WINDOWS["volume_norm_sessions"] + 1):-1].mean()
-    d1_vol_ratio = shown(d1["Volume"] / d1_norm, 2)
-    # d1's own move is a close-to-close reading, so it comes off the closes and
-    # not off `pre`: the BAR C judges has to carry all five fields, but the
-    # session it moved from need not, and `pre.pct_change()` spanned any hole
-    # between the two and called two sessions of drift one quiet day -- the
-    # same merge as check 2's, on the check whose threshold is 2%.
-    d1_move = shown(abs(_move_into(closes, pre.index[-1])) * 100, 1)
-    # The range was measured and printed but left out of the verdict, so a
-    # day that closed unchanged after a 15%-wide swing counted as "calm".
-    # Judged against the stock's own norm, reusing N's baseline and multiple
-    # rather than inventing a second constant. When there is no usable norm
-    # the line says so: N's `else 9.9` sentinel prints "9.90x its norm" for a
-    # range it never managed to measure, and that string goes to Claude.
-    if norm_range:
-        d1_range_ratio = shown(d1_range / norm_range, 2)
-        norm_text = f" = {d1_range_ratio:.2f}x its norm"
+    # C NAMES ONE SESSION, so it needs that session's bar. `pre.iloc[-1]` off
+    # the five-field frame is the newest bar the prune LEFT, which is a
+    # different session whenever the day before the burst carried a close and
+    # a volume and lost its Open, its High or its Low -- and the scan lets
+    # that through, since src.scanner._measurable() prunes on Close and
+    # Volume alone, so _drop_gapped_symbols() sees that bar as the previous
+    # session and detect_setup() measures the gain against it. Reproduced
+    # through those gates: a 3.5% prior day on 3x volume with a NaN High was
+    # thrown away and C reported "prior day 0.0% move ... 1.00x volume" about
+    # the quiet day before it, turning a FAIL into a PASS on 51% of 600
+    # frames, in a row whose `prev_volume` is the real prior day's.
+    #
+    # The session before the burst is the one before it in the CLOSES -- the
+    # last session that printed one, which is the session detect_setup()
+    # measured its gain against. When that session is not a bar this check
+    # can grade, C says so, the way `H` does for a burst bar it cannot read,
+    # rather than silently grading an older day under the words "prior day".
+    d1_at = len(closes) - 2
+    printed_a_close = _carrying(through, ("Close",))
+    judgeable = (len(graded) >= 2 and d1_at >= 0
+                 and graded[-2] == printed_a_close[d1_at])
+    if not judgeable:
+        checks["C_calm_preburst_day"] = {
+            "pass": False,
+            "value": ("no usable bar for the session before the burst; "
+                      "nothing to judge as the calm day"),
+        }
     else:
-        d1_range_ratio = float("inf")
-        norm_text = " (no usable range norm)"
-    checks["C_calm_preburst_day"] = {
-        "pass": bool(d1_move < MAX_D1_MOVE and d1_vol_ratio < MAX_D1_VOL_RATIO and d1_range_ratio <= MAX_D1_RANGE_RATIO),
-        "value": (
-            f"prior day {d1_move:.1f}% move, {d1_range:.1f}% range{norm_text}"
-            f", {d1_vol_ratio:.2f}x volume"
-        ),
-    }
+        d1 = through.iloc[graded[-2]]
+        d1_range = shown((d1["High"] - d1["Low"]) / d1["Close"] * 100, 1)
+        # The sessions before d1, not counting d1: a day cannot be quiet
+        # against a baseline it is itself part of. Every bar that printed a
+        # volume, by _series()'s rule -- the average is a volume reading, so
+        # it counts the bars carrying a volume.
+        d1_norm = _series(_through(through, graded[-2] - 1), "Volume").iloc[
+            -WINDOWS["volume_norm_sessions"]:].mean()
+        d1_vol_ratio = shown(d1["Volume"] / d1_norm, 2)
+        # d1's own move is a close-to-close reading, so it comes off the
+        # closes and not off the bars: the BAR C judges has to carry all five
+        # fields, but the session it moved FROM need not, and a pct_change()
+        # over the pruned frame spanned any hole between the two and called
+        # two sessions of drift one quiet day -- the same merge as check 2's,
+        # on the check whose threshold is 2%.
+        d1_move = shown(abs(_move_into(closes, d1_at)) * 100, 1)
+        # The range was measured and printed but left out of the verdict, so a
+        # day that closed unchanged after a 15%-wide swing counted as "calm".
+        # Judged against the stock's own norm, reusing N's baseline and
+        # multiple rather than inventing a second constant. When there is no
+        # usable norm the line says so: N's `else 9.9` sentinel prints "9.90x
+        # its norm" for a range it never managed to measure, and that string
+        # goes to Claude.
+        if norm_range:
+            d1_range_ratio = shown(d1_range / norm_range, 2)
+            norm_text = f" = {d1_range_ratio:.2f}x its norm"
+        else:
+            d1_range_ratio = float("inf")
+            norm_text = " (no usable range norm)"
+        checks["C_calm_preburst_day"] = {
+            "pass": bool(d1_move < MAX_D1_MOVE and d1_vol_ratio < MAX_D1_VOL_RATIO and d1_range_ratio <= MAX_D1_RANGE_RATIO),
+            "value": (
+                f"prior day {d1_move:.1f}% move, {d1_range:.1f}% range{norm_text}"
+                f", {d1_vol_ratio:.2f}x volume"
+            ),
+        }
 
     # ---- H: burst day closed near its high ----
     rng = float(burst["High"]) - float(burst["Low"])
@@ -818,7 +949,15 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     # seventh vote. `checks`, `passes`, `total`, `summary` and `detail_lines`
     # are untouched, so every consumer of the six-check structure sees exactly
     # what it saw before this rule existed.
-    up_run = consecutive_up_days(raw)
+    #
+    # Anchored, like every other reading here. Handed the whole frame it
+    # counted the graded burst itself as one of the up days the rule refuses
+    # buying INTO -- the one thing consecutive_up_days()'s own docstring says
+    # this must not do -- whenever the newest bar was one the checklist could
+    # not grade: reproduced on a candidate two up days into a burst, refused
+    # by an absolute rule for a run of three, one of which was the bar being
+    # judged.
+    up_run = consecutive_up_days(through)
     vetoes = {
         # Keyed by the names in VETO_RULES; a test asserts the two agree, so a
         # rule added here without a name there fails at development time.
@@ -834,7 +973,11 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     # Separate from `checks` because it is not a vote, and separate from
     # `vetoes` because it refuses nothing: src.scorer sends these as
     # `quality_notes`, which knowledge/strategy.md tells the model to weigh.
-    worst = worst_base_day(raw)
+    # Anchored for the same reason, and it moved a verdict the same way: on a
+    # frame whose newest bar the checklist could not grade, the 20-session
+    # window slid one session past a -5.6% day and told the model "worst base
+    # day +0.0% ... no break" through quality_notes.
+    worst = worst_base_day(through)
     context_checks = {
         "base_breakdown": {
             "pass": worst is None or worst > BREAKDOWN_PCT,
@@ -864,14 +1007,34 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
 def extra_context(df: pd.DataFrame) -> dict:
     """Additional metrics Claude uses for relative strength / setup scoring.
 
-    `raw` is kept for the same reason evaluate_2lynch() keeps one: Bonde's two
-    measurements have their own rule about which bars count, and handing them
-    a frame this function pruned for its own purposes made the number sent to
-    the model disagree with the verdict the veto reached from it.
+    `raw` is kept for the same reason evaluate_2lynch() keeps one: every
+    measurement here has its own rule about which bars count, and handing
+    them a frame this function pruned for its own purposes made the number
+    sent to the model disagree with the verdict the veto reached from it.
     """
     raw = df
-    df = df.dropna(subset=["Close", "Volume"])
-    close = float(df["Close"].iloc[-1])
+    # THE BAR THE CHECKLIST GRADES, not this function's own newest bar.
+    # evaluate_2lynch() prunes on all five fields and calls the last row left
+    # the burst; this prunes on Close and Volume, because burst_bar_shape()
+    # needs the gain's own denominator -- so a newest bar carrying a close
+    # and a volume and missing an Open, a High or a Low was graded by none of
+    # the six checks and was still the anchor for the four readings below and
+    # for Bonde's two, while burst_bar_shape(), three keys further down this
+    # same dict, correctly refused to describe it. Reproduced: -0.6% off the
+    # year's high for a bar the checklist never read, beside a null gap
+    # saying it had not read it. One request, one bar.
+    priced_at = _carrying(raw, ("Close", "Volume"))
+    graded = graded_bar_at(raw)
+    # No bar carries all five, so there is no bar the checklist grades and
+    # nothing to anchor on but this function's own newest readable bar --
+    # which is what every reading here came off before the anchor existed.
+    anchor = graded if graded is not None else int(priced_at[-1])
+    through = _through(raw, anchor)
+    # ...and the frame burst_bar_shape() reads is that same cleaning, cut at
+    # the same bar: its last row is the bar the checklist grades and the row
+    # before it is the close detect_setup() measured the gain against.
+    priced = raw.iloc[priced_at[priced_at <= anchor]]
+    close = float(priced["Close"].iloc[-1])
     # Every window here is read from WINDOWS, and each length guard from the
     # same key as the slice it guards: 63 was spelled twice with two meanings
     # (the index, and the history it needs), so moving the window alone left
@@ -886,11 +1049,6 @@ def extra_context(df: pd.DataFrame) -> dict:
     # perf_3mo_pct from +28.1% to +28.6% and perf_6mo_pct from +64.7% to
     # +65.4%, under the keys knowledge/strategy.md names to the model as this
     # name's relative strength.
-    # Nothing after the bar this block describes: `df`'s last row is the
-    # session every reading here is anchored on, and a later bar is the
-    # future. (A frame whose last bar has no Close or no Volume steps every
-    # layer back onto the same earlier session -- see the test of that name.)
-    through = _through(raw, df.index[-1])
     highs, lows, all_closes = (_series(through, "High"), _series(through, "Low"),
                                _series(through, "Close"))
     high_low = WINDOWS["high_low_sessions"]
@@ -911,11 +1069,11 @@ def extra_context(df: pd.DataFrame) -> dict:
     # reports its value -- 0 up days and 2 are both allowed and are not the
     # same setup -- and because the archive keeps this block, so the evidence
     # views can one day ask whether either number separates the winners.
-    worst = worst_base_day(raw)
+    worst = worst_base_day(through)
     return {
         "pct_off_52w_high": round((close / hi_52w - 1) * 100, 1),
         "pct_above_52w_low": round((close / lo_52w - 1) * 100, 1),
-        "consecutive_up_days": consecutive_up_days(raw),
+        "consecutive_up_days": consecutive_up_days(through),
         "worst_base_day_pct": worst,
         # None, not "n/a": these land in docs/data.json, whose contract is
         # "numbers are numbers or null" — a string sentinel in a numeric field
@@ -923,8 +1081,9 @@ def extra_context(df: pd.DataFrame) -> dict:
         "perf_3mo_pct": round(perf_3mo, 1) if perf_3mo is not None else None,
         "perf_6mo_pct": round(perf_6mo, 1) if perf_6mo is not None else None,
         # The burst bar's own shape -- the one thing in the metrics block the
-        # model was asked to judge and given no number for. Measured off `df`
-        # rather than `raw` so the gap's denominator is the previous close the
-        # scan's gain_pct used; see burst_bar_shape().
-        **burst_bar_shape(df),
+        # model was asked to judge and given no number for. Measured off the
+        # Close-and-Volume cleaning rather than `raw` so the gap's denominator
+        # is the previous close the scan's gain_pct used; see
+        # burst_bar_shape().
+        **burst_bar_shape(priced),
     }

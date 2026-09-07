@@ -71,6 +71,7 @@ from pathlib import Path
 import pandas as pd
 
 from .ledger import NO_STREAK_RECORDED, UNCOUNTED_UNKNOWNS, streak_day
+from .lynch import graded_bar_at
 
 log = logging.getLogger(__name__)
 
@@ -164,25 +165,50 @@ class ScoreFormatError(ValueError):
 def render_chart(ticker: str, df: pd.DataFrame, out_dir: str = "charts") -> str:
     """Render a daily candlestick + volume chart (last ~85 sessions) to PNG.
 
-    A bar missing one of O, H, L or C is dropped BEFORE the tail is taken, so
-    one hole is a gap in the picture rather than no picture. mplfinance
-    refuses a frame whose four price columns do not share their missing rows
-    -- "O,H,L,C must have the same amount of missing data!", reproduced on
-    each of the four -- and src.pipeline catches that, records `chart_seen`
-    false and scores the candidate on the numbers alone, which
+    A bar missing one of O, H, L or C is BLANKED and kept, so one hole is a
+    gap in the picture rather than no picture -- and rather than a splice.
+    mplfinance refuses a frame whose four price columns do not share their
+    missing rows -- "O,H,L,C must have the same amount of missing data!",
+    reproduced on each of the four -- and src.pipeline catches that, records
+    `chart_seen` false and scores the candidate on the numbers alone, which
     knowledge/strategy.md tells the model to trust LESS than the picture. One
-    unreadable bar in eighty-five is not a reason to show none. Dropped
-    before the slice rather than after, so a night with holes still shows
-    eighty-five sessions. Volume is deliberately not in the set: a NaN there
-    renders, checked rather than assumed, and the volume panel is the half a
-    reader can still read across a hole.
+    unreadable bar in eighty-five is not a reason to show none.
+
+    BLANKED RATHER THAN DROPPED, and that is the whole of the word "gap".
+    Dropping the row satisfies the same rule, and nothing then asks the plot
+    to keep a slot for a date it was not given: rendered under one ticker,
+    the chart of a frame with a holed bar came out BYTE-IDENTICAL to the
+    chart of a frame in which that session had been deleted, so the picture
+    could not tell a hole from a session that never happened -- on the
+    surface the rulebook tells the model to trust when it disagrees with the
+    numbers. All four price columns NaN on that row is what mplfinance's
+    equal-missing rule wants, and it leaves the slot empty.
+
+    Eighty-five READABLE sessions, so a night with holes shows as many
+    candles as a clean one and the holes sit between them. Volume is
+    deliberately not in the blanking set: a NaN there renders, checked rather
+    than assumed, and the volume panel is the half a reader can still read
+    across a hole. The picture ends where the CHECKLIST's burst is
+    (graded_bar_at), which is the one thing the blanking set leaves open --
+    a newest bar with prices and no volume would otherwise draw a candle for
+    a session `H` is not grading and no number in the request describes.
     """
     import mplfinance as mpf
+    import numpy as np
 
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     path = str(Path(out_dir) / f"{ticker}.png")
-    plot_df = df.dropna(subset=[c for c in ("Open", "High", "Low", "Close")
-                                if c in df.columns]).iloc[-85:].copy()
+    graded = graded_bar_at(df)
+    frame = df if graded is None else df.iloc[:graded + 1]
+    price = [c for c in ("Open", "High", "Low", "Close") if c in frame.columns]
+    readable = frame[price].notna().all(axis=1).to_numpy() if price else np.zeros(
+        len(frame), dtype=bool)
+    drawn = np.flatnonzero(readable)[-85:]
+    start = int(drawn[0]) if len(drawn) else 0
+    plot_df = frame.iloc[start:].copy()
+    blank = np.flatnonzero(~readable[start:])
+    if len(blank) and price:
+        plot_df.iloc[blank, [plot_df.columns.get_loc(c) for c in price]] = float("nan")
     plot_df.index = pd.to_datetime(plot_df.index)
 
     mpf.plot(

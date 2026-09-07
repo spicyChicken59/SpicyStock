@@ -145,7 +145,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1388 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1406 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -1122,8 +1122,12 @@ bar with no Open reached the model as `bar_range_pct 9.4` -- a bar that closed
 at 98% of its own range -- beside `H` saying "closed at 50% of day's range",
 which is the session BEFORE, under a rulebook sentence that had just told the
 model to read those two together. All three are null when the checklist is not
-reading this bar, and the base window skips the bars `N` drops for the same
-reason. The scan refuses such a frame (`_session_bar_problem()` requires all
+reading this bar, and the base window holds the bars `N` holds for the same
+reason. (Both halves were re-aimed by the holes-in-a-bar audit below: the
+metrics block anchors on the graded bar now, so it publishes that bar's own
+geometry rather than three nulls, and `N`'s window counts a bar carrying a
+high, a low and a close rather than all five -- so the base window followed it
+there.) The scan refuses such a frame (`_session_bar_problem()` requires all
 five on the session bar), so no run published one; the rule is there because
 the rulebook's sentence is unconditional.
 
