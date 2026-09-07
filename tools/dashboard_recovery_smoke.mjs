@@ -19,13 +19,13 @@ for (const root of ['', ...(process.env.NODE_PATH || '').split(':')]) {
 }
 assert.ok(chromium, 'Playwright is required; recovery cannot pass without opening the dashboard.');
 const types = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
-let dataMode = 'ok', ledgerMode = 'ok', data = fixture, ledgerRequests = 0;
+let dataMode = 'ok', ledgerMode = 'ok', data = fixture, ledgerRequests = 0, dataRequests = 0;
 const held = [];
 const server = createServer(async (request, response) => {
   const path = new URL(request.url, 'http://local').pathname;
   if (path === '/data.json' || path === '/ledger.json') {
     const isLedger = path === '/ledger.json';
-    if (isLedger) ledgerRequests++;
+    if (isLedger) ledgerRequests++; else dataRequests++;
     const mode = isLedger ? ledgerMode : dataMode;
     if (mode === 'failed') { response.writeHead(503).end('Temporary failure'); return; }
     if (mode === 'held') { held.push(response); return; }
@@ -51,7 +51,7 @@ try {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   const open = async () => page.goto(`http://127.0.0.1:${server.address().port}/`, { waitUntil: 'load' });
-  const ready = async () => page.waitForFunction(() => !document.querySelector('#run-strip').hidden && !document.querySelector('#snapshot-refresh').disabled);
+  const ready = async () => page.waitForFunction(() => !document.querySelector('#run-strip').hidden && document.querySelector('#snapshot-refresh').getAttribute('aria-disabled') !== 'true');
   const status = () => page.locator('#snapshot-status').innerText();
   dataMode = 'failed';
   await open();
@@ -66,10 +66,13 @@ try {
 
   const before = await page.locator('#h1').innerText();
   dataMode = 'failed';
-  await page.getByRole('button', { name: 'Check for updates' }).click();
+  await page.keyboard.press('Tab');
+  await page.locator('#snapshot-refresh').focus();
+  await page.keyboard.press('Enter');
   await page.waitForFunction(() => document.querySelector('#snapshot-status').textContent.includes('Update check failed'));
   check('failed refresh retains the previously loaded report and identifies it', before === await page.locator('#h1').innerText() && /Still showing recorded session/.test(await status()));
   check('failed refresh does not relabel retained data as unavailable', !await page.locator('#run-strip').isHidden() && !await page.locator('#snapshot-refresh').isDisabled());
+  check('keyboard focus stays on the refresh action after a failed response', await page.locator('#snapshot-refresh').evaluate(node => document.activeElement === node));
   dataMode = 'ok';
   await page.locator('#snapshot-refresh').click();
   await ready();
@@ -80,6 +83,27 @@ try {
   await ready();
   check('unchanged refresh preserves the selected basis and open details', await page.getByRole('button', { name: "from the next session's open", exact: true }).getAttribute('aria-pressed') === 'true' && await page.locator('.pick details').first().evaluate(node => node.open));
   check('unchanged refresh keeps the current report nodes', await page.locator('.pick').first().getAttribute('data-recovery-identity') === 'keep');
+  await page.keyboard.press('Tab');
+  await page.locator('#snapshot-refresh').focus();
+  await page.keyboard.press('Enter');
+  await ready();
+  check('keyboard-activated refresh keeps focus on its action after the response', await page.locator('#snapshot-refresh').evaluate(node => document.activeElement === node));
+  dataMode = 'held';
+  const beforeRequest = dataRequests;
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => document.querySelector('#snapshot-refresh').getAttribute('aria-disabled') === 'true');
+  await page.waitForTimeout(100);
+  check('an in-flight update remains focused and communicates unavailability', await page.locator('#snapshot-refresh').evaluate(node => document.activeElement === node && !node.disabled));
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Space');
+  await page.waitForTimeout(100);
+  check('repeated keyboard activation cannot start duplicate update requests', dataRequests === beforeRequest + 1);
+  dataMode = 'ok';
+  for (const response of held.splice(0)) response.end(JSON.stringify(data));
+  await ready();
+  check('completing an in-flight update re-enables the same focused action', await page.locator('#snapshot-refresh').evaluate(node => document.activeElement === node && node.getAttribute('aria-disabled') === 'false'));
+
+
 
   ledgerMode = 'failed';
   await page.getByRole('button', { name: 'Load every burst of every name' }).click();
@@ -141,7 +165,7 @@ try {
   await page.keyboard.press('Tab');
   await page.locator('#snapshot-refresh').focus();
   check('refresh has a visible keyboard focus indicator', await page.locator('#snapshot-refresh').evaluate(node => document.activeElement === node && getComputedStyle(node).outlineStyle !== 'none'));
-  check('snapshot status is announced without moving keyboard focus', await page.locator('#snapshot-status').getAttribute('role') === 'status');
+  check('snapshot status uses a polite live region', await page.locator('#snapshot-status').getAttribute('role') === 'status' && await page.locator('#snapshot-status').getAttribute('aria-live') === 'polite');
   check('recovery scenarios produce no page errors', errors.length === 0);
   console.log(`${checks.length} dashboard recovery checks passed.`);
 } finally {

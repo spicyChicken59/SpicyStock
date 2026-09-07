@@ -63,7 +63,7 @@ basis and expanded details when the file has not changed.
   focus, retained report state, request failures and delayed response bodies.
   API tests use actual installed SDK request paths with network doubles.
 - The combined gate collects 1,212 Python cases, exercises 214 original dashboard
-  checks plus 27 recovery scenarios, regenerates both fixtures, and verifies all
+  checks plus 32 recovery scenarios, regenerates both fixtures, and verifies all
   22 immutable shared design assets. GitHub CI runs the same required checks.
 
 ## Operating boundaries

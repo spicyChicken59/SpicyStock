@@ -64,7 +64,7 @@
       <p class="sc-note" id="snapshot-stamp">These are recorded daily results, not live quotes. Checking this page does not run a scan.</p>
     </div>
     <div class="stock-snapshot__actions sc-screen-only">
-      <button class="sc-btn sc-btn--secondary sc-btn--sm" id="snapshot-refresh" type="button" disabled>Checking…</button>
+      <button class="sc-btn sc-btn--secondary sc-btn--sm" id="snapshot-refresh" type="button" aria-disabled="true">Checking…</button>
       <a class="sc-btn sc-btn--ghost sc-btn--sm" href="https://github.com/spicyChicken59/SpicyStock/actions/workflows/evening.yml" rel="noopener">Scan activity ↗</a>
     </div>
   </section>
@@ -2366,7 +2366,9 @@
     if (snapshotLoading) return;
     snapshotLoading = true;
     var button = $('snapshot-refresh');
-    button.disabled = true;
+    // Keep a keyboard user's place while the request runs. Native disabled
+    // blurs an activated button; the in-flight guard above prevents repeats.
+    button.setAttribute('aria-disabled', 'true');
     button.textContent = 'Checking…';
     $('snapshot-status').textContent = LAST_DATA
       ? 'Checking for updates. The recorded session below remains visible.'
@@ -2430,7 +2432,7 @@
       if (!LAST_DATA) fail(message);
     }).finally(function () {
       snapshotLoading = false;
-      button.disabled = false;
+      button.setAttribute('aria-disabled', 'false');
       button.textContent = LAST_DATA ? 'Check for updates' : 'Retry snapshot';
     });
   }
