@@ -21,7 +21,7 @@
       "runs[].rules is what this screener was when that run was made: every number its rules turned on — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate — plus what produced the SCORE, since round 11: score.prompt is a digest of the scoring model's system prompt and score.record_keys is the record block the request carries. A run scored under a rewritten rulebook is as much a second screener as one whose gate moved, and every mean keyed on score averages both. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. A run from before it carries no rules block, and no surface may read that as agreement.",
       "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when the rule is off or nothing could be ranked), over (how many names the percentile was drawn from), refused (how many bursts sat below it). `over` is the population the FLOOR was drawn from -- the names whose session bar carried a readable, positive dollar volume -- and not the population the scan measured, which is run.coverage.measured and can be larger or smaller. A null floor has three readings: `pctile <= 0` is the rule switched off, whatever `over` says; a null floor with `over: 0` is a night no name's dollar volume could be ranked; and a null floor with no `over` at all is a run from before the count existed. No surface may report one cause as the other. run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
       "run.coverage is how much of the night was READ, in the counts the scan reached before it stopped: requested, with_bars (answered with any bar), fresh, measured, stale, gapped, no_bars, dropped, duplicate_bars, plus the session and the newest bar the names that missed it carried. measured is the population a burst could have come from -- the names whose session bar the detector read and answered about -- so with_bars minus measured is what could not be measured for the session (behind it, holed on the session before it, unreadable, measured onto an earlier session, or one the detector raised on), and measured 0 UNDER A POSITIVE with_bars is a BLIND night: the feed answered and nothing could be read, which no surface may report as a quiet market. measured 0 beside with_bars 0 is a scan nothing answered, which is what a dead run's notice carries and is not the same sentence. requested minus with_bars is the other half of the first cut -- the names that answered with nothing at all, plus any dropped after their batch failed twice -- so no surface may attribute it to the burst filter either. A count that is absent was never reached, and absent is never 0. runs[].measured carries that one number into the durable record, because docs/data.json is rewritten every night and both its readers are later runs.",
-      "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
+      "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is how many setups the run contributed at any horizon and rows is how many rows they were collapsed from, so n <= rows always. THE WEIGHT IS PER HORIZON: n1, n3 and n5 are the setups behind d1, d3 and d5 separately, and an average across sessions must weight each horizon by its own, because a frame with a hole after the first session measures d1 and nothing after it -- that setup is in n and out of n5, and weighting d5 by n counts setups that have no d5. nH is 0 exactly when dH is null and nH <= n always; they are not ordered n1 >= n3 >= n5, since a non-finite close at one horizon leaves it null with a later one measured. from_open carries its own n1/n3/n5 for the same reason it carries its own n.",
       "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
       "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
       "runs[].benchmark is the universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), over every name whose frame carries the session and whose dollar volume that session was at or above the run's own liquidity floor -- rule 6's bar that night, run.liquidity.floor -- with nN the number of symbols behind each horizon. benchmark.liquidity_floor is the floor the fill that FIRST measured the block applied -- null for a run recorded without one, when every name that traded counts -- and benchmark.below_floor is how many names that fill left out under it; the horizons a later fill adds are measured over the same population, so one block is one set of names. Null until a later run's scan carried the sessions, null forever for a run whose universe later scans never fetched, and never filled at all for a run that measured nothing: nothing is ever paired with a blind night's rung, since it scored no setup, and its floor -- null when no name's dollar volume could be ranked, and drawn from however few could be when it is not -- would stamp the block with a population that night never read. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks, and evidence.universe.floored is how many of those pairings were measured over a floor and evidence.universe.unfloored how many were measured with none -- before the floor reached the benchmark, or on a night rule 6 was off, which the block cannot tell apart -- over every name that traded (a pending pairing is in neither); it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
@@ -1034,14 +1034,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": null,
+        "n1": 0,
         "d3": null,
+        "n3": 0,
         "d5": null,
+        "n5": 0,
         "n": 0,
         "rows": 0,
         "from_open": {
           "d1": null,
+          "n1": 0,
           "d3": null,
+          "n3": 0,
           "d5": null,
+          "n5": 0,
           "n": 0
         }
       },
@@ -1139,14 +1145,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 1.72,
+        "n1": 3,
         "d3": null,
+        "n3": 0,
         "d5": null,
+        "n5": 0,
         "n": 3,
         "rows": 3,
         "from_open": {
           "d1": 1.76,
+          "n1": 3,
           "d3": null,
+          "n3": 0,
           "d5": null,
+          "n5": 0,
           "n": 3
         }
       },
@@ -1244,14 +1256,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 1.1,
+        "n1": 1,
         "d3": null,
+        "n3": 0,
         "d5": null,
+        "n5": 0,
         "n": 1,
         "rows": 2,
         "from_open": {
           "d1": 0.14,
+          "n1": 1,
           "d3": null,
+          "n3": 0,
           "d5": null,
+          "n5": 0,
           "n": 1
         }
       },
@@ -1349,14 +1367,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 3.16,
+        "n1": 5,
         "d3": 5.15,
+        "n3": 5,
         "d5": null,
+        "n5": 0,
         "n": 5,
         "rows": 7,
         "from_open": {
           "d1": 3.1,
+          "n1": 5,
           "d3": 5.07,
+          "n3": 5,
           "d5": null,
+          "n5": 0,
           "n": 5
         }
       },
@@ -1454,14 +1478,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 3.69,
+        "n1": 4,
         "d3": 4.79,
+        "n3": 4,
         "d5": null,
+        "n5": 0,
         "n": 4,
         "rows": 6,
         "from_open": {
           "d1": 3.64,
+          "n1": 4,
           "d3": 4.73,
+          "n3": 4,
           "d5": null,
+          "n5": 0,
           "n": 4
         }
       },
@@ -1559,14 +1589,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 1.11,
+        "n1": 3,
         "d3": 1.23,
+        "n3": 3,
         "d5": 0.7,
+        "n5": 3,
         "n": 3,
         "rows": 4,
         "from_open": {
           "d1": 1.04,
+          "n1": 3,
           "d3": 1.17,
+          "n3": 3,
           "d5": 0.64,
+          "n5": 3,
           "n": 3
         }
       },
@@ -1664,14 +1700,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 6.0,
+        "n1": 1,
         "d3": 5.44,
+        "n3": 1,
         "d5": 3.41,
+        "n5": 1,
         "n": 1,
         "rows": 1,
         "from_open": {
           "d1": 6.09,
+          "n1": 1,
           "d3": 5.52,
+          "n3": 1,
           "d5": 3.5,
+          "n5": 1,
           "n": 1
         }
       },
@@ -1769,14 +1811,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 0.36,
+        "n1": 4,
         "d3": 3.73,
+        "n3": 4,
         "d5": 6.92,
+        "n5": 4,
         "n": 4,
         "rows": 4,
         "from_open": {
           "d1": 0.12,
+          "n1": 4,
           "d3": 3.48,
+          "n3": 4,
           "d5": 6.65,
+          "n5": 4,
           "n": 4
         }
       },
@@ -1874,14 +1922,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 2.82,
+        "n1": 2,
         "d3": 2.83,
+        "n3": 2,
         "d5": 8.21,
+        "n5": 2,
         "n": 2,
         "rows": 2,
         "from_open": {
           "d1": 1.19,
+          "n1": 2,
           "d3": 1.2,
+          "n3": 2,
           "d5": 6.59,
+          "n5": 2,
           "n": 2
         }
       },
@@ -1979,14 +2033,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": null,
+        "n1": 0,
         "d3": null,
+        "n3": 0,
         "d5": null,
+        "n5": 0,
         "n": 0,
         "rows": 2,
         "from_open": {
           "d1": null,
+          "n1": 0,
           "d3": null,
+          "n3": 0,
           "d5": null,
+          "n5": 0,
           "n": 0
         }
       },
@@ -2084,14 +2144,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 0.48,
+        "n1": 2,
         "d3": 5.02,
+        "n3": 2,
         "d5": 3.35,
+        "n5": 2,
         "n": 2,
         "rows": 2,
         "from_open": {
           "d1": 0.1,
+          "n1": 2,
           "d3": 4.53,
+          "n3": 2,
           "d5": 2.85,
+          "n5": 2,
           "n": 2
         }
       },
@@ -2189,14 +2255,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 3.17,
+        "n1": 4,
         "d3": 9.88,
+        "n3": 4,
         "d5": 16.93,
+        "n5": 4,
         "n": 4,
         "rows": 5,
         "from_open": {
           "d1": 2.81,
+          "n1": 4,
           "d3": 9.5,
+          "n3": 4,
           "d5": 16.53,
+          "n5": 4,
           "n": 4
         }
       },
@@ -2294,14 +2366,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 1.07,
+        "n1": 3,
         "d3": 1.72,
+        "n3": 3,
         "d5": 2.61,
+        "n5": 3,
         "n": 3,
         "rows": 3,
         "from_open": {
           "d1": 0.66,
+          "n1": 3,
           "d3": 1.27,
+          "n3": 3,
           "d5": 2.13,
+          "n5": 3,
           "n": 3
         }
       },
@@ -2399,14 +2477,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 4.05,
+        "n1": 2,
         "d3": 2.67,
+        "n3": 2,
         "d5": 4.64,
+        "n5": 2,
         "n": 2,
         "rows": 3,
         "from_open": {
           "d1": 2.59,
+          "n1": 2,
           "d3": 1.2,
+          "n3": 2,
           "d5": 3.08,
+          "n5": 2,
           "n": 2
         }
       },
@@ -2504,14 +2588,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 3.58,
+        "n1": 4,
         "d3": 2.49,
+        "n3": 4,
         "d5": 6.5,
+        "n5": 4,
         "n": 4,
         "rows": 5,
         "from_open": {
           "d1": 3.19,
+          "n1": 4,
           "d3": 2.09,
+          "n3": 4,
           "d5": 6.09,
+          "n5": 4,
           "n": 4
         }
       },
@@ -2609,14 +2699,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 0.52,
+        "n1": 3,
         "d3": -1.53,
+        "n3": 3,
         "d5": -1.42,
+        "n5": 3,
         "n": 3,
         "rows": 4,
         "from_open": {
           "d1": -0.13,
+          "n1": 3,
           "d3": -2.22,
+          "n3": 3,
           "d5": -2.18,
+          "n5": 3,
           "n": 3
         }
       },
@@ -2714,14 +2810,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 6.81,
+        "n1": 3,
         "d3": 4.81,
+        "n3": 3,
         "d5": 3.76,
+        "n5": 3,
         "n": 3,
         "rows": 3,
         "from_open": {
           "d1": 5.96,
+          "n1": 3,
           "d3": 3.92,
+          "n3": 3,
           "d5": 2.86,
+          "n5": 3,
           "n": 3
         }
       },
@@ -2819,14 +2921,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": -1.38,
+        "n1": 2,
         "d3": -1.06,
+        "n3": 2,
         "d5": -1.02,
+        "n5": 2,
         "n": 2,
         "rows": 2,
         "from_open": {
           "d1": -1.08,
+          "n1": 2,
           "d3": -0.78,
+          "n3": 2,
           "d5": -0.74,
+          "n5": 2,
           "n": 2
         }
       },
@@ -2924,14 +3032,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 6.88,
+        "n1": 2,
         "d3": 7.82,
+        "n3": 2,
         "d5": 6.71,
+        "n5": 2,
         "n": 2,
         "rows": 2,
         "from_open": {
           "d1": 6.09,
+          "n1": 2,
           "d3": 7.04,
+          "n3": 2,
           "d5": 5.96,
+          "n5": 2,
           "n": 2
         }
       },
@@ -3029,14 +3143,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": null,
+        "n1": 0,
         "d3": null,
+        "n3": 0,
         "d5": null,
+        "n5": 0,
         "n": 0,
         "rows": 0,
         "from_open": {
           "d1": null,
+          "n1": 0,
           "d3": null,
+          "n3": 0,
           "d5": null,
+          "n5": 0,
           "n": 0
         }
       },
@@ -3134,14 +3254,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 2.24,
+        "n1": 4,
         "d3": 2.77,
+        "n3": 4,
         "d5": 1.82,
+        "n5": 4,
         "n": 4,
         "rows": 5,
         "from_open": {
           "d1": 1.55,
+          "n1": 4,
           "d3": 2.09,
+          "n3": 4,
           "d5": 1.15,
+          "n5": 4,
           "n": 4
         }
       },
@@ -3239,14 +3365,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": -0.46,
+        "n1": 2,
         "d3": -2.62,
+        "n3": 2,
         "d5": 0.3,
+        "n5": 2,
         "n": 2,
         "rows": 5,
         "from_open": {
           "d1": -0.44,
+          "n1": 2,
           "d3": -2.6,
+          "n3": 2,
           "d5": 0.32,
+          "n5": 2,
           "n": 2
         }
       },
@@ -3344,14 +3476,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 5.85,
+        "n1": 2,
         "d3": 12.92,
+        "n3": 2,
         "d5": 19.1,
+        "n5": 2,
         "n": 2,
         "rows": 3,
         "from_open": {
           "d1": 5.95,
+          "n1": 2,
           "d3": 13.0,
+          "n3": 2,
           "d5": 19.17,
+          "n5": 2,
           "n": 2
         }
       },
@@ -3449,14 +3587,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 0.72,
+        "n1": 3,
         "d3": 3.54,
+        "n3": 3,
         "d5": 7.75,
+        "n5": 3,
         "n": 3,
         "rows": 6,
         "from_open": {
           "d1": 0.43,
+          "n1": 3,
           "d3": 3.24,
+          "n3": 3,
           "d5": 7.43,
+          "n5": 3,
           "n": 3
         }
       },
@@ -3554,14 +3698,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 0.92,
+        "n1": 9,
         "d3": 3.23,
+        "n3": 9,
         "d5": 8.97,
+        "n5": 9,
         "n": 9,
         "rows": 9,
         "from_open": {
           "d1": 1.08,
+          "n1": 9,
           "d3": 3.4,
+          "n3": 9,
           "d5": 9.14,
+          "n5": 9,
           "n": 9
         }
       },
@@ -3659,14 +3809,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 0.3,
+        "n1": 3,
         "d3": 5.12,
+        "n3": 3,
         "d5": 5.96,
+        "n5": 3,
         "n": 3,
         "rows": 3,
         "from_open": {
           "d1": 0.32,
+          "n1": 3,
           "d3": 5.13,
+          "n3": 3,
           "d5": 5.98,
+          "n5": 3,
           "n": 3
         }
       },
@@ -3764,14 +3920,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": -0.56,
+        "n1": 2,
         "d3": 2.97,
+        "n3": 2,
         "d5": 6.17,
+        "n5": 2,
         "n": 2,
         "rows": 2,
         "from_open": {
           "d1": -0.43,
+          "n1": 2,
           "d3": 3.1,
+          "n3": 2,
           "d5": 6.31,
+          "n5": 2,
           "n": 2
         }
       },
@@ -3869,14 +4031,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 0.94,
+        "n1": 7,
         "d3": 2.05,
+        "n3": 7,
         "d5": 3.84,
+        "n5": 7,
         "n": 7,
         "rows": 8,
         "from_open": {
           "d1": 0.59,
+          "n1": 7,
           "d3": 1.69,
+          "n3": 7,
           "d5": 3.47,
+          "n5": 7,
           "n": 7
         }
       },
@@ -3974,14 +4142,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 2.89,
+        "n1": 5,
         "d3": 5.97,
+        "n3": 5,
         "d5": 7.25,
+        "n5": 5,
         "n": 5,
         "rows": 6,
         "from_open": {
           "d1": 2.5,
+          "n1": 5,
           "d3": 5.57,
+          "n3": 5,
           "d5": 6.85,
+          "n5": 5,
           "n": 5
         }
       },
@@ -4079,14 +4253,20 @@
       "measured": 77,
       "forward_returns": {
         "d1": 0.9,
+        "n1": 4,
         "d3": 3.71,
+        "n3": 4,
         "d5": 2.98,
+        "n5": 4,
         "n": 4,
         "rows": 4,
         "from_open": {
           "d1": 0.8,
+          "n1": 4,
           "d3": 3.6,
+          "n3": 4,
           "d5": 2.89,
+          "n5": 4,
           "n": 4
         }
       },

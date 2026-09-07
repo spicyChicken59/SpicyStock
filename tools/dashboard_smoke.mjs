@@ -154,10 +154,36 @@ const VARIANTS = {
   // when the two numbers DIFFERED, so the reader could not see the ratio in
   // the one case where it is settled, and could not tell "nothing collapsed"
   // from "the file does not say".
+  // A file where nothing collapsed: every row is its own setup, at every
+  // horizon. The per-horizon counts are levelled with `n` too, because a
+  // frame with a hole is not a collapse -- the canonical fixture holds one
+  // (2026-08-25 measures 21 setups at +1d and 18 at +5d), and leaving it here
+  // would make this variant a file where a horizon really is over fewer
+  // setups than rows, which is the state it exists to have none of.
   norepeats() {
     const d = clone();
     d.runs.forEach((r) => {
-      if (r.forward_returns && r.forward_returns.n) r.forward_returns.rows = r.forward_returns.n;
+      const f = r.forward_returns;
+      if (!f || !f.n) return;
+      f.rows = f.n;
+      for (const h of ['1', '3', '5']) if (f['d' + h] !== null && f['d' + h] !== undefined) f['n' + h] = f.n;
+    });
+    return d;
+  },
+  // Every run entry as it was written before the per-horizon counts existed:
+  // one `n` for three horizons, on both bases. That is the shape of every
+  // file this project published up to round 11, including the one main is
+  // serving now, and the page has to weight those means by the only count
+  // the file has rather than printing NaN over it.
+  oldcounts() {
+    const d = clone();
+    d.runs.forEach((r) => {
+      const f = r.forward_returns;
+      if (!f) return;
+      for (const h of ['1', '3', '5']) {
+        delete f['n' + h];
+        if (f.from_open) delete f.from_open['n' + h];
+      }
     });
     return d;
   },
@@ -804,13 +830,26 @@ const CHECKS = (() => {
 })();
 const HARSHEST = [...CHECKS].sort((a, b) => a.rate - b.rate)[0];
 const WEAKEST = [...CHECKS].sort((a, b) => a.gap - b.gap)[0];
+// THE WEIGHT IS THE HORIZON'S OWN COUNT (src.ledger's mean_returns). `n` is
+// every setup the run measured at ANY horizon: a setup whose frame has a hole
+// after the third session is in n and out of n5, so weighting d5 by n counts
+// setups that have no d5. `byN` recomputes the same mean the old way, and the
+// check below asserts the page is on the per-horizon one and that the two
+// numbers differ on this source -- without that second half the check passes
+// on any file whose horizons all have the same count, which is every file the
+// synthetic history writes.
 const horizon = (k) => {
   const have = REAL.runs.filter((r) => (r.forward_returns || {})[k] !== null && (r.forward_returns || {})[k] !== undefined);
-  const names = have.reduce((a, r) => a + (r.forward_returns.n || 0), 0);
-  const wsum = have.reduce((a, r) => a + r.forward_returns[k] * (r.forward_returns.n || 0), 0);
+  const w = (r) => (typeof r.forward_returns['n' + k.slice(1)] === 'number'
+    ? r.forward_returns['n' + k.slice(1)] : (r.forward_returns.n || 0));
+  const names = have.reduce((a, r) => a + w(r), 0);
+  const wsum = have.reduce((a, r) => a + r.forward_returns[k] * w(r), 0);
+  const anyN = have.reduce((a, r) => a + (r.forward_returns.n || 0), 0);
+  const anySum = have.reduce((a, r) => a + r.forward_returns[k] * (r.forward_returns.n || 0), 0);
   const vals = have.map((r) => r.forward_returns[k]);
   const rows = have.reduce((a, r) => a + (r.forward_returns.rows || 0), 0);
   return { sessions: have.length, names, rows, mean: names ? wsum / names : null,
+           byN: anyN ? anySum / anyN : null,
            plain: vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null,
            best: vals.length ? Math.max(...vals) : null, worst: vals.length ? Math.min(...vals) : null };
 };
@@ -1475,6 +1514,43 @@ ok('a session that has not closed is not counted as one',
 ok('and the horizons that have not happened are not averaged in as zeros',
   tiles[2].value === money(H5.mean) && H5.sessions > 0 && H5.sessions < REAL.runs.length,
   `${tiles[2].value} from ${H5.sessions} of ${REAL.runs.length} sessions, ${H5.names} names`);
+// A HOLE IN ONE FRAME. The fixture's 2026-08-25 run measured 21 setups at +1d
+// and 18 at +5d -- forward_returns() ends a row's measurement at the first
+// session its frame does not carry -- so weighting +5d by `n` averages in
+// three setups that have no +5d. The precondition is the check: without the
+// two numbers differing on this source, a page still weighting by n passes.
+ok('a horizon is weighted by the setups that reached IT, not by the run\u2019s',
+  H5.mean !== H5.byN && tiles[2].value === money(H5.mean),
+  `page ${tiles[2].value}, per horizon ${money(H5.mean)} over ${H5.names}, by run n ${money(H5.byN)}`);
+ok('and the setup count under a horizon is that horizon\u2019s own',
+  tiles[2].sub.includes(`${H5.names} setup`) && H5.names !== H1.names,
+  `${tiles[2].sub} — +1d is over ${H1.names}`);
+// The open basis carries its own counts, and the basis switch has to hand
+// them over: without them the open tab weighted +5d by from_open.n -- 21
+// setups for a mean over 18 -- which is the close basis's defect wearing the
+// other label. Recomputed from the same file, on the open block.
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+await page.waitForTimeout(150);
+const openTiles = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')].map((t) => ({
+  value: t.querySelector('.sc-tile__value').textContent.trim(),
+  sub: t.querySelector('.sc-tile__sub').textContent.trim()
+})));
+const openH5 = (() => {
+  const have = REAL.runs.filter((r) => ((r.forward_returns || {}).from_open || {}).d5 !== null
+    && ((r.forward_returns || {}).from_open || {}).d5 !== undefined);
+  const w = (r) => r.forward_returns.from_open.n5;
+  const names = have.reduce((a, r) => a + w(r), 0);
+  const byN = have.reduce((a, r) => a + (r.forward_returns.from_open.n || 0), 0);
+  return { names, byN,
+    mean: names ? have.reduce((a, r) => a + r.forward_returns.from_open.d5 * w(r), 0) / names : null,
+    other: byN ? have.reduce((a, r) => a + r.forward_returns.from_open.d5 * r.forward_returns.from_open.n, 0) / byN : null };
+})();
+ok('the open basis is weighted by ITS own per-horizon counts too',
+  openH5.mean !== openH5.other && openTiles[2].value === money(openH5.mean)
+  && openTiles[2].sub.includes(`${openH5.names} setup`),
+  `page ${openTiles[2].value} / ${openTiles[2].sub}, per horizon ${money(openH5.mean)} over ${openH5.names}, by n ${money(openH5.other)}`);
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+await page.waitForTimeout(150);
 // n IS SETUPS, and the tile says so -- but it used to print what they were
 // collapsed FROM only when the two numbers differed, which hid the ratio in
 // the 1:1 case and said nothing about the collapse in any file where a run of
@@ -1882,6 +1958,26 @@ const grown = await page.evaluate(() => [...document.querySelectorAll('#returns-
 ok('a horizon with enough sessions stops saying there is not enough data',
   grown[0] === 'measured' && grown[1] === 'not enough data' && grown[2] === 'not enough data',
   grown.join(' | '));
+
+// A file from before the per-horizon counts: the weights are the run-level
+// `n` it does carry, on both bases, and no tile is NaN. Recomputed here the
+// old way, because that IS what such a file claims about its own means.
+await open('/v/oldcounts/');
+const oldTiles = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')].map((t) => ({
+  value: t.querySelector('.sc-tile__value').textContent.trim(),
+  sub: t.querySelector('.sc-tile__sub').textContent.trim()
+})));
+const oldWant = ['d1', 'd5'].map((k) => {
+  const have = VARIANTS.oldcounts().runs.filter((r) => (r.forward_returns || {})[k] !== null
+    && (r.forward_returns || {})[k] !== undefined);
+  const n = have.reduce((a, r) => a + r.forward_returns.n, 0);
+  return { n, mean: n ? have.reduce((a, r) => a + r.forward_returns[k] * r.forward_returns.n, 0) / n : null };
+});
+ok('a file from before the per-horizon counts is weighted by the one count it has',
+  oldTiles[0].value === money(oldWant[0].mean) && oldTiles[2].value === money(oldWant[1].mean)
+  && oldTiles.every((t) => !/NaN/.test(t.value) && !/NaN/.test(t.sub))
+  && oldTiles[2].sub.includes(`${oldWant[1].n} setup`),
+  `${oldTiles.map((t) => t.value).join(' | ')} — want ${money(oldWant[0].mean)} and ${money(oldWant[1].mean)}`);
 
 await open('/v/norepeats/');
 const flat = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')]

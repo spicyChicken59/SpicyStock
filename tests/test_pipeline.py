@@ -3471,10 +3471,11 @@ def test_a_second_run_keeps_the_first_and_fills_its_forward_returns(
         "d3": want["from_open"]["d3"], "d5": want["from_open"]["d5"]}, (
         "the open basis fills the same way: the recorded horizon kept, the rest measured")
     assert book["runs"][1]["forward_returns"] == {
-        "d1": first["forward_returns"]["d1"], "d3": want["d3"], "d5": want["d5"],
-        "n": 1, "rows": 1,
-        "from_open": {"d1": first["forward_returns"]["from_open"]["d1"],
-                      "d3": want["from_open"]["d3"], "d5": want["from_open"]["d5"], "n": 1}}
+        "d1": first["forward_returns"]["d1"], "n1": 1, "d3": want["d3"], "n3": 1,
+        "d5": want["d5"], "n5": 1, "n": 1, "rows": 1,
+        "from_open": {"d1": first["forward_returns"]["from_open"]["d1"], "n1": 1,
+                      "d3": want["from_open"]["d3"], "n3": 1,
+                      "d5": want["from_open"]["d5"], "n5": 1, "n": 1}}
     assert clean(tmp_path)["runs"][1]["forward_returns"]["d5"] == want["d5"], (
         "and the dashboard reads the same history")
 
@@ -3507,9 +3508,9 @@ def test_todays_candidates_are_published_pending_rather_than_guessed(
     data = clean(tmp_path)
     assert all(c["forward_returns"] == ledger.empty_returns() for c in data["candidates"]), (
         "pending on both bases")
-    assert data["runs"][0]["forward_returns"] == {"d1": None, "d3": None, "d5": None,
-                                                  "n": 0, "rows": 0,
-                                                  "from_open": {"d1": None, "d3": None, "d5": None, "n": 0}}
+    assert data["runs"][0]["forward_returns"] == {
+        "d1": None, "n1": 0, "d3": None, "n3": 0, "d5": None, "n5": 0, "n": 0, "rows": 0,
+        "from_open": {"d1": None, "n1": 0, "d3": None, "n3": 0, "d5": None, "n5": 0, "n": 0}}
     assert len(mocked_boundaries["alpaca"].bar_requests) == 1, (
         "and no second request was made for returns that cannot exist")
 
@@ -5226,6 +5227,68 @@ def test_the_fill_reads_each_horizon_by_its_session_across_every_frame_the_run_f
     assert bench["d1"] is not None, "the whole names still benchmark the session"
     assert bench["below_floor"] == len(names) - len(kept)
     assert bench["n1"] == len(kept) - 1, "every kept name but the holed one, which has no bar on that session"
+
+
+def test_a_published_run_mean_weights_each_horizon_by_the_setups_that_reached_it(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """THE HOLE, end to end. A run's mean carried ONE n for three horizons
+    while the page multiplied every horizon by it, so a name whose frame has
+    a hole two sessions after the burst -- d1 measured, everything after it
+    refused, which is the rule the round-9 fill enforces -- was counted in
+    the +5d weight of a mean it is not in.
+
+    Two names burst on the same session; one of them is missing the session
+    two on, so its d1 is in and its d3 and d5 are not. The published entry's
+    n1 is 2 and its n5 is 1, and the d5 it publishes is the whole name's own
+    return, recomputed here from the frame the double served.
+    """
+    from tests.test_scanner import _thin
+
+    # Volume ten times the usual on both bursts, so the second night's
+    # liquidity floor cannot be what drops either of them: this test is
+    # about a hole.
+    for name in ("BURST", "BRSTB"):
+        fake_alpaca.add_history(name, ohlcv("burst", base_volume=30_000_000.0))
+    names = ["BURST", "BRSTB"]
+    for i, suffix in enumerate("ABCD"):
+        fake_alpaca.add_history(f"Q{suffix}", _thin(ohlcv, "flat", price=40.0 + i,
+                                                    volume=3_000_000, variant=i + 2))
+        names.append(f"Q{suffix}")
+    _universe_file(monkeypatch, tmp_path, names)
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    pipeline.run("evening", dry_run=True)
+    burst_session = recorded(tmp_path)["runs"][0]["date"]
+    assert {c["ticker"] for c in recorded(tmp_path)["runs"][0]["candidates"]} == {"BURST", "BRSTB"}, (
+        "precondition: two setups on the session whose mean this is about")
+
+    # BRSTB is missing the SECOND session after the burst. Not the one
+    # before tonight's -- that is the scan's own gap rule, a different
+    # session and a different defect -- so the scan sees a whole name and
+    # only the fill meets the hole.
+    hole = session_offset(2)
+    fake_alpaca.hole_on("BRSTB", hole)
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(5))
+    pipeline.run("evening", dry_run=True)
+
+    book = recorded(tmp_path)
+    older = next(r for r in book["runs"] if r["date"] == burst_session)
+    rows = {c["ticker"]: c["forward_returns"] for c in older["candidates"]}
+    whole = expected_returns(served(fake_alpaca, "BURST", session_offset(5)), burst_session)
+    holed = expected_returns(served(fake_alpaca, "BRSTB", session_offset(5)), burst_session,
+                             horizons=(1,))
+    assert rows["BRSTB"]["d1"] == holed["d1"] and rows["BRSTB"]["d3"] is None, (
+        "precondition: the hole ends this row's measurement after d1")
+    assert rows["BURST"]["d5"] == whole["d5"]
+
+    mean = older["forward_returns"]
+    assert (mean["n1"], mean["n3"], mean["n5"]) == (2, 1, 1)
+    assert mean["n"] == 2, "both setups measured something, which is not the +5d weight"
+    assert mean["d1"] == round((whole["d1"] + holed["d1"]) / 2, 2)
+    assert mean["d5"] == whole["d5"], "the +5d mean is the one name that has one"
+    assert (mean["from_open"]["n1"], mean["from_open"]["n5"]) == (2, 1)
+    assert clean(tmp_path)["runs"][-1]["forward_returns"]["n5"] == 1, (
+        "and the same counts reach the page's own file")
 
 
 def test_the_documented_smoke_test_cannot_write_a_slid_horizon_into_a_universe_row(

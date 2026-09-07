@@ -213,7 +213,31 @@ def _returns_ok(returns, *, run_level: bool) -> bool:
         # a mean weighted by rows over-weights the name that burst five
         # sessions running, and a label saying "names" over a row count is not
         # true of either number.
-        return n <= rows
+        if n > rows:
+            return False
+        # AND THE WEIGHT IS PER HORIZON. n is every setup that measured
+        # SOMETHING, so a run holding one setup holed after d1 and one
+        # measured throughout publishes d5 over one setup with n 2 -- and the
+        # page multiplies by that. Each horizon's own count, on both bases,
+        # against three things the writer guarantees: it is a count, it is 0
+        # exactly when its mean is null (a weight of 0 under a number, or a
+        # weight under a null, is a session that would be averaged wrong in
+        # either direction), and it cannot exceed the setups the run has.
+        # from_open is checked only when it is there: a run from before the
+        # open basis carries none, which the contract calls a fact about that
+        # run rather than a measurement of zero.
+        for block, total in ((returns, n), (returns.get("from_open"), (returns.get("from_open") or {}).get("n"))):
+            if block is None:
+                continue
+            if not isinstance(total, int) or isinstance(total, bool) or total < 0:
+                return False
+            for key in horizons:
+                count = block.get("n" + key[1:])
+                if not isinstance(count, int) or isinstance(count, bool) or count < 0:
+                    return False
+                if (count > 0) != (block.get(key) is not None) or count > total:
+                    return False
+        return True
     if "as_of" not in returns:
         return False
     measured = any(returns[k] is not None for k in horizons)
@@ -601,6 +625,7 @@ def document() -> dict:
         "runs": [{"date": "2026-08-31", "type": "evening", "bursts": 3, "passed_gate": 2,
                   "scored": 2, "shortlist_size": 2, "top_score": 8.4, "fallbacks": 1,
                   "forward_returns": {"d1": None, "d3": None, "d5": None,
+                                      "n1": 0, "n3": 0, "n5": 0,
                                       "n": 0, "rows": 0}}] + [
             # The sessions the streak blocks above say the record holds. A
             # document whose rows claim a history deeper than its own `runs`
@@ -611,7 +636,11 @@ def document() -> dict:
             # the entry's own liquidity block names.
             {"date": day, "type": "evening", "bursts": 3, "passed_gate": 2,
              "scored": 2, "shortlist_size": 2, "top_score": 8.0, "fallbacks": 0,
-             "forward_returns": {"d1": 1.1, "d3": None, "d5": None, "n": 2, "rows": 2},
+             # One count per horizon, the weight the page multiplies by:
+             # d1 is over both setups and the two horizons no session has
+             # reached yet are over none. Same shape as `benchmark` below.
+             "forward_returns": {"d1": 1.1, "d3": None, "d5": None,
+                                 "n1": 2, "n3": 0, "n5": 0, "n": 2, "rows": 2},
              "liquidity": {"pctile": 30, "floor": 200_000_000.0, "refused": 0},
              "benchmark": {"d1": 0.4, "d3": None, "d5": None, "n1": 150, "n3": 0, "n5": 0,
                            "from_open": {"d1": 0.1, "d3": None, "d5": None, "n1": 148, "n3": 0, "n5": 0},
@@ -1039,12 +1068,55 @@ def test_a_run_mean_over_no_names_is_caught(document):
 
 
 def test_a_run_that_claims_more_setups_than_it_has_rows_is_caught(document):
-    """n is the weight the dashboard multiplies a session's mean by, and rows
-    is what those setups were collapsed from. More setups than rows is the
-    shape of a run that went back to weighting by rows and kept the label."""
+    """n is how many setups the run measured at any horizon and rows is what
+    those setups were collapsed from. More setups than rows is the shape of a
+    run that went back to weighting by rows and kept the label. (The weight
+    the dashboard multiplies by is n1/n3/n5, one per horizon; this pair is
+    what the runs table prints.)"""
     document["runs"][0]["forward_returns"] = {"d1": 1.0, "d3": None, "d5": None,
                                               "n": 4, "rows": 3}
     _only(document, "returns_shape")
+
+
+def test_a_horizon_count_that_is_not_that_horizon_s_weight_is_caught(document):
+    """n1/n3/n5 are what the page multiplies each horizon's mean by, so each
+    one is held to what mean_returns() guarantees: a count, 0 exactly when
+    its own mean is null, and never more setups than the run measured at all.
+    Both bases, because the page switches and the open basis carries its own.
+
+    Every plant here is a file no writer produces and a reader cannot tell
+    from a real one -- a weight is not contradicted by anything else on the
+    page -- which is why it is refused rather than rendered.
+    """
+    entry = next(r for r in document["runs"] if (r.get("forward_returns") or {}).get("d1") is not None)
+    returns = entry["forward_returns"]
+    assert (returns["n1"], returns["n"]) == (2, 2), "the precondition, from the clean document"
+
+    for bad in ("2", None, True, 1.5, -1):
+        returns["n1"] = bad
+        _only(document, "returns_shape")
+    returns["n1"] = returns["n"] + 1
+    _only(document, "returns_shape")
+    returns["n1"] = 0                       # a weight of nothing under a number
+    _only(document, "returns_shape")
+    returns["n1"] = 2
+    returns["n3"] = 1                       # a weight under a null mean
+    _only(document, "returns_shape")
+    returns["n3"] = 0
+    assert contract_violations(document) == set(), "the plants are one field wide"
+
+    # And one level in, on the basis the page can switch to.
+    returns["from_open"] = {"d1": 0.5, "n1": "2", "d3": None, "n3": 0,
+                            "d5": None, "n5": 0, "n": 2}
+    _only(document, "returns_shape")
+    returns["from_open"]["n1"] = 3          # more than the open basis's own n
+    _only(document, "returns_shape")
+    returns["from_open"]["n1"] = 2
+    assert contract_violations(document) == set()
+    # A run from before the open basis carries no from_open at all, which is
+    # a fact about that run and not a weight of zero.
+    del returns["from_open"]
+    assert contract_violations(document) == set()
 
 
 def test_a_run_that_says_it_scored_nothing_beside_a_measured_mean_is_caught(document):
@@ -1064,15 +1136,20 @@ def test_a_run_that_says_it_scored_nothing_beside_a_measured_mean_is_caught(docu
     # And the horizon on its own, with the counts it should have: a mean with
     # no rows behind it is the same lie one field over, and the first version
     # of this test could not see it -- every plant it made tripped the row
-    # count first, so the clause that reads the horizons was deletable.
+    # count first, so the clause that reads the horizons was deletable. It is
+    # TWO violations since the weight became per horizon: d1 1.1 needs n1 >= 1
+    # and n1 cannot exceed an n of 0, so the shape rule refuses this file one
+    # rule earlier. The pair is asserted exactly, which is what still makes
+    # the horizon clause load-bearing -- delete it and this reads
+    # {returns_shape} alone.
     entry["forward_returns"].update(n=0, rows=0)
-    _only(document, "quiet_run")
+    assert contract_violations(document) == {"quiet_run", "returns_shape"}
 
 
 def test_a_run_that_scored_nothing_may_not_claim_setups_either(document):
-    """n is the weight the dashboard multiplies a session's mean by, rows is
-    what those setups were collapsed from, and a run with no candidates has
-    neither -- mean_returns() takes both off the run's own rows. The open
+    """n is how many setups a run measured at any horizon, rows is what they
+    were collapsed from, and a run with no candidates has neither --
+    mean_returns() takes both off the run's own rows. The open
     basis is checked with the close one, because a mean is published on both
     and only one of them was ever read here."""
     entry = document["runs"][0]
@@ -1083,13 +1160,15 @@ def test_a_run_that_scored_nothing_may_not_claim_setups_either(document):
     entry["forward_returns"].update(n=0, rows=2)
     _only(document, "quiet_run")
     entry["forward_returns"].update(rows=0,
-                                    from_open={"d1": 1.0, "d3": None, "d5": None, "n": 1})
+                                    from_open={"d1": 1.0, "d3": None, "d5": None,
+                                               "n1": 1, "n3": 0, "n5": 0, "n": 1})
     _only(document, "quiet_run")
     # The open basis's n with nothing measured beside it. This is the ONLY
     # shape that reaches the setup count on its own: the close basis's n
     # cannot exceed rows (returns_shape), so a quiet run claiming one there
     # is caught by the row count first, and from_open carries no rows.
-    entry["forward_returns"].update(from_open={"d1": None, "d3": None, "d5": None, "n": 1})
+    entry["forward_returns"].update(from_open={"d1": None, "d3": None, "d5": None,
+                                               "n1": 0, "n3": 0, "n5": 0, "n": 1})
     _only(document, "quiet_run")
 
 
@@ -1101,10 +1180,16 @@ def test_a_run_whose_every_scored_row_is_a_repeat_may_not_read_as_waiting(docume
     claim that state and publish a mean anyway."""
     entry = document["runs"][0]
     entry["forward_returns"].update(rows=entry["scored"], n=0, d1=1.2)
-    _only(document, "quiet_run")
+    # Two violations, and both are true of this file: the mean is published
+    # over a d1 whose own count is 0, which the per-horizon weight refuses on
+    # its own. Exactly two, so the clause above stays load-bearing -- delete
+    # it and this set loses "quiet_run".
+    assert contract_violations(document) == {"quiet_run", "returns_shape"}
     # A run still WAITING is the same shape with fewer rows measured, and is
     # not this state: the precondition that keeps the rule from swallowing it.
-    entry["forward_returns"].update(rows=entry["scored"] - 1)
+    # Its d1 goes back to null with the count, because a mean over no setups
+    # is not a number in any file mean_returns() writes.
+    entry["forward_returns"].update(rows=entry["scored"] - 1, d1=None)
     assert contract_violations(document) == set()
 
 
@@ -1420,8 +1505,9 @@ def test_the_mean_of_no_measurements_is_null_not_zero():
     rows = [_row(t, "2026-08-31") for t in ("AAA", "BBB", "CCC")]
 
     assert ledger.mean_returns(rows, _every_row_leads(rows)) == {
-        "d1": None, "d3": None, "d5": None, "n": 0, "rows": 0,
-        "from_open": {"d1": None, "d3": None, "d5": None, "n": 0}}
+        "d1": None, "d3": None, "d5": None, "n1": 0, "n3": 0, "n5": 0,
+        "n": 0, "rows": 0,
+        "from_open": {"d1": None, "d3": None, "d5": None, "n1": 0, "n3": 0, "n5": 0, "n": 0}}
 
 
 def test_the_mean_counts_only_the_names_that_have_one():
@@ -1430,8 +1516,65 @@ def test_the_mean_counts_only_the_names_that_have_one():
             _row("CCC", "2026-08-31")]
 
     assert ledger.mean_returns(rows, _every_row_leads(rows)) == {
-        "d1": 0.5, "d3": 4.0, "d5": None, "n": 2, "rows": 2,
-        "from_open": {"d1": None, "d3": None, "d5": None, "n": 0}}
+        "d1": 0.5, "d3": 4.0, "d5": None, "n1": 2, "n3": 1, "n5": 0,
+        "n": 2, "rows": 2,
+        "from_open": {"d1": None, "d3": None, "d5": None, "n1": 0, "n3": 0, "n5": 0, "n": 0}}
+
+
+def test_each_horizon_is_weighted_by_the_setups_that_actually_have_it():
+    """THE HOLE. forward_returns() ends a row's measurement at the first
+    session its frame does not carry, so a setup can hold d1 and nothing
+    after it -- and ONE n for three horizons then tells the page that d5 was
+    measured over setups which have no d5.
+
+    Reproduced through this function before it was changed: these two rows
+    published d5 6.0 beside n 2, and a second session that measured both of
+    its setups at 0.0 gave the page (6*2 + 0*2)/4 = 3.00% where the honest
+    weighting is (6*1 + 0*2)/3 = 2.00%. The weight is per horizon now, which
+    is the shape runs[].benchmark has carried since round 7.
+
+    `n` stays what it was -- the setups this run contributed at any horizon,
+    which is what the runs table prints -- so the two counts are asserted
+    against each other here rather than one being renamed into the other.
+    """
+    rows = [_row("AAA", "2026-08-31", d1=30.0, as_of="x",
+                 from_open={"d1": 29.0, "d3": None, "d5": None}),
+            _row("BBB", "2026-08-31", d1=2.0, d3=2.0, d5=6.0, as_of="x",
+                 from_open={"d1": 1.0, "d3": 1.0, "d5": 5.0})]
+
+    out = ledger.mean_returns(rows, _every_row_leads(rows))
+
+    assert (out["n1"], out["n3"], out["n5"]) == (2, 1, 1), (
+        "d3 and d5 are one setup's, and only the horizon's own count says so")
+    assert out["d5"] == 6.0 and out["n"] == 2, (
+        "n is every setup that measured SOMETHING -- not the weight for d5")
+    assert (out["from_open"]["n1"], out["from_open"]["n3"], out["from_open"]["n5"]) == (2, 1, 1)
+    assert out["from_open"]["n"] == 2
+
+
+def test_a_horizon_measured_without_the_one_before_it_is_counted_where_it_is():
+    """The counts are NOT a prefix, which is why nothing asserts
+    n1 >= n3 >= n5 and the contract says so out loud. A hole ends a row's
+    measurement, but a bar that is THERE and prints a non-finite close does
+    not: forward_returns() skips that horizon and measures the next one. The
+    row is produced by the real function rather than hand-written, because
+    the claim is about what the writer emits -- a walker taught the prefix
+    would refuse a file this scanner really produces."""
+    index = pd.to_datetime(["2026-08-31", "2026-09-01", "2026-09-02",
+                            "2026-09-03", "2026-09-04", "2026-09-07"])
+    frame = pd.DataFrame({"Open": [10.0] * 6, "High": [12.0] * 6, "Low": [9.0] * 6,
+                          "Close": [10.0, float("nan"), 10.5, 10.4, 10.2, 11.0],
+                          "Volume": [1e6] * 6}, index=index)
+    holed = ledger.forward_returns(frame, date(2026, 8, 31))
+    assert holed["d1"] is None and holed["d3"] == 4.0, "the premise, from the writer"
+
+    rows = [{"ticker": "AAA", "date": "2026-08-31", "forward_returns": holed},
+            _row("BBB", "2026-08-31", d1=1.0, d3=2.0, as_of="x")]
+
+    out = ledger.mean_returns(rows, _every_row_leads(rows))
+
+    assert (out["n1"], out["n3"]) == (1, 2)
+    assert out["n"] == 2
 
 
 def test_a_row_that_continues_a_setup_is_not_a_second_observation():
@@ -2108,9 +2251,46 @@ def test_forward_returns_are_filled_into_an_earlier_run(tmp_path):
         "d1": 1.0, "d3": 3.0, "d5": 10.0, "as_of": "2026-08-31",
         "from_open": {"d1": None, "d3": None, "d5": None}}
     assert old["forward_returns"] == {"d1": 1.0, "d3": 3.0, "d5": 10.0,
-                                      "n": 1, "rows": 1,
-                                      "from_open": {"d1": None, "d3": None, "d5": None, "n": 0}}, (
+                                      "n1": 1, "n3": 1, "n5": 1, "n": 1, "rows": 1,
+                                      "from_open": {"d1": None, "d3": None, "d5": None,
+                                                    "n1": 0, "n3": 0, "n5": 0, "n": 0}}, (
         "the run mean covers the scored candidates, one setup from one row")
+
+
+def test_a_stored_run_mean_is_rebuilt_rather_than_republished(tmp_path):
+    """WHY THE PER-HORIZON COUNTS ARE NOT A LOAD CHECK, executed rather than
+    argued. Every other nested block this record gained -- benchmark, rules,
+    the row's own from_open -- is refused at load, because a shape no writer
+    produces reaches a consumer that indexes into it. A run's MEAN does not:
+    add_run() calls _recompute_means() over every entry before write(), so
+    the block on disk is thrown away and rebuilt from the rows, and there is
+    no path from a stored n5 to the page.
+
+    Driven here with a string, a null, a list and a string `n` in one entry:
+    they load clean and the entry the next run publishes carries the counts
+    its own rows give. If a later round ever publishes a stored mean without
+    recomputing it, this test is what says the load check is now needed.
+    """
+    book = ledger.Ledger(tmp_path).load()
+    book.add_run(*_run("2026-08-24"))
+    book.write()
+    stored = json.loads((tmp_path / "ledger.json").read_text())
+    entry = next(r for r in stored["runs"] if r["date"] == "2026-08-24")
+    entry["forward_returns"] = {"d1": 9.9, "n1": "three", "n3": None, "n5": [],
+                                "n": "x", "rows": 1,
+                                "from_open": {"d1": None, "n1": "?", "n": 0}}
+    (tmp_path / "ledger.json").write_text(json.dumps(stored))
+
+    again = ledger.Ledger(tmp_path).load()
+    assert again.load_error is None, "a run mean is not what the load check is for"
+    again.add_run(*_run("2026-08-25"))
+    published = next(r for r in again.runs if r["date"] == "2026-08-24")["forward_returns"]
+
+    assert published == {"d1": None, "n1": 0, "d3": None, "n3": 0, "d5": None, "n5": 0,
+                         "n": 0, "rows": 0,
+                         "from_open": {"d1": None, "n1": 0, "d3": None, "n3": 0,
+                                       "d5": None, "n5": 0, "n": 0}}, (
+        "the stored block is rebuilt from the rows, so nothing on disk reaches the page")
 
 
 def test_todays_own_candidates_are_not_asked_for_a_return_that_cannot_exist(tmp_path):
@@ -3273,7 +3453,8 @@ def test_run_means_and_evidence_outcomes_carry_the_open_basis_with_its_own_n():
 
     means = ledger.mean_returns(rows, _every_row_leads(rows))
     assert (means["d1"], means["d5"], means["n"]) == (round(5 / 3, 2), round(16 / 3, 2), 3)
-    assert means["from_open"] == {"d1": 2.0, "d3": None, "d5": 7.5, "n": 2}
+    assert means["from_open"] == {"d1": 2.0, "d3": None, "d5": 7.5,
+                                  "n1": 2, "n3": 0, "n5": 2, "n": 2}
 
     summary = ledger.outcome_summary(rows)
     d5 = ledger.at_horizon(summary, 5)

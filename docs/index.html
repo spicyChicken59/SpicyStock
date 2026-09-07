@@ -1256,6 +1256,20 @@
   // horizons there by _quiet_run_ok -- so the mutant that filters `runs`
   // here instead is equivalent, which is exactly why that rule was put in
   // the walker and not left to this filter alone.
+  // THE WEIGHT IS THE HORIZON'S OWN COUNT. `n` is every setup the run
+  // measured at ANY horizon, so a run holding one setup whose frame has a
+  // hole after the first session -- forward_returns() ends the measurement
+  // there rather than sliding a horizon onto a later bar -- publishes a d5
+  // over one setup with n 2, and weighting d5 by n counts a setup that has
+  // no d5. src.ledger's mean_returns() publishes n1/n3/n5 on both bases, the
+  // shape runs[].benchmark has had since round 7. A run entry written before
+  // those counts existed carries only `n`, and that IS what that file claims
+  // about its own weights, so it is used there rather than the horizon being
+  // dropped from a mean the file can still support.
+  function horizonN(f, d) {
+    var own = f['n' + d];
+    return typeof own === 'number' ? own : (f.n || 0);
+  }
   function horizonStats(runs) {
     var quiet = runs.filter(unscoredRun).length;
     var repeats = runs.filter(noNewSetup).length;
@@ -1273,7 +1287,7 @@
       });
       var wsum = 0, setups = 0, rows = 0, vals = [];
       have.forEach(function (r) {
-        var f = runFwd(r), w = f.n || 0;
+        var f = runFwd(r), w = horizonN(f, d);
         wsum += f[k] * w; setups += w; rows += (f.rows || 0); vals.push(f[k]);
       });
       var plain = vals.length ? vals.reduce(function (a, b) { return a + b; }, 0) / vals.length : null;
@@ -1408,7 +1422,9 @@
     if (BASIS !== 'open') return fr;
     if (!fr.from_open || typeof fr.from_open !== 'object') return {};
     // rows is a fact about the close-basis collapse and the open basis shares it.
-    return { d1: fr.from_open.d1, d3: fr.from_open.d3, d5: fr.from_open.d5, n: fr.from_open.n, rows: fr.rows };
+    return { d1: fr.from_open.d1, d3: fr.from_open.d3, d5: fr.from_open.d5,
+             n1: fr.from_open.n1, n3: fr.from_open.n3, n5: fr.from_open.n5,
+             n: fr.from_open.n, rows: fr.rows };
   }
   // One evidence outcome on the chosen basis, in the close basis's shape.
   // (Named onBasis, not pick: the shortlist card builder is pick(c), and a
@@ -2429,7 +2445,9 @@
     var enough = horizons.filter(function (h) { return h.sessions >= MIN_SESSIONS; });
     $('returns-hint').textContent =
       'Mean forward return across every scored candidate in a session, not just its shortlist, ' +
-      'weighted by how much each session contributed. One observation per SETUP, not per row: ' +
+      'each horizon weighted by the setups that actually reached it \u2014 a run whose frame had a ' +
+      'hole after the first session is in the +1d weight and not in the +5d one. One observation per ' +
+      'SETUP, not per row: ' +
       'a name that bursts five sessions running is one move measured five times, and counting ' +
       'it five times would weight that move against every other name in the file. A horizon needs ' + MIN_SESSIONS +
       ' sessions before its mean is worth reading; ' +
@@ -2482,10 +2500,11 @@
         return el('tr', null, [
           el('td', { text: '+' + h.days + ' day' + (h.days === 1 ? '' : 's') }),
           el('td', { 'class': 'sc-num' }, figure(h.mean === null ? nothingWords(h)[0] : pct(h.mean, 2),
-            h.weighted ? 'weighted by setups' : (h.sessions ? 'unweighted — no setup counts' : null))),
+            h.weighted ? 'weighted by the setups behind this horizon'
+                       : (h.sessions ? 'unweighted — no setup counts' : null))),
           el('td', { 'class': 'sc-num', title: excludedNote(h),
             text: commas(h.sessions) + ' of ' + commas(h.of) }),
-          el('td', { 'class': 'sc-num', title: h.rows ? commas(h.rows) + ' rows carry a return; repeats of one setup count once'
+          el('td', { 'class': 'sc-num', title: h.rows ? commas(h.rows) + ' rows carry a return at some horizon; repeats of one setup count once, and a setup whose frame had a hole before this horizon is not in this count'
                                                      : null,
             text: h.setups ? commas(h.setups) : '—' }),
           el('td', { 'class': 'sc-num', text: h.best === null ? '—' : pct(h.best, 2) }),

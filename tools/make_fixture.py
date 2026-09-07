@@ -738,6 +738,14 @@ by_src = collections.Counter(c["provenance"]["source"] for c in candidates)
 # These sessions are also the record the streak blocks above name: seven of
 # them before SESSION, the oldest 2026-08-21, which is what SPAN says and what
 # makes the day numbers up there ones the real code could have written.
+#: The sessions a run's frames were missing, per horizon: three of
+#: 2026-08-25's 21 setups had a hole between the third session after the
+#: burst and the fifth, so forward_returns() ended their measurement at d3
+#: and that night's d5 is over 18 setups while its d1 is over 21. The one
+#: state that tells a per-horizon weight from a run-level one, which is why
+#: the canonical fixture holds it.
+HORIZON_HOLES = {"2026-08-25": {"d5": 3}}
+
 runs = [
     {"date": SESSION, "type": "evening", "bursts": BURSTS, "passed_gate": PASSED,
      "scored": len(candidates), "shortlist_size": 5, "top_score": candidates[0]["score"],
@@ -777,6 +785,28 @@ for _i, _run in enumerate(runs):
     _fr["from_open"] = {k: (None if _fr[k] is None else round(_fr[k] - 0.6 - 0.05 * _i, 2))
                         for k in ("d1", "d3", "d5")}
     _fr["from_open"]["n"] = 0 if _fr["n"] == 0 else _fr["n"] - (1 if _i % 3 == 0 else 0)
+    # THE WEIGHT IS PER HORIZON (src.ledger's mean_returns). `n` is every
+    # setup that measured something; n1/n3/n5 are the setups behind each
+    # mean, and the page multiplies each horizon's mean by its own. Written
+    # out here rather than derived from `n`, because deriving them would make
+    # this file unable to hold the state the counts exist for -- HOLES is
+    # 2026-08-25's, where three of its 21 setups have a hole in the frame
+    # between d3 and d5, so its d5 is over 18 and its d1 over 21. A file where
+    # every horizon has the same count cannot tell a per-horizon weighting
+    # from a run-level one.
+    _holes = HORIZON_HOLES.get(_run["date"], {})
+    _close, _open = {}, {}
+    for _k in ("d1", "d3", "d5"):
+        _close[_k] = _fr[_k]
+        _close["n" + _k[1:]] = 0 if _fr[_k] is None else _fr["n"] - _holes.get(_k, 0)
+        _open[_k] = _fr["from_open"][_k]
+        _open["n" + _k[1:]] = (0 if _fr["from_open"][_k] is None
+                               else min(_close["n" + _k[1:]], _fr["from_open"]["n"]))
+    _open["n"] = _fr["from_open"]["n"]
+    # In mean_returns()' own key order, so the fixture is that writer's file
+    # in shape as well as in content.
+    _run["forward_returns"] = _fr = {**_close, "n": _fr["n"], "rows": _fr["rows"],
+                                     "from_open": _open}
     # The universe's own return from each session (src.ledger.add_run writes
     # the pending shape; fill_benchmarks fills it on the evening five sessions
     # later). Hand-authored where the run's own returns are in: a little

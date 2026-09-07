@@ -217,7 +217,7 @@ CONTRACT_INVARIANTS = [
     "runs[].rules is what this screener was when that run was made: every number its rules turned on — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate — plus what produced the SCORE, since round 11: score.prompt is a digest of the scoring model's system prompt and score.record_keys is the record block the request carries. A run scored under a rewritten rulebook is as much a second screener as one whose gate moved, and every mean keyed on score averages both. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. A run from before it carries no rules block, and no surface may read that as agreement.",
     "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when the rule is off or nothing could be ranked), over (how many names the percentile was drawn from), refused (how many bursts sat below it). `over` is the population the FLOOR was drawn from -- the names whose session bar carried a readable, positive dollar volume -- and not the population the scan measured, which is run.coverage.measured and can be larger or smaller. A null floor has three readings: `pctile <= 0` is the rule switched off, whatever `over` says; a null floor with `over: 0` is a night no name's dollar volume could be ranked; and a null floor with no `over` at all is a run from before the count existed. No surface may report one cause as the other. run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
     "run.coverage is how much of the night was READ, in the counts the scan reached before it stopped: requested, with_bars (answered with any bar), fresh, measured, stale, gapped, no_bars, dropped, duplicate_bars, plus the session and the newest bar the names that missed it carried. measured is the population a burst could have come from -- the names whose session bar the detector read and answered about -- so with_bars minus measured is what could not be measured for the session (behind it, holed on the session before it, unreadable, measured onto an earlier session, or one the detector raised on), and measured 0 UNDER A POSITIVE with_bars is a BLIND night: the feed answered and nothing could be read, which no surface may report as a quiet market. measured 0 beside with_bars 0 is a scan nothing answered, which is what a dead run's notice carries and is not the same sentence. requested minus with_bars is the other half of the first cut -- the names that answered with nothing at all, plus any dropped after their batch failed twice -- so no surface may attribute it to the burst filter either. A count that is absent was never reached, and absent is never 0. runs[].measured carries that one number into the durable record, because docs/data.json is rewritten every night and both its readers are later runs.",
-    "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
+    "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is how many setups the run contributed at any horizon and rows is how many rows they were collapsed from, so n <= rows always. THE WEIGHT IS PER HORIZON: n1, n3 and n5 are the setups behind d1, d3 and d5 separately, and an average across sessions must weight each horizon by its own, because a frame with a hole after the first session measures d1 and nothing after it -- that setup is in n and out of n5, and weighting d5 by n counts setups that have no d5. nH is 0 exactly when dH is null and nH <= n always; they are not ordered n1 >= n3 >= n5, since a non-finite close at one horizon leaves it null with a later one measured. from_open carries its own n1/n3/n5 for the same reason it carries its own n.",
     "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
     "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
     "runs[].benchmark is the universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), over every name whose frame carries the session and whose dollar volume that session was at or above the run's own liquidity floor -- rule 6's bar that night, run.liquidity.floor -- with nN the number of symbols behind each horizon. benchmark.liquidity_floor is the floor the fill that FIRST measured the block applied -- null for a run recorded without one, when every name that traded counts -- and benchmark.below_floor is how many names that fill left out under it; the horizons a later fill adds are measured over the same population, so one block is one set of names. Null until a later run's scan carried the sessions, null forever for a run whose universe later scans never fetched, and never filled at all for a run that measured nothing: nothing is ever paired with a blind night's rung, since it scored no setup, and its floor -- null when no name's dollar volume could be ranked, and drawn from however few could be when it is not -- would stamp the block with a population that night never read. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks, and evidence.universe.floored is how many of those pairings were measured over a floor and evidence.universe.unfloored how many were measured with none -- before the floor reached the benchmark, or on a night rule 6 was off, which the block cannot tell apart -- over every name that traded (a pending pairing is in neither); it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
@@ -1369,16 +1369,31 @@ def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
 
       d1/d3/d5  the mean over the rows in `leads` — one per setup. A horizon
                 nobody has a value for is null rather than 0.0: the dashboard
-                weights these by `n` across sessions, and a zero would be
-                averaged in as a flat session that never happened.
-      n         how many setups are behind those means. THE WEIGHT: the
-                dashboard multiplies by it when it averages across sessions,
-                so it has to be the count the mean was taken over, or the
-                weighting is arithmetic over two different denominators.
-      rows      how many rows in this run carry a return at all. `n` is what
-                the means count; `rows` is what they were collapsed from, and
-                the pair is what lets a label say which of the two it is
-                showing instead of calling rows "names".
+                weights these by their own count across sessions, and a zero
+                would be averaged in as a flat session that never happened.
+      n1/n3/n5  how many setups are behind d1, d3 and d5 SEPARATELY. THE
+                WEIGHT, one per horizon, which the benchmark block has
+                carried since round 7 and this one did not: a row whose frame
+                has a hole after the first session measures d1 and nothing
+                after it (forward_returns() ends the measurement rather than
+                sliding a horizon onto a later bar), so it is in n and out of
+                n5 -- and one n for three horizons then weights a d5 mean by
+                setups that have no d5. Reproduced before it was changed: two
+                setups, one holed after d1, published d5 6.0 with n 2, and a
+                second session measuring both at 0.0 gave the page 3.0 where
+                the honest weighting is 2.0. `nH` is 0 exactly when `dH` is
+                null, and nH <= n always. They are NOT ordered n1 >= n3 >= n5:
+                a frame whose d1 bar carries a non-finite close measures d3
+                without d1, so a prefix rule would be a claim the writer does
+                not make.
+      n         how many setups are behind the means at ANY horizon -- what
+                this run contributed to the record, and what the runs table
+                prints as "setups". It is not a weight for a horizon; the
+                pair of counts is what stops one number doing both jobs.
+      rows      how many rows in this run carry a return at all. `n` is the
+                setups; `rows` is what they were collapsed from, and the pair
+                is what lets a label say which of the two it is showing
+                instead of calling rows "names".
 
     `leads` comes from scored_leads() over the WHOLE ledger, not this run:
     whether a row starts a setup is a question about the sessions around it,
@@ -1404,10 +1419,11 @@ def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
         values = [row["forward_returns"][key] for row in counted
                   if row.get("forward_returns", {}).get(key) is not None]
         out[key] = round(math.fsum(values) / len(values), 2) if values else None
+        out[f"n{horizon}"] = len(values)
     out["n"] = sum(1 for row in counted if _measured(row))
     out["rows"] = sum(1 for row in rows if _measured(row))
     # The same means from the next open, over the same setups, with their
-    # own n: a row whose frame carried no usable open has a close-basis
+    # own counts: a row whose frame carried no usable open has a close-basis
     # return and no open-basis one, and the two counts must not be one.
     from_open: dict = {}
     for horizon in HORIZONS:
@@ -1415,6 +1431,7 @@ def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
         values = [_from_open(row.get("forward_returns"))[key] for row in counted
                   if _from_open(row.get("forward_returns")).get(key) is not None]
         from_open[key] = round(math.fsum(values) / len(values), 2) if values else None
+        from_open[f"n{horizon}"] = len(values)
     from_open["n"] = sum(1 for row in counted
                          if any(_from_open(row.get("forward_returns")).get(f"d{h}") is not None
                                 for h in HORIZONS))
@@ -1872,22 +1889,6 @@ def _population(rows: list[dict]) -> dict:
     summary = outcome_summary(rows)
     return {"setups": len(rows), "outcomes": summary, "enough": _enough(summary),
             "enough_from_open": _enough_from_open(summary)}
-
-
-def _shortlist_size(runs: list[dict]) -> int:
-    """How many names the runs in this record actually emailed.
-
-    Read off the record rather than imported from src.pipeline's TOP_N,
-    because the record spans runs and TOP_N is today's value: a ledger written
-    before it changed would otherwise be split at a boundary those runs never
-    used. The newest run that states one wins; 0 means no run said, and then
-    nothing is called a shortlist.
-    """
-    for run in runs:
-        size = run.get("shortlist_size") if isinstance(run, dict) else None
-        if isinstance(size, int) and not isinstance(size, bool) and size > 0:
-            return size
-    return 0
 
 
 # -------------------------------------------------------------- the file --

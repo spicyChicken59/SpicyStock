@@ -521,7 +521,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1352 tests, no network or API keys needed
+pytest tests/                   # 1357 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -693,7 +693,7 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 15.42 MB raw
+and what followed — needs the whole record, which projects to about 15.45 MB raw
 and **1.24 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
@@ -950,9 +950,21 @@ rows, which is what the dashboard's "has any of this made money yet" panel reads
 That mean is taken over **setups**, not rows: a name that bursts on five
 consecutive sessions is one move measured five times, and counting it five times
 weights that one move against every other name in the file. `forward_returns.n`
-is the setup count the mean was taken over — the weight the dashboard averages
-sessions by — and `forward_returns.rows` is what those setups were collapsed
-from. The page prints both, and calls neither of them "names".
+is how many setups the run contributed at any horizon and `forward_returns.rows`
+is what those setups were collapsed from. The page prints both, and calls
+neither of them "names".
+
+**The weight is per horizon**, not per run: `forward_returns.n1`, `n3` and `n5`
+are the setups behind `d1`, `d3` and `d5 `separately, on both bases, and the
+dashboard multiplies each horizon's mean by its own. A frame with a hole two
+sessions after the burst measures `d1` and nothing after it — the fill refuses
+a horizon it cannot reach across every session on the way — so that setup is in
+`n` and out of `n5`, and one `n` for three horizons weighted a +5d mean by
+setups that have no +5d. `nH` is `0` exactly when `dH` is `null`, and they are
+not ordered `n1 >= n3 >= n5`: a bar that is there and prints a non-finite close
+leaves its own horizon null with a later one measured. A run entry written
+before these counts carries only `n`, which is what that file claims about its
+own weights, and the page uses it there.
 
 - `d1`, `d3`, `d5` are the percentage change from the burst-day close to the
   close 1, 3 and 5 **sessions** later — sessions read off the calendar the
@@ -1244,14 +1256,14 @@ construction: `docs/` and its exact design-system snapshot are served locally,
 and external requests are blocked. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 244 checks, and which file each one
+**Three data sources, one page.** It runs 248 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 42 mutated copies of it are served
+  night can hold at once. 43 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now
