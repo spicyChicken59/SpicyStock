@@ -89,16 +89,24 @@ against the gain, which describes two closes. `gap_pct` is where it opened
 against the previous session's close — the part of the move that happened
 before anyone reading this could act on it. `bar_range_pct` is high minus low
 over the close: how wide the session was. `range_expansion` is that width
-over the average width of the sessions immediately before it, so 3x means a
-bar three times as wide as the consolidation it broke out of and 0.5x means a
-burst narrower than its own base — a gain delivered on the open rather than
-through the day. Nothing is refused on any of these: they are measurements,
-they carry no threshold, and each is null when the bar could not supply it
-(no open, no envelope, or an open printed outside its own high and low).
-Null means not measured; it never means zero. Read them beside `H`, which
-says where in that range the close landed: a wide bar closing at its high is
-the powerful burst bar above, and a wide bar closing mid-range is the
-demand-faded kill two sections up.
+over the average width of the last seven sessions before it that the
+checklist could read — the same window `N` measures, and the same number the
+`N` line in this request prints as its pre-burst range, so `bar_range_pct` divided by
+that %/day is this ratio. 3x means a bar three times as wide as the
+consolidation it broke out of; 0.5x means a burst narrower than its own base
+— a gain delivered on the open rather than through the day. Nothing is
+refused on any of these: they are measurements and they carry no threshold.
+Each is null when the bar could not supply it, and the reasons are per key:
+the gap alone when there was no readable open or the open was printed outside
+its own high and low, which is not a price anybody paid; the width and the
+expansion when the envelope cannot be read; the expansion alone when no
+readable session before the burst had any width to expand against; and all
+three when the burst bar is missing something the checklist needs, because
+then `H` and the six checks are grading the session BEFORE it and these would
+be describing another one. Null means not measured; it never means zero. Read
+them beside `H`, which says where in that range the close landed: a wide bar
+closing at its high is the powerful burst bar above, and a wide bar closing
+mid-range is the demand-faded kill under What kills a setup.
 
 `consecutive_up_days` is how many sessions closed up in a row ENDING THE DAY
 BEFORE the burst — the run you would be buying into, not counting the entry.

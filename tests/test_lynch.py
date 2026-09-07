@@ -18,6 +18,7 @@ without disturbing the other five checks at the same time.
 
 from __future__ import annotations
 
+import math
 import pathlib
 import re
 
@@ -43,6 +44,7 @@ from src.lynch import (
     MIN_LINEAR_R2,
     MIN_LINEAR_SLOPE,
     WINDOWS,
+    _bar_width,
     consecutive_up_days,
     evaluate_2lynch,
     extra_context,
@@ -156,6 +158,7 @@ def _frame(
     burst_pct: float = 8.0,
     wide_range: float = 0.040,
     tight_range: float = 0.020,
+    shelf_ranges: tuple[float, ...] | None = None,
     d1_range: float | None = None,
     burst_zero_range: bool = False,
     burst_close_pos: float = 0.98,
@@ -189,6 +192,15 @@ def _frame(
                            long the advance ran. Defaults to the original
                            `30 - trend_days`, so every frame built before this
                            keyword existed is byte-identical.
+      shelf_ranges         the widths of the last N sessions before the
+                           burst, oldest first, overriding `tight_range` over
+                           those sessions and no others. None keeps the flat
+                           shelf every frame built before this keyword
+                           existed had -- and a flat shelf is a frame on
+                           which the mean of the rounded widths, the rounded
+                           mean of them, and the width of any ONE of them are
+                           all the same number, so it can tell no two of
+                           those denominators apart.
       burst_close_pos      where in its own range the burst day closes (H).
       burst_gap_pct        where the burst bar OPENED, as a % from the prior
                            close. None keeps the +0.5% every frame built
@@ -259,6 +271,8 @@ def _frame(
 
     span = np.full(days, wide_range)
     span[burst_i - shelf : burst_i] = tight_range
+    if shelf_ranges is not None:
+        span[burst_i - len(shelf_ranges) : burst_i] = shelf_ranges
     if d1_range is not None:
         span[burst_i - 1] = d1_range
 
@@ -1068,6 +1082,20 @@ def test_the_gap_and_the_width_are_the_burst_bar_s_own_arithmetic():
     # high it would be 13.2%.
     mid = extra_context(_frame(burst_gap_pct=3.0, burst_low_pct=-1.0, burst_close_pos=0.6))
     assert mid["bar_range_pct"] == 13.9
+    # And the width is rounded ONCE, from the raw span. A bar 8.2501% wide
+    # is 8.3; rounded to a hundredth first it is 8.25, which round-half-even
+    # then takes DOWN to 8.2 -- the double-rounding half of the class
+    # worst_base_day() closed, on the number the rulebook tells the model to
+    # read beside `H`.
+    boundary = extra_context(_frame(burst_low_pct=-0.7319))
+    assert boundary["bar_range_pct"] == 8.3
+
+    # The gap is published at the tenth of a percent `bar_range_pct` beside
+    # it is, and not at `gain_pct`'s two decimals: an open 3.26% above the
+    # previous close reads 3.3. Pinned because nothing did -- every earlier
+    # test used a +3.0% open, where the two roundings are one number.
+    assert extra_context(_frame(burst_gap_pct=3.26))["gap_pct"] == 3.3
+
     # And the same numbers reach the request, since src.scorer spreads the
     # context into it -- the archive gets them from src.ledger the same way.
     payload = _payload_for(_off_its_own_high(_frame(burst_gap_pct=3.0, burst_low_pct=-1.0)))
@@ -1106,22 +1134,58 @@ def test_the_expansion_is_measured_against_the_consolidation_the_checklist_names
 def test_a_bar_that_cannot_be_read_measures_null_and_never_zero(column):
     """The rule round 9 settled for the open basis (F1/L4), one layer over.
 
-    A missing Open leaves the width measurable and the gap unsayable; a
-    missing High or Low leaves nothing measurable at all, because a bar with
-    no envelope has no width and an open nothing can be checked against is
-    not a print. Zero would be a fabricated measurement, and the most
-    confident one available: 0.0% is "it opened exactly where it closed
-    yesterday", which is a claim about the market.
+    Zero would be a fabricated measurement, and the most confident one
+    available: 0.0% is "it opened exactly where it closed yesterday", which
+    is a claim about the market.
+
+    ALL THREE, on any of the three columns, and the Open case is why this
+    test exists rather than the two that follow. A bar with no Open still
+    has a perfectly readable width -- the precondition below executes that
+    rather than describing it -- but `evaluate_2lynch()` has dropped that bar
+    before choosing the burst, so `H` is describing the session BEFORE. The
+    round that added these measured the width anyway, and the model was sent
+    `bar_range_pct 9.4` beside "closed at 50% of day's range" for a bar that
+    closed at 98% of its own, under a rulebook sentence telling it to read
+    the two together.
+    """
+    frame = _frame()
+    frame.iloc[-1, frame.columns.get_loc(column)] = float("nan")
+    if column == "Open":
+        assert _bar_width(frame.iloc[-1]) is not None, (
+            "this bar's width cannot be read either, so a null below says "
+            "nothing about the bar the checklist is reading")
+    checklist = evaluate_2lynch(frame)
+    clean = evaluate_2lynch(_frame())
+    assert (checklist["checks"]["H_close_near_high"]["value"]
+            != clean["checks"]["H_close_near_high"]["value"]), (
+        "the checklist is reading the same bar it reads on a clean frame, so "
+        "these three cannot describe a different one")
+
+    ctx = extra_context(frame)
+    for key in BURST_BAR_KEYS:
+        assert ctx[key] is None, (
+            f"{key} describes the burst bar while `H` describes the session "
+            f"before it, because the bar has no {column}")
+
+
+@pytest.mark.parametrize("column", ["Close", "Volume"])
+def test_the_two_layers_step_back_onto_one_bar_together(column):
+    """The other half of the rule above, and the reason it is a rule about
+    the CHECKLIST's bar rather than about the Open.
+
+    A burst bar with no Close (or no Volume) is dropped by everything --
+    src.scanner.detect_setup(), extra_context()'s own cleaning and
+    evaluate_2lynch() -- so all three layers call the SAME earlier bar the
+    burst and the three measurements are measurements of the bar `H` grades.
+    Null would be wrong here: nothing disagrees.
     """
     frame = _frame()
     frame.iloc[-1, frame.columns.get_loc(column)] = float("nan")
     ctx = extra_context(frame)
-
-    unsayable = ["gap_pct"] if column == "Open" else list(BURST_BAR_KEYS)
-    for key in unsayable:
-        assert ctx[key] is None, f"{key} was measured off a bar with no {column}"
-    for key in set(BURST_BAR_KEYS) - set(unsayable):
-        assert isinstance(ctx[key], float) and ctx[key] > 0, key
+    for key in BURST_BAR_KEYS:
+        assert ctx[key] is not None, key
+    # And they are that earlier bar's own numbers, not the dropped bar's.
+    assert ctx == extra_context(frame.iloc[:-1])
 
 
 def test_an_open_outside_its_own_bar_is_not_a_gap():
@@ -1204,6 +1268,248 @@ def test_a_flat_bar_has_no_width_rather_than_no_measurement():
     # The gap is still measurable: the open equals the close equals the high
     # equals the low, which is inside its own (degenerate) bar.
     assert ctx["gap_pct"] is not None
+
+
+
+def _printed_pre_burst_range(frame: pd.DataFrame) -> float:
+    """The %/day `N` prints, parsed back out of the line the model reads."""
+    line = evaluate_2lynch(frame)["checks"]["N_narrow_consolidation"]["value"]
+    return float(line.split("range ")[1].split("%")[0])
+
+
+#: Seven pre-burst sessions of DIFFERENT widths, oldest first. Every frame in
+#: this file had a flat 2.0%/day shelf, on which the mean of the rounded
+#: widths, the rounded mean of them and the width of any one of them are the
+#: same number -- so no test could tell those three denominators apart, and
+#: the ratio the pipeline published disagreed with the `N` line beside it on
+#: 8 of the 9 rows it had written.
+UNEVEN_SHELF = (0.0283, 0.0112, 0.0061, 0.0281, 0.0063, 0.0270, 0.0088)
+
+
+def _shelf_widths(frame: pd.DataFrame) -> list[float]:
+    """The pre-burst widths, as `N` measures them: raw, most recent last."""
+    widths = (frame["High"] - frame["Low"]) / frame["Close"] * 100
+    return [float(w) for w in widths.iloc[-(WINDOWS["tight_sessions"] + 1):-1]]
+
+
+def test_the_expansion_is_the_ratio_the_N_line_lets_a_reader_recompute():
+    """One number, printed once, in the request the model reads.
+
+    `N` prints the pre-burst range as the mean of the raw widths, rounded
+    once to the tenth. This divided by the mean of the widths each already
+    ROUNDED -- a different number, and never shown anywhere -- so the request
+    said "pre-burst range 1.0%/day" beside a 9.5% bar and called it 9.37x,
+    where the reader recomputing it from the two numbers in front of him gets
+    9.5x. 8 of the 9 rows the real pipeline had written into
+    tests/fixtures/history/ disagreed that way, and the canonical fixture
+    asserted the identity the pipeline did not hold.
+
+    The preconditions are executed: the shelf is uneven (a flat one cannot
+    tell the two arithmetics apart), the two arithmetics really do give
+    different ratios on it, and so does every shorter window -- which is what
+    holds the divisor to WINDOWS["tight_sessions"], `N`'s own window, rather
+    than to any prefix of it.
+    """
+    frame = _frame(shelf_ranges=UNEVEN_SHELF)
+    widths = _shelf_widths(frame)
+    assert len(set(round(w, 1) for w in widths)) > 1, "the shelf is flat"
+
+    ctx = extra_context(frame)
+    printed = _printed_pre_burst_range(frame)
+    assert ctx["range_expansion"] == round(ctx["bar_range_pct"] / printed, 2), (
+        f"{ctx['bar_range_pct']}% over a {printed}%/day base is not "
+        f"{ctx['range_expansion']}x -- the two numbers in one request do not "
+        "reconcile")
+
+    for mean_of_rounded in (sum(round(w, 1) for w in widths) / len(widths),
+                            round(sum(round(w, 1) for w in widths) / len(widths), 1)):
+        assert round(ctx["bar_range_pct"] / mean_of_rounded, 2) != ctx["range_expansion"], (
+            "rounding each width first gives the same answer on this frame, "
+            "so this test cannot tell the two denominators apart -- and it "
+            "has to separate BOTH forms of it, the unrounded mean this "
+            "divided by and the rounded one that looks like the fix")
+    for shorter in (1, 3):
+        norm = round(sum(widths[-shorter:]) / shorter, 1)
+        assert round(ctx["bar_range_pct"] / norm, 2) != ctx["range_expansion"], (
+            f"a divisor over the last {shorter} sessions gives the same "
+            "answer, so the window is not pinned")
+
+
+#: Seven lows, on the frame's own shelf bars (one High and one Close across
+#: all seven), whose widths average to 2.3499999999999992 -- a mean sitting
+#: an ULP either side of `round(x, 1)`'s boundary. Found by search over 4,847
+#: candidate shelves, because this is the one shape that tells three ways of
+#: averaging seven floats apart: pandas answers 2.4, math.fsum 2.3, and the
+#: builtin sum() 2.4 on CI's 3.12 and 2.3 on this sandbox's 3.11.
+FSUM_SHELF_LOWS = (43.17865131892043, 42.81060259359148, 42.95613495891439,
+                   42.915183372965885, 42.82071494887865, 43.13299173820462,
+                   43.26552106852392)
+
+
+def test_the_base_is_averaged_by_the_one_thing_that_prints_it():
+    """The denominator is `N`'s number, so it is averaged `N`'s way.
+
+    math.fsum is what src.ledger.mean_returns() uses and the argument for it
+    is real -- CPython 3.12 made the builtin sum() compensated, so one frame
+    published 0.87 here and 0.88 on CI -- but it is an argument about a mean
+    NOTHING ELSE COMPUTES. This one is computed twice: once here and once by
+    `N`, with pandas, into a line the same request carries. On the shelf
+    below the two disagree by an ULP, and the more accurate answer is the one
+    that contradicts the printed number.
+
+    The interpreter half of that finding is closed either way: no builtin
+    sum() is left, so nothing here can answer 2.4 on 3.12 and 2.3 on 3.11.
+    """
+    frame = _frame()
+    low = frame.columns.get_loc("Low")
+    for k, value in enumerate(FSUM_SHELF_LOWS):
+        frame.iloc[len(frame) - 1 - len(FSUM_SHELF_LOWS) + k, low] = value
+    widths = _shelf_widths(frame)
+    printed = _printed_pre_burst_range(frame)
+
+    ctx = extra_context(frame)
+    assert ctx["range_expansion"] == round(ctx["bar_range_pct"] / printed, 2)
+    # And this frame really is the one that separates them: if it stops
+    # being, the assertion above is satisfied by every mean and says nothing.
+    fsum_norm = round(math.fsum(widths) / len(widths), 1)
+    assert fsum_norm != printed, (
+        "fsum and the printed mean agree on this shelf, so it can no longer "
+        "tell them apart -- the search that found it is in CLAUDE.md")
+    assert ctx["range_expansion"] != round(ctx["bar_range_pct"] / fsum_norm, 2)
+    if sum(widths) != math.fsum(widths):     # true on 3.11, false on 3.12
+        assert round(sum(widths) / len(widths), 1) != fsum_norm, (
+            "the builtin sum and fsum agree here, so the interpreter half of "
+            "this is not exercised")
+
+
+def test_the_expansion_averages_the_bars_the_checklist_averages():
+    """The window is `N`'s window, so it holds `N`'s bars.
+
+    A bar with no Open has a perfectly readable width and is one
+    `evaluate_2lynch()` drops before it measures anything -- so counting it
+    here would put a bar in the divisor that is in no `N` line, and the two
+    printed numbers would stop reconciling on exactly the frames a feed with
+    a hole in it produces.
+    """
+    frame = _frame(shelf_ranges=UNEVEN_SHELF)
+    hole = len(frame) - 3
+    frame.iloc[hole, frame.columns.get_loc("Open")] = float("nan")
+    assert _bar_width(frame.iloc[hole]) is not None, (
+        "this bar's width cannot be read at all, so skipping it says nothing "
+        "about the checklist's window")
+
+    ctx = extra_context(frame)
+    printed = _printed_pre_burst_range(frame)
+    assert ctx["range_expansion"] == round(ctx["bar_range_pct"] / printed, 2)
+    # And the hole really did move the answer: a window that counted it would
+    # publish a different ratio, so this is not two readings of one number.
+    counted = _shelf_widths(frame)
+    assert round(ctx["bar_range_pct"] / round(sum(counted) / len(counted), 1), 2) \
+        != ctx["range_expansion"], "counting the hole gives the same ratio"
+
+
+def test_the_gap_is_measured_off_the_close_the_gain_was_measured_against():
+    """One denominator for the two numbers in the payload.
+
+    `detect_setup()` measures gain_pct after dropping every bar with no
+    readable close or volume (src.scanner._measurable), and extra_context()
+    hands burst_bar_shape() that same cleaning -- so a readable close under
+    an unreadable volume is a session NEITHER number is measured against.
+    Handed the frame as received instead, the request reads gain 8.0% beside
+    gap 21.7%: two non-null numbers naming two different previous sessions,
+    which is what the comment above the divide promises cannot happen.
+
+    Three distinct closes sit in the three places a reading could take one
+    from, asserted before anything else, so this cannot pass because two of
+    them happen to be the same number -- which is why the shelf's own closes
+    are moved: they are identical session to session, and a divisor one bar
+    further back was indistinguishable.
+    """
+    from src.scanner import ScanConfig, detect_setup
+
+    frame = _frame()
+    close_col, volume_col = frame.columns.get_loc("Close"), frame.columns.get_loc("Volume")
+    frame.iloc[-2, close_col] = 36.0
+    frame.iloc[-2, volume_col] = float("nan")
+    frame.iloc[-3, close_col] = 41.0
+    cleaned = frame.dropna(subset=["Close", "Volume"])
+    unreadable = float(frame["Close"].iloc[-2])
+    measured = float(cleaned["Close"].iloc[-2])
+    one_further = float(cleaned["Close"].iloc[-3])
+    assert len({unreadable, measured, one_further}) == 3, (
+        "two of the three candidate denominators are the same number")
+
+    setup = detect_setup(frame, ScanConfig())
+    assert setup, "this frame carries no burst, so there is no gain to agree with"
+    assert setup["gain_pct"] == round(
+        (float(cleaned["Close"].iloc[-1]) / measured - 1) * 100, 2), (
+        "the scan is not measuring its gain against the close this test "
+        "expects, so the agreement below would be an accident")
+
+    open_ = float(frame["Open"].iloc[-1])
+    ctx = extra_context(frame)
+    assert ctx["gap_pct"] == round((open_ / measured - 1) * 100, 1)
+    for other in (unreadable, one_further):
+        assert ctx["gap_pct"] != round((open_ / other - 1) * 100, 1)
+
+
+def test_a_base_bar_whose_width_cannot_be_read_is_skipped_and_never_raises():
+    """A close of 0.0 is not a small price, it is no price -- and the
+    division is why this is a guard rather than a preference: weakened to
+    `close < 0`, one zero close anywhere in a name's history raises
+    ZeroDivisionError out of extra_context(), which src.pipeline calls per
+    candidate inside publish() -- after the scan and every Claude call.
+
+    Reachable: src.scanner._session_bar_problem() reads the SESSION bar and
+    _measurable() drops NaN rather than 0.0, so a zero close four sessions
+    back reaches here with nothing in front of it.
+    """
+    frame = _frame(shelf_ranges=UNEVEN_SHELF)
+    zero = len(frame) - 5
+    frame.iloc[zero, frame.columns.get_loc("Close")] = 0.0
+
+    # The seven readable widths, walked back from the bar before the burst
+    # the way the code walks them -- so the window reaches an eighth session
+    # back rather than counting the hole as a flat day.
+    widths, i = [], len(frame) - 2
+    while len(widths) < WINDOWS["tight_sessions"]:
+        bar = frame.iloc[i]
+        if _bar_width(bar) is not None:
+            widths.append(_bar_width(bar))
+        i -= 1
+    assert _bar_width(frame.iloc[zero]) is None, "the planted bar is readable"
+
+    ctx = extra_context(frame)
+    norm = round(sum(widths) / len(widths), 1)
+    assert ctx["range_expansion"] == round(ctx["bar_range_pct"] / norm, 2), (
+        "the unreadable bar was counted rather than skipped")
+    assert i < zero - 1, "the window never reached past the hole"
+
+    # And in the burst position, where the guard is the difference between a
+    # null width and the same raise. (The gap is untouched: it is measured
+    # from the open and the previous close, and this bar has both.)
+    burst_zero = _frame()
+    burst_zero.iloc[-1, burst_zero.columns.get_loc("Close")] = 0.0
+    shape = extra_context(burst_zero)
+    assert shape["bar_range_pct"] is None and shape["range_expansion"] is None
+
+
+def test_a_frame_of_one_bar_has_a_width_and_no_gap_rather_than_an_index_error():
+    """The guard on `prev_close` is the only thing between a one-bar frame
+    and an IndexError two lines further down, and nothing else in this suite
+    hands one over. There is no session before it to have gapped from and no
+    base to have expanded against; the width is still the width.
+
+    The empty-frame return above it is deliberately NOT pinned here: it
+    cannot be reached through extra_context(), which reads
+    `df["Close"].iloc[-1]` first and raises on an empty frame, so a test of
+    it would be a test of burst_bar_shape's own direct callers, of which
+    there are none.
+    """
+    ctx = extra_context(_frame().iloc[-1:])
+    assert ctx["gap_pct"] is None
+    assert ctx["range_expansion"] is None
+    assert isinstance(ctx["bar_range_pct"], float) and ctx["bar_range_pct"] > 0
 
 
 #: Close is deliberately absent: _base() drops a bar with no Close too, so on

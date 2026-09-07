@@ -145,7 +145,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1282 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1292 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -612,13 +612,13 @@ exercised its headline. Nine mutants across them, all killed.
   gate -- and counted off the reason word rather than left over, for the same
   reason this paragraph's own line is.
 
-  **The system prompt is 71% of every request and was paid for 25 times a
+  **The system prompt is 72% of every request and was paid for 25 times a
   night.** `knowledge/strategy.md` is byte-identical on every call of a run --
-  measured at ~2,920 tokens against ~460 of metrics and ~721 for an 869x622
+  measured at ~3,080 tokens against ~460 of metrics and ~721 for an 869x622
   chart -- and nothing asked for it to be cached. It carries `cache_control`
   now: a write costs 1.25x and a read 0.1x, so break-even is the second call
   (1.28 calls: the write costs 0.25x more than the uncached call it replaces
-  and each read saves 0.9x) and a full night is 53% cheaper, $0.35 to $0.17.
+  and each read saves 0.9x) and a full night is 54% cheaper, $0.36 to $0.17.
   This said 1.4 calls, 43% and "$0.24 to $0.13" while README said $0.25 — the
   same paragraph in two files with two arithmetics, and a test now does it
   from README's stated inputs. No `ttl`, because 5 minutes is
@@ -823,6 +823,105 @@ exercised its headline. Nine mutants across them, all killed.
   mechanism, side by side on one page, under two comments each claiming they
   matched.
 
+## Round 11's burst-bar audit — one measurement, two arithmetics, in one request
+
+Three auditors over the commit that put the burst bar in front of the model,
+twelve findings and eight lows, every one reproduced HERE by execution before
+it was touched. **The number the model was shown and the number it was told to
+divide by were computed two different ways, and 8 of the 9 rows the real
+pipeline had already written disagreed with the `N` line in their own row.**
+
+`burst_bar_shape()` divided by the mean of the per-bar widths each ROUNDED to
+a tenth, unrounded itself; `N` prints the ROUNDED MEAN of the raw ones. Both
+numbers go into the same request, and `knowledge/strategy.md` invites exactly
+that recomputation. AMAT in the history fixture: `bar_range_pct` 9.5,
+`range_expansion` 9.37, over an `N` line reading "pre-burst range 1.0%/day"
+-- 9.5 to the reader. The canonical fixture asserted the identity on all 50 of
+its rows, so the generator and the fixture agreed with each other while the
+code did something else, which is the class `check_fixture_fresh.py` cannot
+see (it compares the fixture to the GENERATOR). The denominator is the printed
+number now, and `tests/test_docs_are_true.py` holds every row of both fixtures
+to `bar_range_pct / printed`.
+
+**And the fix's own arithmetic had three candidate answers, which is how the
+"use math.fsum" finding got the right defect and the wrong remedy.** The audit
+reported that the builtin `sum()` there publishes 0.87 here and 0.88 on CI --
+true, and the class this file already records for `mean_returns()`. But fsum
+is an argument about a mean NOTHING ELSE COMPUTES, and this one is computed
+twice: `N` does it with `pandas.mean()` into the line beside it. Measured, not
+argued: `tests/test_lynch.py`'s `FSUM_SHELF_LOWS` is a shelf whose widths mean
+to 2.3499999999999992, which pandas prints as 2.4 and fsum rounds to 2.3 --
+so the MORE ACCURATE answer is the one that contradicts the printed number.
+The base is averaged with pandas, over the same widths, OLDEST FIRST (a float
+mean is order-dependent, and the walk collects newest-first: reversed, that
+shelf answers 2.3 where `N` prints 2.4). The interpreter half closes either
+way, because no builtin `sum()` is left.
+
+**The 3.3 defect reopened one measurement family over.** `evaluate_2lynch()`
+drops every bar missing any of the five OHLCV fields and calls the last row
+LEFT the burst; `burst_bar_shape()` read the frame's own last row. So a burst
+bar with no Open reached the model as `bar_range_pct 9.4` -- a bar that closed
+at 98% of its own range -- beside `H` saying "closed at 50% of day's range",
+which is the session BEFORE, under a rulebook sentence that had just told the
+model to read those two together. All three are null when the checklist is not
+reading this bar, and the base window skips the bars `N` drops for the same
+reason. The scan refuses such a frame (`_session_bar_problem()` requires all
+five on the session bar), so no run published one; the rule is there because
+the rulebook's sentence is unconditional.
+
+**Three rules the suite could not fail on, each pinned on the state it
+names.** The gap's denominator (`burst_bar_shape(df)` against `(raw)`, and
+`iloc[-2]` against `iloc[-3]`): a readable close under an unreadable volume
+between the burst and its previous session publishes gain 8.0% beside gap
+21.7% under the mutant, and every frame in the suite had an identical shelf
+close, so both mutants survived. The window (`WINDOWS["tight_sessions"]`
+against `1`): every shelf was seven identical 2.0% bars, on which one bar and
+seven give the same answer. And `_bar_range_pct()`'s zero-close guard, which
+weakened to `close < 0` raises ZeroDivisionError out of `extra_context()`
+inside `publish()` -- after the scan and every Claude call -- on one 0.0 close
+anywhere in a name's history.
+
+**Twenty-four mutants, twenty-two on the first pass and two real holes.** M1
+restored the old mean-of-rounded arithmetic and SURVIVED: the first uneven
+shelf this round built made the two arithmetics agree once both were rounded,
+so the shelf was searched for again (`UNEVEN_SHELF`, which separates the
+printed mean from the mean-of-rounded, from its own unrounded form, and from
+any one- or three-bar prefix). M19 rounded the width twice (to a hundredth,
+then a tenth), which takes an 8.2501% bar to 8.2 through the exact 8.25 --
+the double-rounding half of the class `worst_base_day()` closed. Both closed
+with the tests they showed were missing; all twenty-four die on the re-run,
+and the two fixture mutants (a row's `range_expansion` moved by 0.01 in each
+file) die on the new guard. **The harness reported every mutant killed on its
+first run and none of them was**: it passed `--timeout=600` to a pytest with
+no `pytest-timeout` installed, so every run exited 4 on a usage error. It
+asserts its own last line says "passed" or "failed" now. That is the third
+round in a row whose mutation harness was the thing that needed checking.
+
+**One finding refuted, by execution.** "`burst_bar_shape()` takes prev_close
+off the frame as received, while `detect_setup()` measures gain_pct after its
+own cleaning" -- the function's only caller is `extra_context()`, which hands
+it the Close/Volume-cleaned frame, which is `_measurable()`'s cleaning:
+`python3 -c "from src.lynch import extra_context; ..."` on the auditor's own
+frame gives gap 0.5% against a gain measured off the same 43.60 close, and
+the 21.7% they report is what `burst_bar_shape(raw)` gives -- the mutant, not
+the code. The comment is true of the caller and now says so.
+
+Swept with it: README's `context` bullet named five of the nine keys the block
+holds (and said the block "held the two Bonde numbers alone" before this
+round, which the parent commit's own fixture falsifies -- it held six), and
+its null causes were a union applied to all three keys where two of the three
+belong to `gap_pct` alone; the rulebook said "the sessions immediately before
+it" for a window that skips what it cannot read, and pointed at a section
+"two sections up" that is one; `tests/fixtures/README.md` said only an open
+outside its own bar can produce a null, where an inverted session bar (which
+`_session_bar_problem()` does not refuse -- it checks each field is finite and
+positive, never that the high is above the low) nulls all three and a
+seven-session flat base nulls the expansion. README and the rulebook are both
+held to `WINDOWS["tight_sessions"]` and to `extra_context()`'s own key set
+now. The rulebook edit moved the cost paragraph again in five files: ~3,080
+system tokens, 72% of a request, $0.36 uncached against $0.17 cached, 54%
+cheaper, $42 a year.
+
 ## Round 11 — the rulebook is a surface, and it was the only one nobody checked
 
 Three auditors over the streak-before-score commit, fourteen findings and eight
@@ -935,9 +1034,9 @@ to README's arithmetic, sentence by sentence, with retracted clauses skipped
 by their own marker ("this said", "used to", "was given as") because a guard
 that refused those would be a guard against the record of the defect. The four
 numbers are gone from the round-4 paragraph: one place to look. And this
-round's own rulebook rewrite moved them again -- ~2,920 system tokens against
-~460 of metrics, 71% of every request, $0.35 uncached against $0.17 cached,
-53% cheaper, $42 a year.
+round's own rulebook rewrite moved them again -- ~3,080 system tokens against
+~460 of metrics, 72% of every request, $0.36 uncached against $0.17 cached,
+54% cheaper, $42 a year.
 
 **Twenty mutants over the round's rules, nineteen killed on the first pass.**
 Six on the rulebook (the retracted day-1 gloss verbatim, two outcome words
@@ -951,7 +1050,7 @@ digest dropped, made a constant, and the record keys retyped as a literal);
 five on the cost guard. The survivor was the fifth cost mutant and it was a
 real hole: `tools/live_check.py` said "the 43% the caching is meant to save"
 in a phrasing none of the patterns could match, which is how that figure sat
-three points stale since round 4. It says "53% cheaper" now, in the same words
+three points stale since round 4. It says "54% cheaper" now, in the same words
 as every other copy, and the mutant dies.
 
 **Three of the audit's smaller findings, each reproduced.** The rulebook gave

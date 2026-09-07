@@ -519,7 +519,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1282 tests, no network or API keys needed
+pytest tests/                   # 1292 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -774,25 +774,41 @@ invariants live in the file rather than only here. The load-bearing ones:
   `tools/live_check.py`, the third caller, on the OK line it prints for the
   live feed.
 - `context` is what was measured beside the burst and voted on by nothing:
-  the two Bonde measurements (`consecutive_up_days`, `worst_base_day_pct`) and
-  the burst bar's own geometry — `gap_pct` (the open against the previous
-  close, off the same two closes as `gain_pct`), `bar_range_pct` (high minus
-  low over the close) and `range_expansion` (that width over the mean width of
-  the seven sessions before it, `N`'s own consolidation window and deliberately
-  not a second one). It is on every burst row, scored or refused, and it
-  survives into `docs/ledger.json` beside the forward returns, which is the
-  only place the question "did the gapped bursts pay worse?" can ever be
-  asked. Each is `null` — never `0` — where the bar could not supply it: no
-  open, no readable high and low, or an open printed outside its own bar,
-  which is not a price anybody paid. None of them is in `run.rules`: no rule
-  reads them, and a measurement that refuses nothing does not make a run a
+  where the close sits against its own year (`pct_off_52w_high`,
+  `pct_above_52w_low`), how the name ran into it (`perf_3mo_pct`,
+  `perf_6mo_pct`), the two Bonde measurements (`consecutive_up_days`,
+  `worst_base_day_pct`) and the burst bar's own geometry — `gap_pct` (the
+  open against the previous close, off the same two closes as `gain_pct`:
+  both are measured after the scan's own cleaning, so a bar with an
+  unreadable volume is a session neither is measured against),
+  `bar_range_pct` (high minus low over the close) and `range_expansion`
+  (that width over the mean width of the last seven sessions before it that
+  the checklist can read — `N`'s own consolidation window, deliberately not a
+  second one, and averaged the way `N` averages it, so the ratio is
+  `bar_range_pct` over the %/day the `N` line in the same row prints). It is
+  on every burst row, scored or refused, and it survives into
+  `docs/ledger.json` beside the forward returns, which is the only place the
+  question "did the gapped bursts pay worse?" can ever be asked. Each is
+  `null` — never `0` — where the bar could not supply it, and which one goes
+  null depends on what is missing: the gap alone for no readable open or an
+  open printed outside its own bar, which is not a price anybody paid; the
+  width and the expansion for an envelope that cannot be read; the expansion
+  alone when no readable session before the burst had any width to expand
+  against; and all three when the burst bar is missing a field the checklist
+  needs, because the six checks then grade the session BEFORE it and these
+  would describe another one. None of them is in `run.rules`: no rule reads
+  them, and a measurement that refuses nothing does not make a run a
   different screener. The rulebook the model reads DOES change when their
   instructions do, and that is in the fingerprint through `score.prompt`.
-  Until round 11 the block held the two Bonde numbers alone, and two bullets
-  of `knowledge/strategy.md` asked the model to judge a bar it was sent no
-  number for: a +7.5% gap into a bar 0.9% wide and a flat open with a 9.4%
-  range, on the same close, gain, volume and `H`, produced byte-identical
-  requests.
+  The three burst-bar numbers are model- and record-only by decision: the
+  page shows `consecutive_up_days` and `worst_base_day_pct` on a candidate
+  card and no view reads the other three, which is what the record is for
+  when there are enough rows to ask.
+  Until round 11 the block held no measurement of the burst bar itself, and
+  two bullets of `knowledge/strategy.md` asked the model to judge a bar it
+  was sent no number for: a +7.5% gap into a bar 0.9% wide and a flat open
+  with a 9.4% range, on the same close, gain, volume and `H`, produced
+  byte-identical requests.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
@@ -1312,19 +1328,19 @@ test fixtures. It dispatches no scan and calls no market or email service.
   run, so roughly $42 a year** at 252 sessions, and only on the evening run.
   This said "a few cents/day", which is out by about 5x. Measured rather than
   guessed: a real `render_chart()` PNG is 869x622, which is 721 image tokens by
-  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~2,920
-  tokens of system prompt and the metrics block ~460, so ~4,100 input tokens
+  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~3,080
+  tokens of system prompt and the metrics block ~460, so ~4,260 input tokens
   and ~120 out per call, at claude-sonnet-4-6's $3/$15 per Mtok. The text
   halves are chars/4 estimates — `count_tokens` needs a network call this
   sandbox cannot make — so treat the figure as ±30%, which does not rescue "a
   few cents".
 
-  **The system prompt is 71% of every request and is byte-identical on all 25
+  **The system prompt is 72% of every request and is byte-identical on all 25
   calls**, so it is sent with `cache_control` and read from cache after the
   first. A cache write costs 1.25x and a read 0.1x — so the first call pays
   0.25x more than it would have and every call after saves 0.9x, which makes
-  break-even the second call (1.28 calls) and a full night 53% cheaper: the
-  $0.35 an uncached night would cost against the $0.17 above. (This said 1.4
+  break-even the second call (1.28 calls) and a full night 54% cheaper: the
+  $0.36 an uncached night would cost against the $0.17 above. (This said 1.4
   calls, 43% and $0.13: 1.4 is 1.25 over 0.9, which charges the whole write
   against the reads as if the first call were otherwise free, and the two
   money figures were rounded from different token counts. A test now does the

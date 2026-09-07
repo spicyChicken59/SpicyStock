@@ -356,8 +356,12 @@ def burst_bar(gain, close_pos, recent_range, i):
     class check_fixture_fresh.py exists to close.
 
     `range_expansion` divides by the `N` line's own pre-burst range, because
-    that is the window src.lynch.burst_bar_shape() divides by -- one window,
-    named once, in the module that owns it.
+    that is the number src.lynch.burst_bar_shape() divides by -- one window,
+    named once, in the module that owns it, and one arithmetic: the mean of
+    the raw widths rounded once, which is what `N` prints. It divided by the
+    mean of the ROUNDED widths until round 11's audit, so this assertion was
+    a true statement about this generator and a false one about the pipeline,
+    and every row here was a shape src.lynch could not produce.
 
     This generator holds measurements and never slices a frame, so the
     numbers are authored rather than measured; what makes them honest is

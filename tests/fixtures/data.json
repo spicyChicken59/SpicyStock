@@ -96,7 +96,7 @@
       "scan.min_rvol": 1.5,
       "scan.min_rvol_sessions": 20,
       "scan.rvol_lookback": 50,
-      "score.prompt": "f2445ec1c4b35f20",
+      "score.prompt": "50838b1c9ef3a326",
       "score.record_keys": [
         "setup_day",
         "setup_unknown_reason",
@@ -4407,7 +4407,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "f2445ec1c4b35f20",
+        "score.prompt": "50838b1c9ef3a326",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -4502,7 +4502,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "f2445ec1c4b35f20",
+        "score.prompt": "50838b1c9ef3a326",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -4597,7 +4597,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "f2445ec1c4b35f20",
+        "score.prompt": "50838b1c9ef3a326",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -4692,7 +4692,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "f2445ec1c4b35f20",
+        "score.prompt": "50838b1c9ef3a326",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -4787,7 +4787,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "f2445ec1c4b35f20",
+        "score.prompt": "50838b1c9ef3a326",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -4882,7 +4882,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "f2445ec1c4b35f20",
+        "score.prompt": "50838b1c9ef3a326",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -4977,7 +4977,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "f2445ec1c4b35f20",
+        "score.prompt": "50838b1c9ef3a326",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -5072,7 +5072,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "f2445ec1c4b35f20",
+        "score.prompt": "50838b1c9ef3a326",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -9291,7 +9291,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "f2445ec1c4b35f20",
+        "score.prompt": "50838b1c9ef3a326",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",

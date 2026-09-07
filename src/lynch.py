@@ -251,8 +251,33 @@ def _finite(value) -> float | None:
     return number if np.isfinite(number) else None
 
 
-def _bar_range_pct(bar) -> float | None:
-    """One bar's high-low span as a percentage of its close, or None.
+def _missing(value) -> bool:
+    """Is this the absence `evaluate_2lynch()`'s dropna would remove a bar for?
+
+    Not the same question as _finite(): a bool is not missing, and neither is
+    a string. dropna removes NaN and None, so that is what this answers, and
+    a value it cannot answer for is present.
+    """
+    try:
+        return bool(pd.isna(value))
+    except (TypeError, ValueError):
+        return False
+
+
+#: The five fields `evaluate_2lynch()` needs of every bar it reads. It drops
+#: the rest and calls the last row LEFT the burst, so a bar missing one of
+#: these is not a bar the checklist judges.
+CHECKLIST_COLUMNS: tuple[str, ...] = ("Open", "High", "Low", "Close", "Volume")
+
+
+def _read_by_the_checklist(bar, columns) -> bool:
+    """Would `evaluate_2lynch()` keep this bar, or drop it before reading?"""
+    return all(name in columns and not _missing(bar.get(name))
+               for name in CHECKLIST_COLUMNS)
+
+
+def _bar_width(bar) -> float | None:
+    """One bar's high-low span as a percentage of its close, unrounded, or None.
 
     None -- never 0 -- when the envelope cannot be read: a missing High or
     Low, a close that is not a positive number, or a High below its own Low,
@@ -267,16 +292,29 @@ def _bar_range_pct(bar) -> float | None:
     bar with no range cannot say; this is being asked how wide the bar was,
     and "no width" is the answer rather than a failure to measure one.
 
-    Rounded to the tenth of a percent it is printed at, once, for the reason
-    every measurement in this module is: a number decided at one precision
-    and shown at another is how -4.04% came to be refused under a note
-    stating -4.0%.
+    UNROUNDED, unlike everything else in this module, and it is the one
+    measurement that may be: nobody is shown this number. It is shown as
+    `bar_range_pct` (rounded once, below) and averaged into the expansion's
+    denominator (rounded once, there). Rounding here would round twice on
+    the second path -- which is exactly the defect that made 8 of 9 rows the
+    pipeline had written disagree with the `N` line beside them.
     """
     high, low = _finite(bar.get("High")), _finite(bar.get("Low"))
     close = _finite(bar.get("Close"))
     if high is None or low is None or close is None or close <= 0 or high < low:
         return None
-    return round((high - low) / close * 100, 1)
+    return (high - low) / close * 100
+
+
+def _bar_range_pct(bar) -> float | None:
+    """`_bar_width()` at the tenth of a percent it is printed at.
+
+    Rounded once, for the reason every measurement in this module is: a
+    number decided at one precision and shown at another is how -4.04% came
+    to be refused under a note stating -4.0%.
+    """
+    width = _bar_width(bar)
+    return None if width is None else round(width, 1)
 
 
 def burst_bar_shape(df: pd.DataFrame) -> dict:
@@ -308,26 +346,49 @@ def burst_bar_shape(df: pd.DataFrame) -> dict:
       range_expansion  that width over the mean width of the consolidation
                        the checklist already names -- WINDOWS["tight_sessions"]
                        sessions, `N`'s own window, deliberately not a second
-                       one. A burst bar three times the width of the shelf it
-                       came out of is the "big range" the rulebook asks for,
-                       stated relative to the stock rather than in absolute
-                       percent, which is the same move step 4 made for volume.
+                       one, and `N`'s own arithmetic: the ratio is the width
+                       over the %/day the `N` line in the same request
+                       prints, so a reader cannot recompute it from the two
+                       numbers in front of him and get a third. A burst bar
+                       three times the width of the shelf it came out of is
+                       the "big range" the rulebook asks for, stated relative
+                       to the stock rather than in absolute percent, which is
+                       the same move step 4 made for volume.
 
     NULL, NEVER 0, wherever a measurement could not be made -- the rule round 9
     settled for the open basis (F1/L4). An open outside its own bar's high and
     low is not a print anybody paid, so it is not a gap either; a bar whose
     envelope cannot be read has no width; and a base with no readable bar
     behind it has no norm to expand against.
+
+    ALL THREE ARE NULL WHEN THE CHECKLIST IS READING A DIFFERENT BAR.
+    `evaluate_2lynch()` drops every bar missing any of CHECKLIST_COLUMNS and
+    calls the last row left the burst, so on a frame whose last bar has no
+    Open it grades the session BEFORE -- and these three would have described
+    the session after it, in the same request, under a rulebook sentence
+    telling the model to read the width beside `H`. Reproduced: a bar closing
+    at 98% of its own range reached the model as `bar_range_pct 9.4` beside
+    "closed at 50% of day's range", which is the previous day. The scan
+    itself refuses such a frame (src.scanner._session_bar_problem requires
+    all five on the session bar), so no run has published one; the rule is
+    here because the sentence in the rulebook is unconditional and this is
+    what makes it true.
     """
     out: dict = {key: None for key in BURST_BAR_KEYS}
     if len(df) == 0:
         return out
     burst = df.iloc[-1]
+    if not _read_by_the_checklist(burst, df.columns):
+        return out
 
     # The gap is measured off the bar BEFORE the burst in the frame this was
     # handed, which is the bar src.scanner.detect_setup() measures gain_pct
     # against -- one denominator, so the two numbers in the payload cannot
-    # describe two different previous sessions.
+    # describe two different previous sessions. That holds because
+    # extra_context() hands over the Close/Volume-cleaned frame, which is
+    # detect_setup()'s own cleaning (src.scanner._measurable): handed `raw`
+    # instead, a readable close under an unreadable volume becomes the
+    # denominator and the payload reads gain 8.0% beside gap 21.7%.
     prev_close = _finite(df["Close"].iloc[-2]) if len(df) >= 2 and "Close" in df else None
     open_ = _finite(burst.get("Open"))
     high, low = _finite(burst.get("High")), _finite(burst.get("Low"))
@@ -338,24 +399,60 @@ def burst_bar_shape(df: pd.DataFrame) -> dict:
     bar_range = _bar_range_pct(burst)
     out["bar_range_pct"] = bar_range
     if bar_range is not None:
-        # The last `tight_sessions` bars before the burst that CAN be read,
-        # not the last `tight_sessions` bars: `N` measures its consolidation
-        # over a frame it has already pruned, and reaching past a hole is
-        # what that amounts to. Walked backwards so a long history costs
-        # seven rows rather than all of them.
+        # The last `tight_sessions` bars before the burst that the CHECKLIST
+        # reads and this can measure a width from, not the last
+        # `tight_sessions` bars: `N` measures its consolidation over a frame
+        # it has already pruned, and reaching past a hole is what that
+        # amounts to. Both halves of that rule are needed for the two
+        # windows to hold the same bars -- a bar with no Open has a
+        # perfectly readable width and is one `N` never sees. Walked
+        # backwards so a long history costs seven rows rather than all of
+        # them.
         base: list[float] = []
         for i in range(len(df) - 2, -1, -1):
-            measured = _bar_range_pct(df.iloc[i])
+            bar = df.iloc[i]
+            measured = _bar_width(bar) if _read_by_the_checklist(bar, df.columns) else None
             if measured is not None:
                 base.append(measured)
                 if len(base) == WINDOWS["tight_sessions"]:
                     break
-        norm = sum(base) / len(base) if base else 0.0
+        # THE NUMBER `N` PRINTS, arrived at `N`'s way: the mean of the raw
+        # widths, rounded once, to the tenth it is shown at. This was the
+        # mean of the widths each already rounded -- a different number, and
+        # 8 of the 9 rows the pipeline had written disagreed with the `N`
+        # line in the same request: "pre-burst range 1.0%/day" beside a 9.5%
+        # bar published as 9.37x, where the reader recomputing it gets 9.5x.
+        #
+        # A pandas mean, and NOT math.fsum, which is the one place in this
+        # repo that argument does not hold. src.ledger.mean_returns() uses
+        # fsum because nothing else computes that mean and the two
+        # interpreters disagreed on it; here `N` computes the same mean --
+        # `.mean()` over a float64 Series of the same seven widths -- and
+        # that is the copy the reader is shown. fsum is the more accurate of
+        # the two and differs from it by an ULP on frames that exist: the
+        # seven lows in tests/test_lynch.py's FSUM_SHELF_LOWS put the exact
+        # mean at 2.3499999999999992, which `N` prints as 2.4 and fsum rounds
+        # to 2.3. Being right by an ULP while disagreeing with the printed
+        # number is the defect this whole change is about. The builtin sum()
+        # is out for the reason mean_returns() names: CPython 3.12 made it
+        # compensated, so it answers 2.4 there and 2.3 on this sandbox's
+        # 3.11, and a published number must not depend on which interpreter
+        # measured it.
+        # OLDEST FIRST, the order `N`'s own slice is in: a float mean is
+        # order-dependent, and reversed this walk answers 2.3 on the shelf
+        # above where `N` prints 2.4 -- the same disagreement by another
+        # door.
+        norm = (round(float(pd.Series(base[::-1], dtype=float).mean()), 1)
+                if base else 0.0)
         if norm > 0:
             # The ratio is taken from the number the model is SHOWN, the same
             # rule `N` follows for its own tightness, so a reader cannot
             # recompute the ratio from the printed width and get another
-            # answer.
+            # answer -- whenever the two windows hold the same bars, which is
+            # every frame but one whose base carries a bar `N` reads and this
+            # cannot measure (a High under its own Low, a non-positive
+            # close), where `N` averages the fabricated width and this skips
+            # the bar.
             out["range_expansion"] = round(bar_range / norm, 2)
     return out
 

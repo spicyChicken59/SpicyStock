@@ -20,10 +20,25 @@ them: the share of the day's gain that happened overnight fixes the open, the
 low sits a little under it, and the `H` line's own close position fixes the
 high, so `make_fixture.py` can assert that the open is inside its own bar.
 Three numbers chosen independently would describe a bar no session can print,
-which is the class `check_fixture_fresh.py` exists to close. What neither
-file holds is a null one: the scan refuses a burst whose open, high or low is
-unreadable before the checklist ever sees it, so only an open printed outside
-its own bar can produce one, and no fixture has been given that shape.
+which is the class `check_fixture_fresh.py` exists to close. That generator's
+own assertion -- the expansion is the width over the `N` line's printed
+pre-burst range -- is the pipeline's arithmetic since round 11's audit and
+was not when it was written: `burst_bar_shape()` divided by the mean of the
+per-bar widths each ROUNDED, so 8 of the 9 rows in `history/` disagreed with
+the `N` line in their own row while this fixture asserted the identity 50
+times. `tests/test_docs_are_true.py` holds every row of BOTH files to it now,
+which is the check comparing a fixture to its generator cannot make.
+
+What neither file holds is a null one. Three shapes produce one on a live
+run, and none of them is a missing field: `src.scanner._session_bar_problem()`
+refuses a session bar whose open, high, low, close or volume is not a finite
+positive number before the checklist ever sees it, and it does not look at
+whether the high is above the low -- so an INVERTED session bar nulls all
+three (executed, not argued: it passes the scan's refusal and
+`detect_setup()`), an open printed outside its own bar nulls the gap alone,
+and a name that printed high == low for seven sessions leaves the expansion
+with no width to expand against. No fixture has been given any of those
+shapes; `tests/test_lynch.py` builds each of them.
 
 Both carry an `evidence` block computed by the real `src/ledger.py`, and they
 hold opposite states of it: `data.json`'s is entirely pending, because the

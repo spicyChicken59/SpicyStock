@@ -842,6 +842,78 @@ def test_the_history_fixture_is_where_the_docs_say_it_is():
     )
 
 
+def test_every_archived_burst_bar_reconciles_with_its_own_N_line():
+    """Both fixtures, both row types, one identity: the expansion is the
+    bar's width over the pre-burst range the `N` line beside it prints.
+
+    This is the guard tools/check_fixture_fresh.py cannot be -- it compares
+    the fixture to the GENERATOR, so a generator and a fixture that agree
+    with each other while the pipeline does something else are both "current".
+    That is what happened: burst_bar_shape() divided by the mean of the
+    per-bar widths each ROUNDED, `N` prints the rounded MEAN of the raw ones,
+    and 8 of the 9 rows the real pipeline had written into
+    tests/fixtures/history/ disagreed with the line in their own row --
+    while the hand-authored fixture asserted the identity 50 times over.
+
+    tests/fixtures/history/ is written by the real pipeline over synthetic
+    frames, so a row here is the arithmetic src.lynch really does; the other
+    is hand-authored, and holding both to one identity is what stops the two
+    describing different shapes of row.
+    """
+    import json
+
+    for name in ("data.json", "history/data.json"):
+        published = json.loads((ROOT / "tests" / "fixtures" / name).read_text())
+        rows = (published.get("candidates") or []) + (published.get("gated_out") or [])
+        assert rows, f"{name} holds no burst to check"
+        for row in rows:
+            context = row.get("context") or {}
+            if context.get("range_expansion") is None:
+                continue
+            (line,) = [d["value"] for d in row["lynch_detail"] if d["code"] == "N"]
+            printed = float(line.split("range ")[1].split("%")[0])
+            assert context["range_expansion"] == round(
+                context["bar_range_pct"] / printed, 2), (
+                f"{name}: {row['ticker']} carries {context['bar_range_pct']}% over "
+                f"a {printed}%/day base and calls it {context['range_expansion']}x")
+
+
+def test_the_readme_describes_every_measurement_the_record_keeps_beside_a_burst(ohlcv):
+    """README's `context` bullet is the only description of that block a
+    reader of the record has, and it named five of the nine keys the file
+    holds -- the four 52-week and performance measurements appear nowhere
+    else in README at all.
+
+    Derived from the code the way the rulebook's list is, so a tenth
+    measurement fails here on the commit that adds it rather than being
+    documented by whoever remembers. The window is read off
+    src.lynch.WINDOWS too: it is a strategy number in the rules fingerprint,
+    and README quoted it in prose where changing it left the sentence
+    saying seven.
+    """
+    from src import lynch
+
+    readme = _read("README.md")
+    (bullet,) = [b for b in readme.split("\n- ") if b.startswith("`context` is")]
+    for key in set(lynch.extra_context(ohlcv("burst"))):
+        assert f"`{key}`" in bullet, f"README's context bullet never names {key}"
+    for key in lynch.BURST_BAR_KEYS:
+        assert f"`{key}`" in bullet, f"README's context bullet never names {key}"
+    words = {7: "seven", 5: "five", 10: "ten", 20: "twenty", 30: "thirty", 60: "sixty"}
+    window = lynch.WINDOWS["tight_sessions"]
+    named = f"{words.get(window, window)} sessions"
+    assert named in bullet, (
+        f"README's context bullet does not name the {window}-session window "
+        "src.lynch.WINDOWS['tight_sessions'] holds")
+    # And the rulebook, which states the same window to the model in the same
+    # prose. Both were typed out beside a constant the fingerprint records, so
+    # a window changed from 7 to 5 moved every published ratio and left two
+    # files saying seven.
+    assert named in _read("knowledge/strategy.md"), (
+        f"knowledge/strategy.md does not name the {window}-session window "
+        "range_expansion divides by")
+
+
 def test_the_documented_evidence_blocks_are_the_ones_published():
     """README's table names what the page can answer, and a reader uses it to
     know which questions the file holds.
