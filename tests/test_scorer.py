@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -181,6 +182,63 @@ def test_render_chart_defaults_into_the_working_directory(ohlcv, tmp_path):
     inside tmp_path -- see the _isolated_cwd fixture."""
     render_chart("AAA", ohlcv("burst"))
     assert (tmp_path / "charts" / "AAA.png").exists()
+
+
+
+def test_a_bar_missing_one_field_is_a_gap_in_the_picture_not_no_picture(ohlcv, tmp_path):
+    """One NaN in an OHLC column used to lose the chart entirely.
+
+    mplfinance refuses a frame whose O, H, L and C do not have the same
+    amount of missing data -- "ValueError: O,H,L,C must have the same amount
+    of missing data!", reproduced on each of the four columns -- and
+    src.pipeline catches that, records `chart_seen` false and scores the
+    candidate on the numbers alone, which knowledge/strategy.md tells the
+    model to trust LESS than the picture. One unreadable bar in eighty-five
+    is a gap in the picture; it is not a reason to show no picture. NaN
+    Volume renders either way and is asserted here so the rule is the one
+    mplfinance actually has.
+    """
+    out = tmp_path / "charts"
+    for column in ("Open", "High", "Low", "Close", "Volume"):
+        frame = ohlcv("burst").copy()
+        frame.iloc[-10, frame.columns.get_loc(column)] = float("nan")
+        path = Path(render_chart(f"H{column}", frame, out_dir=str(out)))
+        data = path.read_bytes()
+        assert data.startswith(PNG_MAGIC) and len(data) > 20_000, column
+
+
+def test_the_chart_keeps_eighty_five_readable_bars_rather_than_eighty_five_rows(ohlcv,
+                                                                               tmp_path,
+                                                                               monkeypatch):
+    """Dropped BEFORE the tail is taken, not after.
+
+    Pruning after the slice would answer the crash and quietly shorten the
+    picture by however many holes the last eighty-five rows carried, which is
+    the reading the model is asked to trust most.
+    """
+    seen = {}
+
+    class _Spy:
+        @staticmethod
+        def plot(df, **kwargs):
+            seen["rows"] = len(df)
+            seen["index"] = df.index
+            Path(kwargs["savefig"]["fname"]).write_bytes(PNG_MAGIC + b"x" * 32)
+
+    monkeypatch.setitem(sys.modules, "mplfinance", _Spy)
+    frame = ohlcv("burst").copy()
+    assert len(frame) > 95, "precondition: more history than the chart shows"
+    for offset in (5, 30, 70):
+        frame.iloc[-offset, frame.columns.get_loc("High")] = float("nan")
+    # ...and a bar whose Volume alone the feed lost stays IN the picture: it
+    # has a candle to draw and mplfinance renders it, so pruning on Volume
+    # would drop a session the reader can otherwise see.
+    frame.iloc[-12, frame.columns.get_loc("Volume")] = float("nan")
+
+    render_chart("AAA", frame, out_dir=str(tmp_path))
+    assert seen["rows"] == 85
+    assert frame.index[-12] in seen["index"]
+    assert frame.index[-5] not in seen["index"]
 
 
 # ----------------------------------------------------------- the request ----

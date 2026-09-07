@@ -40,7 +40,9 @@ Layer 2  2LYNCH checklist (code) ..... 2 first/second burst · L linear prior mo
         ▼
 Layer 3  Chart render ................ 4-month candlestick + volume PNG per name,
         │                              written to docs/charts/ — gitignored, so
-        ▼                              they stay on the machine that ran
+        │                              they stay on the machine that ran;
+        ▼                              a bar with a hole in it is a gap in the
+                                       picture, not a candidate scored blind
 Layer 4  Claude scoring .............. metrics (the burst bar's own gap and
         │                              range included) + 2LYNCH detail + chart
         │                              image + what the RECORD says about this
@@ -521,7 +523,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1373 tests, no network or API keys needed
+pytest tests/                   # 1388 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -827,7 +829,10 @@ invariants live in the file rather than only here. The load-bearing ones:
 - `context` is what was measured beside the burst and voted on by nothing:
   where the close sits against its own year (`pct_off_52w_high`,
   `pct_above_52w_low`), how the name ran into it (`perf_3mo_pct`,
-  `perf_6mo_pct`), the two Bonde measurements (`consecutive_up_days`,
+  `perf_6mo_pct`) — each of those four over the bars that carry the field it
+  reads, since two of them are one close over another and two are a high and
+  a low, so a bar whose Volume alone the feed dropped no longer slides all
+  four windows a session back — the two Bonde measurements (`consecutive_up_days`,
   `worst_base_day_pct`) and the burst bar's own geometry — `gap_pct` (the
   open against the previous close, off the same two closes as `gain_pct`:
   both are measured after the scan's own cleaning, so a bar with an
@@ -1350,7 +1355,12 @@ test fixtures. It dispatches no scan and calls no market or email service.
   override: `ScanConfig` in `src/scanner.py`. There is no share-volume floor;
   step 4 deleted it, and this bullet named the deleted knob and none of the
   three that replaced it
-- 2LYNCH pass criteria: `src/lynch.py` — the thresholds a measurement is
+- 2LYNCH pass criteria: `src/lynch.py` — which BARS a check counts is decided
+  by the fields that check reads and by nothing else: `2`, `L` and `Y` are
+  closes, so they read every bar carrying one, and `N`, `C` and `H` are asked
+  for a range and a volume, so they need all five fields. All six read the
+  five-field frame until round 11, which merged the two sessions either side
+  of every hole for the first three. The thresholds a measurement is
   compared against are module constants, and `WINDOWS` holds how much history
   each check reads, plus the four windows `extra_context()` measures the
   model's relative-strength numbers over. Both kinds are in the rules

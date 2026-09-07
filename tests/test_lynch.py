@@ -1682,6 +1682,236 @@ def test_a_bar_missing_one_field_cannot_make_the_two_surfaces_disagree(column):
     assert reported == consecutive_up_days(_frame(up_run_days=2))
 
 
+
+#: A base that climbs a steady +2.5% a session -- well clear of the 4% that
+#: makes a prior burst, and close enough that ONE merged pair clears it. The
+#: trend runs from offset 8 back; the shelf occupies offsets 1-7, where a
+#: hole merges two flat days and discriminates nothing.
+STEADY_STEP_PCT = 2.5
+STEADY_HOLES = (9, 13)
+
+
+def _steady_base(**kw) -> pd.DataFrame:
+    trend_days = 23
+    return _frame(trend_pct=((1 + STEADY_STEP_PCT / 100) ** (trend_days - 1) - 1) * 100,
+                  trend_days=trend_days, **kw)
+
+
+def _holed(frame: pd.DataFrame, column: str,
+           offsets: tuple[int, ...] = STEADY_HOLES) -> pd.DataFrame:
+    """`frame` with `column` dropped on the sessions `offsets` back from the
+    burst -- a bar the feed served with one field missing."""
+    holed = frame.copy()
+    for offset in offsets:
+        holed.iloc[-1 - offset, holed.columns.get_loc(column)] = float("nan")
+    return holed
+
+
+CLOSE_ONLY_CHECKS = ("2_first_or_second_burst", "L_linear_prior_move", "Y_young_trend")
+
+
+def test_a_hole_in_one_field_cannot_manufacture_a_prior_burst():
+    """Check 2 counted 4% days across bars it had thrown away.
+
+    The six checks were all computed from a frame pruned of every bar missing
+    ANY of the five OHLCV fields, so a bar the feed served with no High was
+    removed and `pct_change()` measured the two sessions either side of it as
+    one day. Reproduced on a base whose largest single session is +2.5%, well
+    under the 4% that makes a prior burst: two missing Highs merged two pairs
+    into +5.06% each, check 2 reported "2 prior 4% bursts in last 20 days" and
+    FAILED a candidate whose base never had one. That is the rule the product
+    is named after, decided on days that do not exist.
+
+    2, L and Y read closes and nothing else, so they read the close-only frame
+    now -- _base()'s rule, which the up-days veto and the base breakdown have
+    followed since the 3.3 audit found the same defect between two functions.
+    """
+    clean = _steady_base()
+    base_moves = clean["Close"].iloc[:-1].pct_change().iloc[
+        -WINDOWS["prior_burst_lookback"]:] * 100
+    assert round(float(base_moves.max()), 2) == STEADY_STEP_PCT, (
+        "precondition: this base's largest session is the step, so any 4% "
+        "day check 2 reports is one the merge invented")
+
+    holed = _holed(clean, "High")
+    pruned = holed.dropna(subset=["Open", "High", "Low", "Close", "Volume"])
+    merged = (pruned["Close"].iloc[:-1].pct_change().iloc[
+        -WINDOWS["prior_burst_lookback"]:] * 100 >= PRIOR_BURST_PCT).sum()
+    assert merged == len(STEADY_HOLES), (
+        "precondition: off the five-field frame these holes DO manufacture a "
+        f"burst each, so the assertion below can fail (got {merged})")
+
+    check = evaluate_2lynch(holed)["checks"]["2_first_or_second_burst"]
+    assert check["value"] == f"0 prior {PRIOR_BURST_PCT:g}% bursts in last " \
+                             f"{WINDOWS['prior_burst_lookback']} days", check["value"]
+    assert check["pass"] is True
+
+
+@pytest.mark.parametrize("column", ["Open", "High", "Low", "Volume"])
+def test_a_hole_in_one_field_moves_no_close_only_check(column):
+    """2, L and Y must read the same closes whatever else the bar is missing.
+
+    All three span sessions -- check 2 walks 20 daily moves, L fits 30 log
+    closes, Y divides today's close by the one 20 sessions back -- so a bar
+    dropped from the middle of the window does not merely lose a reading, it
+    slides every reading past it. Measured before the fix on this frame: Y's
+    month read +52.6% where the intact frame reads +45.2%, because "20
+    sessions back" landed 22 sessions back.
+
+    Close is deliberately not in the list: a bar with no close is dropped by
+    both rules, so on that column the two readings coincide.
+    """
+    clean = _steady_base()
+    holed = _holed(clean, column)
+    pruned = holed.dropna(subset=["Open", "High", "Low", "Close", "Volume"])
+    assert len(pruned) == len(clean) - len(STEADY_HOLES), (
+        "precondition: the five-field frame really loses these bars")
+
+    before = evaluate_2lynch(clean)["checks"]
+    after = evaluate_2lynch(holed)["checks"]
+    pruned_reading = evaluate_2lynch(pruned)["checks"]
+    assert any(pruned_reading[name] != before[name] for name in CLOSE_ONLY_CHECKS), (
+        "precondition: reading these checks off the pruned frame changes an "
+        "answer, so this test can fail")
+
+    for name in CLOSE_ONLY_CHECKS:
+        assert after[name] == before[name], (
+            f"{name} moved because a bar missing its {column} was thrown away: "
+            f"{before[name]['value']!r} -> {after[name]['value']!r}")
+
+
+def test_the_checks_that_read_a_bars_geometry_still_need_all_five_fields():
+    """The other half, and the inverse check the rejection tests here take as
+    a precondition: N, C and H measure ranges and volume, so a bar missing one
+    of those has nothing for them to read and is still dropped. If this stops
+    being true the fix above has been applied to the wrong three checks."""
+    clean = _steady_base(shelf_ranges=UNEVEN_SHELF)
+    holed = _holed(clean, "High", offsets=(2, 3))
+
+    before = evaluate_2lynch(clean)["checks"]
+    after = evaluate_2lynch(holed)["checks"]
+    assert after["N_narrow_consolidation"] != before["N_narrow_consolidation"], (
+        "N averaged a range it could not measure")
+    for name in CLOSE_ONLY_CHECKS:
+        assert after[name] == before[name]
+
+
+def test_the_prior_days_move_is_measured_against_the_session_before_it():
+    """C's move is a close-to-close reading and was taken off `pre` too.
+
+    The bar C judges has to carry all five fields -- it is asked for a range
+    and a volume. Its MOVE is not: with a hole between the prior day and the
+    session before it, `pre["Close"].pct_change()` spanned the hole and
+    reported two sessions of drift as one quiet day's, which is the same
+    merge check 2 was making, in the one check whose threshold is 2%.
+    """
+    clean = _frame(days=200)
+    # The session before d1 loses its High: d1 itself is untouched, so C still
+    # has a bar to judge and only the denominator of its move moves.
+    holed = _holed(clean, "High", offsets=(2,))
+    holed.iloc[-3, holed.columns.get_loc("Close")] *= 0.97
+
+    pruned = holed.dropna(subset=["Open", "High", "Low", "Close", "Volume"])
+    spanning = abs(float(pruned["Close"].iloc[:-1].pct_change().iloc[-1])) * 100
+    real = abs(float(holed["Close"].iloc[-2]) / float(holed["Close"].iloc[-3]) - 1) * 100
+    assert round(spanning, 1) != round(real, 1), (
+        "precondition: the hole changes the move, so this test can fail")
+
+    value = evaluate_2lynch(holed)["checks"]["C_calm_preburst_day"]["value"]
+    assert value.startswith(f"prior day {real:.1f}% move"), value
+
+
+
+def test_a_bar_missing_only_its_volume_moves_no_close_only_metric():
+    """The same defect one function on, found by sweeping for it.
+
+    extra_context() prunes on Close AND Volume, because burst_bar_shape()
+    needs both -- and then measured `perf_3mo_pct` and `perf_6mo_pct`, which
+    are two closes divided by each other, off that frame. A bar whose Volume
+    the feed dropped still has a real close, so removing it slid both windows
+    a session further back: reproduced on a steadily rising frame, +28.1%
+    became +28.6% at three months and +64.7% became +65.4% at six, under keys
+    the model reads as the name's relative strength.
+
+    The 52-week extremes were the same reading in the other direction -- a
+    high or a low thrown out of the window because the SAME bar had no volume
+    -- and read their own columns now.
+    """
+    n = 300
+    close = 40 * np.cumprod(np.r_[1.0, np.full(n - 1, 1.004)])
+    frame = pd.DataFrame(
+        {"Open": close, "High": close * 1.01, "Low": close * 0.99, "Close": close,
+         "Volume": np.full(n, 3e6)},
+        index=pd.bdate_range(end="2026-07-01", periods=n, name="timestamp"))
+
+    holed = frame.copy()
+    holed.iloc[-30, holed.columns.get_loc("Volume")] = float("nan")
+    # ...and that same bar carries the year's high and its low, so dropping it
+    # does not merely slide the window, it throws the extreme out of it.
+    holed.iloc[-30, holed.columns.get_loc("High")] = float(frame["High"].max()) * 1.05
+    holed.iloc[-30, holed.columns.get_loc("Low")] = float(frame["Low"].min()) * 0.95
+    frame = holed.assign(Volume=frame["Volume"])
+    pruned = holed.dropna(subset=["Close", "Volume"])
+    assert len(pruned) == n - 1, "precondition: the pruned frame really loses it"
+
+    before, after = extra_context(frame), extra_context(holed)
+    off_the_pruned_frame = extra_context(pruned)
+    keys = ("perf_3mo_pct", "perf_6mo_pct", "pct_off_52w_high", "pct_above_52w_low")
+    assert any(off_the_pruned_frame[k] != before[k] for k in keys), (
+        "precondition: reading these off the pruned frame moves one, so this "
+        "test can fail")
+    for key in keys:
+        assert after[key] == before[key], key
+
+
+
+@pytest.mark.parametrize("column", ["Open", "High", "Low", "Volume"])
+def test_the_close_only_checks_grade_the_bar_the_checklist_grades(column):
+    """One request, one bar -- the rule burst_bar_shape() states, where the
+    closes are read.
+
+    The five-field prune can take the NEWEST bar too, and then `H` grades the
+    session before it. A close-only reading keeps that bar, so without a rule
+    Y would measure "through today's burst" on a close `H` is not describing
+    and check 2 would count a day past the burst it is judging -- the same two
+    bars in one request that the round before this one closed for the burst
+    bar's own geometry. Reachable only past src.scanner._session_bar_problem(),
+    which requires all five on the session bar; the rule is here because the
+    request is unconditional.
+    """
+    frame = _frame(days=200)
+    frame.iloc[-1, frame.columns.get_loc(column)] = float("nan")
+
+    graded = evaluate_2lynch(frame)
+    stepped_back = evaluate_2lynch(frame.iloc[:-1])
+    assert (graded["checks"]["H_close_near_high"]
+            == stepped_back["checks"]["H_close_near_high"]), (
+        "precondition: the checklist really is grading the earlier bar")
+    for name in CLOSE_ONLY_CHECKS:
+        assert graded["checks"][name] == stepped_back["checks"][name], name
+
+
+
+def test_the_prior_day_of_a_frame_with_no_session_before_it_has_no_move():
+    """`pct_change()` returns NaN in that position and every comparison
+    against NaN is false, so C fails rather than passing on a number nobody
+    measured. Reading the close-only series by position has to keep that:
+    without the guard the lookup wraps to the LAST close, which is the burst,
+    and a two-bar frame prints "prior day 3.8% move" about a session that has
+    nothing before it to have moved from. Defensive -- src.scanner's own
+    volume window means no such frame reaches a candidate -- and measurably
+    not equivalent, which is why it is pinned rather than argued.
+    """
+    close = np.array([100.0, 104.0])
+    two = pd.DataFrame(
+        {"Open": close, "High": close * 1.01, "Low": close * 0.99, "Close": close,
+         "Volume": [1e6, 5e6]},
+        index=pd.bdate_range(end="2026-07-01", periods=2, name="timestamp"))
+
+    value = evaluate_2lynch(two)["checks"]["C_calm_preburst_day"]["value"]
+    assert value.startswith("prior day nan% move"), value
+
+
 def test_every_rule_evaluate_2lynch_vetoes_on_is_named_in_VETO_RULES():
     """The two must agree, and nothing else makes them.
 

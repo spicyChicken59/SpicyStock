@@ -204,6 +204,58 @@ BREAKDOWN_PCT = -4.0          # a single day this bad is a break, not a pullback
 BREAKDOWN_LOOKBACK = 20       # sessions of base examined for one, before the burst
 
 
+def _series(df: pd.DataFrame, column: str) -> pd.Series:
+    """`column`, from every bar that carries it.
+
+    The one rule a single-column measurement follows, so that no caller can
+    hand it a frame pruned for somebody else's fields and get a differently
+    shaped answer. A bar whose High the feed dropped still has a real close
+    and still happened: throwing it away does not merely lose a reading, it
+    MERGES the two sessions either side of it and slides every reading past
+    it. Reproduced on a base whose largest session was +2.5%, where two
+    missing Highs made check 2 report two prior 4% bursts that never
+    happened and slid Y's month reading from +45.2% to +52.6%.
+    """
+    return df.dropna(subset=[column])[column]
+
+
+def _through(df: pd.DataFrame, stamp) -> pd.DataFrame:
+    """`df` up to and including the row at `stamp`: nothing after the bar the
+    checklist is grading.
+
+    `evaluate_2lynch()` drops every bar missing one of CHECKLIST_COLUMNS and
+    calls the last row LEFT the burst, so on a frame whose newest bar has no
+    Open the burst is the session BEFORE it -- and a close-only reading, which
+    keeps that bar, would otherwise measure "through today's burst" on a bar
+    `H` is not grading. One request, one bar: the same rule burst_bar_shape()
+    states for its three measurements, applied where the closes are read.
+    """
+    at = np.flatnonzero(df.index == stamp)
+    return df.iloc[:at[-1] + 1] if len(at) else df
+
+
+def _move_into(closes: pd.Series, stamp) -> float:
+    """The fractional move into the session `stamp`, along a close-only series.
+
+    The session BEFORE `stamp` is the one before it in `closes` -- the last
+    session that printed a close -- and not the bar before it in whatever
+    frame the caller pruned for its own fields. A hole between the two makes
+    those different sessions, and the difference is two sessions' drift
+    reported as one day's.
+
+    NaN when there is no session before it to have moved from, which is what
+    `pct_change()` returned in the same position and which every comparison
+    against it is false for.
+    """
+    at = np.flatnonzero(closes.index == stamp)
+    if not len(at) or at[-1] == 0:
+        return float("nan")
+    prev = float(closes.iloc[at[-1] - 1])
+    if prev <= 0:
+        return float("nan")
+    return float(closes.iloc[at[-1]]) / prev - 1.0
+
+
 def _base(df: pd.DataFrame) -> pd.Series:
     """The closes of the base: everything before the burst day, Close only.
 
@@ -213,7 +265,7 @@ def _base(df: pd.DataFrame) -> pd.Series:
     real close and still happened -- discarding it would shorten the series
     and move a run of up days that really occurred.
     """
-    return df.dropna(subset=["Close"])["Close"].iloc[:-1]
+    return _series(df, "Close").iloc[:-1]
 
 
 def consecutive_up_days(df: pd.DataFrame) -> int:
@@ -582,15 +634,28 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     `context_checks` is the opposite: measured, judged, and left to the
     scoring model to weigh, refusing nothing on its own.
     """
-    # The six checks read intraday ranges and volume, so they need a bar with
-    # all five fields. Bonde's two measurements read closes and must NOT: they
-    # are handed `raw`, and _base() applies their own single rule to it. When
-    # both read `df` the two disagreed on any frame with a partial bar in it,
-    # and the run reported one answer to the reader and the other to the model.
+    # Which bars a measurement counts is decided by the fields IT reads, and by
+    # nothing else. N, C and H are asked for intraday ranges and volume, so
+    # they need a bar with all five fields. 2, L and Y read closes and nothing
+    # else, and must NOT: dropping a bar whose High the feed lost does not
+    # merely lose one reading of theirs, it MERGES the two sessions either
+    # side of it and slides every reading past it. All six used to read `df`,
+    # and on a base whose largest single session was +2.5% two missing Highs
+    # made check 2 report "2 prior 4% bursts" -- the rule this product is
+    # named after, refusing a candidate on days that do not exist -- while Y
+    # measured 22 sessions under the name of 20 and read +52.6% for +45.2%.
+    # This is the rule _base() has applied to Bonde's two measurements since
+    # the 3.3 audit found the same disagreement between two functions; it is
+    # every close-only reading in this one now.
     raw = df
-    df = df.dropna(subset=["Open", "High", "Low", "Close", "Volume"]).copy()
+    df = raw.dropna(subset=list(CHECKLIST_COLUMNS)).copy()
     burst = df.iloc[-1]
     pre = df.iloc[:-1]  # everything before the burst day
+    # ...and the closes are every bar with a close, up to and including THAT
+    # bar -- _base()'s rule, plus _through()'s, so the six checks never
+    # describe two different sessions in one request.
+    closes = _series(_through(raw, df.index[-1]), "Close")
+    base = closes.iloc[:-1]
 
     checks: dict[str, dict] = {}
 
@@ -609,7 +674,7 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
         return round(float(value), places)
 
     # ---- 2: how many 4%+ up days in the last 20 sessions before today? ----
-    rets = pre["Close"].pct_change().iloc[-WINDOWS["prior_burst_lookback"]:] * 100
+    rets = base.pct_change().iloc[-WINDOWS["prior_burst_lookback"]:] * 100
     prior_bursts = int((rets >= PRIOR_BURST_PCT).sum())
     checks["2_first_or_second_burst"] = {
         "pass": prior_bursts <= MAX_PRIOR_BURSTS,
@@ -622,7 +687,7 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     # smooth 45% collapse with R²=1.00 and reported "R²=1.00 over prior 30
     # days" to the scorer, telling Claude the structure was orderly without
     # telling it the structure was orderly *downwards*.
-    log_closes = np.log(pre["Close"].iloc[-WINDOWS["linear_fit_sessions"]:].to_numpy(dtype=float))
+    log_closes = np.log(base.iloc[-WINDOWS["linear_fit_sessions"]:].to_numpy(dtype=float))
     slope, r2 = _log_trend(log_closes)
     r2 = shown(r2, 2)
     fitted_move = shown((float(np.exp(slope * max(len(log_closes) - 1, 0))) - 1) * 100, 1)
@@ -639,7 +704,6 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     # only risk/reward guardrail in the checklist: a +35% gap-up scored the
     # same "-0.5% vs 20SMA" as the quiet day it gapped away from. Extension
     # is a fact about the price you would pay, which is today's close.
-    closes = df["Close"]
     sma20 = closes.iloc[-WINDOWS["sma_sessions"]:].mean()
     ext_vs_sma20 = shown((closes.iloc[-1] / sma20 - 1) * 100, 1)
     if len(closes) >= WINDOWS["run_up_sessions"] + 1:
@@ -689,7 +753,12 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     # baseline it is itself part of. `+ 1` because the slice ends one short.
     d1_norm = pre["Volume"].iloc[-(WINDOWS["volume_norm_sessions"] + 1):-1].mean()
     d1_vol_ratio = shown(d1["Volume"] / d1_norm, 2)
-    d1_move = shown(abs(pre["Close"].pct_change().iloc[-1]) * 100, 1)
+    # d1's own move is a close-to-close reading, so it comes off the closes and
+    # not off `pre`: the BAR C judges has to carry all five fields, but the
+    # session it moved from need not, and `pre.pct_change()` spanned any hole
+    # between the two and called two sessions of drift one quiet day -- the
+    # same merge as check 2's, on the check whose threshold is 2%.
+    d1_move = shown(abs(_move_into(closes, pre.index[-1])) * 100, 1)
     # The range was measured and printed but left out of the verdict, so a
     # day that closed unchanged after a 15%-wide swing counted as "calm".
     # Judged against the stock's own norm, reusing N's baseline and multiple
@@ -807,13 +876,33 @@ def extra_context(df: pd.DataFrame) -> dict:
     # same key as the slice it guards: 63 was spelled twice with two meanings
     # (the index, and the history it needs), so moving the window alone left
     # its own guard stale.
-    long_enough = len(df) >= WINDOWS["high_low_min_sessions"]
+    # ...and every window here counts the bars that carry the field IT reads,
+    # by _series()'s rule, not the bars that carry Close AND Volume. This
+    # function prunes on both because burst_bar_shape() needs both; the two
+    # performance readings are one close over another and the 52-week
+    # extremes are a high and a low, so a bar whose Volume the feed dropped
+    # was slid out of all four windows by a field none of them reads.
+    # Reproduced on a steadily rising frame: one missing Volume moved
+    # perf_3mo_pct from +28.1% to +28.6% and perf_6mo_pct from +64.7% to
+    # +65.4%, under the keys knowledge/strategy.md names to the model as this
+    # name's relative strength.
+    # Nothing after the bar this block describes: `df`'s last row is the
+    # session every reading here is anchored on, and a later bar is the
+    # future. (A frame whose last bar has no Close or no Volume steps every
+    # layer back onto the same earlier session -- see the test of that name.)
+    through = _through(raw, df.index[-1])
+    highs, lows, all_closes = (_series(through, "High"), _series(through, "Low"),
+                               _series(through, "Close"))
     high_low = WINDOWS["high_low_sessions"]
-    hi_52w = float(df["High"].iloc[-high_low:].max()) if long_enough else float(df["High"].max())
-    lo_52w = float(df["Low"].iloc[-high_low:].min()) if long_enough else float(df["Low"].min())
+    hi_52w = (float(highs.iloc[-high_low:].max())
+              if len(highs) >= WINDOWS["high_low_min_sessions"] else float(highs.max()))
+    lo_52w = (float(lows.iloc[-high_low:].min())
+              if len(lows) >= WINDOWS["high_low_min_sessions"] else float(lows.min()))
     three, six = WINDOWS["perf_3mo_sessions"], WINDOWS["perf_6mo_sessions"]
-    perf_3mo = (close / float(df["Close"].iloc[-three]) - 1) * 100 if len(df) > three else None
-    perf_6mo = (close / float(df["Close"].iloc[-six]) - 1) * 100 if len(df) > six else None
+    perf_3mo = ((close / float(all_closes.iloc[-three]) - 1) * 100
+                if len(all_closes) > three else None)
+    perf_6mo = ((close / float(all_closes.iloc[-six]) - 1) * 100
+                if len(all_closes) > six else None)
     # The NUMBERS behind Bonde's two rules. Their verdicts travel separately --
     # the veto through failed_vetoes(), the base breakdown through
     # evaluate_2lynch()'s context_checks -- and these are the measurements

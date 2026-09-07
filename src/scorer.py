@@ -162,12 +162,27 @@ class ScoreFormatError(ValueError):
 
 # ---------------------------------------------------------------- charts ----
 def render_chart(ticker: str, df: pd.DataFrame, out_dir: str = "charts") -> str:
-    """Render a daily candlestick + volume chart (last ~85 sessions) to PNG."""
+    """Render a daily candlestick + volume chart (last ~85 sessions) to PNG.
+
+    A bar missing one of O, H, L or C is dropped BEFORE the tail is taken, so
+    one hole is a gap in the picture rather than no picture. mplfinance
+    refuses a frame whose four price columns do not share their missing rows
+    -- "O,H,L,C must have the same amount of missing data!", reproduced on
+    each of the four -- and src.pipeline catches that, records `chart_seen`
+    false and scores the candidate on the numbers alone, which
+    knowledge/strategy.md tells the model to trust LESS than the picture. One
+    unreadable bar in eighty-five is not a reason to show none. Dropped
+    before the slice rather than after, so a night with holes still shows
+    eighty-five sessions. Volume is deliberately not in the set: a NaN there
+    renders, checked rather than assumed, and the volume panel is the half a
+    reader can still read across a hole.
+    """
     import mplfinance as mpf
 
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     path = str(Path(out_dir) / f"{ticker}.png")
-    plot_df = df.iloc[-85:].copy()
+    plot_df = df.dropna(subset=[c for c in ("Open", "High", "Low", "Close")
+                                if c in df.columns]).iloc[-85:].copy()
     plot_df.index = pd.to_datetime(plot_df.index)
 
     mpf.plot(
