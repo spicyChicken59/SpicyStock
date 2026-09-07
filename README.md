@@ -40,7 +40,8 @@ Layer 2  2LYNCH checklist (code) ..... 2 first/second burst · L linear prior mo
 Layer 3  Chart render ................ 4-month candlestick + volume PNG per name,
         │                              written to docs/charts/ — gitignored, so
         ▼                              they stay on the machine that ran
-Layer 4  Claude scoring .............. metrics + 2LYNCH detail + chart image →
+Layer 4  Claude scoring .............. metrics + 2LYNCH detail + chart image +
+        │                              what the RECORD says about this name →
         │                              score /10, verdict (A+…skip), 1-sentence
         │                              reason, key risk (strategy.md = rulebook)
         ▼
@@ -367,6 +368,17 @@ day number. "We have never seen this name" and "we could not read the file
 that would know" are different sentences, only one is a claim about the
 market, and the email and the dashboard say different words for each.
 
+**And the scorer is told it before it scores.** The ledger is read above the
+chart and the model rather than after them, so `setup_day`, `seen_before`,
+`last_seen`, `last_score` and `last_outcome` are in the metrics block Claude
+is handed — day 2 of a two-night burst used to be scored as if the file had
+never seen the name, on a strategy named after Day 1. `knowledge/strategy.md`
+says how to weigh them. The nulls travel unchanged: a record that cannot
+answer reaches the model as `setup_day: null` beside the reason word, under a
+rulebook sentence saying in as many words that a null day is not day 1.
+Reading it earlier does not make it fatal — an unreadable ledger still only
+degrades the run, which still charts, scores and publishes.
+
 ## One-time setup
 
 Push this repo to GitHub and add six repository secrets — these are exactly
@@ -504,7 +516,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1252 tests, no network or API keys needed
+pytest tests/                   # 1267 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -1264,22 +1276,22 @@ test fixtures. It dispatches no scan and calls no market or email service.
   to cut requests — the obvious move when the universe widens — buys almost
   nothing at this window.
 - Claude: ≤25 scoring calls/run with one chart image each — **about $0.15 a
-  run, so roughly $37 a year** at 252 sessions, and only on the evening run.
+  run, so roughly $39 a year** at 252 sessions, and only on the evening run.
   This said "a few cents/day", which is out by about 5x. Measured rather than
   guessed: a real `render_chart()` PNG is 869x622, which is 721 image tokens by
-  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~1,590
-  tokens of system prompt and the metrics block ~390, so ~2,700 input tokens
+  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~1,990
+  tokens of system prompt and the metrics block ~430, so ~3,140 input tokens
   and ~120 out per call, at claude-sonnet-4-6's $3/$15 per Mtok. The text
   halves are chars/4 estimates — `count_tokens` needs a network call this
   sandbox cannot make — so treat the figure as ±30%, which does not rescue "a
   few cents".
 
-  **The system prompt is 59% of every request and is byte-identical on all 25
+  **The system prompt is 63% of every request and is byte-identical on all 25
   calls**, so it is sent with `cache_control` and read from cache after the
   first. A cache write costs 1.25x and a read 0.1x — so the first call pays
   0.25x more than it would have and every call after saves 0.9x, which makes
-  break-even the second call (1.28 calls) and a full night 41% cheaper: the
-  $0.25 this paragraph used to quote against the $0.15 above. (This said 1.4
+  break-even the second call (1.28 calls) and a full night 45% cheaper: the
+  $0.28 this paragraph used to quote against the $0.15 above. (This said 1.4
   calls, 43% and $0.13: 1.4 is 1.25 over 0.9, which charges the whole write
   against the reads as if the first call were otherwise free, and the two
   money figures were rounded from different token counts. A test now does the

@@ -21,6 +21,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from src import ledger
 from src.scanner import Candidate, ScanConfig, detect_setup
 from src.scorer import (
     KNOWLEDGE_PATH,
@@ -28,11 +29,13 @@ from src.scorer import (
     RETRY_CORRECTION,
     SAMPLING_MODELS,
     STRUCTURED_OUTPUT_MODELS,
+    RECORD_KEYS,
     UNSCORED_VERDICT,
     _fallback_score,
     cache_usage,
     is_fatal_auth_failure,
     metrics_payload,
+    record_context,
     render_chart,
     request_kwargs,
     score_all,
@@ -298,11 +301,11 @@ def test_a_transport_failure_retries_the_request_it_already_had(candidate, claud
 
 def test_the_knowledge_base_is_sent_as_a_cacheable_block(candidate, claude):
     """knowledge/strategy.md is byte-identical on every call of a run and is
-    59% of each request -- measured at ~1,590 system tokens against ~388 of
+    63% of each request -- measured at ~1,990 system tokens against ~430 of
     metrics and ~721 for an 869x622 chart. Without cache_control the run paid
     full price to send the same document up to MAX_TO_SCORE times a night; a
-    write costs 1.25x and a read 0.1x, so break-even is 1.4 calls and a full
-    night is 43% cheaper.
+    write costs 1.25x and a read 0.1x, so break-even is the second call (1.28)
+    and a full night is 45% cheaper.
 
     Asserted on the block, because the saving is invisible from inside the run
     -- the reply is identical either way -- and nothing else here would notice
@@ -741,6 +744,98 @@ def test_a_fallback_row_names_the_error_and_no_model(candidate, claude):
     assert prov["chart_seen"] is False
     assert "401 invalid x-api-key" in prov["error"]
     assert prov["error"].startswith("RuntimeError:")
+
+
+# ------------------------------------------------------- the record block ----
+
+
+def _streak_block(**fields):
+    """A streak block in the shape src.ledger.streak() returns."""
+    base = {"day": 3, "unknown_reason": None, "first_seen": "2026-08-28",
+            "last_seen": "2026-09-01", "last_score": 7.5, "last_verdict": "B+",
+            "last_outcome": "scored", "seen_before": 2,
+            "history_from": "2026-08-03", "history_sessions": 22}
+    return {**base, **fields}
+
+
+def test_the_record_reaches_the_model_under_the_names_the_rulebook_uses():
+    """What the ledger knows about a name is scoring input, not archive-only
+    decoration: day 2 of a setup is a later entry into a move already
+    underway, and until this block existed the model was told nothing about
+    it. The keys are the ones knowledge/strategy.md instructs on."""
+    payload = record_context(_streak_block())
+
+    assert payload == {"setup_day": 3, "setup_unknown_reason": None,
+                       "seen_before": 2, "last_seen": "2026-09-01",
+                       "last_score": 7.5, "last_outcome": "scored"}
+
+
+def test_a_record_that_cannot_answer_is_an_unknown_and_never_a_day_one():
+    """The rule every other surface holds, held here too. A run whose history
+    could not be read must not tell the model this is a fresh setup: that is a
+    claim about the market assembled out of a file error."""
+    payload = record_context(ledger.unknown_streak(ledger.HISTORY_UNREADABLE))
+
+    assert payload["setup_day"] is None
+    assert payload["setup_unknown_reason"] == "history_unreadable"
+    assert payload["seen_before"] == 0
+
+
+@pytest.mark.parametrize("streak", [None, [], "day 2", 3, {"day": "3"}, {"day": True}])
+def test_no_block_the_record_cannot_produce_becomes_a_day_number(streak):
+    """A block that is absent, the wrong type, or carries a day that is not a
+    number reaches the model as an unknown. `"3" > 1` is a TypeError two
+    surfaces already guard against with ledger.streak_day(), which is the one
+    rule this reads through rather than repeating."""
+    payload = record_context(streak)
+
+    assert payload["setup_day"] is None
+    assert set(payload) == {name for name, _key in RECORD_KEYS}, (
+        "the keys are always the same set: a missing key reads as a fact "
+        "about the candidate rather than about the record")
+
+
+def test_a_day_number_and_a_reason_are_never_both_answers():
+    """src.ledger keeps them exclusive at the source. A hand-edited or older
+    block can carry both, and 'day 3, and also the record cannot say' is two
+    answers to one question."""
+    payload = record_context(_streak_block(day=3, unknown_reason="no_history"))
+
+    assert payload["setup_day"] == 3
+    assert payload["setup_unknown_reason"] is None
+
+
+def test_the_record_travels_in_the_request_the_model_actually_reads(candidate, claude):
+    """End of the wire this module owns: the block reaches the text block, not
+    just the payload dict."""
+    score_candidate(candidate, make_lynch(4), CONTEXT, None,
+                    streak=_streak_block(day=2, last_outcome="lynch_gate", last_score=None))
+
+    text = _text_of(claude.calls[0])
+    assert '"setup_day": 2' in text
+    assert '"last_outcome": "lynch_gate"' in text
+
+
+def test_score_all_hands_each_candidate_its_own_record(candidate, claude):
+    """One dict keyed by ticker, so a name with no entry is scored with the
+    record's keys null rather than with another name's streak."""
+    other = SimpleNamespace(**{**candidate.__dict__, "ticker": "ZZZ"})
+    score_all([(candidate, make_lynch(4), CONTEXT, None),
+               (other, make_lynch(4), CONTEXT, None)],
+              streaks={candidate.ticker: _streak_block(day=4)})
+
+    first, second = (_text_of(c) for c in claude.calls)
+    assert '"setup_day": 4' in first
+    assert '"setup_day": null' in second, "and never the previous candidate's"
+
+
+def test_the_metrics_context_cannot_displace_the_record(candidate):
+    """`**context` is splatted into the same dict. A measurement named like a
+    record key must not answer for the record."""
+    payload = metrics_payload(candidate, make_lynch(), {**CONTEXT, "setup_day": 99},
+                              _streak_block(day=2))
+
+    assert payload["setup_day"] == 2
 
 
 # ------------------------------------------------- the volume-ratio label ----

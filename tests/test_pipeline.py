@@ -3630,6 +3630,79 @@ def test_a_first_sighting_says_so_rather_than_saying_nothing(
     assert "day 1 — new setup" in mocked_boundaries["resend"].sent[-1]["html"]
 
 
+def scoring_request_text(claude) -> str:
+    """Every text block of the LAST scoring request, joined.
+
+    The request is the only place the model's inputs can be read: what
+    src.scorer builds is what it saw, and asserting on the row it returned
+    instead would pass over a payload that never carried the field.
+    """
+    blocks = claude.calls[-1]["messages"][0]["content"]
+    return "".join(b["text"] for b in blocks if b["type"] == "text")
+
+
+def test_the_scorer_is_told_the_name_burst_last_night_before_it_scores(
+    monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The record's streak reached the row AFTER the score was paid for, so
+    night 2 of a two-night burst was scored as if the ledger had never seen
+    the name -- the one fact that separates a fresh Day 1 from a later entry
+    into a move already underway, and the strategy is named after Day 1.
+
+    Asserted on the REQUEST, not on the archived row: the row has carried the
+    streak since step 10, and it is the payload that decides what was scored.
+    """
+    seed_history(monkeypatch, fake_alpaca, ohlcv)
+    fake_alpaca.add_history("BURST", ohlcv("burst"))
+    first, second = session_offset(-1), session_offset(0)
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", first)
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+    (day_one,) = clean(tmp_path)["candidates"]
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", second)
+    pipeline.run("evening", dry_run=True, tickers=["BURST"])
+
+    payload = json.loads(re.search(r"METRICS:\n(\{.*?\})\n\n",
+                                   scoring_request_text(mocked_boundaries["anthropic"]),
+                                   re.S).group(1))
+    assert payload["setup_day"] == 2, "the model scored day 2 as if it were day 1"
+    assert payload["seen_before"] == 1
+    assert payload["last_seen"] == first
+    assert payload["last_score"] == day_one["score"], (
+        "and what the record made of it then")
+    assert payload["last_outcome"] == "scored"
+    assert payload["setup_unknown_reason"] is None, (
+        "a day number and a reason for having none can never both be answers")
+    assert clean(tmp_path)["candidates"][0]["streak"]["day"] == 2, (
+        "and the row still carries the same block the email reads")
+
+
+def test_a_history_the_run_could_not_read_reaches_the_model_as_an_unknown(
+    universe, mocked_boundaries, open_gate, tmp_path
+):
+    """The rule the email and the page hold, now held one stage earlier: a
+    record that cannot answer must never reach the scorer as a confident day
+    1. And the run still scores -- moving the read above the score stage must
+    not make an unreadable ledger cost the night its judgements."""
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / ledger.LEDGER_NAME).write_text("{not json")
+    report = pipeline.RunReport()
+
+    scored = pipeline.run("evening", dry_run=True, tickers=universe, report=report)
+
+    assert scored, "the run still scored"
+    claude = mocked_boundaries["anthropic"]
+    assert claude.calls, "and paid for it"
+    payload = json.loads(re.search(r"METRICS:\n(\{.*?\})\n\n",
+                                   scoring_request_text(claude), re.S).group(1))
+    assert payload["setup_day"] is None, "no day number out of a file error"
+    assert payload["setup_unknown_reason"] == "history_unreadable", (
+        "and it says WHICH unknown, in the record's own word")
+    assert report.exit_code == pipeline.EXIT_DEGRADED
+    assert [e["stage"] for e in report.errors] == ["history"], report.errors
+
+
 def test_a_burst_the_gate_rejected_carries_its_streak_too(
     monkeypatch, fake_alpaca, mocked_boundaries, ohlcv, tmp_path
 ):

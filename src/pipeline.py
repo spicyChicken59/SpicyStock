@@ -1061,6 +1061,39 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     log.info("%d bursts → %d below the liquidity floor, %d passed 2LYNCH gate (scoring top %d)",
              n_bursts, len(illiquid), len(passed_gate), len(to_score))
 
+    # What the record already knows about these names. Read BEFORE this run is
+    # added to it — publish() adds it below out of the same object — so that
+    # a session scanned twice does not turn every name in it into a repeat of
+    # itself. The ledger is loaded once here and handed on, rather than opened
+    # again inside publish(), because two reads of one file can disagree.
+    #
+    # AND BEFORE THE SCORE, which is what this stage sits above the chart and
+    # the model for. It used to run after score_all(), so the streak reached
+    # the archived row and the email and never the request: night 2 of a
+    # two-night burst was scored as if the ledger had never seen the name,
+    # while the strategy this run implements is named after Day 1. Nothing
+    # here reads the scores, so the read is a reorder and not a second pass --
+    # the same `book` and the same `marks` are handed on below.
+    #
+    # An unreadable history still only DEGRADES the run from up here: it is
+    # reported by load_history() and answered by streaks_for() with a block
+    # whose day is null, so the night is still charted, still scored and still
+    # published. Moving the read earlier must not make a file error cost the
+    # night its judgements.
+    report.stage = "history"
+    session = scan_stats.get("session")
+    book = load_history(report)
+    # Over EVERY burst, the refused ones included: this read `prepared`
+    # alone, so every liquidity_floor row was archived with streak: null --
+    # the value the contract reserves for a run that could not read its
+    # history -- one line under a lynch_gate row on the same table carrying
+    # a full block from the same read. Found by an audit driving two nights
+    # through the real path; the round's own 29 mutants never read the
+    # refused row's streak.
+    marks = streaks_for(book, session,
+                        [c.ticker for c, _lynch, _ctx in prepared]
+                        + [c.ticker for c in illiquid_bursts])
+
     # Layers 3-5: charts + Claude scoring
     report.stage = "chart"
     scored_inputs = []
@@ -1087,7 +1120,7 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     report.stage = "score"
     score_stats: dict = {}
     returned = score_all(scored_inputs, top_n=TOP_N, min_lynch=MIN_LYNCH_PASSES,
-                         stats=score_stats)
+                         stats=score_stats, streaks=marks)
     # Every scored row, in rank order, untruncated. score_all() also returns
     # its own top-N slice; `rows` is the list step 9 archives.
     scored = score_stats.get("rows")
@@ -1100,27 +1133,11 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     shortlist = scored[:TOP_N]
     _check_scoring(score_stats, report)
 
-    # What the record already knows about these names. Read BEFORE this run is
-    # added to it — publish() adds it below out of the same object — so that
-    # a session scanned twice does not turn every name in it into a repeat of
-    # itself. The ledger is loaded once here and handed on, rather than opened
-    # again inside publish(), because two reads of one file can disagree.
-    report.stage = "history"
-    session = scan_stats.get("session")
-    book = load_history(report)
-    # Over EVERY burst, the refused ones included: this read `prepared`
-    # alone, so every liquidity_floor row was archived with streak: null --
-    # the value the contract reserves for a run that could not read its
-    # history -- one line under a lynch_gate row on the same table carrying
-    # a full block from the same read. Found by an audit driving two nights
-    # through the real path; the round's own 29 mutants never read the
-    # refused row's streak.
-    marks = streaks_for(book, session,
-                        [c.ticker for c, _lynch, _ctx in prepared]
-                        + [c.ticker for c in illiquid_bursts])
     for row in scored:
         # The email reads this off the scored row; docs/data.json gets it from
-        # the same dict below. One lookup, two audiences, no second rule.
+        # the same dict below. One lookup, two audiences, no second rule -- and
+        # the same dict the scoring request above was built from, so what the
+        # record says and what the model was told can never differ.
         row["streak"] = marks.get(row["ticker"])
     # `day` is None when the record cannot say, so it is compared as a number
     # only after that is ruled out: `None > 1` is a TypeError, and it would be

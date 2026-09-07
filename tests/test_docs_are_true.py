@@ -250,6 +250,32 @@ def test_the_documented_thresholds_are_the_ones_the_code_applies(ohlcv):
         "the session arithmetic keys on")
 
 
+def test_the_rulebook_instructs_on_every_field_the_request_carries():
+    """knowledge/strategy.md is the system prompt: a metrics key the rulebook
+    never names is a number the model is left to interpret for itself, and a
+    key the rulebook names that the payload does not carry is an instruction
+    about nothing.
+
+    Asserted over src.scorer.RECORD_KEYS and src.emailer.STREAK_UNKNOWN rather
+    than over a list retyped here, so a seventh record key or a fifth kind of
+    unknown turns this red on the commit that adds it. That is the property a
+    hand-kept copy cannot have, and this project has already paid for one: a
+    second veto added to src.lynch alone left every surface green.
+    """
+    from src import emailer
+    from src.scorer import RECORD_KEYS
+
+    rulebook = _read("knowledge/strategy.md")
+    for name, _key in RECORD_KEYS:
+        assert f"`{name}`" in rulebook, f"the rulebook never mentions {name}"
+    for reason in emailer.STREAK_UNKNOWN:
+        assert f"`{reason}`" in rulebook, f"the rulebook never names the {reason} unknown"
+    # And the rule every other surface holds: an unknown is not a fresh setup.
+    # Without this sentence the model reads a null day as "no prior sighting",
+    # which is a claim about the market made out of a file error.
+    assert "A null `setup_day` is not day 1." in rulebook
+
+
 def test_the_cost_paragraph_does_its_own_arithmetic():
     """README's Costs section states its inputs -- image size, token counts,
     prices, the call cap, the cache multipliers -- and then four conclusions:
@@ -278,6 +304,17 @@ def test_the_cost_paragraph_does_its_own_arithmetic():
     image = round(int(width) * int(height) / 750)
     assert image == num(r"which is (\d+) image tokens")
     system = num(r"~([\d,]+)\s+tokens of system prompt")
+    # MEASURED, not remembered: the paragraph says the text halves are chars/4
+    # estimates, so this is that estimate of the file itself, to the nearest
+    # ten. It had drifted 71 tokens low before the round that added the
+    # record block to the payload grew the system prompt again -- and every
+    # conclusion below is computed FROM this input, so a stale figure makes
+    # four money numbers wrong together and silently. Editing
+    # knowledge/strategy.md turns this red, which is the point: it is the
+    # one input of the four that changes whenever the rulebook does.
+    from src.scorer import KNOWLEDGE_PATH
+    assert system == round(len(KNOWLEDGE_PATH.read_text()) / 4, -1), (
+        "README's system-prompt token count is not chars/4 of knowledge/strategy.md")
     metrics = num(r"metrics block ~([\d,]+)")
     per_call = system + metrics + image
     assert abs(per_call - num(r"so ~([\d,]+) input tokens")) <= 50

@@ -65,6 +65,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from .ledger import streak_day
+
 log = logging.getLogger(__name__)
 
 #: Environment this layer cannot run without. Collected by src.pipeline's
@@ -282,7 +284,50 @@ def _as_dict(value) -> dict:
     return value if isinstance(value, dict) else {}
 
 
-def metrics_payload(cand, lynch_result: dict, context: dict) -> dict:
+#: What a streak block contributes to the metrics, and under which names. The
+#: order is the streak's own; `sort_keys` on the payload is what a reader sees.
+RECORD_KEYS: tuple[tuple[str, str], ...] = (
+    ("setup_day", "day"),
+    ("setup_unknown_reason", "unknown_reason"),
+    ("seen_before", "seen_before"),
+    ("last_seen", "last_seen"),
+    ("last_score", "last_score"),
+    ("last_outcome", "last_outcome"),
+)
+
+
+def record_context(streak) -> dict:
+    """What the RECORD already knows about this name, for the scoring request.
+
+    The strategy is named after Day 1, and until this existed the model was
+    never told which day it was looking at: src.pipeline read the ledger AFTER
+    the score stage, so night 2 of a two-night burst was scored as if the file
+    had never seen the name. The block travels here in the shape src.ledger
+    built and src.emailer renders, one rename per key and no arithmetic.
+
+    THE NULLS ARE THE POINT. A record that cannot answer -- unreadable, empty,
+    undatable, or not reaching back far enough -- publishes `day: null` with
+    the reason word, and every surface is forbidden to dress that up as a
+    confident day 1. So is this one: an absent or malformed block produces the
+    same keys with nulls, never a day number, and `setup_unknown_reason`
+    carries the record's own word rather than a sentence invented here.
+
+    `setup_day` goes through ledger.streak_day(), the one rule that says what
+    counts as a day: a block carrying `"day": "3"` is not day 3 to a reader
+    and must not be day 3 to the model either.
+    """
+    block = _as_dict(streak)
+    payload = {name: block.get(key) for name, key in RECORD_KEYS}
+    payload["setup_day"] = streak_day(block)
+    if payload["setup_day"] is not None:
+        # Both filled would be two answers to one question. src.ledger keeps
+        # them exclusive at the source; this keeps them exclusive if a
+        # hand-edited or older block does not.
+        payload["setup_unknown_reason"] = None
+    return payload
+
+
+def metrics_payload(cand, lynch_result: dict, context: dict, streak=None) -> dict:
     """The numbers Claude is asked to score. Every key means what it says."""
     payload = {
         "ticker": cand.ticker,
@@ -295,6 +340,11 @@ def metrics_payload(cand, lynch_result: dict, context: dict) -> dict:
         "volume_ratio_basis": volume_ratio_basis(cand),
         "dollar_volume": cand.dollar_volume,
         **context,
+        # What the record already knows about this name -- day N of this
+        # setup, when it was last seen and what was done with it then. AFTER
+        # **context, so a context key of the same name can never displace the
+        # record's answer with a measurement.
+        **record_context(streak),
         "2lynch_summary": lynch_result["summary"],
         "2lynch_detail": lynch_result["detail_lines"],
         # Measured criteria that are NOT checklist votes and do not move the
@@ -366,13 +416,13 @@ def request_kwargs(system: str, content: list[dict], model: str | None = None) -
         "max_tokens": MAX_TOKENS,
         # A LIST, not a string, so the knowledge base can carry cache_control.
         # knowledge/strategy.md is byte-identical on every call of a run and is
-        # 59% of each request -- measured: ~1,590 tokens of system against ~388
+        # 63% of each request -- measured: ~1,990 tokens of system against ~430
         # of metrics and ~721 for an 869x622 chart. Without this the run paid
         # full price to send the same document up to MAX_TO_SCORE times a
         # night. A cache write costs 1.25x and a read 0.1x, so break-even is
         # the second call (1.28 calls -- the write costs 0.25x more than the
         # uncached call it replaces, each read saves 0.9x): a night that
-        # scores two candidates is already ahead, and a full one is 41%
+        # scores two candidates is already ahead, and a full one is 45%
         # cheaper.
         #
         # No `ttl`: the default 5-minute window is the cheap one (an hour costs
@@ -564,7 +614,7 @@ def cache_usage(resp) -> dict:
 
 
 def score_candidate(cand, lynch_result: dict, context: dict, chart_path: str | None,
-                    attempts: int = 2, usage: dict | None = None) -> dict:
+                    attempts: int = 2, usage: dict | None = None, streak=None) -> dict:
     """Ask Claude to score one candidate.
 
     Returns score/reason/verdict/key_risk plus `provenance`, which says who
@@ -574,7 +624,7 @@ def score_candidate(cand, lynch_result: dict, context: dict, chart_path: str | N
     quietly dropped — was indistinguishable from one made with the chart.
     """
     system = KNOWLEDGE_PATH.read_text()
-    metrics = metrics_payload(cand, lynch_result, context)
+    metrics = metrics_payload(cand, lynch_result, context, streak)
 
     content: list[dict] = []
     chart_seen = bool(chart_path) and Path(chart_path).exists()
@@ -638,8 +688,14 @@ def _rank_key(row: dict) -> tuple[bool, float]:
 
 
 def score_all(scored_inputs: list[tuple], top_n: int = 5, min_lynch: int = 3,
-              stats: dict | None = None) -> list[dict]:
+              stats: dict | None = None, streaks: dict | None = None) -> list[dict]:
     """scored_inputs: list of (candidate, lynch_result, context, chart_path).
+
+    `streaks`, if given, is one src.ledger streak block per ticker -- what the
+    record already knows about each name, read BEFORE this stage so the model
+    sees it. A ticker the dict does not carry is scored with the record's keys
+    present and null, which is the same shape a run whose history could not be
+    read produces, and never a day 1.
 
     Applies the hard checklist gate, has Claude score survivors, and returns
     the top N as plain dicts ready for the email layer.
@@ -664,7 +720,8 @@ def score_all(scored_inputs: list[tuple], top_n: int = 5, min_lynch: int = 3,
             # another doomed request.
             ai = _fallback(cand, lynch_result, outage)
         else:
-            ai = score_candidate(cand, lynch_result, context, chart_path, usage=cache)
+            ai = score_candidate(cand, lynch_result, context, chart_path, usage=cache,
+                                 streak=(streaks or {}).get(cand.ticker))
             error = ai["provenance"]["error"]
             if ai["provenance"]["source"] != "claude" and is_fatal_auth_failure(error):
                 outage = error

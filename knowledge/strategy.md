@@ -91,6 +91,26 @@ third day of a drift up, which is a later entry into a move already underway.
 Weight it down accordingly, and read it beside the `C` check — a quiet prior
 day and two quiet up days are the same fact seen twice, not two reasons.
 
+`setup_day` is where this burst sits in the record's own run of appearances
+for this name, counting only the sessions it burst on. **1 is the Day 1 this
+strategy is named after**: nothing in the record preceded it. 2 or more is a
+later entry into a move already underway — the same warning
+`consecutive_up_days` carries, measured over sessions that qualified rather
+than over closes — so weight it down, and say so in the reason when it decided
+the score. `seen_before` is how many earlier sessions the record holds a burst
+for, `last_seen` is when the most recent one was, and `last_score` and
+`last_outcome` are what was made of it then: a number and "scored", or the
+word for the rule that refused it ("lynch_gate", "veto_up_days",
+"liquidity_floor", "score_cap") with no number.
+
+**A null `setup_day` is not day 1.** It means the record cannot say, and
+`setup_unknown_reason` names which of four reasons: `history_unreadable` (the
+file could not be read), `no_history` (it holds nothing), `history_undated`
+(it holds runs nothing can date) or `window_not_covered` (it does not reach
+back far enough to prove nothing preceded this). Score the chart and the
+metrics as they stand, and do not credit the setup with being fresh — absence
+of evidence about what came before is not evidence that nothing did.
+
 # Qullamaggie overlay
 
 Weight these upward:
