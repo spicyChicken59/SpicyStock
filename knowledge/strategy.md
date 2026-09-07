@@ -91,13 +91,16 @@ third day of a drift up, which is a later entry into a move already underway.
 Weight it down accordingly, and read it beside the `C` check — a quiet prior
 day and two quiet up days are the same fact seen twice, not two reasons.
 
-`setup_day` is where this burst sits in the record's own run of appearances
-for this name, counting only the sessions it burst on. **1 is the Day 1 this
-strategy is named after**: nothing in the record preceded it. 2 or more is a
-later entry into a move already underway — the same warning
-`consecutive_up_days` carries, measured over sessions that qualified rather
-than over closes — so weight it down, and say so in the reason when it decided
-the score. `seen_before` is how many earlier sessions the record holds a burst
+`setup_day` counts recorded burst appearances in the current episode rather
+than elapsed days. It is not proof of a fresh market breakout. Appearances are grouped when
+each gap is at most 5 weekdays; weekends are excluded, holidays are not.
+Day 1 can follow an older recorded burst outside that window. The ledger may
+miss scans or names outside its scanned basket, so even a numbered day does
+not prove complete market history. Use 2 or more as context suggesting a repeat
+entry, checked against the chart and `2lynch_detail`; do not automatically
+deduct points or double-count the same move in `consecutive_up_days`.
+Say so when this context decides the score.
+`seen_before` is how many earlier sessions the retained record holds a burst
 for, `last_seen` is when the most recent one was, and `last_score` and
 `last_outcome` are what was made of it then: a number and "scored", or the
 word for the rule that refused it ("lynch_gate", "veto_up_days",
@@ -107,9 +110,9 @@ word for the rule that refused it ("lynch_gate", "veto_up_days",
 `setup_unknown_reason` names which of four reasons: `history_unreadable` (the
 file could not be read), `no_history` (it holds nothing), `history_undated`
 (it holds runs nothing can date) or `window_not_covered` (it does not reach
-back far enough to prove nothing preceded this). Score the chart and the
-metrics as they stand, and do not credit the setup with being fresh — absence
-of evidence about what came before is not evidence that nothing did.
+back far enough to number this episode). Score the chart and the metrics as
+they stand; unknown history alone earns neither a freshness bonus nor a
+penalty. Absence of evidence is not evidence that nothing preceded this burst.
 
 # Qullamaggie overlay
 

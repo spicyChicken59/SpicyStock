@@ -262,7 +262,7 @@ def test_the_rulebook_instructs_on_every_field_the_request_carries():
     hand-kept copy cannot have, and this project has already paid for one: a
     second veto added to src.lynch alone left every surface green.
     """
-    from src import emailer
+    from src import emailer, ledger
     from src.scorer import RECORD_KEYS
 
     rulebook = _read("knowledge/strategy.md")
@@ -274,6 +274,13 @@ def test_the_rulebook_instructs_on_every_field_the_request_carries():
     # Without this sentence the model reads a null day as "no prior sighting",
     # which is a claim about the market made out of a file error.
     assert "A null `setup_day` is not day 1." in rulebook
+    # The episode counter cannot establish a fresh market breakout. Keep its
+    # grouping window and missing-observation limits in the model's rules.
+    normalized = " ".join(rulebook.split())
+    assert f"each gap is at most {ledger.MAX_STREAK_GAP_SESSIONS} weekdays" in normalized
+    assert "not proof of a fresh market breakout" in normalized
+    assert "neither a freshness bonus nor a penalty" in normalized
+    assert "double-count the same move" in normalized
 
 
 def test_the_cost_paragraph_does_its_own_arithmetic():

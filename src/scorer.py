@@ -416,13 +416,13 @@ def request_kwargs(system: str, content: list[dict], model: str | None = None) -
         "max_tokens": MAX_TOKENS,
         # A LIST, not a string, so the knowledge base can carry cache_control.
         # knowledge/strategy.md is byte-identical on every call of a run and is
-        # 63% of each request -- measured: ~1,990 tokens of system against ~430
+        # 64% of each request -- measured: ~2,040 tokens of system against ~430
         # of metrics and ~721 for an 869x622 chart. Without this the run paid
         # full price to send the same document up to MAX_TO_SCORE times a
         # night. A cache write costs 1.25x and a read 0.1x, so break-even is
         # the second call (1.28 calls -- the write costs 0.25x more than the
         # uncached call it replaces, each read saves 0.9x): a night that
-        # scores two candidates is already ahead, and a full one is 45%
+        # scores two candidates is already ahead, and a full one is 46%
         # cheaper.
         #
         # No `ttl`: the default 5-minute window is the cheap one (an hour costs
