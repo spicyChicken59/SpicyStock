@@ -1200,6 +1200,48 @@ def test_a_name_the_feed_returned_nothing_for_is_worded_the_same_in_the_email_an
     assert "`last` and `sessions_behind` null" in _read("README.md")
 
 
+def test_a_run_that_scored_nothing_is_worded_the_same_in_the_email_and_on_the_page():
+    """One mechanism, one vocabulary, and one state that is not "pending".
+
+    A run that scored no candidates has no rows for a later run to fill, so
+    its three horizon cells on docs/index.html are null for good; they read
+    "pending" until round 10, and main's own 4 Sep record is one of these --
+    the page it published said "0 of 1 sessions in" under a chip reading "no
+    session closed yet" while the sessions closed one after another. The mail
+    already had words for that night, in the morning follow-through's summary
+    of the run it follows, so the page borrows them rather than inventing a
+    second vocabulary for one mechanism.
+
+    The sentence is RENDERED here rather than grepped: a phrase constant no
+    sentence reaches is a vocabulary of one, and this file's job is to catch
+    exactly that. The state set is a set EQUALITY, so a sixth state added to
+    fwdState() without words in FWD_WORDS turns this red rather than showing
+    a reader a bare number under a state the page cannot name.
+    """
+    from src import emailer
+
+    mail = emailer._empty_morning_note({"bursts": 3, "scored": 0, "session": "2026-09-04"})
+    assert emailer.SCORED_NOTHING in mail, mail
+
+    page = _read("docs/index.html")
+    block = page[page.index("var FWD_WORDS = {"):]
+    block = block[:block.index("};")]
+    said = re.search(r"unscored: \['([^']*)', '([^']*)'\]", block)
+    assert said, "docs/index.html's FWD_WORDS has no words for a run that scored nothing"
+    cell, title = said.group(1), said.group(2)
+    assert emailer.SCORED_NOTHING in title, (
+        f"the page explains the state as {title!r}; the email says {emailer.SCORED_NOTHING!r}")
+    assert cell and cell != "pending", cell
+
+    # Every state fwdState() can hand back has words, and nothing else does.
+    fn = page[page.index("function fwdState(row) {"):]
+    fn = fn[:fn.index("\n  }")]
+    returned = " ".join(re.findall(r"return ([^;]+);", fn))
+    states = set(re.findall(r"'(\w+)'", returned)) - {"measured"}
+    keys = set(re.findall(r"^\s{4}(\w+): \[", block, re.M))
+    assert states == keys, f"fwdState() returns {sorted(states)}; FWD_WORDS has {sorted(keys)}"
+
+
 def test_the_documented_stopped_printing_numbers_are_the_ones_the_code_applies():
     """README's contract bullet quotes the threshold and the cap in digits;
     both are read off src.pipeline so a change there turns this red."""

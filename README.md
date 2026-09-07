@@ -475,7 +475,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1151 tests, no network or API keys needed
+pytest tests/                   # 1152 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -1024,14 +1024,14 @@ construction: `docs/` is served locally and every CDN request is answered from a
 design-system checkout on disk. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 207 checks, and which file each one
+**Three data sources, one page.** It runs 214 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 35 mutated copies of it are served
+  night can hold at once. 37 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now
@@ -1039,7 +1039,9 @@ reads is the point:
 - **`tests/fixtures/history/`** — thirty consecutive runs written by the real
   pipeline (`tools/make_history.py`, see `tests/fixtures/README.md`): forward
   returns filled in by later runs, a night the scorer was down, a chart that
-  would not render, repeats on consecutive sessions, the last week still
+  would not render, repeats on consecutive sessions, a session that scored
+  nothing at all — whose three horizon cells no later run can ever fill, and
+  which read "pending" for a round because of it — and the last week still
   pending. Every expectation is computed from the file the page is reading.
 - **`docs/`** — whatever the last run wrote, exactly as GitHub Pages serves it,
   opened last with only the checks that hold for any run: it opens, its rows

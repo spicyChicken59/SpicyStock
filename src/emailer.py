@@ -1081,6 +1081,17 @@ def _no_shortlist_note(scan_stats: dict) -> str:
             else NO_SHORTLIST_NO_BAND)
 
 
+#: What a night that scored nothing did, in the words one mail already used
+#: for it: the morning follow-through's summary of the run it follows. The
+#: page prints the same phrase in that run's three horizon cells
+#: (docs/index.html's FWD_WORDS.unscored), because the cells used to read
+#: "pending" -- a run with no scored rows has nothing for a later run to
+#: fill, so the wait it promised could never end. One mechanism, one
+#: vocabulary; tests/test_docs_are_true.py renders this sentence and reads
+#: the page's words back against it.
+SCORED_NOTHING = "scored no candidates"
+
+
 def _empty_morning_note(scan_stats: dict) -> str:
     """Why a morning table is empty — read off the run it follows, not this pass.
 
@@ -1131,7 +1142,7 @@ def _empty_morning_note(scan_stats: dict) -> str:
     session = scan_stats.get("session")
     named = (f"The {esc(session)} run this follows through on" if session
              else "The run this follows through on")
-    found = (f"{named} scored no candidates." if bursts
+    found = (f"{named} {SCORED_NOTHING}." if bursts
              else f"{named} found no 4% burst to score: nothing reached the checklist, "
                   "so nothing failed it.")
     universe = scan_stats.get("followed_universe")
