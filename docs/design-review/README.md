@@ -1,5 +1,8 @@
 # Checklist criterion navigation
 
+For the next presentation pass, see the [opening instrument deck review](instrument-deck.md),
+including public-before and phone/desktop after proof.
+
 Shortlisted candidates already have native 2LYNCH signal tables. The checked-in
 design presentation bundle adds optional Check, Result and Measured buttons when
 those tables overflow. The check code stays pinned beside the requested column.
