@@ -1569,6 +1569,14 @@ def follow_through(mode: Mode, dry_run: bool = False,
         # the line is what changes the file, so the emailer scopes the
         # sentence to the run on this path rather than re-asserting it.
         stopped_printing=source.get("stopped_printing"),
+        # And the bars the feed repeated during THAT scan. The morning
+        # presents that run's funnel, so a count printed under it in the
+        # evening and dropped here would be the "one mechanism, two
+        # vocabularies" shape one mail over -- which is exactly how
+        # stopped_printing came to be on the page and not in this mail.
+        # Absent from a run block written before the count existed, and the
+        # emailer prints nothing for that, never a 0.
+        duplicate_bars=source.get("duplicate_bars"),
         # WHICH STAGE BROKE IN THE RUN BEING FOLLOWED, in that run's own stage
         # words. Not its status: "degraded" covers a clock disagreement, a
         # chart that would not render, a Claude fallback, an unreadable
@@ -1672,8 +1680,9 @@ def forward_bars(cfg: ScanConfig, tickers: list[str], through) -> dict:
                                               cfg, through, duplicates=duplicates))
     if duplicates:
         worst = sorted(duplicates.items(), key=lambda kv: (-kv[1], kv[0]))
-        log.warning("%d of %d name(s) whose forward returns are still open carried a bar the feed "
-                    "sent twice (%d bars in all), de-duplicated to the copy sent last: %s",
+        log.warning("%d of %d name(s) whose forward returns are still open carried a timestamp "
+                    "the response had already sent (%d extra bar(s) dropped), keeping the copy "
+                    "that arrived last: %s",
                     len(duplicates), len(tickers), sum(duplicates.values()),
                     ", ".join(f"{t} ({n})" for t, n in worst[:8])
                     + ("..." if len(worst) > 8 else ""))
@@ -2001,13 +2010,21 @@ def scan_coverage(scan_stats: dict) -> dict:
     is the one rule that decides what a number is; a second copy here would be
     a guard no input can reach and no test can fail on.
 
+    A FIXED LIST OF KEYS, which is why `duplicate_bars` had to be added to it:
+    the scanner counted the bars the feed repeated, the run block published
+    the number, and the failure notice -- the one surface a person reads on
+    the night a scan dies -- said nothing, because this list is what reaches
+    it. A count added to run_scan()'s stats and not to this line is a count
+    the notice cannot print.
+
     The newest date any stale symbol carried is the other half of the
     diagnosis: "228 answered, none with a bar for 2026-09-07 (newest seen
     2026-09-04)" is a holiday or a feed that stopped, and the two dates are
     what tell a reader which.
     """
     counts = {key: scan_stats[key] for key in
-              ("requested", "with_bars", "fresh", "no_bars", "dropped") if key in scan_stats}
+              ("requested", "with_bars", "fresh", "no_bars", "dropped", "duplicate_bars")
+              if key in scan_stats}
     # scanner's own rule for "the newest session anything did print", not a
     # second copy of it: a name whose stamp could not be read has no date, and
     # max() over a mix of those and real dates is the crash that function

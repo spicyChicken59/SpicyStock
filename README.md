@@ -656,7 +656,7 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 14.04 MB raw
+and what followed — needs the whole record, which projects to about 14.05 MB raw
 and **1.08 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
@@ -712,16 +712,32 @@ invariants live in the file rather than only here. The load-bearing ones:
   the evening's "check the list": acting on the line is what changes the file,
   and this repo retired all three names the first live scan found -- the list
   held 230 then and 228 since.
-- `run.duplicate_bars` is how many bars the feed sent twice in that night's
-  scan, across every symbol. The scanner sorts what came back with a STABLE
-  sort and keeps the copy that arrived last, so a preliminary bar followed by
-  a corrected one resolves to the corrected one whatever order the response
-  came in -- and the frame that comes out cannot show it ever chose, which is
-  why the count is published. It is a sentinel and not a rule: it degrades
-  nothing, because no live duplicate has been seen yet and the count is what
-  makes reading the first one possible. The forward-returns fetch uses the
-  same downloader and warns in the log rather than adding to this number,
-  which counts the scan.
+- `run.duplicate_bars` is how many bars that night's scan dropped as
+  duplicates, across every symbol -- **the extra copies**, so a bar sent three
+  times counts 2, which is what every line printing this number says. A
+  duplicate here is a bar carrying **a timestamp the response had already
+  sent**, because the index is all the de-dup can see: the same session sent
+  under two different timestamps is a different shape, and this neither counts
+  nor drops it (`detect_setup` then reads the two as one session and finds no
+  gain, which is the way a same-timestamp repeat used to hide a burst --
+  measured through the real downloader, and pinned by a test rather than
+  answered with a session-level de-dup for a wire nobody has seen). The
+  scanner sorts what came back with a STABLE sort and keeps the copy that
+  arrived last, so a preliminary bar followed by a corrected one resolves to
+  the corrected one whatever order the response came in -- and the frame that
+  comes out cannot show it ever chose, which is why the count is published. It
+  is a sentinel and not a rule: it degrades nothing, because no live duplicate
+  has been seen yet and the count is what makes reading the first one
+  possible. It reaches every surface `run.stopped_printing` reaches, and the
+  record twice: the scan's log line, this run block, **the ledger entry** --
+  `docs/data.json` is rewritten by the next run, so the entry is where the
+  first live one has to survive to be read -- the failure notice's coverage
+  sentence, one line under the funnel of both the evening and the morning
+  mail, and the page's universe row, the last two in one shared sentence. The
+  forward-returns fetch uses the same downloader and warns in the log rather
+  than adding to this number, which counts the scan; so does
+  `tools/live_check.py`, the third caller, on the OK line it prints for the
+  live feed.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
@@ -1095,14 +1111,14 @@ construction: `docs/` and its exact design-system snapshot are served locally,
 and external requests are blocked. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 225 checks, and which file each one
+**Three data sources, one page.** It runs 227 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 39 mutated copies of it are served
+  night can hold at once. 40 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now

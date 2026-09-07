@@ -107,13 +107,23 @@ def check_alpaca(symbol: str, cfg: scanner.ScanConfig | None = None) -> Check:
     """One bars request through the scan's own downloader, for one name.
 
     Reports the feed, whether the newest bar is the session the clock names,
-    and -- on refusal -- the same 401-versus-403 message run_scan() raises.
+    how many bars it dropped as duplicates when the response repeated a
+    timestamp, and -- on refusal -- the same 401-versus-403 message run_scan()
+    raises. A clean response says nothing about duplicates, the rule every
+    other surface follows; the bar count is the de-duplicated frame's, because
+    that is the frame the rules would read.
     """
     cfg = cfg or scanner.ScanConfig()
     session = cfg.session_date or scanner.current_session()
+    # The third caller of the scan's downloader, and the one that reads the
+    # LIVE feed -- so it is the likeliest place a first real duplicate is met,
+    # and the bar count below is taken AFTER the de-dup. Counted here for the
+    # same reason run_scan() and forward_bars() count it: the frame that comes
+    # out cannot show it ever chose.
+    duplicates: dict[str, int] = {}
     try:
         client = scanner.get_clients()
-        bars = scanner._download_batch(client, [symbol], cfg, session)
+        bars = scanner._download_batch(client, [symbol], cfg, session, duplicates=duplicates)
     except Exception as e:  # noqa: BLE001 -- every kind is a finding here
         if scanner._is_permanent_refusal(e):
             return Check("alpaca", "FAIL", str(scanner._refusal_error(cfg.feed, e)))
@@ -126,7 +136,10 @@ def check_alpaca(symbol: str, cfg: scanner.ScanConfig | None = None) -> Check:
                      "this window")
     newest = scanner._last_bar_date(frame)
     fresh = newest == session
+    dropped = duplicates.get(symbol, 0)
     detail = (f"{cfg.feed.value!r} feed OK: {len(frame)} bars for {symbol}, newest {newest}"
+              + (f" -- {dropped} extra bar(s) dropped as duplicates, keeping the copy that "
+                 "arrived last" if dropped else "")
               + ("" if fresh else f" -- BEHIND the session the clock names ({session}); "
                  "fine before today's close or on a holiday, and a stale feed otherwise"))
     return Check("alpaca", "ok", detail, data={"frame": frame, "fresh": fresh})

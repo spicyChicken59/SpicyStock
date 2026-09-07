@@ -968,10 +968,23 @@
   // names capped by the pipeline, the threshold the block's own number. A
   // snapshot from before the block existed gets the plain sentence, not
   // "0 names".
+  // The bars the feed repeated, from run.duplicate_bars -- the extra copies of
+  // a timestamp it had already sent, which the scanner dropped keeping the
+  // copy that arrived last. The count reached this file and the Actions log
+  // and no sentence anybody reads; these are src/emailer.py's
+  // DUPLICATE_BARS_NOTE words, and a docs test pins each file against the
+  // other's source. Only when it is not zero: a snapshot from before the
+  // field existed says nothing rather than '0 duplicate bars'.
+  function duplicateNote(run) {
+    var n = run.duplicate_bars;
+    if (typeof n !== 'number' || !isFinite(n) || n <= 0) return '';
+    return ' · ' + n + (n === 1 ? ' duplicate bar dropped — ' : ' duplicate bars dropped — ') +
+      'the feed repeated a timestamp, and the copy that arrived last is the one kept';
+  }
   function scannedNote(run) {
     var base = 'nothing dropped — this is what was scanned';
     var sp = run.stopped_printing;
-    if (!sp || typeof sp !== 'object' || !Array.isArray(sp.names) || !sp.count) return base;
+    if (!sp || typeof sp !== 'object' || !Array.isArray(sp.names) || !sp.count) return base + duplicateNote(run);
     var names = sp.names.map(function (n) {
       // No date is a name the feed returned no bar for at all; the words are
       // src/emailer.py's _stopped_printing_line(), and 'since null' is not a date.
@@ -988,7 +1001,8 @@
       : ' stopped printing: ';
     return base + ' · ' + sp.count + (sp.count === 1 ? ' name has' : ' names have') +
       after + names +
-      (more > 0 ? ' and ' + more + ' more' : '') + ' — check the symbol list';
+      (more > 0 ? ' and ' + more + ' more' : '') + ' — check the symbol list' +
+      duplicateNote(run);
   }
 
   function funnelStages(run) {

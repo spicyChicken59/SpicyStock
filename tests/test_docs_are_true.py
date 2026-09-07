@@ -1220,6 +1220,29 @@ def test_a_name_the_feed_returned_nothing_for_is_worded_the_same_in_the_email_an
     assert "`last` and `sessions_behind` null" in _read("README.md")
 
 
+def test_a_bar_the_feed_repeated_is_worded_the_same_in_the_email_and_on_the_page():
+    """One mechanism, one vocabulary, on the two surfaces a person reads.
+
+    The count reached docs/data.json and the Actions log and neither the email
+    nor the page, which is how the same silence was left half-closed for the
+    sibling case until round 9 put run.stopped_printing on all four surfaces.
+    src.emailer's DUPLICATE_BARS_NOTE is the sentence; docs/index.html's
+    duplicateNote() prints the same words, and each is pinned here against the
+    other's source, because a comment claiming two surfaces agree is exactly
+    what carried a drift for a round."""
+    from src import emailer
+
+    assert emailer.DUPLICATE_BARS_NOTE in _read("src/emailer.py"), "the email's words"
+    assert emailer.DUPLICATE_BARS_NOTE in _read("docs/index.html"), "the page's words"
+    # Whitespace-collapsed, because the bullet wraps and a phrase that lands
+    # across a line break is still the sentence a reader reads.
+    readme = " ".join(_read("README.md").split())
+    assert "the extra copies" in readme, "README says the number counts the extra copies"
+    assert "a bar sent three times counts 2" in readme, "and what that means for a triple"
+    assert "a timestamp the response had already sent" in readme, (
+        "and what a duplicate is keyed on, which is narrower than 'sent twice'")
+
+
 def test_a_run_that_scored_nothing_is_worded_the_same_in_the_email_and_on_the_page():
     """One mechanism, one vocabulary, and one state that is not "pending".
 

@@ -285,11 +285,22 @@ sentence was true on one response order only** until the sort was made
 stable: `sort_index()` defaults to quicksort, so a newest-first response
 whose PRELIMINARY copy of the session bar sat earlier on the wire than the
 corrected one kept the preliminary. Reproduced on pandas 3.0.5 with a genuine
-`BarSet` at 20, 60 and 250 bars; under 17 bars numpy sorts stably by accident
-and the test cannot fail, which is written beside it. The bars a feed sends
-twice are counted now (`run.duplicate_bars`, the coverage log line, a warning
-naming the symbols) and nothing else is done with them, because no live
-duplicate has been read off an Actions log yet.
+`BarSet` at 16, 20, 60 and 250 bars. The length is a length IN ELEMENTS ON
+THE WIRE, which is one more than the frame because the extra copy is one of
+them: swept here, 16 elements sort stably by accident and 17 do not, so the
+smallest FRAME that can fail is 16 bars, and 16 is the first parametrised
+case. Three sentences stated that bound in bars and were each one out until
+round 10 measured it again. The bars a feed repeats are counted now, and
+nothing else is done with them, because no live duplicate has been read off
+an Actions log yet: `run.duplicate_bars` is **the extra copies dropped**,
+keyed on the TIMESTAMP (a session sent under two timestamps is a shape this
+neither counts nor drops -- measured, and pinned, so no sentence promises
+more than the index can see), and it reaches the coverage log line, a warning
+naming the symbols, the run block, the ledger entry, the failure notice's
+coverage sentence, one line under the email's funnel and the page's universe
+row, the last two in one shared sentence. `tools/live_check.py` -- the third
+caller of the same downloader, and the only one that reads the live feed --
+says it on its OK line too.
 
 **A hole before the session published a two-day move as the day's burst.**
 Freshness checked only the newest bar, so a halt or a dropped bar the
@@ -677,9 +688,10 @@ exercised its headline. Nine mutants across them, all killed.
   and 0.72 once round 5 put a liquidity block on every entry, 13.63 and
   0.97 once round 6 put the open basis on every row and every mean and the
   round-5 audit put the dollar volume on every ledger row, 13.71 and
-  0.99 once round 7 put a benchmark on every run entry, and 14.04 and 1.08
+  0.99 once round 7 put a benchmark on every run entry, 14.04 and 1.08
   once the rounds 6-7 audit stamped each benchmark with the universe it was
-  measured over -- the guard below
+  measured over, and 14.05 once round 10 put the night's duplicate-bar count
+  on every run entry -- the guard below
   caught every move on the commit that made it. The gzipped figure has
   grown faster than the raw one, because a block of nulls compresses worse
   than a run of numbers; the page's fetch-on-demand argument still holds at
@@ -996,6 +1008,48 @@ assertions closed on the spot (a window that let a true sentence beside a false
 one excuse it; a by_score check any sentence containing "setup" satisfied), and
 the third is not a hole -- `CLAUDE_MODEL`'s local-only note is stated twice, and
 deleting BOTH turns the completeness half red.
+
+**The de-dup audit: a sentinel counted on three paths and readable on one,
+and a count whose own definition was wider than what it measures.** Three
+auditors over the stable-sort commit, six mediums and ten lows, every one
+reproduced HERE by execution. The largest was the silence one surface short:
+`run.duplicate_bars` reached `docs/data.json` and the Actions log and no
+sentence a person reads -- not the email, not the page, not the durable
+record, which is two of the four surfaces round 9 gave the sibling case. It
+reaches all four now (`_duplicate_bars_line()` under the funnel and
+`duplicateNote()` in the universe row share one sentence,
+`emailer.DUPLICATE_BARS_NOTE`, pinned each against the other's source; the
+ledger entry keeps the number, because `docs/data.json` is rewritten by the
+next run and the first live duplicate has to survive to be read; and
+`scan_coverage()`'s fixed key list -- a count added to the scan's stats and
+not to that line is a count the failure notice cannot print -- carries it
+into the coverage sentence).
+
+**And the definition was wider than the measurement, in three prose places
+and one direction.** `duplicated()` sees the index, so what is counted is
+the EXTRA COPIES of a timestamp the response had already sent: a bar sent
+three times counts 2, and a session sent under TWO timestamps is a shape
+this neither counts nor drops -- driven through the real downloader, where
+it survives both the stale and the gap rules and makes `detect_setup` read
+one session twice and find no gain, which is the very defect the de-dup
+exists to prevent arriving by another door. The sentences say what is
+measured now and a test pins the shape, rather than a session-level de-dup
+invented for a wire nobody has seen. Three retry-and-warning rules that no
+test could fail on are pinned with them (the retried batch's own duplicates;
+the fill warning's totals and most-repeated-first order; the eight-name
+truncation marker on both name-listing warnings), and `tools/live_check.py`
+-- the third caller of the downloader, and the only one that reads the live
+feed -- stopped being silent.
+
+**The fixture parity is derived now, and it was already one key short.**
+`tools/check_fixture_fresh.py` compares `tests/fixtures/data.json` to the
+GENERATOR, so a generator that forgets a key and a fixture that lacks it
+agree with each other and every guard says both are current -- the class
+that put `_LEDGER_RUNS` in the rounds 6-7 audit. A test drives one evening
+run through the doubles and asserts the committed fixture's run block
+carries every key `publish()` writes; `status` was missing, which made the
+canonical fixture a shape the pipeline cannot produce, and the generator
+writes it.
 
 ## Round 9 — the ten items the rounds 6-7 audit left open, and what working them turned up
 

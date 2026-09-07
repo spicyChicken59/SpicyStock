@@ -809,6 +809,14 @@ data = {
         "liquidity": {"pctile": PCTILE, "floor": FLOOR, "refused": ILLIQUID},
         "scored_by": {"claude": by_src["claude"], "fallback": by_src["fallback"]},
         "model": MODEL,
+        # The verdict word publish() stamps on every run, and the one key of
+        # the run block this file did not write: a clean night's is "ok", and
+        # its absence made the fixture a shape the pipeline cannot produce.
+        # Found by deriving the parity rather than remembering it -- an
+        # end-to-end run's own keys are the standard in
+        # tests/test_pipeline.py -- because check_fixture_fresh.py compares
+        # this file to the fixture it wrote and agrees with itself either way.
+        "status": "ok",
         "errors": [],
     },
     "candidates": candidates,

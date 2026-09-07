@@ -2206,6 +2206,17 @@ class Ledger:
         # just written, on any run whose caller had no fingerprint.
         if isinstance(run.get("rules"), dict):
             entry["rules"] = dict(run["rules"])
+        # How many bars the feed repeated that night -- the extra copies of a
+        # timestamp it had already sent, which src.scanner dropped keeping the
+        # copy that arrived last. docs/data.json carries it too, and every
+        # later run rewrites that file: this is the only place it survives the
+        # next night, which is the whole point of counting it, since no
+        # duplicate has been read off a live response yet and the first one
+        # has to still be there to read. Absent when the run carried none, the
+        # rule `rules` follows above: a run from before the field existed says
+        # nothing, and a null is a shape no writer produces.
+        if isinstance(run.get("duplicate_bars"), int) and not isinstance(run["duplicate_bars"], bool):
+            entry["duplicate_bars"] = run["duplicate_bars"]
         self.runs = [r for r in self.runs
                      if (r.get("date"), r.get("type")) != (entry["date"], entry["type"])]
         self.runs.insert(0, entry)

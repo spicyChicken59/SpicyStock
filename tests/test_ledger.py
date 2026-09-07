@@ -1404,6 +1404,33 @@ def _run(date_str: str, tickers=("AAA",), run_type: str = "evening") -> tuple:
     return run, candidates, gated
 
 
+def test_the_run_entry_keeps_the_bars_the_feed_repeated_and_omits_what_it_was_not_told(tmp_path):
+    """docs/data.json is rewritten by every later run, so the count of bars a
+    feed repeated survived exactly one night: the durable record -- the only
+    file that keeps a year of nights and the one a reader asks "which nights
+    had duplicates?" of -- had no trace of it.
+
+    An ABSENT key and not a null for a run that carried no count, the rule
+    `rules` follows: absent is a run from before the field existed, and null
+    is a shape no writer produces (and one _malformed_rows() is free to refuse
+    later)."""
+    book = ledger.Ledger(tmp_path).load()
+    run, cands, gated = _run("2026-08-25")
+
+    older = book.add_run(run, cands, gated)
+    assert "duplicate_bars" not in older, "a run block from before the count says nothing"
+
+    entry = book.add_run({**run, "date": "2026-08-26", "duplicate_bars": 3}, cands, gated)
+    assert entry["duplicate_bars"] == 3
+    book.write()
+    stored = json.loads((tmp_path / ledger.LEDGER_NAME).read_text())["runs"]
+    assert [r.get("duplicate_bars") for r in stored] == [3, None], (
+        "on the file itself, and on the newer run alone", stored)
+
+    weird = book.add_run({**run, "date": "2026-08-27", "duplicate_bars": "lots"}, cands, gated)
+    assert "duplicate_bars" not in weird, "and a shape no writer produces is not stored either"
+
+
 def test_the_view_says_which_runs_a_later_run_will_still_fetch_for(tmp_path):
     """`fills_closed` is _fillable()'s own window, published for the page.
 

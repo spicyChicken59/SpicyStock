@@ -534,6 +534,24 @@ def test_a_failure_notice_counts_what_a_failed_batch_took_with_it(
     assert "4 dropped after their batch failed twice" in text
 
 
+def test_a_failure_notice_counts_the_bars_the_feed_repeated(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, tmp_path
+):
+    """The third clause of the same sentence. scan_coverage() copies a fixed
+    list of keys, and `duplicate_bars` was not one of them, so the count the
+    scanner had already made reached docs/data.json and never the notice a
+    person actually reads -- which on the night a feed starts repeating bars
+    is the surface that says so first."""
+    names = _stale_universe(monkeypatch, fake_alpaca, ohlcv, tmp_path)
+    fake_alpaca.send_session_bar_twice(names[0], copies=2)
+    fake_alpaca.send_session_bar_twice(names[1])
+
+    assert _main(monkeypatch, "evening") == pipeline.EXIT_FAILED
+
+    text = _visible(mocked_boundaries["resend"].sent[0]["html"])
+    assert "3 bars dropped as duplicates" in text, text
+
+
 def test_a_failure_before_the_scan_reports_no_coverage_rather_than_zero(
     monkeypatch, mocked_boundaries, universe
 ):
@@ -2160,14 +2178,26 @@ def test_the_forward_returns_fetch_is_not_the_one_path_a_duplicate_stays_silent_
     the SCAN. The fill asks for a handful of pending names over a different
     window, so one number over both populations would be a number no reader
     could interpret."""
-    fake_alpaca.add_history("BURST", ohlcv("burst"))
-    fake_alpaca.send_session_bar_twice("BURST", copies=2)
+    for i, name in enumerate(("BURST", "QUIET", "CLEAN")):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i))
+    fake_alpaca.send_session_bar_twice("BURST", copies=3)
+    fake_alpaca.send_session_bar_twice("QUIET")
     with caplog.at_level(logging.WARNING, logger="src.pipeline"):
-        frames = pipeline.forward_bars(ScanConfig(), ["BURST"], scanner.current_session())
+        frames = pipeline.forward_bars(ScanConfig(), ["BURST", "QUIET", "CLEAN"],
+                                       scanner.current_session())
 
-    assert not frames["BURST"].index.has_duplicates
-    warned = [r.getMessage() for r in caplog.records if "sent twice" in r.getMessage()]
-    assert len(warned) == 1 and "BURST (2)" in warned[0], [r.getMessage() for r in caplog.records]
+    assert not any(f.index.has_duplicates for f in frames.values())
+    warned = [r.getMessage() for r in caplog.records if "already sent" in r.getMessage()]
+    assert len(warned) == 1, [r.getMessage() for r in caplog.records]
+    # The whole sentence, not just that one exists: the names it is over, the
+    # extra copies in all, and most-repeated first. Each of those three
+    # survived a mutant while only the existence of the counting was pinned --
+    # "3 of 2 name(s)", "1 bars in all" for four dropped, and the least
+    # repeated name leading.
+    assert warned[0].startswith("2 of 3 name(s) whose forward returns are still open carried a "
+                                "timestamp the response had already sent (4 extra bar(s) dropped)"
+                                ), warned[0]
+    assert warned[0].endswith("keeping the copy that arrived last: BURST (3), QUIET (1)"), warned[0]
 
 
 def test_the_run_block_says_how_many_bars_the_feed_sent_twice(
@@ -2200,6 +2230,10 @@ def test_the_run_block_says_how_many_bars_the_feed_sent_twice(
     assert snapshot["run"]["status"] == "ok" and report.errors == [], (
         "counted, not acted on", report.errors)
     assert snapshot["run"]["bursts"] >= 1, "and the burst the duplicated name printed is still found"
+    # docs/data.json is rewritten by the next run, so the DURABLE record is
+    # where the first live duplicate has to survive to be read at all.
+    assert [r.get("duplicate_bars") for r in recorded(tmp_path)["runs"]] == [3, 0], (
+        "the ledger entry keeps it, for this night and the clean one before it")
 
 
 def test_a_published_run_that_does_not_say_what_it_scanned_still_re_presents(
@@ -3955,9 +3989,14 @@ def test_the_morning_mail_names_what_stopped_printing_the_way_the_page_does(
     does not depend on what the file holds this morning."""
     names = _wide_universe(fake_alpaca, ohlcv, fresh=24)
     fake_alpaca.add_history("GONE", ohlcv("burst", variant=90), stale_sessions=30)
+    # The duplicate count is a fact about the same scan and travels the same
+    # way: the morning presents that run's funnel, so a count printed under it
+    # in the evening and dropped in the morning would be one mechanism with
+    # two vocabularies again.
+    fake_alpaca.send_session_bar_twice(names[0], copies=2)
     pipeline.run("evening", dry_run=True, tickers=names + ["GONE", "NOSUCH"])
     source = published(tmp_path)["run"]
-    assert source["stopped_printing"]["count"] == 2
+    assert source["stopped_printing"]["count"] == 2 and source["duplicate_bars"] == 2
     _universe_file(monkeypatch, tmp_path, names)  # GONE and NOSUCH retired since
 
     market_clock.before_the_open()
@@ -3969,6 +4008,41 @@ def test_the_morning_mail_names_what_stopped_printing_the_way_the_page_does(
     assert f"in the symbol file as the {source['date']} run read it" in text
     assert "in the symbol file with no bar" not in text, (
         "which is what the evening says, of a file it had just read")
+    assert f"Duplicate bars: 2 dropped — {emailer.DUPLICATE_BARS_NOTE}." in text, text
+
+
+def test_the_canonical_fixtures_run_block_carries_every_key_the_pipeline_writes(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """DERIVED, not remembered. tests/fixtures/data.json is hand-authored and
+    every page check reads it, so a key publish() writes and the generator
+    forgets makes the fixture describe a file the pipeline cannot produce --
+    which is the one thing that fixture exists to prevent, and which this repo
+    has already done twice (`_LEDGER_RUNS` carried no `benchmark`; the run
+    block carried no `duplicate_bars` until a key was typed in by hand and
+    nothing would have noticed if it had not been).
+
+    The two guards cover two different halves and neither covers this one.
+    check_fixture_fresh.py compares the committed file to the GENERATOR, so it
+    catches a generator edited without regenerating and passes happily when
+    the generator and the fixture AGREE on missing a key -- which is the state
+    this test found, `status`, written by publish() on every run and by
+    nothing in tools/make_fixture.py. So the pipeline's own output is the
+    standard here: one evening run through the doubles, and the keys it
+    publishes.
+    """
+    names = _five_name_market(fake_alpaca, ohlcv)
+    _universe_file(monkeypatch, tmp_path, names)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=True)
+
+    written = set(published(tmp_path)["run"])
+    fixture = json.loads(
+        (Path(__file__).resolve().parent / "fixtures" / "data.json").read_text())["run"]
+
+    assert written - set(fixture) == set(), (
+        "the fixture's run block is missing a key the pipeline writes; add it to "
+        "tools/make_fixture.py and regenerate", sorted(written - set(fixture)))
 
 
 def test_a_morning_run_refuses_to_mail_the_hand_authored_fixture(

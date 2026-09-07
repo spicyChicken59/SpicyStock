@@ -966,6 +966,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -1057,6 +1058,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 1.72,
         "d3": null,
@@ -1148,6 +1150,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 1.1,
         "d3": null,
@@ -1239,6 +1242,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 3.16,
         "d3": 5.15,
@@ -1330,6 +1334,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 3.69,
         "d3": 4.79,
@@ -1421,6 +1426,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 1.11,
         "d3": 1.23,
@@ -1512,6 +1518,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 6.0,
         "d3": 5.44,
@@ -1603,6 +1610,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 0.36,
         "d3": 3.73,
@@ -1694,6 +1702,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 2.82,
         "d3": 2.83,
@@ -1785,6 +1794,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -1876,6 +1886,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 0.48,
         "d3": 5.02,
@@ -1967,6 +1978,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 3.17,
         "d3": 9.88,
@@ -2058,6 +2070,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 1.07,
         "d3": 1.72,
@@ -2149,6 +2162,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 4.05,
         "d3": 2.67,
@@ -2240,6 +2254,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 3.58,
         "d3": 2.49,
@@ -2331,6 +2346,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 0.52,
         "d3": -1.53,
@@ -2422,6 +2438,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 6.81,
         "d3": 4.81,
@@ -2513,6 +2530,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": -1.38,
         "d3": -1.06,
@@ -2604,6 +2622,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 6.88,
         "d3": 7.82,
@@ -2695,6 +2714,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -2786,6 +2806,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 2.24,
         "d3": 2.77,
@@ -2877,6 +2898,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": -0.46,
         "d3": -2.62,
@@ -2968,6 +2990,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 5.85,
         "d3": 12.92,
@@ -3059,6 +3082,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 0.72,
         "d3": 3.54,
@@ -3150,6 +3174,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 0.92,
         "d3": 3.23,
@@ -3241,6 +3266,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 0.3,
         "d3": 5.12,
@@ -3332,6 +3358,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": -0.56,
         "d3": 2.97,
@@ -3423,6 +3450,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 0.94,
         "d3": 2.05,
@@ -3514,6 +3542,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 2.89,
         "d3": 5.97,
@@ -3605,6 +3634,7 @@
         "window.sma_sessions": 20,
         "window.tight_sessions": 7
       },
+      "duplicate_bars": 0,
       "forward_returns": {
         "d1": 0.9,
         "d3": 3.71,

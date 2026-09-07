@@ -334,6 +334,42 @@ def _stopped_printing_line(scan_stats: dict, run_type: str = "evening") -> str:
             f"{esc(block.get('after_sessions'))} sessions; {act}.</p>")
 
 
+#: The one sentence the email and docs/index.html's scannedNote() both print
+#: about a repeated bar. Two surfaces for one mechanism is how this project
+#: grows two vocabularies, so the words live here and a docs test pins each
+#: file against the other's source. It says what was DROPPED (the extra
+#: copies) and which copy survived, because that is the whole of what the
+#: scanner decided.
+#: One literal and not two joined halves, because a docs test looks for these
+#: words in this file and in docs/index.html.
+DUPLICATE_BARS_NOTE = "the feed repeated a timestamp, and the copy that arrived last is the one kept"
+
+
+def _duplicate_bars_line(scan_stats: dict) -> str:
+    """"Duplicate bars: 3 dropped — ..." — or nothing.
+
+    A SENTINEL, printed under the funnel beside the names that stopped
+    printing, because a reader asking what the scan saw asks there. The count
+    reached `docs/data.json`, the ledger entry and the Actions log; until this
+    line it reached no sentence a person reads, which is the silence the
+    count itself exists to end, one surface short.
+
+    Only when the run recorded a non-zero count: a snapshot from before the
+    field existed says nothing rather than "0", the same rule the refusals
+    line and _stopped_printing_line() follow, and is_count() is the one rule
+    that decides what a number is. Deliberately NOT refused at load the way
+    run.stopped_printing is: that is a block the email indexes into, this is
+    an integer nothing indexes into, so a shape no writer produces prints
+    nothing here and crashes nowhere -- a guard for it would be one no input
+    can reach and no test can fail on.
+    """
+    dupes = scan_stats.get("duplicate_bars")
+    if not is_count(dupes) or not dupes:
+        return ""
+    return (f'\n    <p style="color:#666;margin-top:0;">Duplicate bars: {dupes} dropped — '
+            f"{DUPLICATE_BARS_NOTE}.</p>")
+
+
 #: What a streak's `unknown_reason` says to a reader when the record can say
 #: nothing narrower. `day: null` is the state this whole mechanism cares most
 #: about — UNKNOWN, which is not day 1 — and it used to render here as nothing
@@ -816,6 +852,14 @@ def coverage_phrase(scan_stats: dict) -> str:
         dropped = counts["dropped"]
         parts.append(f"{dropped} dropped after {'its' if dropped == 1 else 'their'} "
                      "batch failed twice")
+    if is_count(counts.get("duplicate_bars")) and counts["duplicate_bars"]:
+        # The extra copies of a timestamp the response had already sent. Its
+        # own clause and conditional on its own count, like every other: a
+        # scan that died before counting has no number, and "0 bars dropped as
+        # duplicates" is a claim about a scan that got far enough to look.
+        dupes = counts["duplicate_bars"]
+        parts.append(f"{dupes} bar{'' if dupes == 1 else 's'} dropped as "
+                     f"{'a duplicate' if dupes == 1 else 'duplicates'}")
     return ", ".join(parts)
 
 
@@ -1033,7 +1077,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
     <h2 style="margin-bottom:4px;">{title}</h2>
     <p style="color:#666;margin-top:0;">
       {_funnel_line(results, run_type, scan_stats)}{_provenance_line(scan_stats)}
-    </p>{_stopped_printing_line(scan_stats, run_type)}
+    </p>{_stopped_printing_line(scan_stats, run_type)}{_duplicate_bars_line(scan_stats)}
     <table style="border-collapse:collapse;width:100%;max-width:1100px;">
       <tr style="background:#1a1a2e;color:#fff;text-align:left;">
         <th style="padding:8px;">Ticker</th><th style="padding:8px;">Gain</th>

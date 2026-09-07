@@ -317,6 +317,14 @@ const VARIANTS = {
     delete d.run.stopped_printing.after_sessions;
     return d;
   },
+  // A night the feed repeated bars. run.duplicate_bars is 0 on every source
+  // this repo has -- every night so far has been clean -- so the sentence the
+  // page prints for the first live one is rendered nowhere without this.
+  duplicatebars() {
+    const d = clone(REAL);
+    d.run.duplicate_bars = 3;
+    return d;
+  },
   // A snapshot from before the open basis existed: no from_open on any row,
   // any run mean or any evidence outcome. The open tab must say the record
   // predates it, and no close-basis number may appear under the open label.
@@ -847,6 +855,9 @@ ok('a name the feed returned no bar for at all is printed without a date, in the
   stopped.names.some((n) => n.last === null && n.sessions_behind === null)
   && funnel.rows[0][4].includes(' (no bar at all)') && !funnel.rows[0][4].includes('since null'),
   funnel.rows[0][4]);
+// Kept for the duplicate-bars pair below: this is the note on the canonical
+// fixture, whose run counted no repeated bar.
+const fixtureFunnelNote = funnel.rows[0][4];
 const worstDrop = STAGES.slice(1).map(([name, v], i) => ({ name, lost: STAGES[i][1] - v }))
   .reduce((a, b) => (b.lost > a.lost ? b : a));
 ok('the page names where the attrition actually is',
@@ -973,6 +984,19 @@ ok('the funnel says an absolute rule can cut a name at the gate stage, when the 
 ok('the funnel caption names the floor at the stage it cuts, with the same dollar figure',
   caption.includes(`below the liquidity floor (${floorDollars}/day`),
   caption.slice(0, 200));
+await open('/v/duplicatebars/');
+// The bars the feed repeated, in the universe row's note. The count reached
+// docs/data.json and the Actions log and no surface a person reads; the
+// email's DUPLICATE_BARS_NOTE is this same sentence, and a docs test pins the
+// two files against each other.
+const dupNote = (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent)))[0];
+ok('the universe row says how many bars the feed repeated and which copy was kept',
+  dupNote.includes('3 duplicate bars dropped')
+  && dupNote.includes('the feed repeated a timestamp, and the copy that arrived last is the one kept'),
+  dupNote.slice(0, 240));
+ok('and the clean night this fixture really is says nothing rather than zero',
+  REAL.run.duplicate_bars === 0 && !fixtureFunnelNote.includes('duplicate bar'),
+  fixtureFunnelNote.slice(0, 240));
 await open('/v/nothreshold/');
 const noThresholdNote = (await page.$$eval('#funnel-table tbody tr', (rows) => rows.map((r) => r.textContent)))[0];
 ok('a stopped-printing block with no threshold names its symbols and states no number',
