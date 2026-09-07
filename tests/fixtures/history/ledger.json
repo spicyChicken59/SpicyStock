@@ -42,6 +42,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 190247596.4,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -460,7 +461,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -479,6 +480,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -535,6 +537,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 187495350,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -780,7 +783,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -799,6 +802,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 1.72,
         "d3": null,
@@ -855,6 +859,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 204469510.6,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -1138,7 +1143,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -1157,6 +1162,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 1.1,
         "d3": null,
@@ -1213,6 +1219,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 270157178.6,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -1593,7 +1600,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -1612,6 +1619,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 3.16,
         "d3": 5.15,
@@ -1668,6 +1676,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 210146671.8,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -2045,7 +2054,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -2064,6 +2073,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 3.69,
         "d3": 4.79,
@@ -2120,6 +2130,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 211054539,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -2409,7 +2420,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -2428,6 +2439,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 1.11,
         "d3": 1.23,
@@ -2484,6 +2496,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 193721823.8,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -2682,7 +2695,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -2701,6 +2714,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 6.0,
         "d3": 5.44,
@@ -2757,6 +2771,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 223775606.6,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -3169,7 +3184,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -3188,6 +3203,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.36,
         "d3": 3.73,
@@ -3244,6 +3260,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 161887274.6,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -3445,7 +3462,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -3464,6 +3481,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 2.82,
         "d3": 2.83,
@@ -3520,6 +3538,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 149343306.2,
+        "over": 77,
         "refused": 1
       },
       "candidates": [
@@ -3762,7 +3781,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -3781,6 +3800,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -3837,6 +3857,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 166255999,
+        "over": 77,
         "refused": 1
       },
       "candidates": [
@@ -4079,7 +4100,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -4098,6 +4119,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.48,
         "d3": 5.02,
@@ -4154,6 +4176,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 169311660.6,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -4487,7 +4510,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -4506,6 +4529,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 3.17,
         "d3": 9.88,
@@ -4562,6 +4586,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 155884278,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -4766,7 +4791,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -4785,6 +4810,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 1.07,
         "d3": 1.72,
@@ -4841,6 +4867,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 134251181.8,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -5086,7 +5113,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -5105,6 +5132,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 4.05,
         "d3": 2.67,
@@ -5161,6 +5189,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 192993291.60000002,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -5411,7 +5440,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -5430,6 +5459,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 3.58,
         "d3": 2.49,
@@ -5486,6 +5516,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 176002148.4,
+        "over": 77,
         "refused": 1
       },
       "candidates": [
@@ -5775,7 +5806,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -5794,6 +5825,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.52,
         "d3": -1.53,
@@ -5850,6 +5882,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 212691449.8,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -6054,7 +6087,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -6073,6 +6106,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 6.81,
         "d3": 4.81,
@@ -6129,6 +6163,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 166194170,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -6330,7 +6365,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -6349,6 +6384,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": -1.38,
         "d3": -1.06,
@@ -6405,6 +6441,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 170293802.20000002,
+        "over": 77,
         "refused": 1
       },
       "candidates": [
@@ -6606,7 +6643,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -6625,6 +6662,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 6.88,
         "d3": 7.82,
@@ -6681,6 +6719,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 176022991.8,
+        "over": 77,
         "refused": 1
       },
       "candidates": [],
@@ -6875,7 +6914,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -6894,6 +6933,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -6950,6 +6990,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 197150178.4,
+        "over": 77,
         "refused": 1
       },
       "candidates": [
@@ -7324,7 +7365,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -7343,6 +7384,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 2.24,
         "d3": 2.77,
@@ -7399,6 +7441,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 191448670.20000002,
+        "over": 77,
         "refused": 1
       },
       "candidates": [
@@ -7814,7 +7857,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -7833,6 +7876,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": -0.46,
         "d3": -2.62,
@@ -7889,6 +7933,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 144648934.2,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -8134,7 +8179,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -8153,6 +8198,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 5.85,
         "d3": 12.92,
@@ -8209,6 +8255,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 162117771.6,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -8627,7 +8674,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -8646,6 +8693,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.72,
         "d3": 3.54,
@@ -8702,6 +8750,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 146821119.8,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -9170,7 +9219,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -9189,6 +9238,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.92,
         "d3": 3.23,
@@ -9245,6 +9295,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 145024717.20000002,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -9613,7 +9664,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -9632,6 +9683,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.3,
         "d3": 5.12,
@@ -9688,6 +9740,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 151707698.4,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -9930,7 +9983,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -9949,6 +10002,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": -0.56,
         "d3": 2.97,
@@ -10005,6 +10059,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 179566162.2,
+        "over": 77,
         "refused": 1
       },
       "candidates": [
@@ -10470,7 +10525,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -10489,6 +10544,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.94,
         "d3": 2.05,
@@ -10545,6 +10601,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 160537948.20000002,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -10839,7 +10896,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -10858,6 +10915,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 2.89,
         "d3": 5.97,
@@ -10914,6 +10972,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 140296815.20000002,
+        "over": 77,
         "refused": 0
       },
       "candidates": [
@@ -11120,7 +11179,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -11139,6 +11198,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.9,
         "d3": 3.71,

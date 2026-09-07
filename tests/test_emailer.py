@@ -361,6 +361,80 @@ def test_an_evening_scan_that_completed_says_what_it_found_whatever_else_broke(
     assert message in text, "and the reason is still in the band"
 
 
+COVERAGE = {"requested": 230, "with_bars": 228, "fresh": 226, "measured": 226,
+            "no_bars": 2, "dropped": 0, "duplicate_bars": 0, "stale": 2, "gapped": 0}
+
+
+@pytest.mark.parametrize("measured, expected, forbidden", [
+    # Every name that answered was read: the sentence it always was.
+    (228, "No 4% burst anywhere in the universe today", "measured for this session"),
+    # Some were not, which is the ordinary night -- halts and holes -- and the
+    # cell is the only thing explaining itself, because a handful is under
+    # every degrade threshold and the band is empty.
+    (226, "No 4% burst among the 226 names measured for this session; the other 2 "
+          "that answered could not be.", "anywhere in the universe"),
+    # And none were. This is a claim about a session nothing read.
+    (0, "Not one of the 228 names that answered could be measured for this session",
+     "quiet market"),
+])
+def test_the_quiet_market_sentence_is_only_said_of_the_names_that_were_read(
+    measured, expected, forbidden
+):
+    """The widest claim the mail makes about the market, made from `bursts ==
+    0` alone -- which is also what a scan that measured NOT ONE NAME reports.
+    Three states off one block, and the two new ones are the ones that used to
+    print the third."""
+    stats = dict(STATS, bursts=0, gated=0, coverage=dict(COVERAGE, measured=measured))
+
+    text = _visible_text(build_html([], "evening", stats))
+
+    assert expected in text, text
+    assert forbidden not in text, text
+
+
+def test_a_run_that_reported_no_coverage_keeps_the_sentence_it_always_had():
+    """Absent is absent: every snapshot from before run.coverage existed says
+    nothing about how much was read, and inventing a 0 for it would tell a
+    reader of a year-old night that nothing was measured."""
+    text = _visible_text(build_html([], "evening", dict(STATS, bursts=0, gated=0)))
+    assert "No 4% burst anywhere in the universe today" in text
+    assert "Measured for the session" not in text
+    # And the rule under both surfaces, on the function itself: absent is
+    # absent. A (0, 0) here reads identically to None at today's two call
+    # sites and is a manufactured count the moment a third one reads it --
+    # which is how "0 asked" reached a failure notice for a scan that never
+    # asked.
+    assert emailer.measured_counts({}) is None
+    assert emailer.measured_counts({"coverage": {"with_bars": 12}}) is None
+
+
+@pytest.mark.parametrize("measured, shown", [
+    (226, "Measured for the session: 226 of 228 that answered"),
+    (0, "Measured for the session: 0 of 228 that answered"),
+])
+def test_the_funnel_names_the_first_cut_when_it_bit(measured, shown, results):
+    """Between "Universe: 230 checked-in US common stocks" and "4% bursts
+    found" sits every name that answered and could not be measured, and the
+    funnel had no line for it -- so a night that measured nothing read exactly
+    like a night that measured everything. The page's funnel captions the same
+    cut."""
+    stats = dict(STATS, coverage=dict(COVERAGE, measured=measured))
+    assert shown in _visible_text(build_html(results, "evening", stats))
+
+
+@pytest.mark.parametrize("coverage", [
+    None,                                              # before the block existed
+    dict(COVERAGE, measured=228),                      # nothing was cut here
+    {"requested": 230},                                # a scan that died before it counted
+    dict(COVERAGE, measured="0"),                      # not a count
+])
+def test_the_funnel_says_nothing_about_a_cut_it_cannot_count(coverage, results):
+    """The rule the refusal lines follow: printed only when it bit, and never
+    manufactured. A missing count must not arrive as "0 of 0"."""
+    stats = dict(STATS, **({"coverage": coverage} if coverage else {}))
+    assert "Measured for the session" not in _visible_text(build_html(results, "evening", stats))
+
+
 def test_the_body_counts_how_many_scores_are_not_ai_scores(results):
     assert "Scored by Claude: 8 of 12" in build_html(results, "evening", DEGRADED)
     assert "Scored by Claude" not in build_html(results, "evening", STATS), (
@@ -1839,6 +1913,27 @@ def test_the_email_says_how_many_bars_the_feed_repeated_and_nothing_when_none(re
      "12 asked, 12 answered, 12 with a bar for 2026-09-07, 1 bar dropped as a duplicate"),
     ({"requested": 12, "with_bars": 12, "fresh": 12, "session": "2026-09-07",
       "duplicate_bars": 0},
+     "12 asked, 12 answered, 12 with a bar for 2026-09-07"),
+    # How many of the names that carried the session could actually be
+    # MEASURED for it -- a different number, since a name with a bar for the
+    # session and none for the session before it has one and cannot be read.
+    # The notice is the surface an operator has on the night a scan dies, and
+    # this is the count that tells a blind night from a quiet one.
+    ({"requested": 12, "with_bars": 12, "fresh": 12, "measured": 0,
+      "session": "2026-09-07"},
+     "12 asked, 12 answered, 12 with a bar for 2026-09-07, 0 of those measured"),
+    ({"requested": 12, "with_bars": 12, "fresh": 12, "measured": 11,
+      "session": "2026-09-07"},
+     "12 asked, 12 answered, 12 with a bar for 2026-09-07, 11 of those measured"),
+    # Absent is absent, and "none with a bar" already says the measurement is
+    # zero: one fact is not stated twice.
+    ({"requested": 12, "with_bars": 12, "fresh": 12, "session": "2026-09-07"},
+     "12 asked, 12 answered, 12 with a bar for 2026-09-07"),
+    ({"requested": 12, "with_bars": 12, "fresh": 0, "measured": 0,
+      "session": "2026-09-07"},
+     "12 asked, 12 answered, none with a bar for 2026-09-07"),
+    ({"requested": 12, "with_bars": 12, "fresh": 12, "measured": "0",
+      "session": "2026-09-07"},
      "12 asked, 12 answered, 12 with a bar for 2026-09-07"),
 ])
 def test_the_coverage_phrase_says_what_the_scan_reached_and_no_more(coverage, expected):

@@ -519,7 +519,8 @@
   // MAX_STREAK_GAP_SESSIONS; this only renders what the file says.
   //
   // A NULL DAY IS NOT DAY 1. It means the record cannot say — it could not be
-  // read, it holds nothing, or it does not reach back far enough — and
+  // read, it holds nothing, it does not reach back far enough, or a session
+  // inside the window it does reach measured no name at all — and
   // `unknown_reason` says which. Printing "new setup" there would turn a fact
   // about a file into a claim about the market, and printing nothing (which
   // both tables used to do) leaves the reader to supply the claim themselves.
@@ -541,7 +542,13 @@
     history_undated: 'streak unknown — the history holds runs, but none of them '
               + 'carry a date to count from',
     history_unreadable: 'streak unknown — the run could not read its history',
-    window_not_covered: 'streak unknown — the history does not reach back this far'
+    window_not_covered: 'streak unknown — the history does not reach back this far',
+    // The fifth, and the only one that is not about how FAR the record
+    // reaches: it does, and one of the nights inside the window measured no
+    // name at all, so an earlier burst would have been invisible to it.
+    // src/emailer.py's STREAK_UNKNOWN is the same map in the same words.
+    blind_session: 'streak unknown — a session inside the window measured no name '
+              + 'at all, so an earlier burst could not have been seen'
   };
   // What was done with the name the last time it was seen. 'not scored' used
   // to cover both of the bottom two, which are near opposites: the gate threw
@@ -957,10 +964,21 @@
   }
   // The contract: floor is null when no name traded (the rule on, nothing
   // to rank), which is a different sentence from "not recorded".
+  // A NULL FLOOR HAS TWO CAUSES AND THIS SAYS WHICH. liquidityOf() already
+  // takes the rule being OFF out of the picture; what is left is "nothing
+  // could be ranked", and run.liquidity.over -- how many names the percentile
+  // was drawn from -- is what tells a night on which nothing traded from a
+  // night on which nothing could be MEASURED. Both wrote floor: null, and
+  // this printed "nothing traded" over a scan the feed had answered in full.
+  // A block from before `over` existed keeps the older sentence, which is
+  // what those runs can support.
   function floorText(run) {
     var l = liquidityOf(run) || {};
+    var over = typeof l.over === 'number' && isFinite(l.over) ? l.over : null;
+    var noFloor = over === 0 ? 'no floor — nothing could be measured for this session'
+      : 'no floor — nothing traded';
     var floor = typeof l.floor === 'number' && isFinite(l.floor) ? '$' + big(l.floor) + '/day'
-      : (l.floor === null ? 'no floor — nothing traded' : 'floor not recorded');
+      : (l.floor === null ? noFloor : 'floor not recorded');
     return typeof l.pctile === 'number' && isFinite(l.pctile) ? floor + ', the ' + ordinal(l.pctile) + ' percentile' : floor;
   }
   // The universe row's own note: the names in the symbol file that have
@@ -1005,6 +1023,30 @@
       duplicateNote(run);
   }
 
+  // (measured, answered) off run.coverage, or null for a snapshot from before
+  // the block existed -- and for one whose counts are not counts, since this
+  // page reads whatever docs/ holds and has no load check behind it. Absent
+  // is absent: a missing count must never arrive here as 0.
+  function measuredOf(run) {
+    var c = run && run.coverage;
+    if (!c || typeof c !== 'object' || Array.isArray(c)) return null;
+    var m = c.measured, a = c.with_bars;
+    if (typeof m !== 'number' || !isFinite(m) || m < 0) return null;
+    if (typeof a !== 'number' || !isFinite(a) || a < 0) return null;
+    return { measured: m, answered: a };
+  }
+  function burstWhy(run) {
+    var c = measuredOf(run), gain = 'no 4% gain on the day';
+    if (!c || c.measured >= c.answered) return gain;
+    if (!c.measured) {
+      // Not one name was read, so nothing here was refused for its gain and
+      // naming that cause would be the false half of a true sentence.
+      return 'not one of the ' + c.answered + ' names that answered could be measured for this session';
+    }
+    return gain + '; ' + (c.answered - c.measured) + ' of the ' + c.answered +
+      ' that answered could not be measured for this session';
+  }
+
   function funnelStages(run) {
     var g = run.gate || {};
     var short = run.shortlist_size || 0;
@@ -1012,7 +1054,15 @@
       { name: 'universe scanned', n: (run.universe && run.universe.size) || 0,
         why: null, note: (run.universe && run.universe.label) || 'symbols scanned' },
       { name: '4% bursts', n: run.bursts || 0,
-        why: 'no 4% gain on the day', note: 'the Layer-1 scan' },
+        // THE FIRST CUT IS NOT ALL ONE CAUSE. Between the universe and the
+        // bursts sit the names that answered and could not be measured --
+        // halted, holed on the session before, unreadable -- and this
+        // captioned every one of them "no 4% gain on the day". On a BLIND
+        // night, where not one name could be measured, the page said the
+        // whole universe had failed to gain 4%: a quiet market, printed as
+        // fact, over a session nothing read. run.coverage carries both
+        // counts; src/emailer.py's MEASURED_PHRASE is these words.
+        why: burstWhy(run), note: 'the Layer-1 scan' },
       // Two things cut a name at this stage now, and the caption says so only
       // when the run really had a veto to apply: a snapshot written before
       // the rule existed carries no gate.vetoes, and naming a rule that run
@@ -1841,13 +1891,16 @@
         var longest = at(r.outcomes, h);
         return el('tr', null, [
           el('td', null, r.day === null || r.day === undefined
-            // FOUR reasons put a burst in this bucket and this named one of
-            // them -- the one the only available fixture happens to carry. A
+            // SEVERAL reasons put a burst in this bucket -- four when this
+            // was written and five since blind_session -- and it named one of
+            // them, the one the only available fixture happens to carry. A
             // run whose history could not be READ lands every burst here, and
             // was told the record did not reach back far enough, which is a
             // different fault with a different fix. The bucket has no reason
-            // field to narrow it, so it says the part that is true of all four
-            // and points at the rows, which do carry the specific reason.
+            // field to narrow it, so it says the part that is true of every
+            // one of them and points at the rows, which do carry the specific
+            // reason -- a sentence that counts them would have rotted here on
+            // the round that added the fifth.
             ? [el('span', { text: 'not known' }),
                el('span', { 'class': 'sc-note', text: 'the record could not place these — the rows in the ledger carry the specific reason' })]
             : [el('span', { text: 'day ' + r.day }),

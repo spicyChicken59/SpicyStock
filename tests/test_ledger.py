@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 import math
 import threading
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import pandas as pd
 import pytest
@@ -73,10 +73,12 @@ _STREAK_KEYS = {"day", "unknown_reason", "first_seen", "last_seen", "last_score"
                 "last_verdict", "last_outcome", "seen_before",
                 "history_from", "history_sessions"}
 _UNKNOWN_REASONS = {ledger.NO_HISTORY, ledger.HISTORY_UNDATED,
-                    ledger.HISTORY_UNREADABLE, ledger.WINDOW_NOT_COVERED}
-#: The three reasons that leave the record with NO SPAN to report. The fourth,
-#: window_not_covered, is the one where the span exists and is too short -- and
-#: is therefore the one where reporting it is the whole point.
+                    ledger.HISTORY_UNREADABLE, ledger.WINDOW_NOT_COVERED,
+                    ledger.BLIND_SESSION}
+#: The three reasons that leave the record with NO SPAN to report. The other
+#: two -- window_not_covered, where the span exists and is too short, and
+#: blind_session, where it is long enough and one night inside it read nothing
+#: -- are the ones where reporting the span is the whole point.
 _NO_SPAN_REASONS = {ledger.NO_HISTORY, ledger.HISTORY_UNDATED,
                     ledger.HISTORY_UNREADABLE}
 
@@ -147,7 +149,7 @@ def _streak_ok(row) -> bool:
         if why not in _UNKNOWN_REASONS:
             return False
         if (since is None) != (why in _NO_SPAN_REASONS):
-            return False   # only window_not_covered has a record to report
+            return False   # only the two window reasons have a record to report
         if streak["first_seen"] is not None:
             return False   # where the setup began is the claim `day` makes
     else:
@@ -2235,6 +2237,64 @@ def test_a_name_a_deep_record_has_never_carried_is_day_one_of_a_new_setup():
         "seen_before": 0, **DEEP_SPAN}
 
 
+def test_a_blind_night_inside_the_window_withholds_the_day_instead_of_claiming_day_one():
+    """"day 1 — new setup" is the claim that nothing preceded this burst. A
+    night the scan measured NO NAME AT ALL is a session the record holds an
+    entry for and has no evidence about, so an earlier appearance on it would
+    have been invisible -- and the claim is made over it anyway. Reproduced
+    end to end: a blind Tuesday, a burst on Wednesday, "day 1, never seen".
+
+    Not window_not_covered: this record reaches back 160 sessions. That reason
+    resolves as the file fills up and this one never does, so telling an
+    operator to wait would be advice that cannot come true."""
+    blind = ledger.Record(DEEP, 160, 160, frozenset({date.fromisoformat(MON)}))
+
+    block = ledger.streak([], TUE, record=blind)
+
+    assert block["day"] is None and block["first_seen"] is None
+    assert block["unknown_reason"] == ledger.BLIND_SESSION
+    # The span is still reported -- what the unknown is unknown OVER -- the
+    # way window_not_covered's is, because the record does have one.
+    assert (block["history_from"], block["history_sessions"]) == (DEEP.isoformat(), 160)
+    # And the inverse: the same record with nothing blind in it says day 1, so
+    # this cannot pass by withholding every day number.
+    assert ledger.streak([], TUE, record=DEEP_RECORD)["day"] == 1
+
+
+def test_a_blind_night_outside_the_streak_window_leaves_the_day_alone():
+    """Only the window matters. A night nobody read three months before the
+    setup started could not have held an appearance of THIS chain -- an
+    earlier burst that far back is a different setup by
+    MAX_STREAK_GAP_SESSIONS' own rule -- so withholding the number for it
+    would refuse one the record can support."""
+    far = date.fromisoformat(TUE) - timedelta(days=90)
+    record = ledger.Record(DEEP, 160, 160, frozenset({far}))
+    assert ledger.streak([], TUE, record=record)["day"] == 1
+
+    # The boundary, from both sides: MAX_STREAK_GAP_SESSIONS sessions before
+    # the setup began is inside the window, one more is outside it.
+    sessions = pd.bdate_range(end=TUE, periods=ledger.MAX_STREAK_GAP_SESSIONS + 2)
+    edge, beyond = sessions[1].date(), sessions[0].date()
+    assert ledger.sessions_between(edge, TUE) == ledger.MAX_STREAK_GAP_SESSIONS
+    assert ledger.streak([], TUE, record=ledger.Record(DEEP, 160, 160, frozenset({edge})))["day"] is None
+    assert ledger.streak([], TUE, record=ledger.Record(DEEP, 160, 160, frozenset({beyond})))["day"] == 1
+
+
+def test_only_a_run_that_recorded_measuring_nothing_counts_as_blind():
+    """`measured` is a count the run wrote down. An entry from before the
+    field existed says nothing about how much it read, and reading its absence
+    as 0 would make every historical run blind and every day number in the
+    file disappear -- absence of evidence again, one field over."""
+    assert ledger.Record.of([{"date": MON, "measured": 0}]).blind == {date.fromisoformat(MON)}
+    for entry in ({"date": MON},                      # before the count existed
+                  {"date": MON, "measured": 1},       # it read one name
+                  {"date": MON, "measured": None},
+                  {"date": MON, "measured": False},   # a bool is not a count
+                  {"date": MON, "measured": "0"},
+                  {"date": "nonsense", "measured": 0}):
+        assert ledger.Record.of([entry]).blind == frozenset(), entry
+
+
 def test_a_name_that_burst_yesterday_is_day_two_today():
     """THE case the step exists for: seen on Monday, seen again on Tuesday."""
     history = ledger.appearance_index([_seen(MON, score=7.5, verdict="B")])
@@ -3141,6 +3201,44 @@ def test_a_benchmark_block_of_the_wrong_shape_is_refused_at_load(tmp_path, bad):
     assert ledger.quarantined(docs), "the unreadable file is set aside, not overwritten"
 
 
+@pytest.mark.parametrize("bad", ["0", True, -1, 2.5, None, [0]])
+def test_a_measured_count_that_is_not_a_count_is_refused_at_load(tmp_path, bad):
+    """Two readers index this inside publish(), after the scan and every
+    Claude call are paid for: the streak window (a night nobody read cannot
+    support "nothing preceded this setup") and the benchmark fill. The class
+    this check exists for, on the round's own new key."""
+    docs = tmp_path / f"docs-{abs(hash(str(bad)))}"
+    docs.mkdir()
+    (docs / ledger.LEDGER_NAME).write_text(json.dumps({
+        "schema_version": ledger.SCHEMA_VERSION, "app": "SpicyStock", "generated": "x",
+        "runs": [{"date": "2026-08-24", "type": "evening", "measured": bad,
+                  "candidates": [], "gated": []}]}))
+
+    book = ledger.Ledger(docs).load()
+
+    assert book.runs == [] and book.load_error and "measured" in book.load_error, bad
+
+
+def test_the_run_entry_keeps_how_many_names_the_night_measured(tmp_path):
+    """docs/data.json is rewritten every night, and both readers of this
+    number are LATER runs, so the ledger entry is the only place it can
+    survive to be read. Absent when the run recorded no coverage -- the rule
+    `rules` and `duplicate_bars` follow -- because a run from before the count
+    existed says nothing about how much it read."""
+    book = ledger.Ledger(tmp_path).load()
+    run, candidates, gated = _run("2026-09-08")
+    run["coverage"] = {"requested": 228, "with_bars": 227, "measured": 225}
+
+    assert book.add_run(run, candidates, gated)["measured"] == 225
+
+    silent, candidates, gated = _run("2026-09-09")
+    assert "measured" not in book.add_run(silent, candidates, gated)
+    for coverage in ("x", {"measured": "225"}, {"measured": True}, {}):
+        run, candidates, gated = _run("2026-09-10")
+        run["coverage"] = coverage
+        assert "measured" not in book.add_run(run, candidates, gated), coverage
+
+
 def test_a_run_from_before_the_benchmark_loads_clean(tmp_path):
     """Absent is not broken: a run written before round 7 has no benchmark
     key, loads, and is simply one the rung cannot pair."""
@@ -3933,6 +4031,48 @@ def test_fill_benchmarks_applies_the_runs_own_floor_and_stamps_it(tmp_path):
     unfloored = next(r for r in book.runs if r["date"] == "2026-08-21")["benchmark"]
     assert (unfloored["d1"], unfloored["n1"]) == (0.0, 2), "no floor: every name that traded"
     assert (unfloored["liquidity_floor"], unfloored["below_floor"]) == (None, 0)
+
+
+def test_a_night_that_measured_nothing_is_left_pending_rather_than_stamped_unfloored(tmp_path):
+    """A BLIND night applied no liquidity floor, because it had no dollar
+    volumes to draw a percentile from -- so filling its benchmark measured
+    every name that traded and stamped the block `liquidity_floor: null`,
+    which four surfaces read as "before the floor reached the benchmark, or a
+    night rule 6 was off". Neither is this cause, and a measured horizon keeps
+    its value, so the false attribution is permanent. Reproduced through the
+    fill before this rule existed: d1 filled, below_floor 0, universe stamped.
+
+    It costs nothing to leave pending: a blind night scored no setup, so
+    evidence pairs nothing with it."""
+    book = ledger.Ledger(tmp_path / "docs")
+    universe = {"label": "data/symbols.txt (checked in)", "size": 2}
+    blind, cands, gated = _run("2026-08-24", tickers=("AAA",))
+    blind["universe"] = dict(universe)
+    blind["liquidity"] = {"pctile": 30, "floor": None, "over": 0, "refused": 0}
+    blind["coverage"] = {"requested": 2, "with_bars": 2, "measured": 0}
+    entry = book.add_run(blind, cands, gated)
+    assert entry["measured"] == 0, "the premise: the record says this night read nothing"
+    thick = _traded([100, 101, 102, 103, 104, 110, 111, 112], 5_000_000, end="2026-09-02")
+    thin = _traded([10, 20, 20, 20, 20, 20, 20, 20], 100_000, end="2026-09-02")
+
+    moved = book.fill_benchmarks({"THICK": thick, "THIN": thin}, date(2026, 9, 4),
+                                 universe=universe)
+
+    assert moved == 0
+    assert entry["benchmark"] == ledger.empty_benchmark(), (
+        "a blind night has no alternative to be measured against")
+
+    # The inverse, on the same frames and the same session: a night that DID
+    # measure names is filled, so this rule cannot be satisfied by filling
+    # nothing at all.
+    seeing = ledger.Ledger(tmp_path / "seeing")
+    run, cands, gated = _run("2026-08-24", tickers=("AAA",))
+    run["universe"] = dict(universe)
+    run["coverage"] = {"requested": 2, "with_bars": 2, "measured": 2}
+    kept = seeing.add_run(run, cands, gated)
+    assert seeing.fill_benchmarks({"THICK": thick, "THIN": thin}, date(2026, 9, 4),
+                                  universe=universe) == 1
+    assert kept["benchmark"]["d1"] is not None
 
 
 def test_the_benchmark_window_is_the_fill_window(tmp_path, monkeypatch):

@@ -1495,6 +1495,119 @@ def test_the_evening_after_a_market_closure_is_a_night_and_not_twelve_holes(
     assert len(mocked_boundaries["anthropic"].calls) == 12
 
 
+def _blind_market(fake_alpaca, ohlcv, monkeypatch, tmp_path, *, holes: int = 11) -> list[str]:
+    """A universe where every name that carried the session is holed on the
+    session before it, and one halted name proves the market traded it.
+
+    NOT the day-after-a-holiday shape: a closure is a business day NO name
+    printed on, which observed_previous_session() reads off the frames and
+    measures across. Here HALTED printed on it and then stopped, so the
+    disproof fires, the arithmetic stands, and every other frame is a hole.
+    That is a night the feed answered for every symbol and not one answer
+    could be measured -- the class round 10 removed one instance of."""
+    names = [f"H{letter}" for letter in "ABCDEFGHIJKLMNOP"[:holes]]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i), gap_before_session=True)
+    fake_alpaca.add_history("HALT", ohlcv("flat", variant=90), stale_sessions=1)
+    names.append("HALT")
+    _universe_file(monkeypatch, tmp_path, names)
+    return names
+
+
+def test_a_blind_night_records_what_it_measured_and_no_surface_calls_it_a_quiet_market(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """Reproduced end to end before any of this existed: exit 2, `bursts: 0`,
+    a null floor, and a record whose only account of the night was a degraded
+    sentence -- while the funnel printed "4% bursts found: 0" with nothing
+    between it and the universe, and the page captioned the whole cut "no 4%
+    gain on the day". A blind night described as a quiet market, on every
+    surface a person reads and in the file a later run reads."""
+    _blind_market(fake_alpaca, ohlcv, monkeypatch, tmp_path)
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, report=report)
+
+    assert report.exit_code == pipeline.EXIT_DEGRADED
+    data = clean(tmp_path)
+    assert data["run"]["bursts"] == 0, "the premise: nothing was found"
+    assert data["run"]["coverage"]["with_bars"] == 12
+    assert data["run"]["coverage"]["measured"] == 0, (
+        "twelve names answered and not one of them could be measured")
+    assert data["run"]["liquidity"] == {"pctile": 30.0, "floor": None, "over": 0, "refused": 0}, (
+        "a null floor beside `over: 0` is 'nothing could be ranked', not 'the rule is off'")
+    assert recorded(tmp_path)["runs"][0]["measured"] == 0, (
+        "the one number a later run has to be able to read")
+
+    (sent,) = mocked_boundaries["resend"].sent
+    text = _visible(sent["html"])
+    assert "Measured for the session: 0 of 12 that answered" in text, text
+    assert "quiet market" not in text, text
+    # The cell itself defers to the band here, which is round 10's rule and
+    # the right one: measuring nothing always degrades the run with a `scan`
+    # problem, so the reasons are listed above it. What was missing was the
+    # COUNT -- the funnel went straight from the universe to "4% bursts found:
+    # 0" with no line saying none of it had been read.
+    assert "this is not a statement about the market" in text
+    assert "4% bursts found: 0" in text
+
+
+def test_a_night_that_measured_most_of_itself_says_which_names_it_is_talking_about(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The THIN night, which is the ordinary one: a couple of halted names is
+    under every degrade threshold, so the run is clean, the band is empty and
+    the empty-table cell is the only thing explaining itself -- and it said
+    "No 4% burst anywhere in the universe today", an overclaim of exactly the
+    blind night's shape, one step down. It names the population it measured
+    now, and the funnel carries the cut."""
+    names = [f"Q{letter}" for letter in "ABCDEFGHIJK"]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("flat", variant=i))
+    fake_alpaca.add_history("HALT", ohlcv("flat", variant=90), stale_sessions=1)
+    _universe_file(monkeypatch, tmp_path, names + ["HALT"])
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, report=report)
+
+    assert report.exit_code == pipeline.EXIT_OK, report.errors
+    assert clean(tmp_path)["run"]["coverage"]["measured"] == 11
+    text = _visible(mocked_boundaries["resend"].sent[0]["html"])
+    assert "Measured for the session: 11 of 12 that answered" in text
+    assert "No 4% burst among the 11 names measured for this session; the other 1 " \
+           "that answered could not be." in text
+    assert "anywhere in the universe" not in text
+
+
+def test_a_blind_nights_benchmark_stays_pending_when_the_next_scan_could_fill_it(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The rung is "what the whole universe made that session", stamped with
+    the floor the run applied -- and a blind night applied none, because it
+    had nothing to rank. Filled anyway, its block was stamped `liquidity_floor:
+    null`, which every surface reads as "before the floor reached the
+    benchmark, or a night rule 6 was off": a cause that is not this one, and
+    permanent, since a measured horizon keeps its value. Driven over two
+    nights, the second one seeing."""
+    names = _blind_market(fake_alpaca, ohlcv, monkeypatch, tmp_path)
+    blind_session = session_offset(-1)
+    monkeypatch.setenv("SCAN_SESSION_DATE", blind_session)
+    pipeline.run("evening", dry_run=True, report=pipeline.RunReport())
+    assert recorded(tmp_path)["runs"][0]["measured"] == 0, "the premise: a blind night"
+
+    # The next evening, over the same universe with the holes filled in: this
+    # scan carries the blind session in every frame, so the fill can reach it.
+    for i, name in enumerate(names[:-1]):
+        fake_alpaca.add_history(name, ohlcv("flat", variant=i))
+    monkeypatch.delenv("SCAN_SESSION_DATE")
+    pipeline.run("evening", dry_run=True, report=pipeline.RunReport())
+
+    runs = {r["date"]: r for r in recorded(tmp_path)["runs"]}
+    assert set(runs) == {blind_session, session_offset(0)}
+    assert runs[blind_session]["benchmark"] == ledger.empty_benchmark(), (
+        "a night that measured nothing gets no alternative measured for it")
+
+
 def test_a_nan_on_the_session_bar_does_not_publish_yesterdays_burst_under_tonights_date(
     monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
@@ -4956,6 +5069,32 @@ MALFORMED_SNAPSHOTS = {
         _streak(day=None, unknown_reason="no_history", seen_before="3"), "seen_before"),
     "streak.seen_before is a list": (
         _streak(day=None, unknown_reason="no_history", seen_before=[1]), "seen_before"),
+    # run.coverage: how much of the night was READ. Absent is every snapshot
+    # from before the block existed; present, every count in it is a count,
+    # because the page prints a sentence about the market from `measured` and
+    # a string there makes it compare "0" to 0.
+    "coverage is absent": (lambda d: d["run"].pop("coverage", None), False),
+    "coverage is a list": (_run_field(coverage=[228]), "coverage"),
+    "coverage is a string": (_run_field(coverage="228 asked"), "coverage"),
+    "coverage.measured is a string": (
+        _run_field(coverage={"requested": 228, "with_bars": 227, "measured": "0"}), "measured"),
+    "coverage.measured is a bool": (
+        _run_field(coverage={"requested": 228, "with_bars": 227, "measured": True}), "measured"),
+    "coverage.measured is negative": (
+        _run_field(coverage={"requested": 228, "with_bars": 227, "measured": -1}), "measured"),
+    "coverage.with_bars is a string": (
+        _run_field(coverage={"requested": 228, "with_bars": "227", "measured": 0}), "with_bars"),
+    # A scan that died before it had them carries fewer counts, and that is
+    # the shape the failure notice renders: absent is absent, never 0.
+    "coverage holds only what the scan reached": (
+        _run_field(coverage={"requested": 228}), False),
+    "coverage.session is a number": (
+        _run_field(coverage={"requested": 228, "session": 20260908}), "session"),
+    # run.liquidity.over, one field over: the count that tells a null floor's
+    # two causes apart.
+    "liquidity.over is a string": (lambda d: d["run"]["liquidity"].update(over="225"), "over"),
+    "liquidity.over is negative": (lambda d: d["run"]["liquidity"].update(over=-3), "over"),
+    "liquidity.over is absent": (lambda d: d["run"]["liquidity"].pop("over", None), False),
 }
 
 

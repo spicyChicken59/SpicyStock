@@ -301,7 +301,7 @@ def test_a_transport_failure_retries_the_request_it_already_had(candidate, claud
 
 def test_the_knowledge_base_is_sent_as_a_cacheable_block(candidate, claude):
     """knowledge/strategy.md is byte-identical on every call of a run and is
-    72% of each request -- measured at ~3,080 system tokens against ~460 of
+    73% of each request -- measured at ~3,120 system tokens against ~460 of
     metrics and ~721 for an 869x622 chart. Without cache_control the run paid
     full price to send the same document up to MAX_TO_SCORE times a night; a
     write costs 1.25x and a read 0.1x, so break-even is the second call (1.28)

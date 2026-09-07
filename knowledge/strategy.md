@@ -161,11 +161,13 @@ burst" over a one-session record is not the evidence "no earlier burst" over
 two hundred sessions is.
 
 **A null `setup_day` is not day 1.** It means the record cannot say, and
-`setup_unknown_reason` names which of five reasons: `history_unreadable` (the
+`setup_unknown_reason` names which of six reasons: `history_unreadable` (the
 file could not be read), `no_history` (it holds nothing), `history_undated`
 (it holds runs nothing can date), `window_not_covered` (it does not reach
-back far enough to prove nothing preceded this) or `no_streak_recorded` (this
-run computed no record block for the name at all). Score the chart and the
+back far enough to prove nothing preceded this), `blind_session` (it reaches
+back far enough, and one of the sessions inside that window measured no name
+at all, so an earlier burst would have been invisible to it) or
+`no_streak_recorded` (this run computed no record block for the name at all). Score the chart and the
 metrics as they stand, and do not credit the setup with being fresh — absence
 of evidence about what came before is not evidence that nothing did. A null
 `seen_before` is that same silence one field over: on those unknowns the count

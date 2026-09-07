@@ -388,6 +388,13 @@ STREAK_UNKNOWN = {
                        "carry a date to count from",
     "history_unreadable": "streak unknown — the run could not read its history",
     "window_not_covered": "streak unknown — the history does not reach back this far",
+    # The fifth, and the only one that is not about how FAR the record
+    # reaches: it reaches, and one of the nights it reaches over read nothing
+    # at all, so an earlier burst would have been invisible to it. The
+    # remedy is different too -- window_not_covered fills in as the record
+    # grows, and this one never does -- which is why it is not that word.
+    "blind_session": "streak unknown — a session inside the window measured no "
+                     "name at all, so an earlier burst could not have been seen",
 }
 UNKNOWN_FALLBACK = "streak unknown — no reason was recorded"
 #: A row with no `streak` field at all, which is not the same as a block that
@@ -779,6 +786,20 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     capped = ([(f"Crowded out by the {cap}-call cap" if cap
                 else "Crowded out by the call cap", crowded)]
               if crowded else [])
+    # AND HOW MUCH OF THE UNIVERSE WAS READ, when some of it was not. THE
+    # FIRST CUT, and the one the funnel never named: between the universe and
+    # the bursts sits every name that answered and could not be measured, so a
+    # night that measured NOT ONE of them printed "4% bursts found: 0" and
+    # read exactly like a night that measured all 228. The same rule the
+    # refusal lines follow -- printed only when the cut actually bit, and
+    # silent when the run reported no coverage rather than saying 0. The
+    # page's funnel captions the same cut; one mechanism, and the two
+    # wordings are pinned against each other's source. Evening only: a
+    # morning pass measures nothing itself, and its funnel deliberately
+    # reports the run it follows rather than a scan it did not walk.
+    counted = measured_counts(scan_stats)
+    coverage = ([(MEASURED_LABEL, f"{counted[0]} of {counted[1]} that answered")]
+                if counted and counted[0] < counted[1] else [])
     if run_type == "morning":
         parts = [("Session it should have followed" if failed
                   else "Following through on the session of", session),
@@ -796,12 +817,37 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
                  # for it, and printed "Universe: not recorded" over 228 asked
                  # and 228 answered. Two different facts were sharing one flag.
                  ("Universe", scan_stats.get("universe") or coverage_phrase(scan_stats)),
+                 *coverage,
                  ("4% bursts found", _reported_count(scan_stats, "bursts")),
                  *refused,
                  ("Passed 2LYNCH gate", _reported_count(scan_stats, "gated")),
                  *capped,
                  ("Shortlisted", len(results))]
     return " &nbsp;|&nbsp;\n      ".join(f"{label}: {esc(value)}" for label, value in parts)
+
+
+def measured_counts(scan_stats: dict) -> tuple[int, int] | None:
+    """(measured, answered) off this run's coverage block, or None.
+
+    THE FIRST CUT THE FUNNEL NEVER NAMED. Between "Universe: 228 checked-in US
+    common stocks" and "4% bursts found: 0" sits every name that answered and
+    could not be measured -- halted, holed, unreadable -- and on a night that
+    measured NOT ONE of them the mail read exactly like a night that measured
+    all 228 and found nothing. Both counts are required: "0 measured" is
+    unreadable without what it is 0 of, and a block that carries one and not
+    the other is a scan that stopped before it had both.
+
+    Returns None when the run recorded no coverage at all (every snapshot from
+    before the block existed) or when either count is not a count -- absent is
+    absent, and this must never manufacture a 0.
+    """
+    counts = scan_stats.get("coverage")
+    if not isinstance(counts, dict):
+        return None
+    measured, answered = counts.get("measured"), counts.get("with_bars")
+    if not is_count(measured) or not is_count(answered):
+        return None
+    return measured, answered
 
 
 def coverage_phrase(scan_stats: dict) -> str:
@@ -843,6 +889,15 @@ def coverage_phrase(scan_stats: dict) -> str:
             fresh, session = counts["fresh"], counts["session"]
             parts.append(f"none with a bar for {session}" if not fresh
                          else f"{fresh} with a bar for {session}")
+            # AND HOW MANY OF THOSE COULD BE MEASURED, which is a different
+            # number: a name with a bar for the session and none for the
+            # session before it has one and could not be measured. Only when
+            # some of them carried a bar, because "none with a bar ... 0
+            # measured" is one fact said twice, and only when the scan reached
+            # the count -- a notice for a scan that died earlier prints what it
+            # had and no more.
+            if fresh and is_count(counts.get("measured")):
+                parts.append(f"{counts['measured']} of those measured")
     if counts.get("newest_seen"):
         parts.append("the newest bar among the names that missed the session is "
                      f"{counts['newest_seen']}")
@@ -1230,6 +1285,46 @@ def _failed_evening_note(scan_stats: dict) -> str:
     return _empty_evening_note(scan_stats)
 
 
+def _quiet_market_note(scan_stats: dict) -> str:
+    """"No 4% burst anywhere in the universe today" — WHEN THE UNIVERSE WAS READ.
+
+    This sentence is the widest claim the mail makes about the market, and it
+    was made from `bursts == 0` alone, which is also what a scan that measured
+    NOT ONE NAME reports. Reproduced end to end on a constructed blind night
+    -- eleven frames holed on the session before, one halted name proving the
+    market had traded it -- where the run published 0 bursts and every surface
+    called it quiet.
+
+    THE THIN CASE IS THE LIVE ONE, and it is the same overclaim one step down.
+    A blind evening never reaches this branch -- measuring nothing always
+    degrades the run with a `scan` problem, so _no_shortlist_note() answers
+    first and the band carries the reasons -- but a couple of halted names is
+    under every degrade threshold, so on the ordinary quiet night this cell is
+    the only thing explaining itself, and "anywhere in the universe" over 224
+    of 228 names is not what the run read. The sentence names the population it
+    is about and says how many it is not about; the blind branch is kept
+    because a direct build_html() and a snapshot whose problems were not
+    carried both reach it, and the claim has to be true of its own data on
+    every path. A run that reported no coverage keeps the original wording:
+    absent is absent, and every snapshot from before run.coverage existed is
+    that.
+    """
+    counted = measured_counts(scan_stats)
+    if counted is None or counted[0] == counted[1]:
+        return ("No 4% burst anywhere in the universe today. Nothing reached the "
+                "checklist, so nothing failed it — this is a quiet market, not a "
+                "rejection.")
+    measured, answered = counted
+    if not measured:
+        return (f"Not one of the {answered} names that answered could be "
+                f"{MEASURED_PHRASE}, so no 4% burst could be found in them. Nothing "
+                "reached the checklist — this is not a statement about the market.")
+    return (f"No 4% burst among the {measured} names {MEASURED_PHRASE}; the other "
+            f"{answered - measured} that answered could not be. Nothing reached the "
+            "checklist, so nothing failed it — the names that were read were quiet, "
+            "and the rest were not read.")
+
+
 def _empty_evening_note(scan_stats: dict) -> str:
     """Why an evening run has nothing to show, said from the counts.
 
@@ -1269,9 +1364,7 @@ def _empty_evening_note(scan_stats: dict) -> str:
     by_checklist = _count(scan_stats, "by_checklist")
 
     if not bursts:
-        return ("No 4% burst anywhere in the universe today. Nothing reached the "
-                "checklist, so nothing failed it — this is a quiet market, not a "
-                "rejection.")
+        return _quiet_market_note(scan_stats)
     if passed:
         # Names got through and still produced no row. Rare, and the sentence
         # must not say the checklist rejected them -- it did the opposite.
@@ -1361,6 +1454,19 @@ def _count(scan_stats: dict, key: str) -> int:
     # liquidity floor and 7 rejected" -- seven of five bursts.
     return max(value, 0) if isinstance(value, int) and not isinstance(value, bool) else 0
 
+
+#: The funnel's label for the first cut, and the page's caption for the same
+#: one: docs/index.html's funnelStages() names it in these words, and a docs
+#: test asserts each file against the other's source, because one mechanism
+#: with two vocabularies is a shape this project keeps finding.
+MEASURED_LABEL = "Measured for the session"
+
+#: The words both surfaces use for the cut itself. docs/index.html's
+#: funnelStages() captions the same stage with the same phrase, and a docs
+#: test asserts each file against the other's source: one mechanism with two
+#: vocabularies is how this project has twice ended up telling a reader two
+#: things about one number, side by side on one page.
+MEASURED_PHRASE = "measured for this session"
 
 #: What the funnel prints for a fact the caller did not report. Absent has
 #: always read this way; a value that is not a count reads the same, because

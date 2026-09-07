@@ -1219,6 +1219,12 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         liquidity_pctile=cfg.min_dollar_volume_pctile,
         # The names that have stopped printing, for the email's own line.
         stopped_printing=stopped_printing(scan_stats),
+        # And how much of the universe was really read, in the shape the
+        # failure notice and docs/data.json both carry: the funnel's first cut
+        # was a bare "4% bursts found: 0" with nothing between it and the
+        # universe size, so a night that measured nothing read exactly like a
+        # night that measured everything and found nothing.
+        coverage=scan_coverage(scan_stats),
         # And how many CLEARED the gate and were never looked at anyway. The
         # email's funnel went "Passed 2LYNCH gate: 54" straight to
         # "Shortlisted: 1", so on any night with more survivors than the call
@@ -1924,6 +1930,15 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         # nothing indexes into is how this repo's one-level-short class keeps
         # arriving.
         "duplicate_bars": int(scan_stats.get("duplicate_bars") or 0),
+        # HOW MUCH OF THE NIGHT WAS READ, in the record itself. Every count
+        # here was in the log and in nothing else, so a scan that measured NOT
+        # ONE NAME published `bursts: 0` and the page captioned the cut "no 4%
+        # gain on the day" -- a blind night described as a quiet market, on
+        # the only surface a later reader has. Reproduced end to end on a
+        # constructed blind night (eleven frames holed on the session before,
+        # one halted name proving the market traded it) before this existed.
+        # The same shape the failure notice renders, from the same function.
+        "coverage": scan_coverage(scan_stats),
         "bursts": n_bursts,
         "passed_gate": n_passed,
         "scored": len(scored),
@@ -1943,8 +1958,17 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         # a percentile of every name that traded, in dollars -- and it is the
         # one figure the open decision about widening the universe turns on,
         # so it is kept per run rather than left in a log line.
+        # `over` is how many names the percentile was drawn from, and it is
+        # what tells a null floor's two causes apart: the rule switched off
+        # (pctile <= 0) and nothing left to rank. Both wrote `floor: null`,
+        # and every surface printed the one sentence -- "nothing traded" --
+        # over a night on which the feed had answered for every name and not
+        # one of them could be measured.
         "liquidity": {"pctile": cfg.min_dollar_volume_pctile,
                       "floor": ledger._num(scan_stats.get("liquidity_floor")),
+                      **({"over": scan_stats["liquidity_over"]}
+                         if isinstance(scan_stats.get("liquidity_over"), int)
+                         and not isinstance(scan_stats.get("liquidity_over"), bool) else {}),
                       "refused": sum(1 for _c, _l, _x, reason in unscored
                                      if reason == ledger.LIQUIDITY_REASON)},
         "scored_by": {"claude": score_stats.get("claude", 0),
@@ -2161,6 +2185,11 @@ def scan_coverage(scan_stats: dict) -> dict:
     is the one rule that decides what a number is; a second copy here would be
     a guard no input can reach and no test can fail on.
 
+    TWO READERS, ONE SHAPE. This is `run.coverage` in docs/data.json and in
+    the ledger entry's `measured`, as well as the block the failure notice
+    renders: what a night measured is the same fact whether the run died or
+    published, and two functions composing it would be two answers to it.
+
     A FIXED LIST OF KEYS, which is why `duplicate_bars` had to be added to it:
     the scanner counted the bars the feed repeated, the run block published
     the number, and the failure notice -- the one surface a person reads on
@@ -2174,8 +2203,17 @@ def scan_coverage(scan_stats: dict) -> dict:
     what tell a reader which.
     """
     counts = {key: scan_stats[key] for key in
-              ("requested", "with_bars", "fresh", "no_bars", "dropped", "duplicate_bars")
+              ("requested", "with_bars", "fresh", "measured", "no_bars", "dropped",
+               "duplicate_bars")
               if key in scan_stats}
+    # The two ways of not being measured that the scanner keeps as MAPS of
+    # name -> why. The failure notice and the run block want the counts, and
+    # a dict is not one: len() here rather than a second count in the
+    # scanner, and only when the map is a map, so nothing is coerced.
+    for key in ("stale", "gapped"):
+        found = scan_stats.get(key)
+        if isinstance(found, dict):
+            counts[key] = len(found)
     # scanner's own rule for "the newest session anything did print", not a
     # second copy of it: a name whose stamp could not be read has no date, and
     # max() over a mix of those and real dates is the crash that function

@@ -519,7 +519,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1292 tests, no network or API keys needed
+pytest tests/                   # 1337 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -691,7 +691,7 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 15.41 MB raw
+and what followed — needs the whole record, which projects to about 15.42 MB raw
 and **1.23 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
@@ -728,11 +728,38 @@ invariants live in the file rather than only here. The load-bearing ones:
   opposite of what happened, and a name below the floor was never measured
   against the checklist at all. `run.gate.vetoes` names the absolute rules that
   run applied, and `run.liquidity` records the floor (`pctile`, `floor` in
-  dollars, `refused`), so a snapshot written before either existed is not
-  described as having enforced it. The liquidity refusals were the one class
+  dollars, `over` -- how many names the percentile was drawn from -- and
+  `refused`), so a snapshot written before either existed is not described as
+  having enforced it. A null `floor` has two causes and `over` is what tells
+  them apart: the rule switched off (`pctile <= 0`), or nothing left to rank,
+  which `over: 0` says. Both wrote the same null, and every surface printed
+  the first sentence -- "nothing traded" -- over a night the feed had answered
+  in full and nothing in could be measured. The liquidity refusals were the one class
   the record did not hold until round 5: `apply_liquidity_gate()` logged them
   and dropped them, so on the documented four-name smoke test the thinnest
   name vanished and the funnel counted the other three as everything found.
+- `run.coverage` is how much of the night was actually READ: `requested`,
+  `with_bars` (answered with any bar), `fresh`, `measured`, `stale`, `gapped`,
+  `no_bars`, `dropped` and `duplicate_bars`, plus the `session` and the
+  `newest_seen` bar among the names that missed it. `measured` is the
+  population a burst could have come from -- the names whose session bar the
+  detector read and answered about -- so `with_bars - measured` is what could
+  not be measured for the session (behind it, holed on the session before it,
+  unreadable, or measured onto an earlier session), and **`measured: 0` is a
+  BLIND night**: the feed answered and not one answer could be read, which is
+  not a quiet market and no surface may report it as one. Every count is
+  conditional on the scan having reached it -- a run that died earlier carries
+  fewer of them, and absent is never 0 -- and the same block is what the
+  failure notice renders, so a dead run and a published one describe their
+  coverage in one shape. The email's funnel carries the cut when it bit
+  ("Measured for the session: 216 of 228 that answered"), the page captions
+  the first stage with it, and the empty-table cell names the population it
+  is talking about instead of the whole universe. The ledger entry keeps
+  `measured` alone (`runs[].measured`): `docs/data.json` is rewritten every
+  night and both readers of the number are LATER runs -- a streak, which may
+  not claim "nothing preceded this setup" across a night nobody read, and the
+  benchmark fill, which leaves a blind night pending rather than stamping its
+  rung as measured under no floor.
 - `run.stopped_printing` is a fact about the symbol FILE rather than the
   market: the names in it with no bar for more than 5 sessions -- a halt is
   a day or two, a delisting never comes back -- as `after_sessions`, an exact
@@ -818,8 +845,12 @@ invariants live in the file rather than only here. The load-bearing ones:
   `day` is 1 exactly when `first_seen` is the burst's own session, and
   `last_seen` is `null` exactly when `seen_before` is 0. **A null `day` is not
   day 1**: it means the record cannot say, and `unknown_reason` says which of
-  `no_history`, `history_undated`, `history_unreadable` and
-  `window_not_covered` left it null.
+  `no_history`, `history_undated`, `history_unreadable`,
+  `window_not_covered` and `blind_session` left it null. The last is the only
+  one that is not about how far back the record reaches: it reaches, and one
+  of the sessions inside the window measured no name at all (`runs[].measured`
+  0), so an earlier burst would have been invisible to it -- and unlike
+  `window_not_covered`, waiting for the record to fill up never resolves it.
   Every surface prints that state in words — the email row, both dashboard
   tables and the pick card — because a row that renders nothing is read as a
   first sighting, which was the state of two of those three.
@@ -1192,14 +1223,14 @@ construction: `docs/` and its exact design-system snapshot are served locally,
 and external requests are blocked. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 227 checks, and which file each one
+**Three data sources, one page.** It runs 236 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 40 mutated copies of it are served
+  night can hold at once. 41 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now
@@ -1328,19 +1359,19 @@ test fixtures. It dispatches no scan and calls no market or email service.
   run, so roughly $42 a year** at 252 sessions, and only on the evening run.
   This said "a few cents/day", which is out by about 5x. Measured rather than
   guessed: a real `render_chart()` PNG is 869x622, which is 721 image tokens by
-  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~3,080
-  tokens of system prompt and the metrics block ~460, so ~4,260 input tokens
+  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~3,120
+  tokens of system prompt and the metrics block ~460, so ~4,300 input tokens
   and ~120 out per call, at claude-sonnet-4-6's $3/$15 per Mtok. The text
   halves are chars/4 estimates — `count_tokens` needs a network call this
   sandbox cannot make — so treat the figure as ±30%, which does not rescue "a
   few cents".
 
-  **The system prompt is 72% of every request and is byte-identical on all 25
+  **The system prompt is 73% of every request and is byte-identical on all 25
   calls**, so it is sent with `cache_control` and read from cache after the
   first. A cache write costs 1.25x and a read 0.1x — so the first call pays
   0.25x more than it would have and every call after saves 0.9x, which makes
   break-even the second call (1.28 calls) and a full night 54% cheaper: the
-  $0.36 an uncached night would cost against the $0.17 above. (This said 1.4
+  $0.37 an uncached night would cost against the $0.17 above. (This said 1.4
   calls, 43% and $0.13: 1.4 is 1.25 over 0.9, which charges the whole write
   against the reads as if the first call were otherwise free, and the two
   money figures were rounded from different token counts. A test now does the

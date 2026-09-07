@@ -566,7 +566,8 @@ def test_every_reason_a_streak_can_carry_has_words_on_every_surface():
     from src import emailer, ledger
 
     reasons = {ledger.NO_HISTORY, ledger.HISTORY_UNDATED,
-               ledger.HISTORY_UNREADABLE, ledger.WINDOW_NOT_COVERED}
+               ledger.HISTORY_UNREADABLE, ledger.WINDOW_NOT_COVERED,
+               ledger.BLIND_SESSION}
     page = _read("docs/index.html")
 
     assert reasons <= set(emailer.STREAK_UNKNOWN), (
@@ -582,6 +583,31 @@ def test_every_reason_a_streak_can_carry_has_words_on_every_surface():
     assert not [r for r in reasons if f"`{r}`" not in _read("README.md")], (
         "README's streak bullet does not name every reason a null `day` can carry"
     )
+
+
+def test_the_email_and_the_page_caption_the_first_cut_in_one_vocabulary():
+    """The names that answered and could not be measured are cut between the
+    universe and the bursts, and both surfaces now name that cut: the email's
+    funnel line and the page's caption for the "4% bursts" stage. Two
+    wordings for one mechanism is the shape this project keeps finding side
+    by side on one screen, so each file is asserted against the other's
+    source -- the rule DUPLICATE_BARS_NOTE already follows.
+    """
+    from src import emailer
+
+    page = _read("docs/index.html")
+    assert emailer.MEASURED_PHRASE in page, (
+        f"docs/index.html does not caption the cut with {emailer.MEASURED_PHRASE!r}")
+    # The page's blind sentence and the email's say the same thing about the
+    # same state, so neither can be reworded alone.
+    blind = emailer._quiet_market_note({"coverage": {"measured": 0, "with_bars": 12}})
+    assert emailer.MEASURED_PHRASE in blind
+    assert "could be measured for this session" in page, (
+        "the page's blind caption and the email's cell have drifted apart")
+    # And the funnel's label is the email's own constant rather than a string
+    # typed twice: the page reads its counts from run.coverage, so a rename
+    # here has to be a rename there.
+    assert emailer.MEASURED_LABEL.lower().startswith("measured")
 
 
 def test_the_documented_return_bases_are_the_ones_the_ledger_writes():

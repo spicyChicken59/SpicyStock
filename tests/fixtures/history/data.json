@@ -14,16 +14,17 @@
       "d1/d3/d5 divide the close 1, 3 and 5 sessions after the burst by the BURST-DAY CLOSE: what the setup did. forward_returns.from_open divides the same later closes by the NEXT session's open, the earliest price a reader of the evening email could have paid: what acting on it could have had. Both are paper prices from one venue's official prints with no slippage. Every mean and every evidence outcome carries both, the open basis nested under from_open with its own n, and enough_from_open is the open basis's own licence to be read as a rate -- a surface that shows a number says which basis it is on, and never shows a close-basis number under an open-basis label or the reverse. A row or a run from before this basis existed carries no from_open, which is not a measurement of zero.",
       "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
       "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
-      "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
+      "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered, blind_session (a run inside that window measured no name at all, so an earlier appearance would have been invisible to it -- see runs[].measured). day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
       "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
       "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'liquidity_floor' (rule 6 refused it in the scan, for dollar volume below the session's percentile floor, before the checklist was consulted), 'veto_up_days' (an absolute rule refused it before the pass count was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same four words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and neither a veto nor a liquidity refusal is ever published as a gate rejection.",
       "runs[].benchmark.universe is the universe the benchmark was measured over, and it is always the one that run's own universe block names: a run is benchmarked only from a later scan of the same universe, so a --tickers run contributes no benchmark to anything and receives none. A run whose universe no later scan has read keeps a null benchmark forever, which is the honest answer and not a zero.",
       "runs[].rules is what this screener was when that run was made: every number its rules turned on — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate — plus what produced the SCORE, since round 11: score.prompt is a digest of the scoring model's system prompt and score.record_keys is the record block the request carries. A run scored under a rewritten rulebook is as much a second screener as one whose gate moved, and every mean keyed on score averages both. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. A run from before it carries no rules block, and no surface may read that as agreement.",
-      "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when no name traded or the rule is off), refused (how many bursts sat below it). run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
+      "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when the rule is off or nothing could be ranked), over (how many names the percentile was drawn from), refused (how many bursts sat below it). A null floor has two causes and `over` is what tells them apart: 0 over is a night nothing could be measured, and a positive `over` under a null floor cannot happen, so a null floor with no `over` at all is a run from before the count existed. No surface may report one cause as the other. run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
+      "run.coverage is how much of the night was READ, in the counts the scan reached before it stopped: requested, with_bars (answered with any bar), fresh, measured, stale, gapped, no_bars, dropped, duplicate_bars, plus the session and the newest bar the names that missed it carried. measured is the population a burst could have come from -- the names whose session bar the detector read and answered about -- so with_bars minus measured is what could not be measured for the session, and measured 0 is a BLIND night: the feed answered and nothing could be read, which no surface may report as a quiet market. A count that is absent was never reached, and absent is never 0. runs[].measured carries that one number into the durable record, because docs/data.json is rewritten every night and both its readers are later runs.",
       "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
       "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
       "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
-      "runs[].benchmark is the universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), over every name whose frame carries the session and whose dollar volume that session was at or above the run's own liquidity floor -- rule 6's bar that night, run.liquidity.floor -- with nN the number of symbols behind each horizon. benchmark.liquidity_floor is the floor the fill that FIRST measured the block applied -- null for a run recorded without one, when every name that traded counts -- and benchmark.below_floor is how many names that fill left out under it; the horizons a later fill adds are measured over the same population, so one block is one set of names. Null until a later run's scan carried the sessions, and null forever for a run whose universe later scans never fetched. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks, and evidence.universe.floored is how many of those pairings were measured over a floor and evidence.universe.unfloored how many were measured with none -- before the floor reached the benchmark, or on a night rule 6 was off, which the block cannot tell apart -- over every name that traded (a pending pairing is in neither); it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
+      "runs[].benchmark is the universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), over every name whose frame carries the session and whose dollar volume that session was at or above the run's own liquidity floor -- rule 6's bar that night, run.liquidity.floor -- with nN the number of symbols behind each horizon. benchmark.liquidity_floor is the floor the fill that FIRST measured the block applied -- null for a run recorded without one, when every name that traded counts -- and benchmark.below_floor is how many names that fill left out under it; the horizons a later fill adds are measured over the same population, so one block is one set of names. Null until a later run's scan carried the sessions, null forever for a run whose universe later scans never fetched, and never filled at all for a run that measured nothing: a blind night applied no floor because it had nothing to rank, so filling it would stamp the block unfloored and publish a cause that is not the one. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks, and evidence.universe.floored is how many of those pairings were measured over a floor and evidence.universe.unfloored how many were measured with none -- before the floor reached the benchmark, or on a night rule 6 was off, which the block cannot tell apart -- over every name that traded (a pending pairing is in neither); it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
       "d1/d3/d5 and from_open are measured on the bar of the session 1, 3 and 5 sessions after the burst, the sessions being read across every frame the run fetched rather than counted along one frame's bars: a frame with a hole at a horizon carries null there, never the next bar it happens to have, and as_of names the session of the last bar actually used. from_open's entry is the next session's open only where it lies within that bar's own low and high, the standard the checklist holds a close to; outside it the open basis is null on that row.",
       "Numbers are numbers or null. No 'n/a' strings."
     ]
@@ -43,6 +44,18 @@
       "names": []
     },
     "duplicate_bars": 0,
+    "coverage": {
+      "requested": 77,
+      "with_bars": 77,
+      "fresh": 77,
+      "measured": 77,
+      "no_bars": 0,
+      "dropped": 0,
+      "duplicate_bars": 0,
+      "stale": 0,
+      "gapped": 0,
+      "session": "2026-09-01"
+    },
     "bursts": 9,
     "passed_gate": 6,
     "scored": 6,
@@ -80,7 +93,7 @@
       "scan.min_rvol": 1.5,
       "scan.min_rvol_sessions": 20,
       "scan.rvol_lookback": 50,
-      "score.prompt": "50838b1c9ef3a326",
+      "score.prompt": "b27c4b6f15a0ba4a",
       "score.record_keys": [
         "setup_day",
         "setup_unknown_reason",
@@ -101,6 +114,7 @@
     "liquidity": {
       "pctile": 30.0,
       "floor": 190247596.4,
+      "over": 77,
       "refused": 0
     },
     "scored_by": {
@@ -970,6 +984,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 190247596.4,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -997,7 +1012,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -1016,6 +1031,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -1073,6 +1089,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 187495350,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1100,7 +1117,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -1119,6 +1136,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 1.72,
         "d3": null,
@@ -1176,6 +1194,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 204469510.6,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1203,7 +1222,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -1222,6 +1241,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 1.1,
         "d3": null,
@@ -1279,6 +1299,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 270157178.6,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1306,7 +1327,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -1325,6 +1346,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 3.16,
         "d3": 5.15,
@@ -1382,6 +1404,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 210146671.8,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1409,7 +1432,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -1428,6 +1451,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 3.69,
         "d3": 4.79,
@@ -1485,6 +1509,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 211054539,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1512,7 +1537,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -1531,6 +1556,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 1.11,
         "d3": 1.23,
@@ -1588,6 +1614,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 193721823.8,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1615,7 +1642,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -1634,6 +1661,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 6.0,
         "d3": 5.44,
@@ -1691,6 +1719,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 223775606.6,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1718,7 +1747,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -1737,6 +1766,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.36,
         "d3": 3.73,
@@ -1794,6 +1824,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 161887274.6,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1821,7 +1852,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -1840,6 +1871,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 2.82,
         "d3": 2.83,
@@ -1897,6 +1929,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 149343306.2,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -1924,7 +1957,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -1943,6 +1976,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -2000,6 +2034,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 166255999,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -2027,7 +2062,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -2046,6 +2081,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.48,
         "d3": 5.02,
@@ -2103,6 +2139,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 169311660.6,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -2130,7 +2167,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -2149,6 +2186,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 3.17,
         "d3": 9.88,
@@ -2206,6 +2244,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 155884278,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -2233,7 +2272,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -2252,6 +2291,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 1.07,
         "d3": 1.72,
@@ -2309,6 +2349,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 134251181.8,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -2336,7 +2377,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -2355,6 +2396,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 4.05,
         "d3": 2.67,
@@ -2412,6 +2454,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 192993291.60000002,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -2439,7 +2482,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -2458,6 +2501,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 3.58,
         "d3": 2.49,
@@ -2515,6 +2559,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 176002148.4,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -2542,7 +2587,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -2561,6 +2606,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.52,
         "d3": -1.53,
@@ -2618,6 +2664,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 212691449.8,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -2645,7 +2692,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -2664,6 +2711,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 6.81,
         "d3": 4.81,
@@ -2721,6 +2769,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 166194170,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -2748,7 +2797,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -2767,6 +2816,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": -1.38,
         "d3": -1.06,
@@ -2824,6 +2874,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 170293802.20000002,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -2851,7 +2902,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -2870,6 +2921,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 6.88,
         "d3": 7.82,
@@ -2927,6 +2979,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 176022991.8,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -2954,7 +3007,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -2973,6 +3026,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": null,
         "d3": null,
@@ -3030,6 +3084,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 197150178.4,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -3057,7 +3112,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -3076,6 +3131,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 2.24,
         "d3": 2.77,
@@ -3133,6 +3189,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 191448670.20000002,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -3160,7 +3217,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -3179,6 +3236,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": -0.46,
         "d3": -2.62,
@@ -3236,6 +3294,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 144648934.2,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -3263,7 +3322,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -3282,6 +3341,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 5.85,
         "d3": 12.92,
@@ -3339,6 +3399,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 162117771.6,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -3366,7 +3427,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -3385,6 +3446,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.72,
         "d3": 3.54,
@@ -3442,6 +3504,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 146821119.8,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -3469,7 +3532,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -3488,6 +3551,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.92,
         "d3": 3.23,
@@ -3545,6 +3609,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 145024717.20000002,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -3572,7 +3637,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -3591,6 +3656,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.3,
         "d3": 5.12,
@@ -3648,6 +3714,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 151707698.4,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -3675,7 +3742,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -3694,6 +3761,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": -0.56,
         "d3": 2.97,
@@ -3751,6 +3819,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 179566162.2,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -3778,7 +3847,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -3797,6 +3866,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.94,
         "d3": 2.05,
@@ -3854,6 +3924,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 160537948.20000002,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -3881,7 +3952,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -3900,6 +3971,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 2.89,
         "d3": 5.97,
@@ -3957,6 +4029,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 140296815.20000002,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -3984,7 +4057,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",
@@ -4003,6 +4076,7 @@
         "window.tight_sessions": 7
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.9,
         "d3": 3.71,
@@ -9454,7 +9528,7 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
-        "score.prompt": "50838b1c9ef3a326",
+        "score.prompt": "b27c4b6f15a0ba4a",
         "score.record_keys": [
           "setup_day",
           "setup_unknown_reason",

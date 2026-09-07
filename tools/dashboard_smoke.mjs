@@ -226,6 +226,23 @@ const VARIANTS = {
     d.gated_out = [];
     return d;
   },
+  // A BLIND night: the feed answered for every name and not one of them could
+  // be measured for the session -- every frame holed on the session before it,
+  // or halted, or unreadable. `bursts: 0` is the same number a genuinely quiet
+  // market reports, and the page captioned the whole first cut "no 4% gain on
+  // the day": a claim about the market over a session nothing read. It sits
+  // beside quietmarket deliberately -- one variant asserts the caption is
+  // there and one that it is gone, which is what lets either fail.
+  blindscan() {
+    const d = VARIANTS.quietmarket();
+    d.run.coverage = { requested: d.run.universe.size, with_bars: d.run.universe.size - 1,
+                       fresh: 12, measured: 0, stale: 12, gapped: d.run.universe.size - 13,
+                       no_bars: 1, dropped: 0, duplicate_bars: 0, session: d.run.date };
+    // Nothing could be ranked, so rule 6 drew no floor -- which is a
+    // different sentence from "nothing traded" and from "the rule is off".
+    d.run.liquidity = { pctile: d.run.liquidity.pctile, floor: null, over: 0, refused: 0 };
+    return d;
+  },
   // The control ladder's other two sentences. The history source has 74
   // scored setups closed and 14 refused, which is the "only one side can be
   // read" branch; a direction may only be stated when BOTH clear min_setups,
@@ -2510,6 +2527,29 @@ ok('and says where every name was cut, which is the burst filter itself',
   (await page.textContent('#funnel-hint')).includes('at "4% bursts"'),
   (await page.textContent('#funnel-hint')).replace(/\s+/g, ' '));
 await shot('quiet-market-dark');
+
+// And the night that reports the same 0 for the opposite reason. The pair is
+// the point: quietmarket must SAY "no 4% gain on the day" and blindscan must
+// not, so neither check can pass by asserting nothing.
+ok('a clean night that found nothing blames the burst filter itself',
+  (await page.textContent('#funnel-table')).includes('no 4% gain on the day'),
+  (await page.textContent('#funnel-hint')).replace(/\s+/g, ' ').slice(0, 140));
+await open('/v/blindscan/');
+await setTheme('dark');
+await page.waitForTimeout(200);
+await checksForAnyRun(VARIANTS.blindscan(), 'a night that measured nothing');
+const blindBody = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
+ok('a night that measured nothing does not print "no 4% gain on the day" over it',
+  !/no 4% gain on the day/.test(blindBody),
+  (blindBody.match(/.{0,80}no 4% gain on the day.{0,40}/) || [''])[0]);
+ok('and captions the first cut with what really happened to those names',
+  /not one of the \d+ names that answered could be measured for this session/.test(blindBody),
+  (await page.textContent('#funnel-hint')).replace(/\s+/g, ' ').slice(0, 160));
+ok('a null floor over nothing measured is not reported as "nothing traded"',
+  /nothing could be measured for this session/.test(blindBody)
+  && !/no floor — nothing traded/.test(blindBody),
+  (blindBody.match(/.{0,60}(nothing traded|nothing could be measured).{0,40}/) || [''])[0]);
+await shot('blind-scan-dark');
 
 await browser.close();
 server.close();

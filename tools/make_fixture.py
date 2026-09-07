@@ -30,7 +30,7 @@ from src.lynch import (                       # the real thresholds, not a copy
     MAX_CONSECUTIVE_UP_DAYS, BREAKDOWN_PCT, BREAKDOWN_LOOKBACK,
     WINDOWS,                                  # and the windows its lines print
 )
-from src.pipeline import VETO_REASONS, rules_fingerprint, stopped_printing
+from src.pipeline import VETO_REASONS, rules_fingerprint, scan_coverage, stopped_printing
 _CFG = ScanConfig()
 
 def _universe():
@@ -694,6 +694,31 @@ for _g in gated_out:
         "must exceed the threshold that refused it, and one that does must be vetoed")
 assert BURSTS - PASSED - VETOED - ILLIQUID == sum(1 for g in gated_out if g["reason"] == "lynch_gate")
 
+# What the scan SAW, in one block, because two consumers read it: the names
+# that have stopped printing and the coverage counts are the same night, and
+# hand-authoring them separately is how a fixture ends up describing a file
+# the pipeline cannot produce. Three names never bursting are the ones the
+# feed had trouble with -- two behind the session, one it answered with
+# nothing at all -- and everything else answered and was measured.
+_QUIET = [s for s in UNIVERSE
+          if s not in {r["ticker"] for r in candidates + gated_out}]
+MEASURED = len(UNIVERSE) - 3
+SCAN_STATS = {
+    "session": SESSION,
+    "stale": dict(zip(_QUIET[:2], ["2026-06-12", "2026-08-03"])),
+    "no_bars_names": _QUIET[2:3],
+    "requested": len(UNIVERSE),
+    "with_bars": len(UNIVERSE) - 1,
+    "fresh": MEASURED,
+    "measured": MEASURED,
+    "gapped": {},
+    "no_bars": 1,
+    "dropped": 0,
+    "duplicate_bars": 0,
+}
+assert SCAN_STATS["with_bars"] - len(SCAN_STATS["stale"]) == MEASURED, (
+    "the coverage counts have to add up the way a real scan's do")
+
 by_src = collections.Counter(c["provenance"]["source"] for c in candidates)
 
 # `n` counts SETUPS and `rows` the rows they were collapsed from: a name that
@@ -771,6 +796,12 @@ for _i, _run in enumerate(runs):
             _bench["from_open"]["n" + _h[1:]] = _bench["n" + _h[1:]] - 1
     _run["benchmark"] = _bench
     _run["universe"] = {"label": "data/symbols.txt (checked in)", "size": len(UNIVERSE)}
+    # How many names each night measured (src.ledger.add_run copies it off
+    # run.coverage). Never 0 here: a blind night is a state the page and the
+    # streak rules both have their own sentence for, and a fixture cannot
+    # hold both it and the clean night it exists to show -- the smoke's
+    # `blindscan` variant is that one.
+    _run["measured"] = MEASURED if _i == 0 else MEASURED - (_i % 4)
     # One screener across the whole file: these eight sessions were scanned by
     # the rules this checkout holds, so evidence.rules reports one set and
     # nothing on the page warns about a blended record. The drifted state is a
@@ -845,14 +876,18 @@ data = {
         # rather than a hand-typed block, so the shape and the threshold cannot
         # drift from what publish() writes. Chosen from the names no burst
         # uses, so the page is not told a name both burst and stopped printing.
-        "stopped_printing": stopped_printing({"session": SESSION, "stale": dict(zip(
-            [s for s in UNIVERSE if s not in {r["ticker"] for r in candidates + gated_out}][:2],
-            ["2026-06-12", "2026-08-03"])),
-            "no_bars_names": [s for s in UNIVERSE if s not in {r["ticker"] for r in candidates + gated_out}][2:3]}),
+        "stopped_printing": stopped_printing(SCAN_STATS),
         # A clean feed's count, which is what every night so far has had:
         # publish() writes this key on every run, and a fixture missing it
         # would describe a file the pipeline does not produce.
         "duplicate_bars": 0,
+        # How much of the night was read, through the pipeline's own function
+        # over the same stats block the stopped-printing names come from --
+        # not a hand-typed set of counts that could disagree with them. A
+        # clean night: everything that answered and carried the session was
+        # measured, so the page captions the first cut "no 4% gain on the day"
+        # and no surface says anything could not be read.
+        "coverage": scan_coverage(SCAN_STATS),
         "bursts": BURSTS,
         "passed_gate": PASSED,
         "scored": len(candidates),
@@ -861,7 +896,13 @@ data = {
         "gate": {"min_lynch_passes": 3, "total_checks": 6,
                  "vetoes": list(VETO_REASONS)},
         "rules": rules_fingerprint(),
-        "liquidity": {"pctile": PCTILE, "floor": FLOOR, "refused": ILLIQUID},
+        # `over` is how many names the percentile was drawn from: every name
+        # that traded and could be measured. A null floor beside `over: 0` is
+        # a different sentence -- nothing could be measured -- and the fixture
+        # is the clean night, so this is the population the floor really came
+        # from.
+        "liquidity": {"pctile": PCTILE, "floor": FLOOR, "over": MEASURED,
+                      "refused": ILLIQUID},
         "scored_by": {"claude": by_src["claude"], "fallback": by_src["fallback"]},
         "model": MODEL,
         # The verdict word publish() stamps on every run, and the one key of
