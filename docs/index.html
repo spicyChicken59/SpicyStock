@@ -771,8 +771,13 @@
   }
   // A horizon cell in the scores table or the runs table: the state's words
   // when the row has a state, the number otherwise -- and "pending" only
-  // where a later run could still turn it into one.
-  function horizonCell(row, value, closed) {
+  // where a later run could still turn it into one. `note` is the count
+  // BEHIND this number where there is one to state: a run's mean is over the
+  // setups that reached this horizon, which is not the count the table's last
+  // column prints, and a candidate row is one setup at every horizon and has
+  // none. Only the number branch takes it; the other three carry their own
+  // sentence about why there is no number.
+  function horizonCell(row, value, closed, note) {
     var state = fwdState(row);
     if (FWD_WORDS[state]) {
       return el('td', { 'class': 'sc-num', text: FWD_WORDS[state][0], title: FWD_WORDS[state][1] || null });
@@ -782,7 +787,7 @@
         ? el('td', { 'class': 'sc-num', text: UNFETCHED[0], title: UNFETCHED[1] })
         : el('td', { 'class': 'sc-num', text: 'pending' });
     }
-    return el('td', { 'class': 'sc-num', text: pct(value, 2) });
+    return el('td', { 'class': 'sc-num', title: note || null, text: pct(value, 2) });
   }
 
   // 0 is a real answer here and null is not, so this cannot go through num():
@@ -1285,17 +1290,17 @@
         var f = runFwd(r);
         return f[k] !== null && f[k] !== undefined;
       });
-      var wsum = 0, setups = 0, rows = 0, vals = [];
+      var wsum = 0, setups = 0, anySetups = 0, rows = 0, vals = [];
       have.forEach(function (r) {
         var f = runFwd(r), w = horizonN(f, d);
-        wsum += f[k] * w; setups += w; rows += (f.rows || 0); vals.push(f[k]);
+        wsum += f[k] * w; setups += w; anySetups += (f.n || 0); rows += (f.rows || 0); vals.push(f[k]);
       });
       var plain = vals.length ? vals.reduce(function (a, b) { return a + b; }, 0) / vals.length : null;
       return {
         days: d, key: k,
         mean: setups ? wsum / setups : plain,
         weighted: setups > 0,
-        setups: setups, rows: rows, sessions: have.length, of: measurable.length,
+        setups: setups, anySetups: anySetups, rows: rows, sessions: have.length, of: measurable.length,
         quiet: quiet, repeats: repeats,
         unfetched: runs.length - measurable.length - quiet - repeats,
         excluded: runs.length - measurable.length,
@@ -2445,8 +2450,9 @@
     var enough = horizons.filter(function (h) { return h.sessions >= MIN_SESSIONS; });
     $('returns-hint').textContent =
       'Mean forward return across every scored candidate in a session, not just its shortlist, ' +
-      'each horizon weighted by the setups that actually reached it \u2014 a run whose frame had a ' +
-      'hole after the first session is in the +1d weight and not in the +5d one. One observation per ' +
+      'each horizon weighted by the setups that actually reached it \u2014 a setup whose frame had a ' +
+      'hole after the first session is in the +1d weight and not in the +5d one, and its run is still in ' +
+      'both weights with the setups that did. One observation per ' +
       'SETUP, not per row: ' +
       'a name that bursts five sessions running is one move measured five times, and counting ' +
       'it five times would weight that move against every other name in the file. A horizon needs ' + MIN_SESSIONS +
@@ -2487,7 +2493,21 @@
           // the two cases a reader most wants it: 1:1 (nothing collapsed) and
           // a run of repeats collapsing many rows into few setups, which is
           // where the numbers diverge most and the tile went quiet about it.
-          text: h.sessions ? plural(h.sessions, 'session') + ' · ' + plural(h.setups, 'setup')
+          // THREE POPULATIONS, NOT TWO. `rows` is every row that measured
+          // something, the setups are what they collapse into, and h.setups is
+          // how many of THOSE reached this horizon -- so "60 setups from 65
+          // rows" states a collapse the file does not support the moment a
+          // frame has a hole. Both steps are printed when they differ; the
+          // plain ratio, which is a collapse and reads as one, when they do not.
+          title: h.setups === h.anySetups ? null
+            : commas(h.rows) + ' rows carry a return at some horizon and collapse into '
+              + plural(h.anySetups, 'setup') + '; ' + commas(h.setups) + ' of those reached +' + h.days
+              + ' day' + (h.days === 1 ? '' : 's') + ', and a setup whose frame had a hole before this '
+              + 'horizon is not behind its mean',
+          text: h.sessions ? plural(h.sessions, 'session') + ' · '
+                             + (h.setups === h.anySetups
+                                  ? plural(h.setups, 'setup')
+                                  : commas(h.setups) + ' of ' + plural(h.anySetups, 'setup'))
                              + (h.rows ? ' from ' + plural(h.rows, 'row') : '')
                            : nothingWords(h)[1] }),
         el('span', { 'class': 'sc-chip ' + st.chip, text: st.word })
@@ -2524,7 +2544,7 @@
       'run fetches its rows again. The last three never become numbers, and those runs are in no ' +
       'horizon\u2019s count. A bursts cell marked \u201cmeasured none\u201d is a run that read no name ' +
       'at all that session, which is not a night that found nothing.';
-    table($('runs-table'), ['session', 'run', 'bursts', 'scored', 'fallbacks', 'top score', '+1d', '+3d', '+5d', 'over'],
+    table($('runs-table'), ['session', 'run', 'bursts', 'scored', 'fallbacks', 'top score', '+1d', '+3d', '+5d', 'setups'],
       runs.map(function (r, i) {
         var fr = runFwd(r);
         // Six states here, on the run's mean, and the last three are the
@@ -2533,7 +2553,19 @@
         // whose rows had a usable open, nor is a run that scored nothing, one
         // that scored only names already counted, or one past the fill window
         // whose cell no later run will fetch for.
-        var cell = function (k) { return horizonCell(r, fr[k], r.fills_closed === true); };
+        // THE COUNT BEHIND A MEAN GOES ON THE MEAN. Each of these three cells
+        // is over the setups that reached ITS horizon, which is not the number
+        // in the last column: the canonical fixture's 2026-08-25 run measured
+        // 21 setups and 18 of them have a +5d, so one count beside three means
+        // told a reader the -0.42% was over 21 while the page itself weighted
+        // it by 18. The column was headed "over" and is headed "setups": what
+        // it counts is the run's contribution to the record, not a weight.
+        var cell = function (k) {
+          var w = horizonN(fr, k.slice(1));
+          return horizonCell(r, fr[k], r.fills_closed === true,
+            commas(w) + ' setup' + (w === 1 ? '' : 's') + ' behind this mean'
+            + (fr.n && fr.n !== w ? ', of the ' + commas(fr.n) + ' this run measured at some horizon' : ''));
+        };
         return el('tr', { 'class': i === 0 ? 'runs-now' : null }, [
           el('td', null, [day(r.date), i === 0 ? ' ' : null,
             i === 0 ? el('span', { 'class': 'sc-chip sc-chip--brand', text: 'this run' }) : null]),
@@ -2547,7 +2579,9 @@
           el('td', { 'class': 'sc-num', text: num(r.top_score, 1) }),
           cell('d1'), cell('d3'), cell('d5'),
           el('td', { 'class': 'sc-num',
-            title: 'A name that bursts on consecutive sessions is one setup, counted once.',
+            title: 'Every setup this run measured at some horizon \u2014 a name that bursts on consecutive '
+                   + 'sessions is one setup, counted once. It is not the weight behind any one mean: each '
+                   + 'horizon cell says how many setups reached it.',
             text: fr.n ? commas(fr.n) + ' setup' + (fr.n === 1 ? '' : 's')
                          + (fr.rows && fr.rows !== fr.n ? ' of ' + commas(fr.rows) + ' rows' : '')
                        : '—' })

@@ -738,8 +738,8 @@ by_src = collections.Counter(c["provenance"]["source"] for c in candidates)
 # These sessions are also the record the streak blocks above name: seven of
 # them before SESSION, the oldest 2026-08-21, which is what SPAN says and what
 # makes the day numbers up there ones the real code could have written.
-#: The sessions a run's frames were missing, per horizon: three of
-#: 2026-08-25's 21 setups had a hole between the third session after the
+#: How many of a run's setups lost each horizon to a hole in their frame:
+#: three of 2026-08-25's 21 setups had a hole between the third session after the
 #: burst and the fifth, so forward_returns() ended their measurement at d3
 #: and that night's d5 is over 18 setups while its d1 is over 21. The one
 #: state that tells a per-horizon weight from a run-level one, which is why

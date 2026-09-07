@@ -955,7 +955,7 @@ is what those setups were collapsed from. The page prints both, and calls
 neither of them "names".
 
 **The weight is per horizon**, not per run: `forward_returns.n1`, `n3` and `n5`
-are the setups behind `d1`, `d3` and `d5 `separately, on both bases, and the
+are the setups behind `d1`, `d3` and `d5` separately, on both bases, and the
 dashboard multiplies each horizon's mean by its own. A frame with a hole two
 sessions after the burst measures `d1` and nothing after it — the fill refuses
 a horizon it cannot reach across every session on the way — so that setup is in
@@ -1256,7 +1256,7 @@ construction: `docs/` and its exact design-system snapshot are served locally,
 and external requests are blocked. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 248 checks, and which file each one
+**Three data sources, one page.** It runs 254 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served

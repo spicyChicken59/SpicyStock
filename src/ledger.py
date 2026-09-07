@@ -1555,9 +1555,13 @@ def _enough(outcomes: list[dict]) -> bool:
     """Has the longest horizon enough setups behind it to read as a rate?
 
     d5 decides, not d1: d5 and d3 ARE this strategy's profit and loss, because
-    the trade is held three to five sessions and exited. d1 is an early read
-    and always has the largest n, so keying on it would license a rate for a
-    horizon nobody has measured yet.
+    the trade is held three to five sessions and exited. d1 is the earliest
+    read and usually the largest n -- but the counts are NOT ordered
+    n1 >= n3 >= n5, and mean_returns() says so: a frame whose d1 bar prints a
+    non-finite close measures d3 with no d1 (executed against
+    forward_returns(), not argued). So this is keyed on the horizon it is
+    about, rather than on d1's count standing in for every horizon's; keying
+    on d1 would license a rate for a horizon nobody has measured yet.
     """
     return at_horizon(outcomes, max(HORIZONS))["n"] >= MIN_SETUPS_FOR_A_RATE
 

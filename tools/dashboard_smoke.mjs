@@ -166,7 +166,18 @@ const VARIANTS = {
       const f = r.forward_returns;
       if (!f || !f.n) return;
       f.rows = f.n;
-      for (const h of ['1', '3', '5']) if (f['d' + h] !== null && f['d' + h] !== undefined) f['n' + h] = f.n;
+      // Both bases, because the page reads each basis's own counts and a
+      // variant levelled on one of them is, on the other tab, exactly the file
+      // this comment says it holds none of. A basis that measured nothing is
+      // left alone; one that measured anything is a file where every row had a
+      // usable open and reached every horizon it has.
+      for (const b of [f, f.from_open]) {
+        if (!b) continue;
+        const hs = ['1', '3', '5'].filter((h) => b['d' + h] !== null && b['d' + h] !== undefined);
+        if (!hs.length) continue;
+        b.n = f.n;
+        for (const h of hs) b['n' + h] = b.n;
+      }
     });
     return d;
   },
@@ -838,17 +849,23 @@ const WEAKEST = [...CHECKS].sort((a, b) => a.gap - b.gap)[0];
 // numbers differ on this source -- without that second half the check passes
 // on any file whose horizons all have the same count, which is every file the
 // synthetic history writes.
+// THE WEIGHT BEHIND ONE HORIZON'S MEAN, recomputed in ONE place for every
+// pass of this script. A run's `n` is every setup it measured at some horizon,
+// so weighting d5 by it counts setups that have no d5; a file written before
+// the per-horizon counts carries only `n`, and that is what it claims about
+// its own weights. The history pass kept a second copy of the superseded rule
+// and agreed with this one only because no run in that fixture has a hole.
+const hzWeight = (f, k) => (typeof f['n' + k.slice(1)] === 'number' ? f['n' + k.slice(1)] : (f.n || 0));
 const horizon = (k) => {
   const have = REAL.runs.filter((r) => (r.forward_returns || {})[k] !== null && (r.forward_returns || {})[k] !== undefined);
-  const w = (r) => (typeof r.forward_returns['n' + k.slice(1)] === 'number'
-    ? r.forward_returns['n' + k.slice(1)] : (r.forward_returns.n || 0));
+  const w = (r) => hzWeight(r.forward_returns, k);
   const names = have.reduce((a, r) => a + w(r), 0);
   const wsum = have.reduce((a, r) => a + r.forward_returns[k] * w(r), 0);
   const anyN = have.reduce((a, r) => a + (r.forward_returns.n || 0), 0);
   const anySum = have.reduce((a, r) => a + r.forward_returns[k] * (r.forward_returns.n || 0), 0);
   const vals = have.map((r) => r.forward_returns[k]);
   const rows = have.reduce((a, r) => a + (r.forward_returns.rows || 0), 0);
-  return { sessions: have.length, names, rows, mean: names ? wsum / names : null,
+  return { sessions: have.length, names, rows, anyN, mean: names ? wsum / names : null,
            byN: anyN ? anySum / anyN : null,
            plain: vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null,
            best: vals.length ? Math.max(...vals) : null, worst: vals.length ? Math.min(...vals) : null };
@@ -1407,6 +1424,32 @@ const histAgree = await page.evaluate(() => {
 });
 ok('and it agrees with the tiles above it',
   histAgree.bursts === String(run.bursts) && histAgree.scored === String(run.scored), JSON.stringify(histAgree));
+// A RUN'S THREE MEANS ARE OVER THREE COUNTS, and the table prints four
+// numbers on one row. The fixture's 2026-08-25 entry measured 21 setups at
+// +1d and 18 at +5d, so ONE count in the last column, beside three horizon
+// cells, tells a reader the -0.42% is over 21 when the page itself weighted
+// it by 18. The column says what its number is -- the run's own setups, at
+// any horizon -- and each horizon cell carries the count behind ITS mean.
+// The precondition is the check: on a source where no run's n5 differs from
+// its n1, a page printing one number three times passes this.
+const holedRun = REAL.runs.find((r) => (r.forward_returns || {}).n5 !== (r.forward_returns || {}).n1
+  && (r.forward_returns || {}).d5 !== null && (r.forward_returns || {}).d5 !== undefined);
+const holedRow = await page.$$eval('#runs-table tbody tr', (trs, session) => {
+  const tr = trs.find((t) => t.children[0].textContent.trim().startsWith(session));
+  return tr ? { setups: tr.children[9].textContent.trim(),
+                setupsTitle: tr.children[9].getAttribute('title') || '',
+                titles: [6, 7, 8].map((i) => tr.children[i].getAttribute('title') || '') } : null;
+}, fmtDay(holedRun.date));
+ok('each of a run\u2019s three means says how many setups are behind IT',
+  !!holedRow && holedRow.titles[2].includes(`${holedRun.forward_returns.n5} setup`)
+  && holedRow.titles[0].includes(`${holedRun.forward_returns.n1} setup`)
+  && holedRun.forward_returns.n5 !== holedRun.forward_returns.n1,
+  holedRow ? `${holedRun.date}: +1d "${holedRow.titles[0]}" / +5d "${holedRow.titles[2]}"` : 'no such row');
+ok('and the run\u2019s own setup count is named as that, not as a horizon\u2019s weight',
+  (await page.textContent('#runs-table thead th:nth-child(10)')).trim() === 'setups'
+  && /at some horizon/.test(holedRow.setupsTitle)
+  && holedRow.setups.startsWith(`${holedRun.forward_returns.n} setup`),
+  `${holedRow.setups} (${holedRow.setupsTitle})`);
 
 // --- which 2LYNCH check is doing the gating --------------------------------
 // The view's whole claim is that it looks at EVERY burst. A rate over the
@@ -1493,6 +1536,7 @@ const tiles = await page.evaluate(() => [...document.querySelectorAll('#returns-
   label: t.querySelector('.sc-tile__label').textContent.trim(),
   value: t.querySelector('.sc-tile__value').textContent.trim(),
   sub: t.querySelector('.sc-tile__sub').textContent.trim(),
+  subTitle: t.querySelector('.sc-tile__sub').getAttribute('title') || '',
   delta: t.querySelector('.sc-delta').textContent.trim(),
   chip: t.querySelector('.sc-chip').textContent.trim()
 })));
@@ -1523,7 +1567,7 @@ ok('a horizon is weighted by the setups that reached IT, not by the run\u2019s',
   H5.mean !== H5.byN && tiles[2].value === money(H5.mean),
   `page ${tiles[2].value}, per horizon ${money(H5.mean)} over ${H5.names}, by run n ${money(H5.byN)}`);
 ok('and the setup count under a horizon is that horizon\u2019s own',
-  tiles[2].sub.includes(`${H5.names} setup`) && H5.names !== H1.names,
+  tiles[2].sub.includes(`\u00b7 ${H5.names} `) && H5.names !== H1.names,
   `${tiles[2].sub} — +1d is over ${H1.names}`);
 // The open basis carries its own counts, and the basis switch has to hand
 // them over: without them the open tab weighted +5d by from_open.n -- 21
@@ -1547,7 +1591,7 @@ const openH5 = (() => {
 })();
 ok('the open basis is weighted by ITS own per-horizon counts too',
   openH5.mean !== openH5.other && openTiles[2].value === money(openH5.mean)
-  && openTiles[2].sub.includes(`${openH5.names} setup`),
+  && openTiles[2].sub.includes(`\u00b7 ${openH5.names} `),
   `page ${openTiles[2].value} / ${openTiles[2].sub}, per horizon ${money(openH5.mean)} over ${openH5.names}, by n ${money(openH5.other)}`);
 await page.click('#basis-tabs .sc-tab[data-basis="close"]');
 await page.waitForTimeout(150);
@@ -1561,6 +1605,21 @@ ok('a setup count says what it was collapsed from, whatever the ratio',
     return !h.rows || t.sub.includes(`from ${h.rows} row`);
   }),
   tiles.map((t) => t.sub).join(' | '));
+// THE NUMERATOR IS PER HORIZON AND THE DENOMINATOR IS NOT. `rows` is every row
+// that measured something, `n` the setups they collapse into, and the
+// horizon's own count how many of THOSE reached it: three populations, and
+// "60 setups from 65 rows" states a collapse the file does not support -- 65
+// rows collapse into 63 setups, of which 60 have a +5d, and the other 3 are
+// holes rather than repeats folded away. The tile prints both steps when they
+// differ and the plain ratio when they do not.
+ok('a tile whose horizon is over fewer setups than the run collapsed says both steps',
+  H5.names !== H5.anyN && tiles[2].sub.includes(`${H5.names} of ${H5.anyN} setups from ${H5.rows} rows`)
+  && tiles[2].subTitle.includes(`${H5.rows} rows`) && tiles[2].subTitle.includes(`${H5.anyN} setup`)
+  && /hole before this horizon/.test(tiles[2].subTitle),
+  `${tiles[2].sub} (${tiles[2].subTitle}) — ${H5.names} at +5d, ${H5.anyN} setups, ${H5.rows} rows`);
+ok('and a horizon nothing was held back from prints the ratio plainly',
+  H1.names === H1.anyN && tiles[0].sub.includes(`${H1.names} setups from ${H1.rows} rows`),
+  `${tiles[0].sub} — ${H1.names} at +1d, ${H1.anyN} setups, ${H1.rows} rows`);
 // One observation is not a range. It read "ran -0.42% to -0.42%" until it did.
 ok('a single session is not dressed up as a spread',
   H5.sessions !== 1 || !/ran .* to /.test(tiles[2].delta), tiles[2].delta);
@@ -1568,6 +1627,13 @@ ok('five sessions is not called a measurement',
   tiles.every((t) => t.chip === 'not enough data')
   && (await page.textContent('#returns-hint')).includes('none of the three'),
   tiles.map((t) => t.chip).join(' | '));
+// The weight is per SETUP, and the sentence explaining it said "a run": a run
+// has no frame, and it leaves a horizon's weight only if every one of its
+// setups does -- which is false of the file this page renders, where the holed
+// run is in the +5d weight with 18 of its 21 setups.
+ok('the hint names the unit the weight is really over',
+  (await page.textContent('#returns-hint')).includes('a setup whose frame had a hole'),
+  (await page.textContent('#returns-hint')).slice(0, 200));
 
 // --- the record's own view, on a record one session long -------------------
 // The fixture is one night old, so every horizon in its evidence block is
@@ -1980,10 +2046,22 @@ ok('a file from before the per-horizon counts is weighted by the one count it ha
   `${oldTiles.map((t) => t.value).join(' | ')} — want ${money(oldWant[0].mean)} and ${money(oldWant[1].mean)}`);
 
 await open('/v/norepeats/');
-const flat = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')]
+const subs = () => page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')]
   .map((t) => t.querySelector('.sc-tile__sub').textContent.trim()));
+const flat = await subs();
 ok('a 1:1 collapse still says what the setups were counted from',
   flat.every((t) => /(\d+) setups? from \1 rows?/.test(t)), flat.join(' | '));
+// The levelling has to reach the open basis's own counts, and only a check
+// that switches can say it did: with from_open.n5 left at 18 against an n of
+// 21, this variant is on that tab exactly the file its comment says it exists
+// to have none of, and the close-basis assertion above cannot see it.
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+await page.waitForTimeout(150);
+const flatOpen = await subs();
+ok('and it is 1:1 on the open basis too, which is where the levelling could go missing',
+  flatOpen.every((t) => /(\d+) setups? from \1 rows?/.test(t)), flatOpen.join(' | '));
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+await page.waitForTimeout(150);
 
 await open('/v/degraded/');
 ok('a run that lost something says so at the top', !(await page.locator('#notice').isHidden()));
@@ -2089,11 +2167,13 @@ ok('the night the scorer was down is in the table with its fallback count',
 const HH = [horizon('d1'), horizon('d3'), horizon('d5')];
 const htiles = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')].map((t) => ({
   value: t.querySelector('.sc-tile__value').textContent.trim(), chip: t.querySelector('.sc-chip').textContent.trim() })));
-// horizon() reads REAL; recompute over HIST for this pass.
+// horizon() reads REAL; recompute over HIST for this pass, through the same
+// weight accessor rather than a second copy of the rule.
 const hhorizon = (k) => {
   const have = HIST.runs.filter((r) => (r.forward_returns || {})[k] !== null && (r.forward_returns || {})[k] !== undefined);
-  const n = have.reduce((a, r) => a + (r.forward_returns.n || 0), 0);
-  return { sessions: have.length, mean: n ? have.reduce((a, r) => a + r.forward_returns[k] * (r.forward_returns.n || 0), 0) / n : null };
+  const n = have.reduce((a, r) => a + hzWeight(r.forward_returns, k), 0);
+  return { sessions: have.length,
+           mean: n ? have.reduce((a, r) => a + r.forward_returns[k] * hzWeight(r.forward_returns, k), 0) / n : null };
 };
 const hh = [hhorizon('d1'), hhorizon('d3'), hhorizon('d5')];
 ok('each horizon tile is the setup-weighted mean over the sessions that closed, and says whether that is enough',

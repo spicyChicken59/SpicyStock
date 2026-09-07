@@ -225,8 +225,14 @@ def _returns_ok(returns, *, run_level: bool) -> bool:
         # either direction), and it cannot exceed the setups the run has.
         # from_open is checked only when it is there: a run from before the
         # open basis carries none, which the contract calls a fact about that
-        # run rather than a measurement of zero.
-        for block, total in ((returns, n), (returns.get("from_open"), (returns.get("from_open") or {}).get("n"))):
+        # run rather than a measurement of zero. It is shape-checked BEFORE its
+        # own n is read off it -- `(block or {}).get("n")` raised inside this
+        # walker on any truthy non-object, so a plant of that shape came back
+        # as a test error rather than as the violation it is.
+        open_block = returns.get("from_open")
+        if open_block is not None and not isinstance(open_block, dict):
+            return False
+        for block, total in ((returns, n), (open_block, (open_block or {}).get("n"))):
             if block is None:
                 continue
             if not isinstance(total, int) or isinstance(total, bool) or total < 0:
@@ -1112,6 +1118,18 @@ def test_a_horizon_count_that_is_not_that_horizon_s_weight_is_caught(document):
     returns["from_open"]["n1"] = 3          # more than the open basis's own n
     _only(document, "returns_shape")
     returns["from_open"]["n1"] = 2
+    assert contract_violations(document) == set()
+    # And a from_open that is not an object AT ALL. The count was read off the
+    # block with `(block or {}).get("n")`, so an empty list fell through to {}
+    # and reported the violation while [1], "x", 3, 0.5 and True raised
+    # AttributeError inside the walker -- a test ERROR from the checker whose
+    # whole job is to report the one-level-short class. src.ledger's
+    # _from_open() answers the same question one file over with isinstance.
+    good = dict(returns["from_open"])
+    for bad in ([1], "x", 3, 0.5, True, []):
+        returns["from_open"] = bad
+        _only(document, "returns_shape")
+    returns["from_open"] = good
     assert contract_violations(document) == set()
     # A run from before the open basis carries no from_open at all, which is
     # a fact about that run and not a weight of zero.
@@ -3985,10 +4003,11 @@ def test_the_streak_view_counts_appearances_because_a_setup_lead_is_always_day_o
 def test_whether_a_number_may_be_read_as_a_rate_is_decided_on_the_horizon_that_is_traded():
     """d5 decides `enough`, not d1.
 
-    d1 always has the largest n -- it closes first -- so keying on it would
-    license a rate for a horizon nobody has measured. d3 and d5 are what this
-    strategy trades; a bucket with a hundred d1s and two d5s knows nothing
-    about the trade.
+    d1 closes first and usually has the largest n -- not always, since a frame
+    whose d1 bar prints a non-finite close measures d3 with no d1, which is
+    why the counts are not ordered -- so keying on it would license a rate for
+    a horizon nobody has measured. d3 and d5 are what this strategy trades; a
+    bucket with a hundred d1s and two d5s knows nothing about the trade.
     """
     floor = ledger.MIN_SETUPS_FOR_A_RATE
     sessions = [(f"2026-0{7 + i // 20}-{(i % 20) + 1:02d}", (f"T{i:02d}",)) for i in range(floor + 4)]
