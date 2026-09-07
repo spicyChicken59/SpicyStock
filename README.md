@@ -390,6 +390,11 @@ answer reaches the model as `setup_day: null` beside the reason word, under a
 rulebook sentence saying in as many words that a null day is not day 1.
 Reading it earlier does not make it fatal — an unreadable ledger still only
 degrades the run, which still charts, scores and publishes.
+The model treats this as recorded episode context, not proof of a fresh
+breakout: day 1 may follow an older burst outside the five-weekday grouping
+window, and missing scans limit the record. Unknown history alone earns
+neither a freshness bonus nor a penalty; repeat context is checked against
+the chart without double-counting the same move in consecutive up days.
 
 ## One-time setup
 
