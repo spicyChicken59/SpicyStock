@@ -54,10 +54,11 @@ INVARIANTS = (
     "numbers_or_null",     # no NaN, no "n/a", no 0 standing in for unknown
     "liquidity",           # run.liquidity agrees with the rows and the populations are disjoint
     "benchmark",           # runs[].benchmark and evidence.universe hold together
+    "coverage",            # run.coverage's counts order, and a burst came from a measured name
 )
 
 _RUN_KEYS = ("date", "type", "bursts", "passed_gate", "scored", "score_cap",
-             "shortlist_size", "gate", "scored_by", "universe", "errors")
+             "shortlist_size", "gate", "scored_by", "universe", "coverage", "errors")
 
 #: Fields that must be a number or null wherever they appear. `0` is a legal
 #: value for a count; what the contract forbids is a string or a NaN in one.
@@ -332,6 +333,18 @@ def contract_violations(data: dict, docs_dir=None) -> set[str]:
                 bad.add("liquidity")
         elif refused:
             bad.add("liquidity")   # refusals under a floor the run says it never had
+        # And `over` -- how many names the percentile was drawn FROM. Nothing
+        # checked it at all, so -5 was a legal document; and a floor is a
+        # percentile of a population, so a run that recorded one recorded
+        # ranking at least one name. The reverse is not a rule: a positive
+        # `over` under a null floor is the rule switched off (pctile <= 0),
+        # which is a shape the pipeline writes.
+        if isinstance(liquidity, dict) and "over" in liquidity:
+            over = _count_or_none(liquidity, "over")
+            if over is None or over < 0:
+                bad.add("liquidity")
+            elif isinstance(floor, (int, float)) and not isinstance(floor, bool) and not over:
+                bad.add("liquidity")
     ev = data.get("evidence")
     if isinstance(ev, dict) and isinstance(ev.get("record"), dict):
         populations = ("shortlist", "rest", "refused", "crowded_out", "illiquid")
@@ -356,11 +369,65 @@ def contract_violations(data: dict, docs_dir=None) -> set[str]:
         elif floored + unfloored > rung.get("setups", -1):
             bad.add("benchmark")
 
+    # Round 11's block, and the gap round 9's R9-B closed one block over. The
+    # walker every end-to-end test asserts through clean() as "the whole
+    # contract" returned an identical answer for the canonical fixture and for
+    # `coverage` deleted, `measured: 9999` beside `with_bars: 227`, `measured:
+    # 0` beside `bursts: 50`, a `measured` that is a string, and a negative
+    # `liquidity.over`. Every one of those is a violation now, and the
+    # consequences of the accepted-but-impossible shape were real: both
+    # surfaces silently reverted to the pre-round behaviour, and the evening
+    # cell printed "the other -9772 that answered could not be".
+    if not _coverage_ok(run):
+        bad.add("coverage")
+    # A burst can only have come from a name that was measured, which is what
+    # makes `measured: 0` a BLIND night rather than a quiet one.
+    if run["bursts"] and _count_or_none(run.get("coverage"), "measured") == 0:
+        bad.add("coverage")
+
     found: list = []
     _walk(data, found)
     if found:
         bad.add("numbers_or_null")
     return bad
+
+
+def _count_or_none(block, key):
+    """One count out of a block, or None when it is absent or not a count."""
+    if not isinstance(block, dict):
+        return None
+    value = block.get(key)
+    return value if isinstance(value, int) and not isinstance(value, bool) else None
+
+
+def _coverage_ok(run: dict) -> bool:
+    """run.coverage's counts against the sentences that describe them.
+
+    Every count present is a non-negative whole number, and the four that
+    narrow do narrow: measured <= fresh <= with_bars <= requested. The two
+    maps the scanner keeps come through as counts, and neither way of missing
+    the session can exceed the names that answered. An absent count was never
+    reached -- a run that died early carries fewer of them -- so absent is
+    skipped rather than read as 0.
+    """
+    counts = run.get("coverage")
+    if not isinstance(counts, dict):
+        return False
+    for key in ("requested", "with_bars", "fresh", "measured", "stale", "gapped",
+                "no_bars", "dropped", "duplicate_bars"):
+        if key in counts and _count_or_none(counts, key) is None:
+            return False
+        if key in counts and counts[key] < 0:
+            return False
+    ladder = [counts[key] for key in ("requested", "with_bars", "fresh", "measured")
+              if key in counts]
+    if ladder != sorted(ladder, reverse=True):
+        return False
+    answered = _count_or_none(counts, "with_bars")
+    missed = sum(counts[key] for key in ("stale", "gapped") if key in counts)
+    if answered is not None and missed > answered:
+        return False
+    return True
 
 
 def _quiet_run_ok(entry: dict) -> bool:
@@ -515,6 +582,12 @@ def document() -> dict:
             "universe": {"label": "data/symbols.txt (checked in)", "size": 230},
             "bursts": 3, "passed_gate": 2, "scored": 2, "score_cap": 25,
             "shortlist_size": 2, "gate": {"min_lynch_passes": 3, "total_checks": 6},
+            # How much of the night was read: 230 asked, two names the feed
+            # answered with nothing, two of the answers behind the session.
+            # The four counts narrow, which is what the invariant reads.
+            "coverage": {"requested": 230, "with_bars": 228, "fresh": 226,
+                         "measured": 226, "stale": 2, "gapped": 0, "no_bars": 2,
+                         "dropped": 0, "duplicate_bars": 0, "session": "2026-08-31"},
             "scored_by": {"claude": 1, "fallback": 1}, "model": "claude-sonnet-4-6",
             "errors": [],
         },
@@ -566,6 +639,68 @@ def _only(document, expected):
     """
     violations = contract_violations(document)
     assert violations == {expected}, f"expected only {expected!r}, got {violations}"
+
+
+def test_a_liquidity_population_that_contradicts_the_floor_is_caught(document):
+    """`over` reached the record with nothing checking it against anything.
+    A floor IS a percentile of a population, so a run that recorded one
+    ranked at least one name -- and a count that is not a count is a shape no
+    writer produces. The rule-off state is deliberately NOT a violation: a
+    positive `over` under a null floor is exactly what `pctile: 0` writes,
+    which the published contract said could not happen."""
+    def doctored(edit):
+        fresh = json.loads(json.dumps(document))
+        fresh["run"]["liquidity"] = {"pctile": 30, "floor": 200_000_000.0,
+                                     "over": 190, "refused": 0}
+        edit(fresh["run"]["liquidity"])
+        _only(fresh, "liquidity")
+
+    doctored(lambda block: block.update(over=-5))
+    doctored(lambda block: block.update(over="190"))
+    doctored(lambda block: block.update(over=0))     # a floor drawn from nobody
+
+    legal = json.loads(json.dumps(document))
+    legal["run"]["liquidity"] = {"pctile": 0.0, "floor": None, "over": 226, "refused": 0}
+    assert contract_violations(legal) == set(), (
+        "rule 6 switched off writes a positive `over` under a null floor")
+
+
+def test_a_coverage_block_that_contradicts_its_counts_is_caught(document):
+    """The gap R9-B closed for the benchmark, one block over. Six edits, all
+    of which this walker used to answer identically to the clean document --
+    while the surfaces reading them reverted to the pre-round behaviour and
+    the evening cell printed a negative.
+
+    `coverage` deleted is a `schema` violation rather than this one, because
+    the run block the pipeline writes always carries it: a run that reached
+    publish() reached the scan.
+    """
+    def doctored(edit):
+        fresh = json.loads(json.dumps(document))
+        edit(fresh["run"])
+        _only(fresh, "coverage")
+
+    doctored(lambda run: run["coverage"].update(measured=9999))       # past what answered
+    doctored(lambda run: run["coverage"].update(with_bars=231))       # past what was asked
+    doctored(lambda run: run["coverage"].update(fresh=229))           # past what answered
+    doctored(lambda run: run["coverage"].update(measured="226"))      # not a count
+    doctored(lambda run: run["coverage"].update(gapped=-1))           # not a count either
+    doctored(lambda run: run["coverage"].update(stale=200, gapped=200))  # more than answered
+    # A burst can only come from a name that was measured, which is the shape
+    # that makes ledger.is_blind() misfire: `measured: 0` beside three bursts.
+    doctored(lambda run: run["coverage"].update(measured=0))
+
+    gone = json.loads(json.dumps(document))
+    del gone["run"]["coverage"]
+    assert contract_violations(gone) == {"schema"}
+
+    # And the inverse, so this cannot pass by refusing everything: a run that
+    # measured nothing and found nothing is a legal document.
+    blind = json.loads(json.dumps(document))
+    blind["run"]["coverage"].update(measured=0, fresh=0)
+    blind["run"].update(bursts=0, passed_gate=0, scored=0)
+    blind["candidates"], blind["gated_out"] = [], []
+    assert "coverage" not in contract_violations(blind)
 
 
 def test_a_benchmark_block_that_contradicts_its_sentences_is_caught(document):
@@ -4380,3 +4515,52 @@ def test_a_floor_the_run_entry_cannot_vouch_for_is_no_floor(tmp_path, floor):
     assert book.fill_benchmarks({"THICK": thick, "THIN": thin}, date(2026, 9, 4), universe=universe) == 1
     bench = book.runs[0]["benchmark"]
     assert (bench["n1"], bench["liquidity_floor"], bench["below_floor"]) == (2, None, 0)
+
+
+def test_a_named_basket_that_measured_nothing_is_not_a_blind_night():
+    """A `--tickers` rehearsal that measured nothing must not blank the day
+    number on every burst the next real universe scan finds.
+
+    Reproduced end to end before this rule existed: three universe nights,
+    then a two-name rehearsal on the day after a holiday -- both frames holed,
+    `measured: 0` -- and the next universe scan printed `blind_session` on a
+    name the record had seen three times. The rehearsal read nothing about the
+    market either way: it never asked about it. That is the same reasoning
+    Ledger.fill_benchmarks() applies when it fills a run only from a scan of
+    the universe that run itself scanned, and blind_sessions() did not make it.
+
+    Both halves, so neither can pass by withholding everything: a blind
+    UNIVERSE run in the same window still withholds the day.
+    """
+    basket = {"date": MON, "measured": 0,
+              "universe": {"label": "2 named on the command line (--tickers)",
+                           "size": 2, "tickers": ["AAA", "BBB"]}}
+    assert ledger.Record.of([basket]).blind == frozenset()
+    assert ledger.streak([], TUE, record=ledger.Record(DEEP, 160, 160,
+                                                      ledger.Record.of([basket]).blind))["day"] == 1
+
+    universe = {"date": MON, "measured": 0,
+                "universe": {"label": "data/symbols.txt (checked in)", "size": 228}}
+    assert ledger.Record.of([universe]).blind == {date.fromisoformat(MON)}
+    assert ledger.streak([], TUE, record=ledger.Record(DEEP, 160, 160,
+                                                      ledger.Record.of([universe]).blind))["day"] is None
+
+
+def test_a_re_scan_of_the_session_the_record_holds_as_blind_still_counts_day_one():
+    """The lower edge of the blind window, which is the documented recovery.
+
+    A night measures nothing; the operator fixes the feed and re-runs that
+    same session with SCAN_SESSION_DATE. The streak is computed against the
+    history as it stands, which still holds the blind entry FOR THAT SESSION
+    -- and the burst in front of it is the proof somebody read the session
+    after all. `0 < gap` is what allows it; widening the test to `0 <= gap`
+    withholds the day number on the very session that was just re-read, and
+    no test sat on that edge.
+    """
+    record = ledger.Record(DEEP, 160, 160, frozenset({date.fromisoformat(TUE)}))
+    assert ledger.streak([], TUE, record=record)["day"] == 1
+    # And the session before it is inside the window, so this cannot pass by
+    # ignoring the blind set.
+    day_before = pd.bdate_range(end=TUE, periods=2)[0].date()
+    assert ledger.streak([], TUE, record=ledger.Record(DEEP, 160, 160,
+                                                      frozenset({day_before})))["day"] is None

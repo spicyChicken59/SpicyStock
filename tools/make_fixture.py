@@ -718,6 +718,12 @@ SCAN_STATS = {
 }
 assert SCAN_STATS["with_bars"] - len(SCAN_STATS["stale"]) == MEASURED, (
     "the coverage counts have to add up the way a real scan's do")
+assert MEASURED < SCAN_STATS["with_bars"] < SCAN_STATS["requested"], (
+    "this fixture is the THIN night -- some names never answered and some "
+    "answers could not be measured -- and three prose surfaces called it a "
+    "clean one, whose caption is the bare 'no 4% gain on the day'. That is "
+    "history/, which is 77 of 77 of 77. If this stops being true, sweep "
+    "tests/fixtures/README.md and the comments beside `coverage` here.")
 
 by_src = collections.Counter(c["provenance"]["source"] for c in candidates)
 
@@ -883,10 +889,13 @@ data = {
         "duplicate_bars": 0,
         # How much of the night was read, through the pipeline's own function
         # over the same stats block the stopped-printing names come from --
-        # not a hand-typed set of counts that could disagree with them. A
-        # clean night: everything that answered and carried the session was
-        # measured, so the page captions the first cut "no 4% gain on the day"
-        # and no surface says anything could not be read.
+        # not a hand-typed set of counts that could disagree with them. A THIN
+        # night, not a clean one: 228 asked, 227 answered, 225 measured,
+        # because the two stopped-printing names are stale. So every surface
+        # derived from this file appends the clause -- the page captions the
+        # first cut "no 4% gain on the day; 3 of the 228 asked could not be
+        # measured for this session" -- and history/ is the clean one. The
+        # assertion beside SCAN_STATS is what stops that sentence drifting.
         "coverage": scan_coverage(SCAN_STATS),
         "bursts": BURSTS,
         "passed_gate": PASSED,
@@ -896,11 +905,13 @@ data = {
         "gate": {"min_lynch_passes": 3, "total_checks": 6,
                  "vetoes": list(VETO_REASONS)},
         "rules": rules_fingerprint(),
-        # `over` is how many names the percentile was drawn from: every name
-        # that traded and could be measured. A null floor beside `over: 0` is
-        # a different sentence -- nothing could be measured -- and the fixture
-        # is the clean night, so this is the population the floor really came
-        # from.
+        # `over` is how many names the percentile was drawn FROM -- those whose
+        # session bar carried a readable, positive dollar volume. Not the same
+        # count as run.coverage.measured, which is what the DETECTOR read and
+        # answered about; they coincide on this night and diverge on any night
+        # with a zero-volume bar or a detector error in it. A null floor beside
+        # `over: 0` is a third sentence again -- no name's dollar volume could
+        # be ranked.
         "liquidity": {"pctile": PCTILE, "floor": FLOOR, "over": MEASURED,
                       "refused": ILLIQUID},
         "scored_by": {"claude": by_src["claude"], "fallback": by_src["fallback"]},

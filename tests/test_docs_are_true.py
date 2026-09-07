@@ -580,9 +580,47 @@ def test_every_reason_a_streak_can_carry_has_words_on_every_surface():
         f"{sorted(r for r in reasons if r not in page)}, so the page and the "
         "email say different things about one row"
     )
+    # THE SENTENCES, NOT THE KEYS. Both files carry a comment saying the other
+    # holds the same map in the same words, and this asserted only that the
+    # KEY appeared -- so either surface could be reworded alone with the whole
+    # suite and the whole dashboard smoke green, which is how a comment
+    # claiming two surfaces agree carried a drift for a round twice already.
+    # The page writes its map as JS string concatenation across lines, so the
+    # joins come out before the comparison; nothing else is normalised,
+    # because a difference in anything else IS the drift.
+    joined = re.sub(r"'\s*\+\s*'", "", page)
+    for reason in sorted(reasons):
+        assert emailer.STREAK_UNKNOWN[reason] in joined, (
+            f"docs/index.html does not say {emailer.STREAK_UNKNOWN[reason]!r} for "
+            f"{reason}; the page and the email have drifted apart on one row")
     assert not [r for r in reasons if f"`{r}`" not in _read("README.md")], (
         "README's streak bullet does not name every reason a null `day` can carry"
     )
+
+
+def test_the_readme_names_as_many_ways_of_going_unmeasured_as_the_scan_subtracts():
+    """README's `run.coverage` bullet lists the causes of `with_bars -
+    measured` in a parenthetical, and run_scan() subtracts one term per cause.
+    The bullet named four where the code subtracts five -- the missing one
+    being the detector-error class, which is the one CLAUDE.md records as "a
+    detector that raised on every symbol was a quiet market" -- while
+    src/scanner.py's own comment beside the arithmetic listed all five. A
+    count of causes in prose beside a subtraction that grows is exactly the
+    citation this repo has watched rot four times, so it is counted rather
+    than restated."""
+    scanner_src = _read("src/scanner.py")
+    expression = re.search(r"measured = \(with_bars(.*?)\)\)\n", scanner_src, re.S)
+    assert expression, "src/scanner.py no longer computes `measured` in one expression"
+    terms = expression.group(1).count("- len(")
+
+    bullet = _read("README.md")
+    parenthetical = re.search(
+        r"not be measured for the session, in the five ways `run_scan\(\)` subtracts\s*\n?\s*\((.*?)\)", bullet, re.S)
+    assert parenthetical, "README no longer lists the ways a name goes unmeasured"
+    causes = parenthetical.group(1).count(",") + 1
+    assert causes == terms, (
+        f"README names {causes} ways a name could not be measured; run_scan() "
+        f"subtracts {terms} counts")
 
 
 def test_the_email_and_the_page_caption_the_first_cut_in_one_vocabulary():
@@ -604,10 +642,30 @@ def test_the_email_and_the_page_caption_the_first_cut_in_one_vocabulary():
     assert emailer.MEASURED_PHRASE in blind
     assert "could be measured for this session" in page, (
         "the page's blind caption and the email's cell have drifted apart")
-    # And the funnel's label is the email's own constant rather than a string
-    # typed twice: the page reads its counts from run.coverage, so a rename
-    # here has to be a rename there.
-    assert emailer.MEASURED_LABEL.lower().startswith("measured")
+    # The page's own first-cut caption, in the same words, on the state that
+    # is not the blind one: MEASURED_PHRASE is the string both files share and
+    # the assertion above pins it. This used to end with
+    # `MEASURED_LABEL.lower().startswith("measured")` under a comment saying
+    # "a rename here has to be a rename there" -- and the label appears in
+    # docs/index.html nowhere at all, so the comment described a guard that did
+    # not exist and the assertion could not fail on a rename. The label is the
+    # EMAIL's, and what pins it is the funnel it is printed in.
+    funnel = emailer.build_html([], "evening", {
+        "universe": "228 checked-in US common stocks", "bursts": 0, "gated": 0,
+        "coverage": {"requested": 228, "with_bars": 227, "measured": 216}})
+    # Against README'S OWN QUOTED EXAMPLE, not against the constant the line
+    # was built from: `f"{MEASURED_LABEL}: ..." in funnel` is this project's
+    # third shape of unfailable test -- a value compared with the name it came
+    # from -- and renaming the constant passed it. README's `run.coverage`
+    # bullet quotes the finished line, so one assertion pins the label, both
+    # denominators and the wording, and a rename is a doc sweep.
+    quoted = re.search(r'\("(Measured for the session: [^"]+)"\)',
+                       " ".join(_read("README.md").split()))
+    assert quoted, "README no longer quotes the funnel's first-cut line"
+    assert quoted.group(1) in funnel, (
+        f"README quotes {quoted.group(1)!r}; the funnel renders "
+        f"{[p for p in funnel.split(chr(10)) if 'Measured' in p]}")
+    assert emailer.MEASURED_LABEL in quoted.group(1)
 
 
 def test_the_documented_return_bases_are_the_ones_the_ledger_writes():
@@ -1079,9 +1137,12 @@ def test_the_ledgers_projected_size_is_what_measuring_it_says():
     check count, and the third number in this repo to rot the same way.
 
     Re-measured rather than restated: tools/measure_ledger.py builds the file
-    with the real writer and the real rows. Tolerant to a hundredth, because
-    the assertion is that README is not WRONG, not that a megabyte figure is
-    quoted to the byte.
+    with the real writer and the real rows. Compared against the figure the
+    TOOL PRINTS -- f"{value:.2f}" -- and not against a band a hundredth wide:
+    the band was exactly wide enough to hide the one move it exists to catch,
+    since 1.230009 became 1.235233 when round 11 put `measured` on every
+    entry, and 1.23 and 1.24 both sat inside it while the tool printed 1.24.
+    A number the docs quote and the tool prints have to be the same string.
     """
     import importlib.util
     import re
@@ -1097,11 +1158,11 @@ def test_the_ledgers_projected_size_is_what_measuring_it_says():
         r"projects to about ([\d.]+) MB raw\s*\nand \*\*([\d.]+) MB gzipped\*\*", readme
     ).groups()
 
-    assert abs(float(raw) - measured["raw_mb"]) < 0.01, (
-        f"README says {raw} MB raw; measuring says {measured['raw_mb']:.2f}. "
+    assert raw == f"{measured['raw_mb']:.2f}", (
+        f"README says {raw} MB raw; measuring prints {measured['raw_mb']:.2f}. "
         "Run python tools/measure_ledger.py and sweep it.")
-    assert abs(float(gz) - measured["gzip_mb"]) < 0.01, (
-        f"README says {gz} MB gzipped; measuring says {measured['gzip_mb']:.2f}. "
+    assert gz == f"{measured['gzip_mb']:.2f}", (
+        f"README says {gz} MB gzipped; measuring prints {measured['gzip_mb']:.2f}. "
         "Run python tools/measure_ledger.py and sweep it.")
 
     # The page argues its whole fetch-on-demand design from the same number,
@@ -1111,8 +1172,8 @@ def test_the_ledgers_projected_size_is_what_measuring_it_says():
     quoted = re.findall(r"([\d.]+)\s*MB gzipped", _read("docs/index.html"))
     assert quoted, "docs/index.html no longer quotes the record's gzipped size"
     for figure in quoted:
-        assert abs(float(figure) - measured["gzip_mb"]) < 0.01, (
-            f"docs/index.html says {figure} MB gzipped; measuring says "
+        assert figure == f"{measured['gzip_mb']:.2f}", (
+            f"docs/index.html says {figure} MB gzipped; measuring prints "
             f"{measured['gzip_mb']:.2f}. Run python tools/measure_ledger.py and sweep it.")
 
 

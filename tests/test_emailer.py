@@ -365,31 +365,81 @@ COVERAGE = {"requested": 230, "with_bars": 228, "fresh": 226, "measured": 226,
             "no_bars": 2, "dropped": 0, "duplicate_bars": 0, "stale": 2, "gapped": 0}
 
 
-@pytest.mark.parametrize("measured, expected, forbidden", [
-    # Every name that answered was read: the sentence it always was.
-    (228, "No 4% burst anywhere in the universe today", "measured for this session"),
+#: The same night with nothing missing anywhere: every name asked answered,
+#: and every answer was measured. The one shape the widest sentence is true of.
+WHOLE = {"requested": 228, "with_bars": 228, "fresh": 228, "measured": 228,
+         "no_bars": 0, "dropped": 0, "duplicate_bars": 0, "stale": 0, "gapped": 0}
+
+
+@pytest.mark.parametrize("coverage, expected, forbidden", [
+    # Every name asked answered and every answer was read: the sentence it
+    # always was, and the only block it is true of.
+    (WHOLE, "No 4% burst anywhere in the universe today", "measured for this session"),
     # Some were not, which is the ordinary night -- halts and holes -- and the
     # cell is the only thing explaining itself, because a handful is under
-    # every degrade threshold and the band is empty.
-    (226, "No 4% burst among the 226 names measured for this session; the other 2 "
-          "that answered could not be.", "anywhere in the universe"),
+    # every degrade threshold and the band is empty. The denominator is what
+    # was ASKED, not what answered: the two names the feed never answered for
+    # are as unread as the two whose bars could not be measured.
+    (dict(COVERAGE, measured=226),
+     "No 4% burst among the 226 names measured for this session; the other 4 "
+     "of the 230 asked could not be.", "anywhere in the universe"),
+    # THE CUT THAT IS NOT THE BURST FILTER. Every name that answered was
+    # measured and two never answered, which is a clean green run -- no_bars
+    # of 2 in 230 is under the guard -- and it claimed the whole universe.
+    (dict(COVERAGE, measured=228),
+     "No 4% burst among the 228 names measured for this session; the other 2 "
+     "of the 230 asked could not be.", "anywhere in the universe"),
     # And none were. This is a claim about a session nothing read.
-    (0, "Not one of the 228 names that answered could be measured for this session",
+    (dict(COVERAGE, measured=0),
+     "Not one of the 230 names asked could be measured for this session",
      "quiet market"),
+    # With no `requested` the block can only speak of what answered, and does.
+    ({"with_bars": 228, "measured": 0},
+     "Not one of the 228 names that answered could be measured for this session",
+     "quiet market"),
+    ({"with_bars": 228, "measured": 226},
+     "No 4% burst among the 226 names measured for this session; the other 2 "
+     "that answered could not be.", "anywhere in the universe"),
 ])
 def test_the_quiet_market_sentence_is_only_said_of_the_names_that_were_read(
-    measured, expected, forbidden
+    coverage, expected, forbidden
 ):
     """The widest claim the mail makes about the market, made from `bursts ==
-    0` alone -- which is also what a scan that measured NOT ONE NAME reports.
-    Three states off one block, and the two new ones are the ones that used to
-    print the third."""
-    stats = dict(STATS, bursts=0, gated=0, coverage=dict(COVERAGE, measured=measured))
+    0` alone -- which is also what a scan that measured NOT ONE NAME reports,
+    and what a scan two of whose names never answered reports.
+
+    Six states off one block. The first cut is not all one cause: between the
+    universe and the bursts sit the names that answered and could not be
+    measured AND the names that answered with nothing at all, and this
+    compared `measured` to `with_bars` alone, so the second half was still
+    being attributed to the burst filter on a run that exited 0.
+    """
+    stats = dict(STATS, bursts=0, gated=0, coverage=coverage)
 
     text = _visible_text(build_html([], "evening", stats))
 
     assert expected in text, text
     assert forbidden not in text, text
+
+
+def test_the_widest_sentence_names_a_basket_that_is_not_the_checked_in_file():
+    """"No 4% burst anywhere in the universe today" over two names typed on
+    the command line. _empty_morning_note() has appended the scope clause
+    since round 10 and its evening twin was left with the funnel's Universe
+    line, which is a different line of a different block; the pipeline hands
+    over the same fact under the same rule, so only the exception carries it.
+    """
+    stats = dict(STATS, bursts=0, gated=0, coverage=WHOLE,
+                 scanned_universe="2 named on the command line (--tickers)")
+
+    text = _visible_text(build_html([], "evening", stats))
+
+    assert ("This run scanned 2 named on the command line (--tickers), not the "
+            "checked-in universe.") in text, text
+    # And an ordinary night says nothing, so the clause cannot pass by
+    # appearing on every mail.
+    assert "not the checked-in universe" not in _visible_text(
+        build_html([], "evening", dict(STATS, bursts=0, gated=0, coverage=WHOLE)))
 
 
 def test_a_run_that_reported_no_coverage_keeps_the_sentence_it_always_had():
@@ -408,25 +458,42 @@ def test_a_run_that_reported_no_coverage_keeps_the_sentence_it_always_had():
     assert emailer.measured_counts({"coverage": {"with_bars": 12}}) is None
 
 
-@pytest.mark.parametrize("measured, shown", [
-    (226, "Measured for the session: 226 of 228 that answered"),
-    (0, "Measured for the session: 0 of 228 that answered"),
+@pytest.mark.parametrize("coverage, shown", [
+    # Both denominators when they differ, because they are two cuts with two
+    # causes: four of the 230 asked went unmeasured, two of them by never
+    # answering at all.
+    (dict(COVERAGE, measured=226),
+     "Measured for the session: 226 of 230 asked, 226 of 228 that answered"),
+    (dict(COVERAGE, measured=0),
+     "Measured for the session: 0 of 230 asked, 0 of 228 that answered"),
+    # The cut bit even though every answer was measured: two names never
+    # answered, and that is the half the funnel used to leave to the burst
+    # filter.
+    (dict(COVERAGE, measured=228),
+     "Measured for the session: 228 of 230 asked, 228 of 228 that answered"),
+    # One denominator when there is only one to have.
+    ({"with_bars": 228, "measured": 226},
+     "Measured for the session: 226 of 228 that answered"),
 ])
-def test_the_funnel_names_the_first_cut_when_it_bit(measured, shown, results):
+def test_the_funnel_names_the_first_cut_when_it_bit(coverage, shown, results):
     """Between "Universe: 230 checked-in US common stocks" and "4% bursts
-    found" sits every name that answered and could not be measured, and the
-    funnel had no line for it -- so a night that measured nothing read exactly
-    like a night that measured everything. The page's funnel captions the same
-    cut."""
-    stats = dict(STATS, coverage=dict(COVERAGE, measured=measured))
+    found" sits every name that answered and could not be measured, and every
+    name that never answered -- and the funnel had no line for either, so a
+    night that measured nothing read exactly like a night that measured
+    everything. The page's funnel captions the same cut."""
+    stats = dict(STATS, coverage=coverage)
     assert shown in _visible_text(build_html(results, "evening", stats))
 
 
 @pytest.mark.parametrize("coverage", [
     None,                                              # before the block existed
-    dict(COVERAGE, measured=228),                      # nothing was cut here
+    WHOLE,                                             # nothing was cut here
     {"requested": 230},                                # a scan that died before it counted
     dict(COVERAGE, measured="0"),                      # not a count
+    # Counts that do not order are a block no writer produces, and reading
+    # them printed "the other -9772 that answered could not be".
+    dict(COVERAGE, measured=9999),
+    dict(COVERAGE, with_bars=231),
 ])
 def test_the_funnel_says_nothing_about_a_cut_it_cannot_count(coverage, results):
     """The rule the refusal lines follow: printed only when it bit, and never

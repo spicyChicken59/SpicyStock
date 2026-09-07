@@ -145,7 +145,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1337 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1352 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -823,6 +823,126 @@ exercised its headline. Nine mutants across them, all killed.
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Round 11's blind-night audit — who may testify about a session, and what `over` counts
+
+Three auditors over the commit that made the record say how much of the night
+was measured, fourteen findings and seven lows, every one reproduced HERE by
+execution before it was touched.
+
+**A two-name rehearsal blanked the day number on every burst the next real
+scan found.** `blind_sessions()` collected the session of ANY entry whose
+`measured` is 0, with no reference to what that run scanned -- while
+`fill_benchmarks()`, the other reader of the same new count and added by the
+same commit, fills a run only from a scan of the universe IT scanned, which is
+the rounds 6-7 HIGH finding. So a `--tickers` rehearsal on the day after a
+holiday (two frames cannot reach `coverage_guard_min_symbols`, so the
+arithmetic previous session stands and both names are holes) wrote a blind
+session into the record, and the next universe night printed
+`blind_session` on a name the record had seen three times -- for
+MAX_STREAK_GAP_SESSIONS sessions, on the email, the page and every archived
+row. Tuesday 8 Sep is the day after Labor Day, so a rehearsal dispatched that
+day sets it off. `is_named_basket()` is the rule: a run that scanned a basket
+named on the command line asked about no other name, so it is evidence about
+the session in NEITHER direction -- not that the market was read, and not that
+it was missed. Structural (`universe.tickers`, the key publish() already
+writes for the republish guard) rather than a match on the label's words,
+because the label is composed in another module and a sentence is not a shape.
+
+**`over` counts the floor's population and three published sentences called it
+the measured one.** `stats["liquidity_over"]` is `len(session_dollar_volumes)`
+-- the names whose session bar carried a readable, positive dollar volume,
+taken BEFORE `detect_setup()` runs -- so it includes every name the detector
+raised on and every name whose bar turned out to be an earlier session, and
+excludes every readable zero-volume bar. Measured, not argued: eleven answered
+with one of each unreadable kind gives `over: 8` beside `measured: 6`. Three
+consequences reproduced end to end: a tape of readable zero-volume bars
+published `over: 0` beside `measured: 12`, and the page said "no floor --
+nothing could be measured for this session" three inches from a funnel
+captioned "no 4% gain on the day"; `min_dollar_volume_pctile=0` publishes a
+positive `over` under a null floor, which the contract shipped into every
+`docs/data.json` said "cannot happen"; and a blind night CAN carry a floor,
+which the same contract and `fill_benchmarks()`'s comment both denied. The
+page says "no name's dollar volume could be ranked", the contract states three
+readings of a null floor (`pctile <= 0` is the rule off whatever `over` says),
+and the fill's reason for skipping a blind night is the one that is true: its
+floor was drawn from however few names could be ranked, over a market that
+night never read.
+
+**The first cut was still not all one cause, one denominator over.**
+`measured_counts()` compared `measured` to `with_bars`, so the universe →
+answered half -- `no_bars`, plus anything dropped after its batch failed twice
+-- was still attributed to the burst filter. 20 asked, 18 answered, 18
+measured is a CLEAN run (2/20 is under the guard, exit 0, `errors: []`) whose
+mail read "No 4% burst anywhere in the universe today" and whose page captioned
+the cut "no 4% gain on the day" under a universe stage of 20; on the real
+228-name file up to 22 names go that way with the run still green. Both
+surfaces measure against the widest denominator the block carries now, and the
+funnel prints both when they differ ("216 of 228 asked, 216 of 227 that
+answered").
+
+**And the morning was the missed sibling**: it prints every other cut of the
+run it follows and printed no coverage at all, so one thin night mailed the
+line in the evening and, over the same record, "4% bursts that session: 0"
+with no denominator the next morning -- the shape README already records being
+fixed once, when one name's checklist read two ways in two emails a night
+apart. `follow_through()` forwards `coverage` beside the `bursts` and
+`stopped_printing` it already handed over, and the empty cell carries the same
+clause through the same predicate. The blind case never reaches it (measuring
+nothing always degrades, so the band carries the reasons), which is exactly
+why the thin one is the live case.
+
+**The walker checked nothing under `run.coverage`, which is R9-B one block
+over.** `contract_violations()` -- what every end-to-end test asserts through
+`clean()` as "the whole contract" -- returned an identical answer for the
+canonical fixture and for `coverage` deleted, `measured: 9999` beside
+`with_bars: 227`, `measured: 0` beside 50 bursts, a `measured` that is a
+string, and `liquidity.over: -5`. There is a `coverage` invariant now (every
+count a non-negative whole number, `requested >= with_bars >= fresh >=
+measured`, `stale + gapped <= with_bars`, and a burst only from a measured
+night), `coverage` is in `_RUN_KEYS`, and `over` is checked against the floor
+it was drawn for -- deliberately not against the rule-off state, which is a
+shape the pipeline writes. The email refuses the same disorder rather than
+printing "the other -9772 that answered could not be", which is round 5's
+"Below the liquidity floor: -2" arriving one block later.
+
+**Two guards that could not fail, and one docstring describing a guard that
+does not exist.** `test_every_reason_a_streak_can_carry_has_words_on_every_surface`
+asserted only that the reason KEY appeared in `docs/index.html`, so either
+surface's sentence could be reworded alone with the suite and the smoke green
+-- both directions confirmed by mutation -- and it asserts the SENTENCES now,
+with the page's JS string joins collapsed first. `MEASURED_LABEL`'s docstring
+claimed the page names the cut in those words and that a docs test asserts each
+file against the other's source; neither is true (the label appears in
+`docs/index.html` nowhere), and the guard it named asserted
+`startswith("measured")`. The shared string is `MEASURED_PHRASE`; the label is
+the email's own, and what pins it is the funnel it prints in.
+
+**Smaller, each reproduced:** README's `run.coverage` bullet named four causes
+for `with_bars - measured` where `run_scan()` subtracts five (the missing one
+being the detector-error class, which `src/scanner.py`'s own comment lists),
+and a docs test counts the parenthetical's causes against the subtraction's
+terms; "`measured: 0` is a BLIND night" was stated of a block the failure
+notice also renders, where `measured: 0` beside `with_bars: 0` is a scan
+nothing answered; the gzipped ledger projection moved from an exact 1.23 to
+1.24 when this round put `measured` on every entry, and the guard's ±0.01 band
+was exactly wide enough to hide it (it compares the string the tool PRINTS
+now); the evening's widest sentence names a `--tickers` basket the way the
+morning's has since round 10; the runs table marks a row whose run measured
+nothing, since `runs[].measured` reached `docs/data.json` and was read
+nowhere; the smoke's "does not blame one of the four reasons" alternation was
+one reason short and is counted against the page's own map; README's "the
+checklist was the last cut without one" is retracted in place, since this
+round gave an earlier cut a line; and three prose surfaces called the canonical
+fixture a clean night whose caption is the bare "no 4% gain on the day" when it
+is a THIN one (228 asked, 227 answered, 225 measured, so every surface derived
+from it appends the clause) -- `tools/make_fixture.py` asserts that shape now,
+so the sentence cannot drift back. `history/` is the clean one, 77 of 77 of 77.
+
+**One low is not fixable in the tree**: the parent commit's message breaks
+twenty-nine mutants into six, four, seven, ten and three, which is thirty. The
+harness ran twenty-nine (twenty-seven killed, two survivors); the breakdown is
+the line that is wrong, and a commit message cannot be swept.
 
 ## Round 11's burst-bar audit — one measurement, two arithmetics, in one request
 
@@ -1683,10 +1803,11 @@ had answered or not, and the artifact holding the answer sits on a host this
 sandbox's proxy refuses. That is the state the old symbol of every rename
 ends in once purged, and a typo in the file, invisible below the fraction.
 The scanner names them now (`no_bars_names`, pinned equal to the arithmetic
-count), warns with the names, and prints the coverage as POSITIVE counts --
-requested, answered with bars, of those none for the session, answered with
-no bar at all, dropped -- because no warning is also what a scan that never
-asked prints. `stopped_printing()` carries them first and dateless, `last`
+count), warns with the names, and prints the coverage as POSITIVE counts -- every
+clause `run_scan()`'s own log call names, which was five when this sentence
+was written and is seven now (the duplicate-bar count and the measured count
+joined it), so read them off the call rather than from here -- because no
+warning is also what a scan that never asked prints. `stopped_printing()` carries them first and dateless, `last`
 and `sessions_behind` null; the shape check accepts that one pair and
 refuses a number where the date belongs; the email and the page print
 "(no bar at all)" in one wording, each pinned against the other's source.

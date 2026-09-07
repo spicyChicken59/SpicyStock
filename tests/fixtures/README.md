@@ -11,10 +11,15 @@ and every one of them says so in its own `run.fixture: true`.
 | `history/data.json`, `history/ledger.json` | `python3 tools/make_history.py tests/fixtures/history` | Thirty consecutive evening runs over a synthetic market, **written by the real pipeline** through the test doubles: every row by `candidate_record()`, every forward return by `forward_returns()` on both bases — from the burst-day close and from the next session's open — along the calendar of every frame the run fetched, every streak by `streaks()`, every mean by `mean_returns()`, every run entry's universe benchmark by `fill_benchmarks()` from a genuine universe scan (not `--tickers`, which offers none) over the names at or above that night's liquidity floor, and every run entry's rules fingerprint by `rules_fingerprint()`, so `evidence.rules` reports one screener. A session the scorer was down for, a chart that would not render, repeats on consecutive sessions, eight rows rule 6 refused, a session that scored nothing at all — no rows, so its run entry's three horizon cells can never be filled by anything and the page says so rather than calling them pending — a session (19 Aug) every one of whose scored names was already counted on an earlier one, which the page names as its own state for the same reason (`rows == scored` with `n == 0`: nothing left to measure, and nothing among it that counts) — and the last week's outcomes and benchmarks still pending. Every run entry also carries `fills_closed`, `src.ledger`'s own answer for which runs a later run still fetches bars for; the twenty oldest here are past that window, and none of them has a horizon left empty, which is why the page's fourth never-fills state needs a smoke variant rather than this file. |
 
 **Neither file holds a blind night, and that is deliberate.** Both carry
-`run.coverage` -- how much of the session was actually READ -- and in both it
-is a clean night: everything that answered and carried the session was
-measured, so `run.liquidity.over` is that same population and the page
-captions the first cut "no 4% gain on the day". A night whose `measured` is 0
+`run.coverage` -- how much of the session was actually READ -- and neither has
+`measured: 0`. They are not the same night otherwise: `history/` is clean (77
+asked, 77 answered, 77 measured, so the page captions the first cut "no 4%
+gain on the day" and nothing more), while `data.json` is THIN -- 228 asked,
+227 answered, 225 measured, because its two stopped-printing names are stale
+-- so every surface derived from it appends the clause, and the page reads "no
+4% gain on the day; 3 of the 228 asked could not be measured for this
+session". That is a fine thing for it to be, and it is what the file renders;
+the paragraph used to say the opposite. A night whose `measured` is 0
 says the opposite on four surfaces (the funnel's caption, the null floor's
 sentence, the streak's fifth unknown, and a benchmark that stays pending),
 and a fixture cannot hold a state and its inverse: it is the smoke test's

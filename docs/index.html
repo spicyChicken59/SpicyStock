@@ -274,7 +274,7 @@
   <!-- What happened the last times THIS name burst. The summary comes out of
        data.json's evidence block; the per-appearance detail needs the whole
        record, so docs/ledger.json is fetched ONLY when a reader asks for it
-       (see loadRecord). A year of it is about 1.23 MB gzipped, which is not a
+       (see loadRecord). A year of it is about 1.24 MB gzipped, which is not a
        thing to spend on every visit for a view most readers never open.
        tools/measure_ledger.py measures it and a docs test holds this comment,
        the one above loadRecord and README to what it prints. -->
@@ -967,15 +967,24 @@
   // A NULL FLOOR HAS TWO CAUSES AND THIS SAYS WHICH. liquidityOf() already
   // takes the rule being OFF out of the picture; what is left is "nothing
   // could be ranked", and run.liquidity.over -- how many names the percentile
-  // was drawn from -- is what tells a night on which nothing traded from a
-  // night on which nothing could be MEASURED. Both wrote floor: null, and
-  // this printed "nothing traded" over a scan the feed had answered in full.
-  // A block from before `over` existed keeps the older sentence, which is
-  // what those runs can support.
+  // was drawn FROM -- is what tells a night on which nothing traded from a
+  // night whose tape carried no rankable dollar volume. Both wrote
+  // floor: null, and this printed "nothing traded" over a scan the feed had
+  // answered in full. A block from before `over` existed keeps the older
+  // sentence, which is what those runs can support.
+  //
+  // `over` IS NOT WHAT THE SCAN MEASURED. It counts the names whose session
+  // bar carried a readable, positive dollar volume; run.coverage.measured
+  // counts the names the detector read and answered about, and the two differ
+  // by every zero-volume bar and every name the detector raised on. This
+  // said "nothing could be measured for this session" over a run whose
+  // coverage block reported twelve measured, three lines from a funnel
+  // captioned "no 4% gain on the day" -- two surfaces, opposite claims, one
+  // night.
   function floorText(run) {
     var l = liquidityOf(run) || {};
     var over = typeof l.over === 'number' && isFinite(l.over) ? l.over : null;
-    var noFloor = over === 0 ? 'no floor — nothing could be measured for this session'
+    var noFloor = over === 0 ? 'no floor — no name\'s dollar volume could be ranked'
       : 'no floor — nothing traded';
     var floor = typeof l.floor === 'number' && isFinite(l.floor) ? '$' + big(l.floor) + '/day'
       : (l.floor === null ? noFloor : 'floor not recorded');
@@ -1023,28 +1032,54 @@
       duplicateNote(run);
   }
 
-  // (measured, answered) off run.coverage, or null for a snapshot from before
-  // the block existed -- and for one whose counts are not counts, since this
-  // page reads whatever docs/ holds and has no load check behind it. Absent
-  // is absent: a missing count must never arrive here as 0.
+  // (measured, answered, asked) off run.coverage, or null for a snapshot from
+  // before the block existed -- and for one whose counts are not counts or do
+  // not order, since this page reads whatever docs/ holds and has no load
+  // check behind it. Absent is absent: a missing count must never arrive here
+  // as 0, and `asked` stays null on a block that never reached it.
   function measuredOf(run) {
     var c = run && run.coverage;
     if (!c || typeof c !== 'object' || Array.isArray(c)) return null;
-    var m = c.measured, a = c.with_bars;
+    var m = c.measured, a = c.with_bars, r = c.requested;
     if (typeof m !== 'number' || !isFinite(m) || m < 0) return null;
     if (typeof a !== 'number' || !isFinite(a) || a < 0) return null;
-    return { measured: m, answered: a };
+    var asked = typeof r === 'number' && isFinite(r) && r >= 0 ? r : null;
+    if (m > a || (asked !== null && a > asked)) return null;
+    return { measured: m, answered: a, asked: asked, widest: asked === null ? a : asked };
   }
+  // THE FIRST CUT IS NOT ALL ONE CAUSE, AND IT IS TWO CUTS DEEP. Between the
+  // universe and the bursts sit the names that answered and could not be
+  // measured AND the names that answered with nothing at all (run.coverage's
+  // requested minus with_bars: no_bars, plus any dropped after their batch
+  // failed twice). This compared measured to with_bars alone, so 20 asked, 18
+  // answered and 18 measured -- a clean green run -- was captioned "no 4%
+  // gain on the day" under a universe stage of 20. src/emailer.py's
+  // _quiet_market_note() makes the same cut against the same denominator.
   function burstWhy(run) {
     var c = measuredOf(run), gain = 'no 4% gain on the day';
-    if (!c || c.measured >= c.answered) return gain;
+    if (!c || c.measured >= c.widest) return gain;
+    var scope = c.widest === c.answered ? ' that answered' : ' asked';
     if (!c.measured) {
       // Not one name was read, so nothing here was refused for its gain and
       // naming that cause would be the false half of a true sentence.
-      return 'not one of the ' + c.answered + ' names that answered could be measured for this session';
+      return 'not one of the ' + c.widest + ' names' + scope + ' could be measured for this session';
     }
-    return gain + '; ' + (c.answered - c.measured) + ' of the ' + c.answered +
-      ' that answered could not be measured for this session';
+    return gain + '; ' + (c.widest - c.measured) + ' of the ' + c.widest +
+      scope + ' could not be measured for this session';
+  }
+
+  // A RUN THAT MEASURED NOTHING IS NOT A RUN THAT FOUND NOTHING, and the runs
+  // table said the same "0" for both. runs[].measured is the one count out of
+  // run.coverage the durable record keeps, and it is published in
+  // docs/data.json's runs[] as well -- so the page had the number for every
+  // earlier night and read it nowhere, while being careful about exactly this
+  // for the CURRENT one. Absent stays absent: an entry from before the count
+  // existed says nothing about how much it read. src/emailer.py's
+  // MEASURED_PHRASE is the shared wording for the same fact.
+  var BLIND_RUN_NOTE = 'this run measured no name at all for its session, so its ' +
+    'counts are not a statement about the market';
+  function blindRun(r) {
+    return r && typeof r.measured === 'number' && isFinite(r.measured) && r.measured === 0;
   }
 
   function funnelStages(run) {
@@ -2015,7 +2050,7 @@
   }
 
   // The one lazy fetch. docs/ledger.json is the whole record — about
-  // 1.23 MB gzipped after a year — so it is never pulled on load; the summary
+  // 1.24 MB gzipped after a year — so it is never pulled on load; the summary
   // above comes out of data.json, which the page has already read. A 404 here is the
   // normal state until evening.yml has committed a run back, so it is reported
   // as a fact about the file rather than as a broken page.
@@ -2468,7 +2503,8 @@
       '“' + FWD_WORDS.repeats[0] + '” when every name it scored had already been counted on an ' +
       'earlier session, and “' + UNFETCHED[0] + '” once the run is past the fill window and no later ' +
       'run fetches its rows again. The last three never become numbers, and those runs are in no ' +
-      'horizon\u2019s count.';
+      'horizon\u2019s count. A bursts cell marked \u201cmeasured none\u201d is a run that read no name ' +
+      'at all that session, which is not a night that found nothing.';
     table($('runs-table'), ['session', 'run', 'bursts', 'scored', 'fallbacks', 'top score', '+1d', '+3d', '+5d', 'over'],
       runs.map(function (r, i) {
         var fr = runFwd(r);
@@ -2483,7 +2519,10 @@
           el('td', null, [day(r.date), i === 0 ? ' ' : null,
             i === 0 ? el('span', { 'class': 'sc-chip sc-chip--brand', text: 'this run' }) : null]),
           el('td', { 'class': 'sc-mono', text: r.type || '' }),
-          el('td', { 'class': 'sc-num', text: commas(r.bursts) }),
+          blindRun(r)
+            ? el('td', { 'class': 'sc-num', title: BLIND_RUN_NOTE },
+                 [commas(r.bursts), ' ', el('span', { 'class': 'sc-chip', text: 'measured none' })])
+            : el('td', { 'class': 'sc-num', text: commas(r.bursts) }),
           el('td', { 'class': 'sc-num', text: commas(r.scored) }),
           el('td', { 'class': 'sc-num', text: commas(r.fallbacks) }),
           el('td', { 'class': 'sc-num', text: num(r.top_score, 1) }),

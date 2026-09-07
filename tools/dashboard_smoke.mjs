@@ -207,8 +207,12 @@ const VARIANTS = {
     }
     return d;
   },
-  // The quietest real night there is: the scan ran clean and found no 4%
-  // burst at all. Every candidate-facing card has nothing to hold, and the
+  // The quietest real night there is: the scan found no 4% burst at all. Its
+  // coverage is the fixture's own, which is a THIN night (228 asked, 227
+  // answered, 225 measured), so the funnel caption carries the unmeasured
+  // clause beside the burst filter -- `thinscan` and `blindscan` below are
+  // where the two halves of that cut are asserted apart.
+  // Every candidate-facing card has nothing to hold, and the
   // question is whether the page SAYS that or just goes blank -- the email's
   // version of this said "No candidates passed the quality gate today" under
   // a funnel reading "4% bursts found: 0", blaming the checklist for an
@@ -238,9 +242,29 @@ const VARIANTS = {
     d.run.coverage = { requested: d.run.universe.size, with_bars: d.run.universe.size - 1,
                        fresh: 12, measured: 0, stale: 12, gapped: d.run.universe.size - 13,
                        no_bars: 1, dropped: 0, duplicate_bars: 0, session: d.run.date };
-    // Nothing could be ranked, so rule 6 drew no floor -- which is a
-    // different sentence from "nothing traded" and from "the rule is off".
+    // No name's dollar volume could be ranked, so rule 6 drew no floor --
+    // which is a different sentence from "nothing traded", from "the rule is
+    // off", and from how many names the scan MEASURED, which is its own
+    // count one block over.
     d.run.liquidity = { pctile: d.run.liquidity.pctile, floor: null, over: 0, refused: 0 };
+    // The same night in the RUNS TABLE, which is where every later reader
+    // meets it: runs[0] is this run's own entry, and `measured` reached
+    // docs/data.json's runs[] with nothing on the page reading it, so a blind
+    // row rendered identically to a quiet one.
+    d.runs[0].measured = 0;
+    return d;
+  },
+  // The THIN night: every name that answered was measured and some never
+  // answered at all. The first cut is not all one cause, and this half of it
+  // was still attributed to the burst filter -- 20 asked, 18 answered, 18
+  // measured is a clean green run whose caption read "no 4% gain on the day"
+  // under a universe stage of 20.
+  thinscan() {
+    const d = VARIANTS.quietmarket();
+    const asked = d.run.universe.size;
+    d.run.coverage = { requested: asked, with_bars: asked - 2, fresh: asked - 2,
+                       measured: asked - 2, stale: 0, gapped: 0, no_bars: 2,
+                       dropped: 0, duplicate_bars: 0, session: d.run.date };
     return d;
   },
   // The control ladder's other two sentences. The history source has 74
@@ -2336,17 +2360,38 @@ await open('/f/history/');
 ok('a burst the record cannot place is a row of its own, never a day 1',
   (await page.locator('#streak-table tbody tr', { hasText: 'not known' }).count())
     === HEV.by_day.filter((d) => d.day === null).length);
-// FOUR reasons put a burst in that bucket -- no_history, history_undated,
-// history_unreadable and window_not_covered -- and the note under it named
-// one: the only one any available source carries. A run whose history could
-// not be READ lands every burst here and was told the record did not reach
-// back far enough, which is a different fault with a different fix. The row
-// notes carry the specific reason; the bucket may only say what is true of
-// all four, so the check is that it does NOT pick one.
+// SEVERAL reasons put a burst in that bucket -- four when this check was
+// written, five since blind_session -- and the note under it named one: the
+// only one any available source carries. A run whose history could not be
+// READ lands every burst here and was told the record did not reach back far
+// enough, which is a different fault with a different fix. The row notes
+// carry the specific reason; the bucket may only say what is true of all of
+// them, so the check is that it does NOT pick one.
+//
+// COUNTED AGAINST THE PAGE'S OWN MAP, because the alternation was four
+// phrases for four reasons and the fifth arrived with the round that added
+// it: the bucket could then be reworded to blame blind_session with the
+// whole smoke green. One phrase per key in docs/index.html's STREAK_UNKNOWN,
+// asserted to be as many phrases as there are keys, so a sixth reason cannot
+// arrive uncovered either.
+const REASON_PHRASES = {
+  no_history: /no history/i,
+  history_undated: /undated|carry a date/i,
+  history_unreadable: /could not read/i,
+  window_not_covered: /reach back/i,
+  blind_session: /measured no name|read nothing|nothing was read/i,
+};
+const pageReasons = (await readFile(join(ROOT, 'index.html'), 'utf8'))
+  .match(/var STREAK_UNKNOWN = \{([\s\S]*?)\n  \};/)[1]
+  .match(/^\s{4}(\w+):/gm).map((m) => m.trim().replace(':', ''));
+ok('the bucket check knows every reason the page can name',
+  pageReasons.length === Object.keys(REASON_PHRASES).length
+  && pageReasons.every((r) => REASON_PHRASES[r]),
+  `${pageReasons.join(', ')} vs ${Object.keys(REASON_PHRASES).join(', ')}`);
 const bucketNote = await page.locator('#streak-table tbody tr', { hasText: 'not known' })
   .locator('.sc-note').first().textContent();
-ok('and the bucket does not blame one of the four reasons it cannot tell apart',
-  !/reach back|no history|could not read|undated/i.test(bucketNote)
+ok('and the bucket does not blame one of the reasons it cannot tell apart',
+  Object.values(REASON_PHRASES).every((re) => !re.test(bucketNote))
   && /rows in the ledger carry the specific reason/.test(bucketNote),
   bucketNote);
 ok('the record is broken down by month so a change over time is visible',
@@ -2543,13 +2588,29 @@ ok('a night that measured nothing does not print "no 4% gain on the day" over it
   !/no 4% gain on the day/.test(blindBody),
   (blindBody.match(/.{0,80}no 4% gain on the day.{0,40}/) || [''])[0]);
 ok('and captions the first cut with what really happened to those names',
-  /not one of the \d+ names that answered could be measured for this session/.test(blindBody),
+  /not one of the \d+ names asked could be measured for this session/.test(blindBody),
   (await page.textContent('#funnel-hint')).replace(/\s+/g, ' ').slice(0, 160));
-ok('a null floor over nothing measured is not reported as "nothing traded"',
-  /nothing could be measured for this session/.test(blindBody)
+// And the same night one screen down, where every later reader meets it: the
+// runs table printed the same "0 bursts" for a blind night and a quiet one.
+ok('and the runs table marks a row whose run measured no name at all',
+  /measured none/.test(await page.textContent('#runs-table')),
+  (await page.textContent('#runs-table')).replace(/\s+/g, ' ').slice(0, 120));
+ok('a null floor over nothing rankable is not reported as "nothing traded"',
+  /no name's dollar volume could be ranked/.test(blindBody)
   && !/no floor — nothing traded/.test(blindBody),
-  (blindBody.match(/.{0,60}(nothing traded|nothing could be measured).{0,40}/) || [''])[0]);
+  (blindBody.match(/.{0,60}(nothing traded|could be ranked).{0,40}/) || [''])[0]);
 await shot('blind-scan-dark');
+
+// THE OTHER HALF OF THE FIRST CUT. Two names the feed answered with nothing
+// is a clean green run, and the page captioned them "no 4% gain on the day"
+// under a universe stage that counts them -- the burst filter blamed for a
+// cut it had no part in, which is the blind night's overclaim one step down.
+await open('/v/thinscan/');
+await checksForAnyRun(VARIANTS.thinscan(), 'a night two of whose names never answered');
+const thinBody = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
+ok('a name the feed never answered for is not counted as a name that did not gain 4%',
+  /2 of the \d+ asked could not be measured for this session/.test(thinBody),
+  (await page.textContent('#funnel-hint')).replace(/\s+/g, ' ').slice(0, 160));
 
 await browser.close();
 server.close();

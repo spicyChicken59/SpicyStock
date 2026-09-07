@@ -797,12 +797,20 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     # wordings are pinned against each other's source. Evening only: a
     # morning pass measures nothing itself, and its funnel deliberately
     # reports the run it follows rather than a scan it did not walk.
-    counted = measured_counts(scan_stats)
-    coverage = ([(MEASURED_LABEL, f"{counted[0]} of {counted[1]} that answered")]
-                if counted and counted[0] < counted[1] else [])
+    shown = measured_value(measured_counts(scan_stats))
+    coverage = [(MEASURED_LABEL, shown)] if shown else []
     if run_type == "morning":
         parts = [("Session it should have followed" if failed
                   else "Following through on the session of", session),
+                 # THE CUT THE MORNING PRINTED EVERY OTHER ONE OF. It reports
+                 # the run it follows, and that run's coverage is a fact about
+                 # it exactly as `bursts` and `stopped_printing` beside it are
+                 # -- so a thin night mailed "Measured for the session: 11 of
+                 # 12 that answered" in the evening and "4% bursts that
+                 # session: 0" with no denominator the next morning: two mails
+                 # a night apart about one run, one carrying the cut and one
+                 # not. Same label, same predicate, one vocabulary.
+                 *coverage,
                  ("4% bursts that session", _reported_count(scan_stats, "bursts")),
                  *refused,
                  ("Passed 2LYNCH gate", _reported_count(scan_stats, "gated")),
@@ -826,8 +834,8 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     return " &nbsp;|&nbsp;\n      ".join(f"{label}: {esc(value)}" for label, value in parts)
 
 
-def measured_counts(scan_stats: dict) -> tuple[int, int] | None:
-    """(measured, answered) off this run's coverage block, or None.
+def measured_counts(scan_stats: dict) -> tuple[int, int, int | None] | None:
+    """(measured, answered, asked) off this run's coverage block, or None.
 
     THE FIRST CUT THE FUNNEL NEVER NAMED. Between "Universe: 228 checked-in US
     common stocks" and "4% bursts found: 0" sits every name that answered and
@@ -837,9 +845,23 @@ def measured_counts(scan_stats: dict) -> tuple[int, int] | None:
     unreadable without what it is 0 of, and a block that carries one and not
     the other is a scan that stopped before it had both.
 
+    AND THE FIRST CUT IS NOT ALL ONE CAUSE EITHER. This compared `measured`
+    to `with_bars` alone, so the OTHER half of it -- the names the feed
+    answered with nothing at all, plus any dropped after their batch failed
+    twice -- was still attributed to the burst filter: 20 asked, 18 answered,
+    18 measured is a clean green run whose mail said "No 4% burst anywhere in
+    the universe today" over two names nothing ever looked at, and on the real
+    228-name file up to 22 can go that way with the run still exiting 0. So
+    `asked` comes back too, null for a block that never reached the count, and
+    the widest denominator the block has is the one every sentence is measured
+    against.
+
     Returns None when the run recorded no coverage at all (every snapshot from
-    before the block existed) or when either count is not a count -- absent is
-    absent, and this must never manufacture a 0.
+    before the block existed), when either count is not a count -- absent is
+    absent, and this must never manufacture a 0 -- or when the three do not
+    order, which is a block no writer produces: `measured: 9999` beside
+    `with_bars: 227` printed "the other -9772 that answered could not be",
+    the same class as round 5's "Below the liquidity floor: -2".
     """
     counts = scan_stats.get("coverage")
     if not isinstance(counts, dict):
@@ -847,7 +869,29 @@ def measured_counts(scan_stats: dict) -> tuple[int, int] | None:
     measured, answered = counts.get("measured"), counts.get("with_bars")
     if not is_count(measured) or not is_count(answered):
         return None
-    return measured, answered
+    asked = counts.get("requested") if is_count(counts.get("requested")) else None
+    if measured > answered or (asked is not None and answered > asked):
+        return None
+    return measured, answered, asked
+
+
+def measured_value(counted: tuple[int, int, int | None] | None) -> str | None:
+    """What the funnel prints for the first cut, or None when it did not bite.
+
+    Both denominators when they differ, because they are two different cuts
+    with two different causes: "18 of 20 asked, 18 of 18 that answered" is a
+    feed that answered for eighteen names and a scan that read all eighteen,
+    and neither number alone says that. The cut bit when the widest
+    denominator the block carries is larger than `measured`.
+    """
+    if counted is None:
+        return None
+    measured, answered, asked = counted
+    widest = answered if asked is None else asked
+    if measured >= widest:
+        return None
+    shown = f"{measured} of {answered} that answered"
+    return f"{measured} of {asked} asked, {shown}" if asked is not None and asked != answered else shown
 
 
 def coverage_phrase(scan_stats: dict) -> str:
@@ -1247,7 +1291,7 @@ def _empty_morning_note(scan_stats: dict) -> str:
              else "The run this follows through on")
     found = (f"{named} {SCORED_NOTHING}." if bursts
              else f"{named} found no 4% burst to score: nothing reached the checklist, "
-                  "so nothing failed it.")
+                  "so nothing failed it." + unmeasured_clause(scan_stats))
     universe = scan_stats.get("followed_universe")
     if universe:
         found += f" That run scanned {esc(universe)}, not the checked-in universe."
@@ -1310,19 +1354,79 @@ def _quiet_market_note(scan_stats: dict) -> str:
     that.
     """
     counted = measured_counts(scan_stats)
-    if counted is None or counted[0] == counted[1]:
-        return ("No 4% burst anywhere in the universe today. Nothing reached the "
-                "checklist, so nothing failed it — this is a quiet market, not a "
-                "rejection.")
-    measured, answered = counted
+    if counted is None:
+        return _universal_quiet_note(scan_stats)
+    measured, answered, asked = counted
+    # The widest denominator the block carries, because the claim is as wide
+    # as the universe line above it: a name the feed never answered for is as
+    # unread as one whose bar could not be measured, and folding it into the
+    # burst filter is what let two names vanish under "anywhere in the
+    # universe" on a run that exited 0.
+    widest = answered if asked is None else asked
+    scope = "that answered" if widest == answered else "asked"
+    if measured >= widest:
+        return _universal_quiet_note(scan_stats)
     if not measured:
-        return (f"Not one of the {answered} names that answered could be "
+        return (f"Not one of the {widest} names {scope} could be "
                 f"{MEASURED_PHRASE}, so no 4% burst could be found in them. Nothing "
                 "reached the checklist — this is not a statement about the market.")
+    others = (f"{widest - measured} {scope}" if widest == answered
+              else f"{widest - measured} of the {widest} asked")
     return (f"No 4% burst among the {measured} names {MEASURED_PHRASE}; the other "
-            f"{answered - measured} that answered could not be. Nothing reached the "
+            f"{others} could not be. Nothing reached the "
             "checklist, so nothing failed it — the names that were read were quiet, "
             "and the rest were not read.")
+
+
+def _universal_quiet_note(scan_stats: dict) -> str:
+    """The widest sentence, said only where it is true of the whole basket --
+    AND SAYING WHICH BASKET when it was not the checked-in file.
+
+    A `--tickers` run writes docs/data.json like any other and this cell is a
+    claim about the market, so over a two-name smoke record it said no 4%
+    burst reached the checklist anywhere in the universe. _empty_morning_note()
+    has carried that scope clause since round 10 for exactly this state; the
+    evening's twin was left with the funnel's Universe line as its only hint,
+    which is a different line of a different block. The clause is appended
+    only when the run says it scanned something other than the checked-in
+    file, so the ordinary night reads as it always did.
+    """
+    scanned = scan_stats.get("scanned_universe")
+    scoped = (f" This run scanned {esc(scanned)}, not the checked-in universe."
+              if scanned else "")
+    return ("No 4% burst anywhere in the universe today. Nothing reached the "
+            "checklist, so nothing failed it — this is a quiet market, not a "
+            f"rejection.{scoped}")
+
+
+def unmeasured_clause(scan_stats: dict) -> str:
+    """" That run measured 11 of the 12 names it asked for; the other 1 could
+    not be." — or "" when the run read everything it asked for.
+
+    The morning's half of _quiet_market_note()'s rule, off the same counts
+    through the same predicate. The evening's cell names the population its
+    "no burst" is about; the morning's said "found no 4% burst to score" over
+    the same record with no denominator at all, which is the same overclaim a
+    night later — the shape README already records being fixed once, when one
+    name's checklist read two ways in two emails a night apart.
+
+    Nothing at all for a run that reported no coverage, and nothing when
+    every name asked for was measured: absent is absent, and a clause on
+    every mail is a clause nobody reads.
+    """
+    counted = measured_counts(scan_stats)
+    if counted is None:
+        return ""
+    measured, answered, asked = counted
+    widest = answered if asked is None else asked
+    if measured >= widest:
+        return ""
+    scope = "that answered" if widest == answered else "it asked for"
+    if not measured:
+        return (f" Not one of the {widest} names {scope} could be {MEASURED_PHRASE}, "
+                "so that count is not a statement about the market.")
+    return (f" That run measured {measured} of the {widest} names {scope}; the "
+            f"other {widest - measured} could not be.")
 
 
 def _empty_evening_note(scan_stats: dict) -> str:
@@ -1455,10 +1559,14 @@ def _count(scan_stats: dict, key: str) -> int:
     return max(value, 0) if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
-#: The funnel's label for the first cut, and the page's caption for the same
-#: one: docs/index.html's funnelStages() names it in these words, and a docs
-#: test asserts each file against the other's source, because one mechanism
-#: with two vocabularies is a shape this project keeps finding.
+#: The funnel's label for the first cut. THE EMAIL'S ALONE: the page captions
+#: the same cut in burstWhy() and does not use this string, so this docstring's
+#: earlier claim -- that docs/index.html "names it in these words" and that a
+#: docs test asserts each file against the other's source -- was a copy of
+#: MEASURED_PHRASE's, which is true of MEASURED_PHRASE and not of this. The
+#: guard it named asserted only that the label starts with "Measured", so a
+#: rename could not fail it either. What both files share is MEASURED_PHRASE,
+#: below; what pins this one is the funnel it is printed in.
 MEASURED_LABEL = "Measured for the session"
 
 #: The words both surfaces use for the cut itself. docs/index.html's

@@ -101,7 +101,9 @@ line of the mail while its row sat in the same run's `docs/data.json` under
 `reason: lynch_gate`. The absolute rules got their own line, the liquidity
 floor got one and the call cap got one, each for exactly this reason: a count
 that vanishes reads as a count that never existed. The checklist was the last
-cut without one, and it is the cut the product is named after. It has one now
+cut without one *at the time* — round 11 found an earlier one, between the
+universe and the bursts, and gave it a line above this one — and it is the cut
+the product is named after. It has one now
 — "Rejected by the 2LYNCH checklist: 1", between the floor and the gate, so
 the cuts read top to bottom as the subtraction a reader does — printed only
 when it is not zero, like the other refusal lines, and **counted, not left
@@ -519,7 +521,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1337 tests, no network or API keys needed
+pytest tests/                   # 1352 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -692,7 +694,7 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
 and what followed — needs the whole record, which projects to about 15.42 MB raw
-and **1.23 MB gzipped** after a full year. That is not a thing to spend on every
+and **1.24 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -730,11 +732,19 @@ invariants live in the file rather than only here. The load-bearing ones:
   run applied, and `run.liquidity` records the floor (`pctile`, `floor` in
   dollars, `over` -- how many names the percentile was drawn from -- and
   `refused`), so a snapshot written before either existed is not described as
-  having enforced it. A null `floor` has two causes and `over` is what tells
-  them apart: the rule switched off (`pctile <= 0`), or nothing left to rank,
-  which `over: 0` says. Both wrote the same null, and every surface printed
-  the first sentence -- "nothing traded" -- over a night the feed had answered
-  in full and nothing in could be measured. The liquidity refusals were the one class
+  having enforced it. `over` is the population the FLOOR was drawn from -- the
+  names whose session bar carried a readable, positive dollar volume -- and
+  not what the scan measured, which is `run.coverage.measured` and can differ
+  from it in both directions. A null `floor` has three readings: `pctile <= 0`
+  is the rule switched off whatever `over` says, `over: 0` under a live rule
+  is a night no name's dollar volume could be ranked, and no `over` at all is
+  a run from before the count existed. Both of the first two wrote the same
+  null, and every surface printed one sentence -- "nothing traded" -- over a
+  night the feed had answered in full. (The published contract read "a
+  positive `over` under a null floor cannot happen" for a round; the rule
+  switched off writes exactly that, and rule 6 can draw a floor on a night the
+  scan measured nothing, because a name the detector raised on contributed its
+  dollar volume before it raised.) The liquidity refusals were the one class
   the record did not hold until round 5: `apply_liquidity_gate()` logged them
   and dropped them, so on the documented four-name smoke test the thinnest
   name vanished and the funnel counted the other three as everything found.
@@ -744,17 +754,28 @@ invariants live in the file rather than only here. The load-bearing ones:
   `newest_seen` bar among the names that missed it. `measured` is the
   population a burst could have come from -- the names whose session bar the
   detector read and answered about -- so `with_bars - measured` is what could
-  not be measured for the session (behind it, holed on the session before it,
-  unreadable, or measured onto an earlier session), and **`measured: 0` is a
-  BLIND night**: the feed answered and not one answer could be read, which is
-  not a quiet market and no surface may report it as one. Every count is
+  not be measured for the session, in the five ways `run_scan()` subtracts
+  (behind it, holed on the session before it, unreadable, measured onto an
+  earlier session, or one the detector raised on), and **`measured: 0` under a
+  positive `with_bars` is a BLIND night**: the feed answered and not one
+  answer could be read, which is not a quiet market and no surface may report
+  it as one. `measured: 0` beside `with_bars: 0` is a scan nothing answered,
+  which is what a dead run's notice carries and is a different sentence.
+  `requested - with_bars` is the OTHER half of the same cut -- the names the
+  feed answered with nothing, plus any dropped after their batch failed twice
+  -- and it is not the burst filter either: a run with 20 asked, 18 answered
+  and 18 measured exits 0, and its mail used to say "No 4% burst anywhere in
+  the universe today". Every count is
   conditional on the scan having reached it -- a run that died earlier carries
   fewer of them, and absent is never 0 -- and the same block is what the
   failure notice renders, so a dead run and a published one describe their
-  coverage in one shape. The email's funnel carries the cut when it bit
-  ("Measured for the session: 216 of 228 that answered"), the page captions
-  the first stage with it, and the empty-table cell names the population it
-  is talking about instead of the whole universe. The ledger entry keeps
+  coverage in one shape. The email's funnel carries the cut when it bit, on
+  the widest denominator the block has ("Measured for the session: 216 of 228
+  asked, 216 of 227 that answered"), the page captions the first stage with
+  it, the empty-table cell names the population it is talking about instead of
+  the whole universe, and the morning prints the same line and the same clause
+  for the run it follows, because that run's coverage is a fact about it
+  exactly as its `bursts` is. The ledger entry keeps
   `measured` alone (`runs[].measured`): `docs/data.json` is rewritten every
   night and both readers of the number are LATER runs -- a streak, which may
   not claim "nothing preceded this setup" across a night nobody read, and the
@@ -1223,14 +1244,14 @@ construction: `docs/` and its exact design-system snapshot are served locally,
 and external requests are blocked. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 236 checks, and which file each one
+**Three data sources, one page.** It runs 244 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 41 mutated copies of it are served
+  night can hold at once. 42 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now

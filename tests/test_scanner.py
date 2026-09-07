@@ -1277,6 +1277,11 @@ def test_the_measured_count_leaves_out_every_way_a_name_could_not_be_read(
     assert stats["with_bars"] == 11
     assert stats["measured"] == 6, (
         "eleven answered, five of them unreadable one way or another")
+    # AND `over` IS NOT THAT COUNT. Rule 6's population is taken before
+    # detect_setup() runs, so the name it raised on and the name whose bar was
+    # an earlier session are both in it: eight ranked, six measured. Three
+    # published sentences equated the two, one of them on the page.
+    assert stats["liquidity_over"] == 8
 
 
 def test_the_liquidity_floor_records_how_many_names_it_was_drawn_from(fake_alpaca, ohlcv):
@@ -1301,8 +1306,18 @@ def test_the_liquidity_floor_records_how_many_names_it_was_drawn_from(fake_alpac
     blind: dict = {}
     run_scan(ScanConfig(), universe=_blind_universe(fake_alpaca, ohlcv), stats=blind)
     assert blind["liquidity_floor"] is None and blind["liquidity_over"] == 0, (
-        "nothing could be measured, so nothing was ranked -- which is not the "
-        "same fact as the rule being switched off")
+        "no name's dollar volume could be ranked -- which is not the same fact "
+        "as the rule being switched off, and not the same count as how many "
+        "names the scan measured")
+
+    # AND THE RULE SWITCHED OFF, which the published contract said could not
+    # happen: it read "a positive `over` under a null floor cannot happen", and
+    # `pctile: 0` writes exactly that. `pctile` is what tells this state, and
+    # `over` is what tells the other two apart.
+    off: dict = {}
+    run_scan(ScanConfig(min_dollar_volume_pctile=0.0), universe=universe, stats=off)
+    assert off["liquidity_floor"] is None and off["liquidity_over"] == 9
+
 
 
 def _warned(caplog, phrase: str) -> str:

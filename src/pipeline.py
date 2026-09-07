@@ -1190,6 +1190,15 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
                           "fallback": score_stats.get("fallback", 0)})
     stats = report.email_stats(
         universe=universe_label(scan_stats, tickers),
+        # AND WHAT IT SCANNED, when it was not the checked-in file. The empty
+        # cell's widest sentence is a claim about the market, and a --tickers
+        # run writes docs/data.json and mails like any other: over a two-name
+        # smoke record it said no 4% burst reached the checklist anywhere in
+        # the universe. follow_through() has handed the morning the same fact
+        # since round 10, under the same rule -- only the exception travels,
+        # so an ordinary night's cell reads as it always did.
+        scanned_universe=(intended_universe_label(tickers)
+                          if tickers is not None else None),
         # How many CLEARED the gate, not how many fitted under the call cap
         # afterwards. The email prints this as "Passed 2LYNCH gate", and on any
         # night with more than MAX_TO_SCORE survivors the capped number was a
@@ -1755,6 +1764,15 @@ def follow_through(mode: Mode, dry_run: bool = False,
         # the ordinary case is the whole file, and a morning funnel line
         # naming a universe THIS pass did not scan is what step 10 removed.
         followed_universe=followed_universe,
+        # AND HOW MUCH OF THAT SESSION THAT RUN READ. It is the followed run's
+        # own count, like `bursts` and `stopped_printing` beside it, and the
+        # morning printed every other cut of that run and not the first one:
+        # a thin night mailed the coverage line in the evening and, over the
+        # same record, "4% bursts that session: 0" with no denominator the
+        # next morning. The blind case never reaches it (measuring nothing
+        # always degrades, so the band carries the reasons), which is exactly
+        # why the thin one is the live case.
+        coverage=source.get("coverage") if isinstance(source.get("coverage"), dict) else None,
         # How far behind, in sessions, so the SUBJECT LINE can escalate. Every
         # staleness read DEGRADED before this, and a screener dead for three
         # weeks is not the Tuesday after Presidents' Day. src.emailer._prefix()
@@ -1958,12 +1976,18 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         # a percentile of every name that traded, in dollars -- and it is the
         # one figure the open decision about widening the universe turns on,
         # so it is kept per run rather than left in a log line.
-        # `over` is how many names the percentile was drawn from, and it is
-        # what tells a null floor's two causes apart: the rule switched off
-        # (pctile <= 0) and nothing left to rank. Both wrote `floor: null`,
-        # and every surface printed the one sentence -- "nothing traded" --
-        # over a night on which the feed had answered for every name and not
-        # one of them could be measured.
+        # `over` is how many names the percentile was drawn FROM -- those
+        # whose session bar carried a readable, positive dollar volume -- and
+        # it is what separates the two null floors the RULE can produce: with
+        # the rule on (pctile > 0), `over: 0` is a night no name could be
+        # ranked, and a positive `over` is a floor. The rule switched off
+        # (pctile <= 0) writes a null floor whatever `over` says, and `pctile`
+        # is what reads that. Before the count, every surface printed the one
+        # sentence -- "nothing traded" -- over a night on which the feed had
+        # answered for every name. It is NOT the count of what the scan
+        # measured: run.coverage.measured is that, and the two differ by every
+        # name whose dollar volume would not round above zero and every name
+        # the detector raised on.
         "liquidity": {"pctile": cfg.min_dollar_volume_pctile,
                       "floor": ledger._num(scan_stats.get("liquidity_floor")),
                       **({"over": scan_stats["liquidity_over"]}

@@ -1534,6 +1534,14 @@ def test_a_blind_night_records_what_it_measured_and_no_surface_calls_it_a_quiet_
     assert data["run"]["coverage"]["with_bars"] == 12
     assert data["run"]["coverage"]["measured"] == 0, (
         "twelve names answered and not one of them could be measured")
+    # AND WHY, in the counts the block promises. `stale` and `gapped` are maps
+    # in the scanner and counts here, and only `stale` was ever asserted: the
+    # copy of `gapped` could be dropped from scan_coverage()'s loop with the
+    # whole suite green, taking a field README and the published contract both
+    # list off the run block and out of the failure notice.
+    assert (data["run"]["coverage"]["gapped"], data["run"]["coverage"]["stale"]) == (11, 1), (
+        "eleven holed on the session before, one halted -- the two ways a name "
+        "that answered could not be measured")
     assert data["run"]["liquidity"] == {"pctile": 30.0, "floor": None, "over": 0, "refused": 0}, (
         "a null floor beside `over: 0` is 'nothing could be ranked', not 'the rule is off'")
     assert recorded(tmp_path)["runs"][0]["measured"] == 0, (
@@ -5454,3 +5462,66 @@ def test_a_name_that_stopped_printing_reaches_the_record_and_the_email(
     assert "since None" not in sent["html"]
     assert f"more than {pipeline.STOPPED_PRINTING_SESSIONS} sessions" in sent["html"]
     assert report.status == "ok", report.errors
+
+
+def test_the_morning_names_the_same_first_cut_the_evening_did(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """One thin night, two mails, and only one of them carried the cut.
+
+    Eleven flat names and one halted: 8% unmeasured is under every degrade
+    threshold, so the run is clean, the band is empty, and the evening's cell
+    is the only thing explaining itself -- "No 4% burst among the 11 names
+    measured for this session". The next morning, over the SAME record, the
+    funnel printed "4% bursts that session: 0" with no denominator anywhere
+    and the cell said the run "found no 4% burst to score" full stop: the
+    round's own new cut, missing from the sibling surface a night later, which
+    is the shape README already records being fixed once (one name's checklist
+    reading two ways in two emails a night apart).
+
+    The data was there and simply not forwarded: follow_through() builds its
+    stats from `snapshot['run']`, which carries `run.coverage` beside the
+    `bursts` and `stopped_printing` it did hand over.
+    """
+    names = []
+    for i in range(11):
+        fake_alpaca.add_history(f"Q{i}", ohlcv("flat", variant=i))
+        names.append(f"Q{i}")
+    fake_alpaca.add_history("HALT", ohlcv("flat", variant=90), stale_sessions=1)
+    names.append("HALT")
+
+    market_clock.after_the_close()
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, tickers=names, report=report)
+    assert report.exit_code == pipeline.EXIT_OK, "the premise: a clean, thin, quiet night"
+    evening = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "Measured for the session: 11 of 12 that answered" in evening
+    assert "No 4% burst among the 11 names measured for this session" in evening
+
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+    morning = visible(mocked_boundaries["resend"].sent[-1]["html"])
+
+    assert "Measured for the session: 11 of 12 that answered" in morning, (
+        "the morning prints every other cut of the run it follows; this is the first one")
+    assert "That run measured 11 of the 12 names that answered; the other 1 could not be." \
+        in morning, "and the empty cell names the population, as the evening's does"
+
+
+def test_a_tickers_evening_that_found_nothing_says_which_names_it_read(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """"No 4% burst anywhere in the universe today" over two names typed on
+    the command line. The morning's twin has appended the scope clause since
+    round 10; the evening's was left with the funnel's Universe line, which is
+    a different line of a different block, and this is the only sentence on
+    the mail that makes a claim about the market."""
+    for i, name in enumerate(("FLATA", "FLATB")):
+        fake_alpaca.add_history(name, ohlcv("flat", variant=i))
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=False, tickers=["FLATA", "FLATB"])
+
+    text = _visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "No 4% burst anywhere in the universe today" in text
+    assert ("This run scanned 2 named on the command line (--tickers), not the "
+            "checked-in universe.") in text, text
