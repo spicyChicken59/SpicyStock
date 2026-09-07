@@ -521,7 +521,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1367 tests, no network or API keys needed
+pytest tests/                   # 1373 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -651,7 +651,10 @@ liquidity floor, paired with each of them) and
 which keys differ between them, and how many runs predate the fingerprint
 entirely: **a mean across runs is a mean over one strategy only while `sets`
 is 1**, and a run carrying no fingerprint is not a run that agrees with this
-one — `evidence.horizons` (which sessions after the
+one. `differ` names only the keys every set records, whose value moved; a key
+some set does not carry at all is `unshared`, since a rule that did not exist
+then and a rule that was merely not recorded then are the same silence and
+neither is a number that changed — `evidence.horizons` (which sessions after the
 burst were measured) and `evidence.band` (the range the strategy claims).
 
 **`+3d` and `+5d` are the horizons that matter, and the page says so on every
@@ -693,8 +696,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 15.46 MB raw
-and **1.24 MB gzipped** after a full year. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 15.50 MB raw
+and **1.25 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -988,8 +991,14 @@ own weights, and the page uses it there.
   The trap it exists to avoid is a fingerprint that misses a number and so
   reports "same rules" across a change that altered them, which is worse than
   no fingerprint; the checklist's windows were bare literals until round 8
-  named six of them, and round 11 the seventh — `C`'s volume norm, whose 50
-  could be changed to 30 with this fingerprint byte-identical. `MAX_TO_SCORE`, `TOP_N`, the feed, the model and
+  named six of them, round 11 the seventh — `C`'s volume norm, whose 50
+  could be changed to 30 with this fingerprint byte-identical — and the same
+  round the four inside `extra_context()`, the 52-week, six-month and
+  three-month windows the model's relative-strength numbers are measured over,
+  which a guard scoped to `evaluate_2lynch` alone could not see. A number left
+  as a literal anywhere in `src.lynch` is refused by a test that reads every
+  one of its functions' own numeric constants, and a threshold spelled out at
+  its own value by a second test asserting each named threshold is read. `MAX_TO_SCORE`, `TOP_N`, the feed, the model and
   the universe are deliberately not in it: each is already a fact of the run
   block. What it still cannot see is a measurement key added to the metrics
   payload with the rulebook left untouched — the rulebook has to explain a key
@@ -1257,14 +1266,14 @@ construction: `docs/` and its exact design-system snapshot are served locally,
 and external requests are blocked. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 254 checks, and which file each one
+**Three data sources, one page.** It runs 255 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 43 mutated copies of it are served
+  night can hold at once. 44 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now
@@ -1343,8 +1352,14 @@ test fixtures. It dispatches no scan and calls no market or email service.
   three that replaced it
 - 2LYNCH pass criteria: `src/lynch.py` — the thresholds a measurement is
   compared against are module constants, and `WINDOWS` holds how much history
-  each check reads. Both kinds are in the rules fingerprint, and a number left
-  as a literal in `evaluate_2lynch` is not, which a test refuses
+  each check reads, plus the four windows `extra_context()` measures the
+  model's relative-strength numbers over. Both kinds are in the rules
+  fingerprint; a number left as a literal in ANY of that module's functions is
+  not, and a threshold spelled out at its own value is a third state that
+  looks like neither — two tests refuse them, one reading every function's
+  numeric constants and one asserting every named threshold is read by the
+  module's own code (`2.0` for `MAX_D1_MOVE` passed the first and not the
+  second, because `2.0 == 2`)
 - The two rules that are not checks, and the note beside them saying why not:
   `MAX_CONSECUTIVE_UP_DAYS` (an absolute veto) and `BREAKDOWN_PCT` /
   `BREAKDOWN_LOOKBACK` (measured, sent to the model, rejecting nothing), also

@@ -956,10 +956,13 @@ def test_an_average_rounded_to_a_share_still_reproduces_its_own_ratio():
     so dividing by the archived average lands a cent away whenever the
     rounding falls badly. 1,611,825 shares over a mean of 137,234.66 is 11.75;
     over the archived 137,235 it is 11.74. An exact comparison then told the
-    model "a baseline of about 137,220 shares, which the scanner did not name"
-    with `avg_volume: 137235` three lines above it in the same block -- a
-    false denial, on the field knowledge/strategy.md keys the Episodic Pivot
-    adjustment off. Measured at about 1 candidate in 8,000 over 200,000
+    model "a baseline of about 137,177 shares, which the scanner did not name"
+    with `avg_volume: 137235` in the same block -- a false denial, on the
+    field knowledge/strategy.md keys the Episodic Pivot adjustment off. (That
+    sentence was quoted here and in src/scorer.py as 137,220 for a round:
+    1,611,825 / 11.75 is 137,177, which is the only baseline the function can
+    print on this pair, and "three lines above" was a guess about a payload
+    user_text() serialises with sort_keys.) Measured at about 1 candidate in 8,000 over 200,000
     plausible volume/average pairs: rare, and not zero, and Tuesday starts
     writing real rows.
     """

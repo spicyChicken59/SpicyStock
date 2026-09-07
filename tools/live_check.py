@@ -153,6 +153,22 @@ def _synthetic_burst():
     return make_ohlcv("burst", seed=7, up_run=1)
 
 
+def _unusable(frame) -> str | None:
+    """Why this frame cannot stand in for a candidate, or None if it can.
+
+    Two reasons, and the check says which: too few bars to draw a chart worth
+    scoring, and no trailing volume average the scan itself would have
+    measured. The second was silent -- `or 1.0` supplied a denominator of one
+    share -- and it is the one a real name produces, since a halt or a feed
+    gap inside the window is enough.
+    """
+    if frame is None or len(frame) < 85:
+        return "too few bars to draw one"
+    if scanner.trailing_volume_mean(frame, scanner.ScanConfig()) is None:
+        return "no trailing volume average, which is the pair the model divides back out"
+    return None
+
+
 def _candidate(ticker: str, frame) -> scanner.Candidate:
     """A Candidate off the frame's own last two bars, the shape score_candidate() takes.
 
@@ -166,13 +182,25 @@ def _candidate(ticker: str, frame) -> scanner.Candidate:
     # number round 11 found spelled a third time in src.lynch's C check -- and
     # the pair it produces is what the live request carries: avg_volume beside
     # a volume_ratio the model is told to divide back out.
-    avg = scanner.trailing_volume_mean(frame, scanner.ScanConfig()) or 1.0
+    #
+    # It was `... or 1.0`, and the two are not the same function on a frame
+    # with holes: trailing_volume_mean() dropna()s its window and returns None
+    # below min_rvol_sessions, so a name whose last sixty volumes are NaN sent
+    # "a trailing average of 1 shares" beside a volume_ratio of three million
+    # -- to the live endpoint, from the tool that exists to catch exactly that
+    # kind of sentence. A frame the scan could not measure is refused here and
+    # _measurable_volume() is what the caller asks first.
+    avg = scanner.trailing_volume_mean(frame, scanner.ScanConfig())
+    assert avg is not None, "call _measurable_volume() before building a candidate"
     return scanner.Candidate(
         ticker=ticker, date=str(scanner._last_bar_date(frame)),
         close=float(last["Close"]),
         gain_pct=round((float(last["Close"]) / float(prev["Close"]) - 1) * 100, 2),
         volume=int(last["Volume"]), prev_volume=int(prev["Volume"]),
-        volume_ratio=round(float(last["Volume"]) / avg, 2), avg_volume=int(avg),
+        # round(), not int(): detect_setup() archives the average rounded, and
+        # volume_ratio_basis() reasons about that rounding when it decides
+        # which denominator the payload names.
+        volume_ratio=round(float(last["Volume"]) / avg, 2), avg_volume=round(avg),
         dollar_volume=float(last["Close"]) * float(last["Volume"]),
         history=frame,
     )
@@ -193,8 +221,10 @@ def check_claude(frame=None, ticker: str = "SYNTHETIC", out_dir: str | None = No
     Until round 11 it was a null day with a null REASON, under a system prompt
     promising that could not happen.
     """
-    if frame is None or len(frame) < 85:
-        frame, ticker, source = _synthetic_burst(), "SYNTHETIC", "a synthetic chart"
+    why = _unusable(frame)
+    if why:
+        frame, ticker = _synthetic_burst(), "SYNTHETIC"
+        source = f"a synthetic chart ({why})"
     else:
         source = f"a real chart of {ticker}"
     out_dir = out_dir or tempfile.mkdtemp(prefix="spicystock-live-")

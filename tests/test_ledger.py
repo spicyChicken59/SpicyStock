@@ -3622,7 +3622,8 @@ def test_a_run_from_before_the_fingerprint_loads_clean(tmp_path):
 
     assert len(book.runs) == 1 and not book.load_error
     assert ledger.rules_view(book.runs) == {"current": None, "sets": 0,
-                                            "differ": [], "runs_without": 1}
+                                            "differ": [], "unshared": [],
+                                            "runs_without": 1}
 
 
 def test_a_from_open_block_of_the_wrong_shape_is_refused_at_load(tmp_path):

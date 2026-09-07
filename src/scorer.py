@@ -270,15 +270,36 @@ def volume_ratio_basis(cand) -> str:
         # `avg_volume` is round(mean) -- whole shares. Dividing by the archived
         # average therefore lands a cent away from the archived ratio whenever
         # the rounding falls badly, and an exact comparison then told the model
-        # "a baseline of about 137,220 shares, which the scanner did not name"
-        # with avg_volume 137,235 sitting three lines above it in the same
-        # block. Reproduced on that pair (1,611,825 / 137,234.66 -> 11.75, and
-        # 11.74 through the archived average); measured at about 1 candidate in
-        # 8,000 over 200,000 plausible volume/average pairs, which is rare and
-        # is not zero, and the failure is a false denial rather than a wrong
-        # number. One step and not two: at 0.1 the previous session's volume
-        # starts reproducing ratios it did not produce, and this function's
-        # whole job is to tell those two denominators apart.
+        # "a baseline of about 137,177 shares, which the scanner did not name"
+        # with avg_volume 137,235 in the same block. Reproduced on that pair
+        # (1,611,825 / 137,234.66 -> 11.75, and 11.74 through the archived
+        # average); measured at about 1 candidate in 8,000 over 200,000
+        # plausible volume/average pairs, which is rare and is not zero, and
+        # the failure is a false denial rather than a wrong number. (That
+        # baseline is 1,611,825 / 11.75 = 137,177, and this comment quoted it
+        # as 137,220 -- a number the function cannot print; and "three lines
+        # above" was a claim about a payload user_text() serialises with
+        # sort_keys, which puts avg_volume near the top of the block and this
+        # near the bottom. Both were retyped from the sentence rather than run.)
+        #
+        # ONE STEP AND NOT TWO, and what two would cost is measurable rather
+        # than rhetorical. The AVERAGE is tried first, so the mislabel a wider
+        # slack buys is the trailing average claiming a ratio the PREVIOUS
+        # SESSION produced -- this comment had it the other way round, and put
+        # the boundary at 0.1 when the discrimination is already gone at 0.02:
+        # test_one_rounding_step_of_slack_does_not_let_yesterday_pose_as_the_average
+        # fails at two steps, on a pair whose average is two steps out and
+        # whose previous session is exact. One step is not free either. In the
+        # counterfactual this function is built for -- detect_setup dividing by
+        # YESTERDAY, an unrelated trailing average in the payload -- the
+        # average falsely reproduces the ratio about three times as often at
+        # one step as at exact equality (0.70% against 0.24% over 500,000
+        # plausible pairs, measured here). The trade is the right way round
+        # today, because detect_setup does divide by the trailing mean, so the
+        # slack fixes a real false denial while the false positive is
+        # counterfactual -- but the promise in the docstring above, that this
+        # stays true across a change to detect_setup() this module never hears
+        # about, is weaker than it was by that factor.
         #
         # The difference is ROUNDED before it is compared, and that is the
         # same defect one level down rather than a flourish: 0.01 is not a

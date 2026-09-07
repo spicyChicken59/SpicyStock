@@ -538,7 +538,25 @@ const VARIANTS = {
     const older = JSON.parse(JSON.stringify(current));
     older['gate.min_lynch_passes'] = 4;
     older['scan.min_gain_pct'] = 5.0;
-    ev.rules = { current, sets: 2, differ: ['gate.min_lynch_passes', 'scan.min_gain_pct'], runs_without: 0 };
+    ev.rules = { current, sets: 2, differ: ['gate.min_lynch_passes', 'scan.min_gain_pct'],
+      unshared: [], runs_without: 0 };
+    d.runs[0].rules = current;
+    d.runs.slice(1).forEach((r) => { r.rules = older; });
+    return d;
+  },
+  // The state this repo's own record is in from round 11: the newer runs
+  // record a key the older ones never did, and NOTHING about the screener
+  // moved. Told apart from rulesdrift because the page said the same
+  // sentence about both -- "What moved: window.volume_norm_sessions" over a
+  // volume average that has been 50 throughout.
+  rulesgained() {
+    const d = clone(REAL);
+    const ev = d.evidence;
+    const current = JSON.parse(JSON.stringify(ev.rules.current));
+    const older = JSON.parse(JSON.stringify(current));
+    delete older['window.volume_norm_sessions'];
+    ev.rules = { current, sets: 2, differ: [],
+      unshared: ['window.volume_norm_sessions'], runs_without: 0 };
     d.runs[0].rules = current;
     d.runs.slice(1).forEach((r) => { r.rules = older; });
     return d;
@@ -547,7 +565,8 @@ const VARIANTS = {
   // a row is a different sentence from knowing they were these.
   norules() {
     const d = clone(REAL);
-    d.evidence.rules = { current: null, sets: 0, differ: [], runs_without: d.runs.length };
+    d.evidence.rules = { current: null, sets: 0, differ: [], unshared: [],
+      runs_without: d.runs.length };
     d.runs.forEach((r) => delete r.rules);
     return d;
   },
@@ -1206,6 +1225,14 @@ ok('a record spanning two sets of rules says so and names the keys that moved',
   /spans 2 sets of rules/.test(driftNote) && driftNote.includes('gate.min_lynch_passes')
   && driftNote.includes('scan.min_gain_pct') && /averages more than one screener/.test(driftNote),
   driftNote.slice(0, 150));
+await open('/v/rulesgained/');
+const gainedNote = await page.textContent('#rules-note');
+ok('a key the earlier runs never recorded is not published as one that moved',
+  /no number every one of them records has changed/.test(gainedNote)
+  && /not the same as their having changed/.test(gainedNote)
+  && gainedNote.includes('window.volume_norm_sessions')
+  && !/What moved/.test(gainedNote),
+  gainedNote.slice(0, 200));
 await open('/v/norules/');
 const noRulesNote = await page.textContent('#rules-note');
 ok('and runs from before the fingerprint are counted apart, not as agreement',

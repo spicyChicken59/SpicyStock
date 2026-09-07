@@ -328,6 +328,16 @@ def test_the_rulebook_states_the_numbers_the_checklist_applies():
         range(lynch.MAX_CONSECUTIVE_UP_DAYS + 1)), (
         "the rulebook tells the model which up-day counts it can see; the veto "
         "admits a different set")
+    # The THIRD sentence in that paragraph, carrying the same constant a third
+    # time and read by nothing until an audit sweeping the other two left it
+    # saying "the difference between the three you do see" over a veto that
+    # now admitted four counts -- with tests/test_lynch.py's value pin as the
+    # only red, which a deliberate change updates. How many counts the model
+    # sees IS the count the veto admits.
+    (visible,) = one(r"the difference between the (\w+) you do see")
+    assert words[visible.lower()] == lynch.MAX_CONSECUTIVE_UP_DAYS + 1, (
+        f"the rulebook tells the model it will see {visible} distinct up-day "
+        f"counts; the veto admits {lynch.MAX_CONSECUTIVE_UP_DAYS + 1}")
 
 
 def test_the_fallback_anchors_are_the_rubrics_own_bands():
@@ -355,6 +365,66 @@ def test_the_fallback_anchors_are_the_rubrics_own_bands():
     assert min(int(p) for p, _l, _h in bands) == MIN_LYNCH_PASSES, (
         "the rubric anchors a pass count the gate never lets through, or stops "
         "short of the lowest one it does")
+
+
+def test_the_verdict_bands_are_the_rubrics_own_and_the_rubric_agrees_with_itself():
+    """The number the code OVERRIDES the model on, stated twice in the
+    rulebook with two different values and parsed by nothing.
+
+    `_validated()` REPLACES a model's verdict with the band its score falls
+    in, so `VERDICT_BANDS` is the one rubric number where a disagreement is
+    not a difference of opinion but a rewrite. It was a second copy of a
+    sentence nothing read: rewriting "Verdicts: A+ (9-10), A (8-8.9), ..." to
+    half-point bands left the whole suite green, and moving the B+ floor from
+    7.0 to 6.5 did too -- so the model could be scored against a table the
+    code does not apply, and told "B+ (7-7.9)" while a 6.7 was archived B+.
+
+    And the rulebook disagreed with ITSELF first: its section heading read
+    "What makes an A+ burst (score 8-10)" while its table put A+ at 9-10.
+    Driven through the real code before it was swept:
+    `_validated({"score": 8.5, "verdict": "A+"})` returns verdict "A" and
+    logs the model as contradicting a rubric that contradicted itself.
+
+    Asserted at EVERY mention and by set equality, the shape the round-4
+    prose audit settled on -- including the three copies of the vocabulary
+    (VERDICT_BANDS' names, VERDICTS, and the JSON shape the request asks
+    for), because one mechanism with three lists is how they drift.
+    """
+    import inspect
+
+    from src import scorer
+    from src.scorer import VERDICT_BANDS, VERDICTS, _validated
+
+    book = " ".join(_read("knowledge/strategy.md").split())
+
+    bands = re.findall(r"([A-C]\+?) \((\d+(?:\.\d+)?)[-–]", book)
+    assert bands, "the rulebook no longer states its verdict bands"
+    assert [(float(low), name) for name, low in bands] == list(VERDICT_BANDS), (
+        f"the rulebook's bands are {bands}; the code applies {VERDICT_BANDS}")
+
+    (skip_floor,) = {float(n) for n in re.findall(r"skip \(<(\d+(?:\.\d+)?)\)", book)}
+    assert skip_floor == min(floor for floor, _name in VERDICT_BANDS), (
+        "the rulebook's skip floor is not the lowest band the code awards")
+
+    # The section heading, which is the same claim about A+ made a second
+    # time -- and was the half that was wrong.
+    (heading,) = re.findall(r"A\+ burst \(score (\d+)–10\)", book)
+    top_floor, top_name = VERDICT_BANDS[0]
+    assert float(heading) == top_floor, (
+        f"the rulebook heads its {top_name} section at {heading}-10 while the "
+        f"table and the code put {top_name} at {top_floor:g} and up")
+
+    # The vocabulary, in all three places one mechanism spells it.
+    assert {name for name, _low in bands} | {"skip"} == set(VERDICTS)
+    schema = inspect.getsource(scorer).split('"verdict": "<')[1].split('>"')[0]
+    assert set(schema.split("|")) == set(VERDICTS), (
+        "the JSON shape the request asks for names a different set of verdicts")
+
+    # And the override itself, on the pair that made this visible: a reply
+    # one band under the word it used keeps the BAND, so a rubric the code
+    # does not apply is a rubric the reader is shown for a verdict nobody gave.
+    under = top_floor - 0.5
+    assert _validated({"score": under, "verdict": top_name})["verdict"] != top_name
 
 
 def test_the_rulebook_instructs_on_every_field_the_request_carries():

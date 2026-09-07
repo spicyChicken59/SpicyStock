@@ -156,8 +156,12 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
     have -- and the trap this exists to avoid, since a fingerprint that
     misses a number reports "same rules" across a change that altered them.
     The one thing it cannot catch is a number left as a bare literal, which
-    is why round 8 named the six windows that were, and why a test asserts
-    the fingerprint covers what each source exposes.
+    is why round 8 named six windows, round 11 the seventh (C's volume
+    average) and four more in extra_context(), and why a test asserts the
+    fingerprint covers what each source exposes. The count is not kept here,
+    because it rotted twice: what guards it is
+    test_no_check_reads_a_window_left_as_a_bare_number, which reads the
+    numeric literals out of EVERY function in src.lynch rather than any list.
 
     NOT in it, deliberately: TOP_N and MAX_TO_SCORE (already per run as
     shortlist_size and score_cap, and neither changes what a burst is), the

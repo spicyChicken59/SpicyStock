@@ -1830,6 +1830,47 @@ def test_a_record_written_under_two_screeners_says_so_and_names_what_moved(tmp_p
     assert steady["sets"] == 1 and steady["differ"] == [] and steady["runs_without"] == 0
 
 
+def test_a_number_the_earlier_runs_never_recorded_is_not_reported_as_one_that_moved(tmp_path):
+    """A key ADDED to the fingerprint read as a change, on the real record.
+
+    `differ` was computed with `block.get(key)`, so a key one block does not
+    carry (None) was indistinguishable from a key whose value moved -- and
+    round 11 added three, one of which (`window.volume_norm_sessions`, C's
+    volume average) was named under an explicit no-behaviour-change claim,
+    both fixtures regenerating byte-identically. Reproduced against
+    docs/ledger.json's own 4 Sep run: prepending this commit's fingerprint
+    gave differ ['score.prompt', 'score.record_keys',
+    'window.volume_norm_sessions'], and the page's renderRulesNote() publishes
+    that as "What moved: ...". The number did not move; the record's sight of
+    it did.
+
+    `runs_without` already draws this distinction one level up -- a whole
+    missing block is counted apart and must not be read as agreement -- and
+    the key level was left short.
+    """
+    older = {"scan.min_gain_pct": 4.0, "gate.min_lynch_passes": 3}
+    newer = dict(older, **{"window.volume_norm_sessions": 50})
+    runs = [
+        {"date": "2026-09-02", "type": "evening", "candidates": [], "gated": [], "rules": newer},
+        {"date": "2026-09-01", "type": "evening", "candidates": [], "gated": [], "rules": older},
+    ]
+
+    view = ledger.rules_view(runs)
+
+    assert view["differ"] == [], (
+        "a key the earlier run never recorded is not a key that moved")
+    assert view["unshared"] == ["window.volume_norm_sessions"], (
+        "and it is reported, counted apart, rather than dropped")
+
+    # The inverse, on the same shape: a key both blocks DO carry, whose value
+    # differs, is still named -- so the split cannot be satisfied by reporting
+    # nothing at all.
+    moved = [dict(runs[0]), {**runs[1], "rules": dict(older, **{"scan.min_gain_pct": 5.0})}]
+    moved_view = ledger.rules_view(moved)
+    assert moved_view["differ"] == ["scan.min_gain_pct"]
+    assert moved_view["unshared"] == ["window.volume_norm_sessions"]
+
+
 def _universe_file(monkeypatch, tmp_path, names) -> None:
     """Point the scanner at a symbol file of these names, so the run is a
     genuine UNIVERSE scan rather than a --tickers one. The difference is not

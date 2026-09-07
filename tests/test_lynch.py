@@ -783,17 +783,37 @@ def test_the_volume_norm_and_the_scans_own_volume_window_are_one_number():
 
 
 def test_no_check_reads_a_window_left_as_a_bare_number():
-    """The structural half: the numbers evaluate_2lynch is allowed to spell.
+    """The structural half: the numbers this module is allowed to spell.
 
     A named threshold is in the fingerprint the moment it is named, and a
     window left as a literal is not -- which is the one thing rules_fingerprint()
     cannot catch, said in its own docstring. Round 8 answered that by naming
     six windows and declaring the class closed; C's 50 was the seventh and
     stayed a literal for three rounds. So this reads the constants out of the
-    function's own AST rather than trusting a list somebody remembered to
+    module's own AST rather than trusting a list somebody remembered to
     update: anything outside the set below is an index, a rounding place, a
     percent conversion or a documented sentinel -- or it is a strategy number,
     and belongs in WINDOWS or beside the thresholds.
+
+    EVERY FUNCTION, not evaluate_2lynch alone. The guard that first closed
+    this was scoped by name to one function while `extra_context()` -- four
+    fields of the same metrics payload, archived in every row's `context` --
+    spelled 252, 126, 63 and 60, and three audit lenses found it
+    independently. A guard whose scope is narrower than the class it names is
+    how a class gets declared closed on the instance nobody looked at, twice
+    over the same numbers.
+
+    WHAT THIS STILL CANNOT SEE, said here rather than implied by its silence:
+    the set is keyed on VALUE, so a window of 2 sessions or a threshold of
+    100% spelled bare would pass. The two sides of that are covered by the
+    guards either side of this one --
+    test_every_window_this_module_names_is_one_it_actually_measures_over reads
+    the WINDOWS subscripts out of the AST, and
+    test_every_threshold_this_module_names_is_one_its_own_code_reads asserts
+    each named threshold is read -- so what is left uncovered is a number that
+    was NEVER named, at one of five values. A number written in words inside
+    an f-string is not an ast.Constant numeric either, which is why the L and
+    Y lines are rendered under a patched WINDOWS above rather than read.
     """
     import ast
     import inspect
@@ -804,18 +824,23 @@ def test_no_check_reads_a_window_left_as_a_bare_number():
         0: "list/series indices and the zero comparisons",
         1: "iloc[-1], the +1 that turns a window into a slice, and 1.0 ratios",
         2: "iloc[-2] and the two decimal places every ratio is shown at",
+        3: "_log_trend's minimum points: two fit a line exactly and have no R²",
         100: "ratio -> percent",
         9.9: "N's documented no-usable-norm sentinel, which prints as 9.90x",
     }
     tree = ast.parse(inspect.getsource(lynch_mod))
-    body = next(f for f in ast.walk(tree)
-                if isinstance(f, ast.FunctionDef) and f.name == "evaluate_2lynch")
-    found = {n.value for n in ast.walk(body)
-             if isinstance(n, ast.Constant)
-             and isinstance(n.value, (int, float)) and not isinstance(n.value, bool)}
-    unnamed = sorted(found - set(allowed), key=str)
+    spelled: dict[float, list[str]] = {}
+    for func in ast.walk(tree):
+        if not isinstance(func, ast.FunctionDef):
+            continue
+        for node in ast.walk(func):
+            if (isinstance(node, ast.Constant) and not isinstance(node.value, bool)
+                    and isinstance(node.value, (int, float))):
+                spelled.setdefault(node.value, []).append(func.name)
+    unnamed = sorted(((v, sorted(set(where))) for v, where in spelled.items()
+                      if v not in allowed), key=str)
     assert not unnamed, (
-        f"evaluate_2lynch spells {unnamed} as a bare number; a window belongs in "
+        f"src.lynch spells {unnamed} as a bare number; a window belongs in "
         "WINDOWS and a threshold beside the other thresholds, or rules_fingerprint() "
         "cannot see it")
 
@@ -1782,17 +1807,148 @@ def test_the_record_can_see_a_change_to_the_calm_days_volume_norm():
     assert rules_fingerprint() == before, "the fingerprint did not come back"
 
 
-def test_every_window_this_module_names_is_one_it_actually_measures_over():
-    """The inverse: a window in the dict that no check reads is a number the
-    fingerprint would report as part of the strategy while nothing applied
-    it. Read off the source, because that is where the slicing is."""
+def test_the_lines_the_model_reads_name_the_window_the_code_applied():
+    """Two of the six windows round 8 named were spelled a second time, as
+    DIGITS inside the strings the scoring model reads.
+
+    `L` printed "over prior 30 days" and `Y` "vs 20SMA" as literal text, so
+    with WINDOWS["linear_fit_sessions"] at 10 and ["sma_sessions"] at 5 the
+    lines still said 30 and 20 -- on the request the model scores from, in
+    the email's checklist lines and in the ledger's archived `lynch_detail`.
+    tools/make_fixture.py had already built both lines FROM WINDOWS (round 8
+    swept the generator and not the source), so the generator and the module
+    would have printed two different sentences under a patched window while
+    tools/check_fixture_fresh.py called both current.
+
+    The AST guard below cannot see this: a number written in words is not an
+    ast.Constant numeric. This is the string half, and it is asserted by
+    rendering the lines under a patched WINDOWS rather than by reading them.
+    """
+    import src.lynch as lynch_mod
+
+    frame = make_ohlcv("burst", seed=7, up_run=1)
+    real = evaluate_2lynch(frame)["checks"]
+    assert f"over prior {WINDOWS['linear_fit_sessions']} days" in real["L_linear_prior_move"]["value"]
+    assert f"vs {WINDOWS['sma_sessions']}SMA" in real["Y_young_trend"]["value"]
+
+    patched = dict(lynch_mod.WINDOWS, linear_fit_sessions=10, sma_sessions=5)
+    original = lynch_mod.WINDOWS
+    try:
+        lynch_mod.WINDOWS = patched
+        moved = evaluate_2lynch(frame)["checks"]
+    finally:
+        lynch_mod.WINDOWS = original
+
+    assert "over prior 10 days" in moved["L_linear_prior_move"]["value"], (
+        "L tells the model a window it did not fit over")
+    assert "vs 5SMA" in moved["Y_young_trend"]["value"], (
+        "Y tells the model an average it did not measure against")
+
+
+def test_the_context_measurements_read_the_windows_this_module_names():
+    """The eighth, ninth, tenth and eleventh bare literals, one function over.
+
+    Round 8 named six windows inside `evaluate_2lynch` and round 11 the
+    seventh; `extra_context()` went on spelling 252, 126, 63 and 60 -- the
+    52-week high/low lookback, the six- and three-month performance windows,
+    and the history a 52-week reading needs before it is attempted.
+    Reproduced before they were named: `iloc[-63]` and `len(df) > 63` changed
+    to 45 left rules_fingerprint() BYTE-IDENTICAL and the whole suite green,
+    while `perf_3mo_pct` -- which knowledge/strategy.md names as one of the
+    two relative-strength measures the model has -- moved on the same frame,
+    under a key still called `3mo`, and was archived in every row's `context`.
+    """
+    import src.lynch as lynch_mod
+
+    frame = make_ohlcv("burst", seed=3, up_run=1)
+    assert len(frame) > 130, "precondition: a frame long enough to hold every window"
+
+    patched = dict(lynch_mod.WINDOWS, perf_3mo_sessions=45, perf_6mo_sessions=90,
+                   high_low_sessions=30)
+    original = lynch_mod.WINDOWS
+    try:
+        lynch_mod.WINDOWS = patched
+        ctx = extra_context(frame)
+        close = float(frame["Close"].iloc[-1])
+        assert ctx["perf_3mo_pct"] == round((close / float(frame["Close"].iloc[-45]) - 1) * 100, 1)
+        assert ctx["perf_6mo_pct"] == round((close / float(frame["Close"].iloc[-90]) - 1) * 100, 1)
+        assert ctx["pct_off_52w_high"] == round(
+            (close / float(frame["High"].iloc[-30:].max()) - 1) * 100, 1)
+        assert ctx["pct_above_52w_low"] == round(
+            (close / float(frame["Low"].iloc[-30:].min()) - 1) * 100, 1)
+
+        # And the sentinel beside each window, from both sides: a frame
+        # exactly the window long has no earlier close to measure against.
+        # The two spellings of 63 -- the index and the length guard -- were
+        # one number written twice, so moving the window alone left its own
+        # guard stale.
+        assert extra_context(frame.iloc[-45:])["perf_3mo_pct"] is None
+        assert extra_context(frame.iloc[-46:])["perf_3mo_pct"] is not None
+    finally:
+        lynch_mod.WINDOWS = original
+
+
+def test_every_threshold_this_module_names_is_one_its_own_code_reads():
+    """A threshold inlined at its own value is invisible to the AST guard.
+
+    `found - set(allowed)` compares by numeric VALUE, and 2.0 == 2 and
+    1.0 == 1 in Python -- so `d1_move < 2.0` for MAX_D1_MOVE and
+    `d1_range_ratio <= 1.0` for MAX_D1_RANGE_RATIO both survived that guard
+    (verified: each left tests/test_lynch.py, tests/test_scanner.py and
+    tests/test_docs_are_true.py green). The state that produces is the one
+    the fingerprint exists to prevent: editing the constant then moves
+    rules_fingerprint() and not the rule, so the record states a threshold
+    the code does not apply.
+
+    Keying the allowed set on the literal's type does not close it --
+    `0.0 <= close_pos <= 1.0` legitimately spells 1.0 -- so this asserts the
+    other direction, which does not depend on the literal's value at all:
+    every threshold this module NAMES is read by its own code.
+    """
+    import ast
     import inspect
 
     import src.lynch as lynch_mod
 
-    source = inspect.getsource(lynch_mod)
-    unused = sorted(k for k in lynch_mod.WINDOWS if f'WINDOWS["{k}"]' not in source
-                    and f"WINDOWS['{k}']" not in source)
+    tree = ast.parse(inspect.getsource(lynch_mod))
+    read = {n.id for f in ast.walk(tree) if isinstance(f, ast.FunctionDef)
+            for n in ast.walk(f) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
+    named = {n for n in dir(lynch_mod)
+             if n.isupper() and isinstance(getattr(lynch_mod, n), (int, float))
+             and not isinstance(getattr(lynch_mod, n), bool)}
+    assert named, "src.lynch exposes no threshold constants"
+    unread = sorted(named - read)
+    assert not unread, (
+        f"{unread} is named as a threshold and read by no code in this module. "
+        "A threshold the checklist spells out as a literal instead moves the "
+        "rules fingerprint without moving the rule.")
+
+
+def test_every_window_this_module_names_is_one_it_actually_measures_over():
+    """The inverse: a window in the dict that no check reads is a number the
+    fingerprint would report as part of the strategy while nothing applied
+    it.
+
+    Read off the AST, not the source text. Grepping the file satisfied this
+    with a MENTION: a decoy `"decoy_sessions": 99` under a comment reading
+    `nothing slices WINDOWS["decoy_sessions"]` passed the whole file, so a
+    number the record publishes as part of the strategy and nothing applies
+    was one prose sentence away from being green. (One real key,
+    `tight_sessions`, is discussed in a docstring as well as sliced, which is
+    what made that hole reachable without inventing anything.) Subscripts of
+    the WINDOWS name are what "measures over" means, and that is what this
+    counts.
+    """
+    import ast
+    import inspect
+
+    import src.lynch as lynch_mod
+
+    tree = ast.parse(inspect.getsource(lynch_mod))
+    read = {node.slice.value for node in ast.walk(tree)
+            if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Name)
+            and node.value.id == "WINDOWS" and isinstance(node.slice, ast.Constant)}
+    unused = sorted(set(lynch_mod.WINDOWS) - read)
     assert not unused, f"{unused} is named as a window and never measured over"
 
 

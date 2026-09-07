@@ -38,9 +38,10 @@ import pandas as pd
 MAX_PRIOR_BURSTS = 1        # 2: first or second burst of the leg
 PRIOR_BURST_PCT = 4.0       # 2: what counts as an earlier burst — the scan's gain rule, applied to history
 
-#: How much history each check READS, as against the thresholds above, which
-#: are what a measurement is compared AGAINST. Two different kinds of number,
-#: and the difference is load-bearing twice over.
+#: How much history each check READS -- and, since round 11, each of
+#: extra_context()'s measurements too -- as against the thresholds above,
+#: which are what a measurement is compared AGAINST. Two different kinds of
+#: number, and the difference is load-bearing twice over.
 #:
 #: These were bare literals inside evaluate_2lynch -- iloc[-20:], iloc[-30:],
 #: iloc[-21], iloc[-7:], iloc[-60:-7] -- so they were invisible to anything
@@ -53,15 +54,27 @@ PRIOR_BURST_PCT = 4.0       # 2: what counts as an earlier burst — the scan's 
 #: are written against the scalars for exactly that reason. Putting the
 #: distinction in the code beats adding an exemption list to the guards.
 #:
-#: Round 8 named six of them and MISSED THE SEVENTH, which is the one below:
-#: `C` divided by `pre["Volume"].iloc[-51:-1].mean()`, so the sessions the
-#: calm-day rule averages over were a bare 51. Reproduced rather than argued
-#: -- changing that 50 to 30 left rules_fingerprint() BYTE-IDENTICAL and
-#: tests/test_lynch.py, tests/test_scanner.py and tests/test_docs_are_true.py
-#: all green, while C's verdict moved. A round that names six of seven is how
-#: a class gets declared closed on the instance nobody looked at, so
-#: test_no_check_reads_a_window_left_as_a_bare_number now reads the numeric
-#: literals out of evaluate_2lynch's own AST rather than trusting this list.
+#: Round 8 named six of them and MISSED THE SEVENTH, which is `C`'s: it
+#: divided by `pre["Volume"].iloc[-51:-1].mean()`, so the 50 sessions the
+#: calm-day rule averages over were spelled as a bare 51 in a slice bound.
+#: Reproduced rather than argued -- changing that 50 to 30 left
+#: rules_fingerprint() BYTE-IDENTICAL and tests/test_lynch.py,
+#: tests/test_scanner.py and tests/test_docs_are_true.py all green, while C's
+#: verdict moved. A round that names six of seven is how a class gets
+#: declared closed on the instance nobody looked at, so
+#: test_no_check_reads_a_window_left_as_a_bare_number reads the numeric
+#: literals out of the module's own AST rather than trusting this list.
+#:
+#: AND THE ROUND THAT NAMED THE SEVENTH DECLARED THE CLASS CLOSED ON ONE
+#: FUNCTION. That guard read `evaluate_2lynch` alone, and `extra_context()`
+#: -- four of the metrics payload's own fields, archived in every row's
+#: `context` -- went on spelling 252, 126, 63 and 60. Reproduced the same
+#: way: `iloc[-63]` and its `len(df) > 63` guard changed to 45 left the
+#: fingerprint byte-identical and the whole suite green, while
+#: `perf_3mo_pct` moved under a key still called `3mo` and
+#: knowledge/strategy.md went on naming it as one of the two
+#: relative-strength measures the model has. They are the last four below,
+#: and the guard walks every function in this module now.
 WINDOWS = {
     "prior_burst_lookback": 20,   # 2: sessions searched for earlier bursts
     "linear_fit_sessions": 30,    # L: sessions of prior move the log-price fit covers
@@ -83,6 +96,15 @@ WINDOWS = {
     # it -- and a judgement with a guard on it can be revisited, while one
     # spelled as an import cannot even be seen.
     "volume_norm_sessions": 50,
+    # extra_context()'s four. No rule reads them and nothing is compared
+    # against them -- they are measurements the scoring model weighs, which
+    # is why they are windows and not thresholds -- but a window that moves
+    # moves every number the model saw, and round 11 put what produced the
+    # SCORE into the fingerprint for exactly that reason.
+    "high_low_sessions": 252,      # the 52-week high and low the burst is placed against
+    "high_low_min_sessions": 60,   # ...below which that window is not attempted and the whole frame is used
+    "perf_6mo_sessions": 126,      # perf_6mo_pct: the close this one is measured from
+    "perf_3mo_sessions": 63,       # perf_3mo_pct: likewise, and strategy.md names it to the model
 }
 MIN_LINEAR_R2 = 0.55        # L: fit quality of the prior move
 MIN_LINEAR_SLOPE = 0.0      # L: ...and it must be an advance, not a collapse
@@ -154,13 +176,19 @@ MIN_CLOSE_POS = 0.70        # H: where in the day's range the burst closed
 # names a different window for the base, this is the one place the CODE reads
 # it from. It is NOT the only place the number is written, and this comment
 # said it was: knowledge/strategy.md tells the model "three or more is refused
-# before it reaches you" and "anything you are scoring is 0, 1 or 2", and
-# README states the rule in the pipeline diagram. Editing this constant alone
-# leaves the rulebook -- the system prompt, a surface a reader never sees --
-# asserting a rule the code no longer applies. What makes the sentence true is
-# a guard rather than a promise: test_the_rulebook_states_the_numbers_the_
-# checklist_applies reads all four of those sentences back against these
-# constants and turns red until they are swept with it.
+# before it reaches you", "anything you are scoring is 0, 1 or 2" and "the
+# difference between the three you do see", and README states the rule in the
+# pipeline diagram. Editing this constant alone leaves the rulebook -- the
+# system prompt, a surface a reader never sees -- asserting a rule the code no
+# longer applies. What makes the sentence true is a guard rather than a
+# promise, and it is two guards over four sentences rather than one over all
+# of them: test_the_rulebook_states_the_numbers_the_checklist_applies reads
+# the rulebook's three, and test_the_documented_thresholds_are_the_ones_the_
+# code_applies reads README's. This comment said "all four" of one test that
+# reads three, and the third of the three was read by neither -- so sweeping
+# the two that were guarded left the system prompt saying "the difference
+# between the three you do see" over a veto admitting four counts, with the
+# value pin as the only red and a deliberate change updating that.
 #: Every absolute rule, named once, here beside the rules themselves. The
 #: reason word an unscored burst carries is DERIVED from the name by
 #: veto_reason(), so nothing anywhere holds a second copy of this list that a
@@ -600,7 +628,10 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
     fitted_move = shown((float(np.exp(slope * max(len(log_closes) - 1, 0))) - 1) * 100, 1)
     checks["L_linear_prior_move"] = {
         "pass": bool(r2 >= MIN_LINEAR_R2 and slope >= MIN_LINEAR_SLOPE),
-        "value": f"R²={r2:.2f}, fitted trend {fitted_move:+.1f}% over prior 30 days",
+        # The window is INTERPOLATED, not typed: it was spelled "30 days" here
+        # and 30 in WINDOWS, so a change to one told the model the other.
+        "value": (f"R²={r2:.2f}, fitted trend {fitted_move:+.1f}% over prior "
+                  f"{WINDOWS['linear_fit_sessions']} days"),
     }
 
     # ---- Y: young trend — not extended, measured through the burst day ----
@@ -633,7 +664,7 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
         # the same number means very different things before and after the
         # burst. (The old format hard-coded a "+", printing "+-33.8%".)
         "value": (
-            f"{run_up_text}, {ext_vs_sma20:+.1f}% vs 20SMA"
+            f"{run_up_text}, {ext_vs_sma20:+.1f}% vs {WINDOWS['sma_sessions']}SMA"
             " (through today's burst)"
         ),
     }
@@ -772,10 +803,17 @@ def extra_context(df: pd.DataFrame) -> dict:
     raw = df
     df = df.dropna(subset=["Close", "Volume"])
     close = float(df["Close"].iloc[-1])
-    hi_52w = float(df["High"].iloc[-252:].max()) if len(df) >= 60 else float(df["High"].max())
-    lo_52w = float(df["Low"].iloc[-252:].min()) if len(df) >= 60 else float(df["Low"].min())
-    perf_3mo = (close / float(df["Close"].iloc[-63]) - 1) * 100 if len(df) > 63 else None
-    perf_6mo = (close / float(df["Close"].iloc[-126]) - 1) * 100 if len(df) > 126 else None
+    # Every window here is read from WINDOWS, and each length guard from the
+    # same key as the slice it guards: 63 was spelled twice with two meanings
+    # (the index, and the history it needs), so moving the window alone left
+    # its own guard stale.
+    long_enough = len(df) >= WINDOWS["high_low_min_sessions"]
+    high_low = WINDOWS["high_low_sessions"]
+    hi_52w = float(df["High"].iloc[-high_low:].max()) if long_enough else float(df["High"].max())
+    lo_52w = float(df["Low"].iloc[-high_low:].min()) if long_enough else float(df["Low"].min())
+    three, six = WINDOWS["perf_3mo_sessions"], WINDOWS["perf_6mo_sessions"]
+    perf_3mo = (close / float(df["Close"].iloc[-three]) - 1) * 100 if len(df) > three else None
+    perf_6mo = (close / float(df["Close"].iloc[-six]) - 1) * 100 if len(df) > six else None
     # The NUMBERS behind Bonde's two rules. Their verdicts travel separately --
     # the veto through failed_vetoes(), the base breakdown through
     # evaluate_2lynch()'s context_checks -- and these are the measurements

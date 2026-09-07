@@ -214,7 +214,7 @@ CONTRACT_INVARIANTS = [
     "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
     "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'liquidity_floor' (rule 6 refused it in the scan, for dollar volume below the session's percentile floor, before the checklist was consulted), 'veto_up_days' (an absolute rule refused it before the pass count was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same four words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and neither a veto nor a liquidity refusal is ever published as a gate rejection.",
     "runs[].benchmark.universe is the universe the benchmark was measured over, and it is always the one that run's own universe block names: a run is benchmarked only from a later scan of the same universe, so a --tickers run contributes no benchmark to anything and receives none. A run whose universe no later scan has read keeps a null benchmark forever, which is the honest answer and not a zero.",
-    "runs[].rules is what this screener was when that run was made: every number its rules turned on — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate — plus what produced the SCORE, since round 11: score.prompt is a digest of the scoring model's system prompt and score.record_keys is the record block the request carries. A run scored under a rewritten rulebook is as much a second screener as one whose gate moved, and every mean keyed on score averages both. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. A run from before it carries no rules block, and no surface may read that as agreement.",
+    "runs[].rules is what this screener was when that run was made: every number its rules turned on — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate — plus what produced the SCORE, since round 11: score.prompt is a digest of the scoring model's system prompt and score.record_keys is the record block the request carries. A run scored under a rewritten rulebook is as much a second screener as one whose gate moved, and every mean keyed on score averages both. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. evidence.rules.differ names only keys EVERY set records, whose value moved; a key some set does not carry at all is in unshared instead, because a rule that did not exist then and a rule that was not recorded then are not the same fact and neither is a number that changed. A run from before it carries no rules block, and no surface may read that as agreement.",
     "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when the rule is off or nothing could be ranked), over (how many names the percentile was drawn from), refused (how many bursts sat below it). `over` is the population the FLOOR was drawn from -- the names whose session bar carried a readable, positive dollar volume -- and not the population the scan measured, which is run.coverage.measured and can be larger or smaller. A null floor has three readings: `pctile <= 0` is the rule switched off, whatever `over` says; a null floor with `over: 0` is a night no name's dollar volume could be ranked; and a null floor with no `over` at all is a run from before the count existed. No surface may report one cause as the other. run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
     "run.coverage is how much of the night was READ, in the counts the scan reached before it stopped: requested, with_bars (answered with any bar), fresh, measured, stale, gapped, no_bars, dropped, duplicate_bars, plus the session and the newest bar the names that missed it carried. measured is the population a burst could have come from -- the names whose session bar the detector read and answered about -- so with_bars minus measured is what could not be measured for the session (behind it, holed on the session before it, unreadable, measured onto an earlier session, or one the detector raised on), and measured 0 UNDER A POSITIVE with_bars is a BLIND night: the feed answered and nothing could be read, which no surface may report as a quiet market. measured 0 beside with_bars 0 is a scan nothing answered, which is what a dead run's notice carries and is not the same sentence. requested minus with_bars is the other half of the first cut -- the names that answered with nothing at all, plus any dropped after their batch failed twice -- so no surface may attribute it to the burst filter either. A count that is absent was never reached, and absent is never 0. runs[].measured carries that one number into the durable record, because docs/data.json is rewritten every night and both its readers are later runs.",
     "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is how many setups the run contributed at any horizon and rows is how many rows they were collapsed from, so n <= rows always. THE WEIGHT IS PER HORIZON: n1, n3 and n5 are the setups behind d1, d3 and d5 separately, and an average across sessions must weight each horizon by its own, because a frame with a hole after the first session measures d1 and nothing after it -- that setup is in n and out of n5, and weighting d5 by n counts setups that have no d5. nH is 0 exactly when dH is null and nH <= n always; they are not ordered n1 >= n3 >= n5, since a non-finite close at one horizon leaves it null with a later one measured. from_open carries its own n1/n3/n5 for the same reason it carries its own n.",
@@ -1866,6 +1866,25 @@ def rules_view(runs: list[dict]) -> dict:
     `runs_without` how many entries predate the fingerprint, which is a
     different thing from agreeing with it and must not be counted as
     agreement.
+
+    `unshared` IS THAT DISTINCTION ONE LEVEL IN, and it was missing for three
+    rounds. `differ` was computed with `block.get(key)`, so a key some block
+    does not carry at all read as None against the other's number -- exactly
+    the shape of a value that moved. Round 11 added three keys to the
+    fingerprint, and on this repo's own record (one 4 Sep run, 28 keys) the
+    page would have published "What moved: score.prompt, score.record_keys,
+    window.volume_norm_sessions" -- of which the last is C's volume average,
+    named under a no-behaviour-change claim both fixtures confirmed by
+    regenerating byte-identically. The number did not move; the record's
+    sight of it did.
+
+    The two are not merged and `sets` is not computed over the shared keys
+    only, for the reason `runs_without` is counted apart: a key one block
+    lacks may be a rule that did not exist then, or one that existed and was
+    not recorded, and the record cannot tell those apart. Reporting them as
+    agreement would be the confident half of an answer this file does not
+    have. It runs both ways -- a constant DELETED is unshared too -- which is
+    why the name says what is true of both rather than "added".
     """
     seen: list[dict] = []
     without = 0
@@ -1877,11 +1896,13 @@ def rules_view(runs: list[dict]) -> dict:
         if block not in seen:
             seen.append(block)
     keys = sorted({key for block in seen for key in block})
+    shared = [key for key in keys if all(key in block for block in seen)]
     differ = sorted(
-        key for key in keys
-        if len({json.dumps(block.get(key), sort_keys=True) for block in seen}) > 1)
+        key for key in shared
+        if len({json.dumps(block[key], sort_keys=True) for block in seen}) > 1)
+    unshared = sorted(set(keys) - set(shared))
     return {"current": dict(seen[0]) if seen else None, "sets": len(seen),
-            "differ": differ, "runs_without": without}
+            "differ": differ, "unshared": unshared, "runs_without": without}
 
 
 def _population(rows: list[dict]) -> dict:

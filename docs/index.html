@@ -274,7 +274,7 @@
   <!-- What happened the last times THIS name burst. The summary comes out of
        data.json's evidence block; the per-appearance detail needs the whole
        record, so docs/ledger.json is fetched ONLY when a reader asks for it
-       (see loadRecord). A year of it is about 1.24 MB gzipped, which is not a
+       (see loadRecord). A year of it is about 1.25 MB gzipped, which is not a
        thing to spend on every visit for a view most readers never open.
        tools/measure_ledger.py measures it and a docs test holds this comment,
        the one above loadRecord and README to what it prints. -->
@@ -1771,18 +1771,38 @@
   // and name what moved: "the rules changed" is not actionable and
   // "scan.min_gain_pct and gate.min_lynch_passes changed" is. Runs from
   // before the fingerprint existed are counted apart, because not knowing
-  // which rules made a row is not the same as knowing they were these.
+  // which rules made a row is not the same as knowing they were these -- and
+  // so is a key some run's block does not carry, for the same reason one
+  // level in: it is a number this record cannot see, not a number that moved.
   function renderRulesNote(ev) {
     var note = $('rules-note');
     if (!note) return;
     var r = ev && ev.rules;
     if (!r || typeof r !== 'object') { note.textContent = ''; note.hidden = true; return; }
+    function names(list) {
+      var shown = (list || []).slice(0, 6).join(', ');
+      return shown + ((list || []).length > 6 ? ', and ' + ((list || []).length - 6) + ' more' : '');
+    }
     var parts = [];
+    var moved = (r.differ || []).length;
+    var unshared = (r.unshared || []).length;
     if (r.sets > 1) {
-      var differ = (r.differ || []).slice(0, 6).join(', ');
-      parts.push('This record spans ' + plural(r.sets, 'set') + ' of rules, so every mean below averages ' +
-        'more than one screener. What moved: ' + (differ || 'not recorded') +
-        ((r.differ || []).length > 6 ? ', and ' + ((r.differ || []).length - 6) + ' more' : '') + '.');
+      // Two answers, because they are two facts. A key EVERY set records
+      // whose value moved is a screener that changed under the means below.
+      // A key some set does not carry is the record's sight of a number
+      // changing, not the number: round 11 added three, and this page would
+      // have published "What moved: window.volume_norm_sessions" over a
+      // record in which C's volume average never moved.
+      parts.push(moved
+        ? 'This record spans ' + plural(r.sets, 'set') + ' of rules, so every mean below averages ' +
+          'more than one screener. What moved: ' + names(r.differ) + '.'
+        : 'This record spans ' + plural(r.sets, 'set') + ' of rules, and no number every one of ' +
+          'them records has changed.');
+    }
+    if (unshared) {
+      parts.push(plural(unshared, 'number') + ' the record does not carry on every run: ' +
+        names(r.unshared) + ' — which is not the same as their having changed, because a rule ' +
+        'that did not exist then and one that was simply not recorded then look alike here.');
     }
     if (r.runs_without) {
       parts.push(plural(r.runs_without, 'run') + ' in the record predate the rules fingerprint, ' +
@@ -2071,7 +2091,7 @@
   }
 
   // The one lazy fetch. docs/ledger.json is the whole record — about
-  // 1.24 MB gzipped after a year — so it is never pulled on load; the summary
+  // 1.25 MB gzipped after a year — so it is never pulled on load; the summary
   // above comes out of data.json, which the page has already read. A 404 here is the
   // normal state until evening.yml has committed a run back, so it is reported
   // as a fact about the file rather than as a broken page.

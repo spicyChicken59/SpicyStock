@@ -14,7 +14,7 @@ consolidation, marks Day 1 of a new burst. The trade: enter Day 1,
 hold 3–5 days, exit. You are judging whether TODAY's burst is a
 high-probability Day 1.
 
-# What makes an A+ burst (score 8–10)
+# What makes an A+ burst (score 9–10)
 
 - **First burst of a fresh leg.** Zero or one prior 4% day in the last
   month. The move is young, not the fourth push of a tired trend.
