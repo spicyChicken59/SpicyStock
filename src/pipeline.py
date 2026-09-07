@@ -1283,6 +1283,11 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
              "forward return(s) filled this run)",
              published["data"], len(scored), len(unscored),
              published["ledger"], published["runs"], published["filled"])
+    # WHAT THE EARLIER PICKS DID, in the artifact a person opens. It is known
+    # only once publish() has run, and `stats` is the same dict the funnel was
+    # built from and the same object report.attempted holds, so the failure
+    # notice carries it too on a night that publishes and then cannot deliver.
+    stats["settled"] = published["settled"]
 
     # Layer 6: email. A degraded run still sends. Suppressing it would replace
     # a misleading email with no email, and no email is the failure this step
@@ -1747,6 +1752,16 @@ def follow_through(mode: Mode, dry_run: bool = False,
         # Absent from a run block written before the count existed, and the
         # emailer prints nothing for that, never a 0.
         duplicate_bars=source.get("duplicate_bars"),
+        # AND WHAT THAT RUN'S FILL SETTLED. The block is a fact about the run
+        # being followed, exactly as its funnel counts are, and the reader of
+        # the 8:30 mail is the one who has to decide what to do about the
+        # names in front of them -- so a scorecard printed in the evening and
+        # dropped here would be the "one mechanism, two vocabularies" shape
+        # one mail over, which is how stopped_printing came to be on the page
+        # and not in this mail. Absent from a snapshot written before the
+        # block existed, and the emailer prints nothing for that, never "no
+        # picks settled".
+        settled=source.get("settled"),
         # WHICH STAGE BROKE IN THE RUN BEING FOLLOWED, in that run's own stage
         # words. Not its status: "degraded" covers a clock disagreement, a
         # chart that would not render, a Claude fallback, an unreadable
@@ -2013,7 +2028,7 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     # at least the one just scanned.
     through = max(scanner.current_session(), session) if session else scanner.current_session()
     pending = book.pending_tickers(through)
-    filled = 0
+    filled: list[ledger.Filled] = []
     frames_read = frames
     try:
         frames = forward_bars(cfg, pending, through)
@@ -2050,6 +2065,16 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     book.latest["run"]["errors"] = list(report.errors)
     book.latest["run"]["status"] = entry["status"] = report.status
 
+    # WHAT THE EARLIER PICKS DID, from the rows the fill above just moved.
+    # Stamped here rather than built with the rest of the run block because
+    # it is not knowable until both fills have run: the benchmark each entry
+    # carries beside the pick is the one fill_benchmarks() may have measured
+    # moments ago, and reading it before that would publish a pending rung
+    # beside a settled pick. Not in the ledger entry: every number in it is a
+    # restatement of a row that file already holds, and README budgets its
+    # size. See src.ledger.settled_rows().
+    book.latest["run"]["settled"] = ledger.settled_rows(filled)
+
     # A SCAN_SESSION_DATE backfill adds an OLDER session to the record. It
     # used to become the headline of docs/data.json too -- the top-level run
     # last week's, while `runs` two lines down still listed last night -- and
@@ -2072,7 +2097,10 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     # record being worthless, and the exit code has to be able to say so.
     report.published = True
     return {"data": written["data"], "ledger": written["ledger"], "headline": headline,
-            "runs": len(book.runs), "pending": len(pending), "filled": filled,
+            "runs": len(book.runs), "pending": len(pending), "filled": len(filled),
+            # The scorecard the email prints under its funnel, handed back
+            # rather than re-read out of the file that was just written.
+            "settled": list(book.latest["run"]["settled"]),
             "benchmarked": benchmarked}
 
 

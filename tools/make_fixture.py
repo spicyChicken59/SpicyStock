@@ -852,6 +852,55 @@ for _i, _run in enumerate(runs):
     assert len(runs) <= ledger.FILL_WINDOW_RUNS, "an entry past the window would be stamped closed"
     _run["fills_closed"] = False
 
+# What THIS run's fill moved: the scorecard both mails print under the funnel
+# (src.ledger.settled_rows, and src.emailer's _settled_table). DERIVED from
+# the runs above rather than typed -- the horizons that land on SESSION are
+# exactly the ones whose means are filled up there, and every universe figure
+# is read off that session's own benchmark, so the fixture cannot state a
+# scorecard the record it ships with contradicts.
+#
+# It belongs to the same half of this file as the streak blocks: the
+# hand-authored seven-session history, not the one run `evidence` is computed
+# over -- which is why `evidence.overall` is still every-n-zero beside it. A
+# real run's two halves come off one ledger; this file's do not, and says so
+# in the comment above `_LEDGER_RUNS`.
+def _sessions_after(day: str, n: int) -> str:
+    """The n-th session after `day`, weekend-only -- the same arithmetic
+    src.ledger.forward_returns() falls back to for a single frame, and enough
+    here because this hand-authored week holds no holiday."""
+    import datetime
+    out = datetime.date.fromisoformat(day)
+    for _ in range(n):
+        out += datetime.timedelta(days=1)
+        while out.weekday() >= 5:
+            out += datetime.timedelta(days=1)
+    return out.isoformat()
+
+
+_PICKS = [("NVDA", 8.7, "A"), ("AMAT", 7.9, "B+"), ("MU", 8.2, "A")]
+SETTLED = []
+for _entry in runs[1:]:
+    for _h in ledger.HORIZONS:
+        if _sessions_after(_entry["date"], _h) != SESSION:
+            continue
+        _mean = _entry["forward_returns"][f"d{_h}"]
+        if _mean is None:
+            continue
+        _name, _score, _verdict = _PICKS[len(SETTLED) % len(_PICKS)]
+        _bench = _entry["benchmark"]
+        SETTLED.append({
+            "ticker": _name, "session": _entry["date"], "score": _score,
+            "verdict": _verdict, "horizon": _h,
+            # One pick, a little either side of the mean of the setups that
+            # night: this is one row's outcome and not the run's average.
+            "ret": round(_mean + 1.4, 2),
+            "ret_from_open": round(_entry["forward_returns"]["from_open"][f"d{_h}"] + 1.4, 2),
+            "universe": _bench[f"d{_h}"],
+            "universe_from_open": _bench["from_open"][f"d{_h}"],
+        })
+assert SETTLED, "the fixture's own runs say three horizons closed on this session"
+assert len({(e["ticker"], e["session"], e["horizon"]) for e in SETTLED}) == len(SETTLED)
+
 # The evidence block, computed by the REAL src/ledger.py over this fixture's
 # own rows rather than hand-authored. One run, whose forward returns have not
 # happened yet -- so every mean in it is null and every n is zero, which is
@@ -917,6 +966,11 @@ data = {
         # publish() writes this key on every run, and a fixture missing it
         # would describe a file the pipeline does not produce.
         "duplicate_bars": 0,
+        # What this run's fill moved -- one entry per (pick, horizon) whose
+        # measurement stopped being pending tonight, which both mails print
+        # under the funnel and nothing else in the record can reconstruct
+        # (a horizon carries no note of the night it was measured).
+        "settled": SETTLED,
         # How much of the night was read, through the pipeline's own function
         # over the same stats block the stopped-printing names come from --
         # not a hand-typed set of counts that could disagree with them. A THIN

@@ -12,6 +12,7 @@
       "provenance.chart_seen is true only when the scoring model actually received the chart image.",
       "forward_returns and runs[].forward_returns are null until the sessions exist -- with exceptions no session can end: a run that scored nothing has no rows for a later run to fill, and a run every one of whose scored rows is a repeat of a setup counted earlier (rows == scored with n == 0) has no setup to average, so in both cases the three horizons and the n stay null and 0 for good and a reader must be told that rather than 'pending'. runs[].fills_closed says the third: false while a later run will still fetch that run's rows, true once it is past the newest FILL_WINDOW_RUNS runs by session, after which a horizon still null there is null for good too. It is a fact about the record as it stands tonight rather than about the run, so it is in this view and not in the ledger. Absent is null, never 0 and never a string.",
       "d1/d3/d5 divide the close 1, 3 and 5 sessions after the burst by the BURST-DAY CLOSE: what the setup did. forward_returns.from_open divides the same later closes by the NEXT session's open, the earliest price a reader of the evening email could have paid: what acting on it could have had. Both are paper prices from one venue's official prints with no slippage. Every mean and every evidence outcome carries both, the open basis nested under from_open with its own n, and enough_from_open is the open basis's own licence to be read as a rate -- a surface that shows a number says which basis it is on, and never shows a close-basis number under an open-basis label or the reverse. A row or a run from before this basis existed carries no from_open, which is not a measurement of zero.",
+      "run.settled is what THIS run's fill made knowable about picks earlier runs made: one entry per (scored row, horizon) whose measurement moved from pending to a number tonight, carrying that pick's ticker, its burst session, the score and verdict it was given then, the horizon, its return on both bases and its own session's universe benchmark on both -- each of them a restatement of what runs[] already holds, never a second arithmetic. A horizon is filled once, so a pick appears under a horizon in exactly one run's block and never twice with two numbers, and at least one of the two bases carries a number in every entry. It is the picks alone: a refusal has no score to report and belongs to the control, which is evidence.refused. An empty list is a run whose fill moved nothing, which is not a claim that nothing was pending; a run from before the block existed carries no key at all, and no surface may read either as a night on which the earlier picks returned zero.",
       "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
       "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
       "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered, blind_session (a run inside that window measured no name at all, so an earlier appearance would have been invisible to it -- see runs[].measured; a run that scanned a basket named on the command line is never one of those, because it asked about no other name and so is evidence about the session in neither direction). day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
@@ -60,6 +61,41 @@
       ]
     },
     "duplicate_bars": 0,
+    "settled": [
+      {
+        "ticker": "NVDA",
+        "session": "2026-08-31",
+        "score": 8.7,
+        "verdict": "A",
+        "horizon": 1,
+        "ret": 2.52,
+        "ret_from_open": 1.87,
+        "universe": 0.32,
+        "universe_from_open": 0.02
+      },
+      {
+        "ticker": "AMAT",
+        "session": "2026-08-27",
+        "score": 7.9,
+        "verdict": "B+",
+        "horizon": 3,
+        "ret": 2.84,
+        "ret_from_open": 2.09,
+        "universe": 0.54,
+        "universe_from_open": 0.24
+      },
+      {
+        "ticker": "MU",
+        "session": "2026-08-25",
+        "score": 8.2,
+        "verdict": "A",
+        "horizon": 5,
+        "ret": 0.98,
+        "ret_from_open": 0.13,
+        "universe": -1.12,
+        "universe_from_open": -1.42
+      }
+    ],
     "coverage": {
       "requested": 228,
       "with_bars": 227,

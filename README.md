@@ -59,7 +59,10 @@ Layer 5  Archive ..................... EVERY scored candidate, plus every burst
                                        results/*.csv (a 30-day artifact)
 Layer 6  Email ....................... HTML table, top 5, with the charts this
                                        run just rendered attached inline —
-                                       the ONLY place TOP_N cuts anything
+                                       the ONLY place TOP_N cuts anything —
+                                       and, under the funnel, what the picks
+                                       of EARLIER runs returned at whatever
+                                       horizons tonight's fill just measured
 ```
 
 ## The two runs
@@ -72,6 +75,7 @@ Layer 6  Email ....................... HTML table, top 5, with the charts this
 | writes | `docs/data.json`, `docs/ledger.json`, `docs/charts/` (gitignored), `results/*.csv` | nothing |
 | charts | attached inline — the PNGs it just rendered, except on a retry after a failed send | none, and the email says why |
 | an empty table | says what its own scan found, unless that scan was cut short | says what the run it follows found, unless *its* scan was |
+| what earlier picks did | the scorecard its own fill just measured (`run.settled`), or no such table at all | the same block, off the run it follows |
 | workflow | `.github/workflows/evening.yml` | `.github/workflows/morning.yml` |
 
 **Why the morning run does not scan.** Before the open it has no market data
@@ -524,7 +528,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1406 tests, no network or API keys needed
+pytest tests/                   # 1436 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -827,6 +831,28 @@ invariants live in the file rather than only here. The load-bearing ones:
   than adding to this number, which counts the scan; so does
   `tools/live_check.py`, the third caller, on the OK line it prints for the
   live feed.
+- `run.settled` is what THIS run's fill made knowable about picks EARLIER runs
+  made: one entry per (scored row, horizon) whose measurement stopped being
+  pending tonight, carrying the pick's `ticker`, its burst `session`, the
+  `score` and `verdict` it was given then, the `horizon`, its return on both
+  bases (`ret`, `ret_from_open`) and that session's universe benchmark on both
+  (`universe`, `universe_from_open`). Every number in it restates a row the
+  record already holds rather than being recomputed, so the block cannot
+  disagree with `runs[]`. A horizon is filled once, so a pick appears under a
+  horizon in exactly one run's block and never twice with two numbers — which
+  is why the block is per `(row, horizon)` and not per row. **It is the picks
+  alone**: a refusal has no score to report and belongs to the control,
+  `evidence.refused`. Both mails print it as a table under the funnel — the
+  evening its own, the morning the same block off the run it follows — and
+  print NOTHING when the list is empty, because the first four nights of any
+  record settle nothing and "no picks settled" is a line a reader learns to
+  skip. An absent key is a run from before the block existed and is not a
+  night on which the earlier picks returned zero. It is not in the ledger
+  entry: every number in it is already in that file, and this block's one
+  irreproducible fact — WHICH night measured a horizon — is what the mail
+  needs and the record does not. The page does not print it either: the page
+  fetches the whole ledger and shows every row's outcome on its own card,
+  which is the thing an email cannot do.
 - `context` is what was measured beside the burst and voted on by nothing:
   where the close sits against its own year (`pct_off_52w_high`,
   `pct_above_52w_low`), how the name ran into it (`perf_3mo_pct`,

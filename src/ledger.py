@@ -208,6 +208,7 @@ CONTRACT_INVARIANTS = [
     "provenance.chart_seen is true only when the scoring model actually received the chart image.",
     "forward_returns and runs[].forward_returns are null until the sessions exist -- with exceptions no session can end: a run that scored nothing has no rows for a later run to fill, and a run every one of whose scored rows is a repeat of a setup counted earlier (rows == scored with n == 0) has no setup to average, so in both cases the three horizons and the n stay null and 0 for good and a reader must be told that rather than 'pending'. runs[].fills_closed says the third: false while a later run will still fetch that run's rows, true once it is past the newest FILL_WINDOW_RUNS runs by session, after which a horizon still null there is null for good too. It is a fact about the record as it stands tonight rather than about the run, so it is in this view and not in the ledger. Absent is null, never 0 and never a string.",
     "d1/d3/d5 divide the close 1, 3 and 5 sessions after the burst by the BURST-DAY CLOSE: what the setup did. forward_returns.from_open divides the same later closes by the NEXT session's open, the earliest price a reader of the evening email could have paid: what acting on it could have had. Both are paper prices from one venue's official prints with no slippage. Every mean and every evidence outcome carries both, the open basis nested under from_open with its own n, and enough_from_open is the open basis's own licence to be read as a rate -- a surface that shows a number says which basis it is on, and never shows a close-basis number under an open-basis label or the reverse. A row or a run from before this basis existed carries no from_open, which is not a measurement of zero.",
+    "run.settled is what THIS run's fill made knowable about picks earlier runs made: one entry per (scored row, horizon) whose measurement moved from pending to a number tonight, carrying that pick's ticker, its burst session, the score and verdict it was given then, the horizon, its return on both bases and its own session's universe benchmark on both -- each of them a restatement of what runs[] already holds, never a second arithmetic. A horizon is filled once, so a pick appears under a horizon in exactly one run's block and never twice with two numbers, and at least one of the two bases carries a number in every entry. It is the picks alone: a refusal has no score to report and belongs to the control, which is evidence.refused. An empty list is a run whose fill moved nothing, which is not a claim that nothing was pending; a run from before the block existed carries no key at all, and no surface may read either as a night on which the earlier picks returned zero.",
     "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
     "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
     "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered, blind_session (a run inside that window measured no name at all, so an earlier appearance would have been invisible to it -- see runs[].measured; a run that scanned a basket named on the command line is never one of those, because it asked about no other name and so is evidence about the session in neither direction). day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
@@ -1364,6 +1365,80 @@ def _measured(row: dict) -> bool:
     return any(returns.get(f"d{h}") is not None for h in HORIZONS)
 
 
+class Filled(NamedTuple):
+    """One (row, horizon) a fill moved from pending to a number.
+
+    `run` is the entry the row sits in, so the alternative for that session --
+    the entry's own benchmark -- can be read beside the pick without looking
+    it up again by date; `scored` is the record's own split between a pick and
+    a refusal, taken from which list the row was in rather than re-derived
+    from the row's fields.
+    """
+
+    run: dict
+    row: dict
+    horizon: int
+    scored: bool
+
+
+def settled_rows(filled: list[Filled]) -> list[dict]:
+    """`run.settled`: what the picks an earlier run made have now returned.
+
+    THE EVENING MAIL COULD NOT ANSWER ITS OWN QUESTION. Every night's mail
+    said what the screener found and nothing about what the last one's finds
+    went on to do -- the whole record was in docs/ledger.json and on the page,
+    and the artifact a person actually opens carried none of it. The fill that
+    runs inside every publish() knows exactly which measurements moved
+    tonight, and threw the list away for a count.
+
+    One entry per (row, horizon) fill_forward_returns() moved, for the SCORED
+    rows only: a refusal has no score and no verdict to report, and the
+    control it belongs to is the evidence block's business, not a scorecard's.
+    Each entry restates numbers the record already holds -- the row's own
+    return on both bases and that session's universe benchmark on both -- so
+    nothing here is a second arithmetic that could disagree with the ledger.
+
+    NOT TRUNCATED, for the reason `candidates` is not: a full night can settle
+    d1, d3 and d5 for three earlier sessions at once, so the block can hold
+    three times MAX_TO_SCORE rows, and the rule for which of them a reader is
+    allowed to see would be an editorial judgement nobody has needed yet.
+    """
+    out = []
+    for fill in filled:
+        if not fill.scored:
+            continue
+        key = f"d{fill.horizon}"
+        returns = fill.row.get("forward_returns") or {}
+        bench = fill.run.get("benchmark")
+        bench = bench if isinstance(bench, dict) else {}
+        verdict = fill.row.get("verdict")
+        out.append({
+            "ticker": fill.row.get("ticker"),
+            # The BURST's session, not tonight's: the entry is a fact about a
+            # pick made earlier, and the horizon says how far after it this is.
+            "session": iso_date(fill.row.get("date")),
+            "score": _num(fill.row.get("score")),
+            "verdict": verdict if isinstance(verdict, str) else None,
+            "horizon": fill.horizon,
+            "ret": _num(returns.get(key)),
+            "ret_from_open": _num(_from_open(returns).get(key)),
+            # THE ALTERNATIVE AT THE SAME HORIZON, ON THE SAME BASIS. Both
+            # bases travel, because a pick's open-basis return beside a
+            # close-basis benchmark is two answers to one question -- the
+            # thing the page's one-basis-at-a-time control exists to prevent.
+            # Null where that session's rung is still pending or was never
+            # measurable, which is not a benchmark of zero.
+            "universe": _num(bench.get(key)),
+            "universe_from_open": _num(_from_open(bench).get(key)),
+        })
+    # Newest burst first, and inside a session by name and then by horizon:
+    # a stable order, because this block is written into a file two guards
+    # compare byte for byte.
+    out.sort(key=lambda entry: ((entry["ticker"] or ""), entry["horizon"]))
+    out.sort(key=lambda entry: (entry["session"] or ""), reverse=True)
+    return out
+
+
 def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
     """The run's mean forward return per horizon, over SETUPS rather than rows.
 
@@ -2436,12 +2511,23 @@ class Ledger:
                     window.append(run)
         return window
 
-    def _fillable(self, through: date | None) -> list[dict]:
-        """Rows that could still gain a horizon, newest FILL_WINDOW_RUNS runs."""
+    def _fillable(self, through: date | None) -> list[tuple[dict, dict, bool]]:
+        """(run entry, row, was it scored) for every row that could still gain
+        a horizon, over the newest FILL_WINDOW_RUNS runs.
+
+        The run entry travels with the row because what the fill MOVES is
+        published (see settled_rows()) beside the alternative for that same
+        session, which is a fact about the run and not about the row; and the
+        scored flag because the record's own split -- `candidates` against
+        `gated` -- is what says whether a row was ever a pick. Reading it back
+        off the row (a `score` key, say) would be a second rule for a
+        question this list already answers.
+        """
         limit = _as_date(through)
         out = []
         for run in self._fill_window():
-            for row in list(run.get("candidates", [])) + list(run.get("gated", [])):
+            for row, scored in ([(r, True) for r in run.get("candidates", [])]
+                                + [(r, False) for r in run.get("gated", [])]):
                 returns = row.get("forward_returns") or {}
                 if (all(returns.get(f"d{h}") is not None for h in HORIZONS)
                         and all(_from_open(returns).get(f"d{h}") is not None for h in HORIZONS)):
@@ -2449,19 +2535,28 @@ class Ledger:
                 burst = _as_date(row.get("date"))
                 if burst is None or (limit is not None and burst >= limit):
                     continue  # the sessions after it have not happened yet
-                out.append(row)
+                out.append((run, row, scored))
         return out
 
     def pending_tickers(self, through: date | None = None) -> list[str]:
         """Which symbols this run would have to fetch to fill anything in."""
         seen: dict[str, None] = {}
-        for row in self._fillable(through):
+        for _run, row, _scored in self._fillable(through):
             seen.setdefault(row["ticker"], None)
         return list(seen)
 
     def fill_forward_returns(self, frames: dict, through: date | None = None,
-                             calendar: list[date] | None = None) -> int:
-        """Fill every horizon these frames make knowable. Returns how many rows moved.
+                             calendar: list[date] | None = None) -> list[Filled]:
+        """Fill every horizon these frames make knowable.
+
+        Returns one Filled per (row, horizon) THIS call moved from pending to
+        a number -- not a count of rows. A count is what a log line wants and
+        it is the wrong thing to hand back: the pairs are the run's own
+        scorecard of what the earlier picks did, which is what the evening
+        mail carries under its funnel and what settled_rows() shapes for
+        docs/data.json. Per (row, horizon), because a row gains d1 one night
+        and d3 two nights later, and a row reported twice under one number is
+        the same setup announced twice.
 
         `calendar` is the sessions the run knows happened (session_calendar()
         over every frame it fetched), so a hole in one name's frame leaves a
@@ -2470,10 +2565,12 @@ class Ledger:
         Idempotent: a row already carrying d1 keeps the value it was given,
         because the frame it came from and the frame here are the same
         arithmetic over the same feed, and rewriting it every night would turn
-        one restated bar into a silently changing record.
+        one restated bar into a silently changing record. That is also what
+        makes the pairs safe to publish: a horizon is filled ONCE, so it is in
+        exactly one run's block for good.
         """
-        moved = 0
-        for row in self._fillable(through):
+        moved: list[Filled] = []
+        for run, row, scored in self._fillable(through):
             frame = frames.get(row["ticker"])
             if frame is None:
                 continue
@@ -2485,19 +2582,26 @@ class Ledger:
             # reaches this line -- _malformed_rows() refused the file.
             if not isinstance(current.get("from_open"), dict):
                 current["from_open"] = {f"d{h}": None for h in HORIZONS}
-            changed = False
+            changed = []
             for horizon in HORIZONS:
                 key = f"d{horizon}"
+                moved_here = False
                 if current.get(key) is None and fresh[key] is not None:
                     current[key] = fresh[key]
-                    changed = True
+                    moved_here = True
                 if (current["from_open"].get(key) is None
                         and fresh["from_open"][key] is not None):
                     current["from_open"][key] = fresh["from_open"][key]
-                    changed = True
+                    moved_here = True
+                # ONE HORIZON, ONE PAIR, whichever basis moved. A row from
+                # before the open basis existed gains that basis alone here,
+                # and a row whose open lay outside its own bar never gains it
+                # at all: neither is a horizon that settled twice.
+                if moved_here:
+                    changed.append(horizon)
             if changed:
                 current["as_of"] = fresh["as_of"]
-                moved += 1
+                moved += [Filled(run, row, horizon, scored) for horizon in changed]
         if moved:
             self._recompute_means()
             self._copy_returns_into_latest()
@@ -2984,6 +3088,42 @@ def snapshot_problem(data: dict) -> str | None:
                     or not (last is None or isinstance(last, str))):
                 return (f"run.stopped_printing.names[{position}] is not "
                         "{ticker, last, sessions_behind}")
+    # run.settled, the same rule one block over, and the class this function
+    # exists for on the newest key: the morning email prints these numbers as
+    # percentages beside a ticker and a score, so a string where a return
+    # belongs renders "+abc%" -- a fabricated outcome for a real pick, which
+    # is worse than a crash because nothing anywhere says it is wrong.
+    # Absent is a snapshot from before the block existed and loads clean; an
+    # empty list is a run whose fill moved nothing and is the ordinary state.
+    if "settled" in run:
+        settled = run["settled"]
+        if not isinstance(settled, list):
+            return (f"run.settled is {type(settled).__name__}, not the list "
+                    "publish() writes")
+        for position, entry in enumerate(settled, start=1):
+            if not isinstance(entry, dict) or not isinstance(entry.get("ticker"), str):
+                return (f"run.settled[{position}] is not the "
+                        "{ticker, session, score, verdict, horizon, ret, ...} "
+                        "object settled_rows() writes")
+            horizon = entry.get("horizon")
+            if isinstance(horizon, bool) or not isinstance(horizon, int) or horizon < 1:
+                # The whole of the entry's meaning -- "+3d" -- and the one
+                # field with no plausible null: an entry that cannot say how
+                # far after the burst it is says nothing at all.
+                return (f"run.settled[{position}] ({entry['ticker']}) has "
+                        f"{horizon!r} where its horizon should be")
+            for field_name in ("session", "verdict"):
+                value = entry.get(field_name)
+                if value is not None and not isinstance(value, str):
+                    return (f"run.settled[{position}] ({entry['ticker']}) has a "
+                            f"{type(value).__name__} where its {field_name} should be")
+            for field_name in ("score", "ret", "ret_from_open", "universe",
+                               "universe_from_open"):
+                value = entry.get(field_name)
+                if value is not None and not _is_number(value):
+                    return (f"run.settled[{position}] ({entry['ticker']}) has a "
+                            f"{type(value).__name__} where its {field_name} number "
+                            "should be")
     for name, count in (run.get("scored_by") or {}).items():
         if count is not None and (isinstance(count, bool) or not isinstance(count, (int, float))):
             return (f"run.scored_by.{name} is {type(count).__name__}, not a number, "

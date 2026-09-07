@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import base64
+import re
 
 import pytest
 
@@ -1658,6 +1659,30 @@ def test_the_whole_monitor_survives_a_malformed_error_entry_not_just_its_headlin
     # hand-edited file must not be able to inject markup into the title.
     ("the session in the title and funnel", {"status": "ok", "session": "2026-09-04<b>x</b>",
                                              "bursts": 1, "gated": 1}, "2026-09-04<b>x</b>"),
+    # The scorecard's three text leaves. Every one is read off docs/data.json
+    # by the morning pass and written into it by an earlier run, which is the
+    # same provenance as the streak leaves the round-10 sweep found unescaped:
+    # a hand-edited or truncated snapshot is the shape that reaches them.
+    ("the ticker in the settled scorecard",
+     {"status": "ok", "session": "2026-09-04", "bursts": 1, "gated": 1,
+      "settled": [{"ticker": "AA<b>x</b>", "session": "2026-08-31", "score": 8.4,
+                   "verdict": "A", "horizon": 1, "ret": 3.2, "ret_from_open": 2.1,
+                   "universe": 0.4, "universe_from_open": 0.3}]},
+     "AA<b>x</b>"),
+    ("the burst session in the settled scorecard",
+     {"status": "ok", "session": "2026-09-04", "bursts": 1, "gated": 1,
+      "settled": [{"ticker": "AAA", "session": "2026-08-31<i>y</i>", "score": 8.4,
+                   "verdict": "A", "horizon": 1, "ret": 3.2, "ret_from_open": 2.1,
+                   "universe": 0.4, "universe_from_open": 0.3}]},
+     "2026-08-31<i>y</i>"),
+    # The verdict is the SCORING MODEL's word, kept in the record and read
+    # back a session later -- the same argument that escapes `reason` in a row.
+    ("the verdict in the settled scorecard",
+     {"status": "ok", "session": "2026-09-04", "bursts": 1, "gated": 1,
+      "settled": [{"ticker": "AAA", "session": "2026-08-31", "score": 8.4,
+                   "verdict": "A<em>z</em>", "horizon": 1, "ret": 3.2, "ret_from_open": 2.1,
+                   "universe": 0.4, "universe_from_open": 0.3}]},
+     "A<em>z</em>"),
 ])
 def test_every_free_text_leaf_reaches_the_reader_whole(where, stats, must_read):
     html = build_html([], "evening", stats)
@@ -1714,6 +1739,106 @@ def test_every_free_text_leaf_a_row_carries_reaches_the_reader_whole(
     html = build_html(rows, run_type, stats)
     assert must_read in _visible_text(html), where
     assert must_read not in html, f"{where}: the raw text is in the source, so it was not escaped"
+
+
+#: One entry of the scorecard, in the shape src.ledger.settled_rows() writes.
+def _settled(**over):
+    return {"ticker": "AAA", "session": "2026-08-31", "score": 8.4, "verdict": "A",
+            "horizon": 1, "ret": 3.2, "ret_from_open": 2.1, "universe": 0.4,
+            "universe_from_open": 0.3, **over}
+
+
+@pytest.mark.parametrize("state, settled", [
+    ("a run from before the block existed", None),
+    ("a run whose fill moved nothing", []),
+])
+def test_a_mail_with_nothing_settled_says_nothing_about_settling(state, settled):
+    """ABSENT, not "no picks settled". The first four nights of any record
+    settle nothing at all -- and every night's fill can move nothing -- so a
+    sentence saying so would be a line the reader learns to skip, which is the
+    rule the refusals line, the duplicate-bar line and the stopped-printing
+    line all follow. A snapshot from before the block existed is the same
+    silence, in the other direction: it is not a night on which the earlier
+    picks returned zero."""
+    stats = dict(DATED) if settled is None else dict(DATED, settled=settled)
+
+    text = _visible_text(build_html([], "evening", stats))
+
+    assert "settle" not in text.lower(), (state, text)
+    assert emailer.BASIS_CLOSE not in text and emailer.BASIS_OPEN not in text
+
+
+def test_the_scorecard_puts_one_basis_in_each_column_with_its_own_alternative():
+    """What the earlier picks did, under the funnel: the pick's return and the
+    universe's for the same session, at the same horizon, ON THE SAME BASIS.
+    A close-basis figure under an open-basis heading is the one thing the
+    page's single-basis control exists to prevent, and a table says it per
+    column instead -- so every number here is distinct, and each has to land
+    under the heading that names its own basis."""
+    stats = dict(DATED, settled=[_settled(ret=3.2, ret_from_open=2.1,
+                                          universe=0.4, universe_from_open=0.3)])
+
+    html = build_html([], "evening", stats)
+    text = _visible_text(html)
+
+    assert f"Settled by the {DATED['session']} scan" in text
+    assert "AAA 2026-08-31 8.4/10 A +1d +3.20% universe +0.40% +2.10% universe +0.30%" in text
+    close = html.index(emailer.BASIS_CLOSE)
+    openbasis = html.index(emailer.BASIS_OPEN)
+    assert close < openbasis, "the columns are in the page's own order"
+    # Each pair is inside its own cell, which is what "one basis per column"
+    # means in a table a mail client lays out.
+    cells = re.findall(r"<td[^>]*>(.*?)</td>", html, re.S)
+    assert any("+3.20%" in cell and "+0.40%" in cell and "+2.10%" not in cell for cell in cells)
+    assert any("+2.10%" in cell and "+0.30%" in cell and "+3.20%" not in cell for cell in cells)
+
+
+def test_the_scorecard_prints_an_em_dash_for_a_number_the_record_does_not_hold():
+    """A pick whose open lay outside its own bar has no open basis ever, and a
+    session whose rung was never measured has no universe figure: neither is a
+    return of zero, and neither may be printed as one. The em dash is the
+    page's own word for it."""
+    stats = dict(DATED, settled=[_settled(horizon=3, ret=-1.5, ret_from_open=None,
+                                          universe=None, universe_from_open=None)])
+
+    text = _visible_text(build_html([], "evening", stats))
+
+    assert "AAA 2026-08-31 8.4/10 A +3d -1.50% universe — — universe —" in text
+    assert "0.00%" not in text, "a number the record does not hold is not a zero"
+
+
+def test_a_settled_pick_with_no_score_on_record_is_not_given_one():
+    """`score` and `verdict` are what the row carried the night it was made,
+    and a row that carries neither -- a truncated or hand-edited record --
+    must print the em dash rather than the 0.0/10 a fabricated number would
+    read as. Neither half is invented from the other: a row with a verdict
+    and no score prints the verdict alone."""
+    stats = dict(DATED, settled=[_settled(score=None, verdict=None)])
+
+    text = _visible_text(build_html([], "evening", stats))
+
+    assert "AAA 2026-08-31 — +1d" in text, text
+    assert "0.0/10" not in text and "/10" not in text
+
+    verdict_only = dict(DATED, settled=[_settled(score=None)])
+    assert "AAA 2026-08-31 A +1d" in _visible_text(build_html([], "evening", verdict_only))
+
+
+def test_the_morning_prints_the_scorecard_of_the_run_it_follows():
+    """The same block, the same words, off the snapshot: a scorecard in the
+    evening mail and not in the morning one is the two-vocabularies shape one
+    mail over, which is how stopped_printing came to be on the page and not in
+    this mail."""
+    entry = _settled(horizon=5, ret=6.0, ret_from_open=5.4)
+    stats = dict(DATED, settled=[entry])
+
+    evening = _visible_text(build_html([], "evening", stats))
+    morning = _visible_text(build_html([], "morning", stats))
+    row = "AAA 2026-08-31 8.4/10 A +5d +6.00% universe +0.40% +5.40% universe +0.30%"
+
+    assert row in evening and row in morning
+    assert f"Settled by the {DATED['session']} scan" in morning, (
+        "the heading names the run that settled these, not 'last night'")
 
 
 def test_the_checklist_lines_are_escaped_line_by_line():

@@ -415,6 +415,51 @@ def contract_violations(data: dict, docs_dir=None) -> set[str]:
     if run["bursts"] and _count_or_none(run.get("coverage"), "measured") == 0:
         bad.add("coverage")
 
+    # run.settled: what this run's fill moved, restated from the record.
+    # Everything checkable from THIS file is checked -- the horizons the
+    # module measures, one entry per (pick, session, horizon), an entry that
+    # measured nothing on either basis, a session no run in the record holds,
+    # and a universe figure that disagrees with that run's own benchmark.
+    # (The rows themselves are not in docs/data.json -- dashboard() strips
+    # `candidates` from every entry in `runs` -- so the pick's own return is
+    # checked against the ledger by tests/test_pipeline.py rather than here.)
+    settled = run.get("settled")
+    if settled is not None:
+        if not isinstance(settled, list):
+            bad.add("settled")
+        else:
+            seen = set()
+            by_session: dict = {}
+            for entry in data["runs"]:
+                if isinstance(entry, dict):
+                    by_session.setdefault(entry.get("date"), entry)
+            for item in settled:
+                if not isinstance(item, dict) or item.get("horizon") not in ledger.HORIZONS:
+                    bad.add("settled")
+                    continue
+                key = (item.get("ticker"), item.get("session"), item["horizon"])
+                if key in seen:
+                    bad.add("settled")   # one horizon, filled once, one entry
+                seen.add(key)
+                if item.get("ret") is None and item.get("ret_from_open") is None:
+                    bad.add("settled")   # settled on neither basis is not settled
+                source = by_session.get(item.get("session"))
+                if source is None:
+                    bad.add("settled")
+                    continue
+                bench = source.get("benchmark") if isinstance(source.get("benchmark"), dict) else {}
+                horizon = f"d{item['horizon']}"
+                # One direction only: an entry written while the rung was
+                # still pending carries a null a later fill may since have
+                # measured, and that is the record moving on, not a
+                # disagreement. A NUMBER here must be that run's own.
+                if item.get("universe") is not None and item["universe"] != bench.get(horizon):
+                    bad.add("settled")
+                open_bench = bench.get("from_open") if isinstance(bench.get("from_open"), dict) else {}
+                if (item.get("universe_from_open") is not None
+                        and item["universe_from_open"] != open_bench.get(horizon)):
+                    bad.add("settled")
+
     found: list = []
     _walk(data, found)
     if found:
@@ -758,6 +803,43 @@ def test_a_benchmark_block_that_contradicts_its_sentences_is_caught(document):
     # here is the smallest the checker reads.
     doctored(lambda d, e: d.update(evidence={"universe": {"setups": 2, "floored": 999, "unfloored": 0,
                                                           "outcomes": []}}))
+
+
+def test_a_scorecard_that_disagrees_with_the_record_is_caught(document):
+    """The same rule as R9-B on the newest block: the walker every end-to-end
+    test asserts through as "the whole contract" must be able to FAIL on
+    run.settled, or its sentence in CONTRACT_INVARIANTS is documentation.
+
+    Each edit is a claim the record beside it contradicts -- and each is a
+    thing a hand-edited file, an older writer or a later round's bug really
+    produces, which is why they are checked here rather than trusted to the
+    generator that writes them.
+    """
+    day = _PAST_SESSIONS[0]
+    honest = {"ticker": "AAA", "session": day, "score": 8.4, "verdict": "A",
+              "horizon": 1, "ret": 2.0, "ret_from_open": 1.4,
+              "universe": 0.4, "universe_from_open": 0.1}
+    document["run"]["settled"] = [honest]
+    assert contract_violations(document) == set(), (
+        "the precondition: this scorecard agrees with the runs under it")
+
+    for what, block in (
+        ("one pick's horizon stated twice", [honest, dict(honest)]),
+        ("an entry settled on neither basis", [dict(honest, ret=None, ret_from_open=None)]),
+        ("a session no run in the record holds", [dict(honest, session="2020-01-02")]),
+        ("a universe figure that is not that run's own", [dict(honest, universe=9.9)]),
+        ("an open-basis figure that is not that run's own",
+         [dict(honest, universe_from_open=9.9)]),
+        ("a horizon this module never measures", [dict(honest, horizon=2)]),
+        ("a scorecard that is not a list", "AAA +1d +2.00%"),
+    ):
+        document["run"]["settled"] = block
+        assert "settled" in contract_violations(document), what
+    # A null universe figure is not a disagreement: the entry was written
+    # while that session's rung was still pending, and a later fill measuring
+    # it is the record moving on.
+    document["run"]["settled"] = [dict(honest, universe=None, universe_from_open=None)]
+    assert contract_violations(document) == set()
 
 
 def test_a_truncated_candidate_list_is_caught(document):
@@ -2264,7 +2346,12 @@ def test_forward_returns_are_filled_into_an_earlier_run(tmp_path):
     filled = book.fill_forward_returns({"AAA": df, "ZZZ": df}, through=date(2026, 8, 31))
 
     old = [r for r in book.runs if r["date"] == "2026-08-24"][0]
-    assert filled == 2, "the scored row and the gated one"
+    # One Filled per (row, horizon) the call moved, not a count of rows: two
+    # rows -- the scored one and the gated one -- times three horizons, and
+    # the scored flag is the record's own split between a pick and a refusal.
+    assert {(f.row["ticker"], f.horizon, f.scored) for f in filled} == (
+        {("AAA", h, True) for h in (1, 3, 5)} | {("ZZZ", h, False) for h in (1, 3, 5)})
+    assert {id(f.run) for f in filled} == {id(old)}
     assert old["candidates"][0]["forward_returns"] == {
         "d1": 1.0, "d3": 3.0, "d5": 10.0, "as_of": "2026-08-31",
         "from_open": {"d1": None, "d3": None, "d5": None}}
@@ -2273,6 +2360,78 @@ def test_forward_returns_are_filled_into_an_earlier_run(tmp_path):
                                       "from_open": {"d1": None, "d3": None, "d5": None,
                                                     "n1": 0, "n3": 0, "n5": 0, "n": 0}}, (
         "the run mean covers the scored candidates, one setup from one row")
+
+
+def test_the_scorecard_is_the_picks_alone_and_never_states_one_horizon_twice(tmp_path):
+    """settled_rows() over what a fill really moved.
+
+    Three rules, each of which the mail turns on. The gated row is not a pick
+    -- it has no score and no verdict, and the control it belongs to is
+    evidence.refused -- so it is in the pairs and not in the block. Each
+    entry restates the row and that session's own benchmark rather than
+    recomputing either. And a horizon is filled ONCE, so the same fill run
+    again moves nothing and the second night's block is empty: without that,
+    a pick would be announced on every night until its d5 closed.
+    """
+    book = ledger.Ledger(tmp_path).load()
+    book.add_run(*_run("2026-08-24"))
+    entry = book.runs[0]
+    entry["benchmark"] = {**ledger.empty_benchmark(), "d1": 0.5, "d3": 1.5, "d5": 2.5,
+                          "from_open": {**ledger.empty_benchmark()["from_open"],
+                                        "d1": 0.2, "d3": 1.2, "d5": 2.2}}
+    df = frame([100, 101, 102, 103, 104, 110], end="2026-08-31")
+
+    scorecard = ledger.settled_rows(
+        book.fill_forward_returns({"AAA": df, "ZZZ": df}, through=date(2026, 8, 31)))
+
+    assert [e["ticker"] for e in scorecard] == ["AAA"] * 3, (
+        "ZZZ is the gated row: in the pairs, not in the scorecard")
+    assert [e["horizon"] for e in scorecard] == [1, 3, 5]
+    row = entry["candidates"][0]
+    assert [e["ret"] for e in scorecard] == [row["forward_returns"][f"d{h}"] for h in (1, 3, 5)]
+    assert [e["universe"] for e in scorecard] == [0.5, 1.5, 2.5]
+    assert [e["universe_from_open"] for e in scorecard] == [0.2, 1.2, 2.2]
+    assert {e["session"] for e in scorecard} == {"2026-08-24"}
+    assert (scorecard[0]["score"], scorecard[0]["verdict"]) == (row["score"], row["verdict"])
+
+    # THE PICK'S OWN SESSION, not the session of the run entry it sits in.
+    # Every file the pipeline writes has the two equal -- a run entry holds
+    # the bursts of the session it scanned -- so the rule is invisible unless
+    # they are forced apart, which is the "passes on an incidental fact about
+    # the fixture" shape this project keeps finding. A hand-edited or merged
+    # ledger is what has them differ, and the mail says which session the
+    # pick was made on.
+    row["date"] = "2026-08-25"
+    row["forward_returns"] = ledger.empty_returns()
+    (older,) = [e for e in ledger.settled_rows(
+        book.fill_forward_returns({"AAA": df}, through=date(2026, 8, 31)))
+        if e["horizon"] == 1]
+    assert older["session"] == "2026-08-25", "the burst's session, not the run entry's"
+
+    again = book.fill_forward_returns({"AAA": df, "ZZZ": df}, through=date(2026, 8, 31))
+
+    assert ledger.settled_rows(again) == [], "a horizon is filled once and announced once"
+
+
+def test_the_scorecard_reads_newest_burst_first(tmp_path):
+    """Deterministic order, because this block is written into a file two
+    guards compare byte for byte -- and the newest burst first, which is the
+    one the reader saw in last night's mail."""
+    book = ledger.Ledger(tmp_path).load()
+    book.add_run(*_run("2026-08-24", tickers=("BBB", "AAA")))
+    book.add_run(*_run("2026-08-25", tickers=("CCC",)))
+    df = frame([100, 101, 102, 103, 104, 110], end="2026-08-31")
+
+    scorecard = ledger.settled_rows(book.fill_forward_returns(
+        {"AAA": df, "BBB": df, "CCC": df, "ZZZ": df}, through=date(2026, 8, 31)))
+
+    assert [(e["session"], e["ticker"], e["horizon"]) for e in scorecard] == [
+        # CCC burst a session later, so the frame that closes AAA's and BBB's
+        # d5 has not reached its own -- which is the ordinary state of a
+        # scorecard and why the newest session is not always the longest row.
+        ("2026-08-25", "CCC", 1), ("2026-08-25", "CCC", 3),
+        ("2026-08-24", "AAA", 1), ("2026-08-24", "AAA", 3), ("2026-08-24", "AAA", 5),
+        ("2026-08-24", "BBB", 1), ("2026-08-24", "BBB", 3), ("2026-08-24", "BBB", 5)]
 
 
 def test_a_stored_run_mean_is_rebuilt_rather_than_republished(tmp_path):
@@ -3670,7 +3829,12 @@ def test_an_older_row_gains_the_open_basis_when_its_bars_are_fetched(tmp_path):
                           end="2026-08-31")
     moved = book.fill_forward_returns({"AAA": df, "BBB": df}, date(2026, 9, 4))
 
-    assert moved == 2
+    # Six pairs, not two rows: AAA gains d3 and d5 on the close basis and all
+    # three on the open one, BBB the open basis alone -- and a horizon that
+    # moved on EITHER basis is one pair, never two.
+    assert {(f.row["ticker"], f.horizon) for f in moved} == {
+        (t, h) for t in ("AAA", "BBB") for h in (1, 3, 5)}
+    assert len(moved) == 6
     got = book.runs[0]["candidates"][0]["forward_returns"]
     assert got["d1"] == 1.0, "the close-basis value already recorded is never restated"
     assert got["d3"] == 3.0 and got["d5"] == 10.0

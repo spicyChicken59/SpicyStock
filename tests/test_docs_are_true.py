@@ -887,17 +887,49 @@ def test_the_email_and_the_page_print_one_figure_for_one_floor():
         start = page.index(f"function {name}(")
         end = page.index("\n  }\n", start) + 4
         fns.append(page[start:end])
+    # pct() is a one-liner, so the block rule above would swallow whatever
+    # follows it; the line itself is the whole function.
+    start = page.index("  function pct(")
+    fns.append(page[start:page.index("\n", start)])
     values = [12_400_000, 190_247_596.4, 4.5e9, 850_000, 999, 1e6, 359_000_000.0]
     pctiles = [30, 1, 2, 3, 11, 12, 13, 21, 22, 23, 30.0]
     script = "\n".join(fns) + f"""
     console.log(JSON.stringify({{
       dollars: {json.dumps(values)}.map((v) => '$' + big(v)),
       ordinals: {json.dumps(pctiles)}.map(ordinal),
+      returns: {json.dumps([3.2, -1.05, 0.0, 12.5, -0.4, 6.0])}.map((v) => pct(v, 2)),
     }}));"""
     out = json.loads(subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True).stdout)
     assert out["dollars"] == [emailer.compact_dollars(v) for v in values]
     assert out["ordinals"] == [emailer.ordinal(p) for p in pctiles]
+    # And the same rule for a forward RETURN, which round 11 put in the mail:
+    # the page prints every row's with pct(v, 2), so "+3.2%" in the email
+    # beside "+3.20%" on the page for one row is the same drift one number
+    # over. Values with at most two decimals, which is what the record holds
+    # (ledger.forward_returns rounds), plus the two states that are not
+    # numbers at all.
+    returns = [3.2, -1.05, 0.0, 12.5, -0.4, 6.0]
+    assert out["returns"] == [emailer.fmt_return(v) for v in returns]
+    assert emailer.fmt_return(None) == "\u2014", "a number the record does not hold"
     assert emailer.ordinal(1) == "1st" and emailer.ordinal(22) == "22nd" and emailer.ordinal(13) == "13th"
+
+
+def test_the_email_and_the_page_name_the_two_bases_in_one_vocabulary():
+    """The scorecard under the funnel is the first place outside the page that
+    names a return basis, and the page has named them since round 6. Two
+    surfaces for one mechanism is this project's most repeated finding, so the
+    email's two column headings are the page's own basisLabel() strings, read
+    out of docs/index.html rather than retyped beside it."""
+    from src import emailer
+
+    page = _read("docs/index.html")
+    start = page.index("function basisLabel(")
+    # Through the JS source's own escapes, so the typographic apostrophe the
+    # page writes as \u2019 is compared as the character a reader sees.
+    labels = page[start:page.index("\n  }\n", start)].encode().decode("unicode_escape")
+    for label in (emailer.BASIS_CLOSE, emailer.BASIS_OPEN):
+        assert label in labels, (
+            f"docs/index.html's basisLabel() does not say {label!r}", labels)
 
 
 def test_the_published_contract_names_every_outcome_a_row_can_carry():

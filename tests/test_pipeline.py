@@ -4976,6 +4976,14 @@ def _run_field(**over):
     return lambda d: d["run"].update(over)
 
 
+def _settled(**over):
+    """One run.settled entry in the shape src.ledger.settled_rows() writes,
+    with the field under test replaced."""
+    return {"ticker": "AAA", "session": "2026-09-04", "score": 8.5, "verdict": "buy",
+            "horizon": 1, "ret": 3.2, "ret_from_open": 2.1, "universe": 0.4,
+            "universe_from_open": 0.3, **over}
+
+
 MALFORMED_SNAPSHOTS = {
     # name: (mutation, the refusal's words -- or False when the shape is tolerated)
     "candidates are strings": (lambda d: d.update(candidates=["AAPL"]), NOT_A_RUN),
@@ -5140,6 +5148,44 @@ MALFORMED_SNAPSHOTS = {
         _run_field(coverage={"requested": 228}), False),
     "coverage.session is a number": (
         _run_field(coverage={"requested": 228, "session": 20260908}), "session"),
+    # run.settled: the (row, horizon) pairs this run's fill moved, which both
+    # mails print as percentages beside a ticker and a score. A string where a
+    # return belongs renders "+abc%" -- a fabricated outcome for a real pick,
+    # the class this check exists for, on the newest key in the block.
+    "settled is absent": (lambda d: d["run"].pop("settled", None), False),
+    # The ordinary state of the first four nights of any record, and of every
+    # night whose fill moved nothing: read, not refused.
+    "settled is empty": (_run_field(settled=[]), False),
+    "settled is a string": (_run_field(settled="BURST +1d +3.20%"), "settled"),
+    "settled is a list of strings": (_run_field(settled=["BURST"]), "settled"),
+    "a settled entry has no horizon": (
+        _run_field(settled=[_settled(horizon=None)]), "horizon"),
+    "a settled entry's horizon is a string": (
+        _run_field(settled=[_settled(horizon="1")]), "horizon"),
+    "a settled entry's horizon is a bool": (
+        _run_field(settled=[_settled(horizon=True)]), "horizon"),
+    "a settled entry's ticker is a number": (
+        _run_field(settled=[_settled(ticker=5)]), "settled"),
+    "a settled entry's session is a number": (
+        _run_field(settled=[_settled(session=20260904)]), "session"),
+    "a settled entry's verdict is a list": (
+        _run_field(settled=[_settled(verdict=["buy"])]), "verdict"),
+    "a settled entry's score is a string": (
+        _run_field(settled=[_settled(score="8.5")]), "score"),
+    "a settled entry's ret is a string": (
+        _run_field(settled=[_settled(ret="3.2")]), "ret"),
+    "a settled entry's open-basis ret is a string": (
+        _run_field(settled=[_settled(ret_from_open="2.1")]), "ret_from_open"),
+    "a settled entry's universe is a string": (
+        _run_field(settled=[_settled(universe="0.4")]), "universe"),
+    "a settled entry's open-basis universe is a list": (
+        _run_field(settled=[_settled(universe_from_open=[0.4])]), "universe_from_open"),
+    # A pick whose open lay outside its own bar has no open basis ever, and a
+    # session whose rung was never measured has no universe number: nulls are
+    # what the writer produces for both, and neither is a return of zero.
+    "a settled entry measured on one basis only": (
+        _run_field(settled=[_settled(ret_from_open=None, universe=None,
+                                     universe_from_open=None)]), False),
     # run.liquidity.over, one field over: the count that tells a null floor's
     # two causes apart.
     "liquidity.over is a string": (lambda d: d["run"]["liquidity"].update(over="225"), "over"),
@@ -5330,6 +5376,104 @@ def test_a_published_run_mean_weights_each_horizon_by_the_setups_that_reached_it
     assert (mean["from_open"]["n1"], mean["from_open"]["n5"]) == (2, 1)
     assert clean(tmp_path)["runs"][-1]["forward_returns"]["n5"] == 1, (
         "and the same counts reach the page's own file")
+
+
+def _reader_pct(value) -> str:
+    """A return as a reader sees it — recomputed here rather than borrowed
+    from src.emailer, so the mail's own formatter is not the standard it is
+    judged against. Two decimals, a sign only when positive, an em dash for a
+    number the record does not hold: docs/index.html's pct(v, 2)."""
+    if value is None:
+        return "—"
+    return ("+" if value > 0 else "") + f"{value:.2f}%"
+
+
+def test_both_mails_say_what_the_earlier_picks_have_now_returned(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """THE MAIL COULD NOT ANSWER ITS OWN QUESTION. Every night it said what
+    the screener had found and nothing about what the last one's finds went on
+    to do: the fill inside publish() moved those measurements and handed back
+    a COUNT, so the one artifact a person opens carried none of the outcomes
+    it had just measured.
+
+    Two nights over one universe. Nothing has happened after night one's
+    burst, so its mail carries no scorecard at all -- not "no picks settled",
+    which is the state of the first four nights of any record and a line a
+    reader would learn to skip. Night two measures that pick's first session
+    and prints it, on both bases, beside what every name in that session's
+    universe did over the same horizon.
+
+    THE PRINTED RETURN IS RECOMPUTED BY HAND from the frames the double
+    served, through the test module's own reading of the sessions and its own
+    percentage formatter: the mail is judged against arithmetic, not against
+    the code that wrote it. And the morning that follows prints the identical
+    row off the snapshot, because a scorecard in one mail and not the other is
+    the two-vocabularies shape this project keeps finding one surface at a
+    time.
+    """
+    from tests.test_scanner import _thin
+
+    fake_alpaca.add_history("BURST", ohlcv("burst", base_volume=30_000_000.0))
+    names = ["BURST"]
+    for i, suffix in enumerate("ABCD"):
+        fake_alpaca.add_history(f"Q{suffix}", _thin(ohlcv, "flat", price=40.0 + i,
+                                                    volume=3_000_000, variant=i + 2))
+        names.append(f"Q{suffix}")
+    _universe_file(monkeypatch, tmp_path, names)
+
+    # Night one: the burst's own session, so nothing after it exists yet.
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=False)
+    burst_session = published(tmp_path)["run"]["date"]
+    pick = next(c for c in recorded(tmp_path)["runs"][0]["candidates"]
+                if c["ticker"] == "BURST")
+    assert published(tmp_path)["run"]["settled"] == [], (
+        "precondition: on the night of the burst there is nothing to settle")
+    first = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "Settled by" not in first and "settled" not in first.lower(), (
+        "a night whose fill moved nothing says nothing about settling, in either "
+        "direction: " + first)
+
+    # Night two: the session after it. The fill measures d1 for that pick.
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(1))
+    pipeline.run("evening", dry_run=False)
+
+    data = clean(tmp_path)
+    (entry,) = data["run"]["settled"]
+    hand = expected_returns(served(fake_alpaca, "BURST", session_offset(1)),
+                            burst_session, horizons=(1,))
+    assert (entry["ticker"], entry["session"], entry["horizon"]) == ("BURST", burst_session, 1)
+    assert entry["score"] == pick["score"] and entry["verdict"] == pick["verdict"]
+    assert entry["ret"] == hand["d1"] and entry["ret_from_open"] == hand["from_open"]["d1"]
+    older = next(run for run in data["runs"] if run["date"] == burst_session)
+    assert entry["universe"] == older["benchmark"]["d1"] is not None, (
+        "the alternative for that session, as the same publish() measured it")
+    assert entry["universe_from_open"] == older["benchmark"]["from_open"]["d1"]
+    assert entry["ret"] != entry["ret_from_open"], (
+        "precondition: the two bases differ, so a column can be read off the wrong one")
+
+    row = (f"BURST {burst_session} {pick['score']:.1f}/10 {pick['verdict']} +1d "
+           f"{_reader_pct(hand['d1'])} universe {_reader_pct(entry['universe'])} "
+           f"{_reader_pct(hand['from_open']['d1'])} universe "
+           f"{_reader_pct(entry['universe_from_open'])}")
+    evening = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert f"Settled by the {session_offset(1)} scan" in evening
+    assert emailer.BASIS_CLOSE in evening and emailer.BASIS_OPEN in evening
+    assert row in evening, (row, evening)
+
+    # And the morning that follows through on it prints the same row. The pin
+    # stays set, so this pass is a clean follow-through of the session the
+    # snapshot names rather than a staleness test.
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+
+    morning = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert row in morning, (row, morning)
+    assert f"Settled by the {session_offset(1)} scan" in morning, (
+        "the run being followed is the run that settled these, and the heading "
+        "names it rather than guessing which night 'last night' was")
 
 
 def test_the_documented_smoke_test_cannot_write_a_slid_horizon_into_a_universe_row(

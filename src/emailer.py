@@ -370,6 +370,142 @@ def _duplicate_bars_line(scan_stats: dict) -> str:
             f"{DUPLICATE_BARS_NOTE}.</p>")
 
 
+#: The two return bases, in the words docs/index.html's basisLabel() prints.
+#: The email had never carried a forward return, so the scorecard below is the
+#: first place outside the page that names a basis -- and one mechanism with
+#: two vocabularies is this project's most repeated finding, so a docs test
+#: reads these two strings out of the page's own source. The column heading a
+#: number sits under is the whole of what says which basis it is on; a
+#: close-basis figure under an open-basis label is the one thing the page's
+#: single-basis control exists to prevent, and a table with two columns says
+#: it per column instead.
+BASIS_CLOSE = "from the burst-day close"
+BASIS_OPEN = "from the next session’s open"
+
+#: What the record does not hold, in the page's own em dash. Never 0: a
+#: horizon that was not measured on a basis, and a session whose universe rung
+#: is still pending, are both "no number here" and neither is a return of
+#: nothing.
+NO_NUMBER = "—"
+
+#: The scorecard's heading and its footnote. It names the scan that settled
+#: these numbers, because on the morning path the same block is the run being
+#: followed and "last night" would be this pass's guess about which night that
+#: was.
+SETTLED_HEADING = "Settled by the {session} scan"
+#: NOT "what every name in that session's scan returned", which is the sentence
+#: this first carried and which round 9 spent a whole item making false: the
+#: rung leaves out the names under that night's liquidity floor -- and on a
+#: record from before the floor reached the benchmark, or a night rule 6 was
+#: off, it does not. Two populations one line cannot name, and the page's
+#: universe rung says which per run, so the note points at it rather than
+#: asserting one of them.
+SETTLED_NOTE = ("what earlier picks have now returned, at the horizons this run's fill "
+                "measured; beside each is that session's own universe benchmark, at the "
+                "same horizon and on the same basis, whose basket the dashboard names")
+SETTLED_DASH_NOTE = (f"{NO_NUMBER} is a number the record does not hold on that basis; "
+                     "a horizon appears here in one run's mail only, on the run that "
+                     "measured it")
+
+
+def fmt_return(value) -> str:
+    """"+3.20%", "-1.05%", "0.00%" — or an em dash for a number that is not there.
+
+    Two decimals and a sign only when the number is positive, which is
+    docs/index.html's pct(v, 2), the rule the page prints every forward return
+    with. A docs test cuts that function out of the page and runs it through
+    node against this one: the mail and the page state the same return about
+    the same row, and "+3.2%" beside "+3.20%" is the drift this project keeps
+    finding one surface at a time.
+    """
+    v = _as_float(value)
+    if v is None:
+        return NO_NUMBER
+    return ("+" if v > 0 else "") + f"{v:.2f}%"
+
+
+def _settled_judgement(entry: dict) -> str:
+    """"8.5/10 buy" — what this pick was given the night it was made.
+
+    Both halves are optional in the record and neither is invented: a row
+    with no score prints its verdict alone, and a row with neither prints the
+    em dash rather than a fabricated 0.
+    """
+    parts = []
+    if _as_float(entry.get("score")) is not None:
+        parts.append(f"{fmt_score(entry.get('score'))}/10")
+    if isinstance(entry.get("verdict"), str) and entry["verdict"].strip():
+        parts.append(entry["verdict"])
+    return " ".join(parts) or NO_NUMBER
+
+
+def _settled_cell(entry: dict, ret_key: str, universe_key: str) -> str:
+    """One basis's cell: the pick's return, and the alternative beside it.
+
+    The two are read from the same basis by construction -- the caller passes
+    the pair -- because a pick measured from the open beside a universe
+    measured from the close is two answers to one question, which is exactly
+    what the page's one-basis-at-a-time control exists to prevent.
+    """
+    return (f"{esc(fmt_return(entry.get(ret_key)))}<br>"
+            f'<span style="color:#666;font-size:11px;">universe '
+            f"{esc(fmt_return(entry.get(universe_key)))}</span>")
+
+
+def _settled_table(scan_stats: dict) -> str:
+    """What the earlier picks did, under the funnel — or nothing at all.
+
+    THE MAIL COULD NOT ANSWER ITS OWN QUESTION. Every night it said what the
+    screener had found and nothing about what the last one's finds went on to
+    do; the whole record was in docs/ledger.json and on a page nobody is
+    pushed, and the artifact a person actually opens carried none of it. The
+    fill inside every publish() knows exactly which measurements moved
+    tonight (src.ledger.fill_forward_returns), and this is that list.
+
+    ABSENT ON A NIGHT THE FILL MOVED NOTHING, and deliberately not "no picks
+    settled": the first four nights of any record settle nothing at all, and a
+    sentence saying so every night until the fifth is a line a reader learns
+    to skip past -- the rule the refusals line, the duplicate-bar line and
+    _stopped_printing_line() all follow. A snapshot from before the block
+    existed is the same silence, which is why the morning hands over an absent
+    key rather than an empty list.
+
+    One list, both paths: the evening prints the block publish() just wrote,
+    the morning the block off the snapshot it is following. There is no second
+    rule here to drift from the first.
+    """
+    entries = scan_stats.get("settled")
+    if not isinstance(entries, list):
+        return ""
+    entries = [entry for entry in entries if isinstance(entry, dict)]
+    if not entries:
+        return ""
+    session = scan_stats.get("session")
+    heading = SETTLED_HEADING.format(session=session) if session else "Settled by this run"
+    rows = ""
+    for entry in entries:
+        rows += f"""
+        <tr>
+          <td style="padding:6px;border-bottom:1px solid #eee;"><b>{esc(entry.get('ticker'))}</b></td>
+          <td style="padding:6px;border-bottom:1px solid #eee;">{esc(entry.get('session') or NOT_RECORDED)}</td>
+          <td style="padding:6px;border-bottom:1px solid #eee;">{esc(_settled_judgement(entry))}</td>
+          <td style="padding:6px;border-bottom:1px solid #eee;">+{esc(entry.get('horizon'))}d</td>
+          <td style="padding:6px;border-bottom:1px solid #eee;">{_settled_cell(entry, 'ret', 'universe')}</td>
+          <td style="padding:6px;border-bottom:1px solid #eee;">{_settled_cell(entry, 'ret_from_open', 'universe_from_open')}</td>
+        </tr>"""
+    return f"""
+    <p style="color:#666;margin-top:0;"><b>{esc(heading)}</b> — {esc(SETTLED_NOTE)}.</p>
+    <table style="border-collapse:collapse;max-width:1100px;font-size:13px;">
+      <tr style="text-align:left;color:#555;">
+        <th style="padding:6px;">Pick</th><th style="padding:6px;">Burst session</th>
+        <th style="padding:6px;">Scored</th><th style="padding:6px;">Horizon</th>
+        <th style="padding:6px;">{esc(BASIS_CLOSE)}</th>
+        <th style="padding:6px;">{esc(BASIS_OPEN)}</th>
+      </tr>{rows}
+    </table>
+    <p style="color:#999;font-size:11px;margin-top:4px;">{esc(SETTLED_DASH_NOTE)}.</p>"""
+
+
 #: What a streak's `unknown_reason` says to a reader when the record can say
 #: nothing narrower. `day: null` is the state this whole mechanism cares most
 #: about — UNKNOWN, which is not day 1 — and it used to render here as nothing
@@ -1176,7 +1312,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
     <h2 style="margin-bottom:4px;">{title}</h2>
     <p style="color:#666;margin-top:0;">
       {_funnel_line(results, run_type, scan_stats)}{_provenance_line(scan_stats)}
-    </p>{_stopped_printing_line(scan_stats, run_type)}{_duplicate_bars_line(scan_stats)}
+    </p>{_stopped_printing_line(scan_stats, run_type)}{_duplicate_bars_line(scan_stats)}{_settled_table(scan_stats)}
     <table style="border-collapse:collapse;width:100%;max-width:1100px;">
       <tr style="background:#1a1a2e;color:#fff;text-align:left;">
         <th style="padding:8px;">Ticker</th><th style="padding:8px;">Gain</th>
