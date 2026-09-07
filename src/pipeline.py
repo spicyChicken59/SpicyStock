@@ -776,24 +776,32 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     disagreement = session_disagreement(mode, cfg)
     if disagreement:
         report.problem("session", disagreement)
-        # A Run-workflow click at lunch to test the secrets is an evening
-        # dispatch before the close. It used to re-scan YESTERDAY's session
-        # -- the newest completed one -- pay Claude for it again, and hand
-        # add_run() a DEGRADED entry for a session the ledger already held as
-        # clean, which replaced it; and exit 2 qualifies for the commit-back,
-        # so the overwrite reached the branch. If that session is already
-        # published, a second scan of the same daily bars can only buy the
-        # same answer, so this run re-presents it instead, the way the
-        # morning does, and says so. The clock disagreement stays in the
-        # report: the email is still marked, the exit code is still 2.
-        already = _already_published(cfg)
-        if already:
-            report.problem("session", f"{already} is already published, so this run "
-                                      "re-presents it rather than scanning it again: a second "
-                                      "scan of the same daily bars would pay for the same answer "
-                                      "and replace a clean record with a degraded one")
-            return follow_through(mode_for("morning"), dry_run, report=report,
-                                  dispatched_as=run_type)
+
+    # A Run-workflow click is an evening dispatch on whatever session the
+    # clock says is newest, and the cron may already have published it: at
+    # lunch that is YESTERDAY's, after the close it is the one the 22:16 cron
+    # scanned minutes earlier. Either way a second scan of the same daily
+    # bars can only buy the same answer, at the cost of paying for every
+    # Claude call again, mailing the same shortlist again, and replacing the
+    # published record with the re-scan -- and exit 2 qualifies for the
+    # commit-back, so the overwrite reaches the branch. So this run
+    # re-presents it instead, the way the morning does, and says so.
+    #
+    # THE CHECK DOES NOT DEPEND ON THE CLOCK, and it used to: it sat inside
+    # the disagreement branch above, so the lunchtime click was defended and
+    # the post-close one -- the click a reader makes to watch the cron's own
+    # work, where the mode and the clock agree -- was not. Nothing in the
+    # reason above mentions an hour.
+    already = _already_published(cfg)
+    if already:
+        report.problem("session", f"{already} is already published, so this run "
+                                  "re-presents it rather than scanning it again: a second "
+                                  "scan of the same daily bars can only buy the same answer, "
+                                  "at the cost of paying for every Claude call a second time, "
+                                  "mailing the same shortlist again, and replacing the "
+                                  "published record with the re-scan")
+        return follow_through(mode_for("morning"), dry_run, report=report,
+                              dispatched_as=run_type)
 
     # Layer 1: scan. Alpaca returns bars only up to the session the scan
     # targets, and src.scanner drops anything that does not carry it. Which
@@ -1290,6 +1298,11 @@ def follow_through(mode: Mode, dry_run: bool = False,
     three surfaces describing the 8:30 cron, on a message sent at noon by a
     click that asked for an evening run. The pass really is this one; the
     dispatch is what the reader has to recognise, because it is what they did.
+    It is also what decides the clock: the mode the operator asked for was
+    checked against it in discover(), and this pass is not a second occasion
+    to check the morning mode nobody requested — a click made after the 22:16
+    cron would otherwise be told it is following through on "a run that is no
+    longer the latest one" about the run published minutes before it.
 
     IT DOES NOT SCAN, AND THAT IS THE POINT. A morning run has no market data
     an evening run did not have — the daily bar it would read is the same
@@ -1327,7 +1340,14 @@ def follow_through(mode: Mode, dry_run: bool = False,
     preflight(dry_run, run_type)
 
     report.stage = "session"
-    disagreement = session_disagreement(mode, cfg)
+    # Only when the operator asked for THIS pass. A re-presentation was
+    # dispatched as an evening run and discover() has already checked that
+    # mode against the clock and reported it; checking the morning mode here
+    # too tells the reader "this is a follow-through pass over a run that is
+    # no longer the latest one" about a run published minutes earlier, which
+    # is the latest there is. One dispatch, one clock check, against the mode
+    # that was asked for.
+    disagreement = session_disagreement(mode, cfg) if dispatched_as is None else None
     if disagreement:
         report.problem("session", disagreement)
 

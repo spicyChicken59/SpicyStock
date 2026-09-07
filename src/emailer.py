@@ -614,9 +614,10 @@ def _when(scan_stats: dict) -> tuple[str, str]:
 
     The morning cron runs at 8:30 ET and both sentences are true of it. The
     same pass also runs when an evening dispatch finds its session already
-    published (a Run-workflow click at lunch, or on a weekend), and when a
-    morning dispatch is made after the close — and in neither is the open
-    still ahead. `dispatch` is set by src.pipeline only on the first of those,
+    published (a Run-workflow click at lunch, on a weekend, or — since the
+    defence stopped depending on the clock — after the 22:16 cron has
+    published tonight), and when a morning dispatch is made after the close —
+    and in neither is the open still ahead. `dispatch` is set by src.pipeline only on the first of those,
     `after_the_close` is its own clock check, and a caller that says neither
     gets the sentence the mode was written for, which is what keeps every
     build_html() call that predates this on the wording it had.

@@ -1938,6 +1938,119 @@ def test_a_lunchtime_evening_dispatch_re_presents_the_published_session_instead_
         mocked_boundaries["resend"].sent[-1]["subject"])
 
 
+def test_a_second_evening_dispatch_after_the_close_re_presents_the_published_session(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The cron published tonight's session at 22:16 UTC and someone clicks
+    Run workflow at 23:30 to see it work. Both runs are AFTER the close, so
+    the mode and the clock AGREE -- and the "already published" defence lived
+    inside the clock-disagreement branch, so it was never consulted.
+    Reproduced on the unfixed code: the second run re-scanned the same daily
+    bars, paid for every Claude call again (3 -> 6), mailed the same
+    shortlist a second time and replaced the published record with the
+    re-scan, all at exit 0 with nothing recorded. The defence belongs before
+    the scan whatever the clock says: the reason it exists -- a second scan
+    of the same bars can only buy the same answer -- has nothing to do with
+    the hour."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=False, tickers=names)
+    paid = len(mocked_boundaries["anthropic"].calls)
+    mailed = len(mocked_boundaries["resend"].sent)
+    assert paid and mailed == 1, "precondition: the first run really did scan and mail"
+    published = json.loads((tmp_path / "docs" / "ledger.json").read_text())["runs"]
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, tickers=names, report=report)
+
+    assert len(mocked_boundaries["anthropic"].calls) == paid, "the session was paid for twice"
+    assert json.loads((tmp_path / "docs" / "ledger.json").read_text())["runs"] == published, (
+        "the published record was replaced by a re-scan of the same bars")
+    assert report.exit_code == pipeline.EXIT_DEGRADED
+    assert any("already published" in e["message"] for e in report.errors)
+    assert len(mocked_boundaries["resend"].sent) == mailed + 1, "the re-presentation is mailed"
+    assert "re-presenting" in mocked_boundaries["resend"].sent[-1]["subject"].lower(), (
+        mocked_boundaries["resend"].sent[-1]["subject"])
+
+
+def test_a_re_presentation_is_never_told_it_follows_a_run_that_is_not_the_latest(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The re-presentation runs the morning PASS, and a morning mode after
+    the close disagrees with the clock: "This is a follow-through pass over a
+    run that is no longer the latest one." On this path that sentence is
+    false -- the run being re-presented is the one published minutes ago, and
+    is the latest there is. The clock is checked against the mode the
+    OPERATOR asked for, once, in discover(); the pass it delegates to is not
+    a second occasion to check it against a mode nobody requested."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=False, tickers=names)
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, tickers=names, report=report)
+
+    band = " ".join(e["message"] for e in report.errors)
+    assert "no longer the latest one" not in band, band
+    text = _visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "no longer the latest one" not in text
+    # And the surface a reader acts on still says what this mail is.
+    assert "by an evening dispatch that found the session already published" in text
+
+
+def test_a_pinned_session_re_scans_a_published_session_on_purpose(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The exemption, on the path the guard now runs on. A backfill of a
+    session docs/data.json already holds is the operator overruling this
+    defence deliberately -- it is how the 4 Sep record was republished to
+    mask an address the first live night put on the page -- so a pin scans,
+    and only a pin does."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=False, tickers=names)
+    session = clean(tmp_path)["run"]["date"]
+    paid = len(mocked_boundaries["anthropic"].calls)
+
+    monkeypatch.setenv("SCAN_SESSION_DATE", session)
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, tickers=names, report=report)
+
+    assert len(mocked_boundaries["anthropic"].calls) > paid, "a pinned re-scan really re-scans"
+    assert not any("already published" in e["message"] for e in report.errors)
+    assert clean(tmp_path)["run"]["date"] == session
+
+
+def test_only_a_published_EVENING_run_is_something_to_re_present(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """`_already_published()` asks for `run.type == "evening"` as well as the
+    session, and the mutant that drops the type survived every other test
+    here: no writer in this repo produces a morning headline, because a
+    follow-through writes neither file. A hand-edited or foreign
+    docs/data.json can, and the difference is a whole night -- a morning
+    block is a VIEW of a session, not a record of it, so there is nothing to
+    re-present and the scan is what has to happen. Refusing to check the type
+    loses that night's scan, its record and its mail to a file the pipeline
+    never wrote."""
+    names = _wide_universe(fake_alpaca, ohlcv, fresh=3)
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=False, tickers=names)
+    paid = len(mocked_boundaries["anthropic"].calls)
+    snapshot = tmp_path / "docs" / "data.json"
+    published = json.loads(snapshot.read_text())
+    published["run"]["type"] = "morning"
+    snapshot.write_text(json.dumps(published))
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, tickers=names, report=report)
+
+    assert len(mocked_boundaries["anthropic"].calls) > paid, (
+        "a morning headline is not a published run, so the session was never scanned")
+    assert not any("already published" in e["message"] for e in report.errors)
+    assert clean(tmp_path)["run"]["type"] == "evening"
+
+
 def test_the_lunchtime_re_presentation_says_which_dispatch_made_it(
     market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
@@ -2096,6 +2209,17 @@ def test_a_ledger_row_shaped_one_level_wrong_cannot_kill_the_run_after_claude_wa
      "date_list": lambda: row.__setitem__("date", [session_offset(-5)]),
      "d5_string": lambda: row["forward_returns"].__setitem__("d5", "1.2")}[mutation]()
     path.write_text(json.dumps(led))
+    # The published snapshot is backdated with it, because the state this
+    # test is about is the NEXT night finding a corrupt history -- and a
+    # second run over a session docs/data.json already holds re-presents it
+    # rather than scanning, which would leave the ledger unread. Bending only
+    # the ledger described a tree no night is ever in.
+    snapshot = tmp_path / "docs" / "data.json"
+    published = json.loads(snapshot.read_text())
+    published["run"]["date"] = session_offset(-5)
+    for stored in published["candidates"] + published["gated_out"]:
+        stored["date"] = session_offset(-5)
+    snapshot.write_text(json.dumps(published))
     report = pipeline.RunReport()
 
     pipeline.run("evening", dry_run=True, tickers=names, report=report)   # must not raise

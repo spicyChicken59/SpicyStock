@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1142 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1146 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -220,7 +220,10 @@ guard's own shell against a stub `gh` running its real `jq` filter.
 the clean record with a degraded one — committed, since exit 2 persists.**
 If the session an evening run would scan is already published, it
 re-presents it the way the morning does and says why; the clock
-disagreement stays in the report and the exit code stays 2.
+disagreement stays in the report and the exit code stays 2. (The defence was
+written inside the clock-disagreement branch, and round 10 found the half it
+therefore missed — the click made AFTER the close, where the mode and the
+clock agree. See "republish-guard" below.)
 
 **A backfill made the morning announce that nothing had published.**
 `SCAN_SESSION_DATE` of last week rewrote `docs/data.json`'s headline to last

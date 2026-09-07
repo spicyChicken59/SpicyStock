@@ -1840,7 +1840,10 @@ def test_a_failed_run_prints_the_coverage_where_the_universe_goes():
     ({"after_the_close": True}, "re-presented after today's close", "after today's close"),
     # An evening dispatch that found its session already published. The
     # dispatch outranks the clock, because it is the fact the reader can act
-    # on -- and this pass is reached only while the clock disagrees anyway.
+    # on -- and it has to, since round 10 moved that defence out of the
+    # clock-disagreement branch: the click made after the 22:16 cron reaches
+    # this pass with the mode and the clock in agreement, which is the second
+    # row below.
     ({"dispatch": "evening"}, "re-presented by an evening dispatch",
      "by an evening dispatch that found the session already published"),
     ({"dispatch": "evening", "after_the_close": True},

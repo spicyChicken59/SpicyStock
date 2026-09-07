@@ -232,7 +232,22 @@ name too. The label cannot quietly become a different day.
 purpose, and a deliberate backfill is not a mistake.
 
 An evening dispatch whose session is already published re-presents it rather
-than paying for the same answer twice — and the mail it sends used to say
+than paying for the same answer twice, **whatever the clock says**. There are
+two such clicks and only one of them used to be defended: the lunchtime one,
+whose newest completed session is yesterday's, and the one made after the
+22:16 cron to watch it work, whose newest completed session is the one that
+cron published minutes earlier. The check sat inside the clock-disagreement
+branch above, and the mode and the clock agree after the close — so the second
+click re-scanned the same daily bars, paid for every Claude call a second
+time, mailed the same shortlist again and replaced the published record with
+the re-scan, at exit 0 with nothing recorded. It is consulted before the scan
+now, on both, and the re-presentation is reported and exits 2 the same way.
+`SCAN_SESSION_DATE` is the one exemption, for the same reason it is exempt
+from the clock check: a pinned session is a deliberate re-scan, and it is how
+the 4 Sep record was republished. A `--tickers` run is not exempt, so a smoke
+test on a day the cron has already published re-presents too — pin a session
+to make it scan, which is also what keeps it out of that night's benchmark.
+And the mail it sends used to say
 "Morning follow-through" in the subject, "re-presented before the open" in the
 band and "at today's open" in the heading, three surfaces describing the 8:30
 cron on a message a lunchtime click produced hours after that open. The pass
@@ -420,6 +435,8 @@ python -m src.pipeline evening --dry-run
 
 # Smoke-test on a few tickers:
 python -m src.pipeline evening --dry-run --tickers NVDA,PLTR,SMCI,CRWD
+# (if the cron has already published that session, this re-presents it
+#  instead of scanning; pin SCAN_SESSION_DATE below to make it scan)
 
 # Re-present the run above, the way the 8:30 AM job would. Scans nothing,
 # reads docs/data.json, needs no Alpaca or Anthropic key. --tickers is
@@ -433,7 +450,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1142 tests, no network or API keys needed
+pytest tests/                   # 1146 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
