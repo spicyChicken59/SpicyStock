@@ -32,6 +32,7 @@ from src import ledger
 from src import lynch
 from src import pipeline
 from src import scanner
+from src import scorer
 from src.scanner import ScanConfig
 from src.scorer import render_chart
 from tests.test_ledger import contract_violations
@@ -1642,6 +1643,42 @@ def test_a_run_records_the_rules_it_applied_and_the_record_reads_them_back(
     view = data["evidence"]["rules"]
     assert view["sets"] == 1 and view["differ"] == [] and view["runs_without"] == 0
     assert view["current"] == rules
+
+
+def test_the_fingerprint_says_which_SCORER_made_a_row_and_not_only_which_screener(
+    tmp_path, monkeypatch
+):
+    """`evidence.by_score`, `top_score` and the separation sentence all average
+    SCORES, and until round 11 nothing in the record said which scorer made
+    them.
+
+    Measured rather than argued, which is what put this here: the commit that
+    moved the record block in front of the model changed every scoring request
+    in the file -- six new payload keys and a rewritten system prompt -- and
+    left this fingerprint byte-identical, so a record spanning that change
+    would have reported one screener while the page's own note stayed hidden.
+    Both halves are derived: the system prompt by digest, the record keys off
+    src.scorer's own tuple.
+    """
+    before = pipeline.rules_fingerprint()
+    assert before["score.record_keys"] == [name for name, _key in scorer.RECORD_KEYS], (
+        "derived from the payload the model is handed, not retyped here")
+
+    edited = tmp_path / "strategy.md"
+    edited.write_text(scorer.KNOWLEDGE_PATH.read_text() + "\nWeight tight bases up.\n")
+    monkeypatch.setattr(pipeline, "KNOWLEDGE_PATH", edited)
+    after = pipeline.rules_fingerprint()
+
+    assert after["score.prompt"] != before["score.prompt"], (
+        "the rulebook changed and the fingerprint did not")
+    assert ({k: v for k, v in after.items() if not k.startswith("score.")}
+            == {k: v for k, v in before.items() if not k.startswith("score.")}), (
+        "and nothing about what a BURST is moved with it")
+
+    # And the inverse, on the half a digest cannot show: a seventh record key
+    # is in the fingerprint the moment src.scorer names it.
+    monkeypatch.setattr(pipeline, "RECORD_KEYS", (*scorer.RECORD_KEYS, ("last_chart", "chart")))
+    assert "last_chart" in pipeline.rules_fingerprint()["score.record_keys"]
 
 
 def test_a_record_written_under_two_screeners_says_so_and_names_what_moved(tmp_path):

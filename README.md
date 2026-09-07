@@ -2,7 +2,8 @@
 
 Scans a checked-in universe of 228 US common stocks each trading day, applies the
 Stockbee/Qullamaggie 4% Momentum Burst strategy with the 2LYNCH quality
-checklist, has Claude score the survivors (numbers + chart image), and
+checklist, has Claude score the survivors (numbers, the checklist detail, what the
+record already knows about the name, and a chart image), and
 emails a ranked top-5 shortlist. **Zero manual steps** — no DeepVue paste,
 no Google Sheet, no n8n.
 
@@ -62,7 +63,7 @@ Layer 6  Email ....................... HTML table, top 5, with the charts this
 |---|---|---|
 | what it does | **discovery** — scans the session that closed today | **follow-through** — re-presents the evening run before the open |
 | scans | yes, every layer above | no |
-| costs | ~25 Claude calls, ~$0.15 | nothing |
+| costs | ~25 Claude calls, ~$0.16 | nothing |
 | writes | `docs/data.json`, `docs/ledger.json`, `docs/charts/` (gitignored), `results/*.csv` | nothing |
 | charts | attached inline — the PNGs it just rendered, except on a retry after a failed send | none, and the email says why |
 | an empty table | says what its own scan found, unless that scan was cut short | says what the run it follows found, unless *its* scan was |
@@ -516,7 +517,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1267 tests, no network or API keys needed
+pytest tests/                   # 1271 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -688,8 +689,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 14.05 MB raw
-and **1.08 MB gzipped** after a full year. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 14.13 MB raw
+and **1.11 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -869,18 +870,28 @@ from. The page prints both, and calls neither of them "names".
   not positions in one frame, so neither a holiday nor a hole can quietly
   shift a horizon. This bullet said "positions in the frame" for a round
   after round 9 made that false.
-- `runs[].rules` is **every number this screener's rules turned on when that
-  run was made**: the scan's strategy thresholds, every threshold and window
-  the checklist names, the vetoes in force and the gate. It is derived rather
-  than listed — `src.pipeline.rules_fingerprint()` walks what `src.lynch`
-  names, its `WINDOWS`, and the `ScanConfig` fields that config itself marks
-  as strategy — so a threshold added later is recorded the moment it is named.
+- `runs[].rules` is **what this screener was when that run was made**: every
+  number its rules turned on — the scan's strategy thresholds, every threshold
+  and window the checklist names, the vetoes in force and the gate — and, since
+  round 11, what produced the SCORE as well as what produced the burst:
+  `score.prompt` is a digest of `knowledge/strategy.md`, the system prompt
+  itself, and `score.record_keys` names the record block the scoring request
+  carries. Every mean this page keys on a score averages the scorer as surely
+  as the gate, and the commit that rewrote the rulebook and added six payload
+  keys left this fingerprint byte-identical until those two arrived. It is
+  derived rather than listed — `src.pipeline.rules_fingerprint()` walks what
+  `src.lynch` names, its `WINDOWS`, the `ScanConfig` fields that config itself
+  marks as strategy, and `src.scorer`'s own `RECORD_KEYS` and knowledge file —
+  so a threshold added later is recorded the moment it is named.
   The trap it exists to avoid is a fingerprint that misses a number and so
   reports "same rules" across a change that altered them, which is worse than
   no fingerprint; the six checklist windows were bare literals until round 8
-  named them for that reason. `MAX_TO_SCORE`, `TOP_N`, the feed and the
-  universe are deliberately not in it: each is already a fact of the run block
-  and none of them changes what a burst is. A run from before the fingerprint
+  named them for that reason. `MAX_TO_SCORE`, `TOP_N`, the feed, the model and
+  the universe are deliberately not in it: each is already a fact of the run
+  block. What it still cannot see is a measurement key added to the metrics
+  payload with the rulebook left untouched — the rulebook has to explain a key
+  for the model to use it, and a docs test holds it to that for the record
+  keys, but that is a convention rather than a proof. A run from before the fingerprint
   carries no `rules` key at all — absent, never null, because the contract
   distinguishes "this run had none" from a shape no writer produces.
 - `runs[].benchmark` is the **universe's equal-weight return from that
@@ -1275,23 +1286,23 @@ test fixtures. It dispatches no scan and calls no market or email service.
   transport, not read. The practical consequence is that raising `batch_size`
   to cut requests — the obvious move when the universe widens — buys almost
   nothing at this window.
-- Claude: ≤25 scoring calls/run with one chart image each — **about $0.15 a
-  run, so roughly $39 a year** at 252 sessions, and only on the evening run.
+- Claude: ≤25 scoring calls/run with one chart image each — **about $0.16 a
+  run, so roughly $40 a year** at 252 sessions, and only on the evening run.
   This said "a few cents/day", which is out by about 5x. Measured rather than
   guessed: a real `render_chart()` PNG is 869x622, which is 721 image tokens by
-  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~1,990
-  tokens of system prompt and the metrics block ~430, so ~3,140 input tokens
+  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~2,530
+  tokens of system prompt and the metrics block ~440, so ~3,690 input tokens
   and ~120 out per call, at claude-sonnet-4-6's $3/$15 per Mtok. The text
   halves are chars/4 estimates — `count_tokens` needs a network call this
   sandbox cannot make — so treat the figure as ±30%, which does not rescue "a
   few cents".
 
-  **The system prompt is 63% of every request and is byte-identical on all 25
+  **The system prompt is 69% of every request and is byte-identical on all 25
   calls**, so it is sent with `cache_control` and read from cache after the
   first. A cache write costs 1.25x and a read 0.1x — so the first call pays
   0.25x more than it would have and every call after saves 0.9x, which makes
-  break-even the second call (1.28 calls) and a full night 45% cheaper: the
-  $0.28 this paragraph used to quote against the $0.15 above. (This said 1.4
+  break-even the second call (1.28 calls) and a full night 50% cheaper: the
+  $0.32 an uncached night would cost against the $0.16 above. (This said 1.4
   calls, 43% and $0.13: 1.4 is 1.25 over 0.9, which charges the whole write
   against the reads as if the first call were otherwise free, and the two
   money figures were rounded from different token counts. A test now does the

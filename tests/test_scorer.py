@@ -301,11 +301,11 @@ def test_a_transport_failure_retries_the_request_it_already_had(candidate, claud
 
 def test_the_knowledge_base_is_sent_as_a_cacheable_block(candidate, claude):
     """knowledge/strategy.md is byte-identical on every call of a run and is
-    63% of each request -- measured at ~1,990 system tokens against ~430 of
+    69% of each request -- measured at ~2,530 system tokens against ~440 of
     metrics and ~721 for an 869x622 chart. Without cache_control the run paid
     full price to send the same document up to MAX_TO_SCORE times a night; a
     write costs 1.25x and a read 0.1x, so break-even is the second call (1.28)
-    and a full night is 45% cheaper.
+    and a full night is 50% cheaper.
 
     Asserted on the block, because the saving is invisible from inside the run
     -- the reply is identical either way -- and nothing else here would notice
@@ -767,7 +767,12 @@ def test_the_record_reaches_the_model_under_the_names_the_rulebook_uses():
 
     assert payload == {"setup_day": 3, "setup_unknown_reason": None,
                        "seen_before": 2, "last_seen": "2026-09-01",
-                       "last_score": 7.5, "last_outcome": "scored"}
+                       "last_score": 7.5, "last_outcome": "scored",
+                       # The record's own span, which is what any absence
+                       # claim above is worth: an unknown over one session is
+                       # not an unknown over two hundred, and the human has
+                       # had this pair in _no_day_note() since step 10.
+                       "history_sessions": 22, "history_from": "2026-08-03"}
 
 
 def test_a_record_that_cannot_answer_is_an_unknown_and_never_a_day_one():
@@ -778,7 +783,51 @@ def test_a_record_that_cannot_answer_is_an_unknown_and_never_a_day_one():
 
     assert payload["setup_day"] is None
     assert payload["setup_unknown_reason"] == "history_unreadable"
-    assert payload["seen_before"] == 0
+    # And the same rule one field over, which this test used to PIN the
+    # opposite of: unknown_streak()'s `seen_before` is a placeholder, not a
+    # reading, so "0 earlier sightings" over a file that could not be opened
+    # is the confident sentence the day number is forbidden to make. The
+    # rendered surfaces never showed it -- _no_day_note() prints no number in
+    # this branch -- and only the model was handed the fabrication.
+    assert payload["seen_before"] is None
+
+
+def test_a_run_that_computed_no_record_block_says_so_rather_than_falling_silent():
+    """The fifth state, and the one the tool that talks to the live endpoint
+    sends: tools/live_check.py scores a candidate with no streak at all.
+
+    A null day with a null reason is a shape knowledge/strategy.md says cannot
+    exist -- it promises that a null `setup_day` always travels with one of
+    the reasons it names -- and it is what every caller without `streaks=`
+    produced. src.emailer's NO_STREAK_BLOCK and docs/index.html's streakText()
+    have said this state in words since step 10, for the reason the comment
+    beside them gives: a block that says which kind of unknown it is can be
+    rendered, an absence cannot.
+    """
+    payload = record_context(None)
+
+    assert payload["setup_day"] is None
+    assert payload["setup_unknown_reason"] == ledger.NO_STREAK_RECORDED
+    assert payload["seen_before"] is None, "a record nobody asked counted nothing"
+    assert payload["history_sessions"] is None and payload["history_from"] is None
+
+
+def test_the_unknowns_whose_count_is_a_reading_keep_it():
+    """The inverse, and the reason the rule is keyed on the WORD rather than
+    on "the day is null": window_not_covered is the state every candidate is
+    in on the first scheduled night, and its `seen_before` is a genuine
+    len(prior) over a record that was read. Nulling it there would answer
+    "the record could not be counted" over a file this run counted.
+    """
+    history = [{"candidates": [{"ticker": "AAA", "date": "2026-09-03",
+                                "score": 7.0, "verdict": "B"}], "gated": []}]
+    block = ledger.streaks(history, ["AAA"], "2026-09-04")["AAA"]
+    assert block["unknown_reason"] == ledger.WINDOW_NOT_COVERED, "precondition"
+
+    payload = record_context(block)
+    assert payload["setup_day"] is None
+    assert payload["seen_before"] == 1
+    assert payload["history_sessions"] == 1, "and what that count is over"
 
 
 @pytest.mark.parametrize("streak", [None, [], "day 2", 3, {"day": "3"}, {"day": True}])

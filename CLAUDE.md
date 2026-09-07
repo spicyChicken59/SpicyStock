@@ -1,8 +1,9 @@
 # SpicyStock — working notes
 
 A daily US-equity screener implementing the Stockbee/Qullamaggie 4% Momentum
-Burst strategy. Scan → 2LYNCH checklist → chart render → Claude scores the
-survivors from metrics plus a chart image → ranked email. Runs as a GitHub
+Burst strategy. Scan → 2LYNCH checklist → read the record → chart render → Claude scores the
+survivors from metrics, the checklist detail, what the record already knows
+about the name and a chart image → ranked email. Runs as a GitHub
 Actions cron.
 
 This project was inherited from another author and is being rebuilt in ranked
@@ -144,7 +145,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1267 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1271 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -611,13 +612,13 @@ exercised its headline. Nine mutants across them, all killed.
   gate -- and counted off the reason word rather than left over, for the same
   reason this paragraph's own line is.
 
-  **The system prompt is 63% of every request and was paid for 25 times a
+  **The system prompt is 69% of every request and was paid for 25 times a
   night.** `knowledge/strategy.md` is byte-identical on every call of a run --
-  measured at ~1,990 tokens against ~430 of metrics and ~721 for an 869x622
+  measured at ~2,530 tokens against ~440 of metrics and ~721 for an 869x622
   chart -- and nothing asked for it to be cached. It carries `cache_control`
   now: a write costs 1.25x and a read 0.1x, so break-even is the second call
   (1.28 calls: the write costs 0.25x more than the uncached call it replaces
-  and each read saves 0.9x) and a full night is 45% cheaper, $0.28 to $0.15.
+  and each read saves 0.9x) and a full night is 50% cheaper, $0.32 to $0.16.
   This said 1.4 calls, 43% and "$0.24 to $0.13" while README said $0.25 — the
   same paragraph in two files with two arithmetics, and a test now does it
   from README's stated inputs. No `ttl`, because 5 minutes is
@@ -821,6 +822,154 @@ exercised its headline. Nine mutants across them, all killed.
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Round 11 — the rulebook is a surface, and it was the only one nobody checked
+
+Three auditors over the streak-before-score commit, fourteen findings and eight
+lows, every one reproduced HERE by execution before it was touched. The round
+before put the record in front of the model and wrote the paragraph that tells
+it how to read it; **that paragraph was the first free prose this project has
+shipped into a decision, and three of its sentences were false.**
+
+**The rulebook told the model that `setup_day: 1` means nothing preceded it,
+and the record says the opposite in the same request.** `streak()` restarts
+the count whenever the gap exceeds `MAX_STREAK_GAP_SESSIONS`, so day 1 is
+published routinely for a name the record HAS carried -- the ordinary repeat
+over a momentum universe, and `src.ledger`'s own comment ("reappearing two
+weeks later is day 1 of a new setup, not day 12 of an old") is the rule the
+rulebook contradicted. Driven, not read: a ledger holding one AAA burst on
+2026-08-20 produces, for a burst on 2026-09-04, `day 1` with `seen_before 1`
+and `last_seen 2026-08-20` -- so the system prompt asserted "nothing in the
+record preceded it" in the request whose payload named when it was last seen
+and what it scored. The email renders the same block honestly ("day 1 -- new
+setup - last seen 2026-08-25, scored 7.5/10 B+") and README's own "Day N of
+this setup" paragraph states the rule; the false copy was the one that moves a
+number. 1 is the first session of THIS setup now, `seen_before` and
+`last_seen` are named beside it, and the guard is a window over the rulebook's
+own sentences rather than a phrase: the definition of 1 and the two sentences
+after it must point at both fields and may not make the absence claim, with
+the day-1-with-a-prior-sighting payload executed in the test as its
+precondition.
+
+**And `score_cap` was glossed as "the word for the rule that refused it"** --
+the one collapse `CONTRACT_INVARIANTS` forbids by name, arriving on the one
+surface that had no test. It is the outcome for a name the screener LIKED and
+could not afford to score, `evidence.crowded_out` exists to keep it out of the
+refusals, and the model was being told to weight it down as a rejection. The
+clause is split and the split is asserted.
+
+**The vocabulary was a fourth hand-kept copy and the round's own new guard
+walked past it.** That guard derives `RECORD_KEYS` and `STREAK_UNKNOWN` from
+the code -- and skipped the third list in the very paragraph it checks: an
+auditor's length-preserving edit of `"liquidity_floor", "score_cap"` to
+`"liquidity_floot", "score_cop"` passed the full suite, and a realistic second
+veto in `src.lynch` turned exactly one test red (the contract's) while the
+rulebook went on naming four words for a record writing five. It is derived
+now from the same union the contract test builds --
+`emailer.LAST_OUTCOME | pipeline.VETO_REASONS.values() | {LIQUIDITY_REASON}`
+-- and both mutants die on it.
+
+**A fifth unknown state the rulebook said could not exist, and the one tool
+that talks to the live endpoint sent it.** `record_context(None)` returned a
+null `setup_day` with a null `setup_unknown_reason`, under a prompt promising
+that a null day always names one of four reasons; `tools/live_check.py` calls
+`score_candidate()` with no streak, twice, so the owner's boundary check was
+the request that shape reached the API in. The email and the page have said
+this state in words since step 10 (`NO_STREAK_BLOCK`, "this run recorded
+none") for the reason their comment gives -- a block that says which kind of
+unknown it is can be rendered, an absence cannot -- and only the model had no
+word for it. `ledger.NO_STREAK_RECORDED` is that word, the rulebook names five
+reasons, and `score_all()`'s docstring stops claiming this is the same shape
+an unreadable history produces, which it never was.
+
+**The round fixed "a record that cannot answer is never a confident day 1" and
+reintroduced it one field over -- and its own test pinned the reintroduction.**
+`unknown_streak()` fills `seen_before: 0` as a placeholder, and only the model
+was shown it: `_no_day_note()` prints no number in that branch. So a run whose
+ledger could not be READ told the model "0 earlier sightings", which is a
+claim about the name assembled out of a file error, under
+`assert payload["seen_before"] == 0`. Measured across the four unknowns rather
+than assumed: `no_history` and `window_not_covered` come out of `streak()`
+with a genuine `len(prior)` and keep it; `history_unreadable` and
+`history_undated` are placeholders (a ledger holding one AAA burst under an
+unparseable date reports 0), and those send null. `UNCOUNTED_UNKNOWNS` is
+where that judgement lives, keyed on the WORD rather than on "the day is
+null", because the first scheduled night's every candidate is a
+`window_not_covered` unknown whose count is real.
+
+**The model's unknown had no span, on the state every candidate is in until
+the record is five sessions deep.** `history_from` and `history_sessions` are
+what `streak()`'s own docstring calls "WHAT MAKES AN UNKNOWN DAY SAYABLE", the
+human has had them since step 10 ("burst on 8 of the 8 sessions in the record,
+which begins 2026-08-20"), and `RECORD_KEYS` dropped both -- so on Tuesday's
+first cron, over main's one-run ledger, every name reaches the model as a bare
+`window_not_covered`. Both are payload keys now, with the rulebook clause that
+says what they qualify.
+
+**The fingerprint could not see the scorer, measured across the two commits.**
+`rules_fingerprint()` hashes identically at `cc0cd54` and `675cd64`
+(ef0c4dbc98ebd169 both) while every scoring request in the file changed --
+six new payload keys and a rewritten system prompt -- and `evidence.by_score`,
+`top_score` and the separation sentence all average SCORES. A record spanning
+that change would have reported one screener and the page's own note stays
+hidden at `sets == 1`. `score.prompt` (a digest of `knowledge/strategy.md`,
+the bytes) and `score.record_keys` (off `src.scorer`'s own tuple) are in the
+fingerprint now, on the cheapest possible day: the record holds one
+pre-change run. What it still cannot see is a measurement key added to
+`metrics_payload()` with the rulebook untouched, and README says so rather
+than implying a proof. The ledger grew 14.05 -> 14.13 MB raw and 1.08 -> 1.11
+gzipped, swept in README and in `docs/index.html`'s two fetch-on-demand
+comments.
+
+**The money paragraph split again, asymmetrically, and the guard could not
+fire.** The round before pinned README's system-prompt token count to
+`chars/4` of the rulebook -- so every rulebook edit forces four money numbers
+to be recomputed -- and left CLAUDE.md's five figures checked by an `in`, which
+is the shape the round-4 prose audit had already fixed once for README's two
+clock times. `63%` -> `59%` survived the full suite; so did rewriting the
+four figures the round-4 paragraph had gone on quoting to "$9.99 / $0.01 /
+3% / $1" -- and the guard's own first run caught this sentence restating
+them, which is why it is not restating them. Every occurrence in CLAUDE.md,
+`src/scorer.py`, `tools/live_check.py` and `tests/test_scorer.py` is now held
+to README's arithmetic, sentence by sentence, with retracted clauses skipped
+by their own marker ("this said", "used to", "was given as") because a guard
+that refused those would be a guard against the record of the defect. The four
+numbers are gone from the round-4 paragraph: one place to look. And this
+round's own rulebook rewrite moved them again -- ~2,530 system tokens against
+~440 of metrics, 69% of every request, $0.32 uncached against $0.16 cached,
+50% cheaper, $40 a year.
+
+**Twenty mutants over the round's rules, nineteen killed on the first pass.**
+Six on the rulebook (the retracted day-1 gloss verbatim, two outcome words
+respelled at the same length, the score_cap collapse restored, the footnote
+clause dropped, the checklist tie-break dropped, the fifth unknown dropped,
+and the absence claim re-added beside the true sentence); five on the payload
+(the no-block reason dropped, the placeholder count kept, `window_not_covered`
+swept into the uncounted set, the span keys dropped, and the count nulled on
+any null day rather than on the word); three on the fingerprint (the prompt
+digest dropped, made a constant, and the record keys retyped as a literal);
+five on the cost guard. The survivor was the fifth cost mutant and it was a
+real hole: `tools/live_check.py` said "the 43% the caching is meant to save"
+in a phrasing none of the patterns could match, which is how that figure sat
+three points stale since round 4. It says "50% cheaper" now, in the same words
+as every other copy, and the mutant dies.
+
+**Three of the audit's smaller findings, each reproduced.** The rulebook gave
+the model the tie-break for `consecutive_up_days` beside `C` and none for
+`setup_day` beside `2_first_or_second_burst` -- one request really does carry
+`setup_day: 1` and `1 prior 4% bursts in last 20 days`, which is the state
+`_why_no_day()`'s docstring describes for the email ("the price frame had
+looked back twenty sessions and the ledger had looked back none"), and the
+frame is the authority where the record has gaps. The email's streak footnote
+-- "including the ones that were never scored ... Neither is N nights of
+confirmation" -- had no counterpart in the rulebook, so the model was the
+third reader of the mechanism and the only one without the disclosure; both
+surfaces are asserted against each other's source now. And three prose
+surfaces still described the scoring request as metrics plus a chart, one of
+them `src/scorer.py`'s own module docstring, whose determinism sentence is
+qualified now: nothing on our side varies between two runs over the same
+candidate GIVEN THE SAME RECORD, and a backfill of an older session between
+two runs of the same one changes it.
 
 ## Round 10 — one rule decides both empty cells, and it is the STAGE
 
@@ -1600,9 +1749,12 @@ fields that config itself marks as strategy, so a threshold added later is
 recorded the moment it is named — the property a hand-kept list cannot have,
 and the trap this exists to avoid, since a fingerprint that misses a number
 reports "same rules" across a change that altered them and is worse than no
-fingerprint at all. 28 numbers today. `MAX_TO_SCORE`, `TOP_N`, the feed and
-the universe are deliberately out: each is already a fact of the run block,
-and none of them changes what a burst is.
+fingerprint at all. 28 numbers when this was written. `MAX_TO_SCORE`, `TOP_N`,
+the feed, the model and the universe are deliberately out: each is already a
+fact of the run block, and none of them changes what a burst is. **What
+produced the SCORE went in in round 11**, because a mean keyed on a score
+averages the scorer too and this fingerprint could not see it: read the
+round-11 section below.
 
 **The one thing a fingerprint of named constants cannot catch is a number
 left as a bare literal, and six of them were.** `iloc[-20:]`, `iloc[-30:]`,
@@ -1887,10 +2039,16 @@ and the two files quoting it disagreed on a third.** Break-even was given as
 as if the first call were otherwise free; it is 1 + 0.25/0.9 = 1.28. The
 cached night was $0.13 in README and rounded from a different token count
 than the "$0.24" beside it here, while README said $0.25. Recomputed from
-the inputs the paragraph states: $0.25 uncached, $0.15 cached, 41% cheaper,
-$37 a year — and a test now does that arithmetic from those inputs, so the
-conclusions can only be wrong together. The saving was overstated by two
-points and the nightly figure by two cents; the conclusion stands.
+the inputs the paragraph states, and a test now does that arithmetic from
+those inputs, so the conclusions can only be wrong together. The saving was
+overstated by two points and the nightly figure by two cents; the conclusion
+stands. THE FOUR NUMBERS ARE NOT REPEATED HERE, and that is the fix for the
+second defect of the same shape: this paragraph went on quoting the round-4
+figures while README's half was swept twice past them, so one file held two
+arithmetics -- which is what the paragraph is about. README's Costs section
+is the one place they are stated, and the guard is a count over every
+occurrence in every other file rather than a membership test that one true
+sentence beside a stale one satisfies.
 
 **And a verdict that contradicted its own score was archived as given.**
 `knowledge/strategy.md` defines the verdict AS the score's band, and
@@ -2056,15 +2214,21 @@ python -m src.pipeline evening --dry-run
     `SCAN_SESSION_DATE` is exempt, since a pin is the user overruling the clock
     on purpose. And the ledger is finally READ as well as written: every burst
     carries a streak — day N of this setup, when the name was last seen, and
-    what was DONE with it then (scored, rejected at the gate, or crowded out by
-    the call cap: three different facts that "not scored" used to cover with
-    one phrase) — with `ledger.MAX_STREAK_GAP_SESSIONS` holding the one
-    judgement about what "the same setup" means. A record that cannot answer —
-    unreadable, empty, or not reaching back far enough — publishes no day
-    number and says which of the three it is, on every surface, in words. It
+    what was DONE with it then -- every word in `emailer.LAST_OUTCOME`, which
+    is five since round 5 and was three when this bullet was written: "not
+    scored" used to cover a gate rejection, an absolute rule's refusal, the
+    liquidity floor and the call cap with one phrase, and they are not one
+    fact -- with `ledger.MAX_STREAK_GAP_SESSIONS` holding the one
+    judgement about what "the same setup" means. A record that cannot answer
+    publishes no day number and says which kind of nothing it is, on every
+    surface, in words: `emailer.STREAK_UNKNOWN`'s four reasons, counted there
+    rather than here because this bullet named three of them for two rounds
+    after `history_undated` became the fourth. It
     never takes the run with it and never collapses into a confident day 1.
     (The streak reached the archived row and the email and NOT the scoring
-    request for four rounds, because the history stage sat below the score
+    request from step 10 until round 11 -- seven rounds by this file's own
+    headings, and `git log -S'streaks_for' -- src/pipeline.py` returns the two
+    commits that bound it -- because the history stage sat below the score
     stage: night 2 of a two-night burst was scored as if the ledger had never
     seen the name. The read is above the chart and the model now and the
     block is in the metrics; `knowledge/strategy.md` says how to weigh it,

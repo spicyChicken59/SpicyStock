@@ -151,6 +151,31 @@ HISTORY_UNDATED = "history_undated"          # it holds runs, none of them datab
 HISTORY_UNREADABLE = "history_unreadable"    # it was set aside; see Ledger.load()
 WINDOW_NOT_COVERED = "window_not_covered"    # it does not reach back far enough
 
+#: The fifth, and the one no ROW ever carries: nothing computed a block at
+#: all. src.emailer's NO_STREAK_BLOCK and docs/index.html's streakText() say
+#: that state in words for a row whose `streak` field is absent, and the
+#: scoring request had no word for it -- so src.scorer.record_context() sent a
+#: null day with a null reason, which the rulebook says cannot happen and
+#: which reads to the model as a shrug rather than as a state. Defined here,
+#: beside the four, because the vocabulary a reader is shown belongs in one
+#: place; written into no run, no ledger row and no snapshot, because there is
+#: no block for it to sit in -- it is the word for the absence itself.
+NO_STREAK_RECORDED = "no_streak_recorded"
+
+#: The unknowns whose `seen_before` is not a count of anything. streak()
+#: reports a genuine len(prior) beside no_history (an empty file really does
+#: hold nothing) and beside window_not_covered (the appearances it found are
+#: real; only the claim about what came BEFORE them is withheld). The other
+#: two are placeholders: unknown_streak() fills 0 for a file that could not be
+#: read, and history_undated is 0 over a file that may hold any number of
+#: appearances nobody can date -- driven here, a ledger holding one AAA burst
+#: under an unparseable date reports seen_before 0. A placeholder is a fact
+#: about this function, not about the name, so the scoring request sends null
+#: for these and the rulebook says null means the record could not be counted.
+#: The rendered surfaces are unchanged: _no_day_note() prints no number in
+#: those branches and _streak_note() reads the count only to pick a colour.
+UNCOUNTED_UNKNOWNS = frozenset({HISTORY_UNREADABLE, HISTORY_UNDATED, NO_STREAK_RECORDED})
+
 #: The invariants, in the file rather than only in the docs. tools/make_fixture.py
 #: imports this list rather than holding a second copy, so the hand-authored
 #: fixture and the pipeline's real output can never describe different contracts
@@ -179,7 +204,7 @@ CONTRACT_INVARIANTS = [
     "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
     "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'liquidity_floor' (rule 6 refused it in the scan, for dollar volume below the session's percentile floor, before the checklist was consulted), 'veto_up_days' (an absolute rule refused it before the pass count was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same four words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and neither a veto nor a liquidity refusal is ever published as a gate rejection.",
     "runs[].benchmark.universe is the universe the benchmark was measured over, and it is always the one that run's own universe block names: a run is benchmarked only from a later scan of the same universe, so a --tickers run contributes no benchmark to anything and receives none. A run whose universe no later scan has read keeps a null benchmark forever, which is the honest answer and not a zero.",
-    "runs[].rules is every number this screener's rules turned on when that run was made — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. A run from before it carries no rules block, and no surface may read that as agreement.",
+    "runs[].rules is what this screener was when that run was made: every number its rules turned on — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate — plus what produced the SCORE, since round 11: score.prompt is a digest of the scoring model's system prompt and score.record_keys is the record block the request carries. A run scored under a rewritten rulebook is as much a second screener as one whose gate moved, and every mean keyed on score averages both. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. A run from before it carries no rules block, and no surface may read that as agreement.",
     "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when no name traded or the rule is off), refused (how many bursts sat below it). run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
     "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
     "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",

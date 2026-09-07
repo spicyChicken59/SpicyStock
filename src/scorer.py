@@ -3,8 +3,9 @@ Layers 3-4 — Chart rendering + Claude scoring engine.
 (Layer 5 is the archive, and it lives in src/ledger.py.)
 
 For each surviving candidate, we render a 4-month daily candlestick chart,
-send it to Claude together with the numeric metrics and the 2LYNCH results,
-and get back a structured score (0-10), a one-sentence reason, and a verdict.
+send it to Claude together with the numeric metrics, the 2LYNCH results and
+what the RECORD already knows about the name (record_context), and get back a
+structured score (0-10), a one-sentence reason, and a verdict.
 
 The knowledge base (knowledge/strategy.md) is injected as the system prompt,
 so the model is scoring against Stockbee/Qullamaggie rules — not vibes.
@@ -25,9 +26,13 @@ and honestly: it does not remove it. `temperature=0` never guaranteed identical
 outputs on any model, and on Opus 4.7+/Sonnet 5/Opus 5 the parameter is
 rejected outright, so a run under those models has no determinism lever at all.
 What IS guaranteed is that nothing on OUR side of the request varies between
-two runs over the same candidate — the metrics block is serialised with sorted
-keys, carries no clock, and the request kwargs are built by one function
-(`request_kwargs()`) that a test can read.
+two runs over the same candidate GIVEN THE SAME RECORD — the metrics block is
+serialised with sorted keys, carries no clock, and the request kwargs are built
+by one function (`request_kwargs()`) that a test can read. The record is the
+qualification: the block record_context() carries is read off docs/ledger.json,
+and streak() excludes appearances on the session itself so a re-scan is stable,
+but a backfill of an OLDER session landing between two runs of the same one
+changes what the file says and therefore what the request carries.
 
 *Parseable.* The reply used to be sliced between the first `{` and the last
 `}` and handed to `json.loads`, which raises on a truncated object, on trailing
@@ -65,7 +70,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .ledger import streak_day
+from .ledger import NO_STREAK_RECORDED, UNCOUNTED_UNKNOWNS, streak_day
 
 log = logging.getLogger(__name__)
 
@@ -293,6 +298,17 @@ RECORD_KEYS: tuple[tuple[str, str], ...] = (
     ("last_seen", "last_seen"),
     ("last_score", "last_score"),
     ("last_outcome", "last_outcome"),
+    # The record's own span, which is what makes an unknown sayable. Without
+    # these the model was handed the bare word -- and on the first scheduled
+    # night, and every night until the file reaches MAX_STREAK_GAP_SESSIONS
+    # sessions back, EVERY candidate is a window_not_covered unknown, so the
+    # bare word was the whole answer. src.emailer's _no_day_note() has told
+    # the human "burst on 8 of the 8 sessions in the record, which begins
+    # 2026-08-20" since step 10; an unknown over a one-session record is not
+    # the same evidence as one over two hundred, and the model could not tell
+    # them apart.
+    ("history_sessions", "history_sessions"),
+    ("history_from", "history_from"),
 )
 
 
@@ -310,7 +326,18 @@ def record_context(streak) -> dict:
     the reason word, and every surface is forbidden to dress that up as a
     confident day 1. So is this one: an absent or malformed block produces the
     same keys with nulls, never a day number, and `setup_unknown_reason`
-    carries the record's own word rather than a sentence invented here.
+    carries the record's own word rather than a sentence invented here -- or,
+    where there is no block to carry one, src.ledger's word for that
+    (NO_STREAK_RECORDED), because a null day beside a null reason is a fifth
+    state the rulebook says cannot exist and the model has no word for.
+
+    AND THE SAME RULE ONE FIELD OVER, which this function used to break:
+    `seen_before` is 0 in the states where nobody counted (see
+    src.ledger.UNCOUNTED_UNKNOWNS), and 0 earlier sightings over a file that
+    could not be opened is exactly the confident sentence the day number is
+    refused. Those send null; the unknowns whose count IS a reading -- an
+    empty record, and a record that simply does not reach back far enough --
+    keep it, and the span keys say what it was counted over.
 
     `setup_day` goes through ledger.streak_day(), the one rule that says what
     counts as a day: a block carrying `"day": "3"` is not day 3 to a reader
@@ -324,6 +351,20 @@ def record_context(streak) -> dict:
         # them exclusive at the source; this keeps them exclusive if a
         # hand-edited or older block does not.
         payload["setup_unknown_reason"] = None
+    elif not payload["setup_unknown_reason"]:
+        # A null day with no reason at all was a fifth state the rulebook
+        # says cannot exist -- and the one tools/live_check.py sends to the
+        # live endpoint, since it scores a candidate with no record block.
+        # The email and the page have had a sentence for it since step 10
+        # (NO_STREAK_BLOCK, "this run recorded none"); the model had silence.
+        payload["setup_unknown_reason"] = NO_STREAK_RECORDED
+    reason = payload["setup_unknown_reason"]
+    if isinstance(reason, str) and reason in UNCOUNTED_UNKNOWNS:
+        # 0 earlier sightings is a reading of the record on some unknowns and
+        # a placeholder on others (see UNCOUNTED_UNKNOWNS). The placeholder is
+        # the same claim this function exists to refuse, one field over: a
+        # record that could not be asked must not answer "none".
+        payload["seen_before"] = None
     return payload
 
 
@@ -416,13 +457,13 @@ def request_kwargs(system: str, content: list[dict], model: str | None = None) -
         "max_tokens": MAX_TOKENS,
         # A LIST, not a string, so the knowledge base can carry cache_control.
         # knowledge/strategy.md is byte-identical on every call of a run and is
-        # 63% of each request -- measured: ~1,990 tokens of system against ~430
+        # 69% of each request -- measured: ~2,530 tokens of system against ~440
         # of metrics and ~721 for an 869x622 chart. Without this the run paid
         # full price to send the same document up to MAX_TO_SCORE times a
         # night. A cache write costs 1.25x and a read 0.1x, so break-even is
         # the second call (1.28 calls -- the write costs 0.25x more than the
         # uncached call it replaces, each read saves 0.9x): a night that
-        # scores two candidates is already ahead, and a full one is 45%
+        # scores two candidates is already ahead, and a full one is 50%
         # cheaper.
         #
         # No `ttl`: the default 5-minute window is the cheap one (an hour costs
@@ -694,8 +735,10 @@ def score_all(scored_inputs: list[tuple], top_n: int = 5, min_lynch: int = 3,
     `streaks`, if given, is one src.ledger streak block per ticker -- what the
     record already knows about each name, read BEFORE this stage so the model
     sees it. A ticker the dict does not carry is scored with the record's keys
-    present and null, which is the same shape a run whose history could not be
-    read produces, and never a day 1.
+    present and null under src.ledger.NO_STREAK_RECORDED -- which is NOT the
+    shape a run whose history could not be read produces, and this docstring
+    said it was: that one names its own reason word and this one says nothing
+    computed a block at all. Never a day 1 either way.
 
     Applies the hard checklist gate, has Claude score survivors, and returns
     the top N as plain dicts ready for the email layer.

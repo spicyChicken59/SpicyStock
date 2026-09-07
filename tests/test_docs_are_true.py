@@ -262,18 +262,95 @@ def test_the_rulebook_instructs_on_every_field_the_request_carries():
     hand-kept copy cannot have, and this project has already paid for one: a
     second veto added to src.lynch alone left every surface green.
     """
-    from src import emailer
+    from src import emailer, ledger, pipeline
     from src.scorer import RECORD_KEYS
 
     rulebook = _read("knowledge/strategy.md")
     for name, _key in RECORD_KEYS:
         assert f"`{name}`" in rulebook, f"the rulebook never mentions {name}"
-    for reason in emailer.STREAK_UNKNOWN:
+    # Every kind of unknown the payload can carry, from the two places the
+    # words are defined: the four a ROW can carry, and the fifth that no row
+    # can -- src.scorer.record_context() sends NO_STREAK_RECORDED where a
+    # block was never computed, and until it did, that state reached the model
+    # as a null day with a null reason under a rulebook saying that cannot be.
+    for reason in set(emailer.STREAK_UNKNOWN) | {ledger.NO_STREAK_RECORDED}:
         assert f"`{reason}`" in rulebook, f"the rulebook never names the {reason} unknown"
+    # And the OUTCOME vocabulary, derived the same way the published contract's
+    # is, from src.lynch's vetoes and src.ledger's own word. A hand-kept copy
+    # here is the fifth-reason-word trap: round 5 added liquidity_floor and
+    # swept seven sentences, and a mutant swapping two of these words for
+    # words that do not exist survived the whole suite.
+    for word in (set(emailer.LAST_OUTCOME) | set(pipeline.VETO_REASONS.values())
+                 | {ledger.LIQUIDITY_REASON}):
+        assert f'"{word}"' in rulebook, f"the rulebook never names the {word} outcome"
+    # score_cap is in that set and is NOT a refusal: the contract says it
+    # "passed the gate, but the run had already sent its limit of candidates
+    # to the scorer", and telling the model a rule threw the name out would be
+    # the one collapse every other surface is forbidden to make.
+    assert "not a judgement" in rulebook, (
+        "the rulebook does not say that score_cap is not a judgement against the name")
+    # And the disclosure the email has carried under every table since round 5:
+    # what a day number counts includes appearances nothing ever scored. One
+    # mechanism, one wording, each surface asserted against the other's source.
+    footnote = emailer._streak_footnote([{"streak": {"day": 3}}])
+    assert "nights of confirmation" in footnote, "the email footnote no longer says it"
+    assert "nights of confirmation" in rulebook, (
+        "the model is the third reader of the streak and the only one without the footnote")
+    # And the rule this cannot say by itself: the record and the frame answer
+    # one question from two sources, and the frame is the authority where the
+    # record has gaps.
+    assert "2_first_or_second_burst" in rulebook, (
+        "the rulebook does not tell the model how to read setup_day beside the "
+        "checklist's own count of prior bursts")
     # And the rule every other surface holds: an unknown is not a fresh setup.
     # Without this sentence the model reads a null day as "no prior sighting",
     # which is a claim about the market made out of a file error.
     assert "A null `setup_day` is not day 1." in rulebook
+
+
+def test_the_rulebook_does_not_read_day_one_as_a_name_the_record_has_never_seen():
+    """day 1 is a claim about THIS SETUP, not about the file.
+
+    src.ledger.streak() restarts the count whenever the gap exceeds
+    MAX_STREAK_GAP_SESSIONS, so day 1 is routinely published for a name the
+    record HAS carried -- the ordinary repeat over a momentum universe. The
+    rulebook told the model the opposite ("nothing in the record preceded
+    it"), in the same request whose payload named when the name was last seen
+    and what it scored, and the system prompt is the one surface where a false
+    gloss moves a number.
+
+    The precondition is executed rather than assumed: the payload below really
+    does carry day 1 with a prior sighting. The guard is then a window over the
+    rulebook's own sentences, in the shape round 10's prose guards took -- the
+    definition of 1 and the two sentences after it must point at `seen_before`
+    and `last_seen`, and none of them may make the absence claim -- because a
+    single phrase is what the retracted wording would be edited around.
+    """
+    import re
+
+    from src import ledger
+    from src.scorer import record_context
+
+    history = [{"candidates": [{"ticker": "AAA", "date": "2026-08-20",
+                                "score": 7.0, "verdict": "B"}], "gated": []}]
+    payload = record_context(ledger.streaks(history, ["AAA"], "2026-09-04")["AAA"])
+    assert (payload["setup_day"], payload["seen_before"]) == (1, 1), (
+        "the state this guards is not reachable -- the streak rule changed")
+    assert payload["last_seen"] == "2026-08-20"
+
+    rulebook = _read("knowledge/strategy.md")
+    sentences = re.split(r"(?<=[.!?])\s+", rulebook)
+    defining = [i for i, s in enumerate(sentences) if re.search(r"\b1 is\b", s)]
+    assert defining, "the rulebook no longer says what setup_day 1 is"
+    for i in defining:
+        window = " ".join(sentences[i:i + 3])
+        assert "`seen_before`" in window and "`last_seen`" in window, (
+            "the rulebook defines day 1 without pointing at the fields that "
+            f"say what the record HAS carried: {window!r}")
+        for claim in ("nothing in the record preceded", "nothing preceded",
+                      "no prior sighting", "no earlier appearance"):
+            assert claim not in window.lower(), (
+                f"the rulebook reads day 1 as an empty record: {claim!r}")
 
 
 def test_the_cost_paragraph_does_its_own_arithmetic():
@@ -329,18 +406,60 @@ def test_the_cost_paragraph_does_its_own_arithmetic():
               + (calls - 1) * ((system * read + (per_call - system)) * price_in + out * price_out)) / 1e6
     break_even = 1 + (write - 1) / (1 - read)
 
+    saving = round(100 * (1 - cached / uncached))
+    share = round(100 * system / per_call)
     assert num(r"break-even the second call \(([\d.]+) calls\)") == round(break_even, 2)
-    assert num(r"a full night (\d+)% cheaper") == round(100 * (1 - cached / uncached))
-    assert num(r"\$([\d.]+) this\s+paragraph used to quote") == round(uncached, 2)
+    assert num(r"a full night (\d+)% cheaper") == saving
+    assert num(r"\$([\d.]+) an uncached night would cost") == round(uncached, 2)
     assert num(r"about \$([\d.]+) a\s+run") == round(cached, 2)
     assert num(r"roughly \$(\d+) a year") == round(cached * 252)
+    assert num(r"system prompt is (\d+)% of every request") == share
     assert readme.count(f"~${round(cached, 2):.2f}") == 1, "the summary table quotes a different nightly figure"
-    for doc in ("CLAUDE.md", "src/scorer.py"):
+
+    # EVERY occurrence, in every other file that quotes one of these, and not
+    # "at least one that is right". The membership test this replaces was the
+    # `in`-instead-of-equality shape the round-4 prose audit had already fixed
+    # once for README's two clock times: CLAUDE.md's round-4 paragraph went on
+    # quoting $0.25 / 41% / $37 three screens below its own swept copy, and
+    # rewriting that sentence to $9.99 / 3% / $1 left the suite green. The
+    # numbers live in README's Costs section; anywhere else they may only be
+    # repeated, never restated differently.
+    expected = {"cheaper": saving, "of every request": share,
+                "calls": round(break_even, 2), "a year": round(cached * 252),
+                "uncached": round(uncached, 2), "cached": round(cached, 2)}
+    quoting = {
+        r"([\d.]+) calls\b": "calls",
+        r"(\d+)% cheaper": "cheaper",
+        r"(\d+)% of (?:each|every) request": "of every request",
+        r"\$(\d+) a year": "a year",
+        r"\$([\d.]+) uncached": "uncached",
+        r"\$([\d.]+) cached": "cached",
+        r"\$([\d.]+) to \$([\d.]+)\.": ("uncached", "cached"),
+    }
+    for doc in ("CLAUDE.md", "src/scorer.py", "tools/live_check.py", "tests/test_scorer.py"):
         # Comment markers and line wraps are not words: the scorer's copy
-        # wraps between the percentage and "cheaper".
+        # wraps between the percentage and "cheaper", and this file's own
+        # docstrings carry the paragraph too.
         text = " ".join(_read(doc).replace("#", " ").split())
-        assert f"{round(break_even, 2)} calls" in text, f"{doc} quotes a different break-even"
-        assert f"{round(100 * (1 - cached / uncached))}% cheaper" in text, f"{doc} quotes a different saving"
+        # A sentence that says what a number USED TO be is history, and these
+        # files keep it on purpose -- CLAUDE.md's cache paragraph records the
+        # 1.4 calls and 43% the round-4 audit retracted, and a guard that
+        # refused those would be a guard against the record of the defect. So
+        # the retracted clauses are skipped by their own marker and every
+        # remaining claim is held to the arithmetic. The paragraph this
+        # replaces carried no marker: it stated $0.25 / 41% / $37 flat.
+        stated = [s for s in re.split(r"(?<=[.!?])\s+", text)
+                  if not re.search(r"\bthis said\b|\bused to\b|\bquoted at\b"
+                                   r"|\bwas given as\b|\bwas \$[\d.]+ in\b",
+                                   s, re.I)]
+        for pattern, key in quoting.items():
+            for found in re.findall(pattern, " ".join(stated)):
+                keys = key if isinstance(key, tuple) else (key,)
+                values = found if isinstance(found, tuple) else (found,)
+                for one, value in zip(keys, values):
+                    assert float(value) == expected[one], (
+                        f"{doc} quotes {value} where README's arithmetic gives "
+                        f"{expected[one]} ({one})")
 
 
 def test_the_documented_workflow_files_are_the_ones_that_exist():

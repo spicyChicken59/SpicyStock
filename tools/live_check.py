@@ -179,6 +179,14 @@ def check_claude(frame=None, ticker: str = "SYNTHETIC", out_dir: str | None = No
     A fallback is a FAIL here even though the pipeline survives one: this is
     the check that the key, the model name and the parser all work, and a
     fallback means at least one of them does not.
+
+    NO STREAK IS PASSED, and that is deliberate: this tool has no ledger and
+    inventing a record block would make the one request that reaches the live
+    endpoint the one request the pipeline never sends. What it sends instead
+    is the state src.scorer names -- a null `setup_day` under
+    src.ledger.NO_STREAK_RECORDED -- which is a shape the rulebook defines.
+    Until round 11 it was a null day with a null REASON, under a system prompt
+    promising that could not happen.
     """
     if frame is None or len(frame) < 85:
         frame, ticker, source = _synthetic_burst(), "SYNTHETIC", "a synthetic chart"
@@ -210,7 +218,7 @@ def check_claude(frame=None, ticker: str = "SYNTHETIC", out_dir: str | None = No
 def check_cache(inputs) -> Check:
     """A second identical call. The first wrote the prefix; this one must read it.
 
-    Without this the 43% the caching is meant to save is a comment in
+    Without this the 50% cheaper a cached night is meant to be is a comment in
     request_kwargs(), not a fact: a system prompt edited below the minimum
     cacheable size, or an account the feature is off for, pays full price
     forever and nothing says so.

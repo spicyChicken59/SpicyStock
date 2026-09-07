@@ -53,8 +53,9 @@ still cleared the filter on Tuesday was presented as a brand-new day-1 idea on
 both nights, with nothing telling the reader they had already looked at it.
 Step 9 built the store that knows better — docs/ledger.json holds every scored
 and gated candidate for up to 260 runs — and the pipeline only ever wrote to
-it. It is now read back before the email goes out, and every burst the run
-reports carries a streak: which day of this setup it is, when the name last
+it. It is now read back before the CHARTS and the model, so the streak is in the
+scoring request as well as in the row, the email and the page, and every burst
+the run reports carries one: which day of this setup it is, when the name last
 appeared, and what it was scored then. src.ledger.MAX_STREAK_GAP_SESSIONS
 holds the one judgement behind it (what "the same setup" means) and the
 reasoning for it.
@@ -102,6 +103,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import logging
 import os
 import re
@@ -113,8 +115,8 @@ from pathlib import Path
 from . import ledger, lynch as lynch_rules, scanner
 from .lynch import VETO_RULES, evaluate_2lynch, extra_context, failed_vetoes, veto_reason
 from .scanner import ScanConfig, run_scan
-from .scorer import MODEL as DEFAULT_MODEL
-from .scorer import render_chart, score_all
+from .scorer import KNOWLEDGE_PATH, MODEL as DEFAULT_MODEL
+from .scorer import RECORD_KEYS, render_chart, score_all
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("pipeline")
@@ -162,7 +164,24 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
     feed (a fact about the data, already in the scan stats), and the universe
     (already per run in run.universe). Those are the run's own facts, not the
     strategy's, and duplicating them here would give a reader two places to
-    look and two chances to disagree.
+    look and two chances to disagree. The MODEL is out for the same reason:
+    run.model already carries it.
+
+    AND THE SCORER'S INPUTS ARE IN, since round 11. What a burst is and what a
+    SCORE is are two different questions and this record answers both under
+    one label: `evidence.by_score`, `top_score` and the separation sentence
+    all average scores, and a screener whose scoring rulebook changed is as
+    much a second screener as one whose gate moved. Measured rather than
+    argued: the commit that put the record block in front of the model left
+    this fingerprint byte-identical (ef0c4dbc98ebd169 on both sides) while
+    every scoring request in the file changed, so the page would have gone on
+    printing nothing across the boundary. Two keys, both derived --
+    `score.prompt` is a digest of knowledge/strategy.md, the system prompt
+    itself, and `score.record_keys` is the payload names src.scorer builds the
+    record block from. What they do NOT cover is a measurement key added to
+    metrics_payload() with the rulebook untouched; the rulebook has to explain
+    a key for the model to use it, and a docs test holds it to that for the
+    record keys, but that is a convention and this is not a proof of one.
     """
     cfg = cfg or ScanConfig()
     # Off the config's OWN class, not the imported name: a caller that builds
@@ -180,6 +199,14 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
     # burst is as surely as moving a threshold does.
     out["check.vetoes"] = sorted(VETO_RULES)
     out["gate.min_lynch_passes"] = MIN_LYNCH_PASSES
+    # The bytes, not the text: a rulebook re-encoded is a different request on
+    # the wire even where it reads the same, and a digest that normalised it
+    # would be reporting agreement it did not check. Truncated because this
+    # goes on every run entry and the record's size is budgeted in README --
+    # 16 hex digits is 64 bits, which is not a collision anyone will meet
+    # across MAX_RUNS entries, and it is an identity rather than a secret.
+    out["score.prompt"] = hashlib.sha256(KNOWLEDGE_PATH.read_bytes()).hexdigest()[:16]
+    out["score.record_keys"] = [name for name, _key in RECORD_KEYS]
     return dict(sorted(out.items()))
 
 
