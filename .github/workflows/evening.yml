@@ -194,9 +194,14 @@ jobs:
         # version of this comment said it had. Both the streaks and the
         # morning follow-through are built on this step actually working, and
         # it does: first on 6 Sep 2026 (run 34014332161, commit f0780c7,
-        # "run 2026-09-04") and on every dispatch past preflight since. The
-        # half of it still traced only against a stub `git` is the rebase
-        # loop at the bottom, because no push has been rejected yet.
+        # "run 2026-09-04"), and twice more that day. NOT on every dispatch
+        # past preflight -- the line below says why itself. A run that
+        # re-presents an already-published session leaves docs/ byte-identical,
+        # `git diff --staged --quiet` short-circuits, and the step exits 0
+        # having committed nothing: run 34018706843, seventeen hours before an
+        # earlier version of this comment claimed every such dispatch had
+        # committed. The half of it still traced only against a stub `git` is
+        # the rebase loop at the bottom, because no push has been rejected yet.
         #
         # docs/charts/*.png is NOT committed either, and that is now a rule in
         # .gitignore rather than an accident of this step failing: ~57 KB a

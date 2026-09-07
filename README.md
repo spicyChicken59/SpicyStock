@@ -202,9 +202,10 @@ follows through on found no 4% burst to score", or "…scored no candidates"),
 adding what that run scanned when it was not the checked-in file, since the
 morning funnel names no universe. The failures sentence is what is left for
 three states: a morning that read no published run at all — the state every
-morning was in until `evening.yml`'s commit-back first succeeded, and the
-state a fresh clone is in — a snapshot whose burst count cannot be read, which
-is not a run this pass can report either, and a run whose own scan was cut
+morning was in until `evening.yml`'s commit-back first succeeded on 6 Sep
+2026, and the state a repo that has never published is in, since a fresh clone
+of this one now reads the run that commit-back left — a snapshot whose burst
+count cannot be read, which is not a run this pass can report either, and a run whose own scan was cut
 short, where the counts are printed and then not read as the session. With no
 red band to point at, the sentence does not point at one. The names that
 stopped printing are on both emails now — `run.stopped_printing` is a fact
@@ -432,7 +433,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1139 tests, no network or API keys needed
+pytest tests/                   # 1142 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
@@ -451,12 +452,15 @@ Put both files back with
 rm -f docs/ledger.json && git checkout -- docs/
 ```
 
-— the ledger is removed first because on a fresh clone it is untracked, so
-`git checkout` would leave it, and the first `git pull` after `evening.yml`
-commits a real one then refuses to overwrite it. A **morning** run writes
-nothing at all, so it cannot disturb either file — but it will refuse to read
-the fixture, which is what you will see if you run one before an evening run
-has published anything.
+— `git checkout -- docs/` on its own is enough here, because the first
+commit-back tracked `docs/ledger.json` along with `docs/data.json`: checkout
+puts both back. The `rm` is kept for a repo that has never published, where
+the ledger really is untracked, checkout leaves it, and the first `git pull`
+after a real commit-back then refuses to overwrite it. A **morning** run
+writes nothing at all, so it cannot disturb either file: it re-presents
+whatever `docs/data.json` holds, which here is the last run this branch
+committed back. It refuses to present the fixture — which is what a repo that
+has never published still holds, and what you would see there.
 
 ## The dashboard
 
@@ -471,9 +475,10 @@ chart is ~57 KB and a night renders up to 25 of them: committing them is about
 360 MB a year of history that does not delta-compress and cannot be taken back
 out, and one file per ticker with no session in it cannot prove which run drew
 it anyway. `docs/data.json` is whatever the last run wrote, and on a fresh clone
-of this repo that is the 4 Sep 2026 scan `evening.yml` committed back on 6 Sep
-2026 — a real run, no banner. In a repo that has never published it is instead
-the hand-authored fixture the tree shipped with, a byte-for-byte copy of
+of this repo that is the run `evening.yml` last committed back — a real run,
+no banner. (Which session that is moves with every commit-back, so this
+sentence does not name one; `run.date` in the file does.) In a repo that has
+never published it is instead the hand-authored fixture the tree shipped with, a byte-for-byte copy of
 `tests/fixtures/data.json`, which `tools/make_fixture.py` generates, and it says
 so in its own `run.fixture: true`, which is what raises the "sample data" banner
 at the top of the page. The first evening run `evening.yml` commits back
@@ -842,10 +847,12 @@ A backfill is also how the dashboard's score-against-outcome bands gain
 resolved points before a week has passed: on a normal evening run tonight's
 candidates are pending by construction, and it is the NEXT runs that fill their
 horizons in. The bands themselves need no backfill and no change to the page —
-`evidence()` computes `by_score` over every resolved row in `docs/ledger.json`
-at write time, and the page draws what the file carries, fetching `ledger.json`
-itself only for the per-name view. This paragraph told a reader the opposite
-for two rounds — that a backfill was the only way a point could ever appear,
+`evidence()` computes `by_score` at write time over the first SCORED
+appearance of every setup in `docs/ledger.json` — resolved or not, so a
+pending setup is counted in its band with an n of zero — and the bursts the
+gate refused are the control beside those bands, never in them. The page draws
+what the file carries, fetching `ledger.json` itself only for the per-name
+view. This paragraph told a reader the opposite for two rounds — that a backfill was the only way a point could ever appear,
 and that plotting outcomes across runs would take a change to the page nobody
 had made. Step 11 was that change, and the guard on this sentence reads both
 halves off the code rather than trusting the next reader to notice.
@@ -894,9 +901,12 @@ how the `git add` bug below was found too.
 
 **It has run, and this paragraph said for ten rounds that it never had.**
 The first time was 6 Sep 2026 — Actions run 34014332161, commit `f0780c7`,
-message `run 2026-09-04` — and every dispatch that got past preflight since has
-committed too; `git log --author=spicystock` is the list, and a docs test reads
-it back against these sentences so this cannot rot again. What was true when
+message `run 2026-09-04` — and two more landed the same day, `932ec58` and
+`369c695`; `git log --author=spicystock` is the list, and a docs test reads it
+back against these sentences, on any checkout that carries the history (CI
+asks for all of it, for exactly this reason).
+
+What was true when
 this was written, and stayed true for ten rounds, is that nothing had reached
 the add, the commit or the push: `evening.yml` had fired six times, every one
 of them scheduled — three no-ops from the DST guard and three that died in
@@ -908,6 +918,16 @@ code was ever the tip of `main`, and the nightly failure it supposedly caused
 was invented. **One half of the step is still only traced against a stub**: no
 push has been rejected yet, so the rebase-and-retry loop below has never run for
 real.
+
+**A dispatch that gets past preflight does not always leave a commit**, and
+the same day showed it: run 34018706843 re-presented the already-published
+4 Sep session, mailed it and exited 2, and the persist step ran, found `docs/`
+byte-identical to what was already on the branch, and exited 0 at
+`git diff --staged --quiet` with nothing to commit. The sentence this replaces
+made that claim of all of them, which is the same universal shape as the "it
+has never executed" sentence before THAT, and it was false seventeen hours
+before it was written. A docs test reads that short-circuit out of the
+workflow and refuses the claim while the step still has it.
 
 Since step 10 that commit-back carries a second job: it is what the 8:30 AM
 follow-through reads, and it is what makes a streak possible at all. Remove it

@@ -836,6 +836,17 @@ def test_the_ledgers_projected_size_is_what_measuring_it_says():
         f"README says {gz} MB gzipped; measuring says {measured['gzip_mb']:.2f}. "
         "Run python tools/measure_ledger.py and sweep it.")
 
+    # The page argues its whole fetch-on-demand design from the same number,
+    # in two comments, and they said 0.6 MB for four rounds while README was
+    # swept twice: the guard was pointed at one file for a figure that lives
+    # in three. Every "N MB gzipped" in docs/index.html is that figure.
+    quoted = re.findall(r"([\d.]+)\s*MB gzipped", _read("docs/index.html"))
+    assert quoted, "docs/index.html no longer quotes the record's gzipped size"
+    for figure in quoted:
+        assert abs(float(figure) - measured["gzip_mb"]) < 0.01, (
+            f"docs/index.html says {figure} MB gzipped; measuring says "
+            f"{measured['gzip_mb']:.2f}. Run python tools/measure_ledger.py and sweep it.")
+
 
 def _persist_message_fragment() -> str:
     """The lines of evening.yml's persist step that choose the commit message.
@@ -1208,15 +1219,49 @@ def _sentences(text: str) -> list[str]:
     return re.split(r"(?<=[.!?])\s+", " ".join(flat.split()))
 
 
+def _paragraphs(text: str) -> list[str]:
+    """Blank-line-separated blocks, comment markers stripped.
+
+    A claim can be split over two sentences -- "SCAN_SESSION_DATE stays on
+    your machine. evening.yml does not forward it." -- and a guard that reads
+    one sentence at a time sees the denial without the name, or the name
+    without the denial, and passes. The paragraph is the unit a reader reads.
+    """
+    flat = "\n".join(re.sub(r"^\s*(?:#+|//|\*)\s?", "", line) for line in text.splitlines())
+    return [block for block in re.split(r"\n\s*\n", flat) if block.strip()]
+
+
+def _windows(text: str) -> list[str]:
+    """Each sentence with the one before and the one after it, inside its own
+    paragraph. A claim split over two sentences is one claim, and so is the
+    condition that makes it true; a whole paragraph is too coarse the other
+    way, since one true "in a repo that has never published" would then excuse
+    every false sentence beside it."""
+    out = []
+    for paragraph in _paragraphs(text):
+        sentences = _sentences(paragraph)
+        for index, sentence in enumerate(sentences):
+            out.append(" ".join(sentences[max(0, index - 1):index + 2]))
+    return out
+
+
+PROSE_FILES = ("README.md", ".env.example", "docs/index.html", ".gitignore",
+               "requirements.txt", "requirements-dev.txt")
 PROSE_DIRS = ("src", "tools", ".github/workflows", "knowledge", "data")
 PROSE_SUFFIXES = {".py", ".mjs", ".yml", ".yaml", ".md", ".txt", ".html"}
 
 
 def _prose_files() -> list[str]:
-    """Every file in this repo that carries prose a reader might believe,
-    minus the two that quote retracted sentences on purpose (tests/ and
-    CLAUDE.md) and minus the data files under docs/."""
-    found = ["README.md", ".env.example", "docs/index.html"]
+    """The files a reader is pointed at, and might believe: the six named
+    above plus every prose-suffixed file under PROSE_DIRS.
+
+    NOT the whole tree, and the exclusions are deliberate: tests/ and
+    CLAUDE.md quote retracted sentences as history, and docs/*.json are data.
+    .gitignore, requirements.txt and requirements-dev.txt are named one by
+    one because a suffix list cannot see a file that has no suffix -- and
+    .gitignore carries 38 lines of reader-facing prose, including the
+    docs/charts reasoning this project has already had to correct twice."""
+    found = list(PROSE_FILES)
     for directory in PROSE_DIRS:
         for path in sorted((ROOT / directory).rglob("*")):
             if path.is_file() and path.suffix in PROSE_SUFFIXES:
@@ -1228,12 +1273,41 @@ def _documented_variables() -> set[str]:
     return set(re.findall(r"^#?\s*([A-Z][A-Z0-9_]{2,})=", _read(".env.example"), re.M))
 
 
-def _pipeline_step_env() -> dict:
+def _pipeline_step_env(workflow: str = "evening.yml") -> dict:
+    """The env block of the step that runs the pipeline, in either workflow.
+
+    Found by what the step RUNS rather than by an id, because morning.yml's
+    has none -- and the point of this helper is to answer "what does this
+    workflow hand the pipeline" for whichever workflow a sentence names."""
     import yaml
 
-    evening = yaml.safe_load(_read(".github/workflows/evening.yml"))
-    (step,) = [s for s in evening["jobs"]["scan"]["steps"] if s.get("id") == "pipeline"]
-    return step["env"]
+    doc = yaml.safe_load(_read(f".github/workflows/{workflow}"))
+    (job,) = doc["jobs"].values()
+    (step,) = [s for s in job["steps"] if "python -m src.pipeline" in (s.get("run") or "")]
+    return step.get("env") or {}
+
+
+#: A denial of forwarding, in the wordings a writer reaches for. The first
+#: version knew "not forward" and "not pass" -- the two verbs that happened to
+#: be in the tree -- so "is never forwarded by evening.yml", "does not carry
+#: SCAN_SESSION_DATE into Actions" and "stays on your machine" all passed.
+FORWARD_DENIAL = re.compile(
+    r"\b(?:not|never|no longer|doesn't|don't)\s+(?:\w+\s+){0,2}?"
+    r"(?:forward\w*|pass(?:e[sd])?|carr(?:y|ies|ied)|sends?|sent)\b"
+    r"|\blocal[- ]only\b|\bstays on your machine\b|\bnever leaves your machine\b",
+    re.I)
+
+
+def _denial_target(sentence: str, paragraph: str) -> str:
+    """Which workflow a denial is about. A sentence naming the morning run is
+    judged against morning.yml: "morning.yml does not forward ALPACA_API_KEY,
+    because it never scans" is TRUE, and the first version of this guard
+    turned red on it, because it compared every denial against the evening
+    step's env block."""
+    text = sentence if re.search(r"morning|evening", sentence, re.I) else paragraph
+    if re.search(r"\bmorning\b", text, re.I) and not re.search(r"\bevening\b", text, re.I):
+        return "morning.yml"
+    return "evening.yml"
 
 
 def test_no_document_denies_forwarding_a_variable_the_workflow_forwards():
@@ -1245,92 +1319,206 @@ def test_no_document_denies_forwarding_a_variable_the_workflow_forwards():
     it misled.
 
     The rule is derived, not listed: a sentence that DENIES forwarding may
-    name only variables the pipeline step's env block does not carry, and
-    every such variable must be denied somewhere, so a variable that stops
-    being forwarded and keeps its note fails here too."""
+    name only variables the named workflow's pipeline step does not carry,
+    and every variable the evening step does not carry must be denied
+    somewhere, so a variable that stops being forwarded and keeps its note
+    fails here too.
+
+    Three things the first version could not see, each of them a mutant that
+    survived it: a denial in any wording but its two verbs, a denial in a file
+    outside README and .env.example (this round put its other notes in
+    evening.yml's own comments), and a denial split over two sentences. It
+    reads every prose file, in paragraphs, over a denial vocabulary."""
     documented = _documented_variables()
-    forwarded = set(_pipeline_step_env())
-    local_only = documented - forwarded
+    forwarded = {name: set(_pipeline_step_env(name)) for name in ("evening.yml", "morning.yml")}
+    local_only = documented - forwarded["evening.yml"]
     assert local_only, "the workflow forwards every documented variable; this test has nothing to hold"
 
-    denial = re.compile(r"not\s+(?:forward|pass)", re.I)
-    denied: dict[str, str] = {}
-    for name in ("README.md", ".env.example"):
-        for sentence in _sentences(_read(name)):
-            if not denial.search(sentence):
-                continue
-            for var in documented:
-                if re.search(rf"\b{var}\b", sentence):
-                    denied.setdefault(var, f"{name}: {sentence}")
+    denied: dict[str, dict[str, str]] = {"evening.yml": {}, "morning.yml": {}}
+    for name in _prose_files():
+        for paragraph in _paragraphs(_read(name)):
+            sentences = _sentences(paragraph)
+            for index, sentence in enumerate(sentences):
+                if not FORWARD_DENIAL.search(sentence):
+                    continue
+                named = {v for v in documented if re.search(rf"\b{v}\b", sentence)}
+                if not named and index:
+                    named = {v for v in documented if re.search(rf"\b{v}\b", sentences[index - 1])}
+                target = _denial_target(sentence, paragraph)
+                for var in named:
+                    denied[target].setdefault(var, f"{name}: {sentence}")
 
-    wrong = sorted(set(denied) - local_only)
+    wrong = sorted((flow, var) for flow in denied for var in set(denied[flow]) & forwarded[flow])
     assert not wrong, (
-        "the docs say the evening workflow does not forward "
-        + ", ".join(wrong)
-        + ", and its pipeline step's env block names it: "
-        + " | ".join(denied[v] for v in wrong)
-    )
-    assert set(denied) == local_only, (
-        f"nothing tells a reader that {sorted(local_only - set(denied))} is local-only, "
-        "which is the other half of the same sentence"
-    )
+        "the docs deny forwarding a variable the named workflow's pipeline step carries: "
+        + " | ".join(f"{flow} {var} -- {denied[flow][var]}" for flow, var in wrong))
+    assert set(denied["evening.yml"]) == local_only, (
+        f"nothing tells a reader that {sorted(local_only - set(denied['evening.yml']))} is "
+        "local-only, which is the other half of the same sentence")
+
+
+def _git(*args: str) -> str:
+    """`git` in this repo, or "" where it cannot answer -- no git on PATH, no
+    repository. Both are the same fact for the guards below: no evidence, so
+    nothing to hold the prose against. The FileNotFoundError was a test ERROR
+    for a round, under a docstring promising a skip."""
+    import subprocess
+
+    try:
+        out = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
+    except (FileNotFoundError, OSError):
+        return ""
+    return out.stdout if out.returncode == 0 else ""
 
 
 def _commit_backs() -> list[tuple[int, str]]:
-    """Every commit this repo's own persist step made, oldest first.
+    """Every commit this repo's own persist step made, oldest first, as
+    (unix time, full sha).
 
     Identified by the two things evening.yml sets rather than by a name typed
     here: the author it configures, and the message shape it commits with.
-    Empty on a checkout that cannot answer -- a shallow CI clone, or a fork
-    whose evening run has never published."""
-    import subprocess
-
+    Empty on a checkout that cannot answer -- a shallow clone (which CI is
+    NOT, since tests.yml asks for the whole history), a repo whose history
+    holds no such commit, or a change to that author or message shape. A fork
+    is a full clone and carries the upstream's commit-backs, so it does
+    exercise the guard; an earlier docstring said the opposite."""
     persist = [s for s in __import__("yaml").safe_load(_read(".github/workflows/evening.yml"))
                ["jobs"]["scan"]["steps"] if s.get("name") == "Persist the run"][0]["run"]
     author = re.search(r'git config user\.name\s+"([^"]+)"', persist).group(1)
     prefix = re.search(r'git commit -m "(\w+) \$SESSION"', persist).group(1)
-    out = subprocess.run(["git", "log", "--all", "--format=%ct%x00%an%x00%h%x00%s"],
-                         cwd=ROOT, capture_output=True, text=True)
     found = []
-    for line in out.stdout.splitlines():
-        when, name, short, subject = line.split("\0", 3)
+    for line in _git("log", "--all", "--format=%ct%x00%an%x00%H%x00%s").splitlines():
+        when, name, sha, subject = line.split("\0", 3)
         if name == author and re.fullmatch(rf"{prefix} \d{{4}}-\d\d-\d\d", subject):
-            found.append((int(when), short))
+            found.append((int(when), sha))
     return sorted(found)
+
+
+#: A claim that the persist step has not run, in the present or present
+#: perfect. "had never" and "nothing had reached" are how this file's
+#: retractions describe what WAS true, and they stay legal.
+NEVER_RAN = re.compile(
+    r"\b(?:has|have)\s+(?:still\s+)?never\s+(?:been\s+)?"
+    r"(?:executed|run|ran|fired|committed|reached|happened|worked)\b"
+    r"|\b(?:nothing|no\s+run|no\s+dispatch|no\s+night)\s+has\s+ever\s+"
+    r"(?:been\s+)?(?:executed|run|ran|fired|committed|reached|exercised)\b"
+    r"|\bnever\s+(?:executes|runs|fires)\b"
+    r"|\bwatch the first evening run\b", re.I)
+PERSIST_STEP = re.compile(
+    r"persist step|commit-back|commit back|git add docs|the add, the commit", re.I)
 
 
 def test_the_docs_do_not_say_the_commit_back_has_never_run_once_it_has():
     """`evening.yml`'s persist step -- the one every streak and the whole
     input of the morning run rest on -- had never executed for ten rounds,
-    and three files said so in the present tense. It first ran on 6 Sep 2026
-    and has run on every dispatch since; this repo's own git log is the
-    evidence, so the prose is checked against that rather than against a
-    memory of an Actions page.
+    and three files said so in the present tense. It first ran on 6 Sep 2026;
+    this repo's own git log is the evidence, so the prose is checked against
+    that rather than against a memory of an Actions page.
 
-    Skipped, not passed, on a checkout that holds no such commit: a shallow
-    CI clone is not evidence that the step has never run."""
+    Every prose file is read, not the three that happened to carry the
+    sentence, and the claim is matched as a family rather than as three
+    wordings: "The persist step has never run." and "No run has ever reached
+    the commit-back." both survived the first version, in either of two files
+    it did not open.
+
+    Skipped, not passed, on a checkout that holds no such commit: a clone
+    with no history is not evidence that the step has never run. CI is not
+    that checkout -- tests.yml asks for fetch-depth 0 precisely so this guard
+    has its evidence there."""
     commits = _commit_backs()
     if not commits:
         pytest.skip(
             "no commit made by the persist step is in this checkout, so there is nothing "
-            "to check the prose against -- a shallow CI clone, a fork that has never "
+            "to check the prose against -- a clone with no history, a repo that has never "
             "published, or (the one that would silently disable this) a change to the "
             "author or message shape _commit_backs() derives from evening.yml")
 
     first = commits[0][1]
-    claim = re.compile(r"has (?:still )?never executed|nothing has ever exercised it"
-                       r"|watch the first evening run", re.I)
     stale = []
-    for name in ("README.md", ".github/workflows/evening.yml", "tools/live_check.py"):
-        stale += [f"{name}: {s}" for s in _sentences(_read(name)) if claim.search(s)]
+    for name in _prose_files():
+        stale += [f"{name}: {s}" for s in _sentences(_read(name))
+                  if NEVER_RAN.search(s) and PERSIST_STEP.search(s)]
     assert not stale, (
         f"{len(commits)} commit(s) from the persist step are in this repo's history, the "
-        f"first is {first}, and the docs still say the step has never run: " + " | ".join(stale)
-    )
-    assert first in _read("README.md"), (
-        f"README does not cite {first}, the first commit that step ever made; a claim about "
-        "whether it works should name the commit a reader can go and look at"
-    )
+        f"first is {first[:7]}, and the docs still say the step has never run: "
+        + " | ".join(stale))
+
+    readme = _read("README.md")
+    cited = [tok for tok in re.findall(r"\b[0-9a-f]{7,40}\b", readme) if first.startswith(tok)]
+    assert cited, (
+        f"README does not cite {first[:7]}, the first commit that step ever made; a claim "
+        "about whether it works should name the commit a reader can go and look at. Any "
+        "abbreviation of it counts, because `git log %h` grows with the repo and honours "
+        "core.abbrev -- comparing against one length made a correct README red")
+
+
+
+#: "every dispatch past preflight has committed" -- the universal claim that
+#: replaced "it has never executed". The step exits 0 without committing when
+#: docs/ is unchanged, which is what a re-presentation of an already-published
+#: session does, and run 34018706843 did exactly that seventeen hours before
+#: the sentence was written.
+EVERY_DISPATCH = re.compile(r"every (?:dispatch|run|night|scan)\b", re.I)
+
+
+def test_no_document_says_every_dispatch_commits_while_the_step_can_decline_to():
+    """The persist step's first line after `git add docs` is
+    `git diff --staged --quiet && exit 0`: a run whose docs/ is byte-identical
+    to what is already committed makes no commit and the step still succeeds.
+    So "every dispatch that got past preflight since has committed too" is
+    false by the workflow's own shell, and it is the same universal shape as
+    the "has never executed" sentence it replaced.
+
+    The short-circuit is read out of the workflow, so this rule disappears
+    the day the step stops having it rather than being remembered."""
+    persist = [s for s in __import__("yaml").safe_load(_read(".github/workflows/evening.yml"))
+               ["jobs"]["scan"]["steps"] if s.get("name") == "Persist the run"][0]["run"]
+    assert "git diff --staged --quiet && exit 0" in persist, (
+        "the persist step no longer declines to commit an unchanged docs/; this rule was "
+        "written for the step that does")
+
+    wrong = []
+    for name in _prose_files():
+        for sentence in _sentences(_read(name)):
+            if not EVERY_DISPATCH.search(sentence):
+                continue
+            if not re.search(r"\bcommit(?:s|ted|ting)?\b", sentence, re.I):
+                continue
+            if not (PERSIST_STEP.search(sentence) or re.search(r"preflight", sentence, re.I)):
+                continue
+            if re.search(r"unchanged|no diff|nothing (?:to commit|staged)", sentence, re.I):
+                continue
+            wrong.append(f"{name}: {sentence}")
+    assert not wrong, (
+        "the persist step exits 0 without committing when docs/ is unchanged -- run "
+        "34018706843 re-presented an already-published session and made no commit -- so "
+        "these sentences claim more than the step does: " + " | ".join(wrong))
+
+
+def test_the_ci_checkout_carries_the_history_the_docs_guards_read():
+    """`actions/checkout` clones at depth 1 unless asked otherwise, and the
+    guard above skips on a checkout with no history -- so on the runner, the
+    one place this suite is enforced for everyone, it read nothing, while
+    README called it a check that cannot rot. Reproduced with
+    `git clone --depth 1` before it was fixed: one commit, no commit-back in
+    it, SKIPPED.
+
+    The pytest job asks for the whole history now. The dashboard job does not
+    need it and is not held to it."""
+    import yaml
+
+    tests_workflow = yaml.safe_load(_read(".github/workflows/tests.yml"))
+    (checkout,) = [step for step in tests_workflow["jobs"]["pytest"]["steps"]
+                   if str(step.get("uses", "")).startswith("actions/checkout")]
+    assert (checkout.get("with") or {}).get("fetch-depth") == 0, (
+        "the pytest job checks out at the default depth 1, so "
+        "test_the_docs_do_not_say_the_commit_back_has_never_run_once_it_has skips on every "
+        "CI run and a retracted claim can come back green")
+
+
+NEVER_PUBLISHED = re.compile(
+    r"never published|not published (?:yet|anything)|has not published|hasn't published"
+    r"|before (?:its|the|a|an) first evening run|before an evening run has published", re.I)
 
 
 def test_no_document_calls_the_committed_snapshot_a_fixture_once_a_run_has_replaced_it():
@@ -1340,31 +1528,72 @@ def test_no_document_calls_the_committed_snapshot_a_fixture_once_a_run_has_repla
     a fork's first morning run reads before refusing to mail it, and it no
     longer refuses: it re-presents the upstream owner's last real run.
 
-    The condition is read off the file itself. A sentence may still pair the
+    The condition is read off the file itself. A paragraph may still pair the
     two ideas while docs/data.json is real, but only by naming the case it is
     true of -- a repo that has never published.
 
-    The files are walked rather than listed, because a hand-kept list is a
-    second thing to remember and this rule exists because remembering failed:
-    six files carried the sentence and a list naming five would have passed.
-    tests/ and CLAUDE.md are out on purpose -- both quote retracted sentences
-    as history, including this test's own docstring."""
+    The first version needed the words "fresh clone" AND "fixture" in ONE
+    sentence, and three siblings said the same thing in other words: "the
+    state a fresh clone is in" (of a morning that read no published run),
+    twice, and "it will refuse to read the fixture" in a paragraph about a
+    fresh checkout. The claim is the pre-publication STATE, however it is
+    spelled, and the unit is the paragraph."""
     import json
 
     if json.loads(_read("docs/data.json"))["run"].get("fixture"):
         pytest.skip("docs/data.json still claims to be the fixture; the sentences are true")
 
+    fresh = re.compile(r"fresh clone|fresh checkout|fresh copy of this repo", re.I)
+    prepub = re.compile(
+        r"\bfixture\b|refuses? to read|no published run|\bno snapshot\b"
+        r"|nothing (?:has )?(?:ever )?published|is untracked", re.I)
     wrong = []
     for name in _prose_files():
-        for sentence in _sentences(_read(name)):
-            if "fresh clone" in sentence and "fixture" in sentence \
-                    and "never published" not in sentence:
-                wrong.append(f"{name}: {sentence}")
+        for window in _windows(_read(name)):
+            if fresh.search(window) and prepub.search(window) \
+                    and not NEVER_PUBLISHED.search(window):
+                wrong.append(f"{name}: {window[:240]}")
     assert not wrong, (
-        "docs/data.json is a real run (run.fixture is false), and these sentences say a "
-        "fresh clone holds the fixture. Say which repo that is true of -- one that has "
-        "never published: " + " | ".join(wrong)
-    )
+        "docs/data.json is a real run (run.fixture is false), and these paragraphs put a "
+        "fresh clone in the pre-publication state. Say which repo that is true of -- one "
+        "that has never published: " + " | ".join(wrong))
+
+
+def test_no_document_calls_the_committed_ledger_untracked_once_it_is_tracked():
+    """`docs/ledger.json` was untracked on a fresh clone, so README and
+    .env.example both told a reader to `rm -f docs/ledger.json` before
+    `git checkout -- docs/`, because checkout leaves an untracked file and
+    the first `git pull` after a real commit-back would then refuse to
+    overwrite it. The first commit-back tracked the file -- f0780c7 added it
+    along with data.json -- so `git checkout -- docs/` alone puts both back
+    and the stated mechanism no longer exists.
+
+    Same class as the fixture sentences above and the same evidence rule: ask
+    git, do not remember. Judged per SENTENCE, not per window: the claim and
+    the case it is true of are one clause apart ("the rm is for a repo that
+    has never published, where the ledger is untracked"), and a true sentence
+    beside a false one must not excuse it -- planting the old wording next to
+    the new one is a mutant that survives a window and dies here. Skipped
+    where git cannot answer."""
+    listed = _git("ls-files", "docs/ledger.json").strip()
+    if not listed:
+        pytest.skip("git cannot answer whether docs/ledger.json is tracked in this checkout")
+
+    untracked = re.compile(r"\buntracked\b", re.I)
+    wrong = []
+    for name in _prose_files():
+        for paragraph in _paragraphs(_read(name)):
+            for sentence in _sentences(paragraph):
+                if not re.search(r"\bledger(?:\.json)?\b", sentence, re.I):
+                    continue
+                if not untracked.search(sentence) or NEVER_PUBLISHED.search(sentence):
+                    continue
+                wrong.append(f"{name}: {sentence[:240]}")
+    assert not wrong, (
+        "docs/ledger.json is tracked (git ls-files lists it), so `git checkout -- docs/` "
+        "restores it and nothing is left behind. These sentences still call it untracked "
+        "without naming the repo that is true of -- one that has never published: "
+        + " | ".join(wrong))
 
 
 def test_readme_does_not_deny_the_page_reads_the_record_it_reads():
@@ -1395,3 +1624,18 @@ def test_readme_does_not_deny_the_page_reads_the_record_it_reads():
         "the page reads docs/ledger.json and draws evidence.by_score; README still says "
         "it does not: " + " | ".join(wrong)
     )
+
+    # And when it says what the bands are OVER, it has to say what evidence()
+    # does. The sentence that replaced the retracted one said "every resolved
+    # row", which is wrong in both directions: setup_chains() keys the bands on
+    # the first SCORED appearance of each setup (a pending one is in its band
+    # with an n of zero), and a resolved row the gate refused is in `refused`
+    # and in no band -- the round-4 rule that keeps the control out of the
+    # picks, contradicted two sections above by README's own "taken over
+    # setups, not rows".
+    population = [s for s in _sentences(_read("README.md")) if "by_score" in s]
+    assert population, "README no longer says what by_score is computed over"
+    for sentence in population:
+        assert "setup" in sentence.lower() and not re.search(r"\brows?\b", sentence), (
+            "README has to say what by_score is over, and it is setups -- the first SCORED "
+            "appearance of each -- not rows: " + sentence)

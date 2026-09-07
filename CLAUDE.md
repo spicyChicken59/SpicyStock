@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1139 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1142 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -637,7 +637,7 @@ exercised its headline. Nine mutants across them, all killed.
   and 0.72 once round 5 put a liquidity block on every entry, 13.63 and
   0.97 once round 6 put the open basis on every row and every mean and the
   round-5 audit put the dollar volume on every ledger row, 13.71 and
-  0.99 once round 7 put a benchmark on every run entry, and 14.03 and 1.08
+  0.99 once round 7 put a benchmark on every run entry, and 14.04 and 1.08
   once the rounds 6-7 audit stamped each benchmark with the universe it was
   measured over -- the guard below
   caught every move on the commit that made it. The gzipped figure has
@@ -647,7 +647,10 @@ exercised its headline. Nine mutants across them, all killed.
   -- real rows from the generated history, real row counts from the canonical
   one-night fixture, and `src.ledger`'s own writer, because `indent=2` is most
   of the raw size and a compact estimate is not the file a browser fetches --
-  and `tests/test_docs_are_true.py` asserts README against what it prints.
+  and `tests/test_docs_are_true.py` asserts README against what it prints --
+  and, since round 10's prose audit, `docs/index.html` too, which quoted 0.6 MB
+  in the two comments that ARGUE the fetch-on-demand design while README was
+  swept twice beside them: one number in three places needed one assertion.
   Two estimates disagreed by a factor of two on the way here (968 B/row scaled,
   against per-row-type sums at compact separators); building the actual file is
   what settled it, which is this file's own rule about argued findings.
@@ -693,8 +696,10 @@ exercised its headline. Nine mutants across them, all killed.
   second; assume there is a third.**
 
   **And `evening.yml`'s commit-back has still never executed** (written before
-  6 Sep 2026; it executed that day, run 34014332161, commit f0780c7, and every
-  dispatch since -- round 9 below) — nor has the
+  6 Sep 2026; it executed that day, run 34014332161, commit f0780c7, and twice
+  more the same day -- round 9 below, and round 10's prose audit for the
+  dispatch that passed preflight and committed nothing because docs/ was
+  unchanged) — nor has the
   step it lives in. Every streak, and the morning run's entire input, rest on
   it; the `git add` bug that would have voided it is fixed and guarded by a
   test. But read from the Actions API: `evening.yml` had fired SIX times when
@@ -713,8 +718,12 @@ exercised its headline. Nine mutants across them, all killed.
   was traced with `bash -ex` against a stub `git` — three attempts really
   happen now, where the old loop aborted after one — but that is a simulation,
   and it still is: the step has run since (6 Sep 2026, commit f0780c7, and
-  every dispatch past preflight after it), while no push has yet been rejected,
-  so the retry loop is the one half nothing has exercised.
+  two more commits that day), while no push has yet been rejected, so the retry
+  loop is the one half nothing has exercised. It has run WITHOUT committing
+  too, which the round-10 prose audit found README and the workflow both
+  claiming otherwise: `git diff --staged --quiet && exit 0` is the step's own
+  first branch, and run 34018706843 re-presented an already-published session,
+  left docs/ byte-identical and exited 0 with nothing staged.
 
   **One judgement about the calendar, written down once.** The morning email's
   staleness band needs to know whether a market closure could explain nothing
@@ -905,6 +914,48 @@ is the test the audit named: it ran on a mail with no rows, so neither the
 footnote nor a streak line existed to carry the phrases it forbade, and its
 page half grepped a column header out of `docs/index.html`'s own source --
 the "asserting the page's own source" shape. It renders a row now.
+
+**The prose audit: a retracted universal claim was replaced by another one,
+and the guards that were meant to stop that read the wordings that happened to
+be in the tree.** Three auditors, fourteen findings and seven lows, every one
+reproduced HERE by execution. The sentence "every dispatch that got past
+preflight since has committed too" (README and `evening.yml`) was false
+seventeen hours before it was written: run 34018706843 passed preflight,
+re-presented the already-published 4 Sep session, mailed it, exited 2 -- and
+the persist step ran, found `docs/` byte-identical and exited 0 at
+`git diff --staged --quiet` with nothing to commit. Three commits exist,
+`f0780c7`, `932ec58` and `369c695`, all on 6 Sep; both surfaces say that and
+the no-diff branch now, and a guard reads the short-circuit out of the workflow
+and refuses the universal claim while the step still has it.
+
+The same round's other two guards were pinned to a phrase rather than a claim.
+"On a fresh clone that is the fixture" was swept in six files under a test
+requiring "fresh clone" AND "fixture" in ONE sentence -- so "the state a fresh
+clone is in" (README's three-states paragraph and `follow_through()`'s comment,
+of a morning with NO SNAPSHOT) and "it will refuse to read the fixture" (README's
+"Run locally") all survived it, and a fresh clone of this repo refuses nothing:
+driven on a real clone, `morning --dry-run` follows through on 2026-09-04 and
+exits 0. Both guards read every prose file in windows of three sentences now,
+over a family of wordings, and each of the auditors' mutants dies. `.gitignore`
+and the requirements files joined `_prose_files()`, which had been claiming to
+walk "every file that carries prose" while a suffix list cannot see a file with
+no suffix -- and `.gitignore` was carrying the retracted "the persist step was
+aborting before its commit on every run", as was `src/pipeline.py`.
+
+Three more of the same class, each checked against git rather than remembered:
+`docs/ledger.json` has been tracked since `f0780c7` added it, so "on a fresh
+clone the ledger is untracked" (README, `.env.example`, this file) is false and
+`git checkout -- docs/` alone restores both files; the commit-back guard was
+SKIPPED on every CI run, because `actions/checkout` clones at depth 1 and
+`tests.yml` asked for nothing else, under a README sentence calling it a check
+that cannot rot (`fetch-depth: 0` now, asserted); and `docs/index.html` argued
+its whole fetch-on-demand design from "~0.6 MB gzipped" in two comments while
+the measured figure is 1.08 and README was swept twice beside it. Twenty-three
+mutants over the new guards, twenty killed; two survivors were shaped
+assertions closed on the spot (a window that let a true sentence beside a false
+one excuse it; a by_score check any sentence containing "setup" satisfied), and
+the third is not a hole -- `CLAUDE_MODEL`'s local-only note is stated twice, and
+deleting BOTH turns the completeness half red.
 
 ## Round 9 — the ten items the rounds 6-7 audit left open, and what working them turned up
 
@@ -1705,8 +1756,11 @@ other run — one row per name, no marker — and the next real run on another
 session read it as history: streaks starting on a night that scanned nothing,
 scored rows counted as setups in the evidence, and `git add docs` committing
 the lot. README said `git checkout docs/data.json` put everything back; it
-never touched the ledger, which on a fresh clone is untracked, so the first
-`git pull` after `evening.yml` commits a real one refuses to overwrite it.
+never touched the ledger, which was untracked in every checkout until the
+first commit-back added it on 6 Sep 2026, so the first `git pull` after
+`evening.yml` committed a real one would have refused to overwrite it. (It is
+tracked now, and `git checkout -- docs/` restores both files; a repo that has
+never published is the case the `rm` is still for.)
 Every run entry carries its `universe` now, in the ledger and in the page's
 runs table, and README says how to put both files back. The row is still
 written — the whole test suite and `tools/make_history.py` drive the pipeline

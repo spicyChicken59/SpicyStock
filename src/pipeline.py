@@ -212,8 +212,9 @@ def unscored_reason(lynch: dict) -> str:
 #:
 #:   Size. A chart is ~57 KB and a night renders up to MAX_TO_SCORE of them —
 #:   about 360 MB a year of history that does not delta-compress and cannot be
-#:   removed after the fact. Nothing had ever been committed only because the
-#:   persist step was aborting before its commit on every run.
+#:   removed after the fact. Nothing had been committed there before 6 Sep
+#:   2026 because the persist step had never run at all; since it does, this
+#:   rule is what keeps them out.
 #:
 #:   A chart here cannot say which session drew it. One file per ticker,
 #:   overwritten by every evening run, with the session nowhere in the name or
@@ -1385,9 +1386,11 @@ def follow_through(mode: Mode, dry_run: bool = False,
         session=session,
         # Only when the run being read actually reported them. With no
         # snapshot -- the state every morning was in until evening.yml's
-        # commit-back first succeeded, and the state a fresh clone is in --
-        # these were 0 and 0, and the funnel printed "4% bursts that session:
-        # 0 | Passed 2LYNCH gate: 0" under a session it called "not recorded":
+        # commit-back first succeeded on 6 Sep 2026, and the state a repo that
+        # has never published is in; a fresh clone of this one reads the run
+        # that commit-back left -- these were 0 and 0, and the funnel printed
+        # "4% bursts that session: 0 | Passed 2LYNCH gate: 0" under a session
+        # it called "not recorded":
         # two invented market counts three lines above a cell saying this is
         # not a statement about the market.
         # PRESENT OR NOT AT ALL, never a default: `.get(key, 0)` applies only
