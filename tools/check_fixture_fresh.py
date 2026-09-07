@@ -11,9 +11,10 @@ TWO FIXTURES, AND A COPY. The canonical one-night fixture is
 tests/fixtures/data.json, guarded here against tools/make_fixture.py; the
 thirty-run history is tests/fixtures/history/, guarded against
 tools/make_history.py, which drives the real pipeline and is byte-deterministic
-for exactly this reason. docs/data.json is whatever
-the last run wrote: the same fixture, byte for byte, on a fresh clone -- and
-last night's real run once evening.yml has committed one back. Until 3.1 this
+for exactly this reason. docs/data.json is whatever the last run wrote: a copy
+of the canonical fixture, byte for byte, only while nothing has published, and
+the run evening.yml last committed back after that -- which here it has, since
+6 Sep 2026. Until 3.1 this
 script compared docs/data.json itself to the generator, which made the first
 successful commit-back turn CI red on the next push, permanently, for the crime
 of the pipeline working. A guard that has to be defeated to ship is worse than

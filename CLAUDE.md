@@ -24,7 +24,7 @@ Known scheduled falsifications:
 | ~~Step 4 replaces the 5,000,000-share floor~~ done | ~~`.env.example`'s absolute-floor note, README's Layer-1 filter description and Costs volume numbers~~ all swept |
 | ~~Step 5 makes failures loud~~ done | ~~`.env.example`'s "these fail in three different ways" block~~ swept |
 | ~~Step 6 fixes the test suite~~ done | ~~the `detect_burst` comment in `.gitignore`, the broken-test note in README~~ swept |
-| ~~Step 9 emits `docs/data.json`~~ done | ~~the "hand-authored fixture" caveat in README's dashboard section~~ swept — the committed copy is still the fixture and says so in `run.fixture`; the pipeline writes the real one |
+| ~~Step 9 emits `docs/data.json`~~ done | ~~the "hand-authored fixture" caveat in README's dashboard section~~ swept — and then falsified by the thing it was waiting for: the committed copy has been a real run since 6 Sep 2026 (`run.fixture` false), so six files saying "on a fresh clone that is the fixture" went stale on one commit and were swept in round 10, under a test that reads the flag off `docs/data.json` |
 | ~~The first commit-back replaces `docs/data.json` with a real run~~ swept before it happened (3.1) | ~~`check_fixture_fresh.py` compared `docs/data.json` to the generator, so the pipeline working would have turned CI red on the next push; README's "regenerate … `docs/data.json`" and "pinned to the fixture" smoke-test section~~ — the canonical fixture is `tests/fixtures/data.json` now, `docs/data.json` is whatever the last run wrote, and the guard only checks a `docs/` copy that still *claims* to be the fixture |
 | ~~`evening.yml` keeps `docs/` between runs~~ done in step 9 | ~~README's "Does the history actually accumulate?" section and the stale `charts/` path in that workflow's upload step~~ both swept; step 10 added why that commit-back now also feeds the morning run and every streak |
 | ~~Step 10 makes the mode mean something and reads the ledger back~~ done | ~~README's "morning has no workflow and no distinct behaviour" note, the workflow inventory, `.env.example`'s required-variable list~~ all swept; `morning.yml` now exists |
@@ -120,7 +120,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1135 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1139 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -430,9 +430,13 @@ exercised its headline. Nine mutants across them, all killed.
   of the missing secrets are what mailing needs, and it says so.
   **It needs the six repository secrets set (README, "One-time setup"); no
   amount of further work in this repo can do it.** Until then
-  `docs/ledger.json` will never exist, the forward returns cannot be measured,
-  the page's evidence block stays empty and correct, and the morning run has
-  nothing to follow through on.
+  `docs/ledger.json` would never exist, the forward returns could not be
+  measured, the page's evidence block stayed empty and correct, and the morning
+  run had nothing to follow through on. (Written on 4 Sep and true until the
+  6th: the last three secrets went in that day, `docs/ledger.json` exists on
+  this branch with one run in it, and this paragraph is history rather than
+  the state of the repo -- kept because the composition rule it demonstrates
+  is not.)
 
   **Two of the six are in now.** Read off the Actions log for the owner's
   manual dispatch of `evening.yml` on 5 Sep at 11:42 UTC (run 10, on the
@@ -707,8 +711,10 @@ exercised its headline. Nine mutants across them, all killed.
   the invented nightly failure was not, which is the difference this file's own
   "verification is by execution" rule exists to keep. The push-and-rebase loop
   was traced with `bash -ex` against a stub `git` — three attempts really
-  happen now, where the old loop aborted after one — but that is a simulation.
-  Watch the first evening run that gets past preflight.
+  happen now, where the old loop aborted after one — but that is a simulation,
+  and it still is: the step has run since (6 Sep 2026, commit f0780c7, and
+  every dispatch past preflight after it), while no push has yet been rejected,
+  so the retry loop is the one half nothing has exercised.
 
   **One judgement about the calendar, written down once.** The morning email's
   staleness band needs to know whether a market closure could explain nothing

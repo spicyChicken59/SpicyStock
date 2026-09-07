@@ -21,8 +21,9 @@
 // disk, and every other host is answered with an empty body.
 //
 // THREE DATA SOURCES, ONE PAGE. docs/data.json is whatever the last run wrote
-// -- the fixture on a fresh clone, last night's real run once evening.yml has
-// committed one back -- so the checks that know the fixture's contents (25
+// -- the run evening.yml last committed back, real here since 6 Sep 2026, and
+// the fixture only while nothing has published -- so the checks that know the
+// fixture's contents (25
 // scored, a fallback on the shortlist, chart paths that 404) cannot run against
 // it: the first real run would have failed a dozen of them and thrown in two.
 // They run against the canonical fixture instead, served under /f/fixture/;

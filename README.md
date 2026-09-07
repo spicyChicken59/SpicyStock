@@ -367,8 +367,8 @@ Claude honours `cache_control` and whether the cache actually hits on a second
 call, and whether Resend accepts `RESEND_FROM`. Every check is exercised offline
 in `tests/test_live_check.py`, including the one where `--no-spend` must NOT
 print READY over boundaries it never tried. The one thing it cannot try is the
-commit-back push, which only Actions can run: watch the first evening run's
-"Persist the run" step for that.
+commit-back push, which only Actions can run — and Actions has, since 6 Sep
+2026; see "Does the history actually accumulate?" below.
 
 Both pipeline workflows then fire on weekdays and can be triggered manually
 from the Actions tab. `morning.yml` is passed only the three delivery secrets,
@@ -387,7 +387,12 @@ because the follow-through pass runs neither the scanner nor the scorer and
 > `morning.yml` depends on `evening.yml` having committed `docs/` back — see
 > "Does the history actually accumulate?" below. On a repo where that has never
 > happened it finds the hand-authored fixture, refuses it by name and mails a
-> degraded notice rather than a watchlist of invented tickers.
+> degraded notice rather than a watchlist of invented tickers. That is no
+> longer this repo's state, and a fork inherits the difference: its first
+> morning run reads the last run **this** branch committed — a real scan, so
+> nothing refuses it — and follows through on someone else's night until the
+> fork's own evening run publishes one. Pin `SCAN_SESSION_DATE` and run an
+> evening first if that matters.
 >
 > An older `SETUP.md` walked through a Gmail OAuth flow this code no longer
 > uses; it was removed rather than annotated, since following it minted
@@ -427,14 +432,15 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1135 tests, no network or API keys needed
+pytest tests/                   # 1139 tests, no network or API keys needed
 ```
 
 Every **evening** run — `--dry-run` included, since `--dry-run` skips only the
 email — rewrites `docs/data.json`, updates `docs/ledger.json` and writes PNGs
 into `docs/charts/`. A four-ticker smoke test therefore replaces whatever
-`docs/data.json` held with a four-ticker run — the hand-authored fixture on a
-fresh clone, last night's real run once `evening.yml` has committed one back.
+`docs/data.json` held with a four-ticker run — the run `evening.yml` last
+committed back, which here is a real one, and the hand-authored fixture only in
+a repo that has never published.
 `docs/ledger.json` gains a run too — one row per named ticker, marked with the
 universe it scanned (`runs[].universe` says `named on the command line`) so the
 record can tell it from a real night, but a row all the same: the next evening
@@ -464,15 +470,17 @@ from a checkout that has just run the pipeline and the same slots fill in. A
 chart is ~57 KB and a night renders up to 25 of them: committing them is about
 360 MB a year of history that does not delta-compress and cannot be taken back
 out, and one file per ticker with no session in it cannot prove which run drew
-it anyway. `docs/data.json` is whatever the last run wrote. On a fresh clone
-that is the hand-authored fixture — a byte-for-byte copy of
-`tests/fixtures/data.json`, which `tools/make_fixture.py` generates — and it
-says so in its own `run.fixture: true`, which is what raises the "sample data"
-banner at the top of the page. The first evening run `evening.yml` commits back
-replaces it with a real run, `run.fixture` goes `false`, and the banner
-disappears; nothing in CI expects the file to stay a fixture, because a guard
-that has to be defeated to ship is worse than none. The canonical fixture stays
-at `tests/fixtures/data.json`, where `tools/check_fixture_fresh.py` guards it
+it anyway. `docs/data.json` is whatever the last run wrote, and on a fresh clone
+of this repo that is the 4 Sep 2026 scan `evening.yml` committed back on 6 Sep
+2026 — a real run, no banner. In a repo that has never published it is instead
+the hand-authored fixture the tree shipped with, a byte-for-byte copy of
+`tests/fixtures/data.json`, which `tools/make_fixture.py` generates, and it says
+so in its own `run.fixture: true`, which is what raises the "sample data" banner
+at the top of the page. The first evening run `evening.yml` commits back
+replaces it, `run.fixture` goes `false`, and the banner disappears; nothing in
+CI expects the file to stay a fixture, because a guard that has to be defeated
+to ship is worse than none. The canonical fixture stays at
+`tests/fixtures/data.json`, where `tools/check_fixture_fresh.py` guards it
 against its generator — and, for as long as `docs/data.json` still claims to be
 the fixture, guards that copy against the canonical one.
 
@@ -830,11 +838,17 @@ scans, scores and writes its record — into the run's artifact, named
 click at lunch, and how a request whose window reaches past the clock was
 tried before the first scheduled evening asked for one.
 
-That is also the only way the dashboard's score-against-outcome plot can carry a
-point today: on a normal evening run, tonight's candidates are pending by
-construction, and the next run replaces the snapshot rather than filling it in.
-Plotting resolved outcomes across runs needs the page to read `ledger.json`,
-which is a change to `docs/index.html` and not part of this step.
+A backfill is also how the dashboard's score-against-outcome bands gain
+resolved points before a week has passed: on a normal evening run tonight's
+candidates are pending by construction, and it is the NEXT runs that fill their
+horizons in. The bands themselves need no backfill and no change to the page —
+`evidence()` computes `by_score` over every resolved row in `docs/ledger.json`
+at write time, and the page draws what the file carries, fetching `ledger.json`
+itself only for the per-name view. This paragraph told a reader the opposite
+for two rounds — that a backfill was the only way a point could ever appear,
+and that plotting outcomes across runs would take a change to the page nobody
+had made. Step 11 was that change, and the guard on this sentence reads both
+halves off the code rather than trusting the next reader to notice.
 
 ### Does the history actually accumulate?
 
@@ -878,17 +892,22 @@ git pull --rebase ...` now, with a conflicting rebase aborted and named rather
 than left half-applied. Traced with `bash -ex` against a stub `git`, which is
 how the `git add` bug below was found too.
 
-**Nothing has ever exercised it, and not for the reason this paragraph used
-to give.** The `git add` fix is real and a test now guards it. But no run has
-reached the push, or the add, or the commit-back step at all: `evening.yml`
-has fired six times, every one of them scheduled — three no-ops from the DST
-guard and three that died in preflight for want of secrets — and a failed
-pipeline step skips the persist step entirely. This said "every run before it
-aborted at the add", which describes something that has never happened once.
-The bug was real in the code and it was fixed before that code was ever the
-tip of `main`; the nightly failure it supposedly caused is invented. Streaks
-and the whole input of the morning run rest on this step working, so the first
-evening run that gets past preflight is worth watching in the Actions log.
+**It has run, and this paragraph said for ten rounds that it never had.**
+The first time was 6 Sep 2026 — Actions run 34014332161, commit `f0780c7`,
+message `run 2026-09-04` — and every dispatch that got past preflight since has
+committed too; `git log --author=spicystock` is the list, and a docs test reads
+it back against these sentences so this cannot rot again. What was true when
+this was written, and stayed true for ten rounds, is that nothing had reached
+the add, the commit or the push: `evening.yml` had fired six times, every one
+of them scheduled — three no-ops from the DST guard and three that died in
+preflight for want of secrets — and a failed pipeline step skips the persist
+step entirely. An earlier version of the same paragraph said instead that
+"every run before it aborted at the `git add`", which described something that
+had never happened once: the bug was real in the code and was fixed before that
+code was ever the tip of `main`, and the nightly failure it supposedly caused
+was invented. **One half of the step is still only traced against a stub**: no
+push has been rejected yet, so the rebase-and-retry loop below has never run for
+real.
 
 Since step 10 that commit-back carries a second job: it is what the 8:30 AM
 follow-through reads, and it is what makes a streak possible at all. Remove it
@@ -1099,6 +1118,6 @@ against a hand-made `data.json` and agree, but that check is not committed.
   The ledger is the dataset the AI rankings were always meant to be checked
   against — the Phase-2 item in the original doc — and reading it is how you
   find out whether the score predicts anything. See "Does the history actually
-  accumulate?" above for how it survives a CI container — and for the one thing
-  about that step nothing has ever exercised.
+  accumulate?" above for how it survives a CI container — and for the one half
+  of that step nothing has exercised yet.
 - Output is screening for human review, not trading advice.

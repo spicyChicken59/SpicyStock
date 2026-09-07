@@ -1192,3 +1192,206 @@ def test_the_documented_stopped_printing_numbers_are_the_ones_the_code_applies()
     assert said and int(said.group(1)) == STOPPED_PRINTING_SESSIONS, said and said.group(0)
     cap = re.search(r"at most (\d+) named", readme)
     assert cap and int(cap.group(1)) == STOPPED_PRINTING_MAX, cap and cap.group(0)
+
+
+# --- prose against the state the repo is actually in -------------------------
+# Four sentences in these files described a repo that stopped existing on
+# 6 Sep 2026, the first day a scheduled artifact of this pipeline reached the
+# branch. Each is checkable against something the tree can be asked -- the
+# workflow's own env block, this repo's git log, docs/data.json's own flag, the
+# page's own fetch -- so each is asked here rather than remembered.
+
+def _sentences(text: str) -> list[str]:
+    """Whitespace-collapsed sentences. Comment markers are stripped so a
+    claim reads the same whether it lives in Markdown, YAML or a docstring."""
+    flat = " ".join(re.sub(r"^\s*(?:#+|//|\*)\s?", "", line) for line in text.splitlines())
+    return re.split(r"(?<=[.!?])\s+", " ".join(flat.split()))
+
+
+PROSE_DIRS = ("src", "tools", ".github/workflows", "knowledge", "data")
+PROSE_SUFFIXES = {".py", ".mjs", ".yml", ".yaml", ".md", ".txt", ".html"}
+
+
+def _prose_files() -> list[str]:
+    """Every file in this repo that carries prose a reader might believe,
+    minus the two that quote retracted sentences on purpose (tests/ and
+    CLAUDE.md) and minus the data files under docs/."""
+    found = ["README.md", ".env.example", "docs/index.html"]
+    for directory in PROSE_DIRS:
+        for path in sorted((ROOT / directory).rglob("*")):
+            if path.is_file() and path.suffix in PROSE_SUFFIXES:
+                found.append(str(path.relative_to(ROOT)))
+    return found
+
+
+def _documented_variables() -> set[str]:
+    return set(re.findall(r"^#?\s*([A-Z][A-Z0-9_]{2,})=", _read(".env.example"), re.M))
+
+
+def _pipeline_step_env() -> dict:
+    import yaml
+
+    evening = yaml.safe_load(_read(".github/workflows/evening.yml"))
+    (step,) = [s for s in evening["jobs"]["scan"]["steps"] if s.get("id") == "pipeline"]
+    return step["env"]
+
+
+def test_no_document_denies_forwarding_a_variable_the_workflow_forwards():
+    """.env.example told a reader three times that SCAN_SESSION_DATE is
+    local-only -- in its header, beside CLAUDE_MODEL and beside SCAN_FEED --
+    while a fourth sentence in the same file, and the workflow's own env
+    block, said evening.yml forwards it from the Run-workflow form. A reader
+    backfilling from Actions is the one who needs that sentence and the one
+    it misled.
+
+    The rule is derived, not listed: a sentence that DENIES forwarding may
+    name only variables the pipeline step's env block does not carry, and
+    every such variable must be denied somewhere, so a variable that stops
+    being forwarded and keeps its note fails here too."""
+    documented = _documented_variables()
+    forwarded = set(_pipeline_step_env())
+    local_only = documented - forwarded
+    assert local_only, "the workflow forwards every documented variable; this test has nothing to hold"
+
+    denial = re.compile(r"not\s+(?:forward|pass)", re.I)
+    denied: dict[str, str] = {}
+    for name in ("README.md", ".env.example"):
+        for sentence in _sentences(_read(name)):
+            if not denial.search(sentence):
+                continue
+            for var in documented:
+                if re.search(rf"\b{var}\b", sentence):
+                    denied.setdefault(var, f"{name}: {sentence}")
+
+    wrong = sorted(set(denied) - local_only)
+    assert not wrong, (
+        "the docs say the evening workflow does not forward "
+        + ", ".join(wrong)
+        + ", and its pipeline step's env block names it: "
+        + " | ".join(denied[v] for v in wrong)
+    )
+    assert set(denied) == local_only, (
+        f"nothing tells a reader that {sorted(local_only - set(denied))} is local-only, "
+        "which is the other half of the same sentence"
+    )
+
+
+def _commit_backs() -> list[tuple[int, str]]:
+    """Every commit this repo's own persist step made, oldest first.
+
+    Identified by the two things evening.yml sets rather than by a name typed
+    here: the author it configures, and the message shape it commits with.
+    Empty on a checkout that cannot answer -- a shallow CI clone, or a fork
+    whose evening run has never published."""
+    import subprocess
+
+    persist = [s for s in __import__("yaml").safe_load(_read(".github/workflows/evening.yml"))
+               ["jobs"]["scan"]["steps"] if s.get("name") == "Persist the run"][0]["run"]
+    author = re.search(r'git config user\.name\s+"([^"]+)"', persist).group(1)
+    prefix = re.search(r'git commit -m "(\w+) \$SESSION"', persist).group(1)
+    out = subprocess.run(["git", "log", "--all", "--format=%ct%x00%an%x00%h%x00%s"],
+                         cwd=ROOT, capture_output=True, text=True)
+    found = []
+    for line in out.stdout.splitlines():
+        when, name, short, subject = line.split("\0", 3)
+        if name == author and re.fullmatch(rf"{prefix} \d{{4}}-\d\d-\d\d", subject):
+            found.append((int(when), short))
+    return sorted(found)
+
+
+def test_the_docs_do_not_say_the_commit_back_has_never_run_once_it_has():
+    """`evening.yml`'s persist step -- the one every streak and the whole
+    input of the morning run rest on -- had never executed for ten rounds,
+    and three files said so in the present tense. It first ran on 6 Sep 2026
+    and has run on every dispatch since; this repo's own git log is the
+    evidence, so the prose is checked against that rather than against a
+    memory of an Actions page.
+
+    Skipped, not passed, on a checkout that holds no such commit: a shallow
+    CI clone is not evidence that the step has never run."""
+    commits = _commit_backs()
+    if not commits:
+        pytest.skip(
+            "no commit made by the persist step is in this checkout, so there is nothing "
+            "to check the prose against -- a shallow CI clone, a fork that has never "
+            "published, or (the one that would silently disable this) a change to the "
+            "author or message shape _commit_backs() derives from evening.yml")
+
+    first = commits[0][1]
+    claim = re.compile(r"has (?:still )?never executed|nothing has ever exercised it"
+                       r"|watch the first evening run", re.I)
+    stale = []
+    for name in ("README.md", ".github/workflows/evening.yml", "tools/live_check.py"):
+        stale += [f"{name}: {s}" for s in _sentences(_read(name)) if claim.search(s)]
+    assert not stale, (
+        f"{len(commits)} commit(s) from the persist step are in this repo's history, the "
+        f"first is {first}, and the docs still say the step has never run: " + " | ".join(stale)
+    )
+    assert first in _read("README.md"), (
+        f"README does not cite {first}, the first commit that step ever made; a claim about "
+        "whether it works should name the commit a reader can go and look at"
+    )
+
+
+def test_no_document_calls_the_committed_snapshot_a_fixture_once_a_run_has_replaced_it():
+    """docs/data.json was a byte-for-byte copy of tests/fixtures/data.json
+    until the first commit-back replaced it with the 4 Sep run. Six files
+    still told a reader that a fresh clone holds the fixture -- which is what
+    a fork's first morning run reads before refusing to mail it, and it no
+    longer refuses: it re-presents the upstream owner's last real run.
+
+    The condition is read off the file itself. A sentence may still pair the
+    two ideas while docs/data.json is real, but only by naming the case it is
+    true of -- a repo that has never published.
+
+    The files are walked rather than listed, because a hand-kept list is a
+    second thing to remember and this rule exists because remembering failed:
+    six files carried the sentence and a list naming five would have passed.
+    tests/ and CLAUDE.md are out on purpose -- both quote retracted sentences
+    as history, including this test's own docstring."""
+    import json
+
+    if json.loads(_read("docs/data.json"))["run"].get("fixture"):
+        pytest.skip("docs/data.json still claims to be the fixture; the sentences are true")
+
+    wrong = []
+    for name in _prose_files():
+        for sentence in _sentences(_read(name)):
+            if "fresh clone" in sentence and "fixture" in sentence \
+                    and "never published" not in sentence:
+                wrong.append(f"{name}: {sentence}")
+    assert not wrong, (
+        "docs/data.json is a real run (run.fixture is false), and these sentences say a "
+        "fresh clone holds the fixture. Say which repo that is true of -- one that has "
+        "never published: " + " | ".join(wrong)
+    )
+
+
+def test_readme_does_not_deny_the_page_reads_the_record_it_reads():
+    """README's "Seeding a history" paragraph said a backfill is the only way
+    the score-against-outcome plot can carry a point, and that plotting
+    resolved outcomes needs the page to read ledger.json, "which is a change
+    to docs/index.html and not part of this step". Both stopped being true at
+    step 11: evidence() publishes by_score over every resolved row in the
+    record, the page draws it, and it fetches ledger.json for the per-name
+    view. Both halves are read off the code here.
+
+    A consequence worth knowing: this cannot tell a claim from a QUOTE of a
+    retracted one, so a retraction in this file's usual style ("it said X for
+    a round") has to paraphrase rather than reproduce the sentence. That is
+    the cost of a guard that reads prose, and it is cheaper than the sentence
+    coming back."""
+    from src import ledger
+
+    assert "by_score" in ledger.evidence([]), "evidence() no longer publishes by_score"
+    page = _read("docs/index.html")
+    assert "ev.by_score" in page, "the page no longer draws the score bands"
+    assert "fetch('ledger.json'" in page, "the page no longer fetches the record"
+
+    denial = re.compile(r"not part of this step|needs the page to read|cannot plot", re.I)
+    wrong = [s for s in _sentences(_read("README.md"))
+             if denial.search(s) and ("ledger.json" in s or "index.html" in s)]
+    assert not wrong, (
+        "the page reads docs/ledger.json and draws evidence.by_score; README still says "
+        "it does not: " + " | ".join(wrong)
+    )
