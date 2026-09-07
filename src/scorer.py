@@ -3,8 +3,9 @@ Layers 3-4 — Chart rendering + Claude scoring engine.
 (Layer 5 is the archive, and it lives in src/ledger.py.)
 
 For each surviving candidate, we render a 4-month daily candlestick chart,
-send it to Claude together with the numeric metrics and the 2LYNCH results,
-and get back a structured score (0-10), a one-sentence reason, and a verdict.
+send it to Claude together with the numeric metrics, the 2LYNCH results and
+what the RECORD already knows about the name (record_context), and get back a
+structured score (0-10), a one-sentence reason, and a verdict.
 
 The knowledge base (knowledge/strategy.md) is injected as the system prompt,
 so the model is scoring against Stockbee/Qullamaggie rules — not vibes.
@@ -25,9 +26,13 @@ and honestly: it does not remove it. `temperature=0` never guaranteed identical
 outputs on any model, and on Opus 4.7+/Sonnet 5/Opus 5 the parameter is
 rejected outright, so a run under those models has no determinism lever at all.
 What IS guaranteed is that nothing on OUR side of the request varies between
-two runs over the same candidate — the metrics block is serialised with sorted
-keys, carries no clock, and the request kwargs are built by one function
-(`request_kwargs()`) that a test can read.
+two runs over the same candidate GIVEN THE SAME RECORD — the metrics block is
+serialised with sorted keys, carries no clock, and the request kwargs are built
+by one function (`request_kwargs()`) that a test can read. The record is the
+qualification: the block record_context() carries is read off docs/ledger.json,
+and streak() excludes appearances on the session itself so a re-scan is stable,
+but a backfill of an OLDER session landing between two runs of the same one
+changes what the file says and therefore what the request carries.
 
 *Parseable.* The reply used to be sliced between the first `{` and the last
 `}` and handed to `json.loads`, which raises on a truncated object, on trailing
@@ -65,7 +70,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from .ledger import streak_day
+from .ledger import NO_STREAK_RECORDED, UNCOUNTED_UNKNOWNS, streak_day
+from .lynch import graded_bar_at
 
 log = logging.getLogger(__name__)
 
@@ -157,12 +163,52 @@ class ScoreFormatError(ValueError):
 
 # ---------------------------------------------------------------- charts ----
 def render_chart(ticker: str, df: pd.DataFrame, out_dir: str = "charts") -> str:
-    """Render a daily candlestick + volume chart (last ~85 sessions) to PNG."""
+    """Render a daily candlestick + volume chart (last ~85 sessions) to PNG.
+
+    A bar missing one of O, H, L or C is BLANKED and kept, so one hole is a
+    gap in the picture rather than no picture -- and rather than a splice.
+    mplfinance refuses a frame whose four price columns do not share their
+    missing rows -- "O,H,L,C must have the same amount of missing data!",
+    reproduced on each of the four -- and src.pipeline catches that, records
+    `chart_seen` false and scores the candidate on the numbers alone, which
+    knowledge/strategy.md tells the model to trust LESS than the picture. One
+    unreadable bar in eighty-five is not a reason to show none.
+
+    BLANKED RATHER THAN DROPPED, and that is the whole of the word "gap".
+    Dropping the row satisfies the same rule, and nothing then asks the plot
+    to keep a slot for a date it was not given: rendered under one ticker,
+    the chart of a frame with a holed bar came out BYTE-IDENTICAL to the
+    chart of a frame in which that session had been deleted, so the picture
+    could not tell a hole from a session that never happened -- on the
+    surface the rulebook tells the model to trust when it disagrees with the
+    numbers. All four price columns NaN on that row is what mplfinance's
+    equal-missing rule wants, and it leaves the slot empty.
+
+    Eighty-five READABLE sessions, so a night with holes shows as many
+    candles as a clean one and the holes sit between them. Volume is
+    deliberately not in the blanking set: a NaN there renders, checked rather
+    than assumed, and the volume panel is the half a reader can still read
+    across a hole. The picture ends where the CHECKLIST's burst is
+    (graded_bar_at), which is the one thing the blanking set leaves open --
+    a newest bar with prices and no volume would otherwise draw a candle for
+    a session `H` is not grading and no number in the request describes.
+    """
     import mplfinance as mpf
+    import numpy as np
 
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     path = str(Path(out_dir) / f"{ticker}.png")
-    plot_df = df.iloc[-85:].copy()
+    graded = graded_bar_at(df)
+    frame = df if graded is None else df.iloc[:graded + 1]
+    price = [c for c in ("Open", "High", "Low", "Close") if c in frame.columns]
+    readable = frame[price].notna().all(axis=1).to_numpy() if price else np.zeros(
+        len(frame), dtype=bool)
+    drawn = np.flatnonzero(readable)[-85:]
+    start = int(drawn[0]) if len(drawn) else 0
+    plot_df = frame.iloc[start:].copy()
+    blank = np.flatnonzero(~readable[start:])
+    if len(blank) and price:
+        plot_df.iloc[blank, [plot_df.columns.get_loc(c) for c in price]] = float("nan")
     plot_df.index = pd.to_datetime(plot_df.index)
 
     mpf.plot(
@@ -258,8 +304,54 @@ def volume_ratio_basis(cand) -> str:
         return "unknown — the scanner supplied no volume or no ratio"
 
     def reproduces(denominator) -> bool:
-        # detect_setup() rounds the ratio to 2dp; match at that resolution.
-        return bool(denominator) and round(volume / denominator, 2) == round(ratio, 2)
+        # detect_setup() rounds the ratio to 2dp -- so match at that
+        # resolution, and allow ONE step of it. The two numbers in the payload
+        # are rounded from different originals: `volume_ratio` is
+        # round(volume / mean, 2) off the unrounded trailing mean, while
+        # `avg_volume` is round(mean) -- whole shares. Dividing by the archived
+        # average therefore lands a cent away from the archived ratio whenever
+        # the rounding falls badly, and an exact comparison then told the model
+        # "a baseline of about 137,177 shares, which the scanner did not name"
+        # with avg_volume 137,235 in the same block. Reproduced on that pair
+        # (1,611,825 / 137,234.66 -> 11.75, and 11.74 through the archived
+        # average); measured at about 1 candidate in 8,000 over 200,000
+        # plausible volume/average pairs, which is rare and is not zero, and
+        # the failure is a false denial rather than a wrong number. (That
+        # baseline is 1,611,825 / 11.75 = 137,177, and this comment quoted it
+        # as 137,220 -- a number the function cannot print; and "three lines
+        # above" was a claim about a payload user_text() serialises with
+        # sort_keys, which puts avg_volume near the top of the block and this
+        # near the bottom. Both were retyped from the sentence rather than run.)
+        #
+        # ONE STEP AND NOT TWO, and what two would cost is measurable rather
+        # than rhetorical. The AVERAGE is tried first, so the mislabel a wider
+        # slack buys is the trailing average claiming a ratio the PREVIOUS
+        # SESSION produced -- this comment had it the other way round, and put
+        # the boundary at 0.1 when the discrimination is already gone at 0.02:
+        # test_one_rounding_step_of_slack_does_not_let_yesterday_pose_as_the_average
+        # fails at two steps, on a pair whose average is two steps out and
+        # whose previous session is exact. One step is not free either. In the
+        # counterfactual this function is built for -- detect_setup dividing by
+        # YESTERDAY, an unrelated trailing average in the payload -- the
+        # average falsely reproduces the ratio about three times as often at
+        # one step as at exact equality (0.70% against 0.24% over 500,000
+        # plausible pairs, measured here). The trade is the right way round
+        # today, because detect_setup does divide by the trailing mean, so the
+        # slack fixes a real false denial while the false positive is
+        # counterfactual -- but the promise in the docstring above, that this
+        # stays true across a change to detect_setup() this module never hears
+        # about, is weaker than it was by that factor.
+        #
+        # The difference is ROUNDED before it is compared, and that is the
+        # same defect one level down rather than a flourish: 0.01 is not a
+        # double, so the gap between two 2dp numbers one step apart lands
+        # either side of it depending on their magnitude. Measured over two
+        # million plausible pairs, 69 of 209 one-step straddles came out at
+        # 0.010000000000000009 and would have been refused by a bare
+        # `<= 0.01` -- a third of the cases this exists for, failing the same
+        # way the thing it fixes does.
+        return (bool(denominator)
+                and round(abs(round(volume / denominator, 2) - round(ratio, 2)), 2) <= 0.01)
 
     average = getattr(cand, "avg_volume", None)
     if reproduces(average):
@@ -293,6 +385,17 @@ RECORD_KEYS: tuple[tuple[str, str], ...] = (
     ("last_seen", "last_seen"),
     ("last_score", "last_score"),
     ("last_outcome", "last_outcome"),
+    # The record's own span, which is what makes an unknown sayable. Without
+    # these the model was handed the bare word -- and on the first scheduled
+    # night, and every night until the file reaches MAX_STREAK_GAP_SESSIONS
+    # sessions back, EVERY candidate is a window_not_covered unknown, so the
+    # bare word was the whole answer. src.emailer's _no_day_note() has told
+    # the human "burst on 8 of the 8 sessions in the record, which begins
+    # 2026-08-20" since step 10; an unknown over a one-session record is not
+    # the same evidence as one over two hundred, and the model could not tell
+    # them apart.
+    ("history_sessions", "history_sessions"),
+    ("history_from", "history_from"),
 )
 
 
@@ -310,7 +413,18 @@ def record_context(streak) -> dict:
     the reason word, and every surface is forbidden to dress that up as a
     confident day 1. So is this one: an absent or malformed block produces the
     same keys with nulls, never a day number, and `setup_unknown_reason`
-    carries the record's own word rather than a sentence invented here.
+    carries the record's own word rather than a sentence invented here -- or,
+    where there is no block to carry one, src.ledger's word for that
+    (NO_STREAK_RECORDED), because a null day beside a null reason is a fifth
+    state the rulebook says cannot exist and the model has no word for.
+
+    AND THE SAME RULE ONE FIELD OVER, which this function used to break:
+    `seen_before` is 0 in the states where nobody counted (see
+    src.ledger.UNCOUNTED_UNKNOWNS), and 0 earlier sightings over a file that
+    could not be opened is exactly the confident sentence the day number is
+    refused. Those send null; the unknowns whose count IS a reading -- an
+    empty record, and a record that simply does not reach back far enough --
+    keep it, and the span keys say what it was counted over.
 
     `setup_day` goes through ledger.streak_day(), the one rule that says what
     counts as a day: a block carrying `"day": "3"` is not day 3 to a reader
@@ -324,6 +438,20 @@ def record_context(streak) -> dict:
         # them exclusive at the source; this keeps them exclusive if a
         # hand-edited or older block does not.
         payload["setup_unknown_reason"] = None
+    elif not payload["setup_unknown_reason"]:
+        # A null day with no reason at all was a fifth state the rulebook
+        # says cannot exist -- and the one tools/live_check.py sends to the
+        # live endpoint, since it scores a candidate with no record block.
+        # The email and the page have had a sentence for it since step 10
+        # (NO_STREAK_BLOCK, "this run recorded none"); the model had silence.
+        payload["setup_unknown_reason"] = NO_STREAK_RECORDED
+    reason = payload["setup_unknown_reason"]
+    if isinstance(reason, str) and reason in UNCOUNTED_UNKNOWNS:
+        # 0 earlier sightings is a reading of the record on some unknowns and
+        # a placeholder on others (see UNCOUNTED_UNKNOWNS). The placeholder is
+        # the same claim this function exists to refuse, one field over: a
+        # record that could not be asked must not answer "none".
+        payload["seen_before"] = None
     return payload
 
 
@@ -416,13 +544,13 @@ def request_kwargs(system: str, content: list[dict], model: str | None = None) -
         "max_tokens": MAX_TOKENS,
         # A LIST, not a string, so the knowledge base can carry cache_control.
         # knowledge/strategy.md is byte-identical on every call of a run and is
-        # 64% of each request -- measured: ~2,040 tokens of system against ~430
+        # 73% of each request -- measured: ~3,120 tokens of system against ~460
         # of metrics and ~721 for an 869x622 chart. Without this the run paid
         # full price to send the same document up to MAX_TO_SCORE times a
         # night. A cache write costs 1.25x and a read 0.1x, so break-even is
         # the second call (1.28 calls -- the write costs 0.25x more than the
         # uncached call it replaces, each read saves 0.9x): a night that
-        # scores two candidates is already ahead, and a full one is 46%
+        # scores two candidates is already ahead, and a full one is 54%
         # cheaper.
         #
         # No `ttl`: the default 5-minute window is the cheap one (an hour costs
@@ -564,6 +692,16 @@ def _fallback_score(lynch_result: dict) -> float:
     scored better than most candidates somebody did. The low end is the
     conservative reading of the same table, and no chart adjustment is
     available to earn more than it.
+
+    The four anchors the rubric states are the four this map has to agree
+    with, and it is a SECOND COPY of them: nothing here reads
+    knowledge/strategy.md, because parsing the system prompt at scoring time
+    to decide a number would make a prose edit a code path. The agreement is a
+    guard instead -- test_the_fallback_anchors_are_the_rubrics_own_bands parses
+    the rubric's sentence and asserts this function against it, so an edit to
+    either half turns red. Below 3/6 the rubric says nothing (the gate refuses
+    those before a call is made, and 3 is MIN_LYNCH_PASSES), so 0-2 are this
+    function's own conservative extension and the guard leaves them alone.
     """
     anchors = {0: 0.0, 1: 1.0, 2: 2.0, 3: 3.0, 4: 5.0, 5: 7.0, 6: 8.0}
     total = lynch_result.get("total") or 6
@@ -694,8 +832,10 @@ def score_all(scored_inputs: list[tuple], top_n: int = 5, min_lynch: int = 3,
     `streaks`, if given, is one src.ledger streak block per ticker -- what the
     record already knows about each name, read BEFORE this stage so the model
     sees it. A ticker the dict does not carry is scored with the record's keys
-    present and null, which is the same shape a run whose history could not be
-    read produces, and never a day 1.
+    present and null under src.ledger.NO_STREAK_RECORDED -- which is NOT the
+    shape a run whose history could not be read produces, and this docstring
+    said it was: that one names its own reason word and this one says nothing
+    computed a block at all. Never a day 1 either way.
 
     Applies the hard checklist gate, has Claude score survivors, and returns
     the top N as plain dicts ready for the email layer.

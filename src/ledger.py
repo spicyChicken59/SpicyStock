@@ -150,6 +150,41 @@ NO_HISTORY = "no_history"                    # the ledger holds no run at all
 HISTORY_UNDATED = "history_undated"          # it holds runs, none of them datable
 HISTORY_UNREADABLE = "history_unreadable"    # it was set aside; see Ledger.load()
 WINDOW_NOT_COVERED = "window_not_covered"    # it does not reach back far enough
+#: And the fifth reason a `day` is withheld, which is not about how FAR the
+#: record reaches but about what it SAW: a run inside the window that measured
+#: no name at all. A blind night is a session the file holds an entry for and
+#: has no evidence about, so "nothing preceded this setup" is a claim made
+#: over a session nobody read -- which is the same defect window_not_covered
+#: exists to refuse, arriving from inside the window instead of from outside
+#: it. Deliberately a fifth word rather than window_not_covered: the record
+#: DOES reach back, and telling an operator to wait for it to fill up is
+#: advice that will never come true.
+BLIND_SESSION = "blind_session"              # a run in the window measured nothing
+
+#: The fifth, and the one no ROW ever carries: nothing computed a block at
+#: all. src.emailer's NO_STREAK_BLOCK and docs/index.html's streakText() say
+#: that state in words for a row whose `streak` field is absent, and the
+#: scoring request had no word for it -- so src.scorer.record_context() sent a
+#: null day with a null reason, which the rulebook says cannot happen and
+#: which reads to the model as a shrug rather than as a state. Defined here,
+#: beside the four, because the vocabulary a reader is shown belongs in one
+#: place; written into no run, no ledger row and no snapshot, because there is
+#: no block for it to sit in -- it is the word for the absence itself.
+NO_STREAK_RECORDED = "no_streak_recorded"
+
+#: The unknowns whose `seen_before` is not a count of anything. streak()
+#: reports a genuine len(prior) beside no_history (an empty file really does
+#: hold nothing) and beside window_not_covered and blind_session (the
+#: appearances it found are real; only the claim about what came BEFORE them
+#: is withheld). The other two are placeholders: unknown_streak() fills 0 for a file that could not be
+#: read, and history_undated is 0 over a file that may hold any number of
+#: appearances nobody can date -- driven here, a ledger holding one AAA burst
+#: under an unparseable date reports seen_before 0. A placeholder is a fact
+#: about this function, not about the name, so the scoring request sends null
+#: for these and the rulebook says null means the record could not be counted.
+#: The rendered surfaces are unchanged: _no_day_note() prints no number in
+#: those branches and _streak_note() reads the count only to pick a colour.
+UNCOUNTED_UNKNOWNS = frozenset({HISTORY_UNREADABLE, HISTORY_UNDATED, NO_STREAK_RECORDED})
 
 #: The invariants, in the file rather than only in the docs. tools/make_fixture.py
 #: imports this list rather than holding a second copy, so the hand-authored
@@ -173,18 +208,20 @@ CONTRACT_INVARIANTS = [
     "provenance.chart_seen is true only when the scoring model actually received the chart image.",
     "forward_returns and runs[].forward_returns are null until the sessions exist -- with exceptions no session can end: a run that scored nothing has no rows for a later run to fill, and a run every one of whose scored rows is a repeat of a setup counted earlier (rows == scored with n == 0) has no setup to average, so in both cases the three horizons and the n stay null and 0 for good and a reader must be told that rather than 'pending'. runs[].fills_closed says the third: false while a later run will still fetch that run's rows, true once it is past the newest FILL_WINDOW_RUNS runs by session, after which a horizon still null there is null for good too. It is a fact about the record as it stands tonight rather than about the run, so it is in this view and not in the ledger. Absent is null, never 0 and never a string.",
     "d1/d3/d5 divide the close 1, 3 and 5 sessions after the burst by the BURST-DAY CLOSE: what the setup did. forward_returns.from_open divides the same later closes by the NEXT session's open, the earliest price a reader of the evening email could have paid: what acting on it could have had. Both are paper prices from one venue's official prints with no slippage. Every mean and every evidence outcome carries both, the open basis nested under from_open with its own n, and enough_from_open is the open basis's own licence to be read as a rate -- a surface that shows a number says which basis it is on, and never shows a close-basis number under an open-basis label or the reverse. A row or a run from before this basis existed carries no from_open, which is not a measurement of zero.",
+    "run.settled is what THIS run's fill made knowable about picks earlier runs made: one entry per (scored row, horizon) whose measurement moved from pending to a number tonight, carrying that pick's ticker, its burst session, the score and verdict it was given then, the horizon, its return on both bases and its own session's universe benchmark on both -- each of them a restatement of what runs[] already holds, never a second arithmetic. A horizon is filled once, so a pick appears under a horizon in exactly one run's block and never twice with two numbers, and at least one of the two bases carries a number in every entry. It is the picks alone: a refusal has no score to report and belongs to the control, which is evidence.refused. An empty list is a run whose fill moved nothing, which is not a claim that nothing was pending; a run from before the block existed carries no key at all, and no surface may read either as a night on which the earlier picks returned zero.",
     "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
     "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
-    "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
+    "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered, blind_session (a run inside that window measured no name at all, so an earlier appearance would have been invisible to it -- see runs[].measured; a run that scanned a basket named on the command line is never one of those, because it asked about no other name and so is evidence about the session in neither direction). day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
     "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
     "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'liquidity_floor' (rule 6 refused it in the scan, for dollar volume below the session's percentile floor, before the checklist was consulted), 'veto_up_days' (an absolute rule refused it before the pass count was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same four words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and neither a veto nor a liquidity refusal is ever published as a gate rejection.",
     "runs[].benchmark.universe is the universe the benchmark was measured over, and it is always the one that run's own universe block names: a run is benchmarked only from a later scan of the same universe, so a --tickers run contributes no benchmark to anything and receives none. A run whose universe no later scan has read keeps a null benchmark forever, which is the honest answer and not a zero.",
-    "runs[].rules is every number this screener's rules turned on when that run was made — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. A run from before it carries no rules block, and no surface may read that as agreement.",
-    "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when no name traded or the rule is off), refused (how many bursts sat below it). run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
-    "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
+    "runs[].rules is what this screener was when that run was made: every number its rules turned on — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate — plus what produced the SCORE, since round 11: score.prompt is a digest of the scoring model's system prompt and score.record_keys is the record block the request carries. A run scored under a rewritten rulebook is as much a second screener as one whose gate moved, and every mean keyed on score averages both. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. evidence.rules.differ names only keys EVERY set records, whose value moved; a key some set does not carry at all is in unshared instead, because a rule that did not exist then and a rule that was not recorded then are not the same fact and neither is a number that changed. A run from before it carries no rules block, and no surface may read that as agreement.",
+    "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when the rule is off or nothing could be ranked), over (how many names the percentile was drawn from), refused (how many bursts sat below it). `over` is the population the FLOOR was drawn from -- the names whose session bar carried a readable, positive dollar volume -- and not the population the scan measured, which is run.coverage.measured and can be larger or smaller. A null floor has three readings: `pctile <= 0` is the rule switched off, whatever `over` says; a null floor with `over: 0` is a night no name's dollar volume could be ranked; and a null floor with no `over` at all is a run from before the count existed. No surface may report one cause as the other. run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
+    "run.coverage is how much of the night was READ, in the counts the scan reached before it stopped: requested, with_bars (answered with any bar), fresh, measured, stale, gapped, no_bars, dropped, duplicate_bars, plus the session and the newest bar the names that missed it carried. measured is the population a burst could have come from -- the names whose session bar the detector read and answered about -- so with_bars minus measured is what could not be measured for the session (behind it, holed on the session before it, unreadable, measured onto an earlier session, or one the detector raised on), and measured 0 UNDER A POSITIVE with_bars is a BLIND night: the feed answered and nothing could be read, which no surface may report as a quiet market. measured 0 beside with_bars 0 is a scan nothing answered, which is what a dead run's notice carries and is not the same sentence. requested minus with_bars is the other half of the first cut -- the names that answered with nothing at all, plus any dropped after their batch failed twice -- so no surface may attribute it to the burst filter either. A count that is absent was never reached, and absent is never 0. runs[].measured carries that one number into the durable record, because docs/data.json is rewritten every night and both its readers are later runs.",
+    "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is how many setups the run contributed at any horizon and rows is how many rows they were collapsed from, so n <= rows always. THE WEIGHT IS PER HORIZON: n1, n3 and n5 are the setups behind d1, d3 and d5 separately, and an average across sessions must weight each horizon by its own, because a frame with a hole after the first session measures d1 and nothing after it -- that setup is in n and out of n5, and weighting d5 by n counts setups that have no d5. nH is 0 exactly when dH is null and nH <= n always; they are not ordered n1 >= n3 >= n5, since a non-finite close at one horizon leaves it null with a later one measured. from_open carries its own n1/n3/n5 for the same reason it carries its own n.",
     "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
     "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
-    "runs[].benchmark is the universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), over every name whose frame carries the session and whose dollar volume that session was at or above the run's own liquidity floor -- rule 6's bar that night, run.liquidity.floor -- with nN the number of symbols behind each horizon. benchmark.liquidity_floor is the floor the fill that FIRST measured the block applied -- null for a run recorded without one, when every name that traded counts -- and benchmark.below_floor is how many names that fill left out under it; the horizons a later fill adds are measured over the same population, so one block is one set of names. Null until a later run's scan carried the sessions, and null forever for a run whose universe later scans never fetched. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks, and evidence.universe.floored is how many of those pairings were measured over a floor and evidence.universe.unfloored how many were measured with none -- before the floor reached the benchmark, or on a night rule 6 was off, which the block cannot tell apart -- over every name that traded (a pending pairing is in neither); it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
+    "runs[].benchmark is the universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), over every name whose frame carries the session and whose dollar volume that session was at or above the run's own liquidity floor -- rule 6's bar that night, run.liquidity.floor -- with nN the number of symbols behind each horizon. benchmark.liquidity_floor is the floor the fill that FIRST measured the block applied -- null for a run recorded without one, when every name that traded counts -- and benchmark.below_floor is how many names that fill left out under it; the horizons a later fill adds are measured over the same population, so one block is one set of names. Null until a later run's scan carried the sessions, null forever for a run whose universe later scans never fetched, and never filled at all for a run that measured nothing: nothing is ever paired with a blind night's rung, since it scored no setup, and its floor -- null when no name's dollar volume could be ranked, and drawn from however few could be when it is not -- would stamp the block with a population that night never read. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks, and evidence.universe.floored is how many of those pairings were measured over a floor and evidence.universe.unfloored how many were measured with none -- before the floor reached the benchmark, or on a night rule 6 was off, which the block cannot tell apart -- over every name that traded (a pending pairing is in neither); it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
     "d1/d3/d5 and from_open are measured on the bar of the session 1, 3 and 5 sessions after the burst, the sessions being read across every frame the run fetched rather than counted along one frame's bars: a frame with a hole at a horizon carries null there, never the next bar it happens to have, and as_of names the session of the last bar actually used. from_open's entry is the next session's open only where it lies within that bar's own low and high, the standard the checklist holds a close to; outside it the open basis is null on that row.",
     "Numbers are numbers or null. No 'n/a' strings.",
 ]
@@ -432,12 +469,14 @@ def oldest_session(runs: list[dict]) -> date | None:
 class Record(NamedTuple):
     """How much the ledger has LOOKED AT — the one input every streak shares.
 
-    Three numbers, and they travel together because every judgement below is
-    made against the same record and a reader has to be able to see it:
+    Three numbers and a set of dates, and they travel together because every
+    judgement below is made against the same record and a reader has to be
+    able to see it:
 
       first     the oldest session the ledger holds a run for, or None
       sessions  how many distinct sessions that is
       entries   how many run entries the file holds, datable or not
+      blind     the sessions it holds a run for that MEASURED NOTHING
 
     `entries` exists only to tell an EMPTY file from an undatable one. Both
     have `first is None` and `sessions == 0`, and the difference is whether the
@@ -450,11 +489,23 @@ class Record(NamedTuple):
     sessions after the burst as well and so makes "burst on N of the M sessions
     in the record" under-claim. Under-claiming is the direction everything in
     this module errs in: it would rather say less than invent continuity.
+
+    `blind` is the fourth because a session with an entry is not the same
+    thing as a session that was READ. A run whose scan measured no name at
+    all -- every frame holed, halted or unreadable -- is an entry the file
+    holds and a night the record knows nothing about, and _why_no_day() has
+    to be able to tell "nobody burst then" from "nobody looked then". Only
+    the runs that RECORD a measured count can be in it: an entry from before
+    the count existed says nothing about how much it read, and absent is
+    absent. It is a set of dates rather than a count because the question
+    asked of it is always about one window.
+
     """
 
     first: date | None
     sessions: int
     entries: int
+    blind: frozenset = frozenset()
 
     @classmethod
     def of(cls, runs: list[dict]) -> "Record":
@@ -476,7 +527,44 @@ class Record(NamedTuple):
         entry could name but whose bursts are written down.
         """
         days = sorted(set(session_dates(runs)) | _dated_row_sessions(runs))
-        return cls(days[0] if days else None, len(days), len(runs))
+        return cls(days[0] if days else None, len(days), len(runs), blind_sessions(runs))
+
+
+def blind_sessions(runs: list[dict]) -> frozenset:
+    """The sessions these run entries measured NOTHING on.
+
+    `measured` is how many symbols the scan actually read a session bar for
+    (src.scanner.run_scan()'s own count, carried into the entry by add_run).
+    Zero of them is a night the record has an entry for and no evidence
+    about: the feed answered, and not one answer could be measured for the
+    session. Reproduced end to end on a constructed blind night before this
+    existed, where every surface reported it as a quiet market.
+
+    A count is required, not inferred. An entry from before the field existed
+    carries no `measured`, and reading that as 0 would make every historical
+    run blind; a `measured` that is not a whole number is a shape no writer
+    produces, and a date that will not parse cannot be compared with the
+    window anyway. All three are simply not in the set.
+
+    AND ONLY A RUN THAT SCANNED A UNIVERSE CAN BE EVIDENCE ABOUT ONE. A
+    `--tickers` rehearsal asks about the names it was handed and about no
+    others, so it is not a night the market went unread -- it is a night this
+    file says nothing about, which is the state an entry from before the count
+    existed is already in. Counting one as blind blanked the day number on
+    every burst the next real scan found, for MAX_STREAK_GAP_SESSIONS
+    sessions, on the email, the page and every archived row: reproduced end to
+    end on a two-name rehearsal the day after a holiday, where both frames
+    were holes. Ledger.fill_benchmarks() makes the same distinction for the
+    rung, and this is the reasoning one step over -- see is_named_basket().
+    """
+    blind = set()
+    for run in runs:
+        if is_named_basket(run) or not is_blind(run):
+            continue
+        session = _as_date(run.get("date"))
+        if session is not None:
+            blind.add(session)
+    return frozenset(blind)
 
 
 #: What a run that has read nothing is measured against: a record with no span
@@ -526,6 +614,26 @@ def _why_no_day(record: Record, first: date | None) -> str | None:
     reach = sessions_between(record.first, first)
     if reach is None or reach < MAX_STREAK_GAP_SESSIONS:
         return WINDOW_NOT_COVERED
+    # AND WHETHER IT SAW ANYTHING IN THE WINDOW IT REACHES BACK OVER. The
+    # rule above is a floor on how far the file looks; it says nothing about
+    # what those nights read. A run that measured NO NAME AT ALL -- the feed
+    # answered and not one answer could be measured for the session -- is a
+    # night the record holds an entry for and has no evidence about, so an
+    # appearance on it would be invisible and "nothing preceded this setup"
+    # is asserted over a session nobody read. Reproduced end to end: a blind
+    # Tuesday, a burst on Wednesday, "day 1 — new setup" beside it.
+    #
+    # Only the window matters. A blind night three months before the setup
+    # started could not have held an appearance of THIS chain -- an earlier
+    # one that far back is a different setup by MAX_STREAK_GAP_SESSIONS' own
+    # rule -- so refusing a day number for it would withhold a number the
+    # record can support. Strictly before `first`, because a blind run ON it
+    # is a run that did not find the burst the chain starts with, and some
+    # other run that session did.
+    for session in record.blind:
+        gap = sessions_between(session, first)
+        if gap is not None and 0 < gap <= MAX_STREAK_GAP_SESSIONS:
+            return BLIND_SESSION
     return None
 
 
@@ -541,9 +649,9 @@ def unknown_streak(reason: str) -> dict:
     history_from and history_sessions are null and 0 for exactly the reasons
     this function serves: a record that could not be read, holds nothing, or
     holds nothing datable has no span to report. Every OTHER kind of unknown —
-    window_not_covered — comes out of streak() with its span filled in, because
-    there the span is precisely what the reader needs in order to see what the
-    unknown is unknown over.
+    window_not_covered and blind_session — comes out of streak() with its span
+    filled in, because there the span is precisely what the reader needs in
+    order to see what the unknown is unknown over.
     """
     return {"day": None, "unknown_reason": reason, "first_seen": None,
             "last_seen": None, "last_score": None, "last_verdict": None,
@@ -560,7 +668,8 @@ def streak(history: list[dict], session, *, record: Record = EMPTY_RECORD) -> di
                    setup began — a gap cannot inflate it. NULL when the record
                    has not looked far enough back to say; see _why_no_day().
       unknown_reason  which of no_history / history_undated /
-                   history_unreadable / window_not_covered left `day` null.
+                   history_unreadable / window_not_covered / blind_session
+                   left `day` null.
                    Null when day is a number, so the two can never both be
                    answers.
       first_seen   the session the current setup started on. Equals the
@@ -678,13 +787,14 @@ def streaks(runs: list[dict], tickers, session,
             *, unreadable: str | None = None) -> dict[str, dict]:
     """One streak block per ticker, against the history in `runs`.
 
-    Four answers, and they are four because collapsing any pair of them puts
+    Five answers, and they are five because collapsing any pair of them puts
     a claim about the market where a fact about a file belongs:
 
       the ledger could not be READ      `unreadable` — every name unknown
       the ledger holds nothing          no_history
       it holds runs nothing can date    history_undated
       it holds too little to say        window_not_covered
+      a night in the window read none   blind_session
 
     `unreadable` is passed in rather than inferred, because from here a
     history that failed to parse and one that was never written look the same:
@@ -1255,21 +1365,110 @@ def _measured(row: dict) -> bool:
     return any(returns.get(f"d{h}") is not None for h in HORIZONS)
 
 
+class Filled(NamedTuple):
+    """One (row, horizon) a fill moved from pending to a number.
+
+    `run` is the entry the row sits in, so the alternative for that session --
+    the entry's own benchmark -- can be read beside the pick without looking
+    it up again by date; `scored` is the record's own split between a pick and
+    a refusal, taken from which list the row was in rather than re-derived
+    from the row's fields.
+    """
+
+    run: dict
+    row: dict
+    horizon: int
+    scored: bool
+
+
+def settled_rows(filled: list[Filled]) -> list[dict]:
+    """`run.settled`: what the picks an earlier run made have now returned.
+
+    THE EVENING MAIL COULD NOT ANSWER ITS OWN QUESTION. Every night's mail
+    said what the screener found and nothing about what the last one's finds
+    went on to do -- the whole record was in docs/ledger.json and on the page,
+    and the artifact a person actually opens carried none of it. The fill that
+    runs inside every publish() knows exactly which measurements moved
+    tonight, and threw the list away for a count.
+
+    One entry per (row, horizon) fill_forward_returns() moved, for the SCORED
+    rows only: a refusal has no score and no verdict to report, and the
+    control it belongs to is the evidence block's business, not a scorecard's.
+    Each entry restates numbers the record already holds -- the row's own
+    return on both bases and that session's universe benchmark on both -- so
+    nothing here is a second arithmetic that could disagree with the ledger.
+
+    NOT TRUNCATED, for the reason `candidates` is not: a full night can settle
+    d1, d3 and d5 for three earlier sessions at once, so the block can hold
+    three times MAX_TO_SCORE rows, and the rule for which of them a reader is
+    allowed to see would be an editorial judgement nobody has needed yet.
+    """
+    out = []
+    for fill in filled:
+        if not fill.scored:
+            continue
+        key = f"d{fill.horizon}"
+        returns = fill.row.get("forward_returns") or {}
+        bench = fill.run.get("benchmark")
+        bench = bench if isinstance(bench, dict) else {}
+        verdict = fill.row.get("verdict")
+        out.append({
+            "ticker": fill.row.get("ticker"),
+            # The BURST's session, not tonight's: the entry is a fact about a
+            # pick made earlier, and the horizon says how far after it this is.
+            "session": iso_date(fill.row.get("date")),
+            "score": _num(fill.row.get("score")),
+            "verdict": verdict if isinstance(verdict, str) else None,
+            "horizon": fill.horizon,
+            "ret": _num(returns.get(key)),
+            "ret_from_open": _num(_from_open(returns).get(key)),
+            # THE ALTERNATIVE AT THE SAME HORIZON, ON THE SAME BASIS. Both
+            # bases travel, because a pick's open-basis return beside a
+            # close-basis benchmark is two answers to one question -- the
+            # thing the page's one-basis-at-a-time control exists to prevent.
+            # Null where that session's rung is still pending or was never
+            # measurable, which is not a benchmark of zero.
+            "universe": _num(bench.get(key)),
+            "universe_from_open": _num(_from_open(bench).get(key)),
+        })
+    # Newest burst first, and inside a session by name and then by horizon:
+    # a stable order, because this block is written into a file two guards
+    # compare byte for byte.
+    out.sort(key=lambda entry: ((entry["ticker"] or ""), entry["horizon"]))
+    out.sort(key=lambda entry: (entry["session"] or ""), reverse=True)
+    return out
+
+
 def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
     """The run's mean forward return per horizon, over SETUPS rather than rows.
 
       d1/d3/d5  the mean over the rows in `leads` — one per setup. A horizon
                 nobody has a value for is null rather than 0.0: the dashboard
-                weights these by `n` across sessions, and a zero would be
-                averaged in as a flat session that never happened.
-      n         how many setups are behind those means. THE WEIGHT: the
-                dashboard multiplies by it when it averages across sessions,
-                so it has to be the count the mean was taken over, or the
-                weighting is arithmetic over two different denominators.
-      rows      how many rows in this run carry a return at all. `n` is what
-                the means count; `rows` is what they were collapsed from, and
-                the pair is what lets a label say which of the two it is
-                showing instead of calling rows "names".
+                weights these by their own count across sessions, and a zero
+                would be averaged in as a flat session that never happened.
+      n1/n3/n5  how many setups are behind d1, d3 and d5 SEPARATELY. THE
+                WEIGHT, one per horizon, which the benchmark block has
+                carried since round 7 and this one did not: a row whose frame
+                has a hole after the first session measures d1 and nothing
+                after it (forward_returns() ends the measurement rather than
+                sliding a horizon onto a later bar), so it is in n and out of
+                n5 -- and one n for three horizons then weights a d5 mean by
+                setups that have no d5. Reproduced before it was changed: two
+                setups, one holed after d1, published d5 6.0 with n 2, and a
+                second session measuring both at 0.0 gave the page 3.0 where
+                the honest weighting is 2.0. `nH` is 0 exactly when `dH` is
+                null, and nH <= n always. They are NOT ordered n1 >= n3 >= n5:
+                a frame whose d1 bar carries a non-finite close measures d3
+                without d1, so a prefix rule would be a claim the writer does
+                not make.
+      n         how many setups are behind the means at ANY horizon -- what
+                this run contributed to the record, and what the runs table
+                prints as "setups". It is not a weight for a horizon; the
+                pair of counts is what stops one number doing both jobs.
+      rows      how many rows in this run carry a return at all. `n` is the
+                setups; `rows` is what they were collapsed from, and the pair
+                is what lets a label say which of the two it is showing
+                instead of calling rows "names".
 
     `leads` comes from scored_leads() over the WHOLE ledger, not this run:
     whether a row starts a setup is a question about the sessions around it,
@@ -1295,10 +1494,11 @@ def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
         values = [row["forward_returns"][key] for row in counted
                   if row.get("forward_returns", {}).get(key) is not None]
         out[key] = round(math.fsum(values) / len(values), 2) if values else None
+        out[f"n{horizon}"] = len(values)
     out["n"] = sum(1 for row in counted if _measured(row))
     out["rows"] = sum(1 for row in rows if _measured(row))
     # The same means from the next open, over the same setups, with their
-    # own n: a row whose frame carried no usable open has a close-basis
+    # own counts: a row whose frame carried no usable open has a close-basis
     # return and no open-basis one, and the two counts must not be one.
     from_open: dict = {}
     for horizon in HORIZONS:
@@ -1306,6 +1506,7 @@ def mean_returns(rows: list[dict], leads: set[tuple[str, str]]) -> dict:
         values = [_from_open(row.get("forward_returns"))[key] for row in counted
                   if _from_open(row.get("forward_returns")).get(key) is not None]
         from_open[key] = round(math.fsum(values) / len(values), 2) if values else None
+        from_open[f"n{horizon}"] = len(values)
     from_open["n"] = sum(1 for row in counted
                          if any(_from_open(row.get("forward_returns")).get(f"d{h}") is not None
                                 for h in HORIZONS))
@@ -1429,9 +1630,13 @@ def _enough(outcomes: list[dict]) -> bool:
     """Has the longest horizon enough setups behind it to read as a rate?
 
     d5 decides, not d1: d5 and d3 ARE this strategy's profit and loss, because
-    the trade is held three to five sessions and exited. d1 is an early read
-    and always has the largest n, so keying on it would license a rate for a
-    horizon nobody has measured yet.
+    the trade is held three to five sessions and exited. d1 is the earliest
+    read and usually the largest n -- but the counts are NOT ordered
+    n1 >= n3 >= n5, and mean_returns() says so: a frame whose d1 bar prints a
+    non-finite close measures d3 with no d1 (executed against
+    forward_returns(), not argued). So this is keyed on the horizon it is
+    about, rather than on d1's count standing in for every horizon's; keying
+    on d1 would license a rate for a horizon nobody has measured yet.
     """
     return at_horizon(outcomes, max(HORIZONS))["n"] >= MIN_SETUPS_FOR_A_RATE
 
@@ -1736,6 +1941,25 @@ def rules_view(runs: list[dict]) -> dict:
     `runs_without` how many entries predate the fingerprint, which is a
     different thing from agreeing with it and must not be counted as
     agreement.
+
+    `unshared` IS THAT DISTINCTION ONE LEVEL IN, and it was missing for three
+    rounds. `differ` was computed with `block.get(key)`, so a key some block
+    does not carry at all read as None against the other's number -- exactly
+    the shape of a value that moved. Round 11 added three keys to the
+    fingerprint, and on this repo's own record (one 4 Sep run, 28 keys) the
+    page would have published "What moved: score.prompt, score.record_keys,
+    window.volume_norm_sessions" -- of which the last is C's volume average,
+    named under a no-behaviour-change claim both fixtures confirmed by
+    regenerating byte-identically. The number did not move; the record's
+    sight of it did.
+
+    The two are not merged and `sets` is not computed over the shared keys
+    only, for the reason `runs_without` is counted apart: a key one block
+    lacks may be a rule that did not exist then, or one that existed and was
+    not recorded, and the record cannot tell those apart. Reporting them as
+    agreement would be the confident half of an answer this file does not
+    have. It runs both ways -- a constant DELETED is unshared too -- which is
+    why the name says what is true of both rather than "added".
     """
     seen: list[dict] = []
     without = 0
@@ -1747,11 +1971,13 @@ def rules_view(runs: list[dict]) -> dict:
         if block not in seen:
             seen.append(block)
     keys = sorted({key for block in seen for key in block})
+    shared = [key for key in keys if all(key in block for block in seen)]
     differ = sorted(
-        key for key in keys
-        if len({json.dumps(block.get(key), sort_keys=True) for block in seen}) > 1)
+        key for key in shared
+        if len({json.dumps(block[key], sort_keys=True) for block in seen}) > 1)
+    unshared = sorted(set(keys) - set(shared))
     return {"current": dict(seen[0]) if seen else None, "sets": len(seen),
-            "differ": differ, "runs_without": without}
+            "differ": differ, "unshared": unshared, "runs_without": without}
 
 
 def _population(rows: list[dict]) -> dict:
@@ -1763,22 +1989,6 @@ def _population(rows: list[dict]) -> dict:
     summary = outcome_summary(rows)
     return {"setups": len(rows), "outcomes": summary, "enough": _enough(summary),
             "enough_from_open": _enough_from_open(summary)}
-
-
-def _shortlist_size(runs: list[dict]) -> int:
-    """How many names the runs in this record actually emailed.
-
-    Read off the record rather than imported from src.pipeline's TOP_N,
-    because the record spans runs and TOP_N is today's value: a ledger written
-    before it changed would otherwise be split at a boundary those runs never
-    used. The newest run that states one wins; 0 means no run said, and then
-    nothing is called a shortlist.
-    """
-    for run in runs:
-        size = run.get("shortlist_size") if isinstance(run, dict) else None
-        if isinstance(size, int) and not isinstance(size, bool) and size > 0:
-            return size
-    return 0
 
 
 # -------------------------------------------------------------- the file --
@@ -1821,6 +2031,16 @@ def _malformed_rows(runs: list[dict]) -> str | None:
         # benchmark existed; present in a shape no writer produces is refused.
         # Two audit lenses found this independently, which is the argument for
         # sweeping a class rather than closing its instances one at a time.
+        # `measured` decides two things a later run does -- whether a streak
+        # may claim "nothing preceded this setup" across that night, and
+        # whether its benchmark is filled -- and both read it inside publish(),
+        # after the scan and every Claude call are paid for. A count, or
+        # absent for an entry from before it existed.
+        if "measured" in run:
+            count = run["measured"]
+            if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+                return (f"holds a run for {run.get('date')!r} whose measured is "
+                        f"{count!r} rather than a count")
         bench = run.get("benchmark")
         if "benchmark" in run and not isinstance(bench, dict):
             return (f"holds a run for {run.get('date')!r} whose benchmark is a JSON "
@@ -2217,6 +2437,23 @@ class Ledger:
         # nothing, and a null is a shape no writer produces.
         if isinstance(run.get("duplicate_bars"), int) and not isinstance(run["duplicate_bars"], bool):
             entry["duplicate_bars"] = run["duplicate_bars"]
+        # And HOW MANY NAMES THAT RUN MEASURED, the one number out of
+        # run.coverage that a later run has to be able to read. docs/data.json
+        # is rewritten every night, so the count would otherwise last one
+        # session -- and the two readers of it are both later runs: a streak,
+        # which cannot claim "nothing preceded this setup" across a night
+        # nobody read (see _why_no_day), and fill_benchmarks(), which must not
+        # stamp a blind night's benchmark as measured under no floor. The rest
+        # of the block stays out for the reason stopped_printing does: the
+        # ledger's size is budgeted in README, and nothing later reads it.
+        # Absent when the run recorded no coverage, the rule `rules` follows:
+        # a run from before the count existed says nothing, and a null is a
+        # shape no writer produces.
+        coverage = run.get("coverage")
+        if isinstance(coverage, dict):
+            count = coverage.get("measured")
+            if isinstance(count, int) and not isinstance(count, bool):
+                entry["measured"] = count
         self.runs = [r for r in self.runs
                      if (r.get("date"), r.get("type")) != (entry["date"], entry["type"])]
         self.runs.insert(0, entry)
@@ -2274,12 +2511,23 @@ class Ledger:
                     window.append(run)
         return window
 
-    def _fillable(self, through: date | None) -> list[dict]:
-        """Rows that could still gain a horizon, newest FILL_WINDOW_RUNS runs."""
+    def _fillable(self, through: date | None) -> list[tuple[dict, dict, bool]]:
+        """(run entry, row, was it scored) for every row that could still gain
+        a horizon, over the newest FILL_WINDOW_RUNS runs.
+
+        The run entry travels with the row because what the fill MOVES is
+        published (see settled_rows()) beside the alternative for that same
+        session, which is a fact about the run and not about the row; and the
+        scored flag because the record's own split -- `candidates` against
+        `gated` -- is what says whether a row was ever a pick. Reading it back
+        off the row (a `score` key, say) would be a second rule for a
+        question this list already answers.
+        """
         limit = _as_date(through)
         out = []
         for run in self._fill_window():
-            for row in list(run.get("candidates", [])) + list(run.get("gated", [])):
+            for row, scored in ([(r, True) for r in run.get("candidates", [])]
+                                + [(r, False) for r in run.get("gated", [])]):
                 returns = row.get("forward_returns") or {}
                 if (all(returns.get(f"d{h}") is not None for h in HORIZONS)
                         and all(_from_open(returns).get(f"d{h}") is not None for h in HORIZONS)):
@@ -2287,19 +2535,28 @@ class Ledger:
                 burst = _as_date(row.get("date"))
                 if burst is None or (limit is not None and burst >= limit):
                     continue  # the sessions after it have not happened yet
-                out.append(row)
+                out.append((run, row, scored))
         return out
 
     def pending_tickers(self, through: date | None = None) -> list[str]:
         """Which symbols this run would have to fetch to fill anything in."""
         seen: dict[str, None] = {}
-        for row in self._fillable(through):
+        for _run, row, _scored in self._fillable(through):
             seen.setdefault(row["ticker"], None)
         return list(seen)
 
     def fill_forward_returns(self, frames: dict, through: date | None = None,
-                             calendar: list[date] | None = None) -> int:
-        """Fill every horizon these frames make knowable. Returns how many rows moved.
+                             calendar: list[date] | None = None) -> list[Filled]:
+        """Fill every horizon these frames make knowable.
+
+        Returns one Filled per (row, horizon) THIS call moved from pending to
+        a number -- not a count of rows. A count is what a log line wants and
+        it is the wrong thing to hand back: the pairs are the run's own
+        scorecard of what the earlier picks did, which is what the evening
+        mail carries under its funnel and what settled_rows() shapes for
+        docs/data.json. Per (row, horizon), because a row gains d1 one night
+        and d3 two nights later, and a row reported twice under one number is
+        the same setup announced twice.
 
         `calendar` is the sessions the run knows happened (session_calendar()
         over every frame it fetched), so a hole in one name's frame leaves a
@@ -2308,10 +2565,12 @@ class Ledger:
         Idempotent: a row already carrying d1 keeps the value it was given,
         because the frame it came from and the frame here are the same
         arithmetic over the same feed, and rewriting it every night would turn
-        one restated bar into a silently changing record.
+        one restated bar into a silently changing record. That is also what
+        makes the pairs safe to publish: a horizon is filled ONCE, so it is in
+        exactly one run's block for good.
         """
-        moved = 0
-        for row in self._fillable(through):
+        moved: list[Filled] = []
+        for run, row, scored in self._fillable(through):
             frame = frames.get(row["ticker"])
             if frame is None:
                 continue
@@ -2323,19 +2582,26 @@ class Ledger:
             # reaches this line -- _malformed_rows() refused the file.
             if not isinstance(current.get("from_open"), dict):
                 current["from_open"] = {f"d{h}": None for h in HORIZONS}
-            changed = False
+            changed = []
             for horizon in HORIZONS:
                 key = f"d{horizon}"
+                moved_here = False
                 if current.get(key) is None and fresh[key] is not None:
                     current[key] = fresh[key]
-                    changed = True
+                    moved_here = True
                 if (current["from_open"].get(key) is None
                         and fresh["from_open"][key] is not None):
                     current["from_open"][key] = fresh["from_open"][key]
-                    changed = True
+                    moved_here = True
+                # ONE HORIZON, ONE PAIR, whichever basis moved. A row from
+                # before the open basis existed gains that basis alone here,
+                # and a row whose open lay outside its own bar never gains it
+                # at all: neither is a horizon that settled twice.
+                if moved_here:
+                    changed.append(horizon)
             if changed:
                 current["as_of"] = fresh["as_of"]
-                moved += 1
+                moved += [Filled(run, row, horizon, scored) for horizon in changed]
         if moved:
             self._recompute_means()
             self._copy_returns_into_latest()
@@ -2405,6 +2671,22 @@ class Ledger:
                 continue
             session = _as_date(run.get("date"))
             if session is None or (limit is not None and session >= limit) or not frames:
+                continue
+            # A NIGHT THAT MEASURED NOTHING GETS NO ALTERNATIVE. The rung is
+            # "what buying the whole universe that session would have made",
+            # and it is stamped with the floor the run applied -- which on a
+            # blind night is drawn from however few names could be RANKED, a
+            # population that says nothing about the market that night went
+            # unread. (Not "no floor at all": a name whose detector raised
+            # still contributed its dollar volume, so a blind run can carry
+            # one, which the sentence here claimed it could not.) Filling it
+            # stamps the block with a population the night never read, and
+            # permanently, since a measured horizon keeps its value. It costs
+            # nothing to leave pending -- a blind night scored no setup, so
+            # nothing is ever paired with it -- and the entry's own `measured`
+            # says why. Reproduced on a blind Tuesday filled by Wednesday's
+            # scan before this line existed.
+            if is_blind(run):
                 continue
             # ONE BLOCK, ONE POPULATION. A block that already holds a
             # horizon was measured over some set of names, and the horizons
@@ -2536,6 +2818,39 @@ class Ledger:
         _write_json(self.path, ledger)
         _write_json(self.data_path, self.dashboard(headline))
         return {"data": self.data_path, "ledger": self.path}
+
+
+def is_named_basket(run: dict) -> bool:
+    """Did this entry scan a basket named on the command line?
+
+    `--tickers` runs write docs/data.json and a ledger entry like any other,
+    and src.pipeline's publish() stamps the names it was handed into
+    `universe.tickers` -- the key it keeps for the republish guard, and the
+    one structural mark that tells a basket from a scan of a universe. A run
+    entry that carries it read the market only where it was pointed, so it is
+    evidence about the session in NEITHER direction: not that the market was
+    read, and not that it was missed.
+
+    Structural rather than a match on the label's words, because the label is
+    composed in another module and a sentence is not a shape. A run from
+    before the key existed cannot be told apart and reads as a universe scan,
+    the rule absent fields follow everywhere here -- and no such run carries
+    `measured` either, since that count is newer than this key.
+    """
+    universe = run.get("universe")
+    return isinstance(universe, dict) and isinstance(universe.get("tickers"), list)
+
+
+def is_blind(run: dict) -> bool:
+    """Did this run entry measure nothing at all?
+
+    One predicate, three readers: blind_sessions() for the streak window,
+    fill_benchmarks() for the rung, and the tests that plant one. A run that
+    does not record a `measured` count is not blind -- it is a run from
+    before the count existed, and absent is absent.
+    """
+    count = run.get("measured")
+    return isinstance(count, int) and not isinstance(count, bool) and count == 0
 
 
 def _floor_of(run: dict) -> float | None:
@@ -2702,6 +3017,40 @@ def snapshot_problem(data: dict) -> str | None:
             return f"run.liquidity.floor is {type(floor).__name__}, not a number or null"
         if isinstance(refused, bool) or not isinstance(refused, int):
             return f"run.liquidity.refused is {type(refused).__name__}, not a count"
+        # `over` is how many names the floor was drawn from, and it is what
+        # tells a null floor's two causes apart on every surface that prints
+        # one. Absent is a snapshot from before it existed; present, it is a
+        # count, because a string there makes the page compare "0" to 0 and
+        # tell a blind night that nothing traded.
+        over = liquidity.get("over")
+        if "over" in liquidity and (isinstance(over, bool) or not isinstance(over, int)
+                                    or over < 0):
+            return f"run.liquidity.over is {over!r}, not the count publish() writes"
+    # run.coverage, the same rule one block over: how much of the night was
+    # measured. The morning email and the page both read `measured` off it and
+    # print a sentence about the market from it, so a string where the count
+    # belongs is the class this function exists to refuse. Absent is a
+    # snapshot from before the block existed; present, it is the object
+    # scan_coverage() writes, and every count in it is a count.
+    if "coverage" in run:
+        coverage = run["coverage"]
+        if not isinstance(coverage, dict):
+            return (f"run.coverage is {type(coverage).__name__}, not the object "
+                    "publish() writes")
+        for field_name in ("requested", "with_bars", "fresh", "measured", "stale",
+                           "gapped", "no_bars", "dropped", "duplicate_bars"):
+            if field_name not in coverage:
+                # Absent is absent: scan_coverage() carries only the counts the
+                # scan had reached, and a run that died early has fewer of them.
+                continue
+            value = coverage[field_name]
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                return (f"run.coverage.{field_name} is {value!r}, not the count "
+                        "scan_coverage() writes")
+        for field_name in ("session", "newest_seen"):
+            if field_name in coverage and not isinstance(coverage[field_name], str):
+                return (f"run.coverage.{field_name} is "
+                        f"{type(coverage[field_name]).__name__}, not a date string")
     # One level into scored_by, because the email does ARITHMETIC on these two.
     # It does not crash on strings: "5" + "1" is "51", so the provenance line
     # rendered "Scored by Claude: 5 of 51" -- a fabricated count, which is
@@ -2739,6 +3088,42 @@ def snapshot_problem(data: dict) -> str | None:
                     or not (last is None or isinstance(last, str))):
                 return (f"run.stopped_printing.names[{position}] is not "
                         "{ticker, last, sessions_behind}")
+    # run.settled, the same rule one block over, and the class this function
+    # exists for on the newest key: the morning email prints these numbers as
+    # percentages beside a ticker and a score, so a string where a return
+    # belongs renders "+abc%" -- a fabricated outcome for a real pick, which
+    # is worse than a crash because nothing anywhere says it is wrong.
+    # Absent is a snapshot from before the block existed and loads clean; an
+    # empty list is a run whose fill moved nothing and is the ordinary state.
+    if "settled" in run:
+        settled = run["settled"]
+        if not isinstance(settled, list):
+            return (f"run.settled is {type(settled).__name__}, not the list "
+                    "publish() writes")
+        for position, entry in enumerate(settled, start=1):
+            if not isinstance(entry, dict) or not isinstance(entry.get("ticker"), str):
+                return (f"run.settled[{position}] is not the "
+                        "{ticker, session, score, verdict, horizon, ret, ...} "
+                        "object settled_rows() writes")
+            horizon = entry.get("horizon")
+            if isinstance(horizon, bool) or not isinstance(horizon, int) or horizon < 1:
+                # The whole of the entry's meaning -- "+3d" -- and the one
+                # field with no plausible null: an entry that cannot say how
+                # far after the burst it is says nothing at all.
+                return (f"run.settled[{position}] ({entry['ticker']}) has "
+                        f"{horizon!r} where its horizon should be")
+            for field_name in ("session", "verdict"):
+                value = entry.get(field_name)
+                if value is not None and not isinstance(value, str):
+                    return (f"run.settled[{position}] ({entry['ticker']}) has a "
+                            f"{type(value).__name__} where its {field_name} should be")
+            for field_name in ("score", "ret", "ret_from_open", "universe",
+                               "universe_from_open"):
+                value = entry.get(field_name)
+                if value is not None and not _is_number(value):
+                    return (f"run.settled[{position}] ({entry['ticker']}) has a "
+                            f"{type(value).__name__} where its {field_name} number "
+                            "should be")
     for name, count in (run.get("scored_by") or {}).items():
         if count is not None and (isinstance(count, bool) or not isinstance(count, (int, float))):
             return (f"run.scored_by.{name} is {type(count).__name__}, not a number, "

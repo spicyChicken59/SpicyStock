@@ -2,7 +2,8 @@
 
 Scans a checked-in universe of 228 US common stocks each trading day, applies the
 Stockbee/Qullamaggie 4% Momentum Burst strategy with the 2LYNCH quality
-checklist, has Claude score the survivors (numbers + chart image), and
+checklist, has Claude score the survivors (numbers, the checklist detail, what the
+record already knows about the name, and a chart image), and
 emails a ranked top-5 shortlist. **Zero manual steps** — no DeepVue paste,
 no Google Sheet, no n8n.
 
@@ -39,11 +40,16 @@ Layer 2  2LYNCH checklist (code) ..... 2 first/second burst · L linear prior mo
         ▼
 Layer 3  Chart render ................ 4-month candlestick + volume PNG per name,
         │                              written to docs/charts/ — gitignored, so
-        ▼                              they stay on the machine that ran
-Layer 4  Claude scoring .............. metrics + 2LYNCH detail + chart image +
-        │                              what the RECORD says about this name →
-        │                              score /10, verdict (A+…skip), 1-sentence
-        │                              reason, key risk (strategy.md = rulebook)
+        │                              they stay on the machine that ran;
+        ▼                              a bar with a hole in it is drawn as a
+                                       gap — blanked, never spliced out —
+                                       not a candidate scored blind
+Layer 4  Claude scoring .............. metrics (the burst bar's own gap and
+        │                              range included) + 2LYNCH detail + chart
+        │                              image + what the RECORD says about this
+        │                              name → score /10, verdict (A+…skip),
+        │                              1-sentence reason, key risk
+        │                              (strategy.md = rulebook)
         ▼
 Layer 5  Archive ..................... EVERY scored candidate, plus every burst
         │                              that was not scored and why:
@@ -53,7 +59,10 @@ Layer 5  Archive ..................... EVERY scored candidate, plus every burst
                                        results/*.csv (a 30-day artifact)
 Layer 6  Email ....................... HTML table, top 5, with the charts this
                                        run just rendered attached inline —
-                                       the ONLY place TOP_N cuts anything
+                                       the ONLY place TOP_N cuts anything —
+                                       and, under the funnel, what the picks
+                                       of EARLIER runs returned at whatever
+                                       horizons tonight's fill just measured
 ```
 
 ## The two runs
@@ -62,10 +71,11 @@ Layer 6  Email ....................... HTML table, top 5, with the charts this
 |---|---|---|
 | what it does | **discovery** — scans the session that closed today | **follow-through** — re-presents the evening run before the open |
 | scans | yes, every layer above | no |
-| costs | ~25 Claude calls, ~$0.15 | nothing |
+| costs | ~25 Claude calls, ~$0.17 | nothing |
 | writes | `docs/data.json`, `docs/ledger.json`, `docs/charts/` (gitignored), `results/*.csv` | nothing |
 | charts | attached inline — the PNGs it just rendered, except on a retry after a failed send | none, and the email says why |
 | an empty table | says what its own scan found, unless that scan was cut short | says what the run it follows found, unless *its* scan was |
+| what earlier picks did | the scorecard its own fill just measured (`run.settled`), or no such table at all | the same block, off the run it follows |
 | workflow | `.github/workflows/evening.yml` | `.github/workflows/morning.yml` |
 
 **Why the morning run does not scan.** Before the open it has no market data
@@ -98,7 +108,9 @@ line of the mail while its row sat in the same run's `docs/data.json` under
 `reason: lynch_gate`. The absolute rules got their own line, the liquidity
 floor got one and the call cap got one, each for exactly this reason: a count
 that vanishes reads as a count that never existed. The checklist was the last
-cut without one, and it is the cut the product is named after. It has one now
+cut without one *at the time* — round 11 found an earlier one, between the
+universe and the bursts, and gave it a line above this one — and it is the cut
+the product is named after. It has one now
 — "Rejected by the 2LYNCH checklist: 1", between the floor and the gate, so
 the cuts read top to bottom as the subtraction a reader does — printed only
 when it is not zero, like the other refusal lines, and **counted, not left
@@ -521,7 +533,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1270 tests, no network or API keys needed
+pytest tests/                   # 1439 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -651,7 +663,10 @@ liquidity floor, paired with each of them) and
 which keys differ between them, and how many runs predate the fingerprint
 entirely: **a mean across runs is a mean over one strategy only while `sets`
 is 1**, and a run carrying no fingerprint is not a run that agrees with this
-one — `evidence.horizons` (which sessions after the
+one. `differ` names only the keys every set records, whose value moved; a key
+some set does not carry at all is `unshared`, since a rule that did not exist
+then and a rule that was merely not recorded then are the same silence and
+neither is a number that changed — `evidence.horizons` (which sessions after the
 burst were measured) and `evidence.band` (the range the strategy claims).
 
 **`+3d` and `+5d` are the horizons that matter, and the page says so on every
@@ -693,8 +708,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 14.05 MB raw
-and **1.08 MB gzipped** after a full year. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 15.51 MB raw
+and **1.25 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -730,11 +745,57 @@ invariants live in the file rather than only here. The load-bearing ones:
   opposite of what happened, and a name below the floor was never measured
   against the checklist at all. `run.gate.vetoes` names the absolute rules that
   run applied, and `run.liquidity` records the floor (`pctile`, `floor` in
-  dollars, `refused`), so a snapshot written before either existed is not
-  described as having enforced it. The liquidity refusals were the one class
+  dollars, `over` -- how many names the percentile was drawn from -- and
+  `refused`), so a snapshot written before either existed is not described as
+  having enforced it. `over` is the population the FLOOR was drawn from -- the
+  names whose session bar carried a readable, positive dollar volume -- and
+  not what the scan measured, which is `run.coverage.measured` and can differ
+  from it in both directions. A null `floor` has three readings: `pctile <= 0`
+  is the rule switched off whatever `over` says, `over: 0` under a live rule
+  is a night no name's dollar volume could be ranked, and no `over` at all is
+  a run from before the count existed. Both of the first two wrote the same
+  null, and every surface printed one sentence -- "nothing traded" -- over a
+  night the feed had answered in full. (The published contract read "a
+  positive `over` under a null floor cannot happen" for a round; the rule
+  switched off writes exactly that, and rule 6 can draw a floor on a night the
+  scan measured nothing, because a name the detector raised on contributed its
+  dollar volume before it raised.) The liquidity refusals were the one class
   the record did not hold until round 5: `apply_liquidity_gate()` logged them
   and dropped them, so on the documented four-name smoke test the thinnest
   name vanished and the funnel counted the other three as everything found.
+- `run.coverage` is how much of the night was actually READ: `requested`,
+  `with_bars` (answered with any bar), `fresh`, `measured`, `stale`, `gapped`,
+  `no_bars`, `dropped` and `duplicate_bars`, plus the `session` and the
+  `newest_seen` bar among the names that missed it. `measured` is the
+  population a burst could have come from -- the names whose session bar the
+  detector read and answered about -- so `with_bars - measured` is what could
+  not be measured for the session, in the five ways `run_scan()` subtracts
+  (behind it, holed on the session before it, unreadable, measured onto an
+  earlier session, or one the detector raised on), and **`measured: 0` under a
+  positive `with_bars` is a BLIND night**: the feed answered and not one
+  answer could be read, which is not a quiet market and no surface may report
+  it as one. `measured: 0` beside `with_bars: 0` is a scan nothing answered,
+  which is what a dead run's notice carries and is a different sentence.
+  `requested - with_bars` is the OTHER half of the same cut -- the names the
+  feed answered with nothing, plus any dropped after their batch failed twice
+  -- and it is not the burst filter either: a run with 20 asked, 18 answered
+  and 18 measured exits 0, and its mail used to say "No 4% burst anywhere in
+  the universe today". Every count is
+  conditional on the scan having reached it -- a run that died earlier carries
+  fewer of them, and absent is never 0 -- and the same block is what the
+  failure notice renders, so a dead run and a published one describe their
+  coverage in one shape. The email's funnel carries the cut when it bit, on
+  the widest denominator the block has ("Measured for the session: 216 of 228
+  asked, 216 of 227 that answered"), the page captions the first stage with
+  it, the empty-table cell names the population it is talking about instead of
+  the whole universe, and the morning prints the same line and the same clause
+  for the run it follows, because that run's coverage is a fact about it
+  exactly as its `bursts` is. The ledger entry keeps
+  `measured` alone (`runs[].measured`): `docs/data.json` is rewritten every
+  night and both readers of the number are LATER runs -- a streak, which may
+  not claim "nothing preceded this setup" across a night nobody read, and the
+  benchmark fill, which leaves a blind night pending rather than stamping its
+  rung as measured under no floor.
 - `run.stopped_printing` is a fact about the symbol FILE rather than the
   market: the names in it with no bar for more than 5 sessions -- a halt is
   a day or two, a delisting never comes back -- as `after_sessions`, an exact
@@ -775,6 +836,70 @@ invariants live in the file rather than only here. The load-bearing ones:
   than adding to this number, which counts the scan; so does
   `tools/live_check.py`, the third caller, on the OK line it prints for the
   live feed.
+- `run.settled` is what THIS run's fill made knowable about picks EARLIER runs
+  made: one entry per (scored row, horizon) whose measurement stopped being
+  pending tonight, carrying the pick's `ticker`, its burst `session`, the
+  `score` and `verdict` it was given then, the `horizon`, its return on both
+  bases (`ret`, `ret_from_open`) and that session's universe benchmark on both
+  (`universe`, `universe_from_open`). Every number in it restates a row the
+  record already holds rather than being recomputed, so the block cannot
+  disagree with `runs[]`. A horizon is filled once, so a pick appears under a
+  horizon in exactly one run's block and never twice with two numbers — which
+  is why the block is per `(row, horizon)` and not per row. **It is the picks
+  alone**: a refusal has no score to report and belongs to the control,
+  `evidence.refused`. Both mails print it as a table under the funnel — the
+  evening its own, the morning the same block off the run it follows — and
+  print NOTHING when the list is empty, because the first four nights of any
+  record settle nothing and "no picks settled" is a line a reader learns to
+  skip. An absent key is a run from before the block existed and is not a
+  night on which the earlier picks returned zero. It is not in the ledger
+  entry: every number in it is already in that file, and this block's one
+  irreproducible fact — WHICH night measured a horizon — is what the mail
+  needs and the record does not. The page does not print it either: the page
+  fetches the whole ledger and shows every row's outcome on its own card,
+  which is the thing an email cannot do.
+- `context` is what was measured beside the burst and voted on by nothing:
+  where the close sits against its own year (`pct_off_52w_high`,
+  `pct_above_52w_low`), how the name ran into it (`perf_3mo_pct`,
+  `perf_6mo_pct`) — each of those four over the bars that carry the field it
+  reads, since two of them are one close over another and two are a high and
+  a low, so a bar whose Volume alone the feed dropped no longer slides all
+  four windows a session back — the two Bonde measurements (`consecutive_up_days`,
+  `worst_base_day_pct`) and the burst bar's own geometry — `gap_pct` (the
+  open against the previous close, off the same two closes as `gain_pct`:
+  both are measured after the scan's own cleaning, so a bar with an
+  unreadable volume is a session neither is measured against),
+  `bar_range_pct` (high minus low over the close) and `range_expansion`
+  (that width over the mean width of the last seven sessions before it whose
+  range can be read — `N`'s own consolidation window, deliberately not a
+  second one, holding the bars `N` holds, and averaged the way `N` averages
+  it, so the ratio is
+  `bar_range_pct` over the %/day the `N` line in the same row prints). It is
+  on every burst row, scored or refused, and it survives into
+  `docs/ledger.json` beside the forward returns, which is the only place the
+  question "did the gapped bursts pay worse?" can ever be asked. Each is
+  `null` — never `0` — where the bar could not supply it, and which one goes
+  null depends on what is missing: the gap alone for no readable open or an
+  open printed outside its own bar, which is not a price anybody paid; the
+  width and the expansion for an envelope that cannot be read; the expansion
+  alone when no readable session before the burst had any width to expand
+  against; and all three when the LAST bar of the frame handed over is missing
+  a field the checklist needs, which is the rule and no longer a state this
+  block reaches — the metrics are anchored on the bar the checklist grades, so
+  these three step back onto it with `H` rather than describing the session
+  after. None of them is in `run.rules`: no rule reads
+  them, and a measurement that refuses nothing does not make a run a
+  different screener. The rulebook the model reads DOES change when their
+  instructions do, and that is in the fingerprint through `score.prompt`.
+  The three burst-bar numbers are model- and record-only by decision: the
+  page shows `consecutive_up_days` and `worst_base_day_pct` on a candidate
+  card and no view reads the other three, which is what the record is for
+  when there are enough rows to ask.
+  Until round 11 the block held no measurement of the burst bar itself, and
+  two bullets of `knowledge/strategy.md` asked the model to judge a bar it
+  was sent no number for: a +7.5% gap into a bar 0.9% wide and a flat open
+  with a 9.4% range, on the same close, gain, volume and `H`, produced
+  byte-identical requests.
 - Every candidate carries `provenance.source` (`"claude"` or `"fallback"`), and
   `provenance.chart_seen` is true only when the model actually received the chart.
 - `chart` is a path relative to `docs/`, or `null` with a `chart_error` saying why.
@@ -784,8 +909,12 @@ invariants live in the file rather than only here. The load-bearing ones:
   `day` is 1 exactly when `first_seen` is the burst's own session, and
   `last_seen` is `null` exactly when `seen_before` is 0. **A null `day` is not
   day 1**: it means the record cannot say, and `unknown_reason` says which of
-  `no_history`, `history_undated`, `history_unreadable` and
-  `window_not_covered` left it null.
+  `no_history`, `history_undated`, `history_unreadable`,
+  `window_not_covered` and `blind_session` left it null. The last is the only
+  one that is not about how far back the record reaches: it reaches, and one
+  of the sessions inside the window measured no name at all (`runs[].measured`
+  0), so an earlier burst would have been invisible to it -- and unlike
+  `window_not_covered`, waiting for the record to fill up never resolves it.
   Every surface prints that state in words — the email row, both dashboard
   tables and the pick card — because a row that renders nothing is read as a
   first sighting, which was the state of two of those three.
@@ -864,9 +993,21 @@ rows, which is what the dashboard's "has any of this made money yet" panel reads
 That mean is taken over **setups**, not rows: a name that bursts on five
 consecutive sessions is one move measured five times, and counting it five times
 weights that one move against every other name in the file. `forward_returns.n`
-is the setup count the mean was taken over — the weight the dashboard averages
-sessions by — and `forward_returns.rows` is what those setups were collapsed
-from. The page prints both, and calls neither of them "names".
+is how many setups the run contributed at any horizon and `forward_returns.rows`
+is what those setups were collapsed from. The page prints both, and calls
+neither of them "names".
+
+**The weight is per horizon**, not per run: `forward_returns.n1`, `n3` and `n5`
+are the setups behind `d1`, `d3` and `d5` separately, on both bases, and the
+dashboard multiplies each horizon's mean by its own. A frame with a hole two
+sessions after the burst measures `d1` and nothing after it — the fill refuses
+a horizon it cannot reach across every session on the way — so that setup is in
+`n` and out of `n5`, and one `n` for three horizons weighted a +5d mean by
+setups that have no +5d. `nH` is `0` exactly when `dH` is `null`, and they are
+not ordered `n1 >= n3 >= n5`: a bar that is there and prints a non-finite close
+leaves its own horizon null with a later one measured. A run entry written
+before these counts carries only `n`, which is what that file claims about its
+own weights, and the page uses it there.
 
 - `d1`, `d3`, `d5` are the percentage change from the burst-day close to the
   close 1, 3 and 5 **sessions** later — sessions read off the calendar the
@@ -874,18 +1015,35 @@ from. The page prints both, and calls neither of them "names".
   not positions in one frame, so neither a holiday nor a hole can quietly
   shift a horizon. This bullet said "positions in the frame" for a round
   after round 9 made that false.
-- `runs[].rules` is **every number this screener's rules turned on when that
-  run was made**: the scan's strategy thresholds, every threshold and window
-  the checklist names, the vetoes in force and the gate. It is derived rather
-  than listed — `src.pipeline.rules_fingerprint()` walks what `src.lynch`
-  names, its `WINDOWS`, and the `ScanConfig` fields that config itself marks
-  as strategy — so a threshold added later is recorded the moment it is named.
+- `runs[].rules` is **what this screener was when that run was made**: every
+  number its rules turned on — the scan's strategy thresholds, every threshold
+  and window the checklist names, the vetoes in force and the gate — and, since
+  round 11, what produced the SCORE as well as what produced the burst:
+  `score.prompt` is a digest of `knowledge/strategy.md`, the system prompt
+  itself, and `score.record_keys` names the record block the scoring request
+  carries. Every mean this page keys on a score averages the scorer as surely
+  as the gate, and the commit that rewrote the rulebook and added six payload
+  keys left this fingerprint byte-identical until those two arrived. It is
+  derived rather than listed — `src.pipeline.rules_fingerprint()` walks what
+  `src.lynch` names, its `WINDOWS`, the `ScanConfig` fields that config itself
+  marks as strategy, and `src.scorer`'s own `RECORD_KEYS` and knowledge file —
+  so a threshold added later is recorded the moment it is named.
   The trap it exists to avoid is a fingerprint that misses a number and so
   reports "same rules" across a change that altered them, which is worse than
-  no fingerprint; the six checklist windows were bare literals until round 8
-  named them for that reason. `MAX_TO_SCORE`, `TOP_N`, the feed and the
-  universe are deliberately not in it: each is already a fact of the run block
-  and none of them changes what a burst is. A run from before the fingerprint
+  no fingerprint; the checklist's windows were bare literals until round 8
+  named six of them, round 11 the seventh — `C`'s volume norm, whose 50
+  could be changed to 30 with this fingerprint byte-identical — and the same
+  round the four inside `extra_context()`, the 52-week, six-month and
+  three-month windows the model's relative-strength numbers are measured over,
+  which a guard scoped to `evaluate_2lynch` alone could not see. A number left
+  as a literal anywhere in `src.lynch` is refused by a test that reads every
+  one of its functions' own numeric constants, and a threshold spelled out at
+  its own value by a second test asserting each named threshold is read. `MAX_TO_SCORE`, `TOP_N`, the feed, the model and
+  the universe are deliberately not in it: each is already a fact of the run
+  block. What it still cannot see is a measurement key added to the metrics
+  payload with the rulebook left untouched — the rulebook has to explain a key
+  for the model to use it, and a docs test holds it to that for the record
+  keys, but that is a convention rather than a proof. A run from before the fingerprint
   carries no `rules` key at all — absent, never null, because the contract
   distinguishes "this run had none" from a shape no writer produces.
 - `runs[].benchmark` is the **universe's equal-weight return from that
@@ -1148,14 +1306,14 @@ construction: `docs/` and its exact design-system snapshot are served locally,
 and external requests are blocked. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
 
-**Three data sources, one page.** It runs 227 checks, and which file each one
+**Three data sources, one page.** It runs 255 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 40 mutated copies of it are served
+  night can hold at once. 44 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now
@@ -1232,7 +1390,31 @@ test fixtures. It dispatches no scan and calls no market or email service.
   override: `ScanConfig` in `src/scanner.py`. There is no share-volume floor;
   step 4 deleted it, and this bullet named the deleted knob and none of the
   three that replaced it
-- 2LYNCH pass criteria: `src/lynch.py`
+- 2LYNCH pass criteria: `src/lynch.py` — which BARS a MEASUREMENT counts is
+  decided by the fields that measurement reads and by nothing else. Per
+  measurement, not per check, because two checks are on both sides of the
+  split: the closes (`2`, `L`, `Y`, `C`'s prior-day move, the up-days veto and
+  the base breakdown) count every bar carrying a close, the ranges (`N`, and
+  `C`'s own width) count every bar carrying a high, a low and a close, and all
+  five fields are needed only to BE the bar graded — the burst `H` judges, and
+  the prior day `C` judges, which is the session before it in the closes and
+  not "whatever bar the prune left". All of it read one five-field frame until
+  round 11; that arrangement merged the two sessions either side of every
+  hole, which was reproduced on check 2 reporting two prior 4% bursts that
+  never happened. The thresholds a measurement is
+  compared against are module constants, and `WINDOWS` holds how much history
+  each check reads, plus the four windows `extra_context()` measures the
+  model's relative-strength numbers over. Both kinds are in the rules
+  fingerprint, and `RULES_REVISION` is there for the change neither kind can
+  express — which bars a check counts, which bar it is anchored on — bumped by
+  hand in the same commit as such a change, since a walk of numbers cannot see
+  one. A number left as a literal in ANY of that module's functions is
+  not in the fingerprint, and a threshold spelled out at its own value is a
+  third state that
+  looks like neither — two tests refuse them, one reading every function's
+  numeric constants and one asserting every named threshold is read by the
+  module's own code (`2.0` for `MAX_D1_MOVE` passed the first and not the
+  second, because `2.0 == 2`)
 - The two rules that are not checks, and the note beside them saying why not:
   `MAX_CONSECUTIVE_UP_DAYS` (an absolute veto) and `BREAKDOWN_PCT` /
   `BREAKDOWN_LOOKBACK` (measured, sent to the model, rejecting nothing), also
@@ -1280,23 +1462,23 @@ test fixtures. It dispatches no scan and calls no market or email service.
   transport, not read. The practical consequence is that raising `batch_size`
   to cut requests — the obvious move when the universe widens — buys almost
   nothing at this window.
-- Claude: ≤25 scoring calls/run with one chart image each — **about $0.15 a
-  run, so roughly $39 a year** at 252 sessions, and only on the evening run.
+- Claude: ≤25 scoring calls/run with one chart image each — **about $0.17 a
+  run, so roughly $42 a year** at 252 sessions, and only on the evening run.
   This said "a few cents/day", which is out by about 5x. Measured rather than
   guessed: a real `render_chart()` PNG is 869x622, which is 721 image tokens by
-  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~2,040
-  tokens of system prompt and the metrics block ~430, so ~3,190 input tokens
+  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~3,120
+  tokens of system prompt and the metrics block ~460, so ~4,300 input tokens
   and ~120 out per call, at claude-sonnet-4-6's $3/$15 per Mtok. The text
   halves are chars/4 estimates — `count_tokens` needs a network call this
   sandbox cannot make — so treat the figure as ±30%, which does not rescue "a
   few cents".
 
-  **The system prompt is 64% of every request and is byte-identical on all 25
+  **The system prompt is 73% of every request and is byte-identical on all 25
   calls**, so it is sent with `cache_control` and read from cache after the
   first. A cache write costs 1.25x and a read 0.1x — so the first call pays
   0.25x more than it would have and every call after saves 0.9x, which makes
-  break-even the second call (1.28 calls) and a full night 46% cheaper: the
-  $0.28 this paragraph used to quote against the $0.15 above. (This said 1.4
+  break-even the second call (1.28 calls) and a full night 54% cheaper: the
+  $0.37 an uncached night would cost against the $0.17 above. (This said 1.4
   calls, 43% and $0.13: 1.4 is 1.25 over 0.9, which charges the whole write
   against the reads as if the first call were otherwise free, and the two
   money figures were rounded from different token counts. A test now does the

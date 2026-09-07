@@ -53,6 +53,7 @@ from src.scanner import (
     trailing_volume_mean,
 )
 from src.scanner import _SYMBOL_RE
+from src import scanner
 
 
 def test_flat_series_is_not_a_setup(ohlcv):
@@ -383,14 +384,25 @@ def test_the_trailing_average_excludes_the_day_being_measured(ohlcv):
 
 
 def test_the_trailing_window_is_the_one_src_lynch_already_uses(ohlcv):
-    """src.lynch's C check divides the pre-burst day by
-    `pre["Volume"].iloc[-51:-1].mean()`. Two layers of one pipeline reporting
-    "volume vs average" against different windows is how a metric stops
-    meaning anything, so this pins them to the same arithmetic."""
+    """src.lynch's C check divides the pre-burst day by the same window. Two
+    layers of one pipeline reporting "volume vs average" against different
+    windows is how a metric stops meaning anything, so this pins them to the
+    same arithmetic.
+
+    Its name promised that and it did not do it: the window it compared
+    against was one this test wrote out itself, off `cfg.rvol_lookback`, so
+    src.lynch was never read and its 50 was a bare literal the whole time.
+    It reads `lynch.WINDOWS` now, which is where that half of the number
+    lives."""
+    from src.lynch import WINDOWS
+
     cfg = ScanConfig()
     frame = _passing(ohlcv)
     assert cfg.rvol_lookback == 50
-    lynch_window = frame["Volume"].iloc[-(cfg.rvol_lookback + 1):-1].mean()
+    assert WINDOWS["volume_norm_sessions"] == cfg.rvol_lookback, (
+        "the checklist's calm-day norm and rule 3's trailing average are "
+        "documented as one number")
+    lynch_window = frame["Volume"].iloc[-(WINDOWS["volume_norm_sessions"] + 1):-1].mean()
     assert trailing_volume_mean(frame, cfg) == pytest.approx(float(lynch_window))
 
 
@@ -1141,7 +1153,7 @@ def test_run_scan_names_the_symbols_the_feed_returned_nothing_for_and_states_its
     assert [m for m in messages if m.startswith("Coverage for ")] == [
         f"Coverage for {stats['session']}: 11 requested; 9 answered with bars, 1 of those with no bar "
         "for the session; 2 answered with no bar at all; 0 dropped after their batch failed twice; "
-        "0 duplicate bar(s) dropped"], messages
+        "0 duplicate bar(s) dropped; 8 measured for the session"], messages
 
 
 def test_run_scan_counts_the_bars_the_feed_sent_twice_and_states_them_in_its_coverage(
@@ -1172,7 +1184,7 @@ def test_run_scan_counts_the_bars_the_feed_sent_twice_and_states_them_in_its_cov
     assert [m for m in messages if m.startswith("Coverage for ")] == [
         f"Coverage for {stats['session']}: 9 requested; 9 answered with bars, 1 of those with no bar "
         "for the session; 0 answered with no bar at all; 0 dropped after their batch failed twice; "
-        "3 duplicate bar(s) dropped"], messages
+        "3 duplicate bar(s) dropped; 8 measured for the session"], messages
 
 
 def test_a_scan_with_no_duplicate_bars_says_so_rather_than_saying_nothing(fake_alpaca, ohlcv, caplog):
@@ -1190,7 +1202,133 @@ def test_a_scan_with_no_duplicate_bars_says_so_rather_than_saying_nothing(fake_a
     assert [m for m in (r.getMessage() for r in caplog.records) if m.startswith("Coverage for ")] == [
         f"Coverage for {stats['session']}: 9 requested; 9 answered with bars, 1 of those with no bar "
         "for the session; 0 answered with no bar at all; 0 dropped after their batch failed twice; "
-        "0 duplicate bar(s) dropped"]
+        "0 duplicate bar(s) dropped; 8 measured for the session"]
+
+
+def _blind_universe(fake_alpaca, ohlcv, *, holes: int = 11) -> list[str]:
+    """A universe where every name that carried the session has a hole on the
+    session before it, and one halted name proves the market traded it.
+
+    NOT the day-after-a-holiday shape round 10 closed: `close_session()` is a
+    business day nobody printed on, which the scan reads off the frames as a
+    closure and measures across. Here one name DID print on it -- it stopped
+    printing that session -- so observed_previous_session()'s disproof fires,
+    the arithmetic's date stands, and every frame missing it is a hole. That
+    is a night the feed answered for every symbol and not one answer could be
+    measured, and it stays reachable after the closure rule.
+    """
+    names = []
+    for i in range(holes):
+        name = f"H{'ABCDEFGHIJKLMNOP'[i]}"
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i), gap_before_session=True)
+        names.append(name)
+    fake_alpaca.add_history("HALT", ohlcv("flat", variant=90), stale_sessions=1)
+    return names + ["HALT"]
+
+
+def test_a_scan_that_measured_nothing_says_so_instead_of_returning_a_quiet_market(
+    fake_alpaca, ohlcv, caplog
+):
+    """A BLIND NIGHT. Every count of a name that could not be read was in the
+    stats and nothing added them up, so a scan that measured NOT ONE NAME came
+    back as `with_bars: 12` and no candidates -- which every surface
+    downstream rendered as a quiet market. Reproduced end to end before the
+    count existed: exit 2, 0 bursts, a null floor and a record that said
+    nothing about how much of the night it had read."""
+    universe = _blind_universe(fake_alpaca, ohlcv)
+    stats: dict = {}
+    with caplog.at_level(logging.INFO, logger="src.scanner"):
+        found = run_scan(ScanConfig(), universe=universe, stats=stats)
+
+    assert found == [], "the premise: this night produced no candidate at all"
+    assert stats["with_bars"] == 12 and len(stats["gapped"]) == 11 and len(stats["stale"]) == 1
+    assert stats["measured"] == 0, (
+        "the feed answered for twelve names and not one of them could be measured")
+    assert [m for m in (r.getMessage() for r in caplog.records)
+            if m.startswith("Coverage for ")][0].endswith("0 measured for the session")
+
+
+def test_the_measured_count_leaves_out_every_way_a_name_could_not_be_read(
+    monkeypatch, fake_alpaca, ohlcv, caplog
+):
+    """Five ways, and `measured` is what is left after all five. One name
+    behind the session, one holed on the session before, one whose session bar
+    cannot be read, one the detector raises on, and one whose measured bar
+    turns out to be an earlier session: each is a name that answered and could
+    not be measured FOR THIS SESSION, and a count that leaves any of them in
+    is a count of something else."""
+    universe = _coverage(fake_alpaca, ohlcv, fresh=6, stale=1, prefix="M")
+    fake_alpaca.add_history("HOLED", ohlcv("burst", variant=40), gap_before_session=True)
+    fake_alpaca.add_history("BADBAR", _nan_on_the_session_bar(ohlcv, "Close"))
+    # Two prices nothing else in this universe carries, so the double for
+    # detect_setup can tell whose frame it has: it is handed a frame and a
+    # config, never a ticker.
+    fake_alpaca.add_history("RAISER", _thin(ohlcv, "burst", price=137.11,
+                                            volume=9_000_000, variant=41))
+    fake_alpaca.add_history("EARLIER", _thin(ohlcv, "burst", price=241.77,
+                                             volume=9_000_000, variant=42))
+    universe += ["HOLED", "BADBAR", "RAISER", "EARLIER"]
+
+    real = scanner.detect_setup
+
+    def detect(df, cfg):
+        if round(float(df["Close"].iloc[-1]), 2) == 137.11:
+            raise ValueError("a pandas change, as far as this scan can tell")
+        found = real(df, cfg)
+        if found and round(float(df["Close"].iloc[-1]), 2) == 241.77:
+            found = {**found, "date": str(previous_session(date.fromisoformat(found["date"])))}
+        return found
+
+    monkeypatch.setattr(scanner, "detect_setup", detect)
+    stats: dict = {}
+    run_scan(ScanConfig(), universe=universe, stats=stats)
+
+    assert (len(stats["stale"]), len(stats["gapped"]), len(stats["invalid_bars"]),
+            len(stats["detector_errors"]), len(stats["off_session"])) == (1, 1, 1, 1, 1), stats
+    assert stats["with_bars"] == 11
+    assert stats["measured"] == 6, (
+        "eleven answered, five of them unreadable one way or another")
+    # AND `over` IS NOT THAT COUNT. Rule 6's population is taken before
+    # detect_setup() runs, so the name it raised on and the name whose bar was
+    # an earlier session are both in it: eight ranked, six measured. Three
+    # published sentences equated the two, one of them on the page.
+    assert stats["liquidity_over"] == 8
+
+
+def test_the_liquidity_floor_records_how_many_names_it_was_drawn_from(fake_alpaca, ohlcv):
+    """A null floor has two causes -- the rule is off, or there was nothing to
+    rank -- and `floor: null` was the whole record of both. `over` is the
+    population the percentile came from, so a blind night's null floor can be
+    told from a night nobody scanned with the rule off."""
+    # The population is every name that TRADED, not the ones that burst: the
+    # floor is a percentile of the session's tape, and a universe whose every
+    # fresh name bursts cannot tell the two apart. Five bursts among nine
+    # names that traded is what makes this count the one it claims to be.
+    universe = _coverage(fake_alpaca, ohlcv, fresh=5, stale=1, prefix="L")
+    for i in range(4):
+        name = f"LQ{i}"
+        fake_alpaca.add_history(name, ohlcv("flat", variant=50 + i))
+        universe.append(name)
+    stats: dict = {}
+    found = run_scan(ScanConfig(), universe=universe, stats=stats)
+    assert len(found) < 9, "the premise: not every name that traded burst"
+    assert stats["liquidity_over"] == 9 and stats["liquidity_floor"] is not None
+
+    blind: dict = {}
+    run_scan(ScanConfig(), universe=_blind_universe(fake_alpaca, ohlcv), stats=blind)
+    assert blind["liquidity_floor"] is None and blind["liquidity_over"] == 0, (
+        "no name's dollar volume could be ranked -- which is not the same fact "
+        "as the rule being switched off, and not the same count as how many "
+        "names the scan measured")
+
+    # AND THE RULE SWITCHED OFF, which the published contract said could not
+    # happen: it read "a positive `over` under a null floor cannot happen", and
+    # `pctile: 0` writes exactly that. `pctile` is what tells this state, and
+    # `over` is what tells the other two apart.
+    off: dict = {}
+    run_scan(ScanConfig(min_dollar_volume_pctile=0.0), universe=universe, stats=off)
+    assert off["liquidity_floor"] is None and off["liquidity_over"] == 9
+
 
 
 def _warned(caplog, phrase: str) -> str:

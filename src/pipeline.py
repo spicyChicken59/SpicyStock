@@ -53,8 +53,9 @@ still cleared the filter on Tuesday was presented as a brand-new day-1 idea on
 both nights, with nothing telling the reader they had already looked at it.
 Step 9 built the store that knows better — docs/ledger.json holds every scored
 and gated candidate for up to 260 runs — and the pipeline only ever wrote to
-it. It is now read back before the email goes out, and every burst the run
-reports carries a streak: which day of this setup it is, when the name last
+it. It is now read back before the CHARTS and the model, so the streak is in the
+scoring request as well as in the row, the email and the page, and every burst
+the run reports carries one: which day of this setup it is, when the name last
 appeared, and what it was scored then. src.ledger.MAX_STREAK_GAP_SESSIONS
 holds the one judgement behind it (what "the same setup" means) and the
 reasoning for it.
@@ -102,6 +103,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import logging
 import os
 import re
@@ -113,8 +115,8 @@ from pathlib import Path
 from . import ledger, lynch as lynch_rules, scanner
 from .lynch import VETO_RULES, evaluate_2lynch, extra_context, failed_vetoes, veto_reason
 from .scanner import ScanConfig, run_scan
-from .scorer import MODEL as DEFAULT_MODEL
-from .scorer import render_chart, score_all
+from .scorer import KNOWLEDGE_PATH, MODEL as DEFAULT_MODEL
+from .scorer import RECORD_KEYS, render_chart, score_all
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("pipeline")
@@ -154,15 +156,36 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
     have -- and the trap this exists to avoid, since a fingerprint that
     misses a number reports "same rules" across a change that altered them.
     The one thing it cannot catch is a number left as a bare literal, which
-    is why round 8 named the six windows that were, and why a test asserts
-    the fingerprint covers what each source exposes.
+    is why round 8 named six windows, round 11 the seventh (C's volume
+    average) and four more in extra_context(), and why a test asserts the
+    fingerprint covers what each source exposes. The count is not kept here,
+    because it rotted twice: what guards it is
+    test_no_check_reads_a_window_left_as_a_bare_number, which reads the
+    numeric literals out of EVERY function in src.lynch rather than any list.
 
     NOT in it, deliberately: TOP_N and MAX_TO_SCORE (already per run as
     shortlist_size and score_cap, and neither changes what a burst is), the
     feed (a fact about the data, already in the scan stats), and the universe
     (already per run in run.universe). Those are the run's own facts, not the
     strategy's, and duplicating them here would give a reader two places to
-    look and two chances to disagree.
+    look and two chances to disagree. The MODEL is out for the same reason:
+    run.model already carries it.
+
+    AND THE SCORER'S INPUTS ARE IN, since round 11. What a burst is and what a
+    SCORE is are two different questions and this record answers both under
+    one label: `evidence.by_score`, `top_score` and the separation sentence
+    all average scores, and a screener whose scoring rulebook changed is as
+    much a second screener as one whose gate moved. Measured rather than
+    argued: the commit that put the record block in front of the model left
+    this fingerprint byte-identical (ef0c4dbc98ebd169 on both sides) while
+    every scoring request in the file changed, so the page would have gone on
+    printing nothing across the boundary. Two keys, both derived --
+    `score.prompt` is a digest of knowledge/strategy.md, the system prompt
+    itself, and `score.record_keys` is the payload names src.scorer builds the
+    record block from. What they do NOT cover is a measurement key added to
+    metrics_payload() with the rulebook untouched; the rulebook has to explain
+    a key for the model to use it, and a docs test holds it to that for the
+    record keys, but that is a convention and this is not a proof of one.
     """
     cfg = cfg or ScanConfig()
     # Off the config's OWN class, not the imported name: a caller that builds
@@ -180,6 +203,14 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
     # burst is as surely as moving a threshold does.
     out["check.vetoes"] = sorted(VETO_RULES)
     out["gate.min_lynch_passes"] = MIN_LYNCH_PASSES
+    # The bytes, not the text: a rulebook re-encoded is a different request on
+    # the wire even where it reads the same, and a digest that normalised it
+    # would be reporting agreement it did not check. Truncated because this
+    # goes on every run entry and the record's size is budgeted in README --
+    # 16 hex digits is 64 bits, which is not a collision anyone will meet
+    # across MAX_RUNS entries, and it is an identity rather than a secret.
+    out["score.prompt"] = hashlib.sha256(KNOWLEDGE_PATH.read_bytes()).hexdigest()[:16]
+    out["score.record_keys"] = [name for name, _key in RECORD_KEYS]
     return dict(sorted(out.items()))
 
 
@@ -1163,6 +1194,15 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
                           "fallback": score_stats.get("fallback", 0)})
     stats = report.email_stats(
         universe=universe_label(scan_stats, tickers),
+        # AND WHAT IT SCANNED, when it was not the checked-in file. The empty
+        # cell's widest sentence is a claim about the market, and a --tickers
+        # run writes docs/data.json and mails like any other: over a two-name
+        # smoke record it said no 4% burst reached the checklist anywhere in
+        # the universe. follow_through() has handed the morning the same fact
+        # since round 10, under the same rule -- only the exception travels,
+        # so an ordinary night's cell reads as it always did.
+        scanned_universe=(intended_universe_label(tickers)
+                          if tickers is not None else None),
         # How many CLEARED the gate, not how many fitted under the call cap
         # afterwards. The email prints this as "Passed 2LYNCH gate", and on any
         # night with more than MAX_TO_SCORE survivors the capped number was a
@@ -1192,6 +1232,12 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         liquidity_pctile=cfg.min_dollar_volume_pctile,
         # The names that have stopped printing, for the email's own line.
         stopped_printing=stopped_printing(scan_stats),
+        # And how much of the universe was really read, in the shape the
+        # failure notice and docs/data.json both carry: the funnel's first cut
+        # was a bare "4% bursts found: 0" with nothing between it and the
+        # universe size, so a night that measured nothing read exactly like a
+        # night that measured everything and found nothing.
+        coverage=scan_coverage(scan_stats),
         # And how many CLEARED the gate and were never looked at anyway. The
         # email's funnel went "Passed 2LYNCH gate: 54" straight to
         # "Shortlisted: 1", so on any night with more survivors than the call
@@ -1237,6 +1283,11 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
              "forward return(s) filled this run)",
              published["data"], len(scored), len(unscored),
              published["ledger"], published["runs"], published["filled"])
+    # WHAT THE EARLIER PICKS DID, in the artifact a person opens. It is known
+    # only once publish() has run, and `stats` is the same dict the funnel was
+    # built from and the same object report.attempted holds, so the failure
+    # notice carries it too on a night that publishes and then cannot deliver.
+    stats["settled"] = published["settled"]
 
     # Layer 6: email. A degraded run still sends. Suppressing it would replace
     # a misleading email with no email, and no email is the failure this step
@@ -1701,6 +1752,16 @@ def follow_through(mode: Mode, dry_run: bool = False,
         # Absent from a run block written before the count existed, and the
         # emailer prints nothing for that, never a 0.
         duplicate_bars=source.get("duplicate_bars"),
+        # AND WHAT THAT RUN'S FILL SETTLED. The block is a fact about the run
+        # being followed, exactly as its funnel counts are, and the reader of
+        # the 8:30 mail is the one who has to decide what to do about the
+        # names in front of them -- so a scorecard printed in the evening and
+        # dropped here would be the "one mechanism, two vocabularies" shape
+        # one mail over, which is how stopped_printing came to be on the page
+        # and not in this mail. Absent from a snapshot written before the
+        # block existed, and the emailer prints nothing for that, never "no
+        # picks settled".
+        settled=source.get("settled"),
         # WHICH STAGE BROKE IN THE RUN BEING FOLLOWED, in that run's own stage
         # words. Not its status: "degraded" covers a clock disagreement, a
         # chart that would not render, a Claude fallback, an unreadable
@@ -1722,6 +1783,15 @@ def follow_through(mode: Mode, dry_run: bool = False,
         # the ordinary case is the whole file, and a morning funnel line
         # naming a universe THIS pass did not scan is what step 10 removed.
         followed_universe=followed_universe,
+        # AND HOW MUCH OF THAT SESSION THAT RUN READ. It is the followed run's
+        # own count, like `bursts` and `stopped_printing` beside it, and the
+        # morning printed every other cut of that run and not the first one:
+        # a thin night mailed the coverage line in the evening and, over the
+        # same record, "4% bursts that session: 0" with no denominator the
+        # next morning. The blind case never reaches it (measuring nothing
+        # always degrades, so the band carries the reasons), which is exactly
+        # why the thin one is the live case.
+        coverage=source.get("coverage") if isinstance(source.get("coverage"), dict) else None,
         # How far behind, in sessions, so the SUBJECT LINE can escalate. Every
         # staleness read DEGRADED before this, and a screener dead for three
         # weeks is not the Tuesday after Presidents' Day. src.emailer._prefix()
@@ -1897,6 +1967,15 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         # nothing indexes into is how this repo's one-level-short class keeps
         # arriving.
         "duplicate_bars": int(scan_stats.get("duplicate_bars") or 0),
+        # HOW MUCH OF THE NIGHT WAS READ, in the record itself. Every count
+        # here was in the log and in nothing else, so a scan that measured NOT
+        # ONE NAME published `bursts: 0` and the page captioned the cut "no 4%
+        # gain on the day" -- a blind night described as a quiet market, on
+        # the only surface a later reader has. Reproduced end to end on a
+        # constructed blind night (eleven frames holed on the session before,
+        # one halted name proving the market traded it) before this existed.
+        # The same shape the failure notice renders, from the same function.
+        "coverage": scan_coverage(scan_stats),
         "bursts": n_bursts,
         "passed_gate": n_passed,
         "scored": len(scored),
@@ -1916,8 +1995,23 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         # a percentile of every name that traded, in dollars -- and it is the
         # one figure the open decision about widening the universe turns on,
         # so it is kept per run rather than left in a log line.
+        # `over` is how many names the percentile was drawn FROM -- those
+        # whose session bar carried a readable, positive dollar volume -- and
+        # it is what separates the two null floors the RULE can produce: with
+        # the rule on (pctile > 0), `over: 0` is a night no name could be
+        # ranked, and a positive `over` is a floor. The rule switched off
+        # (pctile <= 0) writes a null floor whatever `over` says, and `pctile`
+        # is what reads that. Before the count, every surface printed the one
+        # sentence -- "nothing traded" -- over a night on which the feed had
+        # answered for every name. It is NOT the count of what the scan
+        # measured: run.coverage.measured is that, and the two differ by every
+        # name whose dollar volume would not round above zero and every name
+        # the detector raised on.
         "liquidity": {"pctile": cfg.min_dollar_volume_pctile,
                       "floor": ledger._num(scan_stats.get("liquidity_floor")),
+                      **({"over": scan_stats["liquidity_over"]}
+                         if isinstance(scan_stats.get("liquidity_over"), int)
+                         and not isinstance(scan_stats.get("liquidity_over"), bool) else {}),
                       "refused": sum(1 for _c, _l, _x, reason in unscored
                                      if reason == ledger.LIQUIDITY_REASON)},
         "scored_by": {"claude": score_stats.get("claude", 0),
@@ -1934,7 +2028,7 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     # at least the one just scanned.
     through = max(scanner.current_session(), session) if session else scanner.current_session()
     pending = book.pending_tickers(through)
-    filled = 0
+    filled: list[ledger.Filled] = []
     frames_read = frames
     try:
         frames = forward_bars(cfg, pending, through)
@@ -1971,6 +2065,16 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     book.latest["run"]["errors"] = list(report.errors)
     book.latest["run"]["status"] = entry["status"] = report.status
 
+    # WHAT THE EARLIER PICKS DID, from the rows the fill above just moved.
+    # Stamped here rather than built with the rest of the run block because
+    # it is not knowable until both fills have run: the benchmark each entry
+    # carries beside the pick is the one fill_benchmarks() may have measured
+    # moments ago, and reading it before that would publish a pending rung
+    # beside a settled pick. Not in the ledger entry: every number in it is a
+    # restatement of a row that file already holds, and README budgets its
+    # size. See src.ledger.settled_rows().
+    book.latest["run"]["settled"] = ledger.settled_rows(filled)
+
     # A SCAN_SESSION_DATE backfill adds an OLDER session to the record. It
     # used to become the headline of docs/data.json too -- the top-level run
     # last week's, while `runs` two lines down still listed last night -- and
@@ -1993,7 +2097,10 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     # record being worthless, and the exit code has to be able to say so.
     report.published = True
     return {"data": written["data"], "ledger": written["ledger"], "headline": headline,
-            "runs": len(book.runs), "pending": len(pending), "filled": filled,
+            "runs": len(book.runs), "pending": len(pending), "filled": len(filled),
+            # The scorecard the email prints under its funnel, handed back
+            # rather than re-read out of the file that was just written.
+            "settled": list(book.latest["run"]["settled"]),
             "benchmarked": benchmarked}
 
 
@@ -2134,6 +2241,11 @@ def scan_coverage(scan_stats: dict) -> dict:
     is the one rule that decides what a number is; a second copy here would be
     a guard no input can reach and no test can fail on.
 
+    TWO READERS, ONE SHAPE. This is `run.coverage` in docs/data.json and in
+    the ledger entry's `measured`, as well as the block the failure notice
+    renders: what a night measured is the same fact whether the run died or
+    published, and two functions composing it would be two answers to it.
+
     A FIXED LIST OF KEYS, which is why `duplicate_bars` had to be added to it:
     the scanner counted the bars the feed repeated, the run block published
     the number, and the failure notice -- the one surface a person reads on
@@ -2147,8 +2259,17 @@ def scan_coverage(scan_stats: dict) -> dict:
     what tell a reader which.
     """
     counts = {key: scan_stats[key] for key in
-              ("requested", "with_bars", "fresh", "no_bars", "dropped", "duplicate_bars")
+              ("requested", "with_bars", "fresh", "measured", "no_bars", "dropped",
+               "duplicate_bars")
               if key in scan_stats}
+    # The two ways of not being measured that the scanner keeps as MAPS of
+    # name -> why. The failure notice and the run block want the counts, and
+    # a dict is not one: len() here rather than a second count in the
+    # scanner, and only when the map is a map, so nothing is coerced.
+    for key in ("stale", "gapped"):
+        found = scan_stats.get(key)
+        if isinstance(found, dict):
+            counts[key] = len(found)
     # scanner's own rule for "the newest session anything did print", not a
     # second copy of it: a name whose stamp could not be read has no date, and
     # max() over a mix of those and real dates is the crash that function

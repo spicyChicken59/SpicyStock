@@ -1,8 +1,9 @@
 # SpicyStock — working notes
 
 A daily US-equity screener implementing the Stockbee/Qullamaggie 4% Momentum
-Burst strategy. Scan → 2LYNCH checklist → chart render → Claude scores the
-survivors from metrics plus a chart image → ranked email. Runs as a GitHub
+Burst strategy. Scan → 2LYNCH checklist → read the record → chart render → Claude scores the
+survivors from metrics, the checklist detail, what the record already knows
+about the name and a chart image → ranked email. Runs as a GitHub
 Actions cron.
 
 This project was inherited from another author and is being rebuilt in ranked
@@ -144,7 +145,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1270 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1439 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -611,13 +612,13 @@ exercised its headline. Nine mutants across them, all killed.
   gate -- and counted off the reason word rather than left over, for the same
   reason this paragraph's own line is.
 
-  **The system prompt is 64% of every request and was paid for 25 times a
+  **The system prompt is 73% of every request and was paid for 25 times a
   night.** `knowledge/strategy.md` is byte-identical on every call of a run --
-  measured at ~2,040 tokens against ~430 of metrics and ~721 for an 869x622
+  measured at ~3,120 tokens against ~460 of metrics and ~721 for an 869x622
   chart -- and nothing asked for it to be cached. It carries `cache_control`
   now: a write costs 1.25x and a read 0.1x, so break-even is the second call
   (1.28 calls: the write costs 0.25x more than the uncached call it replaces
-  and each read saves 0.9x) and a full night is 46% cheaper, $0.28 to $0.15.
+  and each read saves 0.9x) and a full night is 54% cheaper, $0.37 to $0.17.
   This said 1.4 calls, 43% and "$0.24 to $0.13" while README said $0.25 — the
   same paragraph in two files with two arithmetics, and a test now does it
   from README's stated inputs. No `ttl`, because 5 minutes is
@@ -697,8 +698,10 @@ exercised its headline. Nine mutants across them, all killed.
   round-5 audit put the dollar volume on every ledger row, 13.71 and
   0.99 once round 7 put a benchmark on every run entry, 14.04 and 1.08
   once the rounds 6-7 audit stamped each benchmark with the universe it was
-  measured over, and 14.05 once round 10 put the night's duplicate-bar count
-  on every run entry -- the guard below
+  measured over, 14.05 once round 10 put the night's duplicate-bar count
+  on every run entry, and 15.46 and 1.24 by the end of round 11, whose own
+  entries added `measured`, an `n` per horizon and the seventh checklist
+  window -- the guard below
   caught every move on the commit that made it. The gzipped figure has
   grown faster than the raw one, because a block of nulls compresses worse
   than a run of numbers; the page's fetch-on-demand argument still holds at
@@ -732,11 +735,12 @@ exercised its headline. Nine mutants across them, all killed.
   -- and did not sweep the page. A 6/6 name refused by an absolute rule is
   counted in `seen_before`, and the tooltip told the reader it was not. Same
   round, a second one: the streak table's null bucket said "the record does not
-  reach back far enough", which is ONE of the four reasons that put a burst
-  there, and the only one any available fixture carries -- so a run whose
+  reach back far enough", which is ONE of the reasons that put a burst
+  there (four then, five since `blind_session`), and the only one any
+  available fixture carries -- so a run whose
   history could not be READ was told a different fault with a different fix.
   The bucket has no reason field to narrow it, so it now says what is true of
-  all four and points at the rows, which do. Both pinned by tests that read
+  every one of them and points at the rows, which do. Both pinned by tests that read
   both files, because a comment claiming two surfaces match is exactly what
   carried this for a round.
 
@@ -821,6 +825,512 @@ exercised its headline. Nine mutants across them, all killed.
   calls a burst the call budget crowded out — two vocabularies for one
   mechanism, side by side on one page, under two comments each claiming they
   matched.
+
+## Round 11's checklist-one-number audit — a key the record never carried is not a key that moved
+
+Three auditors over the commit that named C's volume window, ten findings and
+nine lows, every one reproduced HERE by execution before it was touched. Two
+lenses found the same HIGH independently and three found the same MEDIUM.
+
+**The page was about to publish "What moved: window.volume_norm_sessions" over
+a record in which it did not move, from Tuesday.** `rules_view()` computed
+`differ` with `block.get(key)`, so a key one block does not carry read as None
+against the other's number -- indistinguishable from a value that changed.
+Reproduced against this repo's own record: `docs/ledger.json`'s single 4 Sep
+run carries a 28-key block, the fingerprint returns 35 now, and driving the
+real `rules_view()` over the pair gave `sets 2, runs_without 0, differ
+['score.prompt', 'score.record_keys', 'window.volume_norm_sessions']` --
+which `renderRulesNote()` renders as "This record spans 2 sets of rules, so
+every mean below averages more than one screener. What moved: ...". Of those
+three the last provably did not move: the commit that named it claimed no
+behaviour change and both fixtures regenerated byte-identically. `runs_without`
+already draws exactly this distinction one level up -- a whole missing block is
+counted apart and explicitly must not be read as agreement -- and the key level
+was left short. `differ` is now the keys EVERY set records whose value moved,
+`unshared` the keys some set does not carry, and the page says the second in
+its own sentence. `sets` is deliberately still the count of distinct blocks and
+is NOT computed over the shared keys: a key one block lacks may be a rule that
+did not exist then or one that existed and was not recorded, the record cannot
+tell those apart, and calling it one screener would be the confident half of an
+answer this file does not have. The name says what is true of both directions,
+since a constant DELETED is unshared too.
+
+**Two of the six windows round 8 named were spelled a second time, as digits
+inside the strings the model reads.** `L` printed "over prior 30 days" and `Y`
+"vs 20SMA" as literal text: with the windows patched to 10 and 5 the lines
+still said 30 and 20 -- in the scoring request, in the email's checklist lines
+and in every archived `lynch_detail`. `tools/make_fixture.py` had already built
+both lines FROM `WINDOWS` (round 8 swept the generator and not the source), so
+under a patched window the generator and the pipeline would have printed two
+different sentences while `check_fixture_fresh.py`, which compares the fixture
+to the GENERATOR, called both current. Both interpolate now, and the guard for
+this half is the rendered line under a patched `WINDOWS`, because a number
+written in words is not an `ast.Constant` numeric and the AST guard is blind
+to it.
+
+**And the class was declared closed a second time, on one function.** The
+round-11 guard read `evaluate_2lynch` alone while `extra_context()` spelled
+252, 126, 63 and 60 -- the 52-week high/low lookback, the six- and three-month
+performance windows, and the history a 52-week reading needs first. Three
+lenses found it independently and each reproduced it the way the round had
+reproduced its own premise: `iloc[-63]` and its `len(df) > 63` guard changed to
+45 left `rules_fingerprint()` BYTE-IDENTICAL and the FULL suite green, while
+`perf_3mo_pct` moved on the same frame -- under a key still called `3mo`, in a
+block `knowledge/strategy.md` names to the model as one of its two
+relative-strength measures, archived in every row's `context`. All four are in
+`WINDOWS` now (the two spellings of 63 read the same key, so moving the window
+cannot leave its own length guard stale), the guard walks every function in the
+module, and the fingerprint is 31 keys -> 35.
+
+**A threshold inlined at its own value passed the guard meant to catch it.**
+`found - set(allowed)` compares by numeric VALUE, and `2.0 == 2` and
+`1.0 == 1`: `d1_move < 2.0` for `MAX_D1_MOVE` and `d1_range_ratio <= 1.0` for
+`MAX_D1_RANGE_RATIO` both survived it, which is the state the fingerprint
+exists to prevent from the other side -- editing the constant then moves the
+record and not the rule. Keying the set on the literal's type does not close it
+(`0.0 <= close_pos <= 1.0` legitimately spells 1.0), so the guard is the
+other direction and does not depend on the value at all: every threshold this
+module names is read by its own code. The residual -- a number NEVER named, at
+one of the five allowed values -- is written into the guard's docstring rather
+than left to its silence.
+
+**The rulebook's most consequential number was parsed by nothing, and it
+disagreed with itself.** `_validated()` REPLACES a model's verdict with the
+band its score falls in, so `VERDICT_BANDS` is the one rubric number where a
+disagreement is a rewrite rather than an opinion -- and rewriting "Verdicts: A+
+(9-10), A (8-8.9), ..." to half-point bands, or moving the B+ floor from 7.0 to
+6.5, each left the FULL suite green. The rulebook also contradicted itself
+first: its section heading read "What makes an A+ burst (score 8-10)" over a
+table putting A+ at 9-10, so `_validated({"score": 8.5, "verdict": "A+"})`
+returns "A" and logs the model as contradicting a rubric that contradicted
+itself. The heading says 9-10 now and a sibling of the fallback-anchor guard
+parses the bands, the skip floor, the heading and all three copies of the
+vocabulary (`VERDICT_BANDS`' names, `VERDICTS`, and the JSON shape the request
+asks for).
+
+**And the guard the round's own comment promised was one sentence short, with
+the count wrong.** That comment said one test "reads all four of those
+sentences"; it named three, the test reads only `knowledge/strategy.md`'s, and
+README's is read by a different test. Reproduced both ways: sweeping the two
+guarded sentences and README's diagram for `MAX_CONSECUTIVE_UP_DAYS` 2 -> 3
+left the system prompt saying "the difference between the three you do see"
+over a veto admitting four counts, with the value pin -- which a deliberate
+change updates -- as the only red; and editing that sentence alone on a
+pristine tree left the whole suite green. It is parsed now, and the comment
+names which test reads which.
+
+**Fifteen mutants over the round's rules, all fifteen killed** -- two on
+`rules_view` (differ over every key again, `unshared` always empty), two on the
+page's sentence through the smoke's new `rulesgained` variant, four on the
+verdict bands (the code's floor, the rulebook's table, the heading, the request
+schema), two on `live_check`, and five on the lynch guards -- plus seven more
+over the AST guards themselves (a threshold inlined at 2.0 and at 1.0, a decoy
+window whose only mention is a comment, a literal back in `extra_context`, both
+window strings retyped, and `extra_context`'s own length guard left behind).
+
+**The lows, each reproduced.** The worked example quoted in four places was a
+number the function cannot print: 1,611,825 / 11.75 is 137,177, not 137,220,
+and "three lines above it" was a guess about a payload `user_text()` serialises
+with `sort_keys` (avg_volume near the top, the basis near the bottom). The
+tolerance comment argued "one step and not two: at 0.1 the previous session's
+volume starts reproducing ratios it did not produce" -- wrong magnitude and
+wrong direction: the AVERAGE is tried first, so what a wider slack buys is the
+average claiming a previous-session ratio, and the round's own test fails at
+0.02. One step is not free either, measured rather than argued: in the
+counterfactual the function is built for, the average falsely reproduces the
+ratio about three times as often at one step as at exact equality (0.70%
+against 0.24% over 500,000 pairs), so the docstring's promise to stay true
+across a change to `detect_setup()` is weaker by that factor and now says so.
+`tools/live_check.py` -- the one request in this repo that reaches the real
+endpoint -- sent "a trailing average of 1 shares" beside a volume_ratio of
+three million on any frame whose window has holes, because
+`trailing_volume_mean(...) or 1.0` turned the scan's "I cannot measure this"
+into a denominator; it falls back to the synthetic frame and says which of the
+two reasons it was, and rounds the average the way `detect_setup()` archives
+it. The inverse window guard was satisfied by a MENTION -- a decoy key under a
+comment naming it passed -- and reads the AST's `WINDOWS` subscripts now. And
+three pointers: `rules_fingerprint()`'s docstring still said round 8 named
+"the six windows that were", this file's round-8 paragraph pointed DOWN at a
+round-11 section that is above it, and the same paragraph called C's window "a
+bare 51" where 51 is the slice bound and 50 the sessions.
+
+**One low is recorded rather than fixed**, because it is not a defect: two of
+the seven mutants over the previous round's scorer code survived and both are
+provably equivalent -- rounding the slack's difference to 3dp instead of 2 (the
+operands are two 2dp values, so the same straddles map onto 0.01), and raising
+`_fallback_score()`'s 0/1/2 anchors, which `passes >= MIN_LYNCH_PASSES` cannot
+reach.
+
+## Round 11's blind-night audit — who may testify about a session, and what `over` counts
+
+Three auditors over the commit that made the record say how much of the night
+was measured, fourteen findings and seven lows, every one reproduced HERE by
+execution before it was touched.
+
+**A two-name rehearsal blanked the day number on every burst the next real
+scan found.** `blind_sessions()` collected the session of ANY entry whose
+`measured` is 0, with no reference to what that run scanned -- while
+`fill_benchmarks()`, the other reader of the same new count and added by the
+same commit, fills a run only from a scan of the universe IT scanned, which is
+the rounds 6-7 HIGH finding. So a `--tickers` rehearsal on the day after a
+holiday (two frames cannot reach `coverage_guard_min_symbols`, so the
+arithmetic previous session stands and both names are holes) wrote a blind
+session into the record, and the next universe night printed
+`blind_session` on a name the record had seen three times -- for
+MAX_STREAK_GAP_SESSIONS sessions, on the email, the page and every archived
+row. Tuesday 8 Sep is the day after Labor Day, so a rehearsal dispatched that
+day sets it off. `is_named_basket()` is the rule: a run that scanned a basket
+named on the command line asked about no other name, so it is evidence about
+the session in NEITHER direction -- not that the market was read, and not that
+it was missed. Structural (`universe.tickers`, the key publish() already
+writes for the republish guard) rather than a match on the label's words,
+because the label is composed in another module and a sentence is not a shape.
+
+**`over` counts the floor's population and three published sentences called it
+the measured one.** `stats["liquidity_over"]` is `len(session_dollar_volumes)`
+-- the names whose session bar carried a readable, positive dollar volume,
+taken BEFORE `detect_setup()` runs -- so it includes every name the detector
+raised on and every name whose bar turned out to be an earlier session, and
+excludes every readable zero-volume bar. Measured, not argued: eleven answered
+with one of each unreadable kind gives `over: 8` beside `measured: 6`. Three
+consequences reproduced end to end: a tape of readable zero-volume bars
+published `over: 0` beside `measured: 12`, and the page said "no floor --
+nothing could be measured for this session" three inches from a funnel
+captioned "no 4% gain on the day"; `min_dollar_volume_pctile=0` publishes a
+positive `over` under a null floor, which the contract shipped into every
+`docs/data.json` said "cannot happen"; and a blind night CAN carry a floor,
+which the same contract and `fill_benchmarks()`'s comment both denied. The
+page says "no name's dollar volume could be ranked", the contract states three
+readings of a null floor (`pctile <= 0` is the rule off whatever `over` says),
+and the fill's reason for skipping a blind night is the one that is true: its
+floor was drawn from however few names could be ranked, over a market that
+night never read.
+
+**The first cut was still not all one cause, one denominator over.**
+`measured_counts()` compared `measured` to `with_bars`, so the universe →
+answered half -- `no_bars`, plus anything dropped after its batch failed twice
+-- was still attributed to the burst filter. 20 asked, 18 answered, 18
+measured is a CLEAN run (2/20 is under the guard, exit 0, `errors: []`) whose
+mail read "No 4% burst anywhere in the universe today" and whose page captioned
+the cut "no 4% gain on the day" under a universe stage of 20; on the real
+228-name file up to 22 names go that way with the run still green. Both
+surfaces measure against the widest denominator the block carries now, and the
+funnel prints both when they differ ("216 of 228 asked, 216 of 227 that
+answered").
+
+**And the morning was the missed sibling**: it prints every other cut of the
+run it follows and printed no coverage at all, so one thin night mailed the
+line in the evening and, over the same record, "4% bursts that session: 0"
+with no denominator the next morning -- the shape README already records being
+fixed once, when one name's checklist read two ways in two emails a night
+apart. `follow_through()` forwards `coverage` beside the `bursts` and
+`stopped_printing` it already handed over, and the empty cell carries the same
+clause through the same predicate. The blind case never reaches it (measuring
+nothing always degrades, so the band carries the reasons), which is exactly
+why the thin one is the live case.
+
+**The walker checked nothing under `run.coverage`, which is R9-B one block
+over.** `contract_violations()` -- what every end-to-end test asserts through
+`clean()` as "the whole contract" -- returned an identical answer for the
+canonical fixture and for `coverage` deleted, `measured: 9999` beside
+`with_bars: 227`, `measured: 0` beside 50 bursts, a `measured` that is a
+string, and `liquidity.over: -5`. There is a `coverage` invariant now (every
+count a non-negative whole number, `requested >= with_bars >= fresh >=
+measured`, `stale + gapped <= with_bars`, and a burst only from a measured
+night), `coverage` is in `_RUN_KEYS`, and `over` is checked against the floor
+it was drawn for -- deliberately not against the rule-off state, which is a
+shape the pipeline writes. The email refuses the same disorder rather than
+printing "the other -9772 that answered could not be", which is round 5's
+"Below the liquidity floor: -2" arriving one block later.
+
+**Two guards that could not fail, and one docstring describing a guard that
+does not exist.** `test_every_reason_a_streak_can_carry_has_words_on_every_surface`
+asserted only that the reason KEY appeared in `docs/index.html`, so either
+surface's sentence could be reworded alone with the suite and the smoke green
+-- both directions confirmed by mutation -- and it asserts the SENTENCES now,
+with the page's JS string joins collapsed first. `MEASURED_LABEL`'s docstring
+claimed the page names the cut in those words and that a docs test asserts each
+file against the other's source; neither is true (the label appears in
+`docs/index.html` nowhere), and the guard it named asserted
+`startswith("measured")`. The shared string is `MEASURED_PHRASE`; the label is
+the email's own, and what pins it is the funnel it prints in.
+
+**Smaller, each reproduced:** README's `run.coverage` bullet named four causes
+for `with_bars - measured` where `run_scan()` subtracts five (the missing one
+being the detector-error class, which `src/scanner.py`'s own comment lists),
+and a docs test counts the parenthetical's causes against the subtraction's
+terms; "`measured: 0` is a BLIND night" was stated of a block the failure
+notice also renders, where `measured: 0` beside `with_bars: 0` is a scan
+nothing answered; the gzipped ledger projection moved from an exact 1.23 to
+1.24 when this round put `measured` on every entry, and the guard's ±0.01 band
+was exactly wide enough to hide it (it compares the string the tool PRINTS
+now); the evening's widest sentence names a `--tickers` basket the way the
+morning's has since round 10; the runs table marks a row whose run measured
+nothing, since `runs[].measured` reached `docs/data.json` and was read
+nowhere; the smoke's "does not blame one of the four reasons" alternation was
+one reason short and is counted against the page's own map; README's "the
+checklist was the last cut without one" is retracted in place, since this
+round gave an earlier cut a line; and three prose surfaces called the canonical
+fixture a clean night whose caption is the bare "no 4% gain on the day" when it
+is a THIN one (228 asked, 227 answered, 225 measured, so every surface derived
+from it appends the clause) -- `tools/make_fixture.py` asserts that shape now,
+so the sentence cannot drift back. `history/` is the clean one, 77 of 77 of 77.
+
+**One low is not fixable in the tree**: the parent commit's message breaks
+twenty-nine mutants into six, four, seven, ten and three, which is thirty. The
+harness ran twenty-nine (twenty-seven killed, two survivors); the breakdown is
+the line that is wrong, and a commit message cannot be swept.
+
+## Round 11's burst-bar audit — one measurement, two arithmetics, in one request
+
+Three auditors over the commit that put the burst bar in front of the model,
+twelve findings and eight lows, every one reproduced HERE by execution before
+it was touched. **The number the model was shown and the number it was told to
+divide by were computed two different ways, and 8 of the 9 rows the real
+pipeline had already written disagreed with the `N` line in their own row.**
+
+`burst_bar_shape()` divided by the mean of the per-bar widths each ROUNDED to
+a tenth, unrounded itself; `N` prints the ROUNDED MEAN of the raw ones. Both
+numbers go into the same request, and `knowledge/strategy.md` invites exactly
+that recomputation. AMAT in the history fixture: `bar_range_pct` 9.5,
+`range_expansion` 9.37, over an `N` line reading "pre-burst range 1.0%/day"
+-- 9.5 to the reader. The canonical fixture asserted the identity on all 50 of
+its rows, so the generator and the fixture agreed with each other while the
+code did something else, which is the class `check_fixture_fresh.py` cannot
+see (it compares the fixture to the GENERATOR). The denominator is the printed
+number now, and `tests/test_docs_are_true.py` holds every row of both fixtures
+to `bar_range_pct / printed`.
+
+**And the fix's own arithmetic had three candidate answers, which is how the
+"use math.fsum" finding got the right defect and the wrong remedy.** The audit
+reported that the builtin `sum()` there publishes 0.87 here and 0.88 on CI --
+true, and the class this file already records for `mean_returns()`. But fsum
+is an argument about a mean NOTHING ELSE COMPUTES, and this one is computed
+twice: `N` does it with `pandas.mean()` into the line beside it. Measured, not
+argued: `tests/test_lynch.py`'s `FSUM_SHELF_LOWS` is a shelf whose widths mean
+to 2.3499999999999992, which pandas prints as 2.4 and fsum rounds to 2.3 --
+so the MORE ACCURATE answer is the one that contradicts the printed number.
+The base is averaged with pandas, over the same widths, OLDEST FIRST (a float
+mean is order-dependent, and the walk collects newest-first: reversed, that
+shelf answers 2.3 where `N` prints 2.4). The interpreter half closes either
+way, because no builtin `sum()` is left.
+
+**The 3.3 defect reopened one measurement family over.** `evaluate_2lynch()`
+drops every bar missing any of the five OHLCV fields and calls the last row
+LEFT the burst; `burst_bar_shape()` read the frame's own last row. So a burst
+bar with no Open reached the model as `bar_range_pct 9.4` -- a bar that closed
+at 98% of its own range -- beside `H` saying "closed at 50% of day's range",
+which is the session BEFORE, under a rulebook sentence that had just told the
+model to read those two together. All three are null when the checklist is not
+reading this bar, and the base window holds the bars `N` holds for the same
+reason. (Both halves were re-aimed by the holes-in-a-bar audit below: the
+metrics block anchors on the graded bar now, so it publishes that bar's own
+geometry rather than three nulls, and `N`'s window counts a bar carrying a
+high, a low and a close rather than all five -- so the base window followed it
+there.) The scan refuses such a frame (`_session_bar_problem()` requires all
+five on the session bar), so no run published one; the rule is there because
+the rulebook's sentence is unconditional.
+
+**Three rules the suite could not fail on, each pinned on the state it
+names.** The gap's denominator (`burst_bar_shape(df)` against `(raw)`, and
+`iloc[-2]` against `iloc[-3]`): a readable close under an unreadable volume
+between the burst and its previous session publishes gain 8.0% beside gap
+21.7% under the mutant, and every frame in the suite had an identical shelf
+close, so both mutants survived. The window (`WINDOWS["tight_sessions"]`
+against `1`): every shelf was seven identical 2.0% bars, on which one bar and
+seven give the same answer. And `_bar_range_pct()`'s zero-close guard, which
+weakened to `close < 0` raises ZeroDivisionError out of `extra_context()`
+inside `publish()` -- after the scan and every Claude call -- on one 0.0 close
+anywhere in a name's history.
+
+**Twenty-four mutants, twenty-two on the first pass and two real holes.** M1
+restored the old mean-of-rounded arithmetic and SURVIVED: the first uneven
+shelf this round built made the two arithmetics agree once both were rounded,
+so the shelf was searched for again (`UNEVEN_SHELF`, which separates the
+printed mean from the mean-of-rounded, from its own unrounded form, and from
+any one- or three-bar prefix). M19 rounded the width twice (to a hundredth,
+then a tenth), which takes an 8.2501% bar to 8.2 through the exact 8.25 --
+the double-rounding half of the class `worst_base_day()` closed. Both closed
+with the tests they showed were missing; all twenty-four die on the re-run,
+and the two fixture mutants (a row's `range_expansion` moved by 0.01 in each
+file) die on the new guard. **The harness reported every mutant killed on its
+first run and none of them was**: it passed `--timeout=600` to a pytest with
+no `pytest-timeout` installed, so every run exited 4 on a usage error. It
+asserts its own last line says "passed" or "failed" now. That is the third
+round in a row whose mutation harness was the thing that needed checking.
+
+**One finding refuted, by execution.** "`burst_bar_shape()` takes prev_close
+off the frame as received, while `detect_setup()` measures gain_pct after its
+own cleaning" -- the function's only caller is `extra_context()`, which hands
+it the Close/Volume-cleaned frame, which is `_measurable()`'s cleaning:
+`python3 -c "from src.lynch import extra_context; ..."` on the auditor's own
+frame gives gap 0.5% against a gain measured off the same 43.60 close, and
+the 21.7% they report is what `burst_bar_shape(raw)` gives -- the mutant, not
+the code. The comment is true of the caller and now says so.
+
+Swept with it: README's `context` bullet named five of the nine keys the block
+holds (and said the block "held the two Bonde numbers alone" before this
+round, which the parent commit's own fixture falsifies -- it held six), and
+its null causes were a union applied to all three keys where two of the three
+belong to `gap_pct` alone; the rulebook said "the sessions immediately before
+it" for a window that skips what it cannot read, and pointed at a section
+"two sections up" that is one; `tests/fixtures/README.md` said only an open
+outside its own bar can produce a null, where an inverted session bar (which
+`_session_bar_problem()` does not refuse -- it checks each field is finite and
+positive, never that the high is above the low) nulls all three and a
+seven-session flat base nulls the expansion. README and the rulebook are both
+held to `WINDOWS["tight_sessions"]` and to `extra_context()`'s own key set
+now. The rulebook edit moved the cost paragraph again in five files: ~3,120
+system tokens, 73% of a request, $0.37 uncached against $0.17 cached, 54%
+cheaper, $42 a year.
+
+## Round 11 — the rulebook is a surface, and it was the only one nobody checked
+
+Three auditors over the streak-before-score commit, fourteen findings and eight
+lows, every one reproduced HERE by execution before it was touched. The round
+before put the record in front of the model and wrote the paragraph that tells
+it how to read it; **that paragraph was the first free prose this project has
+shipped into a decision, and three of its sentences were false.**
+
+**The rulebook told the model that `setup_day: 1` means nothing preceded it,
+and the record says the opposite in the same request.** `streak()` restarts
+the count whenever the gap exceeds `MAX_STREAK_GAP_SESSIONS`, so day 1 is
+published routinely for a name the record HAS carried -- the ordinary repeat
+over a momentum universe, and `src.ledger`'s own comment ("reappearing two
+weeks later is day 1 of a new setup, not day 12 of an old") is the rule the
+rulebook contradicted. Driven, not read: a ledger holding one AAA burst on
+2026-08-20 produces, for a burst on 2026-09-04, `day 1` with `seen_before 1`
+and `last_seen 2026-08-20` -- so the system prompt asserted "nothing in the
+record preceded it" in the request whose payload named when it was last seen
+and what it scored. The email renders the same block honestly ("day 1 -- new
+setup - last seen 2026-08-25, scored 7.5/10 B+") and README's own "Day N of
+this setup" paragraph states the rule; the false copy was the one that moves a
+number. 1 is the first session of THIS setup now, `seen_before` and
+`last_seen` are named beside it, and the guard is a window over the rulebook's
+own sentences rather than a phrase: the definition of 1 and the two sentences
+after it must point at both fields and may not make the absence claim, with
+the day-1-with-a-prior-sighting payload executed in the test as its
+precondition.
+
+**And `score_cap` was glossed as "the word for the rule that refused it"** --
+the one collapse `CONTRACT_INVARIANTS` forbids by name, arriving on the one
+surface that had no test. It is the outcome for a name the screener LIKED and
+could not afford to score, `evidence.crowded_out` exists to keep it out of the
+refusals, and the model was being told to weight it down as a rejection. The
+clause is split and the split is asserted.
+
+**The vocabulary was a fourth hand-kept copy and the round's own new guard
+walked past it.** That guard derives `RECORD_KEYS` and `STREAK_UNKNOWN` from
+the code -- and skipped the third list in the very paragraph it checks: an
+auditor's length-preserving edit of `"liquidity_floor", "score_cap"` to
+`"liquidity_floot", "score_cop"` passed the full suite, and a realistic second
+veto in `src.lynch` turned exactly one test red (the contract's) while the
+rulebook went on naming four words for a record writing five. It is derived
+now from the same union the contract test builds --
+`emailer.LAST_OUTCOME | pipeline.VETO_REASONS.values() | {LIQUIDITY_REASON}`
+-- and both mutants die on it.
+
+**A fifth unknown state the rulebook said could not exist, and the one tool
+that talks to the live endpoint sent it.** `record_context(None)` returned a
+null `setup_day` with a null `setup_unknown_reason`, under a prompt promising
+that a null day always names one of four reasons; `tools/live_check.py` calls
+`score_candidate()` with no streak, twice, so the owner's boundary check was
+the request that shape reached the API in. The email and the page have said
+this state in words since step 10 (`NO_STREAK_BLOCK`, "this run recorded
+none") for the reason their comment gives -- a block that says which kind of
+unknown it is can be rendered, an absence cannot -- and only the model had no
+word for it. `ledger.NO_STREAK_RECORDED` is that word, the rulebook names five
+reasons, and `score_all()`'s docstring stops claiming this is the same shape
+an unreadable history produces, which it never was.
+
+**The round fixed "a record that cannot answer is never a confident day 1" and
+reintroduced it one field over -- and its own test pinned the reintroduction.**
+`unknown_streak()` fills `seen_before: 0` as a placeholder, and only the model
+was shown it: `_no_day_note()` prints no number in that branch. So a run whose
+ledger could not be READ told the model "0 earlier sightings", which is a
+claim about the name assembled out of a file error, under
+`assert payload["seen_before"] == 0`. Measured across the four unknowns rather
+than assumed: `no_history` and `window_not_covered` come out of `streak()`
+with a genuine `len(prior)` and keep it; `history_unreadable` and
+`history_undated` are placeholders (a ledger holding one AAA burst under an
+unparseable date reports 0), and those send null. `UNCOUNTED_UNKNOWNS` is
+where that judgement lives, keyed on the WORD rather than on "the day is
+null", because the first scheduled night's every candidate is a
+`window_not_covered` unknown whose count is real.
+
+**The model's unknown had no span, on the state every candidate is in until
+the record is five sessions deep.** `history_from` and `history_sessions` are
+what `streak()`'s own docstring calls "WHAT MAKES AN UNKNOWN DAY SAYABLE", the
+human has had them since step 10 ("burst on 8 of the 8 sessions in the record,
+which begins 2026-08-20"), and `RECORD_KEYS` dropped both -- so on Tuesday's
+first cron, over main's one-run ledger, every name reaches the model as a bare
+`window_not_covered`. Both are payload keys now, with the rulebook clause that
+says what they qualify.
+
+**The fingerprint could not see the scorer, measured across the two commits.**
+`rules_fingerprint()` hashes identically at `cc0cd54` and `675cd64`
+(ef0c4dbc98ebd169 both) while every scoring request in the file changed --
+six new payload keys and a rewritten system prompt -- and `evidence.by_score`,
+`top_score` and the separation sentence all average SCORES. A record spanning
+that change would have reported one screener and the page's own note stays
+hidden at `sets == 1`. `score.prompt` (a digest of `knowledge/strategy.md`,
+the bytes) and `score.record_keys` (off `src.scorer`'s own tuple) are in the
+fingerprint now, on the cheapest possible day: the record holds one
+pre-change run. What it still cannot see is a measurement key added to
+`metrics_payload()` with the rulebook untouched, and README says so rather
+than implying a proof. The ledger grew 14.05 -> 14.13 MB raw and 1.08 -> 1.11
+gzipped, swept in README and in `docs/index.html`'s two fetch-on-demand
+comments.
+
+**The money paragraph split again, asymmetrically, and the guard could not
+fire.** The round before pinned README's system-prompt token count to
+`chars/4` of the rulebook -- so every rulebook edit forces four money numbers
+to be recomputed -- and left CLAUDE.md's five figures checked by an `in`, which
+is the shape the round-4 prose audit had already fixed once for README's two
+clock times. `63%` -> `59%` survived the full suite; so did rewriting the
+four figures the round-4 paragraph had gone on quoting to "$9.99 / $0.01 /
+3% / $1" -- and the guard's own first run caught this sentence restating
+them, which is why it is not restating them. Every occurrence in CLAUDE.md,
+`src/scorer.py`, `tools/live_check.py` and `tests/test_scorer.py` is now held
+to README's arithmetic, sentence by sentence, with retracted clauses skipped
+by their own marker ("this said", "used to", "was given as") because a guard
+that refused those would be a guard against the record of the defect. The four
+numbers are gone from the round-4 paragraph: one place to look. And this
+round's own rulebook rewrite moved them again -- ~3,120 system tokens against
+~460 of metrics, 73% of every request, $0.37 uncached against $0.17 cached,
+54% cheaper, $42 a year.
+
+**Twenty mutants over the round's rules, nineteen killed on the first pass.**
+Six on the rulebook (the retracted day-1 gloss verbatim, two outcome words
+respelled at the same length, the score_cap collapse restored, the footnote
+clause dropped, the checklist tie-break dropped, the fifth unknown dropped,
+and the absence claim re-added beside the true sentence); five on the payload
+(the no-block reason dropped, the placeholder count kept, `window_not_covered`
+swept into the uncounted set, the span keys dropped, and the count nulled on
+any null day rather than on the word); three on the fingerprint (the prompt
+digest dropped, made a constant, and the record keys retyped as a literal);
+five on the cost guard. The survivor was the fifth cost mutant and it was a
+real hole: `tools/live_check.py` said "the 43% the caching is meant to save"
+in a phrasing none of the patterns could match, which is how that figure sat
+three points stale since round 4. It says "54% cheaper" now, in the same words
+as every other copy, and the mutant dies.
+
+**Three of the audit's smaller findings, each reproduced.** The rulebook gave
+the model the tie-break for `consecutive_up_days` beside `C` and none for
+`setup_day` beside `2_first_or_second_burst` -- one request really does carry
+`setup_day: 1` and `1 prior 4% bursts in last 20 days`, which is the state
+`_why_no_day()`'s docstring describes for the email ("the price frame had
+looked back twenty sessions and the ledger had looked back none"), and the
+frame is the authority where the record has gaps. The email's streak footnote
+-- "including the ones that were never scored ... Neither is N nights of
+confirmation" -- had no counterpart in the rulebook, so the model was the
+third reader of the mechanism and the only one without the disclosure; both
+surfaces are asserted against each other's source now. And three prose
+surfaces still described the scoring request as metrics plus a chart, one of
+them `src/scorer.py`'s own module docstring, whose determinism sentence is
+qualified now: nothing on our side varies between two runs over the same
+candidate GIVEN THE SAME RECORD, and a backfill of an older session between
+two runs of the same one changes it.
 
 ## Round 10 — one rule decides both empty cells, and it is the STAGE
 
@@ -1434,10 +1944,11 @@ had answered or not, and the artifact holding the answer sits on a host this
 sandbox's proxy refuses. That is the state the old symbol of every rename
 ends in once purged, and a typo in the file, invisible below the fraction.
 The scanner names them now (`no_bars_names`, pinned equal to the arithmetic
-count), warns with the names, and prints the coverage as POSITIVE counts --
-requested, answered with bars, of those none for the session, answered with
-no bar at all, dropped -- because no warning is also what a scan that never
-asked prints. `stopped_printing()` carries them first and dateless, `last`
+count), warns with the names, and prints the coverage as POSITIVE counts -- every
+clause `run_scan()`'s own log call names, which was five when this sentence
+was written and is seven now (the duplicate-bar count and the measured count
+joined it), so read them off the call rather than from here -- because no
+warning is also what a scan that never asked prints. `stopped_printing()` carries them first and dateless, `last`
 and `sessions_behind` null; the shape check accepts that one pair and
 refuses a number where the date belongs; the email and the page print
 "(no bar at all)" in one wording, each pinned against the other's source.
@@ -1600,16 +2111,36 @@ fields that config itself marks as strategy, so a threshold added later is
 recorded the moment it is named — the property a hand-kept list cannot have,
 and the trap this exists to avoid, since a fingerprint that misses a number
 reports "same rules" across a change that altered them and is worse than no
-fingerprint at all. 28 numbers today. `MAX_TO_SCORE`, `TOP_N`, the feed and
-the universe are deliberately out: each is already a fact of the run block,
-and none of them changes what a burst is.
+fingerprint at all. 28 numbers when this was written. `MAX_TO_SCORE`, `TOP_N`,
+the feed, the model and the universe are deliberately out: each is already a
+fact of the run block, and none of them changes what a burst is. **What
+produced the SCORE went in in round 11**, because a mean keyed on a score
+averages the scorer too and this fingerprint could not see it: read
+"Round 11 -- the rulebook is a surface", which this file puts ABOVE this
+section, since newer rounds go first.
 
 **The one thing a fingerprint of named constants cannot catch is a number
-left as a bare literal, and six of them were.** `iloc[-20:]`, `iloc[-30:]`,
-`iloc[-21]`, `iloc[-7:]`, `iloc[-60:-7]` and the `4.0` inside `rets >= 4.0`
-were the windows each check reads and what counts as an earlier burst — every
-one a strategy number no other layer could see. They are `lynch.WINDOWS` and
-`PRIOR_BURST_PCT` now. The windows are GROUPED rather than left as module
+left as a bare literal, and ELEVEN of them were — this round named six and
+declared the class closed, and the round that named the seventh declared it
+closed again on one function.** `iloc[-20:]`, `iloc[-30:]`, `iloc[-21]`,
+`iloc[-7:]`, `iloc[-60:-7]` and the `4.0` inside `rets >= 4.0` were the
+windows each check reads and what counts as an earlier burst — every one a
+strategy number no other layer could see. They are `lynch.WINDOWS` and
+`PRIOR_BURST_PCT` now. The seventh was `C`'s `iloc[-51:-1]`, the volume
+average the pre-burst day is called quiet against, and it stayed a literal
+until round 11 (in the sections above, where the newer rounds are): changing
+that 50 to 30 left the fingerprint
+byte-identical and the checklist, scanner and docs suites green while `C`'s
+verdict moved. The last four are `extra_context()`'s — 252, 126, 63 and the
+60-bar minimum behind them, the windows for `pct_off_52w_high`,
+`pct_above_52w_low`, `perf_6mo_pct` and `perf_3mo_pct`, which the model reads
+and the archive keeps — found by three lenses independently and reproduced the
+same way: `iloc[-63]` to 45 left the fingerprint byte-identical and the FULL
+suite green while `perf_3mo_pct` moved under a key still called `3mo`. The
+count in this paragraph is why the guard is now an AST read of every function
+in `src.lynch` rather than a list, and why the count of what it covers is not
+written anywhere it can rot: it was six, then seven, and a guard scoped to one
+function is how the second "closed" was declared. The windows are GROUPED rather than left as module
 scalars because two existing guards are written against the scalars and are
 right to be: `tools/make_fixture.py` starts from hand-authored measurements
 and never slices a frame, so it can carry a threshold and cannot carry a
@@ -1887,10 +2418,16 @@ and the two files quoting it disagreed on a third.** Break-even was given as
 as if the first call were otherwise free; it is 1 + 0.25/0.9 = 1.28. The
 cached night was $0.13 in README and rounded from a different token count
 than the "$0.24" beside it here, while README said $0.25. Recomputed from
-the inputs the paragraph states: $0.25 uncached, $0.15 cached, 41% cheaper,
-$37 a year — and a test now does that arithmetic from those inputs, so the
-conclusions can only be wrong together. The saving was overstated by two
-points and the nightly figure by two cents; the conclusion stands.
+the inputs the paragraph states, and a test now does that arithmetic from
+those inputs, so the conclusions can only be wrong together. The saving was
+overstated by two points and the nightly figure by two cents; the conclusion
+stands. THE FOUR NUMBERS ARE NOT REPEATED HERE, and that is the fix for the
+second defect of the same shape: this paragraph went on quoting the round-4
+figures while README's half was swept twice past them, so one file held two
+arithmetics -- which is what the paragraph is about. README's Costs section
+is the one place they are stated, and the guard is a count over every
+occurrence in every other file rather than a membership test that one true
+sentence beside a stale one satisfies.
 
 **And a verdict that contradicted its own score was archived as given.**
 `knowledge/strategy.md` defines the verdict AS the score's band, and
@@ -2056,15 +2593,22 @@ python -m src.pipeline evening --dry-run
     `SCAN_SESSION_DATE` is exempt, since a pin is the user overruling the clock
     on purpose. And the ledger is finally READ as well as written: every burst
     carries a streak — day N of this setup, when the name was last seen, and
-    what was DONE with it then (scored, rejected at the gate, or crowded out by
-    the call cap: three different facts that "not scored" used to cover with
-    one phrase) — with `ledger.MAX_STREAK_GAP_SESSIONS` holding the one
-    judgement about what "the same setup" means. A record that cannot answer —
-    unreadable, empty, or not reaching back far enough — publishes no day
-    number and says which of the three it is, on every surface, in words. It
+    what was DONE with it then -- every word in `emailer.LAST_OUTCOME`, which
+    is five since round 5 and was three when this bullet was written: "not
+    scored" used to cover a gate rejection, an absolute rule's refusal, the
+    liquidity floor and the call cap with one phrase, and they are not one
+    fact -- with `ledger.MAX_STREAK_GAP_SESSIONS` holding the one
+    judgement about what "the same setup" means. A record that cannot answer
+    publishes no day number and says which kind of nothing it is, on every
+    surface, in words: `emailer.STREAK_UNKNOWN`'s reasons -- four when this
+    bullet was written and five since `blind_session` -- counted there
+    rather than here because this bullet named three of them for two rounds
+    after `history_undated` became the fourth. It
     never takes the run with it and never collapses into a confident day 1.
     (The streak reached the archived row and the email and NOT the scoring
-    request for four rounds, because the history stage sat below the score
+    request from step 10 until round 11 -- seven rounds by this file's own
+    headings, and `git log -S'streaks_for' -- src/pipeline.py` returns the two
+    commits that bound it -- because the history stage sat below the score
     stage: night 2 of a two-night burst was scored as if the ledger had never
     seen the name. The read is above the chart and the model now and the
     block is in the metrics; `knowledge/strategy.md` says how to weigh it,

@@ -274,7 +274,7 @@
   <!-- What happened the last times THIS name burst. The summary comes out of
        data.json's evidence block; the per-appearance detail needs the whole
        record, so docs/ledger.json is fetched ONLY when a reader asks for it
-       (see loadRecord). A year of it is about 1.08 MB gzipped, which is not a
+       (see loadRecord). A year of it is about 1.25 MB gzipped, which is not a
        thing to spend on every visit for a view most readers never open.
        tools/measure_ledger.py measures it and a docs test holds this comment,
        the one above loadRecord and README to what it prints. -->
@@ -519,7 +519,8 @@
   // MAX_STREAK_GAP_SESSIONS; this only renders what the file says.
   //
   // A NULL DAY IS NOT DAY 1. It means the record cannot say — it could not be
-  // read, it holds nothing, or it does not reach back far enough — and
+  // read, it holds nothing, it does not reach back far enough, or a session
+  // inside the window it does reach measured no name at all — and
   // `unknown_reason` says which. Printing "new setup" there would turn a fact
   // about a file into a claim about the market, and printing nothing (which
   // both tables used to do) leaves the reader to supply the claim themselves.
@@ -541,7 +542,13 @@
     history_undated: 'streak unknown — the history holds runs, but none of them '
               + 'carry a date to count from',
     history_unreadable: 'streak unknown — the run could not read its history',
-    window_not_covered: 'streak unknown — the history does not reach back this far'
+    window_not_covered: 'streak unknown — the history does not reach back this far',
+    // The fifth, and the only one that is not about how FAR the record
+    // reaches: it does, and one of the nights inside the window measured no
+    // name at all, so an earlier burst would have been invisible to it.
+    // src/emailer.py's STREAK_UNKNOWN is the same map in the same words.
+    blind_session: 'streak unknown — a session inside the window measured no name '
+              + 'at all, so an earlier burst could not have been seen'
   };
   // What was done with the name the last time it was seen. 'not scored' used
   // to cover both of the bottom two, which are near opposites: the gate threw
@@ -764,8 +771,13 @@
   }
   // A horizon cell in the scores table or the runs table: the state's words
   // when the row has a state, the number otherwise -- and "pending" only
-  // where a later run could still turn it into one.
-  function horizonCell(row, value, closed) {
+  // where a later run could still turn it into one. `note` is the count
+  // BEHIND this number where there is one to state: a run's mean is over the
+  // setups that reached this horizon, which is not the count the table's last
+  // column prints, and a candidate row is one setup at every horizon and has
+  // none. Only the number branch takes it; the other three carry their own
+  // sentence about why there is no number.
+  function horizonCell(row, value, closed, note) {
     var state = fwdState(row);
     if (FWD_WORDS[state]) {
       return el('td', { 'class': 'sc-num', text: FWD_WORDS[state][0], title: FWD_WORDS[state][1] || null });
@@ -775,7 +787,7 @@
         ? el('td', { 'class': 'sc-num', text: UNFETCHED[0], title: UNFETCHED[1] })
         : el('td', { 'class': 'sc-num', text: 'pending' });
     }
-    return el('td', { 'class': 'sc-num', text: pct(value, 2) });
+    return el('td', { 'class': 'sc-num', title: note || null, text: pct(value, 2) });
   }
 
   // 0 is a real answer here and null is not, so this cannot go through num():
@@ -957,10 +969,30 @@
   }
   // The contract: floor is null when no name traded (the rule on, nothing
   // to rank), which is a different sentence from "not recorded".
+  // A NULL FLOOR HAS TWO CAUSES AND THIS SAYS WHICH. liquidityOf() already
+  // takes the rule being OFF out of the picture; what is left is "nothing
+  // could be ranked", and run.liquidity.over -- how many names the percentile
+  // was drawn FROM -- is what tells a night on which nothing traded from a
+  // night whose tape carried no rankable dollar volume. Both wrote
+  // floor: null, and this printed "nothing traded" over a scan the feed had
+  // answered in full. A block from before `over` existed keeps the older
+  // sentence, which is what those runs can support.
+  //
+  // `over` IS NOT WHAT THE SCAN MEASURED. It counts the names whose session
+  // bar carried a readable, positive dollar volume; run.coverage.measured
+  // counts the names the detector read and answered about, and the two differ
+  // by every zero-volume bar and every name the detector raised on. This
+  // said "nothing could be measured for this session" over a run whose
+  // coverage block reported twelve measured, three lines from a funnel
+  // captioned "no 4% gain on the day" -- two surfaces, opposite claims, one
+  // night.
   function floorText(run) {
     var l = liquidityOf(run) || {};
+    var over = typeof l.over === 'number' && isFinite(l.over) ? l.over : null;
+    var noFloor = over === 0 ? 'no floor — no name\'s dollar volume could be ranked'
+      : 'no floor — nothing traded';
     var floor = typeof l.floor === 'number' && isFinite(l.floor) ? '$' + big(l.floor) + '/day'
-      : (l.floor === null ? 'no floor — nothing traded' : 'floor not recorded');
+      : (l.floor === null ? noFloor : 'floor not recorded');
     return typeof l.pctile === 'number' && isFinite(l.pctile) ? floor + ', the ' + ordinal(l.pctile) + ' percentile' : floor;
   }
   // The universe row's own note: the names in the symbol file that have
@@ -1005,6 +1037,56 @@
       duplicateNote(run);
   }
 
+  // (measured, answered, asked) off run.coverage, or null for a snapshot from
+  // before the block existed -- and for one whose counts are not counts or do
+  // not order, since this page reads whatever docs/ holds and has no load
+  // check behind it. Absent is absent: a missing count must never arrive here
+  // as 0, and `asked` stays null on a block that never reached it.
+  function measuredOf(run) {
+    var c = run && run.coverage;
+    if (!c || typeof c !== 'object' || Array.isArray(c)) return null;
+    var m = c.measured, a = c.with_bars, r = c.requested;
+    if (typeof m !== 'number' || !isFinite(m) || m < 0) return null;
+    if (typeof a !== 'number' || !isFinite(a) || a < 0) return null;
+    var asked = typeof r === 'number' && isFinite(r) && r >= 0 ? r : null;
+    if (m > a || (asked !== null && a > asked)) return null;
+    return { measured: m, answered: a, asked: asked, widest: asked === null ? a : asked };
+  }
+  // THE FIRST CUT IS NOT ALL ONE CAUSE, AND IT IS TWO CUTS DEEP. Between the
+  // universe and the bursts sit the names that answered and could not be
+  // measured AND the names that answered with nothing at all (run.coverage's
+  // requested minus with_bars: no_bars, plus any dropped after their batch
+  // failed twice). This compared measured to with_bars alone, so 20 asked, 18
+  // answered and 18 measured -- a clean green run -- was captioned "no 4%
+  // gain on the day" under a universe stage of 20. src/emailer.py's
+  // _quiet_market_note() makes the same cut against the same denominator.
+  function burstWhy(run) {
+    var c = measuredOf(run), gain = 'no 4% gain on the day';
+    if (!c || c.measured >= c.widest) return gain;
+    var scope = c.widest === c.answered ? ' that answered' : ' asked';
+    if (!c.measured) {
+      // Not one name was read, so nothing here was refused for its gain and
+      // naming that cause would be the false half of a true sentence.
+      return 'not one of the ' + c.widest + ' names' + scope + ' could be measured for this session';
+    }
+    return gain + '; ' + (c.widest - c.measured) + ' of the ' + c.widest +
+      scope + ' could not be measured for this session';
+  }
+
+  // A RUN THAT MEASURED NOTHING IS NOT A RUN THAT FOUND NOTHING, and the runs
+  // table said the same "0" for both. runs[].measured is the one count out of
+  // run.coverage the durable record keeps, and it is published in
+  // docs/data.json's runs[] as well -- so the page had the number for every
+  // earlier night and read it nowhere, while being careful about exactly this
+  // for the CURRENT one. Absent stays absent: an entry from before the count
+  // existed says nothing about how much it read. src/emailer.py's
+  // MEASURED_PHRASE is the shared wording for the same fact.
+  var BLIND_RUN_NOTE = 'this run measured no name at all for its session, so its ' +
+    'counts are not a statement about the market';
+  function blindRun(r) {
+    return r && typeof r.measured === 'number' && isFinite(r.measured) && r.measured === 0;
+  }
+
   function funnelStages(run) {
     var g = run.gate || {};
     var short = run.shortlist_size || 0;
@@ -1012,7 +1094,15 @@
       { name: 'universe scanned', n: (run.universe && run.universe.size) || 0,
         why: null, note: (run.universe && run.universe.label) || 'symbols scanned' },
       { name: '4% bursts', n: run.bursts || 0,
-        why: 'no 4% gain on the day', note: 'the Layer-1 scan' },
+        // THE FIRST CUT IS NOT ALL ONE CAUSE. Between the universe and the
+        // bursts sit the names that answered and could not be measured --
+        // halted, holed on the session before, unreadable -- and this
+        // captioned every one of them "no 4% gain on the day". On a BLIND
+        // night, where not one name could be measured, the page said the
+        // whole universe had failed to gain 4%: a quiet market, printed as
+        // fact, over a session nothing read. run.coverage carries both
+        // counts; src/emailer.py's MEASURED_PHRASE is these words.
+        why: burstWhy(run), note: 'the Layer-1 scan' },
       // Two things cut a name at this stage now, and the caption says so only
       // when the run really had a veto to apply: a snapshot written before
       // the rule existed carries no gate.vetoes, and naming a rule that run
@@ -1171,6 +1261,20 @@
   // horizons there by _quiet_run_ok -- so the mutant that filters `runs`
   // here instead is equivalent, which is exactly why that rule was put in
   // the walker and not left to this filter alone.
+  // THE WEIGHT IS THE HORIZON'S OWN COUNT. `n` is every setup the run
+  // measured at ANY horizon, so a run holding one setup whose frame has a
+  // hole after the first session -- forward_returns() ends the measurement
+  // there rather than sliding a horizon onto a later bar -- publishes a d5
+  // over one setup with n 2, and weighting d5 by n counts a setup that has
+  // no d5. src.ledger's mean_returns() publishes n1/n3/n5 on both bases, the
+  // shape runs[].benchmark has had since round 7. A run entry written before
+  // those counts existed carries only `n`, and that IS what that file claims
+  // about its own weights, so it is used there rather than the horizon being
+  // dropped from a mean the file can still support.
+  function horizonN(f, d) {
+    var own = f['n' + d];
+    return typeof own === 'number' ? own : (f.n || 0);
+  }
   function horizonStats(runs) {
     var quiet = runs.filter(unscoredRun).length;
     var repeats = runs.filter(noNewSetup).length;
@@ -1186,17 +1290,17 @@
         var f = runFwd(r);
         return f[k] !== null && f[k] !== undefined;
       });
-      var wsum = 0, setups = 0, rows = 0, vals = [];
+      var wsum = 0, setups = 0, anySetups = 0, rows = 0, vals = [];
       have.forEach(function (r) {
-        var f = runFwd(r), w = f.n || 0;
-        wsum += f[k] * w; setups += w; rows += (f.rows || 0); vals.push(f[k]);
+        var f = runFwd(r), w = horizonN(f, d);
+        wsum += f[k] * w; setups += w; anySetups += (f.n || 0); rows += (f.rows || 0); vals.push(f[k]);
       });
       var plain = vals.length ? vals.reduce(function (a, b) { return a + b; }, 0) / vals.length : null;
       return {
         days: d, key: k,
         mean: setups ? wsum / setups : plain,
         weighted: setups > 0,
-        setups: setups, rows: rows, sessions: have.length, of: measurable.length,
+        setups: setups, anySetups: anySetups, rows: rows, sessions: have.length, of: measurable.length,
         quiet: quiet, repeats: repeats,
         unfetched: runs.length - measurable.length - quiet - repeats,
         excluded: runs.length - measurable.length,
@@ -1323,7 +1427,9 @@
     if (BASIS !== 'open') return fr;
     if (!fr.from_open || typeof fr.from_open !== 'object') return {};
     // rows is a fact about the close-basis collapse and the open basis shares it.
-    return { d1: fr.from_open.d1, d3: fr.from_open.d3, d5: fr.from_open.d5, n: fr.from_open.n, rows: fr.rows };
+    return { d1: fr.from_open.d1, d3: fr.from_open.d3, d5: fr.from_open.d5,
+             n1: fr.from_open.n1, n3: fr.from_open.n3, n5: fr.from_open.n5,
+             n: fr.from_open.n, rows: fr.rows };
   }
   // One evidence outcome on the chosen basis, in the close basis's shape.
   // (Named onBasis, not pick: the shortlist card builder is pick(c), and a
@@ -1665,18 +1771,38 @@
   // and name what moved: "the rules changed" is not actionable and
   // "scan.min_gain_pct and gate.min_lynch_passes changed" is. Runs from
   // before the fingerprint existed are counted apart, because not knowing
-  // which rules made a row is not the same as knowing they were these.
+  // which rules made a row is not the same as knowing they were these -- and
+  // so is a key some run's block does not carry, for the same reason one
+  // level in: it is a number this record cannot see, not a number that moved.
   function renderRulesNote(ev) {
     var note = $('rules-note');
     if (!note) return;
     var r = ev && ev.rules;
     if (!r || typeof r !== 'object') { note.textContent = ''; note.hidden = true; return; }
+    function names(list) {
+      var shown = (list || []).slice(0, 6).join(', ');
+      return shown + ((list || []).length > 6 ? ', and ' + ((list || []).length - 6) + ' more' : '');
+    }
     var parts = [];
+    var moved = (r.differ || []).length;
+    var unshared = (r.unshared || []).length;
     if (r.sets > 1) {
-      var differ = (r.differ || []).slice(0, 6).join(', ');
-      parts.push('This record spans ' + plural(r.sets, 'set') + ' of rules, so every mean below averages ' +
-        'more than one screener. What moved: ' + (differ || 'not recorded') +
-        ((r.differ || []).length > 6 ? ', and ' + ((r.differ || []).length - 6) + ' more' : '') + '.');
+      // Two answers, because they are two facts. A key EVERY set records
+      // whose value moved is a screener that changed under the means below.
+      // A key some set does not carry is the record's sight of a number
+      // changing, not the number: round 11 added three, and this page would
+      // have published "What moved: window.volume_norm_sessions" over a
+      // record in which C's volume average never moved.
+      parts.push(moved
+        ? 'This record spans ' + plural(r.sets, 'set') + ' of rules, so every mean below averages ' +
+          'more than one screener. What moved: ' + names(r.differ) + '.'
+        : 'This record spans ' + plural(r.sets, 'set') + ' of rules, and no number every one of ' +
+          'them records has changed.');
+    }
+    if (unshared) {
+      parts.push(plural(unshared, 'number') + ' the record does not carry on every run: ' +
+        names(r.unshared) + ' — which is not the same as their having changed, because a rule ' +
+        'that did not exist then and one that was simply not recorded then look alike here.');
     }
     if (r.runs_without) {
       parts.push(plural(r.runs_without, 'run') + ' in the record predate the rules fingerprint, ' +
@@ -1841,13 +1967,16 @@
         var longest = at(r.outcomes, h);
         return el('tr', null, [
           el('td', null, r.day === null || r.day === undefined
-            // FOUR reasons put a burst in this bucket and this named one of
-            // them -- the one the only available fixture happens to carry. A
+            // SEVERAL reasons put a burst in this bucket -- four when this
+            // was written and five since blind_session -- and it named one of
+            // them, the one the only available fixture happens to carry. A
             // run whose history could not be READ lands every burst here, and
             // was told the record did not reach back far enough, which is a
             // different fault with a different fix. The bucket has no reason
-            // field to narrow it, so it says the part that is true of all four
-            // and points at the rows, which do carry the specific reason.
+            // field to narrow it, so it says the part that is true of every
+            // one of them and points at the rows, which do carry the specific
+            // reason -- a sentence that counts them would have rotted here on
+            // the round that added the fifth.
             ? [el('span', { text: 'not known' }),
                el('span', { 'class': 'sc-note', text: 'the record could not place these — the rows in the ledger carry the specific reason' })]
             : [el('span', { text: 'day ' + r.day }),
@@ -1962,7 +2091,7 @@
   }
 
   // The one lazy fetch. docs/ledger.json is the whole record — about
-  // 1.08 MB gzipped after a year — so it is never pulled on load; the summary
+  // 1.25 MB gzipped after a year — so it is never pulled on load; the summary
   // above comes out of data.json, which the page has already read. A 404 here is the
   // normal state until evening.yml has committed a run back, so it is reported
   // as a fact about the file rather than as a broken page.
@@ -2341,7 +2470,10 @@
     var enough = horizons.filter(function (h) { return h.sessions >= MIN_SESSIONS; });
     $('returns-hint').textContent =
       'Mean forward return across every scored candidate in a session, not just its shortlist, ' +
-      'weighted by how much each session contributed. One observation per SETUP, not per row: ' +
+      'each horizon weighted by the setups that actually reached it \u2014 a setup whose frame had a ' +
+      'hole after the first session is in the +1d weight and not in the +5d one, and its run is still in ' +
+      'both weights with the setups that did. One observation per ' +
+      'SETUP, not per row: ' +
       'a name that bursts five sessions running is one move measured five times, and counting ' +
       'it five times would weight that move against every other name in the file. A horizon needs ' + MIN_SESSIONS +
       ' sessions before its mean is worth reading; ' +
@@ -2381,7 +2513,21 @@
           // the two cases a reader most wants it: 1:1 (nothing collapsed) and
           // a run of repeats collapsing many rows into few setups, which is
           // where the numbers diverge most and the tile went quiet about it.
-          text: h.sessions ? plural(h.sessions, 'session') + ' · ' + plural(h.setups, 'setup')
+          // THREE POPULATIONS, NOT TWO. `rows` is every row that measured
+          // something, the setups are what they collapse into, and h.setups is
+          // how many of THOSE reached this horizon -- so "60 setups from 65
+          // rows" states a collapse the file does not support the moment a
+          // frame has a hole. Both steps are printed when they differ; the
+          // plain ratio, which is a collapse and reads as one, when they do not.
+          title: h.setups === h.anySetups ? null
+            : commas(h.rows) + ' rows carry a return at some horizon and collapse into '
+              + plural(h.anySetups, 'setup') + '; ' + commas(h.setups) + ' of those reached +' + h.days
+              + ' day' + (h.days === 1 ? '' : 's') + ', and a setup whose frame had a hole before this '
+              + 'horizon is not behind its mean',
+          text: h.sessions ? plural(h.sessions, 'session') + ' · '
+                             + (h.setups === h.anySetups
+                                  ? plural(h.setups, 'setup')
+                                  : commas(h.setups) + ' of ' + plural(h.anySetups, 'setup'))
                              + (h.rows ? ' from ' + plural(h.rows, 'row') : '')
                            : nothingWords(h)[1] }),
         el('span', { 'class': 'sc-chip ' + st.chip, text: st.word })
@@ -2394,10 +2540,11 @@
         return el('tr', null, [
           el('td', { text: '+' + h.days + ' day' + (h.days === 1 ? '' : 's') }),
           el('td', { 'class': 'sc-num' }, figure(h.mean === null ? nothingWords(h)[0] : pct(h.mean, 2),
-            h.weighted ? 'weighted by setups' : (h.sessions ? 'unweighted — no setup counts' : null))),
+            h.weighted ? 'weighted by the setups behind this horizon'
+                       : (h.sessions ? 'unweighted — no setup counts' : null))),
           el('td', { 'class': 'sc-num', title: excludedNote(h),
             text: commas(h.sessions) + ' of ' + commas(h.of) }),
-          el('td', { 'class': 'sc-num', title: h.rows ? commas(h.rows) + ' rows carry a return; repeats of one setup count once'
+          el('td', { 'class': 'sc-num', title: h.rows ? commas(h.rows) + ' rows carry a return at some horizon; repeats of one setup count once, and a setup whose frame had a hole before this horizon is not in this count'
                                                      : null,
             text: h.setups ? commas(h.setups) : '—' }),
           el('td', { 'class': 'sc-num', text: h.best === null ? '—' : pct(h.best, 2) }),
@@ -2415,8 +2562,9 @@
       '“' + FWD_WORDS.repeats[0] + '” when every name it scored had already been counted on an ' +
       'earlier session, and “' + UNFETCHED[0] + '” once the run is past the fill window and no later ' +
       'run fetches its rows again. The last three never become numbers, and those runs are in no ' +
-      'horizon\u2019s count.';
-    table($('runs-table'), ['session', 'run', 'bursts', 'scored', 'fallbacks', 'top score', '+1d', '+3d', '+5d', 'over'],
+      'horizon\u2019s count. A bursts cell marked \u201cmeasured none\u201d is a run that read no name ' +
+      'at all that session, which is not a night that found nothing.';
+    table($('runs-table'), ['session', 'run', 'bursts', 'scored', 'fallbacks', 'top score', '+1d', '+3d', '+5d', 'setups'],
       runs.map(function (r, i) {
         var fr = runFwd(r);
         // Six states here, on the run's mean, and the last three are the
@@ -2425,18 +2573,35 @@
         // whose rows had a usable open, nor is a run that scored nothing, one
         // that scored only names already counted, or one past the fill window
         // whose cell no later run will fetch for.
-        var cell = function (k) { return horizonCell(r, fr[k], r.fills_closed === true); };
+        // THE COUNT BEHIND A MEAN GOES ON THE MEAN. Each of these three cells
+        // is over the setups that reached ITS horizon, which is not the number
+        // in the last column: the canonical fixture's 2026-08-25 run measured
+        // 21 setups and 18 of them have a +5d, so one count beside three means
+        // told a reader the -0.42% was over 21 while the page itself weighted
+        // it by 18. The column was headed "over" and is headed "setups": what
+        // it counts is the run's contribution to the record, not a weight.
+        var cell = function (k) {
+          var w = horizonN(fr, k.slice(1));
+          return horizonCell(r, fr[k], r.fills_closed === true,
+            commas(w) + ' setup' + (w === 1 ? '' : 's') + ' behind this mean'
+            + (fr.n && fr.n !== w ? ', of the ' + commas(fr.n) + ' this run measured at some horizon' : ''));
+        };
         return el('tr', { 'class': i === 0 ? 'runs-now' : null }, [
           el('td', null, [day(r.date), i === 0 ? ' ' : null,
             i === 0 ? el('span', { 'class': 'sc-chip sc-chip--brand', text: 'this run' }) : null]),
           el('td', { 'class': 'sc-mono', text: r.type || '' }),
-          el('td', { 'class': 'sc-num', text: commas(r.bursts) }),
+          blindRun(r)
+            ? el('td', { 'class': 'sc-num', title: BLIND_RUN_NOTE },
+                 [commas(r.bursts), ' ', el('span', { 'class': 'sc-chip', text: 'measured none' })])
+            : el('td', { 'class': 'sc-num', text: commas(r.bursts) }),
           el('td', { 'class': 'sc-num', text: commas(r.scored) }),
           el('td', { 'class': 'sc-num', text: commas(r.fallbacks) }),
           el('td', { 'class': 'sc-num', text: num(r.top_score, 1) }),
           cell('d1'), cell('d3'), cell('d5'),
           el('td', { 'class': 'sc-num',
-            title: 'A name that bursts on consecutive sessions is one setup, counted once.',
+            title: 'Every setup this run measured at some horizon \u2014 a name that bursts on consecutive '
+                   + 'sessions is one setup, counted once. It is not the weight behind any one mean: each '
+                   + 'horizon cell says how many setups reached it.',
             text: fr.n ? commas(fr.n) + ' setup' + (fr.n === 1 ? '' : 's')
                          + (fr.rows && fr.rows !== fr.n ? ' of ' + commas(fr.rows) + ' rows' : '')
                        : '—' })

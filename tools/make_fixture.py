@@ -30,7 +30,7 @@ from src.lynch import (                       # the real thresholds, not a copy
     MAX_CONSECUTIVE_UP_DAYS, BREAKDOWN_PCT, BREAKDOWN_LOOKBACK,
     WINDOWS,                                  # and the windows its lines print
 )
-from src.pipeline import VETO_REASONS, rules_fingerprint, stopped_printing
+from src.pipeline import VETO_REASONS, rules_fingerprint, scan_coverage, stopped_printing
 _CFG = ScanConfig()
 
 def _universe():
@@ -344,6 +344,45 @@ def _consistent_with_the_checklist(specs):
 SPEC = _consistent_with_the_checklist(_remap(SPEC, 0))
 
 
+def burst_bar(gain, close_pos, recent_range, i):
+    """The burst bar's own geometry, in src.lynch.BURST_BAR_KEYS' shape.
+
+    DERIVED FROM THE ROW'S OWN MEASUREMENTS, not invented beside them. The
+    three numbers describe one bar and cannot be chosen independently: the
+    part of the day's gain that happened overnight fixes the open, the low
+    sits a little under it, and `close_pos` -- the number the `H` line
+    already prints -- fixes the high. A row whose gap and width were authored
+    separately would describe a bar no session can produce, which is the
+    class check_fixture_fresh.py exists to close.
+
+    `range_expansion` divides by the `N` line's own pre-burst range, because
+    that is the number src.lynch.burst_bar_shape() divides by -- one window,
+    named once, in the module that owns it, and one arithmetic: the mean of
+    the raw widths rounded once, which is what `N` prints. It divided by the
+    mean of the ROUNDED widths until round 11's audit, so this assertion was
+    a true statement about this generator and a false one about the pipeline,
+    and every row here was a shape src.lynch could not produce.
+
+    This generator holds measurements and never slices a frame, so the
+    numbers are authored rather than measured; what makes them honest is
+    that they are consistent with each other and with the rest of the row.
+    """
+    share = (i % 4) / 3.0            # how much of the move happened overnight
+    tail = 0.2 + (i % 3) * 0.35      # how far the low sat under the open, %
+    close = 1.0 + gain / 100.0
+    open_ = 1.0 + gain * share / 100.0
+    low = min(open_, close) * (1.0 - tail / 100.0)
+    high = low + (close - low) / close_pos
+    assert low <= open_ <= high, (
+        f"row {i}: an open outside its own bar is a price nobody paid")
+    width = round((high - low) / close * 100, 1)
+    return {
+        "gap_pct": round((open_ - 1.0) * 100, 1),
+        "bar_range_pct": width,
+        "range_expansion": round(width / recent_range, 2) if recent_range else None,
+    }
+
+
 def build_candidate(s, i):
     detail = lynch(*s.lm, gain=s.gain)
     passes = sum(1 for d in detail if d["pass"])
@@ -367,6 +406,17 @@ def build_candidate(s, i):
         score, verdict, reason, risk = s.score, s.verdict, s.reason, s.risk
         prov = {"source": "claude", "model": MODEL, "chart_seen": s.chart, "error": None}
     off_hi, abv_lo, p3, p6 = s.ctx
+    # The three burst-bar numbers describe ONE bar, and the expansion is the
+    # width over the `N` line's own pre-burst range -- read back OUT of the
+    # finished row rather than trusted, so a generator dividing by anything
+    # else fails here rather than shipping a row whose two printed numbers
+    # cannot be reconciled by the reader they are printed for.
+    bar = burst_bar(s.gain, s.lm[9], s.lm[4], i)
+    printed = float(next(d["value"] for d in detail if d["code"] == "N")
+                    .split("range ")[1].split("%")[0])
+    assert bar["range_expansion"] == round(bar["bar_range_pct"] / printed, 2), (
+        f"{s.t}: {bar['bar_range_pct']}% over a {printed}%/day base is not "
+        f"{bar['range_expansion']}x")
     # Bonde's two measurements. This fixture holds MEASUREMENTS and not frames,
     # so there is no walk here to count a run of up days off; they are authored
     # from the row's position, spread across every value a SCORED row can
@@ -402,7 +452,8 @@ def build_candidate(s, i):
                         "mplfinance ValueError: only 41 sessions of history, need 85"),
         "context": {"pct_off_52w_high": off_hi, "pct_above_52w_low": abv_lo,
                     "perf_3mo_pct": p3, "perf_6mo_pct": p6,
-                    "consecutive_up_days": up_days, "worst_base_day_pct": worst_base},
+                    "consecutive_up_days": up_days, "worst_base_day_pct": worst_base,
+                    **bar},
         "streak": streak(i),
         # Pending on both bases, in the shape the ledger writes.
         "forward_returns": ledger.empty_returns(),
@@ -592,7 +643,11 @@ def build_gated(g, i):
         "dollar_volume": round(g.close * g.vol),
         "lynch": f"{passes}/{len(detail)}", "lynch_passes": passes,
         "lynch_total": len(detail), "lynch_detail": detail,
-        "context": {"consecutive_up_days": up_days, "worst_base_day_pct": worst_base},
+        # The burst bar's shape on a refused row too, for the reason the two
+        # Bonde numbers are here: the record's whole use is judging what was
+        # refused, and a row archived without its measurements can never be.
+        "context": {"consecutive_up_days": up_days, "worst_base_day_pct": worst_base,
+                    **burst_bar(g.gain, g.lm[9], g.lm[4], i)},
         "streak": streak(i), "reason": g.reason,
     }
 
@@ -639,6 +694,37 @@ for _g in gated_out:
         "must exceed the threshold that refused it, and one that does must be vetoed")
 assert BURSTS - PASSED - VETOED - ILLIQUID == sum(1 for g in gated_out if g["reason"] == "lynch_gate")
 
+# What the scan SAW, in one block, because two consumers read it: the names
+# that have stopped printing and the coverage counts are the same night, and
+# hand-authoring them separately is how a fixture ends up describing a file
+# the pipeline cannot produce. Three names never bursting are the ones the
+# feed had trouble with -- two behind the session, one it answered with
+# nothing at all -- and everything else answered and was measured.
+_QUIET = [s for s in UNIVERSE
+          if s not in {r["ticker"] for r in candidates + gated_out}]
+MEASURED = len(UNIVERSE) - 3
+SCAN_STATS = {
+    "session": SESSION,
+    "stale": dict(zip(_QUIET[:2], ["2026-06-12", "2026-08-03"])),
+    "no_bars_names": _QUIET[2:3],
+    "requested": len(UNIVERSE),
+    "with_bars": len(UNIVERSE) - 1,
+    "fresh": MEASURED,
+    "measured": MEASURED,
+    "gapped": {},
+    "no_bars": 1,
+    "dropped": 0,
+    "duplicate_bars": 0,
+}
+assert SCAN_STATS["with_bars"] - len(SCAN_STATS["stale"]) == MEASURED, (
+    "the coverage counts have to add up the way a real scan's do")
+assert MEASURED < SCAN_STATS["with_bars"] < SCAN_STATS["requested"], (
+    "this fixture is the THIN night -- some names never answered and some "
+    "answers could not be measured -- and three prose surfaces called it a "
+    "clean one, whose caption is the bare 'no 4% gain on the day'. That is "
+    "history/, which is 77 of 77 of 77. If this stops being true, sweep "
+    "tests/fixtures/README.md and the comments beside `coverage` here.")
+
 by_src = collections.Counter(c["provenance"]["source"] for c in candidates)
 
 # `n` counts SETUPS and `rows` the rows they were collapsed from: a name that
@@ -652,6 +738,14 @@ by_src = collections.Counter(c["provenance"]["source"] for c in candidates)
 # These sessions are also the record the streak blocks above name: seven of
 # them before SESSION, the oldest 2026-08-21, which is what SPAN says and what
 # makes the day numbers up there ones the real code could have written.
+#: How many of a run's setups lost each horizon to a hole in their frame:
+#: three of 2026-08-25's 21 setups had a hole between the third session after the
+#: burst and the fifth, so forward_returns() ended their measurement at d3
+#: and that night's d5 is over 18 setups while its d1 is over 21. The one
+#: state that tells a per-horizon weight from a run-level one, which is why
+#: the canonical fixture holds it.
+HORIZON_HOLES = {"2026-08-25": {"d5": 3}}
+
 runs = [
     {"date": SESSION, "type": "evening", "bursts": BURSTS, "passed_gate": PASSED,
      "scored": len(candidates), "shortlist_size": 5, "top_score": candidates[0]["score"],
@@ -691,6 +785,28 @@ for _i, _run in enumerate(runs):
     _fr["from_open"] = {k: (None if _fr[k] is None else round(_fr[k] - 0.6 - 0.05 * _i, 2))
                         for k in ("d1", "d3", "d5")}
     _fr["from_open"]["n"] = 0 if _fr["n"] == 0 else _fr["n"] - (1 if _i % 3 == 0 else 0)
+    # THE WEIGHT IS PER HORIZON (src.ledger's mean_returns). `n` is every
+    # setup that measured something; n1/n3/n5 are the setups behind each
+    # mean, and the page multiplies each horizon's mean by its own. Written
+    # out here rather than derived from `n`, because deriving them would make
+    # this file unable to hold the state the counts exist for -- HOLES is
+    # 2026-08-25's, where three of its 21 setups have a hole in the frame
+    # between d3 and d5, so its d5 is over 18 and its d1 over 21. A file where
+    # every horizon has the same count cannot tell a per-horizon weighting
+    # from a run-level one.
+    _holes = HORIZON_HOLES.get(_run["date"], {})
+    _close, _open = {}, {}
+    for _k in ("d1", "d3", "d5"):
+        _close[_k] = _fr[_k]
+        _close["n" + _k[1:]] = 0 if _fr[_k] is None else _fr["n"] - _holes.get(_k, 0)
+        _open[_k] = _fr["from_open"][_k]
+        _open["n" + _k[1:]] = (0 if _fr["from_open"][_k] is None
+                               else min(_close["n" + _k[1:]], _fr["from_open"]["n"]))
+    _open["n"] = _fr["from_open"]["n"]
+    # In mean_returns()' own key order, so the fixture is that writer's file
+    # in shape as well as in content.
+    _run["forward_returns"] = _fr = {**_close, "n": _fr["n"], "rows": _fr["rows"],
+                                     "from_open": _open}
     # The universe's own return from each session (src.ledger.add_run writes
     # the pending shape; fill_benchmarks fills it on the evening five sessions
     # later). Hand-authored where the run's own returns are in: a little
@@ -716,6 +832,12 @@ for _i, _run in enumerate(runs):
             _bench["from_open"]["n" + _h[1:]] = _bench["n" + _h[1:]] - 1
     _run["benchmark"] = _bench
     _run["universe"] = {"label": "data/symbols.txt (checked in)", "size": len(UNIVERSE)}
+    # How many names each night measured (src.ledger.add_run copies it off
+    # run.coverage). Never 0 here: a blind night is a state the page and the
+    # streak rules both have their own sentence for, and a fixture cannot
+    # hold both it and the clean night it exists to show -- the smoke's
+    # `blindscan` variant is that one.
+    _run["measured"] = MEASURED if _i == 0 else MEASURED - (_i % 4)
     # One screener across the whole file: these eight sessions were scanned by
     # the rules this checkout holds, so evidence.rules reports one set and
     # nothing on the page warns about a blended record. The drifted state is a
@@ -729,6 +851,55 @@ for _i, _run in enumerate(runs):
     # fixture this size cannot hold it.
     assert len(runs) <= ledger.FILL_WINDOW_RUNS, "an entry past the window would be stamped closed"
     _run["fills_closed"] = False
+
+# What THIS run's fill moved: the scorecard both mails print under the funnel
+# (src.ledger.settled_rows, and src.emailer's _settled_table). DERIVED from
+# the runs above rather than typed -- the horizons that land on SESSION are
+# exactly the ones whose means are filled up there, and every universe figure
+# is read off that session's own benchmark, so the fixture cannot state a
+# scorecard the record it ships with contradicts.
+#
+# It belongs to the same half of this file as the streak blocks: the
+# hand-authored seven-session history, not the one run `evidence` is computed
+# over -- which is why `evidence.overall` is still every-n-zero beside it. A
+# real run's two halves come off one ledger; this file's do not, and says so
+# in the comment above `_LEDGER_RUNS`.
+def _sessions_after(day: str, n: int) -> str:
+    """The n-th session after `day`, weekend-only -- the same arithmetic
+    src.ledger.forward_returns() falls back to for a single frame, and enough
+    here because this hand-authored week holds no holiday."""
+    import datetime
+    out = datetime.date.fromisoformat(day)
+    for _ in range(n):
+        out += datetime.timedelta(days=1)
+        while out.weekday() >= 5:
+            out += datetime.timedelta(days=1)
+    return out.isoformat()
+
+
+_PICKS = [("NVDA", 8.7, "A"), ("AMAT", 7.9, "B+"), ("MU", 8.2, "A")]
+SETTLED = []
+for _entry in runs[1:]:
+    for _h in ledger.HORIZONS:
+        if _sessions_after(_entry["date"], _h) != SESSION:
+            continue
+        _mean = _entry["forward_returns"][f"d{_h}"]
+        if _mean is None:
+            continue
+        _name, _score, _verdict = _PICKS[len(SETTLED) % len(_PICKS)]
+        _bench = _entry["benchmark"]
+        SETTLED.append({
+            "ticker": _name, "session": _entry["date"], "score": _score,
+            "verdict": _verdict, "horizon": _h,
+            # One pick, a little either side of the mean of the setups that
+            # night: this is one row's outcome and not the run's average.
+            "ret": round(_mean + 1.4, 2),
+            "ret_from_open": round(_entry["forward_returns"]["from_open"][f"d{_h}"] + 1.4, 2),
+            "universe": _bench[f"d{_h}"],
+            "universe_from_open": _bench["from_open"][f"d{_h}"],
+        })
+assert SETTLED, "the fixture's own runs say three horizons closed on this session"
+assert len({(e["ticker"], e["session"], e["horizon"]) for e in SETTLED}) == len(SETTLED)
 
 # The evidence block, computed by the REAL src/ledger.py over this fixture's
 # own rows rather than hand-authored. One run, whose forward returns have not
@@ -790,14 +961,26 @@ data = {
         # rather than a hand-typed block, so the shape and the threshold cannot
         # drift from what publish() writes. Chosen from the names no burst
         # uses, so the page is not told a name both burst and stopped printing.
-        "stopped_printing": stopped_printing({"session": SESSION, "stale": dict(zip(
-            [s for s in UNIVERSE if s not in {r["ticker"] for r in candidates + gated_out}][:2],
-            ["2026-06-12", "2026-08-03"])),
-            "no_bars_names": [s for s in UNIVERSE if s not in {r["ticker"] for r in candidates + gated_out}][2:3]}),
+        "stopped_printing": stopped_printing(SCAN_STATS),
         # A clean feed's count, which is what every night so far has had:
         # publish() writes this key on every run, and a fixture missing it
         # would describe a file the pipeline does not produce.
         "duplicate_bars": 0,
+        # What this run's fill moved -- one entry per (pick, horizon) whose
+        # measurement stopped being pending tonight, which both mails print
+        # under the funnel and nothing else in the record can reconstruct
+        # (a horizon carries no note of the night it was measured).
+        "settled": SETTLED,
+        # How much of the night was read, through the pipeline's own function
+        # over the same stats block the stopped-printing names come from --
+        # not a hand-typed set of counts that could disagree with them. A THIN
+        # night, not a clean one: 228 asked, 227 answered, 225 measured,
+        # because the two stopped-printing names are stale. So every surface
+        # derived from this file appends the clause -- the page captions the
+        # first cut "no 4% gain on the day; 3 of the 228 asked could not be
+        # measured for this session" -- and history/ is the clean one. The
+        # assertion beside SCAN_STATS is what stops that sentence drifting.
+        "coverage": scan_coverage(SCAN_STATS),
         "bursts": BURSTS,
         "passed_gate": PASSED,
         "scored": len(candidates),
@@ -806,7 +989,15 @@ data = {
         "gate": {"min_lynch_passes": 3, "total_checks": 6,
                  "vetoes": list(VETO_REASONS)},
         "rules": rules_fingerprint(),
-        "liquidity": {"pctile": PCTILE, "floor": FLOOR, "refused": ILLIQUID},
+        # `over` is how many names the percentile was drawn FROM -- those whose
+        # session bar carried a readable, positive dollar volume. Not the same
+        # count as run.coverage.measured, which is what the DETECTOR read and
+        # answered about; they coincide on this night and diverge on any night
+        # with a zero-volume bar or a detector error in it. A null floor beside
+        # `over: 0` is a third sentence again -- no name's dollar volume could
+        # be ranked.
+        "liquidity": {"pctile": PCTILE, "floor": FLOOR, "over": MEASURED,
+                      "refused": ILLIQUID},
         "scored_by": {"claude": by_src["claude"], "fallback": by_src["fallback"]},
         "model": MODEL,
         # The verdict word publish() stamps on every run, and the one key of

@@ -250,6 +250,183 @@ def test_the_documented_thresholds_are_the_ones_the_code_applies(ohlcv):
         "the session arithmetic keys on")
 
 
+def test_the_rulebook_states_the_numbers_the_checklist_applies():
+    """knowledge/strategy.md is the system prompt, and five of the checklist's
+    numbers are written out in its prose.
+
+    README's numbers have been read back against the code since the round-4
+    prose audit; the rulebook's had not been, and it is the surface that moves
+    a score. Reproduced by mutation before this existed: MIN_CLOSE_POS 0.70 ->
+    0.60, MAX_EXT_VS_SMA20 15 -> 12, MAX_RUN_UP_1MO 25 -> 35, MAX_PRIOR_BURSTS
+    1 -> 2 and PRIOR_BURST_PCT 4 -> 6 each left this whole file green, so the
+    model would have gone on being told a rule the code had stopped applying.
+    Only MAX_CONSECUTIVE_UP_DAYS failed anything, and what it failed named
+    README.
+
+    Every number is asserted at EVERY mention, by findall and set equality
+    rather than `in` -- the shaped-assertion shape the same audit found on
+    README's two "8:30 AM ET" strings, where changing one left the other to
+    satisfy the check. The rulebook's own two bars (top 25% for an A+, 20%
+    extension for an automatic kill) are NOT copies of these constants and are
+    asserted as what they claim to be: strictly stricter, and strictly looser,
+    than the checks they are written beside.
+    """
+    from src import lynch
+
+    # One line: the file wraps its prose, and a sentence is not two sentences
+    # because a paragraph reflowed.
+    book = " ".join(_read("knowledge/strategy.md").split())
+
+    def one(pattern):
+        found = re.findall(pattern, book)
+        assert found, f"knowledge/strategy.md no longer says {pattern!r}"
+        return found
+
+    # -- 2: how many earlier 4% days a fresh leg may already have --
+    (prior,) = one(r"(\w+) or (?:\w+) prior [\d.]+% day")
+    (allowed,) = one(r"(?:\w+) or (\w+) prior [\d.]+% day")
+    words = {"zero": 0, "one": 1, "two": 2, "three": 3, "four": 4}
+    assert [words[prior.lower()], words[allowed.lower()]] == [0, lynch.MAX_PRIOR_BURSTS], (
+        f"the rulebook allows {prior} or {allowed} prior bursts; "
+        f"MAX_PRIOR_BURSTS is {lynch.MAX_PRIOR_BURSTS}")
+    assert {float(n) for n in one(r"prior ([\d.]+)% day")} == {lynch.PRIOR_BURST_PCT}
+
+    # -- H: where in its range the burst closed --
+    h_bar = round((1 - lynch.MIN_CLOSE_POS) * 100)
+    assert {int(n) for n in one(r"`H` passes at the top (\d+)%")} == {h_bar}
+    # EVERY "top N%" in the file, and there are three: H's, and the A+ bar
+    # stated twice. The first version of this matched one wording of the A+
+    # bar and never the other, so changing either one alone survived -- the
+    # shaped-assertion shape, on the assertion written to avoid it.
+    tops = [int(n) for n in one(r"[Tt]op (\d+)%")]
+    a_plus = [n for n in tops if n != h_bar]
+    assert len(a_plus) == 2 and len(set(a_plus)) == 1, (
+        f"the rulebook's A+ close bar is stated twice and they disagree: {tops}")
+    assert a_plus[0] < h_bar, (
+        "the A+ bar is written as deliberately STRICTER than H's; it is not")
+
+    # -- Y: extension above the 20-day average, and the month's run-up --
+    assert {int(n) for n in one(r"`Y` fails at (\d+)% above")} == {
+        int(lynch.MAX_EXT_VS_SMA20)}
+    assert {int(n) for n in one(r"(\d+)-day average")} == {
+        lynch.WINDOWS["sma_sessions"]}
+    assert {int(n) for n in one(r"(\d+)% run-up over the past month")} == {
+        int(lynch.MAX_RUN_UP_1MO)}
+    kill = {int(n) for n in one(r"Stock (\d+)%\+ extended")}
+    assert kill == {int(n) for n in one(r"(\d+)% is YOUR bar for an automatic kill")}
+    assert min(kill) > lynch.MAX_EXT_VS_SMA20, (
+        "the kill bar is written as deliberately LOOSER than Y's; it is not")
+
+    # -- the up-days veto, which refuses before the model is asked --
+    (refused,) = one(r"(\w+) or more is refused before it reaches you")
+    assert words[refused.lower()] == lynch.MAX_CONSECUTIVE_UP_DAYS + 1, (
+        f"the rulebook tells the model {refused} or more up days are refused "
+        f"before it sees them; the veto refuses at "
+        f"{lynch.MAX_CONSECUTIVE_UP_DAYS + 1}")
+    seen = one(r"you are scoring is ([\d, ]*\d) or (\d)")
+    assert [int(n) for n in re.findall(r"\d", "".join(seen[0]))] == list(
+        range(lynch.MAX_CONSECUTIVE_UP_DAYS + 1)), (
+        "the rulebook tells the model which up-day counts it can see; the veto "
+        "admits a different set")
+    # The THIRD sentence in that paragraph, carrying the same constant a third
+    # time and read by nothing until an audit sweeping the other two left it
+    # saying "the difference between the three you do see" over a veto that
+    # now admitted four counts -- with tests/test_lynch.py's value pin as the
+    # only red, which a deliberate change updates. How many counts the model
+    # sees IS the count the veto admits.
+    (visible,) = one(r"the difference between the (\w+) you do see")
+    assert words[visible.lower()] == lynch.MAX_CONSECUTIVE_UP_DAYS + 1, (
+        f"the rulebook tells the model it will see {visible} distinct up-day "
+        f"counts; the veto admits {lynch.MAX_CONSECUTIVE_UP_DAYS + 1}")
+
+
+def test_the_fallback_anchors_are_the_rubrics_own_bands():
+    """The checklist-only score is the LOW end of the band the rubric anchors,
+    and the map in src.scorer is a second copy of four numbers the system
+    prompt states.
+
+    Nothing reads the rulebook at scoring time -- parsing the system prompt to
+    decide a number would make a prose edit a code path -- so the agreement is
+    a guard. Before it, the map was pinned by a dict typed out in
+    tests/test_scorer.py, which is a third copy and agrees with whichever of
+    the other two it was typed from. Below 3/6 the rubric says nothing, so
+    those anchors are the scorer's own and are left to it.
+    """
+    from src.pipeline import MIN_LYNCH_PASSES
+    from src.scorer import _fallback_score
+
+    book = " ".join(_read("knowledge/strategy.md").split())
+    bands = re.findall(r"(\d)/6 ≈ (\d+)(?:[-–](\d+))?", book)
+    assert len(bands) >= 4, f"the rubric's anchor sentence is gone: {bands}"
+    for passes, low, _high in bands:
+        real = _fallback_score({"passes": int(passes), "total": 6, "summary": ""})
+        assert real == float(low), (
+            f"the rubric anchors {passes}/6 at {low}; the fallback gives {real}")
+    assert min(int(p) for p, _l, _h in bands) == MIN_LYNCH_PASSES, (
+        "the rubric anchors a pass count the gate never lets through, or stops "
+        "short of the lowest one it does")
+
+
+def test_the_verdict_bands_are_the_rubrics_own_and_the_rubric_agrees_with_itself():
+    """The number the code OVERRIDES the model on, stated twice in the
+    rulebook with two different values and parsed by nothing.
+
+    `_validated()` REPLACES a model's verdict with the band its score falls
+    in, so `VERDICT_BANDS` is the one rubric number where a disagreement is
+    not a difference of opinion but a rewrite. It was a second copy of a
+    sentence nothing read: rewriting "Verdicts: A+ (9-10), A (8-8.9), ..." to
+    half-point bands left the whole suite green, and moving the B+ floor from
+    7.0 to 6.5 did too -- so the model could be scored against a table the
+    code does not apply, and told "B+ (7-7.9)" while a 6.7 was archived B+.
+
+    And the rulebook disagreed with ITSELF first: its section heading read
+    "What makes an A+ burst (score 8-10)" while its table put A+ at 9-10.
+    Driven through the real code before it was swept:
+    `_validated({"score": 8.5, "verdict": "A+"})` returns verdict "A" and
+    logs the model as contradicting a rubric that contradicted itself.
+
+    Asserted at EVERY mention and by set equality, the shape the round-4
+    prose audit settled on -- including the three copies of the vocabulary
+    (VERDICT_BANDS' names, VERDICTS, and the JSON shape the request asks
+    for), because one mechanism with three lists is how they drift.
+    """
+    import inspect
+
+    from src import scorer
+    from src.scorer import VERDICT_BANDS, VERDICTS, _validated
+
+    book = " ".join(_read("knowledge/strategy.md").split())
+
+    bands = re.findall(r"([A-C]\+?) \((\d+(?:\.\d+)?)[-–]", book)
+    assert bands, "the rulebook no longer states its verdict bands"
+    assert [(float(low), name) for name, low in bands] == list(VERDICT_BANDS), (
+        f"the rulebook's bands are {bands}; the code applies {VERDICT_BANDS}")
+
+    (skip_floor,) = {float(n) for n in re.findall(r"skip \(<(\d+(?:\.\d+)?)\)", book)}
+    assert skip_floor == min(floor for floor, _name in VERDICT_BANDS), (
+        "the rulebook's skip floor is not the lowest band the code awards")
+
+    # The section heading, which is the same claim about A+ made a second
+    # time -- and was the half that was wrong.
+    (heading,) = re.findall(r"A\+ burst \(score (\d+)–10\)", book)
+    top_floor, top_name = VERDICT_BANDS[0]
+    assert float(heading) == top_floor, (
+        f"the rulebook heads its {top_name} section at {heading}-10 while the "
+        f"table and the code put {top_name} at {top_floor:g} and up")
+
+    # The vocabulary, in all three places one mechanism spells it.
+    assert {name for name, _low in bands} | {"skip"} == set(VERDICTS)
+    schema = inspect.getsource(scorer).split('"verdict": "<')[1].split('>"')[0]
+    assert set(schema.split("|")) == set(VERDICTS), (
+        "the JSON shape the request asks for names a different set of verdicts")
+
+    # And the override itself, on the pair that made this visible: a reply
+    # one band under the word it used keeps the BAND, so a rubric the code
+    # does not apply is a rubric the reader is shown for a verdict nobody gave.
+    under = top_floor - 0.5
+    assert _validated({"score": under, "verdict": top_name})["verdict"] != top_name
+
+
 def test_the_rulebook_instructs_on_every_field_the_request_carries():
     """knowledge/strategy.md is the system prompt: a metrics key the rulebook
     never names is a number the model is left to interpret for itself, and a
@@ -262,25 +439,109 @@ def test_the_rulebook_instructs_on_every_field_the_request_carries():
     hand-kept copy cannot have, and this project has already paid for one: a
     second veto added to src.lynch alone left every surface green.
     """
-    from src import emailer, ledger
+    from src import emailer, ledger, lynch, pipeline
     from src.scorer import RECORD_KEYS
 
     rulebook = _read("knowledge/strategy.md")
     for name, _key in RECORD_KEYS:
         assert f"`{name}`" in rulebook, f"the rulebook never mentions {name}"
-    for reason in emailer.STREAK_UNKNOWN:
+    # And the burst bar's own geometry, derived from src.lynch.BURST_BAR_KEYS
+    # for the same reason. Two of the rulebook's bullets asked for judgements
+    # about that bar -- a "powerful burst bar" with a big range, and a "huge
+    # gap" as the EP signal -- while the payload carried no open, no high and
+    # no low: the model could answer them from the chart image alone, and on a
+    # night the render fails there is no image.
+    for name in lynch.BURST_BAR_KEYS:
+        assert f"`{name}`" in rulebook, f"the rulebook never mentions {name}"
+    # These carry no threshold at all, so the one thing the model has to be
+    # told is what an absent one means. A null here is a bar that could not be
+    # measured, and reading it as zero is a claim about the market: 0.0%
+    # gap_pct says it opened exactly where it closed yesterday.
+    assert "Null means not measured; it never means zero." in rulebook, (
+        "the rulebook does not say what a null burst-bar measurement means")
+    # Every kind of unknown the payload can carry, from the two places the
+    # words are defined: the four a ROW can carry, and the fifth that no row
+    # can -- src.scorer.record_context() sends NO_STREAK_RECORDED where a
+    # block was never computed, and until it did, that state reached the model
+    # as a null day with a null reason under a rulebook saying that cannot be.
+    for reason in set(emailer.STREAK_UNKNOWN) | {ledger.NO_STREAK_RECORDED}:
         assert f"`{reason}`" in rulebook, f"the rulebook never names the {reason} unknown"
+    # And the OUTCOME vocabulary, derived the same way the published contract's
+    # is, from src.lynch's vetoes and src.ledger's own word. A hand-kept copy
+    # here is the fifth-reason-word trap: round 5 added liquidity_floor and
+    # swept seven sentences, and a mutant swapping two of these words for
+    # words that do not exist survived the whole suite.
+    for word in (set(emailer.LAST_OUTCOME) | set(pipeline.VETO_REASONS.values())
+                 | {ledger.LIQUIDITY_REASON}):
+        assert f'"{word}"' in rulebook, f"the rulebook never names the {word} outcome"
+    # score_cap is in that set and is NOT a refusal: the contract says it
+    # "passed the gate, but the run had already sent its limit of candidates
+    # to the scorer", and telling the model a rule threw the name out would be
+    # the one collapse every other surface is forbidden to make.
+    assert "not a judgement" in rulebook, (
+        "the rulebook does not say that score_cap is not a judgement against the name")
+    # And the disclosure the email has carried under every table since round 5:
+    # what a day number counts includes appearances nothing ever scored. One
+    # mechanism, one wording, each surface asserted against the other's source.
+    footnote = emailer._streak_footnote([{"streak": {"day": 3}}])
+    assert "nights of confirmation" in footnote, "the email footnote no longer says it"
+    assert "nights of confirmation" in rulebook, (
+        "the model is the third reader of the streak and the only one without the footnote")
+    # And the rule this cannot say by itself: the record and the frame answer
+    # one question from two sources, and the frame is the authority where the
+    # record has gaps.
+    assert "2_first_or_second_burst" in rulebook, (
+        "the rulebook does not tell the model how to read setup_day beside the "
+        "checklist's own count of prior bursts")
     # And the rule every other surface holds: an unknown is not a fresh setup.
     # Without this sentence the model reads a null day as "no prior sighting",
     # which is a claim about the market made out of a file error.
     assert "A null `setup_day` is not day 1." in rulebook
-    # The episode counter cannot establish a fresh market breakout. Keep its
-    # grouping window and missing-observation limits in the model's rules.
-    normalized = " ".join(rulebook.split())
-    assert f"each gap is at most {ledger.MAX_STREAK_GAP_SESSIONS} weekdays" in normalized
-    assert "not proof of a fresh market breakout" in normalized
-    assert "neither a freshness bonus nor a penalty" in normalized
-    assert "double-count the same move" in normalized
+
+
+def test_the_rulebook_does_not_read_day_one_as_a_name_the_record_has_never_seen():
+    """day 1 is a claim about THIS SETUP, not about the file.
+
+    src.ledger.streak() restarts the count whenever the gap exceeds
+    MAX_STREAK_GAP_SESSIONS, so day 1 is routinely published for a name the
+    record HAS carried -- the ordinary repeat over a momentum universe. The
+    rulebook told the model the opposite ("nothing in the record preceded
+    it"), in the same request whose payload named when the name was last seen
+    and what it scored, and the system prompt is the one surface where a false
+    gloss moves a number.
+
+    The precondition is executed rather than assumed: the payload below really
+    does carry day 1 with a prior sighting. The guard is then a window over the
+    rulebook's own sentences, in the shape round 10's prose guards took -- the
+    definition of 1 and the two sentences after it must point at `seen_before`
+    and `last_seen`, and none of them may make the absence claim -- because a
+    single phrase is what the retracted wording would be edited around.
+    """
+    import re
+
+    from src import ledger
+    from src.scorer import record_context
+
+    history = [{"candidates": [{"ticker": "AAA", "date": "2026-08-20",
+                                "score": 7.0, "verdict": "B"}], "gated": []}]
+    payload = record_context(ledger.streaks(history, ["AAA"], "2026-09-04")["AAA"])
+    assert (payload["setup_day"], payload["seen_before"]) == (1, 1), (
+        "the state this guards is not reachable -- the streak rule changed")
+    assert payload["last_seen"] == "2026-08-20"
+
+    rulebook = _read("knowledge/strategy.md")
+    sentences = re.split(r"(?<=[.!?])\s+", rulebook)
+    defining = [i for i, s in enumerate(sentences) if re.search(r"\b1 is\b", s)]
+    assert defining, "the rulebook no longer says what setup_day 1 is"
+    for i in defining:
+        window = " ".join(sentences[i:i + 3])
+        assert "`seen_before`" in window and "`last_seen`" in window, (
+            "the rulebook defines day 1 without pointing at the fields that "
+            f"say what the record HAS carried: {window!r}")
+        for claim in ("nothing in the record preceded", "nothing preceded",
+                      "no prior sighting", "no earlier appearance"):
+            assert claim not in window.lower(), (
+                f"the rulebook reads day 1 as an empty record: {claim!r}")
 
 
 def test_the_cost_paragraph_does_its_own_arithmetic():
@@ -336,18 +597,60 @@ def test_the_cost_paragraph_does_its_own_arithmetic():
               + (calls - 1) * ((system * read + (per_call - system)) * price_in + out * price_out)) / 1e6
     break_even = 1 + (write - 1) / (1 - read)
 
+    saving = round(100 * (1 - cached / uncached))
+    share = round(100 * system / per_call)
     assert num(r"break-even the second call \(([\d.]+) calls\)") == round(break_even, 2)
-    assert num(r"a full night (\d+)% cheaper") == round(100 * (1 - cached / uncached))
-    assert num(r"\$([\d.]+) this\s+paragraph used to quote") == round(uncached, 2)
+    assert num(r"a full night (\d+)% cheaper") == saving
+    assert num(r"\$([\d.]+) an uncached night would cost") == round(uncached, 2)
     assert num(r"about \$([\d.]+) a\s+run") == round(cached, 2)
     assert num(r"roughly \$(\d+) a year") == round(cached * 252)
+    assert num(r"system prompt is (\d+)% of every request") == share
     assert readme.count(f"~${round(cached, 2):.2f}") == 1, "the summary table quotes a different nightly figure"
-    for doc in ("CLAUDE.md", "src/scorer.py"):
+
+    # EVERY occurrence, in every other file that quotes one of these, and not
+    # "at least one that is right". The membership test this replaces was the
+    # `in`-instead-of-equality shape the round-4 prose audit had already fixed
+    # once for README's two clock times: CLAUDE.md's round-4 paragraph went on
+    # quoting $0.25 / 41% / $37 three screens below its own swept copy, and
+    # rewriting that sentence to $9.99 / 3% / $1 left the suite green. The
+    # numbers live in README's Costs section; anywhere else they may only be
+    # repeated, never restated differently.
+    expected = {"cheaper": saving, "of every request": share,
+                "calls": round(break_even, 2), "a year": round(cached * 252),
+                "uncached": round(uncached, 2), "cached": round(cached, 2)}
+    quoting = {
+        r"([\d.]+) calls\b": "calls",
+        r"(\d+)% cheaper": "cheaper",
+        r"(\d+)% of (?:each|every) request": "of every request",
+        r"\$(\d+) a year": "a year",
+        r"\$([\d.]+) uncached": "uncached",
+        r"\$([\d.]+) cached": "cached",
+        r"\$([\d.]+) to \$([\d.]+)\.": ("uncached", "cached"),
+    }
+    for doc in ("CLAUDE.md", "src/scorer.py", "tools/live_check.py", "tests/test_scorer.py"):
         # Comment markers and line wraps are not words: the scorer's copy
-        # wraps between the percentage and "cheaper".
+        # wraps between the percentage and "cheaper", and this file's own
+        # docstrings carry the paragraph too.
         text = " ".join(_read(doc).replace("#", " ").split())
-        assert f"{round(break_even, 2)} calls" in text, f"{doc} quotes a different break-even"
-        assert f"{round(100 * (1 - cached / uncached))}% cheaper" in text, f"{doc} quotes a different saving"
+        # A sentence that says what a number USED TO be is history, and these
+        # files keep it on purpose -- CLAUDE.md's cache paragraph records the
+        # 1.4 calls and 43% the round-4 audit retracted, and a guard that
+        # refused those would be a guard against the record of the defect. So
+        # the retracted clauses are skipped by their own marker and every
+        # remaining claim is held to the arithmetic. The paragraph this
+        # replaces carried no marker: it stated $0.25 / 41% / $37 flat.
+        stated = [s for s in re.split(r"(?<=[.!?])\s+", text)
+                  if not re.search(r"\bthis said\b|\bused to\b|\bquoted at\b"
+                                   r"|\bwas given as\b|\bwas \$[\d.]+ in\b",
+                                   s, re.I)]
+        for pattern, key in quoting.items():
+            for found in re.findall(pattern, " ".join(stated)):
+                keys = key if isinstance(key, tuple) else (key,)
+                values = found if isinstance(found, tuple) else (found,)
+                for one, value in zip(keys, values):
+                    assert float(value) == expected[one], (
+                        f"{doc} quotes {value} where README's arithmetic gives "
+                        f"{expected[one]} ({one})")
 
 
 def test_the_documented_workflow_files_are_the_ones_that_exist():
@@ -440,7 +743,8 @@ def test_every_reason_a_streak_can_carry_has_words_on_every_surface():
     from src import emailer, ledger
 
     reasons = {ledger.NO_HISTORY, ledger.HISTORY_UNDATED,
-               ledger.HISTORY_UNREADABLE, ledger.WINDOW_NOT_COVERED}
+               ledger.HISTORY_UNREADABLE, ledger.WINDOW_NOT_COVERED,
+               ledger.BLIND_SESSION}
     page = _read("docs/index.html")
 
     assert reasons <= set(emailer.STREAK_UNKNOWN), (
@@ -453,9 +757,92 @@ def test_every_reason_a_streak_can_carry_has_words_on_every_surface():
         f"{sorted(r for r in reasons if r not in page)}, so the page and the "
         "email say different things about one row"
     )
+    # THE SENTENCES, NOT THE KEYS. Both files carry a comment saying the other
+    # holds the same map in the same words, and this asserted only that the
+    # KEY appeared -- so either surface could be reworded alone with the whole
+    # suite and the whole dashboard smoke green, which is how a comment
+    # claiming two surfaces agree carried a drift for a round twice already.
+    # The page writes its map as JS string concatenation across lines, so the
+    # joins come out before the comparison; nothing else is normalised,
+    # because a difference in anything else IS the drift.
+    joined = re.sub(r"'\s*\+\s*'", "", page)
+    for reason in sorted(reasons):
+        assert emailer.STREAK_UNKNOWN[reason] in joined, (
+            f"docs/index.html does not say {emailer.STREAK_UNKNOWN[reason]!r} for "
+            f"{reason}; the page and the email have drifted apart on one row")
     assert not [r for r in reasons if f"`{r}`" not in _read("README.md")], (
         "README's streak bullet does not name every reason a null `day` can carry"
     )
+
+
+def test_the_readme_names_as_many_ways_of_going_unmeasured_as_the_scan_subtracts():
+    """README's `run.coverage` bullet lists the causes of `with_bars -
+    measured` in a parenthetical, and run_scan() subtracts one term per cause.
+    The bullet named four where the code subtracts five -- the missing one
+    being the detector-error class, which is the one CLAUDE.md records as "a
+    detector that raised on every symbol was a quiet market" -- while
+    src/scanner.py's own comment beside the arithmetic listed all five. A
+    count of causes in prose beside a subtraction that grows is exactly the
+    citation this repo has watched rot four times, so it is counted rather
+    than restated."""
+    scanner_src = _read("src/scanner.py")
+    expression = re.search(r"measured = \(with_bars(.*?)\)\)\n", scanner_src, re.S)
+    assert expression, "src/scanner.py no longer computes `measured` in one expression"
+    terms = expression.group(1).count("- len(")
+
+    bullet = _read("README.md")
+    parenthetical = re.search(
+        r"not be measured for the session, in the five ways `run_scan\(\)` subtracts\s*\n?\s*\((.*?)\)", bullet, re.S)
+    assert parenthetical, "README no longer lists the ways a name goes unmeasured"
+    causes = parenthetical.group(1).count(",") + 1
+    assert causes == terms, (
+        f"README names {causes} ways a name could not be measured; run_scan() "
+        f"subtracts {terms} counts")
+
+
+def test_the_email_and_the_page_caption_the_first_cut_in_one_vocabulary():
+    """The names that answered and could not be measured are cut between the
+    universe and the bursts, and both surfaces now name that cut: the email's
+    funnel line and the page's caption for the "4% bursts" stage. Two
+    wordings for one mechanism is the shape this project keeps finding side
+    by side on one screen, so each file is asserted against the other's
+    source -- the rule DUPLICATE_BARS_NOTE already follows.
+    """
+    from src import emailer
+
+    page = _read("docs/index.html")
+    assert emailer.MEASURED_PHRASE in page, (
+        f"docs/index.html does not caption the cut with {emailer.MEASURED_PHRASE!r}")
+    # The page's blind sentence and the email's say the same thing about the
+    # same state, so neither can be reworded alone.
+    blind = emailer._quiet_market_note({"coverage": {"measured": 0, "with_bars": 12}})
+    assert emailer.MEASURED_PHRASE in blind
+    assert "could be measured for this session" in page, (
+        "the page's blind caption and the email's cell have drifted apart")
+    # The page's own first-cut caption, in the same words, on the state that
+    # is not the blind one: MEASURED_PHRASE is the string both files share and
+    # the assertion above pins it. This used to end with
+    # `MEASURED_LABEL.lower().startswith("measured")` under a comment saying
+    # "a rename here has to be a rename there" -- and the label appears in
+    # docs/index.html nowhere at all, so the comment described a guard that did
+    # not exist and the assertion could not fail on a rename. The label is the
+    # EMAIL's, and what pins it is the funnel it is printed in.
+    funnel = emailer.build_html([], "evening", {
+        "universe": "228 checked-in US common stocks", "bursts": 0, "gated": 0,
+        "coverage": {"requested": 228, "with_bars": 227, "measured": 216}})
+    # Against README'S OWN QUOTED EXAMPLE, not against the constant the line
+    # was built from: `f"{MEASURED_LABEL}: ..." in funnel` is this project's
+    # third shape of unfailable test -- a value compared with the name it came
+    # from -- and renaming the constant passed it. README's `run.coverage`
+    # bullet quotes the finished line, so one assertion pins the label, both
+    # denominators and the wording, and a rename is a doc sweep.
+    quoted = re.search(r'\("(Measured for the session: [^"]+)"\)',
+                       " ".join(_read("README.md").split()))
+    assert quoted, "README no longer quotes the funnel's first-cut line"
+    assert quoted.group(1) in funnel, (
+        f"README quotes {quoted.group(1)!r}; the funnel renders "
+        f"{[p for p in funnel.split(chr(10)) if 'Measured' in p]}")
+    assert emailer.MEASURED_LABEL in quoted.group(1)
 
 
 def test_the_documented_return_bases_are_the_ones_the_ledger_writes():
@@ -500,17 +887,49 @@ def test_the_email_and_the_page_print_one_figure_for_one_floor():
         start = page.index(f"function {name}(")
         end = page.index("\n  }\n", start) + 4
         fns.append(page[start:end])
+    # pct() is a one-liner, so the block rule above would swallow whatever
+    # follows it; the line itself is the whole function.
+    start = page.index("  function pct(")
+    fns.append(page[start:page.index("\n", start)])
     values = [12_400_000, 190_247_596.4, 4.5e9, 850_000, 999, 1e6, 359_000_000.0]
     pctiles = [30, 1, 2, 3, 11, 12, 13, 21, 22, 23, 30.0]
     script = "\n".join(fns) + f"""
     console.log(JSON.stringify({{
       dollars: {json.dumps(values)}.map((v) => '$' + big(v)),
       ordinals: {json.dumps(pctiles)}.map(ordinal),
+      returns: {json.dumps([3.2, -1.05, 0.0, 12.5, -0.4, 6.0])}.map((v) => pct(v, 2)),
     }}));"""
     out = json.loads(subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True).stdout)
     assert out["dollars"] == [emailer.compact_dollars(v) for v in values]
     assert out["ordinals"] == [emailer.ordinal(p) for p in pctiles]
+    # And the same rule for a forward RETURN, which round 11 put in the mail:
+    # the page prints every row's with pct(v, 2), so "+3.2%" in the email
+    # beside "+3.20%" on the page for one row is the same drift one number
+    # over. Values with at most two decimals, which is what the record holds
+    # (ledger.forward_returns rounds), plus the two states that are not
+    # numbers at all.
+    returns = [3.2, -1.05, 0.0, 12.5, -0.4, 6.0]
+    assert out["returns"] == [emailer.fmt_return(v) for v in returns]
+    assert emailer.fmt_return(None) == "\u2014", "a number the record does not hold"
     assert emailer.ordinal(1) == "1st" and emailer.ordinal(22) == "22nd" and emailer.ordinal(13) == "13th"
+
+
+def test_the_email_and_the_page_name_the_two_bases_in_one_vocabulary():
+    """The scorecard under the funnel is the first place outside the page that
+    names a return basis, and the page has named them since round 6. Two
+    surfaces for one mechanism is this project's most repeated finding, so the
+    email's two column headings are the page's own basisLabel() strings, read
+    out of docs/index.html rather than retyped beside it."""
+    from src import emailer
+
+    page = _read("docs/index.html")
+    start = page.index("function basisLabel(")
+    # Through the JS source's own escapes, so the typographic apostrophe the
+    # page writes as \u2019 is compared as the character a reader sees.
+    labels = page[start:page.index("\n  }\n", start)].encode().decode("unicode_escape")
+    for label in (emailer.BASIS_CLOSE, emailer.BASIS_OPEN):
+        assert label in labels, (
+            f"docs/index.html's basisLabel() does not say {label!r}", labels)
 
 
 def test_the_published_contract_names_every_outcome_a_row_can_carry():
@@ -716,6 +1135,78 @@ def test_the_history_fixture_is_where_the_docs_say_it_is():
     )
 
 
+def test_every_archived_burst_bar_reconciles_with_its_own_N_line():
+    """Both fixtures, both row types, one identity: the expansion is the
+    bar's width over the pre-burst range the `N` line beside it prints.
+
+    This is the guard tools/check_fixture_fresh.py cannot be -- it compares
+    the fixture to the GENERATOR, so a generator and a fixture that agree
+    with each other while the pipeline does something else are both "current".
+    That is what happened: burst_bar_shape() divided by the mean of the
+    per-bar widths each ROUNDED, `N` prints the rounded MEAN of the raw ones,
+    and 8 of the 9 rows the real pipeline had written into
+    tests/fixtures/history/ disagreed with the line in their own row --
+    while the hand-authored fixture asserted the identity 50 times over.
+
+    tests/fixtures/history/ is written by the real pipeline over synthetic
+    frames, so a row here is the arithmetic src.lynch really does; the other
+    is hand-authored, and holding both to one identity is what stops the two
+    describing different shapes of row.
+    """
+    import json
+
+    for name in ("data.json", "history/data.json"):
+        published = json.loads((ROOT / "tests" / "fixtures" / name).read_text())
+        rows = (published.get("candidates") or []) + (published.get("gated_out") or [])
+        assert rows, f"{name} holds no burst to check"
+        for row in rows:
+            context = row.get("context") or {}
+            if context.get("range_expansion") is None:
+                continue
+            (line,) = [d["value"] for d in row["lynch_detail"] if d["code"] == "N"]
+            printed = float(line.split("range ")[1].split("%")[0])
+            assert context["range_expansion"] == round(
+                context["bar_range_pct"] / printed, 2), (
+                f"{name}: {row['ticker']} carries {context['bar_range_pct']}% over "
+                f"a {printed}%/day base and calls it {context['range_expansion']}x")
+
+
+def test_the_readme_describes_every_measurement_the_record_keeps_beside_a_burst(ohlcv):
+    """README's `context` bullet is the only description of that block a
+    reader of the record has, and it named five of the nine keys the file
+    holds -- the four 52-week and performance measurements appear nowhere
+    else in README at all.
+
+    Derived from the code the way the rulebook's list is, so a tenth
+    measurement fails here on the commit that adds it rather than being
+    documented by whoever remembers. The window is read off
+    src.lynch.WINDOWS too: it is a strategy number in the rules fingerprint,
+    and README quoted it in prose where changing it left the sentence
+    saying seven.
+    """
+    from src import lynch
+
+    readme = _read("README.md")
+    (bullet,) = [b for b in readme.split("\n- ") if b.startswith("`context` is")]
+    for key in set(lynch.extra_context(ohlcv("burst"))):
+        assert f"`{key}`" in bullet, f"README's context bullet never names {key}"
+    for key in lynch.BURST_BAR_KEYS:
+        assert f"`{key}`" in bullet, f"README's context bullet never names {key}"
+    words = {7: "seven", 5: "five", 10: "ten", 20: "twenty", 30: "thirty", 60: "sixty"}
+    window = lynch.WINDOWS["tight_sessions"]
+    named = f"{words.get(window, window)} sessions"
+    assert named in bullet, (
+        f"README's context bullet does not name the {window}-session window "
+        "src.lynch.WINDOWS['tight_sessions'] holds")
+    # And the rulebook, which states the same window to the model in the same
+    # prose. Both were typed out beside a constant the fingerprint records, so
+    # a window changed from 7 to 5 moved every published ratio and left two
+    # files saying seven.
+    assert named in _read("knowledge/strategy.md"), (
+        f"knowledge/strategy.md does not name the {window}-session window "
+        "range_expansion divides by")
+
+
 def test_the_documented_evidence_blocks_are_the_ones_published():
     """README's table names what the page can answer, and a reader uses it to
     know which questions the file holds.
@@ -855,9 +1346,12 @@ def test_the_ledgers_projected_size_is_what_measuring_it_says():
     check count, and the third number in this repo to rot the same way.
 
     Re-measured rather than restated: tools/measure_ledger.py builds the file
-    with the real writer and the real rows. Tolerant to a hundredth, because
-    the assertion is that README is not WRONG, not that a megabyte figure is
-    quoted to the byte.
+    with the real writer and the real rows. Compared against the figure the
+    TOOL PRINTS -- f"{value:.2f}" -- and not against a band a hundredth wide:
+    the band was exactly wide enough to hide the one move it exists to catch,
+    since 1.230009 became 1.235233 when round 11 put `measured` on every
+    entry, and 1.23 and 1.24 both sat inside it while the tool printed 1.24.
+    A number the docs quote and the tool prints have to be the same string.
     """
     import importlib.util
     import re
@@ -873,11 +1367,11 @@ def test_the_ledgers_projected_size_is_what_measuring_it_says():
         r"projects to about ([\d.]+) MB raw\s*\nand \*\*([\d.]+) MB gzipped\*\*", readme
     ).groups()
 
-    assert abs(float(raw) - measured["raw_mb"]) < 0.01, (
-        f"README says {raw} MB raw; measuring says {measured['raw_mb']:.2f}. "
+    assert raw == f"{measured['raw_mb']:.2f}", (
+        f"README says {raw} MB raw; measuring prints {measured['raw_mb']:.2f}. "
         "Run python tools/measure_ledger.py and sweep it.")
-    assert abs(float(gz) - measured["gzip_mb"]) < 0.01, (
-        f"README says {gz} MB gzipped; measuring says {measured['gzip_mb']:.2f}. "
+    assert gz == f"{measured['gzip_mb']:.2f}", (
+        f"README says {gz} MB gzipped; measuring prints {measured['gzip_mb']:.2f}. "
         "Run python tools/measure_ledger.py and sweep it.")
 
     # The page argues its whole fetch-on-demand design from the same number,
@@ -887,8 +1381,8 @@ def test_the_ledgers_projected_size_is_what_measuring_it_says():
     quoted = re.findall(r"([\d.]+)\s*MB gzipped", _read("docs/index.html"))
     assert quoted, "docs/index.html no longer quotes the record's gzipped size"
     for figure in quoted:
-        assert abs(float(figure) - measured["gzip_mb"]) < 0.01, (
-            f"docs/index.html says {figure} MB gzipped; measuring says "
+        assert figure == f"{measured['gzip_mb']:.2f}", (
+            f"docs/index.html says {figure} MB gzipped; measuring prints "
             f"{measured['gzip_mb']:.2f}. Run python tools/measure_ledger.py and sweep it.")
 
 

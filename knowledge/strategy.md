@@ -14,7 +14,7 @@ consolidation, marks Day 1 of a new burst. The trade: enter Day 1,
 hold 3–5 days, exit. You are judging whether TODAY's burst is a
 high-probability Day 1.
 
-# What makes an A+ burst (score 8–10)
+# What makes an A+ burst (score 9–10)
 
 - **First burst of a fresh leg.** Zero or one prior 4% day in the last
   month. The move is young, not the fourth push of a tired trend.
@@ -28,6 +28,9 @@ high-probability Day 1.
   YOUR bar for an A+, and it is deliberately stricter than the checklist's:
   `H` passes at the top 30%, so a bar can pass `H` and still not be A+ on this
   line. The two numbers answer different questions and are meant to differ.
+  "Big range" is `bar_range_pct` and `range_expansion` in the metrics block —
+  see below. Read them; do not infer the bar's width from the gain, which is
+  a fact about two closes and says nothing about the day between them.
 - **Room overhead.** Near or at 52-week highs, or breaking out of a
   multi-month base with little overhead supply.
 - **Relative strength.** A strong run into the burst — `perf_3mo_pct` and
@@ -81,6 +84,30 @@ negative, not an automatic zero: one deep day at the far end of an otherwise
 tight base is weaker evidence than one three days ago, and the chart is what
 tells the two apart. Say so in the reason when a FAIL here decided the score.
 
+`gap_pct`, `bar_range_pct` and `range_expansion` describe the burst BAR, as
+against the gain, which describes two closes. `gap_pct` is where it opened
+against the previous session's close — the part of the move that happened
+before anyone reading this could act on it. `bar_range_pct` is high minus low
+over the close: how wide the session was. `range_expansion` is that width
+over the average width of the last seven sessions before it whose range
+could be read — the same window `N` measures, and the same number the
+`N` line in this request prints as its pre-burst range, so `bar_range_pct` divided by
+that %/day is this ratio. 3x means a bar three times as wide as the
+consolidation it broke out of; 0.5x means a burst narrower than its own base
+— a gain delivered on the open rather than through the day. Nothing is
+refused on any of these: they are measurements and they carry no threshold.
+Each is null when the bar could not supply it, and the reasons are per key:
+the gap alone when there was no readable open or the open was printed outside
+its own high and low, which is not a price anybody paid; the width and the
+expansion when the envelope cannot be read; the expansion alone when no
+readable session before the burst had any width to expand against; and all
+three only for a bar that is not the one the checklist graded, which is a
+state this request cannot be in: they step back onto that bar with `H`, and
+they describe it. Null means not measured; it never means zero. Read
+them beside `H`, which says where in that range the close landed: a wide bar
+closing at its high is the powerful burst bar above, and a wide bar closing
+mid-range is the demand-faded kill under What kills a setup.
+
 `consecutive_up_days` is how many sessions closed up in a row ENDING THE DAY
 BEFORE the burst — the run you would be buying into, not counting the entry.
 Anything you are scoring is 0, 1 or 2: **three or more is refused before it
@@ -91,28 +118,61 @@ third day of a drift up, which is a later entry into a move already underway.
 Weight it down accordingly, and read it beside the `C` check — a quiet prior
 day and two quiet up days are the same fact seen twice, not two reasons.
 
-`setup_day` counts recorded burst appearances in the current episode rather
-than elapsed days. It is not proof of a fresh market breakout. Appearances are grouped when
-each gap is at most 5 weekdays; weekends are excluded, holidays are not.
-Day 1 can follow an older recorded burst outside that window. The ledger may
-miss scans or names outside its scanned basket, so even a numbered day does
-not prove complete market history. Use 2 or more as context suggesting a repeat
-entry, checked against the chart and `2lynch_detail`; do not automatically
-deduct points or double-count the same move in `consecutive_up_days`.
-Say so when this context decides the score.
-`seen_before` is how many earlier sessions the retained record holds a burst
-for, `last_seen` is when the most recent one was, and `last_score` and
-`last_outcome` are what was made of it then: a number and "scored", or the
-word for the rule that refused it ("lynch_gate", "veto_up_days",
-"liquidity_floor", "score_cap") with no number.
+`setup_day` is where this burst sits in the record's own run of appearances
+for this name, counting only the sessions it burst on. Those are every session
+the scan found a burst on for the name, INCLUDING the ones nothing scored —
+the checklist rejected them, an absolute rule refused them, the liquidity
+floor refused them, or the night's call budget crowded them out. Neither
+`setup_day` nor `seen_before` is N nights of confirmation.
+
+**1 is the first session of THIS setup**: the record holds no earlier burst
+close enough behind it to belong to the same run. It is NOT "the record has
+never carried this name" — `seen_before` and `last_seen` can be filled beside
+a day 1, and a name that burst a fortnight ago and bursts again today is
+exactly that: a new setup with a prior sighting, which is a different fact
+from a name the record has never seen. Read the three together. 2 or more is
+a later entry into a move already underway — the same warning
+`consecutive_up_days` carries, measured over sessions that qualified rather
+than over closes — so weight it down, and say so in the reason when it decided
+the score.
+
+`setup_day` is what the RECORD saw; the `2_first_or_second_burst` line on the
+checklist is what the price FRAME saw, over its own window of sessions. They
+answer one question from two sources and they can disagree, because the record
+holds only the sessions this screener actually scanned and only names that
+were in its universe those nights. **Where they disagree the frame is
+authoritative**: day 1 beside a checklist line counting prior 4% bursts is a
+gap in the record, not a fresh setup, and it must not be credited as one.
+
+`seen_before` is how many earlier sessions the record holds a burst for,
+`last_seen` is when the most recent one was, and `last_score` and
+`last_outcome` are what was made of it then. Either a number and "scored", or
+the reason it was never scored — and those are not one thing: "lynch_gate"
+(the checklist rejected it), "veto_up_days" (an absolute rule refused it) and
+"liquidity_floor" (its dollar volume was under that session's floor, so the
+checklist never saw it) are refusals, while "score_cap" means it passed the
+gate and the night's call budget filled first, which is not a judgement
+against the name and must not be read as one.
+
+`history_sessions` and `history_from` are the record's own span — how many
+distinct sessions it holds a run for, and the oldest of them. They qualify
+everything above, and they are how far the absence claims reach: "no earlier
+burst" over a one-session record is not the evidence "no earlier burst" over
+two hundred sessions is.
 
 **A null `setup_day` is not day 1.** It means the record cannot say, and
-`setup_unknown_reason` names which of four reasons: `history_unreadable` (the
+`setup_unknown_reason` names which of six reasons: `history_unreadable` (the
 file could not be read), `no_history` (it holds nothing), `history_undated`
-(it holds runs nothing can date) or `window_not_covered` (it does not reach
-back far enough to number this episode). Score the chart and the metrics as
-they stand; unknown history alone earns neither a freshness bonus nor a
-penalty. Absence of evidence is not evidence that nothing preceded this burst.
+(it holds runs nothing can date), `window_not_covered` (it does not reach
+back far enough to prove nothing preceded this), `blind_session` (it reaches
+back far enough, and one of the sessions inside that window measured no name
+at all, so an earlier burst would have been invisible to it) or
+`no_streak_recorded` (this run computed no record block for the name at all). Score the chart and the
+metrics as they stand, and do not credit the setup with being fresh — absence
+of evidence about what came before is not evidence that nothing did. A null
+`seen_before` is that same silence one field over: on those unknowns the count
+would be a placeholder rather than a reading, so it is withheld, and null
+there means the record could not be counted and never that it counted none.
 
 # Qullamaggie overlay
 
@@ -121,6 +181,10 @@ Weight these upward:
   prior run (his flag/breakout setup).
 - Signs of an Episodic Pivot: enormous volume (3x+), huge gap or gain,
   which usually means a real catalyst (earnings, guidance, FDA, contract).
+  The gap is `gap_pct` and the gain is `gain_pct`, and they are different
+  facts: a burst that gapped and then went sideways is an entry you have
+  already missed most of, while one that opened flat and closed at its high
+  spent the session being bought.
   If volume ratio is 3x+ AND the gain is large, note possible EP in reason.
   A gain that large also fails the `Y` check by construction: that FAIL is
   the risk/reward warning, not an argument against the catalyst. Weight the

@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 import math
 import threading
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import pandas as pd
 import pytest
@@ -54,10 +54,11 @@ INVARIANTS = (
     "numbers_or_null",     # no NaN, no "n/a", no 0 standing in for unknown
     "liquidity",           # run.liquidity agrees with the rows and the populations are disjoint
     "benchmark",           # runs[].benchmark and evidence.universe hold together
+    "coverage",            # run.coverage's counts order, and a burst came from a measured name
 )
 
 _RUN_KEYS = ("date", "type", "bursts", "passed_gate", "scored", "score_cap",
-             "shortlist_size", "gate", "scored_by", "universe", "errors")
+             "shortlist_size", "gate", "scored_by", "universe", "coverage", "errors")
 
 #: Fields that must be a number or null wherever they appear. `0` is a legal
 #: value for a count; what the contract forbids is a string or a NaN in one.
@@ -73,10 +74,12 @@ _STREAK_KEYS = {"day", "unknown_reason", "first_seen", "last_seen", "last_score"
                 "last_verdict", "last_outcome", "seen_before",
                 "history_from", "history_sessions"}
 _UNKNOWN_REASONS = {ledger.NO_HISTORY, ledger.HISTORY_UNDATED,
-                    ledger.HISTORY_UNREADABLE, ledger.WINDOW_NOT_COVERED}
-#: The three reasons that leave the record with NO SPAN to report. The fourth,
-#: window_not_covered, is the one where the span exists and is too short -- and
-#: is therefore the one where reporting it is the whole point.
+                    ledger.HISTORY_UNREADABLE, ledger.WINDOW_NOT_COVERED,
+                    ledger.BLIND_SESSION}
+#: The three reasons that leave the record with NO SPAN to report. The other
+#: two -- window_not_covered, where the span exists and is too short, and
+#: blind_session, where it is long enough and one night inside it read nothing
+#: -- are the ones where reporting the span is the whole point.
 _NO_SPAN_REASONS = {ledger.NO_HISTORY, ledger.HISTORY_UNDATED,
                     ledger.HISTORY_UNREADABLE}
 
@@ -147,7 +150,7 @@ def _streak_ok(row) -> bool:
         if why not in _UNKNOWN_REASONS:
             return False
         if (since is None) != (why in _NO_SPAN_REASONS):
-            return False   # only window_not_covered has a record to report
+            return False   # only the two window reasons have a record to report
         if streak["first_seen"] is not None:
             return False   # where the setup began is the claim `day` makes
     else:
@@ -210,7 +213,37 @@ def _returns_ok(returns, *, run_level: bool) -> bool:
         # a mean weighted by rows over-weights the name that burst five
         # sessions running, and a label saying "names" over a row count is not
         # true of either number.
-        return n <= rows
+        if n > rows:
+            return False
+        # AND THE WEIGHT IS PER HORIZON. n is every setup that measured
+        # SOMETHING, so a run holding one setup holed after d1 and one
+        # measured throughout publishes d5 over one setup with n 2 -- and the
+        # page multiplies by that. Each horizon's own count, on both bases,
+        # against three things the writer guarantees: it is a count, it is 0
+        # exactly when its mean is null (a weight of 0 under a number, or a
+        # weight under a null, is a session that would be averaged wrong in
+        # either direction), and it cannot exceed the setups the run has.
+        # from_open is checked only when it is there: a run from before the
+        # open basis carries none, which the contract calls a fact about that
+        # run rather than a measurement of zero. It is shape-checked BEFORE its
+        # own n is read off it -- `(block or {}).get("n")` raised inside this
+        # walker on any truthy non-object, so a plant of that shape came back
+        # as a test error rather than as the violation it is.
+        open_block = returns.get("from_open")
+        if open_block is not None and not isinstance(open_block, dict):
+            return False
+        for block, total in ((returns, n), (open_block, (open_block or {}).get("n"))):
+            if block is None:
+                continue
+            if not isinstance(total, int) or isinstance(total, bool) or total < 0:
+                return False
+            for key in horizons:
+                count = block.get("n" + key[1:])
+                if not isinstance(count, int) or isinstance(count, bool) or count < 0:
+                    return False
+                if (count > 0) != (block.get(key) is not None) or count > total:
+                    return False
+        return True
     if "as_of" not in returns:
         return False
     measured = any(returns[k] is not None for k in horizons)
@@ -330,6 +363,18 @@ def contract_violations(data: dict, docs_dir=None) -> set[str]:
                 bad.add("liquidity")
         elif refused:
             bad.add("liquidity")   # refusals under a floor the run says it never had
+        # And `over` -- how many names the percentile was drawn FROM. Nothing
+        # checked it at all, so -5 was a legal document; and a floor is a
+        # percentile of a population, so a run that recorded one recorded
+        # ranking at least one name. The reverse is not a rule: a positive
+        # `over` under a null floor is the rule switched off (pctile <= 0),
+        # which is a shape the pipeline writes.
+        if isinstance(liquidity, dict) and "over" in liquidity:
+            over = _count_or_none(liquidity, "over")
+            if over is None or over < 0:
+                bad.add("liquidity")
+            elif isinstance(floor, (int, float)) and not isinstance(floor, bool) and not over:
+                bad.add("liquidity")
     ev = data.get("evidence")
     if isinstance(ev, dict) and isinstance(ev.get("record"), dict):
         populations = ("shortlist", "rest", "refused", "crowded_out", "illiquid")
@@ -354,11 +399,110 @@ def contract_violations(data: dict, docs_dir=None) -> set[str]:
         elif floored + unfloored > rung.get("setups", -1):
             bad.add("benchmark")
 
+    # Round 11's block, and the gap round 9's R9-B closed one block over. The
+    # walker every end-to-end test asserts through clean() as "the whole
+    # contract" returned an identical answer for the canonical fixture and for
+    # `coverage` deleted, `measured: 9999` beside `with_bars: 227`, `measured:
+    # 0` beside `bursts: 50`, a `measured` that is a string, and a negative
+    # `liquidity.over`. Every one of those is a violation now, and the
+    # consequences of the accepted-but-impossible shape were real: both
+    # surfaces silently reverted to the pre-round behaviour, and the evening
+    # cell printed "the other -9772 that answered could not be".
+    if not _coverage_ok(run):
+        bad.add("coverage")
+    # A burst can only have come from a name that was measured, which is what
+    # makes `measured: 0` a BLIND night rather than a quiet one.
+    if run["bursts"] and _count_or_none(run.get("coverage"), "measured") == 0:
+        bad.add("coverage")
+
+    # run.settled: what this run's fill moved, restated from the record.
+    # Everything checkable from THIS file is checked -- the horizons the
+    # module measures, one entry per (pick, session, horizon), an entry that
+    # measured nothing on either basis, a session no run in the record holds,
+    # and a universe figure that disagrees with that run's own benchmark.
+    # (The rows themselves are not in docs/data.json -- dashboard() strips
+    # `candidates` from every entry in `runs` -- so the pick's own return is
+    # checked against the ledger by tests/test_pipeline.py rather than here.)
+    settled = run.get("settled")
+    if settled is not None:
+        if not isinstance(settled, list):
+            bad.add("settled")
+        else:
+            seen = set()
+            by_session: dict = {}
+            for entry in data["runs"]:
+                if isinstance(entry, dict):
+                    by_session.setdefault(entry.get("date"), entry)
+            for item in settled:
+                if not isinstance(item, dict) or item.get("horizon") not in ledger.HORIZONS:
+                    bad.add("settled")
+                    continue
+                key = (item.get("ticker"), item.get("session"), item["horizon"])
+                if key in seen:
+                    bad.add("settled")   # one horizon, filled once, one entry
+                seen.add(key)
+                if item.get("ret") is None and item.get("ret_from_open") is None:
+                    bad.add("settled")   # settled on neither basis is not settled
+                source = by_session.get(item.get("session"))
+                if source is None:
+                    bad.add("settled")
+                    continue
+                bench = source.get("benchmark") if isinstance(source.get("benchmark"), dict) else {}
+                horizon = f"d{item['horizon']}"
+                # One direction only: an entry written while the rung was
+                # still pending carries a null a later fill may since have
+                # measured, and that is the record moving on, not a
+                # disagreement. A NUMBER here must be that run's own.
+                if item.get("universe") is not None and item["universe"] != bench.get(horizon):
+                    bad.add("settled")
+                open_bench = bench.get("from_open") if isinstance(bench.get("from_open"), dict) else {}
+                if (item.get("universe_from_open") is not None
+                        and item["universe_from_open"] != open_bench.get(horizon)):
+                    bad.add("settled")
+
     found: list = []
     _walk(data, found)
     if found:
         bad.add("numbers_or_null")
     return bad
+
+
+def _count_or_none(block, key):
+    """One count out of a block, or None when it is absent or not a count."""
+    if not isinstance(block, dict):
+        return None
+    value = block.get(key)
+    return value if isinstance(value, int) and not isinstance(value, bool) else None
+
+
+def _coverage_ok(run: dict) -> bool:
+    """run.coverage's counts against the sentences that describe them.
+
+    Every count present is a non-negative whole number, and the four that
+    narrow do narrow: measured <= fresh <= with_bars <= requested. The two
+    maps the scanner keeps come through as counts, and neither way of missing
+    the session can exceed the names that answered. An absent count was never
+    reached -- a run that died early carries fewer of them -- so absent is
+    skipped rather than read as 0.
+    """
+    counts = run.get("coverage")
+    if not isinstance(counts, dict):
+        return False
+    for key in ("requested", "with_bars", "fresh", "measured", "stale", "gapped",
+                "no_bars", "dropped", "duplicate_bars"):
+        if key in counts and _count_or_none(counts, key) is None:
+            return False
+        if key in counts and counts[key] < 0:
+            return False
+    ladder = [counts[key] for key in ("requested", "with_bars", "fresh", "measured")
+              if key in counts]
+    if ladder != sorted(ladder, reverse=True):
+        return False
+    answered = _count_or_none(counts, "with_bars")
+    missed = sum(counts[key] for key in ("stale", "gapped") if key in counts)
+    if answered is not None and missed > answered:
+        return False
+    return True
 
 
 def _quiet_run_ok(entry: dict) -> bool:
@@ -513,6 +657,12 @@ def document() -> dict:
             "universe": {"label": "data/symbols.txt (checked in)", "size": 230},
             "bursts": 3, "passed_gate": 2, "scored": 2, "score_cap": 25,
             "shortlist_size": 2, "gate": {"min_lynch_passes": 3, "total_checks": 6},
+            # How much of the night was read: 230 asked, two names the feed
+            # answered with nothing, two of the answers behind the session.
+            # The four counts narrow, which is what the invariant reads.
+            "coverage": {"requested": 230, "with_bars": 228, "fresh": 226,
+                         "measured": 226, "stale": 2, "gapped": 0, "no_bars": 2,
+                         "dropped": 0, "duplicate_bars": 0, "session": "2026-08-31"},
             "scored_by": {"claude": 1, "fallback": 1}, "model": "claude-sonnet-4-6",
             "errors": [],
         },
@@ -526,6 +676,7 @@ def document() -> dict:
         "runs": [{"date": "2026-08-31", "type": "evening", "bursts": 3, "passed_gate": 2,
                   "scored": 2, "shortlist_size": 2, "top_score": 8.4, "fallbacks": 1,
                   "forward_returns": {"d1": None, "d3": None, "d5": None,
+                                      "n1": 0, "n3": 0, "n5": 0,
                                       "n": 0, "rows": 0}}] + [
             # The sessions the streak blocks above say the record holds. A
             # document whose rows claim a history deeper than its own `runs`
@@ -536,7 +687,11 @@ def document() -> dict:
             # the entry's own liquidity block names.
             {"date": day, "type": "evening", "bursts": 3, "passed_gate": 2,
              "scored": 2, "shortlist_size": 2, "top_score": 8.0, "fallbacks": 0,
-             "forward_returns": {"d1": 1.1, "d3": None, "d5": None, "n": 2, "rows": 2},
+             # One count per horizon, the weight the page multiplies by:
+             # d1 is over both setups and the two horizons no session has
+             # reached yet are over none. Same shape as `benchmark` below.
+             "forward_returns": {"d1": 1.1, "d3": None, "d5": None,
+                                 "n1": 2, "n3": 0, "n5": 0, "n": 2, "rows": 2},
              "liquidity": {"pctile": 30, "floor": 200_000_000.0, "refused": 0},
              "benchmark": {"d1": 0.4, "d3": None, "d5": None, "n1": 150, "n3": 0, "n5": 0,
                            "from_open": {"d1": 0.1, "d3": None, "d5": None, "n1": 148, "n3": 0, "n5": 0},
@@ -566,6 +721,68 @@ def _only(document, expected):
     assert violations == {expected}, f"expected only {expected!r}, got {violations}"
 
 
+def test_a_liquidity_population_that_contradicts_the_floor_is_caught(document):
+    """`over` reached the record with nothing checking it against anything.
+    A floor IS a percentile of a population, so a run that recorded one
+    ranked at least one name -- and a count that is not a count is a shape no
+    writer produces. The rule-off state is deliberately NOT a violation: a
+    positive `over` under a null floor is exactly what `pctile: 0` writes,
+    which the published contract said could not happen."""
+    def doctored(edit):
+        fresh = json.loads(json.dumps(document))
+        fresh["run"]["liquidity"] = {"pctile": 30, "floor": 200_000_000.0,
+                                     "over": 190, "refused": 0}
+        edit(fresh["run"]["liquidity"])
+        _only(fresh, "liquidity")
+
+    doctored(lambda block: block.update(over=-5))
+    doctored(lambda block: block.update(over="190"))
+    doctored(lambda block: block.update(over=0))     # a floor drawn from nobody
+
+    legal = json.loads(json.dumps(document))
+    legal["run"]["liquidity"] = {"pctile": 0.0, "floor": None, "over": 226, "refused": 0}
+    assert contract_violations(legal) == set(), (
+        "rule 6 switched off writes a positive `over` under a null floor")
+
+
+def test_a_coverage_block_that_contradicts_its_counts_is_caught(document):
+    """The gap R9-B closed for the benchmark, one block over. Six edits, all
+    of which this walker used to answer identically to the clean document --
+    while the surfaces reading them reverted to the pre-round behaviour and
+    the evening cell printed a negative.
+
+    `coverage` deleted is a `schema` violation rather than this one, because
+    the run block the pipeline writes always carries it: a run that reached
+    publish() reached the scan.
+    """
+    def doctored(edit):
+        fresh = json.loads(json.dumps(document))
+        edit(fresh["run"])
+        _only(fresh, "coverage")
+
+    doctored(lambda run: run["coverage"].update(measured=9999))       # past what answered
+    doctored(lambda run: run["coverage"].update(with_bars=231))       # past what was asked
+    doctored(lambda run: run["coverage"].update(fresh=229))           # past what answered
+    doctored(lambda run: run["coverage"].update(measured="226"))      # not a count
+    doctored(lambda run: run["coverage"].update(gapped=-1))           # not a count either
+    doctored(lambda run: run["coverage"].update(stale=200, gapped=200))  # more than answered
+    # A burst can only come from a name that was measured, which is the shape
+    # that makes ledger.is_blind() misfire: `measured: 0` beside three bursts.
+    doctored(lambda run: run["coverage"].update(measured=0))
+
+    gone = json.loads(json.dumps(document))
+    del gone["run"]["coverage"]
+    assert contract_violations(gone) == {"schema"}
+
+    # And the inverse, so this cannot pass by refusing everything: a run that
+    # measured nothing and found nothing is a legal document.
+    blind = json.loads(json.dumps(document))
+    blind["run"]["coverage"].update(measured=0, fresh=0)
+    blind["run"].update(bursts=0, passed_gate=0, scored=0)
+    blind["candidates"], blind["gated_out"] = [], []
+    assert "coverage" not in contract_violations(blind)
+
+
 def test_a_benchmark_block_that_contradicts_its_sentences_is_caught(document):
     """R9-B. Four edits the round-9 audit made to the fixture, none of which
     the checker saw: a count the universe cannot hold under a null mean, a
@@ -586,6 +803,43 @@ def test_a_benchmark_block_that_contradicts_its_sentences_is_caught(document):
     # here is the smallest the checker reads.
     doctored(lambda d, e: d.update(evidence={"universe": {"setups": 2, "floored": 999, "unfloored": 0,
                                                           "outcomes": []}}))
+
+
+def test_a_scorecard_that_disagrees_with_the_record_is_caught(document):
+    """The same rule as R9-B on the newest block: the walker every end-to-end
+    test asserts through as "the whole contract" must be able to FAIL on
+    run.settled, or its sentence in CONTRACT_INVARIANTS is documentation.
+
+    Each edit is a claim the record beside it contradicts -- and each is a
+    thing a hand-edited file, an older writer or a later round's bug really
+    produces, which is why they are checked here rather than trusted to the
+    generator that writes them.
+    """
+    day = _PAST_SESSIONS[0]
+    honest = {"ticker": "AAA", "session": day, "score": 8.4, "verdict": "A",
+              "horizon": 1, "ret": 2.0, "ret_from_open": 1.4,
+              "universe": 0.4, "universe_from_open": 0.1}
+    document["run"]["settled"] = [honest]
+    assert contract_violations(document) == set(), (
+        "the precondition: this scorecard agrees with the runs under it")
+
+    for what, block in (
+        ("one pick's horizon stated twice", [honest, dict(honest)]),
+        ("an entry settled on neither basis", [dict(honest, ret=None, ret_from_open=None)]),
+        ("a session no run in the record holds", [dict(honest, session="2020-01-02")]),
+        ("a universe figure that is not that run's own", [dict(honest, universe=9.9)]),
+        ("an open-basis figure that is not that run's own",
+         [dict(honest, universe_from_open=9.9)]),
+        ("a horizon this module never measures", [dict(honest, horizon=2)]),
+        ("a scorecard that is not a list", "AAA +1d +2.00%"),
+    ):
+        document["run"]["settled"] = block
+        assert "settled" in contract_violations(document), what
+    # A null universe figure is not a disagreement: the entry was written
+    # while that session's rung was still pending, and a later fill measuring
+    # it is the record moving on.
+    document["run"]["settled"] = [dict(honest, universe=None, universe_from_open=None)]
+    assert contract_violations(document) == set()
 
 
 def test_a_truncated_candidate_list_is_caught(document):
@@ -902,12 +1156,67 @@ def test_a_run_mean_over_no_names_is_caught(document):
 
 
 def test_a_run_that_claims_more_setups_than_it_has_rows_is_caught(document):
-    """n is the weight the dashboard multiplies a session's mean by, and rows
-    is what those setups were collapsed from. More setups than rows is the
-    shape of a run that went back to weighting by rows and kept the label."""
+    """n is how many setups the run measured at any horizon and rows is what
+    those setups were collapsed from. More setups than rows is the shape of a
+    run that went back to weighting by rows and kept the label. (The weight
+    the dashboard multiplies by is n1/n3/n5, one per horizon; this pair is
+    what the runs table prints.)"""
     document["runs"][0]["forward_returns"] = {"d1": 1.0, "d3": None, "d5": None,
                                               "n": 4, "rows": 3}
     _only(document, "returns_shape")
+
+
+def test_a_horizon_count_that_is_not_that_horizon_s_weight_is_caught(document):
+    """n1/n3/n5 are what the page multiplies each horizon's mean by, so each
+    one is held to what mean_returns() guarantees: a count, 0 exactly when
+    its own mean is null, and never more setups than the run measured at all.
+    Both bases, because the page switches and the open basis carries its own.
+
+    Every plant here is a file no writer produces and a reader cannot tell
+    from a real one -- a weight is not contradicted by anything else on the
+    page -- which is why it is refused rather than rendered.
+    """
+    entry = next(r for r in document["runs"] if (r.get("forward_returns") or {}).get("d1") is not None)
+    returns = entry["forward_returns"]
+    assert (returns["n1"], returns["n"]) == (2, 2), "the precondition, from the clean document"
+
+    for bad in ("2", None, True, 1.5, -1):
+        returns["n1"] = bad
+        _only(document, "returns_shape")
+    returns["n1"] = returns["n"] + 1
+    _only(document, "returns_shape")
+    returns["n1"] = 0                       # a weight of nothing under a number
+    _only(document, "returns_shape")
+    returns["n1"] = 2
+    returns["n3"] = 1                       # a weight under a null mean
+    _only(document, "returns_shape")
+    returns["n3"] = 0
+    assert contract_violations(document) == set(), "the plants are one field wide"
+
+    # And one level in, on the basis the page can switch to.
+    returns["from_open"] = {"d1": 0.5, "n1": "2", "d3": None, "n3": 0,
+                            "d5": None, "n5": 0, "n": 2}
+    _only(document, "returns_shape")
+    returns["from_open"]["n1"] = 3          # more than the open basis's own n
+    _only(document, "returns_shape")
+    returns["from_open"]["n1"] = 2
+    assert contract_violations(document) == set()
+    # And a from_open that is not an object AT ALL. The count was read off the
+    # block with `(block or {}).get("n")`, so an empty list fell through to {}
+    # and reported the violation while [1], "x", 3, 0.5 and True raised
+    # AttributeError inside the walker -- a test ERROR from the checker whose
+    # whole job is to report the one-level-short class. src.ledger's
+    # _from_open() answers the same question one file over with isinstance.
+    good = dict(returns["from_open"])
+    for bad in ([1], "x", 3, 0.5, True, []):
+        returns["from_open"] = bad
+        _only(document, "returns_shape")
+    returns["from_open"] = good
+    assert contract_violations(document) == set()
+    # A run from before the open basis carries no from_open at all, which is
+    # a fact about that run and not a weight of zero.
+    del returns["from_open"]
+    assert contract_violations(document) == set()
 
 
 def test_a_run_that_says_it_scored_nothing_beside_a_measured_mean_is_caught(document):
@@ -927,15 +1236,20 @@ def test_a_run_that_says_it_scored_nothing_beside_a_measured_mean_is_caught(docu
     # And the horizon on its own, with the counts it should have: a mean with
     # no rows behind it is the same lie one field over, and the first version
     # of this test could not see it -- every plant it made tripped the row
-    # count first, so the clause that reads the horizons was deletable.
+    # count first, so the clause that reads the horizons was deletable. It is
+    # TWO violations since the weight became per horizon: d1 1.1 needs n1 >= 1
+    # and n1 cannot exceed an n of 0, so the shape rule refuses this file one
+    # rule earlier. The pair is asserted exactly, which is what still makes
+    # the horizon clause load-bearing -- delete it and this reads
+    # {returns_shape} alone.
     entry["forward_returns"].update(n=0, rows=0)
-    _only(document, "quiet_run")
+    assert contract_violations(document) == {"quiet_run", "returns_shape"}
 
 
 def test_a_run_that_scored_nothing_may_not_claim_setups_either(document):
-    """n is the weight the dashboard multiplies a session's mean by, rows is
-    what those setups were collapsed from, and a run with no candidates has
-    neither -- mean_returns() takes both off the run's own rows. The open
+    """n is how many setups a run measured at any horizon, rows is what they
+    were collapsed from, and a run with no candidates has neither --
+    mean_returns() takes both off the run's own rows. The open
     basis is checked with the close one, because a mean is published on both
     and only one of them was ever read here."""
     entry = document["runs"][0]
@@ -946,13 +1260,15 @@ def test_a_run_that_scored_nothing_may_not_claim_setups_either(document):
     entry["forward_returns"].update(n=0, rows=2)
     _only(document, "quiet_run")
     entry["forward_returns"].update(rows=0,
-                                    from_open={"d1": 1.0, "d3": None, "d5": None, "n": 1})
+                                    from_open={"d1": 1.0, "d3": None, "d5": None,
+                                               "n1": 1, "n3": 0, "n5": 0, "n": 1})
     _only(document, "quiet_run")
     # The open basis's n with nothing measured beside it. This is the ONLY
     # shape that reaches the setup count on its own: the close basis's n
     # cannot exceed rows (returns_shape), so a quiet run claiming one there
     # is caught by the row count first, and from_open carries no rows.
-    entry["forward_returns"].update(from_open={"d1": None, "d3": None, "d5": None, "n": 1})
+    entry["forward_returns"].update(from_open={"d1": None, "d3": None, "d5": None,
+                                               "n1": 0, "n3": 0, "n5": 0, "n": 1})
     _only(document, "quiet_run")
 
 
@@ -964,10 +1280,16 @@ def test_a_run_whose_every_scored_row_is_a_repeat_may_not_read_as_waiting(docume
     claim that state and publish a mean anyway."""
     entry = document["runs"][0]
     entry["forward_returns"].update(rows=entry["scored"], n=0, d1=1.2)
-    _only(document, "quiet_run")
+    # Two violations, and both are true of this file: the mean is published
+    # over a d1 whose own count is 0, which the per-horizon weight refuses on
+    # its own. Exactly two, so the clause above stays load-bearing -- delete
+    # it and this set loses "quiet_run".
+    assert contract_violations(document) == {"quiet_run", "returns_shape"}
     # A run still WAITING is the same shape with fewer rows measured, and is
     # not this state: the precondition that keeps the rule from swallowing it.
-    entry["forward_returns"].update(rows=entry["scored"] - 1)
+    # Its d1 goes back to null with the count, because a mean over no setups
+    # is not a number in any file mean_returns() writes.
+    entry["forward_returns"].update(rows=entry["scored"] - 1, d1=None)
     assert contract_violations(document) == set()
 
 
@@ -1283,8 +1605,9 @@ def test_the_mean_of_no_measurements_is_null_not_zero():
     rows = [_row(t, "2026-08-31") for t in ("AAA", "BBB", "CCC")]
 
     assert ledger.mean_returns(rows, _every_row_leads(rows)) == {
-        "d1": None, "d3": None, "d5": None, "n": 0, "rows": 0,
-        "from_open": {"d1": None, "d3": None, "d5": None, "n": 0}}
+        "d1": None, "d3": None, "d5": None, "n1": 0, "n3": 0, "n5": 0,
+        "n": 0, "rows": 0,
+        "from_open": {"d1": None, "d3": None, "d5": None, "n1": 0, "n3": 0, "n5": 0, "n": 0}}
 
 
 def test_the_mean_counts_only_the_names_that_have_one():
@@ -1293,8 +1616,65 @@ def test_the_mean_counts_only_the_names_that_have_one():
             _row("CCC", "2026-08-31")]
 
     assert ledger.mean_returns(rows, _every_row_leads(rows)) == {
-        "d1": 0.5, "d3": 4.0, "d5": None, "n": 2, "rows": 2,
-        "from_open": {"d1": None, "d3": None, "d5": None, "n": 0}}
+        "d1": 0.5, "d3": 4.0, "d5": None, "n1": 2, "n3": 1, "n5": 0,
+        "n": 2, "rows": 2,
+        "from_open": {"d1": None, "d3": None, "d5": None, "n1": 0, "n3": 0, "n5": 0, "n": 0}}
+
+
+def test_each_horizon_is_weighted_by_the_setups_that_actually_have_it():
+    """THE HOLE. forward_returns() ends a row's measurement at the first
+    session its frame does not carry, so a setup can hold d1 and nothing
+    after it -- and ONE n for three horizons then tells the page that d5 was
+    measured over setups which have no d5.
+
+    Reproduced through this function before it was changed: these two rows
+    published d5 6.0 beside n 2, and a second session that measured both of
+    its setups at 0.0 gave the page (6*2 + 0*2)/4 = 3.00% where the honest
+    weighting is (6*1 + 0*2)/3 = 2.00%. The weight is per horizon now, which
+    is the shape runs[].benchmark has carried since round 7.
+
+    `n` stays what it was -- the setups this run contributed at any horizon,
+    which is what the runs table prints -- so the two counts are asserted
+    against each other here rather than one being renamed into the other.
+    """
+    rows = [_row("AAA", "2026-08-31", d1=30.0, as_of="x",
+                 from_open={"d1": 29.0, "d3": None, "d5": None}),
+            _row("BBB", "2026-08-31", d1=2.0, d3=2.0, d5=6.0, as_of="x",
+                 from_open={"d1": 1.0, "d3": 1.0, "d5": 5.0})]
+
+    out = ledger.mean_returns(rows, _every_row_leads(rows))
+
+    assert (out["n1"], out["n3"], out["n5"]) == (2, 1, 1), (
+        "d3 and d5 are one setup's, and only the horizon's own count says so")
+    assert out["d5"] == 6.0 and out["n"] == 2, (
+        "n is every setup that measured SOMETHING -- not the weight for d5")
+    assert (out["from_open"]["n1"], out["from_open"]["n3"], out["from_open"]["n5"]) == (2, 1, 1)
+    assert out["from_open"]["n"] == 2
+
+
+def test_a_horizon_measured_without_the_one_before_it_is_counted_where_it_is():
+    """The counts are NOT a prefix, which is why nothing asserts
+    n1 >= n3 >= n5 and the contract says so out loud. A hole ends a row's
+    measurement, but a bar that is THERE and prints a non-finite close does
+    not: forward_returns() skips that horizon and measures the next one. The
+    row is produced by the real function rather than hand-written, because
+    the claim is about what the writer emits -- a walker taught the prefix
+    would refuse a file this scanner really produces."""
+    index = pd.to_datetime(["2026-08-31", "2026-09-01", "2026-09-02",
+                            "2026-09-03", "2026-09-04", "2026-09-07"])
+    frame = pd.DataFrame({"Open": [10.0] * 6, "High": [12.0] * 6, "Low": [9.0] * 6,
+                          "Close": [10.0, float("nan"), 10.5, 10.4, 10.2, 11.0],
+                          "Volume": [1e6] * 6}, index=index)
+    holed = ledger.forward_returns(frame, date(2026, 8, 31))
+    assert holed["d1"] is None and holed["d3"] == 4.0, "the premise, from the writer"
+
+    rows = [{"ticker": "AAA", "date": "2026-08-31", "forward_returns": holed},
+            _row("BBB", "2026-08-31", d1=1.0, d3=2.0, as_of="x")]
+
+    out = ledger.mean_returns(rows, _every_row_leads(rows))
+
+    assert (out["n1"], out["n3"]) == (1, 2)
+    assert out["n"] == 2
 
 
 def test_a_row_that_continues_a_setup_is_not_a_second_observation():
@@ -1966,14 +2346,128 @@ def test_forward_returns_are_filled_into_an_earlier_run(tmp_path):
     filled = book.fill_forward_returns({"AAA": df, "ZZZ": df}, through=date(2026, 8, 31))
 
     old = [r for r in book.runs if r["date"] == "2026-08-24"][0]
-    assert filled == 2, "the scored row and the gated one"
+    # One Filled per (row, horizon) the call moved, not a count of rows: two
+    # rows -- the scored one and the gated one -- times three horizons, and
+    # the scored flag is the record's own split between a pick and a refusal.
+    assert {(f.row["ticker"], f.horizon, f.scored) for f in filled} == (
+        {("AAA", h, True) for h in (1, 3, 5)} | {("ZZZ", h, False) for h in (1, 3, 5)})
+    assert {id(f.run) for f in filled} == {id(old)}
     assert old["candidates"][0]["forward_returns"] == {
         "d1": 1.0, "d3": 3.0, "d5": 10.0, "as_of": "2026-08-31",
         "from_open": {"d1": None, "d3": None, "d5": None}}
     assert old["forward_returns"] == {"d1": 1.0, "d3": 3.0, "d5": 10.0,
-                                      "n": 1, "rows": 1,
-                                      "from_open": {"d1": None, "d3": None, "d5": None, "n": 0}}, (
+                                      "n1": 1, "n3": 1, "n5": 1, "n": 1, "rows": 1,
+                                      "from_open": {"d1": None, "d3": None, "d5": None,
+                                                    "n1": 0, "n3": 0, "n5": 0, "n": 0}}, (
         "the run mean covers the scored candidates, one setup from one row")
+
+
+def test_the_scorecard_is_the_picks_alone_and_never_states_one_horizon_twice(tmp_path):
+    """settled_rows() over what a fill really moved.
+
+    Three rules, each of which the mail turns on. The gated row is not a pick
+    -- it has no score and no verdict, and the control it belongs to is
+    evidence.refused -- so it is in the pairs and not in the block. Each
+    entry restates the row and that session's own benchmark rather than
+    recomputing either. And a horizon is filled ONCE, so the same fill run
+    again moves nothing and the second night's block is empty: without that,
+    a pick would be announced on every night until its d5 closed.
+    """
+    book = ledger.Ledger(tmp_path).load()
+    book.add_run(*_run("2026-08-24"))
+    entry = book.runs[0]
+    entry["benchmark"] = {**ledger.empty_benchmark(), "d1": 0.5, "d3": 1.5, "d5": 2.5,
+                          "from_open": {**ledger.empty_benchmark()["from_open"],
+                                        "d1": 0.2, "d3": 1.2, "d5": 2.2}}
+    df = frame([100, 101, 102, 103, 104, 110], end="2026-08-31")
+
+    scorecard = ledger.settled_rows(
+        book.fill_forward_returns({"AAA": df, "ZZZ": df}, through=date(2026, 8, 31)))
+
+    assert [e["ticker"] for e in scorecard] == ["AAA"] * 3, (
+        "ZZZ is the gated row: in the pairs, not in the scorecard")
+    assert [e["horizon"] for e in scorecard] == [1, 3, 5]
+    row = entry["candidates"][0]
+    assert [e["ret"] for e in scorecard] == [row["forward_returns"][f"d{h}"] for h in (1, 3, 5)]
+    assert [e["universe"] for e in scorecard] == [0.5, 1.5, 2.5]
+    assert [e["universe_from_open"] for e in scorecard] == [0.2, 1.2, 2.2]
+    assert {e["session"] for e in scorecard} == {"2026-08-24"}
+    assert (scorecard[0]["score"], scorecard[0]["verdict"]) == (row["score"], row["verdict"])
+
+    # THE PICK'S OWN SESSION, not the session of the run entry it sits in.
+    # Every file the pipeline writes has the two equal -- a run entry holds
+    # the bursts of the session it scanned -- so the rule is invisible unless
+    # they are forced apart, which is the "passes on an incidental fact about
+    # the fixture" shape this project keeps finding. A hand-edited or merged
+    # ledger is what has them differ, and the mail says which session the
+    # pick was made on.
+    row["date"] = "2026-08-25"
+    row["forward_returns"] = ledger.empty_returns()
+    (older,) = [e for e in ledger.settled_rows(
+        book.fill_forward_returns({"AAA": df}, through=date(2026, 8, 31)))
+        if e["horizon"] == 1]
+    assert older["session"] == "2026-08-25", "the burst's session, not the run entry's"
+
+    again = book.fill_forward_returns({"AAA": df, "ZZZ": df}, through=date(2026, 8, 31))
+
+    assert ledger.settled_rows(again) == [], "a horizon is filled once and announced once"
+
+
+def test_the_scorecard_reads_newest_burst_first(tmp_path):
+    """Deterministic order, because this block is written into a file two
+    guards compare byte for byte -- and the newest burst first, which is the
+    one the reader saw in last night's mail."""
+    book = ledger.Ledger(tmp_path).load()
+    book.add_run(*_run("2026-08-24", tickers=("BBB", "AAA")))
+    book.add_run(*_run("2026-08-25", tickers=("CCC",)))
+    df = frame([100, 101, 102, 103, 104, 110], end="2026-08-31")
+
+    scorecard = ledger.settled_rows(book.fill_forward_returns(
+        {"AAA": df, "BBB": df, "CCC": df, "ZZZ": df}, through=date(2026, 8, 31)))
+
+    assert [(e["session"], e["ticker"], e["horizon"]) for e in scorecard] == [
+        # CCC burst a session later, so the frame that closes AAA's and BBB's
+        # d5 has not reached its own -- which is the ordinary state of a
+        # scorecard and why the newest session is not always the longest row.
+        ("2026-08-25", "CCC", 1), ("2026-08-25", "CCC", 3),
+        ("2026-08-24", "AAA", 1), ("2026-08-24", "AAA", 3), ("2026-08-24", "AAA", 5),
+        ("2026-08-24", "BBB", 1), ("2026-08-24", "BBB", 3), ("2026-08-24", "BBB", 5)]
+
+
+def test_a_stored_run_mean_is_rebuilt_rather_than_republished(tmp_path):
+    """WHY THE PER-HORIZON COUNTS ARE NOT A LOAD CHECK, executed rather than
+    argued. Every other nested block this record gained -- benchmark, rules,
+    the row's own from_open -- is refused at load, because a shape no writer
+    produces reaches a consumer that indexes into it. A run's MEAN does not:
+    add_run() calls _recompute_means() over every entry before write(), so
+    the block on disk is thrown away and rebuilt from the rows, and there is
+    no path from a stored n5 to the page.
+
+    Driven here with a string, a null, a list and a string `n` in one entry:
+    they load clean and the entry the next run publishes carries the counts
+    its own rows give. If a later round ever publishes a stored mean without
+    recomputing it, this test is what says the load check is now needed.
+    """
+    book = ledger.Ledger(tmp_path).load()
+    book.add_run(*_run("2026-08-24"))
+    book.write()
+    stored = json.loads((tmp_path / "ledger.json").read_text())
+    entry = next(r for r in stored["runs"] if r["date"] == "2026-08-24")
+    entry["forward_returns"] = {"d1": 9.9, "n1": "three", "n3": None, "n5": [],
+                                "n": "x", "rows": 1,
+                                "from_open": {"d1": None, "n1": "?", "n": 0}}
+    (tmp_path / "ledger.json").write_text(json.dumps(stored))
+
+    again = ledger.Ledger(tmp_path).load()
+    assert again.load_error is None, "a run mean is not what the load check is for"
+    again.add_run(*_run("2026-08-25"))
+    published = next(r for r in again.runs if r["date"] == "2026-08-24")["forward_returns"]
+
+    assert published == {"d1": None, "n1": 0, "d3": None, "n3": 0, "d5": None, "n5": 0,
+                         "n": 0, "rows": 0,
+                         "from_open": {"d1": None, "n1": 0, "d3": None, "n3": 0,
+                                       "d5": None, "n5": 0, "n": 0}}, (
+        "the stored block is rebuilt from the rows, so nothing on disk reaches the page")
 
 
 def test_todays_own_candidates_are_not_asked_for_a_return_that_cannot_exist(tmp_path):
@@ -2233,6 +2727,64 @@ def test_a_name_a_deep_record_has_never_carried_is_day_one_of_a_new_setup():
         "day": 1, "unknown_reason": None, "first_seen": TUE, "last_seen": None,
         "last_score": None, "last_verdict": None, "last_outcome": None,
         "seen_before": 0, **DEEP_SPAN}
+
+
+def test_a_blind_night_inside_the_window_withholds_the_day_instead_of_claiming_day_one():
+    """"day 1 — new setup" is the claim that nothing preceded this burst. A
+    night the scan measured NO NAME AT ALL is a session the record holds an
+    entry for and has no evidence about, so an earlier appearance on it would
+    have been invisible -- and the claim is made over it anyway. Reproduced
+    end to end: a blind Tuesday, a burst on Wednesday, "day 1, never seen".
+
+    Not window_not_covered: this record reaches back 160 sessions. That reason
+    resolves as the file fills up and this one never does, so telling an
+    operator to wait would be advice that cannot come true."""
+    blind = ledger.Record(DEEP, 160, 160, frozenset({date.fromisoformat(MON)}))
+
+    block = ledger.streak([], TUE, record=blind)
+
+    assert block["day"] is None and block["first_seen"] is None
+    assert block["unknown_reason"] == ledger.BLIND_SESSION
+    # The span is still reported -- what the unknown is unknown OVER -- the
+    # way window_not_covered's is, because the record does have one.
+    assert (block["history_from"], block["history_sessions"]) == (DEEP.isoformat(), 160)
+    # And the inverse: the same record with nothing blind in it says day 1, so
+    # this cannot pass by withholding every day number.
+    assert ledger.streak([], TUE, record=DEEP_RECORD)["day"] == 1
+
+
+def test_a_blind_night_outside_the_streak_window_leaves_the_day_alone():
+    """Only the window matters. A night nobody read three months before the
+    setup started could not have held an appearance of THIS chain -- an
+    earlier burst that far back is a different setup by
+    MAX_STREAK_GAP_SESSIONS' own rule -- so withholding the number for it
+    would refuse one the record can support."""
+    far = date.fromisoformat(TUE) - timedelta(days=90)
+    record = ledger.Record(DEEP, 160, 160, frozenset({far}))
+    assert ledger.streak([], TUE, record=record)["day"] == 1
+
+    # The boundary, from both sides: MAX_STREAK_GAP_SESSIONS sessions before
+    # the setup began is inside the window, one more is outside it.
+    sessions = pd.bdate_range(end=TUE, periods=ledger.MAX_STREAK_GAP_SESSIONS + 2)
+    edge, beyond = sessions[1].date(), sessions[0].date()
+    assert ledger.sessions_between(edge, TUE) == ledger.MAX_STREAK_GAP_SESSIONS
+    assert ledger.streak([], TUE, record=ledger.Record(DEEP, 160, 160, frozenset({edge})))["day"] is None
+    assert ledger.streak([], TUE, record=ledger.Record(DEEP, 160, 160, frozenset({beyond})))["day"] == 1
+
+
+def test_only_a_run_that_recorded_measuring_nothing_counts_as_blind():
+    """`measured` is a count the run wrote down. An entry from before the
+    field existed says nothing about how much it read, and reading its absence
+    as 0 would make every historical run blind and every day number in the
+    file disappear -- absence of evidence again, one field over."""
+    assert ledger.Record.of([{"date": MON, "measured": 0}]).blind == {date.fromisoformat(MON)}
+    for entry in ({"date": MON},                      # before the count existed
+                  {"date": MON, "measured": 1},       # it read one name
+                  {"date": MON, "measured": None},
+                  {"date": MON, "measured": False},   # a bool is not a count
+                  {"date": MON, "measured": "0"},
+                  {"date": "nonsense", "measured": 0}):
+        assert ledger.Record.of([entry]).blind == frozenset(), entry
 
 
 def test_a_name_that_burst_yesterday_is_day_two_today():
@@ -3078,7 +3630,8 @@ def test_run_means_and_evidence_outcomes_carry_the_open_basis_with_its_own_n():
 
     means = ledger.mean_returns(rows, _every_row_leads(rows))
     assert (means["d1"], means["d5"], means["n"]) == (round(5 / 3, 2), round(16 / 3, 2), 3)
-    assert means["from_open"] == {"d1": 2.0, "d3": None, "d5": 7.5, "n": 2}
+    assert means["from_open"] == {"d1": 2.0, "d3": None, "d5": 7.5,
+                                  "n1": 2, "n3": 0, "n5": 2, "n": 2}
 
     summary = ledger.outcome_summary(rows)
     d5 = ledger.at_horizon(summary, 5)
@@ -3141,6 +3694,44 @@ def test_a_benchmark_block_of_the_wrong_shape_is_refused_at_load(tmp_path, bad):
     assert ledger.quarantined(docs), "the unreadable file is set aside, not overwritten"
 
 
+@pytest.mark.parametrize("bad", ["0", True, -1, 2.5, None, [0]])
+def test_a_measured_count_that_is_not_a_count_is_refused_at_load(tmp_path, bad):
+    """Two readers index this inside publish(), after the scan and every
+    Claude call are paid for: the streak window (a night nobody read cannot
+    support "nothing preceded this setup") and the benchmark fill. The class
+    this check exists for, on the round's own new key."""
+    docs = tmp_path / f"docs-{abs(hash(str(bad)))}"
+    docs.mkdir()
+    (docs / ledger.LEDGER_NAME).write_text(json.dumps({
+        "schema_version": ledger.SCHEMA_VERSION, "app": "SpicyStock", "generated": "x",
+        "runs": [{"date": "2026-08-24", "type": "evening", "measured": bad,
+                  "candidates": [], "gated": []}]}))
+
+    book = ledger.Ledger(docs).load()
+
+    assert book.runs == [] and book.load_error and "measured" in book.load_error, bad
+
+
+def test_the_run_entry_keeps_how_many_names_the_night_measured(tmp_path):
+    """docs/data.json is rewritten every night, and both readers of this
+    number are LATER runs, so the ledger entry is the only place it can
+    survive to be read. Absent when the run recorded no coverage -- the rule
+    `rules` and `duplicate_bars` follow -- because a run from before the count
+    existed says nothing about how much it read."""
+    book = ledger.Ledger(tmp_path).load()
+    run, candidates, gated = _run("2026-09-08")
+    run["coverage"] = {"requested": 228, "with_bars": 227, "measured": 225}
+
+    assert book.add_run(run, candidates, gated)["measured"] == 225
+
+    silent, candidates, gated = _run("2026-09-09")
+    assert "measured" not in book.add_run(silent, candidates, gated)
+    for coverage in ("x", {"measured": "225"}, {"measured": True}, {}):
+        run, candidates, gated = _run("2026-09-10")
+        run["coverage"] = coverage
+        assert "measured" not in book.add_run(run, candidates, gated), coverage
+
+
 def test_a_run_from_before_the_benchmark_loads_clean(tmp_path):
     """Absent is not broken: a run written before round 7 has no benchmark
     key, loads, and is simply one the rung cannot pair."""
@@ -3190,7 +3781,8 @@ def test_a_run_from_before_the_fingerprint_loads_clean(tmp_path):
 
     assert len(book.runs) == 1 and not book.load_error
     assert ledger.rules_view(book.runs) == {"current": None, "sets": 0,
-                                            "differ": [], "runs_without": 1}
+                                            "differ": [], "unshared": [],
+                                            "runs_without": 1}
 
 
 def test_a_from_open_block_of_the_wrong_shape_is_refused_at_load(tmp_path):
@@ -3237,7 +3829,12 @@ def test_an_older_row_gains_the_open_basis_when_its_bars_are_fetched(tmp_path):
                           end="2026-08-31")
     moved = book.fill_forward_returns({"AAA": df, "BBB": df}, date(2026, 9, 4))
 
-    assert moved == 2
+    # Six pairs, not two rows: AAA gains d3 and d5 on the close basis and all
+    # three on the open one, BBB the open basis alone -- and a horizon that
+    # moved on EITHER basis is one pair, never two.
+    assert {(f.row["ticker"], f.horizon) for f in moved} == {
+        (t, h) for t in ("AAA", "BBB") for h in (1, 3, 5)}
+    assert len(moved) == 6
     got = book.runs[0]["candidates"][0]["forward_returns"]
     assert got["d1"] == 1.0, "the close-basis value already recorded is never restated"
     assert got["d3"] == 3.0 and got["d5"] == 10.0
@@ -3571,10 +4168,11 @@ def test_the_streak_view_counts_appearances_because_a_setup_lead_is_always_day_o
 def test_whether_a_number_may_be_read_as_a_rate_is_decided_on_the_horizon_that_is_traded():
     """d5 decides `enough`, not d1.
 
-    d1 always has the largest n -- it closes first -- so keying on it would
-    license a rate for a horizon nobody has measured. d3 and d5 are what this
-    strategy trades; a bucket with a hundred d1s and two d5s knows nothing
-    about the trade.
+    d1 closes first and usually has the largest n -- not always, since a frame
+    whose d1 bar prints a non-finite close measures d3 with no d1, which is
+    why the counts are not ordered -- so keying on it would license a rate for
+    a horizon nobody has measured. d3 and d5 are what this strategy trades; a
+    bucket with a hundred d1s and two d5s knows nothing about the trade.
     """
     floor = ledger.MIN_SETUPS_FOR_A_RATE
     sessions = [(f"2026-0{7 + i // 20}-{(i % 20) + 1:02d}", (f"T{i:02d}",)) for i in range(floor + 4)]
@@ -3935,6 +4533,48 @@ def test_fill_benchmarks_applies_the_runs_own_floor_and_stamps_it(tmp_path):
     assert (unfloored["liquidity_floor"], unfloored["below_floor"]) == (None, 0)
 
 
+def test_a_night_that_measured_nothing_is_left_pending_rather_than_stamped_unfloored(tmp_path):
+    """A BLIND night applied no liquidity floor, because it had no dollar
+    volumes to draw a percentile from -- so filling its benchmark measured
+    every name that traded and stamped the block `liquidity_floor: null`,
+    which four surfaces read as "before the floor reached the benchmark, or a
+    night rule 6 was off". Neither is this cause, and a measured horizon keeps
+    its value, so the false attribution is permanent. Reproduced through the
+    fill before this rule existed: d1 filled, below_floor 0, universe stamped.
+
+    It costs nothing to leave pending: a blind night scored no setup, so
+    evidence pairs nothing with it."""
+    book = ledger.Ledger(tmp_path / "docs")
+    universe = {"label": "data/symbols.txt (checked in)", "size": 2}
+    blind, cands, gated = _run("2026-08-24", tickers=("AAA",))
+    blind["universe"] = dict(universe)
+    blind["liquidity"] = {"pctile": 30, "floor": None, "over": 0, "refused": 0}
+    blind["coverage"] = {"requested": 2, "with_bars": 2, "measured": 0}
+    entry = book.add_run(blind, cands, gated)
+    assert entry["measured"] == 0, "the premise: the record says this night read nothing"
+    thick = _traded([100, 101, 102, 103, 104, 110, 111, 112], 5_000_000, end="2026-09-02")
+    thin = _traded([10, 20, 20, 20, 20, 20, 20, 20], 100_000, end="2026-09-02")
+
+    moved = book.fill_benchmarks({"THICK": thick, "THIN": thin}, date(2026, 9, 4),
+                                 universe=universe)
+
+    assert moved == 0
+    assert entry["benchmark"] == ledger.empty_benchmark(), (
+        "a blind night has no alternative to be measured against")
+
+    # The inverse, on the same frames and the same session: a night that DID
+    # measure names is filled, so this rule cannot be satisfied by filling
+    # nothing at all.
+    seeing = ledger.Ledger(tmp_path / "seeing")
+    run, cands, gated = _run("2026-08-24", tickers=("AAA",))
+    run["universe"] = dict(universe)
+    run["coverage"] = {"requested": 2, "with_bars": 2, "measured": 2}
+    kept = seeing.add_run(run, cands, gated)
+    assert seeing.fill_benchmarks({"THICK": thick, "THIN": thin}, date(2026, 9, 4),
+                                  universe=universe) == 1
+    assert kept["benchmark"]["d1"] is not None
+
+
 def test_the_benchmark_window_is_the_fill_window(tmp_path, monkeypatch):
     """Same window as the forward returns, and until now pinned by nothing
     of its own: a run outside the newest FILL_WINDOW_RUNS is not
@@ -4240,3 +4880,52 @@ def test_a_floor_the_run_entry_cannot_vouch_for_is_no_floor(tmp_path, floor):
     assert book.fill_benchmarks({"THICK": thick, "THIN": thin}, date(2026, 9, 4), universe=universe) == 1
     bench = book.runs[0]["benchmark"]
     assert (bench["n1"], bench["liquidity_floor"], bench["below_floor"]) == (2, None, 0)
+
+
+def test_a_named_basket_that_measured_nothing_is_not_a_blind_night():
+    """A `--tickers` rehearsal that measured nothing must not blank the day
+    number on every burst the next real universe scan finds.
+
+    Reproduced end to end before this rule existed: three universe nights,
+    then a two-name rehearsal on the day after a holiday -- both frames holed,
+    `measured: 0` -- and the next universe scan printed `blind_session` on a
+    name the record had seen three times. The rehearsal read nothing about the
+    market either way: it never asked about it. That is the same reasoning
+    Ledger.fill_benchmarks() applies when it fills a run only from a scan of
+    the universe that run itself scanned, and blind_sessions() did not make it.
+
+    Both halves, so neither can pass by withholding everything: a blind
+    UNIVERSE run in the same window still withholds the day.
+    """
+    basket = {"date": MON, "measured": 0,
+              "universe": {"label": "2 named on the command line (--tickers)",
+                           "size": 2, "tickers": ["AAA", "BBB"]}}
+    assert ledger.Record.of([basket]).blind == frozenset()
+    assert ledger.streak([], TUE, record=ledger.Record(DEEP, 160, 160,
+                                                      ledger.Record.of([basket]).blind))["day"] == 1
+
+    universe = {"date": MON, "measured": 0,
+                "universe": {"label": "data/symbols.txt (checked in)", "size": 228}}
+    assert ledger.Record.of([universe]).blind == {date.fromisoformat(MON)}
+    assert ledger.streak([], TUE, record=ledger.Record(DEEP, 160, 160,
+                                                      ledger.Record.of([universe]).blind))["day"] is None
+
+
+def test_a_re_scan_of_the_session_the_record_holds_as_blind_still_counts_day_one():
+    """The lower edge of the blind window, which is the documented recovery.
+
+    A night measures nothing; the operator fixes the feed and re-runs that
+    same session with SCAN_SESSION_DATE. The streak is computed against the
+    history as it stands, which still holds the blind entry FOR THAT SESSION
+    -- and the burst in front of it is the proof somebody read the session
+    after all. `0 < gap` is what allows it; widening the test to `0 <= gap`
+    withholds the day number on the very session that was just re-read, and
+    no test sat on that edge.
+    """
+    record = ledger.Record(DEEP, 160, 160, frozenset({date.fromisoformat(TUE)}))
+    assert ledger.streak([], TUE, record=record)["day"] == 1
+    # And the session before it is inside the window, so this cannot pass by
+    # ignoring the blind set.
+    day_before = pd.bdate_range(end=TUE, periods=2)[0].date()
+    assert ledger.streak([], TUE, record=ledger.Record(DEEP, 160, 160,
+                                                      frozenset({day_before})))["day"] is None

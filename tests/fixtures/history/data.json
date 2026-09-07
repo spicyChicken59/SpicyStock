@@ -12,18 +12,20 @@
       "provenance.chart_seen is true only when the scoring model actually received the chart image.",
       "forward_returns and runs[].forward_returns are null until the sessions exist -- with exceptions no session can end: a run that scored nothing has no rows for a later run to fill, and a run every one of whose scored rows is a repeat of a setup counted earlier (rows == scored with n == 0) has no setup to average, so in both cases the three horizons and the n stay null and 0 for good and a reader must be told that rather than 'pending'. runs[].fills_closed says the third: false while a later run will still fetch that run's rows, true once it is past the newest FILL_WINDOW_RUNS runs by session, after which a horizon still null there is null for good too. It is a fact about the record as it stands tonight rather than about the run, so it is in this view and not in the ledger. Absent is null, never 0 and never a string.",
       "d1/d3/d5 divide the close 1, 3 and 5 sessions after the burst by the BURST-DAY CLOSE: what the setup did. forward_returns.from_open divides the same later closes by the NEXT session's open, the earliest price a reader of the evening email could have paid: what acting on it could have had. Both are paper prices from one venue's official prints with no slippage. Every mean and every evidence outcome carries both, the open basis nested under from_open with its own n, and enough_from_open is the open basis's own licence to be read as a rate -- a surface that shows a number says which basis it is on, and never shows a close-basis number under an open-basis label or the reverse. A row or a run from before this basis existed carries no from_open, which is not a measurement of zero.",
+      "run.settled is what THIS run's fill made knowable about picks earlier runs made: one entry per (scored row, horizon) whose measurement moved from pending to a number tonight, carrying that pick's ticker, its burst session, the score and verdict it was given then, the horizon, its return on both bases and its own session's universe benchmark on both -- each of them a restatement of what runs[] already holds, never a second arithmetic. A horizon is filled once, so a pick appears under a horizon in exactly one run's block and never twice with two numbers, and at least one of the two bases carries a number in every entry. It is the picks alone: a refusal has no score to report and belongs to the control, which is evidence.refused. An empty list is a run whose fill moved nothing, which is not a claim that nothing was pending; a run from before the block existed carries no key at all, and no surface may read either as a night on which the earlier picks returned zero.",
       "chart is a path relative to docs/, or null when the render failed. The file may legitimately not exist yet.",
       "Every burst carries lynch_detail — one row per check, with the value that was measured — whether it was scored or gated out. The dashboard's per-check pass rates are computed over all of them; without the gated ones the rates only describe the candidates that already passed.",
-      "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered. day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
+      "Every burst carries streak — day, unknown_reason, first_seen, last_seen, last_score, last_verdict, last_outcome, seen_before, history_from, history_sessions. day is a NUMBER only where the ledger reaches at least MAX_STREAK_GAP_SESSIONS sessions back past the session the setup started on — sessions_between(history_from, first_seen) >= MAX_STREAK_GAP_SESSIONS, which is checkable from the block itself; otherwise day and first_seen are null and unknown_reason is one of no_history, history_undated, history_unreadable, window_not_covered, blind_session (a run inside that window measured no name at all, so an earlier appearance would have been invisible to it -- see runs[].measured; a run that scanned a basket named on the command line is never one of those, because it asked about no other name and so is evidence about the session in neither direction). day is 1 exactly when first_seen is the burst's own session, first_seen is null exactly when day is, and last_seen is null exactly when seen_before is 0. Absence of evidence is never day 1.",
       "history_from is the session of the OLDEST run the ledger holds and history_sessions is how many distinct sessions it holds runs for. Both are facts about the RECORD rather than about the name, so every burst in one run carries the same pair. history_from is null exactly when history_sessions is 0, which is exactly when unknown_reason is no_history, history_undated or history_unreadable. seen_before <= history_sessions always: a name cannot have burst on more sessions than the record holds. The pair is what an unknown day is unknown OVER — it lets a reader be told 'burst on 8 of the 8 sessions in the record, which begins 2026-08-20, and may have started before it' instead of nothing at all.",
       "last_outcome says what became of the appearance last_seen names — 'scored', or the reason it never was: 'liquidity_floor' (rule 6 refused it in the scan, for dollar volume below the session's percentile floor, before the checklist was consulted), 'veto_up_days' (an absolute rule refused it before the pass count was consulted, and it may well have passed 6/6), 'lynch_gate' (rejected by the checklist), 'score_cap' (passed the gate, but the run had already sent its limit of candidates to the scorer). The same four words are gated_out[].reason. Null exactly with last_seen. A gate rejection is never published as an absence of judgement, and neither a veto nor a liquidity refusal is ever published as a gate rejection.",
       "runs[].benchmark.universe is the universe the benchmark was measured over, and it is always the one that run's own universe block names: a run is benchmarked only from a later scan of the same universe, so a --tickers run contributes no benchmark to anything and receives none. A run whose universe no later scan has read keeps a null benchmark forever, which is the honest answer and not a zero.",
-      "runs[].rules is every number this screener's rules turned on when that run was made — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. A run from before it carries no rules block, and no surface may read that as agreement.",
-      "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when no name traded or the rule is off), refused (how many bursts sat below it). run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
-      "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is the weight an average across sessions must use; rows is how many rows those setups were collapsed from, so n <= rows always.",
+      "runs[].rules is what this screener was when that run was made: every number its rules turned on — the scan's strategy thresholds, every threshold and window the checklist names, the vetoes in force and the gate — plus what produced the SCORE, since round 11: score.prompt is a digest of the scoring model's system prompt and score.record_keys is the record block the request carries. A run scored under a rewritten rulebook is as much a second screener as one whose gate moved, and every mean keyed on score averages both. evidence.rules says how many distinct sets the record holds and which keys differ between them: a mean across runs is a mean over one strategy only while sets is 1, and runs_without counts entries written before the fingerprint existed, which is not the same as agreeing with it. evidence.rules.differ names only keys EVERY set records, whose value moved; a key some set does not carry at all is in unshared instead, because a rule that did not exist then and a rule that was not recorded then are not the same fact and neither is a number that changed. A run from before it carries no rules block, and no surface may read that as agreement.",
+      "run.liquidity records rule 6 as this run applied it: pctile (the percentile of the session's dollar volume the floor sits at), floor (that percentile in dollars, null when the rule is off or nothing could be ranked), over (how many names the percentile was drawn from), refused (how many bursts sat below it). `over` is the population the FLOOR was drawn from -- the names whose session bar carried a readable, positive dollar volume -- and not the population the scan measured, which is run.coverage.measured and can be larger or smaller. A null floor has three readings: `pctile <= 0` is the rule switched off, whatever `over` says; a null floor with `over: 0` is a night no name's dollar volume could be ranked; and a null floor with no `over` at all is a run from before the count existed. No surface may report one cause as the other. run.bursts COUNTS those refusals, so they are in gated_out with reason 'liquidity_floor' and carry lynch_detail like every other burst; a run written before this block exists carries none of them and no run.liquidity, which is the truth about that run and not a night with none.",
+      "run.coverage is how much of the night was READ, in the counts the scan reached before it stopped: requested, with_bars (answered with any bar), fresh, measured, stale, gapped, no_bars, dropped, duplicate_bars, plus the session and the newest bar the names that missed it carried. measured is the population a burst could have come from -- the names whose session bar the detector read and answered about -- so with_bars minus measured is what could not be measured for the session (behind it, holed on the session before it, unreadable, measured onto an earlier session, or one the detector raised on), and measured 0 UNDER A POSITIVE with_bars is a BLIND night: the feed answered and nothing could be read, which no surface may report as a quiet market. measured 0 beside with_bars 0 is a scan nothing answered, which is what a dead run's notice carries and is not the same sentence. requested minus with_bars is the other half of the first cut -- the names that answered with nothing at all, plus any dropped after their batch failed twice -- so no surface may attribute it to the burst filter either. A count that is absent was never reached, and absent is never 0. runs[].measured carries that one number into the durable record, because docs/data.json is rewritten every night and both its readers are later runs.",
+      "runs[].forward_returns.n counts SETUPS, not rows: consecutive sessions of one name collapse to the session its setup started on, because their d1/d3/d5 windows overlap and measure one move. n is how many setups the run contributed at any horizon and rows is how many rows they were collapsed from, so n <= rows always. THE WEIGHT IS PER HORIZON: n1, n3 and n5 are the setups behind d1, d3 and d5 separately, and an average across sessions must weight each horizon by its own, because a frame with a hole after the first session measures d1 and nothing after it -- that setup is in n and out of n5, and weighting d5 by n counts setups that have no d5. nH is 0 exactly when dH is null and nH <= n always; they are not ordered n1 >= n3 >= n5, since a non-finite close at one horizon leaves it null with a later one measured. from_open carries its own n1/n3/n5 for the same reason it carries its own n.",
       "evidence is the whole RECORD's view, not this run's: every block in it is computed over docs/ledger.json by src/ledger.py's evidence(), and every mean it carries is over SETUPS (mean_returns' rule) except evidence.by_day, which counts APPEARANCES and says so, because a setup's leading row is day 1 by construction. Every mean carries the n of its own horizon, and `enough` is that n against evidence.min_setups -- a page must not decide for itself whether a number may be read as a rate.",
       "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
-      "runs[].benchmark is the universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), over every name whose frame carries the session and whose dollar volume that session was at or above the run's own liquidity floor -- rule 6's bar that night, run.liquidity.floor -- with nN the number of symbols behind each horizon. benchmark.liquidity_floor is the floor the fill that FIRST measured the block applied -- null for a run recorded without one, when every name that traded counts -- and benchmark.below_floor is how many names that fill left out under it; the horizons a later fill adds are measured over the same population, so one block is one set of names. Null until a later run's scan carried the sessions, and null forever for a run whose universe later scans never fetched. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks, and evidence.universe.floored is how many of those pairings were measured over a floor and evidence.universe.unfloored how many were measured with none -- before the floor reached the benchmark, or on a night rule 6 was off, which the block cannot tell apart -- over every name that traded (a pending pairing is in neither); it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
+      "runs[].benchmark is the universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), over every name whose frame carries the session and whose dollar volume that session was at or above the run's own liquidity floor -- rule 6's bar that night, run.liquidity.floor -- with nN the number of symbols behind each horizon. benchmark.liquidity_floor is the floor the fill that FIRST measured the block applied -- null for a run recorded without one, when every name that traded counts -- and benchmark.below_floor is how many names that fill left out under it; the horizons a later fill adds are measured over the same population, so one block is one set of names. Null until a later run's scan carried the sessions, null forever for a run whose universe later scans never fetched, and never filled at all for a run that measured nothing: nothing is ever paired with a blind night's rung, since it scored no setup, and its floor -- null when no name's dollar volume could be ranked, and drawn from however few could be when it is not -- would stamp the block with a population that night never read. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks, and evidence.universe.floored is how many of those pairings were measured over a floor and evidence.universe.unfloored how many were measured with none -- before the floor reached the benchmark, or on a night rule 6 was off, which the block cannot tell apart -- over every name that traded (a pending pairing is in neither); it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
       "d1/d3/d5 and from_open are measured on the bar of the session 1, 3 and 5 sessions after the burst, the sessions being read across every frame the run fetched rather than counted along one frame's bars: a frame with a hole at a horizon carries null there, never the next bar it happens to have, and as_of names the session of the last bar actually used. from_open's entry is the next session's open only where it lies within that bar's own low and high, the standard the checklist holds a close to; outside it the open basis is null on that row.",
       "Numbers are numbers or null. No 'n/a' strings."
     ]
@@ -43,6 +45,18 @@
       "names": []
     },
     "duplicate_bars": 0,
+    "coverage": {
+      "requested": 77,
+      "with_bars": 77,
+      "fresh": 77,
+      "measured": 77,
+      "no_bars": 0,
+      "dropped": 0,
+      "duplicate_bars": 0,
+      "stale": 0,
+      "gapped": 0,
+      "session": "2026-09-01"
+    },
     "bursts": 9,
     "passed_gate": 6,
     "scored": 6,
@@ -70,6 +84,7 @@
       "check.min_linear_r2": 0.55,
       "check.min_linear_slope": 0.0,
       "check.prior_burst_pct": 4.0,
+      "check.rules_revision": 2,
       "check.vetoes": [
         "up_days"
       ],
@@ -80,16 +95,33 @@
       "scan.min_rvol": 1.5,
       "scan.min_rvol_sessions": 20,
       "scan.rvol_lookback": 50,
+      "score.prompt": "a65ab9f290bd84ea",
+      "score.record_keys": [
+        "setup_day",
+        "setup_unknown_reason",
+        "seen_before",
+        "last_seen",
+        "last_score",
+        "last_outcome",
+        "history_sessions",
+        "history_from"
+      ],
+      "window.high_low_min_sessions": 60,
+      "window.high_low_sessions": 252,
       "window.linear_fit_sessions": 30,
       "window.norm_sessions": 60,
+      "window.perf_3mo_sessions": 63,
+      "window.perf_6mo_sessions": 126,
       "window.prior_burst_lookback": 20,
       "window.run_up_sessions": 20,
       "window.sma_sessions": 20,
-      "window.tight_sessions": 7
+      "window.tight_sessions": 7,
+      "window.volume_norm_sessions": 50
     },
     "liquidity": {
       "pctile": 30.0,
       "floor": 190247596.4,
+      "over": 77,
       "refused": 0
     },
     "scored_by": {
@@ -103,7 +135,8 @@
         "stage": "chart",
         "message": "1 of 6 charts failed to render; those candidates were scored without the image: IBM (ValueError: fixture: mplfinance refused this frame)"
       }
-    ]
+    ],
+    "settled": []
   },
   "candidates": [
     {
@@ -175,7 +208,10 @@
         "consecutive_up_days": 0,
         "worst_base_day_pct": -2.2,
         "perf_3mo_pct": 42.7,
-        "perf_6mo_pct": 71.3
+        "perf_6mo_pct": 71.3,
+        "gap_pct": 0.6,
+        "bar_range_pct": 9.3,
+        "range_expansion": 3.88
       },
       "streak": {
         "day": 1,
@@ -270,7 +306,10 @@
         "consecutive_up_days": 2,
         "worst_base_day_pct": -0.6,
         "perf_3mo_pct": 79.4,
-        "perf_6mo_pct": 57.5
+        "perf_6mo_pct": 57.5,
+        "gap_pct": 0.2,
+        "bar_range_pct": 7.8,
+        "range_expansion": 4.88
       },
       "streak": {
         "day": 2,
@@ -365,7 +404,10 @@
         "consecutive_up_days": 0,
         "worst_base_day_pct": -2,
         "perf_3mo_pct": 26,
-        "perf_6mo_pct": 19.2
+        "perf_6mo_pct": 19.2,
+        "gap_pct": 0.1,
+        "bar_range_pct": 9.5,
+        "range_expansion": 9.5
       },
       "streak": {
         "day": 1,
@@ -460,7 +502,10 @@
         "consecutive_up_days": 2,
         "worst_base_day_pct": -3.5,
         "perf_3mo_pct": 24.2,
-        "perf_6mo_pct": 10.2
+        "perf_6mo_pct": 10.2,
+        "gap_pct": 0.3,
+        "bar_range_pct": 8.8,
+        "range_expansion": 4.89
       },
       "streak": {
         "day": 1,
@@ -555,7 +600,10 @@
         "consecutive_up_days": 2,
         "worst_base_day_pct": -0.8,
         "perf_3mo_pct": 35.8,
-        "perf_6mo_pct": 36.3
+        "perf_6mo_pct": 36.3,
+        "gap_pct": 0.5,
+        "bar_range_pct": 7.2,
+        "range_expansion": 4.8
       },
       "streak": {
         "day": 1,
@@ -650,7 +698,10 @@
         "consecutive_up_days": 2,
         "worst_base_day_pct": -1.9,
         "perf_3mo_pct": 143.2,
-        "perf_6mo_pct": 178.2
+        "perf_6mo_pct": 178.2,
+        "gap_pct": -0.1,
+        "bar_range_pct": 7.3,
+        "range_expansion": 4.29
       },
       "streak": {
         "day": 1,
@@ -733,7 +784,10 @@
         "consecutive_up_days": 5,
         "worst_base_day_pct": -1.4,
         "perf_3mo_pct": 61.2,
-        "perf_6mo_pct": 50.8
+        "perf_6mo_pct": 50.8,
+        "gap_pct": 2.6,
+        "bar_range_pct": 8,
+        "range_expansion": 4.44
       },
       "streak": {
         "day": 2,
@@ -804,7 +858,10 @@
         "consecutive_up_days": 3,
         "worst_base_day_pct": -2.1,
         "perf_3mo_pct": 55.4,
-        "perf_6mo_pct": 59.4
+        "perf_6mo_pct": 59.4,
+        "gap_pct": 0.7,
+        "bar_range_pct": 7.2,
+        "range_expansion": 7.2
       },
       "streak": {
         "day": 1,
@@ -875,7 +932,10 @@
         "consecutive_up_days": 0,
         "worst_base_day_pct": -1.7,
         "perf_3mo_pct": 84.5,
-        "perf_6mo_pct": 74.5
+        "perf_6mo_pct": 74.5,
+        "gap_pct": 0.5,
+        "bar_range_pct": 7.9,
+        "range_expansion": 1.98
       },
       "streak": {
         "day": 4,
@@ -932,6 +992,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 190247596.4,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -949,6 +1010,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -959,24 +1021,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": null,
+        "n1": 0,
         "d3": null,
+        "n3": 0,
         "d5": null,
+        "n5": 0,
         "n": 0,
         "rows": 0,
         "from_open": {
           "d1": null,
+          "n1": 0,
           "d3": null,
+          "n3": 0,
           "d5": null,
+          "n5": 0,
           "n": 0
         }
       },
@@ -1024,6 +1109,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 187495350,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1041,6 +1127,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -1051,24 +1138,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 1.72,
+        "n1": 3,
         "d3": null,
+        "n3": 0,
         "d5": null,
+        "n5": 0,
         "n": 3,
         "rows": 3,
         "from_open": {
           "d1": 1.76,
+          "n1": 3,
           "d3": null,
+          "n3": 0,
           "d5": null,
+          "n5": 0,
           "n": 3
         }
       },
@@ -1116,6 +1226,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 204469510.6,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1133,6 +1244,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -1143,24 +1255,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 1.1,
+        "n1": 1,
         "d3": null,
+        "n3": 0,
         "d5": null,
+        "n5": 0,
         "n": 1,
         "rows": 2,
         "from_open": {
           "d1": 0.14,
+          "n1": 1,
           "d3": null,
+          "n3": 0,
           "d5": null,
+          "n5": 0,
           "n": 1
         }
       },
@@ -1208,6 +1343,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 270157178.6,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1225,6 +1361,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -1235,24 +1372,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 3.16,
+        "n1": 5,
         "d3": 5.15,
+        "n3": 5,
         "d5": null,
+        "n5": 0,
         "n": 5,
         "rows": 7,
         "from_open": {
           "d1": 3.1,
+          "n1": 5,
           "d3": 5.07,
+          "n3": 5,
           "d5": null,
+          "n5": 0,
           "n": 5
         }
       },
@@ -1300,6 +1460,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 210146671.8,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1317,6 +1478,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -1327,24 +1489,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 3.69,
+        "n1": 4,
         "d3": 4.79,
+        "n3": 4,
         "d5": null,
+        "n5": 0,
         "n": 4,
         "rows": 6,
         "from_open": {
           "d1": 3.64,
+          "n1": 4,
           "d3": 4.73,
+          "n3": 4,
           "d5": null,
+          "n5": 0,
           "n": 4
         }
       },
@@ -1392,6 +1577,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 211054539,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1409,6 +1595,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -1419,24 +1606,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 1.11,
+        "n1": 3,
         "d3": 1.23,
+        "n3": 3,
         "d5": 0.7,
+        "n5": 3,
         "n": 3,
         "rows": 4,
         "from_open": {
           "d1": 1.04,
+          "n1": 3,
           "d3": 1.17,
+          "n3": 3,
           "d5": 0.64,
+          "n5": 3,
           "n": 3
         }
       },
@@ -1484,6 +1694,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 193721823.8,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1501,6 +1712,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -1511,24 +1723,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 6.0,
+        "n1": 1,
         "d3": 5.44,
+        "n3": 1,
         "d5": 3.41,
+        "n5": 1,
         "n": 1,
         "rows": 1,
         "from_open": {
           "d1": 6.09,
+          "n1": 1,
           "d3": 5.52,
+          "n3": 1,
           "d5": 3.5,
+          "n5": 1,
           "n": 1
         }
       },
@@ -1576,6 +1811,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 223775606.6,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1593,6 +1829,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -1603,24 +1840,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.36,
+        "n1": 4,
         "d3": 3.73,
+        "n3": 4,
         "d5": 6.92,
+        "n5": 4,
         "n": 4,
         "rows": 4,
         "from_open": {
           "d1": 0.12,
+          "n1": 4,
           "d3": 3.48,
+          "n3": 4,
           "d5": 6.65,
+          "n5": 4,
           "n": 4
         }
       },
@@ -1668,6 +1928,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 161887274.6,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1685,6 +1946,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -1695,24 +1957,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 2.82,
+        "n1": 2,
         "d3": 2.83,
+        "n3": 2,
         "d5": 8.21,
+        "n5": 2,
         "n": 2,
         "rows": 2,
         "from_open": {
           "d1": 1.19,
+          "n1": 2,
           "d3": 1.2,
+          "n3": 2,
           "d5": 6.59,
+          "n5": 2,
           "n": 2
         }
       },
@@ -1760,6 +2045,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 149343306.2,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -1777,6 +2063,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -1787,24 +2074,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": null,
+        "n1": 0,
         "d3": null,
+        "n3": 0,
         "d5": null,
+        "n5": 0,
         "n": 0,
         "rows": 2,
         "from_open": {
           "d1": null,
+          "n1": 0,
           "d3": null,
+          "n3": 0,
           "d5": null,
+          "n5": 0,
           "n": 0
         }
       },
@@ -1852,6 +2162,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 166255999,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -1869,6 +2180,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -1879,24 +2191,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.48,
+        "n1": 2,
         "d3": 5.02,
+        "n3": 2,
         "d5": 3.35,
+        "n5": 2,
         "n": 2,
         "rows": 2,
         "from_open": {
           "d1": 0.1,
+          "n1": 2,
           "d3": 4.53,
+          "n3": 2,
           "d5": 2.85,
+          "n5": 2,
           "n": 2
         }
       },
@@ -1944,6 +2279,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 169311660.6,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -1961,6 +2297,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -1971,24 +2308,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 3.17,
+        "n1": 4,
         "d3": 9.88,
+        "n3": 4,
         "d5": 16.93,
+        "n5": 4,
         "n": 4,
         "rows": 5,
         "from_open": {
           "d1": 2.81,
+          "n1": 4,
           "d3": 9.5,
+          "n3": 4,
           "d5": 16.53,
+          "n5": 4,
           "n": 4
         }
       },
@@ -2036,6 +2396,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 155884278,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -2053,6 +2414,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -2063,24 +2425,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 1.07,
+        "n1": 3,
         "d3": 1.72,
+        "n3": 3,
         "d5": 2.61,
+        "n5": 3,
         "n": 3,
         "rows": 3,
         "from_open": {
           "d1": 0.66,
+          "n1": 3,
           "d3": 1.27,
+          "n3": 3,
           "d5": 2.13,
+          "n5": 3,
           "n": 3
         }
       },
@@ -2128,6 +2513,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 134251181.8,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -2145,6 +2531,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -2155,24 +2542,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 4.05,
+        "n1": 2,
         "d3": 2.67,
+        "n3": 2,
         "d5": 4.64,
+        "n5": 2,
         "n": 2,
         "rows": 3,
         "from_open": {
           "d1": 2.59,
+          "n1": 2,
           "d3": 1.2,
+          "n3": 2,
           "d5": 3.08,
+          "n5": 2,
           "n": 2
         }
       },
@@ -2220,6 +2630,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 192993291.60000002,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -2237,6 +2648,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -2247,24 +2659,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 3.58,
+        "n1": 4,
         "d3": 2.49,
+        "n3": 4,
         "d5": 6.5,
+        "n5": 4,
         "n": 4,
         "rows": 5,
         "from_open": {
           "d1": 3.19,
+          "n1": 4,
           "d3": 2.09,
+          "n3": 4,
           "d5": 6.09,
+          "n5": 4,
           "n": 4
         }
       },
@@ -2312,6 +2747,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 176002148.4,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -2329,6 +2765,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -2339,24 +2776,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.52,
+        "n1": 3,
         "d3": -1.53,
+        "n3": 3,
         "d5": -1.42,
+        "n5": 3,
         "n": 3,
         "rows": 4,
         "from_open": {
           "d1": -0.13,
+          "n1": 3,
           "d3": -2.22,
+          "n3": 3,
           "d5": -2.18,
+          "n5": 3,
           "n": 3
         }
       },
@@ -2404,6 +2864,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 212691449.8,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -2421,6 +2882,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -2431,24 +2893,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 6.81,
+        "n1": 3,
         "d3": 4.81,
+        "n3": 3,
         "d5": 3.76,
+        "n5": 3,
         "n": 3,
         "rows": 3,
         "from_open": {
           "d1": 5.96,
+          "n1": 3,
           "d3": 3.92,
+          "n3": 3,
           "d5": 2.86,
+          "n5": 3,
           "n": 3
         }
       },
@@ -2496,6 +2981,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 166194170,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -2513,6 +2999,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -2523,24 +3010,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": -1.38,
+        "n1": 2,
         "d3": -1.06,
+        "n3": 2,
         "d5": -1.02,
+        "n5": 2,
         "n": 2,
         "rows": 2,
         "from_open": {
           "d1": -1.08,
+          "n1": 2,
           "d3": -0.78,
+          "n3": 2,
           "d5": -0.74,
+          "n5": 2,
           "n": 2
         }
       },
@@ -2588,6 +3098,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 170293802.20000002,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -2605,6 +3116,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -2615,24 +3127,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 6.88,
+        "n1": 2,
         "d3": 7.82,
+        "n3": 2,
         "d5": 6.71,
+        "n5": 2,
         "n": 2,
         "rows": 2,
         "from_open": {
           "d1": 6.09,
+          "n1": 2,
           "d3": 7.04,
+          "n3": 2,
           "d5": 5.96,
+          "n5": 2,
           "n": 2
         }
       },
@@ -2680,6 +3215,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 176022991.8,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -2697,6 +3233,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -2707,24 +3244,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": null,
+        "n1": 0,
         "d3": null,
+        "n3": 0,
         "d5": null,
+        "n5": 0,
         "n": 0,
         "rows": 0,
         "from_open": {
           "d1": null,
+          "n1": 0,
           "d3": null,
+          "n3": 0,
           "d5": null,
+          "n5": 0,
           "n": 0
         }
       },
@@ -2772,6 +3332,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 197150178.4,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -2789,6 +3350,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -2799,24 +3361,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 2.24,
+        "n1": 4,
         "d3": 2.77,
+        "n3": 4,
         "d5": 1.82,
+        "n5": 4,
         "n": 4,
         "rows": 5,
         "from_open": {
           "d1": 1.55,
+          "n1": 4,
           "d3": 2.09,
+          "n3": 4,
           "d5": 1.15,
+          "n5": 4,
           "n": 4
         }
       },
@@ -2864,6 +3449,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 191448670.20000002,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -2881,6 +3467,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -2891,24 +3478,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": -0.46,
+        "n1": 2,
         "d3": -2.62,
+        "n3": 2,
         "d5": 0.3,
+        "n5": 2,
         "n": 2,
         "rows": 5,
         "from_open": {
           "d1": -0.44,
+          "n1": 2,
           "d3": -2.6,
+          "n3": 2,
           "d5": 0.32,
+          "n5": 2,
           "n": 2
         }
       },
@@ -2956,6 +3566,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 144648934.2,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -2973,6 +3584,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -2983,24 +3595,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 5.85,
+        "n1": 2,
         "d3": 12.92,
+        "n3": 2,
         "d5": 19.1,
+        "n5": 2,
         "n": 2,
         "rows": 3,
         "from_open": {
           "d1": 5.95,
+          "n1": 2,
           "d3": 13.0,
+          "n3": 2,
           "d5": 19.17,
+          "n5": 2,
           "n": 2
         }
       },
@@ -3048,6 +3683,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 162117771.6,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -3065,6 +3701,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -3075,24 +3712,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.72,
+        "n1": 3,
         "d3": 3.54,
+        "n3": 3,
         "d5": 7.75,
+        "n5": 3,
         "n": 3,
         "rows": 6,
         "from_open": {
           "d1": 0.43,
+          "n1": 3,
           "d3": 3.24,
+          "n3": 3,
           "d5": 7.43,
+          "n5": 3,
           "n": 3
         }
       },
@@ -3140,6 +3800,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 146821119.8,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -3157,6 +3818,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -3167,24 +3829,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.92,
+        "n1": 9,
         "d3": 3.23,
+        "n3": 9,
         "d5": 8.97,
+        "n5": 9,
         "n": 9,
         "rows": 9,
         "from_open": {
           "d1": 1.08,
+          "n1": 9,
           "d3": 3.4,
+          "n3": 9,
           "d5": 9.14,
+          "n5": 9,
           "n": 9
         }
       },
@@ -3232,6 +3917,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 145024717.20000002,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -3249,6 +3935,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -3259,24 +3946,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.3,
+        "n1": 3,
         "d3": 5.12,
+        "n3": 3,
         "d5": 5.96,
+        "n5": 3,
         "n": 3,
         "rows": 3,
         "from_open": {
           "d1": 0.32,
+          "n1": 3,
           "d3": 5.13,
+          "n3": 3,
           "d5": 5.98,
+          "n5": 3,
           "n": 3
         }
       },
@@ -3324,6 +4034,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 151707698.4,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -3341,6 +4052,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -3351,24 +4063,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": -0.56,
+        "n1": 2,
         "d3": 2.97,
+        "n3": 2,
         "d5": 6.17,
+        "n5": 2,
         "n": 2,
         "rows": 2,
         "from_open": {
           "d1": -0.43,
+          "n1": 2,
           "d3": 3.1,
+          "n3": 2,
           "d5": 6.31,
+          "n5": 2,
           "n": 2
         }
       },
@@ -3416,6 +4151,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 179566162.2,
+        "over": 77,
         "refused": 1
       },
       "rules": {
@@ -3433,6 +4169,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -3443,24 +4180,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.94,
+        "n1": 7,
         "d3": 2.05,
+        "n3": 7,
         "d5": 3.84,
+        "n5": 7,
         "n": 7,
         "rows": 8,
         "from_open": {
           "d1": 0.59,
+          "n1": 7,
           "d3": 1.69,
+          "n3": 7,
           "d5": 3.47,
+          "n5": 7,
           "n": 7
         }
       },
@@ -3508,6 +4268,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 160537948.20000002,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -3525,6 +4286,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -3535,24 +4297,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 2.89,
+        "n1": 5,
         "d3": 5.97,
+        "n3": 5,
         "d5": 7.25,
+        "n5": 5,
         "n": 5,
         "rows": 6,
         "from_open": {
           "d1": 2.5,
+          "n1": 5,
           "d3": 5.57,
+          "n3": 5,
           "d5": 6.85,
+          "n5": 5,
           "n": 5
         }
       },
@@ -3600,6 +4385,7 @@
       "liquidity": {
         "pctile": 30.0,
         "floor": 140296815.20000002,
+        "over": 77,
         "refused": 0
       },
       "rules": {
@@ -3617,6 +4403,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -3627,24 +4414,47 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "duplicate_bars": 0,
+      "measured": 77,
       "forward_returns": {
         "d1": 0.9,
+        "n1": 4,
         "d3": 3.71,
+        "n3": 4,
         "d5": 2.98,
+        "n5": 4,
         "n": 4,
         "rows": 4,
         "from_open": {
           "d1": 0.8,
+          "n1": 4,
           "d3": 3.6,
+          "n3": 4,
           "d5": 2.89,
+          "n5": 4,
           "n": 4
         }
       },
@@ -9076,6 +9886,7 @@
         "check.min_linear_r2": 0.55,
         "check.min_linear_slope": 0.0,
         "check.prior_burst_pct": 4.0,
+        "check.rules_revision": 2,
         "check.vetoes": [
           "up_days"
         ],
@@ -9086,15 +9897,32 @@
         "scan.min_rvol": 1.5,
         "scan.min_rvol_sessions": 20,
         "scan.rvol_lookback": 50,
+        "score.prompt": "a65ab9f290bd84ea",
+        "score.record_keys": [
+          "setup_day",
+          "setup_unknown_reason",
+          "seen_before",
+          "last_seen",
+          "last_score",
+          "last_outcome",
+          "history_sessions",
+          "history_from"
+        ],
+        "window.high_low_min_sessions": 60,
+        "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
         "window.norm_sessions": 60,
+        "window.perf_3mo_sessions": 63,
+        "window.perf_6mo_sessions": 126,
         "window.prior_burst_lookback": 20,
         "window.run_up_sessions": 20,
         "window.sma_sessions": 20,
-        "window.tight_sessions": 7
+        "window.tight_sessions": 7,
+        "window.volume_norm_sessions": 50
       },
       "sets": 1,
       "differ": [],
+      "unshared": [],
       "runs_without": 0
     }
   }

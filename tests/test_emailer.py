@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import base64
+import re
 
 import pytest
 
@@ -359,6 +360,147 @@ def test_an_evening_scan_that_completed_says_what_it_found_whatever_else_broke(
     assert "not a statement about the market" not in text, (
         f"a {stage} problem spoils the run; it does not shorten the scan")
     assert message in text, "and the reason is still in the band"
+
+
+COVERAGE = {"requested": 230, "with_bars": 228, "fresh": 226, "measured": 226,
+            "no_bars": 2, "dropped": 0, "duplicate_bars": 0, "stale": 2, "gapped": 0}
+
+
+#: The same night with nothing missing anywhere: every name asked answered,
+#: and every answer was measured. The one shape the widest sentence is true of.
+WHOLE = {"requested": 228, "with_bars": 228, "fresh": 228, "measured": 228,
+         "no_bars": 0, "dropped": 0, "duplicate_bars": 0, "stale": 0, "gapped": 0}
+
+
+@pytest.mark.parametrize("coverage, expected, forbidden", [
+    # Every name asked answered and every answer was read: the sentence it
+    # always was, and the only block it is true of.
+    (WHOLE, "No 4% burst anywhere in the universe today", "measured for this session"),
+    # Some were not, which is the ordinary night -- halts and holes -- and the
+    # cell is the only thing explaining itself, because a handful is under
+    # every degrade threshold and the band is empty. The denominator is what
+    # was ASKED, not what answered: the two names the feed never answered for
+    # are as unread as the two whose bars could not be measured.
+    (dict(COVERAGE, measured=226),
+     "No 4% burst among the 226 names measured for this session; the other 4 "
+     "of the 230 asked could not be.", "anywhere in the universe"),
+    # THE CUT THAT IS NOT THE BURST FILTER. Every name that answered was
+    # measured and two never answered, which is a clean green run -- no_bars
+    # of 2 in 230 is under the guard -- and it claimed the whole universe.
+    (dict(COVERAGE, measured=228),
+     "No 4% burst among the 228 names measured for this session; the other 2 "
+     "of the 230 asked could not be.", "anywhere in the universe"),
+    # And none were. This is a claim about a session nothing read.
+    (dict(COVERAGE, measured=0),
+     "Not one of the 230 names asked could be measured for this session",
+     "quiet market"),
+    # With no `requested` the block can only speak of what answered, and does.
+    ({"with_bars": 228, "measured": 0},
+     "Not one of the 228 names that answered could be measured for this session",
+     "quiet market"),
+    ({"with_bars": 228, "measured": 226},
+     "No 4% burst among the 226 names measured for this session; the other 2 "
+     "that answered could not be.", "anywhere in the universe"),
+])
+def test_the_quiet_market_sentence_is_only_said_of_the_names_that_were_read(
+    coverage, expected, forbidden
+):
+    """The widest claim the mail makes about the market, made from `bursts ==
+    0` alone -- which is also what a scan that measured NOT ONE NAME reports,
+    and what a scan two of whose names never answered reports.
+
+    Six states off one block. The first cut is not all one cause: between the
+    universe and the bursts sit the names that answered and could not be
+    measured AND the names that answered with nothing at all, and this
+    compared `measured` to `with_bars` alone, so the second half was still
+    being attributed to the burst filter on a run that exited 0.
+    """
+    stats = dict(STATS, bursts=0, gated=0, coverage=coverage)
+
+    text = _visible_text(build_html([], "evening", stats))
+
+    assert expected in text, text
+    assert forbidden not in text, text
+
+
+def test_the_widest_sentence_names_a_basket_that_is_not_the_checked_in_file():
+    """"No 4% burst anywhere in the universe today" over two names typed on
+    the command line. _empty_morning_note() has appended the scope clause
+    since round 10 and its evening twin was left with the funnel's Universe
+    line, which is a different line of a different block; the pipeline hands
+    over the same fact under the same rule, so only the exception carries it.
+    """
+    stats = dict(STATS, bursts=0, gated=0, coverage=WHOLE,
+                 scanned_universe="2 named on the command line (--tickers)")
+
+    text = _visible_text(build_html([], "evening", stats))
+
+    assert ("This run scanned 2 named on the command line (--tickers), not the "
+            "checked-in universe.") in text, text
+    # And an ordinary night says nothing, so the clause cannot pass by
+    # appearing on every mail.
+    assert "not the checked-in universe" not in _visible_text(
+        build_html([], "evening", dict(STATS, bursts=0, gated=0, coverage=WHOLE)))
+
+
+def test_a_run_that_reported_no_coverage_keeps_the_sentence_it_always_had():
+    """Absent is absent: every snapshot from before run.coverage existed says
+    nothing about how much was read, and inventing a 0 for it would tell a
+    reader of a year-old night that nothing was measured."""
+    text = _visible_text(build_html([], "evening", dict(STATS, bursts=0, gated=0)))
+    assert "No 4% burst anywhere in the universe today" in text
+    assert "Measured for the session" not in text
+    # And the rule under both surfaces, on the function itself: absent is
+    # absent. A (0, 0) here reads identically to None at today's two call
+    # sites and is a manufactured count the moment a third one reads it --
+    # which is how "0 asked" reached a failure notice for a scan that never
+    # asked.
+    assert emailer.measured_counts({}) is None
+    assert emailer.measured_counts({"coverage": {"with_bars": 12}}) is None
+
+
+@pytest.mark.parametrize("coverage, shown", [
+    # Both denominators when they differ, because they are two cuts with two
+    # causes: four of the 230 asked went unmeasured, two of them by never
+    # answering at all.
+    (dict(COVERAGE, measured=226),
+     "Measured for the session: 226 of 230 asked, 226 of 228 that answered"),
+    (dict(COVERAGE, measured=0),
+     "Measured for the session: 0 of 230 asked, 0 of 228 that answered"),
+    # The cut bit even though every answer was measured: two names never
+    # answered, and that is the half the funnel used to leave to the burst
+    # filter.
+    (dict(COVERAGE, measured=228),
+     "Measured for the session: 228 of 230 asked, 228 of 228 that answered"),
+    # One denominator when there is only one to have.
+    ({"with_bars": 228, "measured": 226},
+     "Measured for the session: 226 of 228 that answered"),
+])
+def test_the_funnel_names_the_first_cut_when_it_bit(coverage, shown, results):
+    """Between "Universe: 230 checked-in US common stocks" and "4% bursts
+    found" sits every name that answered and could not be measured, and every
+    name that never answered -- and the funnel had no line for either, so a
+    night that measured nothing read exactly like a night that measured
+    everything. The page's funnel captions the same cut."""
+    stats = dict(STATS, coverage=coverage)
+    assert shown in _visible_text(build_html(results, "evening", stats))
+
+
+@pytest.mark.parametrize("coverage", [
+    None,                                              # before the block existed
+    WHOLE,                                             # nothing was cut here
+    {"requested": 230},                                # a scan that died before it counted
+    dict(COVERAGE, measured="0"),                      # not a count
+    # Counts that do not order are a block no writer produces, and reading
+    # them printed "the other -9772 that answered could not be".
+    dict(COVERAGE, measured=9999),
+    dict(COVERAGE, with_bars=231),
+])
+def test_the_funnel_says_nothing_about_a_cut_it_cannot_count(coverage, results):
+    """The rule the refusal lines follow: printed only when it bit, and never
+    manufactured. A missing count must not arrive as "0 of 0"."""
+    stats = dict(STATS, **({"coverage": coverage} if coverage else {}))
+    assert "Measured for the session" not in _visible_text(build_html(results, "evening", stats))
 
 
 def test_the_body_counts_how_many_scores_are_not_ai_scores(results):
@@ -1517,6 +1659,30 @@ def test_the_whole_monitor_survives_a_malformed_error_entry_not_just_its_headlin
     # hand-edited file must not be able to inject markup into the title.
     ("the session in the title and funnel", {"status": "ok", "session": "2026-09-04<b>x</b>",
                                              "bursts": 1, "gated": 1}, "2026-09-04<b>x</b>"),
+    # The scorecard's three text leaves. Every one is read off docs/data.json
+    # by the morning pass and written into it by an earlier run, which is the
+    # same provenance as the streak leaves the round-10 sweep found unescaped:
+    # a hand-edited or truncated snapshot is the shape that reaches them.
+    ("the ticker in the settled scorecard",
+     {"status": "ok", "session": "2026-09-04", "bursts": 1, "gated": 1,
+      "settled": [{"ticker": "AA<b>x</b>", "session": "2026-08-31", "score": 8.4,
+                   "verdict": "A", "horizon": 1, "ret": 3.2, "ret_from_open": 2.1,
+                   "universe": 0.4, "universe_from_open": 0.3}]},
+     "AA<b>x</b>"),
+    ("the burst session in the settled scorecard",
+     {"status": "ok", "session": "2026-09-04", "bursts": 1, "gated": 1,
+      "settled": [{"ticker": "AAA", "session": "2026-08-31<i>y</i>", "score": 8.4,
+                   "verdict": "A", "horizon": 1, "ret": 3.2, "ret_from_open": 2.1,
+                   "universe": 0.4, "universe_from_open": 0.3}]},
+     "2026-08-31<i>y</i>"),
+    # The verdict is the SCORING MODEL's word, kept in the record and read
+    # back a session later -- the same argument that escapes `reason` in a row.
+    ("the verdict in the settled scorecard",
+     {"status": "ok", "session": "2026-09-04", "bursts": 1, "gated": 1,
+      "settled": [{"ticker": "AAA", "session": "2026-08-31", "score": 8.4,
+                   "verdict": "A<em>z</em>", "horizon": 1, "ret": 3.2, "ret_from_open": 2.1,
+                   "universe": 0.4, "universe_from_open": 0.3}]},
+     "A<em>z</em>"),
 ])
 def test_every_free_text_leaf_reaches_the_reader_whole(where, stats, must_read):
     html = build_html([], "evening", stats)
@@ -1573,6 +1739,106 @@ def test_every_free_text_leaf_a_row_carries_reaches_the_reader_whole(
     html = build_html(rows, run_type, stats)
     assert must_read in _visible_text(html), where
     assert must_read not in html, f"{where}: the raw text is in the source, so it was not escaped"
+
+
+#: One entry of the scorecard, in the shape src.ledger.settled_rows() writes.
+def _settled(**over):
+    return {"ticker": "AAA", "session": "2026-08-31", "score": 8.4, "verdict": "A",
+            "horizon": 1, "ret": 3.2, "ret_from_open": 2.1, "universe": 0.4,
+            "universe_from_open": 0.3, **over}
+
+
+@pytest.mark.parametrize("state, settled", [
+    ("a run from before the block existed", None),
+    ("a run whose fill moved nothing", []),
+])
+def test_a_mail_with_nothing_settled_says_nothing_about_settling(state, settled):
+    """ABSENT, not "no picks settled". The first four nights of any record
+    settle nothing at all -- and every night's fill can move nothing -- so a
+    sentence saying so would be a line the reader learns to skip, which is the
+    rule the refusals line, the duplicate-bar line and the stopped-printing
+    line all follow. A snapshot from before the block existed is the same
+    silence, in the other direction: it is not a night on which the earlier
+    picks returned zero."""
+    stats = dict(DATED) if settled is None else dict(DATED, settled=settled)
+
+    text = _visible_text(build_html([], "evening", stats))
+
+    assert "settle" not in text.lower(), (state, text)
+    assert emailer.BASIS_CLOSE not in text and emailer.BASIS_OPEN not in text
+
+
+def test_the_scorecard_puts_one_basis_in_each_column_with_its_own_alternative():
+    """What the earlier picks did, under the funnel: the pick's return and the
+    universe's for the same session, at the same horizon, ON THE SAME BASIS.
+    A close-basis figure under an open-basis heading is the one thing the
+    page's single-basis control exists to prevent, and a table says it per
+    column instead -- so every number here is distinct, and each has to land
+    under the heading that names its own basis."""
+    stats = dict(DATED, settled=[_settled(ret=3.2, ret_from_open=2.1,
+                                          universe=0.4, universe_from_open=0.3)])
+
+    html = build_html([], "evening", stats)
+    text = _visible_text(html)
+
+    assert f"Settled by the {DATED['session']} scan" in text
+    assert "AAA 2026-08-31 8.4/10 A +1d +3.20% universe +0.40% +2.10% universe +0.30%" in text
+    close = html.index(emailer.BASIS_CLOSE)
+    openbasis = html.index(emailer.BASIS_OPEN)
+    assert close < openbasis, "the columns are in the page's own order"
+    # Each pair is inside its own cell, which is what "one basis per column"
+    # means in a table a mail client lays out.
+    cells = re.findall(r"<td[^>]*>(.*?)</td>", html, re.S)
+    assert any("+3.20%" in cell and "+0.40%" in cell and "+2.10%" not in cell for cell in cells)
+    assert any("+2.10%" in cell and "+0.30%" in cell and "+3.20%" not in cell for cell in cells)
+
+
+def test_the_scorecard_prints_an_em_dash_for_a_number_the_record_does_not_hold():
+    """A pick whose open lay outside its own bar has no open basis ever, and a
+    session whose rung was never measured has no universe figure: neither is a
+    return of zero, and neither may be printed as one. The em dash is the
+    page's own word for it."""
+    stats = dict(DATED, settled=[_settled(horizon=3, ret=-1.5, ret_from_open=None,
+                                          universe=None, universe_from_open=None)])
+
+    text = _visible_text(build_html([], "evening", stats))
+
+    assert "AAA 2026-08-31 8.4/10 A +3d -1.50% universe — — universe —" in text
+    assert "0.00%" not in text, "a number the record does not hold is not a zero"
+
+
+def test_a_settled_pick_with_no_score_on_record_is_not_given_one():
+    """`score` and `verdict` are what the row carried the night it was made,
+    and a row that carries neither -- a truncated or hand-edited record --
+    must print the em dash rather than the 0.0/10 a fabricated number would
+    read as. Neither half is invented from the other: a row with a verdict
+    and no score prints the verdict alone."""
+    stats = dict(DATED, settled=[_settled(score=None, verdict=None)])
+
+    text = _visible_text(build_html([], "evening", stats))
+
+    assert "AAA 2026-08-31 — +1d" in text, text
+    assert "0.0/10" not in text and "/10" not in text
+
+    verdict_only = dict(DATED, settled=[_settled(score=None)])
+    assert "AAA 2026-08-31 A +1d" in _visible_text(build_html([], "evening", verdict_only))
+
+
+def test_the_morning_prints_the_scorecard_of_the_run_it_follows():
+    """The same block, the same words, off the snapshot: a scorecard in the
+    evening mail and not in the morning one is the two-vocabularies shape one
+    mail over, which is how stopped_printing came to be on the page and not in
+    this mail."""
+    entry = _settled(horizon=5, ret=6.0, ret_from_open=5.4)
+    stats = dict(DATED, settled=[entry])
+
+    evening = _visible_text(build_html([], "evening", stats))
+    morning = _visible_text(build_html([], "morning", stats))
+    row = "AAA 2026-08-31 8.4/10 A +5d +6.00% universe +0.40% +5.40% universe +0.30%"
+
+    assert row in evening and row in morning
+    assert f"Settled by the {DATED['session']} scan" in morning, (
+        "the heading names the run that settled these, not 'last night'")
 
 
 def test_the_checklist_lines_are_escaped_line_by_line():
@@ -1839,6 +2105,27 @@ def test_the_email_says_how_many_bars_the_feed_repeated_and_nothing_when_none(re
      "12 asked, 12 answered, 12 with a bar for 2026-09-07, 1 bar dropped as a duplicate"),
     ({"requested": 12, "with_bars": 12, "fresh": 12, "session": "2026-09-07",
       "duplicate_bars": 0},
+     "12 asked, 12 answered, 12 with a bar for 2026-09-07"),
+    # How many of the names that carried the session could actually be
+    # MEASURED for it -- a different number, since a name with a bar for the
+    # session and none for the session before it has one and cannot be read.
+    # The notice is the surface an operator has on the night a scan dies, and
+    # this is the count that tells a blind night from a quiet one.
+    ({"requested": 12, "with_bars": 12, "fresh": 12, "measured": 0,
+      "session": "2026-09-07"},
+     "12 asked, 12 answered, 12 with a bar for 2026-09-07, 0 of those measured"),
+    ({"requested": 12, "with_bars": 12, "fresh": 12, "measured": 11,
+      "session": "2026-09-07"},
+     "12 asked, 12 answered, 12 with a bar for 2026-09-07, 11 of those measured"),
+    # Absent is absent, and "none with a bar" already says the measurement is
+    # zero: one fact is not stated twice.
+    ({"requested": 12, "with_bars": 12, "fresh": 12, "session": "2026-09-07"},
+     "12 asked, 12 answered, 12 with a bar for 2026-09-07"),
+    ({"requested": 12, "with_bars": 12, "fresh": 0, "measured": 0,
+      "session": "2026-09-07"},
+     "12 asked, 12 answered, none with a bar for 2026-09-07"),
+    ({"requested": 12, "with_bars": 12, "fresh": 12, "measured": "0",
+      "session": "2026-09-07"},
      "12 asked, 12 answered, 12 with a bar for 2026-09-07"),
 ])
 def test_the_coverage_phrase_says_what_the_scan_reached_and_no_more(coverage, expected):

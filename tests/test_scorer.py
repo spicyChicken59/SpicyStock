@@ -16,12 +16,14 @@ from __future__ import annotations
 
 import inspect
 import json
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from src import ledger
+from src.lynch import evaluate_2lynch
 from src.scanner import Candidate, ScanConfig, detect_setup
 from src.scorer import (
     KNOWLEDGE_PATH,
@@ -183,6 +185,128 @@ def test_render_chart_defaults_into_the_working_directory(ohlcv, tmp_path):
     assert (tmp_path / "charts" / "AAA.png").exists()
 
 
+
+def test_a_bar_missing_one_field_is_a_gap_in_the_picture_not_no_picture(ohlcv, tmp_path):
+    """One NaN in an OHLC column used to lose the chart entirely.
+
+    mplfinance refuses a frame whose O, H, L and C do not have the same
+    amount of missing data -- "ValueError: O,H,L,C must have the same amount
+    of missing data!", reproduced on each of the four columns -- and
+    src.pipeline catches that, records `chart_seen` false and scores the
+    candidate on the numbers alone, which knowledge/strategy.md tells the
+    model to trust LESS than the picture. One unreadable bar in eighty-five
+    is a gap in the picture; it is not a reason to show no picture. NaN
+    Volume renders either way and is asserted here so the rule is the one
+    mplfinance actually has.
+    """
+    out = tmp_path / "charts"
+    for column in ("Open", "High", "Low", "Close", "Volume"):
+        frame = ohlcv("burst").copy()
+        frame.iloc[-10, frame.columns.get_loc(column)] = float("nan")
+        path = Path(render_chart(f"H{column}", frame, out_dir=str(out)))
+        data = path.read_bytes()
+        assert data.startswith(PNG_MAGIC) and len(data) > 20_000, column
+
+
+def _plot_spy(monkeypatch, seen):
+    class _Spy:
+        @staticmethod
+        def plot(df, **kwargs):
+            seen["rows"] = len(df)
+            seen["index"] = df.index
+            seen["frame"] = df
+            Path(kwargs["savefig"]["fname"]).write_bytes(PNG_MAGIC + b"x" * 32)
+
+    monkeypatch.setitem(sys.modules, "mplfinance", _Spy)
+
+
+def test_the_chart_keeps_eighty_five_readable_bars_rather_than_eighty_five_rows(ohlcv,
+                                                                               tmp_path,
+                                                                               monkeypatch):
+    """Eighty-five sessions a reader can read, and the holes between them.
+
+    The tail is taken over the READABLE bars, so a night with holes still
+    shows eighty-five candles -- counting rows instead would quietly shorten
+    the picture by however many holes the last eighty-five carried, which is
+    the reading the model is asked to trust most.
+    """
+    seen = {}
+    _plot_spy(monkeypatch, seen)
+    frame = ohlcv("burst").copy()
+    assert len(frame) > 95, "precondition: more history than the chart shows"
+    for offset in (5, 30, 70):
+        frame.iloc[-offset, frame.columns.get_loc("High")] = float("nan")
+    # ...and a bar whose Volume alone the feed lost keeps its candle: it has
+    # one to draw and mplfinance renders it, so blanking on Volume would put
+    # a gap where the reader can otherwise see a session.
+    frame.iloc[-12, frame.columns.get_loc("Volume")] = float("nan")
+
+    render_chart("AAA", frame, out_dir=str(tmp_path))
+    drawn = seen["frame"].dropna(subset=["Open", "High", "Low", "Close"])
+    assert len(drawn) == 85
+    assert frame.index[-12] in drawn.index
+    for offset in (5, 30, 70):
+        assert frame.index[-offset] in seen["index"], (
+            "the session is missing from the picture rather than blank in it")
+
+
+def test_a_hole_is_a_gap_in_the_picture_and_not_a_splice(ohlcv, tmp_path):
+    """The word "gap" has to be true of the PNG, and it was not.
+
+    Dropping the row answers mplfinance's refusal and draws the neighbours
+    adjacent, because nothing asks it to keep a slot for a date it was not
+    given: rendered under one ticker, the chart of a frame with a holed bar
+    was byte-identical to the chart of a frame in which that session had been
+    DELETED -- so the picture could not tell a hole from a session that never
+    happened, on the surface knowledge/strategy.md tells the model to trust
+    MOST. Blanking all four price columns is what mplfinance's equal-missing
+    rule wants and leaves the slot empty, which is what the word means.
+
+    The identity is the assertion, because "a PNG was produced" passes either
+    way -- which is why the two chart tests of the round that wrote the word
+    did not see this.
+    """
+    frame = ohlcv("burst").copy()
+    hole = len(frame) - 40
+    holed = frame.copy()
+    holed.iloc[hole, holed.columns.get_loc("High")] = float("nan")
+    spliced = frame.drop(frame.index[hole])
+
+    gap = Path(render_chart("AAA", holed, out_dir=str(tmp_path / "gap"))).read_bytes()
+    splice = Path(render_chart("AAA", spliced, out_dir=str(tmp_path / "splice"))).read_bytes()
+
+    assert gap.startswith(PNG_MAGIC) and len(gap) > 20_000
+    assert gap != splice, (
+        "the hole is drawn as a splice: the picture of a session that "
+        "happened and could not be read is the picture of one that did not")
+
+
+def test_the_chart_ends_on_the_bar_the_checklist_grades(ohlcv, tmp_path, monkeypatch):
+    """One request, one bar -- the rule the metrics block and the checklist
+    both follow, on the third surface in the same request.
+
+    render_chart() blanks a bar missing one of O, H, L or C, and Volume is
+    deliberately not in that set because a NaN there renders. That leaves one
+    column: a NEWEST bar carrying prices and no volume draws a candle for a
+    session `evaluate_2lynch()` is not grading and every number in the
+    request describes the session before. src.scanner refuses such a
+    candidate, so no run has published one; the rule is here because the
+    rulebook's sentence about reading the chart beside `H` is unconditional.
+    """
+    seen = {}
+    _plot_spy(monkeypatch, seen)
+    frame = ohlcv("burst").copy()
+    frame.iloc[-1, frame.columns.get_loc("Volume")] = float("nan")
+    graded = evaluate_2lynch(frame)
+    assert (graded["checks"]["H_close_near_high"]
+            == evaluate_2lynch(frame.iloc[:-1])["checks"]["H_close_near_high"]), (
+        "precondition: the checklist really is grading the earlier bar")
+
+    render_chart("AAA", frame, out_dir=str(tmp_path))
+
+    assert seen["index"][-1] == frame.index[-2]
+
+
 # ----------------------------------------------------------- the request ----
 
 
@@ -301,11 +425,11 @@ def test_a_transport_failure_retries_the_request_it_already_had(candidate, claud
 
 def test_the_knowledge_base_is_sent_as_a_cacheable_block(candidate, claude):
     """knowledge/strategy.md is byte-identical on every call of a run and is
-    64% of each request -- measured at ~2,040 system tokens against ~430 of
+    73% of each request -- measured at ~3,120 system tokens against ~460 of
     metrics and ~721 for an 869x622 chart. Without cache_control the run paid
     full price to send the same document up to MAX_TO_SCORE times a night; a
     write costs 1.25x and a read 0.1x, so break-even is the second call (1.28)
-    and a full night is 46% cheaper.
+    and a full night is 54% cheaper.
 
     Asserted on the block, because the saving is invisible from inside the run
     -- the reply is identical either way -- and nothing else here would notice
@@ -702,10 +826,19 @@ def test_the_fallback_never_scores_above_the_rubrics_own_anchor(candidate):
     """knowledge/strategy.md anchors the pass count: "6/6 ~ 8-10, 5/6 ~ 7-8,
     4/6 ~ 5-7, 3/6 ~ 3-5". `passes / total * 10` put 5/6 at 8.3 -- above the
     top of its band -- and 6/6 at a flat 10.0, the maximum of the whole scale,
-    for a candidate no model looked at."""
-    anchor_low = {3: 3.0, 4: 5.0, 5: 7.0, 6: 8.0}
-    for passes, low in anchor_low.items():
-        assert _fallback_score(make_lynch(passes)) == low
+    for a candidate no model looked at.
+
+    The four anchors themselves used to be a dict typed out here, which is a
+    THIRD copy of them beside the map and the rulebook and agrees with
+    whichever it was typed from. They are asserted against the rulebook's own
+    sentence in tests/test_docs_are_true.py's
+    test_the_fallback_anchors_are_the_rubrics_own_bands; what is left here is
+    what that parse cannot say -- that the map never rises with fewer checks
+    passed, and never reaches the top of the scale for a candidate nobody
+    looked at.
+    """
+    scores = [_fallback_score(make_lynch(passes)) for passes in range(7)]
+    assert scores == sorted(scores), f"a worse checklist scores better: {scores}"
     assert _fallback_score(make_lynch(6)) < 10.0
 
 
@@ -767,7 +900,12 @@ def test_the_record_reaches_the_model_under_the_names_the_rulebook_uses():
 
     assert payload == {"setup_day": 3, "setup_unknown_reason": None,
                        "seen_before": 2, "last_seen": "2026-09-01",
-                       "last_score": 7.5, "last_outcome": "scored"}
+                       "last_score": 7.5, "last_outcome": "scored",
+                       # The record's own span, which is what any absence
+                       # claim above is worth: an unknown over one session is
+                       # not an unknown over two hundred, and the human has
+                       # had this pair in _no_day_note() since step 10.
+                       "history_sessions": 22, "history_from": "2026-08-03"}
 
 
 def test_a_record_that_cannot_answer_is_an_unknown_and_never_a_day_one():
@@ -778,7 +916,51 @@ def test_a_record_that_cannot_answer_is_an_unknown_and_never_a_day_one():
 
     assert payload["setup_day"] is None
     assert payload["setup_unknown_reason"] == "history_unreadable"
-    assert payload["seen_before"] == 0
+    # And the same rule one field over, which this test used to PIN the
+    # opposite of: unknown_streak()'s `seen_before` is a placeholder, not a
+    # reading, so "0 earlier sightings" over a file that could not be opened
+    # is the confident sentence the day number is forbidden to make. The
+    # rendered surfaces never showed it -- _no_day_note() prints no number in
+    # this branch -- and only the model was handed the fabrication.
+    assert payload["seen_before"] is None
+
+
+def test_a_run_that_computed_no_record_block_says_so_rather_than_falling_silent():
+    """The fifth state, and the one the tool that talks to the live endpoint
+    sends: tools/live_check.py scores a candidate with no streak at all.
+
+    A null day with a null reason is a shape knowledge/strategy.md says cannot
+    exist -- it promises that a null `setup_day` always travels with one of
+    the reasons it names -- and it is what every caller without `streaks=`
+    produced. src.emailer's NO_STREAK_BLOCK and docs/index.html's streakText()
+    have said this state in words since step 10, for the reason the comment
+    beside them gives: a block that says which kind of unknown it is can be
+    rendered, an absence cannot.
+    """
+    payload = record_context(None)
+
+    assert payload["setup_day"] is None
+    assert payload["setup_unknown_reason"] == ledger.NO_STREAK_RECORDED
+    assert payload["seen_before"] is None, "a record nobody asked counted nothing"
+    assert payload["history_sessions"] is None and payload["history_from"] is None
+
+
+def test_the_unknowns_whose_count_is_a_reading_keep_it():
+    """The inverse, and the reason the rule is keyed on the WORD rather than
+    on "the day is null": window_not_covered is the state every candidate is
+    in on the first scheduled night, and its `seen_before` is a genuine
+    len(prior) over a record that was read. Nulling it there would answer
+    "the record could not be counted" over a file this run counted.
+    """
+    history = [{"candidates": [{"ticker": "AAA", "date": "2026-09-03",
+                                "score": 7.0, "verdict": "B"}], "gated": []}]
+    block = ledger.streaks(history, ["AAA"], "2026-09-04")["AAA"]
+    assert block["unknown_reason"] == ledger.WINDOW_NOT_COVERED, "precondition"
+
+    payload = record_context(block)
+    assert payload["setup_day"] is None
+    assert payload["seen_before"] == 1
+    assert payload["history_sessions"] == 1, "and what that count is over"
 
 
 @pytest.mark.parametrize("streak", [None, [], "day 2", 3, {"day": "3"}, {"day": True}])
@@ -888,6 +1070,79 @@ def test_a_previous_session_denominator_is_named_as_one():
     basis = volume_ratio_basis(cand)
     assert "PREVIOUS SESSION" in basis
     assert "not a trailing average" in basis
+
+
+def test_an_average_rounded_to_a_share_still_reproduces_its_own_ratio():
+    """The two numbers in one payload are rounded from different originals.
+
+    detect_setup() publishes `volume_ratio` as round(volume / mean, 2) off the
+    UNROUNDED trailing mean and `avg_volume` as round(mean) -- whole shares --
+    so dividing by the archived average lands a cent away whenever the
+    rounding falls badly. 1,611,825 shares over a mean of 137,234.66 is 11.75;
+    over the archived 137,235 it is 11.74. An exact comparison then told the
+    model "a baseline of about 137,177 shares, which the scanner did not name"
+    with `avg_volume: 137235` in the same block -- a false denial, on the
+    field knowledge/strategy.md keys the Episodic Pivot adjustment off. (That
+    sentence was quoted here and in src/scorer.py as 137,220 for a round:
+    1,611,825 / 11.75 is 137,177, which is the only baseline the function can
+    print on this pair, and "three lines above" was a guess about a payload
+    user_text() serialises with sort_keys.) Measured at about 1 candidate in 8,000 over 200,000
+    plausible volume/average pairs: rare, and not zero, and Tuesday starts
+    writing real rows.
+    """
+    volume, mean = 1_611_825, 137_234.66
+    ratio = round(volume / mean, 2)
+    archived = round(mean)
+    assert round(volume / archived, 2) != ratio, (
+        "this pair no longer straddles the rounding step, so the test cannot fail")
+    cand = _stand_in(volume=volume, avg_volume=float(archived),
+                     prev_volume=900_000, volume_ratio=ratio)
+    basis = volume_ratio_basis(cand)
+    assert "trailing average" in basis and f"{archived:,}" in basis
+    assert "did not name" not in basis
+
+
+def test_the_slack_is_a_step_and_not_a_float_that_is_nearly_one():
+    """The straddle whose gap lands ABOVE 0.01, which is the same defect.
+
+    0.01 is not a double, so the difference between two 2dp numbers one step
+    apart is 0.00999999999999979 at one magnitude and 0.010000000000000009 at
+    another. A bare `<= 0.01` refuses the second, which is a third of the
+    cases the slack exists for: 69 of 209 one-step straddles over two million
+    plausible volume/average pairs. This is that pair, found by searching for
+    it rather than reasoned about.
+    """
+    volume, mean = 380_541, 197_683.618530932
+    ratio, archived = round(volume / mean, 2), round(mean)
+    assert abs(round(volume / archived, 2) - ratio) > 0.01, (
+        "this pair no longer lands above the step, so the test cannot fail")
+    cand = _stand_in(volume=volume, avg_volume=float(archived),
+                     prev_volume=90_000, volume_ratio=ratio)
+    assert "trailing average" in volume_ratio_basis(cand)
+
+
+def test_one_rounding_step_of_slack_does_not_let_yesterday_pose_as_the_average():
+    """Why the tolerance is one step and not two.
+
+    The average is tried first, so widening the slack costs exactly this: a
+    ratio the PREVIOUS SESSION produced, over a candidate whose trailing
+    average happens to sit a few hundredths away, would be reported as the
+    trailing average -- the mislabel this whole function exists to end, since
+    a one-day denominator is inflated by precisely the quiet day the setup
+    screens for. The average here is TWO steps out and the previous session is
+    exact, which is the smallest gap that separates one step of slack from
+    two: at 0.05 the widening-to-two-steps mutant survived.
+    """
+    volume = 3_000_000
+    cand = _stand_in(volume=volume, prev_volume=1_000_000, volume_ratio=3.0,
+                     avg_volume=volume / 3.02)
+    assert round(volume / cand.avg_volume, 2) == 3.02, "the precondition moved"
+    basis = volume_ratio_basis(cand)
+    # The previous-session sentence says "not a trailing average", so the
+    # phrase alone cannot tell the two branches apart -- what does is which
+    # number is named as the denominator.
+    assert "PREVIOUS SESSION" in basis and f"{cand.prev_volume:,}" in basis
+    assert f"{cand.avg_volume:,.0f}" not in basis
 
 
 def test_an_unrecognised_denominator_is_admitted_to_rather_than_guessed():

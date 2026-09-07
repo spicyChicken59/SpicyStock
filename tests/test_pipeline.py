@@ -32,6 +32,7 @@ from src import ledger
 from src import lynch
 from src import pipeline
 from src import scanner
+from src import scorer
 from src.scanner import ScanConfig
 from src.scorer import render_chart
 from tests.test_ledger import contract_violations
@@ -1494,6 +1495,127 @@ def test_the_evening_after_a_market_closure_is_a_night_and_not_twelve_holes(
     assert len(mocked_boundaries["anthropic"].calls) == 12
 
 
+def _blind_market(fake_alpaca, ohlcv, monkeypatch, tmp_path, *, holes: int = 11) -> list[str]:
+    """A universe where every name that carried the session is holed on the
+    session before it, and one halted name proves the market traded it.
+
+    NOT the day-after-a-holiday shape: a closure is a business day NO name
+    printed on, which observed_previous_session() reads off the frames and
+    measures across. Here HALTED printed on it and then stopped, so the
+    disproof fires, the arithmetic stands, and every other frame is a hole.
+    That is a night the feed answered for every symbol and not one answer
+    could be measured -- the class round 10 removed one instance of."""
+    names = [f"H{letter}" for letter in "ABCDEFGHIJKLMNOP"[:holes]]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("burst", variant=i), gap_before_session=True)
+    fake_alpaca.add_history("HALT", ohlcv("flat", variant=90), stale_sessions=1)
+    names.append("HALT")
+    _universe_file(monkeypatch, tmp_path, names)
+    return names
+
+
+def test_a_blind_night_records_what_it_measured_and_no_surface_calls_it_a_quiet_market(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """Reproduced end to end before any of this existed: exit 2, `bursts: 0`,
+    a null floor, and a record whose only account of the night was a degraded
+    sentence -- while the funnel printed "4% bursts found: 0" with nothing
+    between it and the universe, and the page captioned the whole cut "no 4%
+    gain on the day". A blind night described as a quiet market, on every
+    surface a person reads and in the file a later run reads."""
+    _blind_market(fake_alpaca, ohlcv, monkeypatch, tmp_path)
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, report=report)
+
+    assert report.exit_code == pipeline.EXIT_DEGRADED
+    data = clean(tmp_path)
+    assert data["run"]["bursts"] == 0, "the premise: nothing was found"
+    assert data["run"]["coverage"]["with_bars"] == 12
+    assert data["run"]["coverage"]["measured"] == 0, (
+        "twelve names answered and not one of them could be measured")
+    # AND WHY, in the counts the block promises. `stale` and `gapped` are maps
+    # in the scanner and counts here, and only `stale` was ever asserted: the
+    # copy of `gapped` could be dropped from scan_coverage()'s loop with the
+    # whole suite green, taking a field README and the published contract both
+    # list off the run block and out of the failure notice.
+    assert (data["run"]["coverage"]["gapped"], data["run"]["coverage"]["stale"]) == (11, 1), (
+        "eleven holed on the session before, one halted -- the two ways a name "
+        "that answered could not be measured")
+    assert data["run"]["liquidity"] == {"pctile": 30.0, "floor": None, "over": 0, "refused": 0}, (
+        "a null floor beside `over: 0` is 'nothing could be ranked', not 'the rule is off'")
+    assert recorded(tmp_path)["runs"][0]["measured"] == 0, (
+        "the one number a later run has to be able to read")
+
+    (sent,) = mocked_boundaries["resend"].sent
+    text = _visible(sent["html"])
+    assert "Measured for the session: 0 of 12 that answered" in text, text
+    assert "quiet market" not in text, text
+    # The cell itself defers to the band here, which is round 10's rule and
+    # the right one: measuring nothing always degrades the run with a `scan`
+    # problem, so the reasons are listed above it. What was missing was the
+    # COUNT -- the funnel went straight from the universe to "4% bursts found:
+    # 0" with no line saying none of it had been read.
+    assert "this is not a statement about the market" in text
+    assert "4% bursts found: 0" in text
+
+
+def test_a_night_that_measured_most_of_itself_says_which_names_it_is_talking_about(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The THIN night, which is the ordinary one: a couple of halted names is
+    under every degrade threshold, so the run is clean, the band is empty and
+    the empty-table cell is the only thing explaining itself -- and it said
+    "No 4% burst anywhere in the universe today", an overclaim of exactly the
+    blind night's shape, one step down. It names the population it measured
+    now, and the funnel carries the cut."""
+    names = [f"Q{letter}" for letter in "ABCDEFGHIJK"]
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, ohlcv("flat", variant=i))
+    fake_alpaca.add_history("HALT", ohlcv("flat", variant=90), stale_sessions=1)
+    _universe_file(monkeypatch, tmp_path, names + ["HALT"])
+
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, report=report)
+
+    assert report.exit_code == pipeline.EXIT_OK, report.errors
+    assert clean(tmp_path)["run"]["coverage"]["measured"] == 11
+    text = _visible(mocked_boundaries["resend"].sent[0]["html"])
+    assert "Measured for the session: 11 of 12 that answered" in text
+    assert "No 4% burst among the 11 names measured for this session; the other 1 " \
+           "that answered could not be." in text
+    assert "anywhere in the universe" not in text
+
+
+def test_a_blind_nights_benchmark_stays_pending_when_the_next_scan_could_fill_it(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """The rung is "what the whole universe made that session", stamped with
+    the floor the run applied -- and a blind night applied none, because it
+    had nothing to rank. Filled anyway, its block was stamped `liquidity_floor:
+    null`, which every surface reads as "before the floor reached the
+    benchmark, or a night rule 6 was off": a cause that is not this one, and
+    permanent, since a measured horizon keeps its value. Driven over two
+    nights, the second one seeing."""
+    names = _blind_market(fake_alpaca, ohlcv, monkeypatch, tmp_path)
+    blind_session = session_offset(-1)
+    monkeypatch.setenv("SCAN_SESSION_DATE", blind_session)
+    pipeline.run("evening", dry_run=True, report=pipeline.RunReport())
+    assert recorded(tmp_path)["runs"][0]["measured"] == 0, "the premise: a blind night"
+
+    # The next evening, over the same universe with the holes filled in: this
+    # scan carries the blind session in every frame, so the fill can reach it.
+    for i, name in enumerate(names[:-1]):
+        fake_alpaca.add_history(name, ohlcv("flat", variant=i))
+    monkeypatch.delenv("SCAN_SESSION_DATE")
+    pipeline.run("evening", dry_run=True, report=pipeline.RunReport())
+
+    runs = {r["date"]: r for r in recorded(tmp_path)["runs"]}
+    assert set(runs) == {blind_session, session_offset(0)}
+    assert runs[blind_session]["benchmark"] == ledger.empty_benchmark(), (
+        "a night that measured nothing gets no alternative measured for it")
+
+
 def test_a_nan_on_the_session_bar_does_not_publish_yesterdays_burst_under_tonights_date(
     monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
@@ -1644,6 +1766,42 @@ def test_a_run_records_the_rules_it_applied_and_the_record_reads_them_back(
     assert view["current"] == rules
 
 
+def test_the_fingerprint_says_which_SCORER_made_a_row_and_not_only_which_screener(
+    tmp_path, monkeypatch
+):
+    """`evidence.by_score`, `top_score` and the separation sentence all average
+    SCORES, and until round 11 nothing in the record said which scorer made
+    them.
+
+    Measured rather than argued, which is what put this here: the commit that
+    moved the record block in front of the model changed every scoring request
+    in the file -- six new payload keys and a rewritten system prompt -- and
+    left this fingerprint byte-identical, so a record spanning that change
+    would have reported one screener while the page's own note stayed hidden.
+    Both halves are derived: the system prompt by digest, the record keys off
+    src.scorer's own tuple.
+    """
+    before = pipeline.rules_fingerprint()
+    assert before["score.record_keys"] == [name for name, _key in scorer.RECORD_KEYS], (
+        "derived from the payload the model is handed, not retyped here")
+
+    edited = tmp_path / "strategy.md"
+    edited.write_text(scorer.KNOWLEDGE_PATH.read_text() + "\nWeight tight bases up.\n")
+    monkeypatch.setattr(pipeline, "KNOWLEDGE_PATH", edited)
+    after = pipeline.rules_fingerprint()
+
+    assert after["score.prompt"] != before["score.prompt"], (
+        "the rulebook changed and the fingerprint did not")
+    assert ({k: v for k, v in after.items() if not k.startswith("score.")}
+            == {k: v for k, v in before.items() if not k.startswith("score.")}), (
+        "and nothing about what a BURST is moved with it")
+
+    # And the inverse, on the half a digest cannot show: a seventh record key
+    # is in the fingerprint the moment src.scorer names it.
+    monkeypatch.setattr(pipeline, "RECORD_KEYS", (*scorer.RECORD_KEYS, ("last_chart", "chart")))
+    assert "last_chart" in pipeline.rules_fingerprint()["score.record_keys"]
+
+
 def test_a_record_written_under_two_screeners_says_so_and_names_what_moved(tmp_path):
     """The state this exists for. Two runs, one threshold apart, and a third
     from before the fingerprint existed: the record must not report the third
@@ -1670,6 +1828,47 @@ def test_a_record_written_under_two_screeners_says_so_and_names_what_moved(tmp_p
     same = [dict(runs[1], date="2026-09-03"), runs[1], dict(runs[1], date="2026-08-30")]
     steady = ledger.rules_view(same)
     assert steady["sets"] == 1 and steady["differ"] == [] and steady["runs_without"] == 0
+
+
+def test_a_number_the_earlier_runs_never_recorded_is_not_reported_as_one_that_moved(tmp_path):
+    """A key ADDED to the fingerprint read as a change, on the real record.
+
+    `differ` was computed with `block.get(key)`, so a key one block does not
+    carry (None) was indistinguishable from a key whose value moved -- and
+    round 11 added three, one of which (`window.volume_norm_sessions`, C's
+    volume average) was named under an explicit no-behaviour-change claim,
+    both fixtures regenerating byte-identically. Reproduced against
+    docs/ledger.json's own 4 Sep run: prepending this commit's fingerprint
+    gave differ ['score.prompt', 'score.record_keys',
+    'window.volume_norm_sessions'], and the page's renderRulesNote() publishes
+    that as "What moved: ...". The number did not move; the record's sight of
+    it did.
+
+    `runs_without` already draws this distinction one level up -- a whole
+    missing block is counted apart and must not be read as agreement -- and
+    the key level was left short.
+    """
+    older = {"scan.min_gain_pct": 4.0, "gate.min_lynch_passes": 3}
+    newer = dict(older, **{"window.volume_norm_sessions": 50})
+    runs = [
+        {"date": "2026-09-02", "type": "evening", "candidates": [], "gated": [], "rules": newer},
+        {"date": "2026-09-01", "type": "evening", "candidates": [], "gated": [], "rules": older},
+    ]
+
+    view = ledger.rules_view(runs)
+
+    assert view["differ"] == [], (
+        "a key the earlier run never recorded is not a key that moved")
+    assert view["unshared"] == ["window.volume_norm_sessions"], (
+        "and it is reported, counted apart, rather than dropped")
+
+    # The inverse, on the same shape: a key both blocks DO carry, whose value
+    # differs, is still named -- so the split cannot be satisfied by reporting
+    # nothing at all.
+    moved = [dict(runs[0]), {**runs[1], "rules": dict(older, **{"scan.min_gain_pct": 5.0})}]
+    moved_view = ledger.rules_view(moved)
+    assert moved_view["differ"] == ["scan.min_gain_pct"]
+    assert moved_view["unshared"] == ["window.volume_norm_sessions"]
 
 
 def _universe_file(monkeypatch, tmp_path, names) -> None:
@@ -3313,10 +3512,11 @@ def test_a_second_run_keeps_the_first_and_fills_its_forward_returns(
         "d3": want["from_open"]["d3"], "d5": want["from_open"]["d5"]}, (
         "the open basis fills the same way: the recorded horizon kept, the rest measured")
     assert book["runs"][1]["forward_returns"] == {
-        "d1": first["forward_returns"]["d1"], "d3": want["d3"], "d5": want["d5"],
-        "n": 1, "rows": 1,
-        "from_open": {"d1": first["forward_returns"]["from_open"]["d1"],
-                      "d3": want["from_open"]["d3"], "d5": want["from_open"]["d5"], "n": 1}}
+        "d1": first["forward_returns"]["d1"], "n1": 1, "d3": want["d3"], "n3": 1,
+        "d5": want["d5"], "n5": 1, "n": 1, "rows": 1,
+        "from_open": {"d1": first["forward_returns"]["from_open"]["d1"], "n1": 1,
+                      "d3": want["from_open"]["d3"], "n3": 1,
+                      "d5": want["from_open"]["d5"], "n5": 1, "n": 1}}
     assert clean(tmp_path)["runs"][1]["forward_returns"]["d5"] == want["d5"], (
         "and the dashboard reads the same history")
 
@@ -3349,9 +3549,9 @@ def test_todays_candidates_are_published_pending_rather_than_guessed(
     data = clean(tmp_path)
     assert all(c["forward_returns"] == ledger.empty_returns() for c in data["candidates"]), (
         "pending on both bases")
-    assert data["runs"][0]["forward_returns"] == {"d1": None, "d3": None, "d5": None,
-                                                  "n": 0, "rows": 0,
-                                                  "from_open": {"d1": None, "d3": None, "d5": None, "n": 0}}
+    assert data["runs"][0]["forward_returns"] == {
+        "d1": None, "n1": 0, "d3": None, "n3": 0, "d5": None, "n5": 0, "n": 0, "rows": 0,
+        "from_open": {"d1": None, "n1": 0, "d3": None, "n3": 0, "d5": None, "n5": 0, "n": 0}}
     assert len(mocked_boundaries["alpaca"].bar_requests) == 1, (
         "and no second request was made for returns that cannot exist")
 
@@ -3404,6 +3604,14 @@ def test_the_ledger_row_is_the_judgement_next_to_what_followed_it(
     # criterion -- are justified by being evaluable later, and until this key
     # was kept there was nowhere for that evidence to accumulate.
     assert {"consecutive_up_days", "worst_base_day_pct"} <= set(row["context"])
+    # And the burst BAR's own shape, since round 11: the record is where a
+    # gapped burst and a wide-range burst can be told apart afterwards, and
+    # the payload that carried neither carried nothing to tell them apart in
+    # the archive either. Derived from src.lynch, not retyped, so a fourth
+    # measurement fails here on the commit that adds it.
+    assert set(lynch.BURST_BAR_KEYS) <= set(row["context"])
+    assert all(row["context"][key] is not None for key in lynch.BURST_BAR_KEYS), (
+        "the double's burst bar is a readable one, so nothing here is unmeasurable")
     assert all(v is None or isinstance(v, (int, float)) for v in row["context"].values())
 
 
@@ -4768,6 +4976,14 @@ def _run_field(**over):
     return lambda d: d["run"].update(over)
 
 
+def _settled(**over):
+    """One run.settled entry in the shape src.ledger.settled_rows() writes,
+    with the field under test replaced."""
+    return {"ticker": "AAA", "session": "2026-09-04", "score": 8.5, "verdict": "buy",
+            "horizon": 1, "ret": 3.2, "ret_from_open": 2.1, "universe": 0.4,
+            "universe_from_open": 0.3, **over}
+
+
 MALFORMED_SNAPSHOTS = {
     # name: (mutation, the refusal's words -- or False when the shape is tolerated)
     "candidates are strings": (lambda d: d.update(candidates=["AAPL"]), NOT_A_RUN),
@@ -4911,6 +5127,70 @@ MALFORMED_SNAPSHOTS = {
         _streak(day=None, unknown_reason="no_history", seen_before="3"), "seen_before"),
     "streak.seen_before is a list": (
         _streak(day=None, unknown_reason="no_history", seen_before=[1]), "seen_before"),
+    # run.coverage: how much of the night was READ. Absent is every snapshot
+    # from before the block existed; present, every count in it is a count,
+    # because the page prints a sentence about the market from `measured` and
+    # a string there makes it compare "0" to 0.
+    "coverage is absent": (lambda d: d["run"].pop("coverage", None), False),
+    "coverage is a list": (_run_field(coverage=[228]), "coverage"),
+    "coverage is a string": (_run_field(coverage="228 asked"), "coverage"),
+    "coverage.measured is a string": (
+        _run_field(coverage={"requested": 228, "with_bars": 227, "measured": "0"}), "measured"),
+    "coverage.measured is a bool": (
+        _run_field(coverage={"requested": 228, "with_bars": 227, "measured": True}), "measured"),
+    "coverage.measured is negative": (
+        _run_field(coverage={"requested": 228, "with_bars": 227, "measured": -1}), "measured"),
+    "coverage.with_bars is a string": (
+        _run_field(coverage={"requested": 228, "with_bars": "227", "measured": 0}), "with_bars"),
+    # A scan that died before it had them carries fewer counts, and that is
+    # the shape the failure notice renders: absent is absent, never 0.
+    "coverage holds only what the scan reached": (
+        _run_field(coverage={"requested": 228}), False),
+    "coverage.session is a number": (
+        _run_field(coverage={"requested": 228, "session": 20260908}), "session"),
+    # run.settled: the (row, horizon) pairs this run's fill moved, which both
+    # mails print as percentages beside a ticker and a score. A string where a
+    # return belongs renders "+abc%" -- a fabricated outcome for a real pick,
+    # the class this check exists for, on the newest key in the block.
+    "settled is absent": (lambda d: d["run"].pop("settled", None), False),
+    # The ordinary state of the first four nights of any record, and of every
+    # night whose fill moved nothing: read, not refused.
+    "settled is empty": (_run_field(settled=[]), False),
+    "settled is a string": (_run_field(settled="BURST +1d +3.20%"), "settled"),
+    "settled is a list of strings": (_run_field(settled=["BURST"]), "settled"),
+    "a settled entry has no horizon": (
+        _run_field(settled=[_settled(horizon=None)]), "horizon"),
+    "a settled entry's horizon is a string": (
+        _run_field(settled=[_settled(horizon="1")]), "horizon"),
+    "a settled entry's horizon is a bool": (
+        _run_field(settled=[_settled(horizon=True)]), "horizon"),
+    "a settled entry's ticker is a number": (
+        _run_field(settled=[_settled(ticker=5)]), "settled"),
+    "a settled entry's session is a number": (
+        _run_field(settled=[_settled(session=20260904)]), "session"),
+    "a settled entry's verdict is a list": (
+        _run_field(settled=[_settled(verdict=["buy"])]), "verdict"),
+    "a settled entry's score is a string": (
+        _run_field(settled=[_settled(score="8.5")]), "score"),
+    "a settled entry's ret is a string": (
+        _run_field(settled=[_settled(ret="3.2")]), "ret"),
+    "a settled entry's open-basis ret is a string": (
+        _run_field(settled=[_settled(ret_from_open="2.1")]), "ret_from_open"),
+    "a settled entry's universe is a string": (
+        _run_field(settled=[_settled(universe="0.4")]), "universe"),
+    "a settled entry's open-basis universe is a list": (
+        _run_field(settled=[_settled(universe_from_open=[0.4])]), "universe_from_open"),
+    # A pick whose open lay outside its own bar has no open basis ever, and a
+    # session whose rung was never measured has no universe number: nulls are
+    # what the writer produces for both, and neither is a return of zero.
+    "a settled entry measured on one basis only": (
+        _run_field(settled=[_settled(ret_from_open=None, universe=None,
+                                     universe_from_open=None)]), False),
+    # run.liquidity.over, one field over: the count that tells a null floor's
+    # two causes apart.
+    "liquidity.over is a string": (lambda d: d["run"]["liquidity"].update(over="225"), "over"),
+    "liquidity.over is negative": (lambda d: d["run"]["liquidity"].update(over=-3), "over"),
+    "liquidity.over is absent": (lambda d: d["run"]["liquidity"].pop("over", None), False),
 }
 
 
@@ -5034,6 +5314,166 @@ def test_the_fill_reads_each_horizon_by_its_session_across_every_frame_the_run_f
     assert bench["d1"] is not None, "the whole names still benchmark the session"
     assert bench["below_floor"] == len(names) - len(kept)
     assert bench["n1"] == len(kept) - 1, "every kept name but the holed one, which has no bar on that session"
+
+
+def test_a_published_run_mean_weights_each_horizon_by_the_setups_that_reached_it(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """THE HOLE, end to end. A run's mean carried ONE n for three horizons
+    while the page multiplied every horizon by it, so a name whose frame has
+    a hole two sessions after the burst -- d1 measured, everything after it
+    refused, which is the rule the round-9 fill enforces -- was counted in
+    the +5d weight of a mean it is not in.
+
+    Two names burst on the same session; one of them is missing the session
+    two on, so its d1 is in and its d3 and d5 are not. The published entry's
+    n1 is 2 and its n5 is 1, and the d5 it publishes is the whole name's own
+    return, recomputed here from the frame the double served.
+    """
+    from tests.test_scanner import _thin
+
+    # Volume ten times the usual on both bursts, so the second night's
+    # liquidity floor cannot be what drops either of them: this test is
+    # about a hole.
+    for name in ("BURST", "BRSTB"):
+        fake_alpaca.add_history(name, ohlcv("burst", base_volume=30_000_000.0))
+    names = ["BURST", "BRSTB"]
+    for i, suffix in enumerate("ABCD"):
+        fake_alpaca.add_history(f"Q{suffix}", _thin(ohlcv, "flat", price=40.0 + i,
+                                                    volume=3_000_000, variant=i + 2))
+        names.append(f"Q{suffix}")
+    _universe_file(monkeypatch, tmp_path, names)
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    pipeline.run("evening", dry_run=True)
+    burst_session = recorded(tmp_path)["runs"][0]["date"]
+    assert {c["ticker"] for c in recorded(tmp_path)["runs"][0]["candidates"]} == {"BURST", "BRSTB"}, (
+        "precondition: two setups on the session whose mean this is about")
+
+    # BRSTB is missing the SECOND session after the burst. Not the one
+    # before tonight's -- that is the scan's own gap rule, a different
+    # session and a different defect -- so the scan sees a whole name and
+    # only the fill meets the hole.
+    hole = session_offset(2)
+    fake_alpaca.hole_on("BRSTB", hole)
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(5))
+    pipeline.run("evening", dry_run=True)
+
+    book = recorded(tmp_path)
+    older = next(r for r in book["runs"] if r["date"] == burst_session)
+    rows = {c["ticker"]: c["forward_returns"] for c in older["candidates"]}
+    whole = expected_returns(served(fake_alpaca, "BURST", session_offset(5)), burst_session)
+    holed = expected_returns(served(fake_alpaca, "BRSTB", session_offset(5)), burst_session,
+                             horizons=(1,))
+    assert rows["BRSTB"]["d1"] == holed["d1"] and rows["BRSTB"]["d3"] is None, (
+        "precondition: the hole ends this row's measurement after d1")
+    assert rows["BURST"]["d5"] == whole["d5"]
+
+    mean = older["forward_returns"]
+    assert (mean["n1"], mean["n3"], mean["n5"]) == (2, 1, 1)
+    assert mean["n"] == 2, "both setups measured something, which is not the +5d weight"
+    assert mean["d1"] == round((whole["d1"] + holed["d1"]) / 2, 2)
+    assert mean["d5"] == whole["d5"], "the +5d mean is the one name that has one"
+    assert (mean["from_open"]["n1"], mean["from_open"]["n5"]) == (2, 1)
+    assert clean(tmp_path)["runs"][-1]["forward_returns"]["n5"] == 1, (
+        "and the same counts reach the page's own file")
+
+
+def _reader_pct(value) -> str:
+    """A return as a reader sees it — recomputed here rather than borrowed
+    from src.emailer, so the mail's own formatter is not the standard it is
+    judged against. Two decimals, a sign only when positive, an em dash for a
+    number the record does not hold: docs/index.html's pct(v, 2)."""
+    if value is None:
+        return "—"
+    return ("+" if value > 0 else "") + f"{value:.2f}%"
+
+
+def test_both_mails_say_what_the_earlier_picks_have_now_returned(
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """THE MAIL COULD NOT ANSWER ITS OWN QUESTION. Every night it said what
+    the screener had found and nothing about what the last one's finds went on
+    to do: the fill inside publish() moved those measurements and handed back
+    a COUNT, so the one artifact a person opens carried none of the outcomes
+    it had just measured.
+
+    Two nights over one universe. Nothing has happened after night one's
+    burst, so its mail carries no scorecard at all -- not "no picks settled",
+    which is the state of the first four nights of any record and a line a
+    reader would learn to skip. Night two measures that pick's first session
+    and prints it, on both bases, beside what every name in that session's
+    universe did over the same horizon.
+
+    THE PRINTED RETURN IS RECOMPUTED BY HAND from the frames the double
+    served, through the test module's own reading of the sessions and its own
+    percentage formatter: the mail is judged against arithmetic, not against
+    the code that wrote it. And the morning that follows prints the identical
+    row off the snapshot, because a scorecard in one mail and not the other is
+    the two-vocabularies shape this project keeps finding one surface at a
+    time.
+    """
+    from tests.test_scanner import _thin
+
+    fake_alpaca.add_history("BURST", ohlcv("burst", base_volume=30_000_000.0))
+    names = ["BURST"]
+    for i, suffix in enumerate("ABCD"):
+        fake_alpaca.add_history(f"Q{suffix}", _thin(ohlcv, "flat", price=40.0 + i,
+                                                    volume=3_000_000, variant=i + 2))
+        names.append(f"Q{suffix}")
+    _universe_file(monkeypatch, tmp_path, names)
+
+    # Night one: the burst's own session, so nothing after it exists yet.
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(0))
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=False)
+    burst_session = published(tmp_path)["run"]["date"]
+    pick = next(c for c in recorded(tmp_path)["runs"][0]["candidates"]
+                if c["ticker"] == "BURST")
+    assert published(tmp_path)["run"]["settled"] == [], (
+        "precondition: on the night of the burst there is nothing to settle")
+    first = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "Settled by" not in first and "settled" not in first.lower(), (
+        "a night whose fill moved nothing says nothing about settling, in either "
+        "direction: " + first)
+
+    # Night two: the session after it. The fill measures d1 for that pick.
+    monkeypatch.setenv("SCAN_SESSION_DATE", session_offset(1))
+    pipeline.run("evening", dry_run=False)
+
+    data = clean(tmp_path)
+    (entry,) = data["run"]["settled"]
+    hand = expected_returns(served(fake_alpaca, "BURST", session_offset(1)),
+                            burst_session, horizons=(1,))
+    assert (entry["ticker"], entry["session"], entry["horizon"]) == ("BURST", burst_session, 1)
+    assert entry["score"] == pick["score"] and entry["verdict"] == pick["verdict"]
+    assert entry["ret"] == hand["d1"] and entry["ret_from_open"] == hand["from_open"]["d1"]
+    older = next(run for run in data["runs"] if run["date"] == burst_session)
+    assert entry["universe"] == older["benchmark"]["d1"] is not None, (
+        "the alternative for that session, as the same publish() measured it")
+    assert entry["universe_from_open"] == older["benchmark"]["from_open"]["d1"]
+    assert entry["ret"] != entry["ret_from_open"], (
+        "precondition: the two bases differ, so a column can be read off the wrong one")
+
+    row = (f"BURST {burst_session} {pick['score']:.1f}/10 {pick['verdict']} +1d "
+           f"{_reader_pct(hand['d1'])} universe {_reader_pct(entry['universe'])} "
+           f"{_reader_pct(hand['from_open']['d1'])} universe "
+           f"{_reader_pct(entry['universe_from_open'])}")
+    evening = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert f"Settled by the {session_offset(1)} scan" in evening
+    assert emailer.BASIS_CLOSE in evening and emailer.BASIS_OPEN in evening
+    assert row in evening, (row, evening)
+
+    # And the morning that follows through on it prints the same row. The pin
+    # stays set, so this pass is a clean follow-through of the session the
+    # snapshot names rather than a staleness test.
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+
+    morning = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert row in morning, (row, morning)
+    assert f"Settled by the {session_offset(1)} scan" in morning, (
+        "the run being followed is the run that settled these, and the heading "
+        "names it rather than guessing which night 'last night' was")
 
 
 def test_the_documented_smoke_test_cannot_write_a_slid_horizon_into_a_universe_row(
@@ -5270,3 +5710,66 @@ def test_a_name_that_stopped_printing_reaches_the_record_and_the_email(
     assert "since None" not in sent["html"]
     assert f"more than {pipeline.STOPPED_PRINTING_SESSIONS} sessions" in sent["html"]
     assert report.status == "ok", report.errors
+
+
+def test_the_morning_names_the_same_first_cut_the_evening_did(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """One thin night, two mails, and only one of them carried the cut.
+
+    Eleven flat names and one halted: 8% unmeasured is under every degrade
+    threshold, so the run is clean, the band is empty, and the evening's cell
+    is the only thing explaining itself -- "No 4% burst among the 11 names
+    measured for this session". The next morning, over the SAME record, the
+    funnel printed "4% bursts that session: 0" with no denominator anywhere
+    and the cell said the run "found no 4% burst to score" full stop: the
+    round's own new cut, missing from the sibling surface a night later, which
+    is the shape README already records being fixed once (one name's checklist
+    reading two ways in two emails a night apart).
+
+    The data was there and simply not forwarded: follow_through() builds its
+    stats from `snapshot['run']`, which carries `run.coverage` beside the
+    `bursts` and `stopped_printing` it did hand over.
+    """
+    names = []
+    for i in range(11):
+        fake_alpaca.add_history(f"Q{i}", ohlcv("flat", variant=i))
+        names.append(f"Q{i}")
+    fake_alpaca.add_history("HALT", ohlcv("flat", variant=90), stale_sessions=1)
+    names.append("HALT")
+
+    market_clock.after_the_close()
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, tickers=names, report=report)
+    assert report.exit_code == pipeline.EXIT_OK, "the premise: a clean, thin, quiet night"
+    evening = visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "Measured for the session: 11 of 12 that answered" in evening
+    assert "No 4% burst among the 11 names measured for this session" in evening
+
+    market_clock.before_the_open()
+    pipeline.run("morning", dry_run=False)
+    morning = visible(mocked_boundaries["resend"].sent[-1]["html"])
+
+    assert "Measured for the session: 11 of 12 that answered" in morning, (
+        "the morning prints every other cut of the run it follows; this is the first one")
+    assert "That run measured 11 of the 12 names that answered; the other 1 could not be." \
+        in morning, "and the empty cell names the population, as the evening's does"
+
+
+def test_a_tickers_evening_that_found_nothing_says_which_names_it_read(
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
+):
+    """"No 4% burst anywhere in the universe today" over two names typed on
+    the command line. The morning's twin has appended the scope clause since
+    round 10; the evening's was left with the funnel's Universe line, which is
+    a different line of a different block, and this is the only sentence on
+    the mail that makes a claim about the market."""
+    for i, name in enumerate(("FLATA", "FLATB")):
+        fake_alpaca.add_history(name, ohlcv("flat", variant=i))
+    market_clock.after_the_close()
+    pipeline.run("evening", dry_run=False, tickers=["FLATA", "FLATB"])
+
+    text = _visible(mocked_boundaries["resend"].sent[-1]["html"])
+    assert "No 4% burst anywhere in the universe today" in text
+    assert ("This run scanned 2 named on the command line (--tickers), not the "
+            "checked-in universe.") in text, text

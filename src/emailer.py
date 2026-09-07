@@ -370,6 +370,142 @@ def _duplicate_bars_line(scan_stats: dict) -> str:
             f"{DUPLICATE_BARS_NOTE}.</p>")
 
 
+#: The two return bases, in the words docs/index.html's basisLabel() prints.
+#: The email had never carried a forward return, so the scorecard below is the
+#: first place outside the page that names a basis -- and one mechanism with
+#: two vocabularies is this project's most repeated finding, so a docs test
+#: reads these two strings out of the page's own source. The column heading a
+#: number sits under is the whole of what says which basis it is on; a
+#: close-basis figure under an open-basis label is the one thing the page's
+#: single-basis control exists to prevent, and a table with two columns says
+#: it per column instead.
+BASIS_CLOSE = "from the burst-day close"
+BASIS_OPEN = "from the next session’s open"
+
+#: What the record does not hold, in the page's own em dash. Never 0: a
+#: horizon that was not measured on a basis, and a session whose universe rung
+#: is still pending, are both "no number here" and neither is a return of
+#: nothing.
+NO_NUMBER = "—"
+
+#: The scorecard's heading and its footnote. It names the scan that settled
+#: these numbers, because on the morning path the same block is the run being
+#: followed and "last night" would be this pass's guess about which night that
+#: was.
+SETTLED_HEADING = "Settled by the {session} scan"
+#: NOT "what every name in that session's scan returned", which is the sentence
+#: this first carried and which round 9 spent a whole item making false: the
+#: rung leaves out the names under that night's liquidity floor -- and on a
+#: record from before the floor reached the benchmark, or a night rule 6 was
+#: off, it does not. Two populations one line cannot name, and the page's
+#: universe rung says which per run, so the note points at it rather than
+#: asserting one of them.
+SETTLED_NOTE = ("what earlier picks have now returned, at the horizons this run's fill "
+                "measured; beside each is that session's own universe benchmark, at the "
+                "same horizon and on the same basis, whose basket the dashboard names")
+SETTLED_DASH_NOTE = (f"{NO_NUMBER} is a number the record does not hold on that basis; "
+                     "a horizon appears here in one run's mail only, on the run that "
+                     "measured it")
+
+
+def fmt_return(value) -> str:
+    """"+3.20%", "-1.05%", "0.00%" — or an em dash for a number that is not there.
+
+    Two decimals and a sign only when the number is positive, which is
+    docs/index.html's pct(v, 2), the rule the page prints every forward return
+    with. A docs test cuts that function out of the page and runs it through
+    node against this one: the mail and the page state the same return about
+    the same row, and "+3.2%" beside "+3.20%" is the drift this project keeps
+    finding one surface at a time.
+    """
+    v = _as_float(value)
+    if v is None:
+        return NO_NUMBER
+    return ("+" if v > 0 else "") + f"{v:.2f}%"
+
+
+def _settled_judgement(entry: dict) -> str:
+    """"8.5/10 buy" — what this pick was given the night it was made.
+
+    Both halves are optional in the record and neither is invented: a row
+    with no score prints its verdict alone, and a row with neither prints the
+    em dash rather than a fabricated 0.
+    """
+    parts = []
+    if _as_float(entry.get("score")) is not None:
+        parts.append(f"{fmt_score(entry.get('score'))}/10")
+    if isinstance(entry.get("verdict"), str) and entry["verdict"].strip():
+        parts.append(entry["verdict"])
+    return " ".join(parts) or NO_NUMBER
+
+
+def _settled_cell(entry: dict, ret_key: str, universe_key: str) -> str:
+    """One basis's cell: the pick's return, and the alternative beside it.
+
+    The two are read from the same basis by construction -- the caller passes
+    the pair -- because a pick measured from the open beside a universe
+    measured from the close is two answers to one question, which is exactly
+    what the page's one-basis-at-a-time control exists to prevent.
+    """
+    return (f"{esc(fmt_return(entry.get(ret_key)))}<br>"
+            f'<span style="color:#666;font-size:11px;">universe '
+            f"{esc(fmt_return(entry.get(universe_key)))}</span>")
+
+
+def _settled_table(scan_stats: dict) -> str:
+    """What the earlier picks did, under the funnel — or nothing at all.
+
+    THE MAIL COULD NOT ANSWER ITS OWN QUESTION. Every night it said what the
+    screener had found and nothing about what the last one's finds went on to
+    do; the whole record was in docs/ledger.json and on a page nobody is
+    pushed, and the artifact a person actually opens carried none of it. The
+    fill inside every publish() knows exactly which measurements moved
+    tonight (src.ledger.fill_forward_returns), and this is that list.
+
+    ABSENT ON A NIGHT THE FILL MOVED NOTHING, and deliberately not "no picks
+    settled": the first four nights of any record settle nothing at all, and a
+    sentence saying so every night until the fifth is a line a reader learns
+    to skip past -- the rule the refusals line, the duplicate-bar line and
+    _stopped_printing_line() all follow. A snapshot from before the block
+    existed is the same silence, which is why the morning hands over an absent
+    key rather than an empty list.
+
+    One list, both paths: the evening prints the block publish() just wrote,
+    the morning the block off the snapshot it is following. There is no second
+    rule here to drift from the first.
+    """
+    entries = scan_stats.get("settled")
+    if not isinstance(entries, list):
+        return ""
+    entries = [entry for entry in entries if isinstance(entry, dict)]
+    if not entries:
+        return ""
+    session = scan_stats.get("session")
+    heading = SETTLED_HEADING.format(session=session) if session else "Settled by this run"
+    rows = ""
+    for entry in entries:
+        rows += f"""
+        <tr>
+          <td style="padding:6px;border-bottom:1px solid #eee;"><b>{esc(entry.get('ticker'))}</b></td>
+          <td style="padding:6px;border-bottom:1px solid #eee;">{esc(entry.get('session') or NOT_RECORDED)}</td>
+          <td style="padding:6px;border-bottom:1px solid #eee;">{esc(_settled_judgement(entry))}</td>
+          <td style="padding:6px;border-bottom:1px solid #eee;">+{esc(entry.get('horizon'))}d</td>
+          <td style="padding:6px;border-bottom:1px solid #eee;">{_settled_cell(entry, 'ret', 'universe')}</td>
+          <td style="padding:6px;border-bottom:1px solid #eee;">{_settled_cell(entry, 'ret_from_open', 'universe_from_open')}</td>
+        </tr>"""
+    return f"""
+    <p style="color:#666;margin-top:0;"><b>{esc(heading)}</b> — {esc(SETTLED_NOTE)}.</p>
+    <table style="border-collapse:collapse;max-width:1100px;font-size:13px;">
+      <tr style="text-align:left;color:#555;">
+        <th style="padding:6px;">Pick</th><th style="padding:6px;">Burst session</th>
+        <th style="padding:6px;">Scored</th><th style="padding:6px;">Horizon</th>
+        <th style="padding:6px;">{esc(BASIS_CLOSE)}</th>
+        <th style="padding:6px;">{esc(BASIS_OPEN)}</th>
+      </tr>{rows}
+    </table>
+    <p style="color:#999;font-size:11px;margin-top:4px;">{esc(SETTLED_DASH_NOTE)}.</p>"""
+
+
 #: What a streak's `unknown_reason` says to a reader when the record can say
 #: nothing narrower. `day: null` is the state this whole mechanism cares most
 #: about — UNKNOWN, which is not day 1 — and it used to render here as nothing
@@ -388,6 +524,13 @@ STREAK_UNKNOWN = {
                        "carry a date to count from",
     "history_unreadable": "streak unknown — the run could not read its history",
     "window_not_covered": "streak unknown — the history does not reach back this far",
+    # The fifth, and the only one that is not about how FAR the record
+    # reaches: it reaches, and one of the nights it reaches over read nothing
+    # at all, so an earlier burst would have been invisible to it. The
+    # remedy is different too -- window_not_covered fills in as the record
+    # grows, and this one never does -- which is why it is not that word.
+    "blind_session": "streak unknown — a session inside the window measured no "
+                     "name at all, so an earlier burst could not have been seen",
 }
 UNKNOWN_FALLBACK = "streak unknown — no reason was recorded"
 #: A row with no `streak` field at all, which is not the same as a block that
@@ -779,9 +922,31 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
     capped = ([(f"Crowded out by the {cap}-call cap" if cap
                 else "Crowded out by the call cap", crowded)]
               if crowded else [])
+    # AND HOW MUCH OF THE UNIVERSE WAS READ, when some of it was not. THE
+    # FIRST CUT, and the one the funnel never named: between the universe and
+    # the bursts sits every name that answered and could not be measured, so a
+    # night that measured NOT ONE of them printed "4% bursts found: 0" and
+    # read exactly like a night that measured all 228. The same rule the
+    # refusal lines follow -- printed only when the cut actually bit, and
+    # silent when the run reported no coverage rather than saying 0. The
+    # page's funnel captions the same cut; one mechanism, and the two
+    # wordings are pinned against each other's source. Evening only: a
+    # morning pass measures nothing itself, and its funnel deliberately
+    # reports the run it follows rather than a scan it did not walk.
+    shown = measured_value(measured_counts(scan_stats))
+    coverage = [(MEASURED_LABEL, shown)] if shown else []
     if run_type == "morning":
         parts = [("Session it should have followed" if failed
                   else "Following through on the session of", session),
+                 # THE CUT THE MORNING PRINTED EVERY OTHER ONE OF. It reports
+                 # the run it follows, and that run's coverage is a fact about
+                 # it exactly as `bursts` and `stopped_printing` beside it are
+                 # -- so a thin night mailed "Measured for the session: 11 of
+                 # 12 that answered" in the evening and "4% bursts that
+                 # session: 0" with no denominator the next morning: two mails
+                 # a night apart about one run, one carrying the cut and one
+                 # not. Same label, same predicate, one vocabulary.
+                 *coverage,
                  ("4% bursts that session", _reported_count(scan_stats, "bursts")),
                  *refused,
                  ("Passed 2LYNCH gate", _reported_count(scan_stats, "gated")),
@@ -796,12 +961,73 @@ def _funnel_line(results: list[dict], run_type: str, scan_stats: dict) -> str:
                  # for it, and printed "Universe: not recorded" over 228 asked
                  # and 228 answered. Two different facts were sharing one flag.
                  ("Universe", scan_stats.get("universe") or coverage_phrase(scan_stats)),
+                 *coverage,
                  ("4% bursts found", _reported_count(scan_stats, "bursts")),
                  *refused,
                  ("Passed 2LYNCH gate", _reported_count(scan_stats, "gated")),
                  *capped,
                  ("Shortlisted", len(results))]
     return " &nbsp;|&nbsp;\n      ".join(f"{label}: {esc(value)}" for label, value in parts)
+
+
+def measured_counts(scan_stats: dict) -> tuple[int, int, int | None] | None:
+    """(measured, answered, asked) off this run's coverage block, or None.
+
+    THE FIRST CUT THE FUNNEL NEVER NAMED. Between "Universe: 228 checked-in US
+    common stocks" and "4% bursts found: 0" sits every name that answered and
+    could not be measured -- halted, holed, unreadable -- and on a night that
+    measured NOT ONE of them the mail read exactly like a night that measured
+    all 228 and found nothing. Both counts are required: "0 measured" is
+    unreadable without what it is 0 of, and a block that carries one and not
+    the other is a scan that stopped before it had both.
+
+    AND THE FIRST CUT IS NOT ALL ONE CAUSE EITHER. This compared `measured`
+    to `with_bars` alone, so the OTHER half of it -- the names the feed
+    answered with nothing at all, plus any dropped after their batch failed
+    twice -- was still attributed to the burst filter: 20 asked, 18 answered,
+    18 measured is a clean green run whose mail said "No 4% burst anywhere in
+    the universe today" over two names nothing ever looked at, and on the real
+    228-name file up to 22 can go that way with the run still exiting 0. So
+    `asked` comes back too, null for a block that never reached the count, and
+    the widest denominator the block has is the one every sentence is measured
+    against.
+
+    Returns None when the run recorded no coverage at all (every snapshot from
+    before the block existed), when either count is not a count -- absent is
+    absent, and this must never manufacture a 0 -- or when the three do not
+    order, which is a block no writer produces: `measured: 9999` beside
+    `with_bars: 227` printed "the other -9772 that answered could not be",
+    the same class as round 5's "Below the liquidity floor: -2".
+    """
+    counts = scan_stats.get("coverage")
+    if not isinstance(counts, dict):
+        return None
+    measured, answered = counts.get("measured"), counts.get("with_bars")
+    if not is_count(measured) or not is_count(answered):
+        return None
+    asked = counts.get("requested") if is_count(counts.get("requested")) else None
+    if measured > answered or (asked is not None and answered > asked):
+        return None
+    return measured, answered, asked
+
+
+def measured_value(counted: tuple[int, int, int | None] | None) -> str | None:
+    """What the funnel prints for the first cut, or None when it did not bite.
+
+    Both denominators when they differ, because they are two different cuts
+    with two different causes: "18 of 20 asked, 18 of 18 that answered" is a
+    feed that answered for eighteen names and a scan that read all eighteen,
+    and neither number alone says that. The cut bit when the widest
+    denominator the block carries is larger than `measured`.
+    """
+    if counted is None:
+        return None
+    measured, answered, asked = counted
+    widest = answered if asked is None else asked
+    if measured >= widest:
+        return None
+    shown = f"{measured} of {answered} that answered"
+    return f"{measured} of {asked} asked, {shown}" if asked is not None and asked != answered else shown
 
 
 def coverage_phrase(scan_stats: dict) -> str:
@@ -843,6 +1069,15 @@ def coverage_phrase(scan_stats: dict) -> str:
             fresh, session = counts["fresh"], counts["session"]
             parts.append(f"none with a bar for {session}" if not fresh
                          else f"{fresh} with a bar for {session}")
+            # AND HOW MANY OF THOSE COULD BE MEASURED, which is a different
+            # number: a name with a bar for the session and none for the
+            # session before it has one and could not be measured. Only when
+            # some of them carried a bar, because "none with a bar ... 0
+            # measured" is one fact said twice, and only when the scan reached
+            # the count -- a notice for a scan that died earlier prints what it
+            # had and no more.
+            if fresh and is_count(counts.get("measured")):
+                parts.append(f"{counts['measured']} of those measured")
     if counts.get("newest_seen"):
         parts.append("the newest bar among the names that missed the session is "
                      f"{counts['newest_seen']}")
@@ -1077,7 +1312,7 @@ def build_html(results: list[dict], run_type: str, scan_stats: dict) -> str:
     <h2 style="margin-bottom:4px;">{title}</h2>
     <p style="color:#666;margin-top:0;">
       {_funnel_line(results, run_type, scan_stats)}{_provenance_line(scan_stats)}
-    </p>{_stopped_printing_line(scan_stats, run_type)}{_duplicate_bars_line(scan_stats)}
+    </p>{_stopped_printing_line(scan_stats, run_type)}{_duplicate_bars_line(scan_stats)}{_settled_table(scan_stats)}
     <table style="border-collapse:collapse;width:100%;max-width:1100px;">
       <tr style="background:#1a1a2e;color:#fff;text-align:left;">
         <th style="padding:8px;">Ticker</th><th style="padding:8px;">Gain</th>
@@ -1192,7 +1427,7 @@ def _empty_morning_note(scan_stats: dict) -> str:
              else "The run this follows through on")
     found = (f"{named} {SCORED_NOTHING}." if bursts
              else f"{named} found no 4% burst to score: nothing reached the checklist, "
-                  "so nothing failed it.")
+                  "so nothing failed it." + unmeasured_clause(scan_stats))
     universe = scan_stats.get("followed_universe")
     if universe:
         found += f" That run scanned {esc(universe)}, not the checked-in universe."
@@ -1228,6 +1463,106 @@ def _failed_evening_note(scan_stats: dict) -> str:
                 "carries no rows for them: the run failed before it could. See the "
                 "failures listed above.")
     return _empty_evening_note(scan_stats)
+
+
+def _quiet_market_note(scan_stats: dict) -> str:
+    """"No 4% burst anywhere in the universe today" — WHEN THE UNIVERSE WAS READ.
+
+    This sentence is the widest claim the mail makes about the market, and it
+    was made from `bursts == 0` alone, which is also what a scan that measured
+    NOT ONE NAME reports. Reproduced end to end on a constructed blind night
+    -- eleven frames holed on the session before, one halted name proving the
+    market had traded it -- where the run published 0 bursts and every surface
+    called it quiet.
+
+    THE THIN CASE IS THE LIVE ONE, and it is the same overclaim one step down.
+    A blind evening never reaches this branch -- measuring nothing always
+    degrades the run with a `scan` problem, so _no_shortlist_note() answers
+    first and the band carries the reasons -- but a couple of halted names is
+    under every degrade threshold, so on the ordinary quiet night this cell is
+    the only thing explaining itself, and "anywhere in the universe" over 224
+    of 228 names is not what the run read. The sentence names the population it
+    is about and says how many it is not about; the blind branch is kept
+    because a direct build_html() and a snapshot whose problems were not
+    carried both reach it, and the claim has to be true of its own data on
+    every path. A run that reported no coverage keeps the original wording:
+    absent is absent, and every snapshot from before run.coverage existed is
+    that.
+    """
+    counted = measured_counts(scan_stats)
+    if counted is None:
+        return _universal_quiet_note(scan_stats)
+    measured, answered, asked = counted
+    # The widest denominator the block carries, because the claim is as wide
+    # as the universe line above it: a name the feed never answered for is as
+    # unread as one whose bar could not be measured, and folding it into the
+    # burst filter is what let two names vanish under "anywhere in the
+    # universe" on a run that exited 0.
+    widest = answered if asked is None else asked
+    scope = "that answered" if widest == answered else "asked"
+    if measured >= widest:
+        return _universal_quiet_note(scan_stats)
+    if not measured:
+        return (f"Not one of the {widest} names {scope} could be "
+                f"{MEASURED_PHRASE}, so no 4% burst could be found in them. Nothing "
+                "reached the checklist — this is not a statement about the market.")
+    others = (f"{widest - measured} {scope}" if widest == answered
+              else f"{widest - measured} of the {widest} asked")
+    return (f"No 4% burst among the {measured} names {MEASURED_PHRASE}; the other "
+            f"{others} could not be. Nothing reached the "
+            "checklist, so nothing failed it — the names that were read were quiet, "
+            "and the rest were not read.")
+
+
+def _universal_quiet_note(scan_stats: dict) -> str:
+    """The widest sentence, said only where it is true of the whole basket --
+    AND SAYING WHICH BASKET when it was not the checked-in file.
+
+    A `--tickers` run writes docs/data.json like any other and this cell is a
+    claim about the market, so over a two-name smoke record it said no 4%
+    burst reached the checklist anywhere in the universe. _empty_morning_note()
+    has carried that scope clause since round 10 for exactly this state; the
+    evening's twin was left with the funnel's Universe line as its only hint,
+    which is a different line of a different block. The clause is appended
+    only when the run says it scanned something other than the checked-in
+    file, so the ordinary night reads as it always did.
+    """
+    scanned = scan_stats.get("scanned_universe")
+    scoped = (f" This run scanned {esc(scanned)}, not the checked-in universe."
+              if scanned else "")
+    return ("No 4% burst anywhere in the universe today. Nothing reached the "
+            "checklist, so nothing failed it — this is a quiet market, not a "
+            f"rejection.{scoped}")
+
+
+def unmeasured_clause(scan_stats: dict) -> str:
+    """" That run measured 11 of the 12 names it asked for; the other 1 could
+    not be." — or "" when the run read everything it asked for.
+
+    The morning's half of _quiet_market_note()'s rule, off the same counts
+    through the same predicate. The evening's cell names the population its
+    "no burst" is about; the morning's said "found no 4% burst to score" over
+    the same record with no denominator at all, which is the same overclaim a
+    night later — the shape README already records being fixed once, when one
+    name's checklist read two ways in two emails a night apart.
+
+    Nothing at all for a run that reported no coverage, and nothing when
+    every name asked for was measured: absent is absent, and a clause on
+    every mail is a clause nobody reads.
+    """
+    counted = measured_counts(scan_stats)
+    if counted is None:
+        return ""
+    measured, answered, asked = counted
+    widest = answered if asked is None else asked
+    if measured >= widest:
+        return ""
+    scope = "that answered" if widest == answered else "it asked for"
+    if not measured:
+        return (f" Not one of the {widest} names {scope} could be {MEASURED_PHRASE}, "
+                "so that count is not a statement about the market.")
+    return (f" That run measured {measured} of the {widest} names {scope}; the "
+            f"other {widest - measured} could not be.")
 
 
 def _empty_evening_note(scan_stats: dict) -> str:
@@ -1269,9 +1604,7 @@ def _empty_evening_note(scan_stats: dict) -> str:
     by_checklist = _count(scan_stats, "by_checklist")
 
     if not bursts:
-        return ("No 4% burst anywhere in the universe today. Nothing reached the "
-                "checklist, so nothing failed it — this is a quiet market, not a "
-                "rejection.")
+        return _quiet_market_note(scan_stats)
     if passed:
         # Names got through and still produced no row. Rare, and the sentence
         # must not say the checklist rejected them -- it did the opposite.
@@ -1361,6 +1694,23 @@ def _count(scan_stats: dict, key: str) -> int:
     # liquidity floor and 7 rejected" -- seven of five bursts.
     return max(value, 0) if isinstance(value, int) and not isinstance(value, bool) else 0
 
+
+#: The funnel's label for the first cut. THE EMAIL'S ALONE: the page captions
+#: the same cut in burstWhy() and does not use this string, so this docstring's
+#: earlier claim -- that docs/index.html "names it in these words" and that a
+#: docs test asserts each file against the other's source -- was a copy of
+#: MEASURED_PHRASE's, which is true of MEASURED_PHRASE and not of this. The
+#: guard it named asserted only that the label starts with "Measured", so a
+#: rename could not fail it either. What both files share is MEASURED_PHRASE,
+#: below; what pins this one is the funnel it is printed in.
+MEASURED_LABEL = "Measured for the session"
+
+#: The words both surfaces use for the cut itself. docs/index.html's
+#: funnelStages() captions the same stage with the same phrase, and a docs
+#: test asserts each file against the other's source: one mechanism with two
+#: vocabularies is how this project has twice ended up telling a reader two
+#: things about one number, side by side on one page.
+MEASURED_PHRASE = "measured for this session"
 
 #: What the funnel prints for a fact the caller did not report. Absent has
 #: always read this way; a value that is not a count reads the same, because

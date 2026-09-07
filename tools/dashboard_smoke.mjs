@@ -154,10 +154,47 @@ const VARIANTS = {
   // when the two numbers DIFFERED, so the reader could not see the ratio in
   // the one case where it is settled, and could not tell "nothing collapsed"
   // from "the file does not say".
+  // A file where nothing collapsed: every row is its own setup, at every
+  // horizon. The per-horizon counts are levelled with `n` too, because a
+  // frame with a hole is not a collapse -- the canonical fixture holds one
+  // (2026-08-25 measures 21 setups at +1d and 18 at +5d), and leaving it here
+  // would make this variant a file where a horizon really is over fewer
+  // setups than rows, which is the state it exists to have none of.
   norepeats() {
     const d = clone();
     d.runs.forEach((r) => {
-      if (r.forward_returns && r.forward_returns.n) r.forward_returns.rows = r.forward_returns.n;
+      const f = r.forward_returns;
+      if (!f || !f.n) return;
+      f.rows = f.n;
+      // Both bases, because the page reads each basis's own counts and a
+      // variant levelled on one of them is, on the other tab, exactly the file
+      // this comment says it holds none of. A basis that measured nothing is
+      // left alone; one that measured anything is a file where every row had a
+      // usable open and reached every horizon it has.
+      for (const b of [f, f.from_open]) {
+        if (!b) continue;
+        const hs = ['1', '3', '5'].filter((h) => b['d' + h] !== null && b['d' + h] !== undefined);
+        if (!hs.length) continue;
+        b.n = f.n;
+        for (const h of hs) b['n' + h] = b.n;
+      }
+    });
+    return d;
+  },
+  // Every run entry as it was written before the per-horizon counts existed:
+  // one `n` for three horizons, on both bases. That is the shape of every
+  // file this project published up to round 11, including the one main is
+  // serving now, and the page has to weight those means by the only count
+  // the file has rather than printing NaN over it.
+  oldcounts() {
+    const d = clone();
+    d.runs.forEach((r) => {
+      const f = r.forward_returns;
+      if (!f) return;
+      for (const h of ['1', '3', '5']) {
+        delete f['n' + h];
+        if (f.from_open) delete f.from_open['n' + h];
+      }
     });
     return d;
   },
@@ -207,8 +244,12 @@ const VARIANTS = {
     }
     return d;
   },
-  // The quietest real night there is: the scan ran clean and found no 4%
-  // burst at all. Every candidate-facing card has nothing to hold, and the
+  // The quietest real night there is: the scan found no 4% burst at all. Its
+  // coverage is the fixture's own, which is a THIN night (228 asked, 227
+  // answered, 225 measured), so the funnel caption carries the unmeasured
+  // clause beside the burst filter -- `thinscan` and `blindscan` below are
+  // where the two halves of that cut are asserted apart.
+  // Every candidate-facing card has nothing to hold, and the
   // question is whether the page SAYS that or just goes blank -- the email's
   // version of this said "No candidates passed the quality gate today" under
   // a funnel reading "4% bursts found: 0", blaming the checklist for an
@@ -224,6 +265,43 @@ const VARIANTS = {
     d.run.gate.total_checks = null;   // nothing measured a checklist either
     d.candidates = [];
     d.gated_out = [];
+    return d;
+  },
+  // A BLIND night: the feed answered for every name and not one of them could
+  // be measured for the session -- every frame holed on the session before it,
+  // or halted, or unreadable. `bursts: 0` is the same number a genuinely quiet
+  // market reports, and the page captioned the whole first cut "no 4% gain on
+  // the day": a claim about the market over a session nothing read. It sits
+  // beside quietmarket deliberately -- one variant asserts the caption is
+  // there and one that it is gone, which is what lets either fail.
+  blindscan() {
+    const d = VARIANTS.quietmarket();
+    d.run.coverage = { requested: d.run.universe.size, with_bars: d.run.universe.size - 1,
+                       fresh: 12, measured: 0, stale: 12, gapped: d.run.universe.size - 13,
+                       no_bars: 1, dropped: 0, duplicate_bars: 0, session: d.run.date };
+    // No name's dollar volume could be ranked, so rule 6 drew no floor --
+    // which is a different sentence from "nothing traded", from "the rule is
+    // off", and from how many names the scan MEASURED, which is its own
+    // count one block over.
+    d.run.liquidity = { pctile: d.run.liquidity.pctile, floor: null, over: 0, refused: 0 };
+    // The same night in the RUNS TABLE, which is where every later reader
+    // meets it: runs[0] is this run's own entry, and `measured` reached
+    // docs/data.json's runs[] with nothing on the page reading it, so a blind
+    // row rendered identically to a quiet one.
+    d.runs[0].measured = 0;
+    return d;
+  },
+  // The THIN night: every name that answered was measured and some never
+  // answered at all. The first cut is not all one cause, and this half of it
+  // was still attributed to the burst filter -- 20 asked, 18 answered, 18
+  // measured is a clean green run whose caption read "no 4% gain on the day"
+  // under a universe stage of 20.
+  thinscan() {
+    const d = VARIANTS.quietmarket();
+    const asked = d.run.universe.size;
+    d.run.coverage = { requested: asked, with_bars: asked - 2, fresh: asked - 2,
+                       measured: asked - 2, stale: 0, gapped: 0, no_bars: 2,
+                       dropped: 0, duplicate_bars: 0, session: d.run.date };
     return d;
   },
   // The control ladder's other two sentences. The history source has 74
@@ -460,7 +538,25 @@ const VARIANTS = {
     const older = JSON.parse(JSON.stringify(current));
     older['gate.min_lynch_passes'] = 4;
     older['scan.min_gain_pct'] = 5.0;
-    ev.rules = { current, sets: 2, differ: ['gate.min_lynch_passes', 'scan.min_gain_pct'], runs_without: 0 };
+    ev.rules = { current, sets: 2, differ: ['gate.min_lynch_passes', 'scan.min_gain_pct'],
+      unshared: [], runs_without: 0 };
+    d.runs[0].rules = current;
+    d.runs.slice(1).forEach((r) => { r.rules = older; });
+    return d;
+  },
+  // The state this repo's own record is in from round 11: the newer runs
+  // record a key the older ones never did, and NOTHING about the screener
+  // moved. Told apart from rulesdrift because the page said the same
+  // sentence about both -- "What moved: window.volume_norm_sessions" over a
+  // volume average that has been 50 throughout.
+  rulesgained() {
+    const d = clone(REAL);
+    const ev = d.evidence;
+    const current = JSON.parse(JSON.stringify(ev.rules.current));
+    const older = JSON.parse(JSON.stringify(current));
+    delete older['window.volume_norm_sessions'];
+    ev.rules = { current, sets: 2, differ: [],
+      unshared: ['window.volume_norm_sessions'], runs_without: 0 };
     d.runs[0].rules = current;
     d.runs.slice(1).forEach((r) => { r.rules = older; });
     return d;
@@ -469,7 +565,8 @@ const VARIANTS = {
   // a row is a different sentence from knowing they were these.
   norules() {
     const d = clone(REAL);
-    d.evidence.rules = { current: null, sets: 0, differ: [], runs_without: d.runs.length };
+    d.evidence.rules = { current: null, sets: 0, differ: [], unshared: [],
+      runs_without: d.runs.length };
     d.runs.forEach((r) => delete r.rules);
     return d;
   },
@@ -763,13 +860,32 @@ const CHECKS = (() => {
 })();
 const HARSHEST = [...CHECKS].sort((a, b) => a.rate - b.rate)[0];
 const WEAKEST = [...CHECKS].sort((a, b) => a.gap - b.gap)[0];
+// THE WEIGHT IS THE HORIZON'S OWN COUNT (src.ledger's mean_returns). `n` is
+// every setup the run measured at ANY horizon: a setup whose frame has a hole
+// after the third session is in n and out of n5, so weighting d5 by n counts
+// setups that have no d5. `byN` recomputes the same mean the old way, and the
+// check below asserts the page is on the per-horizon one and that the two
+// numbers differ on this source -- without that second half the check passes
+// on any file whose horizons all have the same count, which is every file the
+// synthetic history writes.
+// THE WEIGHT BEHIND ONE HORIZON'S MEAN, recomputed in ONE place for every
+// pass of this script. A run's `n` is every setup it measured at some horizon,
+// so weighting d5 by it counts setups that have no d5; a file written before
+// the per-horizon counts carries only `n`, and that is what it claims about
+// its own weights. The history pass kept a second copy of the superseded rule
+// and agreed with this one only because no run in that fixture has a hole.
+const hzWeight = (f, k) => (typeof f['n' + k.slice(1)] === 'number' ? f['n' + k.slice(1)] : (f.n || 0));
 const horizon = (k) => {
   const have = REAL.runs.filter((r) => (r.forward_returns || {})[k] !== null && (r.forward_returns || {})[k] !== undefined);
-  const names = have.reduce((a, r) => a + (r.forward_returns.n || 0), 0);
-  const wsum = have.reduce((a, r) => a + r.forward_returns[k] * (r.forward_returns.n || 0), 0);
+  const w = (r) => hzWeight(r.forward_returns, k);
+  const names = have.reduce((a, r) => a + w(r), 0);
+  const wsum = have.reduce((a, r) => a + r.forward_returns[k] * w(r), 0);
+  const anyN = have.reduce((a, r) => a + (r.forward_returns.n || 0), 0);
+  const anySum = have.reduce((a, r) => a + r.forward_returns[k] * (r.forward_returns.n || 0), 0);
   const vals = have.map((r) => r.forward_returns[k]);
   const rows = have.reduce((a, r) => a + (r.forward_returns.rows || 0), 0);
-  return { sessions: have.length, names, rows, mean: names ? wsum / names : null,
+  return { sessions: have.length, names, rows, anyN, mean: names ? wsum / names : null,
+           byN: anyN ? anySum / anyN : null,
            plain: vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null,
            best: vals.length ? Math.max(...vals) : null, worst: vals.length ? Math.min(...vals) : null };
 };
@@ -1109,6 +1225,14 @@ ok('a record spanning two sets of rules says so and names the keys that moved',
   /spans 2 sets of rules/.test(driftNote) && driftNote.includes('gate.min_lynch_passes')
   && driftNote.includes('scan.min_gain_pct') && /averages more than one screener/.test(driftNote),
   driftNote.slice(0, 150));
+await open('/v/rulesgained/');
+const gainedNote = await page.textContent('#rules-note');
+ok('a key the earlier runs never recorded is not published as one that moved',
+  /no number every one of them records has changed/.test(gainedNote)
+  && /not the same as their having changed/.test(gainedNote)
+  && gainedNote.includes('window.volume_norm_sessions')
+  && !/What moved/.test(gainedNote),
+  gainedNote.slice(0, 200));
 await open('/v/norules/');
 const noRulesNote = await page.textContent('#rules-note');
 ok('and runs from before the fingerprint are counted apart, not as agreement',
@@ -1327,6 +1451,32 @@ const histAgree = await page.evaluate(() => {
 });
 ok('and it agrees with the tiles above it',
   histAgree.bursts === String(run.bursts) && histAgree.scored === String(run.scored), JSON.stringify(histAgree));
+// A RUN'S THREE MEANS ARE OVER THREE COUNTS, and the table prints four
+// numbers on one row. The fixture's 2026-08-25 entry measured 21 setups at
+// +1d and 18 at +5d, so ONE count in the last column, beside three horizon
+// cells, tells a reader the -0.42% is over 21 when the page itself weighted
+// it by 18. The column says what its number is -- the run's own setups, at
+// any horizon -- and each horizon cell carries the count behind ITS mean.
+// The precondition is the check: on a source where no run's n5 differs from
+// its n1, a page printing one number three times passes this.
+const holedRun = REAL.runs.find((r) => (r.forward_returns || {}).n5 !== (r.forward_returns || {}).n1
+  && (r.forward_returns || {}).d5 !== null && (r.forward_returns || {}).d5 !== undefined);
+const holedRow = await page.$$eval('#runs-table tbody tr', (trs, session) => {
+  const tr = trs.find((t) => t.children[0].textContent.trim().startsWith(session));
+  return tr ? { setups: tr.children[9].textContent.trim(),
+                setupsTitle: tr.children[9].getAttribute('title') || '',
+                titles: [6, 7, 8].map((i) => tr.children[i].getAttribute('title') || '') } : null;
+}, fmtDay(holedRun.date));
+ok('each of a run\u2019s three means says how many setups are behind IT',
+  !!holedRow && holedRow.titles[2].includes(`${holedRun.forward_returns.n5} setup`)
+  && holedRow.titles[0].includes(`${holedRun.forward_returns.n1} setup`)
+  && holedRun.forward_returns.n5 !== holedRun.forward_returns.n1,
+  holedRow ? `${holedRun.date}: +1d "${holedRow.titles[0]}" / +5d "${holedRow.titles[2]}"` : 'no such row');
+ok('and the run\u2019s own setup count is named as that, not as a horizon\u2019s weight',
+  (await page.textContent('#runs-table thead th:nth-child(10)')).trim() === 'setups'
+  && /at some horizon/.test(holedRow.setupsTitle)
+  && holedRow.setups.startsWith(`${holedRun.forward_returns.n} setup`),
+  `${holedRow.setups} (${holedRow.setupsTitle})`);
 
 // --- which 2LYNCH check is doing the gating --------------------------------
 // The view's whole claim is that it looks at EVERY burst. A rate over the
@@ -1413,6 +1563,7 @@ const tiles = await page.evaluate(() => [...document.querySelectorAll('#returns-
   label: t.querySelector('.sc-tile__label').textContent.trim(),
   value: t.querySelector('.sc-tile__value').textContent.trim(),
   sub: t.querySelector('.sc-tile__sub').textContent.trim(),
+  subTitle: t.querySelector('.sc-tile__sub').getAttribute('title') || '',
   delta: t.querySelector('.sc-delta').textContent.trim(),
   chip: t.querySelector('.sc-chip').textContent.trim()
 })));
@@ -1434,6 +1585,43 @@ ok('a session that has not closed is not counted as one',
 ok('and the horizons that have not happened are not averaged in as zeros',
   tiles[2].value === money(H5.mean) && H5.sessions > 0 && H5.sessions < REAL.runs.length,
   `${tiles[2].value} from ${H5.sessions} of ${REAL.runs.length} sessions, ${H5.names} names`);
+// A HOLE IN ONE FRAME. The fixture's 2026-08-25 run measured 21 setups at +1d
+// and 18 at +5d -- forward_returns() ends a row's measurement at the first
+// session its frame does not carry -- so weighting +5d by `n` averages in
+// three setups that have no +5d. The precondition is the check: without the
+// two numbers differing on this source, a page still weighting by n passes.
+ok('a horizon is weighted by the setups that reached IT, not by the run\u2019s',
+  H5.mean !== H5.byN && tiles[2].value === money(H5.mean),
+  `page ${tiles[2].value}, per horizon ${money(H5.mean)} over ${H5.names}, by run n ${money(H5.byN)}`);
+ok('and the setup count under a horizon is that horizon\u2019s own',
+  tiles[2].sub.includes(`\u00b7 ${H5.names} `) && H5.names !== H1.names,
+  `${tiles[2].sub} — +1d is over ${H1.names}`);
+// The open basis carries its own counts, and the basis switch has to hand
+// them over: without them the open tab weighted +5d by from_open.n -- 21
+// setups for a mean over 18 -- which is the close basis's defect wearing the
+// other label. Recomputed from the same file, on the open block.
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+await page.waitForTimeout(150);
+const openTiles = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')].map((t) => ({
+  value: t.querySelector('.sc-tile__value').textContent.trim(),
+  sub: t.querySelector('.sc-tile__sub').textContent.trim()
+})));
+const openH5 = (() => {
+  const have = REAL.runs.filter((r) => ((r.forward_returns || {}).from_open || {}).d5 !== null
+    && ((r.forward_returns || {}).from_open || {}).d5 !== undefined);
+  const w = (r) => r.forward_returns.from_open.n5;
+  const names = have.reduce((a, r) => a + w(r), 0);
+  const byN = have.reduce((a, r) => a + (r.forward_returns.from_open.n || 0), 0);
+  return { names, byN,
+    mean: names ? have.reduce((a, r) => a + r.forward_returns.from_open.d5 * w(r), 0) / names : null,
+    other: byN ? have.reduce((a, r) => a + r.forward_returns.from_open.d5 * r.forward_returns.from_open.n, 0) / byN : null };
+})();
+ok('the open basis is weighted by ITS own per-horizon counts too',
+  openH5.mean !== openH5.other && openTiles[2].value === money(openH5.mean)
+  && openTiles[2].sub.includes(`\u00b7 ${openH5.names} `),
+  `page ${openTiles[2].value} / ${openTiles[2].sub}, per horizon ${money(openH5.mean)} over ${openH5.names}, by n ${money(openH5.other)}`);
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+await page.waitForTimeout(150);
 // n IS SETUPS, and the tile says so -- but it used to print what they were
 // collapsed FROM only when the two numbers differed, which hid the ratio in
 // the 1:1 case and said nothing about the collapse in any file where a run of
@@ -1444,6 +1632,21 @@ ok('a setup count says what it was collapsed from, whatever the ratio',
     return !h.rows || t.sub.includes(`from ${h.rows} row`);
   }),
   tiles.map((t) => t.sub).join(' | '));
+// THE NUMERATOR IS PER HORIZON AND THE DENOMINATOR IS NOT. `rows` is every row
+// that measured something, `n` the setups they collapse into, and the
+// horizon's own count how many of THOSE reached it: three populations, and
+// "60 setups from 65 rows" states a collapse the file does not support -- 65
+// rows collapse into 63 setups, of which 60 have a +5d, and the other 3 are
+// holes rather than repeats folded away. The tile prints both steps when they
+// differ and the plain ratio when they do not.
+ok('a tile whose horizon is over fewer setups than the run collapsed says both steps',
+  H5.names !== H5.anyN && tiles[2].sub.includes(`${H5.names} of ${H5.anyN} setups from ${H5.rows} rows`)
+  && tiles[2].subTitle.includes(`${H5.rows} rows`) && tiles[2].subTitle.includes(`${H5.anyN} setup`)
+  && /hole before this horizon/.test(tiles[2].subTitle),
+  `${tiles[2].sub} (${tiles[2].subTitle}) — ${H5.names} at +5d, ${H5.anyN} setups, ${H5.rows} rows`);
+ok('and a horizon nothing was held back from prints the ratio plainly',
+  H1.names === H1.anyN && tiles[0].sub.includes(`${H1.names} setups from ${H1.rows} rows`),
+  `${tiles[0].sub} — ${H1.names} at +1d, ${H1.anyN} setups, ${H1.rows} rows`);
 // One observation is not a range. It read "ran -0.42% to -0.42%" until it did.
 ok('a single session is not dressed up as a spread',
   H5.sessions !== 1 || !/ran .* to /.test(tiles[2].delta), tiles[2].delta);
@@ -1451,6 +1654,13 @@ ok('five sessions is not called a measurement',
   tiles.every((t) => t.chip === 'not enough data')
   && (await page.textContent('#returns-hint')).includes('none of the three'),
   tiles.map((t) => t.chip).join(' | '));
+// The weight is per SETUP, and the sentence explaining it said "a run": a run
+// has no frame, and it leaves a horizon's weight only if every one of its
+// setups does -- which is false of the file this page renders, where the holed
+// run is in the +5d weight with 18 of its 21 setups.
+ok('the hint names the unit the weight is really over',
+  (await page.textContent('#returns-hint')).includes('a setup whose frame had a hole'),
+  (await page.textContent('#returns-hint')).slice(0, 200));
 
 // --- the record's own view, on a record one session long -------------------
 // The fixture is one night old, so every horizon in its evidence block is
@@ -1842,11 +2052,43 @@ ok('a horizon with enough sessions stops saying there is not enough data',
   grown[0] === 'measured' && grown[1] === 'not enough data' && grown[2] === 'not enough data',
   grown.join(' | '));
 
+// A file from before the per-horizon counts: the weights are the run-level
+// `n` it does carry, on both bases, and no tile is NaN. Recomputed here the
+// old way, because that IS what such a file claims about its own means.
+await open('/v/oldcounts/');
+const oldTiles = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')].map((t) => ({
+  value: t.querySelector('.sc-tile__value').textContent.trim(),
+  sub: t.querySelector('.sc-tile__sub').textContent.trim()
+})));
+const oldWant = ['d1', 'd5'].map((k) => {
+  const have = VARIANTS.oldcounts().runs.filter((r) => (r.forward_returns || {})[k] !== null
+    && (r.forward_returns || {})[k] !== undefined);
+  const n = have.reduce((a, r) => a + r.forward_returns.n, 0);
+  return { n, mean: n ? have.reduce((a, r) => a + r.forward_returns[k] * r.forward_returns.n, 0) / n : null };
+});
+ok('a file from before the per-horizon counts is weighted by the one count it has',
+  oldTiles[0].value === money(oldWant[0].mean) && oldTiles[2].value === money(oldWant[1].mean)
+  && oldTiles.every((t) => !/NaN/.test(t.value) && !/NaN/.test(t.sub))
+  && oldTiles[2].sub.includes(`${oldWant[1].n} setup`),
+  `${oldTiles.map((t) => t.value).join(' | ')} — want ${money(oldWant[0].mean)} and ${money(oldWant[1].mean)}`);
+
 await open('/v/norepeats/');
-const flat = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')]
+const subs = () => page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')]
   .map((t) => t.querySelector('.sc-tile__sub').textContent.trim()));
+const flat = await subs();
 ok('a 1:1 collapse still says what the setups were counted from',
   flat.every((t) => /(\d+) setups? from \1 rows?/.test(t)), flat.join(' | '));
+// The levelling has to reach the open basis's own counts, and only a check
+// that switches can say it did: with from_open.n5 left at 18 against an n of
+// 21, this variant is on that tab exactly the file its comment says it exists
+// to have none of, and the close-basis assertion above cannot see it.
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+await page.waitForTimeout(150);
+const flatOpen = await subs();
+ok('and it is 1:1 on the open basis too, which is where the levelling could go missing',
+  flatOpen.every((t) => /(\d+) setups? from \1 rows?/.test(t)), flatOpen.join(' | '));
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+await page.waitForTimeout(150);
 
 await open('/v/degraded/');
 ok('a run that lost something says so at the top', !(await page.locator('#notice').isHidden()));
@@ -1952,11 +2194,13 @@ ok('the night the scorer was down is in the table with its fallback count',
 const HH = [horizon('d1'), horizon('d3'), horizon('d5')];
 const htiles = await page.evaluate(() => [...document.querySelectorAll('#returns-tiles .sc-tile')].map((t) => ({
   value: t.querySelector('.sc-tile__value').textContent.trim(), chip: t.querySelector('.sc-chip').textContent.trim() })));
-// horizon() reads REAL; recompute over HIST for this pass.
+// horizon() reads REAL; recompute over HIST for this pass, through the same
+// weight accessor rather than a second copy of the rule.
 const hhorizon = (k) => {
   const have = HIST.runs.filter((r) => (r.forward_returns || {})[k] !== null && (r.forward_returns || {})[k] !== undefined);
-  const n = have.reduce((a, r) => a + (r.forward_returns.n || 0), 0);
-  return { sessions: have.length, mean: n ? have.reduce((a, r) => a + r.forward_returns[k] * (r.forward_returns.n || 0), 0) / n : null };
+  const n = have.reduce((a, r) => a + hzWeight(r.forward_returns, k), 0);
+  return { sessions: have.length,
+           mean: n ? have.reduce((a, r) => a + r.forward_returns[k] * hzWeight(r.forward_returns, k), 0) / n : null };
 };
 const hh = [hhorizon('d1'), hhorizon('d3'), hhorizon('d5')];
 ok('each horizon tile is the setup-weighted mean over the sessions that closed, and says whether that is enough',
@@ -2319,17 +2563,38 @@ await open('/f/history/');
 ok('a burst the record cannot place is a row of its own, never a day 1',
   (await page.locator('#streak-table tbody tr', { hasText: 'not known' }).count())
     === HEV.by_day.filter((d) => d.day === null).length);
-// FOUR reasons put a burst in that bucket -- no_history, history_undated,
-// history_unreadable and window_not_covered -- and the note under it named
-// one: the only one any available source carries. A run whose history could
-// not be READ lands every burst here and was told the record did not reach
-// back far enough, which is a different fault with a different fix. The row
-// notes carry the specific reason; the bucket may only say what is true of
-// all four, so the check is that it does NOT pick one.
+// SEVERAL reasons put a burst in that bucket -- four when this check was
+// written, five since blind_session -- and the note under it named one: the
+// only one any available source carries. A run whose history could not be
+// READ lands every burst here and was told the record did not reach back far
+// enough, which is a different fault with a different fix. The row notes
+// carry the specific reason; the bucket may only say what is true of all of
+// them, so the check is that it does NOT pick one.
+//
+// COUNTED AGAINST THE PAGE'S OWN MAP, because the alternation was four
+// phrases for four reasons and the fifth arrived with the round that added
+// it: the bucket could then be reworded to blame blind_session with the
+// whole smoke green. One phrase per key in docs/index.html's STREAK_UNKNOWN,
+// asserted to be as many phrases as there are keys, so a sixth reason cannot
+// arrive uncovered either.
+const REASON_PHRASES = {
+  no_history: /no history/i,
+  history_undated: /undated|carry a date/i,
+  history_unreadable: /could not read/i,
+  window_not_covered: /reach back/i,
+  blind_session: /measured no name|read nothing|nothing was read/i,
+};
+const pageReasons = (await readFile(join(ROOT, 'index.html'), 'utf8'))
+  .match(/var STREAK_UNKNOWN = \{([\s\S]*?)\n  \};/)[1]
+  .match(/^\s{4}(\w+):/gm).map((m) => m.trim().replace(':', ''));
+ok('the bucket check knows every reason the page can name',
+  pageReasons.length === Object.keys(REASON_PHRASES).length
+  && pageReasons.every((r) => REASON_PHRASES[r]),
+  `${pageReasons.join(', ')} vs ${Object.keys(REASON_PHRASES).join(', ')}`);
 const bucketNote = await page.locator('#streak-table tbody tr', { hasText: 'not known' })
   .locator('.sc-note').first().textContent();
-ok('and the bucket does not blame one of the four reasons it cannot tell apart',
-  !/reach back|no history|could not read|undated/i.test(bucketNote)
+ok('and the bucket does not blame one of the reasons it cannot tell apart',
+  Object.values(REASON_PHRASES).every((re) => !re.test(bucketNote))
   && /rows in the ledger carry the specific reason/.test(bucketNote),
   bucketNote);
 ok('the record is broken down by month so a change over time is visible',
@@ -2510,6 +2775,45 @@ ok('and says where every name was cut, which is the burst filter itself',
   (await page.textContent('#funnel-hint')).includes('at "4% bursts"'),
   (await page.textContent('#funnel-hint')).replace(/\s+/g, ' '));
 await shot('quiet-market-dark');
+
+// And the night that reports the same 0 for the opposite reason. The pair is
+// the point: quietmarket must SAY "no 4% gain on the day" and blindscan must
+// not, so neither check can pass by asserting nothing.
+ok('a clean night that found nothing blames the burst filter itself',
+  (await page.textContent('#funnel-table')).includes('no 4% gain on the day'),
+  (await page.textContent('#funnel-hint')).replace(/\s+/g, ' ').slice(0, 140));
+await open('/v/blindscan/');
+await setTheme('dark');
+await page.waitForTimeout(200);
+await checksForAnyRun(VARIANTS.blindscan(), 'a night that measured nothing');
+const blindBody = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
+ok('a night that measured nothing does not print "no 4% gain on the day" over it',
+  !/no 4% gain on the day/.test(blindBody),
+  (blindBody.match(/.{0,80}no 4% gain on the day.{0,40}/) || [''])[0]);
+ok('and captions the first cut with what really happened to those names',
+  /not one of the \d+ names asked could be measured for this session/.test(blindBody),
+  (await page.textContent('#funnel-hint')).replace(/\s+/g, ' ').slice(0, 160));
+// And the same night one screen down, where every later reader meets it: the
+// runs table printed the same "0 bursts" for a blind night and a quiet one.
+ok('and the runs table marks a row whose run measured no name at all',
+  /measured none/.test(await page.textContent('#runs-table')),
+  (await page.textContent('#runs-table')).replace(/\s+/g, ' ').slice(0, 120));
+ok('a null floor over nothing rankable is not reported as "nothing traded"',
+  /no name's dollar volume could be ranked/.test(blindBody)
+  && !/no floor — nothing traded/.test(blindBody),
+  (blindBody.match(/.{0,60}(nothing traded|could be ranked).{0,40}/) || [''])[0]);
+await shot('blind-scan-dark');
+
+// THE OTHER HALF OF THE FIRST CUT. Two names the feed answered with nothing
+// is a clean green run, and the page captioned them "no 4% gain on the day"
+// under a universe stage that counts them -- the burst filter blamed for a
+// cut it had no part in, which is the blind night's overclaim one step down.
+await open('/v/thinscan/');
+await checksForAnyRun(VARIANTS.thinscan(), 'a night two of whose names never answered');
+const thinBody = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
+ok('a name the feed never answered for is not counted as a name that did not gain 4%',
+  /2 of the \d+ asked could not be measured for this session/.test(thinBody),
+  (await page.textContent('#funnel-hint')).replace(/\s+/g, ' ').slice(0, 160));
 
 await browser.close();
 server.close();

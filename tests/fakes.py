@@ -77,6 +77,8 @@ class FakeAlpaca:
         self.gapped: set[str] = set()
         #: sessions NO frame carries -- see close_session
         self.closed_sessions: set = set()
+        #: sessions ONE name is missing -- see hole_on
+        self.holes: dict[str, set] = {}
         #: symbols whose session bar is sent twice -- see send_session_bar_twice
         self.duplicated: dict[str, int] = {}
 
@@ -113,6 +115,21 @@ class FakeAlpaca:
         session after Labor Day as 230 holes.
         """
         self.closed_sessions.add(pd.Timestamp(day).date())
+
+    def hole_on(self, ticker: str, day) -> None:
+        """Serve THIS symbol's frame without a bar on `day`, while every other
+        name carries it: one name's own hole on a session the market held.
+
+        The per-name sibling of close_session(), and a knob for the same
+        reason: _align_to_end rebuilds every index as contiguous business
+        days, so a frame handed in with a gap comes back without one.
+        `gap_before_session` removes the bar before the NEWEST, which is the
+        session the scan's own gap rule reads; a hole between a burst and its
+        horizons is a different session, and only the fill can see it -- no
+        test in this suite could hold one before this existed, which is how
+        the per-horizon setup counts went four rounds unmeasured end to end.
+        """
+        self.holes.setdefault(ticker, set()).add(pd.Timestamp(day).date())
 
     def send_session_bar_twice(self, ticker: str, copies: int = 1) -> None:
         """Serve `copies` extra copies of this symbol's newest bar.
@@ -157,6 +174,9 @@ class FakeAlpaca:
             # twice.
             if self.closed_sessions:
                 lower = lower[[pd.Timestamp(t).date() not in self.closed_sessions
+                               for t in lower.index]]
+            if self.holes.get(sym):
+                lower = lower[[pd.Timestamp(t).date() not in self.holes[sym]
                                for t in lower.index]]
             if sym in self.gapped and len(lower) >= 2:
                 lower = pd.concat([lower.iloc[:-2], lower.iloc[-1:]])

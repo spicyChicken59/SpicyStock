@@ -237,6 +237,63 @@ def test_the_live_check_says_when_the_feed_repeated_a_bar_and_stays_quiet_when_i
 
 
 # --------------------------------------------------------------- claude ----
+def test_the_stand_in_candidate_carries_the_scans_own_volume_arithmetic(live, ohlcv):
+    """The one tool that reaches the real API builds its own Candidate, and
+    the pair it puts in the request is `avg_volume` beside a `volume_ratio`
+    knowledge/strategy.md tells the model to divide back out.
+
+    It retyped the scan's 50-session window as `iloc[-51:-1]`, so nothing tied
+    the two numbers together and an off-by-one here would have sent a ratio
+    over a baseline the payload did not name -- the exact sentence
+    src.scorer.volume_ratio_basis() exists to avoid printing. It calls
+    trailing_volume_mean() now, and this reads the result back through the
+    scorer's own derivation.
+    """
+    from src.scanner import ScanConfig, trailing_volume_mean
+    from src.scorer import volume_ratio_basis
+
+    frame = ohlcv("burst")
+    cand = live._candidate("AAA", frame)
+    # ROUNDED, the way detect_setup() archives it, not truncated. The pair
+    # this sends is read back by volume_ratio_basis(), whose one step of
+    # slack is reasoned from round() -- so a tool that truncates is a tool
+    # whose request is rounded differently from every real candidate's.
+    assert cand.avg_volume == round(trailing_volume_mean(frame, ScanConfig()))
+    assert "trailing average" in volume_ratio_basis(cand)
+
+
+def test_a_frame_with_no_measurable_volume_average_is_not_sent_as_one_share(live, boundaries, ohlcv):
+    """`trailing_volume_mean() or 1.0` made 1 a denominator.
+
+    The two are not the same function on a frame with holes: the scan's mean
+    dropna()s its window and returns None below `min_rvol_sessions`, and `or
+    1.0` then told the live model "a trailing average of 1 shares" beside a
+    volume_ratio of three million. Reproduced on a frame whose last sixty
+    volumes are NaN: avg_volume 1, volume_ratio 3000000.0. This is the one
+    request in the repo that reaches the real endpoint, and the round that
+    wrote the line pinned it on a clean synthetic frame only.
+
+    A frame the scan could not have measured is a frame this tool cannot
+    build the pair from, so it falls back to the synthetic one the way
+    check_claude already does below 85 bars -- and says which of the two
+    reasons it was, rather than sending a number nothing produced.
+    """
+    from src.scanner import ScanConfig, trailing_volume_mean
+
+    frame = ohlcv("burst").copy()
+    frame.iloc[-60:, frame.columns.get_loc("Volume")] = float("nan")
+    assert len(frame) >= 85, "precondition: long enough that the bar count is not the reason"
+    assert trailing_volume_mean(frame, ScanConfig()) is None, (
+        "precondition: the scan itself would refuse to measure an average here")
+
+    check = live.check_claude(frame=frame, ticker="AAA")
+
+    assert check.ok, check.detail
+    assert "synthetic chart" in check.detail and "trailing" in check.detail, check.detail
+    cand = check.data["inputs"][0]
+    assert cand.avg_volume > 1, "a baseline of one share is not a baseline"
+
+
 def test_a_rejected_anthropic_key_fails_claude_and_skips_the_cache_check(live, boundaries):
     boundaries["anthropic"].set_error(RuntimeError("Error code: 401 - invalid x-api-key"))
     checks = by_name(live.run_checks(now=NOW))

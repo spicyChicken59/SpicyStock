@@ -368,9 +368,11 @@ class ScanConfig:
     min_rvol: float = 1.5
     # Sessions in the trailing average, EXCLUDING the burst day itself. 50 is
     # not a fresh guess: src.lynch's C check already measures the pre-burst
-    # day against `pre["Volume"].iloc[-51:-1].mean()`, and two layers of one
-    # pipeline disagreeing about what "average volume" means is how a metric
-    # ends up meaning nothing. ~10 weeks is long enough that one earnings
+    # day against its own `WINDOWS["volume_norm_sessions"]` average, and two
+    # layers of one pipeline disagreeing about what "average volume" means is
+    # how a metric ends up meaning nothing. That window was a bare literal
+    # until round 11, so the agreement this comment asserts was unenforceable;
+    # both halves are named now and a test holds them equal. ~10 weeks is long enough that one earnings
     # spike cannot set the baseline, short enough to follow a name whose
     # liquidity regime has changed.
     rvol_lookback: int = 50
@@ -1070,7 +1072,7 @@ def trailing_volume_mean(df: pd.DataFrame, cfg: ScanConfig) -> float | None:
     """Mean volume over the sessions BEFORE the last bar, or None.
 
     Exclusive of the bar being measured, matching src.lynch's C check, which
-    divides the pre-burst day by `pre["Volume"].iloc[-51:-1].mean()`. The
+    divides the pre-burst day by its own `volume_norm_sessions` average. The
     exclusion is not a detail: a burst day inside its own denominator drags
     the average up by roughly its own excess, so a genuine 10x day reports
     about 8.5x on a 50-session window and about 5x on a 20-session one. The
@@ -1450,6 +1452,12 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     log.info("Scanned %d symbols for %s — %d candidates before rule 6",
              len(fresh), session, len(candidates))
 
+    # The population a burst could have come from -- see the stats key below.
+    # Computed once, here, because the log line, the stats dict and the run's
+    # own record all have to be one number.
+    measured = (with_bars - len(stale) - len(gapped) - len(invalid_bars)
+                - len(off_session) - len(detector_errors))
+
     # Everything the caller cannot read off the returned list. Set before the
     # guards so a raise still leaves the numbers behind it visible.
     if stats is not None:
@@ -1492,6 +1500,17 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             "off_session": dict(off_session),
             "invalid_bars": dict(invalid_bars),
             "detector_errors": dict(detector_errors),
+            # HOW MUCH OF THE NIGHT WAS ACTUALLY READ. Every count above is a
+            # way of not being measured, and nothing added them up, so a scan
+            # that measured NOT ONE NAME reported `with_bars: 12` and 0
+            # candidates -- which every surface downstream rendered as a quiet
+            # market. This is the population a burst could have come from: the
+            # symbols whose session bar the detector read and answered about,
+            # for THIS session. A name whose bar was unreadable, whose
+            # detector raised, or whose measured bar turned out to be an
+            # earlier session was not measured for it, so none of them are in
+            # here; `with_bars - measured` is what could not be.
+            "measured": measured,
             "candidates": len(candidates),
         })
 
@@ -1540,9 +1559,9 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     # shape this repo already names.)
     log.info("Coverage for %s: %d requested; %d answered with bars, %d of those with no bar for "
              "the session; %d answered with no bar at all; %d dropped after their batch failed "
-             "twice; %d duplicate bar(s) dropped",
+             "twice; %d duplicate bar(s) dropped; %d measured for the session",
              session, len(tickers), with_bars, len(stale), len(no_bars_names), dropped,
-             sum(duplicate_bars.values()))
+             sum(duplicate_bars.values()), measured)
 
     # Three ways a scan can come back too empty to mean anything, in the order
     # a diagnosis would take them: nothing arrived, most of it arrived stale,
@@ -1581,16 +1600,16 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
             f"shortlist would describe the minority that did update. "
             f"{_stale_hint(cfg, session, partial=True)}"
         )
-    measured = with_bars - len(stale) - len(gapped)
-    if measured and len(invalid_bars) == measured:
+    ready = with_bars - len(stale) - len(gapped)
+    if ready and len(invalid_bars) == ready:
         raise IncompleteScanError(
-            f"not one of the {measured} symbols otherwise ready for {session} carried "
+            f"not one of the {ready} symbols otherwise ready for {session} carried "
             "readable required OHLCV fields on its session bar. The feed's current bars "
             "could not be measured; an empty shortlist here is not a quiet market."
         )
-    if measured and len(detector_errors) == measured:
+    if ready and len(detector_errors) == ready:
         raise IncompleteScanError(
-            f"detect_setup raised on every one of the {measured} symbols that carried a "
+            f"detect_setup raised on every one of the {ready} symbols that carried a "
             f"bar for {session} (first: {next(iter(detector_errors.values()))}). That is a "
             "defect in this code or a change in the data's shape, not a quiet market."
         )
@@ -1624,6 +1643,14 @@ def run_scan(cfg: ScanConfig | None = None, universe: list[str] | None = None,
     if stats is not None:
         stats["candidates"] = len(candidates)
         stats["liquidity_floor"] = floor
+        # HOW MANY NAMES THE PERCENTILE WAS DRAWN FROM. A null floor has two
+        # causes -- the rule switched off (pctile <= 0) and nothing to rank --
+        # and liquidity_floor() returns None for both, so every surface read
+        # one state and printed the other's sentence. This is the second half
+        # of the pair: 0 here under a null floor is "nothing could be
+        # measured", and it is written beside the floor because the two are
+        # one fact about one night.
+        stats["liquidity_over"] = len(session_dollar_volumes)
         stats["liquidity_refused"] = len(illiquid)
     log.info("Scan complete: %d candidates from %d symbols", len(candidates), len(tickers))
     return candidates
