@@ -942,6 +942,9 @@
       width: function (s) { return ctx.measureText(String(s)).width + String(s).length * spacing + 2; } };
   }
   function chartLabel(kids, type, text, x, y, width) {
+    // Wrapped tspans retain a separator for readable textContent. SVG includes
+    // that trailing space in its painted bounds, so reserve room for it too.
+    width = Math.max(1, width - type.width(' '));
     var lines = [], line = '';
     String(text).split(/\s+/).forEach(function (word) {
       if (line && type.width(line + ' ' + word) > width) { lines.push(line); line = ''; }
