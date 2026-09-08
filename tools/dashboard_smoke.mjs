@@ -823,7 +823,7 @@ const results = [];
 const ok = (name, pass, detail = '') => results.push({ name, pass: !!pass, detail });
 const shot = async (n) => { if (SHOTS) await page.screenshot({ path: join(SHOTS, n + '.png'), fullPage: true }); };
 async function open(path = '/f/fixture/') {
-  await page.goto(BASE + path, { waitUntil: 'load' });
+  await page.goto(BASE + path + '#research-report', { waitUntil: 'load' });
   await page.waitForFunction(() => {
     const h = document.getElementById('h1');
     return h && h.textContent.trim() && h.textContent !== 'Loading the latest run…';
@@ -2116,7 +2116,7 @@ ok('a snapshot with no record in it says so rather than hiding the question',
   && /not that the answer is no/.test(gone.text), gone.text.slice(0, 90));
 ok('and the views that need a record stay down rather than drawing an empty shell', gone.predict);
 
-await page.goto(BASE + '/v/nodata/', { waitUntil: 'load' });
+await page.goto(BASE + '/v/nodata/#research-report', { waitUntil: 'load' });
 await page.waitForTimeout(600);
 ok('a page with no data.json says so instead of showing an empty shell',
   (await page.textContent('#h1')) === 'Snapshot unavailable'

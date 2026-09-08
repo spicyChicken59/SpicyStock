@@ -2563,7 +2563,8 @@ class Ledger:
         return list(seen)
 
     def fill_forward_returns(self, frames: dict, through: date | None = None,
-                             calendar: list[date] | None = None) -> list[Filled]:
+                             calendar: list[date] | None = None, *,
+                             observed_on: date | None = None) -> list[Filled]:
         """Fill every horizon these frames make knowable.
 
         Returns one Filled per (row, horizon) THIS call moved from pending to
@@ -2609,6 +2610,12 @@ class Ledger:
                 if (current["from_open"].get(key) is None
                         and fresh["from_open"][key] is not None):
                     current["from_open"][key] = fresh["from_open"][key]
+                    # Learning may only use a label after we actually knew it.
+                    # Backfilled bars are not evidence of earlier availability.
+                    if (horizon == 5 and type(observed_on) is date
+                            and isinstance(fresh.get("as_of"), str)
+                            and observed_on.isoformat() >= fresh["as_of"]):
+                        current.setdefault("observed_at", observed_on.isoformat())
                     moved_here = True
                 # ONE HORIZON, ONE PAIR, whichever basis moved. A row from
                 # before the open basis existed gains that basis alone here,
@@ -2776,6 +2783,8 @@ class Ledger:
         """docs/data.json: the newest run, plus the history's headline numbers."""
         if self.latest is None:
             raise ValueError("no run has been added, so there is nothing to publish")
+        from . import learning
+
         open_fills = {id(run) for run in self._fill_window()}
         return {
             "schema_version": SCHEMA_VERSION,
@@ -2819,6 +2828,8 @@ class Ledger:
             # carried a cross-run history of per-run means, so a block spanning
             # the record is not a new kind of thing in this file.
             "evidence": evidence(self.runs),
+            "learning": learning.build(self.runs, (headline or self.latest)["run"],
+                                       (headline or self.latest)["candidates"]),
         }
 
     def write(self, headline: dict | None = None) -> dict:

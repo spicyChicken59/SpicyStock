@@ -40,7 +40,7 @@ try {
   for (const width of [1280, 390, 320]) {
     for (const theme of ['light', 'dark']) {
       await page.setViewportSize({width,height:900});
-      await page.goto(origin);
+      await page.goto(origin + '/#research-report');
       await page.waitForSelector('.signal-card');
       await page.click(`.sc-theme-toggle button[data-theme="${theme}"]`);
       assert.equal(await page.locator('.signal-card').count(), fixture.candidates.length);
@@ -95,7 +95,7 @@ try {
   const malformed = structuredClone(fixture);
   malformed.candidates.at(-1).lynch_detail = 'not a checklist';
   await page.route(origin + '/data.json', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(malformed)}));
-  await page.goto(origin);
+  await page.goto(origin + '/#research-report');
   await page.waitForFunction(() => document.getElementById('snapshot-status').textContent.includes('Snapshot unavailable'));
   assert.equal(await page.locator('#signal-workspace').isVisible(), false, 'A failed first render must not leave partially rendered candidate evidence visible');
   assert.deepEqual(errors, []);

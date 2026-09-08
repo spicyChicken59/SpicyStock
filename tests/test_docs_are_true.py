@@ -1487,14 +1487,14 @@ def test_every_module_this_repo_imports_is_a_dependency_it_declares():
         return re.sub(r"[-_.]+", "-", name).lower()
 
     declared = set()
-    for name in ("requirements.txt", "requirements-dev.txt"):
+    for name in ("requirements.txt", "requirements-dev.txt", "requirements-bridge.txt"):
         for line in _read(name).splitlines():
             line = line.split("#")[0].strip()
             if line and not line.startswith("-"):
                 declared.add(normalise(re.split(r"[<>=!\[;]", line)[0].strip()))
 
     imported = set()
-    for path in sorted(ROOT.glob("src/*.py")) + sorted(ROOT.glob("tests/**/*.py")) \
+    for path in sorted(ROOT.glob("src/**/*.py")) + sorted(ROOT.glob("tests/**/*.py")) \
             + sorted(ROOT.glob("tools/*.py")):
         for node in ast.walk(ast.parse(path.read_text())):
             if isinstance(node, ast.Import):
@@ -1516,7 +1516,7 @@ def test_every_module_this_repo_imports_is_a_dependency_it_declares():
             missing[module] = dists
 
     assert not missing, (
-        f"imported but declared in neither requirements file: {missing}. "
+        f"imported but not declared in the requirements files: {missing}. "
         "CI installs requirements-dev.txt and nothing else, so these error there "
         "while passing here.")
 
@@ -1537,7 +1537,7 @@ def test_no_module_defines_the_same_name_twice():
     import ast
 
     clashes = {}
-    for path in sorted(ROOT.glob("src/*.py")) + sorted(ROOT.glob("tests/**/*.py")) \
+    for path in sorted(ROOT.glob("src/**/*.py")) + sorted(ROOT.glob("tests/**/*.py")) \
             + sorted(ROOT.glob("tools/*.py")):
         seen: dict[str, list[int]] = {}
         for node in ast.parse(path.read_text()).body:

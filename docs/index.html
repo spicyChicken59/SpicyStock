@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#111F31">
 <title>SpicyStock</title>
-<meta name="description" content="SpicyStock — a 4% momentum burst screener. Every candidate the run scored, with its 2LYNCH checklist, and whether the score came from Claude or from the offline fallback.">
+<meta name="description" content="SpicyStock — your daily 4% trading desk. Review setups, define risk, record confirmed fills, and follow your positions in one place.">
 <!-- SpicyChicken Design System · exact local snapshot recorded in design-system/provenance.json -->
 <link rel="icon" href="design-system/assets/favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="icon" href="design-system/assets/sc-avatar-tile.svg" type="image/svg+xml">
@@ -20,7 +20,7 @@
 <script src="design-system/sc-motion.js" defer></script>
 <script src="design-system/sc-reading.js" defer></script>
 <link rel="stylesheet" href="stock.css?v=eca9d1ccfa48">
-<link rel="stylesheet" href="stock-home.css?v=1ffc616eef18">
+<link rel="stylesheet" href="stock-home.css?v=845a54311c16">
 <script src="signal-map.js?v=dadeb5f4dc6e"></script>
 <link rel="stylesheet" href="stock-cockpit.css?v=ae166b76553e">
 <link rel="stylesheet" href="stock-desk.css?v=6adf38072b3c">
@@ -30,8 +30,12 @@
 <script src="stock-replay.js?v=4df0cbae5fd8"></script>
 <link rel="stylesheet" href="stockbee-workbench.css?v=90753ec8c426">
 <link rel="stylesheet" href="stockbee-plan.css?v=b0a3c71376f7">
-<script src="stockbee-plan.js?v=f0a0cd25b06c"></script>
+<script src="stockbee-plan.js?v=a50f0ec6f38f"></script>
 <script src="stockbee-workbench.js?v=8924a0957f08"></script>
+<link rel="stylesheet" href="trade-workspace.css?v=c3845b34011b">
+<script src="trade-state.js?v=18b3cc5ddfb7"></script>
+<script src="trade-bridge.js?v=37ee390d5de3"></script>
+<script src="trade-workspace.js?v=799174c03285"></script>
 </head>
 <body>
 <a class="sc-skip" href="#main">Skip to content</a>
@@ -39,7 +43,7 @@
 <header class="sc-masthead sc-screen-only">
   <a class="sc-brand" href="./">
     <img class="sc-mark" src="design-system/assets/sc-mark-color-dark.svg" alt="" width="22" height="26">
-    <span><span class="sc-brand__name">SpicyStock</span><span class="sc-brand__sub">4% momentum burst screener</span></span>
+    <span><span class="sc-brand__name">SpicyStock</span><span class="sc-brand__sub">your daily 4% trading desk</span></span>
   </a>
   <div class="sc-masthead__right">
     <span id="mast-right" class="sc-hide-sm">Loading…</span>
@@ -55,23 +59,6 @@
 <main class="sc-wrap sc-wrap--wide sc-stack sc-print-report" id="main">
   <div class="sc-print-head" aria-hidden="true"><span class="sc-signature sc-signature--small"><img src="design-system/assets/sc-mark-color-light.svg" alt="" width="342" height="405"><span class="sc-signature__name">SpicyStock</span></span><span>market research / current run</span></div>
   <div class="sc-print-foot" aria-hidden="true"><span>SpicyChicken / market research</span><span>Screening output for human review</span></div>
-  <section class="sc-cover stock-cover" aria-labelledby="h1">
-    <div class="sc-cover__content sc-reveal" data-sc-motion="rise">
-      <p class="sc-eyebrow stock-cover__brand">Stockbee momentum bursts / next-session preparation</p>
-      <p class="cockpit-cover-line">Find the first burst.<br><em>Know your risk.</em></p>
-      <p class="stock-playbook-intro">Read the market. Find the setup. Define the trade.</p>
-      <div class="sc-eyebrow sc-eyebrow--muted" id="eyebrow">screener</div>
-      <h1 class="sc-cover__title" id="h1">Loading the latest run…</h1>
-      <p class="sc-cover__dek" id="dek"></p>
-      <div class="sc-cover__meta" id="meta"></div>
-    </div>
-    <div class="sc-cover__art stock-cover__art sc-brand-stage sc-brand-stage--orbit sc-reveal" data-sc-motion="scale" aria-hidden="true">
-      <span class="stock-scan-mark">4<span>%</span></span>
-      <span class="stock-scan-caption">A starting signal.<br>A setup still needs a plan.</span>
-      <span class="stock-scan-formula">+4% on the day<br>volume above yesterday<br>at least 100,000 shares</span>
-    </div>
-  </section>
-
   <section class="sc-card stock-snapshot" id="snapshot-panel" aria-label="Snapshot status">
     <div>
       <p class="sc-eyebrow sc-eyebrow--muted">recorded snapshot / daily research</p>
@@ -83,6 +70,28 @@
       <a class="sc-btn sc-btn--ghost sc-btn--sm" href="https://github.com/spicyChicken59/SpicyStock/actions/workflows/evening.yml" rel="noopener">Scan activity ↗</a>
     </div>
   </section>
+  <section id="trade-workspace" class="trade-workspace" aria-label="Your daily trading desk" hidden></section>
+  <details id="research-report" class="stock-research">
+    <summary id="research-toggle"><span><strong>Research &amp; strategy</strong><span>The scan, charts, original rules, and the full record.</span></span><span class="stock-research-arrow" aria-hidden="true">↗</span></summary>
+    <div class="sc-stack stock-research-body">
+  <section class="sc-cover stock-cover" aria-labelledby="h1">
+    <div class="sc-cover__content sc-reveal" data-sc-motion="rise">
+      <p class="sc-eyebrow stock-cover__brand">Stockbee momentum bursts / next-session preparation</p>
+      <p class="cockpit-cover-line">Find the first burst.<br><em>Know your risk.</em></p>
+      <p class="stock-playbook-intro">Read the market. Find the setup. Define the trade.</p>
+      <div class="sc-eyebrow sc-eyebrow--muted" id="eyebrow">screener</div>
+      <h2 class="sc-cover__title" id="h1">Loading the latest run…</h2>
+      <p class="sc-cover__dek" id="dek"></p>
+      <div class="sc-cover__meta" id="meta"></div>
+    </div>
+    <div class="sc-cover__art stock-cover__art sc-brand-stage sc-brand-stage--orbit sc-reveal" data-sc-motion="scale" aria-hidden="true">
+      <span class="stock-scan-mark">4<span>%</span></span>
+      <span class="stock-scan-caption">A starting signal.<br>A setup still needs a plan.</span>
+      <span class="stock-scan-formula">+4% on the day<br>volume above yesterday<br>at least 100,000 shares</span>
+    </div>
+  </section>
+
+
 
   <dl class="sc-stat-strip sc-stat-strip--4 stock-run-strip sc-stagger" id="run-strip" hidden aria-label="Run at a glance">
     <div class="sc-stat"><dt class="sc-stat__label">universe</dt><dd class="sc-stat__value" id="stat-universe">—</dd><dd class="sc-stat__note">names in the run</dd></div>
@@ -374,6 +383,8 @@
     <p>The scan thresholds, the 2LYNCH checklist and the rubric Claude scores to are all in the repo.
       <a href="https://github.com/spicyChicken59/SpicyStock" rel="noopener">SpicyStock on GitHub →</a></p>
   </div>
+    </div>
+  </details>
 </main>
 
 <footer class="sc-foot sc-screen-only">
@@ -386,6 +397,27 @@
 <script>
 (function () {
   'use strict';
+
+  var researchReport = document.getElementById('research-report');
+  function revealResearchTarget() {
+    var target;
+    try { target = document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch (_) { return; }
+    if (target && researchReport && (target === researchReport || researchReport.contains(target))) researchReport.open = true;
+  }
+  window.addEventListener('hashchange', revealResearchTarget);
+  researchReport.addEventListener('toggle', function () {
+    if (researchReport.open) window.dispatchEvent(new Event('resize'));
+  });
+  document.addEventListener('click', function (event) {
+    var link = event.target.closest && event.target.closest('a[href^="#"]');
+    if (!link) return;
+    var target = document.getElementById(link.getAttribute('href').slice(1));
+    if (target && researchReport && researchReport.contains(target)) researchReport.open = true;
+  });
+  var researchWasOpen = false;
+  window.addEventListener('beforeprint', function () { researchWasOpen = researchReport.open; researchReport.open = true; });
+  window.addEventListener('afterprint', function () { researchReport.open = researchWasOpen; });
+  revealResearchTarget();
 
   // sc-charts.js gives el()/svg(); if its file is unavailable the page still
   // has to render, so fall back to the two builders it would have supplied.
@@ -2363,6 +2395,7 @@
     $('shortlist-hint').textContent = 'The email shortlist: Claude-reviewed candidates first, then checklist fallbacks, ranked by score within each group. ' +
       'Each carries its full 2LYNCH checklist and who produced its score.';
     clear($('shortlist')).append.apply($('shortlist'), short.map(pick));
+    renderWorkspace('SCTradeWorkspace', 'trade-workspace', 'Daily trading desk', d);
     renderWorkspace('SCStockbee', 'stockbee-workspace', 'Stockbee setup desk', d);
     renderWorkspace('SCStockPlan', 'stockbee-plan', 'Risk planner and journal', d);
     renderWorkspace('SCStockSignals', 'signal-workspace', 'Signal lens', d);
@@ -2722,6 +2755,8 @@
   }
 
   function fail(message) {
+    researchReport.open = true;
+    renderWorkspace('SCTradeWorkspace', 'trade-workspace', 'Daily trading desk', null);
     $('eyebrow').textContent = 'snapshot';
     clear($('meta'));
     $('h1').textContent = 'Snapshot unavailable';
@@ -2818,7 +2853,7 @@
           if (previous) render(previous);
           else {
             redraws = [];
-            document.querySelectorAll('#main > [hidden], #main .stock-section, #stockbee-workspace, #stockbee-plan, #session-cockpit, #signal-workspace, #run-strip, #page-index, #fixture-banner, #fallback-callout')
+            document.querySelectorAll('#main > [hidden], #main .stock-section, #trade-workspace, #stockbee-workspace, #stockbee-plan, #session-cockpit, #signal-workspace, #run-strip, #page-index, #fixture-banner, #fallback-callout')
               .forEach(function (node) { node.hidden = true; });
           }
           throw error;

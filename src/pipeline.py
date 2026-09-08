@@ -2055,7 +2055,10 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         # the next bar it has. See ledger.session_calendar(). ONE calendar
         # for both fills below, which is what the contract sentence says.
         calendar = ledger.session_calendar({**(frames_read or {}), **frames})
-        filled = book.fill_forward_returns(frames, through, calendar)
+        filled = book.fill_forward_returns(
+            frames, through, calendar,
+            observed_on=(None if run["dry_run"] or run["fixture"] else
+                         datetime.now(timezone.utc).astimezone(scanner.MARKET_TZ).date()))
     # The universe benchmark, from the frames THIS scan already read: no
     # request, and the one alternative the north star was missing.
     # The universe these frames ARE -- and None for a --tickers run, which
