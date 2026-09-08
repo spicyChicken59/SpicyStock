@@ -2,6 +2,7 @@
 // checkout, including explicitly labelled fixtures; no market service is called.
 // node tools/research_cockpit_smoke.mjs [--shots /tmp/research-shots]
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { readFile, mkdir } from 'node:fs/promises';
 import { dirname, extname, join, resolve, sep } from 'node:path';
@@ -43,6 +44,25 @@ let browser;
 const errors = [];
 let checks = 0;
 function pass(name) { checks++; console.log('PASS ' + name); }
+// A fresh page must request fresh application assets even if a returning
+// browser still holds an older response for each unversioned URL.
+const pageAssets = [
+  'stock.css', 'stock-home.css', 'signal-map.js',
+  'stock-cockpit.css', 'stock-cockpit.js', 'stock-desk.css', 'stock-desk.js',
+  'stock-replay.css', 'stock-replay.js'
+];
+const indexHTML = await readFile(join(docs, 'index.html'), 'utf8');
+const assetBase = 'https://research.local/';
+const linkedAssets = [...indexHTML.matchAll(/<(?:link|script)\b[^>]*\b(?:href|src)=["']([^"']+)["'][^>]*>/gi)]
+  .map(match => new URL(match[1], assetBase));
+await Promise.all(pageAssets.map(async asset => {
+  const matches = linkedAssets.filter(url => url.origin === new URL(assetBase).origin && url.pathname === '/' + asset);
+  assert.equal(matches.length, 1, asset + ' must be loaded once from this site.');
+  const digest = createHash('sha256').update(await readFile(join(docs, asset))).digest('hex').slice(0, 12);
+  assert.deepEqual(matches[0].searchParams.getAll('v'), [digest],
+    asset + ' needs a v= content hash matching its exact file bytes so returning browsers receive this release.');
+}));
+pass('every page-owned CSS and JavaScript URL carries its current content hash');
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
 try {

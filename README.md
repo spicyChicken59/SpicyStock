@@ -605,6 +605,9 @@ The view modules are `stock-cockpit.js`, `signal-map.js`, `stock-desk.js` and
 shows its own retry message while the original report finishes rendering. Empty
 and sample runs remain clearly identified. Saved notes use the namespaced
 `spicystock.research.v1` browser-storage key; comparison choices are temporary.
+Page-owned scripts and styles use content-hash version URLs so a returning browser
+loads the matching release assets. Update their `v` values in `docs/index.html`
+when those files change; the research smoke suite verifies each hash.
 
 **An evening run that scans writes that file at the end** (step 9,
 `src/ledger.py`) — one that re-presents an already-published session leaves it
