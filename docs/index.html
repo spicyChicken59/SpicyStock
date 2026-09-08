@@ -22,12 +22,16 @@
 <link rel="stylesheet" href="stock.css?v=eca9d1ccfa48">
 <link rel="stylesheet" href="stock-home.css?v=1ffc616eef18">
 <script src="signal-map.js?v=dadeb5f4dc6e"></script>
-<link rel="stylesheet" href="stock-cockpit.css?v=5fc75e9f15d4">
+<link rel="stylesheet" href="stock-cockpit.css?v=ae166b76553e">
 <link rel="stylesheet" href="stock-desk.css?v=6adf38072b3c">
 <link rel="stylesheet" href="stock-replay.css?v=772756da3913">
-<script src="stock-cockpit.js?v=7cb0f45abfbc"></script>
+<script src="stock-cockpit.js?v=ffb80b5914d2"></script>
 <script src="stock-desk.js?v=352c34561ea9"></script>
 <script src="stock-replay.js?v=4df0cbae5fd8"></script>
+<link rel="stylesheet" href="stockbee-workbench.css?v=90753ec8c426">
+<link rel="stylesheet" href="stockbee-plan.css?v=b0a3c71376f7">
+<script src="stockbee-plan.js?v=f0a0cd25b06c"></script>
+<script src="stockbee-workbench.js?v=8924a0957f08"></script>
 </head>
 <body>
 <a class="sc-skip" href="#main">Skip to content</a>
@@ -53,16 +57,18 @@
   <div class="sc-print-foot" aria-hidden="true"><span>SpicyChicken / market research</span><span>Screening output for human review</span></div>
   <section class="sc-cover stock-cover" aria-labelledby="h1">
     <div class="sc-cover__content sc-reveal" data-sc-motion="rise">
-      <p class="sc-eyebrow stock-cover__brand">SpicyStock / your research desk</p>
-      <p class="cockpit-cover-line">The session.<br><em>In focus.</em></p>
+      <p class="sc-eyebrow stock-cover__brand">Stockbee momentum bursts / next-session preparation</p>
+      <p class="cockpit-cover-line">Find the first burst.<br><em>Know your risk.</em></p>
+      <p class="stock-playbook-intro">Read the market. Find the setup. Define the trade.</p>
       <div class="sc-eyebrow sc-eyebrow--muted" id="eyebrow">screener</div>
       <h1 class="sc-cover__title" id="h1">Loading the latest run…</h1>
       <p class="sc-cover__dek" id="dek"></p>
       <div class="sc-cover__meta" id="meta"></div>
     </div>
     <div class="sc-cover__art stock-cover__art sc-brand-stage sc-brand-stage--orbit sc-reveal" data-sc-motion="scale" aria-hidden="true">
-      <img class="stock-cover__mark" src="design-system/assets/sc-mark-mono-cream.svg" alt="" width="172" height="200">
-      <span class="sc-cover__caption">a SpicyChicken project<br>4% momentum burst screener</span>
+      <span class="stock-scan-mark">4<span>%</span></span>
+      <span class="stock-scan-caption">A starting signal.<br>A setup still needs a plan.</span>
+      <span class="stock-scan-formula">+4% on the day<br>volume above yesterday<br>at least 100,000 shares</span>
     </div>
   </section>
 
@@ -80,14 +86,15 @@
 
   <dl class="sc-stat-strip sc-stat-strip--4 stock-run-strip sc-stagger" id="run-strip" hidden aria-label="Run at a glance">
     <div class="sc-stat"><dt class="sc-stat__label">universe</dt><dd class="sc-stat__value" id="stat-universe">—</dd><dd class="sc-stat__note">names in the run</dd></div>
-    <div class="sc-stat"><dt class="sc-stat__label">bursts</dt><dd class="sc-stat__value" id="stat-bursts">—</dd><dd class="sc-stat__note">found by the scan</dd></div>
+    <div class="sc-stat"><dt class="sc-stat__label" id="stat-bursts-label">filtered bursts</dt><dd class="sc-stat__value" id="stat-bursts">—</dd><dd class="sc-stat__note" id="stat-bursts-note">found by the scoring scan</dd></div>
     <div class="sc-stat"><dt class="sc-stat__label">scored</dt><dd class="sc-stat__value" id="stat-scored">—</dd><dd class="sc-stat__note">every candidate below</dd></div>
     <div class="sc-stat sc-stat--lead"><dt class="sc-stat__label">shortlist</dt><dd class="sc-stat__value" id="stat-shortlist">—</dd><dd class="sc-stat__note">sent for human review</dd></div>
   </dl>
 
   <nav class="stock-index sc-chapter-nav" data-sc-reading id="page-index" aria-label="On this page" hidden>
     <span class="sc-eyebrow sc-eyebrow--muted">your workspace</span>
-    <a class="sc-press" href="#session-cockpit">Start here</a>
+    <a class="sc-press" href="#stockbee-workspace">4% desk</a>
+    <a class="sc-press" href="#stockbee-plan">Plan &amp; journal</a>
     <a class="sc-press" href="#signal-workspace">Signal lens</a>
     <a class="sc-press" href="#stock-desk">My desk</a>
     <a class="sc-press" href="#stock-replay">Replay</a>
@@ -123,11 +130,14 @@
     <p id="fallback-body"></p>
   </div>
 
+  <section class="stockbee-workspace" id="stockbee-workspace" aria-label="Stockbee setup workbench" hidden></section>
+  <section class="stockbee-plan" id="stockbee-plan" aria-label="Risk planner and trade journal" hidden></section>
+
   <section class="cockpit" id="session-cockpit" aria-labelledby="cockpit-title" hidden></section>
 
   <section class="signal-workspace" id="signal-workspace" aria-labelledby="signal-title" hidden>
     <div class="signal-heading">
-      <div><p class="sc-eyebrow sc-eyebrow--muted">Explore this session</p><h2 id="signal-title">A closer look at <em>the signals.</em></h2></div>
+      <div><p class="sc-eyebrow sc-eyebrow--muted">Scored overlay / compare the recorded reviews</p><h2 id="signal-title">A closer look at <em>the signals.</em></h2></div>
       <p id="signal-count" class="sc-note"></p>
     </div>
     <p class="signal-description">Recorded daily gain and volume versus the 50-day average. Select a point or a candidate to connect the measurements with the score.</p>
@@ -2248,6 +2258,12 @@
       ' that went out by email. ' +
       (fb ? fb + ' of the ' + (run.scored || 0) + ' scores came from the offline checklist rather than from Claude.'
           : 'Every score came from Claude.');
+    var baseScan = run.stockbee && run.stockbee.version === 1 && run.stockbee.date === run.date && run.stockbee.scan;
+    var hasBaseScan = baseScan && Number.isInteger(baseScan.matched) && baseScan.matched >= 0;
+    if (hasBaseScan) {
+      $('h1').textContent = baseScan.matched + ' base-scan matches · ' + (run.scored || 0) + ' scored reviews';
+      $('dek').textContent = 'The 4% desk shows the basic price-and-volume scan before SpicyStock’s stricter scoring filters. Review the chart, define risk, and record your own decision.';
+    }
     clear($('meta')).append(
       el('span', { text: (run.universe && run.universe.label) || 'universe not recorded' }),
       el('span', { 'class': 'sc-sep', text: '·' }),
@@ -2258,7 +2274,9 @@
     $('mast-right').textContent = day(run.date) + ' · ' + (run.type || '');
     // Presentation only: these are the same recorded values used above.
     $('stat-universe').textContent = commas(run.universe && run.universe.size);
-    $('stat-bursts').textContent = commas(run.bursts || 0);
+    $('stat-bursts').textContent = commas(hasBaseScan ? baseScan.matched : run.bursts || 0);
+    $('stat-bursts-label').textContent = hasBaseScan ? '4% scan matches' : 'filtered bursts';
+    $('stat-bursts-note').textContent = hasBaseScan ? 'before scoring filters' : 'found by the scoring scan';
     $('stat-scored').textContent = commas(run.scored || 0);
     $('stat-shortlist').textContent = commas(shortN);
     $('run-strip').hidden = false;
@@ -2345,6 +2363,8 @@
     $('shortlist-hint').textContent = 'The email shortlist: Claude-reviewed candidates first, then checklist fallbacks, ranked by score within each group. ' +
       'Each carries its full 2LYNCH checklist and who produced its score.';
     clear($('shortlist')).append.apply($('shortlist'), short.map(pick));
+    renderWorkspace('SCStockbee', 'stockbee-workspace', 'Stockbee setup desk', d);
+    renderWorkspace('SCStockPlan', 'stockbee-plan', 'Risk planner and journal', d);
     renderWorkspace('SCStockSignals', 'signal-workspace', 'Signal lens', d);
     renderWorkspace('SCStockDesk', 'stock-desk', 'Research desk', d);
     renderWorkspace('SCStockReplay', 'stock-replay', 'Session replay', d);
@@ -2798,7 +2818,7 @@
           if (previous) render(previous);
           else {
             redraws = [];
-            document.querySelectorAll('#main > [hidden], #main .stock-section, #signal-workspace, #run-strip, #page-index, #fixture-banner, #fallback-callout')
+            document.querySelectorAll('#main > [hidden], #main .stock-section, #stockbee-workspace, #stockbee-plan, #session-cockpit, #signal-workspace, #run-strip, #page-index, #fixture-banner, #fallback-callout')
               .forEach(function (node) { node.hidden = true; });
           }
           throw error;

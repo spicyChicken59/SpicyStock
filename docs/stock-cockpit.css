@@ -7,10 +7,21 @@
 .cockpit-cover-line em { color: var(--sc-chart-emphasis); font-weight: 400; }
 .stock-cover .sc-cover__title { font: 600 clamp(20px, 2vw, 28px)/1.3 var(--sc-font-body); letter-spacing: -.025em; max-width: 35ch; margin: 0 0 14px; }
 .stock-cover .sc-cover__dek { max-width: 58ch; line-height: 1.65; }
-.stock-cover .sc-cover__art { position: relative; min-width: 0; min-height: 290px; max-width: none; width: 100%; align-self: stretch; border-radius: 50% 50% 16px 16px; border: 1px solid var(--sc-border-strong); background: var(--sc-ink); }
+.stock-cover .sc-cover__art { position: relative; min-width: 0; min-height: 260px; max-width: none; width: 100%; align-self: stretch; border-radius: 18px; border: 1px solid var(--sc-border-strong); background: var(--sc-ink); display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 28px; }
 .stock-cover .sc-cover__art::before { content: ''; position: absolute; inset: 18px; border: 1px solid var(--sc-ink-line-strong); border-radius: inherit; pointer-events: none; }
 .stock-cover .stock-cover__mark { width: 98px; max-width: 44%; }
 .stock-cover .sc-cover__caption { padding: 18px; }
+.stock-playbook-intro { color: var(--sc-heading); font-size: 18px; line-height: 1.45; margin: 0 0 20px; }
+.stock-scan-mark { color: var(--sc-on-ink); font: 400 110px/.85 var(--sc-font-display); letter-spacing: -.07em; }
+.stock-scan-mark > span { font-size: 55px; }
+.stock-scan-caption { color: var(--sc-on-ink); font: 500 20px/1.35 var(--sc-font-body); text-align: center; }
+.stock-scan-formula { color: var(--sc-on-ink); opacity: .8; text-align: center; font: 12px/1.8 var(--sc-font-mono); }
+.stock-run-strip .sc-stat { padding: 14px 20px; }
+.stock-run-strip .sc-stat__value { font-size: 30px; }
+.cockpit-details { margin: 14px 0; }
+.cockpit-details > summary { min-height: 44px; display: list-item; align-content: center; cursor: pointer; color: var(--sc-heading); font: 500 14px/1.5 var(--sc-font-body); padding: 12px 16px; border: 1px solid var(--sc-border); border-radius: 10px; }
+.cockpit-details[open] > summary { margin-bottom: 16px; }
+.cockpit-details > summary:focus-visible { outline: 3px solid var(--sc-focus); outline-offset: 3px; }
 .stock-index { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; gap: 20px; padding: 10px 4px; scrollbar-width: thin; border-block: 1px solid var(--sc-border); }
 .stock-index > * { flex: 0 0 auto; }
 .stock-index > .sc-eyebrow { flex: 0 0 auto; margin: 0; }

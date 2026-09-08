@@ -2016,6 +2016,11 @@ def _malformed_rows(runs: list[dict]) -> str | None:
     layer reports it in words (see HISTORY_UNDATED) instead of crashing over it.
     """
     for run in runs:
+        if "stockbee" in run:
+            from .stockbee import problem as stockbee_problem
+            why = stockbee_problem(run["stockbee"], session=run.get("date"), archived=True)
+            if why:
+                return why
         # The rules block is indexed into by rules_view() inside evidence(),
         # which publish() calls after the scan and every Claude call are paid
         # for: the one-level-short class again, refused at load rather than
@@ -2426,6 +2431,18 @@ class Ledger:
         # just written, on any run whose caller had no fingerprint.
         if isinstance(run.get("rules"), dict):
             entry["rules"] = dict(run["rules"])
+        if isinstance(run.get("stockbee"), dict):
+            # Keep dated research measurements; the current snapshot owns the
+            # chart bars. Repeating 30 bars per name per run would make the
+            # archive too large to use on a phone.
+            research = run["stockbee"]
+            entry["stockbee"] = {
+                **research,
+                **{key: {**research[key], "rows": [
+                    {k: v for k, v in row.items() if k != "series"}
+                    for row in research[key]["rows"]]}
+                   for key in ("scan", "anticipation")},
+            }
         # How many bars the feed repeated that night -- the extra copies of a
         # timestamp it had already sent, which src.scanner dropped keeping the
         # copy that arrived last. docs/data.json carries it too, and every
@@ -2793,7 +2810,7 @@ class Ledger:
             # it is an answer about the record as it stands tonight, not a fact
             # about the run, and README budgets that file's size.
             "runs": [{**{k: v for k, v in run.items()
-                         if k not in ("candidates", "gated")},
+                         if k not in ("candidates", "gated", "stockbee")},
                       "fills_closed": id(run) not in open_fills}
                      for run in self.runs],
             # Step 11. The answers to the questions the page exists to ask,
@@ -2973,6 +2990,11 @@ def snapshot_problem(data: dict) -> str | None:
     and src.pipeline guards its single comparison against it instead.
     """
     run = data.get("run")
+    if "stockbee" in run:
+        from .stockbee import problem as stockbee_problem
+        why = stockbee_problem(run["stockbee"], session=run.get("date"))
+        if why:
+            return why
     # The two counts the morning email prints as facts about the session, and
     # the only inputs to its empty-table sentence. Absent is a record that
     # says nothing about them, which the funnel prints as "not recorded" and

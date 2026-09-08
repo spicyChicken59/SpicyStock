@@ -145,7 +145,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1439 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1466 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -612,13 +612,13 @@ exercised its headline. Nine mutants across them, all killed.
   gate -- and counted off the reason word rather than left over, for the same
   reason this paragraph's own line is.
 
-  **The system prompt is 73% of every request and was paid for 25 times a
+  **The system prompt is 74% of every request and was paid for 25 times a
   night.** `knowledge/strategy.md` is byte-identical on every call of a run --
-  measured at ~3,120 tokens against ~460 of metrics and ~721 for an 869x622
+  measured at ~3,280 tokens against ~460 of metrics and ~721 for an 869x622
   chart -- and nothing asked for it to be cached. It carries `cache_control`
   now: a write costs 1.25x and a read 0.1x, so break-even is the second call
   (1.28 calls: the write costs 0.25x more than the uncached call it replaces
-  and each read saves 0.9x) and a full night is 54% cheaper, $0.37 to $0.17.
+  and each read saves 0.9x) and a full night is 55% cheaper, $0.38 to $0.17.
   This said 1.4 calls, 43% and "$0.24 to $0.13" while README said $0.25 — the
   same paragraph in two files with two arithmetics, and a test now does it
   from README's stated inputs. No `ttl`, because 5 minutes is
@@ -1180,9 +1180,9 @@ outside its own bar can produce a null, where an inverted session bar (which
 positive, never that the high is above the low) nulls all three and a
 seven-session flat base nulls the expansion. README and the rulebook are both
 held to `WINDOWS["tight_sessions"]` and to `extra_context()`'s own key set
-now. The rulebook edit moved the cost paragraph again in five files: ~3,120
-system tokens, 73% of a request, $0.37 uncached against $0.17 cached, 54%
-cheaper, $42 a year.
+now. The rulebook edit moved the cost paragraph again in five files: ~3,280
+system tokens, 74% of a request, $0.38 uncached against $0.17 cached, 55%
+cheaper, $43 a year.
 
 ## Round 11 — the rulebook is a surface, and it was the only one nobody checked
 
@@ -1296,9 +1296,9 @@ to README's arithmetic, sentence by sentence, with retracted clauses skipped
 by their own marker ("this said", "used to", "was given as") because a guard
 that refused those would be a guard against the record of the defect. The four
 numbers are gone from the round-4 paragraph: one place to look. And this
-round's own rulebook rewrite moved them again -- ~3,120 system tokens against
-~460 of metrics, 73% of every request, $0.37 uncached against $0.17 cached,
-54% cheaper, $42 a year.
+round's own rulebook rewrite moved them again -- ~3,280 system tokens against
+~460 of metrics, 74% of every request, $0.38 uncached against $0.17 cached,
+55% cheaper, $43 a year.
 
 **Twenty mutants over the round's rules, nineteen killed on the first pass.**
 Six on the rulebook (the retracted day-1 gloss verbatim, two outcome words
@@ -1312,7 +1312,7 @@ digest dropped, made a constant, and the record keys retyped as a literal);
 five on the cost guard. The survivor was the fifth cost mutant and it was a
 real hole: `tools/live_check.py` said "the 43% the caching is meant to save"
 in a phrasing none of the patterns could match, which is how that figure sat
-three points stale since round 4. It says "54% cheaper" now, in the same words
+three points stale since round 4. It says "55% cheaper" now, in the same words
 as every other copy, and the mutant dies.
 
 **Three of the audit's smaller findings, each reproduced.** The rulebook gave

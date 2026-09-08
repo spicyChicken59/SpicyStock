@@ -112,7 +112,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from . import ledger, lynch as lynch_rules, scanner
+from . import ledger, lynch as lynch_rules, scanner, stockbee
 from .lynch import VETO_RULES, evaluate_2lynch, extra_context, failed_vetoes, veto_reason
 from .scanner import ScanConfig, run_scan
 from .scorer import KNOWLEDGE_PATH, MODEL as DEFAULT_MODEL
@@ -2021,6 +2021,16 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         "status": report.status,
         "errors": list(report.errors),
     }
+
+    # A research view of the original scan frames, before any forward-return
+    # fetch can introduce later bars. It does not alter the gate or scores.
+    research = stockbee.build(
+        frames or {}, session, requested=run["universe"]["size"],
+        label=run["universe"]["label"],
+        previous_session=scan_stats.get("previous_session"),
+        calendar=ledger.session_calendar(frames or {}))
+    if research is not None:
+        run["stockbee"] = research
 
     entry = book.add_run(run, candidates, gated_out)
 
