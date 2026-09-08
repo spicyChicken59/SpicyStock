@@ -234,6 +234,10 @@
 .stock-index a[aria-current="location"] { color: var(--sc-heading); border-bottom-color: var(--sc-brand-line); }
 @media (max-width: 720px) { .pick { grid-template-columns: minmax(0, 1fr); } .stock-index a { font-size: 14px; } }
 @media (max-width: 540px) {
+  /* Keep the funnel's prose readable when swiping the table. A pinned stage
+     column would cover part of the explanation at the far end of the scroll. */
+  #funnel-table :is(th, td):last-child { min-width: 28ch; }
+  #funnel-table :is(th, td):first-child { position: static; }
   .pick .sc-disclosure > :is(.sc-table-scroll, [data-sc-matrix-controls]) { margin-inline: var(--sc-s2); }
   .pick .shot--empty { flex-direction: column; align-items: flex-start; gap: var(--sc-s2); padding: var(--sc-s2) 0; border: 0; background: transparent; }
   .pick .shot--empty .sc-note { max-width: none; width: 100%; }
