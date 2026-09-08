@@ -265,7 +265,11 @@ def problem(block, *, session=None, archived=False) -> str | None:
     if not isinstance(block, dict) or type(block.get("version")) is not int or block["version"] != 1:
         return "stockbee.version must be 1"
     day = _day(block.get("date"))
-    if day is None or block["date"] != day.isoformat() or (session is not None and _day(session) != day):
+    run_day = _day(session)
+    # Legacy run dates can be unreadable without invalidating the record; the
+    # existing history layer reports that uncertainty. Require agreement when
+    # the run has a readable date, and keep the sidecar's own date strict.
+    if day is None or block["date"] != day.isoformat() or (run_day is not None and run_day != day):
         return "stockbee.date must match its run"
     scope = block.get("scope")
     if (not isinstance(scope, dict) or not isinstance(scope.get("label"), str)

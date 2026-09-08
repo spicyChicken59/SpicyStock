@@ -200,6 +200,11 @@ def test_publish_uses_scan_frames_preserves_metadata_and_keeps_summary_slim(tmp_
 @pytest.mark.parametrize("damage", ["version", "coverage", "row", "series", "ratio"])
 def test_persisted_metadata_is_validated_before_use(damage):
     data = deepcopy(build({"SCAN": burst()}))
+    for legacy_date in (None, 20260901, {"a": 1}, "unreadable"):
+        assert stockbee.problem(data, session=legacy_date) is None
+    assert stockbee.problem(data, session="2026-08-27")
+    invalid_date = {**data, "date": {"a": 1}}
+    assert stockbee.problem(invalid_date, session=None)
     if damage == "version":
         data["version"] = True
     elif damage == "coverage":
