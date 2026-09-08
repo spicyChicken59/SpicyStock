@@ -1897,8 +1897,8 @@
       'Every candidate this screener has scored, grouped by the score it gave, against what the next sessions did, ' +
       'measured ' + basisLabel() + '. ' +
       'One observation per setup — a name that bursts on consecutive sessions is one move, counted once. ' +
-      '+3d and +5d are the horizons this strategy trades: the burst is held three to five sessions and exited, so ' +
-      '+1d is an early read rather than the result.';
+      '+3d and +5d measure follow-through over the typical momentum-burst review window; +1d is an earlier read. ' +
+      'These fixed comparison horizons are not automatic holding periods or exit dates.';
     $('evidence-empty').hidden = !!anyOutcome;
     $('evidence-body').hidden = !anyOutcome;
     if (!anyOutcome) {

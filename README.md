@@ -750,9 +750,9 @@ neither is a number that changed — `evidence.horizons` (which sessions after t
 burst were measured) and `evidence.band` (the range the strategy claims).
 
 **`+3d` and `+5d` are the horizons that matter, and the page says so on every
-number.** They are what this strategy trades — the burst is entered on day 1,
-held three to five sessions and exited — so `+1d` is an early read and never
-the result. Every mean carries the `n` of *its own* horizon, because a burst
+number.** They compare follow-through over the typical momentum-burst review
+window; `+1d` is an earlier observation. These fixed comparison horizons are
+not automatic holding periods or exit dates. Every mean carries the `n` of *its own* horizon, because a burst
 three sessions old has a `+3d` and no `+5d`, and one row count beside all three
 would attach a `+1d`-sized sample to a `+5d`-sized answer.
 
