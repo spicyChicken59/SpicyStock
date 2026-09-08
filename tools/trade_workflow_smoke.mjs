@@ -154,7 +154,10 @@ try {
   assert.equal(await page.locator('#trade-account-status').textContent(), 'Not connected');
   assert.equal((await records(page)).fills.length, 0);
   assert.equal((await holdings(page)).positions.length, 0);
+  await page.locator('#trade-tab-positions').click();
   await setProfile(page);
+  assert.equal(await page.locator('#trade-tab-today').getAttribute('aria-selected'), 'true',
+    'Setting limits from the Positions hero must return to the Today profile form.');
   assert.equal((await records(page)).fills.length, 0, 'Saving limits cannot create an execution.');
   assert.equal(manual.state.api.length, 0, 'Manual mode must not reach broker endpoints.');
   pass('the daily desk opens with a collapsed report and private manual limits without a broker connection');

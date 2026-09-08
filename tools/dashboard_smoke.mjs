@@ -823,7 +823,9 @@ const results = [];
 const ok = (name, pass, detail = '') => results.push({ name, pass: !!pass, detail });
 const shot = async (n) => { if (SHOTS) await page.screenshot({ path: join(SHOTS, n + '.png'), fullPage: true }); };
 async function open(path = '/f/fixture/') {
-  await page.goto(BASE + path + '#research-report', { waitUntil: 'load' });
+  await page.goto(BASE + path, { waitUntil: 'load' });
+  if (!await page.locator('#research-report').evaluate(node => node.open))
+    await page.locator('#research-toggle').click();
   await page.waitForFunction(() => {
     const h = document.getElementById('h1');
     return h && h.textContent.trim() && h.textContent !== 'Loading the latest run…';
