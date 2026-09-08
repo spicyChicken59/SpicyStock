@@ -136,10 +136,32 @@ try {
   await page.locator('#snapshot-refresh').click();
   await page.waitForFunction(() => document.querySelector('#snapshot-status').textContent.includes('invalid scored count'));
   check('a missing count is not silently shown as zero', before === await page.locator('#h1').innerText());
-  data = structuredClone(fixture); data.candidates = [null];
+  for (const [label, damage] of [
+    ['missing candidates', d => { delete d.candidates; }],
+    ['empty candidates with scored results', d => { d.candidates = []; }],
+    ['truncated candidates', d => { d.candidates.pop(); }],
+    ['more scored candidates than bursts', d => { d.run.bursts = d.run.scored - 1; }],
+    ['shortlist larger than scored results', d => { d.run.shortlist_size = d.run.scored + 1; }]
+  ]) {
+    data = structuredClone(fixture); damage(data);
+    await page.locator('#snapshot-refresh').click();
+    await page.waitForFunction(() => document.querySelector('#snapshot-status').textContent.includes('Update check failed'));
+    check(label + ' cannot erase a complete report', before === await page.locator('#h1').innerText() && (await page.locator('#scores-table tbody tr').count()) === 25);
+  }
+  data = structuredClone(fixture); delete data.candidates;
+  await open();
+  await page.waitForFunction(() => document.querySelector('#h1').textContent === 'Snapshot unavailable');
+  check('an initial snapshot without candidates cannot claim a successful load', await page.locator('#scores-card').isHidden() && await page.locator('#run-strip').isHidden());
+  data = fixture;
+  await page.locator('#snapshot-refresh').click(); await ready();
+  check('retry recovers after rejecting an incomplete initial snapshot', /recorded session 1 Sep 2026/.test(await status()) && (await page.locator('#scores-table tbody tr').count()) === 25);
+  data = structuredClone(fixture); data.run.date = '2026-09-08'; data.generated = '2026-09-08T22:30:00Z'; data.runs[0].date = '2026-09-08';
+  await page.locator('#snapshot-refresh').click(); await ready();
+  check('a valid next-session refresh replaces the loaded report and fills results and map', /recorded session 8 Sep 2026/.test(await status()) && (await page.locator('#scores-table tbody tr').count()) === 25 && (await page.locator('.signal-card').count()) === 25);
+  data = structuredClone(fixture); data.candidates[0] = null;
   await page.locator('#snapshot-refresh').click();
   await page.waitForFunction(() => document.querySelector('#snapshot-status').textContent.includes('Update check failed'));
-  check('a render failure restores the last complete report', before === await page.locator('#h1').innerText() && (await page.locator('#scores-table tbody tr').count()) === 25);
+  check('a render failure restores the last complete report', before === await page.locator('#h1').innerText() && (await page.locator('#scores-table tbody tr').count()) === 25 && /Still showing recorded session 8 Sep 2026/.test(await status()));
   await open();
   await page.waitForFunction(() => document.querySelector('#h1').textContent === 'Snapshot unavailable');
   check('an initial render failure cannot leave partial counts or results visible', await page.locator('#run-strip').isHidden() && await page.locator('#scores-card').isHidden() && await page.locator('#page-index').isHidden());

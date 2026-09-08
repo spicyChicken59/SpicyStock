@@ -24,13 +24,14 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main'
       && (github.event_name != 'workflow_run'
-          || (github.event.workflow_run.conclusion != 'cancelled'
-              && github.event.workflow_run.head_repository.full_name == github.repository))
+          || github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
       # Never download a scan artifact or check out its branch: a rehearsal
       # can contain unpublished records. Only current committed main is public.
+      # A cancelled run may already have pushed its record. Its completion
+      # must publish too; cancellation before the push just republishes main.
       - uses: actions/checkout@v4
         with:
           ref: main
