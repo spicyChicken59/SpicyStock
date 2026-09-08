@@ -912,6 +912,16 @@ const near = (a, b, tol) => Math.abs(a - b) <= tol;
 // itself. The version this replaces hard-coded "bursts" and would have failed
 // on the first night the scan found exactly one.
 const plural = (n, one, many) => n + ' ' + (n === 1 ? one : (many || one + 's'));
+// New sessions lead with the complete published scan, before the stricter AI
+// funnel. Legacy snapshots still lead with the only counts they recorded.
+const headlineFor = (run) => {
+  const strategy = run.stockbee;
+  const matches = strategy?.scan?.matched;
+  if (strategy?.version === 1 && strategy.date === run.date && Number.isInteger(matches) && matches >= 0) {
+    return `${matches} base-scan matches · ${run.scored || 0} scored reviews`;
+  }
+  return `${plural(run.bursts || 0, 'burst')}, ${run.scored || 0} scored, ${run.shortlist_size || 0} on the shortlist`;
+};
 // An evidence block carries one entry per horizon in a list keyed by
 // `horizon`, not an object keyed d1/d3/d5 — those names mean "a number, the
 // return" on every candidate row in the same file, and one key name over two
@@ -926,8 +936,8 @@ await open();
 await setTheme('dark');
 await page.waitForTimeout(200);
 ok('the run opens', (await page.textContent('#h1')) !== 'Snapshot unavailable', await page.textContent('#h1'));
-ok('the headline states the funnel',
-  (await page.textContent('#h1')) === `${plural(run.bursts, 'burst')}, ${run.scored} scored, ${run.shortlist_size} on the shortlist`,
+ok('the headline states the recorded scan and scoring counts',
+  (await page.textContent('#h1')) === headlineFor(run),
   await page.textContent('#h1'));
 
 // --- the funnel ------------------------------------------------------------
@@ -2134,7 +2144,7 @@ await setTheme('dark');
 await page.waitForTimeout(200);
 const hrun = HIST.run;
 ok('the history fixture opens and is disclosed as sample data',
-  (await page.textContent('#h1')) === `${plural(hrun.bursts, 'burst')}, ${hrun.scored} scored, ${hrun.shortlist_size} on the shortlist`
+  (await page.textContent('#h1')) === headlineFor(hrun)
   && !(await page.locator('#fixture-banner').isHidden()),
   await page.textContent('#h1'));
 ok('its scored and gated rows account for every burst of the newest run',
@@ -2685,8 +2695,7 @@ async function checksForAnyRun(data, where) {
   const cands = data.candidates || [];
   const gated = data.gated_out || [];
   ok(`${where}: the page opens and its headline describes the run`,
-    (await page.textContent('#h1')) ===
-      `${plural(run.bursts || 0, 'burst')}, ${run.scored || 0} scored, ${run.shortlist_size || 0} on the shortlist`,
+    (await page.textContent('#h1')) === headlineFor(run),
     await page.textContent('#h1'));
   ok(`${where}: it says whether it is sample data`,
     (await page.locator('#fixture-banner').isHidden()) === !run.fixture,

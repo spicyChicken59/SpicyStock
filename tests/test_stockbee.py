@@ -134,6 +134,10 @@ def test_missing_lookback_is_null_and_duplicate_daily_bars_are_unmeasured():
     assert row["range_expansion"] is None
     duplicate = pd.concat([df, df.iloc[-1:]])
     assert build({"DUP": duplicate})["scope"]["measured"] == 0
+    title_case = df.rename(columns=str.title)
+    assert build({"NEW": title_case}) == build({"NEW": df})
+    title_case["close"] = title_case["Close"]
+    assert build({"AMBIGUOUS": title_case}) is None
 
 
 def test_breadth_counts_each_day_and_ratios_require_coverage_and_a_denominator():

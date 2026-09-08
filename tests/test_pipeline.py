@@ -1142,6 +1142,12 @@ def test_the_published_run_satisfies_every_invariant_it_declares(
     assert data["run"]["date"] == scanner.current_session().isoformat()
     assert len(data["candidates"]) == data["run"]["scored"] == len(results)
     assert [c["ticker"] for c in data["candidates"]] == [r["ticker"] for r in results]
+    # Exercise the actual scanner's title-case frames through evening publish,
+    # not a hand-built lowercase frame passed directly to the sidecar.
+    research = data["run"]["stockbee"]
+    assert research["scope"]["requested"] == research["scope"]["measured"] == 3
+    assert research["date"] == data["run"]["date"]
+    assert "BURST" in {row["ticker"] for row in research["scan"]["rows"]}
 
 
 def test_top_n_cuts_the_email_and_nothing_else(

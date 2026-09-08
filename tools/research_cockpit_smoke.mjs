@@ -471,6 +471,7 @@ try {
   await legacyBee.page.locator('#stockbee-workspace').waitFor({ state: 'visible' });
   assert.equal(await legacyBee.page.locator('[data-stockbee-select]').count(), 0);
   assert.equal(await legacyBee.page.locator('.signal-card').count(), fixture.candidates.length);
+  assert.match(await legacyBee.page.locator('#h1').textContent(), /on the shortlist$/);
   assert.match(await legacyBee.page.locator('#stockbee-search-results').textContent(), /not yet recorded/);
   assert.match(await legacyBee.page.locator('.sb-pulse').textContent(), /Missing history is not zero activity/);
   assert.equal(await legacyBee.page.locator('.sb-pulse-day').count(), 0);
@@ -508,6 +509,7 @@ try {
   const bee = await open(beeData), bp = bee.page;
   await bp.locator('[data-stockbee-select="TESTBEE"]').waitFor();
   assert.equal(await bp.locator('#fixture-banner').isVisible(), true);
+  assert.equal(await bp.locator('#h1').textContent(), `7 base-scan matches · ${beeData.run.scored} scored reviews`);
   assert.deepEqual(await bp.locator('#stockbee-queue-breakout [data-stockbee-select]').evaluateAll(nodes => nodes.map(n => n.dataset.stockbeeSelect)), ['TESTBEE', fixture.candidates[0].ticker]);
   assert.match(await bp.locator('[data-stockbee-select="TESTBEE"]').textContent(), /Not in the scored list/);
   assert.match(await bp.locator(`[data-stockbee-select="${fixture.candidates[0].ticker}"]`).textContent(), /Also in the scored list/);

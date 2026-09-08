@@ -182,15 +182,19 @@ def _bad_number(key, value) -> bool:
     return not math.isfinite(value)
 
 
-def _walk(node, found: list) -> None:
+def _walk(node, found: list, path=()) -> None:
     if isinstance(node, dict):
         for key, value in node.items():
-            if _bad_number(key, value):
+            # The research sidecar uses rows as a bounded list, whereas the
+            # existing returns contract uses rows as a population count.
+            research_rows = (key == "rows" and isinstance(value, list)
+                             and path[-2:] in (("stockbee", "scan"), ("stockbee", "anticipation")))
+            if not research_rows and _bad_number(key, value):
                 found.append((key, value))
-            _walk(value, found)
+            _walk(value, found, (*path, key))
     elif isinstance(node, list):
         for item in node:
-            _walk(item, found)
+            _walk(item, found, path)
 
 
 def _returns_ok(returns, *, run_level: bool) -> bool:

@@ -76,10 +76,23 @@ def _valid_bar(values) -> bool:
 
 def _bars(frame, through: date) -> dict:
     """Retain invalid dates as holes; never silently shift a lookback over one."""
-    if not isinstance(frame, pd.DataFrame) or not set(FIELDS).issubset(frame.columns):
+    if not isinstance(frame, pd.DataFrame):
         return {}
+    # scanner._download_batch supplies title-case OHLCV. Also accept lowercase
+    # frames at the pure measurement boundary, but never choose between two
+    # columns that claim to be the same field.
+    aliases = {}
+    for column in frame.columns:
+        key = str(column).lower()
+        if key in FIELDS:
+            if key in aliases:
+                return {}
+            aliases[key] = column
+    if not set(FIELDS).issubset(aliases):
+        return {}
+    columns = [aliases[key] for key in FIELDS]
     out = {}
-    for stamp, values in zip(frame.index, frame.loc[:, list(FIELDS)].itertuples(index=False, name=None)):
+    for stamp, values in zip(frame.index, frame.loc[:, columns].itertuples(index=False, name=None)):
         day = _day(stamp)
         if day is None or day > through or day.weekday() >= 5:
             continue
