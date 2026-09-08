@@ -144,15 +144,14 @@ except Exception as e:  # pragma: no cover - depends on the host's tz database
         "tell which session a run targets; `pip install tzdata`"
     ) from e
 
-# The regular session closes at 16:00 ET. The margin is for the last prints to
-# settle into the daily bar. Before this time, today's daily bar is still being
-# written, so the most recent session a scan can treat as finished is yesterday.
-#
-# UNVERIFIED AGAINST A LIVE ACCOUNT: if Alpaca's daily bars aggregate the
-# extended session as well, a bar is not final until 20:00 ET and an evening
-# run at 18:16 ET reads one that is still accumulating post-market volume. The
-# regular close is used here because moving the cutoff to 20:15 ET would make
-# the 18:16 ET cron scan *yesterday*, which is a product change, not a fix.
+# The regular session closes at 16:00 ET. This cutoff selects its date; it is
+# not a promise that all daily OHLCV fields are final. Alpaca's aggregation
+# table excludes extended-hours condition T from daily OHLC but includes it in
+# daily volume: https://docs.alpaca.markets/us/docs/market-data-faq
+# The 18:16 ET scan therefore records volume available at scan time. That can
+# understate relative volume against settled historical days. Moving only this
+# cutoff later would make the existing cron scan yesterday, so the schedule
+# and cutoff must be considered together before changing either.
 SESSION_COMPLETE_ET = time_of_day(16, 15)
 
 # A daily end-of-day scan has no use for real-time data, and the free plan's
@@ -584,7 +583,7 @@ def _download_batch(data_client, tickers, cfg: ScanConfig,
         SIP_HOLDBACK_MINUTES behind `now` instead, because Alpaca documents
         that a SIP query's `end` must be at least fifteen minutes old on a plan
         without a real-time subscription: an evening run at 18:16 ET then asks
-        through 18:00 ET, two hours after the daily bar it wants was final,
+        through 18:00 ET, after the regular close but before daily volume is final,
         and a backfill of an older session is untouched, since its day's end
         is already behind the clock. This was tried once before and removed
         on the argument that `delayed_sip` made it unnecessary; the first live
@@ -592,9 +591,9 @@ def _download_batch(data_client, tickers, cfg: ScanConfig,
         DEFAULT_FEED), so the hold-back is the free plan's only consolidated
         route. Left off every other feed, which none was observed to need.
 
-        The one run this changes is a scan DURING the session, whose bar is
-        partial either way; the mode/clock check is what says so, and the
-        hold-back does not make that bar any more or less final.
+        During the regular session, prices and volume are still partial; the
+        mode/clock check says so. After the regular close, volume still includes
+        extended-hours trades. The hold-back is not a finality guarantee.
 
         And it is applied only once the clock has reached the session's day.
         Before that -- a session pinned AHEAD of the clock, which no schedule

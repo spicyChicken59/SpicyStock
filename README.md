@@ -78,6 +78,14 @@ Layer 6  Email ....................... HTML table, top 5, with the charts this
 | what earlier picks did | the scorecard its own fill just measured (`run.settled`), or no such table at all | the same block, off the run it follows |
 | workflow | `.github/workflows/evening.yml` | `.github/workflows/morning.yml` |
 
+**Volume is recorded at scan time.** Alpaca excludes extended-hours trades
+from daily OHLC under condition T, but includes them in daily volume. The
+6:16 PM ET scan therefore compares still-accumulating current-day volume with
+settled historical days; relative volume can increase afterward. This is a
+research snapshot, not a claim of finalized full-day volume. See the
+[Alpaca aggregation rules](https://docs.alpaca.markets/us/docs/market-data-faq).
+The September readiness audit preserves the established schedule and thresholds.
+
 **Why the morning run does not scan.** Before the open it has no market data
 the evening run did not have — the daily bar it would read is the same daily
 bar — so a "morning scan" is the evening scan repeated at a different hour, for

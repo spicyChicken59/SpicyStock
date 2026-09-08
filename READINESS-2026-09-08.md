@@ -4,12 +4,48 @@ Reviewed 7 September 2026 for Tuesday, 8 September. This audit covers the
 checked-in 228-stock research workflow: evening discovery, morning follow-through,
 the retained record, and the public dashboard. It does not establish a trading edge.
 
+## Follow-up audit before the next run
+
+Rechecked the deployed `4a1cf58` source and its live execution logs on 8 September.
+The scheduled [Labor Day run](https://github.com/spicyChicken59/SpicyStock/actions/runs/34166446137)
+passed preflight, received data for all 228 symbols, and correctly refused to
+publish an empty September 7 scan because every newest bar was September 4.
+Resend accepted the failure notice. The wrong DST slot correctly skipped work.
+The [May 26 rehearsal](https://github.com/spicyChicken59/SpicyStock/actions/runs/34159952994)
+received 228 fresh symbols, found nine bursts, scored four candidates with
+successful Claude responses, and completed cleanly without email or commit-back.
+
+The [latest publisher](https://github.com/spicyChicken59/SpicyStock/actions/runs/34170037533)
+verified public HTML, snapshot and ledger against main. This audit also fetched
+the public HTML, both JSON files and signal-map JavaScript and confirmed exact
+matches. The preserved headline remains September 4 with zero scored candidates;
+that is the actual last published session, not a broken refresh.
+
+Three follow-up repairs protect the upcoming run:
+
+- Publish committed main even when an evening run is cancelled after its push.
+  The publisher still rejects another repository's completion and never reads artifacts.
+- Reject missing or truncated candidate lists and impossible scored/shortlist
+  counts before they can replace a complete dashboard report. Legacy snapshots
+  with no shortlist cap remain readable; valid new sessions still replace old ones.
+- Explain the existing ranking accurately: Claude-reviewed candidates first,
+  then checklist fallbacks, sorted by score within each group.
+
+**Volume timing is now verified, rather than left as an unknown.** Alpaca's
+[aggregation rules](https://docs.alpaca.markets/us/docs/market-data-faq) exclude
+condition T extended-hours trades from daily OHLC but include them in daily
+volume. A 6:16 PM ET scan therefore records volume available then, which can
+understate relative volume against settled historical days. The dashboard now
+says volume reflects scan time and may change. A later scan after extended
+trading, coordinated with the schedule and repeat-run rules, is a separate
+timing decision; no claim of finalized volume or changed strategy is made here.
+
 ## What will happen Tuesday
 
 | Run | Scheduled time | What it can honestly provide |
 | --- | --- | --- |
 | Morning follow-through | 8:30 AM Eastern / 7:30 AM Central | Friday 4 September's recorded results, with their original session and provenance. No fresh scan or intraday data is fetched. |
-| Evening discovery | 6:16 PM Eastern / 5:16 PM Central | Tuesday's completed daily bars, the unchanged 4% burst and 2LYNCH rules, scoring, archive, and ranked email. |
+| Evening discovery | 6:16 PM Eastern / 5:16 PM Central | Tuesday's daily bars available at scan time, the unchanged 4% burst and 2LYNCH rules, scoring, archive, and ranked email. Volume can still change afterward. |
 | Dashboard publication | After the evening workflow completes | An explicit Pages build followed by verification of the public HTML, snapshot and ledger against committed `main`. |
 
 Monday 7 September is Labor Day, a scheduled market closure in the

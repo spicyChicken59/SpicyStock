@@ -2268,7 +2268,7 @@
     var short = cands.filter(function (c) { return c.rank <= shortN; });
     $('shortlist-card').hidden = !short.length;
     $('shortlist-title').textContent = 'The shortlist — top ' + short.length + ' of ' + (run.scored || 0);
-    $('shortlist-hint').textContent = 'The names that went out by email, ranked by score. ' +
+    $('shortlist-hint').textContent = 'The email shortlist: Claude-reviewed candidates first, then checklist fallbacks, ranked by score within each group. ' +
       'Each carries its full 2LYNCH checklist and who produced its score.';
     clear($('shortlist')).append.apply($('shortlist'), short.map(pick));
     if (window.SCStockSignals) window.SCStockSignals.render(d);
@@ -2277,7 +2277,7 @@
     $('scores-card').hidden = !cands.length;
     $('scores-hint').textContent = 'All ' + cands.length + ' of the ' + (run.scored || 0) +
       ' candidates this run scored — the archive is not truncated to the shortlist. ' +
-      'Ranked by score; scores are out of 10.';
+      'Claude-reviewed candidates rank before checklist fallbacks; each group is ordered by score out of 10.';
     clear($('scores-legend')).append(
       el('span', null, [el('i', { 'class': 'is-swatch', style: 'background: var(--sc-chart-1)' }), 'scored by Claude']),
       el('span', null, [el('i', { 'class': 'is-swatch', style: 'background: var(--sc-chart-2)' }), 'offline checklist fallback'])
@@ -2690,6 +2690,14 @@
       ['candidates', 'gated_out', 'runs'].forEach(function (key) {
         if (d[key] !== undefined && !Array.isArray(d[key])) throw new Error('The snapshot has an invalid ' + key + ' list');
       });
+      // A complete JSON response can still omit scored rows. Keep the last
+      // good report instead of presenting missing candidates as an empty run.
+      if (!Array.isArray(d.candidates)) throw new Error('The snapshot has no recorded candidates list');
+      if (d.candidates.length !== d.run.scored) throw new Error('The snapshot candidate count does not match its scored count');
+      if (d.run.scored > d.run.bursts) throw new Error('The snapshot scored count exceeds its burst count');
+      if (d.run.shortlist_size !== undefined && d.run.shortlist_size > d.run.scored) {
+        throw new Error('The snapshot shortlist count exceeds its scored count');
+      }
       var signature = JSON.stringify(d);
       if (signature !== snapshotSignature) {
         if (d.schema_version !== 1) {
@@ -2723,7 +2731,7 @@
       $('snapshot-panel').classList.remove('stock-snapshot--failed');
       $('snapshot-status').textContent = 'Showing recorded session ' + day(d.run.date) + '. Checked ' + checkedAt() + '.';
       $('snapshot-stamp').textContent = 'Published ' + (d.generated || 'time not recorded') +
-        ' · Daily results, not live quotes. Checking this page does not run a scan.';
+        ' · Daily results, not live quotes. Volume reflects scan time and may change later. Checking this page does not run a scan.';
     }).catch(function (error) {
       var message = error.message || String(error);
       $('snapshot-panel').classList.add('stock-snapshot--failed');

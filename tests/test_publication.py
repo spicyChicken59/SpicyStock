@@ -177,7 +177,9 @@ def test_publication_is_triggered_after_evening_and_deploys_only_committed_main(
     job = workflow["jobs"]["publish"]
     condition = " ".join(job["if"].split())
     assert "github.ref == 'refs/heads/main'" in condition
-    assert "conclusion != 'cancelled'" in condition
+    # Cancellation after commit-back must not strand a saved record. Reading
+    # committed main is safe even if cancellation happened before the push.
+    assert "conclusion" not in condition
     assert "head_repository.full_name == github.repository" in condition
     # Success-only would lose precisely the exit 2/3 records already persisted.
     assert "conclusion == 'success'" not in condition
