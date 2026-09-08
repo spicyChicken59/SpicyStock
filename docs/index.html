@@ -885,63 +885,102 @@
   // with a legend; the end label repeats the provenance in words, so the
   // split never rides on colour alone.
   function drawScores(host, cands) {
-    clear(host);
-    var ROW = 21, BAR = 13, PAD_L = 52, PAD_R = 66, PAD_T = 18, PAD_B = 26, W = 760;
-    var H = PAD_T + cands.length * ROW + PAD_B;
-    var maxScore = 10;
-    var x = function (v) { return PAD_L + (v / maxScore) * (W - PAD_L - PAD_R); };
-    // SC.ticks returns {ticks, lo, hi}, not an array.
-    var ticks = (S.ticks ? S.ticks(0, maxScore, 5).ticks : [0, 2, 4, 6, 8, 10])
-      .filter(function (t) { return t >= 0 && t <= maxScore; });
-    var kids = [];
-
-    ticks.forEach(function (t) {
-      kids.push(svgEl('line', { 'class': 'sc-chart__grid', x1: x(t), x2: x(t), y1: PAD_T - 6, y2: H - PAD_B + 2 }));
-      kids.push(svgEl('text', { x: x(t), y: H - PAD_B + 16, 'text-anchor': 'middle' }, String(t)));
-    });
-
-    cands.forEach(function (c, i) {
-      var y = PAD_T + i * ROW + (ROW - BAR) / 2;
+    var W = pxWidth(host), label = chartType(host, 'bar-label'), value = chartType(host, 'bar-value');
+    var axis = chartType(host), PAD_L = axis.width('10') / 2 + 2, BAR = 13;
+    var x = function (v) { return PAD_L + (v / 10) * (W - PAD_L * 2); };
+    var kids = [], y = 4;
+    cands.forEach(function (c) {
+      var score = num(c.score, 1) + (isFallback(c) ? ' fallback' : '');
+      y += chartHeading(kids, W, y, c.ticker, score, label, value) + 5;
       var w = Math.max(2, x(c.score) - PAD_L), r = Math.min(4, w / 2);
       var d = 'M' + PAD_L + ',' + y + 'H' + (PAD_L + w - r) + 'a' + r + ',' + r + ' 0 0 1 ' + r + ',' + r +
               'V' + (y + BAR - r) + 'a' + r + ',' + r + ' 0 0 1 ' + (-r) + ',' + r + 'H' + PAD_L + 'Z';
-      // SC.svg turns every attrs key into a setAttribute — including `text`,
-      // which on an SVG element is an attribute nobody reads. Label text has
-      // to go in as a child.
-      kids.push(svgEl('text', { 'class': 'bar-label', x: PAD_L - 8, y: y + BAR - 3, 'text-anchor': 'end' }, c.ticker));
       kids.push(svgEl('path', { 'class': 'bar', d: d, style: '--sc-tone: var(--sc-chart-' + (isFallback(c) ? '2' : '1') + ')' }));
-      kids.push(svgEl('text', { 'class': 'bar-value', x: PAD_L + w + 7, y: y + BAR - 3 },
-        num(c.score, 1) + (isFallback(c) ? ' fallback' : '')));
+      y += BAR + 14;
     });
-
-    host.appendChild(svgEl('svg', {
-      viewBox: '0 0 ' + W + ' ' + H, 'aria-hidden': 'true', role: 'presentation',
-      preserveAspectRatio: 'xMidYMin meet'
-    }, kids));
+    axisLabels(kids, [0, 2, 4, 6, 8, 10], x, y + axis.size, axis, String);
+    mount(host, W, y + axis.line, kids);
   }
 
   // ---- charts that keep their type size -----------------------------------
-  // These take a viewBox of the host's own measured width, so one SVG unit is
-  // one CSS pixel and an 11px label is 11px at every viewport. drawScores uses
-  // a fixed 760-wide box and its labels shrink with the page; that chart is
-  // direct-labelled and has the full table beneath it, but a new chart should
-  // not repeat it. Redrawn on resize, debounced.
+  // All viewBoxes use the actual host width. Labels reflow rather than shrink
+  // when the viewport narrows or the reader enlarges text.
   var redraws = [];
   var redrawTimer = null;
-  window.addEventListener('resize', function () {
+  function redrawCharts() {
     clearTimeout(redrawTimer);
     redrawTimer = setTimeout(function () {
       for (var i = 0; i < redraws.length; i++) redraws[i]();
     }, 120);
-  });
+  }
+  window.addEventListener('resize', redrawCharts);
+  if (document.fonts) {
+    document.fonts.ready.then(redrawCharts);
+    document.fonts.addEventListener('loadingdone', redrawCharts);
+  }
   // The host must be visible before this is called: a hidden card measures 0.
-  function pxWidth(host) { return Math.max(260, Math.round(host.getBoundingClientRect().width || 720)); }
+  function pxWidth(host) { return host.getBoundingClientRect().width || 720; }
   function live(fn) { redraws.push(fn); fn(); }
   function mount(host, w, h, kids) {
     clear(host).appendChild(svgEl('svg', {
       viewBox: '0 0 ' + w + ' ' + h, width: w, height: h,
       'aria-hidden': 'true', role: 'presentation', preserveAspectRatio: 'xMidYMin meet'
     }, kids));
+  }
+  // Measure the same font the SVG will paint, including theme/reader overrides.
+  // No hard-coded character budget: proportional type and long words both fit.
+  function chartType(host, cls) {
+    var probe = svgEl('text', { 'class': cls || '' }, 'M');
+    var sample = svgEl('svg', { style: 'position:absolute;visibility:hidden;pointer-events:none;width:0;height:0' }, [probe]);
+    host.appendChild(sample);
+    var style = getComputedStyle(probe), size = parseFloat(style.fontSize);
+    var ctx = document.createElement('canvas').getContext('2d');
+    ctx.font = style.fontWeight + ' ' + style.fontSize + ' ' + style.fontFamily;
+    var spacing = parseFloat(style.letterSpacing) || 0;
+    sample.remove();
+    return { cls: cls || '', size: size, line: Math.ceil(size * 1.5),
+      width: function (s) { return ctx.measureText(String(s)).width + String(s).length * spacing + 2; } };
+  }
+  function chartLabel(kids, type, text, x, y, width) {
+    // Wrapped tspans retain a separator for readable textContent. SVG includes
+    // that trailing space in its painted bounds, so reserve room for it too.
+    width = Math.max(1, width - type.width(' '));
+    var lines = [], line = '';
+    String(text).split(/\s+/).forEach(function (word) {
+      if (line && type.width(line + ' ' + word) > width) { lines.push(line); line = ''; }
+      // A long ticker or unbroken token still stays within the card.
+      while (type.width(word) > width && word.length > 1) {
+        var end = 1;
+        while (end < word.length && type.width(word.slice(0, end + 1)) <= width) end++;
+        lines.push(word.slice(0, end)); word = word.slice(end);
+      }
+      line += (line ? ' ' : '') + word;
+    });
+    if (line) lines.push(line);
+    kids.push(svgEl('text', { 'class': type.cls, x: x, y: y + type.size }, lines.map(function (s, i) {
+      return svgEl('tspan', { x: x, dy: i ? type.line : 0 }, s + (i < lines.length - 1 ? ' ' : ''));
+    })));
+    return Math.max(1, lines.length) * type.line;
+  }
+  function chartHeading(kids, width, y, name, count, label, value) {
+    var countW = value.width(count), labelW = width - countW - 16;
+    if (labelW < label.size * 7) {
+      var h = chartLabel(kids, label, name, 0, y, width);
+      return h + chartLabel(kids, value, count, 0, y + h, width);
+    }
+    var h = chartLabel(kids, label, name, 0, y, labelW);
+    kids.push(svgEl('text', { 'class': value.cls, x: width - 2, y: y + value.size, 'text-anchor': 'end' }, count));
+    return Math.max(h, value.line);
+  }
+  // Keep both endpoints and omit interior ticks that would collide with type.
+  function axisLabels(kids, ticks, x, y, type, format) {
+    var lastRight = -Infinity, end = ticks[ticks.length - 1];
+    ticks.forEach(function (v, i) {
+      var w = type.width(format(v)), left = x(v) - w / 2;
+      if (i && i < ticks.length - 1 && (left < lastRight + 8 || x(v) + w / 2 + 8 > x(end) - type.width(format(end)) / 2)) return;
+      kids.push(svgEl('text', { x: x(v), y: y, 'text-anchor': 'middle' }, format(v)));
+      lastRight = x(v) + w / 2;
+    });
   }
   function shareOf(n, total) {
     if (!total) return '—';
@@ -1146,23 +1185,20 @@
     // A minimum of 3px: the shortlist is 2% of the universe and must still be
     // a bar rather than nothing, and it carries its count in the row above.
     var x = function (v) { return Math.max(3, (v / top) * PW); };
-    var NAME = 15, BAR = 16, DROP = 19, GAP = 10;
+    var name = chartType(host, 's-name'), value = chartType(host, 's-value'), drop = chartType(host, 's-drop');
+    var BAR = 16, GAP = 14;
     var kids = [], y = 4, i, s, prev, lost;
     for (i = 0; i < stages.length; i++) {
       s = stages[i];
       prev = i ? stages[i - 1].n : s.n;
-      kids.push(svgEl('text', { 'class': 's-name', x: 0, y: y + 11 }, s.name));
-      kids.push(svgEl('text', { 'class': 's-value', x: W, y: y + 11, 'text-anchor': 'end' },
-        [commas(s.n) + ' ', svgEl('tspan', { 'class': 's-share' }, shareOf(s.n, top))]));
-      y += NAME;
+      y += chartHeading(kids, W, y, s.name, commas(s.n) + ' ' + shareOf(s.n, top), name, value) + 5;
       if (i) kids.push(svgEl('rect', { 'class': 'seg-lost', x: 0, y: y, width: x(prev), height: BAR, rx: 3 }));
       kids.push(svgEl('rect', { 'class': 'seg-kept', x: 0, y: y, width: x(s.n), height: BAR, rx: 3 }));
       y += BAR;
       if (i + 1 < stages.length) {
         lost = s.n - stages[i + 1].n;
-        kids.push(svgEl('text', { 'class': 's-drop', x: 0, y: y + 13 },
-          '↓ −' + commas(lost) + ' · ' + stages[i + 1].why));
-        y += DROP;
+        y += 6;
+        y += chartLabel(kids, drop, '↓ −' + commas(lost) + ' · ' + stages[i + 1].why, 0, y, W);
       }
       y += GAP;
     }
@@ -1219,13 +1255,12 @@
 
   function drawChecks(host, checks) {
     var W = pxWidth(host), PAD_R = 116, PW = Math.max(60, W - PAD_R);
-    var NAME = 15, BAR = 14, GAP = 13;
+    var name = chartType(host, 's-name'), value = chartType(host, 's-value');
+    var BAR = 14, GAP = 14;
     var kids = [], y = 4;
     checks.forEach(function (st) {
-      kids.push(svgEl('text', { 'class': 's-name', x: 0, y: y + 11 }, st.code + '  ' + st.label));
-      kids.push(svgEl('text', { 'class': 's-value', x: W, y: y + 11, 'text-anchor': 'end' },
-        [rate(st.rate) + ' ', svgEl('tspan', { 'class': 's-share' }, st.pass + '/' + st.total)]));
-      y += NAME;
+      y += chartHeading(kids, W, y, st.code + '  ' + st.label,
+        rate(st.rate) + ' ' + st.pass + '/' + st.total, name, value) + 5;
       kids.push(svgEl('rect', { 'class': 'seg-lost', x: 0, y: y, width: PW, height: BAR, rx: 3 }));
       kids.push(svgEl('rect', { 'class': 'seg-kept', x: 0, y: y,
         width: Math.max(2, (st.rate || 0) * PW), height: BAR, rx: 3 }));
@@ -1362,26 +1397,27 @@
   }
 
   function drawOutcome(host, rows) {
-    var W = pxWidth(host), PAD_L = 46, PAD_R = 10, PAD_T = 12, PAD_B = 34, H = 250;
-    var plotW = Math.max(60, W - PAD_L - PAD_R), plotH = H - PAD_T - PAD_B;
+    var W = pxWidth(host), axis = chartType(host);
     var ys = rows.map(function (c) { return fwd(c).d1; }).concat([0]);
     var t = (S.ticks || function (lo, hi) { return { ticks: [lo, hi], lo: lo, hi: hi }; })(
       Math.min.apply(null, ys), Math.max.apply(null, ys), 4);
+    var PAD_L = Math.max.apply(null, t.ticks.map(function (v) { return axis.width(pct(v, 1)); })) + 8;
+    var PAD_R = axis.width('10') / 2 + 4, PAD_T = axis.line, PAD_B = axis.line * 3;
+    var H = Math.max(250, axis.line * 12), plotW = Math.max(20, W - PAD_L - PAD_R), plotH = H - PAD_T - PAD_B;
     var span = (t.hi - t.lo) || 1;
     var x = function (v) { return PAD_L + Math.max(0, Math.min(10, v)) / 10 * plotW; };
     var y = function (v) { return PAD_T + (t.hi - v) / span * plotH; };
     var kids = [];
     t.ticks.forEach(function (v) {
       kids.push(svgEl('line', { 'class': 'sc-chart__grid', x1: PAD_L, x2: PAD_L + plotW, y1: y(v), y2: y(v) }));
-      kids.push(svgEl('text', { x: PAD_L - 7, y: y(v) + 3.5, 'text-anchor': 'end' }, pct(v, 1)));
+      kids.push(svgEl('text', { x: PAD_L - 7, y: y(v) + axis.size / 3, 'text-anchor': 'end' }, pct(v, 1)));
     });
     // Zero is the line that decides whether a pick made money; it is not just
     // another gridline.
     kids.push(svgEl('line', { 'class': 'sc-chart__crosshair', x1: PAD_L, x2: PAD_L + plotW, y1: y(0), y2: y(0) }));
-    [0, 2, 4, 6, 8, 10].forEach(function (v) {
-      kids.push(svgEl('text', { x: x(v), y: PAD_T + plotH + 17, 'text-anchor': 'middle' }, String(v)));
-    });
-    kids.push(svgEl('text', { x: PAD_L + plotW / 2, y: H - 4, 'text-anchor': 'middle' }, 'score out of 10'));
+    axisLabels(kids, [0, 2, 4, 6, 8, 10], x, PAD_T + plotH + axis.line, axis, String);
+    var titleY = PAD_T + plotH + axis.line * 1.5;
+    var titleH = chartLabel(kids, axis, 'score out of 10', 0, titleY, W);
     rows.forEach(function (c) {
       var fill = isFallback(c);
       kids.push(svgEl('circle', {
@@ -1390,7 +1426,7 @@
         style: (fill ? 'stroke:' : 'fill:') + 'var(--sc-chart-1)'
       }));
     });
-    mount(host, W, H, kids);
+    mount(host, W, Math.max(H, titleY + titleH), kids);
   }
 
   // ---- the evidence blocks (step 11) --------------------------------------
@@ -1500,8 +1536,7 @@
   // "+2% at five sessions" and "inside the 8–20% a burst is supposed to run"
   // are different verdicts, and the second is the one being tested.
   function drawEvidence(host, buckets, band, shown) {
-    var W = pxWidth(host), PAD_L = 66, PAD_R = 58, PAD_T = 10, PAD_B = 26;
-    var plotW = Math.max(80, W - PAD_L - PAD_R);
+    var W = pxWidth(host), axis = chartType(host), name = chartType(host, 's-name'), drop = chartType(host, 's-drop');
     var vals = [0, band.high];
     buckets.forEach(function (b) {
       // onBasis, like the table three inches below it: the chart's bars, its
@@ -1514,45 +1549,42 @@
     var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
     var t = (S.ticks || function (a, b2) { return { ticks: [a, b2], lo: a, hi: b2 }; })(lo, hi, 5);
     var span = (t.hi - t.lo) || 1;
+    var PAD_L = axis.width(pct(t.lo, 0)) / 2 + 2, PAD_R = axis.width(pct(t.hi, 0)) / 2 + 2;
+    var plotW = Math.max(20, W - PAD_L - PAD_R);
     var x = function (v) { return PAD_L + (v - t.lo) / span * plotW; };
-    var ROW = 15, LANE = shown.length * ROW + 12;
-    var kids = [], bottom = PAD_T + buckets.length * LANE + 2;
-
-    t.ticks.forEach(function (v) {
-      kids.push(svgEl('line', { 'class': 'sc-chart__grid', x1: x(v), x2: x(v), y1: PAD_T - 4, y2: bottom }));
-      kids.push(svgEl('text', { x: x(v), y: bottom + 16, 'text-anchor': 'middle' }, pct(v, 0)));
-    });
-    // The claimed band, and zero. Zero decides whether a band made money at
-    // all; the other two decide whether it did what the strategy promises.
-    [band.low, band.high].forEach(function (v) {
-      if (v < t.lo || v > t.hi) return;
-      kids.push(svgEl('line', { 'class': 'sc-chart__grid', x1: x(v), x2: x(v), y1: PAD_T - 4, y2: bottom,
-        style: 'stroke-dasharray: 3 3' }));
-    });
-    kids.push(svgEl('line', { 'class': 'sc-chart__crosshair', x1: x(0), x2: x(0), y1: PAD_T - 4, y2: bottom }));
-
-    buckets.forEach(function (b, i) {
-      var top = PAD_T + i * LANE;
-      kids.push(svgEl('text', { 'class': 's-name', x: 0, y: top + 13 }, b.verdict));
-      kids.push(svgEl('text', { 'class': 's-share', x: 0, y: top + 27 }, num(b.low, 0) + '–' + num(b.high, 0)));
+    var BAR = 12, kids = [], y = 4;
+    buckets.forEach(function (b) {
+      y += chartLabel(kids, name, b.verdict + ' · ' + num(b.low, 0) + '–' + num(b.high, 0), 0, y, W) + 6;
       shown.forEach(function (h, j) {
-        var cell = onBasis(at(b.outcomes, h)), yy = top + j * ROW + (j ? 2 : 0);
+        var cell = onBasis(at(b.outcomes, h));
+        // Full-width annotations above their marks keep the horizon, return
+        // and sample size together, including when a bar reaches the axis end.
+        y += chartLabel(kids, drop, hzLabel(h) + (cell.mean === null ? ' pending' :
+          ' ' + pct(cell.mean, 1) + ' (n=' + cell.n + ')'), 0, y, W) + 4;
         if (cell.mean === null) {
-          kids.push(svgEl('text', { 'class': 's-drop', x: PAD_L + 4, y: yy + 11 }, hzLabel(h) + ' pending'));
+          y += 6;
           return;
         }
+        t.ticks.forEach(function (v) {
+          kids.push(svgEl('line', { 'class': 'sc-chart__grid', x1: x(v), x2: x(v), y1: y - 2, y2: y + BAR + 2 }));
+        });
+        [band.low, band.high].forEach(function (v) {
+          if (v < t.lo || v > t.hi) return;
+          kids.push(svgEl('line', { 'class': 'sc-chart__grid', x1: x(v), x2: x(v), y1: y - 2, y2: y + BAR + 2,
+            style: 'stroke-dasharray: 3 3' }));
+        });
+        kids.push(svgEl('line', { 'class': 'sc-chart__crosshair', x1: x(0), x2: x(0), y1: y - 2, y2: y + BAR + 2 }));
         var from = Math.min(x(0), x(cell.mean)), to = Math.max(x(0), x(cell.mean));
         kids.push(svgEl('rect', {
-          'class': 'bar', x: from, y: yy, width: Math.max(2, to - from), height: ROW - 4, rx: 3,
+          'class': 'bar', x: from, y: y, width: Math.max(2, to - from), height: BAR, rx: 3,
           style: '--sc-tone: var(--sc-chart-' + (j ? '2' : '1') + ')'
         }));
-        // Direct-labelled with the horizon AND the n, so neither the series
-        // nor the sample size rides on colour.
-        kids.push(svgEl('text', { 'class': 's-drop', x: to + 6, y: yy + ROW - 7 },
-          hzLabel(h) + ' ' + pct(cell.mean, 1) + ' (n=' + cell.n + ')'));
+        y += BAR + 10;
       });
+      y += 10;
     });
-    mount(host, W, bottom + PAD_B, kids);
+    axisLabels(kids, t.ticks, x, y + axis.size, axis, function (v) { return pct(v, 0); });
+    mount(host, W, y + axis.line, kids);
   }
 
   // The sentence a reader takes away, and it is allowed to say no. It leans
@@ -2282,7 +2314,7 @@
       el('span', null, [el('i', { 'class': 'is-swatch', style: 'background: var(--sc-chart-1)' }), 'scored by Claude']),
       el('span', null, [el('i', { 'class': 'is-swatch', style: 'background: var(--sc-chart-2)' }), 'offline checklist fallback'])
     );
-    drawScores($('scores-chart'), cands);
+    live(function () { drawScores($('scores-chart'), cands); });
     table($('scores-table'),
       ['ticker', 'score', 'source', 'verdict', '2LYNCH', 'burst', 'vol x', 'close', '+1d', '+3d', '+5d', 'why'],
       cands.map(function (c, index) {

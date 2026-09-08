@@ -1317,12 +1317,21 @@ Traced through the actual guard shell and its `jq` filters in
 
 ```bash
 node tools/dashboard_smoke.mjs
+node tools/mobile_layout_smoke.mjs --shots /tmp/shots
 ```
 
 Opens the real page in headless Chromium and asserts what it promises. Offline by
 construction: `docs/` and its exact design-system snapshot are served locally,
 and external requests are blocked. Needs playwright's chromium; it is not a repo
 dependency, and the script exits 0 with a note if chromium is missing.
+
+The mobile layout check covers the committed snapshot and populated fixtures at
+320–1280px, light and dark themes, and doubled text size. It checks painted SVG
+text bounds and label collisions as well as page overflow: SVG text can extend
+past a card without changing the document's scroll width. Charts wrap long
+explanations and redraw at their container width after resizing or font loading.
+This check fails if Chromium is unavailable; CI also verifies that the reported
+funnel overflow is detected against the pre-fix page.
 
 **Three data sources, one page.** It runs 255 checks, and which file each one
 reads is the point:

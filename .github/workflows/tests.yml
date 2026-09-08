@@ -72,6 +72,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The mobile regression control serves the previous committed
+          # layout without modifying this checkout.
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -87,6 +91,10 @@ jobs:
           node tools/dashboard_smoke.mjs --shots /tmp/shots
           node tools/dashboard_recovery_smoke.mjs
           node tools/signal_map_smoke.mjs --shots /tmp/shots
+      - name: Check mobile chart labels and enlarged text
+        run: node tools/mobile_layout_smoke.mjs --shots /tmp/shots/mobile
+      - name: Prove the layout checks catch the previous phone overflow
+        run: node tools/mobile_layout_smoke.mjs --baseline c765880 --expect-layout-failure
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
