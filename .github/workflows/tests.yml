@@ -95,6 +95,8 @@ jobs:
         run: node tools/mobile_layout_smoke.mjs --shots /tmp/shots/mobile
       - name: Prove the layout checks catch the previous phone overflow
         run: node tools/mobile_layout_smoke.mjs --baseline c765880 --expect-layout-failure
+      - name: Exercise the research workspace
+        run: node tools/research_cockpit_smoke.mjs --shots /tmp/shots/research
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

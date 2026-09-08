@@ -22,6 +22,12 @@
 <link rel="stylesheet" href="stock.css">
 <link rel="stylesheet" href="stock-home.css">
 <script src="signal-map.js"></script>
+<link rel="stylesheet" href="stock-cockpit.css">
+<link rel="stylesheet" href="stock-desk.css">
+<link rel="stylesheet" href="stock-replay.css">
+<script src="stock-cockpit.js"></script>
+<script src="stock-desk.js"></script>
+<script src="stock-replay.js"></script>
 </head>
 <body>
 <a class="sc-skip" href="#main">Skip to content</a>
@@ -47,7 +53,8 @@
   <div class="sc-print-foot" aria-hidden="true"><span>SpicyChicken / market research</span><span>Screening output for human review</span></div>
   <section class="sc-cover stock-cover" aria-labelledby="h1">
     <div class="sc-cover__content sc-reveal" data-sc-motion="rise">
-      <p class="sc-eyebrow stock-cover__brand">SpicyStock / market research</p>
+      <p class="sc-eyebrow stock-cover__brand">SpicyStock / your research desk</p>
+      <p class="cockpit-cover-line">The session.<br><em>In focus.</em></p>
       <div class="sc-eyebrow sc-eyebrow--muted" id="eyebrow">screener</div>
       <h1 class="sc-cover__title" id="h1">Loading the latest run…</h1>
       <p class="sc-cover__dek" id="dek"></p>
@@ -79,7 +86,11 @@
   </dl>
 
   <nav class="stock-index sc-chapter-nav" data-sc-reading id="page-index" aria-label="On this page" hidden>
-    <span class="sc-eyebrow sc-eyebrow--muted">in this report</span>
+    <span class="sc-eyebrow sc-eyebrow--muted">your workspace</span>
+    <a class="sc-press" href="#session-cockpit">Start here</a>
+    <a class="sc-press" href="#signal-workspace">Signal lens</a>
+    <a class="sc-press" href="#stock-desk">My desk</a>
+    <a class="sc-press" href="#stock-replay">Replay</a>
     <a class="sc-press" href="#evidence-card"><span class="sc-chapter-nav__index">01</span> The evidence</a>
     <a class="sc-press" href="#funnel-card" id="nav-funnel"><span class="sc-chapter-nav__index">02</span> This session</a>
     <a class="sc-press" href="#predict-card" id="nav-record"><span class="sc-chapter-nav__index">03</span> The record</a>
@@ -112,6 +123,8 @@
     <p id="fallback-body"></p>
   </div>
 
+  <section class="cockpit" id="session-cockpit" aria-labelledby="cockpit-title" hidden></section>
+
   <section class="signal-workspace" id="signal-workspace" aria-labelledby="signal-title" hidden>
     <div class="signal-heading">
       <div><p class="sc-eyebrow sc-eyebrow--muted">Explore this session</p><h2 id="signal-title">A closer look at <em>the signals.</em></h2></div>
@@ -120,6 +133,9 @@
     <p class="signal-description">Recorded daily gain and volume versus the 50-day average. Select a point or a candidate to connect the measurements with the score.</p>
     <div id="signal-content"></div>
   </section>
+
+  <section class="sc-card stock-section" id="stock-desk" aria-labelledby="desk-title" hidden></section>
+  <section class="sc-card stock-section" id="stock-replay" aria-labelledby="stock-replay-title" hidden></section>
 
   <!-- Historical evidence follows the current-session explorer. Its means
        come from the ledger; the signal map above adds no scoring or return
@@ -2126,7 +2142,7 @@
     }).join(' · ');
   }
 
-  // The one lazy fetch. docs/ledger.json is the whole record — about
+  // The per-name view's lazy fetch. docs/ledger.json is the whole record — about
   // 1.25 MB gzipped after a year — so it is never pulled on load; the summary
   // above comes out of data.json, which the page has already read. A 404 here is the
   // normal state until evening.yml has committed a run back, so it is reported
@@ -2185,6 +2201,32 @@
   }
 
   // ---- render -------------------------------------------------------------
+  // Workspace failures stay local to their view; the recorded report must
+  // still finish rendering if an optional interaction cannot initialize.
+  function renderWorkspace(name, id, label, data, retry) {
+    var host = $(id);
+    if (!host) return;
+    var old = host.querySelector('.workspace-fallback');
+    if (old) old.remove();
+    host.classList.remove('workspace-failed');
+    try {
+      if (!window[name] || typeof window[name].render !== 'function') throw new Error('Workspace unavailable');
+      window[name].render(data);
+      if (retry) { host.tabIndex = -1; host.focus({ preventScroll: true }); }
+    } catch (_) {
+      host.hidden = false;
+      host.classList.add('workspace-failed');
+      var warning = el('div', { 'class': 'workspace-fallback', role: 'status' }, [
+        el('strong', { text: label + ' could not load.' }),
+        el('p', { text: 'You can still read the recorded report below.' })
+      ]);
+      var again = el('button', { type: 'button', 'class': 'sc-btn sc-btn--secondary', text: 'Try again' });
+      again.addEventListener('click', function () { renderWorkspace(name, id, label, data, true); });
+      warning.appendChild(again);
+      warning.appendChild(el('a', { href: '#evidence-card', 'class': 'sc-btn sc-btn--ghost', text: 'Open full report' }));
+      host.appendChild(warning);
+    }
+  }
   function render(d) {
     // A refresh or basis switch replaces these closures; old snapshots must
     // not redraw over the new one when the viewport changes.
@@ -2202,7 +2244,7 @@
     $('eyebrow').textContent = (run.type || 'run') + ' run · ' + day(run.date);
     $('h1').textContent = plural(run.bursts || 0, 'burst') + ', ' +
       (run.scored || 0) + ' scored, ' + shortN + ' on the shortlist';
-    $('dek').textContent = 'Every candidate this run scored is on this page, not just the ' + shortN +
+    $('dek').textContent = !cands.length ? 'No candidates were scored in this recorded session. Review the run notes and selection stages, or use replay to explore earlier sessions.' : 'Every candidate this run scored is on this page, not just the ' + shortN +
       ' that went out by email. ' +
       (fb ? fb + ' of the ' + (run.scored || 0) + ' scores came from the offline checklist rather than from Claude.'
           : 'Every score came from Claude.');
@@ -2303,7 +2345,10 @@
     $('shortlist-hint').textContent = 'The email shortlist: Claude-reviewed candidates first, then checklist fallbacks, ranked by score within each group. ' +
       'Each carries its full 2LYNCH checklist and who produced its score.';
     clear($('shortlist')).append.apply($('shortlist'), short.map(pick));
-    if (window.SCStockSignals) window.SCStockSignals.render(d);
+    renderWorkspace('SCStockSignals', 'signal-workspace', 'Signal lens', d);
+    renderWorkspace('SCStockDesk', 'stock-desk', 'Research desk', d);
+    renderWorkspace('SCStockReplay', 'stock-replay', 'Session replay', d);
+    renderWorkspace('SCStockCockpit', 'session-cockpit', 'Session cockpit', d);
 
     // every scored candidate
     $('scores-card').hidden = !cands.length;

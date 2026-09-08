@@ -1,10 +1,12 @@
-/* A presentation of the recorded candidates. No requests, storage, scoring,
-   sector inference, or new market data. The existing ranking stays authoritative. */
+/* A presentation of recorded candidates. Filters never change the source ranking
+   or measurements; saved choices are delegated to the device's research desk. */
 (function () {
   'use strict';
   var selected = null;
   var observer;
   var resize;
+  var refreshDesk;
+  var lensState = { session: null, search: '', filter: 'all', order: 'rank' };
   var ns = 'http://www.w3.org/2000/svg';
   function node(tag, className, text) {
     var n = document.createElement(tag);
@@ -31,12 +33,69 @@
     if (!root) return;
     if (observer) observer.disconnect();
     if (resize) window.removeEventListener('resize', resize);
+    if (refreshDesk) window.removeEventListener('stock:desk-change', refreshDesk);
     root.replaceChildren();
     var candidates = Array.isArray(data.candidates) ? data.candidates : [];
     var run = data.run || {};
     var points = candidates.map(function (c, index) { return { c: c, index: index }; }).filter(function (p) { return canPlot(p.c); });
     document.getElementById('signal-workspace').hidden = false;
     document.getElementById('signal-count').textContent = candidates.length + ' scored · ' + points.length + ' plotted';
+    // Changing the return basis re-renders the same session; keep its research lens.
+    var sessionKey = JSON.stringify([run.date || null, run.type || null]);
+    if (lensState.session !== sessionKey) lensState = { session: sessionKey, search: '', filter: 'all', order: 'rank' };
+    var query = lensState.search.trim().toLowerCase(), activeFilter = lensState.filter, order = lensState.order;
+    var visibleIndexes = candidates.map(function (_, index) { return index; });
+    var shortlistSize = finite(run.shortlist_size) ? Math.max(0, run.shortlist_size) : 0;
+
+    var lens = node('div', 'signal-lens');
+    var lensFields = node('div', 'signal-lens-fields');
+    var searchLabel = node('label', 'signal-search');
+    searchLabel.append(node('span', 'signal-field-label', 'Find a signal'));
+    var search = node('input', 'signal-search-input');
+    search.type = 'search';
+    search.id = 'signal-search';
+    search.placeholder = 'Ticker or scoring note';
+    search.autocomplete = 'off';
+    search.spellcheck = false;
+    search.value = lensState.search;
+    searchLabel.append(search);
+    var sortLabel = node('label', 'signal-sort');
+    sortLabel.append(node('span', 'signal-field-label', 'Arrange by'));
+    var sort = node('select', 'signal-sort-input');
+    sort.id = 'signal-sort';
+    [['rank', 'Recorded rank'], ['gain', 'Highest daily gain'], ['volume', 'Highest relative volume']].forEach(function (entry) {
+      var option = node('option', '', entry[1]); option.value = entry[0]; sort.append(option);
+    });
+    sort.value = order;
+    sortLabel.append(sort);
+    lensFields.append(searchLabel, sortLabel);
+    var filters = node('div', 'signal-filters');
+    filters.setAttribute('role', 'group');
+    filters.setAttribute('aria-label', 'Filter recorded signals');
+    var filterButtons = [];
+    [['all', 'All'], ['shortlist', 'Shortlist'], ['claude', 'Claude'], ['fallback', 'Fallback'], ['volume', 'Volume ≥ 3×']].forEach(function (entry) {
+      var chip = node('button', 'signal-filter', entry[1]);
+      chip.type = 'button';
+      chip.dataset.signalFilter = entry[0];
+      chip.setAttribute('aria-pressed', String(entry[0] === 'all'));
+      chip.addEventListener('click', function () { activeFilter = entry[0]; applyLens(); });
+      filters.append(chip); filterButtons.push(chip);
+    });
+    var lensFooter = node('div', 'signal-lens-footer');
+    var resultCount = node('p', 'signal-result-count');
+    resultCount.id = 'signal-results';
+    resultCount.setAttribute('role', 'status');
+    resultCount.setAttribute('aria-live', 'polite');
+    var clearFilters = node('button', 'signal-clear', 'Clear filters');
+    clearFilters.type = 'button';
+    clearFilters.addEventListener('click', function () {
+      query = ''; activeFilter = 'all'; order = 'rank'; search.value = ''; sort.value = 'rank';
+      applyLens(); search.focus();
+    });
+    lensFooter.append(resultCount, clearFilters);
+    lens.append(lensFields, filters, lensFooter);
+    search.addEventListener('input', function () { query = search.value.trim().toLowerCase(); applyLens(); });
+    sort.addEventListener('change', function () { order = sort.value; applyLens(); });
 
     var layout = node('div', 'signal-layout');
     var panel = node('div', 'signal-panel');
@@ -59,14 +118,17 @@
     // A keyboard reader can scroll this region even when no point has focus.
     cards.tabIndex = 0;
     layout.append(panel, cards);
-    root.append(layout);
-    var cardNodes = [], buttons = [], markerNodes = [];
+    root.append(lens, layout);
+    var cardNodes = [], buttons = [], markerNodes = [], deskButtons = [];
+    var noMatches = node('div', 'signal-no-matches');
+    noMatches.append(node('h3', '', 'No signals match this lens.'), node('p', '', 'Try a different ticker, search the scoring notes, or clear your filters to see every recorded candidate.'));
+    noMatches.hidden = true;
     var selectedIndex = candidates.findIndex(function (c) { return c.ticker === selected; });
     if (selectedIndex < 0 && candidates.length) selectedIndex = 0;
 
     function select(index, reveal, announce) {
       var c = candidates[index];
-      if (!c) return;
+      if (!c || visibleIndexes.indexOf(index) < 0) return;
       selectedIndex = index;
       selected = c.ticker;
       cardNodes.forEach(function (card, i) { card.classList.toggle('is-selected', i === index); });
@@ -108,10 +170,40 @@
         var row = document.getElementById('signal-record-' + index);
         if (row) row.focus({ preventScroll: true });
       });
-      card.append(link);
+      var actions = node('div', 'signal-card-actions');
+      ['save', 'compare'].forEach(function (kind) {
+        var action = node('button', 'signal-desk-action', kind === 'save' ? 'Save' : 'Compare');
+        action.type = 'button';
+        action.setAttribute('data-stock-' + kind, String(c.ticker));
+        action.addEventListener('click', function () {
+          var desk = window.SCStockDesk;
+          var method = kind === 'save' ? 'toggleSaved' : 'toggleCompare';
+          if (desk && typeof desk[method] === 'function') desk[method](c.ticker);
+          refreshDesk();
+        });
+        actions.append(action); deskButtons.push({ node: action, c: c, kind: kind });
+      });
+      card.append(actions, link);
       cards.append(card);
       cardNodes.push(card); buttons.push(button);
     });
+
+    cards.append(noMatches);
+    refreshDesk = function () {
+      var desk = window.SCStockDesk;
+      deskButtons.forEach(function (entry) {
+        var check = entry.kind === 'save' ? 'hasSaved' : 'hasCompared';
+        var method = entry.kind === 'save' ? 'toggleSaved' : 'toggleCompare';
+        var available = desk && typeof desk[check] === 'function' && typeof desk[method] === 'function';
+        var pressed = !!(available && desk[check](entry.c.ticker));
+        entry.node.disabled = !available;
+        entry.node.setAttribute('aria-pressed', String(pressed));
+        entry.node.textContent = entry.kind === 'save' ? (pressed ? 'Saved' : 'Save') : (pressed ? 'In compare' : 'Compare');
+        entry.node.setAttribute('aria-label', (entry.kind === 'save' ? (pressed ? 'Remove ' : 'Save ') : (pressed ? 'Remove ' : 'Compare ')) + String(entry.c.ticker) + (pressed ? (entry.kind === 'save' ? ' from saved signals' : ' from comparison') : ''));
+      });
+    };
+    window.addEventListener('stock:desk-change', refreshDesk);
+    refreshDesk();
 
     if (!candidates.length) {
       cards.append(node('div', 'signal-empty', 'No candidates were scored in this session.'), node('p', 'signal-empty-note', 'Review the run status and evidence before interpreting an empty result. The map only displays recorded candidates.'));
@@ -122,9 +214,10 @@
     function draw() {
       surface.replaceChildren();
       markerNodes = [];
-      if (!points.length) {
+      var shownPoints = points.filter(function (p) { return visibleIndexes.indexOf(p.index) >= 0; });
+      if (!shownPoints.length) {
         var empty = node('div', 'signal-map-empty');
-        empty.append(node('span', 'signal-empty-symbol', '—'), node('strong', '', candidates.length ? 'No complete measurements to plot.' : 'No scored signals.'), node('span', '', candidates.length ? 'Every scored candidate remains in the notes.' : 'The map fills when a run records scored candidates.'));
+        empty.append(node('span', 'signal-empty-symbol', '—'), node('strong', '', candidates.length ? (visibleIndexes.length ? 'No complete measurements to plot.' : 'No signals in this view.') : 'No scored signals.'), node('span', '', candidates.length ? (visibleIndexes.length ? 'The matching candidates remain in the notes.' : 'Change or clear your filters to explore the recorded session.') : 'The map fills when a run records scored candidates.'));
         surface.append(empty);
         return;
       }
@@ -145,11 +238,14 @@
       }
       svg.append(svgNode('text', { x: left, y: 19, 'class': 'signal-axis-title' }, 'Relative volume'), svgNode('text', { x: (left + right) / 2, y: height - 13, 'text-anchor': 'middle', 'class': 'signal-axis-title' }, 'Daily gain'));
       surface.append(svg);
-      points.forEach(function (p) {
+      shownPoints.forEach(function (p) {
         var marker = node('button', 'signal-point' + (fallback(p.c) ? ' is-fallback' : unknown(p.c) ? ' is-unknown' : ''));
         marker.type = 'button';
         marker.style.left = x(p.c.gain_pct) + 'px';
         marker.style.top = y(p.c.volume_ratio) + 'px';
+        // Keep the selected ticker label inside the plot at either horizontal edge.
+        if (x(p.c.gain_pct) > width - 82) marker.classList.add('is-near-right');
+        if (x(p.c.gain_pct) < 82) marker.classList.add('is-near-left');
         marker.dataset.signalIndex = p.index;
         var label = String(p.c.ticker) + ', daily gain ' + amount(p.c.gain_pct, '%', true) + ', relative volume ' + amount(p.c.volume_ratio, '×') + ', ' + sourceLabel(p.c);
         marker.setAttribute('aria-label', label);
@@ -160,8 +256,46 @@
       });
       select(selectedIndex, false, false);
     }
-    draw();
-    select(selectedIndex, false, false);
+    function applyLens() {
+      lensState.search = search.value;
+      lensState.filter = activeFilter;
+      lensState.order = order;
+      visibleIndexes = candidates.map(function (_, index) { return index; }).filter(function (index) {
+        var c = candidates[index];
+        var matchesQuery = !query || (String(c.ticker) + ' ' + String(c.reason || '')).toLowerCase().indexOf(query) >= 0;
+        var matchesFilter = activeFilter === 'all' ||
+          (activeFilter === 'shortlist' && finite(c.rank) && c.rank > 0 && c.rank <= shortlistSize) ||
+          (activeFilter === 'claude' && !unknown(c) && !fallback(c)) ||
+          (activeFilter === 'fallback' && fallback(c)) ||
+          (activeFilter === 'volume' && finite(c.volume_ratio) && c.volume_ratio >= 3);
+        return matchesQuery && matchesFilter;
+      });
+      if (order !== 'rank') visibleIndexes.sort(function (a, b) {
+        var key = order === 'gain' ? 'gain_pct' : 'volume_ratio';
+        var av = candidates[a][key], bv = candidates[b][key];
+        var validA = finite(av) && (key !== 'volume_ratio' || av >= 0);
+        var validB = finite(bv) && (key !== 'volume_ratio' || bv >= 0);
+        if (validA !== validB) return validA ? -1 : 1;
+        return validA && av !== bv ? bv - av : a - b;
+      });
+      cardNodes.forEach(function (card, index) { card.hidden = visibleIndexes.indexOf(index) < 0; });
+      visibleIndexes.forEach(function (index) { cards.append(cardNodes[index]); });
+      cards.append(noMatches);
+      noMatches.hidden = !candidates.length || !!visibleIndexes.length;
+      filterButtons.forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.signalFilter === activeFilter)); });
+      clearFilters.hidden = !query && activeFilter === 'all' && order === 'rank';
+      var plotted = points.filter(function (p) { return visibleIndexes.indexOf(p.index) >= 0; }).length;
+      resultCount.textContent = visibleIndexes.length + ' of ' + candidates.length + ' signals · ' + plotted + ' plotted' + (order === 'rank' ? '' : ' · original ranks kept');
+      if (visibleIndexes.indexOf(selectedIndex) < 0) selectedIndex = visibleIndexes.length ? visibleIndexes[0] : -1;
+      if (selectedIndex < 0) {
+        selection.textContent = candidates.length ? 'No candidates match the current filters.' : 'No scored candidates to select.';
+        cardNodes.forEach(function (card) { card.classList.remove('is-selected'); });
+        buttons.forEach(function (button) { button.setAttribute('aria-pressed', 'false'); });
+      } else select(selectedIndex, false, true);
+      draw();
+    }
+    applyLens();
+    if (points.length) mapNote.textContent += ' Axes stay fixed while you filter.';
     if (points.length !== candidates.length) mapNote.textContent += ' ' + (candidates.length - points.length) + ' candidate(s) lack complete gain/volume measurements and remain listed.';
     if (window.ResizeObserver) { observer = new ResizeObserver(draw); observer.observe(surface); }
     else { resize = draw; window.addEventListener('resize', resize); }
