@@ -120,6 +120,11 @@ try {
   assert.equal(await page.locator('.signal-point').getAttribute('data-signal-index'), '4');
   assert.match(await page.locator('.signal-card:visible .signal-rank').textContent(), new RegExp('\\b' + selected.rank + '\\b'));
   assert.deepEqual(await page.locator('.signal-axis').allTextContents(), originalAxes, 'Filtering must not silently change the coordinate scale.');
+  assert.equal(await page.locator('.signal-point-label').evaluate(label => {
+    const text = document.createRange();
+    text.selectNodeContents(label);
+    return text.getClientRects().length;
+  }), 1, 'A normal ticker label must remain on one readable line.');
   await screenshot(page, '#signal-workspace', 'signal-filtered-phone');
   await page.locator('#signal-search').fill('no-such-recorded-ticker');
   assert.equal(await page.locator('.signal-card:visible').count(), 0);
@@ -188,7 +193,7 @@ try {
     assert.match(await card.textContent(), new RegExp(candidate.score.toFixed(1).replace('.', '\\.')));
     assert.ok((await card.textContent()).includes(candidate.key_risk), 'Comparison retains the recorded risk.');
   }
-  await page.getByRole('button', { name: `Remove ${choices[0]} from comparison`, exact: true }).click();
+  await page.locator(`[data-desk-ticker="${choices[0]}"]`).getByRole('button', { name: `Remove ${choices[0]} from comparison`, exact: true }).click();
   await page.locator(`[data-stock-compare="${choices[3]}"]`).click();
   assert.deepEqual(await page.locator('[data-desk-ticker]').evaluateAll(nodes => nodes.map(n => n.dataset.deskTicker)), choices.slice(1));
   await screenshot(page, '#stock-desk', 'compare-phone');

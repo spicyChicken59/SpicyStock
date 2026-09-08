@@ -136,7 +136,7 @@ body { font-family: var(--sc-font-body); }
 .signal-no-matches p { margin: 0; color: var(--sc-text-2); font-size: 15px; line-height: 1.6; }
 .signal-card[hidden], .signal-no-matches[hidden], .signal-clear[hidden] { display: none; }
 .signal-card-note, .signal-selection, .signal-map-note, .signal-rank, .signal-provenance, .signal-stamp { overflow-wrap: anywhere; }
-.signal-point-label { max-width: 120px; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+.signal-point-label { width: max-content; max-width: 120px; white-space: normal; overflow-wrap: anywhere; text-align: center; }
 .signal-point.is-near-right .signal-point-label { left: auto; right: 11px; transform: none; }
 .signal-point.is-near-left .signal-point-label { left: 11px; transform: none; }
 .signal-search-input:focus-visible, .signal-sort-input:focus-visible, .signal-filter:focus-visible, .signal-clear:focus-visible, .signal-desk-action:focus-visible { outline: 3px solid var(--sc-focus); outline-offset: 3px; }
