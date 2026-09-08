@@ -42,7 +42,7 @@ const origin = `http://127.0.0.1:${server.address().port}`;
 
 async function screenshot(page, selector, name) {
   if (!shots) return;
-  await page.locator(selector).scrollIntoViewIfNeeded();
+  await page.locator(selector).evaluate(node => node.scrollIntoView({ block: 'start', behavior: 'auto' }));
   await page.screenshot({ path: join(shots, name + '.png') });
 }
 
@@ -262,7 +262,17 @@ try {
       await geometry(page);
       await screenshot(page, '#trade-plan-title', `trade-plan-${width}-${theme}`);
       for (const tab of ['positions', 'activity']) {
+        if (tab === 'activity') await page.locator('#trade-tab-today').click();
+        await page.locator('#trade-save-plan').evaluate(node => node.scrollIntoView({ block: 'start', behavior: 'auto' }));
         await page.locator('#trade-tab-' + tab).click();
+        if (width <= 390) {
+          const location = await page.evaluate(() => ({
+            headingTop: document.querySelector('#trade-panel h3').getBoundingClientRect().top,
+            tabsBottom: document.querySelector('#trade-workspace .tw-tabs').getBoundingClientRect().bottom
+          }));
+          assert.ok(location.headingTop >= location.tabsBottom - 1,
+            `${width}px ${theme} ${tab}: its heading must clear the sticky tabs after leaving a deep plan (${JSON.stringify(location)}).`);
+        }
         await geometry(page);
         await screenshot(page, '#trade-panel', `trade-${tab}-${width}-${theme}`);
       }

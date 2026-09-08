@@ -64,7 +64,7 @@ _ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 
 from src.lynch import MAX_CONSECUTIVE_UP_DAYS
-from src import ledger, pipeline, scanner, scorer  # noqa: E402
+from src import learning, ledger, pipeline, scanner, scorer  # noqa: E402
 from src.scorer import VERDICT_BANDS, _balanced_spans  # noqa: E402
 from tests.fakes import FakeAlpaca, FakeDataClient  # noqa: E402
 
@@ -564,6 +564,10 @@ def generate(out_dir: pathlib.Path) -> dict:
     book["generated"] = GENERATED
     book["fixture"] = True
     book["about"] = ABOUT_LEDGER
+    # The pipeline built its evidence before these fixture labels existed.
+    # Re-evaluate the learning block against the document we actually publish:
+    # synthetic history must not carry a model-calibration state of its own.
+    data["learning"] = learning.build(book, data["run"], data["candidates"])
 
     out_dir.mkdir(parents=True, exist_ok=True)
     for name, payload in ((ledger.DATA_NAME, data), (ledger.LEDGER_NAME, book)):

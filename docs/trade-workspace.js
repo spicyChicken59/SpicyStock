@@ -38,7 +38,11 @@
   }
   function calc() { var p = profile(); return engine().calculate({ capital: p.capital, risk_percent: p.risk_percent, cash_cap: p.cash_cap, entry: draft.entry, stop: draft.stop }); }
   function mutate(result, success) { if (!result || !result.ok) { announce(result && result.error || 'This change could not be saved.'); return false; } announce(success + (result.temporary ? ' This visit only; export a backup before leaving.' : '')); return true; }
-  function showTab(tab, keyboard) { activeTab = tab; paintTabs(); paintBody(); if (keyboard) focus('trade-tab-' + tab); }
+  function showTab(tab, keyboard) {
+    activeTab = tab; paintTabs(); paintBody();
+    panel.scrollIntoView({ block: 'start', behavior: 'auto' });
+    if (keyboard) focus('trade-tab-' + tab);
+  }
   function tabButton(name, label) { var b = button(label, 'trade-tab-' + name, function () { showTab(name, false); }); b.className = 'tw-tab'; b.setAttribute('role', 'tab'); b.dataset.tradeTab = name; b.setAttribute('aria-controls', 'trade-panel'); return b; }
   function paintTabs() { host.querySelectorAll('[data-trade-tab]').forEach(function (b) { var yes = b.dataset.tradeTab === activeTab; b.setAttribute('aria-selected', String(yes)); b.tabIndex = yes ? 0 : -1; }); }
 

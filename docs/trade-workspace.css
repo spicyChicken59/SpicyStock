@@ -30,7 +30,8 @@
 .tw-tab[aria-selected='true'] { color: var(--sc-heading); background: var(--sc-bg); border-color: var(--sc-border-strong); box-shadow: inset 0 -2px var(--sc-chart-emphasis); }
 .tw-notice { color: var(--sc-heading); font-size: 13px; line-height: 1.7; margin: 0; padding: 0; }
 .tw-notice:not(:empty) { margin: 18px 0; padding: 14px 16px; background: var(--sc-brand-fill); border-left: 2px solid var(--sc-chart-emphasis); border-radius: 0 8px 8px 0; }
-.tw-panel { padding: 26px 0 0; min-width: 0; }
+.tw-panel { padding: 26px 0 0; min-width: 0; scroll-margin-top: 84px; }
+.tw-order-confirm, .tw-position-card, .tw-exit, .tw-order-receipt, #trade-plan-title { scroll-margin-top: 92px; }
 .tw-routine { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; margin: 0 0 30px; }
 .tw-routine-step { display: flex; align-items: center; gap: 10px; color: var(--sc-text-2); font: 12px/1.6 var(--sc-font-body); min-width: 0; }
 .tw-routine-step b { font: 11px/1.5 var(--sc-font-mono); color: var(--sc-chart-emphasis); border-bottom: 2px solid var(--sc-chart-emphasis); padding: 7px 0; flex-shrink: 0; }
