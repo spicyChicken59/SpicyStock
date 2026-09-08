@@ -50,7 +50,8 @@ const pageAssets = [
   'stock.css', 'stock-home.css', 'signal-map.js',
   'stock-cockpit.css', 'stock-cockpit.js', 'stock-desk.css', 'stock-desk.js',
   'stock-replay.css', 'stock-replay.js',
-  'stockbee-workbench.css', 'stockbee-workbench.js', 'stockbee-plan.css', 'stockbee-plan.js'
+  'stockbee-workbench.css', 'stockbee-workbench.js', 'stockbee-plan.css', 'stockbee-plan.js',
+  'trade-workspace.css', 'trade-state.js', 'trade-bridge.js', 'trade-workspace.js'
 ];
 const indexHTML = await readFile(join(docs, 'index.html'), 'utf8');
 const assetBase = 'https://research.local/';
@@ -89,7 +90,7 @@ try {
       }
       await route.continue();
     });
-    await page.goto(origin, { waitUntil: 'load' });
+    await page.goto(origin + '/#research-report', { waitUntil: 'load' });
     await page.locator('#session-cockpit').waitFor({ state: 'visible' });
     await page.locator('#signal-search').waitFor({ state: 'visible' });
     return { context, page, state };
@@ -104,7 +105,7 @@ try {
   }
 
   const live = await open(recorded);
-  assert.equal(await live.page.locator('#funnel-card').isVisible(), true, 'The full report must be available by default.');
+  assert.equal(await live.page.locator('#funnel-card').isVisible(), true, 'The research report must open when its anchor is requested.');
   assert.equal(live.state.archiveRequests, 0, 'Opening the cockpit must not eagerly download the archive.');
   if (!recorded.candidates.length) {
     assert.equal(await live.page.locator('.signal-card').count(), 0);
@@ -558,21 +559,28 @@ try {
   await bp.locator('#stockbee-lynch-questions > summary').click();
   pass('the inspector preserves exact recorded candles and six qualitative 2LYNCH questions without a fabricated score');
 
-  await bp.locator('#bee-plan-entry').fill('99');
-  await bp.locator('#bee-plan-stop').fill('90');
+  await bp.locator('#trade-plan-manual').click();
+  await bp.locator('#trade-entry').fill('99');
+  await bp.locator('#trade-stop').fill('90');
   await bp.locator('#stockbee-plan-setup').click();
-  assert.equal(await bp.locator('#bee-plan-ticker').inputValue(), 'TESTBEE');
-  assert.equal(await bp.locator('#bee-plan-entry').inputValue(), '');
-  assert.equal(await bp.locator('#bee-plan-stop').inputValue(), '');
-  assert.equal(await bp.locator('#bee-plan-capital').inputValue(), '');
-  assert.equal(await bp.locator('#bee-plan-riskPercent').inputValue(), '');
-  assert.match(await bp.locator('#bee-plan-reference').textContent(), /Historical reference only/);
-  assert.ok((await bp.locator('#bee-plan-reference').textContent()).includes(fixture.run.date));
-  await bp.locator('#bee-plan-use-reference').click();
-  assert.equal(await bp.locator('#bee-plan-entry').inputValue(), '20');
-  assert.equal(await bp.locator('#bee-plan-stop').inputValue(), '18');
+  assert.equal(await bp.locator('#trade-symbol').inputValue(), 'TESTBEE');
+  assert.equal(await bp.locator('#trade-entry').inputValue(), '');
+  assert.equal(await bp.locator('#trade-stop').inputValue(), '');
+  assert.deepEqual(await bp.evaluate(() => {
+    const p = window.SCTradeState.getState().profile;
+    return { capital: p.capital, risk: p.risk_percent };
+  }), { capital: null, risk: null });
+  assert.ok((await bp.locator('#trade-reference').textContent()).includes(fixture.run.date));
+  await bp.locator('#trade-use-reference').click();
+  assert.equal(await bp.locator('#trade-entry').inputValue(), '20');
+  assert.equal(await bp.locator('#trade-stop').inputValue(), '18');
   pass('setup handoff fills only the ticker until the user explicitly accepts the dated price reference');
 
+  // The retained research calculator still supports existing journal users.
+  // Seed its own inputs explicitly; setup handoff now belongs to the trade desk.
+  await bp.locator('#bee-plan-ticker').fill('TESTBEE');
+  await bp.locator('#bee-plan-entry').fill('20');
+  await bp.locator('#bee-plan-stop').fill('18');
   await bp.locator('#bee-plan-capital').fill('10000');
   await bp.locator('#bee-plan-riskPercent').fill('1');
   assert.equal(await bp.locator('#bee-plan-shares').textContent(), '50 shares');

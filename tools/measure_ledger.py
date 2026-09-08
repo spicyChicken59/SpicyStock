@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""How big docs/ledger.json gets after a full year, measured rather than guessed.
+"""Project docs/ledger.json after a full year using the normalized history fixture.
 
 README quotes this number, the page's "load every burst of every name" button
 is justified by it, and it is exactly the kind of fact this repo has watched
@@ -12,13 +12,14 @@ So this builds one. Real rows, drawn from the history `tools/make_history.py`
 generates by driving the real pipeline offline; real row COUNTS, taken from the
 canonical one-night fixture; and the real `src.ledger._write_json`, because
 `indent=2` is most of the raw size and a compact estimate is not the file the
-browser fetches. No estimate anywhere in it.
+browser fetches. This is a fixture-based projection; production precision and optional metadata can change the actual size.
 
     python tools/measure_ledger.py
 
 The rows carry no model prose -- `slim_row()` drops `reason` and `key_risk` --
-so a synthetic row is the same SHAPE and the same size as a real one, which is
-what makes this projection sound rather than merely arithmetic.
+so synthetic rows exercise the same schema. Derived Stockbee fixture metrics
+are normalized to eight decimals for reproducibility; production precision
+and optional learning observation dates can make real rows somewhat larger.
 """
 from __future__ import annotations
 

@@ -174,6 +174,8 @@ try {
     const label = `${source}/${width}px/${theme}/${enlarged ? '200%' : '100%'}`;
     await page.setViewportSize({ width, height: 844 });
     await page.goto(`${origin}/${source}/`, { waitUntil: 'load' });
+    if (await page.locator('#research-report').count() && !await page.locator('#research-report').evaluate(node => node.open))
+      await page.locator('#research-toggle').click();
     await page.waitForFunction(() => document.querySelector('#snapshot-refresh').getAttribute('aria-disabled') === 'false');
     assert.equal(await page.locator('#run-strip').isVisible(), true, `${label}: snapshot must load`);
     assert.equal(await page.locator('.signal-card').count(), sources[source].candidates.length,

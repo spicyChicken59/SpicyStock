@@ -151,3 +151,19 @@ body { font-family: var(--sc-font-body); }
 @media print {
   .signal-lens, .signal-card-actions { display: none; }
 }
+
+/* A quiet daily desk first; the complete research remains one disclosure away. */
+.stock-research { min-width: 0; border-top: 1px solid var(--sc-border); }
+.stock-research > summary { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 88px; padding: 20px 4px; cursor: pointer; list-style: none; }
+.stock-research > summary::-webkit-details-marker { display: none; }
+.stock-research > summary strong { display: block; font: 26px var(--sc-font-display); color: var(--sc-heading); }
+.stock-research > summary span span { display: block; margin-top: 6px; color: var(--sc-text-2); font-size: 14px; }
+.stock-research-arrow { font-size: 26px; transition: transform .2s; }
+.stock-research[open] .stock-research-arrow { transform: rotate(90deg); }
+.stock-research-body { padding-top: 18px; }
+.stock-research > summary:focus-visible { outline: 3px solid var(--sc-focus); outline-offset: 4px; }
+#snapshot-panel { padding: 14px 18px; gap: 12px; }
+#snapshot-panel .sc-eyebrow { display: none; }
+#snapshot-panel #snapshot-status { font-size: 13px; margin: 0; }
+#snapshot-panel #snapshot-stamp { font-size: 11px; margin-top: 5px; }
+@media print { .stock-research > summary, #trade-workspace { display: none !important; } }

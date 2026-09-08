@@ -41,6 +41,30 @@ def _generator_failed(proc: subprocess.CompletedProcess) -> bool:
     return True
 
 
+def _first_difference(stored, generated, path="$", *, limit=180) -> str | None:
+    """Name the first differing value without dumping an entire fixture."""
+    if stored == generated:
+        return None
+    if isinstance(stored, dict) and isinstance(generated, dict):
+        for key in sorted(stored.keys() | generated.keys()):
+            child = f"{path}[{json.dumps(key)}]"
+            if key not in stored:
+                return f"{child}: missing from committed fixture"
+            if key not in generated:
+                return f"{child}: absent from regenerated fixture"
+            difference = _first_difference(stored[key], generated[key], child, limit=limit)
+            if difference:
+                return difference
+    if isinstance(stored, list) and isinstance(generated, list):
+        if len(stored) != len(generated):
+            return f"{path}: committed length {len(stored)}, regenerated length {len(generated)}"
+        for index, (left, right) in enumerate(zip(stored, generated)):
+            difference = _first_difference(left, right, f"{path}[{index}]", limit=limit)
+            if difference:
+                return difference
+    return f"{path}: committed {repr(stored)[:limit]}, regenerated {repr(generated)[:limit]}"
+
+
 def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         out = pathlib.Path(tmp) / "regenerated.json"
@@ -62,12 +86,15 @@ def main() -> int:
     canonical = json.loads(CANONICAL.read_text())
     if canonical != fresh:
         print(f"{CANONICAL.relative_to(ROOT)} is stale — re-run: {REGENERATE}")
+        print("First difference:", _first_difference(canonical, fresh))
         return 1
     for name, regenerated in fresh_history.items():
         path = HISTORY / name
         if not path.exists() or json.loads(path.read_text()) != regenerated:
             print(f"{path.relative_to(ROOT)} is {'missing' if not path.exists() else 'stale'} "
                   f"— re-run: {REGENERATE_HISTORY}")
+            if path.exists():
+                print("First difference:", _first_difference(json.loads(path.read_text()), regenerated))
             return 1
     runs = len(fresh_history["ledger.json"]["runs"])
 

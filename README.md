@@ -1,4 +1,60 @@
-# 4% Momentum Burst — Fully Automated Scanner
+# SpicyStock — the daily 4% trading desk
+
+The homepage starts with **Today, Positions, and Activity**. Review a Stockbee
+base-scan setup, save a risk-sized plan, and track confirmed fills in one
+workspace. The scan, charts, qualitative checklist, original planner and full
+record remain under **Research & strategy**.
+
+| Step | What the desk does | What counts as evidence |
+|---|---|---|
+| Prepare | Stores your chosen capital, risk and position limits; selects a dated setup | Published scan date, source and measured price/volume rules |
+| Review | Sizes whole shares from entry, initial stop, cash and risk limits | A plan is a draft, never a position |
+| Submit | On a configured private deployment, requires explicit confirmation of a broker preview | Fresh quote, account, market clock, previous-session scan and an expiring immutable preview |
+| Track | Reconciles pending orders and imports confirmed executions | Broker execution IDs; acceptance alone is not a fill |
+| Learn | Re-evaluates a versioned challenger as real setup outcomes mature | Chronological validation with first-observed outcome dates |
+
+**Public website:** planning, confirmed manual fills, previewed CSV/JSON imports,
+positions, matched exits and backup exports work without a brokerage connection.
+Personal records stay in this browser; export a backup to move devices. Partial
+fills are matched FIFO, paper/live accounts stay separate, and incomplete
+execution history suppresses performance claims. The older journal is retained
+separately rather than silently converted into broker executions.
+
+**Private trading app:** `src/broker_bridge` serves the same frontend with an
+Alpaca OAuth connection and a same-origin `/api`. Its private database encrypts
+tokens and stores order reconciliation records. Public GitHub Pages has trading
+disabled and contains no account credentials. See
+[the private deployment guide](deploy/broker/README.md) for Docker, provider
+registration, HTTPS and account setup. This repository does not create a broker
+account or deploy that service automatically. Alpaca is the first adapter;
+other brokers use confirmed-fill imports until an adapter is implemented.
+
+The broker path uses cash-funded limit entries with a broker-held OTO protective
+stop. It defaults to paper; live mode requires a server flag, an account
+allowlist and a fresh consolidated SIP quote. The free delayed daily scan is
+not an executable quote. Accepted entries can remain unfilled, partial fills
+may be unprotected until the parent fully fills, and a stop can execute below
+its trigger. An uncertain submission is reconciled by its durable client order
+ID and is never automatically resubmitted. See
+[Alpaca order behavior](https://docs.alpaca.markets/us/docs/orders-at-alpaca) and
+[market-data entitlements](https://docs.alpaca.markets/us/docs/market-data-faq).
+
+**Learning without retrospective leakage:** publication rebuilds `data.learning`
+from successful real evening Claude-scored setups under one model/rules
+fingerprint. `forward_returns.observed_at` records the actual New York calendar
+date when the next-open five-session outcome first becomes known. It is never
+backdated to the target bar or added retrospectively to legacy outcomes. Dry
+runs do not stamp learning dates. A ridge calibration uses score, relative
+volume and checklist pass fraction, testing two later chronological windows
+against a score-only baseline. It needs at least 100 training setups, 30
+validation setups, 20 dated sessions and 10 validation dates, with unfinished
+labels purged at each cutoff. A 20-basis-point cost deduction is a hypothetical
+scenario, not account P/L. Versioned parameters, dates and uncertainty are
+published. Even a qualified challenger remains in shadow mode: it does not
+rewrite the strategy, change production rankings or submit trades. Private
+trading records are not uploaded to the public learning dataset.
+
+## The automated scanner
 
 Scans a checked-in universe of 228 US common stocks each trading day, applies the
 Stockbee-inspired 4% Momentum Burst process with SpicyStock's quantitative
@@ -541,7 +597,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1466 tests, no network or API keys needed
+pytest tests/                   # 1562 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -788,8 +844,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 20.55 MB raw
-and **2.43 MB gzipped** after a full year. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 20.24 MB raw
+and **2.24 MB gzipped** after a full year in the normalized history fixture. Actual payload size varies with numeric precision and optional metadata. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 

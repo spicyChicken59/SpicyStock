@@ -64,7 +64,7 @@ _ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 
 from src.lynch import MAX_CONSECUTIVE_UP_DAYS
-from src import ledger, pipeline, scanner, scorer  # noqa: E402
+from src import learning, ledger, pipeline, scanner, scorer  # noqa: E402
 from src.scorer import VERDICT_BANDS, _balanced_spans  # noqa: E402
 from tests.fakes import FakeAlpaca, FakeDataClient  # noqa: E402
 
@@ -127,6 +127,17 @@ GENERATED = "2026-09-01T22:14:07Z"
 #: CLAUDE_MODEL=claude-opus-4-5: run.model changed. This constant existed for
 #: exactly that and was never wired up.
 MODEL = "claude-sonnet-4-6"
+#: Fixture presentation precision, applied only after the real pipeline has
+#: classified and ordered the setups. NumPy reductions can differ by a few
+#: floating-point units across CPUs; eight decimals retain more precision
+#: than these ratios and percentages can use on any product surface.
+STOCKBEE_MEASUREMENT_DIGITS = 8
+STOCKBEE_MEASUREMENT_FIELDS = (
+    "gain_pct", "volume_vs_previous", "volume_vs_average", "range_expansion",
+    "compression_ratio", "close_position", "trend_intensity",
+    "extension_sma20_pct", "base_range_pct", "prior_day_move_pct",
+    "prior_day_range_pct",
+)
 
 ABOUT_DATA = (
     "docs/data.json is written by src/pipeline.py at the end of every run (see "
@@ -497,6 +508,18 @@ def _patched(alpaca: DatedAlpaca):
                 os.environ[k] = v
 
 
+def _normalize_stockbee_measurements(run: dict) -> None:
+    """Stabilize fixture-only derived metrics, preserving bars and decisions."""
+    research = run.get("stockbee")
+    if not isinstance(research, dict):
+        return
+    for queue in ("scan", "anticipation"):
+        for row in research[queue]["rows"]:
+            for key in STOCKBEE_MEASUREMENT_FIELDS:
+                if isinstance(row.get(key), float):
+                    row[key] = round(row[key], STOCKBEE_MEASUREMENT_DIGITS)
+
+
 def generate(out_dir: pathlib.Path) -> dict:
     rng = np.random.default_rng(SEED)
     names = universe()
@@ -564,6 +587,12 @@ def generate(out_dir: pathlib.Path) -> dict:
     book["generated"] = GENERATED
     book["fixture"] = True
     book["about"] = ABOUT_LEDGER
+    # The pipeline built its evidence before these fixture labels existed.
+    # Re-evaluate the learning block against the document we actually publish:
+    # synthetic history must not carry a model-calibration state of its own.
+    data["learning"] = learning.build(book, data["run"], data["candidates"])
+    for entry in [data["run"], *data["runs"], *book["runs"]]:
+        _normalize_stockbee_measurements(entry)
 
     out_dir.mkdir(parents=True, exist_ok=True)
     for name, payload in ((ledger.DATA_NAME, data), (ledger.LEDGER_NAME, book)):

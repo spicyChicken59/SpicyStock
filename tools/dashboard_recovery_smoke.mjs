@@ -50,7 +50,11 @@ try {
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  const open = async () => page.goto(`http://127.0.0.1:${server.address().port}/`, { waitUntil: 'load' });
+  const open = async () => {
+    await page.goto(`http://127.0.0.1:${server.address().port}/`, { waitUntil: 'load' });
+    if (!await page.locator('#research-report').evaluate(node => node.open))
+      await page.locator('#research-toggle').click();
+  };
   const ready = async () => page.waitForFunction(() => !document.querySelector('#run-strip').hidden && document.querySelector('#snapshot-refresh').getAttribute('aria-disabled') !== 'true');
   const status = () => page.locator('#snapshot-status').innerText();
   dataMode = 'failed';

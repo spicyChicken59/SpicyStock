@@ -354,7 +354,10 @@
     if (host !== target || !target.querySelector('#bee-plan-form')) { host = target; inputs = {}; journalInputs = {}; tabs = []; mount(); }
     else { host.hidden = false; renderJournal(); }
   }
-  window.addEventListener('stockbee:plan', function (event) { seed(event.detail && (event.detail.setupRow || event.detail)); });
+  window.addEventListener('stockbee:plan', function (event) {
+    if (window.SCTradeWorkspace && document.querySelector('#trade-workspace:not([hidden])')) return;
+    seed(event.detail && (event.detail.setupRow || event.detail));
+  });
   window.addEventListener('storage', function (event) {
     if (event.key !== KEY && event.key !== null) return;
     if (!storageOK) return;

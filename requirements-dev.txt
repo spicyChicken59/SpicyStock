@@ -4,6 +4,7 @@
 # pulls them in so one command sets up a machine that can run the suite.
 # .github/workflows/tests.yml installs this file and nothing else.
 -r requirements.txt
+-r requirements-bridge.txt
 
 pytest>=8.0
 
