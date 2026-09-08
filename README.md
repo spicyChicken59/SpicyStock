@@ -590,6 +590,22 @@ plot, not a geographic or sector map. Empty runs stay empty. The existing comple
 ranking, shortlist, evidence and history remain below it; selecting a point changes
 only the presentation and makes no requests or stored changes.
 
+The research workspace adds five connected views without changing the scanner:
+
+| View | What it does |
+| --- | --- |
+| Session cockpit | Shows the recorded review queue, score sources and selection counts. Focus view keeps the signal lens, desk and replay visible; report links restore the complete report. |
+| Signal lens | Searches tickers and scoring notes; filters the shortlist, Claude reviews, fallbacks or relative volume ≥3×; sorts by recorded order, gain or volume. Filtering never changes ranks, measurements or the plot scale. |
+| Comparison bench | Keeps up to three current candidates together with their score source, measured gain, relative volume, check count and recorded key risk. A comparison tray keeps the selected names reachable on phones. |
+| Saved research | Saves up to 100 tickers and explicit notes of up to 4,000 characters in this browser. Notes do not sync, and adding a ticker does not add it to the scan. Missing current candidates show notes without carrying old metrics forward. Blocked, full or malformed storage produces a visible visit-only state. |
+| Session replay | Browses the actual saved session counts and lazily loads archived candidate details on request. Return labels follow the page's selected basis and explicitly describe the latest saved observations, which may fill in after the original session. |
+
+The view modules are `stock-cockpit.js`, `signal-map.js`, `stock-desk.js` and
+`stock-replay.js`, with their page-specific styles. A view that cannot initialize
+shows its own retry message while the original report finishes rendering. Empty
+and sample runs remain clearly identified. Saved notes use the namespaced
+`spicystock.research.v1` browser-storage key; comparison choices are temporary.
+
 **An evening run that scans writes that file at the end** (step 9,
 `src/ledger.py`) — one that re-presents an already-published session leaves it
 as the run that published it wrote it — together with `docs/ledger.json` and
@@ -630,10 +646,13 @@ snapshot again; it does not dispatch a scan or claim that the recorded prices
 are live. If the check fails, the last successfully loaded report stays visible
 with an explicit failure message. A changed snapshot replaces the report and
 invalidates any full-record request from the previous snapshot; an unchanged one
-keeps the selected return basis and expanded details. Both snapshot and full-record
-requests time out after 15 seconds, including a stalled response body, and offer
+keeps the selected return basis and expanded details. Requests for the snapshot
+and per-name record time out after 15 seconds, including a stalled response body, and offer
 a retry. The **Scan activity** link opens the evening workflow's actual run history.
 These controls need no credentials and do not change pipeline or email behavior.
+Session replay has its own 12-second archive timeout and retry. It checks the
+selected session's identity and counts against the summary; the independently
+generated dashboard and ledger timestamps are not required to be identical.
 
 ### What the page answers, and what it refuses to answer
 
@@ -1169,8 +1188,8 @@ horizons in. The bands themselves need no backfill and no change to the page —
 appearance of every setup in `docs/ledger.json` — resolved or not, so a
 pending setup is counted in its band with an n of zero — and the bursts the
 gate refused are the control beside those bands, never in them. The page draws
-what the file carries, fetching `ledger.json` itself only for the per-name
-view. This paragraph told a reader the opposite for two rounds — that a backfill was the only way a point could ever appear,
+what the file carries, fetching `ledger.json` itself only on request for the per-name
+view or session replay. This paragraph told a reader the opposite for two rounds — that a backfill was the only way a point could ever appear,
 and that plotting outcomes across runs would take a change to the page nobody
 had made. Step 11 was that change, and the guard on this sentence reads both
 halves off the code rather than trusting the next reader to notice.
@@ -1318,6 +1337,7 @@ Traced through the actual guard shell and its `jq` filters in
 ```bash
 node tools/dashboard_smoke.mjs
 node tools/mobile_layout_smoke.mjs --shots /tmp/shots
+node tools/research_cockpit_smoke.mjs --shots /tmp/shots/research
 ```
 
 Opens the real page in headless Chromium and asserts what it promises. Offline by
@@ -1332,6 +1352,11 @@ past a card without changing the document's scroll width. Charts wrap long
 explanations and redraw at their container width after resizing or font loading.
 This check fails if Chromium is unavailable; CI also verifies that the reported
 funnel overflow is detected against the pre-fix page.
+
+The research-workspace suite exercises real UI interactions: search/filter/sort,
+comparison limits and removal, saved-note persistence and storage failures,
+focus navigation, archive retries and races, return-basis changes, and isolation
+of a failed view. It also captures phone and desktop screens in both themes.
 
 **Three data sources, one page.** It runs 255 checks, and which file each one
 reads is the point:
