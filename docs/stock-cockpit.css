@@ -13,6 +13,7 @@
 .stock-cover .sc-cover__caption { padding: 18px; }
 .stock-index { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; gap: 20px; padding: 10px 4px; scrollbar-width: thin; border-block: 1px solid var(--sc-border); }
 .stock-index > * { flex: 0 0 auto; }
+.stock-index > .sc-eyebrow { flex: 0 0 auto; margin: 0; }
 .stock-index a { min-height: 44px; display: inline-flex; align-items: center; }
 .cockpit { scroll-margin-top: 24px; }
 .cockpit-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 24px; }

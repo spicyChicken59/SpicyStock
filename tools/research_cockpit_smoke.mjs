@@ -265,6 +265,11 @@ try {
         const problems = [], tolerance = 2;
         const sections = ['#session-cockpit', '#signal-workspace', '#stock-desk', '#stock-replay'].map(id => document.querySelector(id));
         if (document.documentElement.scrollWidth > innerWidth + 1) problems.push('page is wider than viewport');
+        const navigation = document.querySelector('#page-index');
+        navigation.scrollLeft = 0;
+        const navigationBox = navigation.getBoundingClientRect();
+        const firstLink = navigation.querySelector('a').getBoundingClientRect();
+        if (firstLink.left < navigationBox.left || firstLink.right > navigationBox.right) problems.push('workspace navigation hides its first link');
         for (const section of sections) {
           const outer = section.getBoundingClientRect();
           if (outer.left < -tolerance || outer.right > innerWidth + tolerance) problems.push(section.id + ' outside viewport');
