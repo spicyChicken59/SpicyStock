@@ -844,8 +844,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 20.55 MB raw
-and **2.43 MB gzipped** after a full year. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 20.24 MB raw
+and **2.24 MB gzipped** after a full year in the normalized history fixture. Actual payload size varies with numeric precision and optional metadata. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
