@@ -46,8 +46,8 @@
      by nothing here, but an inline fill: would take the property away from
      the page stylesheet for good. */
   #scores-chart .bar { fill: var(--sc-tone, var(--sc-chart-context)); }
-  #scores-chart .bar-label { font: 600 11px/1 var(--sc-font-mono); fill: var(--sc-text-2); }
-  #scores-chart .bar-value { font: 600 11px/1 var(--sc-font-mono); fill: var(--sc-text-3); }
+  #scores-chart .bar-label { font: 600 .75rem/1.5 var(--sc-font-mono); fill: var(--sc-text-2); }
+  #scores-chart .bar-value { font: 600 .75rem/1.5 var(--sc-font-mono); fill: var(--sc-text-3); }
 
   /* Column hints for the wide table — the strings it actually holds. */
   #scores-table .col-reason { min-width: 230px; white-space: normal; }
@@ -61,15 +61,13 @@
   #gated-table .col-why .sc-chip { white-space: normal; text-align: left; }
   .runs-now td { font-weight: 600; }
 
-  /* The funnel, the checklist aggregate and the score/outcome plot are drawn
-     at the host's own PIXEL width — the viewBox is the measured width, so one
-     SVG unit is one CSS pixel and the type stays the size it says it is. A
-     fixed viewBox scales the whole drawing instead: the score chart's 11px
-     labels land near 5px on a 390px phone. These redraw on resize. */
-  .s-name { font: 500 12px/1 var(--sc-font-mono); fill: var(--sc-text-2); }
-  .s-value { font: 700 13px/1 var(--sc-font-body); fill: var(--sc-heading); }
-  .s-share { font: 500 11px/1 var(--sc-font-mono); fill: var(--sc-text-3); }
-  .s-drop { font: 500 11px/1 var(--sc-font-mono); fill: var(--sc-text-3); }
+  /* Native-width charts keep readable type on phones. Scoped selectors win
+     over the shared chart defaults; rem sizes also follow enlarged text. */
+  .sc-chart text { font-size: .75rem; }
+  .sc-chart .s-name { font: 500 .75rem/1.5 var(--sc-font-mono); fill: var(--sc-text-2); }
+  .sc-chart .s-value { font: 700 .875rem/1.5 var(--sc-font-body); fill: var(--sc-heading); }
+  .sc-chart .s-share { font: 500 .75rem/1.5 var(--sc-font-mono); fill: var(--sc-text-3); }
+  .sc-chart .s-drop { font: 500 .75rem/1.5 var(--sc-font-mono); fill: var(--sc-text-3); }
   /* Kept and lost are two segments of one bar, and BOTH carry their count in
      the row above or the caption below, so the split never rides on the fill. */
   .seg-kept { fill: var(--sc-chart-emphasis); }
@@ -82,7 +80,6 @@
      the same defect the outcome legend already shipped once. Found by opening
      the page and looking at it, not by a check. */
   #evidence-chart .bar { fill: var(--sc-tone, var(--sc-chart-context)); }
-  #evidence-chart .s-drop { font-size: 10.5px; }
 
   /* Horizon tiles: the value is the mean, the delta underneath carries the
      spread between the best and worst session so a single number never reads
