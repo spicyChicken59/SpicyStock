@@ -549,10 +549,14 @@ def generate(out_dir: pathlib.Path) -> dict:
     data["run"]["fixture"] = True
     label = f"synthetic fixture universe ({len(names)} invented histories)"
     data["run"]["universe"]["label"] = label
+    if "stockbee" in data["run"]:
+        data["run"]["stockbee"]["scope"]["label"] = label
     # Every run entry carries the universe it scanned (src.ledger.add_run), in
     # both files, and every one of these read the temporary file above.
     for entry in data["runs"] + book["runs"]:
         entry["universe"]["label"] = label
+        if "stockbee" in entry:
+            entry["stockbee"]["scope"]["label"] = label
         bench = entry.get("benchmark")
         if isinstance(bench, dict) and isinstance(bench.get("universe"), dict):
             bench["universe"]["label"] = label

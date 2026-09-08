@@ -49,7 +49,8 @@ function pass(name) { checks++; console.log('PASS ' + name); }
 const pageAssets = [
   'stock.css', 'stock-home.css', 'signal-map.js',
   'stock-cockpit.css', 'stock-cockpit.js', 'stock-desk.css', 'stock-desk.js',
-  'stock-replay.css', 'stock-replay.js'
+  'stock-replay.css', 'stock-replay.js',
+  'stockbee-workbench.css', 'stockbee-workbench.js', 'stockbee-plan.css', 'stockbee-plan.js'
 ];
 const indexHTML = await readFile(join(docs, 'index.html'), 'utf8');
 const assetBase = 'https://research.local/';
@@ -461,6 +462,250 @@ try {
   assert.equal(archive.state.archiveRequests, beforeRace + 1, 'A coherent already-loaded archive should be reused.');
   await archive.context.close();
   pass('changing sessions during an archive request cannot display stale candidates or duplicate the download');
+
+  // These explicitly synthetic strategy records exercise the complete scan
+  // queue independently of the fixture's stricter AI-scored candidates.
+  const legacyData = structuredClone(fixture);
+  delete legacyData.run.stockbee;
+  const legacyBee = await open(legacyData);
+  await legacyBee.page.locator('#stockbee-workspace').waitFor({ state: 'visible' });
+  assert.equal(await legacyBee.page.locator('[data-stockbee-select]').count(), 0);
+  assert.equal(await legacyBee.page.locator('.signal-card').count(), fixture.candidates.length);
+  assert.match(await legacyBee.page.locator('#h1').textContent(), /on the shortlist$/);
+  assert.match(await legacyBee.page.locator('#stockbee-search-results').textContent(), /not yet recorded/);
+  assert.match(await legacyBee.page.locator('.sb-pulse').textContent(), /Missing history is not zero activity/);
+  assert.equal(await legacyBee.page.locator('.sb-pulse-day').count(), 0);
+  assert.equal(await legacyBee.page.locator('.sb-chart svg').count(), 0);
+  await legacyBee.context.close();
+  pass('legacy snapshots retain their scored candidates without inventing a Stockbee scan queue or breadth');
+
+  const beeData = structuredClone(fixture);
+  const beeRow = {
+    ticker: 'TESTBEE', date: fixture.run.date, close: 20, high: 20.5, low: 18,
+    prev_close: 19, gain_pct: 100 / 19, volume: 240000, prev_volume: 120000,
+    volume_vs_previous: 2, prior_up_days: 1, trend_intensity: 1.08,
+    prior_bursts_20: 0, extension_sma20_pct: 4.2, prior_day_move_pct: -0.5,
+    prior_day_range_pct: 1.2, base_down4_count: 0, base_range_pct: 3.1,
+    close_position: 0.8, range_expansion: 1.7,
+    series: [
+      { date: '2026-08-28', open: 19, high: 19.4, low: 18.8, close: 19.1, volume: 130000 },
+      { date: '2026-08-31', open: 19.1, high: 19.3, low: 18.9, close: 19, volume: 120000 },
+      { date: fixture.run.date, open: 19, high: 20.5, low: 18, close: 20, volume: 240000 }
+    ]
+  };
+  const quietRow = { ...beeRow, ticker: 'QUIETBEE', gain_pct: 0.5, compression_ratio: 0.65 };
+  beeData.run.stockbee = {
+    version: 1, date: fixture.run.date,
+    scope: { label: 'Synthetic curated universe', requested: 228, measured: 225 },
+    scan: { matched: 7, shown: 2, rows: [beeRow, { ...beeRow, ticker: fixture.candidates[0].ticker }] },
+    anticipation: { matched: 1, shown: 1, rows: [quietRow] },
+    breadth: {
+      ratios: { d5: 2.5, d10: null },
+      days: ['2026-08-26', '2026-08-27', '2026-08-28', '2026-08-31', fixture.run.date]
+        .map(date => ({ date, up4: 5, down4: 2, measured: 225 }))
+    }
+  };
+  assert.equal(beeData.candidates.some(c => c.ticker === beeRow.ticker), false);
+  const bee = await open(beeData), bp = bee.page;
+  await bp.locator('[data-stockbee-select="TESTBEE"]').waitFor();
+  assert.equal(await bp.locator('#fixture-banner').isVisible(), true);
+  assert.equal(await bp.locator('#h1').textContent(), `7 base-scan matches · ${beeData.run.scored} scored reviews`);
+  assert.deepEqual(await bp.locator('#stockbee-queue-breakout [data-stockbee-select]').evaluateAll(nodes => nodes.map(n => n.dataset.stockbeeSelect)), ['TESTBEE', fixture.candidates[0].ticker]);
+  assert.match(await bp.locator('[data-stockbee-select="TESTBEE"]').textContent(), /Not in the scored list/);
+  assert.match(await bp.locator(`[data-stockbee-select="${fixture.candidates[0].ticker}"]`).textContent(), /Also in the scored list/);
+  assert.equal(await bp.locator('[data-stock-compare="TESTBEE"]').count(), 0);
+  assert.match(await bp.locator('#stockbee-panel-breakout .sb-queue-heading').textContent(), /7 matches.*2 setup records/);
+  assert.match(await bp.locator('#stockbee-coverage').textContent(), /Synthetic curated universe.*225 measured \/ 228 requested/);
+  assert.match(await bp.locator('.sb-scope-pill').textContent(), /not the whole market/);
+  assert.deepEqual(await bp.locator('.sb-pulse-stats dd').allTextContents(), ['2.50×', 'Not measured']);
+  assert.equal(await bp.locator('.sb-pulse-day').count(), 5);
+  assert.match(await bp.locator('.sb-pulse-day').last().getAttribute('aria-label'), /5 advances.*2 declines.*225 stocks measured/);
+  pass('the canonical scan includes unscored matches and breadth stays scoped to measured subset coverage');
+
+  await bp.locator('#stockbee-tab-breakout').focus();
+  await bp.keyboard.press('ArrowRight');
+  assert.equal(await bp.locator('#stockbee-tab-anticipation').getAttribute('aria-selected'), 'true');
+  assert.equal(await bp.evaluate(() => document.activeElement.id), 'stockbee-tab-anticipation');
+  assert.equal(await bp.locator('#stockbee-panel-breakout').isVisible(), false);
+  assert.match(await bp.locator('#stockbee-rules-anticipation').textContent(), /App proxy/);
+  await bp.locator('#stockbee-search').fill('quietbee');
+  assert.equal(await bp.locator('#stockbee-selected-title').textContent(), 'QUIETBEE');
+  await bp.locator('[data-stockbee-select="QUIETBEE"]').click();
+  assert.equal(await bp.evaluate(() => document.activeElement.id), 'stockbee-selected-title');
+  await bp.locator('#stockbee-search').fill('missing-setup');
+  assert.equal(await bp.locator('#stockbee-panel-anticipation [data-stockbee-select]').count(), 0);
+  assert.equal(await bp.locator('#stockbee-plan-setup').count(), 0);
+  await bp.locator('#stockbee-panel-anticipation').getByRole('button', { name: 'Clear search', exact: true }).click();
+  assert.equal(await bp.locator('#stockbee-search').inputValue(), '');
+  assert.equal(await bp.evaluate(() => document.activeElement.id), 'stockbee-search');
+  await bp.locator('#stockbee-tab-breakout').click();
+  await bp.locator('[data-stockbee-select="TESTBEE"]').click();
+  assert.equal(await bp.locator('[data-stockbee-select="TESTBEE"]').getAttribute('aria-pressed'), 'true');
+  pass('anticipation stays a separate proxy list with keyboard tabs, ticker search, empty results and focused selection');
+
+  assert.match(await bp.locator('.sb-chart svg').getAttribute('aria-label'), /TESTBEE: 3 recorded daily candles.*Last close \$20\.00/);
+  assert.equal(await bp.locator('.sb-candle-body').count(), 3);
+  assert.equal(await bp.locator('.sb-candle-volume').count(), 3);
+  await bp.locator('.sb-candle-data > summary').click();
+  assert.deepEqual(await bp.locator('.sb-bars-table tbody tr').first().locator('th,td').allTextContents(),
+    [fixture.run.date, '$19.00', '$20.50', '$18.00', '$20.00', '240,000']);
+  await bp.locator('.sb-candle-data > summary').click();
+  await bp.locator('#stockbee-lynch-questions > summary').click();
+  assert.equal(await bp.locator('.sb-lynch-item:visible').count(), 6);
+  assert.deepEqual(await bp.locator('.sb-lynch-letter').allTextContents(), ['2', 'L', 'Y', 'N', 'C', 'H']);
+  assert.match(await bp.locator('.sb-lynch').textContent(), /do not produce a Stockbee pass score/);
+  assert.match(await bp.locator('.sb-lynch .sb-proxy').first().textContent(), /1 consecutive prior up days/);
+  await bp.locator('#stockbee-lynch-questions > summary').click();
+  pass('the inspector preserves exact recorded candles and six qualitative 2LYNCH questions without a fabricated score');
+
+  await bp.locator('#bee-plan-entry').fill('99');
+  await bp.locator('#bee-plan-stop').fill('90');
+  await bp.locator('#stockbee-plan-setup').click();
+  assert.equal(await bp.locator('#bee-plan-ticker').inputValue(), 'TESTBEE');
+  assert.equal(await bp.locator('#bee-plan-entry').inputValue(), '');
+  assert.equal(await bp.locator('#bee-plan-stop').inputValue(), '');
+  assert.equal(await bp.locator('#bee-plan-capital').inputValue(), '');
+  assert.equal(await bp.locator('#bee-plan-riskPercent').inputValue(), '');
+  assert.match(await bp.locator('#bee-plan-reference').textContent(), /Historical reference only/);
+  assert.ok((await bp.locator('#bee-plan-reference').textContent()).includes(fixture.run.date));
+  await bp.locator('#bee-plan-use-reference').click();
+  assert.equal(await bp.locator('#bee-plan-entry').inputValue(), '20');
+  assert.equal(await bp.locator('#bee-plan-stop').inputValue(), '18');
+  pass('setup handoff fills only the ticker until the user explicitly accepts the dated price reference');
+
+  await bp.locator('#bee-plan-capital').fill('10000');
+  await bp.locator('#bee-plan-riskPercent').fill('1');
+  assert.equal(await bp.locator('#bee-plan-shares').textContent(), '50 shares');
+  const planMetric = label => bp.locator('.bee-plan-metrics > div').filter({ has: bp.locator('dt', { hasText: new RegExp('^' + label + '$') }) }).locator('dd');
+  assert.equal(await planMetric('Planned loss at stop').textContent(), '$100.00');
+  assert.equal(await planMetric('Position cost').textContent(), '$1,000.00');
+  await bp.locator('#bee-plan-cashCap').fill('600');
+  assert.equal(await bp.locator('#bee-plan-shares').textContent(), '30 shares');
+  assert.equal(await planMetric('Planned loss at stop').textContent(), '$60.00');
+  assert.equal(await planMetric('Position cost').textContent(), '$600.00');
+  assert.match(await bp.locator('.bee-plan-result-caption').textContent(), /cash cap/);
+  pass('position sizing respects the entered risk budget, rounds to whole shares and applies the cash cap');
+
+  await bp.locator('#bee-plan-stop').fill('20');
+  assert.equal(await bp.locator('#bee-plan-shares').count(), 0);
+  assert.match(await bp.locator('#bee-plan-result').textContent(), /stop must be below/);
+  await bp.locator('#bee-plan-copy').click();
+  assert.equal(await bp.locator('#bee-panel-plan').isVisible(), true);
+  await bp.locator('#bee-plan-stop').fill('18');
+  await bp.locator('#bee-plan-cashCap').fill('10001');
+  assert.match(await bp.locator('#bee-plan-result').textContent(), /cash cap must be between zero and your capital/);
+  await bp.locator('#bee-plan-cashCap').fill('19');
+  assert.equal(await bp.locator('#bee-plan-shares').textContent(), '0 shares');
+  await bp.locator('#bee-plan-copy').click();
+  assert.match(await bp.locator('#bee-plan-notice').textContent(), /at least one whole share/);
+  assert.equal(await bp.locator('.bee-journal-card').count(), 0);
+  await bp.locator('#bee-plan-cashCap').fill('');
+  await bp.locator('#bee-plan-riskPercent').fill('0');
+  assert.equal(await bp.locator('#bee-plan-shares').textContent(), '0 shares');
+  await bp.locator('#bee-plan-riskPercent').fill('1');
+  pass('invalid stops, excessive cash caps and zero-share plans cannot be copied into a journal record');
+
+  const journalNote = 'Synthetic lesson: <img src=x onerror=alert(1)> stays plain text.';
+  async function writeOpenTrade(target, symbol) {
+    await target.locator('#bee-journal-new').click();
+    await target.locator('#bee-journal-status').selectOption('open');
+    for (const [field, value] of Object.entries({ ticker: symbol, date: '2026-08-21', entry: '20', stop: '18', shares: '50' })) {
+      await target.locator('#bee-journal-' + field).fill(value);
+    }
+    await target.locator('#bee-journal-save').click();
+  }
+  await bp.locator('#bee-plan-copy').click();
+  assert.equal(await bp.locator('#bee-journal-status').inputValue(), 'paper');
+  assert.equal(await bp.locator('#bee-journal-date').inputValue(), '');
+  assert.equal(await bp.locator('.bee-journal-card').count(), 0, 'Copying a plan creates a draft only.');
+  await bp.locator('#bee-journal-date').fill('2026-08-21');
+  await bp.locator('#bee-journal-note').fill(journalNote);
+  await bp.locator('#bee-journal-marketNote').fill('Synthetic subset only; no whole-market verdict.');
+  await bp.locator('#bee-journal-save').click();
+  const paperCard = bp.locator('.bee-journal-card').filter({ has: bp.locator('h4', { hasText: /^TESTBEE$/ }) });
+  assert.match(await paperCard.textContent(), /Paper plan.*no holding clock or realized result/);
+  assert.equal(await paperCard.locator('.bee-journal-outcome').count(), 0);
+  assert.ok((await paperCard.textContent()).includes(journalNote));
+  assert.equal(await bp.locator('#bee-journal-list img').count(), 0);
+  await writeOpenTrade(bp, 'OPENBEE');
+  let tradedCard = bp.locator('.bee-journal-card').filter({ has: bp.locator('h4', { hasText: /^OPENBEE$/ }) });
+  assert.match(await tradedCard.locator('.bee-journal-clock').textContent(), /recorded sessions since entry/);
+  assert.equal(await tradedCard.locator('.bee-journal-outcome').count(), 0);
+  await tradedCard.getByRole('button', { name: 'Edit OPENBEE open trade', exact: true }).click();
+  await bp.locator('#bee-journal-status').selectOption('closed');
+  await bp.locator('#bee-journal-exit').fill('24');
+  await bp.locator('#bee-journal-exitDate').fill(fixture.run.date);
+  await bp.locator('#bee-journal-save').click();
+  assert.match(await tradedCard.locator('.bee-journal-outcome').textContent(), /P\/L \$200\.00.*\+2\.00R before fees/);
+  await writeOpenTrade(bp, 'HOLDBEE');
+  assert.equal(await bp.locator('#bee-journal-summary').textContent(), '1 paper plans · 1 open trades · 1 closed trades');
+  await bp.reload({ waitUntil: 'load' });
+  await bp.locator('#bee-tab-journal').click();
+  assert.equal(await bp.locator('.bee-journal-card').count(), 3);
+  assert.ok((await paperCard.textContent()).includes(journalNote));
+  assert.match(await tradedCard.locator('.bee-journal-outcome').textContent(), /\+2\.00R/);
+  const storedJournal = await bp.evaluate(() => JSON.parse(localStorage.getItem('spicystock.trade-journal.v1')));
+  assert.deepEqual(storedJournal.records.map(record => record.status).sort(), ['closed', 'open', 'paper']);
+  assert.equal(storedJournal.records.find(record => record.ticker === 'TESTBEE').exit, null);
+  assert.equal(storedJournal.records.find(record => record.ticker === 'OPENBEE').stop, 18);
+  pass('paper, open and closed records remain distinct; exact R uses the initial stop and plain-text notes survive reload');
+
+  for (const mode of ['corrupt', 'blocked']) {
+    const temporary = await open(beeData, mode === 'corrupt' ? () => {
+      localStorage.setItem('spicystock.trade-journal.v1', '{"version":1,"records":"bad"}');
+    } : () => {
+      const get = Storage.prototype.getItem, set = Storage.prototype.setItem;
+      Storage.prototype.getItem = function (key) { if (key === 'spicystock.trade-journal.v1') throw new DOMException('Blocked', 'SecurityError'); return get.call(this, key); };
+      Storage.prototype.setItem = function (key, value) { if (key === 'spicystock.trade-journal.v1') throw new DOMException('Blocked', 'SecurityError'); return set.call(this, key, value); };
+    });
+    await temporary.page.locator('#bee-tab-journal').click();
+    await writeOpenTrade(temporary.page, 'MEMORYBEE');
+    assert.equal(await temporary.page.locator('.bee-journal-card').count(), 1);
+    assert.match(await temporary.page.locator('#bee-journal-storage').textContent(), /^Only this visit/);
+    assert.match(await temporary.page.locator('#bee-plan-notice').textContent(), /for this visit only/);
+    if (mode === 'corrupt') assert.equal(await temporary.page.evaluate(() => localStorage.getItem('spicystock.trade-journal.v1')), '{"version":1,"records":"bad"}');
+    assert.equal(await temporary.page.locator('#stockbee-search').isEnabled(), true);
+    await temporary.context.close();
+  }
+  pass('unreadable or blocked journal storage preserves the stored copy and keeps a clearly temporary journal usable');
+
+  async function assertBeeGeometry() {
+    const problems = await bp.evaluate(() => {
+      const issues = [];
+      if (document.documentElement.scrollWidth > innerWidth + 1) issues.push('page overflow');
+      for (const section of document.querySelectorAll('#stockbee-workspace, #stockbee-plan')) {
+        const outer = section.getBoundingClientRect();
+        if (outer.left < -2 || outer.right > innerWidth + 2) issues.push(section.id + ' outside viewport');
+        for (const control of section.querySelectorAll('button,input,select,textarea,summary,svg')) {
+          if (!control.getClientRects().length || control.closest('[hidden]')) continue;
+          const box = control.getBoundingClientRect();
+          if (box.left < outer.left - 2 || box.right > outer.right + 2) issues.push((control.id || control.tagName) + ' outside card');
+          if (control.tagName.toLowerCase() !== 'svg' && box.height < 43.5) issues.push((control.id || control.tagName) + ' below 44px touch height');
+        }
+      }
+      return issues;
+    });
+    assert.deepEqual(problems, [], 'Stockbee workbench and planner controls must fit the phone.');
+  }
+  for (const width of [320, 390]) {
+    await bp.setViewportSize({ width, height: 900 });
+    for (const theme of ['light', 'dark']) {
+      await bp.locator(`.sc-theme-toggle [data-theme="${theme}"]`).click();
+      await bp.locator('#bee-tab-plan').click();
+      for (const [field, value] of Object.entries({ ticker: 'TESTBEE', capital: '10000', riskPercent: '1', entry: '20', stop: '18', cashCap: '600' })) {
+        await bp.locator('#bee-plan-' + field).fill(value);
+      }
+      await assertBeeGeometry();
+      await screenshot(bp, '#stockbee-title', `stockbee-workbench-${width}-${theme}`);
+      await screenshot(bp, '#stockbee-selected-title', `stockbee-inspector-${width}-${theme}`);
+      await screenshot(bp, '#bee-plan-ticker', `stockbee-planner-${width}-${theme}`);
+      await bp.locator('#bee-tab-journal').click();
+      await assertBeeGeometry();
+      await screenshot(bp, '#bee-journal-list', `stockbee-journal-${width}-${theme}`);
+    }
+  }
+  await bee.context.close();
+  pass('workbench, inspector, risk planner and journal fit 320px and 390px phones in both themes with usable touch controls');
   assert.deepEqual(errors, [], 'No browser exceptions during research interactions.');
   pass('research interactions complete without application exceptions');
 } finally {

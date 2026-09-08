@@ -1,8 +1,8 @@
 # 4% Momentum Burst — Fully Automated Scanner
 
 Scans a checked-in universe of 228 US common stocks each trading day, applies the
-Stockbee/Qullamaggie 4% Momentum Burst strategy with the 2LYNCH quality
-checklist, has Claude score the survivors (numbers, the checklist detail, what the
+Stockbee-inspired 4% Momentum Burst process with SpicyStock's quantitative
+2LYNCH approximations, has Claude score the survivors (numbers, the checklist detail, what the
 record already knows about the name, and a chart image), and
 emails a ranked top-5 shortlist. **Zero manual steps** — no DeepVue paste,
 no Google Sheet, no n8n.
@@ -541,7 +541,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1439 tests, no network or API keys needed
+pytest tests/                   # 1466 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -572,6 +572,9 @@ whatever `docs/data.json` holds, which here is the last run this branch
 committed back. It refuses to present the fixture — which is what a repo that
 has never published still holds, and what you would see there.
 
+The offline Tests workflow runs once for pull requests, on pushes to `main`,
+and on explicit dispatch. Feature-branch pushes do not duplicate the PR run.
+
 ## The dashboard
 
 `docs/index.html` is a static page served by GitHub Pages from `docs/`. It fetches
@@ -590,7 +593,43 @@ plot, not a geographic or sector map. Empty runs stay empty. The existing comple
 ranking, shortlist, evidence and history remain below it; selecting a point changes
 only the presentation and makes no requests or stored changes.
 
-The research workspace adds five connected views without changing the scanner:
+The page starts with a Stockbee trading desk. Six connected tools carry the
+workflow from preparation to recorded trade review:
+
+| Tool | Behavior and scope |
+| --- | --- |
+| Published 4% scan | Close / previous close ≥1.04, volume > previous volume, and volume ≥100,000. This queue is measured before the stricter scoring filters, so a matching name can appear without an AI score. At most 40 records are saved; the full match count remains visible. |
+| Anticipation queue | A separate SpicyStock proxy: price ≥$3, prior three sessions each at least 100k shares, MA7/MA65 ≥1.05, current move within ±1%, and latest-seven average normalized range / preceding-60 average ≤0.75. Requires 67 contiguous sessions and excludes current 4% scan matches. At most 25 records are saved. |
+| Universe pulse | Ten dated observations of qualifying 4% advances and declines within the scanned basket. Both directions use the same volume rules. Five- and ten-session ratios divide summed advances by summed declines; insufficient coverage or a zero denominator produces no ratio. This is explicitly a curated subset, not Stockbee's whole-market Market Monitor. |
+| Setup inspector | Saved daily candles and volume, exact bar values, and the original qualitative 2LYNCH questions. Measurements support chart review; they do not claim to reproduce a discretionary six-point Stockbee score. |
+| Risk planner | User-entered capital, risk percentage, entry, initial stop and optional cash cap determine whole shares. It caps both planned risk and cash commitment, shows 1R/2R distance landmarks, and copies a plan into an unsaved paper-journal draft. Dated chart prices require an explicit action to use them. |
+| Trade journal | Separate paper plans, open trades and closed trades, with market context, setup notes, actual-fill P/L and R. Review prompts count recorded evening sessions, excluding dry runs; they are not an exchange calendar or automatic exit instructions. Export, edit and delete controls are included. |
+
+Sources: Stockbee's [2015 scan formula](https://stockbee.blogspot.com/2015/11/how-to-use-4-breakout-scan-to-make-money.html),
+[2020 2LYNCH explanation](https://stockbee.blogspot.com/2020/12/how-to-make-money-using-setups-detailed.html),
+[anticipation process](https://stockbee.blogspot.com/2017/04/how-to-find-bullish-breakout.html),
+[Market Monitor universe](https://stockbee.blogspot.com/2014/08/how-i-get-market-monitor-numbers.html),
+[risk calculation](https://stockbee.blogspot.com/2014/08/how-i-control-my-risk.html), and
+[3–5-day process](https://stockbee.blogspot.com/2017/07/my-process-loop-to-trade-4-bo-and-bo.html).
+The published setup review and the app's existing stricter scoring overlay are
+labeled separately. Production filter thresholds, universe, scoring-call cap,
+schedule and email selection are unchanged.
+
+`src/stockbee.py` computes optional versioned `run.stockbee` metadata from the
+daily frames already fetched, with no extra data-service calls. Invalid or missing
+bars break lookbacks rather than producing multi-session returns labeled as daily
+moves. Each saved current setup has at most 30 candles; archived ledger rows retain
+the measurements without the candle series, and run-summary lists omit this block.
+Older snapshots show measurements as not yet recorded; the app never reconstructs
+the full scan from the scored shortlist or fills missing breadth with zero.
+
+The new modules are `stockbee-workbench.js` and `stockbee-plan.js`, with scoped
+styles. Trade records use `spicystock.trade-journal.v1` in this browser, capped at
+100 records with 4,000 characters per note field. They do not sync or send orders.
+Blocked, full, corrupt or conflicting storage reports the problem and preserves
+an exportable in-memory copy without silently replacing stored records.
+
+The existing research workspace remains available below the strategy desk:
 
 | View | What it does |
 | --- | --- |
@@ -612,8 +651,9 @@ when those files change; the research smoke suite verifies each hash.
 **An evening run that scans writes that file at the end** (step 9,
 `src/ledger.py`) — one that re-presents an already-published session leaves it
 as the run that published it wrote it — together with `docs/ledger.json` and
-the chart PNGs — which are **not** committed (`.gitignore` blocks `/docs/charts/`), so the published
-page has no images and every chart slot explains that instead. Open the page
+the chart PNGs — which are **not** committed (`.gitignore` blocks `/docs/charts/`), so the scored-report
+PNG slots explain their absence. The setup inspector renders its separate bounded
+OHLCV series directly in the browser. Open the page
 from a checkout that has just run the pipeline and the same slots fill in. A
 chart is ~57 KB and a night renders up to 25 of them: committing them is about
 360 MB a year of history that does not delta-compress and cannot be taken back
@@ -748,8 +788,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 15.51 MB raw
-and **1.25 MB gzipped** after a full year. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 20.55 MB raw
+and **2.43 MB gzipped** after a full year. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -1518,22 +1558,22 @@ test fixtures. It dispatches no scan and calls no market or email service.
   to cut requests — the obvious move when the universe widens — buys almost
   nothing at this window.
 - Claude: ≤25 scoring calls/run with one chart image each — **about $0.17 a
-  run, so roughly $42 a year** at 252 sessions, and only on the evening run.
+  run, so roughly $43 a year** at 252 sessions, and only on the evening run.
   This said "a few cents/day", which is out by about 5x. Measured rather than
   guessed: a real `render_chart()` PNG is 869x622, which is 721 image tokens by
-  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~3,120
-  tokens of system prompt and the metrics block ~460, so ~4,300 input tokens
+  Anthropic's documented (w x h) / 750 rule; `knowledge/strategy.md` is ~3,280
+  tokens of system prompt and the metrics block ~460, so ~4,460 input tokens
   and ~120 out per call, at claude-sonnet-4-6's $3/$15 per Mtok. The text
   halves are chars/4 estimates — `count_tokens` needs a network call this
   sandbox cannot make — so treat the figure as ±30%, which does not rescue "a
   few cents".
 
-  **The system prompt is 73% of every request and is byte-identical on all 25
+  **The system prompt is 74% of every request and is byte-identical on all 25
   calls**, so it is sent with `cache_control` and read from cache after the
   first. A cache write costs 1.25x and a read 0.1x — so the first call pays
   0.25x more than it would have and every call after saves 0.9x, which makes
-  break-even the second call (1.28 calls) and a full night 54% cheaper: the
-  $0.37 an uncached night would cost against the $0.17 above. (This said 1.4
+  break-even the second call (1.28 calls) and a full night 55% cheaper: the
+  $0.38 an uncached night would cost against the $0.17 above. (This said 1.4
   calls, 43% and $0.13: 1.4 is 1.25 over 0.9, which charges the whole write
   against the reads as if the first call were otherwise free, and the two
   money figures were rounded from different token counts. A test now does the

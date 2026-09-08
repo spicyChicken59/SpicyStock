@@ -26,8 +26,8 @@
     }
     var note = document.getElementById('cockpit-focus-note');
     if (note) note.textContent = focused
-      ? 'Focus view: signal lens, your desk, and replay. Open any report link to restore the full report.'
-      : 'Keep the full report open, or focus on exploring and saving candidates.';
+      ? 'Focus view: setups, risk planning, your journal, and research. Open any report link to restore the full report.'
+      : 'Keep the full report open, or focus on setup research and trade planning.';
   }
   // Reveal report targets before their own handlers move keyboard focus.
   document.addEventListener('click', function (event) {
@@ -55,7 +55,7 @@
     var unknown = candidates.length - claude - fallback;
     var heading = el('div', 'cockpit-heading');
     var intro = el('div');
-    intro.append(el('p', 'sc-eyebrow sc-eyebrow--muted', 'SESSION / START HERE'));
+    intro.append(el('p', 'sc-eyebrow sc-eyebrow--muted', 'SCORING PIPELINE / SECONDARY REVIEW'));
     var title = el('h2', '', run.fixture ? 'Explore this sample session.' : degraded ? 'Start with the run notes.' : candidates.length ? 'Build your view of the session.' : 'No scored candidates. A clear next step.');
     title.id = 'cockpit-title'; intro.append(title);
     var stamp = el('span', 'cockpit-session', 'RECORDED / ' + (run.date || 'DATE NOT RECORDED'));
@@ -99,7 +99,9 @@
     button.addEventListener('click', function () { focused = !focused; applyFocus(); });
     var note = el('p', 'sc-note'); note.id = 'cockpit-focus-note'; note.setAttribute('role', 'status');
     footer.append(button, note);
-    host.replaceChildren(heading, grid, trail, footer); host.hidden = false; applyFocus();
+    var more = el('details', 'cockpit-details');
+    more.append(el('summary', '', count(candidates.length) + ' scored reviews · sources and research tools'), grid);
+    host.replaceChildren(heading, more, trail, footer); host.hidden = false; applyFocus();
   }
   window.SCStockCockpit = { render: render };
 }());

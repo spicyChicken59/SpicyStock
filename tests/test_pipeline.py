@@ -1142,6 +1142,12 @@ def test_the_published_run_satisfies_every_invariant_it_declares(
     assert data["run"]["date"] == scanner.current_session().isoformat()
     assert len(data["candidates"]) == data["run"]["scored"] == len(results)
     assert [c["ticker"] for c in data["candidates"]] == [r["ticker"] for r in results]
+    # Exercise the actual scanner's title-case frames through evening publish,
+    # not a hand-built lowercase frame passed directly to the sidecar.
+    research = data["run"]["stockbee"]
+    assert research["scope"]["requested"] == research["scope"]["measured"] == 3
+    assert research["date"] == data["run"]["date"]
+    assert "BURST" in {row["ticker"] for row in research["scan"]["rows"]}
 
 
 def test_top_n_cuts_the_email_and_nothing_else(
@@ -4504,7 +4510,7 @@ def test_the_morning_mail_names_what_stopped_printing_the_way_the_page_does(
     assert f"Duplicate bars: 2 dropped — {emailer.DUPLICATE_BARS_NOTE}." in text, text
 
 
-def test_the_canonical_fixtures_run_block_carries_every_key_the_pipeline_writes(
+def test_the_current_and_legacy_fixtures_cover_every_key_the_pipeline_writes(
     monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
 ):
     """DERIVED, not remembered. tests/fixtures/data.json is hand-authored and
@@ -4533,7 +4539,17 @@ def test_the_canonical_fixtures_run_block_carries_every_key_the_pipeline_writes(
     fixture = json.loads(
         (Path(__file__).resolve().parent / "fixtures" / "data.json").read_text())["run"]
 
-    assert written - set(fixture) == set(), (
+    # Keep the canonical sample as coverage for old snapshots without optional
+    # strategy measurements. The generated history is the current-format twin;
+    # require its complete, dated sidecar instead of inventing a scan from the
+    # hand-authored scored list. All other published keys remain required here.
+    from src import stockbee
+    current = json.loads(
+        (Path(__file__).resolve().parent / "fixtures" / "history" / "data.json").read_text())["run"]
+    assert "stockbee" not in fixture
+    assert "stockbee" in written and "stockbee" in current
+    assert stockbee.problem(current["stockbee"], session=current["date"]) is None
+    assert written - set(fixture) - {"stockbee"} == set(), (
         "the fixture's run block is missing a key the pipeline writes; add it to "
         "tools/make_fixture.py and regenerate", sorted(written - set(fixture)))
 
