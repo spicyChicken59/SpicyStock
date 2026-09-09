@@ -6,6 +6,11 @@ name: Probe Nasdaq directory reachability
 # prints what each got. It is deleted once the answer is read.
 on:
   workflow_dispatch:
+  # A workflow that has never run and is not on main cannot be dispatched by
+  # name (the API answers 404), so the push of this file is what runs it.
+  push:
+    branches: [claude/spicy-stock-run-failure-jvx7z0]
+    paths: [.github/workflows/probe-nasdaq.yml]
 permissions:
   contents: read
 jobs:
