@@ -68,7 +68,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   scan:
-    runs-on: ubuntu-latest
+    # Nasdaq directory reads repeatedly time out on the Linux runner network.
+    # Use the standard macOS runner; all scan limits and provider checks stay.
+    runs-on: macos-15
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
@@ -141,6 +143,7 @@ jobs:
         id: pipeline
         if: steps.guard.outputs.go == 'true'
         env:
+          MPLBACKEND: Agg
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM: ${{ secrets.RESEND_FROM }}
