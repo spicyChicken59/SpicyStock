@@ -39,7 +39,7 @@ def _check_directory_recovers_after_transient_failures(monkeypatch, failure):
     assert len(universe.fetch_directory()) == 500
     assert len(calls) == 3 and pauses == [1, 3]
     assert all(kwargs["timeout"] == (5, 45) for _, kwargs in calls)
-    assert all(set(kwargs["headers"]) == {"User-Agent", "Accept"} for _, kwargs in calls)
+    assert all(kwargs["headers"] == universe.DIRECTORY_HEADERS for _, kwargs in calls)
 
 
 def _check_directory_failure_is_bounded_and_never_weakens_classification(monkeypatch, failure):
@@ -188,6 +188,27 @@ def test_rotation_makes_room_for_breakouts_and_recent_setups_and_is_bounded():
     assert reasons["rotating discovery"] == 50 and reasons["4% move"] == 1
     assert universe.rotate(dict(reversed(list(metrics.items()))), date(2026, 9, 8), ["S0"])[0] == chosen
     assert universe.rotate(metrics, date(2026, 9, 9), ["S0"])[0] != chosen
+
+
+def test_the_directory_request_presents_as_a_browser_because_nothing_else_is_answered():
+    """api.nasdaq.com holds a non-browser User-Agent open until the read times
+    out, from every GitHub-hosted runner tried: the pipeline's former
+    "SpicyStock/1.0 (...)", python-requests' default and the honest
+    "Mozilla/5.0 (compatible; ...)" form each hung for the full timeout, while
+    a Chrome-style string from the same runners returned the whole directory in
+    about a second (probe run 34414747241, 9 Sep 2026, one header set per fresh
+    runner, with requests and with curl). This pins the SHAPE that answered and
+    not the constant's name: putting any of the three strings that hung back
+    turns it red, and so does dropping the Accept a browser sends. The request
+    itself is held to the constant by the transport-recovery check above.
+    """
+    headers = universe.DIRECTORY_HEADERS
+    assert set(headers) == {"User-Agent", "Accept"}
+    agent = headers["User-Agent"]
+    assert agent.startswith("Mozilla/5.0 (")
+    assert all(token in agent for token in ("AppleWebKit/", "Chrome/", "Safari/"))
+    assert not any(hung in agent for hung in ("compatible", "SpicyStock", "python-requests", "curl"))
+    assert headers["Accept"] == "application/json, text/plain, */*"
 
 
 def test_directory_recovery_and_failure_preserve_the_classified_scope(monkeypatch, tmp_path):

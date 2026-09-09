@@ -1,122 +1,37 @@
 name: Probe Nasdaq directory reachability
-# TEMPORARY, dispatch-only. Every scheduled evening run since the adaptive
-# universe landed has timed out reading api.nasdaq.com from a GitHub-hosted
-# runner (Linux and macOS alike) while the same URL answers elsewhere. This
-# asks the question from a real runner, one header set per fresh runner, and
-# prints what each got. It is deleted once the answer is read.
+# TEMPORARY, branch-scoped. The matrix version of this file (run 34414747241)
+# settled that api.nasdaq.com answers a browser's User-Agent from a GitHub-
+# hosted runner and nothing else. This version runs the pipeline's own
+# fetch_directory(), as changed on this branch, from a real runner -- the
+# boundary the offline suite cannot cross -- and is deleted once read.
 on:
   workflow_dispatch:
-  # A workflow that has never run and is not on main cannot be dispatched by
-  # name (the API answers 404), so the push of this file is what runs it.
   push:
     branches: [claude/spicy-stock-run-failure-jvx7z0]
-    paths: [.github/workflows/probe-nasdaq.yml]
+    paths: [.github/workflows/probe-nasdaq.yml, src/universe.py]
 permissions:
   contents: read
 jobs:
-  probe:
+  fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: current
-            url: https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true
-            headers: '{"User-Agent": "SpicyStock/1.0 (https://github.com/spicyChicken59/SpicyStock)", "Accept": "application/json"}'
-          - name: current-small
-            url: https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=25
-            headers: '{"User-Agent": "SpicyStock/1.0 (https://github.com/spicyChicken59/SpicyStock)", "Accept": "application/json"}'
-          - name: compatible
-            url: https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true
-            headers: '{"User-Agent": "Mozilla/5.0 (compatible; SpicyStock/1.0; +https://github.com/spicyChicken59/SpicyStock)", "Accept": "application/json"}'
-          - name: browser
-            url: https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true
-            headers: '{"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36", "Accept": "application/json, text/plain, */*"}'
-          - name: browser-full
-            url: https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true
-            headers: '{"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36", "Accept": "application/json, text/plain, */*", "Accept-Language": "en-US,en;q=0.9", "Origin": "https://www.nasdaq.com", "Referer": "https://www.nasdaq.com/"}'
-          - name: python-default
-            url: https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true
-            headers: '{"Accept": "application/json"}'
-          - name: nasdaqtrader
-            url: https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt
-            headers: '{"User-Agent": "SpicyStock/1.0 (https://github.com/spicyChicken59/SpicyStock)", "Accept": "text/plain"}'
+    timeout-minutes: 8
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install requests
-      - name: Probe
-        env:
-          PROBE_NAME: ${{ matrix.name }}
-          PROBE_URL: ${{ matrix.url }}
-          PROBE_HEADERS: ${{ matrix.headers }}
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: The pipeline's own fetch_directory(), from this runner
         run: |
-          python - <<'EOF' | tee "result-${PROBE_NAME}.txt"
-          import json, os, subprocess, time
-          import requests
-
-          name = os.environ["PROBE_NAME"]
-          url = os.environ["PROBE_URL"]
-          headers = json.loads(os.environ.get("PROBE_HEADERS") or "{}")
-          print(f"[{name}] url={url}")
-          print(f"[{name}] headers={headers} (requests default UA: {requests.utils.default_user_agent()})")
-
-          # 1. The pipeline's own client, the pipeline's own timeouts.
+          python - <<'EOF'
+          import logging, time
+          logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+          from src import universe
+          print("headers:", universe.DIRECTORY_HEADERS)
           t0 = time.monotonic()
-          try:
-              r = requests.get(url, headers=headers, timeout=(5, 30))
-              dt = time.monotonic() - t0
-              rows = None
-              if "json" in r.headers.get("content-type", ""):
-                  try:
-                      body = r.json()
-                      data = body.get("data") if isinstance(body, dict) else None
-                      found = data.get("rows") if isinstance(data, dict) else None
-                      rows = len(found) if isinstance(found, list) else f"no rows; keys={list(body)[:6] if isinstance(body, dict) else type(body).__name__}"
-                  except Exception as exc:
-                      rows = f"unparseable ({type(exc).__name__})"
-              print(f"[{name}] python-requests: HTTP {r.status_code} in {dt:.1f}s, {len(r.content)} bytes, "
-                    f"content-type={r.headers.get('content-type')!r}, server={r.headers.get('server')!r}, rows={rows}")
-              if r.status_code != 200 or rows is None:
-                  print(f"[{name}] body head: {r.text[:240]!r}")
-          except Exception as exc:
-              dt = time.monotonic() - t0
-              print(f"[{name}] python-requests: {type(exc).__name__} after {dt:.1f}s: {str(exc)[:200]}")
-
-          # 2. curl with the same headers: a different TLS fingerprint on the same wire.
-          args = ["curl", "-sS", "--compressed", "-o", "/dev/null", "-m", "30",
-                  "-w", "HTTP %{http_code} connect=%{time_connect}s tls=%{time_appconnect}s "
-                        "first-byte=%{time_starttransfer}s total=%{time_total}s bytes=%{size_download}"]
-          for key, value in headers.items():
-              args += ["-H", f"{key}: {value}"]
-          if "User-Agent" not in headers:
-              print(f"[{name}] curl sends its own default User-Agent here")
-          done = subprocess.run(args + [url], capture_output=True, text=True)
-          print(f"[{name}] curl: exit {done.returncode} {done.stdout.strip()} {done.stderr.strip()[:160]}")
-
-          # 3. Which egress this runner had, so the matrix rows can be told apart.
-          try:
-              print(f"[{name}] runner egress ip: {requests.get('https://api.ipify.org', timeout=10).text.strip()}")
-          except Exception as exc:
-              print(f"[{name}] runner egress ip: unavailable ({type(exc).__name__})")
+          rows = universe.fetch_directory()
+          print(f"fetch_directory() returned {len(rows)} listings in {time.monotonic() - t0:.1f}s")
+          pool, reasons = universe.directory_pool(rows, [])
+          print(f"directory_pool(): {len(pool)} eligible; exclusions {reasons}")
           EOF
-      - uses: actions/upload-artifact@v4
-        with:
-          name: probe-${{ matrix.name }}
-          path: result-*.txt
-          retention-days: 1
-  summarize:
-    needs: probe
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: probe-*
-          merge-multiple: true
-      - name: Every variant's answer
-        run: |
-          for f in result-*.txt; do echo "== $f"; cat "$f"; echo; done
