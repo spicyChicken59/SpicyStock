@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   var host, data, activeTab = 'today', queueTab = 'breakout', query = '', selected = null;
+  var tracker, trackerMount, homePanel, returnFocus, allSetups = false, mapView = 'map', activeChart = null;
   var panel, statusPanel, notice, profileOpen = false, manualOpen = false, importOpen = false;
   var draft = { symbol: '', entry: '', stop: '', note: '' }, fillDraft = {}, editingPlan = null;
   var preview = null, importPreview = null, broker = { state: 'unconfigured', connected: false };
@@ -39,88 +40,192 @@
   function calc() { var p = profile(); return engine().calculate({ capital: p.capital, risk_percent: p.risk_percent, cash_cap: p.cash_cap, entry: draft.entry, stop: draft.stop }); }
   function mutate(result, success) { if (!result || !result.ok) { announce(result && result.error || 'This change could not be saved.'); return false; } announce(success + (result.temporary ? ' This visit only; export a backup before leaving.' : '')); return true; }
   function showTab(tab, keyboard) {
-    activeTab = tab; paintTabs(); paintBody();
-    panel.scrollIntoView({ block: 'start', behavior: 'auto' });
+    activeTab = tab;
+    if (tab === 'today') {
+      if (tracker && tracker.open) tracker.close();
+      panel = homePanel;
+    } else {
+      if (!tracker.open) { returnFocus = document.activeElement; tracker.showModal(); document.documentElement.classList.add('tw-modal-open'); }
+      panel = trackerMount;
+    }
+    paintTabs(); paintBody();
+    if (tab !== 'today') trackerMount.scrollTop = 0;
     if (keyboard) focus('trade-tab-' + tab);
   }
-  function tabButton(name, label) { var b = button(label, 'trade-tab-' + name, function () { showTab(name, false); }); b.className = 'tw-tab'; b.setAttribute('role', 'tab'); b.dataset.tradeTab = name; b.setAttribute('aria-controls', 'trade-panel'); return b; }
+
+  function tabButton(name, label) { var b = button(label, 'trade-tab-' + name, function () { showTab(name, false); }); b.className = 'tw-tab'; b.setAttribute('role', 'tab'); b.dataset.tradeTab = name; b.setAttribute('aria-controls', 'trade-tracker-panel'); return b; }
+
   function paintTabs() { host.querySelectorAll('[data-trade-tab]').forEach(function (b) { var yes = b.dataset.tradeTab === activeTab; b.setAttribute('aria-selected', String(yes)); b.tabIndex = yes ? 0 : -1; }); }
 
   function nextAction() {
     var d = derived(), s = measured();
-    if (list(d.reconciliation).length || broker.state === 'reconciliation_needed' || list(portfolio && portfolio.unresolved).length) return { label: 'A record needs your attention.', text: 'Resolve unmatched fills or an uncertain order before preparing another trade.', button: 'Review positions', action: function () { showTab('positions'); }, tone: 'attention' };
-    if (!profileReady()) return { label: 'Make this your trading desk.', text: 'Set your capital and the amount you choose to risk. We will do the share math for each plan.', button: 'Set my limits', action: showProfile, tone: 'ready' };
-    if (list(portfolio && portfolio.pending_orders).length) return { label: 'An order is still in progress.', text: 'Submitted is not filled. Keep its actual fill and stop status in view.', button: 'Track the order', action: function () { showTab('positions'); }, tone: 'attention' };
-    if (list(d.positions).length || list(d.broker_positions).length) return { label: 'Start with what you own.', text: 'Review your recorded positions, pending orders and planned risk before adding another setup.', button: 'Review positions', action: function () { showTab('positions'); }, tone: 'ready' };
-    if (!s || oldSnapshot()) return { label: 'Your next move: prepare, then verify.', text: !s ? 'The saved scan predates the new 4% queue. Set up your plan while the next recorded scan arrives.' : 'These setups come from an older snapshot. Review the date and verify current market prices before acting.', button: 'Prepare a plan', action: openBlankPlan, tone: 'quiet' };
-    if (broker.connected && portfolio && portfolio.clock && portfolio.clock.is_open === false) return { label: 'Market closed. Plan with a clear head.', text: 'Build a plan now. Order previews stay unavailable until the broker reports an open market.', button: rows().length ? 'Review the first setup' : 'Prepare a plan', action: function () { if (rows().length) choose(rows()[0]); else openBlankPlan(); }, tone: 'quiet' };
-    if (!list(s.scan && s.scan.rows).length) return { label: 'No 4% matches in this scan.', text: 'A quiet list is useful information. Review the anticipation watchlist without treating it as a breakout signal.', button: 'See what is setting up', action: function () { queueTab = 'anticipation'; activeTab = 'today'; paintTabs(); paintBody(); focus('trade-watch-tab'); }, tone: 'quiet' };
-    return { label: 'A short list. A deliberate next move.', text: 'Review why a stock matched, define your entry and stop, then choose whether to place an order.', button: 'Review the first setup', action: function () { queueTab = 'breakout'; choose(rows()[0]); }, tone: 'ready' };
+    if (list(d.reconciliation).length || broker.state === 'reconciliation_needed' || list(portfolio && portfolio.unresolved).length) return { label: 'Check one thing first.', text: 'A fill or order needs your review. Open the tracker to resolve it.', button: 'Review tracker', action: function () { showTab('positions'); }, tone: 'attention' };
+    if (list(portfolio && portfolio.pending_orders).length) return { label: 'Your order is in progress.', text: 'Open the tracker to check what has actually filled.', button: 'Open tracker', action: function () { showTab('positions'); }, tone: 'attention' };
+    if (list(d.positions).length || list(d.broker_positions).length) return { label: 'Check your trades. Then look ahead.', text: 'Your positions are in the tracker. Fresh ideas are below when you need them.', button: 'Open tracker', action: function () { showTab('positions'); }, tone: 'ready' };
+    if (!s) return { label: 'A clear place to start.', text: 'The latest 4% scan will appear here when it is published.', button: 'Plan a stock', action: openBlankPlan, tone: 'quiet' };
+    if (oldSnapshot()) return { label: 'Review now. Verify before trading.', text: 'This is an older daily scan. Check current prices before using a plan.', button: 'Review a setup', action: function () { if (rows().length) choose(rows()[0]); else openBlankPlan(); }, tone: 'quiet' };
+    if (!list(s.scan && s.scan.rows).length) return { label: 'No rush. No forced trades.', text: 'No breakout matches this session. See which stocks are still setting up.', button: 'See what’s setting up', action: function () { queueTab = 'anticipation'; allSetups = false; showTab('today'); focus('trade-watch-tab'); }, tone: 'quiet' };
+    return { label: 'See the move. Make your plan.', text: 'Explore the scan. Read the chart. Turn one idea into a trade you can follow.', button: 'Review the first setup', action: function () { queueTab = 'breakout'; choose(rows()[0]); }, tone: 'ready' };
   }
+
   function paintStatus() {
     if (!statusPanel) return;
-    var next = nextAction(); statusPanel.replaceChildren(); statusPanel.dataset.tone = next.tone;
-    var top = node('div', 'tw-status-line'); var mode = broker.connected ? (broker.mode === 'live' ? 'LIVE ACCOUNT' : 'PAPER ACCOUNT') : 'YOUR PRIVATE RECORD';
-    top.append(node('span', 'tw-eyebrow', 'TODAY / ' + mode), node('span', 'tw-status-dot', navigator.onLine === false ? 'Offline · last saved view' : brokerError ? 'Broker refresh unavailable' : broker.connected ? 'Broker connected' : 'Broker not connected'));
-    var text = node('div', 'tw-status-copy'); text.append(node('h1', 'tw-title', next.label), node('p', 'tw-intro', next.text));
+    var next = nextAction(), s = measured(), d = derived(); statusPanel.replaceChildren(); statusPanel.dataset.tone = next.tone;
+    var top = node('div', 'tw-status-line'); top.append(node('span', 'tw-eyebrow', 'SPICYSTOCK / THE TRADING DESK'), node('span', 'tw-status-dot', navigator.onLine === false ? 'Offline · saved scan' : brokerError ? 'Account refresh unavailable' : broker.connected ? (broker.mode === 'live' ? 'Live account connected' : 'Paper account connected') : 'Trade in your broker · track here'));
+    var copy = node('div', 'tw-status-copy'); copy.append(node('h1', 'tw-title', next.label), node('p', 'tw-intro', next.text));
     var actions = node('div', 'tw-actions'); actions.append(button(next.button, 'trade-next-action', next.action, true));
-    var stamp = node('div', 'tw-data-stamp'); stamp.id = 'trade-data-status';
-    var run = data && data.run || {}; stamp.append(node('span', '', 'Scan session ' + (run.date || 'not recorded')), node('span', '', 'Published ' + time(data && data.generated)), node('span', 'tw-data-quality', (run.fixture || run.dry_run ? 'Demonstration / rehearsal data' : oldSnapshot() ? 'Older snapshot · not a live quote' : 'Daily snapshot · not a live quote')));
-    statusPanel.append(top, text, actions, stamp);
+    if (next.button !== 'Open tracker' && next.button !== 'Review tracker') actions.append(button('My tracker', 'trade-open-tracker', function () { showTab('positions'); }));
+    var stats = node('dl', 'tw-session-summary');
+    stats.append(metric('Breakout matches', s ? number(s.scan && s.scan.matched, 0) : '—'), metric('Setting up', s ? number(s.anticipation && s.anticipation.matched, 0) : '—'), metric('My open positions', String(list(d.broker_positions).length + list(d.positions).filter(function (p) { return p.source !== 'alpaca' || !list(d.broker_positions).some(function (b) { return b.symbol === p.symbol && b.account_id === p.account_id && b.environment === p.environment; }); }).length)));
+    var body = node('div', 'tw-hero-body'); var left = node('div'); left.append(copy, actions); body.append(left, stats);
+    var run = data && data.run || {}, stamp = node('div', 'tw-data-stamp'); stamp.id = 'trade-data-status';
+    stamp.append(node('span', '', 'Session ' + (run.date || 'unavailable')), node('span', '', s && s.scope ? number(s.scope.measured, 0) + ' / ' + number(s.scope.requested, 0) + ' tracked stocks measured' : 'Coverage unavailable'), node('span', 'tw-data-quality', run.fixture || run.dry_run ? 'Sample data · no real signals' : oldSnapshot() ? 'Older snapshot · not live' : 'Daily prices · not live'));
+    if (run.fixture || run.dry_run || list(run.errors).length) stamp.append(node('span', 'tw-warning', run.fixture || run.dry_run ? 'This session is a demonstration.' : 'Scan has missing or degraded data. Open scan details below.'));
+    statusPanel.append(top, body, stamp);
     var badge = host.querySelector('#trade-account-status'); if (badge) badge.textContent = broker.connected ? (broker.mode === 'live' ? 'Live' : 'Paper') + ' connected' : 'Not connected';
   }
+
   function storageLine() {
     var st = engine().getStorageStatus(); var p = node('p', 'tw-storage'); p.id = 'trade-storage-status';
     p.textContent = st.persistent ? 'Your plans and recorded fills stay in this browser. Export a backup to move devices.' : 'This visit only. ' + (st.reason || 'Browser storage is unavailable.') + ' Export a backup before leaving.';
     if (!st.persistent) p.classList.add('tw-warning'); return p;
   }
   function paintBody() {
-    if (!panel) return; panel.replaceChildren(); panel.setAttribute('aria-labelledby', 'trade-tab-' + activeTab);
-    if (activeTab === 'today') paintToday(); else if (activeTab === 'positions') paintPositions(); else paintActivity();
-    panel.append(storageLine());
-    if (notice) notice.textContent = message;
+    if (!panel) return; if (activeChart && panel.contains(activeChart)) { if (activeChart.destroy) activeChart.destroy(); activeChart = null; } panel.replaceChildren();
+    if (activeTab === 'today') { panel.removeAttribute('aria-labelledby'); paintToday(); }
+    else { panel.setAttribute('aria-labelledby', 'trade-tab-' + activeTab); if (activeTab === 'positions') paintPositions(); else if (activeTab === 'plans') paintPlans(); else paintActivity(); panel.append(storageLine()); }
+    if (notice) { (activeTab === 'today' ? host : tracker).insertBefore(notice, activeTab === 'today' ? homePanel : trackerMount); notice.textContent = message; }
   }
+
   function sectionHeading(kicker, heading, text) { var h = node('div', 'tw-section-heading'); if (kicker) h.append(node('p', 'tw-eyebrow', kicker)); h.append(node('h3', '', heading)); if (text) h.append(node('p', 'tw-copy', text)); return h; }
   function empty(title, text) { var box = node('div', 'tw-empty'); box.append(node('h4', '', title), node('p', 'tw-copy', text)); return box; }
-  function showProfile() { profileOpen = true; activeTab = 'today'; paintTabs(); paintBody(); focus('trade-capital'); }
-  function paintToday() {
-    var rail = node('div', 'tw-routine'); ['Find a setup', 'Define your risk', 'Confirm & track'].forEach(function (label, i) { var item = node('span', 'tw-routine-step'); item.append(node('b', '', '0' + (i + 1)), document.createTextNode(label)); rail.append(item); }); panel.append(rail);
-    if (profileOpen) panel.append(profileForm());
-    var grid = node('div', 'tw-desk-grid' + (planVisible ? ' tw-desk-grid--planning' : ''));
-    var queue = node('section', 'tw-queue'); queue.id = 'trade-queue'; queue.append(sectionHeading('01 / FIND', 'Setups worth a closer look.', 'The published price-and-volume scan, before the stricter scoring filters.'));
-    var tabs = node('div', 'tw-queue-switch'); tabs.setAttribute('role', 'group'); tabs.setAttribute('aria-label', 'Setup list');
-    [['breakout', '4% breakouts', 'trade-breakout-tab'], ['anticipation', 'Setting up', 'trade-watch-tab']].forEach(function (item) { var b = button(item[1], item[2], function () { queueTab = item[0]; query = ''; paintBody(); focus(item[2]); }); b.setAttribute('aria-pressed', String(queueTab === item[0])); tabs.append(b); }); queue.append(tabs);
-    var search = node('div', 'tw-search'); var label = node('label', '', 'Find a symbol'); label.htmlFor = 'trade-search'; var input = node('input'); input.id = 'trade-search'; input.type = 'search'; input.placeholder = 'Search this scan'; input.value = query; input.autocomplete = 'off'; input.addEventListener('input', function () { query = input.value; paintCards(queue.querySelector('#trade-setup-list')); }); search.append(label, input); queue.append(search);
-    var cards = node('div', 'tw-setup-list'); cards.id = 'trade-setup-list'; paintCards(cards); queue.append(cards);
-    var methods = node('details', 'tw-details'); methods.append(node('summary', '', 'Why these stocks?')); var s = measured();
-    methods.append(small(queueTab === 'anticipation' ? 'This separate watchlist uses SpicyStock’s disclosed trend-and-compression proxy. These stocks have not necessarily broken out.' : 'A match has risen at least 4%, traded more shares than the previous session, and traded at least 100,000 shares. It still needs chart review.'));
-    methods.append(small('Order: recorded model score first when available, then how near the high the session closed, then symbol. This is a review order, not a win probability. Model scores are a SpicyStock overlay.'));
-    methods.append(small('Coverage: ' + (s && s.scope ? number(s.scope.measured, 0) + ' of ' + number(s.scope.requested, 0) + ' requested names' : 'not yet recorded') + '. A curated subset, not the entire stock market.'));
-    var source = node('a', 'tw-source', 'Read Stockbee’s published scan'); source.href = SOURCE; source.target = '_blank'; source.rel = 'noopener noreferrer'; methods.append(source); queue.append(methods);
-    var own = node('div', 'tw-actions'); own.append(button('Plan a different symbol', 'trade-plan-manual', openBlankPlan)); queue.append(own); grid.append(queue);
-    if (planVisible) grid.append(planForm()); panel.append(grid);
-    var footer = node('div', 'tw-support-grid'); footer.append(accountCard(), learningCard()); panel.append(footer);
+  function showProfile() { profileOpen = true; showTab('today'); focus('trade-capital'); }
+
+  function openResearch(id) {
+    var report = document.getElementById('research-report'), target = document.getElementById(id || 'research-report');
+    if (report) report.open = true;
+    if (target) { for (var p = target; p; p = p.parentElement) if (p.tagName === 'DETAILS') p.open = true; target.scrollIntoView({ block: 'start', behavior: 'auto' }); var title = target.querySelector('summary, h2, h3') || target; title.tabIndex = -1; title.focus({ preventScroll: true }); }
+    window.dispatchEvent(new Event('resize'));
   }
+  function paintToday() {
+    activeChart = null;
+    if (profileOpen && !planVisible) panel.append(profileForm());
+    var market = node('section', 'tw-market'); market.id = 'trade-queue';
+    var heading = node('div', 'tw-market-heading'), title = sectionHeading('01 / EXPLORE', 'Where the action is.', 'Tap a stock. Its chart, setup and trade plan stay together.');
+    title.querySelector('h3').id = 'trade-market-title'; title.querySelector('h3').tabIndex = -1;
+    var modes = node('div', 'tw-view-switch'); modes.setAttribute('role', 'group'); modes.setAttribute('aria-label', 'Explore stocks as');
+    [['map', 'Map'], ['cards', 'Cards']].forEach(function (v) { var b = button(v[1], 'trade-view-' + v[0], function () { mapView = v[0]; paintBody(); focus('trade-view-' + v[0]); }); b.setAttribute('aria-pressed', String(mapView === v[0])); modes.append(b); }); heading.append(title, modes); market.append(heading);
+    var toolbar = node('div', 'tw-market-toolbar'), switches = node('div', 'tw-queue-switch'), s = measured(); switches.setAttribute('role', 'group'); switches.setAttribute('aria-label', 'Setup list');
+    [['breakout', '4% breakouts', 'trade-breakout-tab', s && s.scan], ['anticipation', 'Setting up', 'trade-watch-tab', s && s.anticipation]].forEach(function (v) {
+      var b = button(v[1] + ' · ' + (v[3] ? number(v[3].matched, 0) : '—'), v[2], function () { queueTab = v[0]; query = ''; selected = null; planVisible = false; preview = null; allSetups = false; paintBody(); focus(v[2]); }); b.setAttribute('aria-pressed', String(queueTab === v[0])); switches.append(b);
+    });
+    var search = node('div', 'tw-search'), label = node('label', '', 'Find a stock'), input = node('input'); label.htmlFor = 'trade-search'; input.id = 'trade-search'; input.type = 'search'; input.placeholder = 'Search symbol'; input.value = query; input.autocomplete = 'off';
+    input.addEventListener('input', function () { query = input.value; var target = host.querySelector('#trade-market-content'); if (target) renderMarket(target); }); search.append(label, input); toolbar.append(switches, search); market.append(toolbar);
+    var content = node('div'); content.id = 'trade-market-content'; renderMarket(content); market.append(content);
+    var footer = node('div', 'tw-market-footer'); footer.append(small('Review order: recorded score, then close strength. A scan match is not a buy signal.'), button('Plan another stock', 'trade-plan-manual', openBlankPlan)); market.append(footer); panel.append(market);
+    var row = selected || (!planVisible ? rows()[0] : null), desk = node('div', 'tw-visual-desk' + (planVisible && selected ? ' tw-visual-desk--planning' : '')); desk.id = 'trade-selected-desk';
+    if (row) desk.append(setupPreview(row));
+    if (planVisible) desk.append(planForm());
+    else if (!row) desk.append(empty('Nothing to force.', 'Switch lists, or plan a stock you already follow. Your saved trades are in My tracker.'));
+    panel.append(desk, universeCard());
+    var support = node('div', 'tw-support-compact');
+    var settings = node('details', 'tw-settings'); settings.append(node('summary', '', 'My limits & account')); settings.append(accountCard()); support.append(settings);
+    var learning = node('details', 'tw-settings'); learning.append(node('summary', '', 'Strategy results & learning'), learningCard()); support.append(learning); panel.append(support);
+  }
+  function renderMarket(box) {
+    box.replaceChildren(); var all = rows().filter(function (r) { return r.ticker.indexOf(query.trim().toUpperCase()) >= 0; });
+    if (!all.length) { box.append(empty(query ? 'No matching symbol.' : 'No matches on this list.', query ? 'Try another symbol or plan a stock you follow.' : 'Try the other list. The next scan may find something new.')); return; }
+    if (mapView === 'cards') { var cards = node('div', 'tw-setup-list tw-visual-cards'); cards.id = 'trade-setup-list'; paintCards(cards); box.append(cards); return; }
+    var displayed = all.slice(0, 12), valid = displayed.filter(function (r) { return finite(r.gain_pct) && finite(r.volume_vs_average); });
+    if (!valid.length) { box.append(small('Map measurements are unavailable. Use Cards to review the saved stocks.')); return; }
+    var figure = node('figure', 'tw-opportunity-map'), chart = node('div', 'tw-map-plot'); chart.setAttribute('aria-label', 'Stock map: session move vertically, volume versus its average horizontally.');
+    var xs = valid.map(function (r) { return r.volume_vs_average; }), ys = valid.map(function (r) { return r.gain_pct; });
+    var xlo = Math.min.apply(null, xs), xhi = Math.max.apply(null, xs), ylo = Math.min(0, Math.min.apply(null, ys)), yhi = Math.max(4, Math.max.apply(null, ys));
+    var xpad = Math.max(.12, (xhi - xlo) * .15), ypad = Math.max(.5, (yhi - ylo) * .12); xlo = Math.max(0, xlo - xpad); xhi += xpad; ylo -= ypad; yhi += ypad;
+    var area = node('div', 'tw-map-area');
+    [0, .5, 1].forEach(function (t) { var line = node('div', 'tw-map-gridline'); line.style.bottom = t * 100 + '%'; line.append(node('span', '', pct(ylo + (yhi - ylo) * t))); area.append(line); });
+    if (ylo < 4 && yhi > 4) { var trigger = node('div', 'tw-map-trigger'); trigger.style.bottom = (4 - ylo) / (yhi - ylo) * 100 + '%'; trigger.append(node('span', '', '+4% scan level')); area.append(trigger); }
+    valid.forEach(function (r, i) {
+      var point = button('', 'trade-map-' + r.ticker, function () { choose(r); }); point.className = 'tw-map-point'; point.dataset.tradeSelect = r.ticker;
+      point.setAttribute('aria-label', 'Review ' + r.ticker + ', ' + pct(r.gain_pct) + ', ' + number(r.volume_vs_average) + ' times average volume'); point.setAttribute('aria-pressed', String((selected || rows()[0]).ticker === r.ticker));
+      point.style.left = ((r.volume_vs_average - xlo) / (xhi - xlo) * 100) + '%'; point.style.bottom = ((r.gain_pct - ylo) / (yhi - ylo) * 100) + '%'; point.style.setProperty('--point-delay', i * 35 + 'ms');
+      point.append(node('span', 'tw-map-dot'), node('strong', '', r.ticker)); area.append(point);
+    });
+    chart.append(node('span', 'tw-map-y-title', 'SESSION MOVE'), area);
+    var axis = node('div', 'tw-map-x-axis'); axis.append(node('span', '', number(xlo) + '×'), node('span', '', 'VOLUME VS 20-DAY AVERAGE'), node('span', '', number(xhi) + '×')); chart.append(axis); figure.append(chart);
+    var legend = node('figcaption', 'tw-map-caption'); legend.append(node('span', '', 'More participation →'), node('span', '', 'Higher on the map = larger session move. Not a return forecast.')); figure.append(legend); box.append(figure);
+    var strip = node('div', 'tw-symbol-strip'); strip.setAttribute('role', 'group'); strip.setAttribute('aria-label', 'Select any stock on the map');
+    displayed.forEach(function (r) { var b = button('', null, function () { choose(r); }); b.setAttribute('aria-pressed', String((selected || rows()[0]).ticker === r.ticker)); b.append(node('strong', '', r.ticker), node('span', r.gain_pct >= 0 ? 'tw-positive' : 'tw-negative', pct(r.gain_pct))); strip.append(b); }); box.append(strip);
+    if (all.length > displayed.length) box.append(button('See all ' + all.length + ' stocks as cards', 'trade-map-show-all', function () { mapView = 'cards'; allSetups = true; paintBody(); focus('trade-view-cards'); }));
+  }
+  function setupPreview(row) {
+    var box = node('section', 'tw-inspector tw-surface'); box.id = 'trade-inspector';
+    if (!row) return box;
+    var head = node('div', 'tw-inspector-head'), identity = node('div'); identity.append(node('p', 'tw-eyebrow', '02 / UNDERSTAND THE SETUP'), node('h3', 'tw-inspector-symbol', row.ticker));
+    identity.querySelector('h3').id = 'trade-inspector-title'; identity.querySelector('h3').tabIndex = -1;
+    var price = node('div', 'tw-inspector-price'); price.append(node('strong', '', money(row.close)), node('span', row.gain_pct >= 0 ? 'tw-positive' : 'tw-negative', pct(row.gain_pct) + ' session')); head.append(identity, price); box.append(head);
+    var c = scored(row.ticker), provenance = c && c.provenance && c.provenance.source;
+    var meta = node('div', 'tw-inspector-meta'); meta.append(node('span', '', 'Daily bars · ' + (row.date || 'unknown session')), node('span', '', c && finite(c.score) ? number(c.score) + '/10 · ' + (provenance === 'claude' ? 'AI reviewed' : 'Recorded score') : 'Scan match · no AI score')); box.append(meta, spark(row));
+    var evidence = node('section', 'tw-setup-evidence'); evidence.append(node('div', 'tw-evidence-heading', 'The setup, explained.'));
+    var gauges = node('div', 'tw-evidence-grid');
+    [
+      ['Close strength', finite(row.close_position) ? Math.round(row.close_position * 100) + '%' : '—', finite(row.close_position) ? row.close_position : null, 'Where the close sits between the session low and high. 100% means it closed at the high. This is a measurement, not a win probability.'],
+      ['Volume lift', finite(row.volume_vs_previous) ? number(row.volume_vs_previous) + '×' : '—', finite(row.volume_vs_previous) ? Math.min(row.volume_vs_previous / 3, 1) : null, 'Shares traded versus the prior session. The 4% scan asks for more volume than yesterday, plus at least 100,000 shares.'],
+      ['Base compression', finite(row.compression_ratio) ? number(row.compression_ratio) + '×' : '—', finite(row.compression_ratio) ? Math.min(row.compression_ratio, 1) : null, 'Recent range versus its longer baseline. A lower ratio means the recent price action is tighter. It does not confirm a breakout by itself.'],
+      ['Above 20-day average', finite(row.extension_sma20_pct) ? pct(row.extension_sma20_pct) : '—', null, 'Distance from the 20-session moving average. A large extension means the price has already travelled; inspect your entry and stop distance.'],
+      ['Prior up days', number(row.prior_up_days, 0), null, 'Consecutive up sessions immediately before the signal. This helps distinguish a fresh move from one already running.'],
+      ['Earlier 4% bursts', number(row.prior_bursts_20, 0), null, 'Number of earlier 4% bursts in 20 sessions. Repeated bursts can help you spot an extended or choppy move on the chart.']
+    ].forEach(function (v) { var cell = node('details', 'tw-evidence-cell'), summary = node('summary'); summary.append(node('span', 'tw-evidence-label', v[0]), node('strong', '', v[1]), node('span', 'tw-evidence-info', 'ⓘ')); if (v[2] !== null) { var meter = node('span', 'tw-evidence-meter'); meter.style.setProperty('--meter', Math.max(0, Math.min(v[2], 1)) * 100 + '%'); summary.append(meter); } cell.append(summary, small(v[3])); gauges.append(cell); }); evidence.append(gauges); box.append(evidence);
+    if (c && typeof c.reason === 'string') box.append(node('p', 'tw-recorded-review', 'Recorded review · ' + c.reason));
+    var actions = node('div', 'tw-inspector-actions');
+    if (!planVisible) actions.append(button('Build a plan for ' + row.ticker + ' →', 'trade-review-featured', function () { choose(row); }, true));
+    else actions.append(button('Jump to trade ticket ↓', 'trade-jump-ticket', function () { focus('trade-entry'); }));
+    actions.append(button('See the strategy record ↗', 'trade-inspector-research', function () { openResearch('evidence-card'); })); box.append(actions); return box;
+  }
+  function universeCard() {
+    var run = data && data.run || {}, s = measured(), u = run.universe || {}, selection = u.selection;
+    var box = node('section', 'tw-universe'); box.id = 'trade-universe';
+    var coverage = 'This session used the 228-name curated starter list. It is a subset of US stocks.';
+    if (selection) {
+      coverage = 'Discovery used a fallback. The scope below is the one actually scanned.';
+      if (selection.mode === 'adaptive') {
+        var captured = typeof selection.directory_fetched_at === 'string' ? selection.directory_fetched_at.slice(0, 10) : '';
+        coverage = selection.directory_status === 'cached'
+          ? 'Listings captured ' + (safeDate(captured) ? captured : 'on an unavailable date') + '. Prices and selection refreshed for ' + run.date + '.'
+          : 'Refreshed from current listings and recorded market activity.';
+      }
+    }
+    var heading = sectionHeading('THE SEARCH BEHIND THE SIGNALS', selection && selection.mode === 'adaptive' ? 'A universe that moves with the market.' : 'Know what the scan actually covers.', coverage); box.append(heading);
+    var steps = node('div', 'tw-universe-flow');
+    [['Discovered', selection ? number(selection.discovered, 0) : '—'], ['Deeply scanned', s ? number(s.scope && s.scope.measured, 0) : '—'], ['4% breakouts', s ? number(s.scan && s.scan.matched, 0) : '—'], ['Setting up', s ? number(s.anticipation && s.anticipation.matched, 0) : '—']].forEach(function (v, i) { var part = node('div', 'tw-universe-stage'); part.append(node('span', 'tw-universe-step', '0' + (i + 1)), node('strong', '', v[1]), node('span', '', v[0])); steps.append(part); }); box.append(steps);
+    if (selection) { box.append(small('Selected ' + number(selection.selected, 0) + ' of ' + number(selection.eligible, 0) + ' eligible · ' + list(selection.added).length + ' added · ' + list(selection.removed).length + ' rotated out · ' + (selection.source || 'Source unavailable'))); if (selection.warning) box.append(node('p', 'tw-warning', selection.warning)); }
+    else box.append(small('The starter list was hand-picked for fast scans, not ranked as the best 228 stocks. New scan selection is shown here when a refreshed run publishes.'));
+    box.append(button('Inspect the scan record ↗', 'trade-universe-record', function () { openResearch('funnel-card'); })); return box;
+  }
+
   function paintCards(box) {
     if (!box) return; box.replaceChildren(); var s = measured(), all = rows(), filtered = all.filter(function (r) { return r.ticker.indexOf(query.trim().toUpperCase()) >= 0; });
-    if (!s) { box.append(empty('The next scan starts here.', 'This saved session has no canonical 4% measurements yet. We will show recorded matches when the next scan publishes.')); return; }
-    if (!filtered.length) { box.append(empty(query ? 'No matching symbol.' : queueTab === 'anticipation' ? 'No anticipation matches recorded.' : 'No 4% matches recorded.', query ? 'Try another symbol from this list.' : 'You do not need a trade every session. The next scan may bring a different list.')); return; }
-    filtered.forEach(function (row, i) {
+    if (!s) { box.append(empty('Waiting for the next scan.', 'Your saved trades are still in My tracker.')); return; }
+    if (!filtered.length) { box.append(empty(query ? 'No matching stock.' : 'Nothing on this list today.', query ? 'Try another symbol.' : 'Try the other list. There is no need to force a trade.')); return; }
+    (allSetups || query ? filtered : filtered.slice(0, 5)).forEach(function (row, i) {
       var b = button('', null, function () { choose(row); }); b.className = 'tw-setup-card'; b.dataset.tradeSelect = row.ticker; b.setAttribute('aria-label', 'Review ' + row.ticker + ' setup'); b.setAttribute('aria-pressed', String(selected && selected.ticker === row.ticker));
       var h = node('div', 'tw-card-top'); h.append(node('span', 'tw-card-rank', String(i + 1).padStart(2, '0')), node('strong', 'tw-symbol', row.ticker), node('span', 'tw-change', pct(row.gain_pct))); b.append(h);
-      var reasons = []; if (finite(row.volume_vs_previous)) reasons.push(row.volume_vs_previous.toFixed(2) + '× yesterday’s volume'); if (finite(row.close_position)) reasons.push('closed at ' + Math.round(row.close_position * 100) + '% of its range'); b.append(node('span', 'tw-card-reason', reasons.join(' · ') || 'Open the recorded measurements to review this setup.'));
       var c = scored(row.ticker), provenance = c && c.provenance && c.provenance.source;
-      var tag = c && finite(c.score) ? 'Score ' + number(c.score) + '/10 · ' + (provenance === 'claude' ? 'AI review' : provenance === 'fallback' ? 'offline fallback' : 'source not recorded') : 'Scan match · no model score';
-      b.append(node('span', 'tw-card-meta', tag), node('span', 'tw-card-bottom', money(row.close) + ' recorded close · ' + (row.date || s.date))); box.append(b);
+      var tag = c && finite(c.score) ? number(c.score) + '/10 · ' + (provenance === 'claude' ? 'AI review' : provenance === 'fallback' ? 'Checklist fallback' : 'Unknown score source') : 'Scan match · unscored';
+      b.append(node('span', 'tw-card-reason', money(row.close) + ' close · ' + (finite(row.volume_vs_previous) ? number(row.volume_vs_previous) + '× volume vs yesterday' : 'Volume unavailable')));
+      var bottom = node('span', 'tw-card-bottom'); bottom.append(node('span', 'tw-card-meta', tag), node('span', 'tw-card-cta', 'Review →')); b.append(bottom); box.append(b);
     });
-    var group = queueTab === 'anticipation' ? s.anticipation : s.scan;
-    if (group && finite(group.matched) && group.matched > all.length) box.append(small(number(all.length, 0) + ' saved for review of ' + number(group.matched, 0) + ' measured matches.'));
+    if (!query && filtered.length > 5) box.append(button(allSetups ? 'Show fewer' : 'Show all ' + filtered.length + ' stocks', 'trade-show-all', function () { allSetups = !allSetups; paintCards(box); focus('trade-show-all'); }));
+    var group = queueTab === 'anticipation' ? s.anticipation : s.scan; if (group && finite(group.matched) && group.matched > all.length) box.append(small(number(all.length, 0) + ' saved of ' + number(group.matched, 0) + ' measured matches.'));
   }
+
   function choose(row) {
     if (!row || typeof row.ticker !== 'string') return;
-    selected = row; draft = { symbol: row.ticker, entry: '', stop: '', note: '' }; editingPlan = null; preview = null; planVisible = true; activeTab = 'today'; paintTabs(); paintBody(); focus('trade-entry'); announce('Reviewing ' + row.ticker + '. Enter intended prices, or explicitly load the dated reference.');
+    selected = row; draft = { symbol: row.ticker, entry: '', stop: '', note: '' }; editingPlan = null; preview = null; planVisible = true; profileOpen = false; showTab('today'); focus('trade-inspector-title'); announce('Reviewing ' + row.ticker + '. Check the chart, then enter your prices.');
   }
-  function openBlankPlan() { selected = null; draft = { symbol: '', entry: '', stop: '', note: '' }; editingPlan = null; preview = null; planVisible = true; activeTab = 'today'; paintTabs(); paintBody(); focus('trade-symbol'); }
+
+  function openBlankPlan() { selected = null; draft = { symbol: '', entry: '', stop: '', note: '' }; editingPlan = null; preview = null; planVisible = true; showTab('today'); focus('trade-symbol'); }
+
   function field(label, id, attrs, value, change) {
     var wrap = node('div', 'tw-field'); var lab = node('label', '', label); lab.htmlFor = id;
     var input = node(attrs && attrs.type === 'textarea' ? 'textarea' : 'input'); input.id = id;
@@ -132,14 +237,19 @@
     options.forEach(function (o) { var n = node('option', '', o[1]); n.value = o[0]; select.append(n); }); select.value = value || ''; select.addEventListener('change', function () { change(select.value); }); wrap.append(lab, select); return wrap;
   }
   function profileForm() {
-    var form = node('form', 'tw-profile tw-surface'); form.id = 'trade-profile-form'; form.append(sectionHeading('YOUR LIMITS / SET ONCE, CHANGE ANY TIME', 'Your money. Your boundaries.', 'Choose the capital and risk budget you want this planner to use.'));
-    var p = profile(), values = Object.assign({}, p), fields = node('div', 'tw-fields');
-    [['Capital ($)', 'capital', 'trade-capital'], ['Risk per trade (%)', 'risk_percent', 'trade-risk'], ['Cash cap per position ($, optional)', 'cash_cap', 'trade-cash-cap'], ['Maximum open positions (optional)', 'max_positions', 'trade-max-positions']].forEach(function (v) { fields.append(field(v[0], v[2], { type: 'number', min: '0', step: v[1] === 'max_positions' ? '1' : 'any', inputmode: 'decimal' }, p[v[1]], function (text) { values[v[1]] = text.trim() === '' ? null : Number(text); })); }); form.append(fields);
-    form.append(small('No risk percentage is preselected. Position sizing uses your limit and rounds down to whole shares. A stop is a plan; gaps and slippage can produce a larger loss.'));
-    var actions = node('div', 'tw-actions'), save = node('button', 'tw-button tw-button--primary', 'Save my limits'); save.type = 'submit'; save.id = 'trade-save-profile'; actions.append(save); if (profileReady()) actions.append(button('Close', null, function () { profileOpen = false; paintBody(); })); form.append(actions);
-    form.addEventListener('submit', function (e) { e.preventDefault(); if (mutate(engine().setProfile(values), 'Trading limits saved.')) { profileOpen = false; preview = null; paintStatus(); paintBody(); } }); return form;
+    var form = node('form', 'tw-profile tw-surface'); form.id = 'trade-profile-form'; form.append(sectionHeading('SET ONCE', 'Start with your limits.', 'We’ll calculate the shares. You choose how much to risk.'));
+    var p = profile(), values = Object.assign({}, p), fields = node('div', 'tw-fields'), extra = node('details', 'tw-details'); extra.append(node('summary', '', 'Optional position limits'));
+    [['Trading capital ($)', 'capital', 'trade-capital'], ['Risk per trade (%)', 'risk_percent', 'trade-risk'], ['Cash cap per stock ($)', 'cash_cap', 'trade-cash-cap'], ['Maximum open positions', 'max_positions', 'trade-max-positions']].forEach(function (v, i) { var f = field(v[0], v[2], { type: 'number', min: '0', step: v[1] === 'max_positions' ? '1' : 'any', inputmode: 'decimal' }, p[v[1]], function (text) { values[v[1]] = text.trim() === '' ? null : Number(text); }); (i < 2 ? fields : extra).append(f); }); form.append(fields, extra);
+    form.append(small('Risk means the planned loss if your stop is reached. Gaps and slippage can make the actual loss larger.'));
+    var actions = node('div', 'tw-actions'), save = node('button', 'tw-button tw-button--primary', 'Save my limits'); save.type = 'submit'; save.id = 'trade-save-profile'; actions.append(save, button('Close', null, function () { profileOpen = false; paintBody(); })); form.append(actions);
+    form.addEventListener('submit', function (e) { e.preventDefault(); if (mutate(engine().setProfile(values), 'Trading limits saved.')) { profileOpen = false; preview = null; paintStatus(); paintBody(); if (planVisible) focus('trade-entry'); } }); return form;
   }
+
   function spark(row) {
+    if (window.SCTradeChart) { activeChart = window.SCTradeChart.render(row, { entry: planVisible && draft.symbol === row.ticker ? Number(draft.entry) || null : null, stop: planVisible && draft.symbol === row.ticker ? Number(draft.stop) || null : null }); return activeChart; }
+    return fallbackSpark(row);
+  }
+  function fallbackSpark(row) {
     var bars = list(row && row.series).filter(function (b) { return b && finite(b.open) && finite(b.close) && finite(b.high) && finite(b.low) && b.low > 0 && b.high >= Math.max(b.open, b.close) && b.low <= Math.min(b.open, b.close); }).slice(-24);
     if (bars.length < 2) return small('Chart history was not saved for this setup.');
     var box = node('figure', 'tw-chart'), svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('viewBox', '0 0 480 160'); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', row.ticker + ' recorded daily candles, ' + bars[0].date + ' through ' + bars[bars.length - 1].date + '. Historical prices, not a live quote.');
@@ -152,22 +262,24 @@
   }
   function planForm() {
     var form = node('section', 'tw-plan tw-surface'); form.id = 'trade-plan'; form.setAttribute('aria-labelledby', 'trade-plan-title');
-    var title = sectionHeading('02 / PLAN', draft.symbol ? 'Make ' + draft.symbol + ' a plan.' : 'Put a price on your risk.', 'A saved plan is not an order.'); title.querySelector('h3').id = 'trade-plan-title'; form.append(title);
+    var title = sectionHeading('YOUR TRADE TICKET', draft.symbol ? draft.symbol + ' · the plan' : 'Plan a stock.', 'Set two prices. We’ll calculate the shares.'); title.querySelector('h3').id = 'trade-plan-title'; title.querySelector('h3').tabIndex = -1; form.append(title); form.append(button('Back to overview', 'trade-close-plan', function () { planVisible = false; profileOpen = false; paintBody(); focus('trade-review-featured'); }));
     if (selected) {
-      form.append(spark(selected)); var ref = node('div', 'tw-reference'); ref.id = 'trade-reference'; ref.append(small('Recorded ' + (selected.date || 'date unavailable') + ' · close ' + money(selected.close) + ' · low ' + money(selected.low)));
-      if (safeDate(selected.date) && finite(selected.close) && finite(selected.low) && selected.low > 0 && selected.low < selected.close) ref.append(button('Use recorded close & low', 'trade-use-reference', function () { draft.entry = String(selected.close); draft.stop = String(selected.low); preview = null; paintBody(); focus('trade-entry'); announce('Historical reference loaded from ' + selected.date + '. Verify both prices before making a trade.'); }));
+      var ref = node('div', 'tw-reference'); ref.id = 'trade-reference';
+      ref.append(small('Reference · ' + selected.date + ': close ' + money(selected.close) + ' / low ' + money(selected.low)));
+      if (safeDate(selected.date) && finite(selected.close) && finite(selected.low) && selected.low > 0 && selected.low < selected.close) ref.append(button('Start with recorded close & low', 'trade-use-reference', function () { draft.entry = String(selected.close); draft.stop = String(selected.low); preview = null; paintBody(); focus('trade-entry'); announce('Historical reference loaded from ' + selected.date + '. Verify both prices before making a trade.'); }));
       form.append(ref);
-      var explain = node('details', 'tw-details'); explain.append(node('summary', '', 'What to check on the chart')); explain.append(small('Look for a young, orderly move out of a compact base; a quiet preceding day; and a close near the high. Review consecutive up days and prior failed breaks. The numeric scan alone cannot confirm this pattern.'));
-      var c = scored(selected.ticker); if (c && typeof c.reason === 'string') explain.append(small('Recorded model review: ' + c.reason)); form.append(explain);
     }
-    if (!profileReady()) { form.append(empty('Set your limits first.', 'Your position size comes from your chosen capital and risk budget.')); form.append(button('Set my limits', 'trade-plan-profile', showProfile, true)); }
+    if (!profileReady() || profileOpen) { if (profileOpen) form.append(profileForm()); else { form.append(small('One quick setup lets us calculate your shares.')); form.append(button('Set my limits', 'trade-plan-profile', showProfile, true)); } }
     else { var p = profile(); var limits = node('div', 'tw-plan-limits'); limits.append(small(money(p.capital) + ' capital · ' + number(p.risk_percent) + '% risk per trade'), button('Edit limits', 'trade-edit-profile', showProfile)); form.append(limits); }
-    var fields = node('div', 'tw-fields'); [['Symbol', 'symbol', 'trade-symbol', { type: 'text', maxlength: '15', autocomplete: 'off', autocapitalize: 'characters' }], ['Intended entry limit ($)', 'entry', 'trade-entry', { type: 'number', min: '0', step: 'any', inputmode: 'decimal' }], ['Initial stop ($)', 'stop', 'trade-stop', { type: 'number', min: '0', step: 'any', inputmode: 'decimal' }]].forEach(function (v) { fields.append(field(v[0], v[2], v[3], draft[v[1]], function (value) { draft[v[1]] = v[1] === 'symbol' ? value.toUpperCase() : value; preview = null; paintCalculation(); })); }); form.append(fields);
+    var fields = node('div', 'tw-fields'); [['Symbol', 'symbol', 'trade-symbol', { type: 'text', maxlength: '15', autocomplete: 'off', autocapitalize: 'characters' }], ['Buy limit ($)', 'entry', 'trade-entry', { type: 'number', min: '0', step: 'any', inputmode: 'decimal' }], ['Exit if it falls to ($)', 'stop', 'trade-stop', { type: 'number', min: '0', step: 'any', inputmode: 'decimal' }]].forEach(function (v) { fields.append(field(v[0], v[2], v[3], draft[v[1]], function (value) { draft[v[1]] = v[1] === 'symbol' ? value.toUpperCase() : value; preview = null; paintCalculation(); })); }); if (selected) { var symbolField = fields.querySelector('#trade-symbol'); if (symbolField) symbolField.closest('.tw-field').hidden = true; } form.append(fields);
     var result = node('div', 'tw-calculation'); result.id = 'trade-calculation'; result.setAttribute('aria-live', 'polite'); form.append(result);
     var actions = node('div', 'tw-actions'); actions.append(button(editingPlan ? 'Update saved plan' : 'Save plan', 'trade-save-plan', savePlan, true));
     if (broker.connected) { var pb = button('Preview broker order', 'trade-preview-order', previewOrder); pb.disabled = busy || broker.state === 'reconciliation_needed' || !!(portfolio && portfolio.clock && portfolio.clock.is_open === false); actions.append(pb); }
-    form.append(actions); var previewBox = node('div'); previewBox.id = 'trade-order-preview'; form.append(previewBox);
-    var alternatives = node('details', 'tw-details'); alternatives.append(node('summary', '', 'Already bought this stock?')); alternatives.append(small('Record the actual execution from your stock account. The intended entry and share count are kept separate.')); alternatives.append(button('Record actual fill', 'trade-plan-record-fill', function () { openFill(draft.symbol, 'buy', editingPlan); })); form.append(alternatives);
+    if (editingPlan) { actions.append(button('Log my purchase', 'trade-log-purchase', function () { openFill(draft.symbol, 'buy', editingPlan); }, true), button('View saved plans', 'trade-view-plans', function () { showTab('plans'); })); } form.append(actions); if (editingPlan) form.append(small('Saved in My tracker. Place the trade with your broker, then log the actual fill.')); var previewBox = node('div'); previewBox.id = 'trade-order-preview'; form.append(previewBox);
+    var handoff = node('div', 'tw-broker-handoff'); handoff.append(node('p', 'tw-eyebrow', broker.connected ? 'CONNECTED ACCOUNT' : 'PLACE THE TRADE'));
+    handoff.append(node('strong', '', broker.connected ? 'Preview here. Confirm once.' : 'Buy in your broker. Track it here.'));
+    handoff.append(small(broker.connected ? 'A preview checks the current quote, account and order limits.' : 'Direct orders are not connected. Copy this ticket, review current prices in your broker, then log only what actually filled.'));
+    var transfer = node('div', 'tw-actions'); transfer.append(button('Copy trade details', 'trade-copy-ticket', copyTicket), button('I bought it · record fill', 'trade-plan-record-fill', function () { openFill(draft.symbol, 'buy', editingPlan); })); handoff.append(transfer); form.append(handoff);
     window.setTimeout(function () { if (form.isConnected) { paintCalculation(); paintPreview(); } }, 0); return form;
   }
   function paintCalculation() {
@@ -178,11 +290,24 @@
       var max = profile().max_positions, d = derived(); if (finite(max) && max > 0 && list(d.positions).length >= max) target.append(node('p', 'tw-warning', 'Your recorded position count has reached your chosen maximum. Review positions before adding another.'));
     }
     var save = host.querySelector('#trade-save-plan'), pb = host.querySelector('#trade-preview-order'); if (save) save.disabled = !c.ok || !c.qty || !/^[A-Z][A-Z0-9.-]{0,14}$/.test(draft.symbol); if (pb) pb.disabled = busy || !c.ok || !c.qty || !/^[A-Z][A-Z0-9.-]{0,14}$/.test(draft.symbol) || broker.state === 'reconciliation_needed' || !!(portfolio && portfolio.clock && portfolio.clock.is_open === false);
+    if (activeChart && activeChart.isConnected && activeChart.updateLevels) activeChart.updateLevels(Number(draft.entry) || null, Number(draft.stop) || null);
+    var copy = host.querySelector('#trade-copy-ticket'); if (copy) copy.disabled = !c.ok || !c.qty || !/^[A-Z][A-Z0-9.-]{0,14}$/.test(draft.symbol);
+    var rail = host.querySelector('#trade-risk-ruler'); if (rail) rail.remove();
+    if (c.ok && c.qty) { var ruler = node('div', 'tw-risk-ruler'); ruler.id = 'trade-risk-ruler'; ruler.append(node('span', '', 'Stop ' + money(Number(draft.stop))), node('span', 'tw-risk-distance', number((Number(draft.entry) - Number(draft.stop)) / Number(draft.entry) * 100) + '% room'), node('span', '', 'Entry ' + money(Number(draft.entry)))); target.append(ruler); }
     paintPreview();
+  }
+  function copyTicket() {
+    var c = calc(); if (!c.ok || !c.qty || !/^[A-Z][A-Z0-9.-]{0,14}$/.test(draft.symbol)) { announce('Enter a valid symbol, prices and trading limits first.'); return; }
+    var original = editingPlan && list(state().plans).find(function (p) { return p.id === editingPlan; });
+    var ticketSession = original && original.snapshot_date || selected && selected.date || data.run && data.run.date || 'unknown';
+    var text = draft.symbol + ' · BUY PLAN (not an order)\n' + c.qty + ' shares · buy limit ' + money(Number(draft.entry)) + '\nInitial stop reference ' + money(Number(draft.stop)) + '\nPosition cost ' + money(c.position_cost) + ' · planned loss at stop ' + money(c.planned_risk) + '\nRecorded session ' + ticketSession + '\nVerify current prices, order type and protection in your broker. Gaps can exceed planned loss.';
+    function manualCopy() { var old = host.querySelector('#trade-ticket-text'); if (old) old.remove(); var area = node('textarea', 'tw-ticket-copy'); area.id = 'trade-ticket-text'; area.readOnly = true; area.setAttribute('aria-label', 'Trade details to copy'); area.value = text; host.querySelector('.tw-broker-handoff').append(area); area.focus(); area.select(); announce('Select and copy your trade details below.'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { announce('Trade details copied. No order has been placed.'); }, manualCopy); else manualCopy();
   }
   function savePlan() {
     var c = calc(); if (!c.ok || !c.qty) { announce(c.error || 'A plan needs at least one whole share.'); return; }
-    var p = profile(), snapshotDate = selected && selected.date || data && data.run && data.run.date;
+    var savedPlan = editingPlan && list(state().plans).find(function (r) { return r.id === editingPlan; });
+    var p = profile(), snapshotDate = savedPlan && savedPlan.snapshot_date || selected && selected.date || data && data.run && data.run.date;
     if (!safeDate(snapshotDate)) { announce('A dated scan is required to link this plan to its evidence.'); return; }
     var result = engine().savePlan({ id: editingPlan || undefined, symbol: draft.symbol, snapshot_date: snapshotDate, entry: Number(draft.entry), stop: Number(draft.stop), risk_percent: p.risk_percent, capital: p.capital, cash_cap: p.cash_cap, qty: c.qty, status: 'prepared' });
     if (mutate(result, 'Plan saved. No order has been placed.')) { editingPlan = result.plan && result.plan.id || result.id || (result.state && list(result.state.plans).find(function (r) { return r.symbol === draft.symbol && r.entry === Number(draft.entry) && r.stop === Number(draft.stop); }) || {}).id || editingPlan; paintStatus(); paintBody(); }
@@ -215,100 +340,141 @@
     if (learning && learning.validation && finite(learning.validation.mae_improvement_pct)) details.append(small('Validation error improvement vs baseline: ' + pct(learning.validation.mae_improvement_pct) + '. Hypothetical next-open to fifth-session-close outcomes; the recorded cost proxy is ' + number(learning.target && learning.target.round_trip_cost_bps, 0) + ' basis points round trip.'));
     box.append(details); return box;
   }
+  var trackerExpanded = '';
+  function trackerRow(key, title, subtitle, value, valueLabel) {
+    var row = node('details', 'tw-tracker-row'); row.dataset.trackerKey = key; row.name = 'trade-tracker-record';
+    var summary = node('summary', 'tw-tracker-summary'), identity = node('span', 'tw-tracker-identity');
+    identity.append(node('strong', 'tw-tracker-symbol', title), node('span', 'tw-tracker-meta', subtitle));
+    var amount = node('span', 'tw-tracker-amount'); amount.append(node('strong', '', value), node('span', '', valueLabel));
+    summary.append(identity, amount, node('span', 'tw-tracker-chevron', '⌄')); row.append(summary);
+    var body = node('div', 'tw-tracker-detail'); row.append(body); row.open = trackerExpanded === key;
+    row.addEventListener('toggle', function () {
+      if (row.open) { trackerExpanded = key; panel.querySelectorAll('.tw-tracker-row[open]').forEach(function (other) { if (other !== row) other.open = false; }); }
+      else if (trackerExpanded === key) trackerExpanded = '';
+    });
+    return { row: row, body: body };
+  }
+  function paintPlans() {
+    var plans = list(state().plans), current = plans.filter(function (p) { return p.status !== 'canceled'; });
+    panel.append(sectionHeading('', 'Your saved plans', 'Review a plan. Buy in your account. Record what actually filled.'));
+    var container = node('div', 'tw-tracker-list'); container.id = 'trade-saved-plans';
+    if (!current.length) container.append(empty('Nothing saved yet.', 'Choose a stock, set your entry and stop, and save the plan here.'));
+    current.slice().reverse().forEach(function (p) { container.append(savedPlanRow(p)); }); panel.append(container);
+    var old = plans.filter(function (p) { return p.status === 'canceled'; });
+    if (old.length) { var archive = node('details', 'tw-details'); archive.append(node('summary', '', 'Canceled plans · ' + old.length)); old.slice().reverse().forEach(function (p) { archive.append(savedPlanRow(p)); }); panel.append(archive); }
+    var actions = node('div', 'tw-actions'); actions.append(button('Find a setup', 'trade-plans-find', function () { showTab('today'); }, !current.length)); panel.append(actions);
+  }
+  function savedPlanRow(p) {
+    var labels = { draft: 'Draft', prepared: 'Ready to review', submitted: 'Order submitted · check fills', canceled: 'Canceled' };
+    var item = trackerRow('plan:' + p.id, p.symbol, labels[p.status] || p.status, number(p.qty, 0), 'planned shares'); item.row.dataset.tradePlanId = p.id;
+    var dl = node('dl', 'tw-tracker-metrics'); dl.append(metric('Planned entry', money(p.entry)), metric('Planned stop', money(p.stop)), metric('Planned risk', money(p.qty * (p.entry - p.stop)))); item.body.append(dl);
+    item.body.append(small('Evidence: ' + p.snapshot_date + '. A saved plan is not a holding.'));
+    if (p.status === 'submitted') item.body.append(small('Confirm the execution in Holdings. An accepted order may still be unfilled.'));
+    if (['draft', 'prepared'].indexOf(p.status) >= 0) {
+      var actions = node('div', 'tw-actions'); actions.append(button('Review plan', null, function () { editPlan(p); }, true), button('Record actual fill', null, function () { openFill(p.symbol, 'buy', p.id); })); item.body.append(actions);
+      var cancel = node('details', 'tw-inline-confirm'); cancel.append(node('summary', '', 'Cancel plan'), small('Keep the record and mark this unsubmitted plan as canceled?'));
+      cancel.append(button('Confirm cancel plan', null, function () { if (mutate(engine().savePlan(Object.assign({}, p, { status: 'canceled' })), 'Plan canceled. Its record is retained.')) { paintStatus(); paintBody(); } })); item.body.append(cancel);
+    }
+    return item.row;
+  }
   function paintPositions() {
-    panel.append(sectionHeading('03 / TRACK', 'Know what you actually own.', 'Filled executions create positions. Saved plans and accepted orders do not.'));
-    var actions = node('div', 'tw-actions'); actions.append(button('Record actual fill', 'trade-record-fill', function () { openFill('', 'buy'); }, true), button('Import fills', 'trade-import-open', function () { importOpen = !importOpen; manualOpen = false; paintBody(); })); panel.append(actions);
-    if (manualOpen) panel.append(fillForm()); if (importOpen) panel.append(importForm());
-    var d = derived(), s = state(), brokerPositions = list(d.broker_positions);
-    if (list(d.reconciliation).length) { var warnings = node('section', 'tw-reconciliation'); warnings.id = 'trade-reconciliation'; warnings.append(node('h4', '', 'Reconcile before relying on totals.')); list(d.reconciliation).forEach(function (r) { warnings.append(small((r.symbol ? r.symbol + ' · ' : '') + (r.environment === 'paper' ? 'Paper · ' : 'Live · ') + r.reason)); }); panel.append(warnings); }
+    var d = derived(), brokerPositions = list(d.broker_positions);
+    panel.append(sectionHeading('', 'What you own', 'Only actual fills count. Tap a holding to see its details.'));
+    if (list(d.reconciliation).length) { var warnings = node('section', 'tw-reconciliation'); warnings.id = 'trade-reconciliation'; warnings.append(node('h4', '', 'Check these records first')); list(d.reconciliation).forEach(function (r) { warnings.append(small((r.symbol ? r.symbol + ' · ' : '') + (r.environment === 'paper' ? 'Paper · ' : 'Live · ') + r.reason)); }); panel.append(warnings); }
     if (brokerError) panel.append(node('p', 'tw-warning', brokerError + ' Broker values below are the last saved snapshot.'));
+    if (manualOpen) { panel.append(fillForm()); return; }
+    if (importOpen) { panel.append(importForm()); return; }
+    var actions = node('div', 'tw-actions tw-tracker-actions'); actions.append(button('Record a trade', 'trade-record-fill', function () { openFill('', 'buy'); }, true), button('Import fills', 'trade-import-open', function () { importOpen = true; manualOpen = false; paintBody(); focus('trade-import-file'); }));
+    if (broker.connected) actions.append(button('Refresh account', 'trade-refresh-holdings', function () { refreshBroker(true); })); panel.append(actions);
     var pending = list(portfolio && portfolio.pending_orders); if (pending.length || list(portfolio && portfolio.unresolved).length || broker.state === 'reconciliation_needed') {
-      var orderBox = node('section', 'tw-order-list tw-surface'); orderBox.id = 'trade-pending-orders'; orderBox.append(node('h4', '', 'Orders in progress'));
-      pending.forEach(function (o) { var item = node('div', 'tw-pending-order'); item.append(node('strong', '', (o.symbol || 'Order') + ' · ' + String(o.status || 'status unknown').replace(/_/g, ' ')), small(number(Number(o.filled_qty || 0)) + ' filled of ' + number(Number(o.qty)) + ' shares'));
-        if (o.status === 'partially_filled') item.append(node('p', 'tw-warning', 'Partial fill. The attached stop may not activate until the entry fills completely.'));
-        var legs = list(o.legs); if (legs.length) legs.forEach(function (leg) { item.append(small('Attached ' + (leg.type || 'exit') + ' · ' + String(leg.status || 'status unknown').replace(/_/g, ' '))); }); else item.append(small('Attached stop status is not confirmed in this order response.'));
-        orderBox.append(item);
+      var orderBox = node('section', 'tw-order-list tw-tracker-pending'); orderBox.id = 'trade-pending-orders'; orderBox.append(node('h4', '', 'Orders still in progress'));
+      pending.forEach(function (o, i) {
+        var item = trackerRow('order:' + (o.id || i), o.symbol || 'Order', String(o.status || 'status unknown').replace(/_/g, ' '), number(Number(o.filled_qty || 0)) + ' / ' + number(Number(o.qty)), 'shares filled');
+        if (o.status === 'partially_filled') { item.row.dataset.attention = 'true'; orderBox.append(node('p', 'tw-warning', (o.symbol || 'Order') + ': partial fill. The attached stop may not activate until the entry fills completely.')); }
+        var legs = list(o.legs); if (legs.length) legs.forEach(function (leg) { item.body.append(small('Attached ' + (leg.type || 'exit') + ' · ' + String(leg.status || 'status unknown').replace(/_/g, ' '))); }); else item.body.append(small('A working attached stop is not confirmed by this response.')); orderBox.append(item.row);
       });
-      if (broker.state === 'reconciliation_needed' || list(portfolio && portfolio.unresolved).length) orderBox.append(node('p', 'tw-warning', 'An order result needs reconciliation. Refresh account activity before attempting another order.'));
+      if (broker.state === 'reconciliation_needed' || list(portfolio && portfolio.unresolved).length) orderBox.append(node('p', 'tw-warning', 'An order result is uncertain. Refresh account activity before another order.'));
       if (broker.connected) orderBox.append(button('Reconcile account', 'trade-reconcile-account', function () { refreshBroker(true); })); panel.append(orderBox);
     }
-    var positions = node('div', 'tw-position-list'); positions.id = 'trade-positions-list';
+    var positions = node('div', 'tw-tracker-list'); positions.id = 'trade-positions-list';
     brokerPositions.forEach(function (p) {
-      var card = node('article', 'tw-position-card'); card.dataset.tradePosition = p.symbol; card.append(node('p', 'tw-eyebrow', (p.environment === 'paper' ? 'PAPER' : 'LIVE') + ' / BROKER HOLDING'), node('h4', '', p.symbol));
-      var dl = node('dl', 'tw-position-metrics'); dl.append(metric('Broker shares', number(p.qty)), metric('Average entry', money(p.avg_entry_price)), metric('Broker market value', money(p.market_value)), metric('Snapshot price', money(p.current_price))); card.append(dl, small('Account ' + accountLabel(p.account_id) + ' · snapshot ' + time(p.as_of)));
-      card.append(small('Review active exit orders at your broker. A recorded stop price does not confirm a working stop order.')); positions.append(card);
+      var item = trackerRow('broker:' + p.environment + ':' + p.account_id + ':' + p.symbol, p.symbol, (p.environment === 'paper' ? 'Paper' : 'Live') + ' · broker holding', number(p.qty), 'shares'); item.row.dataset.tradePosition = p.symbol;
+      var dl = node('dl', 'tw-tracker-metrics'); dl.append(metric('Average entry', money(p.avg_entry_price)), metric('Snapshot value', money(p.market_value)), metric('Snapshot price', money(p.current_price))); item.body.append(dl, small('Account ' + accountLabel(p.account_id) + ' · snapshot ' + time(p.as_of)), small('Check active exit orders at your broker. A recorded stop does not confirm a working stop order.')); positions.append(item.row);
     });
     list(d.positions).filter(function (p) { return p.source !== 'alpaca' || !brokerPositions.some(function (b) { return b.symbol === p.symbol && b.account_id === p.account_id && b.environment === p.environment; }); }).forEach(function (p) {
-      var card = node('article', 'tw-position-card'); card.dataset.tradePosition = p.symbol; card.append(node('p', 'tw-eyebrow', (p.environment === 'paper' ? 'PAPER' : 'LIVE') + ' / ' + (p.source === 'manual' ? 'CONFIRMED BY YOU' : 'RECORDED EXECUTIONS')), node('h4', '', p.symbol));
-      var dl = node('dl', 'tw-position-metrics'); dl.append(metric('Recorded shares', number(p.qty)), metric('Average entry', money(p.average_entry)), metric('Original planned risk', p.uncertain ? 'Needs reconciliation' : money(p.initial_risk))); card.append(dl);
-      card.append(small('Opened ' + time(p.opened_at) + ' · ' + recordedSessions(p.opened_at) + ' recorded sessions since entry.'));
-      if (p.uncertain) card.append(node('p', 'tw-warning', 'This record needs reconciliation before you rely on its exposure or return.'));
-      else card.append(small('Entry cost only. No current market price or working stop is implied.'));
-      if (p.source === 'manual') card.append(button('Record a sell fill', null, function () { openFill(p.symbol, 'sell', null, p.environment); })); positions.append(card);
+      var item = trackerRow('holding:' + p.source + ':' + p.environment + ':' + p.account_id + ':' + p.symbol, p.symbol, (p.environment === 'paper' ? 'Paper' : 'Live') + ' · ' + (p.uncertain ? 'Check record' : p.source === 'manual' ? 'Confirmed by you' : 'Recorded executions'), number(p.qty), 'recorded shares'); item.row.dataset.tradePosition = p.symbol;
+      var dl = node('dl', 'tw-tracker-metrics'); dl.append(metric('Average entry', money(p.average_entry)), metric('Original planned risk', p.uncertain ? 'Needs reconciliation' : money(p.initial_risk))); item.body.append(dl, small('Opened ' + time(p.opened_at) + ' · ' + recordedSessions(p.opened_at) + ' recorded sessions since entry.'));
+      if (p.uncertain) { item.row.dataset.attention = 'true'; item.body.append(node('p', 'tw-warning', 'Reconcile this record before relying on its exposure or return.')); }
+      else item.body.append(small('Recorded entry cost. No live price or working stop is implied.'));
+      if (p.source === 'manual') item.body.append(button('Record a sell fill', null, function () { openFill(p.symbol, 'sell', null, p.environment); })); positions.append(item.row);
     });
-    if (!positions.childNodes.length) positions.append(empty('Your first fill belongs here.', 'After a trade executes, record the actual shares, price and time, or import its execution record. Paper trading stays separate from live money.'));
-    panel.append(positions);
-    var plans = node('details', 'tw-saved-plans tw-details'); plans.open = !positions.querySelector('[data-trade-position]'); plans.id = 'trade-saved-plans'; plans.append(node('summary', '', 'Saved plans · ' + list(s.plans).filter(function (p) { return p.status !== 'canceled'; }).length));
-    list(s.plans).slice().reverse().forEach(function (p) { var card = node('div', 'tw-saved-plan'); card.dataset.tradePlanId = p.id; card.append(node('strong', '', p.symbol + ' · ' + p.status), small(number(p.qty, 0) + ' intended shares · entry ' + money(p.entry) + ' · stop ' + money(p.stop)), small('Evidence session ' + p.snapshot_date + '. ' + (p.status === 'submitted' ? 'Check actual fills above.' : 'This is not a position.')));
-      var a = node('div', 'tw-actions'); if (['draft', 'prepared'].indexOf(p.status) >= 0) { a.append(button('Open plan', null, function () { editPlan(p); }), button('Record actual fill', null, function () { openFill(p.symbol, 'buy', p.id); }));
-        var cancel = node('details', 'tw-inline-confirm'); cancel.append(node('summary', '', 'Cancel plan')); cancel.append(small('Keep the record and mark this unsubmitted plan as canceled?')); cancel.append(button('Confirm cancel plan', null, function () { if (mutate(engine().savePlan(Object.assign({}, p, { status: 'canceled' })), 'Plan canceled. Its record is retained.')) paintBody(); })); card.append(cancel); }
-      if (a.childNodes.length) card.append(a); plans.append(card);
-    });
-    if (!s.plans.length) plans.append(small('Plans you explicitly save will appear here.')); panel.append(plans);
+    if (!positions.childNodes.length) positions.append(empty('Your first trade goes here.', 'After your broker fills a trade, record its shares, price and time. Live and paper money stay separate.')); panel.append(positions);
   }
   function accountLabel(id) { return typeof id === 'string' && id !== 'local' ? '…' + id.slice(-6) : 'manual record'; }
   function recordedSessions(stamp) { var day = typeof stamp === 'string' ? stamp.slice(0, 10) : ''; var dates = list(data && data.runs).filter(function (r) { return r && r.type === 'evening' && r.dry_run !== true && r.fixture !== true && safeDate(r.date) && r.date > day; }).map(function (r) { return r.date; }); var run = data && data.run; if (run && run.type === 'evening' && run.dry_run !== true && run.fixture !== true && safeDate(run.date) && run.date > day) dates.push(run.date); return new Set(dates).size; }
-  function editPlan(p) { selected = null; editingPlan = p.id; draft = { symbol: p.symbol, entry: String(p.entry), stop: String(p.stop), note: '' }; planVisible = true; preview = null; activeTab = 'today'; paintTabs(); paintBody(); focus('trade-entry'); }
-  function openFill(symbol, side, planId, environment) { fillDraft = { symbol: symbol || '', side: side || 'buy', environment: environment || '', qty: '', price: '', executed_at: '', fees: '', initial_stop: '', execution_id: '', plan_id: planId || null, confirmed: false }; manualOpen = true; importOpen = false; activeTab = 'positions'; paintTabs(); paintBody(); focus(symbol ? 'trade-fill-qty' : 'trade-fill-symbol'); }
+  function editPlan(p) { var s = measured(); selected = list(s && s.scan && s.scan.rows).concat(list(s && s.anticipation && s.anticipation.rows)).find(function (r) { return r.ticker === p.symbol && r.date === p.snapshot_date; }) || null; editingPlan = p.id; draft = { symbol: p.symbol, entry: String(p.entry), stop: String(p.stop), note: '' }; planVisible = true; preview = null; showTab('today'); focus('trade-entry'); }
+
+  function openFill(symbol, side, planId, environment) { fillDraft = { symbol: symbol || '', side: side || 'buy', environment: environment || '', qty: '', price: '', executed_at: '', fees: '', initial_stop: '', execution_id: '', plan_id: planId || null, confirmed: false }; manualOpen = true; importOpen = false; showTab('positions'); focus(symbol ? 'trade-fill-qty' : 'trade-fill-symbol'); }
+
   function fillForm() {
-    var form = node('form', 'tw-fill-form tw-surface'); form.id = 'trade-fill-form'; form.append(sectionHeading('ACTUAL EXECUTION', 'What filled in your account?', 'Enter the broker’s completed execution. Keep intended prices in the plan.'));
-    if (fillDraft.plan_id) { var p = list(state().plans).find(function (r) { return r.id === fillDraft.plan_id; }); if (p) form.append(small('Linked plan: ' + number(p.qty, 0) + ' intended shares at ' + money(p.entry) + ', initial planned stop ' + money(p.stop) + '. Confirm the actual values below.')); }
-    var fields = node('div', 'tw-fields'); fields.append(field('Symbol', 'trade-fill-symbol', { type: 'text', maxlength: '15', autocomplete: 'off', required: '' }, fillDraft.symbol, function (v) { fillDraft.symbol = v.toUpperCase(); }));
-    fields.append(selectField('Execution side', 'trade-fill-side', [['buy', 'Buy'], ['sell', 'Sell']], fillDraft.side, function (v) { fillDraft.side = v; }));
-    fields.append(selectField('Account environment', 'trade-fill-environment', [['', 'Choose your account'], ['live', 'Live · real money'], ['paper', 'Paper · simulated money']], fillDraft.environment, function (v) { fillDraft.environment = v; }));
-    [['Actual shares', 'qty', 'trade-fill-qty'], ['Actual fill price ($)', 'price', 'trade-fill-price'], ['Fees ($, leave blank if unknown)', 'fees', 'trade-fill-fees'], ['Original stop ($, optional for buy)', 'initial_stop', 'trade-fill-stop']].forEach(function (v) { fields.append(field(v[0], v[2], { type: 'number', min: '0', step: 'any', inputmode: 'decimal' }, fillDraft[v[1]], function (x) { fillDraft[v[1]] = x; })); });
-    fields.append(field('Execution time (your local time)', 'trade-fill-time', { type: 'datetime-local', required: '', step: '1' }, fillDraft.executed_at, function (v) { fillDraft.executed_at = v; }));
-    fields.append(field('Execution ID (optional)', 'trade-fill-execution', { type: 'text', maxlength: '180', autocomplete: 'off' }, fillDraft.execution_id, function (v) { fillDraft.execution_id = v; })); form.append(fields);
-    var confirmation = node('label', 'tw-checkbox'); var check = node('input'); check.type = 'checkbox'; check.id = 'trade-fill-confirm'; check.checked = fillDraft.confirmed; check.required = true; check.addEventListener('change', function () { fillDraft.confirmed = check.checked; }); confirmation.append(check, node('span', '', 'I checked the actual symbol, side, shares, fill price, execution time and account environment.')); form.append(confirmation);
-    var actions = node('div', 'tw-actions'), save = node('button', 'tw-button tw-button--primary', 'Record confirmed fill'); save.type = 'submit'; save.id = 'trade-save-fill'; actions.append(save, button('Cancel', 'trade-cancel-fill', function () { manualOpen = false; paintBody(); })); form.append(actions);
+    var form = node('form', 'tw-fill-form tw-tracker-form'); form.id = 'trade-fill-form'; form.append(sectionHeading('', 'Record a completed trade', 'Copy the actual execution from your broker.'));
+    if (fillDraft.plan_id) { var p = list(state().plans).find(function (r) { return r.id === fillDraft.plan_id; }); if (p) form.append(small('Linked plan: ' + number(p.qty, 0) + ' shares at ' + money(p.entry) + ', stop ' + money(p.stop) + '. Enter the actual fill below.')); }
+    var fields = node('div', 'tw-fields');
+    fields.append(field('Symbol', 'trade-fill-symbol', { type: 'text', maxlength: '15', autocomplete: 'off', required: '' }, fillDraft.symbol, function (v) { fillDraft.symbol = v.toUpperCase(); }));
+    fields.append(selectField('Bought or sold?', 'trade-fill-side', [['buy', 'Bought'], ['sell', 'Sold']], fillDraft.side, function (v) { fillDraft.side = v; }));
+    fields.append(selectField('Which account?', 'trade-fill-environment', [['', 'Choose account'], ['live', 'Live · real money'], ['paper', 'Paper · practice']], fillDraft.environment, function (v) { fillDraft.environment = v; })); fields.querySelector('#trade-fill-environment').required = true;
+    [['Shares filled', 'qty', 'trade-fill-qty'], ['Fill price ($)', 'price', 'trade-fill-price']].forEach(function (v) { fields.append(field(v[0], v[2], { type: 'number', min: '0', step: 'any', inputmode: 'decimal', required: '' }, fillDraft[v[1]], function (x) { fillDraft[v[1]] = x; })); });
+    fields.append(field('When did it fill? (local time)', 'trade-fill-time', { type: 'datetime-local', required: '', step: '1' }, fillDraft.executed_at, function (v) { fillDraft.executed_at = v; })); form.append(fields);
+    var extra = node('details', 'tw-details'); extra.append(node('summary', '', 'Fees, original stop & execution ID (optional)'));
+    var optional = node('div', 'tw-fields'); [['Fees ($, blank if unknown)', 'fees', 'trade-fill-fees'], ['Original stop ($, for buys)', 'initial_stop', 'trade-fill-stop']].forEach(function (v) { optional.append(field(v[0], v[2], { type: 'number', min: '0', step: 'any', inputmode: 'decimal' }, fillDraft[v[1]], function (x) { fillDraft[v[1]] = x; })); });
+    optional.append(field('Execution ID', 'trade-fill-execution', { type: 'text', maxlength: '180', autocomplete: 'off' }, fillDraft.execution_id, function (v) { fillDraft.execution_id = v; })); extra.append(optional, small('Known fees make after-fee results available. The original stop enables results measured against planned risk.')); form.append(extra);
+    var confirmation = node('label', 'tw-checkbox'); var check = node('input'); check.type = 'checkbox'; check.id = 'trade-fill-confirm'; check.checked = fillDraft.confirmed; check.required = true; check.addEventListener('change', function () { fillDraft.confirmed = check.checked; }); confirmation.append(check, node('span', '', 'I checked the symbol, side, shares, price, time and account against the actual fill.')); form.append(confirmation);
+    var actions = node('div', 'tw-actions'), save = node('button', 'tw-button tw-button--primary', 'Save actual fill'); save.type = 'submit'; save.id = 'trade-save-fill'; actions.append(save, button('Cancel', 'trade-cancel-fill', function () { manualOpen = false; paintBody(); focus('trade-record-fill'); })); form.append(actions);
     form.addEventListener('submit', function (e) {
       e.preventDefault(); var stamp = new Date(fillDraft.executed_at); if (!Number.isFinite(stamp.getTime())) { announce('Enter the actual execution date and local time.'); return; }
       var values = { symbol: fillDraft.symbol, side: fillDraft.side, qty: fillDraft.qty, price: fillDraft.price, executed_at: stamp.toISOString(), initial_stop: fillDraft.initial_stop === '' ? null : Number(fillDraft.initial_stop), fees: fillDraft.fees === '' ? null : Number(fillDraft.fees), source: 'manual', environment: fillDraft.environment, account_id: 'local', plan_id: fillDraft.plan_id, confirmed: fillDraft.confirmed };
       if (fillDraft.execution_id.trim()) values.execution_id = fillDraft.execution_id.trim();
-      if (mutate(engine().recordFill(values), 'Actual fill recorded. Positions now reflect the execution.')) { manualOpen = false; fillDraft = {}; paintStatus(); paintBody(); focus('trade-tab-positions'); }
+      if (mutate(engine().recordFill(values), 'Fill saved. Your holdings are updated.')) { manualOpen = false; fillDraft = {}; paintStatus(); paintBody(); focus('trade-tab-positions'); }
     }); return form;
   }
   function download(name, contents, mime) { var url = URL.createObjectURL(new Blob([contents], { type: mime })); var a = node('a'); a.href = url; a.download = name; document.body.append(a); a.click(); a.remove(); window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000); }
   function importForm() {
-    var box = node('section', 'tw-import tw-surface'); box.id = 'trade-import'; box.append(sectionHeading('BRING YOUR FILLS', 'Review first. Import once.', 'Use the execution CSV template or a SpicyStock JSON backup. Duplicate execution IDs are checked before anything changes.'));
-    var wrap = node('div', 'tw-field'), label = node('label', '', 'Choose a CSV or JSON file'), file = node('input'); file.id = 'trade-import-file'; file.type = 'file'; file.accept = '.csv,.json,text/csv,application/json'; label.htmlFor = file.id; wrap.append(label, file); box.append(wrap);
-    file.addEventListener('change', async function () { var selectedFile = file.files && file.files[0]; if (!selectedFile) return; if (selectedFile.size > 8000000) { announce('Choose a file smaller than 8 MB.'); return; } try { var text = await selectedFile.text(); importPreview = engine().previewImport(text, /\.csv$/i.test(selectedFile.name) ? 'csv' : 'json'); paintImportPreview(); } catch (_) { announce('This file could not be read.'); } });
-    var actions = node('div', 'tw-actions'); actions.append(button('Download CSV template', 'trade-import-template', function () { download('spicystock-executions-template.csv', engine().csvColumns.join(',') + '\r\n', 'text/csv'); }), button('Preview previous journal', 'trade-import-legacy', function () { importPreview = engine().previewLegacy(); paintImportPreview(); })); box.append(actions);
-    var previewBox = node('div'); previewBox.id = 'trade-import-preview'; previewBox.setAttribute('aria-live', 'polite'); box.append(previewBox); window.setTimeout(function () { if (box.isConnected) paintImportPreview(); }, 0); return box;
+    var box = node('section', 'tw-import tw-tracker-form'); box.id = 'trade-import'; box.append(sectionHeading('', 'Bring in your trades', 'Choose an execution CSV or SpicyStock backup. Review it before saving.'));
+    var wrap = node('div', 'tw-field'), label = node('label', '', 'CSV or JSON file'), file = node('input'); file.id = 'trade-import-file'; file.type = 'file'; file.accept = '.csv,.json,text/csv,application/json'; label.htmlFor = file.id; wrap.append(label, file); box.append(wrap);
+    file.addEventListener('change', async function () { var selectedFile = file.files && file.files[0]; if (!selectedFile) return; importPreview = null; paintImportPreview(); if (selectedFile.size > 8000000) { announce('Choose a file smaller than 8 MB.'); return; } try { var text = await selectedFile.text(); importPreview = engine().previewImport(text, /\.csv$/i.test(selectedFile.name) ? 'csv' : 'json'); paintImportPreview(); } catch (_) { announce('This file could not be read.'); } });
+    var help = node('details', 'tw-details'); help.append(node('summary', '', 'Need a template or your old journal?')); var actions = node('div', 'tw-actions'); actions.append(button('CSV template', 'trade-import-template', function () { download('spicystock-executions-template.csv', engine().csvColumns.join(',') + '\r\n', 'text/csv'); }), button('Preview previous journal', 'trade-import-legacy', function () { importPreview = engine().previewLegacy(); paintImportPreview(); })); help.append(actions); box.append(help);
+    var previewBox = node('div'); previewBox.id = 'trade-import-preview'; previewBox.setAttribute('aria-live', 'polite'); box.append(previewBox);
+    box.append(button('Back to holdings', 'trade-import-cancel', function () { importOpen = false; importPreview = null; paintBody(); focus('trade-import-open'); })); window.setTimeout(function () { if (box.isConnected) paintImportPreview(); }, 0); return box;
   }
   function paintImportPreview() {
     var box = host.querySelector('#trade-import-preview'); if (!box) return; box.replaceChildren(); if (!importPreview) return;
-    var p = importPreview, counts = p.counts || {}; box.append(node('h4', '', p.ok ? 'Ready for your confirmation.' : 'Resolve these rows first.'), small(number(counts.fills || 0, 0) + ' new fills · ' + number(counts.plans || 0, 0) + ' plans · ' + number(counts.duplicates || 0, 0) + ' duplicate executions skipped.'));
+    var p = importPreview, counts = p.counts || {}; box.append(node('h4', '', p.ok ? 'Ready to save?' : 'A few rows need fixing'), small(number(counts.fills || 0, 0) + ' new fills · ' + number(counts.plans || 0, 0) + ' plans · ' + number(counts.duplicates || 0, 0) + ' duplicate executions skipped.'));
     list(p.errors).forEach(function (e) { box.append(node('p', 'tw-warning', e)); }); list(p.warnings).forEach(function (e) { box.append(small(e)); });
     var items = node('ul', 'tw-import-rows'); list(p.rows).slice(0, 8).forEach(function (r) { items.append(node('li', '', (r.environment === 'paper' ? 'Paper' : 'Live') + ' · ' + r.symbol + ' · ' + r.side + ' ' + number(r.qty) + ' at ' + money(r.price) + ' · ' + time(r.executed_at))); }); box.append(items);
     if (list(p.rows).length > 8) box.append(small('Showing the first 8 of ' + p.rows.length + ' execution rows.'));
     if (p.ok) box.append(button('Confirm import', 'trade-import-confirm', function () { var result = engine().commitImport(importPreview); if (mutate(result, 'Import complete. ' + (result.added || 0) + ' fills added; ' + (result.duplicates || 0) + ' duplicates skipped.')) { importPreview = null; importOpen = false; paintStatus(); paintBody(); } }, true));
   }
   function paintActivity() {
-    var d = derived(), s = state(); panel.append(sectionHeading('THE RECORD', 'A receipt for every decision.', 'Plans, executions and corrections retain their provenance. Performance uses matched actual fills.'));
-    var actions = node('div', 'tw-actions'); actions.append(button('Export full backup', 'trade-export-json', function () { download('spicystock-trade-record.json', engine().exportJSON(), 'application/json'); }), button('Export execution CSV', 'trade-export-csv', function () { download('spicystock-executions.csv', engine().exportCSV(), 'text/csv'); })); panel.append(actions);
-    var totals = node('div', 'tw-outcomes'); totals.id = 'trade-performance'; ['live', 'paper'].forEach(function (env) { var values = d.totals[env], count = list(d.closed).filter(function (r) { return r.environment === env; }).length; var box = node('section', 'tw-outcome tw-surface'); box.append(node('p', 'tw-eyebrow', env === 'live' ? 'LIVE MONEY / MATCHED EXITS' : 'PAPER MONEY / MATCHED EXITS')); var stats = node('dl', 'tw-result-metrics'); stats.append(metric('Realized P/L before fees', count ? money(values.realized_gross) : 'No matched exits'), metric('Realized P/L after fees', count ? money(values.realized_net) : 'No matched exits')); box.append(stats, small(count + ' matched exit lots · partial exits match earlier buys first. Unknown fees or missing history keep affected totals unavailable.')); totals.append(box); }); panel.append(totals);
-    var exits = node('div', 'tw-exits'); exits.id = 'trade-closed-exits'; list(d.closed).slice().reverse().slice(0, 40).forEach(function (r) { var row = node('article', 'tw-exit'); row.append(node('strong', '', r.symbol + ' · ' + (r.environment === 'paper' ? 'Paper' : 'Live') + ' matched exit'), small(number(r.qty) + ' shares · ' + money(r.entry) + ' → ' + money(r.exit)), node('p', 'tw-exit-result', money(r.profit) + ' gross · ' + (finite(r.r) ? r.r.toFixed(2) + 'R on original risk' : 'R unavailable')), small(time(r.exited_at))); exits.append(row); }); panel.append(exits);
-    var ledger = node('div', 'tw-execution-list'); ledger.id = 'trade-execution-list'; ledger.append(node('h4', '', 'Execution history'));
+    var d = derived(), s = state(); panel.append(sectionHeading('', 'Your trade history', 'Real results from matched fills. Live and paper money stay separate.'));
+    var totals = node('div', 'tw-tracker-totals'); totals.id = 'trade-performance'; ['live', 'paper'].forEach(function (env) {
+      var values = d.totals[env], count = list(d.closed).filter(function (r) { return r.environment === env; }).length;
+      var box = node('section', 'tw-tracker-total'); box.append(node('p', 'tw-eyebrow', env === 'live' ? 'Live money' : 'Paper money'), node('strong', 'tw-tracker-total-value', count ? money(values.realized_net) : '—'), small(count ? 'Realized P/L after fees' : 'No completed exits'));
+      var detail = node('details', 'tw-details'); detail.append(node('summary', '', 'How this is measured')); detail.append(small('Before fees: ' + (count ? money(values.realized_gross) : 'No matched exits') + '. ' + count + ' matched exit lots. Earlier buys match first. Missing fees or history keep affected totals unavailable.')); box.append(detail); totals.append(box);
+    }); panel.append(totals);
+    var exits = node('details', 'tw-details tw-tracker-exits'); exits.append(node('summary', '', 'Completed exits · ' + list(d.closed).length)); var exitList = node('div', 'tw-tracker-list'); exitList.id = 'trade-closed-exits';
+    list(d.closed).slice().reverse().slice(0, 40).forEach(function (r, i) { var item = trackerRow('exit:' + i + ':' + r.symbol + ':' + r.exited_at, r.symbol, (r.environment === 'paper' ? 'Paper' : 'Live') + ' · ' + number(r.qty) + ' shares', money(r.profit), 'before fees'); var dl = node('dl', 'tw-tracker-metrics'); dl.append(metric('Entry', money(r.entry)), metric('Exit', money(r.exit)), metric('Return on original risk', finite(r.r) ? r.r.toFixed(2) + 'R' : 'Not available')); item.body.append(dl, small(time(r.exited_at))); exitList.append(item.row); });
+    if (!list(d.closed).length) exitList.append(small('Completed exits will appear after a sell fill matches an earlier buy.')); if (list(d.closed).length > 40) exitList.append(small('Showing the latest 40 matched exits. Your backup contains the complete execution record.')); exits.append(exitList); panel.append(exits);
+    var ledger = node('div', 'tw-tracker-list'); ledger.id = 'trade-execution-list'; ledger.append(node('h4', 'tw-tracker-label', 'Recorded fills'));
     var voids = new Set(list(s.voids).map(function (v) { return v.fill_id; }));
     list(s.fills).slice().sort(function (a, b) { return String(b.executed_at).localeCompare(String(a.executed_at)); }).slice(0, 100).forEach(function (f) {
-      var row = node('article', 'tw-execution'); row.dataset.tradeExecution = f.execution_id; var corrected = voids.has(f.id); row.append(node('p', 'tw-eyebrow', (f.environment === 'paper' ? 'PAPER' : 'LIVE') + ' / ' + (f.source === 'manual' ? 'CONFIRMED BY YOU' : 'BROKER EXECUTION') + (corrected ? ' / CORRECTED' : '')));
-      row.append(node('strong', '', f.symbol + ' · ' + f.side + ' ' + number(f.qty) + ' at ' + money(f.price)), small(time(f.executed_at) + ' · execution ' + f.execution_id));
-      if (f.source === 'manual' && !corrected) { var details = node('details', 'tw-inline-confirm'); details.append(node('summary', '', 'Correct this record')); details.append(small('The original stays in your history and is excluded from totals. Record a replacement afterward if needed.')); var reason = field('Why is this execution incorrect?', 'trade-correct-' + f.id.replace(/[^a-zA-Z0-9-]/g, '').slice(-60), { type: 'text', maxlength: '500' }, '', null); details.append(reason); details.append(button('Confirm correction', null, function () { if (mutate(engine().voidFill(f.id, { confirmed: true, reason: reason.querySelector('input').value }), 'Execution marked as corrected. The original record is retained.')) { paintStatus(); paintBody(); } })); row.append(details); }
-      ledger.append(row);
+      var corrected = voids.has(f.id), item = trackerRow('fill:' + f.id, f.symbol, (f.environment === 'paper' ? 'Paper' : 'Live') + ' · ' + (f.side === 'buy' ? 'Bought ' : 'Sold ') + number(f.qty) + (corrected ? ' · Corrected' : ''), money(f.price), 'fill price'); item.row.dataset.tradeExecution = f.execution_id;
+      item.body.append(small((f.source === 'manual' ? 'Confirmed by you' : 'Broker execution') + ' · ' + time(f.executed_at)), small('Execution ' + f.execution_id + ' · account ' + accountLabel(f.account_id)));
+      if (corrected) item.body.append(small('Corrected record. Retained in history and excluded from totals.'));
+      if (f.source === 'manual' && !corrected) { var details = node('details', 'tw-inline-confirm'); details.append(node('summary', '', 'Correct this record'), small('The original stays in history and is excluded from totals. Record a replacement afterward if needed.')); var reason = field('What is incorrect?', 'trade-correct-' + f.id.replace(/[^a-zA-Z0-9-]/g, '').slice(-60), { type: 'text', maxlength: '500' }, '', null); details.append(reason); details.append(button('Confirm correction', null, function () { if (mutate(engine().voidFill(f.id, { confirmed: true, reason: reason.querySelector('input').value }), 'Execution marked as corrected. The original record is retained.')) { paintStatus(); paintBody(); } })); item.body.append(details); } ledger.append(item.row);
     });
-    if (!s.fills.length) ledger.append(empty('An empty record is an honest start.', 'Confirmed fills will appear here with their account environment, source and execution time. No hypothetical gains are added to your results.'));
-    if (s.fills.length > 100) ledger.append(small('Showing the latest 100 executions. Export your full backup for the complete record.')); panel.append(ledger);
+    if (!s.fills.length) ledger.append(empty('A clean start.', 'Your confirmed trades will appear here. Record your first fill in Holdings.'));
+    if (s.fills.length > 100) ledger.append(small('Showing the latest 100 executions. Export a backup for the full record.')); panel.append(ledger);
+    var tools = node('details', 'tw-details'); tools.append(node('summary', '', 'Export & backup')); var actions = node('div', 'tw-actions'); actions.append(button('Full backup (JSON)', 'trade-export-json', function () { download('spicystock-trade-record.json', engine().exportJSON(), 'application/json'); }), button('Execution CSV', 'trade-export-csv', function () { download('spicystock-executions.csv', engine().exportCSV(), 'text/csv'); })); tools.append(actions, small('Use a full backup to move this record to another browser or device.')); panel.append(tools);
   }
   function bridgeFailure(result) { return result && result.error && result.error.message || 'The broker service could not complete this request.'; }
   async function connect(mode) { if (!window.SCTradeBridge || busy) return; busy = true; try { var r = await window.SCTradeBridge.connect(mode); if (!r.ok) announce(bridgeFailure(r)); } finally { busy = false; } }
@@ -376,11 +542,20 @@
   }
   function render(d) {
     host = document.getElementById('trade-workspace'); if (!host) return; data = d || {}; engine().load(); host.hidden = false; host.classList.add('trade-workspace'); host.replaceChildren();
+    if (tracker && tracker.open) tracker.close(); document.documentElement.classList.remove('tw-modal-open'); activeTab = 'today';
+    var navigation = node('nav', 'tw-desk-nav'); navigation.setAttribute('aria-label', 'Trading workspace');
+    navigation.append(button('Trading desk', 'trade-nav-desk', function () { showTab('today'); focus('trade-market-title'); }), button('Research studio ↗', 'trade-nav-research', function () { openResearch('research-report'); }), button('My tracker', 'trade-nav-tracker', function () { showTab('positions'); }), button('My limits', 'trade-nav-limits', showProfile)); host.append(navigation);
     statusPanel = node('section', 'tw-today-status'); statusPanel.id = 'trade-today-status'; host.append(statusPanel);
-    var tabs = node('div', 'tw-tabs'); tabs.setAttribute('role', 'tablist'); tabs.setAttribute('aria-label', 'Your trading desk'); tabs.append(tabButton('today', 'Today'), tabButton('positions', 'Positions'), tabButton('activity', 'Activity'));
-    tabs.addEventListener('keydown', function (event) { if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return; event.preventDefault(); var names = ['today', 'positions', 'activity'], at = names.indexOf(activeTab); var next = event.key === 'Home' ? 0 : event.key === 'End' ? 2 : (at + (event.key === 'ArrowRight' ? 1 : -1) + 3) % 3; showTab(names[next], true); }); host.append(tabs);
     notice = node('p', 'tw-notice', message); notice.id = 'trade-notice'; notice.setAttribute('role', 'status'); notice.setAttribute('aria-live', 'polite'); host.append(notice);
-    panel = node('div', 'tw-panel'); panel.id = 'trade-panel'; panel.setAttribute('role', 'tabpanel'); host.append(panel); paintTabs(); paintStatus(); paintBody();
+    homePanel = node('div', 'tw-panel'); homePanel.id = 'trade-panel'; host.append(homePanel); panel = homePanel;
+    tracker = node('dialog', 'tw-tracker'); tracker.id = 'trade-tracker'; tracker.setAttribute('aria-labelledby', 'trade-tracker-title');
+    var heading = node('div', 'tw-tracker-heading'); var titles = node('div'); titles.append(node('p', 'tw-eyebrow', '03 / LOG & TRACK'), elId(node('h2', '', 'My tracker'), 'trade-tracker-title')); heading.append(titles, button('Close', 'trade-close-tracker', function () { tracker.close(); })); tracker.append(heading);
+    var tabs = node('div', 'tw-tabs'); tabs.setAttribute('role', 'tablist'); tabs.setAttribute('aria-label', 'My tracker'); tabs.append(tabButton('positions', 'Holdings'), tabButton('plans', 'Plans'), tabButton('activity', 'History'));
+    tabs.addEventListener('keydown', function (event) { if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return; event.preventDefault(); var names = ['positions', 'plans', 'activity'], at = names.indexOf(activeTab); var next = event.key === 'Home' ? 0 : event.key === 'End' ? 2 : (at + (event.key === 'ArrowRight' ? 1 : -1) + 3) % 3; showTab(names[next], true); }); tracker.append(tabs);
+    trackerMount = node('div', 'tw-panel tw-tracker-panel'); trackerMount.id = 'trade-tracker-panel'; trackerMount.setAttribute('role', 'tabpanel'); tracker.append(trackerMount); host.append(tracker);
+    tracker.addEventListener('close', function () { if (tracker.open) return; document.documentElement.classList.remove('tw-modal-open'); if (activeTab !== 'today') { activeTab = 'today'; panel = homePanel; host.insertBefore(notice, homePanel); paintStatus(); if (returnFocus && returnFocus.isConnected) returnFocus.focus({ preventScroll: true }); else { var opener = host.querySelector('#trade-open-tracker') || host.querySelector('#trade-next-action'); if (opener) opener.focus({ preventScroll: true }); } } });
+    tracker.addEventListener('click', function (e) { if (e.target === tracker) { var r = tracker.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) tracker.close(); } });
+    paintTabs(); paintStatus(); paintBody();
     if (!initialized) { initialized = true; engine().subscribe(function () { if (host && host.isConnected) { paintStatus(); var line = host.querySelector('#trade-storage-status'); if (line) line.replaceWith(storageLine()); } });
       window.addEventListener('stockbee:plan', function (event) { if (host && host.isConnected) choose(event.detail); });
       document.addEventListener('visibilitychange', function () { clearTimeout(timer); if (!document.hidden && broker.connected) refreshBroker(false); });

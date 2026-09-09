@@ -1,9 +1,19 @@
 # SpicyStock — the daily 4% trading desk
 
-The homepage starts with **Today, Positions, and Activity**. Review a Stockbee
-base-scan setup, save a risk-sized plan, and track confirmed fills in one
-workspace. The scan, charts, qualitative checklist, original planner and full
-record remain under **Research & strategy**.
+The homepage is a visual **Trading desk**, with a visible **Research studio**
+and a bounded **My tracker** window. The opportunity map uses canonical 4%
+breakouts and anticipation matches, so it remains useful without AI scores.
+Select a symbol to see linked interactive price/volume charts, six explained
+setup measurements, and its trade ticket together. Chart inspection supports
+mouse, touch and keyboard; only recorded history is shown, with the original
+date and optional user-entered entry/stop overlays.
+
+Set your capital and risk limits, choose entry and stop prices, then save the
+plan or **Copy trade details** for your broker. **I bought it · record fill**
+logs the actual purchase; copying or saving never submits an order or invents
+a holding. Deeper strategy evidence and replay have visible navigation, while
+Holdings, Plans and History stay inside the tracker. Personal records remain
+in this browser. The desktop ticket sits beside the chart and stacks on phones.
 
 | Step | What the desk does | What counts as evidence |
 |---|---|---|
@@ -56,21 +66,85 @@ trading records are not uploaded to the public learning dataset.
 
 ## The automated scanner
 
-Scans a checked-in universe of 228 US common stocks each trading day, applies the
+Production evening scans refresh a classified US common-stock directory, choose
+up to 500 liquid stocks for detailed analysis, and apply the
 Stockbee-inspired 4% Momentum Burst process with SpicyStock's quantitative
-2LYNCH approximations, has Claude score the survivors (numbers, the checklist detail, what the
-record already knows about the name, and a chart image), and
+2LYNCH approximations. Claude scores the survivors (numbers, the checklist detail, what the
+record already knows about the name, and a chart image), and the workflow
 emails a ranked top-5 shortlist. **Zero manual steps** — no DeepVue paste,
 no Google Sheet, no n8n.
 
 See the [Tuesday readiness review](READINESS-2026-09-08.md) for the verified
 operational fixes, the September 8 schedule, and the current universe/evidence limits.
 
+
+### The universe now changes with the market
+
+The original 228 stocks were a hand-written development shortcut, not an index
+or a ranking of the best companies. EA and FI were retired after they stopped
+returning bars, and BK was replaced by BNY. The file remains the reviewed seed.
+
+Each production evening run tries to download [Nasdaq's stock directory](https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true).
+New securities need an explicit common/ordinary-share description, US issuer
+country and a known sector/industry. Funds, depositary receipts, preferred
+shares, warrants, units and blank-check companies are excluded. New healthcare,
+biotech and pharmaceutical classifications are conservatively excluded; only
+existing curated exceptions such as diversified pharma remain eligible. This
+is broader discovery, not a guarantee of complete exchange coverage or sector
+classification. Nasdaq currently supplies no source-date field, so the record
+keeps the retrieval timestamp and marks that date unknown.
+
+Alpaca supplies the actual screening evidence: split-adjusted SIP daily bars,
+with the existing sixteen-minute access holdback, consistent with its
+[historical SIP access requirement](https://docs.alpaca.markets/us/docs/market-data-faq). Stocks need a price above $4,
+at least $20 million median daily dollar volume in the prior 20 sessions, and
+at least $20 million dollar volume in the target session. This absolute floor
+prevents widening the pool from making a percentile-only liquidity gate too
+permissive. The existing 4% strategy, volume, 2LYNCH and scoring gates still run
+after selection; entering the universe is not a buy signal.
+
+At most 500 stocks receive the detailed history scan. Room is reserved for
+recent setups, current 4% moves, 20-session momentum, liquid leaders and 50
+rotating discovery slots; unused space goes to momentum leaders. Selection is
+deterministic within a session. The directory screen is capped at 6,000 eligible
+securities and reports any capacity exclusions. Short history requests cover
+the broad pool; long histories cover the selected basket. The AI scoring cap
+remains 25. Original basket membership is saved, and short follow-up requests
+keep rotated-out members in historical benchmarks; missing members leave a
+benchmark pending rather than replacing them with today's winners. Legacy seed
+runs lacked dated membership lists; their benchmark keeps the reviewed seed
+reference and explicitly records that historical-membership limitation.
+
+`run.universe.selection` publishes source, mode, classification policy, eligible,
+screened/fresh and selected counts, liquidity floor, slot reasons, additions,
+removals and any warning. `run.universe.tickers` and `identity` preserve each
+session's actual basket. After a temporary provider connection failure, a verified
+directory captured within seven calendar days can still supply classifications;
+prices, liquidity and selection are always recomputed from fresh SIP bars.
+The compressed catalog is saved in `docs/universe-directory.json.gz`. Its source,
+capture time and age are checked; the page displays the capture date and the run
+is marked degraded. Refused access, invalid or expired catalogs, and an incomplete
+market-data screen still fall back to the 228 checked-in stocks. A successful
+directory fetch replaces the catalog. Non-SIP feeds and historical backfills also
+use a labelled seed fallback: today's directory cannot establish past membership.
+
+The production workflow defaults to `SCAN_UNIVERSE=adaptive`; set the repository
+variable to `seed` to restore the reviewed seed. Local commands default to seed
+unless that environment variable is set. The workflow's `skip_email` option
+(`SCAN_SEND_EMAIL=false` locally) publishes a real, non-dry-run scan while
+sending neither the shortlist nor a failure notice; `dry_run` still prevents
+workflow commit-back. To refresh the most recently closed session without an
+email, dispatch with that session, `dry_run: false`, `skip_email: true`.
+A change to `src/universe.py` merged into main triggers one silent refresh of
+the newest closed session. The trigger excludes docs, so data commit-back cannot
+retrigger it. No new API key or paid data product is required. Market-data and source availability are checked on the actual run;
+no claim is made that a refresh succeeded until its new snapshot is published.
+
 ## How it differs from the original spec
 
 | Original plan | This build | Why |
 |---|---|---|
-| DeepVue scan, pasted by hand daily | Built-in scanner over a checked-in symbol list (`data/symbols.txt`) | The one manual step is eliminated — full automation was the requirement |
+| DeepVue scan, pasted by hand daily | Daily classified discovery and bounded liquidity/momentum rotation, with a curated fallback | The one manual step is eliminated — full automation was the requirement |
 | n8n + Airtable + Google Sheets | Single Python pipeline + GitHub Actions cron | Fewer moving parts, zero hosting cost |
 | GPT-5 API | Claude API (vision + text) | One model handles chart reading and checklist reasoning in a single call |
 | NotebookLM knowledge base | `knowledge/strategy.md` injected as the system prompt | Deterministic, versioned, auditable — you can see exactly what rules the AI scores against |
@@ -78,7 +152,7 @@ operational fixes, the September 8 schedule, and the current universe/evidence l
 ## Pipeline
 
 ```
-checked-in universe (data/symbols.txt, 228 names)
+Nasdaq classified US common stocks → 20-session SIP liquidity screen → up to 500 stocks
         │  Alpaca daily OHLCV, split-adjusted, SIP, batched
         ▼
 Layer 1  4% burst filter ............. ≥4% gain, vol ≥ yesterday, ≥1.5x its own
@@ -86,7 +160,7 @@ Layer 1  4% burst filter ............. ≥4% gain, vol ≥ yesterday, ≥1.5x it
         │                              top 70% of the day's dollar volume —
         │                              the bottom 30% are ARCHIVED as refused,
         │                              not dropped (round 5)
-        ▼  (a handful on a 228-name universe)
+        ▼  (survivors depend on the session)
 Layer 2  2LYNCH checklist (code) ..... 2 first/second burst · L linear prior move
         │                              Y young trend · N narrow consolidation
         │                              C calm pre-burst day · H close near high
@@ -597,7 +671,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1564 tests, no network or API keys needed
+pytest tests/                   # 1604 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -1423,7 +1497,7 @@ names its artifact `evening-<session>-<id>`, a run that did not is
 session a run tonight would scan, from **this branch**. Even that is not enough:
 an artifact survives a rejected commit-back push, so the freshly checked-out
 `docs/data.json` must also record a real evening scan of the session over the
-checked-in universe. A rehearsal branch's artifact, an unpublished record, a
+configured universe. A seed-only snapshot cannot suppress an adaptive scan. A rehearsal branch's artifact, an unpublished record, a
 fixture or a `--tickers` smoke snapshot cannot suppress the production cron.
 If either receipt is missing, the pipeline runs; its own duplicate-session
 guard still avoids scoring a universe run that the record already holds.
@@ -1535,7 +1609,7 @@ test fixtures. It dispatches no scan and calls no market or email service.
 
 ## Tuning
 
-- Scan universe: `data/symbols.txt` — a hand-curated starter list, not the whole market
+- Scan universe: `src/universe.py` in production (`SCAN_UNIVERSE=adaptive`); `data/symbols.txt` remains a curated seed/fallback. Neither is the whole market.
 - Thresholds (price floor, gain %, relative-volume floor and its lookback, the
   dollar-volume percentile gate), the data `feed`, and a `session_date`
   override: `ScanConfig` in `src/scanner.py`. There is no share-volume floor;
@@ -1597,15 +1671,14 @@ test fixtures. It dispatches no scan and calls no market or email service.
   run past preflight (6 Sep 2026) showed the bars endpoint refuses that name
   outright; a feed the endpoint or the plan refuses aborts the run with a
   named error on the first batch rather than returning an empty shortlist,
-  and `SCAN_FEED=iex` is the fallback. A 228-symbol scan is
-  seconds, not minutes, and is nowhere near the 55-min timeout — but "under a
-  second", which this said, is not supported: 0.97s is what the scan costs
-  driven through the offline doubles, and those do strictly LESS work than
-  alpaca-py, with no HTTP, no JSON decode and no BarSet construction. That is a
-  floor on the real cost, measured, and the real path adds a network round trip
-  and the SDK's own decode on top of it. Step 9 adds one more bars request per
-  100 candidates still waiting on a forward return — in practice one or two a
-  run, on the same free feed.
+  and `SCAN_FEED=iex` is the fallback. Adaptive selection requires SIP; an
+  IEX run falls back to the reviewed seed and marks that limitation. The broad
+  selection stage requests 35 calendar days for up to 6,000 classified names,
+  then detailed history for at most 500 selected stocks. Pending setup outcomes
+  and original rotating baskets add follow-up requests. The real refresh time
+  depends on coverage, API pagination and latency; it has not been measured
+  in production before the first adaptive run. The job retains its 55-minute
+  timeout, and the maximum 25 scoring calls remains unchanged.
 - **One bars request per 100 names is wrong, and already is.** alpaca-py sends
   `page_size=10_000` and loops on `next_page_token`, so the request count is set
   by TOTAL BARS rather than by `batch_size`: a 100-symbol batch over the scan's

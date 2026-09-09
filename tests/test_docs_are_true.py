@@ -1567,7 +1567,7 @@ def _guard_shell() -> str:
 def _run_guard(tmp_path, *, artifacts: list[dict], event: str, schedule: str,
                today_et: str, offset: str, branch: str = "main",
                published: bool = True, snapshot: dict | None = None,
-               api_error: bool | str = False) -> str:
+               api_error: bool | str = False, universe_mode: str = "seed") -> str:
     """Run the real guard under bash with a stub gh (real jq over a canned
     payload) and a stub date, and return the go= line it printed."""
     import json
@@ -1600,7 +1600,7 @@ def _run_guard(tmp_path, *, artifacts: list[dict], event: str, schedule: str,
                          env={"PATH": f"{stub}:/usr/bin:/bin", "HOME": str(tmp_path),
                               "PAYLOAD": str(payload), "EVENT_NAME": event, "EVENT_SCHEDULE": schedule,
                               "FAKE_TODAY": today_et, "FAKE_OFFSET": offset,
-                              "GITHUB_REF_NAME": branch,
+                              "GITHUB_REF_NAME": branch, "SCAN_UNIVERSE_MODE": universe_mode,
                               "API_FAILURE": str(api_error).lower(),
                               "GITHUB_OUTPUT": str(tmp_path / "out")})
     assert out.returncode == 0, out.stderr
@@ -1764,7 +1764,8 @@ def test_the_evening_workflow_takes_a_session_to_backfill_from_the_run_workflow_
     evening = yaml.safe_load(_read(".github/workflows/evening.yml"))
     on = evening.get("on", evening.get(True))       # PyYAML reads a bare `on:` as True
     inputs = on["workflow_dispatch"]["inputs"]
-    assert set(inputs) == {"session", "dry_run"} and inputs["session"]["required"] is False
+    assert set(inputs) == {"session", "dry_run", "skip_email"} and inputs["session"]["required"] is False
+    assert inputs["skip_email"]["type"] == "boolean" and inputs["skip_email"]["default"] is False
     (step,) = [s for s in evening["jobs"]["scan"]["steps"] if s.get("id") == "pipeline"]
     assert step["env"]["SCAN_SESSION_DATE"] == "${{ inputs.session }}"
 

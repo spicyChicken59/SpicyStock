@@ -49,7 +49,6 @@ def test_history_normalization_preserves_decisions_metadata_and_detectable_drift
     _normalize_stockbee_measurements(changed)
     assert changed == expected
     assert _first_difference(baseline, changed) is not None
-    # The freshness guard still reports a changed price even without metadata drift.
     price_only = deepcopy(baseline)
     price_only["stockbee"]["scan"]["rows"][0]["close"] += 0.01
     _normalize_stockbee_measurements(price_only)

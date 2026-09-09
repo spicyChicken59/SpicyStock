@@ -10,6 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const docs = join(repo, 'docs');
 const data = JSON.parse(await readFile(join(repo, 'tests/fixtures/data.json'), 'utf8'));
+const visualData = JSON.parse(await readFile(join(repo, 'tests/fixtures/history/data.json'), 'utf8'));
 assert.equal(data.run.fixture, true);
 const args = process.argv.slice(2), shotIndex = args.indexOf('--shots');
 const shots = shotIndex < 0 ? null : resolve(args[shotIndex + 1]);
@@ -48,7 +49,7 @@ async function screenshot(page, selector, name) {
 
 try {
   browser = await (await chromiumTool()).launch();
-  async function open(mode = 'manual') {
+  async function open(mode = 'manual', snapshot = data) {
     const context = await browser.newContext({ viewport: { width: 390, height: 900 }, reducedMotion: 'reduce', timezoneId: 'UTC' });
     const page = await context.newPage();
     page.setDefaultTimeout(5000);
@@ -59,7 +60,7 @@ try {
       const request = route.request(), url = new URL(request.url());
       const json = value => route.fulfill({ contentType: 'application/json', body: JSON.stringify(value) });
       if (url.origin !== origin) { await route.fulfill({ status: 200, body: '' }); return; }
-      if (url.pathname === '/data.json') { await json(data); return; }
+      if (url.pathname === '/data.json') { await json(snapshot); return; }
       if (url.pathname === '/trading-config.json') {
         await json({ version: 1, enabled: mode !== 'manual', api_base: mode === 'manual' ? null : '/api', broker: 'alpaca' }); return;
       }
@@ -117,11 +118,47 @@ try {
   }
   const records = page => page.evaluate(() => window.SCTradeState.getState());
   const holdings = page => page.evaluate(() => window.SCTradeState.derive());
+  async function expand(details) {
+    if (!(await details.evaluate(node => node.open))) await details.locator(':scope > summary').click();
+  }
+  async function trackerOpener(page) {
+    return await page.locator('#trade-open-tracker').count() ? page.locator('#trade-open-tracker') : page.locator('#trade-next-action');
+  }
+  async function restoredTrackerFocus(page) {
+    await page.waitForFunction(() => document.activeElement === (document.querySelector('#trade-open-tracker') || document.querySelector('#trade-next-action')));
+  }
+  async function showTracker(page, tab = 'positions') {
+    if (!(await page.locator('#trade-tracker').evaluate(node => node.open))) await (await trackerOpener(page)).click();
+    const target = page.locator('#trade-tab-' + tab);
+    if (await target.getAttribute('aria-selected') !== 'true') await target.click();
+    assert.equal(await page.locator('#trade-tracker').evaluate(node => node.tagName === 'DIALOG' && node.open && node.matches(':modal')), true,
+      'The tracker must be an open native modal dialog.');
+    assert.equal(await page.locator('#trade-tracker').evaluate(node => node.contains(document.activeElement)), true,
+      'Focus must be inside the tracker while it is open.');
+  }
+  async function closeTracker(page, escape = false) {
+    if (!(await page.locator('#trade-tracker').evaluate(node => node.open))) return;
+    if (escape) await page.keyboard.press('Escape'); else await page.locator('#trade-close-tracker').click();
+    await page.locator('#trade-tracker').waitFor({ state: 'hidden' });
+    await page.waitForFunction(() => !document.documentElement.classList.contains('tw-modal-open'));
+  }
+  async function showAccount(page) {
+    await closeTracker(page);
+    await expand(page.locator('.tw-settings').filter({ has: page.locator('.tw-account') }));
+  }
   async function setProfile(page, throughAccount = false) {
+    await closeTracker(page);
     if (throughAccount) {
-      await page.locator('.tw-account summary').filter({ hasText: 'Limits & connection' }).click();
+      await showAccount(page);
+      await expand(page.locator('.tw-account .tw-details').filter({ has: page.locator('#trade-account-profile') }));
       await page.locator('#trade-account-profile').click();
-    } else await page.locator('#trade-next-action').click();
+    } else {
+      await page.locator('#trade-next-action').click();
+      if (!await page.locator('#trade-profile-form').count()) await page.locator('#trade-plan-profile').click();
+    }
+    assert.equal(await page.locator('#trade-tracker').evaluate(node => node.open), false,
+      'Trading limits are edited on the main planning desk.');
+    await expand(page.locator('#trade-profile-form > details'));
     for (const [id, value] of [['trade-capital', '10000'], ['trade-risk', '1'], ['trade-cash-cap', '600'], ['trade-max-positions', '4']]) {
       await page.locator('#' + id).fill(value);
     }
@@ -129,6 +166,9 @@ try {
     assert.deepEqual((await records(page)).profile, { capital: 10000, risk_percent: 1, cash_cap: 600, max_positions: 4 });
   }
   async function fillPlan(page) {
+    await closeTracker(page);
+    const closePlan = page.locator('#trade-close-plan');
+    if (await closePlan.isVisible()) await closePlan.click();
     await page.locator('#trade-plan-manual').click();
     await page.locator('#trade-symbol').fill('TESTBEE');
     await page.locator('#trade-entry').fill('20');
@@ -137,13 +177,15 @@ try {
     assert.equal(await page.locator('#trade-plan-qty').textContent(), '30 shares');
   }
   async function prepareFill(page, side, qty, price, execution, timestamp) {
-    await page.locator('#trade-tab-positions').click();
+    await showTracker(page);
     await page.locator('#trade-record-fill').click();
     await page.locator('#trade-fill-symbol').fill('TESTBEE');
     await page.locator('#trade-fill-side').selectOption(side);
     await page.locator('#trade-fill-qty').fill(String(qty));
     await page.locator('#trade-fill-price').fill(String(price));
     await page.locator('#trade-fill-time').fill(timestamp);
+    assert.equal(await page.locator('#trade-fill-fees').isVisible(), false, 'Optional execution details start collapsed.');
+    await expand(page.locator('#trade-fill-form > details'));
     await page.locator('#trade-fill-fees').fill('0');
     if (side === 'buy') await page.locator('#trade-fill-stop').fill('18');
     await page.locator('#trade-fill-environment').selectOption('paper');
@@ -154,13 +196,68 @@ try {
   assert.equal(await page.locator('#trade-account-status').textContent(), 'Not connected');
   assert.equal((await records(page)).fills.length, 0);
   assert.equal((await holdings(page)).positions.length, 0);
-  await page.locator('#trade-tab-positions').click();
+  assert.equal(await page.locator('#trade-tracker').evaluate(node => node.open), false, 'The tracker starts closed.');
+  await (await trackerOpener(page)).focus();
+  await showTracker(page);
+  await closeTracker(page, true);
+  await restoredTrackerFocus(page);
+  await showTracker(page, 'plans');
+  assert.equal(await page.locator('#trade-tab-plans').getAttribute('aria-selected'), 'true');
+  await closeTracker(page);
+  await restoredTrackerFocus(page);
   await setProfile(page);
-  assert.equal(await page.locator('#trade-tab-today').getAttribute('aria-selected'), 'true',
-    'Setting limits from the Positions hero must return to the Today profile form.');
+  assert.equal(await page.locator('#trade-tracker').evaluate(node => node.open), false,
+    'Saving limits must leave the main desk available.');
   assert.equal((await records(page)).fills.length, 0, 'Saving limits cannot create an execution.');
   assert.equal(manual.state.api.length, 0, 'Manual mode must not reach broker endpoints.');
-  pass('the daily desk opens with a collapsed report and private manual limits without a broker connection');
+  pass('the daily desk stays simple; the tracker opens as a modal, restores focus on close and keeps manual limits private');
+
+  // The primary visual desk must also work when no AI review is available.
+  const visual = await open('manual', { ...visualData, candidates: [], run: { ...visualData.run, scored: 0, shortlist_size: 0,
+    universe: { ...visualData.run.universe, selection: { mode: 'adaptive', directory_status: 'cached',
+      directory_fetched_at: '2026-08-28T23:00:00+00:00', warning: 'Using a dated listings catalog.' } }
+  } }), vp = visual.page;
+  const catalogText = await vp.locator('#trade-universe').textContent();
+  assert.match(catalogText, /Listings captured 2026-08-28/);
+  assert.ok(catalogText.includes('Prices and selection refreshed for ' + visualData.run.date));
+  assert.doesNotMatch(catalogText, /current listings/);
+  assert.equal(await vp.locator('#trade-nav-research').isVisible(), true);
+  const initialSymbol = await vp.locator('.tc-chart').getAttribute('data-symbol');
+  const otherSymbol = visualData.run.stockbee.scan.rows.find(row => row.ticker !== initialSymbol).ticker;
+  await vp.locator('#trade-search').fill(otherSymbol);
+  assert.equal(await vp.locator('.tw-symbol-strip button[aria-pressed="true"]').count(), 0,
+    'Filtering the map must not imply selection of a different stock than the visible inspector.');
+  assert.equal(await vp.locator('.tc-chart').getAttribute('data-symbol'), initialSymbol);
+  await vp.locator('#trade-search').fill('');
+  const point = vp.locator('.tw-map-point').first(), symbol = await point.getAttribute('data-trade-select');
+  await point.focus(); await vp.keyboard.press('Enter');
+  assert.equal(await vp.locator('#trade-inspector-title').textContent(), symbol);
+  assert.equal(await vp.locator('#trade-symbol').inputValue(), symbol);
+  assert.equal(await vp.locator('.tw-evidence-grid').isVisible(), true);
+  assert.equal(await vp.locator('.tc-chart').getAttribute('data-symbol'), symbol);
+  const latestDate = await vp.locator('.tc-date').textContent();
+  await vp.getByRole('button', { name: 'Inspect previous session', exact: true }).click();
+  assert.notEqual(await vp.locator('.tc-date').textContent(), latestDate);
+  await vp.locator('.tc-latest').click();
+  assert.equal(await vp.locator('.tc-date').textContent(), latestDate);
+  await vp.locator('.tc-button[data-view="line"]').click();
+  assert.equal(await vp.locator('.tc-button[data-view="line"]').getAttribute('aria-pressed'), 'true');
+  await vp.evaluate(() => window.SCTradeState.setProfile({ capital: 10000, risk_percent: 1, cash_cap: 600, max_positions: 4 }));
+  await vp.locator('#trade-entry').fill('20'); await vp.locator('#trade-stop').fill('18');
+  assert.equal(await vp.locator('#trade-plan-qty').textContent(), '30 shares');
+  assert.match(await vp.locator('.tc-levels').textContent(), /Your entry \$20\.00.*Your stop \$18\.00/);
+  await vp.locator('#trade-copy-ticket').click();
+  await vp.waitForFunction(() => /copied|Select and copy/.test(document.querySelector('#trade-notice').textContent));
+  assert.equal((await records(vp)).fills.length, 0, 'Copying a ticket cannot create a fill.');
+  assert.equal(visual.state.api.length, 0, 'Visual research and manual tickets cannot reach broker APIs.');
+  for (const width of [320, 390, 1280]) { await vp.setViewportSize({ width, height: 900 }); await geometry(vp); }
+  await vp.locator('#trade-watch-tab').click();
+  assert.equal(await vp.locator('.tc-levels').isVisible(), false,
+    'A different stock cannot inherit the entry and stop from the previous stock.');
+  await vp.locator('#trade-nav-research').click();
+  assert.equal(await vp.locator('#research-report').evaluate(node => node.open), true);
+  await visual.context.close();
+  pass('unscored scan matches drive the interactive map, chart, visible evidence and copyable ticket without creating an order');
 
   await fillPlan(page);
   assert.match(await page.locator('#trade-calculation').textContent(), /\$60\.00.*\$600\.00/);
@@ -176,6 +273,16 @@ try {
   assert.equal(book.fills.length, 0);
   assert.equal((await holdings(page)).positions.length, 0);
   await screenshot(page, '#trade-plan-title', 'trade-plan-phone');
+  await showTracker(page, 'plans');
+  assert.equal(await page.locator('#trade-saved-plans [data-trade-plan-id]').count(), 1);
+  const savedPlan = page.locator('#trade-saved-plans [data-trade-plan-id]');
+  assert.equal(await savedPlan.evaluate(node => node.open), false, 'Plans start as compact rows.');
+  await expand(savedPlan);
+  assert.match(await savedPlan.textContent(), /TESTBEE.*30.*Planned entry\$20\.00.*Planned stop\$18\.00/);
+  await savedPlan.getByRole('button', { name: 'Review plan', exact: true }).click();
+  await page.locator('#trade-tracker').waitFor({ state: 'hidden' });
+  assert.equal(await page.locator('#trade-entry').inputValue(), '20');
+  assert.equal(await page.locator('#trade-stop').inputValue(), '18');
   pass('risk and cash limits size a saved plan while invalid stops are blocked and no holding is invented');
 
   await prepareFill(page, 'buy', 10, 20, 'ci-manual-buy', '2026-08-31T14:00');
@@ -192,7 +299,11 @@ try {
   assert.equal(view.positions[0].qty, 10);
   assert.equal(view.positions[0].cost_basis, 200);
   assert.equal(view.positions[0].initial_risk, 20);
-  assert.match(await page.locator('[data-trade-position="TESTBEE"]').textContent(), /Recorded shares10.*Average entry\$20\.00/);
+  const holding = page.locator('[data-trade-position="TESTBEE"]');
+  assert.equal(await holding.evaluate(node => node.open), false, 'Holdings start as compact rows.');
+  assert.match(await holding.locator(':scope > summary').textContent(), /TESTBEE.*10recorded shares/);
+  await expand(holding);
+  assert.match(await holding.textContent(), /Average entry\$20\.00/);
   await prepareFill(page, 'sell', 4, 24, 'ci-manual-sell', '2026-09-01T14:00');
   await page.locator('#trade-fill-confirm').check();
   await page.locator('#trade-save-fill').click();
@@ -202,11 +313,19 @@ try {
   assert.equal(view.closed[0].profit, 16);
   assert.equal(view.closed[0].r, 2);
   assert.equal(view.totals.live.open_positions, 0, 'Paper fills cannot become live positions.');
-  assert.match(await page.locator('[data-trade-position="TESTBEE"]').textContent(), /Recorded shares6/);
-  await page.locator('#trade-tab-activity').click();
+  assert.match(await page.locator('[data-trade-position="TESTBEE"] > summary').textContent(), /6recorded shares/);
+  await showTracker(page, 'activity');
   assert.equal(await page.locator('[data-trade-execution]').count(), 2);
-  assert.match(await page.locator('#trade-closed-exits').textContent(), /TESTBEE.*\$16\.00 gross.*2\.00R on original risk/);
-  await screenshot(page, '#trade-panel', 'trade-activity-phone');
+  await expand(page.locator('.tw-tracker-exits'));
+  await expand(page.locator('#trade-closed-exits > details').first());
+  assert.match(await page.locator('#trade-closed-exits').textContent(), /TESTBEE.*\$16\.00before fees.*Return on original risk2\.00R/);
+  const executions = page.locator('[data-trade-execution]');
+  assert.equal(await executions.first().evaluate(node => node.open), false);
+  await expand(executions.first());
+  await expand(executions.nth(1));
+  await page.waitForFunction(() => document.querySelectorAll('#trade-tracker .tw-tracker-row[open]').length === 1);
+  assert.equal(await executions.first().evaluate(node => node.open), false, 'Opening another record closes the previous one.');
+  await screenshot(page, '#trade-tracker', 'trade-activity-phone');
   pass('confirmed buys and partial sells create actual positions and realized results independently of the plan');
 
   // Existing export rows give the preview real execution identities to dedupe.
@@ -214,7 +333,7 @@ try {
   const existingFill = (await records(page)).fills[0];
   const extraCSV = ['ci-import-buy', 'TESTBEE', 'buy', '2', '21', '2026-09-01T15:00:00Z', '0', '18', 'manual', 'paper', existingFill.account_id, '', ''].join(',');
   const csv = originalCSV + extraCSV + '\r\n';
-  await page.locator('#trade-tab-positions').click();
+  await showTracker(page);
   await page.locator('#trade-import-open').click();
   await page.locator('#trade-import-file').setInputFiles({ name: 'ci-confirmed-fills.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
   await page.locator('#trade-import-confirm').waitFor({ state: 'visible' });
@@ -239,48 +358,63 @@ try {
 
   async function geometry(page) {
     const issues = await page.evaluate(() => {
-      const problems = [], host = document.querySelector('#trade-workspace');
-      const outer = host.getBoundingClientRect();
+      const problems = [], host = document.querySelector('#trade-workspace'), dialog = document.querySelector('#trade-tracker');
+      const modal = dialog.open, surface = modal ? dialog : host, outer = surface.getBoundingClientRect();
       if (document.documentElement.scrollWidth > innerWidth + 1) problems.push('page overflow');
-      if (outer.left < -2 || outer.right > innerWidth + 2) problems.push('trading desk outside viewport');
-      for (const control of host.querySelectorAll('button,input,select,textarea,summary,svg')) {
+      if (outer.left < -2 || outer.right > innerWidth + 2) problems.push('trading surface outside viewport');
+      if (modal) {
+        if (outer.top < -1 || outer.bottom > innerHeight + 1) problems.push('tracker outside viewport height');
+        const panel = document.querySelector('#trade-tracker-panel'), bounds = panel.getBoundingClientRect();
+        if (bounds.left < outer.left || bounds.right > outer.right || bounds.bottom > outer.bottom + 1) problems.push('tracker content escapes its window');
+        if (!['auto', 'scroll'].includes(getComputedStyle(panel).overflowY)) problems.push('tracker must scroll inside its window');
+      }
+      for (const control of surface.querySelectorAll('button,input,select,textarea,summary,svg')) {
         if (!control.getClientRects().length || control.closest('[hidden]')) continue;
+        if (!modal && control.closest('dialog')) continue;
+        let hidden = false;
+        for (let parent = control.parentElement; parent && parent !== surface; parent = parent.parentElement) {
+          if (parent.matches('details:not([open])')) {
+            const summary = parent.querySelector(':scope > summary');
+            if (!summary?.contains(control)) { hidden = true; break; }
+          }
+        }
+        if (hidden) continue;
         const box = control.getBoundingClientRect();
-        if (box.left < outer.left - 2 || box.right > outer.right + 2) problems.push((control.id || control.tagName) + ' outside desk');
+        if (box.left < outer.left - 2 || box.right > outer.right + 2) problems.push((control.id || control.tagName) + ' outside trading surface');
         if (!control.matches('svg,input[type="checkbox"],input[type="file"]') && box.height < 43.5) problems.push((control.id || control.tagName) + ' below 44px touch height');
       }
       return problems;
     });
-    assert.deepEqual(issues, [], 'The daily trading controls must fit the viewport with usable targets.');
+    assert.deepEqual(issues, [], 'Visible trading controls must fit their page or bounded tracker with usable targets.');
   }
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     for (const theme of ['light', 'dark']) {
+      await closeTracker(page);
       await page.locator(`.sc-theme-toggle [data-theme="${theme}"]`).click();
-      await page.locator('#trade-tab-today').click();
       await fillPlan(page);
       await geometry(page);
       await screenshot(page, '#trade-plan-title', `trade-plan-${width}-${theme}`);
-      for (const tab of ['positions', 'activity']) {
-        if (tab === 'activity') await page.locator('#trade-tab-today').click();
-        await page.locator('#trade-save-plan').evaluate(node => node.scrollIntoView({ block: 'start', behavior: 'auto' }));
-        await page.locator('#trade-tab-' + tab).click();
-        if (width <= 390) {
-          const location = await page.evaluate(() => ({
-            headingTop: document.querySelector('#trade-panel h3').getBoundingClientRect().top,
-            tabsBottom: document.querySelector('#trade-workspace .tw-tabs').getBoundingClientRect().bottom
-          }));
-          assert.ok(location.headingTop >= location.tabsBottom - 1,
-            `${width}px ${theme} ${tab}: its heading must clear the sticky tabs after leaving a deep plan (${JSON.stringify(location)}).`);
-        }
+      for (const tab of ['positions', 'plans', 'activity']) {
+        await showTracker(page, tab);
+        const location = await page.evaluate(() => ({
+          headingTop: document.querySelector('#trade-tracker-panel h3').getBoundingClientRect().top,
+          tabsBottom: document.querySelector('#trade-tracker .tw-tabs').getBoundingClientRect().bottom
+        }));
+        assert.ok(location.headingTop >= location.tabsBottom - 1,
+          `${width}px ${theme} ${tab}: its heading must clear the tracker tabs (${JSON.stringify(location)}).`);
         await geometry(page);
-        await screenshot(page, '#trade-panel', `trade-${tab}-${width}-${theme}`);
+        await screenshot(page, '#trade-tracker', `trade-${tab}-${width}-${theme}`);
+        // A tab change must recover the top of a previously scrolled window.
+        await page.locator('#trade-tracker-panel').evaluate(node => { node.scrollTop = node.scrollHeight; });
       }
+      await closeTracker(page);
+      await restoredTrackerFocus(page);
     }
   }
   assert.deepEqual(manual.state.unexpected, []);
   await manual.context.close();
-  pass('plans, holdings and activity fit 320px, 390px and desktop layouts in both themes');
+  pass('the desk and bounded tracker fit 320px, 390px and desktop in both themes, with readable tab changes and restored focus');
 
   for (const mode of ['accepted', 'unknown']) {
     const app = await open(mode), p = app.page;
@@ -317,7 +451,7 @@ try {
     } else {
       const submit = p.locator('#trade-submit-order');
       assert.equal(await submit.count() === 0 || await submit.isDisabled(), true, 'An uncertain submission cannot leave an enabled submit button.');
-      await p.locator('#trade-tab-today').click();
+      await showAccount(p);
       const refreshed = p.waitForResponse(response => new URL(response.url()).pathname === '/api/portfolio');
       await p.locator('#trade-refresh-account').click();
       await refreshed;

@@ -51,7 +51,7 @@ const pageAssets = [
   'stock-cockpit.css', 'stock-cockpit.js', 'stock-desk.css', 'stock-desk.js',
   'stock-replay.css', 'stock-replay.js',
   'stockbee-workbench.css', 'stockbee-workbench.js', 'stockbee-plan.css', 'stockbee-plan.js',
-  'trade-workspace.css', 'trade-state.js', 'trade-bridge.js', 'trade-workspace.js'
+  'trade-workspace.css', 'trade-tracker.css', 'trade-state.js', 'trade-bridge.js', 'trade-workspace.js'
 ];
 const indexHTML = await readFile(join(docs, 'index.html'), 'utf8');
 const assetBase = 'https://research.local/';
@@ -69,6 +69,14 @@ await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
 try {
   browser = await (await chromiumTool()).launch();
+  async function revealResearch(page) {
+    // Legacy tools remain available behind deliberate disclosures.
+    if (!await page.locator('#research-report').evaluate(node => node.open))
+      await page.locator('#research-toggle').click();
+    for (const summary of await page.locator('.stock-legacy > summary, .stock-scan-details > summary').all()) {
+      if (!await summary.evaluate(node => node.parentElement.open)) await summary.click();
+    }
+  }
   async function open(data = fixture, initScript) {
     const context = await browser.newContext({ viewport: { width: 390, height: 900 }, reducedMotion: 'reduce' });
     if (initScript) await context.addInitScript(initScript);
@@ -91,6 +99,7 @@ try {
       await route.continue();
     });
     await page.goto(origin + '/#research-report', { waitUntil: 'load' });
+    await revealResearch(page);
     await page.locator('#session-cockpit').waitFor({ state: 'visible' });
     await page.locator('#signal-search').waitFor({ state: 'visible' });
     return { context, page, state };
@@ -196,6 +205,7 @@ try {
   assert.equal((await visibleTickers(page)).includes(incomplete.candidates[2].ticker), false);
   pass('missing measurements remain listed without invented map points or score provenance');
   await page.reload({ waitUntil: 'load' });
+  await revealResearch(page);
   await page.locator('#signal-search').waitFor({ state: 'visible' });
 
   const choices = fixture.candidates.slice(0, 4).map(c => c.ticker);
@@ -243,6 +253,7 @@ try {
   assert.equal(await page.evaluate(() => document.body.classList.contains('desk-has-tray')), false);
   pass('comparison tray opens the desk, stays out of note editing and clears selection without leaving page padding');
   await page.reload({ waitUntil: 'load' });
+  await revealResearch(page);
   await page.locator('#desk-tab-saved').click();
   assert.equal(await page.locator(`#desk-note-${savedTicker}`).inputValue(), note);
   assert.equal(await page.locator('#stock-desk img').count(), 0, 'Notes must stay plain text.');
@@ -253,6 +264,7 @@ try {
   await screenshot(page, '#stock-desk', 'saved-notes-phone');
   state.data = recorded;
   await page.reload({ waitUntil: 'load' });
+  await revealResearch(page);
   await page.locator('#desk-tab-saved').click();
   assert.equal(await page.locator(`#desk-note-${savedTicker}`).inputValue(), note);
   if (!recorded.candidates.some(c => c.ticker === savedTicker)) {
@@ -262,6 +274,7 @@ try {
   pass('saved notes survive reload and session changes without carrying old metrics into the new snapshot');
   state.data = fixture;
   await page.reload({ waitUntil: 'load' });
+  await revealResearch(page);
 
   await page.locator('#cockpit-focus').focus();
   await page.keyboard.press('Enter');
@@ -287,11 +300,8 @@ try {
         const problems = [], tolerance = 2;
         const sections = ['#session-cockpit', '#signal-workspace', '#stock-desk', '#stock-replay'].map(id => document.querySelector(id));
         if (document.documentElement.scrollWidth > innerWidth + 1) problems.push('page is wider than viewport');
-        const navigation = document.querySelector('#page-index');
-        navigation.scrollLeft = 0;
-        const navigationBox = navigation.getBoundingClientRect();
-        const firstLink = navigation.querySelector('a').getBoundingClientRect();
-        if (firstLink.left < navigationBox.left || firstLink.right > navigationBox.right) problems.push('workspace navigation hides its first link');
+        const navigation = document.querySelector('#research-toggle').getBoundingClientRect();
+        if (navigation.left < -tolerance || navigation.right > innerWidth + tolerance) problems.push('research disclosure outside viewport');
         for (const section of sections) {
           const outer = section.getBoundingClientRect();
           if (outer.left < -tolerance || outer.right > innerWidth + tolerance) problems.push(section.id + ' outside viewport');
@@ -444,6 +454,7 @@ try {
   archive.state.data = history;
 
   await replay.reload({ waitUntil: 'load' });
+  await revealResearch(replay);
   await replay.locator('#stock-replay-date').selectOption(earlierKey);
   let releaseArchive;
   archive.state.archiveGate = new Promise(resolve => { releaseArchive = resolve; });
@@ -648,6 +659,7 @@ try {
   await writeOpenTrade(bp, 'HOLDBEE');
   assert.equal(await bp.locator('#bee-journal-summary').textContent(), '1 paper plans · 1 open trades · 1 closed trades');
   await bp.reload({ waitUntil: 'load' });
+  await revealResearch(bp);
   await bp.locator('#bee-tab-journal').click();
   assert.equal(await bp.locator('.bee-journal-card').count(), 3);
   assert.ok((await paperCard.textContent()).includes(journalNote));

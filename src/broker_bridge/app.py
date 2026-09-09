@@ -152,7 +152,8 @@ def create_app(config=None, adapter=None, now=None):
         max_positions = values.get("max_positions", config.max_positions)
         require(isinstance(max_positions, int) and not isinstance(max_positions, bool) and 1 <= max_positions <= config.max_positions,
                 "position_cap_invalid", "Choose a position cap within this account's configured limit.", 422)
-        require(sym in config.common_stock_symbols, "common_stock_verification_required", "This symbol is outside the curated common-stock trading scope.")
+        require(sym in config.common_stock_symbols or config.allow_adaptive_universe,
+                "common_stock_verification_required", "This symbol is outside the configured common-stock trading scope.")
         account = broker.account(session)
         cash, equity = checked_account(account, session, config)
         clock = broker.clock(session)
@@ -160,6 +161,8 @@ def create_app(config=None, adapter=None, now=None):
         calendar = broker.calendar(session, (end - timedelta(days=14)).isoformat(), end.isoformat())
         prior = previous_session(calendar, clock, now())
         source = source_setup(config.docs / "data.json", sym, prior)
+        require(sym in config.common_stock_symbols or (config.allow_adaptive_universe and source["classified_common_stock"]),
+                "common_stock_verification_required", "The trusted scan has not verified this symbol as an eligible common stock.")
         asset = broker.asset(session, sym)
         require(isinstance(asset, dict) and asset.get("symbol") == sym and asset.get("class") == "us_equity"
                 and asset.get("status") == "active" and asset.get("tradable") is True
