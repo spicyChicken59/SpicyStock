@@ -2101,7 +2101,8 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     benchmarked = (book.fill_benchmarks(benchmark_frames, through,
                                         universe=run["universe"] if explicit_tickers is None else None,
                                         calendar=ledger.session_calendar({**benchmark_frames, **frames}),
-                                        legacy_seed=(scanner.get_universe() if scan_stats.get("universe_selection") else None))
+                                        **({"legacy_seed": scanner.get_universe()}
+                                           if scan_stats.get("universe_selection") else {}))
                    if frames_read else 0)
 
     # Re-read the report AFTER the fetch: a problem raised in the two lines
