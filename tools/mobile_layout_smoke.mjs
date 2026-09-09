@@ -176,8 +176,12 @@ try {
     await page.goto(`${origin}/${source}/`, { waitUntil: 'load' });
     if (await page.locator('#research-report').count() && !await page.locator('#research-report').evaluate(node => node.open))
       await page.locator('#research-toggle').click();
+    for (const summary of await page.locator('.stock-legacy > summary, .stock-scan-details > summary').all()) {
+      if (!await summary.evaluate(node => node.parentElement.open)) await summary.click();
+    }
     await page.waitForFunction(() => document.querySelector('#snapshot-refresh').getAttribute('aria-disabled') === 'false');
-    assert.equal(await page.locator('#run-strip').isVisible(), true, `${label}: snapshot must load`);
+    const loadedWorkspace = await page.locator('#trade-workspace').count() ? '#trade-workspace' : '#run-strip';
+    assert.equal(await page.locator(loadedWorkspace).isVisible(), true, `${label}: snapshot must load`);
     assert.equal(await page.locator('.signal-card').count(), sources[source].candidates.length,
       `${label}: layout checks must preserve every candidate`);
     await page.locator(`.sc-theme-toggle [data-theme="${theme}"]`).click();

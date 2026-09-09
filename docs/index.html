@@ -32,10 +32,11 @@
 <link rel="stylesheet" href="stockbee-plan.css?v=b0a3c71376f7">
 <script src="stockbee-plan.js?v=a50f0ec6f38f"></script>
 <script src="stockbee-workbench.js?v=8924a0957f08"></script>
-<link rel="stylesheet" href="trade-workspace.css?v=eed394fc2d75">
+<link rel="stylesheet" href="trade-workspace.css?v=215b9cef1426">
+<link rel="stylesheet" href="trade-tracker.css?v=f941e8483d24">
 <script src="trade-state.js?v=18b3cc5ddfb7"></script>
 <script src="trade-bridge.js?v=37ee390d5de3"></script>
-<script src="trade-workspace.js?v=bab6197c413c"></script>
+<script src="trade-workspace.js?v=11e5d29e0864"></script>
 </head>
 <body>
 <a class="sc-skip" href="#main">Skip to content</a>
@@ -59,6 +60,8 @@
 <main class="sc-wrap sc-wrap--wide sc-stack sc-print-report" id="main">
   <div class="sc-print-head" aria-hidden="true"><span class="sc-signature sc-signature--small"><img src="design-system/assets/sc-mark-color-light.svg" alt="" width="342" height="405"><span class="sc-signature__name">SpicyStock</span></span><span>market research / current run</span></div>
   <div class="sc-print-foot" aria-hidden="true"><span>SpicyChicken / market research</span><span>Screening output for human review</span></div>
+  <section id="trade-workspace" class="trade-workspace" aria-label="Your daily trading desk" hidden></section>
+  <details class="stock-scan-details"><summary>Scan details &amp; refresh</summary>
   <section class="sc-card stock-snapshot" id="snapshot-panel" aria-label="Snapshot status">
     <div>
       <p class="sc-eyebrow sc-eyebrow--muted">recorded snapshot / daily research</p>
@@ -70,9 +73,9 @@
       <a class="sc-btn sc-btn--ghost sc-btn--sm" href="https://github.com/spicyChicken59/SpicyStock/actions/workflows/evening.yml" rel="noopener">Scan activity ↗</a>
     </div>
   </section>
-  <section id="trade-workspace" class="trade-workspace" aria-label="Your daily trading desk" hidden></section>
+  </details>
   <details id="research-report" class="stock-research">
-    <summary id="research-toggle"><span><strong>Research &amp; strategy</strong><span>The scan, charts, original rules, and the full record.</span></span><span class="stock-research-arrow" aria-hidden="true">↗</span></summary>
+    <summary id="research-toggle"><span><strong>Go deeper</strong><span>Research, comparisons, strategy evidence, and earlier notes.</span></span><span class="stock-research-arrow" aria-hidden="true">↗</span></summary>
     <div class="sc-stack stock-research-body">
   <section class="sc-cover stock-cover" aria-labelledby="h1">
     <div class="sc-cover__content sc-reveal" data-sc-motion="rise">
@@ -139,10 +142,14 @@
     <p id="fallback-body"></p>
   </div>
 
+  <details class="stock-legacy"><summary>Original setup tools &amp; earlier journal</summary>
   <section class="stockbee-workspace" id="stockbee-workspace" aria-label="Stockbee setup workbench" hidden></section>
   <section class="stockbee-plan" id="stockbee-plan" aria-label="Risk planner and trade journal" hidden></section>
 
+  </details>
+  <details class="stock-legacy"><summary>Session overview &amp; market context</summary>
   <section class="cockpit" id="session-cockpit" aria-labelledby="cockpit-title" hidden></section>
+  </details>
 
   <section class="signal-workspace" id="signal-workspace" aria-labelledby="signal-title" hidden>
     <div class="signal-heading">
@@ -313,7 +320,7 @@
   <!-- What happened the last times THIS name burst. The summary comes out of
        data.json's evidence block; the per-appearance detail needs the whole
        record, so docs/ledger.json is fetched ONLY when a reader asks for it
-       (see loadRecord). A year of it is about 2.24 MB gzipped, which is not a
+       (see loadRecord). A year of it is about 2.17 MB gzipped, which is not a
        thing to spend on every visit for a view most readers never open.
        tools/measure_ledger.py measures it and a docs test holds this comment,
        the one above loadRecord and README to what it prints. -->
@@ -402,7 +409,7 @@
   function revealResearchTarget() {
     var target;
     try { target = document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch (_) { return; }
-    if (target && researchReport && (target === researchReport || researchReport.contains(target))) researchReport.open = true;
+    if (target && researchReport && (target === researchReport || researchReport.contains(target))) { for (var parent = target; parent; parent = parent.parentElement) if (parent.tagName === 'DETAILS') parent.open = true; }
   }
   window.addEventListener('hashchange', revealResearchTarget);
   researchReport.addEventListener('toggle', function () {
@@ -412,8 +419,9 @@
     var link = event.target.closest && event.target.closest('a[href^="#"]');
     if (!link) return;
     var target = document.getElementById(link.getAttribute('href').slice(1));
-    if (target && researchReport && researchReport.contains(target)) researchReport.open = true;
+    if (target && researchReport && researchReport.contains(target)) { for (var parent = target; parent; parent = parent.parentElement) if (parent.tagName === 'DETAILS') parent.open = true; }
   });
+  researchReport.addEventListener('toggle', function (event) { if (event.target.open) window.dispatchEvent(new Event('resize')); }, true);
   var researchWasOpen = false;
   window.addEventListener('beforeprint', function () { researchWasOpen = researchReport.open; researchReport.open = true; });
   window.addEventListener('afterprint', function () { researchReport.open = researchWasOpen; });
@@ -2185,7 +2193,7 @@
   }
 
   // The per-name view's lazy fetch. docs/ledger.json is the whole record — about
-  // 2.24 MB gzipped after a year — so it is never pulled on load; the summary
+  // 2.17 MB gzipped after a year — so it is never pulled on load; the summary
   // above comes out of data.json, which the page has already read. A 404 here is the
   // normal state until evening.yml has committed a run back, so it is reported
   // as a fact about the file rather than as a broken page.
@@ -2867,6 +2875,7 @@
     }).catch(function (error) {
       var message = error.message || String(error);
       $('snapshot-panel').classList.add('stock-snapshot--failed');
+      $('snapshot-panel').closest('details').open = true;
       $('snapshot-status').textContent = LAST_DATA
         ? 'Update check failed. Still showing recorded session ' + day(LAST_DATA.run.date) + '. ' + message
         : 'Snapshot unavailable. ' + message;

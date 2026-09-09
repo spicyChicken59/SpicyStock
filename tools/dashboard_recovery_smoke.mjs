@@ -54,6 +54,8 @@ try {
     await page.goto(`http://127.0.0.1:${server.address().port}/`, { waitUntil: 'load' });
     if (!await page.locator('#research-report').evaluate(node => node.open))
       await page.locator('#research-toggle').click();
+    const scanDetails = page.locator('.stock-scan-details > summary');
+    if (!await scanDetails.evaluate(node => node.parentElement.open)) await scanDetails.click();
   };
   const ready = async () => page.waitForFunction(() => !document.querySelector('#run-strip').hidden && document.querySelector('#snapshot-refresh').getAttribute('aria-disabled') !== 'true');
   const status = () => page.locator('#snapshot-status').innerText();
@@ -75,7 +77,7 @@ try {
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => document.querySelector('#snapshot-status').textContent.includes('Update check failed'));
   check('failed refresh retains the previously loaded report and identifies it', before === await page.locator('#h1').innerText() && /Still showing recorded session/.test(await status()));
-  check('failed refresh does not relabel retained data as unavailable', !await page.locator('#run-strip').isHidden() && !await page.locator('#snapshot-refresh').isDisabled());
+  check('failed refresh does not relabel retained data as unavailable', await page.locator('#trade-workspace').isVisible() && await page.locator('#scores-card').isVisible() && !await page.locator('#snapshot-refresh').isDisabled());
   check('keyboard focus stays on the refresh action after a failed response', await page.locator('#snapshot-refresh').evaluate(node => document.activeElement === node));
   dataMode = 'ok';
   await page.locator('#snapshot-refresh').click();
@@ -155,7 +157,7 @@ try {
   data = structuredClone(fixture); delete data.candidates;
   await open();
   await page.waitForFunction(() => document.querySelector('#h1').textContent === 'Snapshot unavailable');
-  check('an initial snapshot without candidates cannot claim a successful load', await page.locator('#scores-card').isHidden() && await page.locator('#run-strip').isHidden());
+  check('an initial snapshot without candidates cannot claim a successful load', await page.locator('#scores-card').isHidden() && await page.locator('#run-strip').evaluate(node => node.hidden));
   data = fixture;
   await page.locator('#snapshot-refresh').click(); await ready();
   check('retry recovers after rejecting an incomplete initial snapshot', /recorded session 1 Sep 2026/.test(await status()) && (await page.locator('#scores-table tbody tr').count()) === 25);
@@ -168,7 +170,7 @@ try {
   check('a render failure restores the last complete report', before === await page.locator('#h1').innerText() && (await page.locator('#scores-table tbody tr').count()) === 25 && /Still showing recorded session 8 Sep 2026/.test(await status()));
   await open();
   await page.waitForFunction(() => document.querySelector('#h1').textContent === 'Snapshot unavailable');
-  check('an initial render failure cannot leave partial counts or results visible', await page.locator('#run-strip').isHidden() && await page.locator('#scores-card').isHidden() && await page.locator('#page-index').isHidden());
+  check('an initial render failure cannot leave partial counts or results visible', await page.locator('#run-strip').evaluate(node => node.hidden) && await page.locator('#scores-card').isHidden() && await page.locator('#page-index').evaluate(node => node.hidden));
   data = fixture;
 
   dataMode = 'body-stall';
