@@ -49,6 +49,7 @@ def fetch_directory() -> list[dict]:
     # access refusals and incomplete classifications still fail immediately.
     for attempt in range(3):
         try:
+            log.info("Refreshing Nasdaq stock directory (attempt %s/3)", attempt + 1)
             response = requests.get(SOURCE_URL, headers={
                 "User-Agent": "SpicyStock/1.0 (https://github.com/spicyChicken59/SpicyStock)",
                 "Accept": "application/json",
@@ -67,6 +68,7 @@ def fetch_directory() -> list[dict]:
     rows = response.json().get("data", {}).get("rows")
     if not isinstance(rows, list) or len(rows) < 500:
         raise ValueError("Nasdaq returned an incomplete stock directory")
+    log.info("Nasdaq directory returned %s listings", len(rows))
     return rows
 
 
