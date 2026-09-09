@@ -185,7 +185,17 @@
   function universeCard() {
     var run = data && data.run || {}, s = measured(), u = run.universe || {}, selection = u.selection;
     var box = node('section', 'tw-universe'); box.id = 'trade-universe';
-    var heading = sectionHeading('THE SEARCH BEHIND THE SIGNALS', selection && selection.mode === 'adaptive' ? 'A universe that moves with the market.' : 'Know what the scan actually covers.', selection ? (selection.mode === 'adaptive' ? 'Refreshed from current listings and recorded market activity.' : 'Discovery used a fallback. The scope below is the one actually scanned.') : 'This session used the 228-name curated starter list. It is a subset of US stocks.'); box.append(heading);
+    var coverage = 'This session used the 228-name curated starter list. It is a subset of US stocks.';
+    if (selection) {
+      coverage = 'Discovery used a fallback. The scope below is the one actually scanned.';
+      if (selection.mode === 'adaptive') {
+        var captured = typeof selection.directory_fetched_at === 'string' ? selection.directory_fetched_at.slice(0, 10) : '';
+        coverage = selection.directory_status === 'cached'
+          ? 'Listings captured ' + (safeDate(captured) ? captured : 'on an unavailable date') + '. Prices and selection refreshed for ' + run.date + '.'
+          : 'Refreshed from current listings and recorded market activity.';
+      }
+    }
+    var heading = sectionHeading('THE SEARCH BEHIND THE SIGNALS', selection && selection.mode === 'adaptive' ? 'A universe that moves with the market.' : 'Know what the scan actually covers.', coverage); box.append(heading);
     var steps = node('div', 'tw-universe-flow');
     [['Discovered', selection ? number(selection.discovered, 0) : '—'], ['Deeply scanned', s ? number(s.scope && s.scope.measured, 0) : '—'], ['4% breakouts', s ? number(s.scan && s.scan.matched, 0) : '—'], ['Setting up', s ? number(s.anticipation && s.anticipation.matched, 0) : '—']].forEach(function (v, i) { var part = node('div', 'tw-universe-stage'); part.append(node('span', 'tw-universe-step', '0' + (i + 1)), node('strong', '', v[1]), node('span', '', v[0])); steps.append(part); }); box.append(steps);
     if (selection) { box.append(small('Selected ' + number(selection.selected, 0) + ' of ' + number(selection.eligible, 0) + ' eligible · ' + list(selection.added).length + ' added · ' + list(selection.removed).length + ' rotated out · ' + (selection.source || 'Source unavailable'))); if (selection.warning) box.append(node('p', 'tw-warning', selection.warning)); }

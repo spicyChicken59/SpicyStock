@@ -68,9 +68,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   scan:
-    # Nasdaq directory reads repeatedly time out on the Linux runner network.
-    # Use the standard macOS runner; all scan limits and provider checks stay.
-    runs-on: macos-15
+    runs-on: ubuntu-latest
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4

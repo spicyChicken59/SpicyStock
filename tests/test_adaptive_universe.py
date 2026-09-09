@@ -1,7 +1,8 @@
 """Discovery cannot weaken security classification, liquidity or run identity."""
 from copy import deepcopy
 from dataclasses import replace
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
+import gzip
 import json
 
 import pandas as pd
@@ -55,6 +56,89 @@ def _check_directory_failure_is_bounded_and_never_weakens_classification(monkeyp
         universe.fetch_directory()
     assert len(calls) == (3 if failure == "timeout" else 1)
     assert pauses == ([1, 3] if failure == "timeout" else [])
+
+
+def _check_dated_cache_contract(monkeypatch, tmp_path):
+    now = datetime(2026, 9, 9, 1, tzinfo=timezone.utc)
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return now if tz else now.replace(tzinfo=None)
+    monkeypatch.setattr(universe, "datetime", Clock)
+    monkeypatch.setattr(scanner, "current_session", lambda: date(2026, 9, 8))
+    monkeypatch.setattr(scanner, "get_universe", lambda: ["AAPL"])
+    symbols = ["A" + chr(65 + i // 26) + chr(65 + i % 26) for i in range(120)]
+    rows = [company(s) for s in symbols] + [company("MRNA", sector="Health Care")] * 380
+    cached = {"schema_version": 1, "source_url": universe.SOURCE_URL,
+              "fetched_at": (now - timedelta(days=7)).isoformat(), "rows": rows}
+    path = tmp_path / universe.DIRECTORY_CACHE
+    def save(value):
+        path.write_bytes(gzip.compress(json.dumps(value).encode(), mtime=0))
+    save(cached)
+    requested = []
+    def download(client, names, cfg, session):
+        requested.extend(names)
+        assert cfg.feed == scanner.DataFeed.SIP and session == date(2026, 9, 8)
+        return {symbol: frame() for symbol in names}
+    monkeypatch.setattr(scanner, "_download_batch", download)
+    failures = [requests.ReadTimeout("provider-detail"), requests.ConnectionError("provider-detail")]
+    failures += [requests.HTTPError("provider-detail", response=directory_response(status))
+                 for status in (500, 502, 503, 504)]
+    for failure in failures:
+        def unavailable(failure=failure):
+            raise failure
+        monkeypatch.setattr(universe, "fetch_directory", unavailable)
+        names, report = universe.select(scanner.ScanConfig(), tmp_path, data_client=object())
+        assert set(names) == set(symbols), type(failure).__name__
+        assert set(requested) == set(symbols) and "MRNA" not in requested
+        assert report["mode"] == "adaptive" and report["directory_status"] == "cached"
+        assert report["directory_age_days"] == 7 and report["source_date"] is None
+        assert report["directory_fetched_at"] == cached["fetched_at"]
+        assert "2026-09-02" in report["warning"] and "provider-detail" not in report["warning"]
+        assert path.read_bytes() == gzip.compress(json.dumps(cached).encode(), mtime=0), "Using a cache cannot redatestamp it"
+    # A valid cache cannot override an explicit refusal or a malformed live payload.
+    for failure in [requests.HTTPError("provider-detail", response=directory_response(403)),
+                    requests.HTTPError("provider-detail", response=directory_response(429)),
+                    ValueError("Invalid live directory")]:
+        def unavailable(failure=failure):
+            raise failure
+        monkeypatch.setattr(universe, "fetch_directory", unavailable)
+        names, report = universe.select(scanner.ScanConfig(), tmp_path, data_client=object())
+        assert names == ["AAPL"] and report["mode"] == "fallback"
+        assert report["directory_status"] is None
+    monkeypatch.setattr(universe, "fetch_directory", lambda: (_ for _ in ()).throw(requests.ReadTimeout("provider-detail")))
+    bad = []
+    for key, value in [("schema_version", 2), ("schema_version", True),
+                       ("source_url", "https://example.com/other-directory"),
+                       ("fetched_at", (now - timedelta(days=7, microseconds=1)).isoformat()),
+                       ("fetched_at", (now + timedelta(seconds=1)).isoformat()),
+                       ("fetched_at", now.replace(tzinfo=None).isoformat()),
+                       ("fetched_at", now.astimezone(timezone(timedelta(hours=1))).isoformat()),
+                       ("fetched_at", "unknown"), ("rows", rows[:499]),
+                       ("rows", rows * 21), ("rows", rows[:499] + ["not a row"]),
+                       ("rows", rows[:499] + [{"symbol": "MISS"}])]:
+        value = dict(cached, **{key: value})
+        bad.append(value)
+    for value in bad:
+        save(value)
+        names, report = universe.select(scanner.ScanConfig(), tmp_path, data_client=object())
+        assert names == ["AAPL"] and report["mode"] == "fallback"
+        assert report["screened"] == 0 and "no valid Nasdaq directory" in report["warning"]
+    for raw in [b"invalid gzip", gzip.compress(b"invalid json"), gzip.compress(b" " * (universe.DIRECTORY_MAX_BYTES + 1))]:
+        path.write_bytes(raw)
+        assert universe.select(scanner.ScanConfig(), tmp_path, data_client=object())[1]["mode"] == "fallback"
+    save(cached)
+    with monkeypatch.context() as case:
+        case.setattr(universe, "DIRECTORY_MAX_BYTES", path.stat().st_size - 1)
+        assert universe.select(scanner.ScanConfig(), tmp_path, data_client=object())[1]["mode"] == "fallback"
+    # Stale prices still invalidate selection even with a usable classified directory.
+    stale = frame()
+    stale.index = stale.index - pd.Timedelta(days=1)
+    monkeypatch.setattr(scanner, "_download_batch", lambda client, names, cfg, session: {s: stale for s in names})
+    names, report = universe.select(scanner.ScanConfig(), tmp_path, data_client=object())
+    assert names == ["AAPL"] and report["mode"] == "fallback" and report["fresh"] == 0
+    path.unlink()
+    assert universe.select(scanner.ScanConfig(), tmp_path, data_client=object())[1]["mode"] == "fallback"
 
 
 @pytest.mark.parametrize("values", [
@@ -120,6 +204,8 @@ def test_directory_recovery_and_failure_preserve_the_classified_scope(monkeypatc
     names, report = universe.select(scanner.ScanConfig(), tmp_path)
     assert names == ["AAPL", "MSFT"] and report["mode"] == "fallback"
     assert report["warning"] and report["screened"] == 0
+    with monkeypatch.context() as case:
+        _check_dated_cache_contract(case, tmp_path)
 
 
 @pytest.mark.parametrize("cfg", [scanner.ScanConfig(feed=scanner.DataFeed.IEX), scanner.ScanConfig(session_date=date(2025, 1, 2))])
@@ -134,7 +220,8 @@ def test_real_selection_pipeline_records_screened_pool_and_rotation(monkeypatch,
     symbols = ["A" + chr(65 + i // 26) + chr(65 + i % 26) for i in range(120)]
     monkeypatch.setattr(scanner, "get_universe", lambda: ["AAPL"])
     monkeypatch.setattr(scanner, "current_session", lambda: date(2026, 9, 8))
-    monkeypatch.setattr(universe, "fetch_directory", lambda: [company(s) for s in symbols])
+    rows = [company(s, unused="not retained") for s in symbols] + [company("MRNA", sector="Health Care")] * 380
+    monkeypatch.setattr(universe, "fetch_directory", lambda: rows)
     requested = []
     def download(client, names, cfg, session):
         requested.extend(names)
@@ -145,6 +232,25 @@ def test_real_selection_pipeline_records_screened_pool_and_rotation(monkeypatch,
     assert set(requested) == set(symbols) == set(names)
     assert report["mode"] == "adaptive" and report["eligible"] == report["screened"] == 120
     assert report["removed"] == ["AAPL"] and report["selected"] == 120
+    cache_path = tmp_path / universe.DIRECTORY_CACHE
+    saved = cache_path.read_bytes()
+    payload = json.loads(gzip.decompress(saved))
+    assert report["directory_status"] == "live" and report["directory_age_days"] == 0
+    assert payload["fetched_at"] == report["directory_fetched_at"] and len(payload["rows"]) == 500
+    assert payload["source_url"] == universe.SOURCE_URL
+    assert all(set(row) == set(universe.DIRECTORY_FIELDS) for row in payload["rows"])
+    with monkeypatch.context() as case:
+        case.setattr(universe, "fetch_directory", lambda: [company("NEW")])
+        assert universe.select(scanner.ScanConfig(), tmp_path, data_client=object())[1]["mode"] == "fallback"
+        assert cache_path.read_bytes() == saved, "An incomplete refresh cannot replace a good cache"
+    with monkeypatch.context() as case:
+        def cannot_replace(self, target):
+            raise PermissionError("storage unavailable")
+        case.setattr(universe.Path, "replace", cannot_replace)
+        names, report = universe.select(scanner.ScanConfig(), tmp_path, data_client=object())
+        assert set(names) == set(symbols) and report["mode"] == "adaptive"
+        assert cache_path.read_bytes() == saved
+        assert list(tmp_path.glob(".universe-directory-*.tmp")) == []
 
 
 def test_adaptive_basket_does_not_become_an_explicit_smoke_test():
@@ -246,3 +352,15 @@ def test_no_email_publication_preserves_real_run_identity(fake_alpaca, mocked_bo
     assert report.published is True and snapshot["run"]["dry_run"] is False
     assert snapshot["run"]["email_delivery"] == "disabled"
     assert mocked_boundaries["resend"].sent == []
+    warning = "Live listings refresh unavailable; using dated Nasdaq listings with fresh session prices."
+    selection = {"mode": "adaptive", "warning": warning, "directory_status": "cached"}
+    monkeypatch.setenv("SCAN_UNIVERSE", "adaptive")
+    monkeypatch.setattr(universe, "select", lambda cfg, docs: (names, selection))
+    monkeypatch.setattr(pipeline, "_already_published", lambda cfg, tickers: None)
+    report = pipeline.RunReport()
+    pipeline.run("evening", dry_run=False, report=report)
+    snapshot = json.loads((tmp_path / "docs" / "data.json").read_text())
+    assert report.published and report.status == "degraded"
+    assert {"stage": "universe", "message": warning} in report.errors
+    assert snapshot["run"]["universe"]["selection"] == selection
+    assert snapshot["run"]["status"] == "degraded" and mocked_boundaries["resend"].sent == []

@@ -1061,7 +1061,7 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
         scan_tickers, selection = adaptive_universe.select(cfg, ledger.DOCS_DIR)
         scan_stats["universe_selection"] = selection
         scan_stats["universe_tickers"] = sorted(scan_tickers)
-        if selection.get("mode") == "fallback":
+        if selection.get("warning"):
             report.problem("universe", selection["warning"])
     candidates = run_scan(cfg, universe=scan_tickers, stats=scan_stats, refused=illiquid_bursts,
                           frames=frames)

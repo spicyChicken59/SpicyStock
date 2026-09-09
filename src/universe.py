@@ -7,14 +7,17 @@ classification is excluded. The original curated file is a labelled fallback.
 from __future__ import annotations
 
 import hashlib
+import gzip
 import json
 import logging
 import math
 import os
 import re
+import tempfile
 import time
+import zlib
 from dataclasses import replace
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -29,6 +32,11 @@ CAPACITY = 500
 MIN_DOLLARS = 20_000_000
 LOOKBACK = 20
 MAX_DISCOVERY = 6000
+DIRECTORY_CACHE = "universe-directory.json.gz"
+DIRECTORY_CACHE_SCHEMA = 1
+DIRECTORY_MAX_AGE = timedelta(days=7)
+DIRECTORY_MAX_BYTES = 10 * 1024 * 1024
+DIRECTORY_FIELDS = ("symbol", "name", "country", "sector", "industry", "lastsale", "volume")
 _NAME = re.compile(r"\b(common stock|common shares|ordinary shares?)\b", re.I)
 _REJECT = re.compile(r"\b(depositary|depository|ADR|ADS|preferred|preference|warrants?|rights?|units?|notes?|ETF|ETN|funds?)\b", re.I)
 _BIOTECH = re.compile(r"biotech|pharma|medicinal", re.I)
@@ -70,6 +78,82 @@ def fetch_directory() -> list[dict]:
         raise ValueError("Nasdaq returned an incomplete stock directory")
     log.info("Nasdaq directory returned %s listings", len(rows))
     return rows
+
+
+def _transient_directory_error(exc: Exception) -> bool:
+    return isinstance(exc, (requests.Timeout, requests.ConnectionError)) or (
+        isinstance(exc, requests.HTTPError) and exc.response is not None
+        and exc.response.status_code in {500, 502, 503, 504})
+
+
+def _read_directory_cache(docs: Path, now: datetime) -> tuple[list[dict], dict]:
+    """A captured classification directory is useful only for a bounded time."""
+    try:
+        path = docs / DIRECTORY_CACHE
+        if path.stat().st_size > DIRECTORY_MAX_BYTES:
+            raise ValueError
+        with gzip.open(path, "rb") as file:
+            raw = file.read(DIRECTORY_MAX_BYTES + 1)
+        if len(raw) > DIRECTORY_MAX_BYTES:
+            raise ValueError
+        cached = json.loads(raw)
+        if (not isinstance(cached, dict)
+                or type(cached.get("schema_version")) is not int
+                or cached["schema_version"] != DIRECTORY_CACHE_SCHEMA
+                or cached.get("source_url") != SOURCE_URL):
+            raise ValueError
+        captured = datetime.fromisoformat(cached["fetched_at"])
+        if captured.tzinfo is None or captured.utcoffset() != timedelta(0):
+            raise ValueError
+        age = now - captured
+        if not timedelta(0) <= age <= DIRECTORY_MAX_AGE:
+            raise ValueError
+        rows = cached["rows"]
+        if (not isinstance(rows, list) or not 500 <= len(rows) <= 10_000
+                or not all(isinstance(row, dict) and all(key in row for key in DIRECTORY_FIELDS)
+                           for row in rows)):
+            raise ValueError
+    except (OSError, ValueError, TypeError, KeyError, OverflowError, EOFError, zlib.error):
+        raise ValueError("Live directory unavailable and no valid Nasdaq directory captured within seven days; using the curated seed") from None
+    return rows, {"directory_status": "cached", "directory_fetched_at": captured.isoformat(),
+                  "directory_age_days": round(age.total_seconds() / 86400, 4)}
+
+
+def _directory(docs: Path) -> tuple[list[dict], dict]:
+    try:
+        rows = fetch_directory()
+    except Exception as exc:
+        # An access refusal or an invalid live payload is not a transport
+        # outage. Keep its normal seed fallback rather than borrowing a cache.
+        if not _transient_directory_error(exc):
+            raise
+        return _read_directory_cache(docs, datetime.now(timezone.utc))
+    return rows, {"directory_status": "live", "directory_fetched_at": datetime.now(timezone.utc).isoformat(),
+                  "directory_age_days": 0}
+
+
+def _save_directory_cache(docs: Path, rows: list[dict], fetched_at: str) -> None:
+    """Atomically retain only the official fields that current rules inspect."""
+    payload = {"schema_version": DIRECTORY_CACHE_SCHEMA, "source_url": SOURCE_URL,
+               "fetched_at": fetched_at,
+               "rows": [{key: row.get(key) for key in DIRECTORY_FIELDS} for row in rows
+                        if isinstance(row, dict)]}
+    raw = (json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
+    if len(raw) > DIRECTORY_MAX_BYTES:
+        raise ValueError("Directory cache exceeds the size limit")
+    compressed = gzip.compress(raw, mtime=0)
+    if len(compressed) > DIRECTORY_MAX_BYTES:
+        raise ValueError("Compressed directory cache exceeds the size limit")
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="wb", dir=docs,
+                                         prefix=".universe-directory-", suffix=".tmp", delete=False) as file:
+            temporary = Path(file.name)
+            file.write(compressed)
+        temporary.replace(docs / DIRECTORY_CACHE)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def classification(row: dict, seeds: set[str]) -> str | None:
@@ -216,6 +300,7 @@ def select(cfg: scanner.ScanConfig, docs: Path, *, data_client=None) -> tuple[li
         old = seeds
     meta = {"version": VERSION, "mode": "adaptive", "source": "Nasdaq stock screener + Alpaca daily bars",
             "source_url": SOURCE_URL, "refreshed_at": datetime.now(timezone.utc).isoformat(),
+            "directory_status": None, "directory_fetched_at": None, "directory_age_days": None,
             "source_date": None, "session": session.isoformat(), "discovered": 0, "eligible": 0,
             "screened": 0, "selected": 0, "capacity": CAPACITY, "lookback_sessions": LOOKBACK,
             "liquidity_min_dollars": MIN_DOLLARS, "warning": None,
@@ -227,11 +312,22 @@ def select(cfg: scanner.ScanConfig, docs: Path, *, data_client=None) -> tuple[li
         # Never apply today's directory to a genuinely historical session.
         if cfg.session_date is not None and cfg.session_date != scanner.current_session():
             raise ValueError("Historical backfill uses the curated seed; today's membership is not historical evidence")
-        rows = fetch_directory()
+        rows, directory_meta = _directory(docs)
+        meta.update(directory_meta)
         pool, excluded = directory_pool(rows, seeds)
         meta.update(discovered=len(rows), eligible=len(pool), exclusions=excluded)
         if len(pool) < 100:
             raise ValueError("Too few securities had verified US common-stock classification")
+        if meta["directory_status"] == "cached":
+            meta["warning"] = (f"Live listings refresh unavailable; using Nasdaq listings captured "
+                               f"{meta['directory_fetched_at'][:10]} (maximum age seven days). "
+                               f"Prices and selection are refreshed for {session.isoformat()}.")
+        else:
+            try:
+                _save_directory_cache(docs, rows, meta["directory_fetched_at"])
+            except Exception as exc:
+                # A storage problem must not discard a valid live directory.
+                log.warning("Directory cache could not be saved (%s)", type(exc).__name__)
         client = data_client or scanner.get_clients()
         short_cfg = replace(cfg, lookback_days=35)
         metrics, returned, fresh = {}, 0, 0
