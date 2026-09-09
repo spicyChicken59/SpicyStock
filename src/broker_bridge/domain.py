@@ -100,7 +100,17 @@ def source_setup(path, sym, previous_session):
         require(close >= previous * Decimal("1.04") and number(row["volume"]) > number(row["prev_volume"])
                 and number(row["volume"]) >= 100000,
                 "setup_invalid", "The source row does not satisfy the base 4% price-volume scan.")
-        return {"session": previous_session, "snapshot_sha256": sha256(body).hexdigest(), "close": float(close)}
+        universe = run.get("universe") or {}
+        selection = universe.get("selection") or {}
+        members = universe.get("tickers")
+        classified = (selection.get("version") == "nasdaq-sip-rotation-v1"
+                      and selection.get("mode") == "adaptive"
+                      and selection.get("session") == previous_session
+                      and isinstance(members, list) and sym in members
+                      and all(isinstance(t, str) for t in members)
+                      and universe.get("identity") == sha256("\n".join(sorted(members)).encode()).hexdigest()[:16])
+        return {"session": previous_session, "snapshot_sha256": sha256(body).hexdigest(),
+                "close": float(close), "classified_common_stock": classified}
     except Rejected:
         raise
     except (OSError, ValueError, KeyError, TypeError):

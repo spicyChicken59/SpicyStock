@@ -7,16 +7,10 @@ Per-symbol conditions:
   3. Today's volume >= min_rvol x the stock's OWN trailing volume average
   5. Price > $4.00                                     }
 
-  4. Not a biotech stock — NOT CHECKED BY ANY CODE. detect_setup takes
-     (df, cfg) and never sees a ticker, so it structurally cannot apply a
-     sector rule; the only thing enforcing this is the hand-curated contents
-     of data/symbols.txt, whose own header says so. This list used to open
-     "all checked by detect_setup()", which was false in that one line, while
-     a comment beside rule 5 in this same file admitted the rule was curation.
-     It matters far more than a stale sentence: replacing the curated symbol
-     file with a generated universe would DELETE A NAMED STRATEGY RULE, with
-     the whole suite green and no surface reporting it. Whatever generates
-     that universe has to answer for rule 4 or say plainly that it does not.
+  4. Not a biotech stock — enforced before detect_setup(), which has no
+     ticker or sector input. Seed scans use reviewed data/symbols.txt;
+     production's src.universe classifies every new security explicitly and
+     conservatively excludes healthcare/biotech/pharma outside seed exceptions.
 
 And one cross-sectional condition, applied by run_scan() over the whole batch:
   6. Dollar volume at or above the min_dollar_volume_pctile percentile of
@@ -38,10 +32,13 @@ ranks names against each other, and a feed that halves everyone's volume does
 not change the ranking. `$3M/day` would have to be re-tuned per feed; "top
 70% of what we scanned" does not.
 
-UNIVERSE: get_universe() reads a checked-in symbol file (data/symbols.txt),
-not Alpaca's ~11,000-name asset list — no asset-list API call is made. Pass
-run_scan(universe=[...]) to override the file entirely; that is the path
-`python -m src.pipeline ... --tickers NVDA,PLTR` takes.
+UNIVERSE: get_universe() reads the curated fallback data/symbols.txt.
+Production evening runs enable src.universe's Nasdaq-classified, SIP-liquidity
+rotation and pass the resulting explicit list to run_scan(). The scanner
+itself neither fetches an asset list nor classifies securities. --tickers
+remains an explicit diagnostic basket. src.universe enforces classification,
+an absolute consolidated liquidity minimum, a bounded history budget and
+published provenance before that basket reaches these unchanged scan gates.
 
 THE DATA REQUEST: _download_batch() names four things Alpaca would otherwise
 default for us — the adjustment, the feed, and both ends of the window. See
@@ -63,10 +60,10 @@ Everything short of raising is reported rather than swallowed: run_scan
 fills an optional `stats` dict with the counts behind the shortlist, and
 src.pipeline decides from those whether the run was clean.
 
-RULE 4 IS ENFORCED BY CURATION, NOT BY CODE. Alpaca's asset data has no
-sector field, and nothing in this module tests one. Biotech is kept out by
-leaving those names out of the symbol file. To change what is eligible,
-edit that file — not detect_setup().
+RULE 4: seed scans enforce it through curation. Adaptive production scans
+also reject new healthcare, biotechnology and pharmaceutical classifications;
+known curated diversified-pharma exceptions remain eligible. Alpaca's equity
+asset class alone never proves that a security is a non-biotech common stock.
 
 INSTALL
 -------

@@ -16,6 +16,7 @@ class Config:
     docs: Path = Path(__file__).resolve().parents[2] / "docs"
     live_enabled: bool = False
     common_stock_symbols: frozenset = frozenset()
+    allow_adaptive_universe: bool = False
     live_account_ids: frozenset = field(default=frozenset(), repr=False)
     max_positions: int = 5
     max_risk_percent: Decimal = Decimal("1")
@@ -73,6 +74,8 @@ class Config:
             docs=Path(os.getenv("BRIDGE_DOCS", str(cls.docs))),
             live_enabled=os.getenv("BRIDGE_LIVE_ENABLED", "false").lower() == "true",
             common_stock_symbols=frozenset(x.strip().upper() for x in symbols.split(",") if x.strip()),
+            allow_adaptive_universe=(os.getenv("BRIDGE_COMMON_STOCK_SYMBOLS") is None
+                                     and os.getenv("BRIDGE_COMMON_STOCK_FILE") is None),
             live_account_ids=frozenset(x.strip() for x in os.getenv("BRIDGE_LIVE_ACCOUNT_IDS", "").split(",") if x.strip()),
             max_positions=int(os.getenv("BRIDGE_MAX_POSITIONS", "5")),
             max_risk_percent=Decimal(os.getenv("BRIDGE_MAX_RISK_PERCENT", "1")),
