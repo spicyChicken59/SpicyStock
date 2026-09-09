@@ -166,6 +166,8 @@ try {
   }
   async function fillPlan(page) {
     await closeTracker(page);
+    const closePlan = page.locator('#trade-close-plan');
+    if (await closePlan.isVisible()) await closePlan.click();
     await page.locator('#trade-plan-manual').click();
     await page.locator('#trade-symbol').fill('TESTBEE');
     await page.locator('#trade-entry').fill('20');
