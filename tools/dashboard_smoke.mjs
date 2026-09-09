@@ -826,6 +826,9 @@ async function open(path = '/f/fixture/') {
   await page.goto(BASE + path, { waitUntil: 'load' });
   if (!await page.locator('#research-report').evaluate(node => node.open))
     await page.locator('#research-toggle').click();
+  for (const summary of await page.locator('.stock-legacy > summary, .stock-scan-details > summary').all()) {
+    if (!await summary.evaluate(node => node.parentElement.open)) await summary.click();
+  }
   await page.waitForFunction(() => {
     const h = document.getElementById('h1');
     return h && h.textContent.trim() && h.textContent !== 'Loading the latest run…';
@@ -1718,9 +1721,8 @@ const light = await page.evaluate(() => {
     .map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
     return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
   const cr = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-  // The headline now sits on an ink cover even in light mode. Measure the
-  // surface painted behind it, including any translucent ancestor fills,
-  // rather than comparing it with the body outside that cover.
+  // Measure the daily desk's visible headline against its actual painted
+  // surface, including any translucent ancestor fills.
   const paintedBackground = (node) => {
     const layers = [];
     for (let n = node; n; n = n.parentElement) {
@@ -1735,7 +1737,7 @@ const light = await page.evaluate(() => {
   };
   const bg = getComputedStyle(document.body).backgroundColor;
   const chip = document.querySelector('#scores-table .sc-chip--warn');
-  const headline = document.getElementById('h1');
+  const headline = document.querySelector('#trade-workspace .tw-title');
   return {
     bg, dark: lum(bg) < 0.25,
     h1: cr(getComputedStyle(headline).color, paintedBackground(headline)),
