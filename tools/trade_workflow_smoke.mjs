@@ -213,7 +213,14 @@ try {
   pass('the daily desk stays simple; the tracker opens as a modal, restores focus on close and keeps manual limits private');
 
   // The primary visual desk must also work when no AI review is available.
-  const visual = await open('manual', { ...visualData, candidates: [], run: { ...visualData.run, scored: 0, shortlist_size: 0 } }), vp = visual.page;
+  const visual = await open('manual', { ...visualData, candidates: [], run: { ...visualData.run, scored: 0, shortlist_size: 0,
+    universe: { ...visualData.run.universe, selection: { mode: 'adaptive', directory_status: 'cached',
+      directory_fetched_at: '2026-08-28T23:00:00+00:00', warning: 'Using a dated listings catalog.' } }
+  } }), vp = visual.page;
+  const catalogText = await vp.locator('#trade-universe').textContent();
+  assert.match(catalogText, /Listings captured 2026-08-28/);
+  assert.ok(catalogText.includes('Prices and selection refreshed for ' + visualData.run.date));
+  assert.doesNotMatch(catalogText, /current listings/);
   assert.equal(await vp.locator('#trade-nav-research').isVisible(), true);
   const initialSymbol = await vp.locator('.tc-chart').getAttribute('data-symbol');
   const otherSymbol = visualData.run.stockbee.scan.rows.find(row => row.ticker !== initialSymbol).ticker;

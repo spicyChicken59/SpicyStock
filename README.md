@@ -84,7 +84,7 @@ The original 228 stocks were a hand-written development shortcut, not an index
 or a ranking of the best companies. EA and FI were retired after they stopped
 returning bars, and BK was replaced by BNY. The file remains the reviewed seed.
 
-Each production evening run downloads [Nasdaq's stock directory](https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true).
+Each production evening run tries to download [Nasdaq's stock directory](https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true).
 New securities need an explicit common/ordinary-share description, US issuer
 country and a known sector/industry. Funds, depositary receipts, preferred
 shares, warrants, units and blank-check companies are excluded. New healthcare,
@@ -118,8 +118,14 @@ reference and explicitly records that historical-membership limitation.
 `run.universe.selection` publishes source, mode, classification policy, eligible,
 screened/fresh and selected counts, liquidity floor, slot reasons, additions,
 removals and any warning. `run.universe.tickers` and `identity` preserve each
-session's actual basket. A failed refresh falls back to the 228 checked-in
-stocks and marks the run degraded. Non-SIP feeds and historical backfills also
+session's actual basket. After a temporary provider connection failure, a verified
+directory captured within seven calendar days can still supply classifications;
+prices, liquidity and selection are always recomputed from fresh SIP bars.
+The compressed catalog is saved in `docs/universe-directory.json.gz`. Its source,
+capture time and age are checked; the page displays the capture date and the run
+is marked degraded. Refused access, invalid or expired catalogs, and an incomplete
+market-data screen still fall back to the 228 checked-in stocks. A successful
+directory fetch replaces the catalog. Non-SIP feeds and historical backfills also
 use a labelled seed fallback: today's directory cannot establish past membership.
 
 The production workflow defaults to `SCAN_UNIVERSE=adaptive`; set the repository
