@@ -512,3 +512,31 @@ def test_portfolio_does_not_stamp_stale_clock_or_future_execution_as_fresh(bridg
     broker.clock_offset = 0
     broker.fill_data = [fill(transaction_time="2026-09-08T14:01:00Z")]
     assert client.get("/api/portfolio").json()["error"]["code"] == "fill_invalid"
+
+
+@pytest.mark.parametrize("defect", [None, "missing_member", "wrong_identity", "fallback", "wrong_session", "operator_scope"])
+def test_adaptive_symbols_require_current_trusted_classification_and_respect_operator_scope(tmp_path, defect):
+    from src.universe import identity, VERSION
+    cfg = replace(make_config(tmp_path), allow_adaptive_universe=defect != "operator_scope")
+    data = source()
+    data["run"]["stockbee"]["scan"]["rows"][0]["ticker"] = "NEW"
+    data["run"]["universe"] = {
+        "tickers": ["NEW"], "identity": identity(["NEW"]),
+        "selection": {"version": VERSION, "mode": "adaptive", "session": "2026-09-04"}}
+    block = data["run"]["universe"]
+    if defect == "missing_member": block["tickers"] = ["OTHER"]
+    if defect == "wrong_identity": block["identity"] = identity(["OTHER"])
+    if defect == "fallback": block["selection"]["mode"] = "fallback"
+    if defect == "wrong_session": block["selection"]["session"] = "2026-09-03"
+    (cfg.docs / "data.json").write_text(json.dumps(data))
+    broker = BrokerDouble([NOW])
+    broker.asset_data["symbol"] = "NEW"
+    app = create_app(cfg, broker, lambda: NOW)
+    with TestClient(app, base_url="https://stock.test") as client:
+        login(client, app)
+        result = preview(client, symbol="NEW")
+        if defect is None:
+            assert result.status_code == 200 and result.json()["symbol"] == "NEW"
+        else:
+            assert result.json()["error"]["code"] == "common_stock_verification_required"
+        assert not broker.submissions

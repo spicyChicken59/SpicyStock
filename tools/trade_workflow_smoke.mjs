@@ -10,6 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const docs = join(repo, 'docs');
 const data = JSON.parse(await readFile(join(repo, 'tests/fixtures/data.json'), 'utf8'));
+const visualData = JSON.parse(await readFile(join(repo, 'tests/fixtures/history/data.json'), 'utf8'));
 assert.equal(data.run.fixture, true);
 const args = process.argv.slice(2), shotIndex = args.indexOf('--shots');
 const shots = shotIndex < 0 ? null : resolve(args[shotIndex + 1]);
@@ -48,7 +49,7 @@ async function screenshot(page, selector, name) {
 
 try {
   browser = await (await chromiumTool()).launch();
-  async function open(mode = 'manual') {
+  async function open(mode = 'manual', snapshot = data) {
     const context = await browser.newContext({ viewport: { width: 390, height: 900 }, reducedMotion: 'reduce', timezoneId: 'UTC' });
     const page = await context.newPage();
     page.setDefaultTimeout(5000);
@@ -59,7 +60,7 @@ try {
       const request = route.request(), url = new URL(request.url());
       const json = value => route.fulfill({ contentType: 'application/json', body: JSON.stringify(value) });
       if (url.origin !== origin) { await route.fulfill({ status: 200, body: '' }); return; }
-      if (url.pathname === '/data.json') { await json(data); return; }
+      if (url.pathname === '/data.json') { await json(snapshot); return; }
       if (url.pathname === '/trading-config.json') {
         await json({ version: 1, enabled: mode !== 'manual', api_base: mode === 'manual' ? null : '/api', broker: 'alpaca' }); return;
       }
@@ -210,6 +211,46 @@ try {
   assert.equal((await records(page)).fills.length, 0, 'Saving limits cannot create an execution.');
   assert.equal(manual.state.api.length, 0, 'Manual mode must not reach broker endpoints.');
   pass('the daily desk stays simple; the tracker opens as a modal, restores focus on close and keeps manual limits private');
+
+  // The primary visual desk must also work when no AI review is available.
+  const visual = await open('manual', { ...visualData, candidates: [], run: { ...visualData.run, scored: 0, shortlist_size: 0 } }), vp = visual.page;
+  assert.equal(await vp.locator('#trade-nav-research').isVisible(), true);
+  const initialSymbol = await vp.locator('.tc-chart').getAttribute('data-symbol');
+  const otherSymbol = visualData.run.stockbee.scan.rows.find(row => row.ticker !== initialSymbol).ticker;
+  await vp.locator('#trade-search').fill(otherSymbol);
+  assert.equal(await vp.locator('.tw-symbol-strip button[aria-pressed="true"]').count(), 0,
+    'Filtering the map must not imply selection of a different stock than the visible inspector.');
+  assert.equal(await vp.locator('.tc-chart').getAttribute('data-symbol'), initialSymbol);
+  await vp.locator('#trade-search').fill('');
+  const point = vp.locator('.tw-map-point').first(), symbol = await point.getAttribute('data-trade-select');
+  await point.focus(); await vp.keyboard.press('Enter');
+  assert.equal(await vp.locator('#trade-inspector-title').textContent(), symbol);
+  assert.equal(await vp.locator('#trade-symbol').inputValue(), symbol);
+  assert.equal(await vp.locator('.tw-evidence-grid').isVisible(), true);
+  assert.equal(await vp.locator('.tc-chart').getAttribute('data-symbol'), symbol);
+  const latestDate = await vp.locator('.tc-date').textContent();
+  await vp.getByRole('button', { name: 'Inspect previous session', exact: true }).click();
+  assert.notEqual(await vp.locator('.tc-date').textContent(), latestDate);
+  await vp.locator('.tc-latest').click();
+  assert.equal(await vp.locator('.tc-date').textContent(), latestDate);
+  await vp.locator('.tc-button[data-view="line"]').click();
+  assert.equal(await vp.locator('.tc-button[data-view="line"]').getAttribute('aria-pressed'), 'true');
+  await vp.evaluate(() => window.SCTradeState.setProfile({ capital: 10000, risk_percent: 1, cash_cap: 600, max_positions: 4 }));
+  await vp.locator('#trade-entry').fill('20'); await vp.locator('#trade-stop').fill('18');
+  assert.equal(await vp.locator('#trade-plan-qty').textContent(), '30 shares');
+  assert.match(await vp.locator('.tc-levels').textContent(), /Your entry \$20\.00.*Your stop \$18\.00/);
+  await vp.locator('#trade-copy-ticket').click();
+  await vp.waitForFunction(() => /copied|Select and copy/.test(document.querySelector('#trade-notice').textContent));
+  assert.equal((await records(vp)).fills.length, 0, 'Copying a ticket cannot create a fill.');
+  assert.equal(visual.state.api.length, 0, 'Visual research and manual tickets cannot reach broker APIs.');
+  for (const width of [320, 390, 1280]) { await vp.setViewportSize({ width, height: 900 }); await geometry(vp); }
+  await vp.locator('#trade-watch-tab').click();
+  assert.equal(await vp.locator('.tc-levels').isVisible(), false,
+    'A different stock cannot inherit the entry and stop from the previous stock.');
+  await vp.locator('#trade-nav-research').click();
+  assert.equal(await vp.locator('#research-report').evaluate(node => node.open), true);
+  await visual.context.close();
+  pass('unscored scan matches drive the interactive map, chart, visible evidence and copyable ticket without creating an order');
 
   await fillPlan(page);
   assert.match(await page.locator('#trade-calculation').textContent(), /\$60\.00.*\$600\.00/);

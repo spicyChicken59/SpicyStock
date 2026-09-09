@@ -1,4 +1,7 @@
-# SpicyStock scan universe — hand-curated starter list.
+# SpicyStock curated seed and fallback universe.
+# Production evening scans use src/universe.py: a refreshed Nasdaq directory,
+# explicit security/industry classification and delayed SIP liquidity/momentum
+# selection. This reviewed seed remains the safe fallback and pharma exceptions.
 #
 # WHAT THIS IS
 #   A deliberately small, hand-written list of liquid US common stocks, read
@@ -7,14 +10,10 @@
 #   one takes seconds, which is the whole point — every later fix in the
 #   rebuild has to be testable in one sitting.
 #
-# THIS SHOULD EVENTUALLY BE GENERATED — DO NOT TREAT IT AS AUTHORITATIVE.
-#   These names were written out by hand, not fetched from an index or a
-#   screener, so the list is already stale on the day it is committed:
-#   tickers get renamed, companies merge, liquidity moves. A symbol that no
-#   longer trades simply returns no bars and is skipped. The real fix is a
-#   generator (index constituents plus a liquidity percentile — see the
-#   step-4 percentile gate) that rewrites this file on a schedule and
-#   records its source and date right here.
+# This file is deliberately retained rather than overwritten by discovery.
+# The selected production basket, source, session and membership identity are
+# recorded in docs/data.json run.universe; a refresh failure says fallback.
+# Historical backfills and non-SIP feeds use this seed, not today's directory.
 #
 # WHAT IS IN IT
 #   ~230 large- and mid-cap US common stocks, grouped by sector for human
@@ -26,7 +25,7 @@
 #       quality on a free IEX feed.
 #     - Biotech. That is rule 4 of the strategy (binary FDA events are not
 #       momentum), and with fundamentals_filter() deleted, curating this
-#       file is the only thing enforcing it — no code tests a sector. The
+#       file enforces it for seed scans; adaptive discovery also checks sector. The
 #       pharma/biotech line is a judgement call: large diversified pharma
 #       (JNJ, LLY, MRK, PFE, ABBV, BMY) is kept, pure-play biotech is not.
 #     - Class shares spelled with punctuation (BRK.B). Alpaca's exact

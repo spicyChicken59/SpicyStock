@@ -29,11 +29,11 @@ Known scheduled falsifications:
 | ~~The first commit-back replaces `docs/data.json` with a real run~~ swept before it happened (3.1) | ~~`check_fixture_fresh.py` compared `docs/data.json` to the generator, so the pipeline working would have turned CI red on the next push; README's "regenerate … `docs/data.json`" and "pinned to the fixture" smoke-test section~~ — the canonical fixture is `tests/fixtures/data.json` now, `docs/data.json` is whatever the last run wrote, and the guard only checks a `docs/` copy that still *claims* to be the fixture |
 | ~~`evening.yml` keeps `docs/` between runs~~ done in step 9 | ~~README's "Does the history actually accumulate?" section and the stale `charts/` path in that workflow's upload step~~ both swept; step 10 added why that commit-back now also feeds the morning run and every streak |
 | ~~Step 10 makes the mode mean something and reads the ledger back~~ done | ~~README's "morning has no workflow and no distinct behaviour" note, the workflow inventory, `.env.example`'s required-variable list~~ all swept; `morning.yml` now exists |
-| The universe widens past `data/symbols.txt` | **TWO STRATEGY RULES, not just prose.** (a) Rule 4, "not a biotech stock", is enforced by nothing but the curated contents of that file — `detect_setup(df, cfg)` never sees a ticker — so replacing it DELETES a named rule with the suite green. (b) The dollar-volume percentile is feed-invariant but NOT universe-invariant: measured on log-normal populations of the shape US dollar volume has, the 230 names the file then held put the 30th percentile at $359M/day and 3,000 all-cap names at $3.8M/day, the same 70% kept and a 94x lower bar — so a $20M/day burst, `strategy.md`'s own "slippage eats the edge" kill criterion, is refused today and admitted after. The percentile half is pinned by a test; rule 4 cannot be, because nothing in the code sees a ticker — which is the point. The generator has to answer for both or say plainly that it does not. |
-| The universe widens past `data/symbols.txt` | the four universe-size figures in README (230 when this row was written, 228 since the first live day retired three names): its opening line, the diagram's universe box, the diagram's Layer-1 caption, and the Costs section's scan-time note. (This row named a Tuning section that holds none, and missed the opening line — checked by grepping, since a list of places is exactly the kind of claim that rots.) |
+| ~~The universe widens past `data/symbols.txt`~~ implemented | `src/universe.py` uses Nasdaq classifications to exclude unknown/common-stock mismatches and new healthcare/biotech/pharma, retains curated exceptions, and requires $20M prior-20-session median and target-session dollar volume on SIP before the unchanged scanner gates. Selection provenance and dated membership are archived. |
+| ~~The universe-size prose changes~~ swept | README's opening, pipeline diagram, layer caption, Costs and Tuning now describe classified discovery and at most 500 detailed histories; 228 refers only to the reviewed seed/fallback. |
 
-Nothing else is scheduled to go stale: step 10 was the last of the ten. The two
-rows left are one decision — the open one at the bottom of this file — not a step.
+The adaptive selector addresses the former open universe decision. Actual
+production refresh success still has to be established by its published record.
 
 ## Standing rule: no line numbers in comments or docs
 
@@ -145,7 +145,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1562 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1602 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -2618,8 +2618,8 @@ python -m src.pipeline evening --dry-run
     picture belongs to the numbers beside it (the evening email, which attaches
     what it just rendered, is unaffected).
 
-All ten are done. Full-market scanning comes next, and the open decision below
-is the first thing standing in front of it.
+All ten are done. The bounded adaptive selector below extends discovery beyond
+the seed; it does not claim full-market coverage.
 
 **The two Bonde rules the screener did not hold anywhere.** "Never buy after
 3+ consecutive up days" and "no 4% breakdown during the pullback" were in
@@ -2676,24 +2676,25 @@ page asks whether outcomes land in it, not merely whether they are positive
 audit, which asked why one unverified constant carried the warning and its
 sibling did not.
 
-**Open decision — the universe is now 228 names.** Step 2 traded ~11,000 symbols
-for a hand-curated list to make steps 3-8 testable in seconds instead of twenty
-minutes. That is a real strategy narrowing, not just a speed fix: 4% momentum
-bursts are most common in the small- and mid-caps this list excludes. The list is
-a scaffold. Replacing it with a generated, screened universe is required before
-this is a real screener, and it is not one of the ten steps above.
+**Adaptive discovery — the seed is still 228 names.** Step 2 traded roughly
+11,000 assets for a hand-curated development list. Production evening runs now
+refresh Nasdaq's stock directory, admit only classified common stocks under
+the conservative sector rules, screen recent consolidated liquidity, and select
+at most 500 names. The original file stays as reviewed exceptions and a clearly
+labelled fallback. Local commands still default to the seed. No Alpaca asset
+class is treated as proof of common-stock or non-biotech classification.
 
-One fact for that decision, checked by execution rather than remembered:
-alpaca-py 0.44's `Asset` model -- what `GetAssetsRequest` returns for each
-of the roughly eleven thousand tradable names -- carries `exchange`, `name`, `status`,
-`tradable`, `marginable`, `shortable`, `easy_to_borrow`, `fractionable` and a
-`ptp_*` attribute, and NO sector, industry or SIC code (`Asset.model_fields`,
-read off the installed package). So a generator built from the asset list
-alone cannot enforce rule 4 at all; it can only exclude ETFs and OTC names by
-`exchange` and non-common shares by `name` heuristics. Enforcing the rule needs
-a second source that this sandbox cannot reach to validate -- SEC's submissions
-API carries a SIC code per CIK (2834 and 2836 are, FROM MEMORY and
-unverifiable from here, the pharmaceutical-preparations and
-biological-products codes) -- or a maintained exclusion list, which is the
-curated file again with the sign flipped. Either way the generator has to say which it
-does, in the file it writes, in words a later reader can check.
+`src/universe.py` retains recent setups and reserves room for current 4% moves,
+20-session momentum, liquidity leaders and 50 rotating discovery slots. Dated
+membership, identity, source, counts and warnings are published. Original basket
+members receive follow-up bars so tomorrow's winners do not replace yesterday's
+benchmark population; legacy seed benchmarks explicitly state that their old
+records lacked dated membership. Historical backfills and non-SIP feeds fall
+back instead of applying current classification or a consolidated floor to the
+wrong context. README and .env.example document the exact behavior.
+
+A selector change merged to main triggers one refresh of the most recently
+closed session with `SCAN_SEND_EMAIL=false`. It publishes a real record and
+sends no success or failure message. Only `src/universe.py` matches the push
+trigger, so the data commit-back cannot retrigger the scan. Manual dispatch has
+a separate `skip_email` option; `dry_run` continues to prevent commit-back.

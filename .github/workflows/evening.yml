@@ -25,10 +25,14 @@ run-name: >-
   && (github.event.schedule == '16 22 * * 1-5' && 'cron 16 22 * * 1-5, the EDT slot'
   || (github.event.schedule == '16 23 * * 1-5' && 'cron 16 23 * * 1-5, the EST slot'
   || format('cron {0}', github.event.schedule)))
+  || (github.event_name == 'push' && 'selection refresh (no email)'
   || (inputs.dry_run == true && 'rehearsal'
   || (inputs.session != '' && format('backfill {0}', inputs.session)
-  || 'dispatch')) }}
+  || 'dispatch'))) }} ${{ inputs.skip_email == true && '(no email)' || '' }}
 on:
+  push:
+    branches: [main]
+    paths: [src/universe.py]
   schedule:
     # These crons ARE the trigger. An earlier design used an external scheduler
     # (cron-job.org) hitting workflow_dispatch, with these as backup; that is no
@@ -40,6 +44,10 @@ on:
     - cron: "16 23 * * 1-5"   # backup while US is on EST (UTC-5)
   workflow_dispatch:
     inputs:
+      skip_email:
+        description: "Publish a real scan without sending email"
+        type: boolean
+        default: false
       session:
         description: "Backfill: the session to scan, YYYY-MM-DD. Leave empty to scan the session the clock says."
         required: false
@@ -67,6 +75,7 @@ jobs:
       - name: Guard — external dispatch runs always; backup cron only if needed
         id: guard
         env:
+          SCAN_UNIVERSE_MODE: ${{ vars.SCAN_UNIVERSE || 'adaptive' }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -o pipefail
@@ -74,7 +83,7 @@ jobs:
           if [ "$OFFSET" = "-0400" ]; then BACKUP="16 22 * * 1-5"; else BACKUP="16 23 * * 1-5"; fi
           FIRED="${{ github.event.schedule }}"
           GO=false
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "push" ]; then
             GO=true   # primary path: external scheduler or manual run
           elif [ "$FIRED" = "$BACKUP" ]; then
             # "Already ran today" used to mean "any evening-* artifact was
@@ -101,7 +110,11 @@ jobs:
             # This step runs immediately after checkout, so data.json is the
             # branch's committed snapshot, not the earlier run's local file.
             PUBLISHED=false
-            if jq -e --arg session "$SESSION" --arg universe 'data/symbols.txt (checked in)' \
+            UNIVERSE='data/symbols.txt (checked in)'
+            if [ "${SCAN_UNIVERSE_MODE:-adaptive}" = "adaptive" ]; then
+              UNIVERSE='adaptive US common stocks (Nasdaq + Alpaca)'
+            fi
+            if jq -e --arg session "$SESSION" --arg universe "$UNIVERSE" \
               '.run.date == $session and .run.type == "evening"
                 and .run.fixture != true and .run.universe.label == $universe
                 and (.candidates | type == "array")' docs/data.json > /dev/null 2>&1; then
@@ -142,6 +155,8 @@ jobs:
           # -- and an unset one expands to '', which _feed_from_env() already
           # treats as "use the default".
           SCAN_FEED: ${{ vars.SCAN_FEED }}
+          SCAN_UNIVERSE: ${{ vars.SCAN_UNIVERSE || 'adaptive' }}
+          SCAN_SEND_EMAIL: ${{ (github.event_name == 'push' || inputs.skip_email == true) && 'false' || 'true' }}
           # A backfill from the Run-workflow form: the `session` box above,
           # which a scheduled run does not have, so it arrives as '' and the
           # scanner derives the session from the clock as before. A pinned
@@ -183,6 +198,12 @@ jobs:
         # record is rescued. Whether red is right for exit 2 is a separate
         # question and deliberately not answered here.
         run: |
+          # Selector changes refresh the newest closed session once, silently.
+          # Only src/universe.py on main triggers this; docs commit-back cannot loop.
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            SCAN_SESSION_DATE=$(python -c 'from src.scanner import current_session; print(current_session().isoformat())')
+            export SCAN_SESSION_DATE
+          fi
           set +e
           python -m src.pipeline evening $DRY_RUN_FLAG
           code=$?

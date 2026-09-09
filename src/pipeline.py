@@ -101,6 +101,8 @@ friends) and raises there; this module never overrules it.
 
 from __future__ import annotations
 
+from src import universe as adaptive_universe
+
 import argparse
 import csv
 import hashlib
@@ -712,6 +714,13 @@ def missing_delivery_env() -> list[str]:
     return _absent(EMAIL_ENV)
 
 
+def delivery_enabled() -> bool:
+    value = os.getenv("SCAN_SEND_EMAIL", "true").strip().lower() or "true"
+    if value not in {"true", "false"}:
+        raise ValueError("SCAN_SEND_EMAIL must be true or false")
+    return value == "true"
+
+
 def missing_env(dry_run: bool = False, run_type: str = "evening") -> list[str]:
     """Which required environment variables are absent or empty.
 
@@ -737,7 +746,7 @@ def missing_env(dry_run: bool = False, run_type: str = "evening") -> list[str]:
 
     market = list(SCAN_ENV) + list(SCORE_ENV) if mode_for(run_type).scans else []
     # --dry-run skips only delivery, so it still needs data and scoring keys.
-    required = market + ([] if dry_run else list(EMAIL_ENV))
+    required = market + ([] if dry_run or not delivery_enabled() else list(EMAIL_ENV))
     return _absent(required)
 
 
@@ -910,7 +919,9 @@ def _already_published(cfg: ScanConfig, tickers: list[str] | None) -> dict | Non
     block = run.get("universe")
     published = block.get("label") if isinstance(block, dict) else None
     universe = intended_universe_label(tickers)
-    if isinstance(published, str) and published not in (universe, UNIVERSE_FILE_LABEL):
+    if isinstance(published, str) and published not in (universe, UNIVERSE_FILE_LABEL, adaptive_universe.LABEL):
+        return None
+    if tickers is None and adaptive_universe.enabled() and published == UNIVERSE_FILE_LABEL:
         return None
     if tickers is not None and published == universe:
         recorded = _recorded_tickers(block)
@@ -949,7 +960,7 @@ def _republish_reason(published: dict, tickers: list[str] | None) -> str:
             "again, and replacing the published record with the re-scan")
     block = published.get("universe")
     label = block.get("label") if isinstance(block, dict) else None
-    if label is None or (tickers is not None and label != UNIVERSE_FILE_LABEL
+    if label is None or (tickers is not None and label not in (UNIVERSE_FILE_LABEL, adaptive_universe.LABEL)
                          and _recorded_tickers(block) is None):
         return (head + "that older record did not record which symbols were scanned, so "
                 "this run cannot confirm that the requested basket is the same. The "
@@ -1045,7 +1056,14 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     # And every frame the scan read, so publish() can fill the universe
     # benchmark of the runs five sessions back from bars already fetched.
     frames: dict = {}
-    candidates = run_scan(cfg, universe=tickers, stats=scan_stats, refused=illiquid_bursts,
+    scan_tickers = tickers
+    if tickers is None and adaptive_universe.enabled():
+        scan_tickers, selection = adaptive_universe.select(cfg, ledger.DOCS_DIR)
+        scan_stats["universe_selection"] = selection
+        scan_stats["universe_tickers"] = sorted(scan_tickers)
+        if selection.get("mode") == "fallback":
+            report.problem("universe", selection["warning"])
+    candidates = run_scan(cfg, universe=scan_tickers, stats=scan_stats, refused=illiquid_bursts,
                           frames=frames)
     # Every sentence of the form "no scan was completed" is false from here on,
     # whatever kills the run next. The notice for a run that died in publish()
@@ -1303,8 +1321,8 @@ def discover(mode: Mode, dry_run: bool = False, tickers: list[str] | None = None
     # which is the point at THIS call site -- publish() has run by here and
     # can have degraded the run since `stats` was built.
     report.about_to_mail(run_type, stats, shortlist)
-    if dry_run:
-        log.info("DRY RUN — skipping email. Shortlist:")
+    if dry_run or not delivery_enabled():
+        log.info("Email disabled — skipping delivery. Shortlist:")
         for r in shortlist:
             log.info("  %s  %s/10 (%s) %s", r["ticker"], r["score"], r["verdict"], r["reason"])
     else:
@@ -1363,6 +1381,9 @@ def universe_label(scan_stats: dict, explicit_tickers: list[str] | None) -> str:
     size = scan_stats.get("requested", len(explicit_tickers or []))
     if explicit_tickers is not None:
         return f"{size} named on the command line (--tickers)"
+    if scan_stats.get("universe_selection"):
+        mode = scan_stats["universe_selection"]["mode"]
+        return f"{size} US common stocks ({mode} selection)"
     return f"{size} checked-in US common stocks"
 
 
@@ -1377,8 +1398,9 @@ def intended_universe_label(tickers: list[str] | None) -> str:
     src.scanner.run_scan() takes an explicit universe verbatim, which is what
     makes `scan_stats["requested"]` the same number after the scan.
     """
-    return (UNIVERSE_FILE_LABEL if tickers is None
-            else universe_label({"requested": len(tickers)}, tickers))
+    if tickers is None:
+        return adaptive_universe.LABEL if adaptive_universe.enabled() else UNIVERSE_FILE_LABEL
+    return universe_label({"requested": len(tickers)}, tickers)
 
 
 def email_row(row: dict) -> dict:
@@ -1826,8 +1848,8 @@ def follow_through(mode: Mode, dry_run: bool = False,
     # rendered its notice as an evening scan: "candidates for TOMORROW" and
     # "Session it was scanning" four lines under a band saying it did not scan.
     report.about_to_mail(run_type, stats, shortlist)
-    if dry_run:
-        log.info("DRY RUN — skipping email. Following through on %s:",
+    if dry_run or not delivery_enabled():
+        log.info("Email disabled — skipping delivery. Following through on %s:",
                  session or "nothing — no run to follow")
         for r in shortlist:
             log.info("  %s  %s/10 (%s) day %s", r["ticker"], r["score"], r["verdict"],
@@ -1942,6 +1964,7 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
         "date": ledger.iso_date(session) or ledger.iso_date(datetime.now(timezone.utc)),
         "type": run_type,
         "dry_run": bool(dry_run),
+        **({"email_delivery": "disabled"} if not delivery_enabled() else {}),
         "fixture": False,
         "universe": {
             "label": intended_universe_label(explicit_tickers),
@@ -1950,6 +1973,10 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
             # have two names. Keep actual symbols for the rescan guard;
             # ordering is irrelevant, and file scans retain their contract.
             **({"tickers": sorted(explicit_tickers)} if explicit_tickers is not None else {}),
+            **({"tickers": scan_stats["universe_tickers"],
+                "identity": adaptive_universe.identity(scan_stats["universe_tickers"]),
+                "selection": scan_stats["universe_selection"]}
+               if scan_stats.get("universe_selection") else {}),
         },
         # The names in that universe that have stopped printing: a fact about
         # the symbol FILE, kept where its reader looks. Not copied into the
@@ -2064,9 +2091,18 @@ def publish(*, run_type: str, dry_run: bool, cfg: ScanConfig, report: RunReport,
     # The universe these frames ARE -- and None for a --tickers run, which
     # scanned a handful of names it was handed and has no market to offer as
     # anyone's alternative. See Ledger.fill_benchmarks().
-    benchmarked = (book.fill_benchmarks(frames_read or {}, through,
+    benchmark_frames = frames_read or {}
+    if scan_stats.get("universe_selection"):
+        try:
+            benchmark_frames = adaptive_universe.benchmark_history(book, cfg, through,
+                                                                   {**benchmark_frames, **frames})
+        except Exception as exc:
+            report.problem("archive", f"Original universe benchmark bars unavailable ({type(exc).__name__}); outcomes remain pending")
+    benchmarked = (book.fill_benchmarks(benchmark_frames, through,
                                         universe=run["universe"] if explicit_tickers is None else None,
-                                        calendar=ledger.session_calendar({**(frames_read or {}), **frames}))
+                                        calendar=ledger.session_calendar({**benchmark_frames, **frames}),
+                                        **({"legacy_seed": scanner.get_universe()}
+                                           if scan_stats.get("universe_selection") else {}))
                    if frames_read else 0)
 
     # Re-read the report AFTER the fetch: a problem raised in the two lines
@@ -2363,8 +2399,8 @@ def notify_failure(run_type: str, report: RunReport, dry_run: bool) -> None:
     session instead of scanning it. `run_type` is still the fallback, for
     every failure that never got as far as building a mail.
     """
-    if dry_run:
-        log.info("DRY RUN — not mailing the failure notice")
+    if dry_run or not delivery_enabled():
+        log.info("Email disabled — not mailing the failure notice")
         return
     undeliverable = missing_delivery_env()
     if undeliverable:

@@ -2633,7 +2633,8 @@ class Ledger:
 
     def fill_benchmarks(self, frames: dict, through: date | None = None,
                         universe: dict | None = None,
-                        calendar: list[date] | None = None) -> int:
+                        calendar: list[date] | None = None,
+                        legacy_seed: list[str] | None = None) -> int:
         """Fill the universe benchmark of every run in the fill window whose
         horizons the frames make knowable, from the universe `frames` came
         from. Returns how many runs moved.
@@ -2678,7 +2679,10 @@ class Ledger:
             # written before universes were recorded cannot be matched, so it
             # is left pending rather than filled from an assumption.
             scanned = run.get("universe")
-            if not isinstance(scanned, dict) or scanned.get("label") != universe["label"]:
+            if not isinstance(scanned, dict):
+                continue
+            seed_reference = (legacy_seed and scanned.get("label") == "data/symbols.txt (checked in)")
+            if scanned.get("label") != universe["label"] and not seed_reference:
                 continue
             current = run.get("benchmark")
             if not isinstance(current, dict):
@@ -2722,7 +2726,15 @@ class Ledger:
             started = any(_is_number(current.get(f"d{h}")) for h in HORIZONS) or \
                 any(_is_number(current["from_open"].get(f"d{h}")) for h in HORIZONS)
             floor = (_num(current.get("liquidity_floor")) if started else _floor_of(run))
-            fresh = universe_returns(frames, session, floor=floor, calendar=calendar)
+            population = frames
+            if isinstance(scanned.get("selection"), dict) or seed_reference:
+                # Rotation must not benchmark yesterday using today's winners.
+                # Every original member is requested separately by the pipeline.
+                members = legacy_seed if seed_reference else scanned.get("tickers")
+                if not isinstance(members, list) or not members or not all(t in frames for t in members):
+                    continue
+                population = {t: frames[t] for t in members}
+            fresh = universe_returns(population, session, floor=floor, calendar=calendar)
             changed = False
             for horizon in HORIZONS:
                 key, count = f"d{horizon}", f"n{horizon}"
@@ -2743,7 +2755,9 @@ class Ledger:
                 # published n1 3 beside below_floor 1 that way, for a session
                 # on which five names traded and two were under the floor.
                 if not started:
-                    current["universe"] = dict(universe)
+                    current["universe"] = dict(scanned if isinstance(scanned.get("selection"), dict) or seed_reference else universe)
+                    if seed_reference:
+                        current["membership_note"] = "Legacy seed reference; this run did not record dated membership"
                     current["liquidity_floor"] = fresh["liquidity_floor"]
                     current["below_floor"] = fresh["below_floor"]
                 moved += 1
@@ -2866,7 +2880,8 @@ def is_named_basket(run: dict) -> bool:
     `measured` either, since that count is newer than this key.
     """
     universe = run.get("universe")
-    return isinstance(universe, dict) and isinstance(universe.get("tickers"), list)
+    return (isinstance(universe, dict) and isinstance(universe.get("tickers"), list)
+            and not isinstance(universe.get("selection"), dict))
 
 
 def is_blind(run: dict) -> bool:
