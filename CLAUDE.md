@@ -261,7 +261,9 @@ name -- putting any of the three strings that hung back turns it red, and so
 does dropping the Accept -- and the transport-recovery check holds the request
 to the constant, so a stray header cannot creep in. The retry and the catalog
 fallback stay as written; they were built for a transient failure and this
-was never one.
+was never one. Verified once more by execution before the probe workflow was
+deleted: run 34415501631 ran this branch's real `fetch_directory()` on an
+Ubuntu runner and got 7,139 listings on its first attempt, in 3.2 s.
 
 **Two consequences written down rather than changed, because both are the
 owner's call.** With a live fetch, `select()` rewrites
