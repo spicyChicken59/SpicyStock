@@ -128,10 +128,11 @@ GENERATED = "2026-09-01T22:14:07Z"
 #: exactly that and was never wired up.
 MODEL = "claude-sonnet-4-6"
 #: Fixture presentation precision, applied only after the real pipeline has
-#: classified and ordered the setups. NumPy reductions can differ by a few
+#: classified and ordered the setups. NumPy arithmetic can differ by a few
 #: floating-point units across CPUs; eight decimals retain more precision
-#: than these ratios and percentages can use on any product surface.
+#: than these synthetic prices, ratios and percentages use on a product surface.
 STOCKBEE_MEASUREMENT_DIGITS = 8
+STOCKBEE_PRICE_FIELDS = ("open", "high", "low", "close", "prev_close")
 STOCKBEE_MEASUREMENT_FIELDS = (
     "gain_pct", "volume_vs_previous", "volume_vs_average", "range_expansion",
     "compression_ratio", "close_position", "trend_intensity",
@@ -509,15 +510,24 @@ def _patched(alpaca: DatedAlpaca):
 
 
 def _normalize_stockbee_measurements(run: dict) -> None:
-    """Stabilize fixture-only derived metrics, preserving bars and decisions."""
+    """Stabilize synthetic prices and metrics after all trading decisions.
+
+    This includes raw candle prices: NumPy-generated walks also differ by
+    a few floating-point units across CPUs. Production prices, classifications,
+    ordering, volumes and integer counts are never changed by this helper.
+    """
     research = run.get("stockbee")
     if not isinstance(research, dict):
         return
     for queue in ("scan", "anticipation"):
         for row in research[queue]["rows"]:
-            for key in STOCKBEE_MEASUREMENT_FIELDS:
+            for key in (*STOCKBEE_MEASUREMENT_FIELDS, *STOCKBEE_PRICE_FIELDS):
                 if isinstance(row.get(key), float):
                     row[key] = round(row[key], STOCKBEE_MEASUREMENT_DIGITS)
+            for bar in row.get("series", []):
+                for key in STOCKBEE_PRICE_FIELDS:
+                    if isinstance(bar.get(key), float):
+                        bar[key] = round(bar[key], STOCKBEE_MEASUREMENT_DIGITS)
 
 
 def generate(out_dir: pathlib.Path) -> dict:
