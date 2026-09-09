@@ -12,6 +12,7 @@ import logging
 import math
 import os
 import re
+import time
 from dataclasses import replace
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -43,11 +44,26 @@ def enabled() -> bool:
 def fetch_directory() -> list[dict]:
     # No Alpaca header is sent to a different provider. A failed directory
     # refresh never silently approves an unclassified company.
-    response = requests.get(SOURCE_URL, headers={
-        "User-Agent": "SpicyStock/1.0 (https://github.com/spicyChicken59/SpicyStock)",
-        "Accept": "application/json",
-    }, timeout=(5, 25))
-    response.raise_for_status()
+    # The first production refresh timed out downloading this ~2 MB response.
+    # Retry only transient transport/server failures, with a bounded wait;
+    # access refusals and incomplete classifications still fail immediately.
+    for attempt in range(3):
+        try:
+            response = requests.get(SOURCE_URL, headers={
+                "User-Agent": "SpicyStock/1.0 (https://github.com/spicyChicken59/SpicyStock)",
+                "Accept": "application/json",
+            }, timeout=(5, 45))
+            response.raise_for_status()
+            break
+        except (requests.Timeout, requests.ConnectionError, requests.HTTPError) as exc:
+            if isinstance(exc, requests.HTTPError) and (
+                exc.response is None or exc.response.status_code not in {500, 502, 503, 504}
+            ):
+                raise
+            if attempt == 2:
+                raise
+            log.warning("Directory request %s/3 failed (%s); retrying", attempt + 1, type(exc).__name__)
+            time.sleep((1, 3)[attempt])
     rows = response.json().get("data", {}).get("rows")
     if not isinstance(rows, list) or len(rows) < 500:
         raise ValueError("Nasdaq returned an incomplete stock directory")

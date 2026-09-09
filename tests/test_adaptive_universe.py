@@ -6,6 +6,7 @@ import json
 
 import pandas as pd
 import pytest
+import requests
 
 from src import universe, scanner, ledger, pipeline
 from tests.test_pipeline import _wide_universe, market_clock, open_gate
@@ -14,6 +15,46 @@ from tests.test_pipeline import _wide_universe, market_clock, open_gate
 def company(symbol="NEW", **values):
     return {"symbol": symbol, "name": "Example Inc. Common Stock", "country": "United States",
             "sector": "Technology", "industry": "Computer Software", "lastsale": "$20", "volume": "2000000", **values}
+
+
+def directory_response(status=200, count=500):
+    response = requests.Response()
+    response.status_code = status
+    response._content = json.dumps({"data": {"rows": [company()] * count}}).encode()
+    return response
+
+
+def _check_directory_recovers_after_transient_failures(monkeypatch, failure):
+    calls, pauses = [], []
+    def get(url, **kwargs):
+        calls.append((url, kwargs))
+        if len(calls) < 3:
+            if isinstance(failure, int):
+                return directory_response(failure)
+            raise failure("temporary")
+        return directory_response()
+    monkeypatch.setattr(universe.requests, "get", get)
+    monkeypatch.setattr(universe.time, "sleep", pauses.append)
+    assert len(universe.fetch_directory()) == 500
+    assert len(calls) == 3 and pauses == [1, 3]
+    assert all(kwargs["timeout"] == (5, 45) for _, kwargs in calls)
+    assert all(set(kwargs["headers"]) == {"User-Agent", "Accept"} for _, kwargs in calls)
+
+
+def _check_directory_failure_is_bounded_and_never_weakens_classification(monkeypatch, failure):
+    calls, pauses = [], []
+    def get(*args, **kwargs):
+        calls.append(1)
+        if failure == "timeout":
+            raise requests.ReadTimeout("temporary")
+        return directory_response(403 if failure == "refused" else 200, count=2)
+    monkeypatch.setattr(universe.requests, "get", get)
+    monkeypatch.setattr(universe.time, "sleep", pauses.append)
+    expected = {"timeout": requests.ReadTimeout, "refused": requests.HTTPError, "incomplete": ValueError}
+    with pytest.raises(expected[failure]):
+        universe.fetch_directory()
+    assert len(calls) == (3 if failure == "timeout" else 1)
+    assert pauses == ([1, 3] if failure == "timeout" else [])
 
 
 @pytest.mark.parametrize("values", [
@@ -65,7 +106,15 @@ def test_rotation_makes_room_for_breakouts_and_recent_setups_and_is_bounded():
     assert universe.rotate(metrics, date(2026, 9, 9), ["S0"])[0] != chosen
 
 
-def test_discovery_failure_is_explicit_and_retains_only_curated_scope(monkeypatch, tmp_path):
+def test_directory_recovery_and_failure_preserve_the_classified_scope(monkeypatch, tmp_path):
+    # Exercise transport recovery and final fallback as one directory contract.
+    # Each scenario gets isolated patches; every assertion still executes.
+    for failure in (requests.ReadTimeout, requests.ConnectionError, 503, 502):
+        with monkeypatch.context() as case:
+            _check_directory_recovers_after_transient_failures(case, failure)
+    for failure in ("timeout", "refused", "incomplete"):
+        with monkeypatch.context() as case:
+            _check_directory_failure_is_bounded_and_never_weakens_classification(case, failure)
     monkeypatch.setattr(scanner, "get_universe", lambda: ["AAPL", "MSFT"])
     monkeypatch.setattr(universe, "fetch_directory", lambda: (_ for _ in ()).throw(RuntimeError("unavailable")))
     names, report = universe.select(scanner.ScanConfig(), tmp_path)
