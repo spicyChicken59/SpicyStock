@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "app": "SpicyStock",
-  "generated": "2026-09-09T02:49:43Z",
+  "generated": "2026-09-09T03:00:55Z",
   "runs": [
     {
       "date": "2026-09-08",
@@ -255,7 +255,7 @@
           "mode": "fallback",
           "source": "Nasdaq stock screener + Alpaca daily bars",
           "source_url": "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true",
-          "refreshed_at": "2026-09-09T02:47:19.434001+00:00",
+          "refreshed_at": "2026-09-09T02:58:58.479845+00:00",
           "source_date": null,
           "session": "2026-09-08",
           "discovered": 0,
