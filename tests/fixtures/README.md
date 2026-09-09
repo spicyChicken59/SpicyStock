@@ -75,6 +75,14 @@ the two agree.
 drifted from its generator. `tools/dashboard_smoke.mjs` opens the page against
 both, and separately against whatever `docs/` holds.
 
+The history generator serializes Stockbee measurements and synthetic OHLC
+prices (including each row's previous close and chart series) at eight decimal
+places. It does this only after the real pipeline has finished classifying,
+ordering and measuring the runs; input frames and production output retain
+their original precision. This removes insignificant CPU-dependent floating
+point differences while the freshness guard still compares the complete JSON
+exactly, including prices, dates, queue membership and fixture markers.
+
 **The history fixture has a built-in relation between score and outcome.**
 Each planted burst carries a hidden quality that shapes how quiet the week
 before it was, what the stand-in scorer says, and how the next five sessions
