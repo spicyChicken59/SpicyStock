@@ -678,7 +678,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1738 tests, no network or API keys needed
+pytest tests/                   # 1759 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -779,6 +779,23 @@ took `pending_tickers()` from 25 to 96 on the committed record — one extra
 batch. Measured by building the same projected file with each part stripped:
 the forward-return blocks cost 1.14 MB raw and 0.12 MB gzipped of the year,
 and the $ breakout section a further 3.86 MB and 0.62 MB.
+
+**The band is read twice, because the claim and the measurement were two
+different things.** `in_band`, on each horizon's own entry, counts the CLOSE
+at that horizon landing between 8% and 20%. `reached_band`, on each
+population's `magnitude` block, counts the MOVE reaching it — the highest high
+over the sessions from the one after the burst through the last horizon, which
+is what "8 to 20% magnitude in 3 to 5 days" says. A burst that ran to +15%
+intraday on its third session and closed +4% on the fifth is outside the first
+and inside the second, and the record kept only the first until it started
+keeping the highs the fill already walked. Both are published under their own
+names; neither is the other. `forward_returns.peak`/`.trough`/`.span` carry
+the measurement per row, on both bases — `trough` being what a stop would have
+hit, which the record had no column for at all — and `span` says how many
+sessions the frame actually carried, so a peak over two sessions is never read
+as a peak over five. A magnitude is restated while its span GROWS and frozen
+the moment it reaches the last horizon, where a horizon is filled exactly
+once.
 
 The new modules are `stockbee-workbench.js` and `stockbee-plan.js`, with scoped
 styles. Trade records use `spicystock.trade-journal.v1` in this browser, capped at
@@ -945,8 +962,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 25.13 MB raw
-and **2.91 MB gzipped** after a full year in the normalized history fixture. Actual payload size varies with numeric precision and optional metadata. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 27.89 MB raw
+and **3.23 MB gzipped** after a full year in the normalized history fixture. Actual payload size varies with numeric precision and optional metadata. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -1558,14 +1575,14 @@ comparison limits and removal, saved-note persistence and storage failures,
 focus navigation, archive retries and races, return-basis changes, and isolation
 of a failed view. It also captures phone and desktop screens in both themes.
 
-**Three data sources, one page.** It runs 265 checks, and which file each one
+**Three data sources, one page.** It runs 270 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 47 mutated copies of it are served
+  night can hold at once. 48 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now

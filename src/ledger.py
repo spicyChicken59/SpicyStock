@@ -224,6 +224,7 @@ CONTRACT_INVARIANTS = [
     "runs[].benchmark is the universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), over every name whose frame carries the session and whose dollar volume that session was at or above the run's own liquidity floor -- rule 6's bar that night, run.liquidity.floor -- with nN the number of symbols behind each horizon. benchmark.liquidity_floor is the floor the fill that FIRST measured the block applied -- null for a run recorded without one, when every name that traded counts -- and benchmark.below_floor is how many names that fill left out under it; the horizons a later fill adds are measured over the same population, so one block is one set of names. Null until a later run's scan carried the sessions, null forever for a run whose universe later scans never fetched, and never filled at all for a run that measured nothing: nothing is ever paired with a blind night's rung, since it scored no setup, and its floor -- null when no name's dollar volume could be ranked, and drawn from however few could be when it is not -- would stamp the block with a population that night never read. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks, and evidence.universe.floored is how many of those pairings were measured over a floor and evidence.universe.unfloored how many were measured with none -- before the floor reached the benchmark, or on a night rule 6 was off, which the block cannot tell apart -- over every name that traded (a pending pairing is in neither); it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
     "d1/d3/d5 and from_open are measured on the bar of the session 1, 3 and 5 sessions after the burst, the sessions being read across every frame the run fetched rather than counted along one frame's bars: a frame with a hole at a horizon carries null there, never the next bar it happens to have, and as_of names the session of the last bar actually used. from_open's entry is the next session's open only where it lies within that bar's own low and high, the standard the checklist holds a close to; outside it the open basis is null on that row.",
     "evidence.stockbee is the canonical control: src.stockbee runs Bonde's own 4% scan over the same universe every night, and every row it matched now carries the same forward_returns block a pick does, filled by the same code off the same bars. caught is the matches OUR scan also admitted (a candidate or a gated row that session) and missed is the matches it did not, so the sidecar's own question -- does the narrower scan keep the better bursts? -- is a pair of numbers rather than two lists nobody measured. Read them together: a scan that admits everything has an empty missed and is not thereby better. anticipation sits beside both and is in NEITHER, because its rows are not bursts -- they are names a compression proxy says may burst later -- so a return from the same session's close answers a different question. One setup per (ticker, session) per section and NOT collapsed by setup_chains(), because the question is about the scan and every match it printed is one thing the scan said. The sections are capped (stockbee.SCAN_LIMIT, ANTICIPATION_LIMIT) and truncated_sessions counts the sessions where a cap bit, since a mean over a capped list is a fact about the cap as well as about the market. A canonical row is never in run.settled: that list is the run's own scorecard of what ITS picks did, and a name our scan never admitted is not one.",
+    "forward_returns.peak and .trough are the MAGNITUDE -- the highest high and the lowest low over the sessions from the one after the burst through the last horizon -- and span is how many of those sessions the frame carried, so a peak over two sessions is never read as a peak over five. They are one measurement over a window, not a horizon, which is why they sit beside d1/d3/d5 rather than among them, and they are restated while the span GROWS and frozen the moment it reaches the last horizon, where a horizon is filled exactly once. Null on both bases when the frame carried no readable high and low for every session of the window; a row from before this measurement carries none and gains one only while it is still in the fill window. evidence's populations carry `magnitude` over the rows whose span reached the full window: reached_band counts the peaks that landed inside the claimed band and above_band those past it, which is the band read off the MOVE -- while in_band, on each horizon's own entry, is the band read off that horizon's CLOSE. Two counts because they answer two questions: whether the move happened, and whether it was still there on the fifth close. Neither is the other, and no surface may print one under the other's name.",
     "Numbers are numbers or null. No 'n/a' strings.",
 ]
 
@@ -1011,10 +1012,21 @@ def gated_record(cand, lynch_result: dict, context: dict, reason: str,
 # ---------------------------------------------------------- ledger rows --
 
 def empty_returns() -> dict:
-    """Pending, spelled the one way the contract allows -- on both bases."""
+    """Pending, spelled the one way the contract allows -- on both bases.
+
+    `peak`/`trough`/`span` are the magnitude the strategy's own claim is
+    about, pending here like everything else: the highest high and lowest low
+    over the sessions from the one after the burst through the last horizon,
+    and how many of those sessions the frame carried.
+    """
     out = {f"d{h}": None for h in HORIZONS}
     out["as_of"] = None
+    out["span"] = None
+    out["peak"] = None
+    out["trough"] = None
     out["from_open"] = {f"d{h}": None for h in HORIZONS}
+    out["from_open"]["peak"] = None
+    out["from_open"]["trough"] = None
     return out
 
 
@@ -1251,6 +1263,47 @@ def forward_returns(df: pd.DataFrame | None, burst_date,
             out["from_open"][f"d{horizon}"] = _num((later / entry - 1) * 100, 2)
         measured_at = target
     out["as_of"] = iso_date(measured_at)
+
+    # THE MAGNITUDE, which is what the strategy's own claim is about and
+    # which three closes cannot show. CLAIMED_BAND is "a swing trade of
+    # smaller 8 to 20% magnitude in 3 to 5 days" -- a move REACHED inside the
+    # window, not a close on one particular session of it. Driven rather than
+    # argued: a burst that runs to +15% intraday on its third session and
+    # closes +4% on the fifth records d5 4.0 and is counted out of the band
+    # by every surface, while the highs that say otherwise sit in the frame
+    # this function already walks and were thrown away.
+    #
+    # So `peak` is the highest high and `trough` the lowest low over the
+    # sessions from the one after the burst through the last horizon, and
+    # `span` is HOW MANY of those sessions the frame actually carried --
+    # because a peak over two sessions is not a peak over five, and a surface
+    # that showed the number without the span would be comparing them.
+    # Contiguous by the same rule the horizons follow: `reach` already stops
+    # at the first session the frame does not carry.
+    #
+    # Added BESIDE the horizons and never in place of them. in_band has
+    # counted the d5 close since step 9 and rewriting what a published number
+    # means is the collapse this record refuses everywhere else; the band
+    # reading off the magnitude is its own count, named for what it measures.
+    span = min(reach, max(HORIZONS))
+    if span >= 1:
+        highs = df["High"].to_numpy(dtype=float) if "High" in df else None
+        lows = df["Low"].to_numpy(dtype=float) if "Low" in df else None
+        window = [position[days[origin + step]] for step in range(1, span + 1)]
+        top = [float(highs[i]) for i in window
+               if highs is not None and math.isfinite(float(highs[i]))]
+        bottom = [float(lows[i]) for i in window
+                  if lows is not None and math.isfinite(float(lows[i]))]
+        # Both edges or neither: a peak measured over five sessions beside a
+        # trough measured over three is two windows under one heading, and
+        # the span printed with them would be true of only one.
+        if top and bottom and len(top) == len(bottom) == span:
+            out["span"] = span
+            out["peak"] = _num((max(top) / base - 1) * 100, 2)
+            out["trough"] = _num((min(bottom) / base - 1) * 100, 2)
+            if entry is not None:
+                out["from_open"]["peak"] = _num((max(top) / entry - 1) * 100, 2)
+                out["from_open"]["trough"] = _num((min(bottom) / entry - 1) * 100, 2)
     return out
 
 
@@ -1559,6 +1612,17 @@ MIN_SETUPS_FOR_A_RATE = 30
 #: it rather than only whether they are positive -- "+2% at d5" and "in the
 #: band the strategy promises" are different verdicts and the second is the one
 #: the strategy makes.
+#:
+#: TWO READINGS OF IT, and only one of them is what he claims. `in_band`
+#: counts the CLOSE at the last horizon landing between the two numbers, and
+#: has since step 9; `reached_band` counts the MAGNITUDE reaching them --
+#: "a swing trade of smaller 8 to 20% magnitude in 3 to 5 days" is a move
+#: made inside the window, not a close on one session of it. Driven rather
+#: than argued: a burst that runs to +15% intraday on its third session and
+#: closes +4% on the fifth records d5 4.0, and every surface counted it out
+#: of a band its high cleared. Both are published, named for what each
+#: measures, because rewriting what `in_band` has meant for five rounds is
+#: the collapse this record refuses everywhere else.
 #:
 #: UNVERIFIED AGAINST THE PRIMARY SOURCE, exactly like src.lynch's
 #: MAX_CONSECUTIVE_UP_DAYS and BREAKDOWN_PCT: stockbee.blogspot.com and
@@ -2058,7 +2122,54 @@ def _population(rows: list[dict]) -> dict:
     of the same file."""
     summary = outcome_summary(rows)
     return {"setups": len(rows), "outcomes": summary, "enough": _enough(summary),
-            "enough_from_open": _enough_from_open(summary)}
+            "enough_from_open": _enough_from_open(summary),
+            "magnitude": _magnitude(rows)}
+
+
+def _magnitude(rows: list[dict]) -> dict:
+    """How far the move actually went, over the window the claim names.
+
+    NOT per horizon, because it is not a horizon: `peak` and `trough` are one
+    measurement over the sessions from the one after the burst through the
+    last horizon, which is the window "8 to 20% magnitude in 3 to 5 days"
+    describes. Only rows whose span reached that last horizon are counted --
+    a peak over two sessions is not the claim's window, and averaging it in
+    would answer a question nobody asked.
+
+    `reached_band` is the band read off the magnitude; `in_band`, on each
+    horizon's own entry, is the band read off that horizon's close. Two
+    counts because they are two questions: did the move happen, and was it
+    still there on the fifth close.
+    """
+    def basis(row, opened):
+        block = row.get("forward_returns") if isinstance(row.get("forward_returns"), dict) else {}
+        return _from_open(block) if opened else block
+
+    def side(opened: bool) -> dict:
+        peaks, troughs = [], []
+        for row in rows:
+            block = row.get("forward_returns") if isinstance(row.get("forward_returns"), dict) else {}
+            if block.get("span") != max(HORIZONS):
+                continue
+            peak = basis(row, opened).get("peak")
+            trough = basis(row, opened).get("trough")
+            if _is_number(peak):
+                peaks.append(float(peak))
+            if _is_number(trough):
+                troughs.append(float(trough))
+        return {
+            "n": len(peaks),
+            "reached_band": sum(1 for v in peaks if CLAIMED_BAND[0] <= v <= CLAIMED_BAND[1]),
+            "above_band": sum(1 for v in peaks if v > CLAIMED_BAND[1]),
+            "peak_mean": round(math.fsum(peaks) / len(peaks), 2) if peaks else None,
+            "trough_mean": round(math.fsum(troughs) / len(troughs), 2) if troughs else None,
+            "trough_n": len(troughs),
+        }
+
+    out = side(False)
+    out["window"] = max(HORIZONS)
+    out["from_open"] = side(True)
+    return out
 
 
 # -------------------------------------------------------------- the file --
@@ -2275,6 +2386,19 @@ def returns_shape_problem(returns) -> str | None:
     stamp = returns.get("as_of")
     if stamp is not None and not isinstance(stamp, str):
         return f"as_of is a JSON {type(stamp).__name__} rather than a date string"
+    # AND THE MAGNITUDE, one level in on both bases. peak/trough are read by
+    # outcome_summary() inside evidence(), which runs inside publish() after
+    # the scan and every Claude call have been paid for -- the same place
+    # every earlier instance of this class went down.
+    for name in ("peak", "trough"):
+        for block, where in ((returns, name), (returns.get("from_open"), f"from_open {name}")):
+            value = block.get(name) if isinstance(block, dict) else None
+            if value is not None and (isinstance(value, bool)
+                                      or not isinstance(value, (int, float))):
+                return f"{where} is a JSON {type(value).__name__} rather than a number"
+    span = returns.get("span")
+    if span is not None and (isinstance(span, bool) or not isinstance(span, int) or span < 1):
+        return f"span is {span!r} rather than a count of sessions or null"
     return None
 
 
@@ -2694,8 +2818,25 @@ class Ledger:
                        for r in _sidecar_rows(run, section)])
             for row, scored, kind in rows:
                 returns = row.get("forward_returns") or {}
+                # AND its magnitude window still short. A row can carry every
+                # horizon on both bases while its peak was measured over two
+                # sessions -- the frame reached d1 and d3 by date and the
+                # highs after them arrived later -- and dropping it here
+                # would freeze that peak at a span the record then publishes
+                # beside a five-session band.
+                # AND its magnitude window not still widening. A row can
+                # carry every horizon on both bases while its peak was
+                # measured over fewer sessions -- the highs arrived in a
+                # later correction -- and dropping it then would freeze that
+                # peak at a span the record publishes beside a five-session
+                # band. A row with NO span is a different state and is
+                # dropped: its frame carried no high or low to read, which no
+                # later fetch of the same feed changes, and waiting on it
+                # would be waiting for nothing.
+                span = returns.get("span")
                 if (all(returns.get(f"d{h}") is not None for h in HORIZONS)
-                        and all(_from_open(returns).get(f"d{h}") is not None for h in HORIZONS)):
+                        and all(_from_open(returns).get(f"d{h}") is not None for h in HORIZONS)
+                        and not (_is_number(span) and span < max(HORIZONS))):
                     continue
                 burst = _as_date(row.get("date"))
                 if burst is None or (limit is not None and burst >= limit):
@@ -2736,6 +2877,7 @@ class Ledger:
         exactly one run's block for good.
         """
         moved: list[Filled] = []
+        touched = False
         for run, row, scored, kind in self._fillable(through):
             frame = frames.get(row["ticker"])
             if frame is None:
@@ -2771,8 +2913,29 @@ class Ledger:
                 # at all: neither is a horizon that settled twice.
                 if moved_here:
                     changed.append(horizon)
-            if changed:
-                current["as_of"] = fresh["as_of"]
+            # THE MAGNITUDE WIDENS RATHER THAN SETTLING ONCE. A horizon is
+            # filled exactly once because the bar it names never changes; a
+            # peak over the window does change while the window is still
+            # filling -- span 2 tonight, span 5 next week -- so it is restated
+            # while the span GROWS and is frozen the moment it reaches the
+            # last horizon. Monotone, so a later frame with a hole in it can
+            # never shrink a measurement the record has already published.
+            stored_span = current.get("span")
+            fresh_span = fresh.get("span")
+            if (_is_number(fresh_span)
+                    and (not _is_number(stored_span) or fresh_span > stored_span)):
+                current["span"] = fresh_span
+                current["peak"], current["trough"] = fresh["peak"], fresh["trough"]
+                for key in ("peak", "trough"):
+                    value = fresh["from_open"].get(key)
+                    if value is not None or key not in current["from_open"]:
+                        current["from_open"][key] = value
+                widened = True
+            else:
+                widened = False
+            if changed or widened:
+                touched = True
+                current["as_of"] = fresh["as_of"] if changed else current.get("as_of")
                 # A canonical row is measured and archived, and is NOT in what
                 # this call hands back: `moved` is the run's own scorecard of
                 # what ITS picks and refusals did -- the pairs the evening mail
@@ -2782,7 +2945,10 @@ class Ledger:
                 # picks, where a control belongs.
                 if kind in ("candidates", "gated"):
                     moved += [Filled(run, row, horizon, scored) for horizon in changed]
-        if moved:
+        # `touched`, not `moved`: a fill that only widened a magnitude window
+        # hands back no (row, horizon) pair -- there is none -- and its
+        # numbers still have to reach the published means and docs/data.json.
+        if touched:
             self._recompute_means()
             self._copy_returns_into_latest()
         return moved

@@ -331,7 +331,7 @@
   <!-- What happened the last times THIS name burst. The summary comes out of
        data.json's evidence block; the per-appearance detail needs the whole
        record, so docs/ledger.json is fetched ONLY when a reader asks for it
-       (see loadRecord). A year of it is about 2.91 MB gzipped, which is not a
+       (see loadRecord). A year of it is about 3.23 MB gzipped, which is not a
        thing to spend on every visit for a view most readers never open.
        tools/measure_ledger.py measures it and a docs test holds this comment,
        the one above loadRecord and README to what it prints. -->
@@ -1819,6 +1819,28 @@
       floorSentence(ev) +
       'The universe is a curated large-cap list as it stands today, which flatters the benchmark. ';
   }
+  // TWO READINGS OF ONE BAND, and neither may be printed under the other's
+  // name. `in_band` counts the CLOSE at the longest horizon landing inside
+  // the claimed band; `reached_band` counts the MOVE reaching it, over the
+  // sessions from the one after the burst through that horizon -- which is
+  // what "8 to 20% magnitude in 3 to 5 days" actually says. A burst that ran
+  // to +15% intraday on its third session and closed +4% on the fifth is
+  // outside the first and inside the second, and the record kept only the
+  // first until it started keeping the highs.
+  function bandCells(block, longest, ev) {
+    var mag = onBasis(block.magnitude || {});
+    var full = block.magnitude || {};
+    return [
+      el('td', { 'class': 'sc-num' }, figure(commas(longest.in_band),
+        longest.n ? 'of ' + plural(longest.n, 'measured setup') : null)),
+      el('td', { 'class': 'sc-num' }, mag && typeof mag.n === 'number' && mag.n
+        ? figure(commas(mag.reached_band),
+            'of ' + plural(mag.n, 'setup') + ' measured over ' +
+            plural(full.window || 0, 'session') +
+            (mag.above_band ? '; ' + mag.above_band + ' went past it' : ''))
+        : figure('\u2014', 'no full window measured yet'))
+    ];
+  }
   function renderControl(ev) {
     var h = longestOf(ev);
     $('control-hint').textContent =
@@ -1829,22 +1851,25 @@
       'The illiquid row is rule 6\u2019s, kept off it for the opposite reason: those returns are bar prices on names ' +
       'the rule says are too thin to be bought at them. The universe row is the other alternative — buying anything ' +
       'in the universe on the same days, ' + rungClause(ev) + ' — paired setup by ' +
-      'setup with the picks, from frames the scan already fetched.';
+      'setup with the picks, from frames the scan already fetched. The band is read twice, ' +
+      'because they are two questions: “closed in the band” is the return at ' +
+      hzLabel(longestOf(ev)) + ', and “reached the band” is how far the move actually ' +
+      'went before then — which is what the strategy claims.';
     $('control-verdict').textContent = controlVerdict(ev);
     table($('control-table'),
-      ['what the screener did', 'setups'].concat(ev.horizons.map(hzLabel)).concat(['in the claimed band', 'reads as']),
+      ['what the screener did', 'setups'].concat(ev.horizons.map(hzLabel))
+        .concat(['closed in the band', 'reached the band', 'reads as']),
       POPULATIONS.filter(function (p) { return ev[p[0]]; }).map(function (p) {
         var block = ev[p[0]], longest = onBasis(at(block.outcomes, h));
         return el('tr', null, [
           el('td', null, [el('span', { text: p[2] }), el('span', { 'class': 'sc-note', text: typeof p[1] === 'function' ? p[1](ev) : p[1] })]),
           el('td', { 'class': 'sc-num', text: commas(block.setups) })
         ].concat(ev.horizons.map(function (hh) { return rateCell(at(block.outcomes, hh), enoughOf(block)); }))
+         .concat(bandCells(block, longest, ev))
          .concat([
-          el('td', { 'class': 'sc-num' }, figure(commas(longest.in_band),
-            longest.n ? 'of ' + plural(longest.n, 'measured setup') : null)),
           el('td', null, enoughChip(enoughOf(block), longest.n, ev.min_setups))
         ]));
-      }), [1, 2, 3, 4, 5]);
+      }), [1, 2, 3, 4, 5, 6]);
     clipWatch($('control-scroll'), 'What the screener did against the outcome');
     renderCanon(ev);
   }
@@ -1880,19 +1905,19 @@
       'everything has an empty missed row and is not thereby better.';
     $('canon-verdict').textContent = canonVerdict(ev, canon, h);
     table($('canon-table'),
-      ['what his scan found', 'setups'].concat(ev.horizons.map(hzLabel)).concat(['in the claimed band', 'reads as']),
+      ['what his scan found', 'setups'].concat(ev.horizons.map(hzLabel))
+        .concat(['closed in the band', 'reached the band', 'reads as']),
       CANON_ROWS.filter(function (r) { return canon[r[0]]; }).map(function (r) {
         var b = canon[r[0]], longest = onBasis(at(b.outcomes, h));
         return el('tr', null, [
           el('td', null, [el('span', { text: r[2] }), el('span', { 'class': 'sc-note', text: r[1] })]),
           el('td', { 'class': 'sc-num', text: commas(b.setups) })
         ].concat(ev.horizons.map(function (hh) { return rateCell(at(b.outcomes, hh), enoughOf(b)); }))
+         .concat(bandCells(b, longest, ev))
          .concat([
-          el('td', { 'class': 'sc-num' }, figure(commas(longest.in_band),
-            longest.n ? 'of ' + plural(longest.n, 'measured setup') : null)),
           el('td', null, enoughChip(enoughOf(b), longest.n, ev.min_setups))
         ]));
-      }), [1, 2, 3, 4, 5]);
+      }), [1, 2, 3, 4, 5, 6]);
     clipWatch($('canon-scroll'), 'What Stockbee’s own scans found against the outcome');
     // A mean over a capped list is a fact about the cap as well as the
     // market, so a session where one bit is said rather than left for a
@@ -2285,7 +2310,7 @@
   }
 
   // The per-name view's lazy fetch. docs/ledger.json is the whole record — about
-  // 2.91 MB gzipped after a year — so it is never pulled on load; the summary
+  // 3.23 MB gzipped after a year — so it is never pulled on load; the summary
   // above comes out of data.json, which the page has already read. A 404 here is the
   // normal state until evening.yml has committed a run back, so it is reported
   // as a fact about the file rather than as a broken page.

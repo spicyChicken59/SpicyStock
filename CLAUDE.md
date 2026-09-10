@@ -147,7 +147,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1738 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1759 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -449,6 +449,52 @@ scheduled run is what fills them. Over the thirty-run history fixture the
 same code prints +4.99% over 150 for what production kept against 25 measured
 for `rvol_threshold` — too few, and the report says so rather than reading a
 handful as a rate.
+
+### The band the record publishes a verdict about was not the band he claims
+
+Second round, on the finding the first round's own work made reachable.
+`CLAIMED_BAND` is *"a swing trade of smaller 8 to 20% magnitude in 3 to 5
+days"* -- a move REACHED inside the window -- and `in_band` has counted the
+CLOSE at the fifth session since step 9. Driven rather than argued: a burst
+that runs to +15% intraday on its third session and closes +4% on the fifth
+records `d5 4.0`, and every surface counted it out of a band its own high
+cleared. The highs that say otherwise sit in the frame `forward_returns()`
+already walks and were thrown away.
+
+`peak`, `trough` and `span` are on every row now, on both bases: the highest
+high and the lowest low over the sessions from the one after the burst
+through the last horizon, and how many of those sessions the frame carried.
+**`trough` is the drawdown, which the record had no column for at all** --
+what a stop would have hit, on a strategy whose own stop rule is the entry
+day's low. The burst bar's own high is out of the window on purpose, since
+the earliest entry is the next session's open.
+
+Four decisions are in the code beside the rule. Both edges or neither: a peak
+over five sessions beside a trough over three would be two windows under one
+heading. The measurement is restated while its span GROWS and frozen the
+moment it reaches the last horizon -- a horizon is filled once because the
+bar it names never changes, and a peak over a filling window does change. A
+row whose horizons are all filled and whose span is short stays in the fill
+queue, and one whose span is NULL leaves it, because its frame carried no
+high or low to read and waiting on it is waiting for nothing. And
+`reached_band` is published BESIDE `in_band` rather than replacing it:
+rewriting what a number has meant for five rounds is the collapse this record
+refuses everywhere else, so the page has two columns, "closed in the band"
+and "reached the band", and the hint says which question each answers.
+
+On the regenerated thirty-run history the two readings differ by 42%: **27 of
+66 shortlist setups reached the claimed band during the window, where 19 were
+still inside it at the fifth close**, with 8 more past 20% counted apart in
+`above_band`. Eighteen mutants over the round's rules, all eighteen killed on
+the first pass -- including the window taking the burst bar's own high, a
+partial window measured anyway, a magnitude restated after it was full, an
+unfillable row waiting forever, and the walker's new branch made dead.
+`expected_returns()` -- the pipeline tests' hand recomputation -- computes the
+magnitude by hand too, for the reason round 9 gave when it was last extended:
+a second implementation is what can disagree with the first.
+
+The ledger's projected year went 25.13 -> 27.89 MB raw and 2.91 -> 3.23
+gzipped, swept in README and in both of the page's fetch-on-demand comments.
 
 ### The harness, again
 

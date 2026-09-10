@@ -1128,6 +1128,27 @@ def expected_returns(frame: pd.DataFrame, burst: str, horizons=(1, 3, 5)) -> dic
     out["from_open"] = {f"d{h}": (round((float(by_date[session(h)]["close"]) / entry - 1) * 100, 2)
                                   if entry and session(h) in by_date else None)
                         for h in (1, 3, 5)}
+
+    # THE MAGNITUDE, recomputed the same way and for the same reason: it is
+    # what the strategy's own claim is about, and a hand reading of it is a
+    # second implementation that can disagree with the first. The window is
+    # the sessions AFTER the burst through the last horizon -- the burst
+    # bar's own high is not part of a move a reader could take, since the
+    # earliest entry is the next session's open.
+    window = [session(n) for n in range(1, max(horizons) + 1)]
+    if all(day in by_date for day in window):
+        highs = [float(by_date[day]["high"]) for day in window]
+        lows = [float(by_date[day]["low"]) for day in window]
+        out["span"] = len(window)
+        out["peak"] = round((max(highs) / base - 1) * 100, 2)
+        out["trough"] = round((min(lows) / base - 1) * 100, 2)
+        out["from_open"]["peak"] = (round((max(highs) / entry - 1) * 100, 2)
+                                    if entry else None)
+        out["from_open"]["trough"] = (round((min(lows) / entry - 1) * 100, 2)
+                                      if entry else None)
+    else:
+        out["span"] = out["peak"] = out["trough"] = None
+        out["from_open"]["peak"] = out["from_open"]["trough"] = None
     return out
 
 
@@ -3513,7 +3534,8 @@ def test_a_second_run_keeps_the_first_and_fills_its_forward_returns(
     # `n` is the SETUPS the mean was taken over and `rows` is what they were
     # collapsed from -- one candidate here, so the two agree and the pair says
     # nothing was deduplicated away.
-    assert older["forward_returns"]["from_open"] == {
+    assert {k: v for k, v in older["forward_returns"]["from_open"].items()
+            if k in ("d1", "d3", "d5")} == {
         "d1": first["forward_returns"]["from_open"]["d1"],
         "d3": want["from_open"]["d3"], "d5": want["from_open"]["d5"]}, (
         "the open basis fills the same way: the recorded horizon kept, the rest measured")

@@ -489,6 +489,16 @@ const VARIANTS = {
     d.evidence.stockbee.caught.enough = true;
     return d;
   },
+  // A record from before the magnitude was measured, and one whose windows
+  // have not closed. Both must say so rather than printing a zero, which a
+  // reader takes for "no setup ever reached the band".
+  nomagnitude() {
+    const d = VARIANTS.fullcontrol();
+    Object.keys(d.evidence).forEach((k) => {
+      if (d.evidence[k] && typeof d.evidence[k] === 'object') delete d.evidence[k].magnitude;
+    });
+    return d;
+  },
   nobenchmark() {
     const d = VARIANTS.fullcontrol();
     delete d.evidence.universe;
@@ -1247,6 +1257,50 @@ ok('and with both sides over the minimum it states the direction, with both mean
   && /the narrower scan did better, by 4\.00%/.test(fullCanonVerdict)
   && /Read it as the record so far, not as a result\./.test(fullCanonVerdict),
   fullCanonVerdict.slice(0, 190));
+
+// ---------------------------------------------------------------------------
+// TWO READINGS OF ONE BAND. The strategy's claim is "8 to 20% magnitude in 3
+// to 5 days" -- a move REACHED inside the window -- and the record measured a
+// close on one session of it. Both are published now, and neither may be
+// printed under the other's name.
+// ---------------------------------------------------------------------------
+await open('/f/history/');
+const bandHead = await page.$$eval('#control-table thead th', (h) => h.map((c) => c.textContent.trim()));
+ok('the ladder names the two band readings apart rather than showing one as "the band"',
+  bandHead.includes('closed in the band') && bandHead.includes('reached the band')
+  && !bandHead.includes('in the claimed band'),
+  bandHead.join(' | '));
+const shortlistRow = await page.$$eval('#control-table tbody tr', (rows) => {
+  const r = rows.find((x) => /the shortlist/.test(x.children[0].textContent));
+  return r ? [...r.children].map((c) => c.textContent.trim()) : null;
+});
+const closedCell = shortlistRow[shortlistRow.length - 3];
+const reachedCell = shortlistRow[shortlistRow.length - 2];
+ok('and the two are different numbers on a record that measured both',
+  /^\d+/.test(closedCell) && /^\d+/.test(reachedCell)
+  && parseInt(closedCell, 10) !== parseInt(reachedCell, 10)
+  && /measured over \d+ sessions/.test(reachedCell),
+  `closed ${closedCell.replace(/\s+/g, ' ')} | reached ${reachedCell.replace(/\s+/g, ' ')}`);
+ok('and the reached column says how many went past the band rather than folding them in',
+  /went past it/.test(reachedCell), reachedCell.replace(/\s+/g, ' ').slice(0, 90));
+const bandHint = await page.textContent('#control-hint');
+ok('and the hint says which reading is which',
+  /The band is read twice, because they are two questions/.test(bandHint)
+  && /is how far the move actually went before then/.test(bandHint),
+  bandHint.slice(bandHint.indexOf('The band is read twice'), bandHint.indexOf('The band is read twice') + 120));
+await open('/v/nomagnitude/');
+// A record written before the magnitude was measured. Its rows carry closes
+// and no path, and the column must say that rather than print a zero a
+// reader takes for "no setup ever reached the band".
+const reachedCellsOf = () => page.$$eval('#control-table tbody tr',
+  (rows) => rows.map((r) => {
+    const cells = [...r.children].map((c) => c.textContent.trim());
+    return cells[cells.length - 2];
+  }));
+const noMag = await reachedCellsOf();
+ok('a record from before the magnitude was measured says so instead of printing a zero',
+  noMag.length > 0 && noMag.every((cell) => /no full window measured yet/.test(cell)),
+  `${noMag.length} rows: ${(noMag[0] || '(none)').replace(/\s+/g, ' ').slice(0, 60)}`);
 
 await open('/v/nobenchmark/');
 const ladderNoBench = await page.$$eval('#control-table tbody tr', (rows) => rows.map((r) => r.textContent));
