@@ -55,6 +55,8 @@ INVARIANTS = (
     "liquidity",           # run.liquidity agrees with the rows and the populations are disjoint
     "benchmark",           # runs[].benchmark and evidence.universe hold together
     "coverage",            # run.coverage's counts order, and a burst came from a measured name
+    "stockbee_control",    # evidence.stockbee's populations and its truncation tally
+    "magnitude",           # peak/trough/span, and the band read off the move
 )
 
 _RUN_KEYS = ("date", "type", "bursts", "passed_gate", "scored", "score_cap",
@@ -187,8 +189,13 @@ def _walk(node, found: list, path=()) -> None:
         for key, value in node.items():
             # The research sidecar uses rows as a bounded list, whereas the
             # existing returns contract uses rows as a population count.
+            # DERIVED from the module, not retyped: this was a hand-kept
+            # pair and it went stale on the commit that added a third
+            # section, turning 56 end-to-end tests red for a reason that had
+            # nothing to do with any of them.
             research_rows = (key == "rows" and isinstance(value, list)
-                             and path[-2:] in (("stockbee", "scan"), ("stockbee", "anticipation")))
+                             and len(path) >= 2 and path[-2] == "stockbee"
+                             and path[-1] in ledger.SIDECAR_SECTIONS)
             if not research_rows and _bad_number(key, value):
                 found.append((key, value))
             _walk(value, found, (*path, key))
@@ -402,6 +409,63 @@ def contract_violations(data: dict, docs_dir=None) -> set[str]:
             bad.add("benchmark")
         elif floored + unfloored > rung.get("setups", -1):
             bad.add("benchmark")
+
+    # The magnitude, and the band read off it. Checked on the commit that
+    # publishes it: a count that can exceed its own population, or a peak
+    # below its own trough, is the shape every other invariant here exists
+    # to refuse one block over.
+    if isinstance(ev, dict):
+        for name, block in sorted(ev.items()):
+            if not isinstance(block, dict) or "magnitude" not in block:
+                continue
+            mag = block["magnitude"]
+            if not isinstance(mag, dict) or mag.get("window") != max(ledger.HORIZONS):
+                bad.add("magnitude")
+                continue
+            for side in (mag, mag.get("from_open")):
+                if not isinstance(side, dict):
+                    bad.add("magnitude")
+                    continue
+                counts = [side.get(k) for k in ("n", "reached_band", "above_band", "trough_n")]
+                if any(not isinstance(v, int) or isinstance(v, bool) or v < 0 for v in counts):
+                    bad.add("magnitude")
+                elif (side["reached_band"] + side["above_band"] > side["n"]
+                      or side["n"] > block.get("setups", -1)
+                      or side["trough_n"] > side["n"]):
+                    bad.add("magnitude")
+                for key in ("peak_mean", "trough_mean"):
+                    value = side.get(key)
+                    if value is not None and (isinstance(value, bool)
+                                              or not isinstance(value, (int, float))):
+                        bad.add("magnitude")
+                if (_is_num(side.get("peak_mean")) and _is_num(side.get("trough_mean"))
+                        and side["peak_mean"] < side["trough_mean"]):
+                    bad.add("magnitude")
+
+    # The canonical control. A block published and checked by nothing is R9-B
+    # and the round-11 coverage gap arriving a third time, so it is checked
+    # here on the commit that adds it rather than after an audit finds it:
+    # every population a real population, every count a count, and the
+    # truncation tally never claiming more sessions than the record holds.
+    if isinstance(ev, dict):
+        control = ev.get("stockbee")
+        if control is not None:
+            if not isinstance(control, dict):
+                bad.add("stockbee_control")
+            else:
+                for name in ("caught", "missed", "dollar", "anticipation"):
+                    part = control.get(name)
+                    if (not isinstance(part, dict) or not isinstance(part.get("setups"), int)
+                            or isinstance(part.get("setups"), bool) or part["setups"] < 0
+                            or not isinstance(part.get("outcomes"), list)
+                            or not isinstance(part.get("enough"), bool)):
+                        bad.add("stockbee_control")
+                tally = control.get("truncated_sessions")
+                if not isinstance(tally, dict) or set(tally) != set(ledger.SIDECAR_SECTIONS):
+                    bad.add("stockbee_control")
+                elif any(not isinstance(v, int) or isinstance(v, bool) or not 0 <= v <= len(data["runs"])
+                         for v in tally.values()):
+                    bad.add("stockbee_control")
 
     # Round 11's block, and the gap round 9's R9-B closed one block over. The
     # walker every end-to-end test asserts through clean() as "the whole
@@ -714,6 +778,10 @@ def test_the_hand_written_document_satisfies_every_invariant(document):
 # The checker can fail — one doctored rule at a time, and ONLY that one
 # ===========================================================================
 
+def _is_num(value) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
 def _only(document, expected):
     """Assert the checker names exactly the invariant that was broken.
 
@@ -723,6 +791,100 @@ def _only(document, expected):
     """
     violations = contract_violations(document)
     assert violations == {expected}, f"expected only {expected!r}, got {violations}"
+
+
+def test_a_canonical_control_block_that_is_not_one_is_caught(document):
+    """R9-B a third time, closed on the commit that opens the door.
+
+    `evidence.stockbee` is published by every run and was checked by nothing:
+    a mutant that deleted the whole walker branch survived the suite, which
+    is exactly the state the benchmark and the coverage blocks were each
+    found in, one audit late. Eight edits, every one of which this walker
+    used to answer identically to the clean document.
+
+    Absent still loads clean and is NOT a violation: a record written before
+    the sidecar was measured carries no block, and refusing one would be a
+    rule against the history rather than against a shape a writer produces.
+    """
+    def population(setups):
+        return {"setups": setups, "outcomes": [], "enough": False,
+                "enough_from_open": False}
+
+    # The `evidence` block is built HERE rather than put in the fixture: the
+    # hand-written document carries none, and a full one would drag in the
+    # population-sum and benchmark rules, so a doctoring meant for this
+    # invariant would trip those instead and _only() would fail for the right
+    # reason at the wrong rule. Both of those branches ask for `record` and
+    # `universe`, so an evidence holding only this block skips them.
+    document = json.loads(json.dumps(document))
+    document["evidence"] = {"stockbee": {
+        "caught": population(3), "missed": population(2),
+        "dollar": population(5), "anticipation": population(1),
+        "truncated_sessions": {section: 0 for section in ledger.SIDECAR_SECTIONS}}}
+    assert contract_violations(document) == set(), "the precondition: this one is clean"
+
+    def doctored(edit):
+        fresh = json.loads(json.dumps(document))
+        edit(fresh["evidence"])
+        _only(fresh, "stockbee_control")
+
+    doctored(lambda ev: ev.update(stockbee="measured"))                    # not a block
+    doctored(lambda ev: ev["stockbee"].update(caught="none"))              # not a population
+    doctored(lambda ev: ev["stockbee"]["missed"].update(setups=-1))        # not a count
+    doctored(lambda ev: ev["stockbee"]["missed"].update(setups="3"))       # not a count either
+    doctored(lambda ev: ev["stockbee"]["dollar"].update(setups=True))      # a bool is not a count
+    doctored(lambda ev: ev["stockbee"]["anticipation"].update(outcomes={}))  # not a list
+    doctored(lambda ev: ev["stockbee"]["caught"].update(enough="yes"))     # not a verdict
+    doctored(lambda ev: ev["stockbee"].update(truncated_sessions={"scan": 0}))  # a section short
+    doctored(lambda ev: ev["stockbee"]["truncated_sessions"].update(scan=9999))  # past the record
+
+    gone = json.loads(json.dumps(document))
+    del gone["evidence"]["stockbee"]
+    assert contract_violations(gone) == set()
+
+
+def test_a_magnitude_block_that_contradicts_its_own_population_is_caught(document):
+    """The checker can fail. A count that exceeds its own population, or a
+    peak below its own trough, must be a violation and not a shrug."""
+    def population(setups, **mag):
+        return {"setups": setups, "outcomes": [], "enough": False,
+                "enough_from_open": False,
+                "magnitude": {"n": 2, "reached_band": 1, "above_band": 0,
+                              "peak_mean": 9.0, "trough_mean": -2.0, "trough_n": 2,
+                              "window": max(ledger.HORIZONS),
+                              "from_open": {"n": 2, "reached_band": 1, "above_band": 0,
+                                            "peak_mean": 8.0, "trough_mean": -2.5,
+                                            "trough_n": 2},
+                              **mag}}
+
+    document = json.loads(json.dumps(document))
+    document["evidence"] = {"shortlist": population(4)}
+    assert contract_violations(document) == set(), "the precondition: this one is clean"
+
+    def doctored(edit):
+        fresh = json.loads(json.dumps(document))
+        edit(fresh["evidence"]["shortlist"])
+        _only(fresh, "magnitude")
+
+    doctored(lambda b: b["magnitude"].update(n=99))                    # past the population
+    doctored(lambda b: b["magnitude"].update(reached_band=3))          # past its own n
+    doctored(lambda b: b["magnitude"].update(above_band=-1))           # not a count
+    doctored(lambda b: b["magnitude"].update(trough_n=5))              # past its own n
+    doctored(lambda b: b["magnitude"].update(peak_mean=-9.0))          # below its own trough
+    doctored(lambda b: b["magnitude"].update(trough_mean=[]))          # not a number
+    # `n` as a string and `peak_mean` as a string are deliberately NOT here:
+    # `n` is in the walker's numeric key set already, so doctoring it trips
+    # two invariants and _only() cannot tell which one caught it -- which is
+    # the discipline working, not a gap.
+    doctored(lambda b: b["magnitude"].update(window=3))                # not the claim's window
+    doctored(lambda b: b["magnitude"].update(from_open="later"))       # not a block
+    doctored(lambda b: b["magnitude"]["from_open"].update(reached_band=9))
+    doctored(lambda b: b.update(magnitude="measured"))                 # not a block at all
+
+    # Absent still loads clean: a record from before the measurement.
+    gone = json.loads(json.dumps(document))
+    del gone["evidence"]["shortlist"]["magnitude"]
+    assert contract_violations(gone) == set()
 
 
 def test_a_liquidity_population_that_contradicts_the_floor_is_caught(document):
@@ -1356,8 +1518,12 @@ def test_forward_returns_are_sessions_after_the_burst_not_calendar_days():
     assert ledger.forward_returns(df, burst) == {
         "d1": 1.0, "d3": 3.0, "d5": 10.0,
         "as_of": df.index[5].date().isoformat(),
-        # no Open column in this frame, so the open basis is pending
-        "from_open": {"d1": None, "d3": None, "d5": None},
+        # no Open column in this frame, so the open basis is pending -- and no
+        # High/Low either, so the magnitude is too. A frame that cannot show
+        # the path records null for it, never the closes it does have.
+        "span": None, "peak": None, "trough": None,
+        "from_open": {"d1": None, "d3": None, "d5": None,
+                      "peak": None, "trough": None},
     }
 
 
@@ -1418,7 +1584,8 @@ def test_the_open_basis_divides_the_same_closes_by_the_next_sessions_open():
     out = ledger.forward_returns(df, burst)
 
     assert (out["d1"], out["d3"], out["d5"]) == (11.0, 13.0, 21.0)
-    assert out["from_open"] == {"d1": 0.91, "d3": 2.73, "d5": 10.0}
+    assert out["from_open"] == {"d1": 0.91, "d3": 2.73, "d5": 10.0,
+                                "peak": None, "trough": None}
     assert out["as_of"] == df.index[5].date().isoformat()
 
 
@@ -1429,13 +1596,15 @@ def test_a_frame_with_no_usable_open_measures_the_close_basis_alone():
     df = frame([100, 101, 102, 103, 104, 110])
     burst = df.index[0].date().isoformat()
     assert ledger.forward_returns(df, burst)["d1"] == 1.0
-    assert ledger.forward_returns(df, burst)["from_open"] == {"d1": None, "d3": None, "d5": None}
+    assert ledger.forward_returns(df, burst)["from_open"] == {
+        "d1": None, "d3": None, "d5": None, "peak": None, "trough": None}
 
     for bad in (float("nan"), 0.0, -1.0):
         df = frame_with_opens(closes=[100, 101, 102, 103, 104, 110],
                               opens=[100, bad, 101, 102, 103, 104])
         out = ledger.forward_returns(df, df.index[0].date().isoformat())
-        assert out["d5"] == 10.0 and out["from_open"] == {"d1": None, "d3": None, "d5": None}, bad
+        assert out["d5"] == 10.0 and out["from_open"] == {
+            "d1": None, "d3": None, "d5": None, "peak": None, "trough": None}, bad
 
 
 def test_a_horizon_the_open_basis_cannot_reach_is_null_on_that_basis_too():
@@ -1590,8 +1759,17 @@ def test_the_evidence_pairs_every_scored_setup_with_its_own_sessions_benchmark()
 
 
 def test_the_pending_shape_is_pending_on_both_bases():
-    assert ledger.empty_returns() == {"d1": None, "d3": None, "d5": None, "as_of": None,
-                                      "from_open": {"d1": None, "d3": None, "d5": None}}
+    """Every key, on both bases, and the magnitude with them.
+
+    peak/trough/span are the strategy's own claim -- "8 to 20% magnitude in 3
+    to 5 days" is a move REACHED inside the window, not a close on one
+    session of it -- and pending here like everything else.
+    """
+    assert ledger.empty_returns() == {
+        "d1": None, "d3": None, "d5": None, "as_of": None,
+        "span": None, "peak": None, "trough": None,
+        "from_open": {"d1": None, "d3": None, "d5": None,
+                      "peak": None, "trough": None}}
 
 
 def _row(ticker: str, session: str, **returns) -> dict:
@@ -3947,7 +4125,8 @@ def test_the_illiquid_population_is_kept_beside_the_control_and_not_in_it():
     assert ev["refused"]["setups"] == 2 and d5("refused")["mean"] == 3.0, (
         "the control is the checklist's and the veto's verdict, not the floor's")
     assert ev["crowded_out"]["setups"] == 1
-    assert set(ev["illiquid"]) == set(ev["refused"]) == {"setups", "outcomes", "enough", "enough_from_open"}
+    assert set(ev["illiquid"]) == set(ev["refused"]) == {
+        "setups", "outcomes", "enough", "enough_from_open", "magnitude"}
     assert not ev["illiquid"]["enough"]
     assert (ev["shortlist"]["setups"] + ev["rest"]["setups"] + ev["refused"]["setups"]
             + ev["crowded_out"]["setups"] + ev["illiquid"]["setups"]) == ev["record"]["setups"], (
@@ -4933,3 +5112,168 @@ def test_a_re_scan_of_the_session_the_record_holds_as_blind_still_counts_day_one
     day_before = pd.bdate_range(end=TUE, periods=2)[0].date()
     assert ledger.streak([], TUE, record=ledger.Record(DEEP, 160, 160,
                                                       frozenset({day_before})))["day"] is None
+
+
+# ===========================================================================
+# The magnitude — the strategy's own claim is a move REACHED inside a window,
+# and the record kept three closes.
+# ===========================================================================
+
+def frame_with_path(closes, highs, lows, opens=None, end="2026-08-31"):
+    index = pd.bdate_range(end=end, periods=len(closes), name="timestamp")
+    data = {"High": [float(h) for h in highs], "Low": [float(l) for l in lows],
+            "Close": [float(c) for c in closes], "Volume": [1_000_000] * len(closes)}
+    if opens is not None:
+        data["Open"] = [float(o) for o in opens]
+    return pd.DataFrame(data, index=index)
+
+
+def test_a_move_that_reached_the_band_and_gave_it_back_is_measured_as_both():
+    """The case that motivated the measurement, driven rather than argued.
+
+    A burst that runs to +15% intraday on its third session and closes +4% on
+    the fifth: the d5 close says out of band, the high says it made the move,
+    and Bonde's claim is about the move.
+    """
+    df = frame_with_path(closes=[100, 104, 109, 106, 103, 104],
+                         highs=[101, 106, 111, 115, 110, 105],
+                         lows=[99, 100, 104, 105, 100, 102],
+                         opens=[100] * 6)
+    out = ledger.forward_returns(df, df.index[0].date().isoformat())
+    low, high = ledger.CLAIMED_BAND
+    assert out["d5"] == 4.0 and not low <= out["d5"] <= high
+    assert out["peak"] == 15.0 and low <= out["peak"] <= high
+    assert out["trough"] == 0.0
+    assert out["span"] == 5
+
+
+def test_the_window_is_the_sessions_after_the_burst_and_not_the_burst_bar():
+    """The burst bar's own high is not part of the move a reader could take:
+    the earliest entry is the next session. A burst bar spiking to +40% must
+    not become the peak."""
+    df = frame_with_path(closes=[100, 101, 102, 103, 104, 105],
+                         highs=[140, 102, 103, 104, 105, 106],
+                         lows=[99, 100, 101, 102, 103, 104],
+                         opens=[100] * 6)
+    out = ledger.forward_returns(df, df.index[0].date().isoformat())
+    assert out["peak"] == 6.0, "the 140 is the burst bar's own high"
+
+
+def test_a_short_window_records_its_span_rather_than_a_peak_over_five():
+    df = frame_with_path(closes=[100, 104, 109], highs=[101, 106, 111], lows=[99, 100, 104])
+    out = ledger.forward_returns(df, df.index[0].date().isoformat())
+    assert out["span"] == 2 and out["peak"] == 11.0
+
+
+@pytest.mark.parametrize("kill", ["High", "Low"])
+def test_a_frame_that_cannot_show_the_path_records_no_magnitude_rather_than_a_guess(kill):
+    """Both edges or neither: a peak over five sessions beside a trough over
+    three is two windows under one heading."""
+    df = frame_with_path(closes=[100, 104, 109, 106, 103, 104],
+                         highs=[101, 106, 111, 115, 110, 105],
+                         lows=[99, 100, 104, 105, 100, 102]).drop(columns=[kill])
+    out = ledger.forward_returns(df, df.index[0].date().isoformat())
+    assert out["peak"] is None and out["trough"] is None and out["span"] is None
+    assert out["d5"] == 4.0, "the closes are still measured"
+
+
+def test_one_unreadable_high_inside_the_window_refuses_the_whole_magnitude():
+    df = frame_with_path(closes=[100, 104, 109, 106, 103, 104],
+                         highs=[101, 106, float("nan"), 115, 110, 105],
+                         lows=[99, 100, 104, 105, 100, 102])
+    out = ledger.forward_returns(df, df.index[0].date().isoformat())
+    assert out["span"] is None and out["peak"] is None
+
+
+def test_the_magnitude_widens_while_its_window_fills_and_freezes_when_it_is_full(tmp_path):
+    """A horizon is filled once because the bar it names never changes. A peak
+    over the window DOES change while the window is filling, so it is restated
+    while the span grows -- and never after."""
+    book = ledger.Ledger(tmp_path)
+    session = "2026-09-08"
+    book.runs = [{"date": session, "type": "evening", "status": "ok",
+                  "candidates": [{"ticker": "AAA", "date": session}], "gated": []}]
+    short = frame_with_path(closes=[100, 104, 109], highs=[101, 106, 111],
+                            lows=[99, 100, 104], opens=[100] * 3, end="2026-09-10")
+    long = frame_with_path(closes=[100, 104, 109, 106, 103, 104],
+                           highs=[101, 106, 111, 130, 110, 105],
+                           lows=[99, 100, 104, 105, 100, 102], opens=[100] * 6,
+                           end="2026-09-15")
+    book.fill_forward_returns({"AAA": short}, date(2026, 9, 30),
+                              ledger.session_calendar({"a": short, "b": short}))
+    row = book.runs[0]["candidates"][0]["forward_returns"]
+    assert (row["span"], row["peak"]) == (2, 11.0)
+    assert "AAA" in book.pending_tickers(date(2026, 9, 30)), "the window can still widen"
+
+    book.fill_forward_returns({"AAA": long}, date(2026, 9, 30),
+                              ledger.session_calendar({"a": long, "b": long}))
+    row = book.runs[0]["candidates"][0]["forward_returns"]
+    assert (row["span"], row["peak"]) == (5, 30.0), "it widened"
+    assert row["d1"] == 4.0, "and the horizon it already had was not restated"
+    assert "AAA" not in book.pending_tickers(date(2026, 9, 30)), "and it is done"
+
+    # A later frame with a hole cannot shrink what the record published.
+    book.fill_forward_returns({"AAA": short}, date(2026, 9, 30),
+                              ledger.session_calendar({"a": short, "b": short}))
+    assert book.runs[0]["candidates"][0]["forward_returns"]["peak"] == 30.0
+
+
+def test_a_frame_that_can_never_show_a_path_leaves_the_queue_rather_than_waiting(tmp_path):
+    """A row whose horizons are all filled and whose span is NULL is not
+    waiting for anything: its frame carried no high or low to read. Keeping
+    it would re-fetch the same name every night for nothing."""
+    book = ledger.Ledger(tmp_path)
+    session = "2026-09-08"
+    book.runs = [{"date": session, "type": "evening", "status": "ok",
+                  "candidates": [{"ticker": "AAA", "date": session}], "gated": []}]
+    df = frame_with_opens(closes=[100, 101, 102, 103, 104, 110],
+                          opens=[100] * 6, end="2026-09-15")
+    book.fill_forward_returns({"AAA": df}, date(2026, 9, 30),
+                              ledger.session_calendar({"a": df, "b": df}))
+    row = book.runs[0]["candidates"][0]["forward_returns"]
+    assert row["d5"] == 10.0 and row["span"] is None
+    assert "AAA" not in book.pending_tickers(date(2026, 9, 30))
+
+
+def test_the_band_off_the_move_and_the_band_off_the_close_are_two_counts():
+    """Neither is the other, and the record publishes both under their own
+    names. Rows built so the two answers differ by construction."""
+    def row(peak, d5):
+        return {"ticker": "AAA", "date": "2026-09-08", "forward_returns": {
+            **ledger.empty_returns(), "d1": 1.0, "d3": 2.0, "d5": d5,
+            "span": 5, "peak": peak, "trough": -1.0,
+            "from_open": {"d1": 1.0, "d3": 2.0, "d5": d5, "peak": peak, "trough": -1.0}}}
+    rows = [row(15.0, 4.0), row(15.0, 12.0), row(3.0, 3.0), row(40.0, 30.0)]
+    block = ledger._population(rows)
+    d5 = ledger.at_horizon(block["outcomes"], 5)
+    assert d5["in_band"] == 1, "only one CLOSED inside the band"
+    assert block["magnitude"]["reached_band"] == 2, "two REACHED it"
+    assert block["magnitude"]["above_band"] == 1
+    assert block["magnitude"]["n"] == 4 and block["magnitude"]["window"] == 5
+    assert block["magnitude"]["trough_mean"] == -1.0
+
+
+def test_a_peak_measured_over_a_short_window_is_not_counted_at_all():
+    """A peak over two sessions is not the claim's window, and averaging it
+    in would answer a question nobody asked."""
+    def row(span):
+        return {"ticker": "AAA", "date": "2026-09-08", "forward_returns": {
+            **ledger.empty_returns(), "span": span, "peak": 15.0, "trough": -1.0,
+            "from_open": {"d1": None, "d3": None, "d5": None, "peak": 15.0, "trough": -1.0}}}
+    assert ledger._population([row(2)])["magnitude"]["n"] == 0
+    assert ledger._population([row(5)])["magnitude"]["n"] == 1
+
+
+@pytest.mark.parametrize("returns", [
+    {"span": 0}, {"span": -1}, {"span": 2.5}, {"span": True}, {"span": "5"},
+    {"peak": "up"}, {"peak": True}, {"trough": []},
+    {"from_open": {"peak": "up"}}, {"from_open": {"trough": True}},
+])
+def test_a_magnitude_the_wrong_shape_is_refused_at_load(returns):
+    """One level in, on the block the fill restates and evidence() averages
+    inside publish() -- after the scan and every Claude call are paid for."""
+    block = {**ledger.empty_returns(), **returns}
+    if "from_open" in returns:
+        block["from_open"] = {**ledger.empty_returns()["from_open"], **returns["from_open"]}
+    assert ledger.returns_shape_problem(block)
+    assert ledger.returns_shape_problem(ledger.empty_returns()) is None

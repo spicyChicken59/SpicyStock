@@ -7,7 +7,7 @@ import math
 import numpy as np
 import pytest
 
-from src import learning
+from src import learning, ledger
 
 
 def day(offset):
@@ -65,7 +65,9 @@ def test_no_real_history_says_collecting_without_invented_returns():
     ({"fixture": "false"}, "fixture"),
     ({"type": "morning"}, "non_evening_or_degraded"),
     ({"status": "degraded"}, "non_evening_or_degraded"),
-    ({"universe": {"tickers": ["AAA"]}}, "named_basket_or_unknown_universe"),
+    ({"universe": {"tickers": ["AAA"]}}, "named_basket"),
+    ({"universe": None}, "unknown_universe"),
+    ({"universe": ["AAA"]}, "unknown_universe"),
     ({"model": "other-model"}, "different_or_unknown_rules"),
     ({"rules": {"score.prompt": "test-prompt", "gate": 4}}, "different_or_unknown_rules"),
 ])
@@ -73,6 +75,53 @@ def test_training_excludes_rehearsals_partial_runs_and_changed_scoring(change, w
     result = learning.build([run(0, [row(0)], **change)], run())
     assert result["counts"]["matured"] == 0
     assert result["counts"]["excluded"][why] == 1
+
+
+def adaptive(members=("AAA",)):
+    """The universe block src.universe stamps on a production evening scan.
+
+    Both keys matter and the shape is the record's own: `tickers` beside a
+    `selection` object is what the adaptive selector writes, and `tickers`
+    alone is what a --tickers basket writes.
+    """
+    return {"label": "adaptive US common stocks (Nasdaq + Alpaca)", "size": len(members),
+            "tickers": list(members), "identity": "4347617073e5cd47",
+            "selection": {"version": "nasdaq-sip-rotation-v1", "mode": "adaptive",
+                          "session": "2026-09-09", "selected": len(members)}}
+
+
+def test_an_adaptive_universe_scan_is_not_read_as_a_named_basket():
+    """Every production night since the selector landed carries `tickers`.
+
+    The gate used to exclude any run whose universe block held that key, so
+    the record's own clean 500-name scan was training data for nothing. The
+    default run() here has no `tickers` at all, which is why no test could
+    see it: this one uses the shape a real night writes.
+    """
+    scan = run(0, [row(0)], universe=adaptive())
+    assert learning._eligible_run(scan, date.fromisoformat(day(100))) is None
+    result = learning.build([scan], run())
+    assert result["counts"]["eligible"] == 1
+    assert "named_basket" not in result["counts"]["excluded"]
+
+
+@pytest.mark.parametrize("universe", [
+    None, ["AAA"], "AAA", {}, {"label": "curated test universe", "size": 228},
+    {"tickers": ["AAA"]}, {"tickers": []}, {"tickers": "AAA"},
+    {"tickers": ["AAA"], "selection": {}}, {"tickers": ["AAA"], "selection": None},
+    adaptive(), adaptive(("AAA", "BBB")),
+])
+def test_the_training_gate_and_the_ledger_read_one_basket_rule(universe):
+    """Two copies of this test drifted apart once and the record paid for it.
+
+    The gate may exclude a run for other reasons; what it may never do is
+    call a run a named basket that ledger.is_named_basket() calls a scan, or
+    the reverse. Asserted over every universe shape either predicate can be
+    handed, including the two that are not dicts at all.
+    """
+    scan = run(0, [row(0)], universe=universe)
+    excluded_as_basket = learning._eligible_run(scan, date.fromisoformat(day(100))) == "named_basket"
+    assert excluded_as_basket == ledger.is_named_basket(scan)
 
 
 def test_fixture_document_marker_cannot_be_lost_by_extracting_its_runs():
