@@ -147,7 +147,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1809 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1818 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -357,6 +357,19 @@ it -- and on the boundary, where ties break by ticker -- the record is
 silent, and the report says "cannot say for N more" instead. Seven mutants,
 all killed.
 
+**The page threw away an open-basis number the record holds.** `bandCells()`
+passed the magnitude block through `onBasis()`, which is written for an
+OUTCOME entry and maps a `from_open` block into that shape -- horizon, mean,
+n, best, worst, in_band -- so the magnitude kept only its `n` and lost
+`reached_band` with it. Read off the rendered page rather than the source:
+every open-basis "reached the band" cell printed an em dash beside a hint
+reading "of 66 setups measured over 5 sessions", a dash under a count
+asserting the thing WAS measured, while the record held 24 against the close
+basis's 27. `magnitudeOnBasis()` is the accessor now. The smoke could not see
+it, which is the other half of the finding: every band check ran on the close
+basis, so three checks read both columns on both bases against the record's
+own two blocks (270 -> 273). Two page mutants, both killed.
+
 **The $ breakout section silently took rows out of the anticipation
 population.** `build()` tests `_dollar_breakout()` before `_anticipates()`, so
 a name satisfying both is filed under `dollar` alone -- and that is not a
@@ -372,6 +385,44 @@ absent the key and a reader can tell the two definitions apart, and
 record made -- checkable even though the anticipation predicate itself is not,
 since the row carries the open, close and volume the $ scan reads. Five
 mutants, all killed.
+
+### The rest of the leads, worked
+
+Thirteen findings arrived with dead refuters and were reproduced here before
+being touched. `tools/fidelity_report.py` dropped a rule from its outcome
+section the moment any OTHER rule had a measured return -- `pooled.items() or
+[...]` fires only when every rule is empty -- so a section a reader takes for
+the whole partition silently lost the rules still pending. A night the
+canonical scan matched nothing was skipped whole over a zero denominator,
+taking with it the bursts production found on it, which is the widest
+disagreement the two scans can have. The stated production rule went on
+describing the scan without `min_share_volume` and `min_rvol_sessions` after
+the same merge added both, and `_why_missed()` had no branch for the share
+floor; it is built from `ScanConfig.STRATEGY_FIELDS` now and says so if it
+ever falls short. `SIDECAR_VOLUME_SESSIONS` was a hand-typed 20 that nothing
+read, under a comment claiming it came from the rule string -- it does now,
+and it reaches the output, because a constant no output depends on is a
+constant no test can pin. The published contract named three of the sidecar's
+four populations and two of its three caps.
+
+**And README's two stripped-cost figures were reproducible by nothing.**
+1.14/0.12 and 3.86/0.62 were measured once by hand during round 14, in the
+paragraph that argues the sidecar's whole cost -- which is the rot
+`tools/measure_ledger.py` exists to stop, one paragraph from the figures it
+does guard. `--without forward_returns` and `--without dollar` build the same
+projected file with one part stripped: 2.94/0.28 and 4.19/0.61, with a docs
+guard holding README to what the tool prints. Round 13's "Bonde's own
+100,000-share floor is absent entirely" is retracted in place for the same
+reason -- the same merge added `min_share_volume` to production, so three of
+its four causes stand -- and the history fixture's dollar population is 316,
+not the 315 published above.
+
+Eleven mutants over these, eight killed on the first pass; all three
+survivors were holes in the tests and closed. One of them is this file's
+third shape again: the sidecar-window test compared the constant to the
+function beside it, which is 20 against 20 while they agree, so the mutant
+that typed the number back survived it. The module is re-imported under a
+moved rule string now.
 
 ## Round 14 — the second scan, the control, and what the outside evidence says
 
@@ -467,7 +518,10 @@ project has repeatedly found one surface checking a level the other does not.
 
 **Cost, measured rather than argued.** The projected year went 20.13 → 21.27
 MB raw and 2.17 → 2.29 gzipped. Building the same file with the new blocks
-stripped says the measurement itself is **1.14 MB raw and 0.12 gzipped**; the
+stripped said the measurement itself was **1.14 MB raw and 0.12 gzipped** --
+retracted: that pair was measured once by hand and no committed tool could
+recompute it, and `tools/measure_ledger.py --without forward_returns` says
+2.94 and 0.28 once every archived sidecar row carries the block. The
 rest of the move from the 15.46/1.24 this file recorded at round 11 happened
 in rounds 12 and 13 and README had already been swept for it. The fill's
 `pending_tickers()` went 25 → 96 names on the committed record, which is one
@@ -559,7 +613,7 @@ already reads `selection` or keys on the label.
 
 Read off the regenerated thirty-run history fixture — synthetic bars, so the
 numbers are about the machinery and not the market: `caught` 186 setups at
-+5.46% over five sessions, `missed` 26 at +3.13%, `dollar` 315 at +3.79%,
++5.46% over five sessions, `missed` 26 at +3.13%, `dollar` 316 at +3.79%,
 `anticipation` 191 at +8.24%. Two things about that are worth keeping even
 though the market half is meaningless. The narrower scan kept the better
 bursts on this tape, which is the direction the question was asked in. And
@@ -792,8 +846,12 @@ looking in the wrong place.
 **Four causes, one bias.** The universe drops everything under $4 and selects
 on trailing momentum and liquidity; rule 6's percentile puts the floor at
 $76.7M/day and refused a $62M/day burst as illiquid; the scan adds a volume
-gate that is not his; and Bonde's own 100,000-**share** floor is absent
-entirely. His stated preferences run the other way — *"Low float below 25
+gate that is not his; and ~~Bonde's own 100,000-**share** floor is absent
+entirely~~ — retracted by the post-merge audit of round 14: the same merge
+that recorded this added `min_share_volume` to `ScanConfig`, so production
+applies his floor now and three of the four causes stand rather than four.
+The report's own "Production rule:" line did not state it either, and states
+every strategy field the config names now. His stated preferences run the other way — *"Low float below 25
 million is good. Below 10 million float leads to explosive moves. Low priced
 stocks (below 5 dollar) tend to make very explosive moves."* Every one of the
 four pushes toward large, liquid, already-moving names. That is one bias with

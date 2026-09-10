@@ -686,7 +686,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1809 tests, no network or API keys needed
+pytest tests/                   # 1818 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -808,8 +808,12 @@ before de-duplication, so the fill can cost up to six batches of 100 a night
 where it cost one; the thirty-run history fixture's steady state is 61 names,
 because it drives only 77 synthetic names and the de-duplication saturates. Measured by
 building the same projected file with each part stripped:
-the forward-return blocks cost 1.14 MB raw and 0.12 MB gzipped of the year,
-and the $ breakout section a further 3.86 MB and 0.62 MB.
+the forward-return blocks cost 2.94 MB raw and 0.28 MB gzipped of the year,
+and the $ breakout section a further 4.19 MB and 0.61 MB. Both are printed by
+`python tools/measure_ledger.py --without forward_returns` and `--without
+dollar`; before that flag existed the two figures had been measured once by
+hand and were reproducible by nothing committed here, which is the rot that
+tool exists to stop.
 
 **The band is read twice, because the claim and the measurement were two
 different things.** `in_band`, on each horizon's own entry, counts the CLOSE
@@ -1608,7 +1612,7 @@ comparison limits and removal, saved-note persistence and storage failures,
 focus navigation, archive retries and races, return-basis changes, and isolation
 of a failed view. It also captures phone and desktop screens in both themes.
 
-**Three data sources, one page.** It runs 270 checks, and which file each one
+**Three data sources, one page.** It runs 273 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served

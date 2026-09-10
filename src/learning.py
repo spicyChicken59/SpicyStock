@@ -293,7 +293,7 @@ def build(runs, current_run, current_candidates=None):
             "Research only. Production scores, rules and order decisions are unchanged; promotion requires a separate review.",
             "Bar-price outcomes are hypothetical next-open entries, not your trades, stop-managed returns or portfolio performance.",
             "The 20-basis-point round-trip deduction is a fixed cost scenario, not measured commissions, spread or slippage.",
-            "This is a selected, curated-universe sample of scored setups, not all Stockbee scan matches or the whole market.",
+            "This is a selected sample of scored setups from whatever basket that night scanned -- the adaptive selection on a production night, the reviewed seed as a fallback -- not all Stockbee scan matches or the whole market.",
             "Calibration bins describe all eligible matured history; their 95% Wilson intervals are not out-of-sample forecasts.",
             "Two expanding chronological validation windows use only labels first observed before each window begins.",
             "Setup grouping uses the ledger's five-business-day gap convention, which does not adjust for exchange holidays.",

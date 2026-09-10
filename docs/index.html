@@ -1827,8 +1827,29 @@
   // to +15% intraday on its third session and closed +4% on the fifth is
   // outside the first and inside the second, and the record kept only the
   // first until it started keeping the highs.
+  // THE MAGNITUDE IS NOT AN OUTCOME ENTRY, and onBasis() is written for one.
+  // That accessor maps a from_open block into an outcome's SHAPE -- horizon,
+  // mean, n, best, worst, in_band -- so a magnitude passed through it kept
+  // only `n` and lost reached_band, above_band and both means. Every
+  // open-basis "reached the band" cell printed an em dash beside a hint
+  // reading "of 66 setups measured over 5 sessions", which is a dash under a
+  // count asserting the thing WAS measured, while the record held 24. Read
+  // off the rendered page on both bases, not from the source.
+  //
+  // `window` is on the close-basis block alone because it is one window for
+  // both bases by construction -- the same sessions, two denominators -- so
+  // it is carried across rather than looked up twice.
+  function magnitudeOnBasis(mag) {
+    var block = mag || {};
+    if (BASIS !== 'open') return block;
+    var o = block.from_open;
+    if (!o || typeof o !== 'object') return { n: 0, window: block.window, unmeasured: true };
+    return { n: o.n, reached_band: o.reached_band, above_band: o.above_band,
+             peak_mean: o.peak_mean, trough_mean: o.trough_mean,
+             trough_n: o.trough_n, window: block.window };
+  }
   function bandCells(block, longest, ev) {
-    var mag = onBasis(block.magnitude || {});
+    var mag = magnitudeOnBasis(block.magnitude);
     var full = block.magnitude || {};
     return [
       el('td', { 'class': 'sc-num' }, figure(commas(longest.in_band),

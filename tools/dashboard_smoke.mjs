@@ -1283,6 +1283,42 @@ ok('and the two are different numbers on a record that measured both',
   `closed ${closedCell.replace(/\s+/g, ' ')} | reached ${reachedCell.replace(/\s+/g, ' ')}`);
 ok('and the reached column says how many went past the band rather than folding them in',
   /went past it/.test(reachedCell), reachedCell.replace(/\s+/g, ' ').slice(0, 90));
+
+// AND BOTH COLUMNS FOLLOW THE BASIS. Everything above ran on the close basis
+// only, so the round shipped with every open-basis "reached the band" cell
+// printing an em dash under a hint reading "of 66 setups measured over 5
+// sessions" -- a dash beside a count asserting the thing was measured, while
+// the record held the number. The cause was the magnitude passed through
+// onBasis(), which is written for an OUTCOME entry and maps a from_open block
+// into that shape, keeping `n` and dropping reached_band with it. These
+// checks read the record's own two blocks and compare the page against each.
+const magOf = (basis) => {
+  const m = (HIST.evidence.shortlist || {}).magnitude || {};
+  return basis === 'open' ? (m.from_open || {}) : m;
+};
+const bandRow = async () => page.$$eval('#control-table tbody tr', (rows) => {
+  const r = rows.find((x) => /the shortlist/.test(x.children[0].textContent));
+  return r ? [...r.children].map((c) => c.textContent.trim()) : null;
+});
+for (const basis of ['close', 'open']) {
+  await page.click(`#basis-tabs .sc-tab[data-basis="${basis}"]`);
+  const row = await bandRow();
+  const cell = row[row.length - 2];
+  const want = magOf(basis);
+  ok(`the reached-the-band cell reads the ${basis} basis's own count`,
+    typeof want.reached_band === 'number' && want.reached_band > 0
+    && parseInt(cell, 10) === want.reached_band
+    && cell.includes(`${want.above_band} went past it`),
+    `${basis}: cell ${cell.replace(/\s+/g, ' ').slice(0, 70)} | record ${want.reached_band}/${want.above_band}`);
+}
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const openReached = (await bandRow())[(await bandRow()).length - 2];
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+const closeReached = (await bandRow())[(await bandRow()).length - 2];
+ok('and the two bases really do print different reached counts on this record',
+  magOf('open').reached_band !== magOf('close').reached_band
+  && openReached.replace(/\s+/g, ' ') !== closeReached.replace(/\s+/g, ' '),
+  `open ${openReached.split('\n')[0]} vs close ${closeReached.split('\n')[0]}`);
 const bandHint = await page.textContent('#control-hint');
 ok('and the hint says which reading is which',
   /The band is read twice, because they are two questions/.test(bandHint)

@@ -388,3 +388,158 @@ def test_the_committed_records_own_accused_names_are_all_below_its_cutoff(capsys
     printed = capsys.readouterr().out
     assert "admitted" not in printed.split("2026-09-08")[1].split("scored")[0]
     assert "cannot say for 5 more" in printed
+
+
+def _outcome_section(book, **flags):
+    """Drive the real report over a hand-built ledger and hand back the
+    per-rule outcome block a reader sees."""
+    import contextlib
+    import io
+    import tempfile
+
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as fh:
+        json.dump(book, fh)
+        path = fh.name
+    buf = io.StringIO()
+    argv = ["--ledger", path]
+    for key, value in flags.items():
+        argv += ["--" + key.replace("_", "-"), str(value)]
+    with contextlib.redirect_stdout(buf):
+        assert fidelity_report.main(argv) == 0
+    printed = buf.getvalue()
+    return printed, printed.split("What each cut went on to do")[1].split("Call budget")[0]
+
+
+def _missed_row(ticker, ratio, d5=None):
+    row = canonical_row(ticker, volume_vs_average=ratio)
+    if d5 is not None:
+        row["forward_returns"] = {"d1": None, "d3": None, "d5": d5, "as_of": "2026-09-16",
+                                  "from_open": {"d1": None, "d3": None, "d5": d5}}
+    return row
+
+
+def test_a_rule_whose_misses_are_all_pending_still_gets_a_row():
+    """The fallback was `pooled.items() or [...]`, which fires only when NO
+    rule has a measured return -- so the moment one did, every rule still
+    waiting on its outcomes vanished from a section a reader takes for the
+    whole partition. Driven: one rvol_threshold miss with a return beside one
+    rvol_window miss without."""
+    entry = run([_missed_row("AAA", 1.0, d5=3.0), _missed_row("BBB", 2.0)], [])
+    report = fidelity_report.compare(entry)
+    assert set(report["missed_by_rule"]) == {"rvol_threshold", "rvol_window"}, "precondition"
+    assert "rvol_window" not in report["missed_returns_by_rule"], "precondition: it is pending"
+
+    _all, section = _outcome_section({"runs": [entry]}, min_setups=1)
+    assert "rvol_threshold" in section
+    assert "rvol_window" in section, "a rule that dropped a name is on no line"
+    import re
+    assert re.search(r"rvol_window\s+nothing measured yet", section), (
+        "the pending rule is listed but says nothing about its state")
+    assert re.search(r"rvol_threshold\s+\+3\.00% over 1 setups", section)
+
+
+def test_a_night_the_canonical_scan_matched_nothing_is_still_reported():
+    """It was skipped whole over a zero denominator, so the bursts production
+    found on it -- the widest possible disagreement between the two scans,
+    every one a name Bonde's scan did not print -- appeared nowhere, and
+    neither did its call budget."""
+    entry = run([], ["AAA", "BBB"], matched=0)
+    entry["bursts"] = 2
+    printed, _section = _outcome_section({"runs": [entry]}, min_setups=1)
+    assert "2026-09-09" in printed, "the night is not skipped"
+    assert "canonical scan matched none" in printed
+    assert "production called 2 a burst" in printed
+    assert "no overlap to state" in printed, "there is no percentage over a zero denominator"
+    assert "admitted 2 that fail the canonical scan" in printed, (
+        "an empty canonical list is complete, so it IS evidence about every burst")
+    assert "scored" in printed, "and its budget line survives with it"
+
+
+def test_the_night_tail_is_one_rule_for_both_paths():
+    """A night with a canonical list and a night without print the same tail,
+    so the two paths cannot drift into two vocabularies."""
+    with_list = run([canonical_row("KEPT")], ["KEPT", "EXTRA"])
+    with_list["bursts"] = 2
+    printed, _ = _outcome_section({"runs": [with_list]}, min_setups=1)
+    assert "admitted 1 that fail the canonical scan" in printed
+    assert "scored" in printed
+
+
+def test_a_miss_under_productions_share_floor_is_attributed_to_it():
+    """`min_share_volume` arrived in production in round 14 and `_why_missed`
+    had no branch for it, so a name production refused for share volume was
+    filed under a relative-volume verdict instead.
+
+    It cannot happen while production's floor is at or below the canonical
+    scan's own 100,000, because a canonical match cleared that by definition
+    -- but the two numbers live in different modules and nothing makes them
+    move together, which is exactly why the branch is checked rather than
+    assumed. This plants the row that state produces.
+    """
+    cfg = ScanConfig()
+    thin = canonical_row("THIN", volume=float(cfg.min_share_volume - 1), volume_vs_average=9.0)
+    report = fidelity_report.compare(run([thin], []))
+    assert report["missed"] == ["THIN"]
+    assert report["missed_by_rule"] == {"min_share_volume": 1}, (
+        "a name refused for share volume must not be filed under a relative-volume verdict")
+
+    fat = canonical_row("FAT", volume=float(cfg.min_share_volume), volume_vs_average=9.0)
+    assert fidelity_report.compare(run([fat], []))["missed_by_rule"] == {"rvol_window": 1}, (
+        "and the floor is inclusive, so a name exactly on it is not attributed to it")
+
+
+def test_the_report_states_every_strategy_clause_production_applies(capsys):
+    """The stated rule went on describing the scan without `min_share_volume`
+    and `min_rvol_sessions` after the same merge added both. It is built from
+    ScanConfig's own STRATEGY_FIELDS now, and says so when it falls short."""
+    assert fidelity_report.main([]) == 0
+    line = next(l for l in capsys.readouterr().out.splitlines()
+                if l.startswith("Production rule:"))
+    cfg = ScanConfig()
+    assert f"{cfg.min_share_volume:,} shares" in line
+    assert f"at least {cfg.min_rvol_sessions} sessions" in line
+    assert f"{cfg.rvol_lookback}-session average" in line
+    assert f"gain >= {cfg.min_gain_pct}%" in line and f"${cfg.min_price}" in line
+    assert f"{cfg.min_dollar_volume_pctile:g}th percentile" in line
+    assert "does not state" not in line, "a strategy field is unstated and the report admits it"
+
+
+def test_the_sidecar_volume_window_is_read_off_the_rule_and_not_retyped(monkeypatch):
+    """The constant's comment claimed it was read from the rule string and it
+    was a hand-typed 20 that nothing referenced. A number the docs quote and
+    the code applies have to come from one place."""
+    from src import stockbee
+
+    assert fidelity_report.SIDECAR_VOLUME_SESSIONS == fidelity_report._sidecar_volume_sessions()
+    assert "previous %d contiguous sessions" % fidelity_report.SIDECAR_VOLUME_SESSIONS in (
+        stockbee.MEASUREMENT_RULES["volume_vs_average"])
+
+    # THE CONSTANT ITSELF, not just the function beside it. Comparing the two
+    # is 20 against 20 while they agree, so a mutant that types the number
+    # back survived it; the module is re-imported under a moved rule string
+    # and the constant has to move with it.
+    import importlib
+
+    moved_rule = dict(stockbee.MEASUREMENT_RULES)
+    moved_rule["volume_vs_average"] = moved_rule["volume_vs_average"].replace(
+        "previous 20 contiguous", "previous 35 contiguous")
+    monkeypatch.setattr(stockbee, "MEASUREMENT_RULES", moved_rule)
+    reloaded = importlib.reload(fidelity_report)
+    try:
+        assert reloaded.SIDECAR_VOLUME_SESSIONS == 35, (
+            "the constant is typed rather than read off the rule it quotes")
+    finally:
+        monkeypatch.undo()
+        importlib.reload(fidelity_report)
+
+    moved = dict(stockbee.MEASUREMENT_RULES)
+    moved["volume_vs_average"] = moved["volume_vs_average"].replace(
+        "previous 20 contiguous", "previous 35 contiguous")
+    monkeypatch.setattr(stockbee, "MEASUREMENT_RULES", moved)
+    assert fidelity_report._sidecar_volume_sessions() == 35, "it follows the rule it quotes"
+
+    reworded = dict(stockbee.MEASUREMENT_RULES)
+    reworded["volume_vs_average"] = "mean volume over the trailing window"
+    monkeypatch.setattr(stockbee, "MEASUREMENT_RULES", reworded)
+    with pytest.raises(ValueError):
+        fidelity_report._sidecar_volume_sessions()

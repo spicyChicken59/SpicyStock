@@ -2350,3 +2350,46 @@ def test_readme_does_not_deny_the_page_reads_the_record_it_reads():
         assert "setup" in sentence.lower() and not re.search(r"\brows?\b", sentence), (
             "README has to say what by_score is over, and it is setups -- the first SCORED "
             "appearance of each -- not rows: " + sentence)
+
+
+def test_the_stripped_cost_figures_are_what_measuring_them_says():
+    """README states what each part of the record costs of a full year, and
+    the sidecar's whole cost argument rests on the two figures.
+
+    They were 1.14/0.12 and 3.86/0.62, measured once by hand during round 14
+    and reproducible by nothing committed here -- the same rot the sibling
+    guard above exists to stop, one paragraph over, in the file that argues
+    from them. `tools/measure_ledger.py --without` builds the same projected
+    file with one part stripped, and the difference is the figure; compared
+    against the string the tool PRINTS for the reason the sibling gives.
+    """
+    import importlib.util
+    import re
+
+    spec = importlib.util.spec_from_file_location(
+        "measure_ledger", ROOT / "tools" / "measure_ledger.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    whole = module.measure()
+    readme = _read("README.md")
+    quoted = re.search(
+        r"the forward-return blocks cost ([\d.]+) MB raw and ([\d.]+) MB gzipped of the year,\s*"
+        r"\nand the \$ breakout section a further ([\d.]+) MB and ([\d.]+)", readme)
+    assert quoted, "README no longer states the two stripped-cost figures in the shape this reads"
+    fwd_raw, fwd_gz, dollar_raw, dollar_gz = quoted.groups()
+
+    for part, (raw, gz) in (("forward_returns", (fwd_raw, fwd_gz)),
+                            ("dollar", (dollar_raw, dollar_gz))):
+        without = module.measure(strip=part)
+        assert raw == f"{whole['raw_mb'] - without['raw_mb']:.2f}", (
+            f"README says {part} costs {raw} MB raw; measuring prints "
+            f"{whole['raw_mb'] - without['raw_mb']:.2f}. Run "
+            f"python tools/measure_ledger.py --without {part} and sweep it.")
+        assert gz == f"{whole['gzip_mb'] - without['gzip_mb']:.2f}", (
+            f"README says {part} costs {gz} MB gzipped; measuring prints "
+            f"{whole['gzip_mb'] - without['gzip_mb']:.2f}.")
+
+    assert sorted(module.STRIPPERS) == ["dollar", "forward_returns"], (
+        "a new --without part is not stated in README; either quote its cost or "
+        "widen this guard deliberately")

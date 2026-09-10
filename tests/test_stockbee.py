@@ -879,3 +879,17 @@ def test_the_declaration_is_read_off_the_record_and_not_off_todays_chain(monkeyp
         "precondition: tonight's constant would not call it a breakout")
     assert stockbee.problem(moved, session="2026-08-28") == (
         "stockbee.anticipation row is a $ breakout its record declared excluded")
+
+
+@pytest.mark.parametrize("volume,expected", [
+    (stockbee.MIN_SHARE_VOLUME, 1),        # the source writes `v > 100000`; this reads it inclusive
+    (stockbee.MIN_SHARE_VOLUME - 1, 0),
+])
+def test_the_share_floor_is_inclusive_on_both_scans_and_the_drift_is_stated(volume, expected):
+    """The quoted formula is strict on volume and both scans read it
+    inclusive. That choice was stated for the 4% scan and not for the $ one,
+    which is how one number grows two readings; the boundary is pinned on
+    both sections here so neither can drift alone."""
+    assert build({"DOLR": dollar_bar(volume=volume)})["dollar"]["matched"] == expected
+    assert build({"SCAN": burst(last_volume=volume,
+                                prior_volume=volume - 10)})["scan"]["matched"] == expected

@@ -108,6 +108,12 @@ SCAN_RULES = {
     "min_volume": MIN_SHARE_VOLUME,
     "min_price": None,
 }
+#: ONE DRIFT FROM THE QUOTED FORMULA, stated here the way the 4% scan's is.
+#: The source writes `c-o >= .90 and v > 100000` -- strict on volume -- and
+#: this reads it inclusive, so a bar on exactly 100,000 shares is admitted.
+#: The same inclusive reading is applied to the 4% scan's own floor, and the
+#: two must agree or the sections would disagree about one number; a bar on
+#: the boundary is pinned in tests beside the 89.99/89.49-cent cases.
 DOLLAR_RULES = {
     "kind": "Stockbee $ breakout, his companion scan for higher-priced names",
     "min_dollar_move": DOLLAR_BREAKOUT_MOVE,
