@@ -5277,3 +5277,138 @@ def test_a_magnitude_the_wrong_shape_is_refused_at_load(returns):
         block["from_open"] = {**ledger.empty_returns()["from_open"], **returns["from_open"]}
     assert ledger.returns_shape_problem(block)
     assert ledger.returns_shape_problem(ledger.empty_returns()) is None
+
+
+# ---------------------------------------------------------------------------
+# The post-merge audit of round 14: both bases restate together, a bar the
+# window cannot read is not an edge, and a sidecar row archived tonight says
+# pending rather than nothing.
+
+def test_the_open_basis_magnitude_is_restated_with_the_span_null_included(tmp_path):
+    """Reproduced on the merged tree: a first fill measured span 2 on both
+    bases; a second, whose d1 open was printed outside its own bar, widened
+    the close basis to span 5 and peak 25 while the open basis KEPT the
+    span-2 peak under the row's one `span` -- and _magnitude() then counted
+    that stale number as a five-session open-basis peak. The open-basis
+    magnitude is restated with the span now, null when the fill measured
+    none, so every number under `span` is a number over that span."""
+    book = ledger.Ledger(tmp_path)
+    session = "2026-09-08"
+    book.runs = [{"date": session, "type": "evening", "status": "ok",
+                  "candidates": [{"ticker": "AAA", "date": session}], "gated": []}]
+    short = frame_with_path(closes=[100, 104, 109], highs=[101, 106, 111],
+                            lows=[99, 100, 104], opens=[100, 105, 104], end="2026-09-10")
+    # The same bars, three more sessions, and a d1 open of 200 on a bar whose
+    # high is 106: an entry nobody paid, refused, so no open-basis magnitude.
+    long = frame_with_path(closes=[100, 104, 109, 106, 103, 104],
+                           highs=[101, 106, 111, 130, 110, 105],
+                           lows=[99, 100, 104, 105, 100, 102],
+                           opens=[100, 200, 104, 105, 101, 102], end="2026-09-15")
+    book.fill_forward_returns({"AAA": short}, date(2026, 9, 30),
+                              ledger.session_calendar({"a": short, "b": short}))
+    row = book.runs[0]["candidates"][0]["forward_returns"]
+    assert (row["span"], row["peak"], row["from_open"]["peak"]) == (2, 11.0, 5.71)
+    # The trough too, asserted because a mutant that restated the peak alone
+    # survived the first harness run: it never wrote the open-basis trough
+    # on EITHER fill, so "None after widening" was true of it for the wrong
+    # reason. Both edges are measured the first night.
+    assert row["from_open"]["trough"] == -4.76
+    assert row["from_open"]["d1"] == -0.95, "the open basis had an entry the first night"
+
+    book.fill_forward_returns({"AAA": long}, date(2026, 9, 30),
+                              ledger.session_calendar({"a": long, "b": long}))
+    row = book.runs[0]["candidates"][0]["forward_returns"]
+    assert (row["span"], row["peak"], row["trough"]) == (5, 30.0, 0.0)
+    assert row["from_open"]["peak"] is None and row["from_open"]["trough"] is None, (
+        "the open basis was restated with the span, not kept from a window two sessions wide")
+    assert row["from_open"]["d1"] == -0.95, "a horizon filled once stays filled"
+    magnitude = ledger._population([book.runs[0]["candidates"][0]])["magnitude"]
+    assert magnitude["n"] == 1 and magnitude["peak_mean"] == 30.0
+    assert magnitude["from_open"]["n"] == 0 and magnitude["from_open"]["peak_mean"] is None
+
+
+_CLEAN_CLOSES = [100, 104, 109, 106, 103, 104]
+_CLEAN_HIGHS = [101, 106, 111, 130, 110, 105]
+_CLEAN_LOWS = [99, 100, 104, 105, 100, 102]
+
+
+@pytest.mark.parametrize("shape,high,low", [
+    ("an inverted bar", 104.0, 130.0),
+    ("a high under its own close", 105.0, 105.0),
+    ("a low above its own close", 130.0, 107.0),
+    ("a non-positive high", 0.0, 105.0),
+    ("a non-positive low", 130.0, -1.0),
+])
+def test_a_window_bar_that_is_not_a_bar_refuses_the_magnitude(shape, high, low):
+    """The window read a high off any finite number: an inverted bar, a high
+    under its own close (which understates the very peak it exists to
+    measure) and a non-positive edge each produced a peak. The checklist's
+    H refuses a close above its own high as a bad bar and the entry is held
+    to _open_within_its_bar; the window holds every bar to the same
+    standard, and the rule is both edges or neither."""
+    highs, lows = list(_CLEAN_HIGHS), list(_CLEAN_LOWS)
+    highs[3], lows[3] = high, low
+    df = frame_with_path(closes=_CLEAN_CLOSES, highs=highs, lows=lows, end="2026-09-15")
+    burst = df.index[0].date().isoformat()
+    clean = ledger.forward_returns(frame_with_path(closes=_CLEAN_CLOSES, highs=_CLEAN_HIGHS,
+                                                   lows=_CLEAN_LOWS, end="2026-09-15"), burst)
+    assert (clean["span"], clean["peak"]) == (5, 30.0), "precondition: the clean frame measures"
+    out = ledger.forward_returns(df, burst)
+    assert out["d5"] == 4.0, f"{shape}: the horizons read closes and are untouched"
+    assert (out["span"], out["peak"], out["trough"]) == (None, None, None), shape
+
+
+def test_an_inverted_bar_with_no_close_is_refused_on_its_edges_alone():
+    """The inverted-bar clause is load-bearing only where the close clause
+    cannot reach: with a finite close, a low above the high puts the close
+    outside [low, high] and the close clause refuses it first. A mutant that
+    dropped the clause survived the first harness run on exactly that
+    overlap, so this is the bar it is for -- inverted, and no close to read."""
+    closes, highs, lows = list(_CLEAN_CLOSES), list(_CLEAN_HIGHS), list(_CLEAN_LOWS)
+    closes[3], highs[3], lows[3] = float("nan"), 104.0, 130.0
+    df = frame_with_path(closes=closes, highs=highs, lows=lows, end="2026-09-15")
+    out = ledger.forward_returns(df, df.index[0].date().isoformat())
+    assert out["d5"] == 4.0
+    assert (out["span"], out["peak"], out["trough"]) == (None, None, None)
+
+
+def test_a_bar_whose_close_cannot_be_read_still_lends_its_edges():
+    """The close clause applies where there is a close to apply it to: a
+    NaN close in the window is a horizon the frame cannot measure, not an
+    inverted bar, and the edges around it are still edges."""
+    closes = list(_CLEAN_CLOSES)
+    closes[3] = float("nan")
+    df = frame_with_path(closes=closes, highs=_CLEAN_HIGHS, lows=_CLEAN_LOWS, end="2026-09-15")
+    out = ledger.forward_returns(df, df.index[0].date().isoformat())
+    assert out["d3"] is None and out["d5"] == 4.0
+    assert (out["span"], out["peak"]) == (5, 30.0)
+
+
+def test_a_sidecar_row_archived_tonight_says_pending_rather_than_nothing(tmp_path):
+    """slim_row() has written a pending block on every pick since step 9; a
+    sidecar row was archived with no key at all, which is what a row from
+    BEFORE the sidecar was measured carries -- so the two were one shape
+    until a fill first touched the row, and for a name the later scans never
+    fetch again that is never."""
+    book = ledger.Ledger(tmp_path)
+    run, cands, gated = _run("2026-08-25")
+    bar = {"date": "2026-08-25", "open": 10.0, "high": 11.0, "low": 9.5, "close": 10.5, "volume": 200000.0}
+    run["stockbee"] = {
+        "version": 1, "date": "2026-08-25",
+        "scope": {"label": "basket", "requested": 2, "measured": 2, "whole_market": False},
+        "scan": {"matched": 1, "shown": 1, "rows": [
+            {"ticker": "AAA", "date": "2026-08-25", **{k: v for k, v in bar.items() if k != "date"},
+             "prev_close": 10.0, "prev_volume": 100000.0, "gain_pct": 5.0, "series": [bar]}]},
+        "anticipation": {"matched": 0, "shown": 0, "rows": [], "rules": {}},
+        "breadth": {"days": [], "ratios": {}}, "measurement_rules": {},
+    }
+    entry = book.add_run(run, cands, gated)
+    row = entry["stockbee"]["scan"]["rows"][0]
+    assert "series" not in row
+    assert row["forward_returns"] == ledger.empty_returns()
+    assert "forward_returns" not in run["stockbee"]["scan"]["rows"][0], "the snapshot's row is not rewritten"
+    # A block a row already carries is kept, not overwritten with pending.
+    measured = {**ledger.empty_returns(), "d1": 2.0}
+    run["stockbee"]["scan"]["rows"][0]["forward_returns"] = measured
+    entry = book.add_run({**run, "date": "2026-08-26"}, cands, gated)
+    assert entry["stockbee"]["scan"]["rows"][0]["forward_returns"] == measured

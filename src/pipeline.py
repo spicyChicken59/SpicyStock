@@ -188,6 +188,15 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
     metrics_payload() with the rulebook untouched; the rulebook has to explain
     a key for the model to use it, and a docs test holds it to that for the
     record keys, but that is a convention and this is not a proof of one.
+
+    AND THE SIDECAR'S, since the post-merge audit of round 14. evidence.stockbee
+    averages the canonical scan's rows across runs the way by_score averages
+    picks, so a threshold moved in src.stockbee is a second scan under one
+    label unless this can see it. The split is that module's own
+    STRATEGY_CONSTANTS against PLUMBING_CONSTANTS (a section cap changes no
+    verdict), plus the numbers ANTICIPATION_RULES states, which _anticipates()
+    reads; a guard asserts every upper-case number the module names is in
+    exactly one list, the same guard ScanConfig has.
     """
     cfg = cfg or ScanConfig()
     # Off the config's OWN class, not the imported name: a caller that builds
@@ -213,6 +222,11 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
     # across MAX_RUNS entries, and it is an identity rather than a secret.
     out["score.prompt"] = hashlib.sha256(KNOWLEDGE_PATH.read_bytes()).hexdigest()[:16]
     out["score.record_keys"] = [name for name, _key in RECORD_KEYS]
+    out.update({f"stockbee.{name.lower()}": getattr(stockbee, name)
+                for name in stockbee.STRATEGY_CONSTANTS})
+    out.update({f"stockbee.anticipation.{key}": value
+                for key, value in stockbee.ANTICIPATION_RULES.items()
+                if isinstance(value, (int, float)) and not isinstance(value, bool)})
     return dict(sorted(out.items()))
 
 

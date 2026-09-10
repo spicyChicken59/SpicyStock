@@ -573,3 +573,222 @@ def test_the_dollar_move_is_rounded_once_and_the_record_shows_what_decided():
     """
     data = build({"DOLR": dollar_bar(open_=200.0, close=201.04, volume=150000)})
     assert data["dollar"]["rows"][0]["dollar_move"] == 1.04
+
+
+# ---------------------------------------------------------------------------
+# The post-merge audit of round 14: a record checked against tonight's
+# constants is a record that stops loading the day a constant moves.
+
+def _values(row):
+    values = {key: stockbee._number(row.get(key)) for key in stockbee.FIELDS}
+    previous = {"close": stockbee._number(row.get("prev_close")),
+                "volume": stockbee._number(row.get("prev_volume"))}
+    return values, previous
+
+
+def test_the_scan_section_archives_the_rules_that_selected_its_rows():
+    """The dollar and anticipation sections have carried theirs since they
+    existed; the scan section carried none, so nothing could re-derive a row
+    under anything but tonight's constants."""
+    data = build({"SCAN": burst()})
+    assert data["scan"]["rules"] == stockbee.SCAN_RULES
+    assert data["scan"]["rules"]["min_gain_ratio"] == stockbee.SCAN_GAIN_RATIO
+    assert data["scan"]["rules"]["min_volume"] == stockbee.MIN_SHARE_VOLUME
+    assert set(stockbee.RULE_NUMBERS["scan"]) <= set(data["scan"]["rules"])
+    assert set(stockbee.RULE_NUMBERS["dollar"]) <= set(stockbee.DOLLAR_RULES)
+
+
+@pytest.mark.parametrize("constant,moved", [
+    ("MIN_SHARE_VOLUME", 1_000_000),
+    ("SCAN_GAIN_RATIO", 1.10),
+    ("DOLLAR_BREAKOUT_MOVE", 5.0),
+])
+def test_a_record_still_loads_after_the_constant_that_selected_its_rows_moves(monkeypatch, constant, moved):
+    """Reproduced on the committed ledger before this changed: raising
+    MIN_SHARE_VOLUME to 1,000,000 set every run aside as unreadable and
+    refused docs/data.json, with nothing about either file changed. The
+    validator re-derived each row under the module's constants rather than
+    the numbers its record archived, so whether a record was well formed was
+    a function of the calendar. It reads the archived numbers now, and the
+    precondition below is that tonight's predicates really would refuse an
+    archived row -- otherwise a validator still reading the live constants
+    would pass this test for the wrong reason."""
+    data = build({"SCAN": burst(), "DOLR": dollar_bar()})
+    assert data["scan"]["shown"] == 1 and data["dollar"]["shown"] == 1
+    archived = deepcopy(data)
+    monkeypatch.setattr(stockbee, constant, moved)
+    scan_values, scan_previous = _values(archived["scan"]["rows"][0])
+    dollar_values, dollar_previous = _values(archived["dollar"]["rows"][0])
+    live_scan_ok = stockbee._scan(scan_values, scan_previous)
+    live_dollar_ok = (stockbee._dollar_breakout(dollar_values)
+                      and not stockbee._scan(dollar_values, dollar_previous))
+    assert not (live_scan_ok and live_dollar_ok), "precondition: tonight's scan disagrees with the record"
+    for flag in (False, True):
+        assert stockbee.problem(archived, session="2026-08-28", archived=flag) is None
+
+
+def test_a_row_that_fails_the_rules_its_record_archived_is_refused_whatever_tonight_says(monkeypatch):
+    """The other direction: the check is not weakened, it is re-aimed. A row
+    hand-edited under its own record's 1.04 is refused even on a night the
+    module's constant would admit it."""
+    data = build({"SCAN": burst()})
+    data["scan"]["rows"][0]["close"] = 103.0
+    monkeypatch.setattr(stockbee, "SCAN_GAIN_RATIO", 1.02)
+    assert stockbee._scan(*_values(data["scan"]["rows"][0])), "precondition: tonight's scan takes it"
+    assert stockbee.problem(data, session="2026-08-28") == (
+        "stockbee.scan row does not meet the rules its record archived")
+
+
+def test_a_dollar_row_is_refused_under_its_own_archived_numbers_and_the_archived_scan(monkeypatch):
+    data = build({"SCAN": burst(), "DOLR": dollar_bar()})
+    weak = deepcopy(data)
+    weak["dollar"]["rows"][0]["close"] = weak["dollar"]["rows"][0]["open"] + 0.5
+    monkeypatch.setattr(stockbee, "DOLLAR_BREAKOUT_MOVE", 0.25)
+    assert stockbee._dollar_breakout(_values(weak["dollar"]["rows"][0])[0]), "precondition: tonight takes it"
+    assert stockbee.problem(weak, session="2026-08-28") == (
+        "stockbee.dollar row does not meet the rules its record archived")
+    # A 4% match moved into the dollar section is refused under the SCAN
+    # rules the record archived, not tonight's -- raise tonight's to 10% and
+    # the row is still a 4% match of the scan that wrote the record.
+    moved = deepcopy(data)
+    moved["dollar"]["rows"].append(deepcopy(moved["scan"]["rows"][0]))
+    moved["dollar"]["shown"] = moved["dollar"]["matched"] = 2
+    monkeypatch.setattr(stockbee, "SCAN_GAIN_RATIO", 1.10)
+    assert not stockbee._scan(*_values(moved["scan"]["rows"][0])), "precondition: tonight would not match it"
+    assert stockbee.problem(moved, session="2026-08-28") == (
+        "stockbee.dollar row is a match of the 4% scan its record archived")
+
+
+@pytest.mark.parametrize("rules", [
+    None, [], "1.04", {}, {"min_volume": 100000},
+    {"min_gain_ratio": "1.04", "min_volume": 100000},
+    {"min_gain_ratio": 1.04, "min_volume": True},
+    {"min_gain_ratio": float("nan"), "min_volume": 100000},
+])
+def test_scan_rules_that_do_not_name_their_numbers_are_refused(rules):
+    """Present and not naming the numbers is a shape no writer produces."""
+    data = build({"SCAN": burst()})
+    data["scan"]["rules"] = rules
+    assert stockbee.problem(data, session="2026-08-28") == (
+        "stockbee.scan rules must name the numbers its rows were selected by")
+
+
+def test_dollar_rules_that_do_not_name_their_numbers_are_refused():
+    data = build({"DOLR": dollar_bar()})
+    data["dollar"]["rules"] = {"min_volume": 100000}
+    assert stockbee.problem(data, session="2026-08-28") == (
+        "stockbee.dollar rules must name the numbers its rows were selected by")
+
+
+def test_a_record_from_before_the_scan_archived_its_rules_loads_and_is_not_re_derived():
+    """A rule the record did not archive is not one the validator can know:
+    every earlier record's scan rows load as they are, and a hand-edited row
+    in one is the price of not inventing the rule that selected it. Said
+    here so the cost is a sentence in the suite and not a surprise."""
+    data = build({"SCAN": burst(), "DOLR": dollar_bar()})
+    del data["scan"]["rules"]
+    data["scan"]["rows"][0]["close"] = 101.0
+    data["dollar"]["rows"].append(deepcopy(data["scan"]["rows"][0]))
+    data["dollar"]["shown"] = data["dollar"]["matched"] = 2
+    for flag in (False, True):
+        assert stockbee.problem(data, session="2026-08-28", archived=flag) is None
+
+
+def test_a_real_record_loads_under_moved_constants_and_so_does_its_snapshot(tmp_path, monkeypatch):
+    """The reproduction itself, on the shape the pipeline writes: the thirty-
+    run history fixture, its `fixture` marker stripped so the loader reads it
+    as a record, loaded with every sidecar constant moved. Before this every
+    run was set aside as unreadable and the snapshot refused."""
+    import pathlib
+    import shutil
+
+    src = pathlib.Path(__file__).parent / "fixtures" / "history"
+    for name in ("ledger.json", "data.json"):
+        document = json.loads((src / name).read_text())
+        document["fixture"] = False
+        if name == "data.json":
+            document["run"]["fixture"] = False
+        (tmp_path / name).write_text(json.dumps(document))
+    shutil.copytree(src / "charts", tmp_path / "charts", dirs_exist_ok=True) if (src / "charts").exists() else None
+    monkeypatch.setattr(stockbee, "MIN_SHARE_VOLUME", 1_000_000)
+    monkeypatch.setattr(stockbee, "SCAN_GAIN_RATIO", 1.10)
+    monkeypatch.setattr(stockbee, "DOLLAR_BREAKOUT_MOVE", 5.0)
+    book = ledger.Ledger(tmp_path).load()
+    assert book.load_error is None
+    assert len(book.runs) == 30
+    assert all("stockbee" in run for run in book.runs)
+    assert not list(tmp_path.glob("ledger.json.*")), "nothing was set aside"
+    snapshot, why = ledger.read_snapshot(tmp_path)
+    assert why is None and snapshot is not None
+
+
+@pytest.mark.parametrize("key,worse", [
+    ("min_price", 20), ("min_prior_three_volume", 10 ** 9), ("min_trend_intensity", 9.0),
+    ("max_abs_day_change_pct", -1),   # a band no ratio can sit inside
+    ("max_compression_ratio", 0.0), ("min_contiguous_sessions", 10 ** 6),
+])
+def test_the_anticipation_predicate_reads_every_number_its_archived_rules_state(monkeypatch, key, worse):
+    """ANTICIPATION_RULES is archived with every section and _anticipates()
+    spelled the same six numbers again as literals -- the two-spellings class
+    round 11 closed for the checklist's windows. One spelling now: move a
+    number in the dict and the predicate moves with it."""
+    assert build({"ANT": anticipation()})["anticipation"]["matched"] == 1
+    monkeypatch.setitem(stockbee.ANTICIPATION_RULES, key, worse)
+    assert build({"ANT": anticipation()})["anticipation"]["matched"] == 0
+
+
+def test_the_sidecar_says_which_of_its_numbers_are_strategy_and_the_fingerprint_carries_them(monkeypatch):
+    """evidence.stockbee averages this module's rows across runs, so a
+    threshold moved here is a second scan under one label unless the rules
+    fingerprint can see it. The split is the one ScanConfig keeps: strategy
+    numbers decide what a row is, plumbing numbers how many are archived."""
+    scalars = {n for n in dir(stockbee)
+               if n.isupper() and isinstance(getattr(stockbee, n), (int, float))
+               and not isinstance(getattr(stockbee, n), bool)}
+    strategy, plumbing = set(stockbee.STRATEGY_CONSTANTS), set(stockbee.PLUMBING_CONSTANTS)
+    assert not (strategy & plumbing), sorted(strategy & plumbing)
+    assert strategy | plumbing == scalars, (
+        f"uncategorised: {sorted(scalars - strategy - plumbing)}; "
+        f"named but not constants: {sorted((strategy | plumbing) - scalars)}")
+    fingerprint = pipeline.rules_fingerprint()
+    for name in strategy:
+        assert fingerprint[f"stockbee.{name.lower()}"] == getattr(stockbee, name)
+    for name in plumbing:
+        assert f"stockbee.{name.lower()}" not in fingerprint
+    numbers = {k: v for k, v in stockbee.ANTICIPATION_RULES.items()
+               if isinstance(v, (int, float)) and not isinstance(v, bool)}
+    assert len(numbers) == 6
+    for key, value in numbers.items():
+        assert fingerprint[f"stockbee.anticipation.{key}"] == value
+    assert not any(k.startswith("stockbee.anticipation.") and k.split(".")[-1] not in numbers
+                   for k in fingerprint), "a non-number from the rules dict leaked in"
+    # And the record can SEE a move, which is the whole point.
+    monkeypatch.setattr(stockbee, "MIN_SHARE_VOLUME", 1_000_000)
+    monkeypatch.setitem(stockbee.ANTICIPATION_RULES, "min_price", 20)
+    moved = pipeline.rules_fingerprint()
+    assert moved["stockbee.min_share_volume"] == 1_000_000
+    assert moved["stockbee.anticipation.min_price"] == 20
+    assert moved != fingerprint
+
+
+def test_the_measurement_rule_sentences_do_not_spell_the_constants_a_second_time():
+    """The archived sentences describing the scan carried "1.04", "0.90" and
+    "100000" as digits inside strings, beside the named constants they
+    describe -- round 11's class, where a number written in words is not an
+    ast.Constant and the fingerprint's guard is blind to it. They interpolate
+    the constants now, and this reads the SOURCE, since a value check cannot
+    tell an f-string from a literal that happens to agree tonight."""
+    import ast
+    import inspect
+
+    tree = ast.parse(inspect.getsource(stockbee))
+    node = next(n for n in tree.body if isinstance(n, ast.Assign)
+                and any(getattr(t, "id", None) == "MEASUREMENT_RULES" for t in n.targets))
+    literals = [c.value for c in ast.walk(node) if isinstance(c, ast.Constant) and isinstance(c.value, str)]
+    import re
+    spelled = [s for s in literals if re.search(r"\b(1\.04|0\.96|0\.90|100000)\b", s)]
+    assert not spelled, f"a constant is spelled as digits inside: {spelled}"
+    rendered = stockbee.MEASUREMENT_RULES
+    assert str(stockbee.SCAN_GAIN_RATIO) in rendered["scan"] and str(stockbee.MIN_SHARE_VOLUME) in rendered["scan"]
+    assert f"{stockbee.DOLLAR_BREAKOUT_MOVE:.2f}" in rendered["dollar"]
+    assert str(stockbee.SCAN_DROP_RATIO) in rendered["breadth"]

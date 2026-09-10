@@ -224,7 +224,7 @@ CONTRACT_INVARIANTS = [
     "runs[].benchmark is the universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), over every name whose frame carries the session and whose dollar volume that session was at or above the run's own liquidity floor -- rule 6's bar that night, run.liquidity.floor -- with nN the number of symbols behind each horizon. benchmark.liquidity_floor is the floor the fill that FIRST measured the block applied -- null for a run recorded without one, when every name that traded counts -- and benchmark.below_floor is how many names that fill left out under it; the horizons a later fill adds are measured over the same population, so one block is one set of names. Null until a later run's scan carried the sessions, null forever for a run whose universe later scans never fetched, and never filled at all for a run that measured nothing: nothing is ever paired with a blind night's rung, since it scored no setup, and its floor -- null when no name's dollar volume could be ranked, and drawn from however few could be when it is not -- would stamp the block with a population that night never read. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks, and evidence.universe.floored is how many of those pairings were measured over a floor and evidence.universe.unfloored how many were measured with none -- before the floor reached the benchmark, or on a night rule 6 was off, which the block cannot tell apart -- over every name that traded (a pending pairing is in neither); it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
     "d1/d3/d5 and from_open are measured on the bar of the session 1, 3 and 5 sessions after the burst, the sessions being read across every frame the run fetched rather than counted along one frame's bars: a frame with a hole at a horizon carries null there, never the next bar it happens to have, and as_of names the session of the last bar actually used. from_open's entry is the next session's open only where it lies within that bar's own low and high, the standard the checklist holds a close to; outside it the open basis is null on that row.",
     "evidence.stockbee is the canonical control: src.stockbee runs Bonde's own 4% scan over the same universe every night, and every row it matched now carries the same forward_returns block a pick does, filled by the same code off the same bars. caught is the matches OUR scan also admitted (a candidate or a gated row that session) and missed is the matches it did not, so the sidecar's own question -- does the narrower scan keep the better bursts? -- is a pair of numbers rather than two lists nobody measured. Read them together: a scan that admits everything has an empty missed and is not thereby better. anticipation sits beside both and is in NEITHER, because its rows are not bursts -- they are names a compression proxy says may burst later -- so a return from the same session's close answers a different question. One setup per (ticker, session) per section and NOT collapsed by setup_chains(), because the question is about the scan and every match it printed is one thing the scan said. The sections are capped (stockbee.SCAN_LIMIT, ANTICIPATION_LIMIT) and truncated_sessions counts the sessions where a cap bit, since a mean over a capped list is a fact about the cap as well as about the market. A canonical row is never in run.settled: that list is the run's own scorecard of what ITS picks did, and a name our scan never admitted is not one.",
-    "forward_returns.peak and .trough are the MAGNITUDE -- the highest high and the lowest low over the sessions from the one after the burst through the last horizon -- and span is how many of those sessions the frame carried, so a peak over two sessions is never read as a peak over five. They are one measurement over a window, not a horizon, which is why they sit beside d1/d3/d5 rather than among them, and they are restated while the span GROWS and frozen the moment it reaches the last horizon, where a horizon is filled exactly once. Null on both bases when the frame carried no readable high and low for every session of the window; a row from before this measurement carries none and gains one only while it is still in the fill window. evidence's populations carry `magnitude` over the rows whose span reached the full window: reached_band counts the peaks that landed inside the claimed band and above_band those past it, which is the band read off the MOVE -- while in_band, on each horizon's own entry, is the band read off that horizon's CLOSE. Two counts because they answer two questions: whether the move happened, and whether it was still there on the fifth close. Neither is the other, and no surface may print one under the other's name.",
+    "forward_returns.peak and .trough are the MAGNITUDE -- the highest high and the lowest low over the sessions from the one after the burst through the last horizon -- and span is how many of those sessions the frame carried, so a peak over two sessions is never read as a peak over five. They are one measurement over a window, not a horizon, which is why they sit beside d1/d3/d5 rather than among them, and they are restated while the span GROWS and frozen the moment it reaches the last horizon, where a horizon is filled exactly once. Null on both bases when the frame carried no readable high and low for every session of the window -- readable meaning finite, positive, the low no higher than the high and the close between them -- and null on the open basis alone when the entry was refused, since both bases are restated together whenever the span widens and an open-basis peak kept from a shorter window would be read under the wider span; a row from before this measurement carries none and gains one only while it is still in the fill window. evidence's populations carry `magnitude` over the rows whose span reached the full window: reached_band counts the peaks that landed inside the claimed band and above_band those past it, which is the band read off the MOVE -- while in_band, on each horizon's own entry, is the band read off that horizon's CLOSE. Two counts because they answer two questions: whether the move happened, and whether it was still there on the fifth close. Neither is the other, and no surface may print one under the other's name.",
     "Numbers are numbers or null. No 'n/a' strings.",
 ]
 
@@ -1159,6 +1159,19 @@ def _open_within_its_bar(df: pd.DataFrame, at: int, value: float) -> bool:
     return True
 
 
+def _bar_edges(highs, lows, closes, at: int) -> tuple[float | None, float | None]:
+    """(high, low) of one bar when both can be read as the bar's edges, else
+    (None, None). A frame with no High or Low column has no edges to read."""
+    if highs is None or lows is None:
+        return None, None
+    high, low, close = float(highs[at]), float(lows[at]), float(closes[at])
+    if not (math.isfinite(high) and math.isfinite(low)) or high <= 0 or low <= 0 or low > high:
+        return None, None
+    if math.isfinite(close) and not low <= close <= high:
+        return None, None
+    return high, low
+
+
 def forward_returns(df: pd.DataFrame | None, burst_date,
                     calendar: list[date] | None = None) -> dict:
     """d1/d3/d5 for one candidate, measured inside one frame.
@@ -1290,10 +1303,17 @@ def forward_returns(df: pd.DataFrame | None, burst_date,
         highs = df["High"].to_numpy(dtype=float) if "High" in df else None
         lows = df["Low"].to_numpy(dtype=float) if "Low" in df else None
         window = [position[days[origin + step]] for step in range(1, span + 1)]
-        top = [float(highs[i]) for i in window
-               if highs is not None and math.isfinite(float(highs[i]))]
-        bottom = [float(lows[i]) for i in window
-                  if lows is not None and math.isfinite(float(lows[i]))]
+        # A bar is read for its edges only when they ARE edges: finite,
+        # positive, the low no higher than the high, and the close between
+        # them. The checklist's H refuses a close above its own high as a bad
+        # bar and the open basis holds its entry to the same standard
+        # (_open_within_its_bar); a high under its own close would understate
+        # the peak it exists to measure, and an inverted bar is no bar. Found
+        # by the post-merge audit of round 14, which planted each shape and
+        # read a peak off it.
+        readable = [_bar_edges(highs, lows, closes, i) for i in window]
+        top = [high for high, _low in readable if high is not None]
+        bottom = [low for _high, low in readable if low is not None]
         # Both edges or neither: a peak measured over five sessions beside a
         # trough measured over three is two windows under one heading, and
         # the span printed with them would be true of only one.
@@ -2687,10 +2707,18 @@ class Ledger:
             # chart bars. Repeating 30 bars per name per run would make the
             # archive too large to use on a phone.
             research = run["stockbee"]
+            # And the forward-returns block, pending, on every row archived
+            # tonight -- the way slim_row() writes it on a pick. Absent is
+            # what a row from before the sidecar was measured carries, and a
+            # row archived without the key was indistinguishable from one
+            # until a fill first touched it, which for a name the later scans
+            # never fetch again is never.
             entry["stockbee"] = {
                 **research,
                 **{key: {**research[key], "rows": [
-                    {k: v for k, v in row.items() if k != "series"}
+                    {**{k: v for k, v in row.items() if k != "series"},
+                     "forward_returns": dict(row["forward_returns"])
+                     if isinstance(row.get("forward_returns"), dict) else empty_returns()}
                     for row in research[key]["rows"]]}
                    for key in SIDECAR_SECTIONS if isinstance(research.get(key), dict)},
             }
@@ -2926,10 +2954,17 @@ class Ledger:
                     and (not _is_number(stored_span) or fresh_span > stored_span)):
                 current["span"] = fresh_span
                 current["peak"], current["trough"] = fresh["peak"], fresh["trough"]
+                # BOTH BASES RESTATE TOGETHER, null included. `span` is one
+                # number on the row and the open-basis peak is read under it,
+                # so an open-basis peak kept from the shorter window would be
+                # a span-2 number published under a span-5 heading -- the
+                # comparison `span` exists to prevent, reproduced on the
+                # merged tree by the post-merge audit of round 14. A frame
+                # whose entry this fill refused (no usable open, or one
+                # outside its own bar) measures no open-basis magnitude over
+                # the widened window, and null is what it measured.
                 for key in ("peak", "trough"):
-                    value = fresh["from_open"].get(key)
-                    if value is not None or key not in current["from_open"]:
-                        current["from_open"][key] = value
+                    current["from_open"][key] = fresh["from_open"].get(key)
                 widened = True
             else:
                 widened = False

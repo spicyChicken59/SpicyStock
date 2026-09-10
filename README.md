@@ -678,7 +678,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1759 tests, no network or API keys needed
+pytest tests/                   # 1793 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -761,6 +761,24 @@ the measurements without the candle series, and run-summary lists omit this bloc
 Older snapshots show measurements as not yet recorded; the app never reconstructs
 the full scan from the scored shortlist or fills missing breadth with zero.
 
+Each section archives the `rules` that selected its rows — the scan section's
+`min_gain_ratio` and `min_volume` beside the $ breakout's `min_dollar_move` and
+`min_volume` — and the validator re-derives an archived row under THOSE numbers,
+never under `src/stockbee.py`'s constants. It did until the post-merge audit of
+round 14, and a record checked against tonight's constants is a record that
+stops loading the day a constant moves: reproduced on the committed ledger,
+where raising the share floor set every run aside as unreadable and refused
+`docs/data.json` with nothing about either file changed. A record from before
+the scan archived its rules is not re-derived at all, since a rule the record
+did not archive is not one the validator can know; the cost of that, a
+hand-edited row in such a record loading as it is, is stated in the test that
+pins it. The same four strategy constants and the six anticipation numbers are
+in the rules fingerprint as `stockbee.*` keys, so a threshold moved there shows
+in `evidence.rules` rather than averaging two scans into the control under one
+label. Every archived sidecar row carries its `forward_returns` block from the
+night it is written, pending, the way a pick's does — a row with no block is a
+row from before the sidecar was measured, and nothing else.
+
 Every archived sidecar row now carries the same `forward_returns` block a pick
 does, filled by the same `Ledger.fill_forward_returns()` off the same bars, so
 the record can finally answer the question the sidecar exists to ask.
@@ -775,8 +793,13 @@ session) and are not collapsed the way a pick's repeats are, because the
 question is about the scan and every match it printed is one thing the scan
 said; a canonical row never appears in `run.settled`, which is the run's own
 scorecard of what its own picks did. The fill fetches these names too, which
-took `pending_tickers()` from 25 to 96 on the committed record — one extra
-batch. Measured by building the same projected file with each part stripped:
+took `pending_tickers()` from 25 to 96 on the committed record after three
+nights. That is a count off one record and not the ceiling: at the section
+caps, five nights of rows is at most 5 × 105 sidecar names plus the picks
+before de-duplication, so the fill can cost up to six batches of 100 a night
+where it cost one; the thirty-run history fixture's steady state is 61 names,
+because it drives only 77 synthetic names and the de-duplication saturates. Measured by
+building the same projected file with each part stripped:
 the forward-return blocks cost 1.14 MB raw and 0.12 MB gzipped of the year,
 and the $ breakout section a further 3.86 MB and 0.62 MB.
 
@@ -962,8 +985,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 27.89 MB raw
-and **3.23 MB gzipped** after a full year in the normalized history fixture. Actual payload size varies with numeric precision and optional metadata. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 28.11 MB raw
+and **3.27 MB gzipped** after a full year in the normalized history fixture. Actual payload size varies with numeric precision and optional metadata. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -1280,8 +1303,10 @@ own weights, and the page uses it there.
   keys left this fingerprint byte-identical until those two arrived. It is
   derived rather than listed — `src.pipeline.rules_fingerprint()` walks what
   `src.lynch` names, its `WINDOWS`, the `ScanConfig` fields that config itself
-  marks as strategy, and `src.scorer`'s own `RECORD_KEYS` and knowledge file —
-  so a threshold added later is recorded the moment it is named.
+  marks as strategy, `src.scorer`'s own `RECORD_KEYS` and knowledge file, and
+  `src.stockbee`'s `STRATEGY_CONSTANTS` with the numbers its
+  `ANTICIPATION_RULES` states — so a threshold added later is recorded the
+  moment it is named.
   The trap it exists to avoid is a fingerprint that misses a number and so
   reports "same rules" across a change that altered them, which is worse than
   no fingerprint; the checklist's windows were bare literals until round 8

@@ -147,7 +147,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1759 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1793 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -221,6 +221,89 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   over 14 and 74 -- which is the "only one side can be read" sentence, and
   the page says exactly that. The three verdict branches are pinned on three
   sources, because no real source can hold more than one of them yet.
+
+## Round 14's post-merge audit — the record's own rules, and a number kept under the wrong span
+
+Five lenses over the merged commit, by execution, after the first review
+workflow was itself the thing that needed checking: its worktree isolation
+failed because the session's working directory was not a repository, nine
+agents errored, and two findings came back "refuted" with zero votes -- a
+dead verifier returning null, which is the 3.1 shape again. Both were
+reproduced HERE on main before anything was touched, and the re-run with
+agent-made worktrees is what produced the lenses.
+
+**A ledger that stops loading the day a constant moves.** `stockbee.problem()`
+re-derived every archived scan row under the module's live `_scan()` and
+`_dollar_breakout()` -- `MIN_SHARE_VOLUME`, `DOLLAR_BREAKOUT_MOVE` and the
+`1.04` spelled inside the predicate -- so whether the record was well formed
+was a function of the calendar. Reproduced on the committed ledger:
+`MIN_SHARE_VOLUME = 1_000_000` set every run aside as
+`ledger.json.<stamp>.unreadable`, kept 0 runs and refused `docs/data.json`,
+with nothing about either file changed. That is the rule `fill_benchmarks()`
+already keeps -- the floor a run is measured under is the run's own, not
+tonight's -- arriving in the validator. The scan section archives `rules` now
+(`min_gain_ratio`, `min_volume`, beside the dollar section's, which always
+carried them), `RULE_NUMBERS` names which archived numbers each section is
+re-derived under, and a row is checked against those and never against the
+module. A record from before the block carries none and its rows are not
+re-derived at all, since a rule the record did not archive is not one the
+validator can know; the cost -- a hand-edited row in such a record loads --
+is the sentence in the test that pins it rather than a surprise. The
+predicates' defaults read the constants at CALL time: a mutant that bound
+them at definition died on the test that patches the constant, which is the
+trap a default argument sets for exactly this kind of test.
+
+And the fingerprint could not see the sidecar. `evidence.stockbee` averages
+the canonical scan's rows across runs the way `by_score` averages picks, so
+a threshold moved in `src.stockbee` was a second scan under one label.
+`STRATEGY_CONSTANTS` / `PLUMBING_CONSTANTS` is the split `ScanConfig` keeps,
+under the same guard (every upper-case number in exactly one list); the four
+strategy numbers and the six `ANTICIPATION_RULES` numbers are `stockbee.*`
+keys, 37 -> 47. `_anticipates()` spelled the six as literals beside the dict
+that archives them -- round 11's two-spellings class -- and reads the dict
+now; `MEASUREMENT_RULES` spelled 1.04, 0.90, 0.96 and 100000 inside its
+sentences and interpolates the constants, under a guard that reads the
+SOURCE, because a value check cannot tell an f-string from a literal that
+agrees tonight. The record gains a second set of rules on the first run after
+this merges, and `evidence.rules.unshared` names the ten new keys.
+
+**A stale open-basis magnitude under the row's one span.**
+`fill_forward_returns()` restated `peak`/`trough` on the close basis whenever
+the span widened and restated the open basis only when the fresh value was
+not None -- so a second fill whose d1 open was refused (printed outside its
+own bar) widened the close basis to span 5 while `from_open.peak` kept the
+span-2 number, and `_magnitude()` counted it as a five-session open-basis
+peak. Reproduced on main: fill 1 span 2, peak 10.0 on both bases; fill 2
+span 5, peak 25.0 on the close basis, `from_open.peak` still 10.0, open-basis
+n 1. Both bases restate together now, null included. The first harness
+run's survivor was the test and not the code: a mutant restating the peak
+alone never wrote the open-basis trough on EITHER fill, so "None after
+widening" was true of it for the wrong reason -- this file's second shape,
+and the fix is the trough asserted on the first fill.
+
+**Three lows worked with them.** The magnitude window read a high off any
+finite number: an inverted bar, a high under its own close and a non-positive
+edge each produced a peak, where the checklist's H and `_open_within_its_bar()`
+refuse the same shapes; `_bar_edges()` holds every window bar to that
+standard, both edges or neither, and the inverted-bar clause is load-bearing
+only where the close clause cannot reach (a bar with no close), which the
+second survivor found and a test now pins. A sidecar row was archived with no
+`forward_returns` key -- the shape a row from BEFORE the measurement carries
+-- so the two were one shape until a fill first touched the row, and for a
+name later scans never fetch, never; `add_run()` writes the pending block the
+way `slim_row()` does for a pick. And "one extra batch" for the fill's pending
+names was three nights' worth and not a bound: measured, the thirty-run
+history fixture's steady state is 61 names over its 77 synthetic names (the
+de-duplication saturates), the committed record 96 after three nights, and at
+the section caps five nights of rows is at most 5 x 105 sidecar names plus
+the picks -- up to six batches of 100 a night in the worst case, which README
+says beside the measurement now.
+
+The ledger's projected year went 27.89 -> 28.11 MB raw and 3.23 -> 3.27
+gzipped (the pending block on every sidecar row, the scan rules and ten
+fingerprint keys on every entry), swept in README and both page comments.
+Thirty-two mutants, thirty killed on the first pass, both survivors holes in
+the tests and closed; 270 smoke checks over 48 variants, no page errors.
 
 ## Round 14 — the second scan, the control, and what the outside evidence says
 
