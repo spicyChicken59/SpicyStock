@@ -147,7 +147,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1827 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1833 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -221,6 +221,62 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   over 14 and 74 -- which is the "only one side can be read" sentence, and
   the page says exactly that. The three verdict branches are pinned on three
   sources, because no real source can hold more than one of them yet.
+
+## Round 15 — the selector is a screener, and the record could not see it
+
+The universe stopped being a checked-in file and nothing followed it.
+`rules_fingerprint()` named the universe in its own list of deliberate
+exclusions -- "already per run in `run.universe`" -- which was true of a
+symbol list and is not true of a selector with a floor, a capacity, a lookback
+and a quota mix. Reproduced before it was touched: moving `MIN_DOLLARS`
+20M -> 3M and `CAPACITY` 500 -> 1500 left the fingerprint byte-identical
+(`36c0050558cc0407` on both sides), and `learning._signature()` identical with
+it, so the ridge fit would have pooled two screeners and `evidence.rules`
+would have reported one. That is the shape the post-merge audit of round 14
+fixed in `src.learning`, one module further out. 47 keys -> 56, `universe.`
+is a PRODUCTION prefix, and the guard that refuses an unclassified family was
+already there and already red -- which is that guard working rather than a
+second one being needed.
+
+`MAX_DISCOVERY` is STRATEGY where `src.stockbee`'s section caps are PLUMBING,
+and the difference is driven rather than asserted: a section cap truncates the
+ARCHIVE, while this one cuts the liquidity-ranked tail out of the pool, so a
+name past it is never fetched, never measured and can never burst. The first
+version of that guard only checked the two lists against each other, so moving
+the constant to PLUMBING passed it; the test drives the cut now.
+
+**The price floor was spelled three times, and the third was found only by
+sweeping for it.** `directory_pool()` held a bare `4`, `rotate()` a bare `.04`
+for the burst threshold, and `measure()` a second bare `4`. Each was
+reproduced rather than read: at `min_price` $10 the pool still admitted a $6
+name and `measure()` still measured it, and at `min_gain_pct` 10% the
+"4% move" quota still reserved room for a 4.5% mover -- under an archived
+`scan.min_price` and `scan.min_gain_pct` that had not decided anything. All
+three read `ScanConfig` now, at call time and threaded from the config
+`select()` was handed, so a run with its own floor wins over the class.
+`QUOTAS` names the five quota sizes `rotate()` typed as literals. The first
+two were fixed and the class called closed; `measure()` is what the sweep
+found, which is the second time this file has recorded that exact sequence.
+
+**The leftover fill is 162 of 500 and is not a decision.** `rotate()`'s last
+line gives every unclaimed slot to trailing 20-session momentum under the same
+reason word as its own quota of 150, so `reason_counts` reads 312 on
+2026-09-09 and 270 on the 8th and cannot tell the decided half from the
+defaulted one. Recorded beside the line rather than changed, because changing
+it is a strategy decision.
+
+Eleven mutants over the round's rules, eight killed on the first pass and all
+three survivors real holes: the classification pinned only against itself
+(above), the threading at `select()`'s call site invisible because the class
+fallback agrees with the default, and the literal guard's own function list
+asserted against itself so a name could be dropped from it. The guard derives
+that list from the source now -- any function reading `ScanConfig` or `QUOTAS`
+is applying a threshold, and is therefore exactly the kind that must not spell
+a second one beside it -- and a twelfth mutant retired with the list it
+targeted. The first fix for the threading hole was itself the wrong shape and
+the mutant said so: with the directory price and the measured close both at
+$20, `directory_pool()` emptied the pool and the assertion passed while
+`measure()` read the class. The two stages carry different prices now.
 
 ## Round 14's post-merge audit — the record's own rules, and a number kept under the wrong span
 

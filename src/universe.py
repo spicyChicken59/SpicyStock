@@ -23,6 +23,7 @@ from pathlib import Path
 import requests
 
 from src import scanner
+from src.scanner import ScanConfig
 
 log = logging.getLogger(__name__)
 LABEL = "adaptive US common stocks (Nasdaq + Alpaca)"
@@ -32,6 +33,27 @@ CAPACITY = 500
 MIN_DOLLARS = 20_000_000
 LOOKBACK = 20
 MAX_DISCOVERY = 6000
+#: How many of the selected names each reason may claim, before the leftover
+#: fill. Named rather than typed into rotate(), for the reason round 8 named
+#: six windows in src.lynch and round 14 read ANTICIPATION_RULES out of its
+#: own dict: a strategy number left as a bare literal is one
+#: rules_fingerprint() cannot see, and the record then reports one screener
+#: across a change that moved which names can burst at all.
+QUOTAS = {"recent setup": 100, "4% move": 150, "20-session momentum": 150,
+          "liquid leader": 100, "rotating discovery": 50}
+#: Which of this module's numbers decide WHICH NAMES CAN PRODUCE A BURST, and
+#: which decide how the selection is carried out. Two lists and a guard -- the
+#: shape ScanConfig.STRATEGY_FIELDS and src.stockbee.STRATEGY_CONSTANTS keep,
+#: for the reason they keep it: a constant added later must not arrive
+#: unclassified and take a default in silence.
+#:
+#: MAX_DISCOVERY is STRATEGY and the section caps in src.stockbee are not,
+#: which looks inconsistent and is not: a section cap truncates the ARCHIVE
+#: and changes no verdict, while this one cuts the liquidity-ranked tail out
+#: of the pool, so a name past it is never fetched, never measured and can
+#: never burst.
+STRATEGY_CONSTANTS = ("CAPACITY", "MIN_DOLLARS", "LOOKBACK", "MAX_DISCOVERY")
+PLUMBING_CONSTANTS = ("DIRECTORY_CACHE_SCHEMA", "DIRECTORY_MAX_BYTES")
 DIRECTORY_CACHE = "universe-directory.json.gz"
 DIRECTORY_CACHE_SCHEMA = 1
 DIRECTORY_MAX_AGE = timedelta(days=7)
@@ -206,7 +228,8 @@ def _number(raw) -> float | None:
         return None
 
 
-def directory_pool(rows: list[dict], seeds: list[str]) -> tuple[list[str], dict]:
+def directory_pool(rows: list[dict], seeds: list[str], *,
+                   min_price: float | None = None) -> tuple[list[str], dict]:
     approved, reasons = {}, {}
     seed_set = set(seeds)
     for row in rows:
@@ -214,8 +237,13 @@ def directory_pool(rows: list[dict], seeds: list[str]) -> tuple[list[str], dict]
             continue
         reason = classification(row, seed_set)
         price, volume = _number(row.get("lastsale")), _number(row.get("volume"))
-        if reason is None and (price is None or price <= 4 or volume is None or volume <= 0):
-            reason = "no recent trading above $4"
+        # scanner.ScanConfig's floor, READ, not retyped. It was a bare 4 here
+        # and the config's own min_price is in the rules fingerprint, so
+        # raising the config to $10 left this admitting a $6 name -- two price
+        # floors under one archived number, and only one of them movable.
+        floor = ScanConfig.min_price if min_price is None else min_price
+        if reason is None and (price is None or price <= floor or volume is None or volume <= 0):
+            reason = "no recent trading above $%g" % floor
         if reason:
             reasons[reason] = reasons.get(reason, 0) + 1
         else:
@@ -228,7 +256,7 @@ def directory_pool(rows: list[dict], seeds: list[str]) -> tuple[list[str], dict]
     return sorted(ordered[:MAX_DISCOVERY]), reasons
 
 
-def measure(frame, session: date) -> dict | None:
+def measure(frame, session: date, *, min_price: float | None = None) -> dict | None:
     """Twenty settled prior sessions plus the target day's participation."""
     if frame is None or len(frame) < LOOKBACK + 1:
         return None
@@ -245,7 +273,13 @@ def measure(frame, session: date) -> dict | None:
     today = close * float(volumes.iloc[-1])
     # Absolute consolidated-tape protection is necessary: a percentile alone
     # becomes easier when thousands of illiquid names are added to its pool.
-    if close <= 4 or average < MIN_DOLLARS or today < MIN_DOLLARS:
+    # The THIRD spelling of the price floor this module carried, found by
+    # sweeping for the next instance after directory_pool() and rotate() were
+    # fixed -- the sweep this project's own rule asks for before a class is
+    # called closed. Reproduced: with min_price at $10 a $6 name was still
+    # measured and still selectable.
+    floor = ScanConfig.min_price if min_price is None else min_price
+    if close <= floor or average < MIN_DOLLARS or today < MIN_DOLLARS:
         return None
     return {
         "momentum": close / float(closes.iloc[0]) - 1,
@@ -255,7 +289,8 @@ def measure(frame, session: date) -> dict | None:
     }
 
 
-def rotate(metrics: dict[str, dict], session: date, retained=(), capacity=CAPACITY) -> tuple[list[str], dict]:
+def rotate(metrics: dict[str, dict], session: date, retained=(), capacity=CAPACITY,
+           *, min_gain_pct: float | None = None) -> tuple[list[str], dict]:
     """Separate room for breakouts, building momentum, liquidity and discovery."""
     selected, reasons = [], {}
     def take(names, limit, reason, ceiling=None):
@@ -269,18 +304,29 @@ def rotate(metrics: dict[str, dict], session: date, retained=(), capacity=CAPACI
             selected.append(symbol)
             reasons[symbol] = reason
             count += 1
-    primary_capacity = max(0, capacity - min(50, capacity))
-    take(retained, min(100, capacity), "recent setup", primary_capacity)
-    breakout = sorted((s for s in metrics if metrics[s]["gain"] >= .04),
+    primary_capacity = max(0, capacity - min(QUOTAS["rotating discovery"], capacity))
+    take(retained, min(QUOTAS["recent setup"], capacity), "recent setup", primary_capacity)
+    # ScanConfig's own burst threshold, READ, in the ratio this dict stores.
+    # It was a bare .04 and the config's min_gain_pct is in the rules
+    # fingerprint, so raising the config to 10% left this quota still
+    # reserving room for 4.5% movers -- one number with two spellings, and
+    # the record archiving only the one that did not decide.
+    gain_floor = (ScanConfig.min_gain_pct if min_gain_pct is None else min_gain_pct) / 100
+    breakout = sorted((s for s in metrics if metrics[s]["gain"] >= gain_floor),
                       key=lambda s: (-metrics[s]["participation"], -metrics[s]["liquidity"], s))
-    take(breakout, min(150, capacity), "4% move", primary_capacity)
+    take(breakout, min(QUOTAS["4% move"], capacity), "4% move", primary_capacity)
     leaders = sorted(metrics, key=lambda s: (-metrics[s]["momentum"], -metrics[s]["participation"], s))
-    take(leaders, min(150, capacity), "20-session momentum", primary_capacity)
+    take(leaders, min(QUOTAS["20-session momentum"], capacity), "20-session momentum", primary_capacity)
     liquid = sorted(metrics, key=lambda s: (-metrics[s]["liquidity"], s))
-    take(liquid, min(100, capacity), "liquid leader", primary_capacity)
+    take(liquid, min(QUOTAS["liquid leader"], capacity), "liquid leader", primary_capacity)
     # Stable per session, changes between sessions, not biased by ticker order.
     exploration = sorted(metrics, key=lambda s: hashlib.sha256(f"{session}:{s}".encode()).hexdigest())
-    take(exploration, 50, "rotating discovery")
+    take(exploration, QUOTAS["rotating discovery"], "rotating discovery")
+    # THE LEFTOVER FILL, and it is not a sixth quota: every slot the five
+    # above did not claim goes to trailing momentum, under the same reason
+    # word as its own quota, so reason_counts cannot tell the 150 that was
+    # decided from the rest that defaulted. Measured on the record: 312 of 500
+    # on 2026-09-09 and 270 on the 8th, against a quota of 150.
     take(leaders, capacity, "20-session momentum")
     return sorted(selected), {r: sum(v == r for v in reasons.values()) for r in sorted(set(reasons.values()))}
 
@@ -332,7 +378,7 @@ def select(cfg: scanner.ScanConfig, docs: Path, *, data_client=None) -> tuple[li
             raise ValueError("Historical backfill uses the curated seed; today's membership is not historical evidence")
         rows, directory_meta = _directory(docs)
         meta.update(directory_meta)
-        pool, excluded = directory_pool(rows, seeds)
+        pool, excluded = directory_pool(rows, seeds, min_price=cfg.min_price)
         meta.update(discovered=len(rows), eligible=len(pool), exclusions=excluded)
         if len(pool) < 100:
             raise ValueError("Too few securities had verified US common-stock classification")
@@ -354,14 +400,15 @@ def select(cfg: scanner.ScanConfig, docs: Path, *, data_client=None) -> tuple[li
             returned += len(frames)
             for symbol, frame in frames.items():
                 fresh += scanner._last_bar_date(frame) == session
-                values = measure(frame, session)
+                values = measure(frame, session, min_price=cfg.min_price)
                 if values is not None:
                     metrics[symbol] = values
         meta["screened"] = returned
         meta["fresh"] = fresh
         if returned < len(pool) * .8 or fresh < returned * .8 or len(metrics) < 50:
             raise ValueError("Broad liquidity screen was incomplete; keeping a known classified basket")
-        chosen, reasons = rotate(metrics, session, _recent_symbols(docs, session))
+        chosen, reasons = rotate(metrics, session, _recent_symbols(docs, session),
+                                 min_gain_pct=cfg.min_gain_pct)
         meta["reason_counts"] = reasons
     except Exception as exc:
         # Do not mask market-data auth failures: the actual scan below still

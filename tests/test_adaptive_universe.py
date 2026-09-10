@@ -385,3 +385,204 @@ def test_no_email_publication_preserves_real_run_identity(fake_alpaca, mocked_bo
     assert {"stage": "universe", "message": warning} in report.errors
     assert snapshot["run"]["universe"]["selection"] == selection
     assert snapshot["run"]["status"] == "degraded" and mocked_boundaries["resend"].sent == []
+
+
+def test_the_selector_says_which_of_its_numbers_are_strategy_and_the_fingerprint_carries_them(monkeypatch):
+    """The selector decides which names can produce a burst, so the record has
+    to say which selector produced a row.
+
+    "Already per run in run.universe" was rules_fingerprint()'s stated reason
+    for leaving this module out, and it was true while the universe was a
+    checked-in symbol file. Reproduced before it was changed: moving
+    MIN_DOLLARS and CAPACITY left the fingerprint byte-identical, so
+    evidence.rules would have reported one screener across a change that
+    moved the pool. Two lists and a guard, the shape ScanConfig and
+    src.stockbee keep, so a constant added later cannot arrive unclassified.
+    """
+    scalars = {n for n in dir(universe)
+               if n.isupper() and isinstance(getattr(universe, n), (int, float))
+               and not isinstance(getattr(universe, n), bool)}
+    strategy, plumbing = set(universe.STRATEGY_CONSTANTS), set(universe.PLUMBING_CONSTANTS)
+    assert not (strategy & plumbing), sorted(strategy & plumbing)
+    assert strategy | plumbing == scalars, (
+        f"uncategorised: {sorted(scalars - strategy - plumbing)}; "
+        f"named but not constants: {sorted((strategy | plumbing) - scalars)}")
+
+    fingerprint = pipeline.rules_fingerprint()
+    for name in strategy:
+        assert fingerprint[f"universe.{name.lower()}"] == getattr(universe, name)
+    for name in plumbing:
+        assert f"universe.{name.lower()}" not in fingerprint
+    assert universe.QUOTAS, "no quotas, so this guard proves nothing"
+    for reason, quota in universe.QUOTAS.items():
+        assert fingerprint[f"universe.quota.{reason.replace(' ', '_')}"] == quota
+
+    # And the record can SEE a move, which is the whole point.
+    monkeypatch.setattr(universe, "MIN_DOLLARS", 3_000_000)
+    monkeypatch.setitem(universe.QUOTAS, "rotating discovery", 200)
+    moved = pipeline.rules_fingerprint()
+    assert moved["universe.min_dollars"] == 3_000_000
+    assert moved["universe.quota.rotating_discovery"] == 200
+    assert moved != fingerprint
+
+
+def test_a_moved_universe_floor_splits_the_learning_corpus(monkeypatch):
+    """The narrower question src.learning asks, over the wider fingerprint.
+
+    The fit reads a row's score, volume ratio and checklist passes -- none of
+    which the selector supplies directly -- but a floor that moved changes
+    which names could be scored at all, so those rows were produced by a
+    different screener. The universe keys are PRODUCTION for that reason, and
+    a run recorded either side of the change must not pool.
+    """
+    from src import learning
+
+    before = {"model": "claude-x", "rules": pipeline.rules_fingerprint()}
+    monkeypatch.setattr(universe, "MIN_DOLLARS", 3_000_000)
+    after = {"model": "claude-x", "rules": pipeline.rules_fingerprint()}
+    assert learning._signature(before) and learning._signature(after)
+    assert learning._signature(before) != learning._signature(after)
+
+
+def test_the_selector_reads_the_scan_thresholds_rather_than_spelling_them_again(monkeypatch):
+    """One number, one spelling -- on both floors this module used to retype.
+
+    Each was reproduced before it was fixed: with min_price at $10 the pool
+    still admitted a $6 name, and with min_gain_pct at 10% the "4% move"
+    quota still reserved room for a 4.5% mover. Both are archived under the
+    config's own value, so the record named a threshold that had not decided
+    anything. Patched on the CLASS, so a default bound at definition time
+    dies here -- the trap round 14 named for exactly this kind of test.
+    """
+    cheap = company(symbol="CHEAP", lastsale="$6.00", volume="5000000")
+    assert universe.directory_pool([cheap], [])[0] == ["CHEAP"]
+    monkeypatch.setattr(scanner.ScanConfig, "min_price", 10.0)
+    pool, reasons = universe.directory_pool([cheap], [])
+    assert pool == []
+    assert reasons == {"no recent trading above $10": 1}
+
+    metrics = {"AAA": {"gain": .05, "participation": 1., "liquidity": 1e9, "momentum": 1.},
+               "BBB": {"gain": .045, "participation": .9, "liquidity": 9e8, "momentum": .9},
+               "CCC": {"gain": .01, "participation": .5, "liquidity": 8e8, "momentum": .8}}
+    session = date(2026, 9, 9)
+    assert universe.rotate(metrics, session, capacity=60)[1].get("4% move") == 2
+    monkeypatch.setattr(scanner.ScanConfig, "min_gain_pct", 10.0)
+    assert universe.rotate(metrics, session, capacity=60)[1].get("4% move") is None
+    # The applied config still wins over the class, which is what select() passes.
+    assert universe.rotate(metrics, session, capacity=60, min_gain_pct=4.0)[1]["4% move"] == 2
+
+    # And the third spelling, in measure(), found by sweeping after the first two.
+    days = pd.bdate_range(end=pd.Timestamp("2026-09-09"), periods=universe.LOOKBACK + 1)
+    frame = pd.DataFrame({"Open": 6., "High": 6.2, "Low": 5.8, "Close": 6.,
+                          "Volume": 2e7}, index=days)
+    assert universe.measure(frame, session, min_price=4.0) is not None
+    assert universe.measure(frame, session) is None, "measure() ignored the raised floor"
+
+
+def test_the_selector_leaves_no_strategy_number_as_a_bare_literal():
+    """The one thing a fingerprint of named constants cannot catch.
+
+    src.lynch has this guard because six windows, then a seventh, then four
+    more in extra_context() were each a strategy number no other layer could
+    see. rotate() held five quota sizes and the burst threshold the same way,
+    and the price floor was spelled THREE times -- directory_pool(), rotate()
+    and measure() -- the third found only by sweeping after the first two were
+    fixed. The AST is read rather than the values, because a literal that
+    happens to equal the constant it shadows agrees tonight and diverges on
+    the commit that moves one of them.
+
+    SCOPED TO THE THREE FUNCTIONS THAT APPLY A SELECTION THRESHOLD, and the
+    scope is the residual: fetch_directory(), the cache readers, identity()
+    and benchmark_history() carry status codes, timeouts and slice widths,
+    which are transport and not strategy, and naming all of them would put
+    two dozen constants in a fingerprint that must stay readable. A fourth
+    selection function would be outside this guard -- what catches it is the
+    assertion below that these three still exist, so a rename is red rather
+    than silently uncovered, plus the STRATEGY_CONSTANTS guard for anything
+    that arrives NAMED. A number never named, in a function nobody added
+    here, is what this cannot see.
+    """
+    import ast
+    import inspect
+
+    tree = ast.parse(inspect.getsource(universe))
+    # indices (0, 1, 2 for iloc[-2]), an empty floor, and the percent divisor
+    allowed = {0, 1, 2, 100}
+
+    def reads_a_named_threshold(fn):
+        """Does this function apply a threshold something else can move?"""
+        for n in ast.walk(fn):
+            if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) \
+                    and n.value.id == "ScanConfig":
+                return True
+            if isinstance(n, ast.Subscript) and isinstance(n.value, ast.Name) \
+                    and n.value.id == "QUOTAS":
+                return True
+        return False
+
+    # DERIVED, not hand-kept: the first version of this guard listed the three
+    # function names and then asserted the list against itself, so dropping a
+    # name from it passed. A function that reads ScanConfig or QUOTAS is
+    # applying a threshold, and is therefore exactly the kind that must not
+    # spell a second one as a literal beside it.
+    selection = {fn.name for fn in ast.walk(tree)
+                 if isinstance(fn, ast.FunctionDef) and reads_a_named_threshold(fn)}
+    assert {"directory_pool", "measure", "rotate"} <= selection, sorted(selection)
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.FunctionDef) and node.name in selection):
+            continue
+        found = {n.value for n in ast.walk(node)
+                 if isinstance(n, ast.Constant) and isinstance(n.value, (int, float))
+                 and not isinstance(n.value, bool)}
+        assert found <= allowed, (
+            f"{node.name}() names {sorted(found - allowed)} as a bare literal; "
+            "put it in QUOTAS or read it off ScanConfig")
+
+
+def test_the_discovery_cap_is_strategy_because_it_cuts_names_out_of_the_pool(monkeypatch):
+    """Why MAX_DISCOVERY is STRATEGY where src.stockbee's section caps are not.
+
+    A section cap truncates the ARCHIVE and changes no verdict. This one cuts
+    the liquidity-ranked tail out of the pool, so a name past it is never
+    fetched, never measured and can never burst -- which is the same question
+    scan.min_gain_pct answers one stage later. Stated in a tuple, the
+    classification is only self-consistent; driven, it is justified, and
+    moving the constant to PLUMBING is red here rather than silently dropping
+    a threshold out of the fingerprint.
+    """
+    rows = [company("Z" + chr(65 + i), volume=str(9_000_000 - i * 1000)) for i in range(6)]
+    assert len(universe.directory_pool(rows, [])[0]) == 6
+    monkeypatch.setattr(universe, "MAX_DISCOVERY", 4)
+    pool, reasons = universe.directory_pool(rows, [])
+    assert len(pool) == 4 and reasons["discovery capacity"] == 2
+    assert pipeline.rules_fingerprint()["universe.max_discovery"] == 4
+    assert "MAX_DISCOVERY" in universe.STRATEGY_CONSTANTS
+
+
+def test_select_applies_the_price_floor_of_the_config_it_was_handed(monkeypatch, tmp_path):
+    """The threading, at the call site, which the class fallback hides.
+
+    measure() reading ScanConfig at call time is right for a caller with no
+    config, and it made dropping `min_price=cfg.min_price` from select()
+    invisible: the default and the applied config agree until someone passes
+    a different one. A `--tickers` run with its own floor is that someone.
+    """
+    # 120 names, because select() falls back below its classified-pool minimum.
+    symbols = ["B" + chr(65 + i // 26) + chr(65 + i % 26) for i in range(120)]
+    monkeypatch.setattr(scanner, "get_universe", lambda: [])
+    monkeypatch.setattr(scanner, "current_session", lambda: date(2026, 9, 8))
+    # The DIRECTORY price is $50 and the measured close is frame()'s $21, so a
+    # $25 floor separates the two stages: the pool still fills, and only
+    # measure() can refuse. The first version of this test left both at $20,
+    # so directory_pool() emptied the pool and the assertion passed with
+    # measure() reading the class -- a test passing because a DIFFERENT rule
+    # rejected, which is the shape this project names.
+    monkeypatch.setattr(universe, "fetch_directory",
+                        lambda: [company(s, lastsale="$50") for s in symbols])
+    monkeypatch.setattr(scanner, "_download_batch",
+                        lambda client, names, cfg, session: {n: frame() for n in names})
+    assert universe.select(scanner.ScanConfig(), tmp_path, data_client=object())[1]["mode"] == "adaptive"
+    cfg = replace(scanner.ScanConfig(), min_price=25.0)
+    report = universe.select(cfg, tmp_path, data_client=object())[1]
+    assert report["eligible"] == len(symbols), "the pool must fill, or measure() is not what refused"
+    assert report["mode"] == "fallback", "select() ignored the config's own price floor"

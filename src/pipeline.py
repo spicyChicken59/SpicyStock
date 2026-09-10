@@ -166,12 +166,25 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
     numeric literals out of EVERY function in src.lynch rather than any list.
 
     NOT in it, deliberately: TOP_N and MAX_TO_SCORE (already per run as
-    shortlist_size and score_cap, and neither changes what a burst is), the
-    feed (a fact about the data, already in the scan stats), and the universe
-    (already per run in run.universe). Those are the run's own facts, not the
-    strategy's, and duplicating them here would give a reader two places to
-    look and two chances to disagree. The MODEL is out for the same reason:
-    run.model already carries it.
+    shortlist_size and score_cap, and neither changes what a burst is) and the
+    feed (a fact about the data, already in the scan stats). Those are the
+    run's own facts, not the strategy's, and duplicating them here would give
+    a reader two places to look and two chances to disagree. The MODEL is out
+    for the same reason: run.model already carries it.
+
+    THE UNIVERSE WAS ON THAT LIST AND IS NOT ANY MORE. "Already per run in
+    run.universe" was true and sufficient when the universe was a checked-in
+    symbol file -- a fact ABOUT the run. It is a selector now, with its own
+    floor, capacity, lookback and quota mix, and those decide which names can
+    produce a burst at all, which is the same question scan.min_gain_pct
+    answers one stage later. Reproduced before it was changed: moving
+    MIN_DOLLARS 20M -> 3M and CAPACITY 500 -> 1500 left this fingerprint
+    byte-identical (36c0050558cc0407 on both sides) and left
+    learning._signature() identical with it, so the ridge fit would have
+    pooled two screeners and evidence.rules would have reported one. That is
+    the shape the post-merge audit of round 14 fixed in src.learning, one
+    module further out. run.universe keeps the per-run facts (the label, the
+    identity, the tickers); this keeps the numbers the selection turned on.
 
     AND THE SCORER'S INPUTS ARE IN, since round 11. What a burst is and what a
     SCORE is are two different questions and this record answers both under
@@ -227,6 +240,10 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
     out.update({f"stockbee.anticipation.{key}": value
                 for key, value in stockbee.ANTICIPATION_RULES.items()
                 if isinstance(value, (int, float)) and not isinstance(value, bool)})
+    out.update({f"universe.{name.lower()}": getattr(adaptive_universe, name)
+                for name in adaptive_universe.STRATEGY_CONSTANTS})
+    out.update({f"universe.quota.{key.replace(' ', '_')}": value
+                for key, value in adaptive_universe.QUOTAS.items()})
     return dict(sorted(out.items()))
 
 
@@ -247,7 +264,7 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
 #: direction -- it discards training data rather than mixing a fit -- and a
 #: silent safe default is still how a corpus gets thrown away for a year
 #: before anyone asks why.
-PRODUCTION_PREFIXES = ("scan.", "check.", "window.", "gate.", "score.")
+PRODUCTION_PREFIXES = ("scan.", "check.", "window.", "gate.", "score.", "universe.")
 RESEARCH_PREFIXES = ("stockbee.",)
 
 
