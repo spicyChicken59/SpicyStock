@@ -215,8 +215,10 @@ VETO_RULES = ("up_days",)
 #: nothing to compare it with, and the two structural guards over this
 #: module's constants exempt a `*_REVISION` name for that reason and for no
 #: other. 1 is every screener up to and including round 11's burst-bar
-#: commit; 2 is the close-only series and the anchors that came with it.
-RULES_REVISION = 2
+#: commit; 2 is the close-only series and the anchors that came with it;
+#: 3 is L stepping past the consolidation to fit the prior move, which
+#: changes WHICH BARS that check reads and nothing it is compared against.
+RULES_REVISION = 3
 
 MAX_CONSECUTIVE_UP_DAYS = 2   # veto at 3+, counted BEFORE the burst day
 BREAKDOWN_PCT = -4.0          # a single day this bad is a break, not a pullback
@@ -777,21 +779,58 @@ def evaluate_2lynch(df: pd.DataFrame) -> dict:
                   f"{WINDOWS['prior_burst_lookback']} days"),
     }
 
-    # ---- L: shape AND direction of the prior 30-day move (log-price fit) ----
+    # ---- L: shape AND direction of the prior move (log-price fit) ----
     # The slope is half the answer. Judged on R² alone this check passed a
     # smooth 45% collapse with R²=1.00 and reported "R²=1.00 over prior 30
     # days" to the scorer, telling Claude the structure was orderly without
     # telling it the structure was orderly *downwards*.
-    log_closes = np.log(base.iloc[-WINDOWS["linear_fit_sessions"]:].to_numpy(dtype=float))
+    #
+    # THE FIT STOPS WHERE THE CONSOLIDATION STARTS, and it did not used to.
+    # Bonde's L is the linearity of the PRIOR MOVE -- "first leg is consistent
+    # and persistent buying" -- which is the advance INTO the base, not the
+    # base. The window ended on the session before the burst, so for any
+    # consolidation longer than about ten sessions the fit was mostly the
+    # consolidation, and this check was measuring the one stretch of chart it
+    # is not about. Reproduced on the textbook shape rather than argued: a
+    # clean +0.6%/day advance followed by a shallow orderly pullback and a 4%
+    # burst passed L at a 10-session base and failed it at 15, at 17 (which is
+    # the base length in Bonde's own worked example: "preceding the breakout
+    # for 17 days the stock did not have a momentum burst, did not have a 4%
+    # breakdown, had a series of narrow range days"), and at every length
+    # beyond. At a 30-session base it failed with R²=1.00 -- a perfect fit of
+    # the base, reported as a non-linear prior move. The better and longer the
+    # consolidation, the more certainly L refused it, which is backwards.
+    #
+    # The skip is `tight_sessions` and NOT a number of its own, because it is
+    # the same question that window already answers -- which sessions are the
+    # consolidation -- and two names for one question is how this file's own
+    # notes describe a mechanism growing two vocabularies. (Where two windows
+    # answer DIFFERENT questions, as `volume_norm_sessions` and
+    # ScanConfig.rvol_lookback do, they are named apart and held equal by a
+    # test. That is the opposite case and this is not it.)
+    #
+    # KNOWN LIMIT, written down rather than hidden: a consolidation longer
+    # than the skip still bleeds into the window. On the same shape the fit
+    # recovers a 17-session base and still fails a 25-session one. Detecting
+    # the base's real length is the fix for that, and it is not this change.
+    skip = WINDOWS["tight_sessions"]
+    stepped_past = len(base) >= skip + 3      # 3 points is the least _log_trend can fit
+    prior_move = base.iloc[:-skip] if stepped_past else base
+    log_closes = np.log(prior_move.iloc[-WINDOWS["linear_fit_sessions"]:].to_numpy(dtype=float))
     slope, r2 = _log_trend(log_closes)
     r2 = shown(r2, 2)
     fitted_move = shown((float(np.exp(slope * max(len(log_closes) - 1, 0))) - 1) * 100, 1)
     checks["L_linear_prior_move"] = {
         "pass": bool(r2 >= MIN_LINEAR_R2 and slope >= MIN_LINEAR_SLOPE),
         # The window is INTERPOLATED, not typed: it was spelled "30 days" here
-        # and 30 in WINDOWS, so a change to one told the model the other.
-        "value": (f"R²={r2:.2f}, fitted trend {fitted_move:+.1f}% over prior "
-                  f"{WINDOWS['linear_fit_sessions']} days"),
+        # and 30 in WINDOWS, so a change to one told the model the other. The
+        # second clause says which sessions were fitted, because "over prior
+        # 30 days" is what the old line said while it was fitting the base,
+        # and a reader could not have told.
+        "value": (f"R²={r2:.2f}, fitted trend {fitted_move:+.1f}% over "
+                  f"{WINDOWS['linear_fit_sessions']} days ending "
+                  + (f"{skip} sessions before the burst" if stepped_past
+                     else "the day before the burst (too little history to step past the base)")),
     }
 
     # ---- Y: young trend — not extended, measured through the burst day ----

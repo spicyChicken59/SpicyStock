@@ -557,6 +557,134 @@ def test_a_burst_older_than_the_lookback_is_not_held_against_the_leg():
 # ---- L: the fit has to be tight as well as rising ------------------------
 
 
+def _advance_then_base(base_len, *, advance_len=60, drift=0.006, base_drift=-0.003):
+    """The shape Bonde's own worked example describes.
+
+    A clean linear advance, then an orderly pullback that drifts gently DOWN
+    for `base_len` sessions, then the 4% burst. `_frame`'s shelf is perfectly
+    flat, which is why it cannot show this: a flat shelf barely disturbs a fit
+    and a drifting one destroys it, and a real consolidation drifts.
+    """
+    closes = [50.0]
+    for _ in range(advance_len - 1):
+        closes.append(closes[-1] * (1 + drift))
+    for _ in range(base_len):
+        closes.append(closes[-1] * (1 + base_drift))
+    closes.append(closes[-1] * 1.06)
+    c = np.array(closes)
+    index = pd.bdate_range(end="2026-09-08", periods=len(c))
+    df = pd.DataFrame({"Open": c * 0.995, "High": c * 1.01, "Low": c * 0.99,
+                       "Close": c, "Volume": 1_000_000.0}, index=index)
+    df.loc[df.index[-1], "High"] = c[-1] * 1.001
+    df.loc[df.index[-1], "Low"] = c[-2] * 0.999
+    df.loc[df.index[-1], "Volume"] = 3_000_000.0
+    return df
+
+
+@pytest.mark.parametrize("base_len", [0, 5, 10, 15, 17])
+def test_L_judges_the_advance_and_not_the_consolidation_in_front_of_it(base_len):
+    """Bonde's L is "linearity of the PRIOR MOVE" -- the advance into the base.
+
+    The fit used to end on the session before the burst, so for any
+    consolidation longer than about ten sessions it was fitting the
+    consolidation, and the check refused the setup for the base's own shape.
+    Reproduced before it was changed, on this exact shape: L passed at a
+    10-session base and failed at 15, at 17 and at every length beyond, and at
+    30 it failed with R²=1.00 -- a PERFECT fit of the base, reported as a
+    non-linear prior move.
+
+    17 is in this table on purpose. It is the base length in the worked
+    example of the post this checklist comes from: "preceding the breakout for
+    17 days the stock did not have a momentum burst, did not have a 4%
+    breakdown, had a series of narrow range days". The A-quality setup the
+    source holds up was refused by the check meant to find it.
+    """
+    result = evaluate_2lynch(_advance_then_base(base_len))
+    check = result["checks"]["L_linear_prior_move"]
+    assert check["pass"], f"a clean advance into a {base_len}-session base failed L: {check['value']}"
+    assert _reported(check["value"], r"R²=([\d.]+)") >= MIN_LINEAR_R2
+
+
+def test_L_skips_exactly_the_consolidation_window_and_not_one_session_fewer():
+    """The line says "ending N sessions before the burst" and the slice has to
+    agree with it. A slice one session short still prints the same sentence,
+    which is this repo's oldest defect shape: a line naming a window the code
+    did not use.
+
+    Pinned by making the session exactly `tight_sessions` back an outlier
+    violent enough to wreck any fit that includes it. Skipping 7 leaves it
+    out and the advance fits cleanly; skipping 6 pulls it in and L fails.
+    """
+    skip = WINDOWS["tight_sessions"]
+    closes = [50.0]
+    for _ in range(59):
+        closes.append(closes[-1] * 1.006)
+    spike_at = len(closes)          # this becomes base[-skip]
+    closes.append(closes[-1] * 0.55)   # one violent session
+    for _ in range(skip - 1):
+        closes.append(closes[-1] * 1.002)
+    closes.append(closes[-1] * 1.06)   # the burst
+    c = np.array(closes)
+    # `base` is every close but the burst, so its length is len(c) - 1 and the
+    # spike sits `(len(c) - 1) - spike_at` sessions from its end.
+    assert (len(c) - 1) - spike_at == skip, "the spike is not at base[-tight_sessions]"
+
+    index = pd.bdate_range(end="2026-09-08", periods=len(c))
+    df = pd.DataFrame({"Open": c * 0.995, "High": c * 1.01, "Low": c * 0.99,
+                       "Close": c, "Volume": 1_000_000.0}, index=index)
+    df.loc[df.index[-1], "High"] = c[-1] * 1.001
+    df.loc[df.index[-1], "Low"] = c[-2] * 0.999
+    df.loc[df.index[-1], "Volume"] = 3_000_000.0
+
+    check = evaluate_2lynch(df)["checks"]["L_linear_prior_move"]
+    assert check["pass"], (
+        "the fit reached one session further back than the line claims: " + check["value"])
+
+
+def test_L_falls_back_only_when_skipping_would_leave_too_little_to_fit():
+    """The guard is `len(base) >= skip + 3`, and the 3 is what _log_trend needs.
+
+    A base of exactly `tight_sessions` sessions is the case that separates the
+    right guard from a looser one: skipping would leave NOTHING to fit, so the
+    fallback has to fire. A guard of `>= skip` would step past anyway, hand
+    _log_trend an empty series, and fail L on a frame it never measured.
+    """
+    skip = WINDOWS["tight_sessions"]
+    closes = [50.0]
+    for _ in range(skip - 1):
+        closes.append(closes[-1] * 1.01)
+    closes.append(closes[-1] * 1.06)
+    c = np.array(closes)
+    assert len(c) - 1 == skip, "this frame no longer has exactly tight_sessions of base"
+
+    index = pd.bdate_range(end="2026-09-08", periods=len(c))
+    df = pd.DataFrame({"Open": c * 0.995, "High": c * 1.01, "Low": c * 0.99,
+                       "Close": c, "Volume": 1_000_000.0}, index=index)
+    value = evaluate_2lynch(df)["checks"]["L_linear_prior_move"]["value"]
+    assert "too little history to step past the base" in value
+
+
+def test_L_still_refuses_an_advance_that_was_never_linear():
+    """The inverse. Stepping past the base must not turn L into a check that
+    passes everything -- the chop has to still fail, or the fix has removed
+    the rule rather than aimed it."""
+    result = evaluate_2lynch(_advance_then_base(10, drift=0.0, base_drift=0.0))
+    # A flat line has no trend to fit at all; _log_trend returns (0, 0) for a
+    # constant series, so the fit quality is under the threshold.
+    assert result["checks"]["L_linear_prior_move"]["pass"] is False
+
+
+def test_L_says_when_it_could_not_step_past_the_base():
+    """A frame too short to skip the consolidation falls back to fitting what
+    it has -- the behaviour before this change -- and the line SAYS so, rather
+    than naming a window it did not use. `Y`'s run-up already sets this
+    precedent: an unmeasurable half says so and does not fail the check."""
+    short = _advance_then_base(0, advance_len=6)
+    value = evaluate_2lynch(short)["checks"]["L_linear_prior_move"]["value"]
+    assert "too little history to step past the base" in value
+    assert f"ending {WINDOWS['tight_sessions']} sessions before" not in value
+
+
 def test_a_choppy_advance_fails_the_linear_check_although_it_ends_higher():
     """The R² half of L. Step 7 pinned the slope half -- a smooth collapse --
     and left this one unasserted, so `r2 >= MIN_LINEAR_R2` could be dropped
@@ -564,8 +692,19 @@ def test_a_choppy_advance_fails_the_linear_check_although_it_ends_higher():
 
     This ride ends up, so the slope clause is satisfied and cannot be what
     fails. Only the fit quality is over its line.
+
+    THE AMPLITUDE HAD TO GROW WHEN L STOPPED FITTING THE SHELF. At 5% this
+    frame failed L on a fit of R²=0.443 -- but the window then ended the day
+    before the burst, so it included `_frame`'s seven flat shelf sessions, and
+    a flat run at the end of a rising fit depresses R² by itself. The advance
+    ALONE fits at 0.552 there, a hair over the threshold: the old case was
+    partly failing on the shelf rather than on the chop it names, which is
+    this project's first shape of shaped test. At 7% the advance itself fits
+    at 0.406, well under the line, and the wave is still small enough that no
+    swing counts as a prior 4% burst -- at 9% one does, and check 2 starts
+    failing beside L, which `_only_failure_is` would then refuse.
     """
-    result = evaluate_2lynch(_frame(wave_pct=5.0))
+    result = evaluate_2lynch(_frame(wave_pct=7.0))
     _only_failure_is(result, "L")
     value = result["checks"]["L_linear_prior_move"]["value"]
     assert _reported(value, r"R²=([\d.]+)") < MIN_LINEAR_R2
@@ -2429,10 +2568,17 @@ def test_the_lines_the_model_reads_name_the_window_the_code_applied():
 
     frame = make_ohlcv("burst", seed=7, up_run=1)
     real = evaluate_2lynch(frame)["checks"]
-    assert f"over prior {WINDOWS['linear_fit_sessions']} days" in real["L_linear_prior_move"]["value"]
+    # L's line now carries TWO windows -- how many sessions were fitted, and
+    # how many were stepped over to get past the consolidation -- and both are
+    # spellable as digits, so both are asserted. The line said "over prior 30
+    # days" while it was fitting the base right up to the burst, which named
+    # the length correctly and the POSITION not at all; a reader could not
+    # have told which sessions went into the fit.
+    assert f"over {WINDOWS['linear_fit_sessions']} days" in real["L_linear_prior_move"]["value"]
+    assert f"ending {WINDOWS['tight_sessions']} sessions before" in real["L_linear_prior_move"]["value"]
     assert f"vs {WINDOWS['sma_sessions']}SMA" in real["Y_young_trend"]["value"]
 
-    patched = dict(lynch_mod.WINDOWS, linear_fit_sessions=10, sma_sessions=5)
+    patched = dict(lynch_mod.WINDOWS, linear_fit_sessions=10, sma_sessions=5, tight_sessions=3)
     original = lynch_mod.WINDOWS
     try:
         lynch_mod.WINDOWS = patched
@@ -2440,8 +2586,10 @@ def test_the_lines_the_model_reads_name_the_window_the_code_applied():
     finally:
         lynch_mod.WINDOWS = original
 
-    assert "over prior 10 days" in moved["L_linear_prior_move"]["value"], (
+    assert "over 10 days" in moved["L_linear_prior_move"]["value"], (
         "L tells the model a window it did not fit over")
+    assert "ending 3 sessions before" in moved["L_linear_prior_move"]["value"], (
+        "L tells the model it stepped past a consolidation of a length it did not use")
     assert "vs 5SMA" in moved["Y_young_trend"]["value"], (
         "Y tells the model an average it did not measure against")
 
