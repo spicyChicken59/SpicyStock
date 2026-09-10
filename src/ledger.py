@@ -223,7 +223,7 @@ CONTRACT_INVARIANTS = [
     "evidence.shortlist, evidence.rest, evidence.refused, evidence.crowded_out and evidence.illiquid are five disjoint populations of setups, each with the same outcomes shape and its own `enough`: the names that went out by email, the scored names that did not, the names the checklist or an absolute rule REFUSED, the names that cleared the gate and were never scored because the call budget filled, and the names rule 6 refused for dollar volume below the session's floor. refused is the alternative the north star names -- what the strategy said no to -- and crowded_out is kept apart from it because a full night must not pad the control with names the screener liked. illiquid is kept apart from refused for the opposite reason: its forward returns are bar prices on names the rule says are too thin to be traded at those prices, so they overstate what a reader could have paid, and folding them into the control would let the thinnest names flatter or damn the strategy on returns nobody could capture.",
     "runs[].benchmark is the universe's equal-weight return from that session's close (d1/d3/d5) and from the next open (from_open), over every name whose frame carries the session and whose dollar volume that session was at or above the run's own liquidity floor -- rule 6's bar that night, run.liquidity.floor -- with nN the number of symbols behind each horizon. benchmark.liquidity_floor is the floor the fill that FIRST measured the block applied -- null for a run recorded without one, when every name that traded counts -- and benchmark.below_floor is how many names that fill left out under it; the horizons a later fill adds are measured over the same population, so one block is one set of names. Null until a later run's scan carried the sessions, null forever for a run whose universe later scans never fetched, and never filled at all for a run that measured nothing: nothing is ever paired with a blind night's rung, since it scored no setup, and its floor -- null when no name's dollar volume could be ranked, and drawn from however few could be when it is not -- would stamp the block with a population that night never read. evidence.universe pairs every scored setup with its own session's benchmark, so its outcomes are the alternative 'buy anything in the universe that day' over the same sessions in the same proportions as the picks, and evidence.universe.floored is how many of those pairings were measured over a floor and evidence.universe.unfloored how many were measured with none -- before the floor reached the benchmark, or on a night rule 6 was off, which the block cannot tell apart -- over every name that traded (a pending pairing is in neither); it is a curated list as it stands today, so the comparison carries survivorship bias in the benchmark's favour, and it is beside the control, never inside refused.",
     "d1/d3/d5 and from_open are measured on the bar of the session 1, 3 and 5 sessions after the burst, the sessions being read across every frame the run fetched rather than counted along one frame's bars: a frame with a hole at a horizon carries null there, never the next bar it happens to have, and as_of names the session of the last bar actually used. from_open's entry is the next session's open only where it lies within that bar's own low and high, the standard the checklist holds a close to; outside it the open basis is null on that row.",
-    "evidence.stockbee is the canonical control: src.stockbee runs Bonde's own 4% scan over the same universe every night, and every row it matched now carries the same forward_returns block a pick does, filled by the same code off the same bars. caught is the matches OUR scan also admitted (a candidate or a gated row that session) and missed is the matches it did not, so the sidecar's own question -- does the narrower scan keep the better bursts? -- is a pair of numbers rather than two lists nobody measured. Read them together: a scan that admits everything has an empty missed and is not thereby better. anticipation sits beside both and is in NEITHER, because its rows are not bursts -- they are names a compression proxy says may burst later -- so a return from the same session's close answers a different question. dollar is his OTHER daily scan, the $ breakout, and sits apart from the caught/missed split for the opposite reason anticipation does: it is disjoint from the 4% scan by construction, so production can never have caught one and a caught column of zeros there would read as a finding rather than as arithmetic. One setup per (ticker, session) per section and NOT collapsed by setup_chains(), because the question is about the scan and every match it printed is one thing the scan said. The sections are capped (stockbee.SCAN_LIMIT, DOLLAR_LIMIT, ANTICIPATION_LIMIT) and truncated_sessions counts the sessions where a cap bit, since a mean over a capped list is a fact about the cap as well as about the market. A canonical row is never in run.settled: that list is the run's own scorecard of what ITS picks did, and a name our scan never admitted is not one.",
+    "evidence.stockbee is the canonical control: src.stockbee runs Bonde's own 4% scan over the same universe every night, and every row it matched now carries the same forward_returns block a pick does, filled by the same code off the same bars. caught is the matches OUR scan also admitted (a candidate or a gated row that session) and missed is the matches it did not, so the sidecar's own question -- does the narrower scan keep the better bursts? -- is a pair of numbers rather than two lists nobody measured. Read them together: a scan that admits everything has an empty missed and is not thereby better. anticipation sits beside both and is in NEITHER, because its rows are not bursts -- they are names a compression proxy says may burst later -- so a return from the same session's close answers a different question. dollar is his OTHER daily scan, the $ breakout, and sits apart from the caught/missed split for the opposite reason anticipation does: it is disjoint from the SIDECAR's 4% scan by construction, so a caught column over it would be zeros by arithmetic rather than by finding. That is not the same as saying production never admitted one -- production is a different scan and reads the previous session by its own rule -- so evidence.stockbee.dollar.admitted_anyway COUNTS the rows production did admit, rather than the record asserting there are none. anticipation carries the same count for the same reason. One setup per (ticker, session) per section and NOT collapsed by setup_chains(), because the question is about the scan and every match it printed is one thing the scan said. The sections are capped (stockbee.SCAN_LIMIT, DOLLAR_LIMIT, ANTICIPATION_LIMIT) and truncated_sessions counts the sessions where a cap bit, since a mean over a capped list is a fact about the cap as well as about the market. A canonical row is never in run.settled: that list is the run's own scorecard of what ITS picks did, and a name our scan never admitted is not one.",
     "forward_returns.peak and .trough are the MAGNITUDE -- the highest high and the lowest low over the sessions from the one after the burst through the last horizon -- and span is how many of those sessions the frame carried, so a peak over two sessions is never read as a peak over five. They are one measurement over a window, not a horizon, which is why they sit beside d1/d3/d5 rather than among them, and they are restated while the span GROWS and frozen the moment it reaches the last horizon, where a horizon is filled exactly once. Null on both bases when the frame carried no readable high and low for every session of the window -- readable meaning finite, positive, the low no higher than the high and the close between them -- and null on the open basis alone when the entry was refused, since both bases are restated together whenever the span widens and an open-basis peak kept from a shorter window would be read under the wider span; a row from before this measurement carries none and gains one only while it is still in the fill window. evidence's populations carry `magnitude` over the rows whose span reached the full window: reached_band counts the peaks that landed inside the claimed band and above_band those past it, which is the band read off the MOVE -- while in_band, on each horizon's own entry, is the band read off that horizon's CLOSE. Two counts because they answer two questions: whether the move happened, and whether it was still there on the fifth close. Neither is the other, and no surface may print one under the other's name.",
     "Numbers are numbers or null. No 'n/a' strings.",
 ]
@@ -2050,6 +2050,18 @@ def _sidecar_evidence(runs: list[dict]) -> dict:
     """
     caught, missed = [], []
     apart: dict[str, list] = {"dollar": [], "anticipation": []}
+    # How many rows kept OUT of the caught/missed split production admitted
+    # anyway. The comment below used to assert this could not happen for a
+    # dollar row, and the assertion rests on production's admission implying
+    # the sidecar's own 4% match -- which the two do not guarantee, since they
+    # read the previous session by different rules (the scanner's
+    # observed_previous_session() over the night's frames against build()'s
+    # own prior map). tools/fidelity_report.py already reports production
+    # bursts the canonical scan did not match. So it is COUNTED rather than
+    # asserted away: the split stays as it is, because the question those two
+    # columns answer is about the 4% scan, and a number says how often the
+    # premise for keeping a row out of them did not hold.
+    overlap = {section: 0 for section in apart}
     truncated = {section: 0 for section in SIDECAR_SECTIONS}
     for run in runs:
         if not isinstance(run, dict):
@@ -2065,12 +2077,15 @@ def _sidecar_evidence(runs: list[dict]) -> dict:
             for row in _sidecar_rows(run, section):
                 if section in apart:
                     # Neither is split by what our scan admitted, and for
-                    # opposite reasons. A `dollar` row is disjoint from the 4%
-                    # scan by construction, so production -- which admits only
-                    # 4% bursts -- can never have caught one, and a caught
-                    # column of zeros would read as a finding rather than as
-                    # arithmetic. An `anticipation` row is not a burst at all.
+                    # opposite reasons. A `dollar` row is disjoint from the
+                    # SIDECAR's 4% scan by construction, so a caught column
+                    # over it would be zeros by arithmetic rather than by
+                    # finding -- production is a different scan and may still
+                    # have admitted the name, which is what `admitted_anyway`
+                    # counts. An `anticipation` row is not a burst at all.
                     apart[section].append(row)
+                    if row.get("ticker") in admitted:
+                        overlap[section] += 1
                 elif row.get("ticker") in admitted:
                     caught.append(row)
                 else:
@@ -2078,8 +2093,9 @@ def _sidecar_evidence(runs: list[dict]) -> dict:
     return {
         "caught": _population(caught),
         "missed": _population(missed),
-        "dollar": _population(apart["dollar"]),
-        "anticipation": _population(apart["anticipation"]),
+        "dollar": {**_population(apart["dollar"]), "admitted_anyway": overlap["dollar"]},
+        "anticipation": {**_population(apart["anticipation"]),
+                         "admitted_anyway": overlap["anticipation"]},
         "truncated_sessions": truncated,
     }
 

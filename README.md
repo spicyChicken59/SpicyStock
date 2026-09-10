@@ -686,7 +686,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1818 tests, no network or API keys needed
+pytest tests/                   # 1827 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -1612,7 +1612,7 @@ comparison limits and removal, saved-note persistence and storage failures,
 focus navigation, archive retries and races, return-basis changes, and isolation
 of a failed view. It also captures phone and desktop screens in both themes.
 
-**Three data sources, one page.** It runs 273 checks, and which file each one
+**Three data sources, one page.** It runs 276 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served

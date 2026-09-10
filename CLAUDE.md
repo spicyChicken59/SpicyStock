@@ -147,7 +147,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1818 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1827 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -423,6 +423,42 @@ third shape again: the sidecar-window test compared the constant to the
 function beside it, which is 20 against 20 while they agree, so the mutant
 that typed the number back survived it. The module is re-imported under a
 moved rule string now.
+
+**The last four, and one refuted.** The smoke's abort filter exempted chart
+PNGs alone, so any other subresource still in flight when the next check
+navigated -- read off a real run, a design-system SVG -- counted as a page
+error and would have failed CI on a slow runner over a change that touched
+nothing. That is round 9's finding one subresource family over. Whether an
+abort HAPPENS is a race, so the first mutant survived: a check that waits for
+the race passes for the wrong reason most runs, and the rule is named
+(`abortedByNavigation`) and asserted directly on the URLs the race leaves
+behind. The basis-surface list was a hand-kept nine and round 14 added a
+tenth and eleventh; the canonical card's hint carried `basisLabel()` under no
+check at all. The two band columns said "nothing" two different ways -- a
+bare 0 a reader takes for a count, beside "no full window measured yet" --
+which is the state every population is in until a horizon fills, and the
+history fixture's crowded-out row already renders it. The truncation note
+printed the ledger's own section KEY over a table labelled with something
+else, and the verdict check typed two fixture counts into the script against
+its own rule that nothing does.
+
+And the contract's "production can never have caught a $ breakout row" was
+one assertion too strong: the disjointness is between the dollar section and
+the SIDECAR's 4% scan, and production is a different scan reading the
+previous session by its own rule -- the report already prints production
+bursts the canonical scan did not match. The split is unchanged, because the
+question caught/missed answers is about the 4% scan; the premise is COUNTED
+now (`evidence.stockbee.dollar.admitted_anyway`, 0 on the history fixture)
+rather than asserted away.
+
+**One lead refuted by execution.** "Run shapes that `_malformed_rows()` loads
+clean crash the report" does not hold: driven over seven of them -- a string,
+list or missing `universe`, a string `bursts`, a null `scored`, a string
+`score_cap` and `measured`, a list `top_score` -- the load check REFUSES
+every one, so no record this repo writes can hold them. What is true is that
+the tool reads a PATH and so can be handed a quarantined casualty, and it
+gave a traceback where it should give a sentence. That is fixed and the
+refutation is pinned beside it.
 
 ## Round 14 — the second scan, the control, and what the outside evidence says
 

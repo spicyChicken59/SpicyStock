@@ -853,9 +853,24 @@ page.on('console', (m) => {
 // that a request the page itself failed -- any other error, or an abort on
 // anything but a chart PNG -- is still a page error that fails the run.
 const aborted = [];
+// A NAMED RULE rather than a condition inside the listener, because whether
+// it fires is a RACE -- it depends on what was still in flight when the next
+// check navigated -- so a check that waits for the race to happen is a check
+// that passes for the wrong reason most runs. The rule is asserted directly
+// below instead, on the URLs the race can leave behind.
+const abortedByNavigation = (why, _url) => why === 'net::ERR_ABORTED';
 page.on('requestfailed', (r) => {
   const why = (r.failure() && r.failure().errorText) || '';
-  if (why === 'net::ERR_ABORTED' && /\/charts\/[^/]+\.png$/.test(r.url())) { aborted.push(r.url()); return; }
+  // AN ABORT IS NOT A FAILURE, whatever the subresource. This exempted chart
+  // PNGs alone, so any OTHER request still in flight when the next check
+  // navigates -- a design-system SVG, a font, the on-demand ledger.json the
+  // per-name view fetches -- counted as a page error and would have failed
+  // this job on a slow runner over a change that touched nothing. That is the
+  // round-9 finding one subresource family over: net::ERR_ABORTED means the
+  // request was cancelled, by the navigation or by the page's own re-render,
+  // and neither is a defect. They are still counted and named, because an
+  // abort STORM is worth seeing even though one abort is not.
+  if (abortedByNavigation(why, r.url())) { aborted.push(r.url()); return; }
   errors.push('request failed: ' + r.url().slice(0, 90) + (why ? ' (' + why + ')' : ''));
 });
 
@@ -1210,6 +1225,16 @@ ok('and the $ breakout row says it is the scan production never saw',
 ok('and the anticipation row says it is not a burst, so it is not folded into either side',
   /not a burst/.test(canonRows[3][0]) && /never folded into them/.test(canonRows[3][0]),
   canonRows[3][0].slice(0, 120));
+// Read off the record, not typed here: the script's own rule is that nothing
+// compares the page against a number in this file, and these two were
+// literals that the next tools/make_history.py regeneration would rot -- and
+// would then fail for a reason unrelated to the verdict branch they name.
+const canonN = (population) => {
+  const block = (HIST.evidence.stockbee || {})[population] || {};
+  const longest = HIST.evidence.horizons[HIST.evidence.horizons.length - 1];
+  const entry = (block.outcomes || []).find((o) => o.horizon === longest) || {};
+  return entry.n;
+};
 const canonVerdictText = await page.textContent('#canon-verdict');
 const canonHint = await page.textContent('#canon-hint');
 // The history's missed side is under min_setups at the longest horizon, which
@@ -1217,8 +1242,8 @@ const canonHint = await page.textContent('#canon-hint');
 // rate is the defect min_setups exists to prevent. Both n's still printed.
 ok('a control whose thinner side is under the minimum refuses a verdict and says both n\u2019s',
   /No verdict yet/.test(canonVerdictText)
-  && /150 matches this screener admitted/.test(canonVerdictText)
-  && /25 matches it dropped/.test(canonVerdictText)
+  && new RegExp(`${canonN('caught')} matches this screener admitted`).test(canonVerdictText)
+  && new RegExp(`${canonN('missed')} matches it dropped`).test(canonVerdictText)
   && !/(did better|did WORSE|did no differently)/.test(canonVerdictText),
   canonVerdictText.slice(0, 150));
 ok('and the hint says the two sides have to be read together',
@@ -1240,11 +1265,22 @@ ok('a record with no truncation says nothing about a cap',
   await page.locator('#canon-truncated').evaluate((n) => n.hidden));
 await open('/v/canontruncated/');
 const truncNote = await page.textContent('#canon-truncated');
+// AND IT NAMES A ROW THE READER CAN FIND. The note printed the ledger's own
+// section KEY -- "the scan list" -- over a table labelled caught, missed, the
+// $ breakouts and the anticipation list, so the sentence named a population
+// the table does not show. `caught` and `missed` are the two halves of the
+// one archived scan section, so the scan's cap is named for both.
+const canonLabels = await page.$$eval('#canon-table tbody tr',
+  (rows) => rows.map((r) => r.children[0].innerText.split('\n')[0].trim()));
 ok('and a record whose archive cap bit says so, because a mean over a capped list is a fact about the cap',
   !(await page.locator('#canon-truncated').evaluate((n) => n.hidden))
-  && /3 sessions the scan list hit its archive cap/.test(truncNote)
-  && !/dollar list/.test(truncNote),
+  && /3 sessions caught and missed hit the archive cap/.test(truncNote)
+  && !/the scan list/.test(truncNote) && !/dollar/.test(truncNote),
   truncNote.slice(0, 120));
+ok('and the population it names is one the table beside it actually shows',
+  canonLabels.length > 0 && ['caught', 'missed'].every((label) => canonLabels.includes(label))
+  && (truncNote.match(/\b(caught|missed|the \$ breakouts|the anticipation list)\b/g) || []).length > 0,
+  `note "${truncNote.slice(0, 60)}" | rows ${canonLabels.join(', ')}`);
 await open('/v/nocanon/');
 ok('a record from before the sidecar was measured hides the block rather than rendering four empty rows',
   await page.locator('#canon-block').evaluate((n) => n.hidden));
@@ -1319,6 +1355,34 @@ ok('and the two bases really do print different reached counts on this record',
   magOf('open').reached_band !== magOf('close').reached_band
   && openReached.replace(/\s+/g, ' ') !== closeReached.replace(/\s+/g, ' '),
   `open ${openReached.split('\n')[0]} vs close ${closeReached.split('\n')[0]}`);
+
+// AND THE TWO SAY "NOTHING" THE SAME WAY. A population with nothing measured
+// at the longest horizon printed a bare "0" in the closed column -- which a
+// reader takes for "none of them closed in the band" -- beside a sibling
+// three inches right saying "no full window measured yet". It is the state
+// every row of docs/ is in until a horizon fills, and the round that put the
+// two columns side by side is what made the 0 read as a count. The history
+// fixture already holds it: the crowded-out row has no measured horizon.
+const emptyBand = await page.$$eval('#control-table tbody tr', (rows) => {
+  const r = rows.find((x) => /the crowded-out/.test(x.children[0].textContent));
+  return r ? [...r.children].slice(-3, -1).map((c) => c.innerText.replace(/\s+/g, ' ').trim()) : null;
+});
+// The abort rule itself, since whether an abort HAPPENS is timing. It
+// exempted chart PNGs alone, so a design-system SVG or the on-demand
+// ledger.json still in flight counted as a page error and would have failed
+// this job on a slow runner over a change that touched nothing.
+ok('an abort is not a page error whatever the subresource, and a real failure still is',
+  ['/charts/AAPL.png', '/design-system/sc-mark.svg', '/ledger.json',
+   '/design-system/sc.css'].every((u) => abortedByNavigation('net::ERR_ABORTED', u))
+  && !abortedByNavigation('net::ERR_CONNECTION_REFUSED', '/design-system/sc-mark.svg')
+  && !abortedByNavigation('net::ERR_NAME_NOT_RESOLVED', '/charts/AAPL.png'),
+  'aborts exempt on every path; other failures still errors');
+ok('a population with nothing measured says so in both band columns rather than printing a zero',
+  emptyBand && !/^0\b/.test(emptyBand[0]) && !/^0\b/.test(emptyBand[1])
+  && /\u2014/.test(emptyBand[0]) && /\u2014/.test(emptyBand[1])
+  && /nothing measured at \+\d+d yet/.test(emptyBand[0])
+  && /no full window measured yet/.test(emptyBand[1]),
+  `closed "${emptyBand && emptyBand[0]}" | reached "${emptyBand && emptyBand[1]}"`);
 const bandHint = await page.textContent('#control-hint');
 ok('and the hint says which reading is which',
   /The band is read twice, because they are two questions/.test(bandHint)
@@ -2605,13 +2669,19 @@ ok('switching to the open basis changes the ladder to the ledger\'s own from_ope
   && closeCells[4].startsWith(pctOf(hRef5.mean)) && openCells[4].startsWith(pctOf(hRef5.from_open.mean))
   && hRef5.mean !== hRef5.from_open.mean,
   `close ${closeCells[4]} vs open ${openCells[4]}; ledger ${hRef5.mean} / ${hRef5.from_open.mean}`);
-// Nine surfaces, not five: the per-check, streak-pay, by-month and per-name
-// cards showed returns under no basis at all until round 9.
-const openHints = await page.$$eval('#evidence-hint, #control-hint, #runs-hint, #control-verdict, #evidence-verdict, #predict-hint, #streak-hint, #trend-hint, #ticker-hint', (ps) => ps.map((p) => p.textContent));
+// Eleven surfaces, not five: the per-check, streak-pay, by-month and per-name
+// cards showed returns under no basis at all until round 9, and round 14's
+// canonical-control card added a hint and a verdict that carry returns too --
+// the list was not extended for either, so dropping basisLabel() from the
+// hint left the suite and this check green.
+const BASIS_SURFACES = ['#evidence-hint', '#control-hint', '#runs-hint', '#control-verdict',
+  '#evidence-verdict', '#predict-hint', '#streak-hint', '#trend-hint', '#ticker-hint',
+  '#canon-hint', '#canon-verdict'];
+const openHints = await page.$$eval(BASIS_SURFACES.join(', '), (ps) => ps.map((p) => p.textContent));
 ok('and every heading that carries a return names the basis it is on',
-  openHints.length === 9 &&
+  openHints.length === BASIS_SURFACES.length &&
   openHints.every((t) => /next session.s open/.test(t)) && !openHints.some((t) => /burst-day close/.test(t)),
-  openHints.map((t) => t.slice(0, 60)).join(' | '));
+  `${openHints.length} of ${BASIS_SURFACES.length}: ` + openHints.map((t) => t.slice(0, 40)).join(' | '));
 const openRunIndex = HIST.runs.findIndex((r) => r.forward_returns && r.forward_returns.from_open && r.forward_returns.from_open.d5 !== null);
 const openRun = HIST.runs[openRunIndex];
 // The table lists runs in the file's order, so the row is found by position:
@@ -3058,6 +3128,8 @@ const noise = [...new Set(errors)].filter((e) => !/HTTP 500|the pipeline has not
 if (noise.length) { console.log('\n  the page logged errors:'); for (const e of noise) console.log('      - ' + e); }
 const failed = results.filter((r) => !r.pass).length;
 console.log(`\ndashboard smoke: ${results.length - failed}/${results.length} checks, ${noise.length} page error${noise.length === 1 ? '' : 's'}`
-  + (aborted.length ? ` (${aborted.length} chart request${aborted.length === 1 ? '' : 's'} aborted by navigation, not counted)` : ''));
+  + (aborted.length ? ` (${aborted.length} request${aborted.length === 1 ? '' : 's'} aborted by navigation, not counted: `
+      + [...new Set(aborted.map((u) => (u.split('/').pop() || u).split('?')[0].replace(/^.*\./, '.')))].join(' ')
+      + ')' : ''));
 if (SHOTS) console.log(`screenshots: ${SHOTS}`);
 process.exit(failed || noise.length ? 1 : 0);

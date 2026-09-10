@@ -893,3 +893,39 @@ def test_the_share_floor_is_inclusive_on_both_scans_and_the_drift_is_stated(volu
     assert build({"DOLR": dollar_bar(volume=volume)})["dollar"]["matched"] == expected
     assert build({"SCAN": burst(last_volume=volume,
                                 prior_volume=volume - 10)})["scan"]["matched"] == expected
+
+
+def test_a_dollar_row_production_admitted_anyway_is_counted_rather_than_ruled_out(tmp_path):
+    """The split kept dollar rows out of caught/missed on the argument that
+    production admits only 4% bursts, so it can never have caught one. That
+    holds only while production's admission implies the SIDECAR's own 4%
+    match, and the two read the previous session by different rules -- the
+    scanner's observed_previous_session() over the night's frames against
+    build()'s own prior map. tools/fidelity_report.py already reports
+    production bursts the canonical scan did not match.
+
+    So the premise is counted rather than asserted: the split is unchanged,
+    because the question caught/missed answers is about the 4% scan, and a
+    number says how often the reason for keeping a row out of them did not
+    hold.
+    """
+    run = _sidecar_run("2026-09-08", ["MISS"], [], admitted=["DOLR"])
+    run["stockbee"]["dollar"] = {"matched": 1, "shown": 1, "rules": {}, "rows": [
+        {"ticker": "DOLR", "date": "2026-09-08", "close": 201.0, "prev_close": 200.5,
+         "volume": 200000.0, "prev_volume": 100000.0, "dollar_move": 1.0}]}
+    control = ledger.evidence([run])["stockbee"]
+    assert control["dollar"]["setups"] == 1
+    assert control["dollar"]["admitted_anyway"] == 1, (
+        "production admitted this name, and the record says so rather than ruling it out")
+    assert control["caught"]["setups"] == 0, "and it is still not in the caught column"
+    assert control["missed"]["setups"] == 1
+
+
+def test_a_dollar_row_production_never_saw_is_not_counted_as_admitted():
+    """The inverse, so the count means what it says."""
+    run = _sidecar_run("2026-09-08", ["MISS"], [], admitted=[])
+    run["stockbee"]["dollar"] = {"matched": 1, "shown": 1, "rules": {}, "rows": [
+        {"ticker": "DOLR", "date": "2026-09-08", "close": 201.0, "prev_close": 200.5,
+         "volume": 200000.0, "prev_volume": 100000.0, "dollar_move": 1.0}]}
+    control = ledger.evidence([run])["stockbee"]
+    assert control["dollar"]["setups"] == 1 and control["dollar"]["admitted_anyway"] == 0

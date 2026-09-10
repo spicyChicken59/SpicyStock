@@ -1852,8 +1852,16 @@
     var mag = magnitudeOnBasis(block.magnitude);
     var full = block.magnitude || {};
     return [
-      el('td', { 'class': 'sc-num' }, figure(commas(longest.in_band),
-        longest.n ? 'of ' + plural(longest.n, 'measured setup') : null)),
+      // ONE WAY OF SAYING NOTHING, for two cells that sit three inches apart.
+      // This printed a bare "0" when nothing had been measured -- which a
+      // reader takes for "none of them closed in the band" -- beside a
+      // sibling saying "no full window measured yet" for the very same state.
+      // It is the state every row of docs/ is in on the first scheduled run
+      // after a deploy, and the round that put the two columns side by side
+      // is what made the 0 read as a count.
+      el('td', { 'class': 'sc-num' }, longest.n
+        ? figure(commas(longest.in_band), 'of ' + plural(longest.n, 'measured setup'))
+        : figure('\u2014', 'nothing measured at ' + hzLabel(longest.horizon) + ' yet')),
       el('td', { 'class': 'sc-num' }, mag && typeof mag.n === 'number' && mag.n
         ? figure(commas(mag.reached_band),
             'of ' + plural(mag.n, 'setup') + ' measured over ' +
@@ -1949,7 +1957,16 @@
     note.hidden = !bitten.length;
     if (bitten.length) {
       note.textContent = 'On ' + bitten.map(function (k) {
-        return plural(cut[k], 'session') + ' the ' + k + ' list hit its archive cap';
+        // The ROW LABEL a reader can find in the table above, not the
+        // ledger's own key: this printed "the scan list" and "the
+        // anticipation list" over rows labelled caught, missed and the $
+        // breakouts, so the sentence named a population the table does not
+        // show. `caught` and `missed` are two halves of one archived section,
+        // so the scan's cap is named for both.
+        var labels = { scan: 'caught and missed', dollar: 'the $ breakouts',
+                       anticipation: 'the anticipation list' };
+        return plural(cut[k], 'session') + ' ' + (labels[k] || 'the ' + k + ' list')
+               + ' hit the archive cap';
       }).join(' and ') + ', so those rows are the best-ranked slice of that night’s matches and not all of them.';
     }
   }

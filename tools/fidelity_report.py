@@ -245,7 +245,13 @@ def compare(run: dict) -> dict | None:
 
     return {
         "date": run.get("date"),
-        "universe": (run.get("universe") or {}).get("label"),
+        # A `universe` that is not an object is a shape Ledger._malformed_rows()
+        # REFUSES, so no record this repo writes can hold one -- checked, not
+        # assumed, across seven such shapes. This tool is pointed at a path
+        # though, including a quarantined casualty, and a traceback is a worse
+        # answer than a name it could not read.
+        "universe": (run["universe"].get("label")
+                     if isinstance(run.get("universe"), dict) else None),
         "measured": run.get("measured"),
         "canonical_matched": scan.get("matched"),
         "canonical_listed": len(canonical),
@@ -332,8 +338,17 @@ def main(argv=None) -> int:
     except (OSError, ValueError) as exc:
         print(f"cannot read {args.ledger}: {type(exc).__name__}", file=sys.stderr)
         return 1
+    # Said rather than assumed: this reads a PATH, so it can be handed a
+    # quarantined casualty or a hand-edited file that Ledger.load() would have
+    # set aside. A record whose runs are not a list of objects is not one this
+    # tool can compare, and saying so beats a traceback.
+    runs = book.get("runs") if isinstance(book, dict) else None
+    if not isinstance(runs, list) or any(not isinstance(r, dict) for r in runs):
+        print(f"{args.ledger} does not hold a list of run objects, so there is "
+              "nothing to compare", file=sys.stderr)
+        return 1
 
-    reports = [r for r in (compare(run) for run in book.get("runs") or []) if r]
+    reports = [r for r in (compare(run) for run in runs) if r]
     if not reports:
         print("No run in this ledger carries a stockbee block, so there is nothing to compare.")
         return 0

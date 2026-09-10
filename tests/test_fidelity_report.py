@@ -543,3 +543,28 @@ def test_the_sidecar_volume_window_is_read_off_the_rule_and_not_retyped(monkeypa
     monkeypatch.setattr(stockbee, "MEASUREMENT_RULES", reworded)
     with pytest.raises(ValueError):
         fidelity_report._sidecar_volume_sessions()
+
+
+@pytest.mark.parametrize("book", [
+    {"runs": "not a list"}, {"runs": [1, 2]}, {"runs": [None]}, [], "a string", {"no": "runs"},
+])
+def test_a_file_that_is_not_a_record_is_named_rather_than_traced(book, capsys, tmp_path):
+    """This reads a PATH, so it can be handed a quarantined casualty or a
+    hand-edited file. A traceback is a worse answer than a sentence.
+
+    Recorded with it: an audit lead claimed run shapes that
+    `Ledger._malformed_rows()` loads clean crash this tool. Driven over seven
+    of them -- a string, list or missing `universe`, a string `bursts`, a null
+    `scored`, a string `score_cap` and `measured`, a list `top_score` -- the
+    load check REFUSES every one, so no record this repo writes can hold them
+    and the premise does not hold. What is true is the path, which is this.
+    """
+    path = tmp_path / "ledger.json"
+    path.write_text(json.dumps(book))
+    assert fidelity_report.main(["--ledger", str(path)]) == 1
+    assert "nothing to compare" in capsys.readouterr().err
+
+
+def test_a_run_whose_universe_is_not_an_object_reads_as_unnamed_rather_than_raising():
+    entry = run([canonical_row("AAA")], ["AAA"], universe="a basket")
+    assert fidelity_report.compare(entry)["universe"] is None
