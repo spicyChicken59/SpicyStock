@@ -87,9 +87,21 @@ def _eligible_run(run, through):
         return "dry_run_or_unknown"
     if run.get("type") != "evening" or run.get("status") != "ok":
         return "non_evening_or_degraded"
-    universe = run.get("universe")
-    if not isinstance(universe, dict) or "tickers" in universe:
-        return "named_basket_or_unknown_universe"
+    # One predicate for "a basket named on the command line", shared with the
+    # ledger rather than restated here. The structural test this replaces --
+    # `"tickers" in universe` -- was written when only a --tickers run carried
+    # that key, and the adaptive selector now stamps it on every production
+    # scan beside a `selection` block: on the committed record, the clean
+    # 2026-09-09 scan of 500 names was excluded as a named basket, so no real
+    # night could ever enter a fit. is_named_basket() reads both keys.
+    # Imported here for the same reason setup_chains is, below: ledger
+    # validation imports this module.
+    from src.ledger import is_named_basket
+
+    if not isinstance(run.get("universe"), dict):
+        return "unknown_universe"
+    if is_named_basket(run):
+        return "named_basket"
     if not isinstance(run.get("candidates"), list) or not isinstance(run.get("gated", []), list):
         return "malformed_rows"
     return None
