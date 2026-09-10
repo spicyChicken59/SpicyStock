@@ -18,10 +18,20 @@ Two divergences, and they run in opposite directions, so a single count of
 
   MISSED   a name the canonical scan matched and production did not. Every one
            is a burst Bonde's method would have put in front of a trader.
-  EXTRA    a name production called a burst that fails the canonical scan.
-           On the record these are all names whose volume did NOT exceed the
-           previous session's -- day two or later of a volume event, which is
-           exactly what `volume > previous volume` exists to exclude.
+  EXTRA    a name production called a burst that fails the canonical scan --
+           its volume did NOT exceed the previous session's, which is day two
+           or later of a volume event and exactly what `volume > previous
+           volume` exists to exclude.
+
+An EXTRA is only sayable where the canonical list is complete, or where the
+name's gain is above the gain the archived rows stop at. The row list is
+capped at `stockbee.SCAN_LIMIT` and sorted by gain, so on a night the cap bit
+a production burst that IS a canonical match is simply not in the archived
+rows -- and reporting it as one that fails the scan accuses a name on the
+strength of a row nobody kept. Reproduced on the committed record: every one
+of the five names this report named for 2026-09-08 sits below the 5.70% the
+archived rows stop at, so the cap alone explains all five. They are counted
+apart now and the sentence says the record cannot tell.
 
 A MISSED name is classified by the first production rule that can be shown to
 reject it from the sidecar's own measurements. That classification is
@@ -124,9 +134,25 @@ def compare(run: dict) -> dict | None:
     rows = scan.get("rows")
     if not isinstance(rows, list):
         return None
-    # `shown` truncates the rows at stockbee.SCAN_LIMIT; comparing against a
-    # truncated list would invent misses. Say so rather than reporting a number
-    # the record cannot support.
+    # `shown` truncates the rows at stockbee.SCAN_LIMIT, and the truncation
+    # cuts BOTH directions -- this comment used to reason about one.
+    #
+    # Misses (canonical minus production) are UNDERCOUNTED, which the sentence
+    # has always said. The other direction is worse, because it does not omit
+    # a name, it ACCUSES one: a production burst that IS a canonical match the
+    # cap cut is not in `canonical`, so it lands in `extra` and prints as
+    # "admitted N that fail the canonical scan". Reproduced on the committed
+    # record: on 2026-09-08 the archived rows stop at a 5.70% gain, and all
+    # five accused names -- BG 4.36, DK 5.30, EIX 4.51, RGTI 4.01, TKO 5.01 --
+    # are below it, so the cap alone explains every one of them and the record
+    # cannot tell "not a match" from "a match we did not keep". CLAUDE.md's
+    # round-13 table published those five as a finding about the scan.
+    #
+    # Rows are sorted by (-gain_pct, ticker), so the archived set is the top
+    # `shown` by gain: a name whose gain is STRICTLY ABOVE the smallest
+    # archived gain would have been kept had it matched, and its absence is
+    # therefore real evidence. At or below that gain the record is silent --
+    # equal gains are broken by ticker, so the boundary itself is unsayable.
     truncated = scan.get("matched") != scan.get("shown")
 
     dollar = sidecar.get("dollar") if isinstance(sidecar.get("dollar"), dict) else None
@@ -138,7 +164,22 @@ def compare(run: dict) -> dict | None:
     cfg = scanner.ScanConfig()
 
     missed = sorted(set(canonical) - set(production))
-    extra = sorted(set(production) - set(canonical))
+    # The gain the archived list stops at, and only when it stopped early.
+    cutoff = min((r.get("gain_pct") for r in canonical.values()
+                  if isinstance(r.get("gain_pct"), (int, float))
+                  and not isinstance(r.get("gain_pct"), bool)), default=None) if truncated else None
+    absent = sorted(set(production) - set(canonical))
+    if cutoff is None:
+        extra, unsayable = absent, []
+    else:
+        # A production gain the report cannot read places the name on the
+        # silent side: an accusation needs evidence, and this has none.
+        def above(ticker):
+            gain = (production.get(ticker) or {}).get("gain_pct")
+            return (isinstance(gain, (int, float)) and not isinstance(gain, bool)
+                    and gain > cutoff)
+        extra = [t for t in absent if above(t)]
+        unsayable = [t for t in absent if not above(t)]
     reasons: dict[str, int] = {}
     outcomes: dict[str, list] = {}
     for ticker in missed:
@@ -167,6 +208,11 @@ def compare(run: dict) -> dict | None:
         "missed_returns_by_rule": {k: sorted(v) for k, v in outcomes.items()},
         "kept_returns": sorted(kept_returns),
         "extra": extra,
+        # Production bursts absent from a truncated canonical list whose gain
+        # sits at or below the cap's cutoff: the record cannot say whether the
+        # canonical scan matched them, and it must not print that it did not.
+        "extra_unsayable": unsayable,
+        "canonical_cutoff_gain_pct": cutoff,
         "scored": run.get("scored"),
         "score_cap": run.get("score_cap"),
         "top_score": run.get("top_score"),
@@ -260,10 +306,13 @@ def main(argv=None) -> int:
             continue
         kept = 100.0 * r["overlap"] / r["canonical_listed"]
         print(f"  {r['date']}  universe {r['measured']} names")
-        note = " (rows truncated; misses undercounted)" if r["canonical_truncated"] else ""
+        note = (" (rows truncated at the cap; misses undercounted and the overlap a floor)"
+                if r["canonical_truncated"] else "")
+        of_what = ("of the %d archived" % r["canonical_listed"]
+                   if r["canonical_truncated"] else "of the canonical list")
         print(f"    canonical scan matched {r['canonical_matched']}{note}; "
               f"production called {r['production_bursts']} a burst; {r['overlap']} in both "
-              f"({kept:.0f}% of the canonical list kept)")
+              f"({kept:.0f}% {of_what} kept)")
         if r["missed"]:
             by = ", ".join(f"{k} {v}" for k, v in sorted(r["missed_by_rule"].items()))
             print(f"    missed {len(r['missed'])}: {by}")
@@ -271,6 +320,13 @@ def main(argv=None) -> int:
         if r["extra"]:
             print(f"    admitted {len(r['extra'])} that fail the canonical scan "
                   f"(volume did not exceed the previous session): {' '.join(r['extra'])}")
+        if r["extra_unsayable"]:
+            # Not an accusation and not a clearance: the cap cut the canonical
+            # list above these names' gain, so the record holds no row that
+            # could match them either way.
+            print(f"    cannot say for {len(r['extra_unsayable'])} more: their gain is at or below "
+                  f"the {r['canonical_cutoff_gain_pct']:.2f}% the archived rows stop at, so the cap "
+                  f"could have cut a match: {' '.join(r['extra_unsayable'])}")
         if r["dollar_listed"]:
             note = "" if r["dollar_matched"] == r["dollar_listed"] else " (rows truncated)"
             print(f"    $ breakout matched {r['dollar_matched']}{note} that the 4% scan did not, "

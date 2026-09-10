@@ -53,12 +53,30 @@ def _source(row):
 
 
 def _signature(run):
+    """Which screener produced this run's rows, for the purpose of fitting them.
+
+    The PRODUCTION half of the fingerprint only. This fit reads a row's score,
+    volume ratio and checklist passes and labels it with the open-basis d5;
+    the research sidecar supplies none of the four, so a constant moved there
+    must not split the corpus. Reproduced before it was narrowed: moving one
+    sidecar constant took a twelve-setup fit to one, every excluded run's own
+    score and outcome unchanged. src.pipeline.production_rules() is the one
+    rule, and evidence.rules deliberately keeps reading every key, because
+    the question it asks is the wider one.
+
+    Imported here for the reason is_named_basket() is, below: src.ledger
+    imports this module, so the edge is taken at call time rather than at
+    import time.
+    """
+    from src.pipeline import production_rules
+
     rules, model = run.get("rules"), run.get("model")
     if (not isinstance(rules, dict) or not isinstance(model, str) or not model
             or not isinstance(rules.get("score.prompt"), str) or not rules["score.prompt"]):
         return None
     try:
-        serialized = json.dumps({"model": model, "rules": rules}, sort_keys=True,
+        serialized = json.dumps({"model": model, "rules": production_rules(rules)},
+                                sort_keys=True,
                                 allow_nan=False, separators=(",", ":"))
     except (TypeError, ValueError):
         return None
@@ -262,7 +280,7 @@ def build(runs, current_run, current_candidates=None):
     out = {
         "version": VERSION, "as_of": through.isoformat(), "status": "collecting", "mode": "shadow_only",
         "reason": "Collecting dated outcomes before a model can be evaluated.",
-        "scope": "Real, successful evening Claude-scored setups under the current model and rules; one observation per setup.",
+        "scope": "Real, successful evening Claude-scored setups under the current model and the production rules that made them; research-only measurements archived beside a row do not split the sample; one observation per setup.",
         "target": {"horizon": 5, "basis": "next_session_open_to_fifth_session_close",
                    "round_trip_cost_bps": ROUND_TRIP_COST_BPS, "returns": "hypothetical"},
         "requirements": {"train_setups": MIN_TRAIN, "validation_setups": MIN_VALIDATION,

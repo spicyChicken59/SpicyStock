@@ -147,7 +147,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1793 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1809 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -299,11 +299,79 @@ the section caps five nights of rows is at most 5 x 105 sidecar names plus
 the picks -- up to six batches of 100 a night in the worst case, which README
 says beside the measurement now.
 
-The ledger's projected year went 27.89 -> 28.11 MB raw and 3.23 -> 3.27
+The ledger's projected year went 27.89 -> 28.12 MB raw and 3.23 -> 3.27
 gzipped (the pending block on every sidecar row, the scan rules and ten
 fingerprint keys on every entry), swept in README and both page comments.
 Thirty-two mutants, thirty killed on the first pass, both survivors holes in
 the tests and closed; 270 smoke checks over 48 variants, no page errors.
+
+### The same class one module over, introduced by the commit that closed it
+
+The standing rule fired on my own work. Putting the sidecar's constants into
+`rules_fingerprint()` is right for `evidence.rules`, and `src.learning`
+hashes the WHOLE block to ask a narrower question -- were these rows produced
+by the same screener? -- before fitting score, volume ratio and checklist
+passes against the open-basis d5. The sidecar supplies none of those four, so
+a constant moved there discarded a training set for a number the fit never
+reads: driven with one name per session over sixteen sessions, moving
+`stockbee.min_share_volume` alone took the fit from twelve eligible setups to
+one, the other twelve counted under `different_or_unknown_rules`, every
+excluded run's own score and outcome untouched. That is a record judged
+against numbers that did not produce it, which is precisely what the sidecar
+validator was fixed for in the commit before.
+
+`production_rules()` is the split and `PRODUCTION_PREFIXES` /
+`RESEARCH_PREFIXES` the classification, the two-list-and-a-guard shape
+`ScanConfig` and `src.stockbee` already keep. Two guards, because the first
+one I wrote could not fail the way its own docstring claimed: rebuilding the
+research keys from the sources the fingerprint walks catches a key that
+should have been research and was not REMOVED, and catches nothing at all
+about a NEW family, which would default to production and split the corpus
+silently. A safe default is still a default. The second guard asserts every
+key the fingerprint emits matches exactly one prefix across the two tuples,
+so a family added later is red until someone classifies it. Twelve mutants,
+all twelve killed, including the new-family one.
+
+### Two findings from the audit lenses, and thirteen that are leads
+
+Five lenses over the merged commit; fifteen of the twenty-three agents died
+on a model usage limit mid-run, which is the 3.1 artefact again -- a dead
+refuter returns null and the summary reads it as "refuted". Two findings got
+real refuters and both came back reproduced by execution; the other thirteen
+are unchecked either way and are LEADS, not refutations. Both confirmed ones
+were reproduced HERE before they were touched.
+
+**The report accused five named companies on the strength of rows nobody
+kept.** `tools/fidelity_report.py`'s own comment reasoned about the cap in one
+direction -- a truncated canonical list UNDERCOUNTS misses, which the sentence
+already said -- and the other direction does not omit a name, it accuses one:
+a production burst that IS a canonical match the cap cut is absent from the
+archived rows and printed as "admitted N that fail the canonical scan". On
+2026-09-08 the archive stops at a 5.70% gain and BG 4.36, DK 5.30, EIX 4.51,
+RGTI 4.01 and TKO 5.01 are every one of them below it, so the cap alone
+explains all five. Those five are the round-13 table's last cell and a
+sentence naming them, published for two rounds; both are retracted in place
+above. The rows are sorted by gain, so a name STRICTLY above the cutoff would
+have been kept had it matched and its absence is real evidence; at or below
+it -- and on the boundary, where ties break by ticker -- the record is
+silent, and the report says "cannot say for N more" instead. Seven mutants,
+all killed.
+
+**The $ breakout section silently took rows out of the anticipation
+population.** `build()` tests `_dollar_breakout()` before `_anticipates()`, so
+a name satisfying both is filed under `dollar` alone -- and that is not a
+corner, it is the cohort the $ scan exists for, where an absolute move is
+small in percent. Reproduced on a frame that is genuinely both: a $200 name
+with a compressed six-session shelf, gapping down $1.20 and closing +0.5%,
+passes both predicates. The history fixture moved 200 anticipation rows to
+191 the day that landed and nothing recorded it. RECORDED rather than
+changed, which is the decision: `ANTICIPATION_RULES` declares
+`excludes_current_dollar_matches` now, so a record written before it is
+absent the key and a reader can tell the two definitions apart, and
+`DISJOINT_DECLARATIONS` holds an archived row to the declaration ITS OWN
+record made -- checkable even though the anticipation predicate itself is not,
+since the row carries the open, close and volume the $ scan reads. Five
+mutants, all killed.
 
 ## Round 14 — the second scan, the control, and what the outside evidence says
 
@@ -638,12 +706,28 @@ ever compared the two lists. `tools/fidelity_report.py` does, offline, from
 | session | canonical | production | in both | admitted that fail his scan |
 |---|---|---|---|---|
 | 2026-09-09 | 20 | 11 | 11 (55%) | 0 |
-| 2026-09-08 | 70 | 15 | 10 (21%) | 5 |
+| 2026-09-08 | 70 | 15 | 10 (of the 40 archived) | ~~5~~ retracted, see below |
 
-Both directions, and a single count hides both. The five it admitted on the
+**The last cell of the second row is retracted, and the post-merge audit of
+round 14 is what retracted it.** That night's canonical list was capped at 40
+of 70 matches, and the report read a production burst's absence from the
+archived 40 as evidence it failed the canonical scan. Every one of the five
+names below sits under the 5.70% gain the archived rows stop at, so the cap
+alone explains all five and the record cannot tell "not a match" from "a match
+we did not keep". The kept percentage moved with it, since the overlap is
+computed over the 40 archived rows and the sentence read as though over 70.
+The 2026-09-09 row is untouched: 20 matches under a cap of 40 is a complete
+list, and its zero is real.
+
+~~Both directions, and a single count hides both. The five it admitted on the
 8th — BG, DK, EIX, RGTI, TKO — have volume above their trailing average and
 **not** above the previous session, which is day two of a volume event and
-exactly what `volume > previous volume` exists to exclude. Of the 30 it
+exactly what `volume > previous volume` exists to exclude.~~ Retracted in
+place rather than deleted, because the sentence is the finding: it is a claim
+about five named companies assembled out of rows nobody kept, and it was
+published here for two rounds. Whether those five really fail the canonical
+scan is UNKNOWN from the record, and stays unknown until a night archives its
+whole list. Of the 30 it
 missed, 22 are under 1.5x on any window; the other 8 pass on the sidecar's 20
 sessions and fail on production's 50, so the report keeps `rvol_threshold` and
 `rvol_window` apart rather than merging two different facts about one rule.

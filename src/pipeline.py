@@ -230,6 +230,60 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
     return dict(sorted(out.items()))
 
 
+#: Which fingerprint key families describe what PRODUCED a row, and which are
+#: archived BESIDE it. The sidecar runs Bonde's own scans over the same frames
+#: and selects, scores and gates nothing: its numbers belong IN the
+#: fingerprint, because evidence.stockbee averages those rows across runs and a
+#: moved threshold there is a second scan under one label -- and they must not
+#: reach a consumer asking the narrower question "were these ROWS produced by
+#: the same screener?".
+#:
+#: TWO LISTS AND A GUARD, the shape ScanConfig's STRATEGY_FIELDS and
+#: src.stockbee's STRATEGY_CONSTANTS already keep, for the reason those keep
+#: it: a family added later must not arrive unclassified and take a default in
+#: silence. A test asserts every key rules_fingerprint() emits matches exactly
+#: one prefix across the two tuples, so a new family is red until someone says
+#: which it is. Defaulting the unknown to production would be the safe
+#: direction -- it discards training data rather than mixing a fit -- and a
+#: silent safe default is still how a corpus gets thrown away for a year
+#: before anyone asks why.
+PRODUCTION_PREFIXES = ("scan.", "check.", "window.", "gate.", "score.")
+RESEARCH_PREFIXES = ("stockbee.",)
+
+
+def production_rules(rules: dict) -> dict:
+    """The fingerprint keys that describe what PRODUCED a row.
+
+    Two different questions are asked of one block and only one of them wants
+    every key. `evidence.rules` asks "does this record span more than one
+    screener?" and must see all of them, since the sidecar's own populations
+    are averaged across runs. src.learning asks "were these rows produced by
+    the same screener?" before fitting score, volume ratio and checklist
+    passes against the open-basis d5 -- and the sidecar supplies none of those
+    four, so hashing its constants there discards a training set for a number
+    the fit never reads.
+
+    Reproduced before it was split, by execution: with one name per session
+    over sixteen sessions, moving `stockbee.min_share_volume` alone -- and
+    nothing else, on runs whose every score, volume and outcome was
+    unchanged -- took the fit from twelve eligible setups to one, the other
+    twelve counted under `different_or_unknown_rules`. That is a record
+    judged against numbers that did not produce it, which is the class the
+    sidecar's own validator was fixed for in the same round; this is that
+    class one module over, introduced by the commit that fixed it.
+
+    PREFIXES rather than a key list, because the keys themselves are derived
+    and a hand-kept copy of a derived set is how this project has repeatedly
+    found one surface checking a level another does not. Two guards hold it:
+    one rebuilds the research keys from the sources rules_fingerprint() walks
+    for them and asserts this removes exactly those, and one asserts every key
+    the fingerprint emits matches exactly one prefix across the two tuples, so
+    a family added later is red until it is classified.
+    """
+    return {name: value for name, value in rules.items()
+            if not name.startswith(RESEARCH_PREFIXES)}
+
+
 def unscored_reason(lynch: dict) -> str:
     """Why this burst was not scored — the veto first, because it is absolute.
 

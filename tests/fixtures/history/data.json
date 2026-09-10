@@ -6900,7 +6900,8 @@
           "max_abs_day_change_pct": 1,
           "max_compression_ratio": 0.75,
           "min_contiguous_sessions": 67,
-          "excludes_current_4pct_scan_matches": true
+          "excludes_current_4pct_scan_matches": true,
+          "excludes_current_dollar_matches": true
         }
       },
       "breadth": {

@@ -283,3 +283,108 @@ def test_the_section_prints_even_when_nothing_is_measured_yet(capsys):
     assert "What each cut went on to do" in out
     assert "kept by production     nothing measured yet" in out
     assert "rvol_threshold         nothing measured yet" in out
+
+
+# ---------------------------------------------------------------------------
+# The post-merge audit of round 14: the cap cuts BOTH directions, and one of
+# them accuses a name rather than omitting it.
+
+def _truncated(archived_gains, production, *, matched=99):
+    """A night whose canonical list stopped at the cap.
+
+    `archived_gains` are the gains of the rows that WERE kept, `production` is
+    {ticker: gain} for the bursts production found. Every production name here
+    is absent from the canonical rows, which is the state the report has to
+    read: on a truncated night that absence has two possible causes and the
+    record cannot always tell them apart.
+    """
+    rows = [canonical_row("K%02d" % i, gain_pct=g) for i, g in enumerate(archived_gains)]
+    entry = run(rows, [], matched=matched)
+    entry["candidates"] = [{"ticker": t, "gain_pct": g} for t, g in production.items()]
+    entry["bursts"] = len(production)
+    return entry
+
+
+def test_a_production_burst_below_the_caps_cutoff_is_not_accused_of_failing_the_scan():
+    """Reproduced on the committed record before this was split: on 2026-09-08
+    the archived rows stop at a 5.70% gain and all five names the report named
+    as "admitted ... that fail the canonical scan" are below it, so the cap
+    alone explains every one of them.
+
+    The rows are sorted by gain and cut at stockbee.SCAN_LIMIT, so a canonical
+    match under the cutoff is simply not in the file. The report was reading
+    that absence as evidence, which is an accusation built on a row nobody
+    kept -- and CLAUDE.md published those five names as a finding about the
+    scan.
+    """
+    report = fidelity_report.compare(_truncated([9.0, 8.0, 7.0], {"LOW": 4.5}))
+    assert report["canonical_truncated"] is True
+    assert report["canonical_cutoff_gain_pct"] == 7.0
+    assert report["extra"] == [], "the record cannot say this name fails the scan"
+    assert report["extra_unsayable"] == ["LOW"]
+
+
+def test_a_production_burst_above_the_cutoff_is_still_reported_as_extra():
+    """The check is narrowed, not deleted. Above the gain the archived rows
+    stop at, a canonical match WOULD have been kept, so its absence is real
+    evidence and the report still says so."""
+    report = fidelity_report.compare(_truncated([9.0, 8.0, 7.0], {"HIGH": 12.0}))
+    assert report["extra"] == ["HIGH"]
+    assert report["extra_unsayable"] == []
+
+
+def test_the_boundary_gain_itself_is_unsayable():
+    """Equal gains are broken by ticker, so a name ON the cutoff could have
+    been the one the cap dropped. The comparison is strictly-above."""
+    report = fidelity_report.compare(_truncated([9.0, 8.0, 7.0], {"EDGE": 7.0}))
+    assert report["extra"] == [] and report["extra_unsayable"] == ["EDGE"]
+
+
+def test_a_production_burst_whose_gain_cannot_be_read_is_not_accused():
+    """An accusation needs evidence and this has none, so the silent side is
+    where a name with no readable gain goes."""
+    entry = _truncated([9.0, 8.0, 7.0], {"AAA": 12.0})
+    entry["candidates"] = [{"ticker": "AAA"}, {"ticker": "BBB", "gain_pct": "8"}]
+    report = fidelity_report.compare(entry)
+    assert report["extra"] == []
+    assert report["extra_unsayable"] == ["AAA", "BBB"]
+
+
+def test_an_untruncated_night_accuses_exactly_as_before():
+    """The narrowing applies only where the cap bit. A complete canonical list
+    is evidence about every name in the universe, so nothing moves."""
+    rows = [canonical_row("KEPT", gain_pct=9.0)]
+    entry = run(rows, [])
+    entry["candidates"] = [{"ticker": "KEPT", "gain_pct": 9.0}, {"ticker": "EXTRA", "gain_pct": 4.1}]
+    entry["bursts"] = 2
+    report = fidelity_report.compare(entry)
+    assert report["canonical_truncated"] is False
+    assert report["canonical_cutoff_gain_pct"] is None
+    assert report["extra"] == ["EXTRA"], "a complete list can still accuse a low-gain name"
+    assert report["extra_unsayable"] == []
+
+
+def test_the_committed_records_own_accused_names_are_all_below_its_cutoff(capsys):
+    """The reproduction itself, kept as a test so the retraction cannot drift.
+
+    This reads the repository's own docs/ledger.json rather than a fixture,
+    because what is being pinned is a fact about the published record: the
+    2026-09-08 run archived 40 of 70 matches, and the five names the report
+    used to accuse are every one of them under the gain the archive stops at.
+    """
+    import pathlib
+
+    book = json.loads((pathlib.Path(__file__).resolve().parent.parent
+                       / "docs" / "ledger.json").read_text())
+    entry = next((r for r in book.get("runs", []) if r.get("date") == "2026-09-08"), None)
+    if entry is None or not isinstance(entry.get("stockbee"), dict):
+        pytest.skip("the committed record no longer carries that run")
+    report = fidelity_report.compare(entry)
+    assert report["canonical_truncated"] is True, "precondition: the cap bit that night"
+    assert set(report["extra_unsayable"]) >= {"BG", "DK", "EIX", "RGTI", "TKO"}
+    assert report["extra"] == [], "none of them is sayable from this record"
+
+    assert fidelity_report.main([]) == 0
+    printed = capsys.readouterr().out
+    assert "admitted" not in printed.split("2026-09-08")[1].split("scored")[0]
+    assert "cannot say for 5 more" in printed

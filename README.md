@@ -50,8 +50,16 @@ ID and is never automatically resubmitted. See
 [market-data entitlements](https://docs.alpaca.markets/us/docs/market-data-faq).
 
 **Learning without retrospective leakage:** publication rebuilds `data.learning`
-from successful real evening Claude-scored setups under one model/rules
-fingerprint. `forward_returns.observed_at` records the actual New York calendar
+from successful real evening Claude-scored setups under one model and one
+PRODUCTION rules fingerprint. The research sidecar's own constants are in the
+fingerprint — `evidence.rules` has to see them, since `evidence.stockbee`
+averages those rows across runs — and are held out of this signature, because
+the fit reads a row's score, volume ratio and checklist passes and labels it
+with the open-basis d5 and the sidecar supplies none of the four. Measured
+before it was split: moving one sidecar constant took a twelve-setup fit to
+one. `src.pipeline.production_rules()` is the one rule, and two guards hold
+its classification, so a key family added later cannot take a default in
+silence. `forward_returns.observed_at` records the actual New York calendar
 date when the next-open five-session outcome first becomes known. It is never
 backdated to the target bar or added retrospectively to legacy outcomes. Dry
 runs do not stamp learning dates. A ridge calibration uses score, relative
@@ -678,7 +686,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1793 tests, no network or API keys needed
+pytest tests/                   # 1809 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -737,7 +745,7 @@ workflow from preparation to recorded trade review:
 | --- | --- |
 | Published 4% scan | Close / previous close ≥1.04, volume > previous volume, and volume ≥100,000. This queue is measured before the stricter scoring filters, so a matching name can appear without an AI score. At most 40 records are saved; the full match count remains visible. |
 | Published $ breakout | Stockbee's OTHER daily scan, and the one his own words point at a universe like this one: close − open ≥ $0.90 (the day's body, so the overnight gap is excluded) and volume ≥100,000, with no volume-versus-previous term and no price floor. He built it because high-priced names "do not often breakout with 4% move". Disjoint from the 4% scan, so a name both matched is archived once, under the 4% scan. At most 40 records are saved. The body is rounded to cents once, and the rule compares the same number the record shows. |
-| Anticipation queue | A separate SpicyStock proxy: price ≥$3, prior three sessions each at least 100k shares, MA7/MA65 ≥1.05, current move within ±1%, and latest-seven average normalized range / preceding-60 average ≤0.75. Requires 67 contiguous sessions and excludes current 4% scan matches. At most 25 records are saved. |
+| Anticipation queue | A separate SpicyStock proxy: price ≥$3, prior three sessions each at least 100k shares, MA7/MA65 ≥1.05, current move within ±1%, and latest-seven average normalized range / preceding-60 average ≤0.75. Requires 67 contiguous sessions and excludes both current 4% scan matches and current $ breakouts, which the section's archived rules declare and the validator holds a row to. At most 25 records are saved. |
 | Universe pulse | Ten dated observations of qualifying 4% advances and declines within the scanned basket. Both directions use the same volume rules. Five- and ten-session ratios divide summed advances by summed declines; insufficient coverage or a zero denominator produces no ratio. This is explicitly a curated subset, not Stockbee's whole-market Market Monitor. |
 | Setup inspector | Saved daily candles and volume, exact bar values, and the original qualitative 2LYNCH questions. Measurements support chart review; they do not claim to reproduce a discretionary six-point Stockbee score. |
 | Risk planner | User-entered capital, risk percentage, entry, initial stop and optional cash cap determine whole shares. It caps both planned risk and cash commitment, shows 1R/2R distance landmarks, and copies a plan into an unsaved paper-journal draft. Dated chart prices require an explicit action to use them. |
@@ -985,7 +993,7 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 28.11 MB raw
+and what followed — needs the whole record, which projects to about 28.12 MB raw
 and **3.27 MB gzipped** after a full year in the normalized history fixture. Actual payload size varies with numeric precision and optional metadata. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.

@@ -81,6 +81,16 @@ FIELDS = ("open", "high", "low", "close", "volume")
 #: one that ran.
 RULE_NUMBERS = {"scan": ("min_gain_ratio", "min_volume"),
                 "dollar": ("min_dollar_move", "min_volume")}
+#: Sections whose rows a record declares disjoint from another section, and
+#: from which. problem() holds an archived row to the declaration ITS OWN
+#: record made -- never to today's chain -- for the reason the scan's rules
+#: are read that way. Anticipation's own predicate cannot be re-derived from
+#: an archived row (it reads the prior three sessions' volume and 67 sessions
+#: of range off a series the ledger drops), but the section it is declared
+#: disjoint FROM can be, so the declaration is checkable even where the
+#: predicate is not.
+DISJOINT_DECLARATIONS = {"anticipation": [("excludes_current_dollar_matches", "dollar"),
+                                          ("excludes_current_4pct_scan_matches", "scan")]}
 #: What the scan section's rows were selected BY, archived with them. The
 #: validator reads a row against these -- the numbers its own record carries
 #: -- and never against the module's constants, because a record checked
@@ -116,6 +126,17 @@ ANTICIPATION_RULES = {
     "max_compression_ratio": 0.75,
     "min_contiguous_sessions": 67,
     "excludes_current_4pct_scan_matches": True,
+    # AND the $ breakout, since round 14 put that section ahead of this one in
+    # build()'s chain. It is a real exclusion and not a tidy-up: a high-priced
+    # name can gap down and close inside the +-1% band on a $0.90 body, which
+    # satisfies both predicates, and that is exactly the cohort the $ scan was
+    # built for. Reproduced rather than argued -- a 6-session tight shelf on a
+    # $200 name, gapping down $1.20 and closing +0.5%, passes _anticipates()
+    # and _dollar_breakout() together and build() files it under `dollar`
+    # alone. The section moved 200 rows to 191 on the history fixture the day
+    # that landed and nothing said so; a record written before this key is
+    # absent it, which is how a reader tells the two definitions apart.
+    "excludes_current_dollar_matches": True,
 }
 #: Bonde's OWN qualifying checklist, letter by letter, as five independent
 #: sources render it -- his 27 Sep 2024 thread, contemporaneous bootcamp notes
@@ -690,6 +711,21 @@ def problem(block, *, session=None, archived=False) -> str | None:
                     values, previous, min_ratio=scan_rules["min_gain_ratio"],
                     min_volume=scan_rules["min_volume"]):
                 return "stockbee.dollar row is a match of the 4% scan its record archived"
+            # And the declarations a section makes about what it excludes. A
+            # record that says its anticipation rows hold no $ breakout is
+            # held to that; one that never said it is not re-derived at all.
+            for flag, other in DISJOINT_DECLARATIONS.get(key, []):
+                rules = section.get("rules")
+                if not isinstance(rules, dict) or rules.get(flag) is not True:
+                    continue
+                if other == "dollar" and dollar_rules and _dollar_breakout(
+                        values, min_move=dollar_rules["min_dollar_move"],
+                        min_volume=dollar_rules["min_volume"]):
+                    return f"stockbee.{key} row is a $ breakout its record declared excluded"
+                if other == "scan" and scan_rules and _scan(
+                        values, previous, min_ratio=scan_rules["min_gain_ratio"],
+                        min_volume=scan_rules["min_volume"]):
+                    return f"stockbee.{key} row is a 4% match its record declared excluded"
             series = row.get("series")
             if series is None and archived:
                 continue

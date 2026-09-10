@@ -792,3 +792,90 @@ def test_the_measurement_rule_sentences_do_not_spell_the_constants_a_second_time
     assert str(stockbee.SCAN_GAIN_RATIO) in rendered["scan"] and str(stockbee.MIN_SHARE_VOLUME) in rendered["scan"]
     assert f"{stockbee.DOLLAR_BREAKOUT_MOVE:.2f}" in rendered["dollar"]
     assert str(stockbee.SCAN_DROP_RATIO) in rendered["breadth"]
+
+
+def both_bar():
+    """A frame that satisfies the $ breakout AND the anticipation proxy.
+
+    High-priced, a genuinely compressed six-session shelf, and a session that
+    gaps DOWN and closes +0.5% on a $1.20 body: quiet close to close, which
+    is what anticipation looks for, on an absolute move that is what the $
+    scan looks for. That combination is not a corner -- it is the cohort
+    Bonde built the $ scan for, where an absolute move is small in percent.
+    """
+    n = 80
+    index = pd.bdate_range(end="2026-08-28", periods=n)
+    closes = [100 * (1.006 ** i) for i in range(n - 7)]
+    closes += [closes[-1]] * 6
+    closes.append(closes[-1] * 1.005)
+    opens = list(closes)
+    opens[-1] = closes[-1] - 1.20
+    highs, lows = [], []
+    for i, close in enumerate(closes):
+        width = 0.0008 if i >= n - 7 else 0.020
+        highs.append(close * (1 + width))
+        lows.append(close * (1 - width))
+    highs[-1] = max(highs[-1], closes[-1], opens[-1])
+    lows[-1] = min(lows[-1], opens[-1])
+    return pd.DataFrame({"open": opens, "high": highs, "low": lows, "close": closes,
+                         "volume": [400000.0] * n}, index=index, dtype=float)
+
+
+def test_the_dollar_section_takes_precedence_over_anticipation_and_the_record_says_so():
+    """Round 14 put `elif _dollar_breakout` ahead of `elif _anticipates`, so a
+    name satisfying both left the anticipation population -- 200 rows to 191
+    on the history fixture -- and nothing recorded the exclusion. The
+    precedence is pinned here on a frame that is genuinely both, and the
+    section's own archived rules now declare it, so a reader can tell a record
+    written under one definition from one written under the other."""
+    frame = both_bar()
+    history = [bar for bar in stockbee._bars(frame, date(2026, 8, 28)).values() if bar]
+    row = stockbee._row("BOTH", history)
+    assert stockbee._dollar_breakout(history[-1]), "precondition: it is a $ breakout"
+    assert stockbee._anticipates(row, history), "precondition: it is an anticipation candidate"
+
+    data = build({"BOTH": frame})
+    assert data["dollar"]["matched"] == 1
+    assert data["anticipation"]["matched"] == 0, "the $ section takes it"
+    assert data["anticipation"]["rules"]["excludes_current_dollar_matches"] is True
+    assert stockbee.problem(data, session="2026-08-28") is None
+
+
+def test_an_anticipation_row_that_is_a_dollar_breakout_is_refused_by_its_own_declaration():
+    """The declaration is checkable even though the anticipation predicate is
+    not: the row carries the open, close and volume the $ scan reads, so a
+    hand-edited record cannot move a row into the section its own rules say
+    excludes it."""
+    data = build({"BOTH": both_bar(), "DOLR": dollar_bar()})
+    moved = deepcopy(data)
+    moved["anticipation"]["rows"] = [deepcopy(data["dollar"]["rows"][0])]
+    moved["anticipation"]["shown"] = moved["anticipation"]["matched"] = 1
+    assert stockbee.problem(moved, session="2026-08-28") == (
+        "stockbee.anticipation row is a $ breakout its record declared excluded")
+
+
+def test_a_record_that_never_declared_the_exclusion_is_not_re_derived():
+    """A record written before the $ section existed says nothing about it,
+    and a rule the record did not archive is not one the validator can know --
+    the same reading the scan's own rules get."""
+    data = build({"BOTH": both_bar(), "DOLR": dollar_bar()})
+    older = deepcopy(data)
+    older["anticipation"]["rows"] = [deepcopy(data["dollar"]["rows"][0])]
+    older["anticipation"]["shown"] = older["anticipation"]["matched"] = 1
+    del older["anticipation"]["rules"]["excludes_current_dollar_matches"]
+    assert stockbee.problem(older, session="2026-08-28") is None
+
+
+def test_the_declaration_is_read_off_the_record_and_not_off_todays_chain(monkeypatch):
+    """Held to the numbers the record archived, like every other re-derivation
+    in this validator: a $0.90 body is a breakout under the record's own rules
+    whatever the module's constant says tonight."""
+    data = build({"BOTH": both_bar(), "DOLR": dollar_bar()})
+    moved = deepcopy(data)
+    moved["anticipation"]["rows"] = [deepcopy(data["dollar"]["rows"][0])]
+    moved["anticipation"]["shown"] = moved["anticipation"]["matched"] = 1
+    monkeypatch.setattr(stockbee, "DOLLAR_BREAKOUT_MOVE", 50.0)
+    assert not stockbee._dollar_breakout(_values(moved["anticipation"]["rows"][0])[0]), (
+        "precondition: tonight's constant would not call it a breakout")
+    assert stockbee.problem(moved, session="2026-08-28") == (
+        "stockbee.anticipation row is a $ breakout its record declared excluded")
