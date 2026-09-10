@@ -119,3 +119,80 @@ def test_the_report_runs_against_this_repos_own_committed_record(capsys):
     book = json.loads((fidelity_report.LEDGER).read_text())
     if any(isinstance(r.get("stockbee"), dict) for r in book.get("runs") or []):
         assert "in both" in out
+
+
+# ---------------------------------------------------------------------------
+# The call budget. On this record the cap has never bound while the scan it
+# feeds was dropping the setups the method is named for, so the report says
+# which of the two the record shows rather than leaving a reader to subtract.
+# ---------------------------------------------------------------------------
+
+def test_the_unspent_calls_are_the_cap_less_what_was_spent():
+    report = fidelity_report.compare(run([canonical_row("AAA")], ["AAA"], scored=6, score_cap=25))
+    assert report["unspent_calls"] == 19
+
+
+@pytest.mark.parametrize("over", [
+    {"score_cap": None}, {"scored": None}, {"score_cap": "25"}, {"scored": True},
+])
+def test_a_run_that_does_not_say_what_its_budget_was_reports_no_unspent_calls(over):
+    """None, not zero. A run entry from before the field existed says nothing
+    about the budget, and folding that into the total as "nothing unspent"
+    would put a fact in the report the record does not hold."""
+    report = fidelity_report.compare(run([canonical_row("AAA")], ["AAA"], **over))
+    assert report["unspent_calls"] is None
+
+
+def test_a_budget_that_bound_is_reported_as_the_live_question_it_is(capsys):
+    """The opposite verdict, on the only record that can produce it — because
+    a report that only ever prints one of its two sentences cannot be shown
+    to choose between them."""
+    entry = run([canonical_row("AAA")], ["AAA"], scored=25, score_cap=25)
+    book = {"runs": [entry]}
+    path = pytest.importorskip("pathlib").Path
+    import tempfile
+    tmp = path(tempfile.mkdtemp()) / "ledger.json"
+    tmp.write_text(json.dumps(book))
+    assert fidelity_report.main(["--ledger", str(tmp)]) == 0
+    out = capsys.readouterr().out
+    assert "0 unspent" in out
+    assert "ranking what to spend it on is a live question" in out
+    assert "not a budget that is too small" not in out
+
+
+def test_an_idle_budget_says_the_funnel_is_the_constraint(capsys):
+    entry = run([canonical_row("AAA"), canonical_row("BBB")], ["AAA"], scored=1, score_cap=25)
+    import tempfile
+    from pathlib import Path
+    tmp = Path(tempfile.mkdtemp()) / "ledger.json"
+    tmp.write_text(json.dumps({"runs": [entry]}))
+    assert fidelity_report.main(["--ledger", str(tmp)]) == 0
+    out = capsys.readouterr().out
+    assert "1 of 25 allowed, 24 unspent" in out
+    assert "1 canonical 4% match(es)" in out
+    assert "not a budget that is too small" in out
+
+
+def test_the_dollar_breakouts_are_reported_and_none_of_them_was_scored(capsys):
+    """Every $ breakout row is by construction a name production never
+    scored: the sections are disjoint and production admits only 4% bursts.
+    Reported so the idle-budget sentence counts them."""
+    entry = run([canonical_row("AAA")], ["AAA"], scored=1, score_cap=25)
+    entry["stockbee"]["dollar"] = {"matched": 2, "shown": 2, "rules": {}, "rows": [
+        {"ticker": "HIGH", "date": "2026-09-09", "dollar_move": 1.4},
+        {"ticker": "PRICY", "date": "2026-09-09", "dollar_move": 0.95}]}
+    report = fidelity_report.compare(entry)
+    assert report["dollar_listed"] == 2 and report["dollar_names"] == ["HIGH", "PRICY"]
+    import tempfile
+    from pathlib import Path
+    tmp = Path(tempfile.mkdtemp()) / "ledger.json"
+    tmp.write_text(json.dumps({"runs": [entry]}))
+    fidelity_report.main(["--ledger", str(tmp)])
+    out = capsys.readouterr().out
+    assert "$ breakout matched 2 that the 4% scan did not, none of them scored" in out
+    assert "and 2 $ breakout(s) went unscored" in out
+
+
+def test_a_record_from_before_the_dollar_scan_reports_none_rather_than_guessing():
+    report = fidelity_report.compare(run([canonical_row("AAA")], ["AAA"]))
+    assert report["dollar_matched"] is None and report["dollar_listed"] == 0

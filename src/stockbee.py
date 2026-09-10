@@ -13,9 +13,52 @@ import re
 import pandas as pd
 
 SCAN_LIMIT = 40
+DOLLAR_LIMIT = 40
 ANTICIPATION_LIMIT = 25
+#: Bonde's OTHER daily scan, and the one his own words point at a universe
+#: like this repo's. "Dollar breakout is another way to find range expansion on
+#: higher priced stocks that move in 5 to 50 dollar move but may not have 4%
+#: b/o on first day of momentum burst"; the scan "looks for a stock up 90 cents
+#: plus ... more useful on high priced stocks above 40 as they do not often
+#: breakout with 4% move" ("My process loop to trade 4% b/o and $ b/o", 2017).
+#:
+#: THREE THINGS THAT ARE NOT THE 4% SCAN, each deliberate on his part:
+#:   * the move is CLOSE MINUS OPEN -- the day's own body -- so the overnight
+#:     gap is excluded, where the 4% scan measures close against the previous
+#:     close and includes it;
+#:   * there is no volume-versus-yesterday term, only the same 100,000-share
+#:     floor;
+#:   * it is an ABSOLUTE move in dollars, so it does not scale with price,
+#:     which is the whole point: a $4 move on a $200 stock is 2%.
+#: The "above 40" is his guidance on where it is useful, not a term of the
+#: scan, and neither rendering of the formula carries a price floor -- so
+#: none is applied here and every row archives its close, which is what lets
+#: a reader split the population later without the rule having guessed.
+DOLLAR_BREAKOUT_MOVE = 0.90
+MIN_SHARE_VOLUME = 100000
+#: Every row-bearing section and how many rows it archives. ONE list, because
+#: a hand-kept copy of it went stale three separate ways on the commit that
+#: added the third section: the ledger's slimmer stopped dropping `series`
+#: from it (which alone put 29 MB on the projected year), the contract
+#: walker's numeric exemption stopped covering it, and this validator had to
+#: name it twice. src.ledger derives SIDECAR_SECTIONS from these keys.
+SECTION_LIMITS = {"scan": SCAN_LIMIT, "dollar": DOLLAR_LIMIT,
+                  "anticipation": ANTICIPATION_LIMIT}
+#: Sections a record written before them will not carry, and whose absence is
+#: therefore not a fault. `scan` and `anticipation` have been in every record
+#: the sidecar ever wrote.
+OPTIONAL_SECTIONS = frozenset({"dollar"})
 SERIES_LIMIT = 30
 FIELDS = ("open", "high", "low", "close", "volume")
+DOLLAR_RULES = {
+    "kind": "Stockbee $ breakout, his companion scan for higher-priced names",
+    "min_dollar_move": DOLLAR_BREAKOUT_MOVE,
+    "measured": "close - open",
+    "min_volume": MIN_SHARE_VOLUME,
+    "min_price": None,
+    "his_guidance": "more useful on high priced stocks above 40, which do not often break out 4%",
+    "excludes_current_4pct_scan_matches": True,
+}
 ANTICIPATION_RULES = {
     "kind": "SpicyStock numeric proxy; manual chart review required",
     "min_price": 3,
@@ -91,6 +134,8 @@ QUALIFYING_THRESHOLDS = {
 
 MEASUREMENT_RULES = {
     "scan": "close / previous session close >= 1.04; volume > previous session volume; volume >= 100000",
+    "dollar": "close - open >= 0.90 dollars; volume >= 100000; no volume-versus-previous term and no price floor; disjoint from scan, so a name the 4% scan matched is not here",
+    "dollar_move": "close - open, in dollars rounded to cents, on every row and not only the dollar section's; the dollar scan compares this same rounded number",
     "breadth": "same volume rules as scan; up: close / previous close >= 1.04; down: close / previous close <= 0.96",
     "breadth_ratios": "sum(up4) / sum(down4), only for a full 5 or 10 dated sessions with nonzero coverage on every day and a nonzero denominator; coverage may vary",
     "volume_vs_average": "current volume / mean volume of previous 20 contiguous sessions",
@@ -177,7 +222,35 @@ def _weekday_before(day: date) -> date:
 def _scan(bar, previous, *, down=False) -> bool:
     ratio = bar["close"] / previous["close"]
     return ((ratio <= 0.96 if down else ratio >= 1.04)
-            and bar["volume"] > previous["volume"] and bar["volume"] >= 100000)
+            and bar["volume"] > previous["volume"] and bar["volume"] >= MIN_SHARE_VOLUME)
+
+
+def _dollar_move(bar) -> float:
+    """The day's body in dollars, ROUNDED TO CENTS exactly once.
+
+    A price difference is a number of cents, and Bonde's scan is written for
+    a platform whose prices are quoted in them. Rounding here is not
+    cosmetic: 23.90 - 23.00 is 0.8999999999999986 in binary floating point,
+    so an unrounded compare refuses a bar whose body is ninety cents by every
+    reading a person can make of it -- and `dollar_move` is archived on every
+    row and printed, so the record would show $0.90 beside a refusal.
+
+    That is the rounding class this project has already closed twice, in
+    worst_base_day() and in burst_bar_shape(): round ONCE, and let the
+    verdict and the line read the same number. Rounding a second time
+    downstream is the other half of it, so nothing else rounds this.
+    """
+    return round(bar["close"] - bar["open"], 2)
+
+
+def _dollar_breakout(bar) -> bool:
+    """Bonde's $ breakout: the day's own body, in dollars, on 100k shares.
+
+    One bar and no previous one, because there is no volume-versus-yesterday
+    term in this scan and the move is measured inside the session. See
+    DOLLAR_BREAKOUT_MOVE for why each of those differs from the 4% scan.
+    """
+    return _dollar_move(bar) >= DOLLAR_BREAKOUT_MOVE and bar["volume"] >= MIN_SHARE_VOLUME
 
 
 def _mean(values) -> float:
@@ -208,6 +281,12 @@ def _row(ticker: str, history: list[dict]) -> dict:
         "ticker": ticker, **current, "prev_close": previous["close"],
         "prev_volume": previous["volume"],
         "gain_pct": (close / previous["close"] - 1) * 100,
+        # The $ scan's own measurement, on EVERY row and not only the ones it
+        # matched: it is what lets a reader ask "how much of the day's move
+        # was the body?" of a 4% match, and it is the number the dollar
+        # section sorts on. close - open, so the overnight gap is out, and
+        # it is the SAME rounded number _dollar_breakout() decided on.
+        "dollar_move": _dollar_move(current),
         "volume_vs_previous": _divide(current["volume"], previous["volume"]),
         "volume_vs_average": (_divide(current["volume"], _mean([b["volume"] for b in history[-21:-1]]))
                               if len(history) >= 21 else None),
@@ -384,7 +463,7 @@ def build(frames: dict, session, *, requested: int, label: str,
     # cannot establish a closure using the very hole we are trying to detect.
     if not calendar:
         prior.update({day: _weekday_before(day) for day in sessions if day != session})
-    scan_rows, anticipation_rows = [], []
+    scan_rows, dollar_rows, anticipation_rows = [], [], []
     measured = 0
     for ticker, bars in histories.items():
         history, day = [], session
@@ -398,9 +477,19 @@ def build(frames: dict, session, *, requested: int, label: str,
         row = _row(ticker, history)
         if _scan(history[-1], history[-2]):
             scan_rows.append(row)
+        elif _dollar_breakout(history[-1]):
+            # DISJOINT FROM THE 4% SCAN, and that is the question rather than
+            # tidiness: the two overlap on any high-priced name that moved 4%,
+            # and a row archived in both would be one event counted twice in a
+            # control that compares populations. What this section holds is
+            # therefore "$ breakouts the 4% scan did not already match" --
+            # which is exactly the cohort Bonde built the $ scan FOR -- and
+            # `matched` counts that disjoint set, not his raw $ b/o count.
+            dollar_rows.append(row)
         elif _anticipates(row, history):
             anticipation_rows.append(row)
     scan_rows.sort(key=lambda row: (-row["gain_pct"], row["ticker"]))
+    dollar_rows.sort(key=lambda row: (-row["dollar_move"], row["ticker"]))
     anticipation_rows.sort(key=lambda row: (row["compression_ratio"], -row["trend_intensity"], row["ticker"]))
     days = []
     for day in sessions[-10:]:
@@ -418,6 +507,8 @@ def build(frames: dict, session, *, requested: int, label: str,
         "version": 1, "date": session.isoformat(),
         "scope": {"label": label, "requested": requested, "measured": measured, "whole_market": False},
         "scan": {"matched": len(scan_rows), "shown": min(SCAN_LIMIT, len(scan_rows)), "rows": scan_rows[:SCAN_LIMIT]},
+        "dollar": {"matched": len(dollar_rows), "shown": min(DOLLAR_LIMIT, len(dollar_rows)),
+                   "rows": dollar_rows[:DOLLAR_LIMIT], "rules": dict(DOLLAR_RULES)},
         "anticipation": {"matched": len(anticipation_rows), "shown": min(ANTICIPATION_LIMIT, len(anticipation_rows)),
                          "rows": anticipation_rows[:ANTICIPATION_LIMIT], "rules": dict(ANTICIPATION_RULES)},
         "breadth": {"days": days, "ratios": ratios},
@@ -448,7 +539,9 @@ def problem(block, *, session=None, archived=False) -> str | None:
             or not count(scope.get("requested")) or not count(scope.get("measured"))
             or scope["measured"] > scope["requested"]):
         return "stockbee.scope must identify the measured basket"
-    for key, limit in (("scan", SCAN_LIMIT), ("anticipation", ANTICIPATION_LIMIT)):
+    for key, limit in SECTION_LIMITS.items():
+        if key not in block and key in OPTIONAL_SECTIONS:
+            continue  # a record from before that section was measured
         section = block.get(key)
         if (not isinstance(section, dict) or not isinstance(section.get("rows"), list)
                 or not count(section.get("matched")) or not count(section.get("shown"))
@@ -463,8 +556,20 @@ def problem(block, *, session=None, archived=False) -> str | None:
                 return f"stockbee.{key} row identity is invalid"
             tickers.add(row["ticker"])
             if any(value is not None and not number(value) for name, value in row.items()
-                   if name not in ("ticker", "date", "series")):
+                   if name not in ("ticker", "date", "series", "forward_returns")):
                 return f"stockbee.{key} row metrics must be numbers or null"
+            # A measured row carries the same forward_returns block a pick
+            # does, filled by the same Ledger.fill_forward_returns() off the
+            # same bars, and is checked by the SAME rule rather than a second
+            # copy of it: a shape rule stated twice is how this project has
+            # repeatedly found one surface checking a level the other does
+            # not. Absent is a row from before the sidecar was measured.
+            # Imported here because src.ledger imports this module.
+            from .ledger import returns_shape_problem
+            if "forward_returns" in row and not isinstance(row["forward_returns"], dict):
+                return f"stockbee.{key} row forward_returns must be an object"
+            if returns_shape_problem(row.get("forward_returns")):
+                return f"stockbee.{key} row forward_returns must be a measured block"
             values = {key: _number(row.get(key)) for key in FIELDS}
             previous = {"close": _number(row.get("prev_close")), "volume": _number(row.get("prev_volume"))}
             if (not _valid_bar(values) or previous["close"] is None or previous["close"] <= 0
@@ -472,6 +577,8 @@ def problem(block, *, session=None, archived=False) -> str | None:
                 return f"stockbee.{key} row has invalid OHLCV"
             if key == "scan" and not _scan(values, previous):
                 return "stockbee.scan row does not meet the recorded scan"
+            if key == "dollar" and (_scan(values, previous) or not _dollar_breakout(values)):
+                return "stockbee.dollar row does not meet the recorded scan"
             series = row.get("series")
             if series is None and archived:
                 continue
@@ -505,5 +612,7 @@ def problem(block, *, session=None, archived=False) -> str | None:
     if not isinstance(ratios, dict) or any(ratios.get(k) is not None and (not number(ratios[k]) or ratios[k] < 0) for k in ("d5", "d10")):
         return "stockbee.breadth ratios must be nonnegative numbers or null"
     if not isinstance(block["anticipation"].get("rules"), dict) or not isinstance(block.get("measurement_rules"), dict):
+        return "stockbee measurement rules must be recorded"
+    if "dollar" in block and not isinstance(block["dollar"].get("rules"), dict):
         return "stockbee measurement rules must be recorded"
     return None

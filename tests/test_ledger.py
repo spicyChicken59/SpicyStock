@@ -55,6 +55,7 @@ INVARIANTS = (
     "liquidity",           # run.liquidity agrees with the rows and the populations are disjoint
     "benchmark",           # runs[].benchmark and evidence.universe hold together
     "coverage",            # run.coverage's counts order, and a burst came from a measured name
+    "stockbee_control",    # evidence.stockbee's populations and its truncation tally
 )
 
 _RUN_KEYS = ("date", "type", "bursts", "passed_gate", "scored", "score_cap",
@@ -187,8 +188,13 @@ def _walk(node, found: list, path=()) -> None:
         for key, value in node.items():
             # The research sidecar uses rows as a bounded list, whereas the
             # existing returns contract uses rows as a population count.
+            # DERIVED from the module, not retyped: this was a hand-kept
+            # pair and it went stale on the commit that added a third
+            # section, turning 56 end-to-end tests red for a reason that had
+            # nothing to do with any of them.
             research_rows = (key == "rows" and isinstance(value, list)
-                             and path[-2:] in (("stockbee", "scan"), ("stockbee", "anticipation")))
+                             and len(path) >= 2 and path[-2] == "stockbee"
+                             and path[-1] in ledger.SIDECAR_SECTIONS)
             if not research_rows and _bad_number(key, value):
                 found.append((key, value))
             _walk(value, found, (*path, key))
@@ -402,6 +408,31 @@ def contract_violations(data: dict, docs_dir=None) -> set[str]:
             bad.add("benchmark")
         elif floored + unfloored > rung.get("setups", -1):
             bad.add("benchmark")
+
+    # The canonical control. A block published and checked by nothing is R9-B
+    # and the round-11 coverage gap arriving a third time, so it is checked
+    # here on the commit that adds it rather than after an audit finds it:
+    # every population a real population, every count a count, and the
+    # truncation tally never claiming more sessions than the record holds.
+    if isinstance(ev, dict):
+        control = ev.get("stockbee")
+        if control is not None:
+            if not isinstance(control, dict):
+                bad.add("stockbee_control")
+            else:
+                for name in ("caught", "missed", "dollar", "anticipation"):
+                    part = control.get(name)
+                    if (not isinstance(part, dict) or not isinstance(part.get("setups"), int)
+                            or isinstance(part.get("setups"), bool) or part["setups"] < 0
+                            or not isinstance(part.get("outcomes"), list)
+                            or not isinstance(part.get("enough"), bool)):
+                        bad.add("stockbee_control")
+                tally = control.get("truncated_sessions")
+                if not isinstance(tally, dict) or set(tally) != set(ledger.SIDECAR_SECTIONS):
+                    bad.add("stockbee_control")
+                elif any(not isinstance(v, int) or isinstance(v, bool) or not 0 <= v <= len(data["runs"])
+                         for v in tally.values()):
+                    bad.add("stockbee_control")
 
     # Round 11's block, and the gap round 9's R9-B closed one block over. The
     # walker every end-to-end test asserts through clean() as "the whole
@@ -723,6 +754,56 @@ def _only(document, expected):
     """
     violations = contract_violations(document)
     assert violations == {expected}, f"expected only {expected!r}, got {violations}"
+
+
+def test_a_canonical_control_block_that_is_not_one_is_caught(document):
+    """R9-B a third time, closed on the commit that opens the door.
+
+    `evidence.stockbee` is published by every run and was checked by nothing:
+    a mutant that deleted the whole walker branch survived the suite, which
+    is exactly the state the benchmark and the coverage blocks were each
+    found in, one audit late. Eight edits, every one of which this walker
+    used to answer identically to the clean document.
+
+    Absent still loads clean and is NOT a violation: a record written before
+    the sidecar was measured carries no block, and refusing one would be a
+    rule against the history rather than against a shape a writer produces.
+    """
+    def population(setups):
+        return {"setups": setups, "outcomes": [], "enough": False,
+                "enough_from_open": False}
+
+    # The `evidence` block is built HERE rather than put in the fixture: the
+    # hand-written document carries none, and a full one would drag in the
+    # population-sum and benchmark rules, so a doctoring meant for this
+    # invariant would trip those instead and _only() would fail for the right
+    # reason at the wrong rule. Both of those branches ask for `record` and
+    # `universe`, so an evidence holding only this block skips them.
+    document = json.loads(json.dumps(document))
+    document["evidence"] = {"stockbee": {
+        "caught": population(3), "missed": population(2),
+        "dollar": population(5), "anticipation": population(1),
+        "truncated_sessions": {section: 0 for section in ledger.SIDECAR_SECTIONS}}}
+    assert contract_violations(document) == set(), "the precondition: this one is clean"
+
+    def doctored(edit):
+        fresh = json.loads(json.dumps(document))
+        edit(fresh["evidence"])
+        _only(fresh, "stockbee_control")
+
+    doctored(lambda ev: ev.update(stockbee="measured"))                    # not a block
+    doctored(lambda ev: ev["stockbee"].update(caught="none"))              # not a population
+    doctored(lambda ev: ev["stockbee"]["missed"].update(setups=-1))        # not a count
+    doctored(lambda ev: ev["stockbee"]["missed"].update(setups="3"))       # not a count either
+    doctored(lambda ev: ev["stockbee"]["dollar"].update(setups=True))      # a bool is not a count
+    doctored(lambda ev: ev["stockbee"]["anticipation"].update(outcomes={}))  # not a list
+    doctored(lambda ev: ev["stockbee"]["caught"].update(enough="yes"))     # not a verdict
+    doctored(lambda ev: ev["stockbee"].update(truncated_sessions={"scan": 0}))  # a section short
+    doctored(lambda ev: ev["stockbee"]["truncated_sessions"].update(scan=9999))  # past the record
+
+    gone = json.loads(json.dumps(document))
+    del gone["evidence"]["stockbee"]
+    assert contract_violations(gone) == set()
 
 
 def test_a_liquidity_population_that_contradicts_the_floor_is_caught(document):

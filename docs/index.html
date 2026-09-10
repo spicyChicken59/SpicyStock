@@ -203,6 +203,13 @@
       <p class="sc-hint" id="control-hint"></p>
       <p class="sc-insight" id="control-verdict"></p>
       <div class="sc-table-scroll" id="control-scroll"><table class="sc-table sc-table--compact sc-table--research" id="control-table"></table></div>
+      <div id="canon-block" hidden>
+        <h3 id="canon-title">Against Stockbee’s own scans</h3>
+        <p class="sc-hint" id="canon-hint"></p>
+        <p class="sc-insight" id="canon-verdict"></p>
+        <div class="sc-table-scroll" id="canon-scroll"><table class="sc-table sc-table--compact sc-table--research" id="canon-table"></table></div>
+        <p class="sc-note" id="canon-truncated" hidden></p>
+      </div>
     </div>
   </section>
 
@@ -324,7 +331,7 @@
   <!-- What happened the last times THIS name burst. The summary comes out of
        data.json's evidence block; the per-appearance detail needs the whole
        record, so docs/ledger.json is fetched ONLY when a reader asks for it
-       (see loadRecord). A year of it is about 2.17 MB gzipped, which is not a
+       (see loadRecord). A year of it is about 2.91 MB gzipped, which is not a
        thing to spend on every visit for a view most readers never open.
        tools/measure_ledger.py measures it and a docs test holds this comment,
        the one above loadRecord and README to what it prints. -->
@@ -1839,6 +1846,87 @@
         ]));
       }), [1, 2, 3, 4, 5]);
     clipWatch($('control-scroll'), 'What the screener did against the outcome');
+    renderCanon(ev);
+  }
+
+  // THE CANONICAL CONTROL. src.stockbee runs Bonde's own 4% scan and his $
+  // breakout over the same universe every night; every row they matched now
+  // carries the same forward returns a pick does. Its own card rather than
+  // four more rows on the ladder above, because that table answers "what did
+  // this screener DO with the bursts it found" and this one answers "did it
+  // find the right bursts" -- one table with both questions in it would be
+  // the two-vocabularies shape this page keeps out everywhere else.
+  var CANON_ROWS = [
+    ['caught', 'his 4% matches this screener also admitted', 'caught'],
+    ['missed', 'his 4% matches this screener\u2019s own scan dropped', 'missed'],
+    ['dollar', 'his $ breakout \u2014 close \u2212 open \u2265 $0.90, the scan he built for high-priced names; disjoint from the 4% scan, so this screener never saw one', 'the $ breakouts'],
+    ['anticipation', 'a compression proxy, not a burst \u2014 measured beside the others and never folded into them', 'the anticipation list']
+  ];
+  function renderCanon(ev) {
+    var canon = ev.stockbee;
+    var block = $('canon-block');
+    if (!block) return;
+    if (!canon || !CANON_ROWS.some(function (r) { return canon[r[0]] && canon[r[0]].setups; })) {
+      block.hidden = true;
+      return;
+    }
+    block.hidden = false;
+    var h = longestOf(ev);
+    $('canon-hint').textContent =
+      'The other half of the question, and the one this record could not ask until every sidecar row was measured: ' +
+      'not what the screener did with what it found, but whether it found the right things. ' +
+      'Stockbee’s own scans run over the same universe every night; these are their matches, ' +
+      'measured ' + basisLabel() + ' on the same bars. Read caught and missed TOGETHER — a scan that admits ' +
+      'everything has an empty missed row and is not thereby better.';
+    $('canon-verdict').textContent = canonVerdict(ev, canon, h);
+    table($('canon-table'),
+      ['what his scan found', 'setups'].concat(ev.horizons.map(hzLabel)).concat(['in the claimed band', 'reads as']),
+      CANON_ROWS.filter(function (r) { return canon[r[0]]; }).map(function (r) {
+        var b = canon[r[0]], longest = onBasis(at(b.outcomes, h));
+        return el('tr', null, [
+          el('td', null, [el('span', { text: r[2] }), el('span', { 'class': 'sc-note', text: r[1] })]),
+          el('td', { 'class': 'sc-num', text: commas(b.setups) })
+        ].concat(ev.horizons.map(function (hh) { return rateCell(at(b.outcomes, hh), enoughOf(b)); }))
+         .concat([
+          el('td', { 'class': 'sc-num' }, figure(commas(longest.in_band),
+            longest.n ? 'of ' + plural(longest.n, 'measured setup') : null)),
+          el('td', null, enoughChip(enoughOf(b), longest.n, ev.min_setups))
+        ]));
+      }), [1, 2, 3, 4, 5]);
+    clipWatch($('canon-scroll'), 'What Stockbee’s own scans found against the outcome');
+    // A mean over a capped list is a fact about the cap as well as the
+    // market, so a session where one bit is said rather than left for a
+    // reader to infer from a round number.
+    var cut = canon.truncated_sessions || {};
+    var bitten = Object.keys(cut).filter(function (k) { return cut[k] > 0; });
+    var note = $('canon-truncated');
+    note.hidden = !bitten.length;
+    if (bitten.length) {
+      note.textContent = 'On ' + bitten.map(function (k) {
+        return plural(cut[k], 'session') + ' the ' + k + ' list hit its archive cap';
+      }).join(' and ') + ', so those rows are the best-ranked slice of that night’s matches and not all of them.';
+    }
+  }
+  // The same rule controlVerdict() follows: a direction only when BOTH sides
+  // clear min_setups at the longest horizon, always with both n's.
+  function canonVerdict(ev, canon, h) {
+    var caught = onBasis(at((canon.caught || {}).outcomes, h));
+    var missed = onBasis(at((canon.missed || {}).outcomes, h));
+    var counts = plural(caught.n, 'match', 'matches') + ' this screener admitted and ' +
+      plural(missed.n, 'match', 'matches') + ' it dropped have closed at ' + hzLabel(h) + ' ' + basisLabel();
+    if (!enoughOf(canon.caught) || !enoughOf(canon.missed)) {
+      return 'No verdict yet: ' + counts + ', and this page needs ' + ev.min_setups +
+        ' of each before it will read the difference between them as a rate.';
+    }
+    var lift = caught.mean - missed.mean;
+    var word = lift > 0.5 ? 'better' : (lift < -0.5 ? 'WORSE' : 'no differently');
+    return 'Of the 4% bursts Stockbee’s own scan found, the ones this screener also admitted returned ' +
+      pct(caught.mean, 2) + ' at ' + hzLabel(h) + ' ' + basisLabel() + ' over ' + plural(caught.n, 'setup') +
+      '; the ones it dropped returned ' + pct(missed.mean, 2) + ' over ' + plural(missed.n, 'setup') +
+      ' — the narrower scan did ' + word +
+      (word === 'no differently' ? '. ' : ', by ' + pct(Math.abs(lift), 2).replace('+', '') + '. ') +
+      'Same market, same sessions, and overlapping bursts are not independent draws. ' +
+      'Read it as the record so far, not as a result.';
   }
 
   // The switch. One control for the whole page: pressing a basis re-renders
@@ -2197,7 +2285,7 @@
   }
 
   // The per-name view's lazy fetch. docs/ledger.json is the whole record — about
-  // 2.17 MB gzipped after a year — so it is never pulled on load; the summary
+  // 2.91 MB gzipped after a year — so it is never pulled on load; the summary
   // above comes out of data.json, which the page has already read. A 404 here is the
   // normal state until evening.yml has committed a run back, so it is reported
   // as a fact about the file rather than as a broken page.

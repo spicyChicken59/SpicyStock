@@ -64,7 +64,7 @@ _ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 
 from src.lynch import MAX_CONSECUTIVE_UP_DAYS
-from src import learning, ledger, pipeline, scanner, scorer  # noqa: E402
+from src import learning, ledger, pipeline, scanner, scorer, stockbee  # noqa: E402
 from src.scorer import VERDICT_BANDS, _balanced_spans  # noqa: E402
 from tests.fakes import FakeAlpaca, FakeDataClient  # noqa: E402
 
@@ -519,8 +519,12 @@ def _normalize_stockbee_measurements(run: dict) -> None:
     research = run.get("stockbee")
     if not isinstance(research, dict):
         return
-    for queue in ("scan", "anticipation"):
-        for row in research[queue]["rows"]:
+    # DERIVED from the module. A hand-kept pair here would leave a later
+    # section's floats unrounded, and this normaliser is what makes the
+    # fixture regenerate byte-identically on another CPU -- so the symptom
+    # would be a fixture that differs between machines for no visible reason.
+    for queue in stockbee.SECTION_LIMITS:
+        for row in (research.get(queue) or {}).get("rows", []):
             for key in (*STOCKBEE_MEASUREMENT_FIELDS, *STOCKBEE_PRICE_FIELDS):
                 if isinstance(row.get(key), float):
                     row[key] = round(row[key], STOCKBEE_MEASUREMENT_DIGITS)

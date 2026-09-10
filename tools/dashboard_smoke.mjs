@@ -459,6 +459,36 @@ const VARIANTS = {
     return d;
   },
   // A record from before the benchmark: no runs[].benchmark, no evidence.universe.
+  // A record from before the sidecar was measured. The canonical block must
+  // hide rather than render four empty rows under a verdict about nothing.
+  nocanon() {
+    const d = VARIANTS.fullcontrol();
+    delete d.evidence.stockbee;
+    return d;
+  },
+  // And one whose archive cap bit, so the note that says a mean is a fact
+  // about the cap as well as the market has a source to render on.
+  canontruncated() {
+    const d = VARIANTS.fullcontrol();
+    d.evidence.stockbee.truncated_sessions = { scan: 3, dollar: 0, anticipation: 0 };
+    return d;
+  },
+  // Both sides of the canonical control over min_setups, so the verdict's
+  // direction branch renders. The history's own missed side is 25 at +5d,
+  // under the 30 this page needs, which is the OTHER branch and is checked
+  // on the history itself -- a verdict function with two branches and one
+  // source can only ever be shown to take one of them.
+  fullcanon() {
+    const d = VARIANTS.fullcontrol();
+    const h = d.evidence.horizons[d.evidence.horizons.length - 1];
+    const caught = d.evidence.stockbee.caught.outcomes.find((o) => o.horizon === h);
+    const missed = d.evidence.stockbee.missed.outcomes.find((o) => o.horizon === h);
+    caught.n = 150; caught.mean = 5.5;
+    missed.n = 44; missed.mean = 1.5;        // four points worse than what it kept
+    d.evidence.stockbee.missed.enough = true;
+    d.evidence.stockbee.caught.enough = true;
+    return d;
+  },
   nobenchmark() {
     const d = VARIANTS.fullcontrol();
     delete d.evidence.universe;
@@ -1147,6 +1177,77 @@ const ladderWithout = await page.$$eval('#control-table tbody tr', (rows) => row
 ok('and its ladder has five rows, not a sixth for a population the file does not hold',
   ladderWithout.length === 5 && !ladderWithout.some((l) => /illiquid/.test(l)) && !noLiqLadder.some((l) => /illiquid/.test(l)),
   `${ladderWithout.length} rows on a rendered ladder`);
+// ---------------------------------------------------------------------------
+// THE CANONICAL CONTROL. Stockbee's own scans run over the same universe
+// every night and, until this round, no row of either had ever been measured
+// -- so the block the page renders here is the first thing in the record that
+// can answer whether the narrower production scan keeps the better bursts.
+// Checked on the history source, which is the only one deep enough to give
+// both sides a verdict.
+// ---------------------------------------------------------------------------
+await open('/f/history/');
+const canonRows = await page.$$eval('#canon-table tbody tr',
+  (rows) => rows.map((r) => [...r.children].map((c) => c.textContent.trim())));
+ok('the canonical control renders a row for each of Stockbee\u2019s own populations',
+  !(await page.locator('#canon-block').evaluate((n) => n.hidden))
+  && canonRows.length === 4
+  && /caught/.test(canonRows[0][0]) && /missed/.test(canonRows[1][0])
+  && /\$ breakouts/.test(canonRows[2][0]) && /anticipation/.test(canonRows[3][0]),
+  canonRows.map((r) => r[0].slice(0, 22)).join(' | '));
+ok('and the $ breakout row says it is the scan production never saw',
+  /disjoint from the 4% scan, so this screener never saw one/.test(canonRows[2][0]),
+  canonRows[2][0].slice(0, 120));
+ok('and the anticipation row says it is not a burst, so it is not folded into either side',
+  /not a burst/.test(canonRows[3][0]) && /never folded into them/.test(canonRows[3][0]),
+  canonRows[3][0].slice(0, 120));
+const canonVerdictText = await page.textContent('#canon-verdict');
+const canonHint = await page.textContent('#canon-hint');
+// The history's missed side is under min_setups at the longest horizon, which
+// is the branch that must NOT state a direction: a page that read 25 as a
+// rate is the defect min_setups exists to prevent. Both n's still printed.
+ok('a control whose thinner side is under the minimum refuses a verdict and says both n\u2019s',
+  /No verdict yet/.test(canonVerdictText)
+  && /150 matches this screener admitted/.test(canonVerdictText)
+  && /25 matches it dropped/.test(canonVerdictText)
+  && !/(did better|did WORSE|did no differently)/.test(canonVerdictText),
+  canonVerdictText.slice(0, 150));
+ok('and the hint says the two sides have to be read together',
+  /a scan that admits everything has an empty missed row and is not thereby better/.test(canonHint),
+  canonHint.slice(canonHint.indexOf('Read caught'), canonHint.indexOf('Read caught') + 110));
+// The basis switch reaches this table like every other rate cell: a control
+// left on the close basis under an open-basis label is the defect round 6
+// exists to prevent, one card further down the page.
+const canonClose = canonRows.map((r) => r.slice(2, 5).join(','));
+await page.click('#basis-tabs .sc-tab[data-basis="open"]');
+const canonOpen = await page.$$eval('#canon-table tbody tr',
+  (rows) => rows.map((r) => [...r.children].map((c) => c.textContent.trim()).slice(2, 5).join(',')));
+ok('and the control follows the basis switch rather than staying on the close basis',
+  canonOpen.some((row, i) => row !== canonClose[i])
+  && /next session.s open/.test(await page.textContent('#canon-verdict')),
+  `${canonClose[0]} -> ${canonOpen[0]}`);
+await page.click('#basis-tabs .sc-tab[data-basis="close"]');
+ok('a record with no truncation says nothing about a cap',
+  await page.locator('#canon-truncated').evaluate((n) => n.hidden));
+await open('/v/canontruncated/');
+const truncNote = await page.textContent('#canon-truncated');
+ok('and a record whose archive cap bit says so, because a mean over a capped list is a fact about the cap',
+  !(await page.locator('#canon-truncated').evaluate((n) => n.hidden))
+  && /3 sessions the scan list hit its archive cap/.test(truncNote)
+  && !/dollar list/.test(truncNote),
+  truncNote.slice(0, 120));
+await open('/v/nocanon/');
+ok('a record from before the sidecar was measured hides the block rather than rendering four empty rows',
+  await page.locator('#canon-block').evaluate((n) => n.hidden));
+await open('/v/fullcanon/');
+const fullCanonVerdict = await page.textContent('#canon-verdict');
+ok('and with both sides over the minimum it states the direction, with both means and both n\u2019s',
+  /the ones this screener also admitted returned \+5\.50% at \+5d/.test(fullCanonVerdict)
+  && /over 150 setups/.test(fullCanonVerdict)
+  && /the ones it dropped returned \+1\.50% over 44 setups/.test(fullCanonVerdict)
+  && /the narrower scan did better, by 4\.00%/.test(fullCanonVerdict)
+  && /Read it as the record so far, not as a result\./.test(fullCanonVerdict),
+  fullCanonVerdict.slice(0, 190));
+
 await open('/v/nobenchmark/');
 const ladderNoBench = await page.$$eval('#control-table tbody tr', (rows) => rows.map((r) => r.textContent));
 ok('a record from before the benchmark shows no universe rung and its verdict says nothing about one',
@@ -1448,8 +1549,19 @@ ok('a missing chart PNG degrades to an explained frame, not a broken image',
   `${shortWithPath} of ${run.shortlist_size} picks name a chart file`);
 ok('and a chart that failed to render says why',
   (await page.locator('#shortlist .pick', { hasText: 'no chart' }).count()) === run.shortlist_size);
+// A SUBSET, not a size. `chart404` is a Set that accumulates across every
+// page this script opens, so a size equality here was really an assertion
+// about how many OTHER sources had been opened first -- it passed only
+// because this block happened to run before any of them, and adding a check
+// anywhere above it turned this red for a reason that had nothing to do with
+// charts. What the rule means is that every chart THIS shortlist names was
+// really requested and really 404d, which is what it now says.
+const shortlistCharts = REAL.candidates
+  .filter((c) => c.rank <= run.shortlist_size && c.chart)
+  .map((c) => c.chart.replace(/^.*\//, ''));
 ok('every chart path on the shortlist was really requested and really 404d',
-  chart404.size === shortWithPath, `${chart404.size} requested, ${shortWithPath} named`);
+  shortlistCharts.length === shortWithPath && shortlistCharts.every((f) => chart404.has(f)),
+  `${shortlistCharts.filter((f) => chart404.has(f)).length} of ${shortWithPath} named charts 404d`);
 
 // --- what is not known yet reads as not known ------------------------------
 ok('forward returns that do not exist read as pending, not as zero or blank',

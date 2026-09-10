@@ -33,6 +33,17 @@ production's. Those are reported as `rvol_window` rather than folded into
 is the bar being too high, the other is the window being too long -- and a
 report that merged them would answer neither.
 
+THE CALL BUDGET is reported beside all of that, because on this record the two
+facts belong together: the scoring cap has never once bound, while the scan it
+feeds was dropping the setups the method is named for. A budget that is 70%
+idle is not a budget problem -- it is a funnel that is not delivering enough to
+spend it on -- and the report says which of the two the record shows.
+
+The $ BREAKOUT is reported with them. It is Bonde's other daily scan
+(`stockbee.DOLLAR_RULES`), the one his own words point at a universe like this
+repo's, and every row of it is by construction a name production never scored:
+the sections are disjoint, and production admits only 4% bursts.
+
 Run: python tools/fidelity_report.py [--json]
 """
 from __future__ import annotations
@@ -108,6 +119,10 @@ def compare(run: dict) -> dict | None:
     # the record cannot support.
     truncated = scan.get("matched") != scan.get("shown")
 
+    dollar = sidecar.get("dollar") if isinstance(sidecar.get("dollar"), dict) else None
+    dollar_rows = [r for r in (dollar or {}).get("rows", [])
+                   if isinstance(r, dict) and r.get("ticker")]
+
     canonical = {r["ticker"]: r for r in rows if isinstance(r, dict) and r.get("ticker")}
     production = _prod_rows(run)
     cfg = scanner.ScanConfig()
@@ -134,7 +149,24 @@ def compare(run: dict) -> dict | None:
         "scored": run.get("scored"),
         "score_cap": run.get("score_cap"),
         "top_score": run.get("top_score"),
+        "unspent_calls": _unspent(run),
+        "dollar_matched": (dollar or {}).get("matched"),
+        "dollar_listed": len(dollar_rows),
+        "dollar_names": [r["ticker"] for r in dollar_rows],
     }
+
+
+def _unspent(run: dict) -> int | None:
+    """Calls the budget allowed and the night did not make.
+
+    None rather than 0 when either number is missing: a run entry from before
+    the field existed says nothing about the budget, and calling that "nothing
+    unspent" would put a fact into the total that the record does not hold.
+    """
+    cap, spent = run.get("score_cap"), run.get("scored")
+    if any(not isinstance(v, int) or isinstance(v, bool) for v in (cap, spent)):
+        return None  # `True` is an int, and it is not a call count
+    return max(0, cap - spent)
 
 
 def main(argv=None) -> int:
@@ -182,8 +214,33 @@ def main(argv=None) -> int:
         if r["extra"]:
             print(f"    admitted {len(r['extra'])} that fail the canonical scan "
                   f"(volume did not exceed the previous session): {' '.join(r['extra'])}")
+        if r["dollar_listed"]:
+            note = "" if r["dollar_matched"] == r["dollar_listed"] else " (rows truncated)"
+            print(f"    $ breakout matched {r['dollar_matched']}{note} that the 4% scan did not, "
+                  f"none of them scored: {' '.join(r['dollar_names'][:12])}"
+                  + (" ..." if len(r["dollar_names"]) > 12 else ""))
         print(f"    scored {r['scored']} of a {r['score_cap']}-call budget; top score {r['top_score']}")
         print()
+
+    # THE BUDGET, over the whole record. Two numbers and one sentence, because
+    # the answer to "are we spending our calls well?" on this record is not a
+    # ranking problem: the cap has never bound.
+    allowed = sum(r["score_cap"] for r in reports if isinstance(r["score_cap"], int))
+    spent = sum(r["scored"] for r in reports if isinstance(r["scored"], int))
+    idle = sum(r["unspent_calls"] for r in reports if r["unspent_calls"] is not None)
+    missed_total = sum(len(r["missed"]) for r in reports)
+    dollar_total = sum(r["dollar_listed"] for r in reports)
+    print(f"  Call budget over these {len(reports)} run(s): {spent} of {allowed} allowed, "
+          f"{idle} unspent.")
+    if idle:
+        print(f"    The cap did not bind on any of them. {missed_total} canonical 4% match(es) "
+              f"and {dollar_total} $ breakout(s) went unscored over the same nights, "
+              f"against {idle} idle call(s).")
+        print("    That is a funnel that is not delivering enough to spend the budget on, "
+              "not a budget that is too small.")
+    else:
+        print("    The cap bound on at least one night, so ranking what to spend it on "
+              "is a live question here.")
     return 0
 
 

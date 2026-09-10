@@ -678,7 +678,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1675 tests, no network or API keys needed
+pytest tests/                   # 1724 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -736,6 +736,7 @@ workflow from preparation to recorded trade review:
 | Tool | Behavior and scope |
 | --- | --- |
 | Published 4% scan | Close / previous close ≥1.04, volume > previous volume, and volume ≥100,000. This queue is measured before the stricter scoring filters, so a matching name can appear without an AI score. At most 40 records are saved; the full match count remains visible. |
+| Published $ breakout | Stockbee's OTHER daily scan, and the one his own words point at a universe like this one: close − open ≥ $0.90 (the day's body, so the overnight gap is excluded) and volume ≥100,000, with no volume-versus-previous term and no price floor. He built it because high-priced names "do not often breakout with 4% move". Disjoint from the 4% scan, so a name both matched is archived once, under the 4% scan. At most 40 records are saved. The body is rounded to cents once, and the rule compares the same number the record shows. |
 | Anticipation queue | A separate SpicyStock proxy: price ≥$3, prior three sessions each at least 100k shares, MA7/MA65 ≥1.05, current move within ±1%, and latest-seven average normalized range / preceding-60 average ≤0.75. Requires 67 contiguous sessions and excludes current 4% scan matches. At most 25 records are saved. |
 | Universe pulse | Ten dated observations of qualifying 4% advances and declines within the scanned basket. Both directions use the same volume rules. Five- and ten-session ratios divide summed advances by summed declines; insufficient coverage or a zero denominator produces no ratio. This is explicitly a curated subset, not Stockbee's whole-market Market Monitor. |
 | Setup inspector | Saved daily candles and volume, exact bar values, and the original qualitative 2LYNCH questions. Measurements support chart review; they do not claim to reproduce a discretionary six-point Stockbee score. |
@@ -759,6 +760,25 @@ moves. Each saved current setup has at most 30 candles; archived ledger rows ret
 the measurements without the candle series, and run-summary lists omit this block.
 Older snapshots show measurements as not yet recorded; the app never reconstructs
 the full scan from the scored shortlist or fills missing breadth with zero.
+
+Every archived sidecar row now carries the same `forward_returns` block a pick
+does, filled by the same `Ledger.fill_forward_returns()` off the same bars, so
+the record can finally answer the question the sidecar exists to ask.
+`evidence.stockbee` publishes four populations: `caught` (Stockbee 4% matches
+this screener also admitted), `missed` (matches it dropped), `dollar` and
+`anticipation`. The last two sit apart from that split for opposite reasons — a
+$ breakout is disjoint from the 4% scan by construction, so production can
+never have caught one, and an anticipation row is not a burst at all. Read
+`caught` and `missed` together: a scan that admits everything has an empty
+`missed` and is not thereby better. Sidecar rows are one setup per (ticker,
+session) and are not collapsed the way a pick's repeats are, because the
+question is about the scan and every match it printed is one thing the scan
+said; a canonical row never appears in `run.settled`, which is the run's own
+scorecard of what its own picks did. The fill fetches these names too, which
+took `pending_tickers()` from 25 to 96 on the committed record — one extra
+batch. Measured by building the same projected file with each part stripped:
+the forward-return blocks cost 1.14 MB raw and 0.12 MB gzipped of the year,
+and the $ breakout section a further 3.86 MB and 0.62 MB.
 
 The new modules are `stockbee-workbench.js` and `stockbee-plan.js`, with scoped
 styles. Trade records use `spicystock.trade-journal.v1` in this browser, capped at
@@ -925,8 +945,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 20.13 MB raw
-and **2.17 MB gzipped** after a full year in the normalized history fixture. Actual payload size varies with numeric precision and optional metadata. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 25.13 MB raw
+and **2.91 MB gzipped** after a full year in the normalized history fixture. Actual payload size varies with numeric precision and optional metadata. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -1538,14 +1558,14 @@ comparison limits and removal, saved-note persistence and storage failures,
 focus navigation, archive retries and races, return-basis changes, and isolation
 of a failed view. It also captures phone and desktop screens in both themes.
 
-**Three data sources, one page.** It runs 255 checks, and which file each one
+**Three data sources, one page.** It runs 265 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
   under `/f/fixture/`. Most of the checks live here, because they know the
   fixture's contents: 25 scored and 5 shown, a fallback that outranks a real
   score, chart paths that 404, a non-empty gated list, the streak states one
-  night can hold at once. 44 mutated copies of it are served
+  night can hold at once. 47 mutated copies of it are served
   under `/v/<name>/` for the states one night cannot hold at once, beside one
   more name, `nodata`, that serves no document at all. This said six, then
   eight, while `VARIANTS` in the smoke test grew past both, so the script now
