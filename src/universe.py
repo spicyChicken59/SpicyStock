@@ -37,6 +37,25 @@ DIRECTORY_CACHE_SCHEMA = 1
 DIRECTORY_MAX_AGE = timedelta(days=7)
 DIRECTORY_MAX_BYTES = 10 * 1024 * 1024
 DIRECTORY_FIELDS = ("symbol", "name", "country", "sector", "industry", "lastsale", "volume")
+#: What api.nasdaq.com is asked with. A BROWSER's User-Agent, on purpose and on
+#: evidence: from a GitHub-hosted runner the endpoint holds every non-browser
+#: string open, unanswered, until the read times out -- the pipeline's own
+#: "SpicyStock/1.0 (...)", python-requests' default, and the honest
+#: "Mozilla/5.0 (compatible; SpicyStock/1.0; +url)" form all did -- while this
+#: string, from the same kind of runner IP, returned 7,139 listings in 1.2 s.
+#: Read off probe run 34414747241 (9 Sep 2026): one header set per fresh
+#: runner, each asked with requests and again with curl. Seven runners, five
+#: timeouts, and the two that answered were the two that named a browser. Not
+#: the size of the reply (a limit=25 request hung too), not the runner's
+#: network (the same runners read nasdaqtrader.com in 0.3 s), not the TLS
+#: client (requests and curl agreed on every row). The five evening runs that
+#: timed out before it, on Linux and on macOS, were this and nothing else.
+#: No Alpaca header is sent to a different provider.
+DIRECTORY_HEADERS = {
+    "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                   "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"),
+    "Accept": "application/json, text/plain, */*",
+}
 _NAME = re.compile(r"\b(common stock|common shares|ordinary shares?)\b", re.I)
 _REJECT = re.compile(r"\b(depositary|depository|ADR|ADS|preferred|preference|warrants?|rights?|units?|notes?|ETF|ETN|funds?)\b", re.I)
 _BIOTECH = re.compile(r"biotech|pharma|medicinal", re.I)
@@ -50,18 +69,17 @@ def enabled() -> bool:
 
 
 def fetch_directory() -> list[dict]:
-    # No Alpaca header is sent to a different provider. A failed directory
-    # refresh never silently approves an unclassified company.
-    # The first production refresh timed out downloading this ~2 MB response.
-    # Retry only transient transport/server failures, with a bounded wait;
-    # access refusals and incomplete classifications still fail immediately.
+    # A failed directory refresh never silently approves an unclassified
+    # company. The first five production refreshes timed out, and this used to
+    # say "downloading this ~2 MB response": they were never answered at all,
+    # because of the User-Agent they sent (DIRECTORY_HEADERS says which and
+    # how that was established). The retry stays for what it was written for:
+    # a genuinely transient transport or server failure, with a bounded wait.
+    # Access refusals and incomplete classifications still fail immediately.
     for attempt in range(3):
         try:
             log.info("Refreshing Nasdaq stock directory (attempt %s/3)", attempt + 1)
-            response = requests.get(SOURCE_URL, headers={
-                "User-Agent": "SpicyStock/1.0 (https://github.com/spicyChicken59/SpicyStock)",
-                "Accept": "application/json",
-            }, timeout=(5, 45))
+            response = requests.get(SOURCE_URL, headers=dict(DIRECTORY_HEADERS), timeout=(5, 45))
             response.raise_for_status()
             break
         except (requests.Timeout, requests.ConnectionError, requests.HTTPError) as exc:

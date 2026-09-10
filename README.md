@@ -85,6 +85,12 @@ or a ranking of the best companies. EA and FI were retired after they stopped
 returning bars, and BK was replaced by BNY. The file remains the reviewed seed.
 
 Each production evening run tries to download [Nasdaq's stock directory](https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true).
+The request presents a browser's User-Agent, because from a GitHub-hosted
+runner the endpoint answers nothing else: the pipeline's former `SpicyStock/1.0`
+string, the library default and a `Mozilla/5.0 (compatible; …)` form were each
+held open until the read timed out, on seven runners, while a Chrome-style string
+returned the full directory in about a second. `DIRECTORY_HEADERS` in
+`src/universe.py` carries that evidence and the test that pins the shape.
 New securities need an explicit common/ordinary-share description, US issuer
 country and a known sector/industry. Funds, depositary receipts, preferred
 shares, warrants, units and blank-check companies are excluded. New healthcare,
@@ -671,7 +677,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1604 tests, no network or API keys needed
+pytest tests/                   # 1605 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips

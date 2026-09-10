@@ -32,8 +32,10 @@ Known scheduled falsifications:
 | ~~The universe widens past `data/symbols.txt`~~ implemented | `src/universe.py` uses Nasdaq classifications to exclude unknown/common-stock mismatches and new healthcare/biotech/pharma, retains curated exceptions, and requires $20M prior-20-session median and target-session dollar volume on SIP before the unchanged scanner gates. Selection provenance and dated membership are archived. |
 | ~~The universe-size prose changes~~ swept | README's opening, pipeline diagram, layer caption, Costs and Tuning now describe classified discovery and at most 500 detailed histories; 228 refers only to the reviewed seed/fallback. |
 
-The adaptive selector addresses the former open universe decision. Actual
-production refresh success still has to be established by its published record.
+The adaptive selector addresses the former open universe decision. No
+production run has yet published a record with `directory_status: live`: every
+refresh from Actions timed out on the User-Agent it sent until round 12 below
+changed it, and the first evening cron after that change is what establishes it.
 
 ## Standing rule: no line numbers in comments or docs
 
@@ -145,7 +147,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1604 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1605 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -219,6 +221,59 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   over 14 and 74 -- which is the "only one side can be read" sentence, and
   the page says exactly that. The three verdict branches are pinned on three
   sources, because no real source can hold more than one of them yet.
+
+## Round 12 — the directory answers a browser and nothing else
+
+**Every evening run since the adaptive universe landed was red for one reason,
+and it was the User-Agent.** Five runs in a row -- 33, 34 and 36 on Ubuntu, 35
+on macOS after PR #43 moved it there, and the 9 Sep cron -- timed out reading
+api.nasdaq.com, three attempts each, the connect succeeding every time and the
+read never answered. PR #42 called that a slow download of a 2 MB reply, PR #43
+the runner's network, and PR #44 gave up on live retrieval and committed a
+seven-day catalog. The 9 Sep cron then did everything the project exists to do
+(500 names, 11 bursts, 6 scored, `docs/` committed as 76783a1, the shortlist
+mailed) and exited 2, because a cached catalog is a documented degradation; so
+the job was red while working, and the morning was red for inheriting it. The
+catalog captured 2026-09-09T03:03Z expires seven days later, so without this
+round the 16 Sep evening would have dropped to the 228-name seed, still red.
+
+Settled by execution, not argued: a temporary matrix workflow asked the endpoint
+from seven fresh runners, one header set each, with the pipeline's own client
+and again with curl (run 34414747241). This sandbox could not ask -- its proxy
+refuses api.nasdaq.com outright -- which is why the question went to a runner.
+
+| header set | python-requests, timeout (5, 30) | curl, 30 s cap |
+|---|---|---|
+| the pipeline's `SpicyStock/1.0 (...)` | ReadTimeout at 30 s | HTTP/2 stream reset in 0.08 s |
+| the same, `limit=25` | ReadTimeout | reset |
+| `Mozilla/5.0 (compatible; SpicyStock/1.0; +url)` | ReadTimeout | reset |
+| python-requests' default | ReadTimeout | reset |
+| a Chrome string + `Accept: application/json, text/plain, */*` | 200, 7,139 rows, 1.2 s | 200 |
+| the same plus Accept-Language, Origin, Referer | 200, 7,139 rows, 1.2 s | 200 |
+| nasdaqtrader.com's symbol file, with the pipeline's old UA | 200 in 0.3 s | 200 |
+
+So it was not the size of the reply, not the runner's network, not the TLS
+client, and not "Mozilla/5.0" alone: the endpoint wants a User-Agent that
+names a browser, and holds anything else open until the client gives up.
+`DIRECTORY_HEADERS` sends the Chrome string with the browser's Accept and
+nothing else. The test pins the SHAPE that answered rather than the constant's
+name -- putting any of the three strings that hung back turns it red, and so
+does dropping the Accept -- and the transport-recovery check holds the request
+to the constant, so a stray header cannot creep in. The retry and the catalog
+fallback stay as written; they were built for a transient failure and this
+was never one. Verified once more by execution before the probe workflow was
+deleted: run 34415501631 ran this branch's real `fetch_directory()` on an
+Ubuntu runner and got 7,139 listings on its first attempt, in 3.2 s.
+
+**Two consequences written down rather than changed, because both are the
+owner's call.** With a live fetch, `select()` rewrites
+`docs/universe-directory.json.gz` every night -- the rows carry `lastsale` and
+`volume`, so the blob differs daily -- and `git add docs` commits it: ~204 KB a
+night, ~50 MB a year of binary history that does not delta-compress, which is
+PR #44's design meeting the first night it actually runs. And a cached-catalog
+night is still exit 2, which is what made red the steady state for a week; the
+evening workflow's own comment already declines to say whether red is right
+for exit 2, and this round does not answer it either.
 
 ## Findings from the round-4 audit — the first-run and scanner lenses
 
