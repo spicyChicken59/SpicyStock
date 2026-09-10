@@ -18,6 +18,8 @@ import numpy as np
 import pandas as pd
 import logging
 
+from dataclasses import replace
+
 import pytest
 import requests
 from alpaca.common.exceptions import APIError
@@ -139,7 +141,17 @@ def _rule_status(frame, cfg: ScanConfig) -> dict[str, bool]:
     avg = trailing_volume_mean(df, cfg)
     return {
         "1_gain": (close / prev_close - 1) * 100 >= cfg.min_gain_pct,
-        "2_vs_prev_day": vol >= prev_vol,
+        # STRICTLY greater, matching Bonde's `v > v1` and src/stockbee.py's
+        # canonical statement of the same rule. This helper is a second copy
+        # of detect_setup's predicates and read as one -- so when it said
+        # `>=` and the scan said `<`, a frame with equal volume was reported
+        # here as passing rule 2 while the scan refused it.
+        "2_vs_prev_day": vol > prev_vol,
+        # Rule 2b is scoped to the consolidated tape, so off-SIP it cannot
+        # fail and this entry is True by construction rather than absent --
+        # a rule missing from this map is a rule `_only_failing` can never
+        # name, which is how a substitution hides.
+        "2b_share_floor": cfg.feed != DataFeed.SIP or vol >= cfg.min_share_volume,
         "3_rvol": avg is not None and vol / avg >= cfg.min_rvol,
         "5_price": close > cfg.min_price,
     }
@@ -253,8 +265,17 @@ def test_rule1_a_gain_exactly_at_the_threshold_is_kept(ohlcv):
     assert result["gain_pct"] == pytest.approx(cfg.min_gain_pct, abs=0.01)
 
 
-def test_rule2_volume_exactly_equal_to_the_previous_day_is_kept(ohlcv):
-    """Rule 2 asks for volume that did not FALL. Equal is not a fall.
+def test_rule2_volume_exactly_equal_to_the_previous_day_is_refused(ohlcv):
+    """Rule 2 asks for volume that EXPANDED. Equal is not an expansion.
+
+    This test used to assert the opposite, on the reading that "rule 2 asks
+    for volume that did not FALL". Bonde's scan is `v > v1` in all three dated
+    versions of it, and src/stockbee.py -- this repo's own canonical statement
+    of the same rule -- has always implemented it strictly and has a boundary
+    case pinning it ("Yesterday's volume is a strict comparison"). So the two
+    modules disagreed about the one rule they both claim to implement, and the
+    disagreement had a shape: a session whose volume exactly equals the one
+    before it, which is what an expansion rule exists to exclude.
 
     Yesterday is lifted to today rather than today dropped to yesterday: the
     burst day carries the volume rule 3 needs, and levelling down would put
@@ -264,11 +285,15 @@ def test_rule2_volume_exactly_equal_to_the_previous_day_is_kept(ohlcv):
     cfg = ScanConfig()
     frame = _passing(ohlcv)
     _set_volume(frame, prev=float(frame["Volume"].iloc[-1]))
-    assert _only_failing(frame, cfg) == set()
+    assert _only_failing(frame, cfg) == {"2_vs_prev_day"}, (
+        "rule 2 has to be the rule that refuses this, not rule 3 standing in for it")
+    assert detect_setup(frame, cfg) is None
 
-    result = detect_setup(frame, cfg)
-    assert result is not None
-    assert result["volume"] == result["prev_volume"]
+    # ...and one share of expansion is enough, so the boundary is where the
+    # rule says it is and not somewhere above it.
+    _set_volume(frame, prev=float(frame["Volume"].iloc[-1]) - 1)
+    assert _only_failing(frame, cfg) == set()
+    assert detect_setup(frame, cfg) is not None
 
 
 # =====================================================================
@@ -564,8 +589,13 @@ def test_liquidity_split_is_the_gate_with_its_other_half(ohlcv):
     floor to report."""
     cfg = ScanConfig()
     cands = []
+    # $5, not $50. Rule 6 is a DOLLAR rule and these dollar volumes are the
+    # point of the test, but at $50 the thinnest of them is 40,000 shares --
+    # under rule 2b's 100,000-share floor, so the name never reaches rule 6 at
+    # all. Lowering the price keeps every dollar figure and makes the shares
+    # real.
     for i, dv in enumerate([2e6, 8e6, 30e6, 90e6]):
-        frame = _thin(ohlcv, "burst", price=50.0, volume=dv / 50.0, variant=i)
+        frame = _thin(ohlcv, "burst", price=5.0, volume=dv / 5.0, variant=i)
         cands.append(Candidate(ticker=f"T{i}", history=frame, **detect_setup(frame, cfg)))
     universe = [float(i + 1) * 1e6 for i in range(100)]
 
@@ -604,8 +634,19 @@ def test_the_gate_survives_a_feed_that_reports_a_fraction_of_the_tape(ohlcv):
     volume moves every dollar figure by the same factor and does not move the
     ranking, so the same names survive. An absolute floor would have to be
     retuned for every feed, and silently means a different strategy until it
-    is."""
+    is.
+
+    THE ONE-VENUE HALF READS AN IEX CONFIG, and that is the argument rather
+    than a convenience. Rule 2b puts Bonde's 100,000-share floor back into the
+    scan, which is exactly the feed-dependent shape this test defends against
+    -- so that floor is scoped to the consolidated tape, and a venue reporting
+    3% of it is by definition not that. The two rules coexist by scope: the
+    percentile is feed-invariant and always applies; the share floor applies
+    only where the volume reported IS the market's. A config that claimed SIP
+    while carrying 3% of the tape is a state that cannot occur and would
+    refuse the name on a number about the venue."""
     cfg = ScanConfig()
+    partial = replace(cfg, feed=DataFeed.IEX)
     frame = _thin(ohlcv, "burst", price=50.0, volume=1_000_000)
     cand = Candidate(ticker="MID", history=frame, **detect_setup(frame, cfg))
     universe = [1e6 * (i + 1) for i in range(20)]
@@ -613,10 +654,40 @@ def test_the_gate_survives_a_feed_that_reports_a_fraction_of_the_tape(ohlcv):
     full_tape = apply_liquidity_gate([cand], universe, cfg)
     one_venue = apply_liquidity_gate(
         [Candidate(ticker="MID", history=frame,
-                   **detect_setup(_scale(frame, volume=0.03), cfg))],
-        [v * 0.03 for v in universe], cfg,
+                   **detect_setup(_scale(frame, volume=0.03), partial))],
+        [v * 0.03 for v in universe], partial,
     )
     assert [c.ticker for c in full_tape] == [c.ticker for c in one_venue] == ["MID"]
+
+
+def test_the_share_floor_applies_on_the_consolidated_tape_and_nowhere_else(ohlcv):
+    """Rule 2b's scope, both ways, on one frame.
+
+    The same 30,000-share burst is refused when the config says the volume is
+    the market's and kept when it says it is one venue's. Without the second
+    half this rule would be the absolute floor step 4 removed, wearing a
+    smaller number."""
+    thin = _thin(ohlcv, "burst", price=50.0, volume=30_000)
+    assert detect_setup(thin, ScanConfig(feed=DataFeed.SIP)) is None
+    assert detect_setup(thin, ScanConfig(feed=DataFeed.IEX)) is not None
+
+    # And the boundary is the stated number, on the tape where it applies.
+    floor = ScanConfig().min_share_volume
+    assert detect_setup(_thin(ohlcv, "burst", price=50.0, volume=floor - 1),
+                        ScanConfig(feed=DataFeed.SIP)) is None
+    assert detect_setup(_thin(ohlcv, "burst", price=50.0, volume=floor),
+                        ScanConfig(feed=DataFeed.SIP)) is not None
+
+    # THE NUMBER HAS TO COME FROM THE CONFIG, and asserting it at its default
+    # cannot show that: a literal 100_000 inlined in the rule satisfies every
+    # line above. This is round 11's "a threshold inlined at its own value
+    # passed the guard meant to catch it", one module over, and it survived
+    # the first mutation sweep of this rule. Moving the field moves the
+    # verdict, or the field is decoration.
+    moved = replace(ScanConfig(feed=DataFeed.SIP), min_share_volume=500_000)
+    middle = _thin(ohlcv, "burst", price=50.0, volume=300_000)
+    assert detect_setup(middle, ScanConfig(feed=DataFeed.SIP)) is not None
+    assert detect_setup(middle, moved) is None
 
 
 def test_the_gate_keeps_the_share_of_the_universe_it_says_it_keeps(ohlcv):
@@ -625,8 +696,11 @@ def test_the_gate_keeps_the_share_of_the_universe_it_says_it_keeps(ohlcv):
     cfg = ScanConfig(min_dollar_volume_pctile=30.0)
     universe = [float(i + 1) * 1e6 for i in range(100)]
     cands = []
+    # $5 for the same reason as the split test above: the thin end of a
+    # uniform $1M-$100M spread is 20,000 shares at $50, which rule 2b refuses
+    # before this rule is consulted.
     for i, dv in enumerate(universe):
-        frame = _thin(ohlcv, "burst", price=50.0, volume=dv / 50.0, variant=i)
+        frame = _thin(ohlcv, "burst", price=5.0, volume=dv / 5.0, variant=i)
         cands.append(Candidate(ticker=f"T{i}", history=frame, **detect_setup(frame, cfg)))
     kept = apply_liquidity_gate(cands, universe, cfg)
     assert 68 <= len(kept) <= 72
@@ -737,7 +811,11 @@ def test_the_liquidity_floor_is_not_universe_invariant():
 
 def test_the_liquidity_gate_can_be_turned_off(ohlcv):
     cfg = ScanConfig(min_dollar_volume_pctile=0.0)
-    frame = _thin(ohlcv, "burst", price=50.0, volume=1_000)
+    # Thin in DOLLARS ($1M/day) while carrying real shares, so the name is
+    # refused by rule 6 alone when the rule is on and by nothing when it is
+    # off. At 1,000 shares it was refused by rule 2b instead, and this test
+    # would have passed for the wrong reason.
+    frame = _thin(ohlcv, "burst", price=5.0, volume=200_000)
     cand = Candidate(ticker="TINY", history=frame, **detect_setup(frame, cfg))
     assert liquidity_floor([1e9] * 10, cfg) is None
     assert [c.ticker for c in apply_liquidity_gate([cand], [1e9] * 10, cfg)] == ["TINY"]

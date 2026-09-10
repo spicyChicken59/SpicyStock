@@ -161,7 +161,8 @@ no claim is made that a refresh succeeded until its new snapshot is published.
 Nasdaq classified US common stocks → 20-session SIP liquidity screen → up to 500 stocks
         │  Alpaca daily OHLCV, split-adjusted, SIP, batched
         ▼
-Layer 1  4% burst filter ............. ≥4% gain, vol ≥ yesterday, ≥1.5x its own
+Layer 1  4% burst filter ............. ≥4% gain, vol > yesterday, ≥100,000 shares
+        │                              on the consolidated tape, ≥1.5x its own
         │                              50-session average, price > $4, and in the
         │                              top 70% of the day's dollar volume —
         │                              the bottom 30% are ARCHIVED as refused,
@@ -677,7 +678,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1659 tests, no network or API keys needed
+pytest tests/                   # 1660 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips

@@ -342,13 +342,32 @@ class ScanConfig:
     #: fingerprint. Class attributes, not dataclass fields -- they carry no
     #: annotation, so nothing constructs them per instance.
     STRATEGY_FIELDS = ("min_price", "min_gain_pct", "min_rvol", "rvol_lookback",
-                       "min_rvol_sessions", "min_dollar_volume_pctile")
+                       "min_rvol_sessions", "min_dollar_volume_pctile",
+                       "min_share_volume")
     OPERATIONAL_FIELDS = ("max_stale_fraction", "max_dropped_fraction",
                           "coverage_guard_min_symbols", "lookback_days",
                           "batch_size", "feed", "session_date")
 
     min_price: float = 4.0            # price > $4
     min_gain_pct: float = 4.0         # >= 4% up from yesterday
+
+    # --- rule 2b: Bonde's own absolute share floor -------------------------
+    # `c/c1>=1.04 and v>v1 and v>=100000`. The third clause is the one this
+    # scan never had, and it is not the same question rule 6 answers: that one
+    # is a DOLLAR percentile, so a $900 stock clears it on a few thousand
+    # shares, and three names in the 2026-09-09 universe traded under 100,000
+    # shares on the session. 100,000 is his number in all three dated versions
+    # of the scan; the only drift across them is `>` against `>=` on the same
+    # magnitude, and the inclusive reading is the one the sidecar states.
+    #
+    # UNRESOLVED AT SOURCE, and named here rather than left to the silence:
+    # Telechart's V is conventionally in hundreds, which would read `v>100000`
+    # as ten million shares. His prose says 100,000, and the Market Monitor
+    # version of the same scan is written `V >= 1000`, which IS 100,000 in
+    # Telechart units. So either the trading scan is written in raw shares or
+    # a transcription lost the conversion. 100,000 shares is the reading with
+    # two independent supports; knowledge/method-sources.md carries the doubt.
+    min_share_volume: int = 100_000
 
     # --- rule 3: volume against the stock's own norm -----------------------
     # `min_rvol` is where a burst stops being ordinary. knowledge/strategy.md
@@ -1111,8 +1130,40 @@ def detect_setup(df: pd.DataFrame, cfg: ScanConfig) -> dict | None:
     if gain_pct < cfg.min_gain_pct:
         return None
 
-    # 2. today's volume >= yesterday's volume
-    if vol < prev_vol:
+    # 2. today's volume > yesterday's volume.
+    #    STRICTLY greater, which it was not. Bonde's scan is `v > v1` in all
+    #    three dated versions of it, and `src/stockbee.py`'s canonical
+    #    statement of the same rule -- "volume > previous session volume" --
+    #    already reads it that way, so the sidecar and production disagreed on
+    #    the one rule they both claim to implement. The disagreement is
+    #    exactly one shape of day: volume identical to the session before,
+    #    which is not an expansion and is what this rule exists to require.
+    if vol <= prev_vol:
+        return None
+
+    # 2b. Bonde's own absolute floor, which this scan did not have --
+    #     ON THE CONSOLIDATED TAPE ONLY, and that condition is the whole
+    #     design of this rule rather than a caveat on it.
+    #
+    #     `c/c1>=1.04 and v>v1 and v>=100000` is the whole canonical scan, and
+    #     the third clause was the only one with no counterpart here: rule 6
+    #     works in DOLLARS, so a high-priced thin name clears it on a few
+    #     thousand shares. Three names in the 2026-09-09 universe traded under
+    #     100,000 shares on the session.
+    #
+    #     But an absolute share count is exactly what step 4 REMOVED, and for
+    #     a reason that has not gone away: it measures the feed as much as the
+    #     stock, and a venue carrying 3% of consolidated volume fails it on
+    #     names that trade fine. `test_the_gate_survives_a_feed_that_reports_a_
+    #     fraction_of_the_tape` is the guard for that argument and it is right.
+    #     So the two coexist by scope: rule 6's percentile is feed-invariant
+    #     and always applies, and this floor applies only where the volume
+    #     reported IS the market's -- which is the same condition
+    #     `src/universe.py` already puts on adaptive selection ("Adaptive
+    #     selection needs consolidated SIP volume"). On any other feed the
+    #     number would be a statement about the venue, so it is not applied
+    #     and the percentile carries the session alone.
+    if cfg.feed == DataFeed.SIP and vol < cfg.min_share_volume:
         return None
 
     # 3. today's volume >= min_rvol x its own trailing average. This replaced
