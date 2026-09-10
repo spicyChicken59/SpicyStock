@@ -26,6 +26,69 @@ ANTICIPATION_RULES = {
     "min_contiguous_sessions": 67,
     "excludes_current_4pct_scan_matches": True,
 }
+#: Bonde's OWN qualifying checklist, letter by letter, as five independent
+#: sources render it -- his 27 Sep 2024 thread, contemporaneous bootcamp notes
+#: taken in his own class, two third-party reimplementations and a paid course
+#: that translates it. It is reproduced here because `src/lynch.py` implements
+#: a checklist under the SAME six letters that means different things by three
+#: of them, and a comparison needs both statements written down in one repo.
+#:
+#: Bonde                                    what src/lynch.py calls it
+#:   2  not up two days in a row            a VETO at three or more
+#:   L  linearity of the prior move         L (the same rule)
+#:   Y  young trend: first or second        `2`
+#:      breakout from consolidation
+#:   N  narrow range OR negative day        `C`
+#:      immediately before the breakout
+#:   C  consolidation quality: shallow,     `N`, plus the non-voting
+#:      orderly, compact, low volume,       base-breakdown criterion
+#:      no more than ONE 4% breakdown
+#:   H  close near the high of the day      H (the same rule)
+#:
+#: `src/lynch.py`'s `Y` -- distance above the 20-day average and the month's
+#: run-up -- has no counterpart in this list at all. It is a real risk measure
+#: and it is this repo's, not his.
+#:
+#: TWO SCOPES THAT ARE EASY TO LOSE. He states 2LYNCH for CONTINUATION setups
+#: only ("2LYNCH is for only continuation setups. Every setup I trade has its
+#: own qualifying checklist"), and he adds "+CV" -- Catalyst, and Volume at
+#: 1.5-2x the 50-day average -- when the consolidation runs beyond about a
+#: month. That second one matters here: `ScanConfig.min_rvol` is 1.5x a
+#: 50-session average, which is his V, applied by this repo as an
+#: unconditional SCAN gate rather than as a criterion for one kind of base.
+#:
+#: UNVERIFIED AGAINST THE PRIMARY SOURCE, like every other number in this
+#: repo's reading of Bonde: stockbee.blogspot.com is refused by this sandbox's
+#: egress proxy, so the wording above comes from the sources named and not from
+#: his blog.
+QUALIFYING_RULES = {
+    "name": "2LYNCH",
+    "scope": "continuation setups; every other setup he trades has its own checklist",
+    "2": "not up two days in a row into the breakout; a small up day under 1% before it is fine",
+    "L": "linearity of the prior move",
+    "Y": "young trend: the first or second breakout out of the consolidation",
+    "N": "a narrow-range day or a negative day immediately before the breakout",
+    "C": "consolidation quality: shallow, orderly, compact, low volume, no more than one 4% breakdown",
+    "H": "the close near the high of the day",
+    "extension": "+CV for a consolidation beyond about a month: a Catalyst, and Volume at 1.5-2x the 50-day average",
+}
+
+#: What `qualify()` compares each measurement against. Three of these are
+#: Bonde's own numbers (the 1% up day, the one 4% breakdown, first-or-second);
+#: `close_near_high` and `compact_base` are the same bars `src/lynch.py`
+#: already applies, so promoting this checklist later cannot move them by
+#: accident; and `narrow_range_ratio` is the one number NOBODY states, which
+#: is why it is named here and called a proxy rather than buried in a
+#: comparison.
+QUALIFYING_THRESHOLDS = {
+    "small_up_day_pct": 1.0,       # Bonde: "a small up day of less than 1% before b/o is fine"
+    "max_prior_bursts": 1,         # Bonde: first or second breakout
+    "max_base_breakdowns": 1,      # Bonde: "no more than one 4% breakdown"
+    "close_near_high": 0.70,       # top 30% of the day's range
+    "compact_base": 1.0,           # the base tighter than the 60 sessions before it
+    "narrow_range_ratio": 1.0,     # PROXY: the prior day no wider than the base's own mean bar
+}
+
 MEASUREMENT_RULES = {
     "scan": "close / previous session close >= 1.04; volume > previous session volume; volume >= 100000",
     "breadth": "same volume rules as scan; up: close / previous close >= 1.04; down: close / previous close <= 0.96",
@@ -169,6 +232,114 @@ def _row(ticker: str, history: list[dict]) -> dict:
         "prior_day_range_pct": normalized[-2] * 100,
         "series": history[-SERIES_LIMIT:],
     }
+
+
+def qualify(row) -> dict:
+    """Bonde's 2LYNCH over one canonical scan row.
+
+    Five of the six are computable from a row `_row()` produced. **`L` is not,
+    and it returns None rather than a guess**: linearity is a fit over the
+    prior move, the row carries no fit, and `trend_intensity` is a different
+    measurement (where price sits, not how straight the path was). Reporting
+    five and saying so beats reporting six with one invented, which is the
+    shape this repo's notes call a confidently false sentence.
+
+    Every verdict is `True`, `False`, or None for "this row cannot say", and
+    the caller is expected to keep those three apart -- a null is not a fail.
+    `passes` and `measured` are returned beside the letters so a caller never
+    has to decide what None counts as.
+
+    The one number here that nobody states is the narrow arm of `N`. Bonde
+    says "narrow range day OR negative day"; negative is unambiguous and
+    narrow is not, so narrow is measured against the base's own mean bar width
+    -- the same shape of comparison `src/lynch.py` makes for its own tightness
+    rule -- and `QUALIFYING_THRESHOLDS` names it a proxy.
+    """
+    def verdict(value, test):
+        return None if value is None else bool(test(value))
+
+    t = QUALIFYING_THRESHOLDS
+    ups, prior_move = row.get("prior_up_days"), row.get("prior_day_move_pct")
+    # "Not up two days in a row", with his own exception for a trivial up day.
+    # A run this row could not measure (the series ends inside the streak) is
+    # None, because a streak that ran off the end of the history is unknown
+    # and not zero.
+    if ups is None:
+        two = None
+    elif ups < 2:
+        two = True
+    else:
+        two = (prior_move is not None and prior_move < t["small_up_day_pct"])
+
+    # N and C combine two arms each, and an arm can be unknown, so both follow
+    # three-valued logic rather than treating None as a fail. The two shapes
+    # are NOT symmetric and writing them the same way is wrong both times:
+    #   N is an OR -- an arm that failed while the other is unknown leaves the
+    #     whole check unknown, because the unknown arm could still carry it.
+    #   C is an AND -- an arm that failed decides the check, whatever the
+    #     other one says, so an unknown beside a fail is still a fail.
+    # The first version of this function had both backwards, which asserted a
+    # failed `N` it could not establish and withheld a `C` it could.
+    narrow = _narrow_prior_day(row)
+    negative = None if prior_move is None else prior_move <= 0
+    if negative is True or narrow is True:
+        n = True
+    elif negative is False and narrow is False:
+        n = False
+    else:
+        n = None
+
+    breakdowns, compression = row.get("base_down4_count"), row.get("compression_ratio")
+    arms = [None if breakdowns is None else breakdowns <= t["max_base_breakdowns"],
+            None if compression is None else compression <= t["compact_base"]]
+    if False in arms:
+        c = False
+    elif None in arms:
+        c = None
+    else:
+        c = True
+
+    checks = {
+        "2": two,
+        "L": None,
+        "Y": verdict(row.get("prior_bursts_20"), lambda v: v <= t["max_prior_bursts"]),
+        "N": n,
+        "C": c,
+        "H": verdict(row.get("close_position"), lambda v: v >= t["close_near_high"]),
+    }
+    return {"checks": checks,
+            "passes": sum(1 for v in checks.values() if v is True),
+            "measured": sum(1 for v in checks.values() if v is not None),
+            "unmeasured": sorted(k for k, v in checks.items() if v is None)}
+
+
+def _narrow_prior_day(row):
+    """Was the session before the breakout a narrow bar for this name?
+
+    Measured against the base's OWN mean width rather than an absolute
+    percentage, because "narrow" for a name that ranges 8% a day is not narrow
+    for one that ranges 1%. The base is the bars before the previous session,
+    read off the row's own `series`; too short a series answers None.
+    """
+    series = row.get("series")
+    if not isinstance(series, list) or len(series) < 4:
+        return None
+    widths = []
+    for bar in series[:-1]:            # everything before the breakout bar
+        try:
+            width = (bar["high"] - bar["low"]) / bar["close"]
+        except (KeyError, TypeError, ZeroDivisionError):
+            return None
+        if not isfinite(width):
+            return None
+        widths.append(width)
+    prior, base = widths[-1], widths[:-1]
+    if not base:
+        return None
+    norm = _mean(base)
+    if not isfinite(norm) or norm <= 0:
+        return None
+    return prior / norm <= QUALIFYING_THRESHOLDS["narrow_range_ratio"]
 
 
 def _anticipates(row, history) -> bool:
