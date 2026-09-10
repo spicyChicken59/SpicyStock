@@ -281,3 +281,148 @@ Written down so the next round does not re-derive them:
    network access could settle in a minute.
 5. Whether his published win rate is 40% or 60%; both circulate, over
    populations that are probably different.
+
+## Round 14's second sweep — his numbers off his own spreadsheet, his second scan, and two poisoned sources
+
+Nine more agents, over the same egress block. Three things changed the picture.
+
+### A primary source that is not the blog
+
+**Bonde's Market Monitor spreadsheet is public and live.** Title "Stockbee
+Market Monitor 2026"; header row carries, verbatim, a column named
+`Worden Common stock universe`. Read off it for 23 Jun – 9 Sep 2026, n = 55
+sessions:
+
+| | |
+|---|---|
+| his universe, daily | 6,481 – 6,546 names (min 24 Jun, max 4 Sep) |
+| "Number of stocks up 4% plus today" | median **239**, p25 165, p75 325, p90 473, max 880 (26 Jun), min 84 (28 Aug) |
+| median as a share of the universe | 3.67% |
+| the down side reaches | 972 (5 Jun) |
+
+This is the first thing in this file weighted **strongest** that is not a
+bootcamp note: it is his own published data, and it settles two questions this
+file previously listed as open. The universe is the whole TC2000 "Common
+Stock" list — *"Common Stock is the list used for all scans as it eliminates
+ETF"* — and the nightly hit count is a few hundred, not a handful.
+
+*Still not settled:* which exchanges that list spans. His T2108 reference is
+NYSE-only, but T2108 is a TC2000 built-in and not his scan universe.
+
+### The scan he built for a universe like ours
+
+`c-o >= .90 and v > 100000`. From "My process loop to trade 4% b/o and $ b/o"
+(2017-07), quoted through a research archive that carries per-post URLs:
+
+> "c-o>=.90 and v>100000 ... The scan looks for a stock up 90 cents plus. It
+> is more useful on high priced stocks above 40 as they do not often breakout
+> with 4% move."
+
+and, on why it exists at all:
+
+> "Dollar breakout is another way to find range expansion on higher priced
+> stocks that move in 5 to 50 dollar move but may not have 4% b/o on first day
+> of momentum burst."
+
+Three differences from the 4% scan, each deliberate: the move is **close minus
+OPEN**, so the overnight gap is excluded where `c/c1` includes it; there is
+**no volume-versus-yesterday term**; and the move is **absolute in dollars**,
+so it does not scale with price. Its stated target is different too — "5 to 20
+dollars move in 3 to 10 days", not 8–20% in 3–5 days.
+
+**This is the single most important line in this file for SpicyStock.** The
+universe here is the top 500 by dollar volume. Bonde does not point the 4%
+scan at that cohort; he built a second scan for it. `src/stockbee.py` runs
+that second scan now, disjoint from the 4% one, and `evidence.stockbee.dollar`
+measures what it finds.
+
+### The companion down-scan, and a unit trap that would put a floor 100× wrong
+
+The breadth pair, from his Market Monitor posts, attested 2010, 2014 and 2018:
+
+* up: `(100 * (C - C1) / C1) >= 4 AND V >= 1000 AND V > V1`
+* down: `(100 * (C - C1) / C1) <= (-4) AND V >= 1000 AND V > V1`
+
+Two things follow. The down count is **not** a bare decliner count — it
+carries the same volume-up condition. And **`V` in Telechart is in HUNDREDS of
+shares**, so `V >= 1000` there is 100,000 shares, the same floor as the trading
+scan. The trading scan's own posts write `v>100000` in prose-matching form and
+his words disambiguate it ("volume should be greater than 100000"); anyone
+reading the breadth formula without the unit convention builds the floor 100×
+too low, and at least one search summariser did exactly that.
+
+### The one rigorous outside test of the checklist
+
+Pre-registered, with a held-out arm split by `md5(ticker)` before any
+computation, n = 10,947 de-overlapped 4% events (7,856 discovery / 3,091
+holdout), metric = median 5-day excess over same-day SPY.
+
+| gate (theirs → ours) | holdout pass/fail | difference | p |
+|---|---|---|---|
+| not up 3 days in a row (`2`) | 2,862 / 229 | +1.37 pp | 0.019 |
+| narrow-or-negative prior day (`N`) | 2,520 / 571 | +1.31 pp | 0.0038 |
+| close in top 30% of range (`H`) | 2,380 / 711 | +0.79 pp | 0.150 |
+| all three | 1,847 / 1,244 | +1.25 pp | 0.0019 |
+
+**And the level, which is the part that matters:** all-sample 5-day median
+excess −0.47%, passing all three gates −0.06%, cut by them −1.30%. Their own
+summary is that the gates remove the losing half rather than finding the
+winning half. The same lab's wider event study (n = 15,812) puts the raw 4%
+scan at a −0.5% 20-day median against a +0.6% baseline and a 49% win rate,
+with the 3-day window — Bonde's own hold — inside ±0.3%; their reading is that
+his exit rules harvest the tail (median MFE 11–12%), not the median. They
+state one caveat themselves: their `gainers_4pct` drops both of his volume
+clauses, so it is the price clause alone.
+
+**One slice of that study is actionable here and nothing in this repo bounds
+it.** Split by the size of the day: 4–8% movers +0.5% and 51%; **≥15% movers
+−9.3% at 20 days and 36%, over 587 events** — the worst cell in the table.
+`ScanConfig` has a floor on the day's gain and no ceiling.
+
+### Two sources that are confidently, entirely wrong
+
+Recorded because this repo's own `Y` came from somewhere, and neither of these
+can be ruled out.
+
+* A GitHub "course" file that ranks in search for 2LYNCH expands it as
+  Two-Timeframe Alignment / Liquidity / Yield Potential / News Sentiment /
+  Catalyst Presence / Horizon. Every letter is wrong. Its own capture file
+  shows the mechanism: the source tweet was scraped **truncated**, ending
+  mid-sentence at *"A series of criteria we look for: 2 – The"*, and a model
+  generated three thousand words from the fragment — including an invented
+  origin story and a rule Bonde never states ("if any single criterion fails,
+  discard the setup").
+* A working Python dashboard implements `calculate_lynch_score` as L = Leader
+  in sector, Y = Young uptrend via EMA stack, N = Neglected (<10 analysts),
+  C = Consolidation, H = High-volume breakout, 2 = 2× earnings acceleration,
+  and gates on `lynch_min_score: 4`. Four of six are wrong, and the tell is
+  that "N = Neglected" is lifted from his **separate** MAGNA53 episodic-pivot
+  checklist, where it genuinely is "neglect: price, volume, news, funds,
+  analysts". This is the more dangerous of the two: it looks like a real
+  implementation, and its `4` reads like a Bonde-stated N-of-6 threshold.
+
+**Bonde publishes no pass count for 2LYNCH at all.** It is a discretionary
+chart-reading filter; `MIN_LYNCH_PASSES = 3` is this repo's number and no
+source supports or contradicts it. One independent quantitative
+implementation that measured a full six-condition gate over 114,586 setups
+reports it passes ~3.3% of them and lifts win rate by 1–2 points — "stable but
+tiny", which is the same shape as the pre-registered study above.
+
+### Where SpicyStock differs — two rows to add
+
+| # | Bonde | SpicyStock | deliberate? |
+|---|---|---|---|
+| 11 | a second daily scan, `c-o >= .90`, **for exactly the high-priced cohort** | had only the 4% scan, pointed at a top-500-by-dollar-volume universe | no — closed in round 14: the sidecar runs it and the record measures it |
+| 12 | no ceiling on the day's move (none stated) | none either — but the one measured study puts ≥15% movers at −9.3%/36% | open: an upper bound is a strategy decision, written down and not taken |
+
+### What no source could settle — one removed, one added
+
+Item 1 (which exchanges the Common Stock list spans) is narrowed but not
+closed: the universe SIZE is now known from his own sheet (~6,500), which is
+what most reimplementation decisions actually needed.
+
+New: whether the `$ breakout` carries a volume-versus-previous term. The 2017
+post's formula does not, and one third-party rendering writes
+`c-o>=.90 or o-c>=.90 and v>=100000` — an OR that folds in the down side and
+whose precedence is ambiguous as written. This repo implements the long side
+only, with no volume-versus-previous term, and says so.

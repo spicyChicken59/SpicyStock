@@ -196,3 +196,90 @@ def test_the_dollar_breakouts_are_reported_and_none_of_them_was_scored(capsys):
 def test_a_record_from_before_the_dollar_scan_reports_none_rather_than_guessing():
     report = fidelity_report.compare(run([canonical_row("AAA")], ["AAA"]))
     assert report["dollar_matched"] is None and report["dollar_listed"] == 0
+
+
+# ---------------------------------------------------------------------------
+# What each cut went on to do. The report's reason for existing: a rule that
+# drops most of the canonical matches is a quality filter only if the names it
+# drops did worse, and every canonical row carries forward returns now.
+# ---------------------------------------------------------------------------
+
+def measured(ticker, d5_open, **over):
+    row = canonical_row(ticker, **over)
+    row["forward_returns"] = {"d1": 1.0, "d3": 2.0, "d5": d5_open + 1,
+                              "as_of": "2026-09-16",
+                              "from_open": {"d1": 0.5, "d3": 1.5, "d5": d5_open}}
+    return row
+
+
+@pytest.mark.parametrize("returns", [
+    None, "measured", {}, {"from_open": None}, {"from_open": {}},
+    {"from_open": {"d5": None}}, {"from_open": {"d5": True}}, {"from_open": {"d5": "4"}},
+    {"d5": 9.0},          # the CLOSE basis alone is not the basis this reads
+])
+def test_a_row_with_no_open_basis_at_the_longest_horizon_is_pending_not_zero(returns):
+    """Pending is not a return of nothing. A horizon that has not happened,
+    or a row whose entry the fill refused, must not be averaged in as 0."""
+    row = canonical_row("AAA")
+    if returns is not None:
+        row["forward_returns"] = returns
+    assert fidelity_report._longest_return(row) is None
+
+
+def test_the_return_is_read_at_the_longest_horizon_on_the_open_basis():
+    from src import ledger
+    row = measured("AAA", 7.5)
+    assert fidelity_report._longest_return(row) == 7.5
+    assert max(ledger.HORIZONS) == fidelity_report._longest_horizon()
+
+
+def test_each_miss_carries_its_outcome_under_the_rule_that_dropped_it():
+    report = fidelity_report.compare(run(
+        [measured("KEPT", 6.0), measured("THIN", 1.0, volume_vs_average=1.2),
+         measured("CHEAP", -2.0, close=2.0)],
+        ["KEPT"]))
+    assert report["kept_returns"] == [6.0]
+    assert report["missed_returns_by_rule"] == {"rvol_threshold": [1.0], "min_price": [-2.0]}
+
+
+def test_a_group_under_the_minimum_prints_its_count_and_refuses_a_rate(capsys):
+    import tempfile
+    from pathlib import Path
+    entry = run([measured("KEPT", 6.0), measured("THIN", 1.0, volume_vs_average=1.2)], ["KEPT"])
+    tmp = Path(tempfile.mkdtemp()) / "ledger.json"
+    tmp.write_text(json.dumps({"runs": [entry]}))
+    assert fidelity_report.main(["--ledger", str(tmp)]) == 0
+    out = capsys.readouterr().out
+    assert "1 measured — too few to read as a rate (this report wants 30)" in out
+    assert "No verdict yet" in out
+    assert "+1.00% over" not in out
+
+
+def test_both_sides_over_the_minimum_print_their_means_and_the_caveat(capsys):
+    import tempfile
+    from pathlib import Path
+    kept = [measured(f"K{i}", 6.0) for i in range(3)]
+    thin = [measured(f"T{i}", 1.0, volume_vs_average=1.2) for i in range(3)]
+    tmp = Path(tempfile.mkdtemp()) / "ledger.json"
+    tmp.write_text(json.dumps({"runs": [run(kept + thin, [r["ticker"] for r in kept])]}))
+    assert fidelity_report.main(["--ledger", str(tmp), "--min-setups", "3"]) == 0
+    out = capsys.readouterr().out
+    assert "kept by production     +6.00% over 3 setups" in out
+    assert "rvol_threshold         +1.00% over 3 setups" in out
+    assert "overlapping bursts are not independent draws" in out
+    assert "No verdict yet" not in out
+
+
+def test_the_section_prints_even_when_nothing_is_measured_yet(capsys):
+    """The committed record is in exactly this state, and a reader who sees
+    nothing cannot tell "not filled yet" from "this report does not ask"."""
+    import tempfile
+    from pathlib import Path
+    tmp = Path(tempfile.mkdtemp()) / "ledger.json"
+    tmp.write_text(json.dumps({"runs": [run(
+        [canonical_row("KEPT"), canonical_row("THIN", volume_vs_average=1.2)], ["KEPT"])]}))
+    assert fidelity_report.main(["--ledger", str(tmp)]) == 0
+    out = capsys.readouterr().out
+    assert "What each cut went on to do" in out
+    assert "kept by production     nothing measured yet" in out
+    assert "rvol_threshold         nothing measured yet" in out

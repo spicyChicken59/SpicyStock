@@ -44,7 +44,17 @@ The $ BREAKOUT is reported with them. It is Bonde's other daily scan
 repo's, and every row of it is by construction a name production never scored:
 the sections are disjoint, and production admits only 4% bursts.
 
-Run: python tools/fidelity_report.py [--json]
+WHAT THE MISSES WENT ON TO DO is reported per rule, and that is the whole
+point of the report existing rather than a table of counts. Every canonical
+row carries forward returns now (`Ledger.fill_forward_returns()` fills the
+sidecar the way it fills a pick), so "does the rule that drops 71% of them
+drop the WORSE ones?" is arithmetic over the record instead of an argument.
+Read the two sides together: a rule that drops nothing has no rows here and
+is not thereby better, and a mean over a handful of rows is not a rate --
+`--min-setups` is the floor below which this prints the count and no verdict,
+the same rule the page applies to every other population.
+
+Run: python tools/fidelity_report.py [--json] [--min-setups N]
 """
 from __future__ import annotations
 
@@ -130,9 +140,18 @@ def compare(run: dict) -> dict | None:
     missed = sorted(set(canonical) - set(production))
     extra = sorted(set(production) - set(canonical))
     reasons: dict[str, int] = {}
+    outcomes: dict[str, list] = {}
     for ticker in missed:
         reason = _why_missed(canonical[ticker], cfg)
         reasons[reason] = reasons.get(reason, 0) + 1
+        # What the rule's refusals went on to do, at the longest horizon the
+        # record measures. None for a row still pending, and pending is NOT
+        # zero: a horizon that has not happened is not a return of nothing.
+        value = _longest_return(canonical[ticker])
+        if value is not None:
+            outcomes.setdefault(reason, []).append(value)
+    kept_returns = [v for t in sorted(set(canonical) & set(production))
+                    if (v := _longest_return(canonical[t])) is not None]
 
     return {
         "date": run.get("date"),
@@ -145,6 +164,8 @@ def compare(run: dict) -> dict | None:
         "overlap": len(set(canonical) & set(production)),
         "missed": missed,
         "missed_by_rule": reasons,
+        "missed_returns_by_rule": {k: sorted(v) for k, v in outcomes.items()},
+        "kept_returns": sorted(kept_returns),
         "extra": extra,
         "scored": run.get("scored"),
         "score_cap": run.get("score_cap"),
@@ -154,6 +175,39 @@ def compare(run: dict) -> dict | None:
         "dollar_listed": len(dollar_rows),
         "dollar_names": [r["ticker"] for r in dollar_rows],
     }
+
+
+#: The horizon the outcome split is read at. The longest the record measures,
+#: because a 4% burst is a 3-to-5 session move and d1 is barely past the
+#: entry. Read off src.ledger rather than typed, so a record that grows a
+#: horizon does not leave this report quoting one nobody fills.
+def _longest_horizon() -> int:
+    from src import ledger
+    return max(ledger.HORIZONS)
+
+
+def _longest_return(row: dict) -> float | None:
+    """One canonical row's return at the longest horizon, on the OPEN basis.
+
+    The open basis, deliberately: this report is about whether a rule drops
+    the worse names, and what a reader of the evening mail could have paid is
+    the next session's open. src.ledger's own contract draws that distinction
+    and every surface that shows a number says which basis it is on, so this
+    one does too -- in its heading, since a column of numbers cannot.
+    """
+    returns = row.get("forward_returns")
+    if not isinstance(returns, dict):
+        return None
+    block = returns.get("from_open")
+    value = block.get(f"d{_longest_horizon()}") if isinstance(block, dict) else None
+    if value is None or isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value)
+
+
+def _mean(values: list[float]) -> float:
+    import math
+    return math.fsum(values) / len(values)
 
 
 def _unspent(run: dict) -> int | None:
@@ -173,6 +227,9 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--json", action="store_true", help="machine-readable output")
     parser.add_argument("--ledger", default=str(LEDGER))
+    parser.add_argument("--min-setups", type=int, default=30,
+                        help="rows a group needs before its mean is read as a rate "
+                             "(default 30, the page's own min_setups)")
     args = parser.parse_args(argv)
 
     try:
@@ -220,6 +277,47 @@ def main(argv=None) -> int:
                   f"none of them scored: {' '.join(r['dollar_names'][:12])}"
                   + (" ..." if len(r["dollar_names"]) > 12 else ""))
         print(f"    scored {r['scored']} of a {r['score_cap']}-call budget; top score {r['top_score']}")
+        print()
+
+    # WHAT THE MISSES DID. The report's reason for existing: a rule that drops
+    # 71% of the canonical matches is a quality filter only if the names it
+    # drops did worse, and the record can finally say. Pooled across the runs,
+    # because one night is never enough rows to read as a rate and this is the
+    # one place a reader will look for the answer.
+    pooled: dict[str, list] = {}
+    kept: list = []
+    for r in reports:
+        kept.extend(r["kept_returns"])
+        for rule, values in r["missed_returns_by_rule"].items():
+            pooled.setdefault(rule, []).extend(values)
+    horizon = _longest_horizon()
+    # Printed even when nothing is measured yet, because this section IS the
+    # answer the report exists to reach: a reader who sees nothing cannot tell
+    # "not filled yet" from "this report does not ask". The committed record
+    # is in exactly that state -- every canonical row gained its
+    # forward_returns block on the commit that made them fillable, and the
+    # first run after it is what fills them.
+    if True:
+        print(f"  What each cut went on to do, at +{horizon}d from the next session's "
+              f"open (the price a reader of the evening mail could have paid):")
+        rows = [("kept by production", kept)] + sorted(
+            pooled.items() or [(rule, []) for rule in sorted(
+                {rule for r in reports for rule in r["missed_by_rule"]})])
+        for label, values in rows:
+            if not values:
+                print(f"    {label:22s} nothing measured yet")
+            elif len(values) < args.min_setups:
+                print(f"    {label:22s} {len(values)} measured — too few to read as a rate "
+                      f"(this report wants {args.min_setups})")
+            else:
+                print(f"    {label:22s} {_mean(values):+.2f}% over {len(values)} setups")
+        if kept and len(kept) >= args.min_setups and any(
+                len(v) >= args.min_setups for v in pooled.values()):
+            print("    Read these against each other, not on their own: same market, "
+                  "same sessions, and overlapping bursts are not independent draws.")
+        else:
+            print("    No verdict yet — a comparison needs both sides over the minimum. "
+                  "A rule that drops nothing has no row here and is not thereby better.")
         print()
 
     # THE BUDGET, over the whole record. Two numbers and one sentence, because
