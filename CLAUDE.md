@@ -445,7 +445,13 @@ a rate below `--min-setups` the way every other population on the page does.
 
 Today it prints "nothing measured yet" on all three rows, which is the honest
 state: the blocks were created by this round's own commit and the first
-scheduled run is what fills them. Over the thirty-run history fixture the
+scheduled run is what fills them.
+
+**The owner's decision, 10 Sep 2026: the relative-volume gate stays.** The
+measurement stays with it, which is the point of having built it as a
+measurement rather than a change -- the record goes on saying what the
+gate's refusals went on to do whether or not anyone acts on it, and the
+decision can be reopened on the record instead of on the argument. Over the thirty-run history fixture the
 same code prints +4.99% over 150 for what production kept against 25 measured
 for `rvol_threshold` — too few, and the report says so rather than reading a
 handful as a rate.

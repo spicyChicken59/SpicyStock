@@ -253,7 +253,7 @@ are **not** comparable to his published Market Monitor figures.
 
 | # | Bonde | SpicyStock | deliberate? |
 |---|---|---|---|
-| 1 | volume > previous session | `min_rvol` 1.5x a 50-session average, **as a scan gate** | no — this is his conditional **+V** criterion promoted to an unconditional filter |
+| 1 | volume > previous session | `min_rvol` 1.5x a 50-session average, **as a scan gate** | **yes, since 10 Sep 2026** — the owner chose to keep it. It is still his conditional **+V** criterion promoted to an unconditional filter, and `evidence.stockbee.missed` now measures what it refuses, so the decision can be revisited on the record rather than on the argument |
 | 2 | volume floor of 100,000 **shares** | 30th-percentile **dollar-volume** floor, $76.7M/day on 2026-09-09 | no — and it refused a $62M/day burst as illiquid |
 | 3 | no price minimum; low-priced names preferred | `min_price` $4, and the universe selector drops everything under $4 | no |
 | 4 | no float or cap limit; **low float preferred** | universe selects on 20-session momentum and "liquid leader" | no — the selection runs opposite to his preference |
