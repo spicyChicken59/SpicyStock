@@ -147,7 +147,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1605 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1659 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -221,6 +221,141 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   over 14 and 74 -- which is the "only one side can be read" sentence, and
   the page says exactly that. The three verdict branches are pinned on three
   sources, because no real source can hold more than one of them yet.
+
+## Round 13 — the screener was looking in the wrong place, at four layers at once
+
+A night's work on one question the project had never asked: **is this a
+Stockbee screener?** The answer is that it is a good screener of something
+adjacent, and every layer is biased the same way. Nine research agents over
+every reachable source (the blog is still egress-blocked, so nothing below was
+read on it), seven audit lenses working by execution against the committed
+record, and every finding reproduced HERE before it was touched.
+
+`knowledge/method-sources.md` is the new file this round exists to produce:
+what Bonde is recorded as saying, who recorded it, and how much weight each
+source carries. `knowledge/strategy.md` stays the system prompt; the evidence
+does not belong in a prompt.
+
+**The letters are shuffled and one of them is not his.** Five independent
+sources — his own 2024 thread, notes taken inside his bootcamp, two
+reimplementations and a paid course — render 2LYNCH as: **2** not up two days
+in a row, **L** linearity of the prior move, **Y** young trend (first or
+second breakout), **N** narrow *or negative* day before the breakout, **C**
+consolidation quality with no more than one 4% breakdown, **H** close near the
+high. `src/lynch.py` means: `2` = Bonde's Y, `N` = his C, `C` = his N, and
+its own `Y` — extension over the 20-day average — is in no source at all. Only
+`L` and `H` mean what the letter says. The rules mostly survive under the
+wrong names, which is why nothing ever caught it: `test_stockbee_qualify.py`
+runs Bonde's own six over the same rows so the two can be compared at all.
+
+Two scopes that were lost with the letters. He states 2LYNCH for
+**continuation setups only**, and he adds **+CV** — a Catalyst, and Volume at
+1.5–2x the 50-day average — only when the consolidation runs beyond about a
+month. `ScanConfig.min_rvol` is 1.5x a 50-session average. **It is his V,
+promoted from a conditional criterion on one kind of base to an unconditional
+gate on every burst**, and that one promotion is most of what follows.
+
+**Production finds a quarter to a half of the bursts Bonde's own scan finds,
+over the same universe, and adds none.** `src/stockbee.py` has run the
+canonical scan beside production every night since it landed and nothing had
+ever compared the two lists. `tools/fidelity_report.py` does, offline, from
+`docs/ledger.json`:
+
+| session | canonical | production | in both | admitted that fail his scan |
+|---|---|---|---|---|
+| 2026-09-09 | 20 | 11 | 11 (55%) | 0 |
+| 2026-09-08 | 70 | 15 | 10 (21%) | 5 |
+
+Both directions, and a single count hides both. The five it admitted on the
+8th — BG, DK, EIX, RGTI, TKO — have volume above their trailing average and
+**not** above the previous session, which is day two of a volume event and
+exactly what `volume > previous volume` exists to exclude. Of the 30 it
+missed, 22 are under 1.5x on any window; the other 8 pass on the sidecar's 20
+sessions and fail on production's 50, so the report keeps `rvol_threshold` and
+`rvol_window` apart rather than merging two different facts about one rule.
+
+**And the rule anti-correlates with the setup it is screening for.** A burst
+comes out of a base where volume dried up; the 50-session denominator
+straddles the base and the advance in front of it, so the *more* the base
+dried up, the larger the multiple the burst has to clear. Measured in
+closed form: at a 7-session base whose volume ran at 40% of the advance's, the
+burst needs 3.5x its own base volume to pass a 1.5x test. The better the
+setup, the harder the gate.
+
+**`L` was fitting the consolidation and refusing setups for its shape.** Its
+own docstring says "the advance before consolidation"; its window ended on the
+session before the burst, so for any base longer than about ten sessions it
+was fitting the base. Reproduced on the textbook shape rather than argued — a
+clean +0.6%/day advance, a shallow orderly pullback, a 4% burst — where L
+passed at a 10-session base, failed at 15, failed at **17**, and at 30 failed
+with **R²=1.00**: a perfect fit of the base, published as a non-linear prior
+move. 17 is the base length in the worked example of the post this checklist
+comes from ("preceding the breakout for 17 days the stock did not have a
+momentum burst, did not have a 4% breakdown, had a series of narrow range
+days"). **The A-quality setup the source holds up was refused by the check
+meant to find it.** The fit ends `WINDOWS["tight_sessions"]` before the burst
+now — the same window `N` already calls the consolidation, not a number of its
+own — and the line says which sessions it fitted, because "over prior 30 days"
+named the length correctly and the position not at all. A base longer than the
+skip still bleeds in; that limit is written beside the code rather than hidden.
+`RULES_REVISION` is 3, since what a check READS changed.
+
+Nine mutants over that fix, eight killed on the first pass and both survivors
+real holes: the skip could be off by one while the line still said 7 (closed
+with a frame whose session exactly seven back is violent enough to wreck any
+fit that includes it), and the short-frame guard could be too loose to leave
+`_log_trend` three points (closed with a base of exactly `tight_sessions`).
+The ninth is `RULES_REVISION` itself, which no rule reads and the structural
+guards exempt by name — it survives by the same design that exempts it.
+
+An existing test had to move with the fix and that is worth recording,
+because it was shaped: the choppy-advance case failed L at a 5% wave on
+R²=0.443, but the window then included `_frame`'s seven flat shelf sessions,
+and a flat run at the end of a rising fit depresses R² by itself. The advance
+alone fits at 0.552 — over the line. It was failing partly on the shelf rather
+than on the chop it names. At 7% the advance itself fits at 0.406, and the
+wave is still small enough that no swing counts as a prior 4% burst.
+
+**What the record says the pipeline is actually doing.** Running Bonde's own
+checklist over Bonde's own scan for the two live sessions: on 8 September it
+selects 8 names and production had found 2 of them, spending its 8 Claude
+calls elsewhere — including a name five consecutive up days into a run with
+three prior bursts behind it. On 9 September it selects 5 and production found
+3. The best-qualifying name of the 8th, a 4-of-5 with a catalyst-shaped base,
+was never scanned at all.
+
+**So the all-skip output is not a calibration bug.** Both live sessions
+returned "skip" for every scored name, top score 4.5. Given a shortlist drawn
+from the wrong band by a scan that drops the qualifying setups and a checklist
+with one check that a good base cannot pass, **the model was scoring the
+candidates correctly**. The screener was honestly reporting that it was
+looking in the wrong place.
+
+**Four causes, one bias.** The universe drops everything under $4 and selects
+on trailing momentum and liquidity; rule 6's percentile puts the floor at
+$76.7M/day and refused a $62M/day burst as illiquid; the scan adds a volume
+gate that is not his; and Bonde's own 100,000-**share** floor is absent
+entirely. His stated preferences run the other way — *"Low float below 25
+million is good. Below 10 million float leads to explosive moves. Low priced
+stocks (below 5 dollar) tend to make very explosive moves."* Every one of the
+four pushes toward large, liquid, already-moving names. That is one bias with
+four causes, and the fix for it is a strategy decision rather than a bug fix,
+so it is written down here and in `knowledge/method-sources.md` rather than
+merged in the night.
+
+**One number retired from the unverified list.** `ledger.CLAIMED_BAND`'s 8–20%
+is Bonde's own, from his X account: *"Momentum burst is a swing trade of
+smaller 8 to 20% magnitude in 3 to 5 days."* It has carried an UNVERIFIED
+warning since 3.3. Three days and −4% are still unconfirmed against him, and
+the up-days rule turns out to have **two** sourced numbers — 2LYNCH says two
+days, a separate post on selecting setups says three — so the veto at three is
+one of his statements rather than a weakening of the other.
+
+**Left standing, deliberately.** `docs/PORTFOLIO-LOOP.md` is the design for
+the thing the record cannot do: it measures paper prices and cannot tell a bad
+pick from a bad execution from a human who took neither. Fidelity publishes no
+retail order API — checked, not assumed — so the shape is read-only positions
+in, a ranked plan out, and the first step needs no integration at all.
 
 ## Round 12 — the directory answers a browser and nothing else
 
