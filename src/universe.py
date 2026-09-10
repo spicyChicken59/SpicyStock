@@ -29,8 +29,26 @@ log = logging.getLogger(__name__)
 LABEL = "adaptive US common stocks (Nasdaq + Alpaca)"
 VERSION = "nasdaq-sip-rotation-v1"
 SOURCE_URL = "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true"
-CAPACITY = 500
-MIN_DOLLARS = 20_000_000
+#: How many selected names get a full scan. Raised 500 -> 1000 for a $50,000
+#: account, and the stopping point is the CALL BUDGET rather than taste: the
+#: 2026-09-09 scan of 500 names found 11 bursts and scored 6, so ~1000 names
+#: is the largest value that keeps MAX_TO_SCORE from biting on a typical
+#: night. Above it the crowded-out population starts filling and the cost of
+#: widening becomes a Claude-spend decision instead of a coverage one. The
+#: 35-session screen already runs over the whole classified pool, so this
+#: costs only the 250-session scan fetch for the extra names.
+CAPACITY = 1000
+#: The absolute liquidity floor, and since this round the ONLY one -- rule 6's
+#: percentile is off (ScanConfig.min_dollar_volume_pctile), which the comment
+#: there records. Lowered $20M -> $5M because the floor's job changed: at a
+#: $50,000 account a 25% position is $12,500, which is 0.003% of the median
+#: archived burst's $399M day, so participation is not the binding constraint
+#: at any floor this could plausibly take. Cost is. $5M/day at a $20+ price is
+#: ~250,000 shares, comfortably above the ~100,000-share ADV line where quoted
+#: spreads run past 50 bps, and a $12,500 order is 0.25% of that day.
+#: Measured on the committed directory over the classified pool: 1,393 names
+#: survived $20M and 1,863 survive $5M, out of 2,485 fetched either way.
+MIN_DOLLARS = 5_000_000
 LOOKBACK = 20
 MAX_DISCOVERY = 6000
 #: How many of the selected names each reason may claim, before the leftover

@@ -331,7 +331,7 @@
   <!-- What happened the last times THIS name burst. The summary comes out of
        data.json's evidence block; the per-appearance detail needs the whole
        record, so docs/ledger.json is fetched ONLY when a reader asks for it
-       (see loadRecord). A year of it is about 3.27 MB gzipped, which is not a
+       (see loadRecord). A year of it is about 3.30 MB gzipped, which is not a
        thing to spend on every visit for a view most readers never open.
        tools/measure_ledger.py measures it and a docs test holds this comment,
        the one above loadRecord and README to what it prints. -->
@@ -2348,7 +2348,7 @@
   }
 
   // The per-name view's lazy fetch. docs/ledger.json is the whole record — about
-  // 3.27 MB gzipped after a year — so it is never pulled on load; the summary
+  // 3.30 MB gzipped after a year — so it is never pulled on load; the summary
   // above comes out of data.json, which the page has already read. A 404 here is the
   // normal state until evening.yml has committed a run back, so it is reported
   // as a fact about the file rather than as a broken page.

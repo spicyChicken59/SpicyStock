@@ -1240,7 +1240,15 @@ def _history_with_one_refusal() -> dict:
     under the floor, the block's count raised with it."""
     import pathlib as _pathlib
     doc = json.loads((_pathlib.Path(__file__).resolve().parent / "fixtures" / "history" / "data.json").read_text())
-    floor = doc["run"]["liquidity"]["floor"]
+    # Rule 6's percentile is 0 in production since round 15, so the fixture
+    # carries a null floor and nothing to plant a refusal against. The gate
+    # itself is unchanged and its contract sentences still have to be
+    # checked, so the block is installed here rather than inherited from a
+    # default that has moved -- the same reason test_pipeline has a rule_six
+    # fixture. Every other field of the record is the fixture's own.
+    floor = 40_000_000.0
+    doc["run"]["liquidity"] = {"pctile": 30.0, "floor": floor,
+                               "over": doc["run"]["liquidity"]["over"], "refused": 0}
     donor = next(g for g in doc["gated_out"] if g["reason"] != ledger.LIQUIDITY_REASON)
     thin = json.loads(json.dumps(donor))
     thin.update(ticker="THIN", reason=ledger.LIQUIDITY_REASON, dollar_volume=floor / 2)

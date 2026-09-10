@@ -29,7 +29,7 @@ Known scheduled falsifications:
 | ~~The first commit-back replaces `docs/data.json` with a real run~~ swept before it happened (3.1) | ~~`check_fixture_fresh.py` compared `docs/data.json` to the generator, so the pipeline working would have turned CI red on the next push; README's "regenerate … `docs/data.json`" and "pinned to the fixture" smoke-test section~~ — the canonical fixture is `tests/fixtures/data.json` now, `docs/data.json` is whatever the last run wrote, and the guard only checks a `docs/` copy that still *claims* to be the fixture |
 | ~~`evening.yml` keeps `docs/` between runs~~ done in step 9 | ~~README's "Does the history actually accumulate?" section and the stale `charts/` path in that workflow's upload step~~ both swept; step 10 added why that commit-back now also feeds the morning run and every streak |
 | ~~Step 10 makes the mode mean something and reads the ledger back~~ done | ~~README's "morning has no workflow and no distinct behaviour" note, the workflow inventory, `.env.example`'s required-variable list~~ all swept; `morning.yml` now exists |
-| ~~The universe widens past `data/symbols.txt`~~ implemented | `src/universe.py` uses Nasdaq classifications to exclude unknown/common-stock mismatches and new healthcare/biotech/pharma, retains curated exceptions, and requires $20M prior-20-session median and target-session dollar volume on SIP before the unchanged scanner gates. Selection provenance and dated membership are archived. |
+| ~~The universe widens past `data/symbols.txt`~~ implemented | `src/universe.py` uses Nasdaq classifications to exclude unknown/common-stock mismatches and new healthcare/biotech/pharma, retains curated exceptions, and requires $5M prior-20-session median and target-session dollar volume on SIP before the scanner gates (rule 6's percentile is off; round 15). Selection provenance and dated membership are archived. |
 | ~~The universe-size prose changes~~ swept | README's opening, pipeline diagram, layer caption, Costs and Tuning now describe classified discovery and at most 500 detailed histories; 228 refers only to the reviewed seed/fallback. |
 
 The adaptive selector addresses the former open universe decision. No
@@ -147,7 +147,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1833 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1834 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -221,6 +221,57 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   over 14 and 74 -- which is the "only one side can be read" sentence, and
   the page says exactly that. The three verdict branches are pinned on three
   sources, because no real source can hold more than one of them yet.
+
+## Round 15 — the floors are a function of the account, not of the basket
+
+The screener's liquidity rules were sized for an account this one is not.
+Measured rather than argued: across the 26 archived burst rows the median
+burst-day dollar volume is $399M, so at a $50,000 account a 25% position is
+$12,500 -- 0.003% of that day, and 160x under the 1%-of-volume convention
+that every capacity rule in this literature is built on. Inverting the two
+floors at 1% participation, the $20M universe floor encodes an ~$800,000
+account and rule 6's percentile, at the $76.7M it took on 2026-09-09, an
+~$3.1M one. It also swung $76.7M / $85.1M / $378.7M across three sessions of
+the record, which is the universe-invariance defect `ScanConfig`'s own
+comment predicted, arriving in production.
+
+So the floor's job changes from capacity to COST, and the two rules split
+accordingly. `min_dollar_volume_pctile` is 0 -- rule 6 off, a state every
+surface already renders and the `noliquidity` smoke variant already covers --
+and `universe.MIN_DOLLARS` is $5,000,000, which at a $20+ price is roughly
+250,000 shares a day, comfortably above the ~100,000-share line where quoted
+spreads run past 50 bps, and a $12,500 order is 0.25% of it. `CAPACITY` is
+1000, and the stopping point is the CALL BUDGET rather than taste: 500 names
+found 11 bursts and scored 6 on 2026-09-09, so ~1000 is the largest value
+that keeps `MAX_TO_SCORE` from biting on a typical night. The 35-session
+screen already runs over the whole classified pool, so this costs only the
+250-session scan fetch for the extra names.
+
+Measured on the committed directory over the classified pool: 1,393 names
+survived $20M and 1,863 survive $5M, out of the 2,485 fetched either way.
+The price tilt this addresses was measured the same way -- 23.2% of listed
+names are $40 or more, 62.9% of what survived the $20M floor, and 73.4% of
+the 500 selected -- so the floor was about 2.7x of the tilt and the momentum
+sorts about 1.17x.
+
+**What it costs, said rather than buried.** `evidence.illiquid` stops
+filling and the benchmark is unfloored, which is a measurement rather than a
+rule, and every surface already names both causes of an unfloored rung. The
+history fixture keeps the percentile ON for exactly that reason: regenerated
+under the production default it carried none of those states and four
+dashboard checks could no longer fail, so `tools/make_history.py` sets it and
+`tests/fixtures/README.md` says so, as does `tests/test_pipeline.py`'s new
+`rule_six` fixture. The projected year moved 28.12 -> 28.22 MB raw and
+3.27 -> 3.30 gzipped, swept in README and both page comments; the stripped
+figures did not move.
+
+Eleven mutants, nine killed on the first pass. Both survivors were the same
+hole in the other direction: README's "up to 1000 stocks" reverted to 500 and
+`.env.example`'s "$5M median prior-20-session dollar volume" reverted to $20M
+with the whole suite green -- two documented strategy numbers with no guard,
+in the two files the standing doc-sweep rule names by name. Every occurrence
+of both is read back now, not the first one, because one true sentence beside
+a stale one is how a membership test gets satisfied while a reader is misled.
 
 ## Round 15 — the selector is a screener, and the record could not see it
 

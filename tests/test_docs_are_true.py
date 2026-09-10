@@ -188,6 +188,7 @@ def test_the_documented_thresholds_are_the_ones_the_code_applies(ohlcv):
     the constant it describes; the times are derived from the workflow crons
     the way the README derives them (UTC under EDT, minus four hours).
     """
+    from src import universe as adaptive_universe
     import yaml
     from src import ledger, lynch, pipeline, scanner
 
@@ -205,8 +206,12 @@ def test_the_documented_thresholds_are_the_ones_the_code_applies(ohlcv):
     assert (float(rvol), int(lookback)) == (cfg.min_rvol, cfg.rvol_lookback)
     (price,) = one(r"price > \$(\d+)")
     assert float(price) == cfg.min_price
-    (kept,) = one(r"top (\d+)% of the day's dollar volume")
-    assert int(kept) == 100 - cfg.min_dollar_volume_pctile
+    # Round 15 replaced the percentile with an absolute floor in another
+    # module. Both are read, so the diagram cannot claim one while the code
+    # applies the other.
+    (floor,) = one(r"\$([\d,]+)/day absolute floor")
+    assert int(floor.replace(",", "")) == adaptive_universe.MIN_DOLLARS
+    assert cfg.min_dollar_volume_pctile == 0, "rule 6 is on again -- document it"
     need, of, cap = one(r"hard gate: ≥(\d)/(\d) passes, top (\d+) kept")
     assert (int(need), int(of), int(cap)) == (
         pipeline.MIN_LYNCH_PASSES, lynch.evaluate_2lynch(ohlcv("burst"))["total"],
@@ -2393,3 +2398,38 @@ def test_the_stripped_cost_figures_are_what_measuring_them_says():
     assert sorted(module.STRIPPERS) == ["dollar", "forward_returns"], (
         "a new --without part is not stated in README; either quote its cost or "
         "widen this guard deliberately")
+
+
+def test_the_documented_selector_numbers_are_the_ones_it_applies():
+    """README and .env.example state the selector's capacity and its absolute
+    floor, and until round 15 nothing read either back.
+
+    Both survived a mutation run: "up to 1000 stocks" reverted to 500 and
+    "$5M median prior-20-session dollar volume" reverted to $20M with the
+    whole suite green, which is a documented strategy number with no guard --
+    the class this file exists for, in the two files the standing doc-sweep
+    rule names by name. Every occurrence is checked rather than the first,
+    because one true sentence beside a stale one is how this project has
+    repeatedly satisfied a membership test while a reader was misled.
+    """
+    from src import universe as adaptive_universe
+
+    def dollars(text: str) -> int:
+        text = text.replace(",", "")
+        return int(float(text[:-1]) * 1_000_000) if text.endswith("M") else int(float(text))
+
+    seen = {"capacity": 0, "floor": 0}
+    for doc in ("README.md", ".env.example"):
+        text = " ".join(_read(doc).split())
+        for found in re.finditer(r"(?:up to|at most) ([\d,]+) (?:selected )?stocks", text):
+            seen["capacity"] += 1
+            assert int(found.group(1).replace(",", "")) == adaptive_universe.CAPACITY, (
+                f"{doc} says {found.group(0)!r}; universe.CAPACITY is "
+                f"{adaptive_universe.CAPACITY}")
+        for found in re.finditer(r"\$([\d,.]+M?)(?= median prior-20-session| today on|/day absolute floor)", text):
+            seen["floor"] += 1
+            assert dollars(found.group(1)) == adaptive_universe.MIN_DOLLARS, (
+                f"{doc} says {found.group(0)!r}; universe.MIN_DOLLARS is "
+                f"{adaptive_universe.MIN_DOLLARS}")
+    assert seen["capacity"] >= 2 and seen["floor"] >= 3, (
+        f"too few statements found to be a guard: {seen} -- did the wording change?")

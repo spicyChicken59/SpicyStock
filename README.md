@@ -166,15 +166,15 @@ no claim is made that a refresh succeeded until its new snapshot is published.
 ## Pipeline
 
 ```
-Nasdaq classified US common stocks → 20-session SIP liquidity screen → up to 500 stocks
+Nasdaq classified US common stocks → 20-session SIP liquidity screen → up to 1000 stocks
         │  Alpaca daily OHLCV, split-adjusted, SIP, batched
         ▼
 Layer 1  4% burst filter ............. ≥4% gain, vol > yesterday, ≥100,000 shares
         │                              on the consolidated tape, ≥1.5x its own
-        │                              50-session average, price > $4, and in the
-        │                              top 70% of the day's dollar volume —
-        │                              the bottom 30% are ARCHIVED as refused,
-        │                              not dropped (round 5)
+        │                              50-session average, price > $4, and at or
+        │                              above the $5,000,000/day absolute floor —
+        │                              anything refused is ARCHIVED, not dropped
+        │                              (round 5). Rule 6's percentile is off.
         ▼  (survivors depend on the session)
 Layer 2  2LYNCH checklist (code) ..... 2 first/second burst · L linear prior move
         │                              Y young trend · N narrow consolidation
@@ -686,7 +686,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1833 tests, no network or API keys needed
+pytest tests/                   # 1834 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -997,8 +997,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 28.12 MB raw
-and **3.27 MB gzipped** after a full year in the normalized history fixture. Actual payload size varies with numeric precision and optional metadata. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 28.22 MB raw
+and **3.30 MB gzipped** after a full year in the normalized history fixture. Actual payload size varies with numeric precision and optional metadata. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -1755,7 +1755,7 @@ test fixtures. It dispatches no scan and calls no market or email service.
   and `SCAN_FEED=iex` is the fallback. Adaptive selection requires SIP; an
   IEX run falls back to the reviewed seed and marks that limitation. The broad
   selection stage requests 35 calendar days for up to 6,000 classified names,
-  then detailed history for at most 500 selected stocks. Pending setup outcomes
+  then detailed history for at most 1000 selected stocks. Pending setup outcomes
   and original rotating baskets add follow-up requests. The real refresh time
   depends on coverage, API pagination and latency; it has not been measured
   in production before the first adaptive run. The job retains its 55-minute

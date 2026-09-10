@@ -421,7 +421,23 @@ class ScanConfig:
     # cost more, it silently rewrites a strategy rule unless the gate gains an
     # absolute floor too. Pinned by test_the_liquidity_floor_is_not_universe_
     # invariant so it cannot be rediscovered.
-    min_dollar_volume_pctile: float = 30.0
+    #
+    # AND THAT OPEN DECISION IS ANSWERED NOW, in the direction this comment
+    # names: the gate gained an absolute floor and this percentile is off.
+    # universe.MIN_DOLLARS is the floor, at $5M, and it does not move with the
+    # basket. What settled it was the account size -- at $50,000 a 25%
+    # position is $12,500, or 0.003% of the median archived burst's $399M day,
+    # so a rule protecting participation was refusing 30% of every night's
+    # bursts for a constraint 300x away from binding. The percentile also
+    # swung $76.7M / $85.1M / $378.7M across three sessions of the record,
+    # which is the universe-invariance defect above arriving in production.
+    #
+    # 0 is a state everything already renders: liquidity_split() returns no
+    # floor, run.liquidity.pctile <= 0 is the contract's "rule off" reading,
+    # the benchmark is unfloored and every surface names both causes for that,
+    # and the `noliquidity` smoke variant covers the page. What it costs is
+    # evidence.illiquid, which stops filling -- a measurement, not a rule.
+    min_dollar_volume_pctile: float = 0.0
 
     # --- how much of the universe may go missing before this is not a scan --
     # Both are fractions of what was asked for, and both are deliberately

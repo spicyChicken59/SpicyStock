@@ -472,7 +472,7 @@ def _patched(alpaca: DatedAlpaca):
     import anthropic
 
     saved = (scanner.StockHistoricalDataClient, anthropic.Anthropic, pipeline.render_chart,
-             scorer.MODEL, pipeline.DEFAULT_MODEL)
+             scorer.MODEL, pipeline.DEFAULT_MODEL, pipeline.ScanConfig)
     env = {k: os.environ.get(k) for k in ("ALPACA_API_KEY", "ALPACA_SECRET_KEY",
                                           "ANTHROPIC_API_KEY", "SCAN_SESSION_DATE", "SCAN_FEED")}
     os.environ.update(ALPACA_API_KEY="fixture", ALPACA_SECRET_KEY="fixture",
@@ -491,6 +491,18 @@ def _patched(alpaca: DatedAlpaca):
         path.write_bytes(_png_1x1())
         return str(path)
 
+    # RULE 6 IS ON IN THE FIXTURE AND OFF IN PRODUCTION, deliberately, and it
+    # is the only place this generator departs from what the pipeline runs.
+    # Round 15 set ScanConfig.min_dollar_volume_pctile to 0 -- universe.
+    # MIN_DOLLARS is the liquidity rule now -- and the gate's machinery is
+    # unchanged and still rendered by the page: evidence.illiquid, the
+    # floored benchmark rung, the refused row's own reason word. Regenerated
+    # with the production default, the fixture carried none of those states
+    # and four dashboard checks could no longer fail. The alternative was a
+    # mutated smoke variant; this keeps the rows real, produced by the same
+    # pipeline over the same frames, and tests/fixtures/README.md says so.
+    _cfg = scanner.ScanConfig
+    pipeline.ScanConfig = lambda **kw: _cfg(min_dollar_volume_pctile=30.0, **kw)
     scanner.StockHistoricalDataClient = lambda *a, **k: FakeDataClient(alpaca, *a, **k)
     anthropic.Anthropic = QualityScorer
     pipeline.render_chart = chart
@@ -501,7 +513,7 @@ def _patched(alpaca: DatedAlpaca):
         yield
     finally:
         (scanner.StockHistoricalDataClient, anthropic.Anthropic, pipeline.render_chart,
-         scorer.MODEL, pipeline.DEFAULT_MODEL) = saved
+         scorer.MODEL, pipeline.DEFAULT_MODEL, pipeline.ScanConfig) = saved
         for k, v in env.items():
             if v is None:
                 os.environ.pop(k, None)

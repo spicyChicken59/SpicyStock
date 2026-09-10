@@ -183,11 +183,15 @@ def test_rotation_makes_room_for_breakouts_and_recent_setups_and_is_bounded():
     metrics = {f"S{i}": {"gain": .01, "momentum": i / 1000, "liquidity": 30e6 + i,
                           "participation": 1} for i in range(800)}
     metrics["BURST"] = {"gain": .05, "momentum": -.3, "liquidity": 25e6, "participation": 4}
-    chosen, reasons = universe.rotate(metrics, date(2026, 9, 8), ["S0"])
+    # An explicit capacity, because the point here is the BOUND: with 801 names
+    # and CAPACITY at 1000 the selection is limited by the input instead and
+    # this test would pass whatever rotate() did with its ceiling.
+    chosen, reasons = universe.rotate(metrics, date(2026, 9, 8), ["S0"], capacity=500)
     assert len(chosen) == 500 and "BURST" in chosen and "S0" in chosen
     assert reasons["rotating discovery"] == 50 and reasons["4% move"] == 1
-    assert universe.rotate(dict(reversed(list(metrics.items()))), date(2026, 9, 8), ["S0"])[0] == chosen
-    assert universe.rotate(metrics, date(2026, 9, 9), ["S0"])[0] != chosen
+    assert universe.rotate(dict(reversed(list(metrics.items()))), date(2026, 9, 8),
+                           ["S0"], capacity=500)[0] == chosen
+    assert universe.rotate(metrics, date(2026, 9, 9), ["S0"], capacity=500)[0] != chosen
 
 
 def test_the_directory_request_presents_as_a_browser_because_nothing_else_is_answered():
@@ -337,7 +341,7 @@ def test_discovery_slots_survive_when_all_other_buckets_are_full():
     metrics = {f"S{i}": {"gain": .05 if i < 400 else .01, "momentum": i / 1000,
                           "liquidity": 30e6 + i, "participation": 1} for i in range(1000)}
     names, reasons = universe.rotate(metrics, date(2026, 9, 8), [f"S{i}" for i in range(100)])
-    assert len(names) == 500 and reasons["rotating discovery"] == 50
+    assert len(names) == universe.CAPACITY and reasons["rotating discovery"] == 50
     assert reasons["recent setup"] == 100 and reasons["4% move"] == 150
 
 
