@@ -377,9 +377,8 @@ Line share `SCStock.chartGeometry()`, so levels, labels and tooltips
 agree in every mode; the Setup range frames the base, the caption
 discloses the sessions, the levels and an off-range aim, and the labels
 sit in a gutter (`rightLabel()`) while the lines stay at their prices.
-The Map is `SCStock.map.render()` over `gain_pct` and `volume_vs_prior`
-as recorded. Following is `SCStock.follow` over a versioned browser
-store; a followed card prints the saved levels, the latest close from
+The Map is `SCStock.map.render()` over `gain_pct` and `volume_vs_prior`.
+Following is `SCStock.follow` over a versioned browser store; a followed card prints the saved levels, the latest close from
 the record's new `observations` block (`pipeline.observations()`, from
 bars already fetched, refused by `report.validate()` when malformed) and
 the movement since the signal close, marked as not a P&L. A page over a
@@ -417,12 +416,11 @@ cards' twin, not a third stage; Following saves a snapshot, never a
 purchase, a fill or a P&L, in this browser only.
 
 **Keep / fix / defer / omit.** Keep: everything above. Fix next if it
-bites: the header strip holds one line at 1280 by fifty pixels and wraps
-on a narrower column; a map under `LABEL_MIN_WIDTH` labels only the
-chosen, focused and hovered point. Defer to Astra: the +4% ceiling
-versus his 4% stop line (unchanged); whether a followed setup keeps an
-observation older than `OBSERVATION_DAYS`. Omit: trade logging, a
-portfolio, a journal, a scenario engine.
+bites: the header strip holds one line at 1280 by fifty pixels; a map
+under `LABEL_MIN_WIDTH` labels only the chosen, focused and hovered
+point. Defer to Astra: the +4% ceiling versus his 4% stop line
+(unchanged). Omit: trade logging, a portfolio, a journal, a scenario
+engine.
 
 **Next action.** On the next green or yellow session, dispatch the dry
 run again and count the A-quality bursts withheld at the limit from its
