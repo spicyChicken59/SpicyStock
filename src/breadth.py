@@ -13,9 +13,10 @@ same name. A NaN or missing input makes a symbol "not measured" for the
 columns that need it and nothing else; it is never a False that counts as a
 healthy day.
 
-The absolute-count thresholds (RED_DOWN4, YELLOW_UP50_MONTH,
-OVERSOLD_DOWN25_QUARTER) are his readings over a ~6,500-name common-stock
-universe and do not rescale to a smaller one.
+The count thresholds (DOWN4_ALARM, UP50_MONTH_HOT, DOWN25_QUARTER_OVERSOLD)
+are his readings over a ~6,500-name common-stock universe; ``regime()``
+scales each by today's measured universe over REFERENCE_UNIVERSE and compares
+the count to the scaled number it prints. The ratios are scale-free.
 """
 from __future__ import annotations
 
@@ -54,22 +55,26 @@ PENNY = 0.01
 RATIO_SHORT_SESSIONS = 5
 RATIO_LONG_SESSIONS = 10
 # --- the regime gate (field guide, section (g)) ----------------------------
+#: The universe Bonde's count thresholds are stated over (his Market Monitor
+#: sheet reads 6,481-6,546 common stocks). Each count below is scaled by
+#: today's measured universe over this before it is compared.
+REFERENCE_UNIVERSE = 6500
 #: "A series of days with 700+ stocks down 4% signals major deterioration."
-RED_DOWN4 = 700
-#: More 4% breakdowns than breakouts over ten sessions.
+DOWN4_ALARM = 700
+#: More 4% breakdowns than breakouts over ten sessions (scale-free).
 RED_RATIO_10D = 1.0
 #: A fast selling phase: the 5-session ratio under this while today's
-#: down-4% count exceeds its up-4% count.
+#: down-4% count exceeds its up-4% count (scale-free).
 RED_RATIO_5D = 0.5
 #: "A 10-day ratio below ~2 ... may not be an ideal time for swing longs."
 YELLOW_RATIO_10D = 2.0
 #: "Readings of the 50%-plus-month indicator above 20 = high bullishness /
 #: likely pullback."
-YELLOW_UP50_MONTH = 20
+UP50_MONTH_HOT = 20
 #: "Quarter counts below ~200 (down 25% in a quarter) mark oversold
 #: extremes" -- informational, never a verdict input. The guide's wording;
 #: not yet checked against Bonde's own.
-OVERSOLD_DOWN25_QUARTER = 200
+DOWN25_QUARTER_OVERSOLD = 200
 SIZE_MULTIPLIER = {"green": 1.0, "yellow": 0.5, "red": 0.0}
 # --- plumbing --------------------------------------------------------------
 #: How many sessions snapshot() carries in ``history``.
@@ -80,6 +85,8 @@ MIN_SESSION_FRACTION = 0.5
 #: reads the rounded number a surface prints.
 RATIO_DECIMALS = 2
 PCT_DECIMALS = 1
+#: A scaled count threshold is rounded ONCE, here, and compared as printed.
+THRESHOLD_DECIMALS = 1
 
 #: Which numbers decide what a count or a verdict IS (archived in ``RULES``)
 #: and which only shape the output. A test holds every upper-case numeric
@@ -88,12 +95,12 @@ STRATEGY_CONSTANTS = (
     "BURST_PCT", "MIN_VOLUME", "MIN_DOLLAR_VOLUME_20", "MONTH_SESSIONS",
     "QUARTER_SESSIONS", "SESSIONS_34", "MA_SESSIONS", "MIN_MONTH_PRICE",
     "QUARTER_MOVE_PCT", "MONTH_MOVE_PCT", "MONTH_BIG_MOVE_PCT", "MOVE_13_PCT",
-    "PENNY", "RATIO_SHORT_SESSIONS", "RATIO_LONG_SESSIONS", "RED_DOWN4",
-    "RED_RATIO_10D", "RED_RATIO_5D", "YELLOW_RATIO_10D", "YELLOW_UP50_MONTH",
-    "OVERSOLD_DOWN25_QUARTER",
+    "PENNY", "RATIO_SHORT_SESSIONS", "RATIO_LONG_SESSIONS", "REFERENCE_UNIVERSE",
+    "DOWN4_ALARM", "RED_RATIO_10D", "RED_RATIO_5D", "YELLOW_RATIO_10D",
+    "UP50_MONTH_HOT", "DOWN25_QUARTER_OVERSOLD",
 )
 PLUMBING_CONSTANTS = ("HISTORY_SESSIONS", "MIN_SESSION_FRACTION",
-                      "RATIO_DECIMALS", "PCT_DECIMALS")
+                      "RATIO_DECIMALS", "PCT_DECIMALS", "THRESHOLD_DECIMALS")
 #: The strategy numbers, keyed by their lower-case names, for data.json.
 RULES = {name.lower(): globals()[name] for name in STRATEGY_CONSTANTS}
 RULES["size_multiplier"] = dict(SIZE_MULTIPLIER)
@@ -336,6 +343,14 @@ def ratios(days: Sequence[BreadthDay], window: int) -> tuple[int, int, float | N
 # ------------------------------------------------------------- regime ----
 
 
+def scaled_threshold(reference: float, universe: int) -> float:
+    """Bonde's count over REFERENCE_UNIVERSE names, scaled to the names
+    measured today and rounded once; the comparison reads this number."""
+    if universe < 0:
+        raise ValueError(f"universe must be non-negative, got {universe}")
+    return round(reference * universe / REFERENCE_UNIVERSE, THRESHOLD_DECIMALS)
+
+
 def _ratio_words(label: str, up: int, down: int, ratio: float | None) -> str:
     if ratio is None:
         return f"{label} undefined ({up} up, {down} down)"
@@ -345,12 +360,15 @@ def _ratio_words(label: str, up: int, down: int, ratio: float | None) -> str:
 def regime(days: Sequence[BreadthDay]) -> dict:
     """The verdict for the newest day, its size multiplier, and why.
 
-    RED on any of: today's down-4% count at or over RED_DOWN4; the 10-session
-    ratio under RED_RATIO_10D; the 5-session ratio under RED_RATIO_5D while
-    today's down-4% count exceeds its up-4% count. YELLOW on the 10-session
-    ratio under YELLOW_RATIO_10D or the 50%-in-a-month count over
-    YELLOW_UP50_MONTH. GREEN otherwise. ``reasons`` name the value and the
-    threshold of every rule that fired, or of every rule cleared on green.
+    RED on any of: today's down-4% count at or over the scaled DOWN4_ALARM;
+    the 10-session ratio under RED_RATIO_10D; the 5-session ratio under
+    RED_RATIO_5D while today's down-4% count exceeds its up-4% count. YELLOW
+    on the 10-session ratio under YELLOW_RATIO_10D or the 50%-in-a-month
+    count over the scaled UP50_MONTH_HOT. GREEN otherwise. Count thresholds
+    are scaled by today's ``universe`` over REFERENCE_UNIVERSE; ratios are
+    not. ``reasons`` name the value and the threshold of every rule that
+    fired, or of every rule cleared on green; ``thresholds`` carries the
+    scaled numbers the page prints.
     """
     if not days:
         raise ValueError("regime needs at least one breadth day")
@@ -361,13 +379,18 @@ def regime(days: Sequence[BreadthDay]) -> dict:
     up5, down5, r5 = ratios(days, RATIO_SHORT_SESSIONS)
     long_words = _ratio_words(f"{RATIO_LONG_SESSIONS}-session ratio", up10, down10, r10)
     short_words = _ratio_words(f"{RATIO_SHORT_SESSIONS}-session ratio", up5, down5, r5)
+    alarm = scaled_threshold(DOWN4_ALARM, today.universe)
+    hot = scaled_threshold(UP50_MONTH_HOT, today.universe)
+    oversold = scaled_threshold(DOWN25_QUARTER_OVERSOLD, today.universe)
+    of = f"of {REFERENCE_UNIVERSE:,}"
 
     rules: list[tuple[str, bool, str]] = []
 
-    fired = today.down4 >= RED_DOWN4
+    fired = today.down4 >= alarm
     rules.append(("red", fired,
-                  f"{today.down4} stocks down 4% today {'>=' if fired else '<'} {RED_DOWN4}"
-                  + (" (major deterioration)" if fired else "")))
+                  f"down 4%: {today.down4} {'>=' if fired else '<'} the scaled alarm of "
+                  f"{alarm:g} ({DOWN4_ALARM} {of})"
+                  + (": major deterioration" if fired else "")))
 
     fired = r10 is not None and r10 < RED_RATIO_10D
     if fired:
@@ -401,10 +424,10 @@ def regime(days: Sequence[BreadthDay]) -> dict:
         sentence = f"{long_words} >= {YELLOW_RATIO_10D}"
     rules.append(("yellow", fired, sentence))
 
-    fired = today.up50_month > YELLOW_UP50_MONTH
+    fired = today.up50_month > hot
     rules.append(("yellow", fired,
-                  f"{today.up50_month} stocks up 50% in a month "
-                  f"{'>' if fired else '<='} {YELLOW_UP50_MONTH}"
+                  f"up 50% in a month: {today.up50_month} {'>' if fired else '<='} the scaled "
+                  f"hot mark of {hot:g} ({UP50_MONTH_HOT} {of})"
                   + (": high bullishness, a pullback is likely" if fired else "")))
 
     red = [s for tier, fired, s in rules if tier == "red" and fired]
@@ -420,7 +443,17 @@ def regime(days: Sequence[BreadthDay]) -> dict:
         "verdict": verdict,
         "size_multiplier": SIZE_MULTIPLIER[verdict],
         "reasons": reasons,
-        "oversold_extreme": today.down25_quarter < OVERSOLD_DOWN25_QUARTER,
+        "oversold_extreme": today.down25_quarter < oversold,
+        "thresholds": {
+            "universe": today.universe,
+            "reference_universe": REFERENCE_UNIVERSE,
+            "down4_alarm": alarm,
+            "up50_month_hot": hot,
+            "down25_quarter_oversold": oversold,
+            "ratio_10d_red": RED_RATIO_10D,
+            "ratio_5d_red": RED_RATIO_5D,
+            "ratio_10d_yellow": YELLOW_RATIO_10D,
+        },
         "inputs": {
             "date": today.date.isoformat(),
             "ratio_10d": r10, "ratio_5d": r5,
@@ -441,7 +474,9 @@ def snapshot(frames: Mapping[str, pd.DataFrame], session: date,
     """The ``breadth`` block data.json carries for ``session``: today's
     columns, both ratios with their sums, the regime, the rules, and
     ``history`` -- the last ``history_sessions`` days that have a full
-    10-session window, oldest first."""
+    10-session window, oldest first. ``start`` is the one bound on the
+    history's length: the days handed to daily_counts() are exactly the
+    history plus the window the first history day needs."""
     if history_sessions < 1:
         raise ValueError(f"history_sessions must be at least 1, got {history_sessions}")
     calendar = observed_sessions(frames)
@@ -464,7 +499,7 @@ def snapshot(frames: Mapping[str, pd.DataFrame], session: date,
         "up4_5d": up5, "down4_5d": down5,
         "up4_10d": up10, "down4_10d": down10,
         "regime": regime(days),
-        "history": history[-history_sessions:],
+        "history": history,
         "rules": {k: (dict(v) if isinstance(v, dict) else v) for k, v in RULES.items()},
     })
     return block

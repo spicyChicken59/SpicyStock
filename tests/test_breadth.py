@@ -47,7 +47,7 @@ def one(closes, volumes=None) -> BreadthDay:
 def day(d: date, up4: int = 0, down4: int = 0, **kw) -> BreadthDay:
     fields = dict(up25_quarter=0, down25_quarter=0, up25_month=0, down25_month=0,
                   up50_month=0, down50_month=0, up13_34d=0, down13_34d=0,
-                  pct_above_40ma=50.0, universe=1000)
+                  pct_above_40ma=50.0, universe=breadth.REFERENCE_UNIVERSE)
     fields.update(kw)
     return BreadthDay(date=d, up4=up4, down4=down4, **fields)
 
@@ -160,6 +160,13 @@ def test_a_bar_on_a_date_that_is_not_a_session_is_dropped_not_read():
         frames[f"S{i}"] = frame([1, 1, 1, 1], index=weekdays.append(monday))
     got = breadth.daily_counts(frames, [monday[0].date()])[0]
     assert got.up4 == 1  # 104 against Thursday's 100, not against 50
+    # A phantom AFTER the last real bar has no later bar to overwrite it.
+    idx = weekdays.append(saturday)
+    frames = {"odd": frame([100, 100, 104, 50], [LIQUID, LIQUID, 2 * LIQUID, LIQUID], index=idx)}
+    for i in range(4):
+        frames[f"S{i}"] = frame([1, 1, 1], index=weekdays)
+    got = breadth.daily_counts(frames, [weekdays[-1].date()])[0]
+    assert (got.up4, got.down4, got.universe) == (1, 0, 5)
 
 
 # ------------------------------------------------------- the 4% scans ----
@@ -356,22 +363,28 @@ def test_the_liquidity_floor_gates_every_window_column():
 
 
 @pytest.mark.parametrize("how", ["nan", "missing_row"])
-def test_a_hole_inside_a_window_leaves_that_column_unmeasured(how):
-    """The 4% columns still read (today and yesterday are fine); the quarter
-    column needs all 65 and is silent rather than a shorter window."""
+@pytest.mark.parametrize("hole", [10, 60])
+def test_a_hole_inside_a_window_leaves_that_column_unmeasured(how, hole):
+    """The 4% columns still read (today and yesterday are fine); a window
+    with a hole in it is silent rather than a shorter window. A hole 55
+    sessions back is inside the quarter only; one 5 back is inside every
+    window, the 20-session liquidity average included."""
     closes = [100.0] * 64 + [130.0]
     volumes = [LIQUID] * 63 + [LIQUID, 2 * LIQUID]
     idx = pd.bdate_range(end=END, periods=65)
     a = frame(closes, volumes, index=idx)
     if how == "nan":
-        a.iloc[10, a.columns.get_loc("Close")] = np.nan
+        a.iloc[hole, a.columns.get_loc("Close")] = np.nan
     else:
-        a = a.drop(idx[10])
+        a = a.drop(idx[hole])
     frames = {"A": a, "B": frame([1.0] * 65, index=idx), "C": frame([1.0] * 65, index=idx)}
     got = breadth.daily_counts(frames, [idx[-1].date()])[0]
     assert got.up4 == 1 and got.universe == 3
     assert got.up25_quarter == 0
-    assert got.up13_34d == 1  # the hole is outside the 34-window
+    if hole == 10:
+        assert (got.up13_34d, got.up25_month, got.pct_above_40ma) == (1, 1, pytest.approx(33.3))
+    else:
+        assert (got.up13_34d, got.up25_month, got.pct_above_40ma) == (0, 0, 0.0)
 
 
 # ---------------------------------------------------------- the MA ----
@@ -433,8 +446,8 @@ def test_green_states_every_rule_it_cleared_with_value_and_threshold():
     text = " | ".join(got["reasons"])
     assert "10-session ratio 3.0" in text and ">= 2.0" in text and ">= 1.0" in text
     assert "5-session ratio 3.0" in text and ">= 0.5" in text
-    assert "10 stocks down 4% today < 700" in text
-    assert "5 stocks up 50% in a month <= 20" in text
+    assert "down 4%: 10 < the scaled alarm of 700 (700 of 6,500)" in text
+    assert "up 50% in a month: 5 <= the scaled hot mark of 20 (20 of 6,500)" in text
     assert len(got["reasons"]) == len(set(got["reasons"]))
 
 
@@ -452,7 +465,8 @@ def test_yellow_when_more_than_20_names_are_up_50_in_a_month(up50, verdict):
     got = breadth.regime(days(30, 10, up50_month=up50))
     assert got["verdict"] == verdict
     if verdict == "yellow":
-        assert any(f"{up50} stocks up 50% in a month > 20" in r for r in got["reasons"])
+        assert any(f"up 50% in a month: {up50} > the scaled hot mark of 20 (20 of 6,500)" in r
+                   for r in got["reasons"])
 
 
 @pytest.mark.parametrize("down4, verdict", [(700, "red"), (699, "green")])
@@ -464,7 +478,8 @@ def test_red_on_700_stocks_down_4_pct_today(down4, verdict):
     assert got["verdict"] == verdict
     if verdict == "red":
         assert got["size_multiplier"] == 0.0
-        assert any("700 stocks down 4% today >= 700" in r for r in got["reasons"])
+        assert any("down 4%: 700 >= the scaled alarm of 700 (700 of 6,500)" in r
+                   for r in got["reasons"])
 
 
 @pytest.mark.parametrize("up4, verdict", [(9, "red"), (10, "yellow")])
@@ -508,6 +523,7 @@ def test_an_undefined_ratio_fires_no_rule_and_is_said_in_words():
     assert got["verdict"] == "green"
     assert got["inputs"]["ratio_10d"] is None and got["inputs"]["ratio_5d"] is None
     assert any("10-session ratio undefined (30 up, 0 down)" in r for r in got["reasons"])
+    assert len(got["reasons"]) == len(set(got["reasons"]))
 
 
 @pytest.mark.parametrize("down25, flag", [(199, True), (200, False)])
@@ -516,6 +532,52 @@ def test_oversold_extreme_is_a_flag_and_not_a_verdict_input(down25, flag):
     assert got["oversold_extreme"] is flag
     assert got["verdict"] == "green"
     assert got["inputs"]["down25_quarter"] == down25
+
+
+def test_count_thresholds_scale_with_the_measured_universe():
+    """The same counts trip the alarm on 2,600 names and not on 6,500."""
+    assert breadth.REFERENCE_UNIVERSE == 6500 and breadth.DOWN4_ALARM == 700
+    small = days([3000] * 9 + [3000], [10] * 9 + [300], universe=2600)
+    big = days([3000] * 9 + [3000], [10] * 9 + [300], universe=6500)
+    assert breadth.scaled_threshold(breadth.DOWN4_ALARM, 2600) == 280.0
+    got = breadth.regime(small)
+    assert got["verdict"] == "red"
+    assert "down 4%: 300 >= the scaled alarm of 280 (700 of 6,500): major deterioration" in got["reasons"]
+    assert got["thresholds"] == {
+        "universe": 2600, "reference_universe": 6500, "down4_alarm": 280.0,
+        "up50_month_hot": 8.0, "down25_quarter_oversold": 80.0,
+        "ratio_10d_red": 1.0, "ratio_5d_red": 0.5, "ratio_10d_yellow": 2.0,
+    }
+    got = breadth.regime(big)
+    assert got["verdict"] == "green"
+    assert "down 4%: 300 < the scaled alarm of 700 (700 of 6,500)" in got["reasons"]
+    assert got["thresholds"]["down4_alarm"] == 700.0
+
+
+def test_the_hot_mark_and_the_oversold_flag_scale_too():
+    hot = breadth.regime(days(30, 10, up50_month=10, universe=2600))
+    assert hot["verdict"] == "yellow"
+    assert "up 50% in a month: 10 > the scaled hot mark of 8 (20 of 6,500)" in hot["reasons"][0]
+    assert breadth.regime(days(30, 10, up50_month=10, universe=6500))["verdict"] == "green"
+    assert breadth.regime(days(30, 10, down25_quarter=150, universe=2600))["oversold_extreme"] is False
+    assert breadth.regime(days(30, 10, down25_quarter=150, universe=6500))["oversold_extreme"] is True
+    assert breadth.regime(days(30, 10, down25_quarter=79, universe=2600))["oversold_extreme"] is True
+
+
+def test_a_scaled_threshold_is_rounded_once_and_compared_as_printed():
+    """2,613 names: 700 * 2613 / 6500 is 281.4; 281 clears it and 282 trips it,
+    and the sentence prints the number the comparison read."""
+    assert breadth.scaled_threshold(breadth.DOWN4_ALARM, 2613) == 281.4
+    clear = breadth.regime(days([3000] * 10, [10] * 9 + [281], universe=2613))
+    trip = breadth.regime(days([3000] * 10, [10] * 9 + [282], universe=2613))
+    assert clear["verdict"] == "green" and trip["verdict"] == "red"
+    assert "down 4%: 281 < the scaled alarm of 281.4 (700 of 6,500)" in clear["reasons"]
+    assert "down 4%: 282 >= the scaled alarm of 281.4 (700 of 6,500): major deterioration" in trip["reasons"]
+    with pytest.raises(ValueError):
+        breadth.scaled_threshold(breadth.DOWN4_ALARM, -1)
+    # the ratios do not scale
+    assert breadth.regime(days(15, 10, universe=2600))["verdict"] == "yellow"
+    assert breadth.regime(days(15, 10, universe=6500))["verdict"] == "yellow"
 
 
 def test_regime_refuses_no_days_and_a_day_that_measured_nothing():
@@ -577,7 +639,10 @@ def test_snapshot_history_shrinks_to_the_days_with_a_full_window():
     frames = _market(25)
     snap = breadth.snapshot(frames, breadth.observed_sessions(frames)[-1])
     assert len(snap["history"]) == 25 - breadth.RATIO_LONG_SESSIONS + 1
-    assert len(breadth.snapshot(frames, breadth.observed_sessions(frames)[-1], history_sessions=4)["history"]) == 4
+    session = breadth.observed_sessions(frames)[-1]
+    short = breadth.snapshot(frames, session, history_sessions=4)["history"]
+    assert len(short) == 4 and short[-1]["date"] == session.isoformat()
+    assert [h["date"] for h in short] == [h["date"] for h in snap["history"][-4:]]
 
 
 def test_snapshot_carries_todays_columns_ratios_regime_and_rules():
@@ -606,7 +671,7 @@ def test_snapshot_refuses_a_session_off_the_calendar_and_a_bad_history_length():
 
 def test_to_dict_is_json_ready():
     d = day(date(2026, 9, 10), 3, 1).to_dict()
-    assert d["date"] == "2026-09-10" and d["up4"] == 3 and d["universe"] == 1000
+    assert d["date"] == "2026-09-10" and d["up4"] == 3 and d["universe"] == 6500
     assert set(d) == {f.name for f in BreadthDay.__dataclass_fields__.values()}
 
 
