@@ -239,7 +239,7 @@ def _close_to_close(b: _Bars, *, down: bool) -> dict | None:
     ratio = _ratio(c, c1)
     if ratio is None or v is None or v1 is None:
         return None
-    moved = ratio <= BREAKDOWN_RATIO if down else ratio > BURST_RATIO
+    moved = ratio <= BREAKDOWN_RATIO if down else ratio >= BURST_RATIO
     if not (moved and v > v1 and v >= MIN_VOLUME):
         return None
     return {
