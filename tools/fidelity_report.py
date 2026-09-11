@@ -18,10 +18,20 @@ Two divergences, and they run in opposite directions, so a single count of
 
   MISSED   a name the canonical scan matched and production did not. Every one
            is a burst Bonde's method would have put in front of a trader.
-  EXTRA    a name production called a burst that fails the canonical scan.
-           On the record these are all names whose volume did NOT exceed the
-           previous session's -- day two or later of a volume event, which is
-           exactly what `volume > previous volume` exists to exclude.
+  EXTRA    a name production called a burst that fails the canonical scan --
+           its volume did NOT exceed the previous session's, which is day two
+           or later of a volume event and exactly what `volume > previous
+           volume` exists to exclude.
+
+An EXTRA is only sayable where the canonical list is complete, or where the
+name's gain is above the gain the archived rows stop at. The row list is
+capped at `stockbee.SCAN_LIMIT` and sorted by gain, so on a night the cap bit
+a production burst that IS a canonical match is simply not in the archived
+rows -- and reporting it as one that fails the scan accuses a name on the
+strength of a row nobody kept. Reproduced on the committed record: every one
+of the five names this report named for 2026-09-08 sits below the 5.70% the
+archived rows stop at, so the cap alone explains all five. They are counted
+apart now and the sentence says the record cannot tell.
 
 A MISSED name is classified by the first production rule that can be shown to
 reject it from the sidecar's own measurements. That classification is
@@ -70,13 +80,29 @@ from src import scanner, stockbee  # noqa: E402
 
 LEDGER = ROOT / "docs" / "ledger.json"
 
-#: The sidecar averages volume over this many prior sessions
-#: (`stockbee.MEASUREMENT_RULES["volume_vs_average"]`). Production's own window
-#: is `ScanConfig.rvol_lookback`, and the gap between them is the whole reason
-#: `rvol_window` is a separate verdict below. Read from the rule string rather
-#: than retyped, so a change to the sidecar cannot leave this report quoting a
-#: window nobody measures.
-SIDECAR_VOLUME_SESSIONS = 20
+def _sidecar_volume_sessions() -> int:
+    """How many prior sessions the sidecar averages volume over.
+
+    READ FROM THE RULE STRING, which is what the constant's comment always
+    claimed and what it never did: it was a hand-typed 20 that nothing
+    referenced, so a change to the sidecar's own window would have left this
+    report quoting a number nobody measures -- the exact rot this repo's
+    tooling exists to stop, in the file that reports on it.
+
+    The gap between this window and `ScanConfig.rvol_lookback` is the whole
+    reason `rvol_window` is a separate verdict from `rvol_threshold`.
+    """
+    import re
+
+    rule = stockbee.MEASUREMENT_RULES["volume_vs_average"]
+    found = re.search(r"previous (\d+) contiguous sessions", rule)
+    if not found:                     # the rule was reworded; say so rather than guess
+        raise ValueError("cannot read the sidecar's volume window out of "
+                         f"MEASUREMENT_RULES['volume_vs_average']: {rule!r}")
+    return int(found.group(1))
+
+
+SIDECAR_VOLUME_SESSIONS = _sidecar_volume_sessions()
 
 
 def _prod_rows(run: dict) -> dict:
@@ -107,12 +133,45 @@ def _why_missed(row: dict, cfg: scanner.ScanConfig) -> str:
     gain = row.get("gain_pct")
     if gain is not None and gain < cfg.min_gain_pct:
         return "min_gain_pct"          # cannot happen for a canonical match; kept so the partition is total
+    volume = row.get("volume")
+    if (volume is not None and getattr(cfg, "min_share_volume", None) is not None
+            and volume < cfg.min_share_volume):
+        # Cannot happen while production's floor is at or below the canonical
+        # scan's own 100,000 -- a canonical match cleared that by definition --
+        # and it is checked rather than assumed, because the two numbers are
+        # set in different modules and nothing makes them move together.
+        return "min_share_volume"
     ratio = row.get("volume_vs_average")
     if ratio is None:
         return "unmeasured"
     if ratio < cfg.min_rvol:
         return "rvol_threshold"
     return "rvol_window"               # passes on 20 sessions; production's 50 is the remaining difference
+
+
+def _night_tail(r: dict) -> None:
+    """The lines every night prints whatever its canonical list held.
+
+    A helper rather than two copies, because a night the canonical scan
+    matched nothing prints exactly these -- and it used to print nothing at
+    all, the whole night skipped over a zero denominator.
+    """
+    if r["extra"]:
+        print(f"    admitted {len(r['extra'])} that fail the canonical scan "
+              f"(volume did not exceed the previous session): {' '.join(r['extra'])}")
+    if r["extra_unsayable"]:
+        # Not an accusation and not a clearance: the cap cut the canonical
+        # list above these names' gain, so the record holds no row that could
+        # match them either way.
+        print(f"    cannot say for {len(r['extra_unsayable'])} more: their gain is at or below "
+              f"the {r['canonical_cutoff_gain_pct']:.2f}% the archived rows stop at, so the cap "
+              f"could have cut a match: {' '.join(r['extra_unsayable'])}")
+    if r["dollar_listed"]:
+        note = "" if r["dollar_matched"] == r["dollar_listed"] else " (rows truncated)"
+        print(f"    $ breakout matched {r['dollar_matched']}{note} that the 4% scan did not, "
+              f"none of them scored: {' '.join(r['dollar_names'][:12])}"
+              + (" ..." if len(r["dollar_names"]) > 12 else ""))
+    print(f"    scored {r['scored']} of a {r['score_cap']}-call budget; top score {r['top_score']}")
 
 
 def compare(run: dict) -> dict | None:
@@ -124,9 +183,25 @@ def compare(run: dict) -> dict | None:
     rows = scan.get("rows")
     if not isinstance(rows, list):
         return None
-    # `shown` truncates the rows at stockbee.SCAN_LIMIT; comparing against a
-    # truncated list would invent misses. Say so rather than reporting a number
-    # the record cannot support.
+    # `shown` truncates the rows at stockbee.SCAN_LIMIT, and the truncation
+    # cuts BOTH directions -- this comment used to reason about one.
+    #
+    # Misses (canonical minus production) are UNDERCOUNTED, which the sentence
+    # has always said. The other direction is worse, because it does not omit
+    # a name, it ACCUSES one: a production burst that IS a canonical match the
+    # cap cut is not in `canonical`, so it lands in `extra` and prints as
+    # "admitted N that fail the canonical scan". Reproduced on the committed
+    # record: on 2026-09-08 the archived rows stop at a 5.70% gain, and all
+    # five accused names -- BG 4.36, DK 5.30, EIX 4.51, RGTI 4.01, TKO 5.01 --
+    # are below it, so the cap alone explains every one of them and the record
+    # cannot tell "not a match" from "a match we did not keep". CLAUDE.md's
+    # round-13 table published those five as a finding about the scan.
+    #
+    # Rows are sorted by (-gain_pct, ticker), so the archived set is the top
+    # `shown` by gain: a name whose gain is STRICTLY ABOVE the smallest
+    # archived gain would have been kept had it matched, and its absence is
+    # therefore real evidence. At or below that gain the record is silent --
+    # equal gains are broken by ticker, so the boundary itself is unsayable.
     truncated = scan.get("matched") != scan.get("shown")
 
     dollar = sidecar.get("dollar") if isinstance(sidecar.get("dollar"), dict) else None
@@ -138,7 +213,22 @@ def compare(run: dict) -> dict | None:
     cfg = scanner.ScanConfig()
 
     missed = sorted(set(canonical) - set(production))
-    extra = sorted(set(production) - set(canonical))
+    # The gain the archived list stops at, and only when it stopped early.
+    cutoff = min((r.get("gain_pct") for r in canonical.values()
+                  if isinstance(r.get("gain_pct"), (int, float))
+                  and not isinstance(r.get("gain_pct"), bool)), default=None) if truncated else None
+    absent = sorted(set(production) - set(canonical))
+    if cutoff is None:
+        extra, unsayable = absent, []
+    else:
+        # A production gain the report cannot read places the name on the
+        # silent side: an accusation needs evidence, and this has none.
+        def above(ticker):
+            gain = (production.get(ticker) or {}).get("gain_pct")
+            return (isinstance(gain, (int, float)) and not isinstance(gain, bool)
+                    and gain > cutoff)
+        extra = [t for t in absent if above(t)]
+        unsayable = [t for t in absent if not above(t)]
     reasons: dict[str, int] = {}
     outcomes: dict[str, list] = {}
     for ticker in missed:
@@ -155,7 +245,13 @@ def compare(run: dict) -> dict | None:
 
     return {
         "date": run.get("date"),
-        "universe": (run.get("universe") or {}).get("label"),
+        # A `universe` that is not an object is a shape Ledger._malformed_rows()
+        # REFUSES, so no record this repo writes can hold one -- checked, not
+        # assumed, across seven such shapes. This tool is pointed at a path
+        # though, including a quarantined casualty, and a traceback is a worse
+        # answer than a name it could not read.
+        "universe": (run["universe"].get("label")
+                     if isinstance(run.get("universe"), dict) else None),
         "measured": run.get("measured"),
         "canonical_matched": scan.get("matched"),
         "canonical_listed": len(canonical),
@@ -167,6 +263,11 @@ def compare(run: dict) -> dict | None:
         "missed_returns_by_rule": {k: sorted(v) for k, v in outcomes.items()},
         "kept_returns": sorted(kept_returns),
         "extra": extra,
+        # Production bursts absent from a truncated canonical list whose gain
+        # sits at or below the cap's cutoff: the record cannot say whether the
+        # canonical scan matched them, and it must not print that it did not.
+        "extra_unsayable": unsayable,
+        "canonical_cutoff_gain_pct": cutoff,
         "scored": run.get("scored"),
         "score_cap": run.get("score_cap"),
         "top_score": run.get("top_score"),
@@ -237,8 +338,17 @@ def main(argv=None) -> int:
     except (OSError, ValueError) as exc:
         print(f"cannot read {args.ledger}: {type(exc).__name__}", file=sys.stderr)
         return 1
+    # Said rather than assumed: this reads a PATH, so it can be handed a
+    # quarantined casualty or a hand-edited file that Ledger.load() would have
+    # set aside. A record whose runs are not a list of objects is not one this
+    # tool can compare, and saying so beats a traceback.
+    runs = book.get("runs") if isinstance(book, dict) else None
+    if not isinstance(runs, list) or any(not isinstance(r, dict) for r in runs):
+        print(f"{args.ledger} does not hold a list of run objects, so there is "
+              "nothing to compare", file=sys.stderr)
+        return 1
 
-    reports = [r for r in (compare(run) for run in book.get("runs") or []) if r]
+    reports = [r for r in (compare(run) for run in runs) if r]
     if not reports:
         print("No run in this ledger carries a stockbee block, so there is nothing to compare.")
         return 0
@@ -251,32 +361,59 @@ def main(argv=None) -> int:
           f"{Path(args.ledger).name}.")
     print(f"Canonical rule: {stockbee.MEASUREMENT_RULES['scan']}")
     cfg = scanner.ScanConfig()
+    # EVERY STRATEGY FIELD THE CONFIG NAMES, so a clause added to production
+    # cannot go unstated here -- `min_share_volume` and `min_rvol_sessions`
+    # both arrived in round 14 and this line went on describing the scan
+    # without them.
     print(f"Production rule: gain >= {cfg.min_gain_pct}%, price > ${cfg.min_price}, "
-          f"volume >= {cfg.min_rvol}x its own {cfg.rvol_lookback}-session average, "
-          f"then rule 6 at the {cfg.min_dollar_volume_pctile:g}th percentile of dollar volume.")
+          f"volume >= {cfg.min_share_volume:,} shares and >= {cfg.min_rvol}x its own "
+          f"{cfg.rvol_lookback}-session average over at least {cfg.min_rvol_sessions} "
+          f"sessions, then rule 6 at the {cfg.min_dollar_volume_pctile:g}th percentile "
+          f"of dollar volume.")
+    stated = {"min_gain_pct", "min_price", "min_share_volume", "min_rvol",
+              "rvol_lookback", "min_rvol_sessions", "min_dollar_volume_pctile"}
+    missing = sorted(set(type(cfg).STRATEGY_FIELDS) - stated)
+    if missing:
+        print(f"    (this report does not state {', '.join(missing)}, which production applies)")
     print()
     for r in reports:
-        if r["canonical_matched"] is None or r["canonical_listed"] == 0:
+        if r["canonical_matched"] is None:
+            continue
+        print(f"  {r['date']}  universe {r['measured']} names")
+        # A NIGHT THE CANONICAL SCAN MATCHED NOTHING IS STILL A NIGHT. It used
+        # to be skipped whole, so the bursts production found on it -- which
+        # is the widest possible disagreement between the two scans, every one
+        # of them a name Bonde's scan did not print -- appeared nowhere, and
+        # neither did its call budget. There is no percentage to state when
+        # the denominator is zero, and the sentence says that instead of
+        # dividing by it.
+        if not r["canonical_listed"]:
+            print(f"    canonical scan matched none; production called "
+                  f"{r['production_bursts']} a burst, so there is no overlap to state")
+            _night_tail(r)
+            print()
             continue
         kept = 100.0 * r["overlap"] / r["canonical_listed"]
-        print(f"  {r['date']}  universe {r['measured']} names")
-        note = " (rows truncated; misses undercounted)" if r["canonical_truncated"] else ""
+        note = (" (rows truncated at the cap; misses undercounted and the overlap a floor)"
+                if r["canonical_truncated"] else "")
+        of_what = ("of the %d archived" % r["canonical_listed"]
+                   if r["canonical_truncated"] else "of the canonical list")
         print(f"    canonical scan matched {r['canonical_matched']}{note}; "
               f"production called {r['production_bursts']} a burst; {r['overlap']} in both "
-              f"({kept:.0f}% of the canonical list kept)")
+              f"({kept:.0f}% {of_what} kept)")
         if r["missed"]:
             by = ", ".join(f"{k} {v}" for k, v in sorted(r["missed_by_rule"].items()))
             print(f"    missed {len(r['missed'])}: {by}")
+            if "rvol_window" in r["missed_by_rule"]:
+                # What the verdict MEANS, in the two numbers that make it a
+                # separate verdict at all: the sidecar's window against
+                # production's. Printed from the constants rather than the
+                # prose so the sentence cannot outlive either.
+                print(f"      (rvol_window: at or above {cfg.min_rvol}x on the sidecar's "
+                      f"{SIDECAR_VOLUME_SESSIONS} sessions, under it on production's "
+                      f"{cfg.rvol_lookback})")
             print(f"      {' '.join(r['missed'])}")
-        if r["extra"]:
-            print(f"    admitted {len(r['extra'])} that fail the canonical scan "
-                  f"(volume did not exceed the previous session): {' '.join(r['extra'])}")
-        if r["dollar_listed"]:
-            note = "" if r["dollar_matched"] == r["dollar_listed"] else " (rows truncated)"
-            print(f"    $ breakout matched {r['dollar_matched']}{note} that the 4% scan did not, "
-                  f"none of them scored: {' '.join(r['dollar_names'][:12])}"
-                  + (" ..." if len(r["dollar_names"]) > 12 else ""))
-        print(f"    scored {r['scored']} of a {r['score_cap']}-call budget; top score {r['top_score']}")
+        _night_tail(r)
         print()
 
     # WHAT THE MISSES DID. The report's reason for existing: a rule that drops
@@ -300,9 +437,16 @@ def main(argv=None) -> int:
     if True:
         print(f"  What each cut went on to do, at +{horizon}d from the next session's "
               f"open (the price a reader of the evening mail could have paid):")
-        rows = [("kept by production", kept)] + sorted(
-            pooled.items() or [(rule, []) for rule in sorted(
-                {rule for r in reports for rule in r["missed_by_rule"]})])
+        # EVERY RULE THAT DROPPED A NAME GETS A ROW, measured or not. The
+        # fallback used to be `pooled.items() or [...]`, which fires only when
+        # NO rule has a measured return -- so the moment one did, every rule
+        # still waiting on its outcomes vanished from a section a reader takes
+        # for the whole partition. Driven: one rvol_threshold miss with a
+        # return beside one rvol_window miss without printed the first and not
+        # the second, over a run whose own tally names both.
+        rows = [("kept by production", kept)] + [
+            (rule, pooled.get(rule, []))
+            for rule in sorted({rule for r in reports for rule in r["missed_by_rule"]})]
         for label, values in rows:
             if not values:
                 print(f"    {label:22s} nothing measured yet")

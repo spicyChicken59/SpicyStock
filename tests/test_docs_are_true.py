@@ -188,6 +188,7 @@ def test_the_documented_thresholds_are_the_ones_the_code_applies(ohlcv):
     the constant it describes; the times are derived from the workflow crons
     the way the README derives them (UTC under EDT, minus four hours).
     """
+    from src import universe as adaptive_universe
     import yaml
     from src import ledger, lynch, pipeline, scanner
 
@@ -205,8 +206,12 @@ def test_the_documented_thresholds_are_the_ones_the_code_applies(ohlcv):
     assert (float(rvol), int(lookback)) == (cfg.min_rvol, cfg.rvol_lookback)
     (price,) = one(r"price > \$(\d+)")
     assert float(price) == cfg.min_price
-    (kept,) = one(r"top (\d+)% of the day's dollar volume")
-    assert int(kept) == 100 - cfg.min_dollar_volume_pctile
+    # Round 15 replaced the percentile with an absolute floor in another
+    # module. Both are read, so the diagram cannot claim one while the code
+    # applies the other.
+    (floor,) = one(r"\$([\d,]+)/day absolute floor")
+    assert int(floor.replace(",", "")) == adaptive_universe.MIN_DOLLARS
+    assert cfg.min_dollar_volume_pctile == 0, "rule 6 is on again -- document it"
     need, of, cap = one(r"hard gate: ≥(\d)/(\d) passes, top (\d+) kept")
     assert (int(need), int(of), int(cap)) == (
         pipeline.MIN_LYNCH_PASSES, lynch.evaluate_2lynch(ohlcv("burst"))["total"],
@@ -2350,3 +2355,81 @@ def test_readme_does_not_deny_the_page_reads_the_record_it_reads():
         assert "setup" in sentence.lower() and not re.search(r"\brows?\b", sentence), (
             "README has to say what by_score is over, and it is setups -- the first SCORED "
             "appearance of each -- not rows: " + sentence)
+
+
+def test_the_stripped_cost_figures_are_what_measuring_them_says():
+    """README states what each part of the record costs of a full year, and
+    the sidecar's whole cost argument rests on the two figures.
+
+    They were 1.14/0.12 and 3.86/0.62, measured once by hand during round 14
+    and reproducible by nothing committed here -- the same rot the sibling
+    guard above exists to stop, one paragraph over, in the file that argues
+    from them. `tools/measure_ledger.py --without` builds the same projected
+    file with one part stripped, and the difference is the figure; compared
+    against the string the tool PRINTS for the reason the sibling gives.
+    """
+    import importlib.util
+    import re
+
+    spec = importlib.util.spec_from_file_location(
+        "measure_ledger", ROOT / "tools" / "measure_ledger.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    whole = module.measure()
+    readme = _read("README.md")
+    quoted = re.search(
+        r"the forward-return blocks cost ([\d.]+) MB raw and ([\d.]+) MB gzipped of the year,\s*"
+        r"\nand the \$ breakout section a further ([\d.]+) MB and ([\d.]+)", readme)
+    assert quoted, "README no longer states the two stripped-cost figures in the shape this reads"
+    fwd_raw, fwd_gz, dollar_raw, dollar_gz = quoted.groups()
+
+    for part, (raw, gz) in (("forward_returns", (fwd_raw, fwd_gz)),
+                            ("dollar", (dollar_raw, dollar_gz))):
+        without = module.measure(strip=part)
+        assert raw == f"{whole['raw_mb'] - without['raw_mb']:.2f}", (
+            f"README says {part} costs {raw} MB raw; measuring prints "
+            f"{whole['raw_mb'] - without['raw_mb']:.2f}. Run "
+            f"python tools/measure_ledger.py --without {part} and sweep it.")
+        assert gz == f"{whole['gzip_mb'] - without['gzip_mb']:.2f}", (
+            f"README says {part} costs {gz} MB gzipped; measuring prints "
+            f"{whole['gzip_mb'] - without['gzip_mb']:.2f}.")
+
+    assert sorted(module.STRIPPERS) == ["dollar", "forward_returns"], (
+        "a new --without part is not stated in README; either quote its cost or "
+        "widen this guard deliberately")
+
+
+def test_the_documented_selector_numbers_are_the_ones_it_applies():
+    """README and .env.example state the selector's capacity and its absolute
+    floor, and until round 15 nothing read either back.
+
+    Both survived a mutation run: "up to 1000 stocks" reverted to 500 and
+    "$5M median prior-20-session dollar volume" reverted to $20M with the
+    whole suite green, which is a documented strategy number with no guard --
+    the class this file exists for, in the two files the standing doc-sweep
+    rule names by name. Every occurrence is checked rather than the first,
+    because one true sentence beside a stale one is how this project has
+    repeatedly satisfied a membership test while a reader was misled.
+    """
+    from src import universe as adaptive_universe
+
+    def dollars(text: str) -> int:
+        text = text.replace(",", "")
+        return int(float(text[:-1]) * 1_000_000) if text.endswith("M") else int(float(text))
+
+    seen = {"capacity": 0, "floor": 0}
+    for doc in ("README.md", ".env.example"):
+        text = " ".join(_read(doc).split())
+        for found in re.finditer(r"(?:up to|at most) ([\d,]+) (?:selected )?stocks", text):
+            seen["capacity"] += 1
+            assert int(found.group(1).replace(",", "")) == adaptive_universe.CAPACITY, (
+                f"{doc} says {found.group(0)!r}; universe.CAPACITY is "
+                f"{adaptive_universe.CAPACITY}")
+        for found in re.finditer(r"\$([\d,.]+M?)(?= median prior-20-session| today on|/day absolute floor)", text):
+            seen["floor"] += 1
+            assert dollars(found.group(1)) == adaptive_universe.MIN_DOLLARS, (
+                f"{doc} says {found.group(0)!r}; universe.MIN_DOLLARS is "
+                f"{adaptive_universe.MIN_DOLLARS}")
+    assert seen["capacity"] >= 2 and seen["floor"] >= 3, (
+        f"too few statements found to be a guard: {seen} -- did the wording change?")

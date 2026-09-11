@@ -26,6 +26,7 @@ from alpaca.common.exceptions import APIError
 from alpaca.data.enums import Adjustment, DataFeed
 from requests.exceptions import HTTPError
 
+from src import universe as adaptive_universe
 from src.scanner import (
     DEFAULT_FEED,
     SIP_HOLDBACK_MINUTES,
@@ -532,7 +533,8 @@ def test_the_liquidity_gate_drops_the_thinnest_burst_of_the_session(fake_alpaca,
         fake_alpaca.add_history(f"Q{i}", _thin(ohlcv, "flat", price=80.0,
                                                volume=2_000_000, variant=i + 2))
 
-    found = run_scan(ScanConfig(), universe=["BIG", "TINY"] + [f"Q{i}" for i in range(8)])
+    found = run_scan(ScanConfig(min_dollar_volume_pctile=30.0),
+                     universe=["BIG", "TINY"] + [f"Q{i}" for i in range(8)])
 
     assert [c.ticker for c in found] == ["BIG"]
 
@@ -571,7 +573,8 @@ def test_the_scan_hands_back_what_the_floor_refused_and_the_floor_itself(fake_al
                                                volume=2_000_000, variant=i + 2))
     stats, refused = {}, []
 
-    found = run_scan(ScanConfig(), universe=["BIG", "TINY"] + [f"Q{i}" for i in range(8)],
+    found = run_scan(ScanConfig(min_dollar_volume_pctile=30.0),
+                     universe=["BIG", "TINY"] + [f"Q{i}" for i in range(8)],
                      stats=stats, refused=refused)
 
     assert [c.ticker for c in found] == ["BIG"]
@@ -587,7 +590,7 @@ def test_liquidity_split_is_the_gate_with_its_other_half(ohlcv):
     list is everything it dropped, and the floor is the percentile both were
     judged against. With the rule off, nothing is refused and there is no
     floor to report."""
-    cfg = ScanConfig()
+    cfg = ScanConfig(min_dollar_volume_pctile=30.0)
     cands = []
     # $5, not $50. Rule 6 is a DOLLAR rule and these dollar volumes are the
     # point of the test, but at $50 the thinnest of them is 40,000 shares --
@@ -618,7 +621,7 @@ def test_the_gate_ranks_a_candidate_against_the_universe_not_against_the_bursts(
     happened to burst that day -- on a one-burst day the bottom X% of one name
     is either everything or nothing.
     """
-    cfg = ScanConfig()
+    cfg = ScanConfig(min_dollar_volume_pctile=30.0)
     frame = _thin(ohlcv, "burst", price=50.0, volume=1_000_000)   # $50M/day
     cand = Candidate(ticker="MID", history=frame, **detect_setup(frame, cfg))
 
@@ -786,7 +789,7 @@ def test_the_liquidity_floor_is_not_universe_invariant():
     curated = np.exp(rng.normal(np.log(600e6), 1.0, 230))     # large/mid caps
     widened = np.concatenate([                                # plus the tail
         curated, np.exp(rng.normal(np.log(8e6), 1.6, 2770))])
-    cfg = ScanConfig()
+    cfg = ScanConfig(min_dollar_volume_pctile=30.0)
 
     tight = liquidity_floor(list(curated), cfg)
     loose = liquidity_floor(list(widened), cfg)
@@ -834,7 +837,7 @@ def test_the_gate_ranks_against_every_symbol_that_traded_not_only_the_bursts(
                                                volume=2_000_000, variant=i + 1))
     universe = ["BURST"] + [f"Q{i}" for i in range(9)]
 
-    assert run_scan(ScanConfig(), universe=universe) == []
+    assert run_scan(ScanConfig(min_dollar_volume_pctile=30.0), universe=universe) == []
     # ...and with nothing else in the scan, the same burst is the whole market.
     fake_alpaca_only = run_scan(ScanConfig(), universe=["BURST"])
     assert [c.ticker for c in fake_alpaca_only] == ["BURST"]
@@ -1388,7 +1391,7 @@ def test_the_liquidity_floor_records_how_many_names_it_was_drawn_from(fake_alpac
         fake_alpaca.add_history(name, ohlcv("flat", variant=50 + i))
         universe.append(name)
     stats: dict = {}
-    found = run_scan(ScanConfig(), universe=universe, stats=stats)
+    found = run_scan(ScanConfig(min_dollar_volume_pctile=30.0), universe=universe, stats=stats)
     assert len(found) < 9, "the premise: not every name that traded burst"
     assert stats["liquidity_over"] == 9 and stats["liquidity_floor"] is not None
 
@@ -1978,7 +1981,13 @@ def test_the_scan_filter_still_holds_the_thresholds_it_was_tuned_to():
     cfg = ScanConfig()
     assert (cfg.min_gain_pct, cfg.min_price) == (4.0, 4.0)
     assert (cfg.min_rvol, cfg.rvol_lookback, cfg.min_rvol_sessions) == (1.5, 50, 20)
-    assert cfg.min_dollar_volume_pctile == 30.0
+    # 0 since round 15: rule 6's percentile is OFF and universe.MIN_DOLLARS is
+    # the absolute floor. Pinned together, because "the liquidity rule" is now
+    # one number in another module and a reader of this list would otherwise
+    # see a gate that had simply been deleted.
+    assert cfg.min_dollar_volume_pctile == 0.0
+    assert adaptive_universe.MIN_DOLLARS == 5_000_000
+    assert adaptive_universe.CAPACITY == 1000
     assert (cfg.max_stale_fraction, cfg.max_dropped_fraction) == (0.5, 0.5)
     assert cfg.coverage_guard_min_symbols == 10
     assert (cfg.lookback_days, cfg.batch_size) == (260, 100)
@@ -2005,7 +2014,7 @@ def test_the_readme_describes_the_filter_the_code_applies():
         r"≥\s*([\d.]+)x its own": cfg.min_rvol,
         r"([\d.]+)-session average": float(cfg.rvol_lookback),
         r"price > \$([\d.]+)": cfg.min_price,
-        r"top ([\d.]+)% of the day's dollar volume": 100.0 - cfg.min_dollar_volume_pctile,
+        r"\$([\d,]+)/day absolute floor": float(adaptive_universe.MIN_DOLLARS),
     }
     for pattern, expected in claims.items():
         found = re.search(pattern, layer1)
@@ -2014,7 +2023,7 @@ def test_the_readme_describes_the_filter_the_code_applies():
             "filter description was reworded -- re-point this test at it -- or a "
             "threshold stopped being documented at all."
         )
-        assert float(found.group(1)) == expected, (
+        assert float(found.group(1).replace(",", "")) == expected, (
             f"README says {found.group(0)!r}; ScanConfig says {expected}. "
             "Sweep the docs (CLAUDE.md: a step is not done until they are true)."
         )
@@ -2222,7 +2231,9 @@ def test_a_business_day_no_name_printed_is_a_closure_not_a_hole_on_every_name(fa
     names = _closed_market(fake_alpaca, ohlcv, 12)
     stats: dict = {}
 
-    found = run_scan(ScanConfig(session_date=TUESDAY_AFTER_LABOR_DAY), universe=names, stats=stats)
+    found = run_scan(ScanConfig(session_date=TUESDAY_AFTER_LABOR_DAY,
+                                min_dollar_volume_pctile=30.0),
+                     universe=names, stats=stats)
 
     assert stats["gapped"] == {}
     assert len(found) == 12

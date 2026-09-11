@@ -331,7 +331,7 @@
   <!-- What happened the last times THIS name burst. The summary comes out of
        data.json's evidence block; the per-appearance detail needs the whole
        record, so docs/ledger.json is fetched ONLY when a reader asks for it
-       (see loadRecord). A year of it is about 3.23 MB gzipped, which is not a
+       (see loadRecord). A year of it is about 3.30 MB gzipped, which is not a
        thing to spend on every visit for a view most readers never open.
        tools/measure_ledger.py measures it and a docs test holds this comment,
        the one above loadRecord and README to what it prints. -->
@@ -1827,12 +1827,41 @@
   // to +15% intraday on its third session and closed +4% on the fifth is
   // outside the first and inside the second, and the record kept only the
   // first until it started keeping the highs.
+  // THE MAGNITUDE IS NOT AN OUTCOME ENTRY, and onBasis() is written for one.
+  // That accessor maps a from_open block into an outcome's SHAPE -- horizon,
+  // mean, n, best, worst, in_band -- so a magnitude passed through it kept
+  // only `n` and lost reached_band, above_band and both means. Every
+  // open-basis "reached the band" cell printed an em dash beside a hint
+  // reading "of 66 setups measured over 5 sessions", which is a dash under a
+  // count asserting the thing WAS measured, while the record held 24. Read
+  // off the rendered page on both bases, not from the source.
+  //
+  // `window` is on the close-basis block alone because it is one window for
+  // both bases by construction -- the same sessions, two denominators -- so
+  // it is carried across rather than looked up twice.
+  function magnitudeOnBasis(mag) {
+    var block = mag || {};
+    if (BASIS !== 'open') return block;
+    var o = block.from_open;
+    if (!o || typeof o !== 'object') return { n: 0, window: block.window, unmeasured: true };
+    return { n: o.n, reached_band: o.reached_band, above_band: o.above_band,
+             peak_mean: o.peak_mean, trough_mean: o.trough_mean,
+             trough_n: o.trough_n, window: block.window };
+  }
   function bandCells(block, longest, ev) {
-    var mag = onBasis(block.magnitude || {});
+    var mag = magnitudeOnBasis(block.magnitude);
     var full = block.magnitude || {};
     return [
-      el('td', { 'class': 'sc-num' }, figure(commas(longest.in_band),
-        longest.n ? 'of ' + plural(longest.n, 'measured setup') : null)),
+      // ONE WAY OF SAYING NOTHING, for two cells that sit three inches apart.
+      // This printed a bare "0" when nothing had been measured -- which a
+      // reader takes for "none of them closed in the band" -- beside a
+      // sibling saying "no full window measured yet" for the very same state.
+      // It is the state every row of docs/ is in on the first scheduled run
+      // after a deploy, and the round that put the two columns side by side
+      // is what made the 0 read as a count.
+      el('td', { 'class': 'sc-num' }, longest.n
+        ? figure(commas(longest.in_band), 'of ' + plural(longest.n, 'measured setup'))
+        : figure('\u2014', 'nothing measured at ' + hzLabel(longest.horizon) + ' yet')),
       el('td', { 'class': 'sc-num' }, mag && typeof mag.n === 'number' && mag.n
         ? figure(commas(mag.reached_band),
             'of ' + plural(mag.n, 'setup') + ' measured over ' +
@@ -1928,7 +1957,16 @@
     note.hidden = !bitten.length;
     if (bitten.length) {
       note.textContent = 'On ' + bitten.map(function (k) {
-        return plural(cut[k], 'session') + ' the ' + k + ' list hit its archive cap';
+        // The ROW LABEL a reader can find in the table above, not the
+        // ledger's own key: this printed "the scan list" and "the
+        // anticipation list" over rows labelled caught, missed and the $
+        // breakouts, so the sentence named a population the table does not
+        // show. `caught` and `missed` are two halves of one archived section,
+        // so the scan's cap is named for both.
+        var labels = { scan: 'caught and missed', dollar: 'the $ breakouts',
+                       anticipation: 'the anticipation list' };
+        return plural(cut[k], 'session') + ' ' + (labels[k] || 'the ' + k + ' list')
+               + ' hit the archive cap';
       }).join(' and ') + ', so those rows are the best-ranked slice of that night’s matches and not all of them.';
     }
   }
@@ -2310,7 +2348,7 @@
   }
 
   // The per-name view's lazy fetch. docs/ledger.json is the whole record — about
-  // 3.23 MB gzipped after a year — so it is never pulled on load; the summary
+  // 3.30 MB gzipped after a year — so it is never pulled on load; the summary
   // above comes out of data.json, which the page has already read. A 404 here is the
   // normal state until evening.yml has committed a run back, so it is reported
   // as a fact about the file rather than as a broken page.

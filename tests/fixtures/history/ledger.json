@@ -519,6 +519,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -922,7 +941,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 13,
@@ -1624,7 +1651,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -2064,6 +2092,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -2299,7 +2346,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 15,
@@ -3169,7 +3224,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -3655,6 +3711,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -3974,7 +4049,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 15,
@@ -4844,7 +4927,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -5434,6 +5518,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -5795,7 +5898,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 12,
@@ -6623,7 +6734,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -7207,6 +7319,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -7568,7 +7699,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 8,
@@ -8396,7 +8535,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -8885,6 +9025,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -9162,7 +9321,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 14,
@@ -10200,7 +10367,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -10588,6 +10756,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -10781,7 +10968,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 9,
@@ -11693,7 +11888,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -12320,6 +12516,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -12807,7 +13022,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 11,
@@ -13803,7 +14026,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -14194,6 +14418,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -14387,7 +14630,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 12,
@@ -15425,7 +15676,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -15862,6 +16114,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -16139,7 +16410,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 9,
@@ -16841,7 +17120,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -17278,6 +17558,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -17555,7 +17854,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 11,
@@ -18341,7 +18648,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -18879,6 +19187,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -19198,7 +19525,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 6,
@@ -19816,7 +20151,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -20210,6 +20546,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -20403,7 +20758,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 6,
@@ -20979,7 +21342,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -21416,6 +21780,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -21651,7 +22034,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 12,
@@ -22437,7 +22828,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -22880,6 +23272,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -23157,7 +23568,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 11,
@@ -23901,7 +24320,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -24390,6 +24810,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -24751,7 +25190,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 11,
@@ -25579,7 +26026,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -25973,6 +26421,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -26250,7 +26717,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 11,
@@ -26952,7 +27427,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -27343,6 +27819,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -27578,7 +28073,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 12,
@@ -28406,7 +28909,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -28797,6 +29301,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -29032,7 +29555,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 14,
@@ -29818,7 +30349,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -30202,6 +30734,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -30563,7 +31114,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 12,
@@ -31223,7 +31782,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -31804,6 +32364,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -32207,7 +32786,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 11,
@@ -32783,7 +33370,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -33413,6 +34001,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -33816,7 +34423,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 5,
@@ -34098,7 +34713,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -34538,6 +35154,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -34941,7 +35576,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 13,
@@ -35643,7 +36286,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -36276,6 +36920,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -36721,7 +37384,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 3,
@@ -37087,7 +37758,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -37775,6 +38447,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -38220,7 +38911,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 5,
@@ -38712,7 +39411,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -39290,6 +39990,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -39651,7 +40370,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 9,
@@ -40185,7 +40912,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -40622,6 +41350,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -40857,7 +41604,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 4,
@@ -41307,7 +42062,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -41989,6 +42745,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -42476,7 +43251,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 17,
@@ -43472,7 +44255,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -43966,6 +44750,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -44327,7 +45130,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 10,
@@ -45071,7 +45882,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {
@@ -45467,6 +46279,25 @@
           "history_sessions",
           "history_from"
         ],
+        "stockbee.anticipation.max_abs_day_change_pct": 1,
+        "stockbee.anticipation.max_compression_ratio": 0.75,
+        "stockbee.anticipation.min_contiguous_sessions": 67,
+        "stockbee.anticipation.min_price": 3,
+        "stockbee.anticipation.min_prior_three_volume": 100000,
+        "stockbee.anticipation.min_trend_intensity": 1.05,
+        "stockbee.dollar_breakout_move": 0.9,
+        "stockbee.min_share_volume": 100000,
+        "stockbee.scan_drop_ratio": 0.96,
+        "stockbee.scan_gain_ratio": 1.04,
+        "universe.capacity": 1000,
+        "universe.lookback": 20,
+        "universe.max_discovery": 6000,
+        "universe.min_dollars": 5000000,
+        "universe.quota.20-session_momentum": 150,
+        "universe.quota.4%_move": 150,
+        "universe.quota.liquid_leader": 100,
+        "universe.quota.recent_setup": 100,
+        "universe.quota.rotating_discovery": 50,
         "window.high_low_min_sessions": 60,
         "window.high_low_sessions": 252,
         "window.linear_fit_sessions": 30,
@@ -45702,7 +46533,15 @@
                 }
               }
             }
-          ]
+          ],
+          "rules": {
+            "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+            "min_gain_ratio": 1.04,
+            "measured": "close / previous session close",
+            "volume_above_previous": true,
+            "min_volume": 100000,
+            "min_price": null
+          }
         },
         "dollar": {
           "matched": 15,
@@ -46656,7 +47495,8 @@
             "max_abs_day_change_pct": 1,
             "max_compression_ratio": 0.75,
             "min_contiguous_sessions": 67,
-            "excludes_current_4pct_scan_matches": true
+            "excludes_current_4pct_scan_matches": true,
+            "excludes_current_dollar_matches": true
           }
         },
         "breadth": {

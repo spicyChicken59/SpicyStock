@@ -29,7 +29,7 @@ Known scheduled falsifications:
 | ~~The first commit-back replaces `docs/data.json` with a real run~~ swept before it happened (3.1) | ~~`check_fixture_fresh.py` compared `docs/data.json` to the generator, so the pipeline working would have turned CI red on the next push; README's "regenerate … `docs/data.json`" and "pinned to the fixture" smoke-test section~~ — the canonical fixture is `tests/fixtures/data.json` now, `docs/data.json` is whatever the last run wrote, and the guard only checks a `docs/` copy that still *claims* to be the fixture |
 | ~~`evening.yml` keeps `docs/` between runs~~ done in step 9 | ~~README's "Does the history actually accumulate?" section and the stale `charts/` path in that workflow's upload step~~ both swept; step 10 added why that commit-back now also feeds the morning run and every streak |
 | ~~Step 10 makes the mode mean something and reads the ledger back~~ done | ~~README's "morning has no workflow and no distinct behaviour" note, the workflow inventory, `.env.example`'s required-variable list~~ all swept; `morning.yml` now exists |
-| ~~The universe widens past `data/symbols.txt`~~ implemented | `src/universe.py` uses Nasdaq classifications to exclude unknown/common-stock mismatches and new healthcare/biotech/pharma, retains curated exceptions, and requires $20M prior-20-session median and target-session dollar volume on SIP before the unchanged scanner gates. Selection provenance and dated membership are archived. |
+| ~~The universe widens past `data/symbols.txt`~~ implemented | `src/universe.py` uses Nasdaq classifications to exclude unknown/common-stock mismatches and new healthcare/biotech/pharma, retains curated exceptions, and requires $5M prior-20-session median and target-session dollar volume on SIP before the scanner gates (rule 6's percentile is off; round 15). Selection provenance and dated membership are archived. |
 | ~~The universe-size prose changes~~ swept | README's opening, pipeline diagram, layer caption, Costs and Tuning now describe classified discovery and at most 500 detailed histories; 228 refers only to the reviewed seed/fallback. |
 
 The adaptive selector addresses the former open universe decision. No
@@ -147,7 +147,7 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   window ending no later than sixteen minutes behind the clock, which is
   the free plan's consolidated route; `delayed_sip`, the default for nine rounds, is a name the bars
   endpoint refuses -- observed on the first live run, round 9 below.
-- **There is a regression net.** `pytest tests/` runs 1759 tests with no network
+- **There is a regression net.** `pytest tests/` runs 1834 tests with no network
   and no API keys (step 6a). The scan filter's thresholds ARE asserted (step 4)
   and the 2LYNCH checks are too (step 7), each mutation-tested; step 6b
   re-mutated both — 88 mutants, 84 killed, and the four survivors are each
@@ -221,6 +221,351 @@ citation that rots, so read the number off `len(MALFORMED_SNAPSHOTS)`.)
   over 14 and 74 -- which is the "only one side can be read" sentence, and
   the page says exactly that. The three verdict branches are pinned on three
   sources, because no real source can hold more than one of them yet.
+
+## Round 15 — the floors are a function of the account, not of the basket
+
+The screener's liquidity rules were sized for an account this one is not.
+Measured rather than argued: across the 26 archived burst rows the median
+burst-day dollar volume is $399M, so at a $50,000 account a 25% position is
+$12,500 -- 0.003% of that day, and 160x under the 1%-of-volume convention
+that every capacity rule in this literature is built on. Inverting the two
+floors at 1% participation, the $20M universe floor encodes an ~$800,000
+account and rule 6's percentile, at the $76.7M it took on 2026-09-09, an
+~$3.1M one. It also swung $76.7M / $85.1M / $378.7M across three sessions of
+the record, which is the universe-invariance defect `ScanConfig`'s own
+comment predicted, arriving in production.
+
+So the floor's job changes from capacity to COST, and the two rules split
+accordingly. `min_dollar_volume_pctile` is 0 -- rule 6 off, a state every
+surface already renders and the `noliquidity` smoke variant already covers --
+and `universe.MIN_DOLLARS` is $5,000,000, which at a $20+ price is roughly
+250,000 shares a day, comfortably above the ~100,000-share line where quoted
+spreads run past 50 bps, and a $12,500 order is 0.25% of it. `CAPACITY` is
+1000, and the stopping point is the CALL BUDGET rather than taste: 500 names
+found 11 bursts and scored 6 on 2026-09-09, so ~1000 is the largest value
+that keeps `MAX_TO_SCORE` from biting on a typical night. The 35-session
+screen already runs over the whole classified pool, so this costs only the
+250-session scan fetch for the extra names.
+
+Measured on the committed directory over the classified pool: 1,393 names
+survived $20M and 1,863 survive $5M, out of the 2,485 fetched either way.
+The price tilt this addresses was measured the same way -- 23.2% of listed
+names are $40 or more, 62.9% of what survived the $20M floor, and 73.4% of
+the 500 selected -- so the floor was about 2.7x of the tilt and the momentum
+sorts about 1.17x.
+
+**What it costs, said rather than buried.** `evidence.illiquid` stops
+filling and the benchmark is unfloored, which is a measurement rather than a
+rule, and every surface already names both causes of an unfloored rung. The
+history fixture keeps the percentile ON for exactly that reason: regenerated
+under the production default it carried none of those states and four
+dashboard checks could no longer fail, so `tools/make_history.py` sets it and
+`tests/fixtures/README.md` says so, as does `tests/test_pipeline.py`'s new
+`rule_six` fixture. The projected year moved 28.12 -> 28.22 MB raw and
+3.27 -> 3.30 gzipped, swept in README and both page comments; the stripped
+figures did not move.
+
+Eleven mutants, nine killed on the first pass. Both survivors were the same
+hole in the other direction: README's "up to 1000 stocks" reverted to 500 and
+`.env.example`'s "$5M median prior-20-session dollar volume" reverted to $20M
+with the whole suite green -- two documented strategy numbers with no guard,
+in the two files the standing doc-sweep rule names by name. Every occurrence
+of both is read back now, not the first one, because one true sentence beside
+a stale one is how a membership test gets satisfied while a reader is misled.
+
+## Round 15 — the selector is a screener, and the record could not see it
+
+The universe stopped being a checked-in file and nothing followed it.
+`rules_fingerprint()` named the universe in its own list of deliberate
+exclusions -- "already per run in `run.universe`" -- which was true of a
+symbol list and is not true of a selector with a floor, a capacity, a lookback
+and a quota mix. Reproduced before it was touched: moving `MIN_DOLLARS`
+20M -> 3M and `CAPACITY` 500 -> 1500 left the fingerprint byte-identical
+(`36c0050558cc0407` on both sides), and `learning._signature()` identical with
+it, so the ridge fit would have pooled two screeners and `evidence.rules`
+would have reported one. That is the shape the post-merge audit of round 14
+fixed in `src.learning`, one module further out. 47 keys -> 56, `universe.`
+is a PRODUCTION prefix, and the guard that refuses an unclassified family was
+already there and already red -- which is that guard working rather than a
+second one being needed.
+
+`MAX_DISCOVERY` is STRATEGY where `src.stockbee`'s section caps are PLUMBING,
+and the difference is driven rather than asserted: a section cap truncates the
+ARCHIVE, while this one cuts the liquidity-ranked tail out of the pool, so a
+name past it is never fetched, never measured and can never burst. The first
+version of that guard only checked the two lists against each other, so moving
+the constant to PLUMBING passed it; the test drives the cut now.
+
+**The price floor was spelled three times, and the third was found only by
+sweeping for it.** `directory_pool()` held a bare `4`, `rotate()` a bare `.04`
+for the burst threshold, and `measure()` a second bare `4`. Each was
+reproduced rather than read: at `min_price` $10 the pool still admitted a $6
+name and `measure()` still measured it, and at `min_gain_pct` 10% the
+"4% move" quota still reserved room for a 4.5% mover -- under an archived
+`scan.min_price` and `scan.min_gain_pct` that had not decided anything. All
+three read `ScanConfig` now, at call time and threaded from the config
+`select()` was handed, so a run with its own floor wins over the class.
+`QUOTAS` names the five quota sizes `rotate()` typed as literals. The first
+two were fixed and the class called closed; `measure()` is what the sweep
+found, which is the second time this file has recorded that exact sequence.
+
+**The leftover fill is 162 of 500 and is not a decision.** `rotate()`'s last
+line gives every unclaimed slot to trailing 20-session momentum under the same
+reason word as its own quota of 150, so `reason_counts` reads 312 on
+2026-09-09 and 270 on the 8th and cannot tell the decided half from the
+defaulted one. Recorded beside the line rather than changed, because changing
+it is a strategy decision.
+
+Eleven mutants over the round's rules, eight killed on the first pass and all
+three survivors real holes: the classification pinned only against itself
+(above), the threading at `select()`'s call site invisible because the class
+fallback agrees with the default, and the literal guard's own function list
+asserted against itself so a name could be dropped from it. The guard derives
+that list from the source now -- any function reading `ScanConfig` or `QUOTAS`
+is applying a threshold, and is therefore exactly the kind that must not spell
+a second one beside it -- and a twelfth mutant retired with the list it
+targeted. The first fix for the threading hole was itself the wrong shape and
+the mutant said so: with the directory price and the measured close both at
+$20, `directory_pool()` emptied the pool and the assertion passed while
+`measure()` read the class. The two stages carry different prices now.
+
+## Round 14's post-merge audit — the record's own rules, and a number kept under the wrong span
+
+Five lenses over the merged commit, by execution, after the first review
+workflow was itself the thing that needed checking: its worktree isolation
+failed because the session's working directory was not a repository, nine
+agents errored, and two findings came back "refuted" with zero votes -- a
+dead verifier returning null, which is the 3.1 shape again. Both were
+reproduced HERE on main before anything was touched, and the re-run with
+agent-made worktrees is what produced the lenses.
+
+**A ledger that stops loading the day a constant moves.** `stockbee.problem()`
+re-derived every archived scan row under the module's live `_scan()` and
+`_dollar_breakout()` -- `MIN_SHARE_VOLUME`, `DOLLAR_BREAKOUT_MOVE` and the
+`1.04` spelled inside the predicate -- so whether the record was well formed
+was a function of the calendar. Reproduced on the committed ledger:
+`MIN_SHARE_VOLUME = 1_000_000` set every run aside as
+`ledger.json.<stamp>.unreadable`, kept 0 runs and refused `docs/data.json`,
+with nothing about either file changed. That is the rule `fill_benchmarks()`
+already keeps -- the floor a run is measured under is the run's own, not
+tonight's -- arriving in the validator. The scan section archives `rules` now
+(`min_gain_ratio`, `min_volume`, beside the dollar section's, which always
+carried them), `RULE_NUMBERS` names which archived numbers each section is
+re-derived under, and a row is checked against those and never against the
+module. A record from before the block carries none and its rows are not
+re-derived at all, since a rule the record did not archive is not one the
+validator can know; the cost -- a hand-edited row in such a record loads --
+is the sentence in the test that pins it rather than a surprise. The
+predicates' defaults read the constants at CALL time: a mutant that bound
+them at definition died on the test that patches the constant, which is the
+trap a default argument sets for exactly this kind of test.
+
+And the fingerprint could not see the sidecar. `evidence.stockbee` averages
+the canonical scan's rows across runs the way `by_score` averages picks, so
+a threshold moved in `src.stockbee` was a second scan under one label.
+`STRATEGY_CONSTANTS` / `PLUMBING_CONSTANTS` is the split `ScanConfig` keeps,
+under the same guard (every upper-case number in exactly one list); the four
+strategy numbers and the six `ANTICIPATION_RULES` numbers are `stockbee.*`
+keys, 37 -> 47. `_anticipates()` spelled the six as literals beside the dict
+that archives them -- round 11's two-spellings class -- and reads the dict
+now; `MEASUREMENT_RULES` spelled 1.04, 0.90, 0.96 and 100000 inside its
+sentences and interpolates the constants, under a guard that reads the
+SOURCE, because a value check cannot tell an f-string from a literal that
+agrees tonight. The record gains a second set of rules on the first run after
+this merges, and `evidence.rules.unshared` names the ten new keys.
+
+**A stale open-basis magnitude under the row's one span.**
+`fill_forward_returns()` restated `peak`/`trough` on the close basis whenever
+the span widened and restated the open basis only when the fresh value was
+not None -- so a second fill whose d1 open was refused (printed outside its
+own bar) widened the close basis to span 5 while `from_open.peak` kept the
+span-2 number, and `_magnitude()` counted it as a five-session open-basis
+peak. Reproduced on main: fill 1 span 2, peak 10.0 on both bases; fill 2
+span 5, peak 25.0 on the close basis, `from_open.peak` still 10.0, open-basis
+n 1. Both bases restate together now, null included. The first harness
+run's survivor was the test and not the code: a mutant restating the peak
+alone never wrote the open-basis trough on EITHER fill, so "None after
+widening" was true of it for the wrong reason -- this file's second shape,
+and the fix is the trough asserted on the first fill.
+
+**Three lows worked with them.** The magnitude window read a high off any
+finite number: an inverted bar, a high under its own close and a non-positive
+edge each produced a peak, where the checklist's H and `_open_within_its_bar()`
+refuse the same shapes; `_bar_edges()` holds every window bar to that
+standard, both edges or neither, and the inverted-bar clause is load-bearing
+only where the close clause cannot reach (a bar with no close), which the
+second survivor found and a test now pins. A sidecar row was archived with no
+`forward_returns` key -- the shape a row from BEFORE the measurement carries
+-- so the two were one shape until a fill first touched the row, and for a
+name later scans never fetch, never; `add_run()` writes the pending block the
+way `slim_row()` does for a pick. And "one extra batch" for the fill's pending
+names was three nights' worth and not a bound: measured, the thirty-run
+history fixture's steady state is 61 names over its 77 synthetic names (the
+de-duplication saturates), the committed record 96 after three nights, and at
+the section caps five nights of rows is at most 5 x 105 sidecar names plus
+the picks -- up to six batches of 100 a night in the worst case, which README
+says beside the measurement now.
+
+The ledger's projected year went 27.89 -> 28.12 MB raw and 3.23 -> 3.27
+gzipped (the pending block on every sidecar row, the scan rules and ten
+fingerprint keys on every entry), swept in README and both page comments.
+Thirty-two mutants, thirty killed on the first pass, both survivors holes in
+the tests and closed; 270 smoke checks over 48 variants, no page errors.
+
+### The same class one module over, introduced by the commit that closed it
+
+The standing rule fired on my own work. Putting the sidecar's constants into
+`rules_fingerprint()` is right for `evidence.rules`, and `src.learning`
+hashes the WHOLE block to ask a narrower question -- were these rows produced
+by the same screener? -- before fitting score, volume ratio and checklist
+passes against the open-basis d5. The sidecar supplies none of those four, so
+a constant moved there discarded a training set for a number the fit never
+reads: driven with one name per session over sixteen sessions, moving
+`stockbee.min_share_volume` alone took the fit from twelve eligible setups to
+one, the other twelve counted under `different_or_unknown_rules`, every
+excluded run's own score and outcome untouched. That is a record judged
+against numbers that did not produce it, which is precisely what the sidecar
+validator was fixed for in the commit before.
+
+`production_rules()` is the split and `PRODUCTION_PREFIXES` /
+`RESEARCH_PREFIXES` the classification, the two-list-and-a-guard shape
+`ScanConfig` and `src.stockbee` already keep. Two guards, because the first
+one I wrote could not fail the way its own docstring claimed: rebuilding the
+research keys from the sources the fingerprint walks catches a key that
+should have been research and was not REMOVED, and catches nothing at all
+about a NEW family, which would default to production and split the corpus
+silently. A safe default is still a default. The second guard asserts every
+key the fingerprint emits matches exactly one prefix across the two tuples,
+so a family added later is red until someone classifies it. Twelve mutants,
+all twelve killed, including the new-family one.
+
+### Two findings from the audit lenses, and thirteen that are leads
+
+Five lenses over the merged commit; fifteen of the twenty-three agents died
+on a model usage limit mid-run, which is the 3.1 artefact again -- a dead
+refuter returns null and the summary reads it as "refuted". Two findings got
+real refuters and both came back reproduced by execution; the other thirteen
+are unchecked either way and are LEADS, not refutations. Both confirmed ones
+were reproduced HERE before they were touched.
+
+**The report accused five named companies on the strength of rows nobody
+kept.** `tools/fidelity_report.py`'s own comment reasoned about the cap in one
+direction -- a truncated canonical list UNDERCOUNTS misses, which the sentence
+already said -- and the other direction does not omit a name, it accuses one:
+a production burst that IS a canonical match the cap cut is absent from the
+archived rows and printed as "admitted N that fail the canonical scan". On
+2026-09-08 the archive stops at a 5.70% gain and BG 4.36, DK 5.30, EIX 4.51,
+RGTI 4.01 and TKO 5.01 are every one of them below it, so the cap alone
+explains all five. Those five are the round-13 table's last cell and a
+sentence naming them, published for two rounds; both are retracted in place
+above. The rows are sorted by gain, so a name STRICTLY above the cutoff would
+have been kept had it matched and its absence is real evidence; at or below
+it -- and on the boundary, where ties break by ticker -- the record is
+silent, and the report says "cannot say for N more" instead. Seven mutants,
+all killed.
+
+**The page threw away an open-basis number the record holds.** `bandCells()`
+passed the magnitude block through `onBasis()`, which is written for an
+OUTCOME entry and maps a `from_open` block into that shape -- horizon, mean,
+n, best, worst, in_band -- so the magnitude kept only its `n` and lost
+`reached_band` with it. Read off the rendered page rather than the source:
+every open-basis "reached the band" cell printed an em dash beside a hint
+reading "of 66 setups measured over 5 sessions", a dash under a count
+asserting the thing WAS measured, while the record held 24 against the close
+basis's 27. `magnitudeOnBasis()` is the accessor now. The smoke could not see
+it, which is the other half of the finding: every band check ran on the close
+basis, so three checks read both columns on both bases against the record's
+own two blocks (270 -> 273). Two page mutants, both killed.
+
+**The $ breakout section silently took rows out of the anticipation
+population.** `build()` tests `_dollar_breakout()` before `_anticipates()`, so
+a name satisfying both is filed under `dollar` alone -- and that is not a
+corner, it is the cohort the $ scan exists for, where an absolute move is
+small in percent. Reproduced on a frame that is genuinely both: a $200 name
+with a compressed six-session shelf, gapping down $1.20 and closing +0.5%,
+passes both predicates. The history fixture moved 200 anticipation rows to
+191 the day that landed and nothing recorded it. RECORDED rather than
+changed, which is the decision: `ANTICIPATION_RULES` declares
+`excludes_current_dollar_matches` now, so a record written before it is
+absent the key and a reader can tell the two definitions apart, and
+`DISJOINT_DECLARATIONS` holds an archived row to the declaration ITS OWN
+record made -- checkable even though the anticipation predicate itself is not,
+since the row carries the open, close and volume the $ scan reads. Five
+mutants, all killed.
+
+### The rest of the leads, worked
+
+Thirteen findings arrived with dead refuters and were reproduced here before
+being touched. `tools/fidelity_report.py` dropped a rule from its outcome
+section the moment any OTHER rule had a measured return -- `pooled.items() or
+[...]` fires only when every rule is empty -- so a section a reader takes for
+the whole partition silently lost the rules still pending. A night the
+canonical scan matched nothing was skipped whole over a zero denominator,
+taking with it the bursts production found on it, which is the widest
+disagreement the two scans can have. The stated production rule went on
+describing the scan without `min_share_volume` and `min_rvol_sessions` after
+the same merge added both, and `_why_missed()` had no branch for the share
+floor; it is built from `ScanConfig.STRATEGY_FIELDS` now and says so if it
+ever falls short. `SIDECAR_VOLUME_SESSIONS` was a hand-typed 20 that nothing
+read, under a comment claiming it came from the rule string -- it does now,
+and it reaches the output, because a constant no output depends on is a
+constant no test can pin. The published contract named three of the sidecar's
+four populations and two of its three caps.
+
+**And README's two stripped-cost figures were reproducible by nothing.**
+1.14/0.12 and 3.86/0.62 were measured once by hand during round 14, in the
+paragraph that argues the sidecar's whole cost -- which is the rot
+`tools/measure_ledger.py` exists to stop, one paragraph from the figures it
+does guard. `--without forward_returns` and `--without dollar` build the same
+projected file with one part stripped: 2.94/0.28 and 4.19/0.61, with a docs
+guard holding README to what the tool prints. Round 13's "Bonde's own
+100,000-share floor is absent entirely" is retracted in place for the same
+reason -- the same merge added `min_share_volume` to production, so three of
+its four causes stand -- and the history fixture's dollar population is 316,
+not the 315 published above.
+
+Eleven mutants over these, eight killed on the first pass; all three
+survivors were holes in the tests and closed. One of them is this file's
+third shape again: the sidecar-window test compared the constant to the
+function beside it, which is 20 against 20 while they agree, so the mutant
+that typed the number back survived it. The module is re-imported under a
+moved rule string now.
+
+**The last four, and one refuted.** The smoke's abort filter exempted chart
+PNGs alone, so any other subresource still in flight when the next check
+navigated -- read off a real run, a design-system SVG -- counted as a page
+error and would have failed CI on a slow runner over a change that touched
+nothing. That is round 9's finding one subresource family over. Whether an
+abort HAPPENS is a race, so the first mutant survived: a check that waits for
+the race passes for the wrong reason most runs, and the rule is named
+(`abortedByNavigation`) and asserted directly on the URLs the race leaves
+behind. The basis-surface list was a hand-kept nine and round 14 added a
+tenth and eleventh; the canonical card's hint carried `basisLabel()` under no
+check at all. The two band columns said "nothing" two different ways -- a
+bare 0 a reader takes for a count, beside "no full window measured yet" --
+which is the state every population is in until a horizon fills, and the
+history fixture's crowded-out row already renders it. The truncation note
+printed the ledger's own section KEY over a table labelled with something
+else, and the verdict check typed two fixture counts into the script against
+its own rule that nothing does.
+
+And the contract's "production can never have caught a $ breakout row" was
+one assertion too strong: the disjointness is between the dollar section and
+the SIDECAR's 4% scan, and production is a different scan reading the
+previous session by its own rule -- the report already prints production
+bursts the canonical scan did not match. The split is unchanged, because the
+question caught/missed answers is about the 4% scan; the premise is COUNTED
+now (`evidence.stockbee.dollar.admitted_anyway`, 0 on the history fixture)
+rather than asserted away.
+
+**One lead refuted by execution.** "Run shapes that `_malformed_rows()` loads
+clean crash the report" does not hold: driven over seven of them -- a string,
+list or missing `universe`, a string `bursts`, a null `scored`, a string
+`score_cap` and `measured`, a list `top_score` -- the load check REFUSES
+every one, so no record this repo writes can hold them. What is true is that
+the tool reads a PATH and so can be handed a quarantined casualty, and it
+gave a traceback where it should give a sentence. That is fixed and the
+refutation is pinned beside it.
 
 ## Round 14 — the second scan, the control, and what the outside evidence says
 
@@ -316,7 +661,10 @@ project has repeatedly found one surface checking a level the other does not.
 
 **Cost, measured rather than argued.** The projected year went 20.13 → 21.27
 MB raw and 2.17 → 2.29 gzipped. Building the same file with the new blocks
-stripped says the measurement itself is **1.14 MB raw and 0.12 gzipped**; the
+stripped said the measurement itself was **1.14 MB raw and 0.12 gzipped** --
+retracted: that pair was measured once by hand and no committed tool could
+recompute it, and `tools/measure_ledger.py --without forward_returns` says
+2.94 and 0.28 once every archived sidecar row carries the block. The
 rest of the move from the 15.46/1.24 this file recorded at round 11 happened
 in rounds 12 and 13 and README had already been swept for it. The fill's
 `pending_tickers()` went 25 → 96 names on the committed record, which is one
@@ -408,7 +756,7 @@ already reads `selection` or keys on the label.
 
 Read off the regenerated thirty-run history fixture — synthetic bars, so the
 numbers are about the machinery and not the market: `caught` 186 setups at
-+5.46% over five sessions, `missed` 26 at +3.13%, `dollar` 315 at +3.79%,
++5.46% over five sessions, `missed` 26 at +3.13%, `dollar` 316 at +3.79%,
 `anticipation` 191 at +8.24%. Two things about that are worth keeping even
 though the market half is meaningless. The narrower scan kept the better
 bursts on this tape, which is the direction the question was asked in. And
@@ -555,12 +903,28 @@ ever compared the two lists. `tools/fidelity_report.py` does, offline, from
 | session | canonical | production | in both | admitted that fail his scan |
 |---|---|---|---|---|
 | 2026-09-09 | 20 | 11 | 11 (55%) | 0 |
-| 2026-09-08 | 70 | 15 | 10 (21%) | 5 |
+| 2026-09-08 | 70 | 15 | 10 (of the 40 archived) | ~~5~~ retracted, see below |
 
-Both directions, and a single count hides both. The five it admitted on the
+**The last cell of the second row is retracted, and the post-merge audit of
+round 14 is what retracted it.** That night's canonical list was capped at 40
+of 70 matches, and the report read a production burst's absence from the
+archived 40 as evidence it failed the canonical scan. Every one of the five
+names below sits under the 5.70% gain the archived rows stop at, so the cap
+alone explains all five and the record cannot tell "not a match" from "a match
+we did not keep". The kept percentage moved with it, since the overlap is
+computed over the 40 archived rows and the sentence read as though over 70.
+The 2026-09-09 row is untouched: 20 matches under a cap of 40 is a complete
+list, and its zero is real.
+
+~~Both directions, and a single count hides both. The five it admitted on the
 8th — BG, DK, EIX, RGTI, TKO — have volume above their trailing average and
 **not** above the previous session, which is day two of a volume event and
-exactly what `volume > previous volume` exists to exclude. Of the 30 it
+exactly what `volume > previous volume` exists to exclude.~~ Retracted in
+place rather than deleted, because the sentence is the finding: it is a claim
+about five named companies assembled out of rows nobody kept, and it was
+published here for two rounds. Whether those five really fail the canonical
+scan is UNKNOWN from the record, and stays unknown until a night archives its
+whole list. Of the 30 it
 missed, 22 are under 1.5x on any window; the other 8 pass on the sidecar's 20
 sessions and fail on production's 50, so the report keeps `rvol_threshold` and
 `rvol_window` apart rather than merging two different facts about one rule.
@@ -625,8 +989,12 @@ looking in the wrong place.
 **Four causes, one bias.** The universe drops everything under $4 and selects
 on trailing momentum and liquidity; rule 6's percentile puts the floor at
 $76.7M/day and refused a $62M/day burst as illiquid; the scan adds a volume
-gate that is not his; and Bonde's own 100,000-**share** floor is absent
-entirely. His stated preferences run the other way — *"Low float below 25
+gate that is not his; and ~~Bonde's own 100,000-**share** floor is absent
+entirely~~ — retracted by the post-merge audit of round 14: the same merge
+that recorded this added `min_share_volume` to `ScanConfig`, so production
+applies his floor now and three of the four causes stand rather than four.
+The report's own "Production rule:" line did not state it either, and states
+every strategy field the config names now. His stated preferences run the other way — *"Low float below 25
 million is good. Below 10 million float leads to explosive moves. Low priced
 stocks (below 5 dollar) tend to make very explosive moves."* Every one of the
 four pushes toward large, liquid, already-moving names. That is one bias with

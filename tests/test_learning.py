@@ -293,3 +293,154 @@ def test_unknown_rules_and_missing_dry_run_provenance_cannot_train():
     del snapshot["dry_run"]
     result = learning.build([snapshot], run())
     assert result["counts"]["matured"] == 0
+
+
+# ---------------------------------------------------------------------------
+# The post-merge audit of round 14: a fit is split by what PRODUCED its rows,
+# and the research sidecar produces none of them.
+
+def _scored_history(sessions=16, rules=None):
+    """One distinct name per session, so every run is its own setup chain.
+
+    Chaining is what hid the size of this: a record whose every session holds
+    the same ticker collapses to ONE observation, and the corpus can be
+    thrown away without the count moving.
+    """
+    return [run(offset, [row(offset, ticker="N%02d" % offset)],
+                universe=adaptive(), rules=dict(rules or {"score.prompt": "test-prompt", "gate": 3}))
+            for offset in range(sessions)]
+
+
+def test_a_research_constant_moving_does_not_throw_away_the_training_set():
+    """Reproduced on the merged tree before this was narrowed: with one name
+    per session over sixteen sessions, moving `stockbee.min_share_volume`
+    alone -- on runs whose every score, volume ratio, checklist count and
+    outcome was untouched -- took the fit from twelve eligible setups to one,
+    the other twelve counted under `different_or_unknown_rules`.
+
+    The fit reads score, volume ratio and checklist passes and labels on the
+    open-basis d5. The sidecar supplies none of the four: it runs Bonde's own
+    scans over the same frames beside the run and selects, scores and gates
+    nothing. So this is a record judged against numbers that did not produce
+    it -- the class the sidecar's own validator was fixed for in the same
+    round, one module over, introduced by the commit that fixed it.
+    """
+    settled = {"score.prompt": "test-prompt", "gate": 3, "stockbee.min_share_volume": 100000}
+    history_runs = _scored_history(rules=settled)
+    baseline = learning.build(history_runs, run(20, rules=dict(settled)))
+
+    moved = dict(settled, **{"stockbee.min_share_volume": 1_000_000})
+    after = learning.build(history_runs, run(20, rules=moved))
+
+    assert baseline["counts"]["eligible"] > 1, "precondition: the corpus is worth keeping"
+    assert after["counts"]["eligible"] == baseline["counts"]["eligible"]
+    assert "different_or_unknown_rules" not in after["counts"]["excluded"]
+
+
+def test_a_production_constant_moving_still_does():
+    """The inverse, and the reason the narrowing is a split and not a
+    deletion: a gate that moved really did produce different rows, and a fit
+    across the boundary would average two screeners."""
+    settled = {"score.prompt": "test-prompt", "gate": 3, "stockbee.min_share_volume": 100000}
+    history_runs = _scored_history(rules=settled)
+    baseline = learning.build(history_runs, run(20, rules=dict(settled)))
+
+    moved = dict(settled, **{"gate": 4})
+    after = learning.build(history_runs, run(20, rules=moved))
+
+    assert after["counts"]["eligible"] < baseline["counts"]["eligible"]
+    assert after["counts"]["excluded"]["different_or_unknown_rules"] >= 1
+
+
+def test_the_scoring_signature_ignores_the_research_keys_and_nothing_else():
+    """Two runs differing ONLY in the research half hash the same; two
+    differing anywhere in the production half do not. Asserted on the
+    signature itself, because `build()` can agree for other reasons."""
+    base = {"score.prompt": "test-prompt", "gate": 3, "stockbee.scan_gain_ratio": 1.04}
+    same = learning._signature(run(0, rules=dict(base)))
+    research = learning._signature(run(0, rules=dict(base, **{"stockbee.scan_gain_ratio": 1.10})))
+    gained = learning._signature(run(0, rules=dict(base, **{"stockbee.anticipation.min_price": 3})))
+    dropped = learning._signature(run(0, rules={k: v for k, v in base.items()
+                                                if not k.startswith("stockbee.")}))
+    production = learning._signature(run(0, rules=dict(base, gate=4)))
+    model = learning._signature(run(0, rules=dict(base), model="other-model"))
+
+    assert same is not None
+    assert research == same, "a research value that moved"
+    assert gained == same, "a research key that did not exist before"
+    assert dropped == same, "a record from before the research keys were named"
+    assert production != same, "a production value that moved"
+    assert model != same, "the scorer model is still part of it"
+
+
+def test_the_research_half_is_derived_from_the_sources_the_fingerprint_walks():
+    """A PREFIX with a derived guard, not a hand-kept list.
+
+    This project has repeatedly found a hand-kept copy of a set going stale in
+    its own direction, so the classification is checked by rebuilding the
+    research keys from the same sources `rules_fingerprint()` reads for them
+    -- src.stockbee's own STRATEGY_CONSTANTS and the numbers its
+    ANTICIPATION_RULES states. A key family added later cannot arrive
+    unclassified: it would be in the fingerprint, absent from this
+    reconstruction, and this assertion names it.
+    """
+    from src import pipeline, stockbee
+
+    fingerprint = pipeline.rules_fingerprint()
+    expected = {"stockbee.%s" % name.lower() for name in stockbee.STRATEGY_CONSTANTS}
+    expected |= {"stockbee.anticipation.%s" % key
+                 for key, value in stockbee.ANTICIPATION_RULES.items()
+                 if isinstance(value, (int, float)) and not isinstance(value, bool)}
+    assert expected, "the sidecar contributes no keys, so this guard proves nothing"
+
+    removed = set(fingerprint) - set(pipeline.production_rules(fingerprint))
+    assert removed == expected, (
+        "production_rules() removes %s; the sidecar's own sources contribute %s"
+        % (sorted(removed), sorted(expected)))
+    kept = set(pipeline.production_rules(fingerprint))
+    assert kept == set(fingerprint) - expected
+    assert not any(name.startswith(pipeline.RESEARCH_PREFIXES) for name in kept)
+
+
+def test_no_fingerprint_key_family_can_arrive_unclassified():
+    """The second guard, and the one the first cannot be: a family nobody
+    classified defaults to production and splits the corpus silently.
+
+    A safe default is still a default. This is the shape ScanConfig keeps for
+    its own fields and src.stockbee for its constants -- every key matches
+    exactly one prefix across the two tuples, so a family added later is red
+    until someone says which it is.
+    """
+    from src import pipeline
+
+    production = set(pipeline.PRODUCTION_PREFIXES)
+    research = set(pipeline.RESEARCH_PREFIXES)
+    assert production and research
+    assert not (production & research), sorted(production & research)
+
+    fingerprint = pipeline.rules_fingerprint()
+    for name in fingerprint:
+        matched = [prefix for prefix in production | research if name.startswith(prefix)]
+        assert len(matched) == 1, (
+            "%r matches %s; every fingerprint key must match exactly one prefix "
+            "in PRODUCTION_PREFIXES or RESEARCH_PREFIXES" % (name, sorted(matched)))
+
+    # And every prefix earns its place, so a family deleted from the
+    # fingerprint does not leave a tuple entry behind claiming to cover it.
+    for prefix in production | research:
+        assert any(name.startswith(prefix) for name in fingerprint), (
+            "%r classifies no key the fingerprint emits" % prefix)
+
+
+def test_evidence_rules_still_reads_every_key_including_the_research_half():
+    """The narrowing is the learning fit's alone. `evidence.rules` asks the
+    wider question -- does this record span more than one screener -- and
+    evidence.stockbee averages the sidecar's own rows across runs, so a moved
+    sidecar threshold there IS two scans and must still show."""
+    base = {"score.prompt": "p", "gate": 3, "stockbee.min_share_volume": 100000}
+    moved = dict(base, **{"stockbee.min_share_volume": 1_000_000})
+    entries = [{"date": "2026-09-08", "type": "evening", "rules": dict(base)},
+               {"date": "2026-09-09", "type": "evening", "rules": dict(moved)}]
+    view = ledger.rules_view(entries)
+    assert view["sets"] == 2, "the record spans two screeners for the sidecar's purposes"
+    assert "stockbee.min_share_volume" in view["differ"]

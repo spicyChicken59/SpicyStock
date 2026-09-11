@@ -50,8 +50,16 @@ ID and is never automatically resubmitted. See
 [market-data entitlements](https://docs.alpaca.markets/us/docs/market-data-faq).
 
 **Learning without retrospective leakage:** publication rebuilds `data.learning`
-from successful real evening Claude-scored setups under one model/rules
-fingerprint. `forward_returns.observed_at` records the actual New York calendar
+from successful real evening Claude-scored setups under one model and one
+PRODUCTION rules fingerprint. The research sidecar's own constants are in the
+fingerprint — `evidence.rules` has to see them, since `evidence.stockbee`
+averages those rows across runs — and are held out of this signature, because
+the fit reads a row's score, volume ratio and checklist passes and labels it
+with the open-basis d5 and the sidecar supplies none of the four. Measured
+before it was split: moving one sidecar constant took a twelve-setup fit to
+one. `src.pipeline.production_rules()` is the one rule, and two guards hold
+its classification, so a key family added later cannot take a default in
+silence. `forward_returns.observed_at` records the actual New York calendar
 date when the next-open five-session outcome first becomes known. It is never
 backdated to the target bar or added retrospectively to legacy outcomes. Dry
 runs do not stamp learning dates. A ridge calibration uses score, relative
@@ -158,15 +166,15 @@ no claim is made that a refresh succeeded until its new snapshot is published.
 ## Pipeline
 
 ```
-Nasdaq classified US common stocks → 20-session SIP liquidity screen → up to 500 stocks
+Nasdaq classified US common stocks → 20-session SIP liquidity screen → up to 1000 stocks
         │  Alpaca daily OHLCV, split-adjusted, SIP, batched
         ▼
 Layer 1  4% burst filter ............. ≥4% gain, vol > yesterday, ≥100,000 shares
         │                              on the consolidated tape, ≥1.5x its own
-        │                              50-session average, price > $4, and in the
-        │                              top 70% of the day's dollar volume —
-        │                              the bottom 30% are ARCHIVED as refused,
-        │                              not dropped (round 5)
+        │                              50-session average, price > $4, and at or
+        │                              above the $5,000,000/day absolute floor —
+        │                              anything refused is ARCHIVED, not dropped
+        │                              (round 5). Rule 6's percentile is off.
         ▼  (survivors depend on the session)
 Layer 2  2LYNCH checklist (code) ..... 2 first/second burst · L linear prior move
         │                              Y young trend · N narrow consolidation
@@ -678,7 +686,7 @@ SCAN_SESSION_DATE=2026-08-24 python -m src.pipeline evening --dry-run
 
 # Offline logic tests (no network / API key needed):
 pip install -r requirements-dev.txt
-pytest tests/                   # 1759 tests, no network or API keys needed
+pytest tests/                   # 1834 tests, no network or API keys needed
 ```
 
 An **evening** run that scans — `--dry-run` included, since `--dry-run` skips
@@ -737,7 +745,7 @@ workflow from preparation to recorded trade review:
 | --- | --- |
 | Published 4% scan | Close / previous close ≥1.04, volume > previous volume, and volume ≥100,000. This queue is measured before the stricter scoring filters, so a matching name can appear without an AI score. At most 40 records are saved; the full match count remains visible. |
 | Published $ breakout | Stockbee's OTHER daily scan, and the one his own words point at a universe like this one: close − open ≥ $0.90 (the day's body, so the overnight gap is excluded) and volume ≥100,000, with no volume-versus-previous term and no price floor. He built it because high-priced names "do not often breakout with 4% move". Disjoint from the 4% scan, so a name both matched is archived once, under the 4% scan. At most 40 records are saved. The body is rounded to cents once, and the rule compares the same number the record shows. |
-| Anticipation queue | A separate SpicyStock proxy: price ≥$3, prior three sessions each at least 100k shares, MA7/MA65 ≥1.05, current move within ±1%, and latest-seven average normalized range / preceding-60 average ≤0.75. Requires 67 contiguous sessions and excludes current 4% scan matches. At most 25 records are saved. |
+| Anticipation queue | A separate SpicyStock proxy: price ≥$3, prior three sessions each at least 100k shares, MA7/MA65 ≥1.05, current move within ±1%, and latest-seven average normalized range / preceding-60 average ≤0.75. Requires 67 contiguous sessions and excludes both current 4% scan matches and current $ breakouts, which the section's archived rules declare and the validator holds a row to. At most 25 records are saved. |
 | Universe pulse | Ten dated observations of qualifying 4% advances and declines within the scanned basket. Both directions use the same volume rules. Five- and ten-session ratios divide summed advances by summed declines; insufficient coverage or a zero denominator produces no ratio. This is explicitly a curated subset, not Stockbee's whole-market Market Monitor. |
 | Setup inspector | Saved daily candles and volume, exact bar values, and the original qualitative 2LYNCH questions. Measurements support chart review; they do not claim to reproduce a discretionary six-point Stockbee score. |
 | Risk planner | User-entered capital, risk percentage, entry, initial stop and optional cash cap determine whole shares. It caps both planned risk and cash commitment, shows 1R/2R distance landmarks, and copies a plan into an unsaved paper-journal draft. Dated chart prices require an explicit action to use them. |
@@ -761,6 +769,24 @@ the measurements without the candle series, and run-summary lists omit this bloc
 Older snapshots show measurements as not yet recorded; the app never reconstructs
 the full scan from the scored shortlist or fills missing breadth with zero.
 
+Each section archives the `rules` that selected its rows — the scan section's
+`min_gain_ratio` and `min_volume` beside the $ breakout's `min_dollar_move` and
+`min_volume` — and the validator re-derives an archived row under THOSE numbers,
+never under `src/stockbee.py`'s constants. It did until the post-merge audit of
+round 14, and a record checked against tonight's constants is a record that
+stops loading the day a constant moves: reproduced on the committed ledger,
+where raising the share floor set every run aside as unreadable and refused
+`docs/data.json` with nothing about either file changed. A record from before
+the scan archived its rules is not re-derived at all, since a rule the record
+did not archive is not one the validator can know; the cost of that, a
+hand-edited row in such a record loading as it is, is stated in the test that
+pins it. The same four strategy constants and the six anticipation numbers are
+in the rules fingerprint as `stockbee.*` keys, so a threshold moved there shows
+in `evidence.rules` rather than averaging two scans into the control under one
+label. Every archived sidecar row carries its `forward_returns` block from the
+night it is written, pending, the way a pick's does — a row with no block is a
+row from before the sidecar was measured, and nothing else.
+
 Every archived sidecar row now carries the same `forward_returns` block a pick
 does, filled by the same `Ledger.fill_forward_returns()` off the same bars, so
 the record can finally answer the question the sidecar exists to ask.
@@ -775,10 +801,19 @@ session) and are not collapsed the way a pick's repeats are, because the
 question is about the scan and every match it printed is one thing the scan
 said; a canonical row never appears in `run.settled`, which is the run's own
 scorecard of what its own picks did. The fill fetches these names too, which
-took `pending_tickers()` from 25 to 96 on the committed record — one extra
-batch. Measured by building the same projected file with each part stripped:
-the forward-return blocks cost 1.14 MB raw and 0.12 MB gzipped of the year,
-and the $ breakout section a further 3.86 MB and 0.62 MB.
+took `pending_tickers()` from 25 to 96 on the committed record after three
+nights. That is a count off one record and not the ceiling: at the section
+caps, five nights of rows is at most 5 × 105 sidecar names plus the picks
+before de-duplication, so the fill can cost up to six batches of 100 a night
+where it cost one; the thirty-run history fixture's steady state is 61 names,
+because it drives only 77 synthetic names and the de-duplication saturates. Measured by
+building the same projected file with each part stripped:
+the forward-return blocks cost 2.94 MB raw and 0.28 MB gzipped of the year,
+and the $ breakout section a further 4.19 MB and 0.61 MB. Both are printed by
+`python tools/measure_ledger.py --without forward_returns` and `--without
+dollar`; before that flag existed the two figures had been measured once by
+hand and were reproducible by nothing committed here, which is the rot that
+tool exists to stop.
 
 **The band is read twice, because the claim and the measurement were two
 different things.** `in_band`, on each horizon's own entry, counts the CLOSE
@@ -962,8 +997,8 @@ cut nobody anticipated reads `docs/ledger.json`, which is published beside it.
 
 **The page fetches that file only when asked.** `docs/data.json` carries the
 summary; the per-name detail — every session a ticker burst on, with the score
-and what followed — needs the whole record, which projects to about 27.89 MB raw
-and **3.23 MB gzipped** after a full year in the normalized history fixture. Actual payload size varies with numeric precision and optional metadata. That is not a thing to spend on every
+and what followed — needs the whole record, which projects to about 28.22 MB raw
+and **3.30 MB gzipped** after a full year in the normalized history fixture. Actual payload size varies with numeric precision and optional metadata. That is not a thing to spend on every
 visit for a view most readers never open, so the "load every burst of every
 name" button is the only second request this page makes.
 
@@ -1280,8 +1315,10 @@ own weights, and the page uses it there.
   keys left this fingerprint byte-identical until those two arrived. It is
   derived rather than listed — `src.pipeline.rules_fingerprint()` walks what
   `src.lynch` names, its `WINDOWS`, the `ScanConfig` fields that config itself
-  marks as strategy, and `src.scorer`'s own `RECORD_KEYS` and knowledge file —
-  so a threshold added later is recorded the moment it is named.
+  marks as strategy, `src.scorer`'s own `RECORD_KEYS` and knowledge file, and
+  `src.stockbee`'s `STRATEGY_CONSTANTS` with the numbers its
+  `ANTICIPATION_RULES` states — so a threshold added later is recorded the
+  moment it is named.
   The trap it exists to avoid is a fingerprint that misses a number and so
   reports "same rules" across a change that altered them, which is worse than
   no fingerprint; the checklist's windows were bare literals until round 8
@@ -1575,7 +1612,7 @@ comparison limits and removal, saved-note persistence and storage failures,
 focus navigation, archive retries and races, return-basis changes, and isolation
 of a failed view. It also captures phone and desktop screens in both themes.
 
-**Three data sources, one page.** It runs 270 checks, and which file each one
+**Three data sources, one page.** It runs 276 checks, and which file each one
 reads is the point:
 
 - **`tests/fixtures/data.json`** — the canonical one-night fixture, served
@@ -1718,7 +1755,7 @@ test fixtures. It dispatches no scan and calls no market or email service.
   and `SCAN_FEED=iex` is the fallback. Adaptive selection requires SIP; an
   IEX run falls back to the reviewed seed and marks that limitation. The broad
   selection stage requests 35 calendar days for up to 6,000 classified names,
-  then detailed history for at most 500 selected stocks. Pending setup outcomes
+  then detailed history for at most 1000 selected stocks. Pending setup outcomes
   and original rotating baskets add follow-up requests. The real refresh time
   depends on coverage, API pagination and latency; it has not been measured
   in production before the first adaptive run. The job retains its 55-minute

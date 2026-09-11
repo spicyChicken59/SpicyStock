@@ -166,12 +166,25 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
     numeric literals out of EVERY function in src.lynch rather than any list.
 
     NOT in it, deliberately: TOP_N and MAX_TO_SCORE (already per run as
-    shortlist_size and score_cap, and neither changes what a burst is), the
-    feed (a fact about the data, already in the scan stats), and the universe
-    (already per run in run.universe). Those are the run's own facts, not the
-    strategy's, and duplicating them here would give a reader two places to
-    look and two chances to disagree. The MODEL is out for the same reason:
-    run.model already carries it.
+    shortlist_size and score_cap, and neither changes what a burst is) and the
+    feed (a fact about the data, already in the scan stats). Those are the
+    run's own facts, not the strategy's, and duplicating them here would give
+    a reader two places to look and two chances to disagree. The MODEL is out
+    for the same reason: run.model already carries it.
+
+    THE UNIVERSE WAS ON THAT LIST AND IS NOT ANY MORE. "Already per run in
+    run.universe" was true and sufficient when the universe was a checked-in
+    symbol file -- a fact ABOUT the run. It is a selector now, with its own
+    floor, capacity, lookback and quota mix, and those decide which names can
+    produce a burst at all, which is the same question scan.min_gain_pct
+    answers one stage later. Reproduced before it was changed: moving
+    MIN_DOLLARS 20M -> 3M and CAPACITY 500 -> 1500 left this fingerprint
+    byte-identical (36c0050558cc0407 on both sides) and left
+    learning._signature() identical with it, so the ridge fit would have
+    pooled two screeners and evidence.rules would have reported one. That is
+    the shape the post-merge audit of round 14 fixed in src.learning, one
+    module further out. run.universe keeps the per-run facts (the label, the
+    identity, the tickers); this keeps the numbers the selection turned on.
 
     AND THE SCORER'S INPUTS ARE IN, since round 11. What a burst is and what a
     SCORE is are two different questions and this record answers both under
@@ -188,6 +201,15 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
     metrics_payload() with the rulebook untouched; the rulebook has to explain
     a key for the model to use it, and a docs test holds it to that for the
     record keys, but that is a convention and this is not a proof of one.
+
+    AND THE SIDECAR'S, since the post-merge audit of round 14. evidence.stockbee
+    averages the canonical scan's rows across runs the way by_score averages
+    picks, so a threshold moved in src.stockbee is a second scan under one
+    label unless this can see it. The split is that module's own
+    STRATEGY_CONSTANTS against PLUMBING_CONSTANTS (a section cap changes no
+    verdict), plus the numbers ANTICIPATION_RULES states, which _anticipates()
+    reads; a guard asserts every upper-case number the module names is in
+    exactly one list, the same guard ScanConfig has.
     """
     cfg = cfg or ScanConfig()
     # Off the config's OWN class, not the imported name: a caller that builds
@@ -213,7 +235,70 @@ def rules_fingerprint(cfg: ScanConfig | None = None) -> dict:
     # across MAX_RUNS entries, and it is an identity rather than a secret.
     out["score.prompt"] = hashlib.sha256(KNOWLEDGE_PATH.read_bytes()).hexdigest()[:16]
     out["score.record_keys"] = [name for name, _key in RECORD_KEYS]
+    out.update({f"stockbee.{name.lower()}": getattr(stockbee, name)
+                for name in stockbee.STRATEGY_CONSTANTS})
+    out.update({f"stockbee.anticipation.{key}": value
+                for key, value in stockbee.ANTICIPATION_RULES.items()
+                if isinstance(value, (int, float)) and not isinstance(value, bool)})
+    out.update({f"universe.{name.lower()}": getattr(adaptive_universe, name)
+                for name in adaptive_universe.STRATEGY_CONSTANTS})
+    out.update({f"universe.quota.{key.replace(' ', '_')}": value
+                for key, value in adaptive_universe.QUOTAS.items()})
     return dict(sorted(out.items()))
+
+
+#: Which fingerprint key families describe what PRODUCED a row, and which are
+#: archived BESIDE it. The sidecar runs Bonde's own scans over the same frames
+#: and selects, scores and gates nothing: its numbers belong IN the
+#: fingerprint, because evidence.stockbee averages those rows across runs and a
+#: moved threshold there is a second scan under one label -- and they must not
+#: reach a consumer asking the narrower question "were these ROWS produced by
+#: the same screener?".
+#:
+#: TWO LISTS AND A GUARD, the shape ScanConfig's STRATEGY_FIELDS and
+#: src.stockbee's STRATEGY_CONSTANTS already keep, for the reason those keep
+#: it: a family added later must not arrive unclassified and take a default in
+#: silence. A test asserts every key rules_fingerprint() emits matches exactly
+#: one prefix across the two tuples, so a new family is red until someone says
+#: which it is. Defaulting the unknown to production would be the safe
+#: direction -- it discards training data rather than mixing a fit -- and a
+#: silent safe default is still how a corpus gets thrown away for a year
+#: before anyone asks why.
+PRODUCTION_PREFIXES = ("scan.", "check.", "window.", "gate.", "score.", "universe.")
+RESEARCH_PREFIXES = ("stockbee.",)
+
+
+def production_rules(rules: dict) -> dict:
+    """The fingerprint keys that describe what PRODUCED a row.
+
+    Two different questions are asked of one block and only one of them wants
+    every key. `evidence.rules` asks "does this record span more than one
+    screener?" and must see all of them, since the sidecar's own populations
+    are averaged across runs. src.learning asks "were these rows produced by
+    the same screener?" before fitting score, volume ratio and checklist
+    passes against the open-basis d5 -- and the sidecar supplies none of those
+    four, so hashing its constants there discards a training set for a number
+    the fit never reads.
+
+    Reproduced before it was split, by execution: with one name per session
+    over sixteen sessions, moving `stockbee.min_share_volume` alone -- and
+    nothing else, on runs whose every score, volume and outcome was
+    unchanged -- took the fit from twelve eligible setups to one, the other
+    twelve counted under `different_or_unknown_rules`. That is a record
+    judged against numbers that did not produce it, which is the class the
+    sidecar's own validator was fixed for in the same round; this is that
+    class one module over, introduced by the commit that fixed it.
+
+    PREFIXES rather than a key list, because the keys themselves are derived
+    and a hand-kept copy of a derived set is how this project has repeatedly
+    found one surface checking a level another does not. Two guards hold it:
+    one rebuilds the research keys from the sources rules_fingerprint() walks
+    for them and asserts this removes exactly those, and one asserts every key
+    the fingerprint emits matches exactly one prefix across the two tuples, so
+    a family added later is red until it is classified.
+    """
+    return {name: value for name, value in rules.items()
+            if not name.startswith(RESEARCH_PREFIXES)}
 
 
 def unscored_reason(lynch: dict) -> str:

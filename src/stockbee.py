@@ -1,8 +1,9 @@
 """Dated Stockbee research measurements from the bars the scan already fetched.
 
 This sidecar does not select the production shortlist or call a data service.
-The canonical scan follows Stockbee's 2015 >=100,000-share version; anticipation
-is an explicit SpicyStock numeric proxy for the chart study in his process.
+The canonical scan follows Stockbee's 2015 >=100,000-share version
+(MIN_SHARE_VOLUME); anticipation is an explicit SpicyStock numeric proxy for
+the chart study in his process.
 """
 from __future__ import annotations
 
@@ -36,6 +37,28 @@ ANTICIPATION_LIMIT = 25
 #: a reader split the population later without the rule having guessed.
 DOLLAR_BREAKOUT_MOVE = 0.90
 MIN_SHARE_VOLUME = 100000
+#: The 4% scan's own two numbers, named rather than spelled inside _scan():
+#: `c/c1 >= 1.04` and the mirror `c/c1 <= 0.96` the breadth count reads.
+#: Named because the record averages this section's rows across runs
+#: (evidence.stockbee), so a threshold moved here is a second scan under one
+#: label unless the rules fingerprint can see it -- and because the validator
+#: below reads a row against the numbers ITS RECORD archived, which have to
+#: be a value the record can carry and not a literal inside a predicate.
+SCAN_GAIN_RATIO = 1.04
+SCAN_DROP_RATIO = 0.96
+#: Which of this module's numbers are STRATEGY (they decide what a row is,
+#: and so which population a setup lands in) and which are PLUMBING (how many
+#: rows a section archives, how many bars a series keeps). The fingerprint in
+#: src.pipeline carries the first list and not the second, for the reason
+#: ScanConfig keeps the same split: a cap moved from 40 to 60 changes no
+#: verdict about any name, and a threshold moved by a cent changes every
+#: mean the record publishes over this section. A test asserts every
+#: upper-case numeric constant here is in exactly one list, so a number
+#: added later cannot arrive uncategorised and escape the fingerprint in
+#: silence.
+STRATEGY_CONSTANTS = ("SCAN_GAIN_RATIO", "SCAN_DROP_RATIO", "MIN_SHARE_VOLUME",
+                      "DOLLAR_BREAKOUT_MOVE")
+PLUMBING_CONSTANTS = ("SCAN_LIMIT", "DOLLAR_LIMIT", "ANTICIPATION_LIMIT", "SERIES_LIMIT")
 #: Every row-bearing section and how many rows it archives. ONE list, because
 #: a hand-kept copy of it went stale three separate ways on the commit that
 #: added the third section: the ledger's slimmer stopped dropping `series`
@@ -50,6 +73,47 @@ SECTION_LIMITS = {"scan": SCAN_LIMIT, "dollar": DOLLAR_LIMIT,
 OPTIONAL_SECTIONS = frozenset({"dollar"})
 SERIES_LIMIT = 30
 FIELDS = ("open", "high", "low", "close", "volume")
+#: The archived rule numbers each section's rows are re-derived under by
+#: problem(). Anticipation is deliberately absent: its predicate reads seven
+#: measurements a row carries only in part (the prior three sessions' volume
+#: and the day's own change are read off the series, which an archived row
+#: no longer holds), so re-deriving it would check a different rule from the
+#: one that ran.
+RULE_NUMBERS = {"scan": ("min_gain_ratio", "min_volume"),
+                "dollar": ("min_dollar_move", "min_volume")}
+#: Sections whose rows a record declares disjoint from another section, and
+#: from which. problem() holds an archived row to the declaration ITS OWN
+#: record made -- never to today's chain -- for the reason the scan's rules
+#: are read that way. Anticipation's own predicate cannot be re-derived from
+#: an archived row (it reads the prior three sessions' volume and 67 sessions
+#: of range off a series the ledger drops), but the section it is declared
+#: disjoint FROM can be, so the declaration is checkable even where the
+#: predicate is not.
+DISJOINT_DECLARATIONS = {"anticipation": [("excludes_current_dollar_matches", "dollar"),
+                                          ("excludes_current_4pct_scan_matches", "scan")]}
+#: What the scan section's rows were selected BY, archived with them. The
+#: validator reads a row against these -- the numbers its own record carries
+#: -- and never against the module's constants, because a record checked
+#: against today's constants is a record that stops loading the day a
+#: constant moves: reproduced on the committed ledger, where raising
+#: MIN_SHARE_VOLUME set every run aside as unreadable and left docs/data.json
+#: refused, after nothing about the record had changed. A record from before
+#: this block existed carries none and is not re-derived at all, since a
+#: rule the record did not archive is not one the validator can know.
+SCAN_RULES = {
+    "kind": "Stockbee 4% breakout, the 2015 >=100,000-share version",
+    "min_gain_ratio": SCAN_GAIN_RATIO,
+    "measured": "close / previous session close",
+    "volume_above_previous": True,
+    "min_volume": MIN_SHARE_VOLUME,
+    "min_price": None,
+}
+#: ONE DRIFT FROM THE QUOTED FORMULA, stated here the way the 4% scan's is.
+#: The source writes `c-o >= .90 and v > 100000` -- strict on volume -- and
+#: this reads it inclusive, so a bar on exactly 100,000 shares is admitted.
+#: The same inclusive reading is applied to the 4% scan's own floor, and the
+#: two must agree or the sections would disagree about one number; a bar on
+#: the boundary is pinned in tests beside the 89.99/89.49-cent cases.
 DOLLAR_RULES = {
     "kind": "Stockbee $ breakout, his companion scan for higher-priced names",
     "min_dollar_move": DOLLAR_BREAKOUT_MOVE,
@@ -68,6 +132,17 @@ ANTICIPATION_RULES = {
     "max_compression_ratio": 0.75,
     "min_contiguous_sessions": 67,
     "excludes_current_4pct_scan_matches": True,
+    # AND the $ breakout, since round 14 put that section ahead of this one in
+    # build()'s chain. It is a real exclusion and not a tidy-up: a high-priced
+    # name can gap down and close inside the +-1% band on a $0.90 body, which
+    # satisfies both predicates, and that is exactly the cohort the $ scan was
+    # built for. Reproduced rather than argued -- a 6-session tight shelf on a
+    # $200 name, gapping down $1.20 and closing +0.5%, passes _anticipates()
+    # and _dollar_breakout() together and build() files it under `dollar`
+    # alone. The section moved 200 rows to 191 on the history fixture the day
+    # that landed and nothing said so; a record written before this key is
+    # absent it, which is how a reader tells the two definitions apart.
+    "excludes_current_dollar_matches": True,
 }
 #: Bonde's OWN qualifying checklist, letter by letter, as five independent
 #: sources render it -- his 27 Sep 2024 thread, contemporaneous bootcamp notes
@@ -133,10 +208,14 @@ QUALIFYING_THRESHOLDS = {
 }
 
 MEASUREMENT_RULES = {
-    "scan": "close / previous session close >= 1.04; volume > previous session volume; volume >= 100000",
-    "dollar": "close - open >= 0.90 dollars; volume >= 100000; no volume-versus-previous term and no price floor; disjoint from scan, so a name the 4% scan matched is not here",
+    "scan": (f"close / previous session close >= {SCAN_GAIN_RATIO}; volume > previous session volume; "
+             f"volume >= {MIN_SHARE_VOLUME}"),
+    "dollar": (f"close - open >= {DOLLAR_BREAKOUT_MOVE:.2f} dollars; volume >= {MIN_SHARE_VOLUME}; "
+               "no volume-versus-previous term and no price floor; disjoint from scan, so a name "
+               "the 4% scan matched is not here"),
     "dollar_move": "close - open, in dollars rounded to cents, on every row and not only the dollar section's; the dollar scan compares this same rounded number",
-    "breadth": "same volume rules as scan; up: close / previous close >= 1.04; down: close / previous close <= 0.96",
+    "breadth": (f"same volume rules as scan; up: close / previous close >= {SCAN_GAIN_RATIO}; "
+                f"down: close / previous close <= {SCAN_DROP_RATIO}"),
     "breadth_ratios": "sum(up4) / sum(down4), only for a full 5 or 10 dated sessions with nonzero coverage on every day and a nonzero denominator; coverage may vary",
     "volume_vs_average": "current volume / mean volume of previous 20 contiguous sessions",
     "range_expansion": "current (high-low)/close / mean((high-low)/close) over previous 7 contiguous sessions",
@@ -219,10 +298,21 @@ def _weekday_before(day: date) -> date:
     return day
 
 
-def _scan(bar, previous, *, down=False) -> bool:
+def _scan(bar, previous, *, down=False, min_ratio=None, max_ratio=None,
+          min_volume=None) -> bool:
+    """Bonde's 4% scan over one bar and the one before it.
+
+    The thresholds are parameters so the validator can apply the numbers a
+    RECORD archived rather than the ones this module holds tonight; the
+    defaults are read at call time, not bound at definition, so a constant
+    patched in a test is the constant every default caller applies.
+    """
+    min_ratio = SCAN_GAIN_RATIO if min_ratio is None else min_ratio
+    max_ratio = SCAN_DROP_RATIO if max_ratio is None else max_ratio
+    min_volume = MIN_SHARE_VOLUME if min_volume is None else min_volume
     ratio = bar["close"] / previous["close"]
-    return ((ratio <= 0.96 if down else ratio >= 1.04)
-            and bar["volume"] > previous["volume"] and bar["volume"] >= MIN_SHARE_VOLUME)
+    return ((ratio <= max_ratio if down else ratio >= min_ratio)
+            and bar["volume"] > previous["volume"] and bar["volume"] >= min_volume)
 
 
 def _dollar_move(bar) -> float:
@@ -243,14 +333,17 @@ def _dollar_move(bar) -> float:
     return round(bar["close"] - bar["open"], 2)
 
 
-def _dollar_breakout(bar) -> bool:
+def _dollar_breakout(bar, *, min_move=None, min_volume=None) -> bool:
     """Bonde's $ breakout: the day's own body, in dollars, on 100k shares.
 
     One bar and no previous one, because there is no volume-versus-yesterday
     term in this scan and the move is measured inside the session. See
-    DOLLAR_BREAKOUT_MOVE for why each of those differs from the 4% scan.
+    DOLLAR_BREAKOUT_MOVE for why each of those differs from the 4% scan. The
+    thresholds are parameters for the reason _scan()'s are.
     """
-    return _dollar_move(bar) >= DOLLAR_BREAKOUT_MOVE and bar["volume"] >= MIN_SHARE_VOLUME
+    min_move = DOLLAR_BREAKOUT_MOVE if min_move is None else min_move
+    min_volume = MIN_SHARE_VOLUME if min_volume is None else min_volume
+    return _dollar_move(bar) >= min_move and bar["volume"] >= min_volume
 
 
 def _mean(values) -> float:
@@ -422,11 +515,23 @@ def _narrow_prior_day(row):
 
 
 def _anticipates(row, history) -> bool:
-    return (len(history) >= 67 and row["close"] >= 3
-            and min(b["volume"] for b in history[-4:-1]) >= 100000
-            and row["trend_intensity"] >= 1.05
-            and 0.99 <= history[-1]["close"] / history[-2]["close"] <= 1.01
-            and row["compression_ratio"] is not None and row["compression_ratio"] <= 0.75)
+    """SpicyStock's numeric proxy for the anticipation chart study.
+
+    Every number here is read off ANTICIPATION_RULES, which the record
+    archives with the section: the same dict spelled its thresholds and this
+    function spelled them again as literals until the post-merge audit of
+    round 14, which is the two-spellings class round 11 closed for the
+    checklist's windows -- a rule the record states and the code applies
+    from a second copy can disagree without any test noticing.
+    """
+    r = ANTICIPATION_RULES
+    band = r["max_abs_day_change_pct"] / 100
+    return (len(history) >= r["min_contiguous_sessions"] and row["close"] >= r["min_price"]
+            and min(b["volume"] for b in history[-4:-1]) >= r["min_prior_three_volume"]
+            and row["trend_intensity"] >= r["min_trend_intensity"]
+            and 1 - band <= history[-1]["close"] / history[-2]["close"] <= 1 + band
+            and row["compression_ratio"] is not None
+            and row["compression_ratio"] <= r["max_compression_ratio"])
 
 
 def build(frames: dict, session, *, requested: int, label: str,
@@ -506,7 +611,8 @@ def build(frames: dict, session, *, requested: int, label: str,
     return {
         "version": 1, "date": session.isoformat(),
         "scope": {"label": label, "requested": requested, "measured": measured, "whole_market": False},
-        "scan": {"matched": len(scan_rows), "shown": min(SCAN_LIMIT, len(scan_rows)), "rows": scan_rows[:SCAN_LIMIT]},
+        "scan": {"matched": len(scan_rows), "shown": min(SCAN_LIMIT, len(scan_rows)),
+                 "rows": scan_rows[:SCAN_LIMIT], "rules": dict(SCAN_RULES)},
         "dollar": {"matched": len(dollar_rows), "shown": min(DOLLAR_LIMIT, len(dollar_rows)),
                    "rows": dollar_rows[:DOLLAR_LIMIT], "rules": dict(DOLLAR_RULES)},
         "anticipation": {"matched": len(anticipation_rows), "shown": min(ANTICIPATION_LIMIT, len(anticipation_rows)),
@@ -539,6 +645,26 @@ def problem(block, *, session=None, archived=False) -> str | None:
             or not count(scope.get("requested")) or not count(scope.get("measured"))
             or scope["measured"] > scope["requested"]):
         return "stockbee.scope must identify the measured basket"
+    # THE NUMBERS A ROW IS CHECKED AGAINST ARE THE RECORD'S OWN. Each section
+    # archives the rules that selected its rows, and a row is re-derived
+    # under those -- never under this module's constants, which describe
+    # tonight's scan and not the one that wrote the record. Reproduced on
+    # the committed ledger before this changed: MIN_SHARE_VOLUME raised to
+    # 1,000,000 set every run aside as unreadable and refused docs/data.json,
+    # with nothing about either file changed. A section from before its
+    # rules were archived carries none and its rows are not re-derived at
+    # all; a `rules` block that is present and does not name its numbers is a
+    # shape no writer produces and is refused.
+    archived_rules = {}
+    for key, names in RULE_NUMBERS.items():
+        section = block.get(key)
+        if not isinstance(section, dict) or "rules" not in section:
+            continue
+        rules = section["rules"]
+        if not isinstance(rules, dict) or not all(number(rules.get(name)) for name in names):
+            return f"stockbee.{key} rules must name the numbers its rows were selected by"
+        archived_rules[key] = {name: rules[name] for name in names}
+    scan_rules, dollar_rules = archived_rules.get("scan"), archived_rules.get("dollar")
     for key, limit in SECTION_LIMITS.items():
         if key not in block and key in OPTIONAL_SECTIONS:
             continue  # a record from before that section was measured
@@ -575,10 +701,37 @@ def problem(block, *, session=None, archived=False) -> str | None:
             if (not _valid_bar(values) or previous["close"] is None or previous["close"] <= 0
                     or previous["volume"] is None or previous["volume"] < 0):
                 return f"stockbee.{key} row has invalid OHLCV"
-            if key == "scan" and not _scan(values, previous):
-                return "stockbee.scan row does not meet the recorded scan"
-            if key == "dollar" and (_scan(values, previous) or not _dollar_breakout(values)):
-                return "stockbee.dollar row does not meet the recorded scan"
+            if key == "scan" and scan_rules and not _scan(
+                    values, previous, min_ratio=scan_rules["min_gain_ratio"],
+                    min_volume=scan_rules["min_volume"]):
+                return "stockbee.scan row does not meet the rules its record archived"
+            if key == "dollar" and dollar_rules and not _dollar_breakout(
+                    values, min_move=dollar_rules["min_dollar_move"],
+                    min_volume=dollar_rules["min_volume"]):
+                return "stockbee.dollar row does not meet the rules its record archived"
+            # Disjoint from the 4% scan AS THAT RECORD RAN IT: a dollar row
+            # the archived scan rules would have matched is a row moved
+            # between the two populations the control compares. Not checked
+            # when the record archived no scan rules, for the reason above.
+            if key == "dollar" and scan_rules and _scan(
+                    values, previous, min_ratio=scan_rules["min_gain_ratio"],
+                    min_volume=scan_rules["min_volume"]):
+                return "stockbee.dollar row is a match of the 4% scan its record archived"
+            # And the declarations a section makes about what it excludes. A
+            # record that says its anticipation rows hold no $ breakout is
+            # held to that; one that never said it is not re-derived at all.
+            for flag, other in DISJOINT_DECLARATIONS.get(key, []):
+                rules = section.get("rules")
+                if not isinstance(rules, dict) or rules.get(flag) is not True:
+                    continue
+                if other == "dollar" and dollar_rules and _dollar_breakout(
+                        values, min_move=dollar_rules["min_dollar_move"],
+                        min_volume=dollar_rules["min_volume"]):
+                    return f"stockbee.{key} row is a $ breakout its record declared excluded"
+                if other == "scan" and scan_rules and _scan(
+                        values, previous, min_ratio=scan_rules["min_gain_ratio"],
+                        min_volume=scan_rules["min_volume"]):
+                    return f"stockbee.{key} row is a 4% match its record declared excluded"
             series = row.get("series")
             if series is None and archived:
                 continue

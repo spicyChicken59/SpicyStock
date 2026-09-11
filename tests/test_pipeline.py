@@ -454,6 +454,23 @@ def test_a_failure_notice_survives_a_session_it_cannot_name(
 # ------------------------------------------------- what Actions can read ----
 
 
+
+@pytest.fixture
+def rule_six(monkeypatch):
+    """Rule 6's percentile, ON, for the tests that exercise its machinery.
+
+    ScanConfig.min_dollar_volume_pctile is 0 since round 15 -- the liquidity
+    rule is universe.MIN_DOLLARS, an absolute floor -- so a run through the
+    real pipeline refuses nothing for liquidity and every surface that names
+    a refusal has nothing to name. The gate itself is unchanged and still has
+    to be tested, and this is where a test says it is asking for it rather
+    than inheriting it from a default that has since moved.
+    """
+    real = scanner.ScanConfig
+    monkeypatch.setattr(pipeline, "ScanConfig",
+                        lambda **kw: real(min_dollar_volume_pctile=30.0, **kw))
+    return 30.0
+
 @pytest.fixture
 def step_summary(monkeypatch, tmp_path) -> Path:
     """The file GitHub Actions renders on a run's own page.
@@ -1496,8 +1513,7 @@ def test_a_candidate_measured_off_the_session_degrades_the_run_with_the_stale_on
 
 
 def test_the_evening_after_a_market_closure_is_a_night_and_not_twelve_holes(
-    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
-):
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, rule_six):
     """The first scheduled night is Tuesday 8 Sep 2026, the day after Labor
     Day. Driven end to end with the session before the pinned one closed on
     every frame: it exited 2, degraded, 0 bursts, 0 Claude calls, a null
@@ -1542,8 +1558,7 @@ def _blind_market(fake_alpaca, ohlcv, monkeypatch, tmp_path, *, holes: int = 11)
 
 
 def test_a_blind_night_records_what_it_measured_and_no_surface_calls_it_a_quiet_market(
-    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
-):
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, rule_six):
     """Reproduced end to end before any of this existed: exit 2, `bursts: 0`,
     a null floor, and a record whose only account of the night was a degraded
     sentence -- while the funnel printed "4% bursts found: 0" with nothing
@@ -1733,8 +1748,7 @@ def _two_bursts_one_thin(fake_alpaca, ohlcv):
 
 
 def test_a_burst_the_liquidity_floor_refused_is_in_the_record_and_says_why(
-    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
-):
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, rule_six):
     """The finding two refuters confirmed by execution: a genuine burst rule 6
     refused was in no count, no gated_out row, no ledger row and no line of
     the email, while the funnel printed "4% bursts found: 1" over it. Every
@@ -1752,7 +1766,10 @@ def test_a_burst_the_liquidity_floor_refused_is_in_the_record_and_says_why(
     assert row["ticker"] == "THIN" and row["reason"] == ledger.LIQUIDITY_REASON
     assert row["lynch_detail"], "the checklist still ran on it, so its row can be judged later"
     liquidity = data["run"]["liquidity"]
-    assert liquidity["refused"] == 1 and liquidity["pctile"] == scanner.ScanConfig().min_dollar_volume_pctile
+    # The percentile the RUN applied, which the fixture set, not the default:
+    # ScanConfig's own is 0 since round 15 and the record must carry what was
+    # actually used rather than what the class happens to say tonight.
+    assert liquidity["refused"] == 1 and liquidity["pctile"] == rule_six
     assert row["dollar_volume"] < liquidity["floor"] <= data["candidates"][0]["dollar_volume"]
     assert data["run"]["scored"] + len(data["gated_out"]) == data["run"]["bursts"]
     # The ledger keeps the row, the floor and the population apart.
@@ -1923,8 +1940,7 @@ def _five_name_market(fake_alpaca, ohlcv) -> list:
 
 
 def test_a_later_scan_fills_the_earlier_runs_universe_benchmark_from_its_own_frames(
-    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
-):
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, rule_six):
     """The scan reads the whole universe with a year of lookback and used to
     keep only the bursting names' frames. The evening after, those frames
     carry every name's close on the earlier session and the sessions since,
@@ -1988,8 +2004,7 @@ def test_a_later_scan_fills_the_earlier_runs_universe_benchmark_from_its_own_fra
 
 
 def test_a_tickers_run_neither_gives_a_benchmark_nor_gets_one(
-    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
-):
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, rule_six):
     """THE defect this rule exists for. The smoke test README documents is
     `--tickers BURST`, and the fill took whatever the caller had scanned: it
     measured one frame against the previous night's run, which had SCORED
@@ -2036,8 +2051,7 @@ def test_a_tickers_run_neither_gives_a_benchmark_nor_gets_one(
 
 
 def test_a_liquidity_refused_row_carries_the_streak_the_run_read_for_it(
-    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
-):
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, rule_six):
     """The streak lookup covered the kept candidates and not the refused
     ones, so every liquidity_floor row was archived with streak: null -- the
     value the contract reserves for a run that could NOT read its history --
@@ -2065,8 +2079,7 @@ def test_a_liquidity_refused_row_carries_the_streak_the_run_read_for_it(
 
 
 def test_the_morning_re_presents_the_liquidity_refusals_the_evening_recorded(
-    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
-):
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, rule_six):
     """The follow-through reads the funnel off the snapshot's own rows, and
     the floor it prints is the one THAT run recorded."""
     names = _two_bursts_one_thin(fake_alpaca, ohlcv)
@@ -2100,8 +2113,7 @@ def _three_bursts_one_thin(fake_alpaca, ohlcv):
 
 
 def test_both_mails_account_for_the_burst_the_checklist_itself_rejected(
-    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
-):
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, rule_six):
     """The funnel's stages have to add up on the mail a person opens, and one
     stage had no line: the checklist's own rejections. Six bursts, two refused
     outright, three through, and the sixth appeared nowhere on the mail while
@@ -2144,8 +2156,7 @@ def test_both_mails_account_for_the_burst_the_checklist_itself_rejected(
 
 
 def test_a_night_only_the_call_cap_cut_reports_no_checklist_rejection(
-    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
-):
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, rule_six):
     """The crowded-out names are INSIDE the gate's own count -- `to_score =
     passed_gate[:MAX_TO_SCORE]` -- so a checklist count that swept them in
     would report them twice, once under a label that says the checklist threw
@@ -2175,8 +2186,7 @@ def test_a_night_only_the_call_cap_cut_reports_no_checklist_rejection(
 
 
 def test_a_refusal_reason_the_mail_has_never_heard_of_reaches_no_line_of_it(
-    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
-):
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, rule_six):
     """A fifth reason word is a burst refused for a reason no line of the mail
     counts, and the honest mail says nothing about it rather than assigning
     it to the last cut in the arithmetic.
@@ -2208,8 +2218,7 @@ def test_a_refusal_reason_the_mail_has_never_heard_of_reaches_no_line_of_it(
 
 
 def test_the_morning_never_relabels_a_refusal_the_record_does_not_name(
-    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
-):
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, rule_six):
     """A `gated_out` row with no reason word is a refusal the record does not
     attribute, and `ledger.snapshot_problem()` accepts it -- that walker
     shape-checks the `candidates` rows and never these -- so the morning mail
@@ -2248,8 +2257,7 @@ def test_the_morning_never_relabels_a_refusal_the_record_does_not_name(
 
 
 def test_a_night_every_burst_was_below_the_floor_says_so_and_never_blames_the_checklist(
-    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
-):
+    market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, rule_six):
     """One thin burst among fat non-bursting names: the scan found one burst
     and rule 6 refused it. The note under the empty table must say that,
     not that the checklist rejected it, and not that the market was quiet."""
@@ -5280,8 +5288,7 @@ def test_a_malformed_snapshot_degrades_the_morning_run_instead_of_failing_it(
 
 
 def test_the_fill_reads_each_horizon_by_its_session_across_every_frame_the_run_fetched(
-    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path
-):
+    monkeypatch, market_clock, fake_alpaca, mocked_boundaries, ohlcv, open_gate, tmp_path, rule_six):
     """forward_returns() counted bars along one frame, so a bar the feed
     dropped between the burst and its horizons slid every later horizon one
     session late and dated it wrong -- the class _drop_gapped_symbols()
