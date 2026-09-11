@@ -212,6 +212,49 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
   ok('degenerate inputs do not throw', !threw, threw && threw.message);
 }
 
+// --- 1b. the panel: gutter labels, three modes, one geometry ----------------------
+// The page's chart panel asks for gutterLabels (every price label in a reserved
+// right gutter, stacked apart, each with a leader to its exact level) and one
+// of three modes over the same series. The COIL fixture is the reference
+// cluster from the review: last close $110.00, trigger $110.61, limit $111.72,
+// stop $109.50 -- four levels within 2%, which must read apart at a phone's
+// plot width without any level line moving.
+{
+  const record = JSON.parse(await readFile(join(REPO, 'tests', 'fixtures', 'page', 'full.json'), 'utf8'));
+  const coil = record.watchlist.top.find((r) => r.ticker === 'COIL'), cp = coil.plan, box = coil.box;
+  const series = coil.series.slice(-60), at = (d) => series.findIndex((x) => x.date === d);
+  const opts = { ticker: 'COIL', card: true, futureSlots: 6, targetRuler: true, ma: [], volumeAvg: 20, burstIndex: null, gutterLabels: true, head: false,
+    box: { start: Math.max(0, at(box.start)), end: at(box.end), low: box.low, high: box.high }, stop: cp.stop, trigger: cp.trigger, entryLow: cp.trigger, entryHigh: cp.limit,
+    targetLow: cp.targets.low, targetHigh: cp.targets.high, targetRef: cp.limit };
+  ok('the COIL reference cluster is the one the review named', cp.stop === 109.5 && cp.trigger === 110.61 && cp.limit === 111.72 && series[series.length - 1].c === 110);
+  const CHARW = 6.6;
+  for (const [W, H] of [[900, 380], [280, 300]]) {
+    const gs = {};
+    for (const mode of ['setup', 'candles', 'line']) gs[mode] = SCStock.chartGeometry(series, { ...opts, mode }, W, H);
+    const g = gs.setup;
+    const kinds = g.rightLabels.map((l) => l.kind);
+    ok(`the gutter names the close, the stop, the trigger and the limit at ${W}px`, ['close', 'stop', 'trigger', 'limit'].every((k) => kinds.includes(k)) && !kinds.includes('zone'), kinds.join(','));
+    ok(`no level label sits on another at ${W}px`, g.rightLabels.slice().sort((a, b) => a.y - b.y).every((l, i, arr) => !i || l.y - arr[i - 1].y >= 14.9), g.rightLabels.map((l) => l.text + '@' + l.y).join(' '));
+    ok(`every gutter label keeps the exact level it names at ${W}px`, g.rightLabels.every((l) => l.kind !== 'stop' || Math.abs(l.yTrue - g.stop.y) < 0.11) && g.rightLabels.every((l) => l.kind !== 'trigger' || Math.abs(l.yTrue - g.trigger.y) < 0.11) && g.rightLabels.every((l) => l.kind !== 'limit' || Math.abs(l.yTrue - g.entry.y1) < 0.11) && g.rightLabels.every((l) => l.kind !== 'close' || Math.abs(l.yTrue - g.y(g.lastClose)) < 0.11));
+    ok(`the gutter is wide enough for its longest label at ${W}px`, g.gutter >= Math.max(...g.rightLabels.map((l) => l.text.length)) * CHARW + 16);
+    ok(`labels stay inside the pane at ${W}px`, g.rightLabels.every((l) => l.y >= g.plot.top && l.y <= g.plot.bottom));
+    ok(`nothing is written over the candles at ${W}px`, g.leftLabels.length === 0 && g.stopTag === null && g.entry.label === null);
+    ok(`the aim is off the scale and says so, with no clamped tick at ${W}px`, g.target && g.target.offscale === true && !g.target.visible && g.rightLabels.every((l) => l.kind !== 'aim'));
+    const same = (a, b) => Math.abs(a - b) < 1e-9;
+    ok(`the three modes share one geometry at ${W}px`, ['candles', 'line'].every((m) => same(gs[m].stop.y, g.stop.y) && same(gs[m].trigger.y, g.trigger.y) && same(gs[m].entry.y1, g.entry.y1) && same(gs[m].entry.y2, g.entry.y2) && same(gs[m].domain.lo, g.domain.lo) && same(gs[m].domain.hi, g.domain.hi) && gs[m].bars.every((b, i) => b.x === g.bars[i].x && b.c === g.bars[i].c)));
+    ok(`the mode is reported and the close trace has a point per close at ${W}px`, gs.line.mode === 'line' && gs.candles.mode === 'candles' && g.mode === 'setup' && g.closePoints.filter(Boolean).length === series.filter((b) => typeof b.c === 'number').length);
+    ok(`date labels are spaced at ${W}px`, g.dateTicks.every((t, i) => !i || t.x - g.dateTicks[i - 1].x >= 45), g.dateTicks.map((t) => t.label + '@' + t.x).join(' '));
+  }
+  // a burst whose buy stop is its close: one close label, no duplicate trigger label, the zone low its own label
+  const aapl = record.bursts.find((b) => b.ticker === 'AAPL'), ap = aapl.plan, s2 = aapl.series.slice(-40), base = aapl.quality.base, at2 = (d) => s2.findIndex((x) => x.date === d);
+  const ga = SCStock.chartGeometry(s2, { ticker: 'AAPL', card: true, futureSlots: 6, targetRuler: true, ma: [], burstIndex: s2.length - 1, gutterLabels: true,
+    box: { start: Math.max(0, at2(base.start)), end: at2(base.end), low: base.low, high: base.high }, stop: ap.stop, trigger: ap.entry_ref, entryLow: ap.entry_low, entryHigh: ap.entry_high, targetLow: ap.targets.low, targetHigh: ap.targets.high, targetRef: ap.planned_entry }, 900, 380);
+  const ak = ga.rightLabels.map((l) => l.kind);
+  ok('a trigger at the last close is labelled once, as the close, and the zone low is its own label', ak.includes('close') && !ak.includes('trigger') && ak.includes('zone') && ak.includes('limit') && ak.includes('stop'), ak.join(','));
+  ok('a burst keeps its setup marks in setup mode and loses them in the other modes only at draw time', ga.burst && ga.burst.label && ga.box && ga.box.label && ga.mode === 'setup');
+  ok('a gap bar stays a gap in the close trace', SCStock.chartGeometry(bars, { gutterLabels: true, mode: 'line' }, 640, 320).closePoints[31] === null);
+}
+
 // --- 2. rendering ---------------------------------------------------------------
 async function loadChromium() {
   if (NO_BROWSER) return null;

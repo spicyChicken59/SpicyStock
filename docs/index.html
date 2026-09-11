@@ -20,6 +20,8 @@
 <script src="design-system/sc-motion.js" defer></script>
 <link rel="stylesheet" href="app.css">
 <script src="app-chart.js"></script>
+<script src="app-map.js"></script>
+<script src="app-follow.js"></script>
 <script src="app.js" defer></script>
 </head>
 <body>
@@ -65,6 +67,7 @@
         <p class="ss-market__links" id="market-links"></p>
       </div>
     </div>
+    <div id="demo-notice" hidden></div>
 
     <div class="ss-stages" id="stages" role="group" aria-label="Choose a stage"></div>
 
@@ -79,6 +82,8 @@
             <button class="sc-btn sc-btn--secondary sc-btn--sm" type="submit">Go</button>
           </form>
           <button class="sc-btn sc-btn--secondary sc-btn--sm ss-choose" type="button" id="choose-open" aria-haspopup="dialog" aria-controls="chooser">Choose stock</button>
+          <div class="sc-tabs ss-discover" id="discover" role="group" aria-label="Show the bursts as" hidden></div>
+          <a class="sc-link--quiet ss-follow-jump" id="following-jump" href="#following" hidden>Following · 0</a>
           <p class="sc-hint ss-picks__status" id="picks-status" role="status" aria-live="polite"></p>
         </div>
         <div class="ss-picks__list" id="pick-list" role="list" aria-label="Stocks in this stage"></div>
@@ -102,6 +107,17 @@
       </div>
     </details>
 
+    <section class="sc-card ss-following" id="following" aria-labelledby="following-h3">
+      <div class="sc-card__head">
+        <div>
+          <h3 id="following-h3">Following</h3>
+          <p class="sc-hint" id="following-hint">The setups you chose to keep in view, saved in this browser only. A saved plan is not a fill, a holding or a result; the record and the scorecard never see it.</p>
+        </div>
+        <span id="following-count"></span>
+      </div>
+      <p class="sc-hint ss-following__status" id="following-status" role="status" aria-live="polite" hidden></p>
+      <div class="ss-following__list" id="following-list"></div>
+    </section>
   </section>
 
   <!-- 02 · Record: what the published model plans did, from bars alone -->

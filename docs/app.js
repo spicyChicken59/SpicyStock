@@ -231,6 +231,12 @@
     const sizeWords = size === 1 ? 'full size' : size === 0 ? 'no new longs' : isNum(size) ? 'size at ' + (size * 100).toFixed(0) + '%' : '';
     fact('regime', [chip((reg.verdict || 'unknown').toUpperCase(), REGIME_TONE[reg.verdict] || 'neutral', true), el('span', { text: sizeWords + (isNum(b.ratio_10d) ? ' · 10-day ratio ' + plain(b.ratio_10d) : '') })]);
     fact('published', [el('span', { text: timeET(run.published_at) + ' · run ' + (run.status || '—') + ' · email ' + (run.email || '—') })]);
+    const notice = $('demo-notice');
+    if (notice) {
+      clear(notice);
+      if (demo) notice.appendChild(el('div', { 'class': 'sc-notice ss-demo', role: 'note' }, [el('span', { 'class': 'sc-eyebrow', text: 'sample data · fixture ' + String(data.fixture) }), el('p', { text: 'Do not trade sample data: this record is a pipeline-written fixture over a synthetic market; its bursts, coils, plans and chart-reader replies are test doubles.' })]));
+      notice.hidden = !demo;
+    }
     // the record's own call to action (Tomorrow's orders / Open model plans),
     // falling back to the model plans on a page that offers no order
     const links = clear($('market-links'));
@@ -486,40 +492,83 @@
     return usd(plan.stop) + ' · ' + basis;
   }
 
-  // ---------------------------------------------------------------- the chart options, per stage
+  // ---------------------------------------------------------------- the chart panel: modes, ranges, preferences
+  // One geometry, three drawings (app-chart.js `mode`) and three ranges. The
+  // mode, the range and the close-line toggle are the reader's preferences,
+  // kept in this browser and applied to every stock; a blocked store keeps
+  // the defaults and still applies a choice for the session.
+  const CHART_PREFS_KEY = 'spicystock:chart:v1';
+  const CHART_MODES = ['setup', 'candles', 'line'];
+  const MODE_WORDS = { setup: 'Setup', candles: 'Candles', line: 'Line' };
+  const CHART_RANGES = ['setup', '60', '120'];
+  const RANGE_WORDS = { setup: 'Setup range', '60': '60 sessions', '120': '120 sessions' };
+  const SETUP_PAD_MIN = 8;          // sessions of context before the base in the Setup range (presentation)
+  const SETUP_PAD_FRACTION = 0.6;   // or this share of the base's length, whichever is more (presentation)
+  const prefs = { mode: 'setup', range: 'setup', closeLine: false };
+  function loadPrefs() {
+    try {
+      const raw = w.localStorage && w.localStorage.getItem(CHART_PREFS_KEY), saved = raw ? JSON.parse(raw) : null;
+      if (saved && CHART_MODES.indexOf(saved.mode) >= 0) prefs.mode = saved.mode;
+      if (saved && CHART_RANGES.indexOf(String(saved.range)) >= 0) prefs.range = String(saved.range);
+      if (saved && typeof saved.closeLine === 'boolean') prefs.closeLine = saved.closeLine;
+    } catch (e) { /* a blocked or corrupt store keeps the defaults */ }
+  }
+  function savePrefs() { try { w.localStorage.setItem(CHART_PREFS_KEY, JSON.stringify(prefs)); } catch (e) { /* not remembered; still applied */ } }
+  const idxOf = (series, date) => series.findIndex((x) => x && x.date === date);
+  // the bars a range shows, with the words that disclose it. The Setup range
+  // frames the base (the burst's base, the coil's box) with a short run of
+  // context before it; without base dates it says so and shows 60 sessions.
+  function rangeSlice(c, range) {
+    const all = c.series, dates = c.stage === 'bursts' ? ((c.row.quality || {}).base || {}) : (c.row.box || {});
+    if (range === 'setup') {
+      const bs = dates.start ? idxOf(all, dates.start) : -1, be = dates.end ? idxOf(all, dates.end) : -1;
+      if (bs >= 0 && be >= bs) {
+        const pad = Math.max(SETUP_PAD_MIN, Math.round((be - bs + 1) * SETUP_PAD_FRACTION)), from = Math.max(0, bs - pad);
+        return { series: all.slice(from), range: 'setup', note: 'the base and ' + plural(bs - from, 'session') + ' before it', fallback: false };
+      }
+      const series = all.slice(-60);
+      return { series: series, range: 'setup', note: 'Setup range unavailable, no base dates recorded: the last ' + series.length + ' sessions', fallback: true };
+    }
+    const series = all.slice(-(+range));
+    return { series: series, range: range, note: 'the last ' + series.length + ' sessions', fallback: false };
+  }
+  function chartOptionsFor(c, series, height) {
+    const o = c.stage === 'bursts' ? burstChartOptions(c.row, series, height) : coilChartOptions(c.row, series, height);
+    o.mode = prefs.mode; o.closeLine = prefs.closeLine; o.gutterLabels = true; o.head = false;
+    return o;
+  }
   function burstChartOptions(b, series, height) {
     const plan = b.plan || {}, q = b.quality || {}, base = q.base || {};
     const check = {}; (q.checks || []).forEach((c) => { if (c && c.key) check[c.key] = c; });
-    const idx = (date) => series.findIndex((x) => x && x.date === date);
     let box = null;
     if (base.start && base.end && isNum(base.low) && isNum(base.high)) {
-      let bs = idx(base.start), be = idx(base.end);
+      let bs = idxOf(series, base.start), be = idxOf(series, base.end);
       if (be >= 0) { if (bs < 0) bs = 0; box = { start: bs, end: be, low: base.low, high: base.high, depthPct: base.depth_pct }; }
     }
     const up = check.two_days && check.two_days.values ? check.two_days.values.up_run : null;
     const rng = check.range_expansion ? check.range_expansion.value : null;
     return {
-      ticker: b.ticker, title: 'daily bars through ' + dateWords(series.length ? series[series.length - 1].date : null) + ' · the last bar is the burst',
+      ticker: b.ticker,
       card: true, compact: false, futureSlots: 6, targetRuler: true, ma: [], volumeAvg: 20,
       burstIndex: series.length - 1, box: box,
-      stop: plan.stop, entryLow: plan.entry_low, entryHigh: plan.entry_high,
+      // the buy stop is the trigger; the zone's top is the limit, its floor the skip line
+      stop: plan.stop, trigger: plan.entry_ref, entryLow: plan.entry_low, entryHigh: plan.entry_high,
       targetLow: plan.targets ? plan.targets.low : null, targetHigh: plan.targets ? plan.targets.high : null, targetRef: plan.planned_entry,
-      upDays: isNum(up) ? up : 0, breakdownIndexes: (base.breakdown_dates || []).map(idx).filter((i) => i >= 0),
+      upDays: isNum(up) ? up : 0, breakdownIndexes: (base.breakdown_dates || []).map((d) => idxOf(series, d)).filter((i) => i >= 0),
       burstVolumeRatio: b.volume_vs_prior, rangeExpansion: isNum(rng) ? rng : null,
       ariaLabel: b.summary || null, height: height
     };
   }
   function coilChartOptions(c, series, height) {
     const plan = c.plan || {}, box = c.box || {};
-    const idx = (date) => series.findIndex((x) => x && x.date === date);
     let bx = null;
     if (box.start && box.end && isNum(box.low) && isNum(box.high)) {
-      let bs = idx(box.start), be = idx(box.end);
+      let bs = idxOf(series, box.start), be = idxOf(series, box.end);
       if (be >= 0) { if (bs < 0) bs = 0; bx = { start: bs, end: be, low: box.low, high: box.high }; }
     }
     const t = plan.targets || {};
     return {
-      ticker: c.ticker, title: 'daily bars through ' + dateWords(series.length ? series[series.length - 1].date : null) + ' · no burst yet: the box is the coil',
+      ticker: c.ticker,
       card: true, compact: false, futureSlots: 6, targetRuler: true, ma: [], volumeAvg: 20,
       burstIndex: null, box: bx,
       stop: plan.stop, trigger: plan.trigger, entryLow: plan.trigger, entryHigh: plan.limit,
@@ -622,11 +671,13 @@
   // #scan-details, #also-quiet) still land where they used to.
   const state = { view: 'explore', stage: null, selected: { bursts: null, 'setting-up': null }, query: '', range: 60, notice: '', picksKey: null, detailKey: null, gesture: false };
   let current = null, model = null, st = null, pendingNotice = '', pendingFocus = '', chooserOpener = null;
+  let demo = false;   // the record is a pipeline-written fixture over a synthetic market
   const LEGACY = {
     hold: { view: 'record', anchor: 'hold' }, record: { view: 'record', anchor: 'record-card' }, breadth: { view: 'market' }, method: { view: 'method' },
     orders: { view: 'explore', open: 'orders' }, scan: { view: 'explore', open: 'scan' }, 'scan-details': { view: 'explore', open: 'scan' },
     'closest-miss': { view: 'explore', open: 'scan', anchor: 'closest-miss' }, tomorrow: { view: 'explore', stage: 'bursts' }, trades: { view: 'explore', stage: 'bursts' },
-    alerts: { view: 'explore', stage: 'setting-up' }, 'also-quiet': { view: 'explore', stage: 'setting-up' }, cover: { view: 'explore' }, main: { view: 'explore' }, next: { view: 'explore', anchor: 'next' }
+    alerts: { view: 'explore', stage: 'setting-up' }, 'also-quiet': { view: 'explore', stage: 'setting-up' }, cover: { view: 'explore' }, main: { view: 'explore' }, next: { view: 'explore', anchor: 'next' },
+    following: { view: 'explore', anchor: 'following' }
   };
   function parseHash(hash) {
     hash = String(hash || '').replace(/^#/, '');
@@ -780,6 +831,7 @@
   }
   function renderPicks() {
     const stage = state.stage, list = model.stages[stage], q = state.query, host = $('pick-list');
+    renderDiscover(stage);
     const shown = list.filter((c) => matches(c, q)), key = stage + '|' + q;
     $('picks-h2').textContent = STAGE_NAME[stage].toLowerCase() + ' · ' + list.length;
     if (state.picksKey !== key) {
@@ -840,40 +892,295 @@
       el('div', { 'class': 'ss-detail__chips' }, chips.concat([back]))
     ]);
   }
+  // the one live chart: disposed (observers, tooltip, listeners) before another is drawn
+  let chartHost = null;
+  function disposeChart() { if (chartHost && chartHost.dispose) chartHost.dispose(); chartHost = null; }
+  const chartHeight = () => (narrow() ? 300 : 400);
+  // the plan's levels in one line beside the chart, the aim named even when it sits outside the visible range
+  function referenceLine(c, g) {
+    const plan = c.plan || {}, parts = [], burst = c.stage === 'bursts';
+    const trig = burst ? plan.entry_ref : plan.trigger, lim = burst ? plan.entry_high : plan.limit;
+    if (isNum(plan.stop)) parts.push('stop ' + usd(plan.stop));
+    if (isNum(trig)) parts.push('trigger ' + usd(trig));
+    if (isNum(lim)) parts.push('limit ' + usd(lim));
+    if (burst && isNum(plan.entry_low) && isNum(trig) && Math.abs(plan.entry_low - trig) / trig > 0.005) parts.push('zone low ' + usd(plan.entry_low));
+    const t = plan.targets || {};
+    if (isNum(t.low) && isNum(t.high)) parts.push('aim +' + plain(t.low_pct) + '% ' + usd(t.low) + ' / +' + plain(t.high_pct) + '% ' + usd(t.high) + (g && g.target && g.target.offscale ? ' (outside the visible range)' : ''));
+    return parts.length ? 'Levels: ' + parts.join(' · ') : 'No plan levels for this name.';
+  }
   function mountChart(mount, c) {
+    disposeChart();
     clear(mount);
     if (!c.series.length) {
+      mount.style.minHeight = '';
       mount.appendChild(el('div', { 'class': 'ss-chart-empty', 'data-chart': 'unavailable' }, [
         el('strong', { text: 'Chart unavailable. ' }),
         'No daily bars are archived for ' + c.ticker + ' in tonight’s record' + (c.quiet ? ': it is on no list, so the run kept only its measures' : '') + '. The grade stands on the numbers; the conditions below carry them.'
       ]));
-      return;
+      return null;
     }
-    const series = c.series.slice(-state.range), height = narrow() ? 280 : 380;
-    const host = SCStock.chart(series, c.stage === 'bursts' ? burstChartOptions(c.row, series, height) : coilChartOptions(c.row, series, height));
-    host.setAttribute('data-sessions', String(series.length));
+    const slice = rangeSlice(c, prefs.range), height = chartHeight();
+    mount.style.minHeight = height + 'px';
+    const host = SCStock.chart(slice.series, chartOptionsFor(c, slice.series, height));
+    host.setAttribute('data-sessions', String(slice.series.length));
     host.setAttribute('data-ticker', c.ticker);
     host.setAttribute('data-stage', c.stage);
+    host.setAttribute('data-range', slice.range);
     mount.appendChild(host);
+    chartHost = host;
+    return { host: host, slice: slice };
   }
   function detailChart(c) {
-    const run = current.run || {}, fig = el('figure', { 'class': 'ss-detail__chart' });
-    const mount = el('div', { 'class': 'ss-chart-mount', id: 'chart-mount' });
-    fig.appendChild(mount);
-    const tabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-label': 'Sessions shown' });
-    [60, 120].forEach((n) => {
-      const t = el('button', { 'class': 'sc-tab', type: 'button', 'aria-pressed': n === state.range ? 'true' : 'false', text: n + ' sessions', 'data-sessions': String(n), disabled: c.series.length ? null : '' });
-      t.addEventListener('click', () => { state.range = n; tabs.querySelectorAll('.sc-tab').forEach((x) => x.setAttribute('aria-pressed', x === t ? 'true' : 'false')); mountChart(mount, c); });
-      tabs.appendChild(t);
-    });
-    const last = c.series.length ? c.series[c.series.length - 1].date : null;
-    fig.appendChild(el('figcaption', { 'class': 'sc-chart-caption' }, [
-      el('p', { text: (c.series.length ? 'Alpaca ' + String(run.feed || '').toUpperCase() + ' daily bars through ' + dateWords(last) + ' · drawn from the same numbers as the plan' : 'No bars archived for ' + c.ticker) + (c.row.chart ? ' · ' : '.') }, c.row.chart ? [el('a', { 'class': 'sc-link--quiet', href: c.row.chart, text: 'the chart the grader saw' })] : null),
-      tabs
+    const run = current.run || {}, all = c.series, last = all.length ? all[all.length - 1] : null;
+    const panel = el('figure', { 'class': 'ss-chart-panel', 'data-mode': prefs.mode, 'data-range': prefs.range });
+    // one header strip: the symbol, its last close and session; the mode and the range controls together; the legend for the mode
+    const legendBox = el('div', { 'class': 'ss-chart-panel__legend' });
+    const modeTabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-label': 'Chart mode' });
+    const rangeTabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-label': 'Sessions shown' });
+    const toggleInput = el('input', { type: 'checkbox', checked: prefs.closeLine ? '' : null });
+    const toggle = el('label', { 'class': 'ss-chart-panel__toggle', hidden: prefs.mode === 'candles' ? null : '' }, [toggleInput, 'close line']);
+    panel.appendChild(el('div', { 'class': 'ss-chart-panel__head' }, [
+      el('div', { 'class': 'ss-chart-panel__id' }, [
+        el('span', { 'class': 'sc-figure', text: c.ticker }),
+        last && isNum(last.c) ? el('span', { 'class': 'ss-chart-panel__price', text: usd(last.c) }) : null,
+        el('span', { 'class': 'sc-hint', text: last ? 'close ' + dateWords(last.date) : 'no bars archived' }),
+        demo ? chip('demo data', 'warn') : null
+      ]),
+      el('div', { 'class': 'ss-chart-panel__tools' }, [modeTabs, el('div', { 'class': 'ss-chart-panel__group' }, [el('span', { 'class': 'ss-chart-panel__caption', 'aria-hidden': 'true', text: 'range' }), rangeTabs]), toggle])
     ]));
-    mountChart(mount, c);
-    return fig;
+    const mount = el('div', { 'class': 'ss-chart-mount', id: 'chart-mount' });
+    panel.appendChild(mount);
+    const rangeLine = el('p', { 'class': 'ss-chart-panel__range' }), refLine = el('p', { 'class': 'ss-chart-panel__refs', 'data-refs': '' });
+    panel.appendChild(el('figcaption', { 'class': 'sc-chart-caption' }, [
+      legendBox, rangeLine, refLine,
+      el('p', { text: (all.length ? 'Alpaca ' + String(run.feed || '').toUpperCase() + ' daily bars, drawn from the same numbers as the plan' : 'No bars archived for ' + c.ticker) + (c.row.chart ? ' · ' : '.') }, c.row.chart ? [el('a', { 'class': 'sc-link--quiet', href: c.row.chart, text: 'the chart the grader saw' })] : null)
+    ]));
+    let live = mountChart(mount, c);
+    function disclose() {
+      const g = chartHost && chartHost.geometry ? chartHost.geometry() : null, series = live ? live.slice.series : [];
+      rangeLine.textContent = series.length ? 'Showing ' + plural(series.length, 'session') + ', ' + dateShort(series[0].date) + ' – ' + dateShort(series[series.length - 1].date) + ' ' + String(series[series.length - 1].date).slice(0, 4) + ' · ' + live.slice.note + '.' : '';
+      refLine.textContent = referenceLine(c, g);
+      clear(legendBox); if (chartHost && chartHost.legend) legendBox.appendChild(chartHost.legend());
+      panel.setAttribute('data-mode', prefs.mode); panel.setAttribute('data-range', prefs.range);
+      toggle.hidden = prefs.mode !== 'candles';
+      modeTabs.querySelectorAll('.sc-tab').forEach((t) => t.setAttribute('aria-pressed', t.getAttribute('data-mode') === prefs.mode ? 'true' : 'false'));
+      rangeTabs.querySelectorAll('.sc-tab').forEach((t) => t.setAttribute('aria-pressed', t.getAttribute('data-range') === prefs.range ? 'true' : 'false'));
+    }
+    CHART_MODES.forEach((m) => {
+      const t = el('button', { 'class': 'sc-tab', type: 'button', 'data-mode': m, 'aria-pressed': m === prefs.mode ? 'true' : 'false', text: MODE_WORDS[m], disabled: all.length ? null : '' });
+      t.addEventListener('click', () => { prefs.mode = m; savePrefs(); if (chartHost) chartHost.update({ mode: m, closeLine: prefs.closeLine }); disclose(); });
+      modeTabs.appendChild(t);
+    });
+    CHART_RANGES.forEach((r) => {
+      const t = el('button', { 'class': 'sc-tab', type: 'button', 'data-range': r, 'aria-pressed': r === prefs.range ? 'true' : 'false', 'aria-label': RANGE_WORDS[r], title: RANGE_WORDS[r], disabled: all.length ? null : '', text: r === 'setup' ? 'setup' : r });
+      t.addEventListener('click', () => {
+        prefs.range = r; savePrefs();
+        if (!chartHost) return;
+        const slice = rangeSlice(c, r);
+        chartHost.update(Object.assign({ series: slice.series }, chartOptionsFor(c, slice.series, chartHeight())));
+        chartHost.setAttribute('data-sessions', String(slice.series.length)); chartHost.setAttribute('data-range', slice.range);
+        live = { host: chartHost, slice: slice };
+        disclose();
+      });
+      rangeTabs.appendChild(t);
+    });
+    toggleInput.addEventListener('change', () => { prefs.closeLine = !!toggleInput.checked; savePrefs(); if (chartHost) chartHost.update({ closeLine: prefs.closeLine }); });
+    disclose();
+    return panel;
   }
+  // ---------------------------------------------------------------- discovery: Cards | Map (Bursts only)
+  // The map is an overview of the stage's bursts by the recorded session's
+  // gain and volume ratio, on the page's one selection state; the cards and
+  // the map are two views of the same list, and the choice is a preference
+  // kept in this browser. Setting up is never mapped: its names have not burst.
+  const DISCOVER_KEY = 'spicystock:discover:v1';
+  let discover = 'cards', mapView = null;
+  function loadDiscover() { try { const v = w.localStorage && w.localStorage.getItem(DISCOVER_KEY); if (v === 'map' || v === 'cards') discover = v; } catch (e) { /* the default stands */ } }
+  function saveDiscover() { try { w.localStorage.setItem(DISCOVER_KEY, discover); } catch (e) { /* not remembered */ } }
+  function mapPoints() {
+    return model.stages.bursts.map((c) => ({
+      id: c.id, ticker: c.ticker, gain: isNum(c.row.gain_pct) ? c.row.gain_pct : null, volume: isNum(c.row.volume_vs_prior) ? c.row.volume_vs_prior : null,
+      grade: c.grade, score: c.score, rank: c.rank, statusWords: statusWords(c.status)[0], statusTone: statusWords(c.status)[1],
+      source: c.row.claude && c.row.claude.source === 'claude' ? 'claude' : (c.row.quality && c.row.quality.checks ? 'checklist' : null),
+      chartSeen: c.row.claude ? c.row.claude.chart_seen : null
+    }));
+  }
+  function unmountMap() {
+    if (mapView) { mapView.dispose(); mapView = null; }
+    const host = $('burst-map'); if (host) host.parentNode.removeChild(host);
+  }
+  function mountMap() {
+    const ws = $('workspace'), run = current.run || {};
+    let host = $('burst-map');
+    if (host && mapView) { mapView.update(state.selected.bursts); return; }
+    unmountMap();
+    host = el('div', { id: 'burst-map' });
+    const picks = $('picks'), head = picks ? picks.querySelector('.ss-picks__head') : null;
+    if (head) picks.insertBefore(host, head.nextSibling); else ws.insertBefore(host, ws.firstChild);
+    mapView = SCStock.map.render(host, { points: mapPoints(), selectedId: state.selected.bursts, sessionWords: dateWords(run.session), demo: demo,
+      onSelect: (id) => { state.gesture = true; navigate(routeHash('bursts', id)); } });
+  }
+  function renderDiscover(stage) {
+    const ctl = $('discover'), ws = $('workspace');
+    if (!ctl || !ws) return;
+    ctl.hidden = stage !== 'bursts';
+    if (!ctl.childElementCount) {
+      [['cards', 'Cards'], ['map', 'Map']].forEach((pair) => {
+        const t = el('button', { 'class': 'sc-tab', type: 'button', 'data-discover': pair[0], 'aria-pressed': 'false', text: pair[1] });
+        t.addEventListener('click', () => { discover = pair[0]; saveDiscover(); renderDiscover(state.stage); if (discover === 'map' && mapView) mapView.focusSelected(); });
+        ctl.appendChild(t);
+      });
+    }
+    ctl.querySelectorAll('.sc-tab').forEach((t) => t.setAttribute('aria-pressed', t.getAttribute('data-discover') === discover ? 'true' : 'false'));
+    const mapMode = stage === 'bursts' && discover === 'map';
+    ws.setAttribute('data-discover', mapMode ? 'map' : 'cards');
+    if (mapMode) mountMap(); else unmountMap();
+  }
+
+  // ---------------------------------------------------------------- Following: a saved setup, in this browser
+  // The button saves the setup's own snapshot with its suggested whole-share
+  // quantity; one optional reference size is the reader's and changes
+  // nothing else. The shelf shows each saved setup against the newest bar the
+  // record carries for it (observations, else the record's own rows), and
+  // never says bought, filled, held, sold or stopped out.
+  function followSetupOf(c) {
+    const run = current.run || {}, app = current.app || {}, plan = c.plan || {}, t = plan.targets || {}, b = c.row;
+    const burst = c.stage === 'bursts';
+    const hasTicket = c.status === 'ticket' && isNum(plan.shares) && plan.shares > 0;
+    return {
+      ticker: c.ticker, kind: burst ? 'burst' : 'anticipation', stage: c.stage, session: run.session || '', rules_version: app.rules_version || '',
+      suggested_shares: hasTicket ? plan.shares : null,
+      snapshot: {
+        name: c.name || '', close: isNum(b.close) ? b.close : null, close_date: run.session || '', grade: c.grade || null, score: isNum(c.score) ? c.score : null,
+        status: c.status, status_words: statusWords(c.status)[0],
+        levels: { entry_low: burst ? plan.entry_low : plan.trigger, entry_high: burst ? plan.entry_high : plan.limit, trigger: burst ? plan.entry_ref : plan.trigger,
+          limit: burst ? plan.entry_high : plan.limit, stop: plan.stop, stop_basis: plan.stop_basis || null,
+          target_low: t.low, target_high: t.high, target_low_pct: t.low_pct, target_high_pct: t.high_pct },
+        order_line: text(plan.order_line), instruction: entryInstruction(plan), summary: burst ? sentence(firstSentence(text(b.summary).replace(/^[A-Z0-9.\-]+:\s*/, ''))) : pickReason(c),
+        withheld_reason: c.status !== 'ticket' ? text(c.reason) : ''
+      }
+    };
+  }
+  // the newest bar the record carries for a symbol: the observation block, else the record's own rows
+  function latestObservation(ticker) {
+    const obs = ((current.observations || {}).symbols || {})[ticker];
+    if (obs && text(obs.date) && isNum(obs.c)) return { date: obs.date, close: obs.c, source: 'observations' };
+    const run = current.run || {};
+    const b = (current.bursts || []).find((x) => x && x.ticker === ticker);
+    if (b && isNum(b.close) && run.session) return { date: run.session, close: b.close, source: 'burst' };
+    const r = ((current.watchlist || {}).top || []).concat((current.watchlist || {}).also_quiet || []).find((x) => x && x.ticker === ticker);
+    if (r && isNum(r.close) && run.session) return { date: run.session, close: r.close, source: 'watchlist' };
+    const o = (current.open_plans || []).find((x) => x && x.ticker === ticker);
+    if (o && isNum(o.last_close) && text(o.last_date)) return { date: o.last_date, close: o.last_close, source: 'open plan' };
+    return null;
+  }
+  const modelUpdateOf = (item) => (current.open_plans || []).find((o) => o && o.ticker === item.ticker && o.picked === item.session) || null;
+  let followStatus = null;
+  function followJump() {
+    const link = $('following-jump'); if (!link) return;
+    const n = SCStock.follow.list().length;
+    link.textContent = 'Following · ' + n;
+    link.hidden = false;
+  }
+  function followBlock(c) {
+    const setup = followSetupOf(c), id = SCStock.follow.identity(setup), st0 = SCStock.follow.status();
+    const item = st0.available ? SCStock.follow.find(id) : null;
+    const box = el('div', { 'class': 'ss-follow', 'data-follow': item ? 'following' : 'not-following', 'data-follow-id': id });
+    const redraw = () => { const next = followBlock(c); box.parentNode.replaceChild(next, box); return next; };
+    const warn = (msg) => { box.querySelectorAll('.ss-follow__warn').forEach((x) => x.remove()); box.appendChild(el('p', { 'class': 'ss-follow__warn', role: 'alert', text: msg })); };
+    if (!st0.available) {
+      box.appendChild(chip('not saved', 'neutral'));
+      warn(st0.error || 'Storage is blocked in this browser; nothing can be followed here.');
+      return box;
+    }
+    if (!item) {
+      const btn = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Follow this setup', 'data-follow-action': 'add' });
+      btn.addEventListener('click', () => {
+        const res = SCStock.follow.add(setup);
+        if (!res.ok) { warn(res.error); return; }
+        redraw(); renderFollowing(); followJump();
+      });
+      box.appendChild(btn);
+      box.appendChild(el('p', { 'class': 'ss-follow__hint', text: setup.suggested_shares ? plural(setup.suggested_shares, 'share') + ' suggested by the plan · saved in this browser only' : (c.status === 'ticket' ? 'for observation, no size suggested' : 'for observation, no ticket: ' + (statusWords(c.status)[0]) + ' · saved in this browser only') }));
+      return box;
+    }
+    box.appendChild(chip('following', 'good'));
+    const size = isNum(item.reference_shares) ? 'your reference size ' + plural(item.reference_shares, 'share') + (isNum(item.suggested_shares) ? ' (plan suggested ' + item.suggested_shares + ')' : '') : (isNum(item.suggested_shares) ? plural(item.suggested_shares, 'share') + ' suggested by the plan' : 'for observation, no size');
+    box.appendChild(el('p', { 'class': 'ss-follow__hint', text: size + ' · saved in this browser, not a broker fill' }));
+    const edit = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Edit size', 'data-follow-action': 'edit' });
+    const undo = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Undo', 'data-follow-action': 'remove' });
+    const link = el('a', { 'class': 'sc-link--quiet', href: '#following', text: 'Following shelf' });
+    edit.addEventListener('click', () => {
+      const form = el('form', { 'class': 'ss-follow__form', novalidate: '' });
+      const input = el('input', { 'class': 'sc-input', type: 'number', min: '1', max: String(SCStock.follow.SHARES_MAX), step: '1', inputmode: 'numeric', value: String(isNum(item.reference_shares) ? item.reference_shares : (item.suggested_shares || 1)), 'aria-label': 'Your reference size in whole shares' });
+      const save = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'submit', text: 'Save size' });
+      const cancel = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Cancel' });
+      const clearBtn = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Use the suggested size', hidden: isNum(item.reference_shares) ? null : '' });
+      form.appendChild(input); form.appendChild(save); form.appendChild(clearBtn); form.appendChild(cancel);
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const n = input.value.trim() === '' ? NaN : Number(input.value);
+        const res = SCStock.follow.setShares(id, Number.isInteger(n) ? n : NaN);
+        if (!res.ok) { warn(res.error); return; }
+        redraw(); renderFollowing();
+      });
+      clearBtn.addEventListener('click', () => { const res = SCStock.follow.setShares(id, null); if (!res.ok) { warn(res.error); return; } redraw(); renderFollowing(); });
+      cancel.addEventListener('click', () => { redraw(); });
+      edit.replaceWith(form); input.focus();
+    });
+    undo.addEventListener('click', () => { const res = SCStock.follow.remove(id); if (!res.ok) { warn(res.error); return; } redraw(); renderFollowing(); followJump(); });
+    box.appendChild(edit); box.appendChild(undo); box.appendChild(link);
+    return box;
+  }
+  function followedCard(item) {
+    const snap = item.snapshot || {}, lv = snap.levels || {}, obs = latestObservation(item.ticker), upd = modelUpdateOf(item);
+    const card = el('article', { 'class': 'ss-followed', 'data-follow-id': item.id, 'data-ticker': item.ticker });
+    const open = el('button', { 'class': 'ss-followed__ticker sc-case', type: 'button', text: item.ticker, 'data-open': routeHash(item.stage === 'setting-up' ? 'setting-up' : 'bursts', item.stage + ':' + item.ticker) });
+    open.addEventListener('click', () => { pendingFocus = 'detail'; state.gesture = true; navigate(open.getAttribute('data-open')); });
+    card.appendChild(el('div', { 'class': 'ss-followed__row' }, [open, el('span', { 'class': 'ss-followed__meta', text: (item.kind === 'anticipation' ? 'setting up' : 'burst') + ' · signal ' + dateWords(item.session) }), snap.status_words ? chip(snap.status_words, snap.status === 'ticket' ? 'good' : 'neutral') : null, item.demo ? chip('demo', 'warn') : null]));
+    const dl = el('dl');
+    const row = (dt, dd) => { if (dd) dl.appendChild(el('div', null, [el('dt', { text: dt }), el('dd', { text: dd })])); };
+    row('size', isNum(item.reference_shares) ? 'your reference size ' + plural(item.reference_shares, 'share') + (isNum(item.suggested_shares) ? ' · plan suggested ' + item.suggested_shares : '') : (isNum(item.suggested_shares) ? plural(item.suggested_shares, 'share') + ' suggested' : 'observation only, no size'));
+    const newer = obs && obs.date > (snap.close_date || '');
+    if (obs) row('latest close', usd(obs.close) + ' · ' + dateWords(obs.date) + (newer ? '' : ' · no newer observation available'));
+    else row('latest close', 'no observation in this record · last seen ' + dateWords(snap.close_date) + (isNum(snap.close) ? ' at ' + usd(snap.close) : ''));
+    if (newer && isNum(snap.close) && snap.close > 0) row('since the signal', pct((obs.close / snap.close - 1) * 100) + ' from the ' + usd(snap.close) + ' close on ' + dateShort(snap.close_date) + ' · price movement on the record’s bars, not your result');
+    const levels = [];
+    if (isNum(lv.trigger)) levels.push('trigger ' + usd(lv.trigger));
+    if (isNum(lv.limit)) levels.push('limit ' + usd(lv.limit));
+    if (isNum(lv.stop)) levels.push('stop ' + usd(lv.stop));
+    if (isNum(lv.target_low) && isNum(lv.target_high)) levels.push('aim ' + usd(lv.target_low) + '–' + usd(lv.target_high));
+    row('saved plan', levels.length ? levels.join(' · ') : 'no plan levels');
+    if (upd) row('model update', 'day ' + plain(upd.day) + ' · ' + (PLAN_STATUS[upd.status] ? PLAN_STATUS[upd.status][0] : words(upd.status)) + (isNum(upd.current_stop) ? ' · stop now ' + usd(upd.current_stop) : '') + ' (the model plan, separate from your saved plan)');
+    card.appendChild(dl);
+    const note = upd && text(upd.instruction) ? upd.instruction : (snap.instruction || snap.summary || snap.withheld_reason || '');
+    if (note) card.appendChild(el('p', { 'class': 'ss-followed__note' }, [el('span', { 'class': 'ss-followed__note-label', text: upd && text(upd.instruction) ? 'the model plan says' : 'the record says' }), ' “' + note + '”']));
+    const actions = el('div', { 'class': 'ss-followed__actions' });
+    const openBtn = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Open chart' });
+    openBtn.addEventListener('click', () => open.click());
+    const remove = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Remove' });
+    remove.addEventListener('click', () => { const res = SCStock.follow.remove(item.id); if (!res.ok) { setFollowStatus(res.error); return; } renderFollowing(); followJump(); if (state.view === 'explore') renderDetailFollow(); });
+    actions.appendChild(openBtn); actions.appendChild(remove);
+    card.appendChild(actions);
+    return card;
+  }
+  function setFollowStatus(msg) { const p = $('following-status'); if (!p) return; p.textContent = msg || ''; p.hidden = !msg; }
+  function renderFollowing() {
+    const list = $('following-list'), count = $('following-count');
+    if (!list) return;
+    clear(list);
+    const st0 = SCStock.follow.status(), items = st0.available ? SCStock.follow.list() : [];
+    if (count) count.textContent = items.length ? plural(items.length, 'setup') + ' · saved in this browser' : 'saved in this browser';
+    setFollowStatus(st0.error || '');
+    if (!items.length) { list.appendChild(el('div', { 'class': 'ss-following__empty', text: st0.available ? 'Nothing followed yet. Follow a setup from its action area to keep it in view here; it is saved in this browser only, and a saved plan is never a trade.' : 'Nothing can be followed in this browser.' })); return; }
+    items.slice().reverse().forEach((it) => list.appendChild(followedCard(it)));
+  }
+  // the chosen stock's follow block, redrawn after a change made from the shelf
+  function renderDetailFollow() {
+    const box = d.querySelector('#detail .ss-follow'), c = model && model.byId[state.selected[state.stage]];
+    if (box && c) box.parentNode.replaceChild(followBlock(c), box);
+  }
+
   function entryInstruction(plan) {
     const s = ((plan || {}).exit_schedule || []).find((x) => x && (x.key === 'entry' || x.day === 1));
     return s && text(s.instruction) ? cap(sentence(s.instruction)) : '';
@@ -945,6 +1252,7 @@
     box.appendChild(el('p', { text: line }));
     btn.addEventListener('click', () => openDisclosure(btn.getAttribute('data-open')));
     box.appendChild(btn);
+    box.appendChild(followBlock(c));
     return box;
   }
   function disclosure(id, title, hint, kids) {
@@ -1075,7 +1383,8 @@
     if (c.stage === 'bursts') {
       if (cl && cl.source === 'claude') {
         kids.push(el('div', { 'class': 'sc-insight' }, [
-          el('div', { 'class': 'sc-eyebrow', text: 'claude read the chart' + (cl.agree === false ? ' · lowered the grade' : cl.agree === true ? ' · agreed' : '') }),
+          el('div', { 'class': 'sc-eyebrow', text: (demo ? 'simulated chart-reader reply (fixture)' : 'claude read the chart') + (cl.agree === false ? ' · lowered the grade' : cl.agree === true ? ' · agreed' : '') }),
+          demo ? el('p', { 'class': 'sc-hint', text: 'Sample data: this reply is scripted by the test doubles, not a live analysis of a real chart.' }) : null,
           el('p', { text: cl.reason || '' }),
           text(cl.key_risk) ? el('p', null, [el('strong', { text: 'Key risk: ' }), cl.key_risk]) : null,
           text(cl.entry_note) ? el('p', null, [el('strong', { text: 'At the open: ' }), cl.entry_note]) : null,
@@ -1097,6 +1406,7 @@
     const key = c ? c.id : 'none:' + stage;
     if (state.detailKey !== key) {
       state.detailKey = key;
+      disposeChart();
       clear(box);
       box.setAttribute('data-selected', c ? c.id : '');
       if (!c) box.appendChild(detailEmpty(stage));
@@ -1415,8 +1725,12 @@
   // ---------------------------------------------------------------- render
   function render(data, now) {
     current = data; SCStock.data = data;
+    demo = !!data.fixture;
+    d.documentElement.setAttribute('data-ss-demo', demo ? 'true' : 'false');
     st = status(data, now); SCStock.state = st;
     model = buildModel(data); SCStock.model = model;
+    SCStock.follow.setDemo(demo);
+    unmountMap();
     state.stage = null; state.selected = { bursts: null, 'setting-up': null }; state.query = ''; state.picksKey = null; state.detailKey = null; state.notice = '';
     $('search').value = '';
     renderStatus(data, st);
@@ -1430,6 +1744,8 @@
     renderRecordView(data);
     renderNext(data, st);
     renderFooter(data);
+    renderFollowing();
+    followJump();
     applyRoute(parseHash(w.location.hash), true);
     d.title = 'SpicyStock · ' + ((data.cover || {}).h1 || 'no verdict');
     if (w.SC && w.SC.reading && w.SC.reading.refresh) { try { w.SC.reading.refresh(); } catch (e) { /* optional */ } }
@@ -1452,11 +1768,14 @@
     $('orders-summary').textContent = 'Tomorrow’s tickets · none';
     $('scan-summary').textContent = 'Everything the scan found · no record';
     clear($('hold-rows')).appendChild(empty('No record loaded.'));
+    const fl = $('following-list'); if (fl) { clear(fl).appendChild(el('div', { 'class': 'ss-following__empty', text: 'No record loaded, so nothing to observe.' })); }
     clear($('record-card')).appendChild(empty('No record loaded.'));
     applyRoute(parseHash(w.location.hash), true);
     d.documentElement.setAttribute('data-ss-rendered', 'error');
   }
   function boot() {
+    loadPrefs();
+    loadDiscover();
     wire();
     const src = (w.SCStock && w.SCStock.dataUrl) || 'data.json';
     w.fetch(src, { cache: 'no-store' })

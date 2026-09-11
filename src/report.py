@@ -141,6 +141,11 @@ CONTRACT: dict[str, str] = {
                  "rules' record, not yours. Null until a plan has settled.",
     "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows "
                     "it when trades is empty. Null when every burst is a trade or there were none.",
+    "observations": "The newest daily bar per symbol for the recorded signals -- the trades, the cut names, "
+                    "the charted bursts, the anticipation list, the open plans -- and, for the days the block "
+                    "names, the symbols an earlier record observed: date, o, h, l, c, v and the session each was "
+                    "first observed from. Read by the page's Following shelf; derived from bars already fetched, "
+                    "never a quote feed. A symbol without a bar tonight keeps its last observation, dated as it was.",
     "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused.",
 }
 
@@ -602,6 +607,14 @@ def validate(data: dict) -> None:
     version = _get(data, "app", "rules_version")
     if not isinstance(version, str) or not re.fullmatch(r"[0-9a-f]{12}", version):
         faults.append("app.rules_version is not a 12-hex digest")
+    obs = data.get("observations")
+    if not isinstance(obs, dict) or not isinstance(obs.get("symbols"), dict):
+        faults.append("observations is not an object with a symbols object")
+    else:
+        for sym, row in obs["symbols"].items():
+            if not isinstance(sym, str) or not isinstance(row, dict) or "date" not in row or "c" not in row:
+                faults.append(f"observations.symbols[{sym!r}] is not a bar with a date and a close")
+                break
     contract = data.get("_contract")
     if not isinstance(contract, dict) or set(contract) != set(data):
         faults.append("_contract does not name exactly the top-level keys")
@@ -611,7 +624,8 @@ def validate(data: dict) -> None:
 
 def build(run: dict, account: dict, rules: dict, breadth: dict, bursts: list[dict], trades: list[str],
           beyond_cap: list[str], cash_budget: dict, watchlist: dict, open_plans: list[dict],
-          scorecard: dict | None, nights: list[dict], generated: Any) -> dict:
+          scorecard: dict | None, nights: list[dict], generated: Any,
+          observations: dict | None = None) -> dict:
     """Assemble and validate the docs/data.json object (schema 2).
 
     Non-finite numbers are replaced with null and counted in run.sanitised
@@ -627,6 +641,7 @@ def build(run: dict, account: dict, rules: dict, breadth: dict, bursts: list[dic
         "cash_budget": dict(cash_budget or {}),
         "watchlist": dict(watchlist or {"top": [], "also_quiet": [], "counts": {}}),
         "open_plans": list(open_plans or []), "scorecard": scorecard,
+        "observations": dict(observations or {"as_of": None, "days": None, "symbols": {}}),
     }, "", replaced)
     body["run"]["sanitised"] = {"replaced": len(replaced), "paths": replaced[:20]}
     for burst in body["bursts"]:

@@ -6,7 +6,7 @@ reads docs/data.json the way the page does."""
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -433,3 +433,50 @@ def test_main_returns_the_reports_exit_code(market, claude, fake_resend, tmp_pat
     assert pipeline.main(["evening", "--tickers", ",".join(market)]) == pipeline.EXIT_DEGRADED
     monkeypatch.setenv("SCAN_SEND_EMAIL", "maybe")
     assert pipeline.main(["evening", "--tickers", ",".join(market)]) == pipeline.EXIT_FAILED
+
+
+# --------------------------------------------------------- observations ---
+def _frame(dates: list[str], closes: list[float]) -> pd.DataFrame:
+    idx = pd.to_datetime(dates)
+    return pd.DataFrame({"Open": closes, "High": [c * 1.01 for c in closes], "Low": [c * 0.99 for c in closes],
+                         "Close": closes, "Volume": [1000.0] * len(closes)}, index=idx)
+
+
+def test_observations_carry_the_newest_bar_for_tonights_signals_and_the_window_of_earlier_ones():
+    session = date.fromisoformat(SESSION)
+    frames = {"AAA": _frame(["2026-09-09", SESSION], [10.0, 10.5]), "KEEP": _frame(["2026-09-08", "2026-09-09"], [5.0, 5.2])}
+    previous = {"observations": {"as_of": "2026-09-09", "days": pipeline.OBSERVATION_DAYS, "symbols": {
+        "KEEP": {"date": "2026-09-09", "o": 5.0, "h": 5.1, "l": 4.9, "c": 5.2, "v": 900.0, "since": "2026-09-01"},
+        "GONE": {"date": "2026-09-09", "o": 1.0, "h": 1.1, "l": 0.9, "c": 1.0, "v": 10.0, "since": "2026-09-02"},
+        "OLD": {"date": "2026-08-01", "o": 2.0, "h": 2.1, "l": 1.9, "c": 2.0, "v": 10.0,
+                "since": (session - timedelta(days=pipeline.OBSERVATION_DAYS + 1)).isoformat()},
+        "JUNK": "not a bar"}}}
+    block = pipeline.observations(frames, previous, {"AAA", "NOBAR"}, session)
+    assert block["as_of"] == SESSION and block["days"] == pipeline.OBSERVATION_DAYS
+    symbols = block["symbols"]
+    assert symbols["AAA"] == {"date": SESSION, "o": 10.5, "h": 10.605, "l": 10.395, "c": 10.5, "v": 1000.0, "since": SESSION}
+    assert symbols["KEEP"]["date"] == "2026-09-09" and symbols["KEEP"]["c"] == 5.2 and symbols["KEEP"]["since"] == "2026-09-01"
+    assert symbols["GONE"] == previous["observations"]["symbols"]["GONE"]      # no frame tonight: the last observation, dated as it was
+    assert "OLD" not in symbols and "JUNK" not in symbols and "NOBAR" not in symbols
+    assert list(symbols) == sorted(symbols)
+
+
+def test_a_previous_record_without_a_block_and_a_symbol_on_the_window_edge():
+    session = date.fromisoformat(SESSION)
+    edge = (session - timedelta(days=pipeline.OBSERVATION_DAYS)).isoformat()
+    block = pipeline.observations({}, {"observations": {"symbols": {"EDGE": {"date": edge, "c": 1.0, "since": edge}}}}, set(), session)
+    assert list(block["symbols"]) == ["EDGE"]
+    assert pipeline.observations({}, {}, set(), session)["symbols"] == {}
+    assert pipeline.observations({}, None, set(), session)["symbols"] == {}
+
+
+def test_a_clean_night_publishes_observations_for_its_signals(market, claude, fake_resend, tmp_path):
+    rep, data, docs = evening(tmp_path, market)
+    assert rep.exit_code() == 0
+    block = data["observations"]
+    assert block["as_of"] == SESSION and block["days"] == pipeline.OBSERVATION_DAYS
+    assert "AAA" in block["symbols"] and block["symbols"]["AAA"]["date"] == SESSION
+    assert block["symbols"]["AAA"]["c"] == data["bursts"][0]["close"] and block["symbols"]["AAA"]["since"] == SESSION
+    for row in data["watchlist"]["top"]:
+        assert row["ticker"] in block["symbols"]
+    assert data["_contract"]["observations"]

@@ -35,6 +35,7 @@ CLOSED_FRACTION = 0.05         # fewer names on the expected session than this i
 MAX_ERROR_FRACTION = 0.05      # more names raising than this is a code fault, not a market (P)
 SERIES_BARS = 120              # bars the page chart carries per trade (plumbing)
 SERIES_TOP = 24                # bursts, by rank, that carry a chart beside the trades and the cut names (plumbing)
+OBSERVATION_DAYS = 21          # calendar days a recorded signal's newest bar stays in the observation block (plumbing)
 NIGHTS_KEPT = record.NIGHTS_KEPT
 TRADE_GRADES = ("A+", "A")     # what gets an order (B: "don't settle for marginal setups")
 YELLOW_GRADES = ("A+",)        # what a yellow night admits (P)
@@ -62,6 +63,7 @@ RULES = {
     "pipeline.yellow_grades": list(YELLOW_GRADES),
     "pipeline.series_bars": SERIES_BARS,
     "pipeline.series_top": SERIES_TOP,
+    "pipeline.observation_days": OBSERVATION_DAYS,
 }
 
 
@@ -210,6 +212,43 @@ def series_of(df: pd.DataFrame, bars: int = SERIES_BARS) -> list[dict]:
         rows.append({"date": d.isoformat(), "o": _num(row.get("Open")), "h": _num(row.get("High")),
                      "l": _num(row.get("Low")), "c": _num(row.get("Close")), "v": _num(row.get("Volume"))})
     return rows
+
+
+def _iso_date(value) -> date | None:
+    try:
+        return date.fromisoformat(str(value)[:10])
+    except (TypeError, ValueError):
+        return None
+
+
+def observations(frames: dict[str, pd.DataFrame], previous: dict | None, symbols: set[str],
+                 session: date) -> dict:
+    """The newest bar per symbol for the recorded signals -- the trades, the
+    cut names, the charted bursts, the anticipation list, the open plans --
+    and, for OBSERVATION_DAYS, the symbols an earlier record observed. A
+    public, per-symbol observation the page's Following shelf reads,
+    derived from bars already fetched: nothing is requested for it. A symbol
+    with no frame tonight keeps its last observation, dated as it was; a
+    symbol with neither is not listed. A committed fixture's block is never
+    carried (load_previous() drops it with the rest of the fixture)."""
+    carried: dict[str, dict] = {}
+    block = (previous or {}).get("observations")
+    prior = block.get("symbols") if isinstance(block, dict) else None
+    if isinstance(prior, dict):
+        for sym, obs in prior.items():
+            since = _iso_date(obs.get("since")) if isinstance(obs, dict) else None
+            if isinstance(sym, str) and since is not None and 0 <= (session - since).days <= OBSERVATION_DAYS:
+                carried[sym] = obs
+    out: dict[str, dict] = {}
+    for sym in sorted(set(symbols) | set(carried)):
+        prev = carried.get(sym)
+        df = frames.get(sym)
+        rows = series_of(df, 1) if df is not None and len(df) else []
+        if rows:
+            out[sym] = dict(rows[-1], since=prev["since"] if prev and _iso_date(prev.get("since")) else session.isoformat())
+        elif prev is not None:
+            out[sym] = dict(prev)
+    return {"as_of": session.isoformat(), "days": OBSERVATION_DAYS, "symbols": out}
 
 
 def _num(value) -> float | None:
@@ -642,8 +681,12 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                                                         "status": run_status(rep, closed),
                                                         "published_at": generated})
         account_block = account.to_dict() | {"notes": plan.account_notes(account)}
+        observed = observations(frames, previous,
+                                keep_series | {r["ticker"] for r in lists.get("top", []) + lists.get("also_quiet", []) if r.get("ticker")}
+                                | {o["ticker"] for o in open_plans if o.get("ticker")}, session)
         data = report.build(run_block, account_block, build_rules(uni), breadth_block, published_bursts,
-                            trades, beyond_cap, budget, lists, open_plans, scorecard, nights, generated)
+                            trades, beyond_cap, budget, lists, open_plans, scorecard, nights, generated,
+                            observations=observed)
         report.write(data, docs / DATA_FILE)
         if not dry_run:
             record.save(rec, docs)
