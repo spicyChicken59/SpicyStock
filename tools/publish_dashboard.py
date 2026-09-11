@@ -2,7 +2,7 @@
 
 GitHub documents that GITHUB_TOKEN pushes do not trigger Pages builds. The
 publication workflow requests one explicitly, then checks the actual public
-HTML, snapshot and ledger against the committed checkout. No market-data,
+HTML, record, picks and script against the committed checkout. No market-data,
 scoring or delivery credentials are used, and no scan artifacts are read.
 """
 from __future__ import annotations
@@ -19,7 +19,7 @@ from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 
 
-PUBLIC_FILES = ("index.html", "data.json", "ledger.json")
+PUBLIC_FILES = ("index.html", "data.json", "picks.json", "app.js")
 WAIT_SECONDS = 480
 
 
@@ -59,7 +59,7 @@ def publish(repository: str, root: Path) -> None:
     queued = github_api(repository, "pages/builds", "POST")
     if queued.get("status") not in {"queued", "building", "built"}:
         raise RuntimeError("GitHub did not acknowledge a Pages build request.")
-    print("Pages build requested; checking the public HTML, snapshot and ledger.", flush=True)
+    print("Pages build requested; checking the public HTML, data.json, picks.json and app.js.", flush=True)
     deadline = time.monotonic() + WAIT_SECONDS
     pending = list(PUBLIC_FILES)
     while time.monotonic() < deadline:
@@ -78,7 +78,7 @@ def publish(repository: str, root: Path) -> None:
             if not matches:
                 pending.append(name)
         if not pending:
-            print("Verified: public index.html, data.json and ledger.json match committed main.")
+            print("Verified: public index.html, data.json, picks.json and app.js match committed main.")
             return
         print("Waiting for Pages: " + ", ".join(pending), flush=True)
         time.sleep(max(0, min(10, deadline - time.monotonic())))

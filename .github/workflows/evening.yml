@@ -1,139 +1,93 @@
 name: Evening scan (6:16 PM ET)
-# WHICH RUN THIS ROW IS, in the Actions list, before anyone opens it. Four
-# different things fire this workflow and every row read "Evening scan
-# (6:16 PM ET)": the live cron, the DST no-op that correctly did nothing (a
-# green tick for a run that never scanned), a rehearsal, and a backfill of a
-# session the clock did not pick. The holiday week is four red rows and a
-# reader needs to know which.
+# The one scheduled run. It reads the whole US common-stock market after the
+# close, grades tonight's bursts, writes docs/data.json + docs/picks.json and
+# commits them back so GitHub Pages can publish the plan for tomorrow.
 #
-# The cron branch names the cron ITSELF rather than "EDT"/"EST" alone,
-# because which of the pair is the no-op depends on today's offset and this
-# label is composed before the job starts. An unregistered cron falls through
-# to its own string instead of borrowing the other slot's name -- a ternary
-# whose last branch is a guess is how a row lies about itself. The test in
-# tests/test_docs_are_true.py reads both crons out of the schedule block
-# below, so adding one without labelling it fails there.
-#
-# `inputs` on a SCHEDULED run is the empty context, and that is not an
-# assumption: the persist step below has read `inputs.dry_run != true` on
-# every scheduled run since it landed, including the ones whose guard let the
-# pipeline step run and fail preflight, and a context error there would have
-# failed the workflow rather than skipping a step. The schedule branch
-# short-circuits before it anyway.
+# Two cron pairs, because GitHub crons are UTC and the US switches between
+# EDT and EST: the guard below runs only the slot that matches today's offset.
+#   6:16 PM ET  -> "16 22" (EDT) / "16 23" (EST)   the primary run
+#   8:16 PM ET  -> "16 0"  (EDT) / "16 1"  (EST)   the retry, next UTC day
+# The retry runs only when docs/data.json does not already hold tonight's
+# session (a failed or late primary), so a normal night runs once. Measured
+# lateness on this repository is 5-17 minutes per slot, never zero.
 run-name: >-
-  Evening ${{ github.event_name == 'schedule'
-  && (github.event.schedule == '16 22 * * 1-5' && 'cron 16 22 * * 1-5, the EDT slot'
-  || (github.event.schedule == '16 23 * * 1-5' && 'cron 16 23 * * 1-5, the EST slot'
-  || format('cron {0}', github.event.schedule)))
-  || (github.event_name == 'push' && 'selection refresh (no email)'
-  || (inputs.dry_run == true && 'rehearsal'
-  || (inputs.session != '' && format('backfill {0}', inputs.session)
-  || 'dispatch'))) }} ${{ inputs.skip_email == true && '(no email)' || '' }}
+  ${{ github.event_name == 'workflow_dispatch'
+      && (inputs.dry_run == true && 'Evening rehearsal'
+          || (inputs.session != '' && format('Evening backfill {0}', inputs.session)
+              || 'Evening dispatch'))
+      || format('Evening cron {0}', github.event.schedule) }}
 on:
-  push:
-    branches: [main]
-    paths: [src/universe.py]
   schedule:
-    # These crons ARE the trigger. An earlier design used an external scheduler
-    # (cron-job.org) hitting workflow_dispatch, with these as backup; that is no
-    # longer set up and you do not need it. The guard below still works
-    # standalone: the first matching cron of the day finds no results artifact
-    # and runs. Both crons are registered; the guard no-ops the wrong one for
-    # the current DST offset, so the effective fire time is 6:16 PM ET.
-    - cron: "16 22 * * 1-5"   # backup while US is on EDT (UTC-4)
-    - cron: "16 23 * * 1-5"   # backup while US is on EST (UTC-5)
+    - cron: "16 22 * * 1-5"   # primary while US is on EDT (UTC-4)
+    - cron: "16 23 * * 1-5"   # primary while US is on EST (UTC-5)
+    - cron: "16 0 * * 2-6"    # retry while US is on EDT (8:16 PM ET = 00:16 UTC next day)
+    - cron: "16 1 * * 2-6"    # retry while US is on EST
   workflow_dispatch:
     inputs:
-      skip_email:
-        description: "Publish a real scan without sending email"
-        type: boolean
-        default: false
       session:
-        description: "Backfill: the session to scan, YYYY-MM-DD. Leave empty to scan the session the clock says."
+        description: "Backfill: the session to scan, YYYY-MM-DD. Leave empty to scan the newest session the bars carry."
         required: false
         default: ""
       dry_run:
-        description: "Rehearse: scan, score and write the record into this run's artifact, but mail nothing and commit nothing back. Fill the session box too if that session is already published -- otherwise the run re-presents it and scans nothing."
+        description: "Rehearse: scan, grade and write the record into this run's artifact, but mail nothing and commit nothing back."
         type: boolean
         required: false
         default: false
+      skip_email:
+        description: "Publish a real record without sending email."
+        type: boolean
+        required: false
+        default: false
+
 permissions:
-  contents: write   # the run commits docs/ back; see "Persist the run" below
+  contents: write   # the run commits docs/ back; see "Persist the run"
   actions: read
 
-# One scan at a time. An overlapping manual run would double the day's Claude
-# spend and race the other run's push.
 concurrency:
   group: evening-scan
   cancel-in-progress: false
+
 jobs:
   scan:
     runs-on: ubuntu-latest
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
-      - name: Guard — external dispatch runs always; backup cron only if needed
+      - name: Guard — the slot for today's UTC offset; the retry only if tonight is unpublished
         id: guard
-        env:
-          SCAN_UNIVERSE_MODE: ${{ vars.SCAN_UNIVERSE || 'adaptive' }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -o pipefail
           OFFSET=$(TZ=America/New_York date +%z)   # -0400 = EDT, -0500 = EST
-          if [ "$OFFSET" = "-0400" ]; then BACKUP="16 22 * * 1-5"; else BACKUP="16 23 * * 1-5"; fi
+          if [ "$OFFSET" = "-0400" ]; then PRIMARY="16 22 * * 1-5"; RETRY="16 0 * * 2-6"
+          else PRIMARY="16 23 * * 1-5"; RETRY="16 1 * * 2-6"; fi
           FIRED="${{ github.event.schedule }}"
           GO=false
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "push" ]; then
-            GO=true   # primary path: external scheduler or manual run
-          elif [ "$FIRED" = "$BACKUP" ]; then
-            # "Already ran today" used to mean "any evening-* artifact was
-            # CREATED on today's UTC date", and both halves of that were wrong.
-            # The artifact step uploads on failure too -- so a preflight
-            # failure, or a Run-workflow click at lunch to test the secrets,
-            # left an artifact that silenced that night's cron. And an EST
-            # night starts at 23:16 UTC, so a run over ~44 minutes uploaded
-            # under TOMORROW's UTC date and silenced the following night. Both
-            # traced through this exact shell against real artifact payloads.
-            #
-            # A run that published names its artifact after the SESSION it
-            # scanned (see "Keep the run's artifacts"); one that did not is
-            # named evening-failed-<id> and counts for nothing here. The
-            # session a run tonight would scan is today's date in market
-            # time, which is what current_session() answers at this hour.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            GO=true
+          elif [ "$FIRED" = "$PRIMARY" ]; then
+            GO=true
+          elif [ "$FIRED" = "$RETRY" ]; then
+            # Tonight's session is today's date in market time (it is still the
+            # evening in New York at 8:16 PM). Run only if the committed record
+            # does not already carry it; a holiday publishes a "closed" record
+            # for the previous session, whose expected_session is today, so it
+            # counts as published too.
             SESSION=$(TZ=America/New_York date +%Y-%m-%d)
-            DONE=$(gh api "repos/${{ github.repository }}/actions/artifacts?per_page=100" 2>/dev/null \
-              | jq -r --arg session "$SESSION" --arg branch "$GITHUB_REF_NAME" \
-                '[.artifacts[] | select(.name | startswith("evening-" + $session + "-"))
-                  | select(.workflow_run.head_branch == $branch)] | length') || DONE=0
-            # An artifact is a backup, not a commit receipt: a branch test or
-            # rejected persist push must not silence the real night's scan.
-            # This step runs immediately after checkout, so data.json is the
-            # branch's committed snapshot, not the earlier run's local file.
-            PUBLISHED=false
-            UNIVERSE='data/symbols.txt (checked in)'
-            if [ "${SCAN_UNIVERSE_MODE:-adaptive}" = "adaptive" ]; then
-              UNIVERSE='adaptive US common stocks (Nasdaq + Alpaca)'
-            fi
-            if jq -e --arg session "$SESSION" --arg universe "$UNIVERSE" \
-              '.run.date == $session and .run.type == "evening"
-                and .run.fixture != true and .run.universe.label == $universe
-                and (.candidates | type == "array")' docs/data.json > /dev/null 2>&1; then
-              PUBLISHED=true
-            fi
-            if [ "$DONE" = "0" ] || [ "$PUBLISHED" != "true" ]; then
-              GO=true
-              echo "Backup trigger: no matching artifact and committed universe record — running now."
+            if jq -e --arg s "$SESSION" \
+              '(.run.session == $s) or (.run.expected_session == $s)' docs/data.json > /dev/null 2>&1; then
+              echo "Retry: tonight ($SESSION) is already published — skipping."
             else
-              echo "Backup trigger: this branch already committed the session's universe run — skipping."
+              GO=true
+              echo "Retry: no record for $SESSION — running now."
             fi
+          else
+            echo "Not this slot ($FIRED; offset $OFFSET) — skipping."
           fi
           echo "go=$GO" >> "$GITHUB_OUTPUT"
-          echo "offset=$OFFSET fired='$FIRED' -> go=$GO"
       - uses: actions/setup-python@v5
         if: steps.guard.outputs.go == 'true'
         with:
           python-version: "3.12"
-          cache: pip
       - name: Install dependencies
         if: steps.guard.outputs.go == 'true'
         run: pip install -r requirements.txt
@@ -148,158 +102,45 @@ jobs:
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
-          # The one knob a failing feed needs, and CI could not reach it: the
-          # scan asks for sip, and if an account may not query it the
-          # run aborts with FeedNotAuthorizedError naming the feed. Without
-          # this the only way to switch to 'iex' was to edit this file. A
-          # repository VARIABLE rather than a secret -- it is not a credential
-          # -- and an unset one expands to '', which _feed_from_env() already
-          # treats as "use the default".
+          # Repository VARIABLES (not secrets): the feed, the universe mode and
+          # the account the plans are sized for. Unset expands to '' = default.
           SCAN_FEED: ${{ vars.SCAN_FEED }}
-          SCAN_UNIVERSE: ${{ vars.SCAN_UNIVERSE || 'adaptive' }}
-          SCAN_SEND_EMAIL: ${{ (github.event_name == 'push' || inputs.skip_email == true) && 'false' || 'true' }}
-          # A backfill from the Run-workflow form: the `session` box above,
-          # which a scheduled run does not have, so it arrives as '' and the
-          # scanner derives the session from the clock as before. A pinned
-          # session is exempt from the mode/clock check, re-scans a session
-          # the record may already hold and replaces that entry -- which is
-          # what a backfill is for. SCAN_SESSION_DATE was documented for a
-          # shell only, and the first live day needed one from here.
+          SCAN_UNIVERSE: ${{ vars.SCAN_UNIVERSE }}
+          ACCOUNT_EQUITY: ${{ vars.ACCOUNT_EQUITY }}
+          RISK_PCT: ${{ vars.RISK_PCT }}
+          SCAN_SEND_EMAIL: ${{ inputs.skip_email == true && 'false' || 'true' }}
           SCAN_SESSION_DATE: ${{ inputs.session }}
-          # A rehearsal from the same form. --dry-run skips only the email (and
-          # the failure notice), so a rehearsal still scans, scores and writes
-          # docs/ -- into this run's artifact, since the persist step below
-          # skips a dry run and the artifact is named so the backup-cron guard
-          # does not count it as the night's run. It is how the first request
-          # whose window reaches past the clock was tried before the first
-          # scheduled evening asked for one. A scheduled run has no box, so
-          # this expands to '' and the command is the plain one.
           DRY_RUN_FLAG: ${{ inputs.dry_run == true && '--dry-run' || '' }}
-        # THE EXIT CODE IS CAPTURED HERE AND RE-RAISED AT THE END OF THE JOB,
-        # so that "Persist the run" can tell a DEGRADED night from a broken one.
-        # It could not before, and the cost was the whole point of the project:
-        # exit 2 means the run scanned, rendered, paid for up to MAX_TO_SCORE
-        # Claude calls, wrote a complete docs/data.json and docs/ledger.json and
-        # MAILED the shortlist -- and then noted a problem. A `run:` step fails
-        # on any non-zero code, and the persist step's `if:` carries no status
-        # function, so Actions ANDs success() into it and skipped it. The
-        # night's record died with the container, having been paid for.
-        #
-        # Not a rare corner: one chart that will not render degrades a run, and
-        # so does one Claude fallback, >10% stale symbols, an unreadable history
-        # or a mode/clock disagreement. This project's own 30-session fixture,
-        # written by driving this same pipeline, is 2 degraded in 30 -- and its
-        # NEWEST run is one of them. src.pipeline's own test is named
-        # test_a_failed_forward_return_fetch_degrades_the_run_but_still_publishes:
-        # publishing while degraded is the code's deliberate contract, and this
-        # workflow was throwing the publication away.
-        #
-        # The job's COLOUR is unchanged -- "Report the pipeline's verdict" below
-        # re-raises the same code, so a degraded night is still red. Only the
-        # record is rescued. Whether red is right for exit 2 is a separate
-        # question and deliberately not answered here.
+          GITHUB_RUN_ID_FOR_RECORD: ${{ github.run_id }}
+        # The exit code is captured here and raised at the end of the job, so
+        # that "Persist the run" can keep a DEGRADED (2) or FAILED-AFTER-
+        # PUBLISH (3) record: both wrote a complete docs/data.json.
         run: |
-          # Selector changes refresh the newest closed session once, silently.
-          # Only src/universe.py on main triggers this; docs commit-back cannot loop.
-          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-            SCAN_SESSION_DATE=$(python -c 'from src.scanner import current_session; print(current_session().isoformat())')
-            export SCAN_SESSION_DATE
-          fi
           set +e
           python -m src.pipeline evening $DRY_RUN_FLAG
           code=$?
           set -e
           echo "code=$code" >> "$GITHUB_OUTPUT"
-          # The session this run PUBLISHED, for the artifact's name below; empty
-          # when nothing was published, which the name expression reads as
-          # "a failed run". The persist step reads the same field again for the
-          # commit message -- two one-line reads of one file, each pinned by
-          # its own test, rather than one read threaded through three steps.
-          session=$(python -c 'import json;print(json.load(open("docs/data.json"))["run"]["date"])' 2>/dev/null || true)
+          session=$(python -c 'import json;print(json.load(open("docs/data.json"))["run"]["session"])' 2>/dev/null || true)
           echo "session=$session" >> "$GITHUB_OUTPUT"
           echo "pipeline exited ${code}"
       - name: Persist the run
         # 0 is clean, 2 is DEGRADED-but-published, 3 is FAILED-after-publishing.
-        # Only 1 means there is nothing trustworthy to commit. Compared as
-        # strings because step outputs are strings.
-        #
-        # 3 is here because 1 was covering two different nights. The record is
-        # written BEFORE the email, so a run that dies sending it -- an
-        # unverified RESEND_FROM domain is the likely one -- has already paid
-        # for the scan, the charts and every Claude call and has a complete
-        # docs/ to show for it. It exited 1, this step skipped, and the night
-        # died with the container: the same defect as the degraded one above,
-        # one stage later, found by sweeping for it rather than by waiting.
-        # src.pipeline's EXIT_FAILED_AFTER_PUBLISH is the other half.
-        # And never a rehearsal: a dry run writes a record it must not commit,
-        # which is what makes it safe to click at lunch. A scheduled run has
-        # no dry_run input, and a null is not true.
+        # Only 1 means there is nothing trustworthy to commit. Never a rehearsal.
         if: >-
           steps.guard.outputs.go == 'true'
           && inputs.dry_run != true
           && (steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2'
               || steps.pipeline.outputs.code == '3')
-        # Without this the ledger cannot accumulate: docs/ is written inside the
-        # container and dies with it, so every CI run would start a fresh
-        # history and the forward returns step 9 exists to collect would never
-        # span more than one session. Market data is live-only — a rejected push
-        # discards a snapshot that cannot be re-fetched — so rebase onto
-        # whatever landed during the run and retry.
-        #
-        # `git add docs` — NOT `git add docs results`. results/ is gitignored on
-        # purpose (README, "Notes"), and `git add` on an ignored path exits 1,
-        # which under Actions' `bash -e` would have aborted this step before
-        # the commit: docs/ staged and never committed, the container taking
-        # it, and the history this exists to accumulate restarting every night
-        # while the workflow reported it was being kept. Step 10 found it by
-        # running `git add` against these rules rather than reading them, and
-        # before any scheduled run reached this step (every one at the time
-        # had stopped at preflight), so it never fired once — an earlier
-        # version of this comment said it had. Both the streaks and the
-        # morning follow-through are built on this step actually working, and
-        # it does: first on 6 Sep 2026 (run 34014332161, commit f0780c7,
-        # "run 2026-09-04"), and twice more that day. NOT on every dispatch
-        # past preflight -- the line below says why itself. A run that
-        # re-presents an already-published session leaves docs/ byte-identical,
-        # `git diff --staged --quiet` short-circuits, and the step exits 0
-        # having committed nothing: run 34018706843, seventeen hours before an
-        # earlier version of this comment claimed every such dispatch had
-        # committed. The half of it still traced only against a stub `git` is
-        # the rebase loop at the bottom, because no push has been rejected yet.
-        #
-        # docs/charts/*.png is NOT committed either, and that is now a rule in
-        # .gitignore rather than an accident of this step failing: ~57 KB a
-        # chart, up to 25 a night, is about 360 MB a year of history that does
-        # not delta-compress and cannot be taken back out. `git add docs` skips
-        # ignored files inside a directory (it only exits 1 when an ignored
-        # path is named), so this line needs no change for it. See CHARTS_DIR
-        # in src/pipeline.py for the other half of that decision.
-        #
-        # Every failure below is either checked or fatal. `set -e` is on, so a
-        # command that fails anywhere except the left of `&&` or inside `if`
-        # ends the step: `git pull --rebase` used to sit bare in the loop, so
-        # the FIRST rejected push aborted the step and iterations 2 and 3 never
-        # ran. The retry existed only in the comment above it. Traced with
-        # `bash -ex`, which is also how the `git add` bug above was found.
+        # `git add docs` -- charts/*.png are gitignored and skipped. The retry
+        # loop really runs three times (traced with bash -ex against a stub
+        # git); a conflict is a failure, not something to paper over.
         run: |
           git config user.name  "spicystock"
           git config user.email "actions@github.com"
           git add docs
           git diff --staged --quiet && exit 0
-          # The SESSION this run read, not the UTC day it happened to finish on.
-          # Step 10 made "name the session you really read" a rule for the
-          # subject line, the table heading and the CSV filename; the commit
-          # message was the one artifact still naming a clock. Two ways they
-          # differ: an EST evening starts at 23:16 UTC, so a run over ~44
-          # minutes commits under TOMORROW's date, and a SCAN_SESSION_DATE
-          # backfill scans an old session and labels it today. Both are the
-          # silent relabelling step 10 exists to end.
-          #
-          # The pipeline has already written docs/data.json by here -- this
-          # step only runs on 0, 2 or 3, and all three publish. If it somehow
-          # cannot be read, the message says the date is a commit time rather
-          # than quietly passing one off as the other.
-          SESSION=$(python -c 'import json;print(json.load(open("docs/data.json"))["run"]["date"])' 2>/dev/null || true)
+          SESSION=$(python -c 'import json;print(json.load(open("docs/data.json"))["run"]["session"])' 2>/dev/null || true)
           if [ -n "$SESSION" ]; then
             git commit -m "run $SESSION"
           else
@@ -309,56 +150,32 @@ jobs:
             if git push; then exit 0; fi
             echo "push $attempt was rejected — rebasing onto what landed during the run"
             if ! git pull --rebase origin "${GITHUB_REF_NAME}"; then
-              # A conflict, not a race. Leaving the rebase half-applied would
-              # make the next push send something nobody wrote, so put the tree
-              # back and fail loudly: market data is live-only, and the run's
-              # own artifact below still holds this snapshot.
               git rebase --abort || true
-              echo "::error::rebase onto ${GITHUB_REF_NAME} conflicted; docs/ was not pushed — the snapshot is in this run's artifact."
+              echo "::error::rebase onto ${GITHUB_REF_NAME} conflicted; docs/ was not pushed — the record is in this run's artifact."
               exit 1
             fi
           done
-          echo "::error::docs/ could not be pushed after 3 attempts; the history did not accumulate tonight."
+          echo "::error::docs/ could not be pushed after 3 attempts; tonight's record did not reach the branch."
           exit 1
       - name: Keep the run's artifacts
-        # Not failure(), and two reasons for the change. It is the 30-day copy
-        # of results/*.csv README documents — which a failure-only upload never
-        # produced on a run that worked. And it is the "an evening run already
-        # happened today" signal the guard above queries: until the `git add`
-        # fix above, that signal existed only because the persist step failed on
-        # every single run, so repairing that step would otherwise have quietly
-        # deleted the guard's only input.
-        #
-        # `success() || failure()` rather than `always()`, which the first
-        # version of this used: always() also fires on a CANCELLED run, and the
-        # artifact it uploads then tells the guard an evening run completed
-        # today — so a manual cancel would silently suppress the backup cron
-        # that exists to catch exactly that. A cancelled run did not happen.
         if: (success() || failure()) && steps.guard.outputs.go == 'true'
         uses: actions/upload-artifact@v4
         with:
-          # evening-<session>-<id> when the run published (exit 0, 2 or 3 --
-          # the same three the persist step keeps), evening-failed-<id>
-          # otherwise, and evening-dryrun-<id> for a rehearsal whatever it
-          # exited, because a rehearsal that published would otherwise wear
-          # the night's name and silence the backup cron. The guard counts
-          # only the first shape, so a failed run, a rehearsal or a test click
-          # never silences that night's cron, and a session is a session
-          # whatever UTC day the upload landed on.
           name: ${{ inputs.dry_run == true && format('evening-dryrun-{0}', github.run_id) || ((steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2' || steps.pipeline.outputs.code == '3') && steps.pipeline.outputs.session != '' && format('evening-{0}-{1}', steps.pipeline.outputs.session, github.run_id) || format('evening-failed-{0}', github.run_id)) }}
           path: |
             docs/data.json
-            docs/ledger.json
-            results/
+            docs/picks.json
+            docs/charts/
           retention-days: 30
       - name: Report the pipeline's verdict
-        # The exit code the pipeline step captured rather than raised, raised
-        # here instead — LAST, so that the persist and the artifact upload have
-        # both already happened. Without this the job would go green on a run
-        # that failed, which is the opposite of the mistake being fixed above.
-        #
-        # No status function on purpose: if the persist step failed, the job is
-        # already red for a reason that matters more than this one, and this
-        # step is skipped rather than overwriting it.
+        # Exit 2 (degraded but published) is a warning, not a red run: a
+        # degraded night that published is a night that worked, and a week of
+        # red taught the owner to ignore red. 1 and 3 stay red.
         if: steps.guard.outputs.go == 'true'
-        run: exit ${{ steps.pipeline.outputs.code }}
+        run: |
+          code=${{ steps.pipeline.outputs.code }}
+          if [ "$code" = "2" ]; then
+            echo "::warning::The run published but was DEGRADED — read run.problems on the page."
+            exit 0
+          fi
+          exit $code

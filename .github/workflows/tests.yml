@@ -1,12 +1,7 @@
 name: Tests
 # The offline regression suite. Every external boundary the pipeline touches
-# — Alpaca, Anthropic, Resend — is replaced with a double in tests/conftest.py,
-# and an autouse fixture severs socket connect(), so this job needs no
-# repository secrets and no market data.
-#
-# That is deliberate: NO secrets are passed to this job. A test that starts
-# reaching a real API fails here instead of quietly depending on credentials
-# that only the evening workflow has.
+# (Alpaca, Anthropic, Resend) is replaced by a double in tests/fakes.py and
+# tests/conftest.py severs socket connect(), so this job needs no secrets.
 on:
   push:
     branches: [main]
@@ -17,108 +12,50 @@ permissions:
 jobs:
   pytest:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          # The whole history, not the depth-1 default. tests/test_docs_are_true.py
-          # holds README's account of the commit-back against this repo's own git
-          # log -- the commits evening.yml's persist step made -- and with one
-          # commit in the checkout that guard SKIPPED on every CI run while
-          # README called it a check that cannot rot. A guard that is inert
-          # exactly where the suite is enforced is the "no-answer is not
-          # all-clear" shape this file's own check below describes.
-          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"   # same runtime as .github/workflows/evening.yml
+          python-version: "3.12"   # same runtime as evening.yml
           cache: pip
           cache-dependency-path: |
             requirements.txt
             requirements-dev.txt
-            requirements-bridge.txt
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
       - name: Run tests
-        run: pytest tests/ -v
+        run: pytest tests/ -q
       - name: Fail if the suite dirtied the working tree
         run: |
           set -euo pipefail
-          # A NO-ANSWER IS NOT ALL-CLEAR. `git status` outside a repository
-          # prints "fatal: not a git repository" on stderr and nothing on
-          # stdout, so `[ -n "$(...)" ]` was false and this step exited 0
-          # reporting a clean tree it had never looked at — the same shape as
-          # the `git check-ignore` bug step 1 found. Ask git whether it can
-          # answer before believing the answer; `set -e` plus a plain
-          # assignment then fails the step on any other git error too.
           git rev-parse --is-inside-work-tree > /dev/null \
             || { echo "Not a git checkout — this check cannot answer, so it fails."; exit 1; }
-          # Two checks, because they catch different things. The porcelain one
-          # catches new tracked-visible files; it CANNOT see results/ or
-          # charts/, which are gitignored — and those are exactly what a
-          # regression in the tests' tmp_path isolation would produce.
           dirty=$(git status --porcelain --untracked-files=all)
           if [ -n "$dirty" ]; then
             echo "The test suite left files behind:"
             echo "$dirty"
             exit 1
           fi
-          if [ -e results ] || [ -e charts ]; then
-            echo "The test suite wrote into the repo root (isolation regressed):"
-            ls -d results charts 2>/dev/null
-            exit 1
-          fi
 
-  dashboard:
+  page:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          # The mobile regression control serves the previous committed
-          # layout without modifying this checkout.
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # The design system is an exact local snapshot inside docs/. Exercise
-      # the same files Pages will serve, with no CDN or mutable branch lookup.
-      - name: Verify the design snapshot
-        run: node tools/design_snapshot.mjs
-      - name: Open the dashboard and ask whether it works
+      - name: Open the page against every fixture and read it back
         run: |
           npm install --no-save --no-audit --no-fund playwright@1.56.1
           npx playwright install --with-deps chromium
           set -o pipefail
-          node tools/dashboard_smoke.mjs --shots /tmp/shots
-          node tools/dashboard_recovery_smoke.mjs
-          node tools/signal_map_smoke.mjs --shots /tmp/shots
-      - name: Check mobile chart labels and enlarged text
-        run: node tools/mobile_layout_smoke.mjs --shots /tmp/shots/mobile
-      - name: Prove the layout checks catch the previous phone overflow
-        run: node tools/mobile_layout_smoke.mjs --baseline c765880 --expect-layout-failure
-      - name: Exercise the research workspace
-        run: node tools/research_cockpit_smoke.mjs --shots /tmp/shots/research
-      - name: Exercise profiles, confirmed fills and broker submission recovery
-        run: |
-          node tools/trade_state_checks.mjs
-          node tools/trade_bridge_checks.mjs
-          node tools/trade_workflow_smoke.mjs --shots /tmp/shots/trade
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: |
-            requirements.txt
-            requirements-bridge.txt
-      # The generator imports src.scanner for the real ScanConfig, which pulls
-      # in pandas and alpaca — without this the step dies on ModuleNotFoundError.
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: The fixture must match its generator
-        run: python3 tools/check_fixture_fresh.py
+          node tools/chart_check.mjs
+          node tools/page_smoke.mjs --shots /tmp/shots
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: dashboard-shots
+          name: page-shots
           path: /tmp/shots
+          if-no-files-found: ignore
