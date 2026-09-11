@@ -225,7 +225,8 @@ def test_a_closed_market_republishes_the_previous_sessions_plans_unchanged(marke
     held = {p["ticker"]: p for p in data["open_plans"]}
     assert held["AAA"]["status"] == "pending" and "No session since the 2026-09-09 pick" in held["AAA"]["instruction"]
     assert (docs / record.PICKS_FILE).read_text() == picks_before
-    assert data["nights"][-1]["status"] == "closed"
+    # the holiday is filed under the day nobody traded; the night before keeps its own row
+    assert [(n["session"], n["status"]) for n in data["nights"]] == [("2026-09-09", "ok"), ("2026-09-10", "closed")]
 
 
 def test_a_closed_first_night_has_nothing_to_carry_and_says_so(market, claude, fake_resend, fake_alpaca, tmp_path):
@@ -242,7 +243,8 @@ def test_a_closed_night_whose_email_failed_is_a_degraded_night_in_the_row(market
     fake_resend.raises = RuntimeError("refused")
     rep, data, docs = evening(tmp_path, market)
     assert rep.exit_code() == pipeline.EXIT_FAILED_AFTER_PUBLISH
-    assert data["run"]["status"] == "degraded" and data["nights"][-1]["status"] == "degraded"
+    assert data["run"]["status"] == "degraded"
+    assert data["nights"][-1] == {"session": SESSION, "status": "degraded", "published_at": data["generated"]}
 
 
 def test_an_a_plus_burst_the_account_cannot_size_is_cut_not_traded(market, claude, fake_resend, tmp_path, monkeypatch):

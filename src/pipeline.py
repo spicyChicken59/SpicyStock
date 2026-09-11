@@ -601,8 +601,8 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         scorecard = record.scorecard(rec, frames, session.isoformat())
 
         rep.stage = "publish"
-        miss = report.closest_miss([_strip_private(b) for b in bursts], trades)
-        keep_series = set(trades) | ({miss["ticker"]} if miss else set())
+        miss = report.closest_miss([_strip_private(b) for b in bursts], trades, beyond_cap)
+        keep_series = set(trades) | set(beyond_cap) | ({miss["ticker"]} if miss else set())   # every card gets its chart
         published_bursts = []
         for b in bursts:
             row = _strip_private(b)
@@ -630,7 +630,9 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             "elapsed_seconds": elapsed, "fetch_seconds": round(fetch_seconds, 1),
             "rules_version": RULES_VERSION_NOTE, "type": "evening",
         }
-        nights = record.nights(previous.get("nights"), {"session": session.isoformat(),
+        # a closed night is filed under the session that did not happen, so the
+        # reliability row shows the holiday as closed and keeps the night before
+        nights = record.nights(previous.get("nights"), {"session": night_session(expected, session, closed),
                                                         "status": run_status(rep, closed),
                                                         "published_at": generated})
         account_block = account.to_dict() | {"notes": plan.account_notes(account)}
@@ -688,9 +690,17 @@ def restamp(data: dict, rep: RunReport, closed: bool) -> None:
     degraded night clean."""
     data["run"]["status"] = run_status(rep, closed)
     data["run"]["problems"] = list(rep.problems)
+    run = data["run"]
+    key = run.get("expected_session") if run.get("session_state") == "closed" else run.get("session")
     for night in data.get("nights", []):
-        if night.get("session") == data["run"].get("session"):
-            night["status"] = data["run"]["status"]
+        if night.get("session") == key:
+            night["status"] = run["status"]
+
+
+def night_session(expected: date, session: date, closed: bool) -> str:
+    """The session a night is filed under in the reliability row: the one
+    it published for, which on a closed night is the day nobody traded."""
+    return (expected if closed else session).isoformat()
 
 
 def run_status(rep: RunReport, closed: bool) -> str:

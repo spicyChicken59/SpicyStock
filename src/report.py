@@ -81,7 +81,7 @@ H1_FAILED = "No verdict for {expected}."
 
 VERBS: tuple[str, ...] = ("trade", "trade small", "stand aside", "keep cash", "hold", "none")
 ORDERS_ACTION = ("Tomorrow's orders", "#orders")
-HOLD_ACTION = ("What you hold", "#open-plans")
+HOLD_ACTION = ("What you hold", "#hold")
 
 #: What the regime's size multiplier says in words. Read off the published
 #: number, never off the verdict, so a moved multiplier moves the sentence.
@@ -89,9 +89,12 @@ SIZE_WORDS: dict[float, str] = {1.0: "Full size.", 0.5: "Half size.", 0.0: "No n
 
 #: The chip word for an open plan's status. An unknown word is printed as
 #: itself, upper-cased, rather than mapped onto the nearest known one.
+#: One word per status src.record can write; docs/app.js prints the same ten
+#: (tests/test_docs.py holds the two equal).
 PLAN_STATUS_WORDS: dict[str, str] = {
     "hold": "HOLD", "sell_half": "SELL HALF", "sell_into_strength": "SELL INTO STRENGTH",
-    "sell": "SELL", "stopped": "STOPPED", "expired": "EXPIRED", "not_filled": "NOT FILLED",
+    "exit": "SELL", "stopped": "STOPPED", "expired": "EXPIRED", "pending": "PENDING",
+    "not_filled": "NOT FILLED", "unreadable": "UNREADABLE", "unmeasured": "UNMEASURED",
 }
 
 CLOSED_SUBJECT = "Market closed — plans unchanged"
@@ -271,7 +274,7 @@ def breadth_sentence(breadth: Any) -> str:
     if up4 is not None and down4 is not None:
         facts.append(f"{up4:,} up 4% vs {down4:,} down")
     if r10 is not None:
-        facts.append(f"10-day ratio {r10:.1f}")
+        facts.append(f"10-day ratio {_ratio(r10)}")
     head = f"Breadth is {verdict}: {', '.join(facts)}." if facts else f"Breadth is {verdict}."
     mult = _num(_get(regime, "size_multiplier"))
     size = SIZE_WORDS.get(mult, f"{mult:g}× size.") if mult is not None else None
@@ -448,9 +451,18 @@ def miss_reason(burst: dict) -> str | None:
     return None
 
 
-def closest_miss(bursts: list, trades: list) -> dict | None:
-    """The highest-scored burst that is not a trade, ties broken by ticker."""
+def _ratio(value: float) -> str:
+    """A breadth ratio as the record holds it (two places at most), printed
+    the way the page prints it: 2.88 stays 2.88, 2.5 stays 2.5, 2 stays 2."""
+    return f"{value:.2f}".rstrip("0").rstrip(".")
+
+
+def closest_miss(bursts: list, trades: list, cut: list | None = None) -> dict | None:
+    """The highest-scored burst that is neither a trade nor a plan the budget
+    cut (a name with an order the slots could not take is not a miss), ties
+    broken by ticker."""
     taken = set(trades) if isinstance(trades, list) else set()
+    taken |= set(cut) if isinstance(cut, list) else set()
     rest = [b for b in (bursts or []) if isinstance(b, dict) and b.get("ticker") not in taken]
     if not rest:
         return None
@@ -603,7 +615,7 @@ def build(run: dict, account: dict, rules: dict, breadth: dict, bursts: list[dic
     for burst in body["bursts"]:
         if isinstance(burst, dict) and not _text(burst.get("summary")):
             burst["summary"] = summary(burst)
-    miss = closest_miss(body["bursts"], body["trades"])
+    miss = closest_miss(body["bursts"], body["trades"], body["beyond_cap"])
     data = {
         "schema_version": SCHEMA_VERSION,
         "generated": _iso(generated),
@@ -742,9 +754,9 @@ def _trade_block(burst: dict, breadth: dict | None) -> str:
     return "".join(parts)
 
 
-def _open_plan_row(plan: dict) -> str:
+def _open_plan_row(plan: dict, hold_days: Any = None) -> str:
     word = _status_word(plan.get("status"))
-    day, of = _int(plan.get("day")), _int(_first(plan.get("of"), plan.get("horizon_sessions")))
+    day, of = _int(plan.get("day")), _int(_first(plan.get("of"), plan.get("horizon_sessions"), hold_days))
     when = []
     if day is not None:
         when.append(f"day {day}" + (f" of {of}" if of is not None else ""))
@@ -768,25 +780,27 @@ def _alert_row(row: dict) -> str:
              f"Shares {esc(_show(str(shares) if shares is not None else None))}"]
     setups = row.get("setups") if isinstance(row.get("setups"), list) else []
     chips = " ".join(_chip(str(s), "neutral") for s in setups if _text(str(s)))
+    if order:
+        ticket = f'<pre style="{_S_PRE}">{esc(order)}</pre>'
+    else:
+        # an alert with no ticket says so, in the words the page uses
+        why = ("breadth sizes new positions at zero tonight; keep the alert, place nothing"
+               if plan.get("action") == "no_new_longs" else _text(plan.get("reason")) or "no order tonight")
+        ticket = f'<p style="{_S_MUTED}">No order · {esc(why)}</p>'
     return (f'<div style="{_S_CARD}"><div><span style="{_S_TICKER}">{esc(row.get("ticker"))}</span>'
             + (f" &nbsp;{chips}" if chips else "")
-            + f'</div><p style="margin:8px 0 0">{" · ".join(facts)}</p>'
-            + (f'<pre style="{_S_PRE}">{esc(order)}</pre>' if order else "") + "</div>")
+            + f'</div><p style="margin:8px 0 0">{" · ".join(facts)}</p>' + ticket + "</div>")
 
 
 def _problems_block(problems: Any) -> str:
+    """The fixed sentence for each problem kind and nothing else: the message
+    the run recorded stays in the run log, on the page and in the mail alike."""
     sentences = problem_sentences(problems)
     if not sentences:
         return ""
     items = "".join(f"<li>{esc(s)}</li>" for s in sentences)
-    details = []
-    for p in problems if isinstance(problems, list) else []:
-        stage, message = _text(_get(p, "stage")), _text(_get(p, "message"))
-        if stage and message:
-            details.append(f"{stage}: {message}")
-    detail_html = (f'<p style="{_S_MUTED}">{esc(" · ".join(details))}</p>' if details else "")
     return (f'<div style="{_S_WARN}"><p style="{_S_WARN_LABEL}"><span style="color:#BE2132">// </span>'
-            f'what went wrong tonight</p><ul style="margin:0;padding-left:18px">{items}</ul>{detail_html}</div>')
+            f'what went wrong tonight</p><ul style="margin:0;padding-left:18px">{items}</ul></div>')
 
 
 def _breadth_line(breadth: Any) -> str:
@@ -803,7 +817,7 @@ def _breadth_line(breadth: Any) -> str:
     for key, label in (("ratio_5d", "5-day ratio"), ("ratio_10d", "10-day ratio")):
         value = _num(_get(breadth, key))
         if value is not None:
-            facts.append(f"{label} {value:.1f}")
+            facts.append(f"{label} {_ratio(value)}")
     return (f'<p style="margin:0 0 12px">{_chip(verdict, tone, code=False)} '
             f'<span>{esc(" · ".join(facts))}</span></p>')
 
@@ -856,7 +870,8 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
     else:
         out.append(f'<p style="margin:0 0 12px">No orders for tomorrow.</p>')
     out.append(f'<h2 style="{_S_H2}">What you hold</h2>')
-    out.extend(_open_plan_row(p) for p in open_plans)
+    hold_days = _get(data, "rules", "plan", "final_exit_day")
+    out.extend(_open_plan_row(p, hold_days) for p in open_plans)
     if not open_plans:
         out.append('<p style="margin:0 0 12px">No open plans. If you hold nothing from this screener, nothing to do.</p>')
     out.append(f'<h2 style="{_S_H2}">Alerts — set these before the open</h2>')

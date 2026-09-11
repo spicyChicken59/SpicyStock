@@ -374,9 +374,14 @@
        "tomorrow →" gutter label and the volume average hairline */
     var upTicks = [], bdMarks = [], bracket = null, tomorrow = null, volAvg = null;
     if (card && burstIndex !== null) {
-      for (i = burstIndex - upDays; i < burstIndex; i++) if (i >= 0 && bars[i].candle) upTicks.push({ index: i, x: x(i), y: r1(y(bars[i].l) + 12) });
+      /* the marks sit on the floor of the price pane under their bar's
+         column, not under each bar's low: the lows before a burst are where
+         the stop pill and the base label live, and a mark under them was the
+         one thing those labels could not be placed around */
+      var markY = r1(plot.bottom - 3);
+      for (i = burstIndex - upDays; i < burstIndex; i++) if (i >= 0 && bars[i].candle) upTicks.push({ index: i, x: x(i), y: markY });
       var bds = options.breakdownIndexes || [];
-      for (i = 0; i < bds.length; i++) { var bi = num(bds[i]); if (bi !== null && bi >= 0 && bi < n && bars[bi].candle) bdMarks.push({ index: bi, x: x(bi), y: r1(y(bars[bi].l) + 12) }); }
+      for (i = 0; i < bds.length; i++) { var bi = num(bds[i]); if (bi !== null && bi >= 0 && bi < n && bars[bi].candle) bdMarks.push({ index: bi, x: x(bi), y: markY }); }
       if (rangeExp !== null) {
         b = bars[burstIndex];
         var rtext = (Math.round(rangeExp * 10) / 10) + '× range', bx0 = r1(x(burstIndex) - bodyW / 2 - 5);
@@ -429,6 +434,8 @@
         return true;
       }
       if (stopTag) placed.push({ x: stopTag.x, y: stopTag.y, w: stopTag.w, h: stopTag.h });
+      for (var mk = 0; mk < upTicks.length; mk++) placed.push({ x: upTicks[mk].x - 4, y: upTicks[mk].y - 9, w: 8, h: 10 });
+      for (mk = 0; mk < bdMarks.length; mk++) placed.push({ x: bdMarks[mk].x - 4, y: bdMarks[mk].y - 9, w: 8, h: 10 });
       if (entryG && entryG.label) {
         var eL = entryG.label, eW = eL.text.length * CHAR + 8;
         settle(eL, [
@@ -443,27 +450,33 @@
       }
       if (burst && burst.label) {
         var bb = bars[burstIndex], bxc = x(burstIndex), bL = burst.label;
-        settle(bL, [
+        var keptBurst = settle(bL, [
           { x: bxc, y: y(bb.h) - 9, anchor: 'middle' },
           { x: bxc - bodyW / 2 - 4, y: y(bb.h) - 2, anchor: 'end' },
           { x: bxc, y: y(bb.l) + 14, anchor: 'middle' },
           { x: bxc - bodyW / 2 - 4, y: y(bb.l) + 14, anchor: 'end' },
-          { x: bxc - bodyW / 2 - 4, y: (y(bb.h) + y(bb.l)) / 2 + 4, anchor: 'end' }
-        ]);
+          { x: bxc - bodyW / 2 - 4, y: (y(bb.h) + y(bb.l)) / 2 + 4, anchor: 'end' },
+          { x: bxc, y: y(bb.l) + 14 + LABEL_H, anchor: 'middle' },
+          { x: bxc - bodyW / 2 - 4, y: y(bb.h) - 2 - LABEL_H, anchor: 'end' }
+        ], true);
+        if (!keptBurst) burst.label = null;   /* the card's header carries the same number */
       }
       if (boxG && boxG.label) {
-        settle(boxG.label, [
+        var keptBox = settle(boxG.label, [
           { x: boxG.x + 2, y: boxG.y - 4, anchor: 'start' },
           { x: boxG.x + 2, y: boxG.y + boxG.h + 12, anchor: 'start' },
           { x: boxG.x + boxG.w - 2, y: boxG.y - 4, anchor: 'end' },
           { x: boxG.x + boxG.w - 2, y: boxG.y + boxG.h + 12, anchor: 'end' },
           { x: boxG.x + 2, y: boxG.y - 4 - LABEL_H, anchor: 'start' },
-          { x: boxG.x + 2, y: boxG.y + boxG.h + 12 + LABEL_H, anchor: 'start' }
-        ]);
+          { x: boxG.x + 2, y: boxG.y + boxG.h + 12 + LABEL_H, anchor: 'start' },
+          { x: plot.left + 2, y: boxG.y + boxG.h + 12, anchor: 'start' },
+          { x: plot.left + 2, y: plot.top + 10, anchor: 'start' }
+        ], true);
+        if (!keptBox) boxG.label = null;   /* the box outline stays; the plan facts name the base */
       }
       if (bracket && bracket.label) {
         var rb2 = bars[burstIndex], rx = x(burstIndex), rmid = (bracket.y1 + bracket.y2) / 2 + 4;
-        var kept = settle(bracket.label, [
+        var keptBracket = settle(bracket.label, [
           { x: bracket.x - 4, y: rmid, anchor: 'end' },
           { x: rx, y: y(rb2.l) + 14, anchor: 'middle' },
           { x: rx, y: y(rb2.l) + 14 + LABEL_H, anchor: 'middle' },
@@ -473,7 +486,7 @@
           { x: bracket.x - 4, y: rmid - LABEL_H, anchor: 'end' },
           { x: rx, y: y(rb2.l) + 14 + 2 * LABEL_H, anchor: 'middle' }
         ], true);
-        if (!kept) bracket.label = null;   /* the bracket itself stays; the matrix row carries the number */
+        if (!keptBracket) bracket.label = null;   /* the bracket itself stays; the matrix row carries the number */
       }
       if (tomorrow) {
         var tL = { x: tomorrow.x, y: tomorrow.y, text: tomorrow.text, anchor: 'start' };
@@ -659,13 +672,13 @@
     }
     /* labels, on surface plates so they read over candles */
     var labels = SC.svg('g');
-    if (g.box) plate(labels, SC, g.box.label);
+    if (g.box && g.box.label) plate(labels, SC, g.box.label);
     for (i = 0; i < g.leftLabels.length; i++) {
       var ld = g.leftLabels[i].leader;
       if (ld) labels.appendChild(SC.svg('line', { 'class': 'sc-chart__leader', x1: ld.x, x2: ld.x, y1: ld.y1, y2: ld.y2 }));
       plate(labels, SC, g.leftLabels[i]);
     }
-    if (g.burst) plate(labels, SC, g.burst.label, 'sc-chart__note--strong');
+    if (g.burst && g.burst.label) plate(labels, SC, g.burst.label, 'sc-chart__note--strong');
     if (g.rangeBracket && g.rangeBracket.label) plate(labels, SC, g.rangeBracket.label);
     if (g.entry && card) plate(labels, SC, g.entry.label, 'sc-chart__note--accent');
     if (g.stopTag) {

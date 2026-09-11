@@ -99,7 +99,7 @@ including the six cover sentences and the plan instructions. The chart
 (`docs/app-chart.js`) is annotated SVG on the SpicyChicken design system
 snapshot under `docs/design-system/`.
 
-What is measured offline: 987 tests, the chart check, and the page smoke
+What is measured offline: 994 tests, the chart check, and the page smoke
 over six fixtures plus the stale and no-record states. What is NOT: the
 full-market fetch time from a runner (the dry-run dispatch measures it), a
 real Claude reply to a real chart, Resend delivering, Pages building after
@@ -143,6 +143,27 @@ printing after its pick read "buy per the plan" and held a slot; a typo in a
 workflow variable was a traceback rather than a preflight sentence; the SPY
 line's test could not fail because the fixture's SPY moved the same every
 day. Each is pinned by the test the finding named.
+
+The second reviewer read the page back in Chromium and the mail through its
+own renderer, twelve findings. The high was mine and a day old: the chart
+card's collision pass re-declared `var kept`, the name the date ticks were
+gathered under, so every card chart lost its date axis (the chart check
+holds the card's axis now). A holiday was filed under the last OPEN session,
+so the closed dot replaced the night before and the holiday read "missing"
+(`night_session()`). One absent cosmetic field took the whole page down and
+four printed `undefined`/`NaN` (the smoke drops eight fields in turn now).
+The stop pill sat on the base label at phone width (the box and burst
+labels are dropped rather than laid over it; the day marks moved to the pane
+floor). The chip said "run failed" from 7 PM while the repo's own retry
+fires at 8:16 (pending runs to 9 PM). The scorecard's readable chip was the
+page's own arithmetic over `plans` where the record's is over `settled`
+(the record's word now). Three vocabularies for one plan status (one map,
+held equal across page and mail). The closest miss named a qualified trade
+the slot cap had cut (cut names are not misses; beyond-cap bursts get their
+card, with no order). The hold button pointed at an anchor that did not
+exist. The hold bar assumed the stop under the entry (a trailed stop passes
+it). And the mail said things the page would not: the recorded problem
+message, an alert with no ticket and no caveat, ratios at one decimal.
 
 ## Open leads, written down rather than worked
 

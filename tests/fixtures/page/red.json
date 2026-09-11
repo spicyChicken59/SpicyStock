@@ -8,9 +8,9 @@
  },
  "cover": {
   "h1": "Stand aside.",
-  "dek": "Breadth is red: 5 up 4% vs 6 down, 10-day ratio 1.0. No new positions. down 4%: 6 >= the scaled alarm of 3.2 (700 of 6,500): major deterioration.",
+  "dek": "Breadth is red: 5 up 4% vs 6 down, 10-day ratio 1. No new positions. down 4%: 6 >= the scaled alarm of 3.2 (700 of 6,500): major deterioration.",
   "action_label": "What you hold",
-  "action_target": "#open-plans",
+  "action_target": "#hold",
   "verb": "stand aside"
  },
  "run": {

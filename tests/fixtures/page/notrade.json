@@ -10,7 +10,7 @@
   "h1": "Nothing qualifies. Keep cash.",
   "dek": "5 bursts found, none A-quality. The closest miss is below.",
   "action_label": "What you hold",
-  "action_target": "#open-plans",
+  "action_target": "#hold",
   "verb": "keep cash"
  },
  "run": {

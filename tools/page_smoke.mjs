@@ -138,9 +138,12 @@ async function checkVariant(browser, base, variant, data) {
   const breadthText = (await text(page, '#breadth-facts')) + '\n' + (await text(page, '#ratio-chart'));
   for (const n of data.breadth.notes) check(`${variant} note ${n.key} printed`, breadthText.includes(n.text), n.key);
 
-  // tomorrow: the trade cards
-  eq(`${variant} trade cards`, await count(page, '#trades article.ss-trade'), trades.length);
-  for (const b of trades) {
+  // tomorrow: a card per A-quality burst with a plan -- the trades, then the ones beyond the cap
+  const beyondCards = data.beyond_cap.map((t) => byTicker[t]).filter((b) => b && b.plan);
+  eq(`${variant} trade cards`, await count(page, '#trades article.ss-trade'), trades.length + beyondCards.length);
+  const target = data.cover.action_target;
+  check(`${variant} cover action target exists`, (await page.locator(target).count()) === 1, target);
+  for (const b of trades.concat(beyondCards)) {
     const card = page.locator(`#trade-${b.ticker}`);
     const body = await card.innerText();
     check(`${variant} ${b.ticker} grade chip`, body.includes(b.grade + ' · ' + b.score.toFixed(1)), body.slice(0, 200));
@@ -229,14 +232,15 @@ async function checkVariant(browser, base, variant, data) {
   } else {
     check(`${variant} scan says nothing found`, (await text(page, '#scan-body')).includes('The scan found no burst'), 'scan');
   }
-  if (data.closest_miss && data.closest_miss.sentence) check(`${variant} closest miss`, (await text(page, '#closest-miss')).includes(data.closest_miss.sentence), 'miss');
+  if (data.closest_miss && data.closest_miss.sentence && !trades.length) check(`${variant} closest miss`, (await text(page, '#closest-miss')).includes(data.closest_miss.sentence), 'miss');
   else eq(`${variant} no closest miss box`, await count(page, '#closest-miss'), 0);
 
   // the record
   const record = await text(page, '#record-card');
   const sc = data.scorecard;
-  check(`${variant} scorecard plans`, record.includes(`n = ${sc.plans}`), record.slice(0, 200));
+  check(`${variant} scorecard plans`, record.includes(`plans\n${sc.plans}`) || record.includes(`plans ${sc.plans}`), record.slice(0, 200));
   check(`${variant} scorecard readable chip`, record.includes(sc.readable ? 'readable' : 'not yet readable'), 'chip');
+  check(`${variant} scorecard settled count`, record.includes(`${sc.settled} settled`), record.slice(0, 300));
   if (sc.readable) check(`${variant} scorecard win rate`, record.includes((100 * sc.win_rate).toFixed(0) + '%'), record);
   else check(`${variant} scorecard prints no rate`, !/win rate\n\d+%/.test(record), record);
   eq(`${variant} fourteen nights`, await count(page, '#nights .ss-night'), 14);
@@ -290,6 +294,7 @@ async function checkStates(browser, base, data) {
   console.log('-- states the clock decides');
   for (const [name, now, chipRe, state] of [
     ['pending', PENDING_NOW, /pending/, 'pending'],
+    ['pending-after-retry', '2026-09-12T00:30:00Z', /pending/, 'pending'],   // Friday 8:30 PM ET: the retry has just fired
     ['stale1', STALE1_NOW, /STALE · 1 session behind/, 'stale1'],
     ['stale2', STALE2_NOW, /STALE · \d+ sessions behind/, 'stale2']]) {
     const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', now, 1280);
@@ -298,7 +303,7 @@ async function checkStates(browser, base, data) {
     eq(`${name} state`, await page.getAttribute('html', 'data-ss-rendered'), state);
     check(`${name} next says do not place`, (await text(page, '#next-h3')).startsWith('Do not place these orders'), 'next');
     eq(`${name} cover action falls back to the holds`, await text(page, '#cover-action'), 'What you hold');
-    if (name !== 'pending') check(`${name} status line links the run log`, (await page.locator('#status-line a[href*="actions/workflows/evening.yml"]').count()) === 1, 'link');
+    if (state !== 'pending') check(`${name} status line links the run log`, (await page.locator('#status-line a[href*="actions/workflows/evening.yml"]').count()) === 1, 'link');
     eq(`${name} page errors`, errors, []);
     if (shotsDir && name === 'stale2') await page.screenshot({ path: path.join(shotsDir, 'stale2-1280-dark.png'), fullPage: true });
     await context.close();
@@ -317,6 +322,26 @@ async function checkStates(browser, base, data) {
     eq('failed page errors', errors, []);
     await context.close();
   } finally { await unlink(path.join(ROOT, failedPath)); }
+  // a record missing a cosmetic field still renders, with no undefined or NaN in sight
+  console.log('-- a field missing');
+  const drop = (obj, path) => { const parts = path.split('.'); let o = obj; for (const p of parts.slice(0, -1)) o = Array.isArray(o) ? o[0] : o[p]; const last = parts[parts.length - 1]; if (Array.isArray(o)) delete o[0][last]; else delete o[last]; };
+  for (const field of ['bursts.quality.checks.threshold', 'bursts.quality.checks.label', 'breadth.up4', 'open_plans.entry_ref', 'open_plans.targets', 'run.reads', 'bursts.claude', 'watchlist.top.plan']) {
+    const copy = JSON.parse(JSON.stringify(data));
+    const parts = field.split('.'); let o = copy;
+    for (let i = 0; i < parts.length - 1; i++) { o = o[parts[i]]; if (Array.isArray(o)) o = o[0]; }
+    delete o[parts[parts.length - 1]];
+    const dropPath = `/tests/fixtures/page/.dropped.json`;
+    await writeFile(path.join(ROOT, dropPath), JSON.stringify(copy));
+    try {
+      const { context, page, errors } = await open(browser, base, dropPath, FRESH_NOW, 1280);
+      const state = await page.getAttribute('html', 'data-ss-rendered');
+      check(`without ${field} the page still renders`, state && state !== 'error', state);
+      const body = await page.locator('body').innerText();
+      check(`without ${field} nothing prints undefined or NaN`, !/\bundefined\b|\bNaN\b/.test(body), (body.match(/.{0,40}(undefined|NaN).{0,40}/) || [''])[0]);
+      eq(`without ${field} page errors`, errors, []);
+      await context.close();
+    } finally { await unlink(path.join(ROOT, dropPath)); }
+  }
   // no record at all
   const { context, page } = await open(browser, base, '/tests/fixtures/page/does-not-exist.json', FRESH_NOW, 1280);
   eq('missing record h1', await text(page, '#cover-h1'), 'The record could not be read.');

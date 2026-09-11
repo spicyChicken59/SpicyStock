@@ -183,3 +183,13 @@ def test_the_page_smoke_reads_the_same_problem_sentences_the_page_prints():
         head = re.search(rf"{kind}: '([^']+)'", smoke).group(1)
         assert sentence.startswith(head), (kind, sentence, head)
         assert report.PROBLEM_SENTENCES[kind] == sentence, kind
+
+
+def test_the_page_prints_the_same_plan_status_words_the_mail_does():
+    page = (ROOT / "docs" / "app.js").read_text()
+    block = re.search(r"const PLAN_STATUS = \{\n(.*?)\n  \};", page, re.S).group(1)
+    words = dict(re.findall(r"(\w+): \['([^']+)'", block))
+    assert words == report.PLAN_STATUS_WORDS
+    for status in ("hold", "sell_half", "sell_into_strength", "exit", "stopped", "expired", "pending",
+                   record.NOT_FILLED, record.UNREADABLE, "unmeasured"):
+        assert status in words, status

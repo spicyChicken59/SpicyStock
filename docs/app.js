@@ -23,6 +23,7 @@
   // the order deadline is the desk's own clock, not a strategy number.
   const BONDE_MEDIAN_NIGHT = 239;
   const ORDERS_BY = '9:28 AM';
+  const PENDING_UNTIL_HOUR = 21;   // ET; evening.yml's retry fires at 8:16 PM and a full-market run takes minutes
   const ET = 'America/New_York';
   const REPO = 'spicyChicken59/SpicyStock';
   const RUNS_API = 'https://api.github.com/repos/' + REPO + '/actions/workflows/evening.yml/runs?per_page=1';
@@ -40,9 +41,11 @@
     email_failed: "The digest could not be delivered; the page is the record.",
     push_retried: "Committing the record took more than one push."
   };
+  // One word per plan status, the same ten src/report.py mails (tests/test_docs.py holds the two equal).
   const PLAN_STATUS = {
     hold: ['HOLD', 'good'], sell_half: ['SELL HALF', 'brand'], sell_into_strength: ['SELL INTO STRENGTH', 'brand'],
-    exit: ['SELL', 'brand'], stopped: ['STOPPED', 'danger'], expired: ['EXPIRED', 'neutral'], pending: ['PENDING', 'neutral']
+    exit: ['SELL', 'brand'], stopped: ['STOPPED', 'danger'], expired: ['EXPIRED', 'neutral'], pending: ['PENDING', 'neutral'],
+    not_filled: ['NOT FILLED', 'neutral'], unreadable: ['UNREADABLE', 'warn'], unmeasured: ['UNMEASURED', 'warn']
   };
   const REGIME_TONE = { green: 'good', yellow: 'warn', red: 'danger' };
   const FLAG_WORDS = { gain_over_15: 'gain over 15%', wide_stop: 'wide stop', position_capped: 'position capped', biotech: 'biotech', foreign: 'foreign', dollar_breakout: '$ breakout', refused: 'refused' };
@@ -129,7 +132,8 @@
     const expected = weekday && et.hour >= 16 ? et.date : prevWeekday(et.date);
     const recordFor = run.expected_session || run.session || null;
     const behind = recordFor ? weekdaysBetween(recordFor, expected) : 99;
-    const pending = weekday && et.hour >= 16 && et.hour < 19;
+    // pending from the close until the 8:16 PM ET retry has had time to run
+    const pending = weekday && et.hour >= 16 && et.hour < PENDING_UNTIL_HOUR;
     const session = run.session || null, sessionWords = session ? dateWords(session) : 'no session';
     const base = { expected: expected, behind: behind, session: session };
     if (!recordFor || run.status === 'failed') {
@@ -238,7 +242,7 @@
     const prev = hist.length >= 2 ? hist[hist.length - 2] : {};
     const line = th.ratio_10d_yellow;
     const deck = clear($('breadth-deck'));
-    deck.appendChild(stat('up 4% today', num(b.up4), delta(b.up4, prev.up4) + (isNum(b.universe) && b.universe ? ' · ' + (100 * b.up4 / b.universe).toFixed(1) + '% of ' + num(b.universe) : '')));
+    deck.appendChild(stat('up 4% today', num(b.up4), delta(b.up4, prev.up4) + (isNum(b.universe) && b.universe && isNum(b.up4) ? ' · ' + (100 * b.up4 / b.universe).toFixed(1) + '% of ' + num(b.universe) : '')));
     deck.appendChild(stat('down 4% today', num(b.down4), delta(b.down4, prev.down4)));
     deck.appendChild(stat('5-day ratio', plain(b.ratio_5d), num(b.up4_5d) + ' up ÷ ' + num(b.down4_5d) + ' down, last 5 sessions'));
     deck.appendChild(stat('10-day ratio', plain(b.ratio_10d), 'Bonde’s line is ' + plain(line) + '. ' + (isNum(b.ratio_10d) && isNum(line) ? (b.ratio_10d >= line ? 'Above it.' : 'Below it.') : ''), true));
@@ -408,8 +412,8 @@
     });
     return btn;
   }
-  function orderBlock(plan, extraHint) {
-    const lines = ticket(plan.order_json);
+  function orderBlock(plan, extraHint, withheld) {
+    const lines = withheld ? null : ticket(plan.order_json);
     const wrap = el('div', { 'class': 'ss-order' });
     if (!lines) { wrap.appendChild(el('p', { 'class': 'sc-hint', text: extraHint || 'No order.' })); return wrap; }
     const pre = el('pre', { 'class': 'ss-order__pre', 'data-order': '' });
@@ -506,7 +510,7 @@
     }
     const left = el('div', null, [facts]);
     const cut = (data.cash_budget && data.cash_budget.cut || []).filter((c) => c && c.ticker === b.ticker).map((c) => c.reason).join(' ');
-    left.appendChild(orderBlock(plan, beyond ? 'No order tonight: beyond the slot cap. ' + (cut || '') : 'No order line was written for this plan.'));
+    left.appendChild(orderBlock(plan, beyond ? 'No order tonight: ' + (cut || 'beyond the slot cap.') : 'No order line was written for this plan.', beyond));
     const right = el('div');
     const sched = plan.exit_schedule || [];
     if (sched.length) {
@@ -529,25 +533,29 @@
     }
     card.appendChild(el('div', { 'class': 'sc-split ss-trade__body' }, [left, right]));
     const checks = q.checks || [], passes = checks.filter((x) => x && x.pass).length, miss = checks.find((x) => x && !x.pass);
-    const footText = passes + ' of ' + checks.length + ' checks pass (' + plain(q.passes) + ' of the ' + plain(q.of) + ' letters)' + (miss ? ' · the miss is ‘' + miss.label + '’ (' + miss.display + ')' : ' · nothing missed') + (q.vetoes && q.vetoes.length ? ' · veto: ' + q.vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') : '');
+    const footText = passes + ' of ' + checks.length + ' checks pass (' + plain(q.passes) + ' of the ' + plain(q.of) + ' letters)' + (miss ? ' · the miss is ‘' + (miss.label || words(miss.key) || 'a check') + '’ (' + (miss.display || '—') + ')' : ' · nothing missed') + (q.vetoes && q.vetoes.length ? ' · veto: ' + q.vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') : '');
     card.appendChild(el('div', { 'class': 'ss-trade__foot' }, [el('span', { 'class': 'sc-hint', text: footText }), el('a', { 'class': 'sc-link--quiet', href: '#burst-' + b.ticker, 'data-matrix-link': '', text: 'row in the matrix ↓' })]));
     return card;
   }
-  function planRow(p, red) {
-    const st = PLAN_STATUS[p.status] || [String(p.status || '—').toUpperCase(), 'neutral'];
+  function planRow(p, red, holdDays) {
+    const st = PLAN_STATUS[p.status] || [words(String(p.status || '—')).toUpperCase(), 'neutral'];
     const row = el('article', { 'class': 'ss-plan', 'data-ticker': p.ticker, 'data-status': p.status || '' });
     row.appendChild(el('div', { 'class': 'ss-plan__row' }, [
       el('strong', { 'class': 'sc-case', text: p.ticker }), chip(st[0], st[1], true),
-      el('span', { 'class': 'ss-plan__meta', text: 'day ' + plain(p.day) + ' of 5 · picked ' + dateMD(p.picked) + ' · ' + num(p.shares) + ' sh' })
+      el('span', { 'class': 'ss-plan__meta', text: 'day ' + plain(p.day) + (isNum(holdDays) ? ' of ' + plain(holdDays) : '') + ' · picked ' + dateMD(p.picked) + ' · ' + num(p.shares) + ' sh' })
     ]));
     const t = p.targets || {}, stop = isNum(p.current_stop) ? p.current_stop : p.stop, aim = isNum(t.high) ? t.high : null;
-    if (isNum(p.last_close) && isNum(stop) && aim !== null && aim > stop) {
+    // the bar runs from the stop to the aim; the entry marker is drawn only
+    // while the entry still sits above the stop (a trailed stop can pass it)
+    if (isNum(p.last_close) && isNum(stop) && aim !== null && aim > stop && isNum(t.low) && isNum(p.entry_ref)) {
       const pos = (v) => Math.max(0, Math.min(100, 100 * (v - stop) / (aim - stop)));
-      const fig = el('figure', { 'class': 'sc-benchmark', style: '--sc-benchmark-position:' + pos(p.last_close).toFixed(1) + '%;--sc-benchmark-reference:' + pos(p.entry_ref).toFixed(1) + '%;--sc-benchmark-band-start:' + pos(t.low).toFixed(1) + '%;--sc-benchmark-band-end:' + pos(t.high).toFixed(1) + '%' });
+      const entryAbove = p.entry_ref > stop;
+      const fig = el('figure', { 'class': 'sc-benchmark', style: '--sc-benchmark-position:' + pos(p.last_close).toFixed(1) + '%;' + (entryAbove ? '--sc-benchmark-reference:' + pos(p.entry_ref).toFixed(1) + '%;' : '') + '--sc-benchmark-band-start:' + pos(t.low).toFixed(1) + '%;--sc-benchmark-band-end:' + pos(t.high).toFixed(1) + '%' });
       fig.appendChild(el('figcaption', { 'class': 'sc-benchmark__head' }, [el('span', { 'class': 'sc-benchmark__label', text: 'last close · ' + dateShort(p.last_date) }), el('strong', { 'class': 'sc-benchmark__value', text: usd(p.last_close) })]));
-      fig.appendChild(el('div', { 'class': 'sc-benchmark__track', 'aria-hidden': 'true' }, [el('span', { 'class': 'sc-benchmark__band' }), el('span', { 'class': 'sc-benchmark__reference' }), el('span', { 'class': 'sc-benchmark__point' })]));
-      fig.appendChild(el('div', { 'class': 'sc-benchmark__scale', 'aria-hidden': 'true' }, [el('span', { text: 'stop ' + usd(stop) }), el('span', { text: 'entry ' + usd(p.entry_ref) }), el('span', { text: 'aim ' + usd(aim) })]));
-      fig.appendChild(el('p', { 'class': 'sc-benchmark__note', text: pct(p.unrealised_pct, 2) + ' from the ' + usd(p.entry_ref) + ' entry · band ' + usd(t.low) + '–' + usd(t.high) + ' · stop ' + usd(stop) }));
+      fig.appendChild(el('div', { 'class': 'sc-benchmark__track', 'aria-hidden': 'true' }, [el('span', { 'class': 'sc-benchmark__band' }), entryAbove ? el('span', { 'class': 'sc-benchmark__reference' }) : null, el('span', { 'class': 'sc-benchmark__point' })]));
+      const scale = [['stop', stop], ['entry', p.entry_ref], ['aim', aim]].sort((a, b) => a[1] - b[1]);
+      fig.appendChild(el('div', { 'class': 'sc-benchmark__scale', 'aria-hidden': 'true' }, scale.map((s) => el('span', { text: s[0] + ' ' + usd(s[1]) }))));
+      fig.appendChild(el('p', { 'class': 'sc-benchmark__note', text: pct(p.unrealised_pct, 2) + ' from the ' + usd(p.entry_ref) + ' entry · band ' + usd(t.low) + '–' + usd(t.high) + ' · stop ' + usd(stop) + (entryAbove ? '' : ' (the stop has been trailed above the entry)') }));
       row.appendChild(fig);
     }
     row.appendChild(el('p', { 'class': 'sc-note ss-plan__instruction', text: p.instruction || '' }));
@@ -555,20 +563,25 @@
   }
   function renderTomorrow(data, st) {
     const bursts = by(data.bursts || [], 'ticker'), trades = (data.trades || []).map((t) => bursts[t]).filter(Boolean);
+    const beyond = (data.beyond_cap || []).map((t) => bursts[t]).filter((b) => b && b.plan);
     const main = clear($('trades'));
     const regime = ((data.breadth || {}).regime || {}).verdict;
+    const rules = data.rules || {}, holdDays = (rules.plan || {}).final_exit_day, window = (rules.record || {}).open_plan_sessions;
     const lede = $('tomorrow-lede');
+    const more = beyond.length ? ' ' + beyond.length + ' more A-quality burst' + (beyond.length === 1 ? ' is' : 's are') + ' cut by the slots or the equity and follow' + (beyond.length === 1 ? 's' : '') + ' with no order.' : '';
     if (st.state === 'closed') lede.textContent = 'The market was closed; nothing new was planned. What you hold is on the right, unchanged.';
     else if (regime === 'red') lede.textContent = 'Breadth is red: no new longs. What you hold is the only work.';
-    else if (!trades.length) lede.textContent = 'No burst reached A-quality tonight. What you hold is the only work; the closest miss is under the scan.';
-    else lede.textContent = trades.length + ' A-quality burst' + (trades.length === 1 ? '' : 's') + ' with ' + (trades.length === 1 ? 'its' : 'their') + ' plans, ranked. Read the chart first; the order block is in Fidelity’s field order.';
-    if (!trades.length) main.appendChild(el('div', { 'class': 'sc-card' }, [empty(st.state === 'closed' ? 'Market closed. Plans unchanged; nothing new to place.' : regime === 'red' ? 'Stand aside. Breadth is red and no new long is offered.' : 'Nothing qualifies. Keep cash; every burst the scan found is in the table below.')]));
-    trades.forEach((b) => main.appendChild(tradeCard(b, data, st)));
+    else if (!trades.length) lede.textContent = 'No burst reached A-quality with an order tonight. What you hold is the only work; the closest miss is under the scan.' + more;
+    else lede.textContent = trades.length + ' A-quality burst' + (trades.length === 1 ? '' : 's') + ' with ' + (trades.length === 1 ? 'its' : 'their') + ' plans, ranked. Read the chart first; the order block is in Fidelity’s field order.' + more;
+    if (!trades.length && !beyond.length) main.appendChild(el('div', { 'class': 'sc-card' }, [empty(st.state === 'closed' ? 'Market closed. Plans unchanged; nothing new to place.' : regime === 'red' ? 'Stand aside. Breadth is red and no new long is offered.' : 'Nothing qualifies. Keep cash; every burst the scan found is in the table below.')]));
+    trades.concat(beyond).forEach((b) => main.appendChild(tradeCard(b, data, st)));
 
     const hold = clear($('hold-rows'));
     const plans = data.open_plans || [];
-    if (!plans.length) hold.appendChild(empty('No open plans. Nothing was picked in the last five sessions.'));
-    plans.forEach((p) => hold.appendChild(planRow(p, regime === 'red')));
+    const hint = $('hold-hint');
+    if (hint) hint.textContent = 'Every pick from the last ' + (isNum(window) ? plain(window) : 'five') + ' sessions, judged from bars alone. If you never bought it, ignore its row.';
+    if (!plans.length) hold.appendChild(empty('No open plans. Nothing was picked in the last ' + (isNum(window) ? plain(window) : 'five') + ' sessions.'));
+    plans.forEach((p) => hold.appendChild(planRow(p, regime === 'red', holdDays)));
 
     const cb = data.cash_budget || {}, acct = data.account || {};
     const budget = clear($('budget'));
@@ -648,10 +661,11 @@
     // the tile carries the verdict and the primary measurement; the full
     // display, his threshold and the note sit on the tile's title
     const primary = c ? String(c.display || '').split(' ')[0] : '';
-    const cell = el('span', { 'class': 'sc-signal' + (tone ? ' sc-signal--' + tone : ''), title: c ? [c.display, 'threshold: ' + c.threshold, c.note].filter(Boolean).join('\n') : null }, [
+    const threshold = c ? String(c.threshold || '') : '';
+    const cell = el('span', { 'class': 'sc-signal' + (tone ? ' sc-signal--' + tone : ''), title: c ? [c.display, threshold ? 'threshold: ' + threshold : '', c.note].filter(Boolean).join('\n') : null }, [
       el('span', { 'class': 'sc-signal__glyph', 'aria-hidden': 'true', text: glyph }),
       el('span', { 'class': 'sc-signal__label', text: word + (primary ? ' · ' + primary : '') }),
-      c ? el('span', { 'class': 'sc-signal__note', text: c.threshold.length > 42 ? c.threshold.slice(0, 40).replace(/\s+\S*$/, '') + '…' : c.threshold }) : null
+      c ? el('span', { 'class': 'sc-signal__note', text: threshold.length > 42 ? threshold.slice(0, 40).replace(/\s+\S*$/, '') + '…' : threshold }) : null
     ]);
     return el('td', null, cell);
   }
@@ -661,7 +675,7 @@
     const nCriteria = bursts.length && bursts[0].quality && bursts[0].quality.checks ? bursts[0].quality.checks.length : Object.keys(CRITERIA_SHORT).length;
     $('scan-lede').textContent = 'Every burst against Bonde’s ' + nCriteria + ' A-quality criteria: the measured value, his threshold, and the verdict in words.' + (isNum(run.bursts) && run.bursts > bursts.length ? ' ' + bursts.length + ' of the ' + num(run.bursts) + ' bursts found are archived with their checks.' : '');
     const cm = data.closest_miss;
-    if (cm && cm.sentence) body.appendChild(el('aside', { 'class': 'sc-callout sc-callout--core', id: 'closest-miss' }, [el('div', { 'class': 'sc-callout__label', text: 'closest miss' }), el('p', { 'class': 'sc-callout__figure', text: cm.sentence })]));
+    if (cm && cm.sentence && !trades.length) body.appendChild(el('aside', { 'class': 'sc-callout sc-callout--core', id: 'closest-miss' }, [el('div', { 'class': 'sc-callout__label', text: 'closest miss' }), el('p', { 'class': 'sc-callout__figure', text: cm.sentence })]));
     if (!bursts.length) { body.appendChild(empty('The scan found no burst.')); return; }
     const keys = Object.keys(CRITERIA_SHORT);
     const labels = {}; bursts.forEach((b) => ((b.quality || {}).checks || []).forEach((c) => { if (c && c.key && !labels[c.key]) labels[c.key] = c.label; }));
@@ -687,7 +701,7 @@
       ]));
       keys.forEach((k) => tr.appendChild(signalCell(checks[k], (k === 'two_days' && vetoes.indexOf('up_days') >= 0) || (k === 'linearity' && vetoes.indexOf('not_linear') >= 0))));
       const miss = (q.checks || []).find((c) => c && !c.pass);
-      const gradeNote = vetoes.length ? 'veto · ' + vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') : q.reclass ? 'reclassified · ' + words(q.reclass) : miss ? 'first miss · ' + miss.label : 'nothing missed';
+      const gradeNote = vetoes.length ? 'veto · ' + vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') : q.reclass ? 'reclassified · ' + words(q.reclass) : miss ? 'first miss · ' + (miss.label || words(miss.key) || 'a check') : 'nothing missed';
       const gradeTone = b.grade === 'A+' || b.grade === 'A' ? 'brand' : 'neutral';
       tr.appendChild(el('td', { 'class': 'sc-signal-matrix__value' }, [chip((b.grade || '—') + (isNum(b.score) ? ' · ' + b.score.toFixed(1) : ''), gradeTone, true),
         el('span', { 'class': 'ss-grade-note', text: gradeNote + (b.claude && b.claude.source === 'claude' && b.claude.agree === false ? ' · Claude lowered it' : '') + (isTrade ? ' · trade' : '') })]));
@@ -724,13 +738,13 @@
   }
   function renderRecord(data) {
     const sc = data.scorecard || {}, card = clear($('record-card'));
-    const n = isNum(sc.plans) ? sc.plans : 0, minRead = sc.min_read;
+    const settled = isNum(sc.settled) ? sc.settled : 0, minRead = sc.min_read, readable = sc.readable === true;
     card.appendChild(el('div', { 'class': 'sc-card__head' }, [
-      el('div', null, [el('h3', { text: 'The scorecard' }), el('p', { 'class': 'sc-hint', text: 'read from n ≥ ' + plain(minRead) + ': the rules’ record, not yours' + (isNum(minRead) && n < minRead ? ' · ' + n + ' so far, so nothing below is a rate yet' : '') })]),
-      chip(isNum(minRead) && n >= minRead ? 'readable' : 'not yet readable', isNum(minRead) && n >= minRead ? 'good' : 'neutral')
+      el('div', null, [el('h3', { text: 'The scorecard' }), el('p', { 'class': 'sc-hint', text: 'read from ' + plain(minRead) + ' settled plans: the rules’ record, not yours' + (readable ? '' : ' · ' + settled + ' settled so far, so nothing below is a rate yet') })]),
+      chip(readable ? 'readable' : 'not yet readable', readable ? 'good' : 'neutral')
     ]));
     card.appendChild(el('div', { 'class': 'sc-grid sc-grid--4' }, [
-      tile('plans', num(sc.plans), 'n = ' + num(sc.plans) + ' · reads at ' + plain(minRead)),
+      tile('plans', num(sc.plans), num(sc.settled) + ' settled · reads at ' + plain(minRead)),
       tile('filled', num(sc.filled), 'at the next open, inside the zone'),
       tile('win rate', isNum(sc.win_rate) ? (100 * sc.win_rate).toFixed(0) + '%' : '—', num(sc.wins) + ' wins · ' + num(sc.losses) + ' losses'),
       tile('avg R', isNum(sc.avg_r) ? (sc.avg_r > 0 ? '+' : '') + sc.avg_r.toFixed(2) : '—', 'sum R ' + (isNum(sc.sum_r) ? (sc.sum_r > 0 ? '+' : '') + sc.sum_r.toFixed(1) : '—'))

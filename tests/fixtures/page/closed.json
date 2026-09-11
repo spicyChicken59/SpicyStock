@@ -10,7 +10,7 @@
   "h1": "Market closed. Plans unchanged.",
   "dek": "No session on 2026-09-10. The plans from 2026-09-09 stand; day counts did not advance.",
   "action_label": "What you hold",
-  "action_target": "#open-plans",
+  "action_target": "#hold",
   "verb": "hold"
  },
  "run": {
@@ -68,7 +68,7 @@
  },
  "nights": [
   {
-   "session": "2026-09-09",
+   "session": "2026-09-10",
    "status": "closed",
    "published_at": "2026-09-10T22:30:00+00:00"
   }

@@ -167,7 +167,7 @@ def test_the_no_trade_dek_counts_the_bursts_and_points_at_the_closest_miss():
 
 @pytest.mark.parametrize("trades, label, target", [
     (["XYZ"], "Tomorrow's orders", "#orders"),
-    ([], "What you hold", "#open-plans"),
+    ([], "What you hold", "#hold"),
 ])
 def test_the_primary_action_points_at_the_orders_when_there_are_any(trades, label, target):
     result = cover(_run(), _breadth("green"), trades, [_burst()], None)
@@ -176,7 +176,7 @@ def test_the_primary_action_points_at_the_orders_when_there_are_any(trades, labe
 
 def test_a_red_regime_points_at_what_you_hold_whatever_the_list_says():
     result = cover(_run(), _breadth("red"), ["XYZ"], [_burst()], None)
-    assert result["h1"] == "Stand aside." and result["action_target"] == "#open-plans"
+    assert result["h1"] == "Stand aside." and result["action_target"] == "#hold"
 
 
 def test_the_failed_cover_carries_the_first_problems_fixed_sentence():
@@ -660,3 +660,45 @@ def test_a_closed_market_goes_out_under_its_own_subject(fake_resend):
     send_digest(data)
     assert [p["subject"] for p in fake_resend.sent] == ["Market closed — plans unchanged"] * 2
     assert "Market closed. Plans unchanged." in _rendered(fake_resend.sent[1]["html"])
+
+
+def test_the_closest_miss_is_never_a_plan_the_budget_cut():
+    """A name with an order the slots could not take is beyond the cap, not
+    a miss; the miss is the best burst that did not qualify."""
+    data = build(**_night(trades=["XYZ"], bursts=[_burst(), _burst("BIG", score=9.9), _miss()], beyond_cap=["BIG"]))
+    assert data["closest_miss"]["ticker"] == "ABC"
+    assert build(**_night(trades=["XYZ"], bursts=[_burst(), _burst("BIG", score=9.9)], beyond_cap=["BIG"]))["closest_miss"] is None
+
+
+def test_the_hold_action_points_at_an_element_the_page_has():
+    page = (Path(__file__).resolve().parent.parent / "docs" / "index.html").read_text()
+    for label, target in (report.HOLD_ACTION, report.ORDERS_ACTION):
+        assert f'id="{target[1:]}"' in page, target
+    assert report.HOLD_ACTION == ("What you hold", "#hold")
+
+
+def test_the_problems_block_prints_the_fixed_sentence_and_never_the_recorded_message():
+    html = report._problems_block([problem("grade", "claude_unavailable", "no reply for any of 5 names (502 Bad Gateway)")])
+    assert PROBLEM_SENTENCES["claude_unavailable"] in _rendered(html)
+    assert "502" not in html and "no reply for any" not in html
+
+
+def test_an_alert_with_no_ticket_says_why_in_the_pages_words():
+    row = {"ticker": "COIL", "setups": ["TI65"], "plan": {"trigger": 110.61, "stop": 109.5, "shares": 0,
+                                                          "order_line": None, "action": "no_new_longs"}}
+    text = _rendered(report._alert_row(row))
+    assert "No order" in text and "breadth sizes new positions at zero tonight" in text
+    row["plan"]["action"] = "no_order"
+    row["plan"]["reason"] = None
+    assert "No order · no order tonight" in _rendered(report._alert_row(row))
+
+
+def test_the_open_plan_row_names_the_hold_length_off_the_rules():
+    data = build(**_night(rules={"plan": {"final_exit_day": 5}, "scans": {}}))
+    assert "day 2 of 5" in _rendered(digest_html(data))
+
+
+def test_the_breadth_line_prints_the_ratio_to_two_places_like_the_page():
+    breadth = _breadth()
+    breadth["ratio_10d"] = 0.88
+    assert "10-day ratio 0.88" in _rendered(report._breadth_line(breadth))
