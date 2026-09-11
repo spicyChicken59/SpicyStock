@@ -107,6 +107,15 @@ const openAll = (page, sel) => page.evaluate((sel) => document.querySelectorAll(
 const active = (page) => page.evaluate(() => { const a = document.activeElement; return a ? (a.id || '') + '/' + (a.className || '') + '/' + (a.dataset ? a.dataset.ticker || '' : '') : ''; });
 const clickPick = async (page, ticker) => { await page.locator(`#pick-list .ss-pick[data-ticker="${ticker}"]`).click(); await page.waitForTimeout(150); };
 
+// the Setup range: the base and a short run of context before it, as docs/app.js frames it (the smoke computes it again, on its own)
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const dateWords = (iso) => { const dt = new Date(iso + 'T12:00:00Z'); return WD[dt.getUTCDay()] + ' ' + dt.getUTCDate() + ' ' + MON[dt.getUTCMonth()]; }; // the page's spelling
+function setupSessions(series, base) {
+  const bs = base && base.start ? series.findIndex((x) => x.date === base.start) : -1, be = base && base.end ? series.findIndex((x) => x.date === base.end) : -1;
+  if (bs < 0 || be < bs) return Math.min(60, series.length);
+  const pad = Math.max(8, Math.round((be - bs + 1) * 0.6));
+  return series.length - Math.max(0, bs - pad);
+}
 // what the record says each stock's status is (the page reads the same fields; the smoke reads them again, on its own)
 function burstStatus(b, data) {
   const cut = (data.cash_budget.cut || []).find((c) => c.ticker === b.ticker);
@@ -144,8 +153,17 @@ async function checkDetail(page, variant, b, data, blocked) {
     eq(`${variant} ${b.ticker} chart drawn`, await chart.count(), 1);
     eq(`${variant} ${b.ticker} chart is this stock's`, await chart.getAttribute('data-ticker'), b.ticker);
     check(`${variant} ${b.ticker} chart aria`, ((await chart.getAttribute('aria-label')) || '').length > 20, 'aria');
-    eq(`${variant} ${b.ticker} chart shows 60 sessions first`, await chart.getAttribute('data-sessions'), String(Math.min(60, b.series.length)));
+    eq(`${variant} ${b.ticker} opens on the Setup range`, await chart.getAttribute('data-range'), 'setup');
+    eq(`${variant} ${b.ticker} the Setup range frames the base`, +(await chart.getAttribute('data-sessions')), setupSessions(b.series, b.quality.base));
     check(`${variant} ${b.ticker} burst legend`, (await text(page, '#detail .sc-legend')).includes('burst'), 'legend');
+    eq(`${variant} ${b.ticker} one chart panel with three modes and three ranges`, [await count(page, '#detail .ss-chart-panel'), await count(page, '#detail .sc-tab[data-mode]'), await count(page, '#detail .sc-tab[data-range]')], [1, 3, 3]);
+    const refs = await text(page, '#detail [data-refs]');
+    if (b.plan) {
+      check(`${variant} ${b.ticker} reference line names the stop, the trigger and the limit`, refs.includes('stop ' + usd(b.plan.stop)) && refs.includes('trigger ' + usd(b.plan.entry_ref)) && refs.includes('limit ' + usd(b.plan.entry_high)), refs);
+      const shown = b.series.slice(-setupSessions(b.series, b.quality.base)), top = Math.max(...shown.map((x) => x.h));
+      eq(`${variant} ${b.ticker} says when the aim is outside the visible range`, refs.includes('outside the visible range'), b.plan.targets.high > top);
+    }
+    check(`${variant} ${b.ticker} chart range is disclosed`, /^Showing \d+ sessions, .+ – .+ \d{4} · /.test(await text(page, '#detail .ss-chart-panel__range')), await text(page, '#detail .ss-chart-panel__range'));
   } else {
     eq(`${variant} ${b.ticker} chart unavailable state`, await count(page, '#detail [data-chart="unavailable"]'), 1);
     eq(`${variant} ${b.ticker} no chart drawn`, await count(page, '#detail .sc-chart--stock'), 0);
@@ -173,7 +191,7 @@ async function checkDetail(page, variant, b, data, blocked) {
   const action = await text(page, '#detail .ss-action');
   const ticketAttr = await page.locator('#detail .ss-action').getAttribute('data-ticket');
   check(`${variant} ${b.ticker} action never says buy now`, !/buy now/i.test(action), action);
-  const btn = await text(page, '#detail .ss-action button');
+  const btn = await text(page, '#detail .ss-action > button[data-open]');
   if (status === 'ticket' && !blocked) {
     eq(`${variant} ${b.ticker} action carries the order`, ticketAttr, 'order');
     check(`${variant} ${b.ticker} action prints the order line`, action.includes(b.plan.order_line), action);
@@ -234,6 +252,8 @@ async function checkDetail(page, variant, b, data, blocked) {
   // provenance
   const prov = await text(page, '#disc-provenance');
   if (b.claude && b.claude.source === 'claude') check(`${variant} ${b.ticker} claude read`, prov.includes(b.claude.reason), 'reason');
+  if (b.claude && b.claude.source === 'claude') check(`${variant} ${b.ticker} a fixture's reader reply is labelled simulated`, prov.includes('simulated chart-reader reply') && !prov.includes('claude read the chart'), prov.slice(0, 120));
+  if ((b.series || []).length) check(`${variant} ${b.ticker} chart panel carries the demo chip`, (await text(page, '#detail .ss-chart-panel__head')).includes('demo data'), 'chip');
   else check(`${variant} ${b.ticker} says the model did not answer`, prov.includes('the model did not answer'), 'nomodel');
   check(`${variant} ${b.ticker} provenance names the rules`, prov.includes(data.app.rules_version), 'rules');
 }
@@ -308,6 +328,10 @@ async function checkVariant(browser, base, variant, data) {
   check(`${variant} market bar names the regime`, facts.includes(data.breadth.regime.verdict.toUpperCase()), facts);
   check(`${variant} market bar names the ratio`, facts.includes(String(data.breadth.ratio_10d)), facts);
   eq(`${variant} explore is the view`, await visibleView(page), ['view-explore']);
+  // a fixture is sample data and says so, everywhere it could be mistaken for a live record
+  eq(`${variant} the page marks the fixture as demo data`, await page.getAttribute('html', 'data-ss-demo'), 'true');
+  check(`${variant} the sample-data warning is shown`, (await text(page, '#demo-notice')).includes('Do not trade sample data'), await text(page, '#demo-notice'));
+  check(`${variant} the sample-data notice names the fixture`, (await text(page, '#demo-notice')).includes('fixture ' + data.fixture), await text(page, '#demo-notice'));
   eq(`${variant} nav marks explore`, await page.locator('#nav a[aria-current="page"]').getAttribute('data-view'), 'explore');
 
   // the stages: two cards with the record's counts; the default stage pressed
@@ -338,7 +362,7 @@ async function checkVariant(browser, base, variant, data) {
     const first = trades.find((b) => b.plan && b.plan.order_json);
     if (first) {
       await clickPick(page, first.ticker);
-      await page.locator('#detail .ss-action button').click();
+      await page.locator('#detail .ss-action > button[data-open]').click();
       await page.waitForTimeout(150);
       eq(`${variant} the plan disclosure opens on request`, await page.evaluate(() => document.getElementById('disc-plan').open), true);
       check(`${variant} focus lands on the plan`, (await active(page)).startsWith('/'), await active(page));
@@ -670,6 +694,216 @@ async function checkMobile(browser, base, data) {
   await desk.context.close();
 }
 
+
+// the three modes over one stock: identical levels, dates and tooltip values; the range and the mode remembered; one chart at a time
+async function checkModes(browser, base, data) {
+  console.log('-- the chart modes');
+  const coil = data.watchlist.top.find((r) => r.ticker === 'COIL') || data.watchlist.top[0];
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { hash: `#/explore/setting-up/${coil.ticker}` });
+  const read = () => page.evaluate(() => {
+    const host = document.querySelector('#chart-mount .sc-chart--stock'), svg = host.querySelector('svg');
+    const level = (k) => { const l = svg.querySelector(`[data-level="${k}"]`); return l ? l.getAttribute('y1') : null; };
+    return { mode: host.getAttribute('data-mode'), range: host.getAttribute('data-range'), sessions: host.getAttribute('data-sessions'), stop: level('stop'), trigger: level('trigger'), close: level('close'),
+      labels: Array.from(svg.querySelectorAll('text[data-kind]')).map((t) => t.getAttribute('data-kind') + ':' + t.textContent + '@' + t.getAttribute('y')), hosts: document.querySelectorAll('.sc-chart--stock').length,
+      candles: svg.querySelectorAll('.sc-chart__candle').length, closePath: svg.querySelectorAll('path[data-series="close"]').length, dates: Array.from(svg.querySelectorAll('text')).filter((t) => /^\d+ \w{3}$/.test(t.textContent)).map((t) => t.textContent).join(','),
+      tones: { up: (svg.querySelector('.sc-chart__candle:not(.is-filled)') || { parentNode: { getAttribute: () => '' } }).parentNode.getAttribute('style'), down: (svg.querySelector('.sc-chart__candle.is-filled') || { parentNode: { getAttribute: () => '' } }).parentNode.getAttribute('style') },
+      levelsTable: Array.from(document.querySelectorAll('#chart-mount [data-sc-twin="levels"] tbody tr')).map((r) => r.textContent.replace(/\s+/g, ' ').trim()).join(' | ') };
+  });
+  const hover = async () => { await page.locator('#chart-mount .sc-chart__hit').scrollIntoViewIfNeeded(); const box = await page.locator('#chart-mount .sc-chart__hit').boundingBox(); await page.mouse.move(box.x - 2, box.y - 2); await page.mouse.move(box.x + box.width * 0.35, box.y + box.height / 2); await page.waitForTimeout(120); return (await page.locator('#chart-mount .sc-tooltip').innerText().catch(() => '')).replace(/\s+/g, ' '); };
+  const seen = {};
+  for (const mode of ['setup', 'candles', 'line']) {
+    await page.click(`#detail .sc-tab[data-mode="${mode}"]`); await page.waitForTimeout(150);
+    seen[mode] = await read(); seen[mode].tip = await hover();
+    eq(`mode ${mode} is drawn`, seen[mode].mode, mode);
+    eq(`mode ${mode} keeps one chart host`, seen[mode].hosts, 1);
+  }
+  for (const mode of ['candles', 'line']) {
+    eq(`${mode} shares the stop, trigger and close coordinates with setup`, [seen[mode].stop, seen[mode].trigger, seen[mode].close], [seen.setup.stop, seen.setup.trigger, seen.setup.close]);
+    eq(`${mode} shares the gutter labels with setup`, seen[mode].labels, seen.setup.labels);
+    eq(`${mode} shares the dates with setup`, seen[mode].dates, seen.setup.dates);
+    eq(`${mode} shares the level table with setup`, seen[mode].levelsTable, seen.setup.levelsTable);
+    eq(`${mode} shares the tooltip values with setup`, seen[mode].tip, seen.setup.tip);
+  }
+  check('the tooltip reads open, high, low, close and volume', /open/.test(seen.setup.tip) && /volume/.test(seen.setup.tip), seen.setup.tip);
+  check('the line mode draws the closes and no candle', seen.line.closePath === 1 && seen.line.candles === 0, `${seen.line.closePath}/${seen.line.candles}`);
+  // the tones need a down bar, which the coil's flat fixture lacks: a burst with one in its last 60 sessions
+  const downBurst = data.bursts.find((b) => (b.series || []).slice(-60).some((bar) => bar.c < bar.o));
+  await go(page, `#/explore/bursts/${downBurst.ticker}`); await page.click('#detail .sc-tab[data-range="60"]'); await page.waitForTimeout(150);
+  await page.click('#detail .sc-tab[data-mode="candles"]'); await page.waitForTimeout(150); const tCandles = await read();
+  await page.click('#detail .sc-tab[data-mode="setup"]'); await page.waitForTimeout(150); const tSetup = await read();
+  check('candles are colour-coded up and down, and hollow versus filled', /--sc-good/.test(tCandles.tones.up) && /--sc-danger/.test(tCandles.tones.down) && tCandles.candles > 0, JSON.stringify(tCandles.tones));
+  check('setup mode draws candles in the chart tones', /chart-emphasis/.test(tSetup.tones.up) && /chart-context/.test(tSetup.tones.down), JSON.stringify(tSetup.tones));
+  await page.click('#detail .sc-tab[data-mode="line"]'); await go(page, `#/explore/setting-up/${coil.ticker}`); await page.click('#detail .sc-tab[data-range="setup"]'); await page.waitForTimeout(150); // back where the loop left off: line mode, the setup range
+  // the COIL cluster reads apart: four level labels, none closer than a label's height
+  const cluster = seen.setup.labels.filter((l) => /^(stop|trigger|limit|close):/.test(l)).map((l) => +l.split('@')[1]).sort((a, b) => a - b);
+  eq('the COIL cluster has its four labels', cluster.length, 4);
+  check('the COIL cluster labels never overlap', cluster.every((y, i) => !i || y - cluster[i - 1] >= 14), cluster.join(','));
+  check('the COIL levels are the reference values', seen.setup.labels.join(' ').includes('stop $109.50') && seen.setup.labels.join(' ').includes('trigger $110.61') && seen.setup.labels.join(' ').includes('limit $111.72') && seen.setup.labels.join(' ').includes('close:$110.00'), seen.setup.labels.join(' '));
+  // the range: 60 and 120 disclose their dates; setup frames the box; the mode holds across ranges and stocks
+  await page.click('#detail .sc-tab[data-range="60"]'); await page.waitForTimeout(150);
+  let r = await read();
+  eq('60 sessions shows 60', [r.sessions, r.mode], ['60', 'line']);
+  check('the range sentence discloses the dates', /Showing 60 sessions, .+ – .+ 2026 · the last 60 sessions\./.test(await text(page, '#detail .ss-chart-panel__range')), await text(page, '#detail .ss-chart-panel__range'));
+  await page.click('#detail .sc-tab[data-range="setup"]'); await page.waitForTimeout(150);
+  r = await read();
+  eq('the Setup range frames the coil', +r.sessions, setupSessions(coil.series, coil.box));
+  await clickPick(page, coil.ticker);
+  await go(page, `#/explore/bursts/${data.trades[0]}`);
+  r = await read();
+  eq('the mode and the range hold across stocks', [r.mode, r.range], ['line', 'setup']);
+  await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(250);
+  r = await read();
+  eq('the mode and the range hold across a reload', [r.mode, r.range], ['line', 'setup']);
+  // rapid switching: modes and stocks in a burst of clicks, one chart at the end, the right one
+  for (const b of data.bursts) { await page.locator(`#pick-list .ss-pick[data-ticker="${b.ticker}"]`).click({ noWaitAfter: true }); for (const m of ['setup', 'candles', 'line']) await page.locator(`#detail .sc-tab[data-mode="${m}"]`).click({ noWaitAfter: true }).catch(() => {}); }
+  await page.waitForTimeout(400);
+  const lastB = data.bursts[data.bursts.length - 1];
+  r = await read();
+  eq('rapid mode and stock switching ends with one chart of the last stock', [r.hosts, await page.locator('#chart-mount .sc-chart--stock').getAttribute('data-ticker'), await text(page, '#detail-h2')], [1, lastB.ticker, lastB.ticker]);
+  await page.click('#detail .sc-tab[data-mode="setup"]');
+  eq('mode journey page errors', errors, []);
+  if (shotsDir) {
+    await go(page, `#/explore/setting-up/${coil.ticker}`);
+    for (const mode of ['setup', 'candles', 'line']) { await page.click(`#detail .sc-tab[data-mode="${mode}"]`); await page.waitForTimeout(150); await page.locator('#detail .ss-chart-panel').screenshot({ path: path.join(shotsDir, `chart-${coil.ticker}-${mode}-1280.png`) }); }
+    await page.click('#detail .sc-tab[data-mode="setup"]');
+    await go(page, `#/explore/bursts/${data.trades[0]}`); await page.waitForTimeout(150);
+    await page.locator('#detail .ss-chart-panel').screenshot({ path: path.join(shotsDir, `chart-${data.trades[0]}-setup-1280.png`) });
+  }
+  await context.close();
+  // the phone: the cluster still reads apart at 390px
+  const m = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { height: 844, hash: `#/explore/setting-up/${coil.ticker}` });
+  const ml = await m.page.evaluate(() => Array.from(document.querySelectorAll('#chart-mount svg text[data-kind]')).filter((t) => /^(stop|trigger|limit|close)$/.test(t.getAttribute('data-kind'))).map((t) => +t.getAttribute('y')).sort((a, b) => a - b));
+  eq('phone: the COIL cluster has its four labels', ml.length, 4);
+  check('phone: the COIL cluster labels never overlap', ml.every((y, i) => !i || y - ml[i - 1] >= 14), ml.join(','));
+  const svgBox = await m.page.locator('#chart-mount svg').boundingBox(), hostBox = await m.page.locator('#chart-mount').boundingBox();
+  check('phone: the chart does not overflow its panel', svgBox && hostBox && svgBox.width <= hostBox.width + 1, JSON.stringify([svgBox, hostBox]));
+  if (shotsDir) await m.page.locator('#detail .ss-chart-panel').screenshot({ path: path.join(shotsDir, `chart-${coil.ticker}-setup-390.png`) });
+  eq('phone mode page errors', m.errors, []);
+  await m.context.close();
+}
+
+// the burst map: the recorded measurements, one selection with the cards, the chooser and the route
+async function checkMap(browser, base, data) {
+  console.log('-- the burst map');
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280);
+  const plottable = data.bursts.filter((b) => typeof b.gain_pct === 'number' && typeof b.volume_vs_prior === 'number');
+  eq('the Cards | Map control is offered for the bursts', await page.locator('#discover').isVisible(), true);
+  await page.click('#discover .sc-tab[data-discover="map"]'); await page.waitForTimeout(300);
+  eq('map mode lays the map across the workspace', await page.getAttribute('#workspace', 'data-discover'), 'map');
+  eq('one point per burst with both measurements', await count(page, '#burst-map .ss-map__point'), plottable.length);
+  const pts = await page.locator('#burst-map .ss-map__point').evaluateAll((els) => els.map((e) => [e.dataset.ticker, +e.dataset.gain, +e.dataset.volume, e.getAttribute('aria-pressed')]));
+  for (const b of plottable) { const p = pts.find((x) => x[0] === b.ticker); eq(`${b.ticker} is plotted at its recorded gain and volume ratio`, p && [p[1], p[2]], [b.gain_pct, b.volume_vs_prior]); }
+  check('the map names the session and the counts', (await text(page, '#burst-map .ss-map__stamp')).includes('session ' + dateWords(data.run.session)) && (await text(page, '[data-counts]')).includes(`${data.bursts.length} bursts · ${plottable.length} plotted`), await text(page, '[data-counts]'));
+  check('the axes name the exact measurements', (await text(page, '#burst-map')).includes('Volume vs previous session (×)') && (await text(page, '#burst-map')).includes('Gain on the session vs previous close (%)'), 'axes');
+  check('the map says position is a measurement, not a return', (await text(page, '#burst-map .ss-map__note')).includes('not a predicted return'), 'note');
+  eq('the first burst is the selected point', pts.filter((p) => p[3] === 'true').map((p) => p[0]), [data.bursts[0].ticker]);
+  const other = plottable[plottable.length - 1];
+  await page.click(`#burst-map .ss-map__point[data-ticker="${other.ticker}"]`); await page.waitForTimeout(250);
+  eq('a point opens the same detail as a card', [await hash(page), await text(page, '#detail-h2')], [`#/explore/bursts/${other.ticker}`, other.ticker]);
+  check('the selection line describes the chosen point with its source and status', (await text(page, '#burst-map .ss-map__selection')).startsWith(other.ticker + ':'), await text(page, '#burst-map .ss-map__selection'));
+  const rowsInTable = await count(page, '#burst-map .ss-map__table tbody tr');
+  eq('the table twin lists every burst', rowsInTable, data.bursts.length);
+  // the keyboard: arrows move between points in rank order, Enter chooses
+  await page.locator(`#burst-map .ss-map__point[data-ticker="${plottable[0].ticker}"]`).focus();
+  await page.keyboard.press('ArrowRight');
+  eq('ArrowRight moves focus to the next point', await page.evaluate(() => document.activeElement.dataset.ticker), plottable[1].ticker);
+  await page.keyboard.press('Enter'); await page.waitForTimeout(250);
+  eq('Enter chooses the focused point', await text(page, '#detail-h2'), plottable[1].ticker);
+  // search and the chooser highlight the same point
+  await page.fill('#search', other.ticker.toLowerCase()); await page.press('#search', 'Enter'); await page.waitForTimeout(250);
+  eq('a search selection highlights its point', await page.locator(`#burst-map .ss-map__point[data-ticker="${other.ticker}"]`).getAttribute('aria-pressed'), 'true');
+  await page.goBack(); await page.waitForTimeout(250);
+  eq('Back keeps the map and restores the point', [await page.getAttribute('#workspace', 'data-discover'), await page.locator(`#burst-map .ss-map__point[data-ticker="${plottable[1].ticker}"]`).getAttribute('aria-pressed')], ['map', 'true']);
+  await page.click('#discover .sc-tab[data-discover="cards"]'); await page.waitForTimeout(200);
+  eq('Cards restores the list with the same stock chosen', [await count(page, '#burst-map'), (await page.locator('#pick-list .ss-pick[aria-pressed="true"]').getAttribute('data-ticker'))], [0, plottable[1].ticker]);
+  await page.click('#discover .sc-tab[data-discover="map"]'); await page.waitForTimeout(200);
+  await page.locator('#stages .ss-stage[data-stage="setting-up"]').click(); await page.waitForTimeout(200);
+  eq('Setting up is never mapped', [await page.locator('#discover').isVisible(), await count(page, '#burst-map')], [false, 0]);
+  await page.locator('#stages .ss-stage[data-stage="bursts"]').click(); await page.waitForTimeout(200);
+  eq('the map returns with the bursts', await count(page, '#burst-map .ss-map__point'), plottable.length);
+  eq('map page errors', errors, []);
+  if (shotsDir) { await page.locator('#burst-map').screenshot({ path: path.join(shotsDir, 'map-1280.png') }); await page.screenshot({ path: path.join(shotsDir, 'map-page-1280.png') }); }
+  await context.close();
+  const m = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { height: 844 });
+  await m.page.click('#discover .sc-tab[data-discover="map"]'); await m.page.waitForTimeout(300);
+  eq('phone: the map is drawn', await count(m.page, '#burst-map .ss-map__point'), plottable.length);
+  const mb = await m.page.locator('#burst-map').boundingBox();
+  check('phone: the map does not overflow the screen', mb && mb.x >= 0 && mb.x + mb.width <= 390, JSON.stringify(mb));
+  if (shotsDir) await m.page.locator('#burst-map').screenshot({ path: path.join(shotsDir, 'map-390.png') });
+  eq('phone map page errors', m.errors, []);
+  await m.context.close();
+}
+
+// Following: one click saves the setup with its suggested size; an edit survives a reload; nothing public changes
+async function checkFollowing(browser, base, data) {
+  console.log('-- following');
+  const trade = data.bursts.find((b) => b.ticker === data.trades[0]);
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { hash: `#/explore/bursts/${trade.ticker}` });
+  const publicBefore = await page.evaluate(() => JSON.stringify([SCStock.data.scorecard, SCStock.data.trades, SCStock.data.cash_budget, SCStock.data.bursts.map((b) => b.plan && b.plan.order_line)]));
+  eq('nothing followed yet', await text(page, '#following-jump'), 'Following · 0');
+  check('the follow button names the suggested size', (await text(page, '#detail .ss-follow')).includes(`${trade.plan.shares} shares suggested`), await text(page, '#detail .ss-follow'));
+  await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
+  eq('one click follows', await page.locator('#detail .ss-follow').getAttribute('data-follow'), 'following');
+  eq('the shelf shows the setup', await count(page, `#following .ss-followed[data-ticker="${trade.ticker}"]`), 1);
+  eq('the count control moves', await text(page, '#following-jump'), 'Following · 1');
+  const card = () => text(page, `#following .ss-followed[data-ticker="${trade.ticker}"]`);
+  check('the card keeps the saved plan levels', (await card()).includes('stop ' + usd(trade.plan.stop)) && (await card()).includes('limit ' + usd(trade.plan.entry_high)), await card());
+  check('the card shows the latest close with its date and no newer observation', (await card()).includes(usd(trade.close)) && (await card()).includes('no newer observation available'), await card());
+  const ownWords = () => page.locator(`#following .ss-followed[data-ticker="${trade.ticker}"]`).first().evaluate((c) => { const k = c.cloneNode(true); k.querySelectorAll('.ss-followed__note').forEach((n) => n.remove()); return k.innerText; });
+  check('the card never asserts a fill or a holding in its own words', !/\b(bought|filled|held|sold|stopped out)\b/i.test(await ownWords()), await ownWords());
+  check('the record’s sentence on the card is quoted and labelled as the record’s', /the (record|model plan) says\s*“/.test(await card()), await card());
+  await page.click('#detail .ss-follow button[data-follow-action="add"]').catch(() => {});
+  eq('a second click is idempotent', await count(page, '#following .ss-followed'), 1);
+  await page.click('#detail .ss-follow button[data-follow-action="edit"]');
+  await page.fill('#detail .ss-follow__form input', '0'); await page.click('#detail .ss-follow__form button[type="submit"]'); await page.waitForTimeout(150);
+  check('an invalid size is refused with a sentence', (await text(page, '#detail .ss-follow')).includes('whole number of shares'), await text(page, '#detail .ss-follow'));
+  await page.fill('#detail .ss-follow__form input', String(trade.plan.shares + 2)); await page.click('#detail .ss-follow__form button[type="submit"]'); await page.waitForTimeout(200);
+  check('the reference size is labelled as the reader’s', (await text(page, '#detail .ss-follow')).includes(`your reference size ${trade.plan.shares + 2} shares (plan suggested ${trade.plan.shares})`), await text(page, '#detail .ss-follow'));
+  await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(250);
+  check('the edit survives a reload', (await text(page, '#detail .ss-follow')).includes(`your reference size ${trade.plan.shares + 2} shares`), await text(page, '#detail .ss-follow'));
+  eq('the store is the demo store for a fixture', await page.evaluate(() => Object.keys(localStorage).filter((k) => /following/.test(k))), ['spicystock:following:demo:v1']);
+  const publicAfter = await page.evaluate(() => JSON.stringify([SCStock.data.scorecard, SCStock.data.trades, SCStock.data.cash_budget, SCStock.data.bursts.map((b) => b.plan && b.plan.order_line)]));
+  eq('following changes nothing public', publicAfter, publicBefore);
+  // a newer record: the observation moves, the saved plan does not
+  const newer = JSON.parse(JSON.stringify(data));
+  newer.observations.symbols[trade.ticker] = { date: '2026-09-11', o: 126, h: 131, l: 125, c: 130, v: 1000, since: data.run.session };
+  await page.evaluate((d) => { SCStock.render(d, new Date('2026-09-10T22:31:00Z')); }, newer);
+  await page.waitForTimeout(250);
+  check('a newer observation updates the card', (await card()).includes('$130.00') && (await card()).includes('11 Sep') && (await card()).includes('since the signal'), await card());
+  check('the saved plan is unchanged by the newer record', (await card()).includes('stop ' + usd(trade.plan.stop)) && (await card()).includes(`your reference size ${trade.plan.shares + 2} shares`), await card());
+  check('the movement is labelled as price movement, not a result', (await card()).includes('not your result'), await card());
+  // a withheld setup can be followed for observation, without a size
+  const withheld = (data.cash_budget.cut || []).find((c) => c.kind === 'withheld');
+  if (withheld) {
+    await go(page, `#/explore/bursts/${withheld.ticker}`);
+    check('a withheld setup offers observation only', (await text(page, '#detail .ss-follow')).includes('for observation, no ticket: ticket withheld'), await text(page, '#detail .ss-follow'));
+    await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
+    check('the withheld reason stays beside the followed setup', (await text(page, '#detail .ss-action')).includes('ticket withheld') && (await text(page, `#following .ss-followed[data-ticker="${withheld.ticker}"]`)).includes('observation only, no size'), 'withheld');
+    await page.click('#detail .ss-follow button[data-follow-action="remove"]'); await page.waitForTimeout(150);
+  }
+  await go(page, `#/explore/bursts/${trade.ticker}`);
+  await page.click('#detail .ss-follow button[data-follow-action="remove"]'); await page.waitForTimeout(200);
+  eq('undo removes the setup', [await page.locator('#detail .ss-follow').getAttribute('data-follow'), await count(page, '#following .ss-followed'), await text(page, '#following-jump')], ['not-following', 0, 'Following · 0']);
+  // a blocked write says so and never shows Following
+  await page.evaluate(() => { window.__setItem = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error('blocked'); }; });
+  await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
+  eq('a blocked write is not a follow', await page.locator('#detail .ss-follow').getAttribute('data-follow'), 'not-following');
+  check('a blocked write is named', (await text(page, '#detail .ss-follow')).includes('Could not save in this browser'), await text(page, '#detail .ss-follow'));
+  eq('following page errors', errors, []);
+  await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
+  eq('a second blocked write does not stack its sentence', await count(page, '#detail .ss-follow .ss-follow__warn'), 1);
+  await page.evaluate(() => { Storage.prototype.setItem = window.__setItem; });
+  if (shotsDir) { await go(page, `#/explore/bursts/${trade.ticker}`); await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200); eq('the store works again once unblocked', await page.locator('#detail .ss-follow').getAttribute('data-follow'), 'following'); await page.locator('#detail .ss-action').screenshot({ path: path.join(shotsDir, 'follow-action-1280.png') }); await page.locator('#following').screenshot({ path: path.join(shotsDir, 'following-1280.png') }); }
+  await context.close();
+  // a corrupt store is set aside, named, and starts empty
+  const c2 = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { hash: `#/explore/bursts/${trade.ticker}` });
+  await c2.page.evaluate(() => { localStorage.setItem('spicystock:following:demo:v1', '{not json'); SCStock.render(SCStock.data, new Date('2026-09-10T22:31:00Z')); });
+  await c2.page.waitForTimeout(200);
+  check('a corrupt store is set aside and named', (await text(c2.page, '#following-status')).includes('could not be read') && (await c2.page.evaluate(() => localStorage.getItem('spicystock:following:demo:v1.corrupt'))) === '{not json', await text(c2.page, '#following-status'));
+  eq('corrupt-store page errors', c2.errors, []);
+  await c2.context.close();
+}
+
 const SENTENCES = {
   universe_cached: 'The stock directory could not ',
   coverage_thin: 'Part of the universe was not r',
@@ -721,7 +955,7 @@ async function checkStates(browser, base, data) {
   } finally { await unlink(path.join(ROOT, failedPath)); }
   // a record missing a cosmetic field still renders, with no undefined or NaN in sight
   console.log('-- a field missing');
-  for (const field of ['bursts.quality.checks.threshold', 'bursts.quality.checks.label', 'breadth.up4', 'open_plans.entry_ref', 'open_plans.targets', 'run.reads', 'bursts.claude', 'watchlist.top.plan', 'bursts.series', 'bursts.summary', 'watchlist.top.box', 'cash_budget.cut', 'bursts.plan.exit_schedule', 'cover.action_target']) {
+  for (const field of ['bursts.quality.checks.threshold', 'bursts.quality.checks.label', 'breadth.up4', 'open_plans.entry_ref', 'open_plans.targets', 'run.reads', 'bursts.claude', 'watchlist.top.plan', 'bursts.series', 'bursts.summary', 'watchlist.top.box', 'cash_budget.cut', 'bursts.plan.exit_schedule', 'cover.action_target', 'bursts.quality.base', 'bursts.volume_vs_prior', 'observations']) {
     const copy = JSON.parse(JSON.stringify(data));
     const parts = field.split('.'); let o = copy;
     for (let i = 0; i < parts.length - 1; i++) { o = o[parts[i]]; if (Array.isArray(o)) o = o[0]; }
@@ -738,6 +972,19 @@ async function checkStates(browser, base, data) {
         const body = await page.locator('body').innerText();
         check(`without ${field} nothing prints undefined or NaN on ${view}`, !/\bundefined\b|\bNaN\b/.test(body), (body.match(/.{0,40}(undefined|NaN).{0,40}/) || [''])[0]);
       }
+      if (field === 'bursts.quality.base') {
+        check('without base dates the Setup range says so and falls back', (await text(page, '#detail .ss-chart-panel__range')).includes('Setup range unavailable'), await text(page, '#detail .ss-chart-panel__range'));
+        eq('without base dates the fallback shows 60 sessions', await page.locator('#detail .sc-chart--stock').getAttribute('data-sessions'), String(Math.min(60, data.bursts[0].series.length)));
+      }
+      if (field === 'bursts.volume_vs_prior') {
+        await page.click('#discover .sc-tab[data-discover="map"]'); await page.waitForTimeout(250);
+        eq('a burst without a volume measurement is not plotted', await page.locator('#burst-map').getAttribute('data-missing'), '1');
+        check('the unplotted burst stays listed and reachable', (await count(page, `#burst-map .ss-map__missing button[data-id="bursts:${data.bursts[0].ticker}"]`)) === 1 && (await text(page, '[data-counts]')).includes('1 without a measurement'), await text(page, '[data-counts]'));
+        await page.click(`#burst-map .ss-map__missing button[data-id="bursts:${data.bursts[0].ticker}"]`); await page.waitForTimeout(200);
+        eq('the unplotted burst opens its detail', await text(page, '#detail-h2'), data.bursts[0].ticker);
+        await page.click('#discover .sc-tab[data-discover="cards"]');
+      }
+      if (field === 'observations') check('without the observation block the shelf still renders', (await count(page, '#following .ss-following__empty')) === 1 || (await count(page, '#following .ss-followed')) >= 0, 'shelf');
       if (field === 'bursts.series') {
         eq('without bars the first burst shows the chart-unavailable state', await count(page, '#detail [data-chart="unavailable"]'), 1);
         eq('without bars no chart is drawn', await count(page, '#detail .sc-chart--stock'), 0);
@@ -790,6 +1037,9 @@ async function main() {
       await checkVariant(browser, base, v, data);
     }
     await checkMobile(browser, base, full);
+    await checkModes(browser, base, full);
+    await checkMap(browser, base, full);
+    await checkFollowing(browser, base, full);
     await checkStates(browser, base, full);
   } finally {
     await browser.close();

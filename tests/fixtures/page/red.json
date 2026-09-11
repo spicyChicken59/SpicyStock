@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "6fc9cb588bdd"
+  "rules_version": "71fae25cfa97"
  },
  "cover": {
   "h1": "Stand aside.",
@@ -317,7 +317,8 @@
     "A+"
    ],
    "series_bars": 120,
-   "series_top": 24
+   "series_top": 24,
+   "observation_days": 21
   },
   "breadth": {
    "burst_pct": 4.0,
@@ -7876,6 +7877,93 @@
   "sessions": 60,
   "note": "from bars alone, a model and not a brokerage record: a fill is booked only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold, settled by day 5"
  },
+ "observations": {
+  "as_of": "2026-09-10",
+  "days": 21,
+  "symbols": {
+   "AAPL": {
+    "date": "2026-09-10",
+    "o": 123.95,
+    "h": 124.23,
+    "l": 123.92,
+    "c": 124.21,
+    "v": 3000000.0,
+    "since": "2026-09-10"
+   },
+   "AMD": {
+    "date": "2026-09-10",
+    "o": 123.02,
+    "h": 123.3,
+    "l": 122.99,
+    "c": 123.27,
+    "v": 2600000.0,
+    "since": "2026-09-10"
+   },
+   "COIL": {
+    "date": "2026-09-10",
+    "o": 110.0,
+    "h": 110.5,
+    "l": 109.5,
+    "c": 110.0,
+    "v": 120000.0,
+    "since": "2026-09-10"
+   },
+   "NBIS": {
+    "date": "2026-09-10",
+    "o": 25.67,
+    "h": 25.96,
+    "l": 25.49,
+    "c": 25.75,
+    "v": 2528350.3248,
+    "since": "2026-09-10"
+   },
+   "NVDA": {
+    "date": "2026-09-10",
+    "o": 126.64,
+    "h": 126.93,
+    "l": 126.61,
+    "c": 126.88,
+    "v": 3400000.0,
+    "since": "2026-09-10"
+   },
+   "PLUG": {
+    "date": "2026-09-10",
+    "o": 119.2,
+    "h": 126.81,
+    "l": 118.35,
+    "c": 123.04,
+    "v": 3000000.0,
+    "since": "2026-09-10"
+   },
+   "SMCI": {
+    "date": "2026-09-10",
+    "o": 24.66,
+    "h": 24.85,
+    "l": 24.51,
+    "c": 24.71,
+    "v": 2582444.0691,
+    "since": "2026-09-10"
+   },
+   "TSLA": {
+    "date": "2026-09-10",
+    "o": 118.96,
+    "h": 124.49,
+    "l": 118.35,
+    "c": 124.21,
+    "v": 3000000.0,
+    "since": "2026-09-10"
+   },
+   "VRT": {
+    "date": "2026-09-10",
+    "o": 197.7,
+    "h": 198.3,
+    "l": 197.5,
+    "c": 198.0,
+    "v": 2880229.583,
+    "since": "2026-09-10"
+   }
+  }
+ },
  "closest_miss": {
   "ticker": "AAPL",
   "grade": "A+",
@@ -7901,6 +7989,7 @@
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
   "scorecard": "The rules' record over the published plans as a model of their fills, always with n, the read threshold and the uncertain count by reason. Rates are over settled plans alone. The rules' record, not yours. Null until a plan has settled.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
+  "observations": "The newest daily bar per symbol for the recorded signals -- the trades, the cut names, the charted bursts, the anticipation list, the open plans -- and, for the days the block names, the symbols an earlier record observed: date, o, h, l, c, v and the session each was first observed from. Read by the page's Following shelf; derived from bars already fetched, never a quote feed. A symbol without a bar tonight keeps its last observation, dated as it was.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."
  },
  "fixture": "red"

@@ -53,8 +53,12 @@ does not carry, falls back to Explore and says so.
    record's own call to action. Then two stage cards, **Bursts · N** (the
    range-expansion days the scan graded) and **Setting up · N** (the
    anticipation list: quiet, coiled names inside established momentum),
-   and inside the chosen stage one selectable card per stock with its
-   grade and its status in the record's words — *ticket*, *ticket
+   and inside the chosen stage — as cards, or for the bursts as a **map**
+   of the session's gain against its volume relative to the previous
+   session, every point the same selection as its card, the unmeasured
+   listed beside it, position a measurement and not a return — one
+   selectable card per stock with its grade and its status in the record's
+   words — *ticket*, *ticket
    withheld*, *beyond the slot cap*, *beyond the configured equity*, *no
    whole share*, *no new longs*, *vetoed*, *no ticket*, *watch* — a search
    that finds a ticker in either stage and says when it switched, and on a
@@ -62,11 +66,22 @@ does not carry, falls back to Explore and says so.
    Bursts when the scan found any, Setting up otherwise, and a chosen stage
    is never switched away from: an empty one says why it is empty. Each
    stage remembers its last chosen stock.
-3. **The chosen stock.** Its annotated chart (the base box, the burst bar,
-   the buy zone, the stop, the +8%/+20% ruler, the last sixty or hundred
-   and twenty sessions; a coil draws its box and its trigger and no burst
+3. **The chosen stock.** One chart panel with one header (the symbol, its
+   last close and session), the controls together above the plot, and every
+   price label in a reserved right gutter with a leader back to its exact
+   level: the last close, the stop, the trigger, the limit (the highest fill
+   the ticket permits) and, for a burst, the zone's floor. Three modes over
+   the same bars, levels and dates — *Setup* (the annotated view: the base,
+   the trigger and zone, the stop, the burst evidence), *Candles*
+   (conventional up/down candles, hollow and filled, with a quiet close-line
+   toggle) and *Line* (the recorded closes) — and three ranges: the *Setup
+   range* (the base and a short run of context before it, the dates
+   disclosed; without base dates it says so and shows 60), 60 and 120
+   sessions. The mode and the range are remembered in the browser. The aim
+   levels are printed beside the chart, and say so when they sit outside
+   the visible range; a coil draws its box and its trigger and no burst
    candle; a name without archived bars says *Chart unavailable* and keeps
-   its conditions). Four answers, each from the record's own sentences:
+   its conditions. Four answers, each from the record's own sentences:
    *why this stock?*, *what would need to happen?*, *what invalidates it,
    or makes me wait?*, *principal risk or limitation*. Then the action
    area: the conditional ticket's order line with *View conditional plan*,
@@ -107,7 +122,26 @@ does not carry, falls back to Explore and says so.
 6. **Method.** Tonight's run (coverage, grades, reads, delivery, timing,
    the run log), how to read the page, and the configured sizing
    assumptions every ticket was computed from.
-7. **The next action**, under every view: place the N orders from
+7. **Following.** One click beside a stock's action area — *Follow this
+   setup*, with the plan's suggested whole-share quantity when it has a
+   ticket, for observation alone when it does not — keeps the setup on a
+   compact shelf at the end of Explore, saved in this browser only (a
+   versioned store keyed by symbol, session, kind and rules identity;
+   idempotent; a blocked or corrupt store is named, never reported as
+   saved). A card carries the saved plan's levels, one optional reference
+   size of the reader's, the latest close the record carries for the
+   symbol (the `observations` block, else the record's own rows, else the
+   last observed date and *no newer observation available*), the movement
+   since the signal close as price movement and not a result, and the
+   model plan's update separately labelled. A saved plan is never a fill,
+   a holding, a sale or a stop-out, and nothing here reaches the record,
+   the mail or the scorecard.
+8. **Sample data.** A record written by `tools/make_fixture.py` says so:
+   a *Do not trade sample data* notice under the market bar naming the
+   fixture, a *demo data* chip on the chart panel and the burst map, a
+   *demo* chip on a followed card, and a chart-reader reply labelled
+   simulated. Demo follows are kept under their own browser key.
+9. **The next action**, under every view: place the N orders from
    tomorrow's tickets before 9:28 AM, nothing to place, no new longs, plans
    unchanged, or do not place these orders.
 
@@ -245,6 +279,9 @@ stale states, drops fourteen fields in turn (a burst without bars must say
 `docs/data.json` (schema 2) is one object: `run`, `cover`, `breadth`,
 `bursts[]`, `trades[]`, `beyond_cap[]`, `cash_budget`, `watchlist`,
 `open_plans[]`, `scorecard`, `nights[]`, `account`, `rules`, `closest_miss`,
+`observations` (the newest bar per recorded signal — the trades, the cut
+names, the charted bursts, the anticipation list, the open plans — carried
+for three weeks, for the page's Following shelf),
 `app`, and `_contract`, which names every top-level key in a sentence.
 `rules` is every module's constants nested by family, and `app.rules_version`
 is a digest of that block, so two records produced by different numbers can
@@ -285,7 +322,7 @@ what the bars say happened to them.
 src/            pipeline.py (the run) · universe.py · market_data.py · clock.py
                 scans.py · quality.py · breadth.py · watchlist.py · plan.py
                 grader.py · charts.py · record.py · report.py
-docs/           index.html · app.js · app.css · app-chart.js · design-system/
+docs/           index.html · app.js · app.css · app-chart.js · app-map.js · app-follow.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/

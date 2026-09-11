@@ -24,7 +24,27 @@
                          upDays bars before the burst, ✕ under breakdownIndexes,
                          a "tomorrow →" gutter label and the 20-session volume
                          average hairline "avg 20d" (volumeAvg)
-     ariaLabel           the host's accessible name (default: generated) */
+     ariaLabel           the host's accessible name (default: generated)
+
+   Panel options (the page's chart panel), also off by default:
+     mode: 'setup' | 'candles' | 'line'
+                         one geometry, three drawings. 'setup' is the annotated
+                         card above; 'candles' is conventional up/down candles
+                         with the same levels and none of the setup marks;
+                         'line' is the recorded closes as one path with the
+                         same levels. A gap stays a gap in every mode.
+     gutterLabels: true  every price label -- last close, stop, trigger, limit,
+                         the zone low when it is not the trigger, the aim ticks
+                         inside the pane -- lives in a reserved right gutter,
+                         stacked apart by one collision pass, each with a leader
+                         back to its exact level; nothing is written over the
+                         candles and the level lines never move. An aim tick
+                         outside the pane is not drawn: g.target.offscale says
+                         so and the page prints the reference beside the chart.
+     head: false         no in-chart head; the page draws the panel header.
+     closeLine: true     a quiet closing-price trace over the candles.
+   The host answers host.update(options) (redraw in place, same observers)
+   and host.dispose() (drop the observers, the tooltip and the listeners). */
 (function (w) {
   'use strict';
   var SCStock = w.SCStock = w.SCStock || {};
@@ -32,6 +52,7 @@
   var LABEL_H = 14;
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  var MODES = ['setup', 'candles', 'line'];
   var styled = false;
 
   function sc() {
@@ -63,6 +84,11 @@
   function shortDate(date) {
     var p = date.split('-');
     return p.length === 3 ? (+p[2]) + ' ' + MONTHS[+p[1] - 1] : date;
+  }
+  function modeOf(options) {
+    var m = options && options.mode;
+    for (var i = 0; i < MODES.length; i++) if (MODES[i] === m) return m;
+    return 'setup';
   }
 
   /* ---------- simple moving average ------------------------------------- */
@@ -108,11 +134,12 @@
      its own pane under the price pane, scaled 0..max, with no second axis on
      the price pane. The right gutter is sized from the widest label it has
      to hold, so a $1,234.56 name and a $4.20 name each get the room they
-     need at 360px. */
+     need at 360px. The mode never touches the scales: the three drawings
+     share one domain, one slot pitch and one set of level coordinates. */
   function chartGeometry(series, options, width, height) {
     var SC = sc();
     options = options || {};
-    var compact = !!options.compact;
+    var compact = !!options.compact, mode = modeOf(options), gutterLabels = !!options.gutterLabels;
     var W = Math.max(200, Math.round(width || options.width || 640));
     var H = Math.max(160, Math.round(height || options.height || (compact ? 200 : 320)));
     var bars = normalise(series), n = bars.length, i, b;
@@ -145,8 +172,8 @@
     if (hi === lo) { var e = Math.max(1, Math.abs(lo) * 0.02); lo -= e; hi += e; }
     var span = hi - lo;
     lo -= span * 0.05; hi += span * 0.07;
-    var lastClose = null;
-    for (i = n - 1; i >= 0 && lastClose === null; i--) lastClose = bars[i].c;
+    var lastClose = null, lastIndex = null;
+    for (i = n - 1; i >= 0 && lastClose === null; i--) { lastClose = bars[i].c; if (lastClose !== null) lastIndex = i; }
 
     /* gridline values and the right-gutter texts, which size the gutter */
     var tk = SC.ticks(lo, hi, compact ? 3 : 5), gridValues = [], decimals = 2;
@@ -174,12 +201,21 @@
       if (len === null || len < 1) continue;
       mas.push({ n: Math.floor(len), weight: Math.floor(len) === 20 ? 1.8 : 1.1, values: sma(closes, Math.floor(len)) });
     }
+    /* the zone low is its own label only when it is not the trigger (a coil's
+       zone starts AT the trigger; a burst's zone low is the skip line) */
+    var zoneLowOwn = entryLow !== null && (trigger === null || Math.abs(entryLow - trigger) / Math.max(entryLow, 1e-9) > 0.005);
     var widest = 0;
     function span1(s) { if (s.length > widest) widest = s.length; }
     if (lastClose !== null) span1(fmtPrice(lastClose));
     for (i = 0; i < gridValues.length; i++) span1(fmtPrice(gridValues[i], decimals));
-    if (target) span1(ruler ? fmtPct(target.pctHigh).replace('.0', '') + ' ↑' : target.text);
+    if (target) span1(ruler ? fmtPct(target.pctHigh).replace('.0', '') + (gutterLabels ? ' aim' : ' ↑') : target.text);
     for (k = 0; k < mas.length; k++) span1(mas[k].n + 'd');
+    if (gutterLabels) {
+      if (stop !== null) span1('stop ' + fmtPrice(stop));
+      if (trigger !== null) span1('trigger ' + fmtPrice(trigger));
+      if (entryHigh !== null) span1('limit ' + fmtPrice(entryHigh));
+      if (zoneLowOwn) span1('zone ' + fmtPrice(entryLow));
+    }
     var gutter = Math.max(compact ? 40 : 48, Math.round(widest * CHAR) + 16);
 
     /* panes */
@@ -217,7 +253,8 @@
         var vTop = vy(b.v);
         volume = { x: bx, y: vTop, w: bodyW, h: Math.max(b.v > 0 ? 1 : 0, r1(vol.bottom - vTop)), burst: i === burstIndex };
       }
-      out.push({ index: i, date: b.date, x: cx, o: b.o, h: b.h, l: b.l, c: b.c, v: b.v, pct: b.pct, candle: candle, volume: volume });
+      out.push({ index: i, date: b.date, x: cx, o: b.o, h: b.h, l: b.l, c: b.c, v: b.v, pct: b.pct, candle: candle, volume: volume,
+                 close: b.c !== null ? { x: cx, y: y(b.c) } : null });
     }
     if (burstIndex !== null) {
       b = bars[burstIndex];
@@ -263,11 +300,13 @@
        buy zone inside its band when the band is tall enough and over it
        otherwise; then one collision pass, and a label the pass moved gets a
        leader back to the level it names. The base label joins the pass when
-       its box starts under these. */
+       its box starts under these. With gutterLabels every level label goes
+       to the right gutter instead (below), and nothing is written here. */
     var left = [], stopG = null, entryG = null, triggerG = null, targetG = null;
     function leftLabel(y0, text, kind, tone) {
       var it = { y: y0, yTrue: y0, x: plot.left + 4, text: text, kind: kind, tone: tone, leader: null };
-      left.push(it); return it;
+      if (!gutterLabels) left.push(it);
+      return it;
     }
     var ey1 = null, ey2 = null;
     if (entryLow !== null && entryHigh !== null) { ey1 = y(entryHigh); ey2 = y(entryLow); }
@@ -276,7 +315,7 @@
     var zoneX = burstIndex !== null ? r1(x(burstIndex) + bodyW / 2 + 2) : n ? r1(x(n - 1) + bodyW / 2 + 2) : plot.left;
     var stopTag = null;
     if (stop !== null) {
-      if (card) {
+      if (card && !gutterLabels) {
         var stext = 'stop ' + fmtPrice(stop).replace('$', ''), sw = r1(stext.length * CHAR + 10);
         stopTag = { text: stext, w: sw, h: LABEL_H + 2, x: r1(plot.right - 2 - sw), y: r1(y(stop) - (LABEL_H + 2) / 2), price: stop };
         stopG = { y: y(stop), price: stop, label: { x: stopTag.x + 5, y: r1(stopTag.y + LABEL_H - 2), yTrue: y(stop), text: stext, kind: 'stop', tone: 'danger', anchor: 'start', leader: null } };
@@ -289,19 +328,19 @@
     if (ey1 !== null) {
       var inside = ey2 - ey1 >= 2 * LABEL_H;
       if (card) {
-        var etext = 'buy ' + fmtPrice(entryLow).replace('$', '') + '\u2013' + fmtPrice(entryHigh).replace('$', '');
+        var etext = 'buy ' + fmtPrice(entryLow).replace('$', '') + '–' + fmtPrice(entryHigh).replace('$', '');
         var ew = etext.length * CHAR + 8, ex = zoneX + 4, eanchor = 'start';
         if (ex + ew > plot.right) { ex = plot.right - 3; eanchor = 'end'; }
         entryG = { y1: ey1, y2: ey2, h: Math.max(1, r1(ey2 - ey1)), low: entryLow, high: entryHigh, x: zoneX, w: Math.max(1, r1(plot.right - zoneX)),
-                   label: { x: ex, y: inside ? r1(ey1 + 11) : r1(ey1 - 4), yTrue: ey1, text: etext, kind: 'entry', tone: 'accent', anchor: eanchor, leader: null } };
+                   label: gutterLabels ? null : { x: ex, y: inside ? r1(ey1 + 11) : r1(ey1 - 4), yTrue: ey1, text: etext, kind: 'entry', tone: 'accent', anchor: eanchor, leader: null } };
       } else {
         entryG = { y1: ey1, y2: ey2, h: Math.max(1, r1(ey2 - ey1)), low: entryLow, high: entryHigh, x: plot.left, w: plot.width,
-                   label: leftLabel(inside ? r1(ey1 + 11) : r1(ey1 - 4), 'buy zone ' + fmtPrice(entryLow) + '\u2013' + fmtPrice(entryHigh), 'entry', 'chart-emphasis') };
+                   label: leftLabel(inside ? r1(ey1 + 11) : r1(ey1 - 4), 'buy zone ' + fmtPrice(entryLow) + '–' + fmtPrice(entryHigh), 'entry', 'chart-emphasis') };
       }
     }
     var leftWidth = 0;
     for (i = 0; i < left.length; i++) leftWidth = Math.max(leftWidth, left[i].text.length * CHAR + 8);
-    var boxJoined = boxG && boxG.label.anchor === 'start' && boxG.label.x < plot.left + leftWidth;
+    var boxJoined = boxG && !gutterLabels && boxG.label.anchor === 'start' && boxG.label.x < plot.left + leftWidth;
     if (boxJoined) { boxG.label.yTrue = boxG.label.y; left.push(boxG.label); }
     SC.spreadLabels(left, { gap: LABEL_H + 1, min: plot.top + 9, max: plot.bottom - 3 });
     for (i = 0; i < left.length; i++) {
@@ -313,29 +352,40 @@
     }
     if (boxJoined) left.pop();
 
-    /* right gutter — last close, the target band, gridline values, MA ends */
+    /* right gutter — last close, the levels (gutterLabels), the target band,
+       gridline values, MA ends. One collision pass; every label keeps yTrue,
+       the exact level it names, and the SVG draws a leader between them. */
     var right = [];
     function near(list, y0, d) { for (var j = 0; j < list.length; j++) if (Math.abs(list[j].yTrue - y0) < d) return true; return false; }
-    function rightLabel(y0, text, kind) { var it = { y: y0, yTrue: y0, text: text, kind: kind }; right.push(it); return it; }
+    function rightLabel(y0, text, kind, tone) { var it = { y: y0, yTrue: y0, text: text, kind: kind, tone: tone || null }; right.push(it); return it; }
     if (lastClose !== null) rightLabel(y(lastClose), fmtPrice(lastClose), 'close');
+    if (gutterLabels) {
+      if (stopG) stopG.gutter = rightLabel(stopG.y, 'stop ' + fmtPrice(stop), 'stop', 'danger');
+      if (triggerG && !(lastClose !== null && Math.abs(trigger - lastClose) / Math.max(lastClose, 1e-9) < 0.001)) triggerG.gutter = rightLabel(triggerG.y, 'trigger ' + fmtPrice(trigger), 'trigger', 'warn');
+      if (entryG) {
+        entryG.gutterHigh = rightLabel(entryG.y1, 'limit ' + fmtPrice(entryHigh), 'limit', 'accent');
+        if (zoneLowOwn) entryG.gutterLow = rightLabel(entryG.y2, 'zone ' + fmtPrice(entryLow), 'zone', 'accent');
+      }
+    }
     if (target && ruler) {
       /* the ruler: a strip in the gutter from +8% to +20%, each tick clamped
          to the pane and saying so with an arrow, so the band never sets the
-         scale and the eye still knows where the aim sits */
+         scale and the eye still knows where the aim sits. With gutterLabels a
+         clamped tick is not drawn at all: offscale says so, the page prints it. */
       var ry1 = y(targetHigh), ry2 = y(targetLow), c1 = Math.max(plot.top, Math.min(plot.bottom, ry1)), c2 = Math.max(plot.top, Math.min(plot.bottom, ry2));
       var tLow = fmtPct(target.pctLow).replace('.0', ''), tHigh = fmtPct(target.pctHigh).replace('.0', '');
       var ticks = [
-        { y: c2, price: targetLow, text: tLow + (c2 !== ry2 ? (ry2 > plot.bottom ? ' ↓' : ' ↑') : ''), clamped: c2 !== ry2 },
-        { y: c1, price: targetHigh, text: tHigh + (c1 !== ry1 ? (ry1 < plot.top ? ' ↑' : ' ↓') : ''), clamped: c1 !== ry1 }
+        { y: c2, price: targetLow, text: tLow + (gutterLabels ? ' aim' : (c2 !== ry2 ? (ry2 > plot.bottom ? ' ↓' : ' ↑') : '')), clamped: c2 !== ry2 },
+        { y: c1, price: targetHigh, text: tHigh + (gutterLabels ? ' aim' : (c1 !== ry1 ? (ry1 < plot.top ? ' ↑' : ' ↓') : '')), clamped: c1 !== ry1 }
       ];
       targetG = { ruler: true, y1: c1, y2: c2, h: Math.max(1, r1(c2 - c1)), low: targetLow, high: targetHigh, ref: ref,
                   pctLow: target.pctLow, pctHigh: target.pctHigh, text: target.text, ticks: ticks,
-                  strip: { x: plot.right + 2, w: 3 }, label: null };
-      for (i = 0; i < ticks.length; i++) ticks[i].label = rightLabel(ticks[i].y, ticks[i].text, 'aim');
+                  strip: { x: plot.right + 2, w: 3 }, label: null, offscale: c1 !== ry1 || c2 !== ry2, visible: !(c1 !== ry1 && c2 !== ry2) };
+      for (i = 0; i < ticks.length; i++) ticks[i].label = gutterLabels && ticks[i].clamped ? null : rightLabel(ticks[i].y, ticks[i].text, 'aim');
     } else if (target) {
       var ty1 = y(targetHigh), ty2 = y(targetLow);
       targetG = { y1: ty1, y2: ty2, h: Math.max(1, r1(ty2 - ty1)), low: targetLow, high: targetHigh, ref: ref,
-                  pctLow: target.pctLow, pctHigh: target.pctHigh, text: target.text,
+                  pctLow: target.pctLow, pctHigh: target.pctHigh, text: target.text, offscale: false, visible: true,
                   strip: { x: plot.right + 1, w: 4 }, label: rightLabel(r1((ty1 + ty2) / 2 + 4), target.text, 'target') };
     }
     var grid = [];
@@ -347,7 +397,7 @@
     for (k = 0; k < maPaths.length; k++) {
       if (maPaths[k].last && !near(right, maPaths[k].last.y, LABEL_H - 2)) rightLabel(maPaths[k].last.y, maPaths[k].n + 'd', 'ma');
     }
-    SC.spreadLabels(right, { gap: LABEL_H - 1, min: plot.top + 5, max: plot.bottom - 2 });
+    SC.spreadLabels(right, { gap: gutterLabels ? LABEL_H + 1 : LABEL_H - 1, min: plot.top + 5, max: plot.bottom - 2 });
     for (i = 0; i < right.length; i++) { right[i].y = r1(right[i].y); right[i].x = plot.right + 9; }
 
     /* date axis: month boundaries; a series too short for two of them is
@@ -357,15 +407,16 @@
       d = bars[i].date; m = d.slice(5, 7); pm = bars[i - 1].date.slice(5, 7);
       if (m && pm && m !== pm) dateTicks.push({ index: i, label: MONTHS[+m - 1] + (m === '01' ? " '" + d.slice(2, 4) : '') });
     }
+    var tickGap = gutterLabels ? 46 : 30;   /* px between date labels: a "28 Aug" label is ~40px of mono */
     if (dateTicks.length < 2 && n) {
-      var step = Math.max(1, Math.ceil(n / 5));
+      var step = Math.max(1, Math.ceil(n / 5), Math.ceil(tickGap / Math.max(slot, 0.1)));
       dateTicks = [];
       for (i = 0; i < n; i += step) dateTicks.push({ index: i, label: shortDate(bars[i].date) });
     }
     var kept = [];
     for (i = 0; i < dateTicks.length; i++) {
       var tx = r1(plot.left + dateTicks[i].index * slot);
-      if (tx - prevX < 30) continue;
+      if (tx - prevX < tickGap) continue;
       dateTicks[i].x = tx; kept.push(dateTicks[i]); prevX = tx;
     }
 
@@ -501,12 +552,17 @@
       }
     }
 
+    /* the closing-price trace: one path, a gap breaks it (never bridged) */
+    var closePoints = [];
+    for (i = 0; i < n; i++) closePoints.push(out[i].close);
+    var lastPoint = lastIndex !== null ? { x: x(lastIndex), y: y(lastClose), index: lastIndex } : null;
+
     return {
-      width: W, height: H, n: n, compact: compact, card: card, gutter: gutter,
+      width: W, height: H, n: n, compact: compact, card: card, mode: mode, gutterLabels: gutterLabels, gutter: gutter,
       plot: plot, vol: vol, axisY: H - 5, slot: slot, bodyWidth: bodyW, futureSlots: futureSlots, future: future,
-      domain: { lo: lo, hi: hi }, volMax: vmax, lastClose: lastClose, decimals: decimals,
+      domain: { lo: lo, hi: hi }, volMax: vmax, lastClose: lastClose, lastPoint: lastPoint, decimals: decimals,
       x: x, y: y, vy: vy,
-      grid: grid, dateTicks: kept, bars: out, ma: maPaths,
+      grid: grid, dateTicks: kept, bars: out, ma: maPaths, closePoints: closePoints,
       box: boxG, burst: burst, stop: stopG, stopTag: stopTag, entry: entryG, trigger: triggerG, target: targetG,
       upTicks: upTicks, breakdownMarks: bdMarks, rangeBracket: bracket, tomorrow: tomorrow, volAvg: volAvg,
       leftLabels: left, rightLabels: right
@@ -529,24 +585,39 @@
       '.sc-chart__candle{stroke:var(--sc-tone,var(--sc-chart-context));stroke-width:1.2;fill:none}',
       '.sc-chart__candle.is-filled{fill:var(--sc-tone,var(--sc-chart-context))}',
       '.sc-chart__candle--burst{stroke-width:1.8}',
+      '.sc-chart--stock.is-panel .sc-chart__wick{stroke-width:1.3}',
+      '.sc-chart--stock.is-panel .sc-chart__candle{stroke-width:1.5}',
+      '.sc-chart--stock.is-panel .sc-chart__candle.is-filled{fill-opacity:.95}',
       '.sc-chart__vol{fill:var(--sc-tone,var(--sc-chart-context));fill-opacity:.5}',
       '.sc-chart__vol.is-emphasis{fill-opacity:1}',
       '.sc-chart__band{fill:var(--sc-tone,var(--sc-chart-context));fill-opacity:.14;stroke:none}',
       '.sc-chart__band--faint{fill-opacity:.07}',
       '.sc-chart__strip{fill:var(--sc-tone,var(--sc-chart-context));fill-opacity:.9}',
       '.sc-chart__box{fill:var(--sc-tone,var(--sc-chart-context));fill-opacity:.2;stroke:var(--sc-tone,var(--sc-chart-context));stroke-width:1.3;stroke-dasharray:4 3}',
+      '.sc-chart--stock.is-panel .sc-chart__box{fill-opacity:.12;stroke-width:1}',
       '.sc-chart__level{fill:none;stroke:var(--sc-tone,var(--sc-chart-context));stroke-width:1.3}',
       '.sc-chart__level--dashed{stroke-dasharray:6 4}',
       '.sc-chart__level--dotted{stroke-dasharray:2 3}',
+      '.sc-chart__level--close{stroke:var(--sc-heading);stroke-width:1;stroke-dasharray:1 3;stroke-opacity:.7}',
       '.sc-chart__flag{fill:var(--sc-tone,var(--sc-accent))}',
       '.sc-chart__leader{stroke:var(--sc-border-strong);stroke-width:1;fill:none}',
+      '.sc-chart__close{fill:none;stroke:var(--sc-tone,var(--sc-chart-emphasis));stroke-width:2;stroke-linejoin:round;stroke-linecap:round}',
+      '.sc-chart__close--quiet{stroke-width:1;stroke-opacity:.7}',
+      '.sc-chart__dot{fill:var(--sc-tone,var(--sc-chart-emphasis));stroke:var(--sc-surface);stroke-width:1.5}',
       /* card marks */
       '.sc-chart__band--zone{fill-opacity:.22}',
+      '.sc-chart--stock.is-panel .sc-chart__band--zone{fill-opacity:.16}',
       '.sc-chart__edge{stroke:var(--sc-tone,var(--sc-accent));stroke-width:1;fill:none}',
       '.sc-chart__level--solid{stroke-width:1.5}',
       '.sc-chart__pill{fill:var(--sc-danger-fill);stroke:var(--sc-danger);stroke-width:1}',
       '.sc-chart--stock .sc-chart__pill-text{font:600 11px var(--sc-font-mono);fill:var(--sc-danger)}',
       '.sc-chart--stock .sc-chart__note--accent{fill:var(--sc-accent)}',
+      '.sc-chart--stock .sc-chart__note--warn{fill:var(--sc-warn)}',
+      '.sc-chart__gutter-plate{fill:var(--sc-surface);stroke:var(--sc-border);stroke-width:1}',
+      '.sc-chart__gutter-plate--accent{stroke:var(--sc-accent)}',
+      '.sc-chart__gutter-plate--warn{stroke:var(--sc-warn)}',
+      '.sc-chart__gutter-plate--close{fill:var(--sc-heading);stroke:var(--sc-heading)}',
+      '.sc-chart--stock .sc-chart__note--onink{fill:var(--sc-surface)}',
       '.sc-chart__ruler{fill:var(--sc-brand-fill);stroke:var(--sc-brand-line);stroke-width:1;stroke-dasharray:2 2}',
       '.sc-chart__ruler-tick{stroke:var(--sc-brand-line);stroke-width:1}',
       '.sc-chart--stock .sc-chart__tick{font-size:9px;fill:var(--sc-text-2)}',
@@ -582,22 +653,32 @@
     }
     return d;
   }
-  function buildSvg(g, SC) {
+  /* the up/down tones: the setup drawing keeps the system's chart slots
+     (emphasis hollow up, context filled down); the conventional candles ask
+     for the status colours, still hollow up and filled down so the direction
+     never rides on colour alone */
+  function candleTones(g) {
+    return g.mode === 'candles' ? { up: 'good', down: 'danger', burst: 'good' } : { up: 'chart-emphasis', down: 'chart-context', burst: g.card ? 'chart-emphasis' : 'accent' };
+  }
+  function buildSvg(g, SC, options) {
+    options = options || {};
     var svg = SC.svg('svg', { viewBox: '0 0 ' + g.width + ' ' + g.height, width: g.width, height: g.height, 'aria-hidden': 'true', focusable: 'false' });
-    var plot = g.plot, i, b, card = g.card;
+    var plot = g.plot, i, b, card = g.card, setup = g.mode === 'setup', line = g.mode === 'line', tones = candleTones(g);
     /* gridlines */
     var grid = SC.svg('g');
     for (i = 0; i < g.grid.length; i++) grid.appendChild(SC.svg('line', { 'class': 'sc-chart__grid', x1: plot.left, x2: plot.right, y1: g.grid[i].y, y2: g.grid[i].y }));
     grid.appendChild(SC.svg('line', { 'class': 'sc-chart__grid', x1: plot.left, x2: plot.right, y1: g.vol.bottom, y2: g.vol.bottom }));
     svg.appendChild(grid);
     /* the burst column under everything but the grid, then the bands: target (faint, full width + gutter strip), buy zone, base box */
-    if (g.burst && !card) svg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band sc-chart__band--faint', style: toneStyle('accent'), x: g.burst.column.x, y: g.burst.column.y, width: g.burst.column.w, height: g.burst.column.h }));
+    if (g.burst && !card && setup) svg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band sc-chart__band--faint', style: toneStyle('accent'), x: g.burst.column.x, y: g.burst.column.y, width: g.burst.column.w, height: g.burst.column.h }));
     if (g.target && g.target.ruler) {
       /* the ruler lives in the gutter only: a rule band, never a forecast over history */
-      var rg = SC.svg('g');
-      rg.appendChild(SC.svg('rect', { 'class': 'sc-chart__ruler', x: g.target.strip.x, y: g.target.y1, width: g.target.strip.w, height: g.target.h }));
-      for (i = 0; i < g.target.ticks.length; i++) rg.appendChild(SC.svg('line', { 'class': 'sc-chart__ruler-tick', x1: g.target.strip.x - 2, x2: g.target.strip.x + g.target.strip.w + 3, y1: g.target.ticks[i].y, y2: g.target.ticks[i].y }));
-      svg.appendChild(rg);
+      if (g.target.visible) {
+        var rg = SC.svg('g');
+        rg.appendChild(SC.svg('rect', { 'class': 'sc-chart__ruler', x: g.target.strip.x, y: g.target.y1, width: g.target.strip.w, height: g.target.h }));
+        for (i = 0; i < g.target.ticks.length; i++) if (!(g.gutterLabels && g.target.ticks[i].clamped)) rg.appendChild(SC.svg('line', { 'class': 'sc-chart__ruler-tick', x1: g.target.strip.x - 2, x2: g.target.strip.x + g.target.strip.w + 3, y1: g.target.ticks[i].y, y2: g.target.ticks[i].y }));
+        svg.appendChild(rg);
+      }
     } else if (g.target) {
       var tg = SC.svg('g', { style: toneStyle('good') });
       tg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band sc-chart__band--faint', x: plot.left, y: g.target.y1, width: plot.width, height: g.target.h }));
@@ -607,25 +688,25 @@
     if (g.entry && card) {
       /* THE PAGE'S SPICE: the accent fill from the burst bar across the future gutter, with 1px accent edges */
       var zg = SC.svg('g', { style: toneStyle('accent') });
-      zg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band sc-chart__band--zone', x: g.entry.x, y: g.entry.y1, width: g.entry.w, height: g.entry.h }));
+      zg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band sc-chart__band--zone' + (setup ? '' : ' sc-chart__band--faint'), x: g.entry.x, y: g.entry.y1, width: g.entry.w, height: g.entry.h }));
       zg.appendChild(SC.svg('line', { 'class': 'sc-chart__edge', x1: g.entry.x, x2: g.entry.x + g.entry.w, y1: g.entry.y1, y2: g.entry.y1 }));
       zg.appendChild(SC.svg('line', { 'class': 'sc-chart__edge', x1: g.entry.x, x2: g.entry.x + g.entry.w, y1: g.entry.y2, y2: g.entry.y2 }));
       svg.appendChild(zg);
     } else if (g.entry) {
       svg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band', style: toneStyle('chart-emphasis'), x: plot.left, y: g.entry.y1, width: plot.width, height: g.entry.h }));
     }
-    if (g.box) {
+    if (g.box && setup) {
       svg.appendChild(SC.svg('rect', { 'class': 'sc-chart__box', style: toneStyle('chart-context'), x: g.box.x, y: g.box.y, width: g.box.w, height: g.box.h }));
     }
     /* volume */
-    var vg = SC.svg('g', { style: toneStyle('chart-context') }), vb = SC.svg('g', { style: toneStyle(card ? 'chart-emphasis' : 'accent') });
+    var vg = SC.svg('g', { style: toneStyle('chart-context') }), vb = SC.svg('g', { style: toneStyle(setup ? (card ? 'chart-emphasis' : 'accent') : 'chart-context') });
     for (i = 0; i < g.bars.length; i++) {
       b = g.bars[i].volume;
       if (!b || !b.h) continue;
-      (b.burst ? vb : vg).appendChild(SC.svg('rect', { 'class': 'sc-chart__vol' + (b.burst ? ' is-emphasis' : ''), x: b.x, y: b.y, width: b.w, height: b.h }));
+      (b.burst ? vb : vg).appendChild(SC.svg('rect', { 'class': 'sc-chart__vol' + (b.burst && setup ? ' is-emphasis' : ''), x: b.x, y: b.y, width: b.w, height: b.h }));
     }
     svg.appendChild(vg); svg.appendChild(vb);
-    if (g.volAvg) {
+    if (g.volAvg && setup) {
       var vd = pathOf(g.volAvg.points);
       if (vd) svg.appendChild(SC.svg('path', { 'class': 'sc-chart__avg', style: toneStyle('chart-context'), d: vd }));
       if (g.volAvg.label) svg.appendChild(SC.svg('text', { 'class': 'sc-chart__faint', x: g.volAvg.label.x, y: g.volAvg.label.y, 'text-anchor': g.volAvg.label.anchor }, g.volAvg.label.text));
@@ -635,29 +716,42 @@
       var d = pathOf(g.ma[i].points);
       if (d) svg.appendChild(SC.svg('path', { 'class': 'sc-chart__series sc-chart__series--context', style: '--sc-weight:' + g.ma[i].weight, d: d }));
     }
-    /* candles: up hollow in emphasis, down filled in context; the burst in the accent on the harness chart, heavier emphasis on a card (the accent is the buy zone's there) */
-    var up = SC.svg('g', { style: toneStyle('chart-emphasis') }), down = SC.svg('g', { style: toneStyle('chart-context') }), burstG = SC.svg('g', { style: toneStyle(card ? 'chart-emphasis' : 'accent') });
-    for (i = 0; i < g.bars.length; i++) {
-      var c = g.bars[i].candle;
-      if (!c) continue;
-      var parent = c.burst ? burstG : c.up ? up : down, cls = 'sc-chart__candle' + (c.filled ? ' is-filled' : '') + (c.burst ? ' sc-chart__candle--burst' : '');
-      /* the wick in two pieces so it never crosses a hollow body */
-      if (c.wickTop < c.y) parent.appendChild(SC.svg('line', { 'class': 'sc-chart__wick', x1: c.cx, x2: c.cx, y1: c.wickTop, y2: c.y }));
-      if (c.wickBottom > c.y + c.h) parent.appendChild(SC.svg('line', { 'class': 'sc-chart__wick', x1: c.cx, x2: c.cx, y1: c.y + c.h, y2: c.wickBottom }));
-      if (c.w <= 2) parent.appendChild(SC.svg('line', { 'class': cls, x1: c.cx, x2: c.cx, y1: c.y, y2: c.y + c.h, 'stroke-width': c.filled ? 2 : 1 }));
-      else parent.appendChild(SC.svg('rect', { 'class': cls, x: c.x, y: c.y, width: c.w, height: c.h }));
+    if (line) {
+      /* the recorded closes as one path; a gap breaks it; the last close wears a dot */
+      var cd = pathOf(g.closePoints);
+      if (cd) svg.appendChild(SC.svg('path', { 'class': 'sc-chart__close', 'data-series': 'close', style: toneStyle('chart-emphasis'), d: cd }));
+      if (g.lastPoint) svg.appendChild(SC.svg('circle', { 'class': 'sc-chart__dot', 'data-mark': 'last-close', style: toneStyle('chart-emphasis'), cx: g.lastPoint.x, cy: g.lastPoint.y, r: 3.5 }));
+    } else {
+      /* candles: up hollow, down filled; the burst heavier (setup and candles), in the accent on the harness chart */
+      var up = SC.svg('g', { style: toneStyle(tones.up) }), down = SC.svg('g', { style: toneStyle(tones.down) }), burstG = SC.svg('g', { style: toneStyle(tones.burst) });
+      for (i = 0; i < g.bars.length; i++) {
+        var c = g.bars[i].candle;
+        if (!c) continue;
+        var parent = c.burst && setup ? burstG : c.up ? up : down, cls = 'sc-chart__candle' + (c.filled ? ' is-filled' : '') + (c.burst ? ' sc-chart__candle--burst' : '');
+        /* the wick in two pieces so it never crosses a hollow body */
+        if (c.wickTop < c.y) parent.appendChild(SC.svg('line', { 'class': 'sc-chart__wick', x1: c.cx, x2: c.cx, y1: c.wickTop, y2: c.y }));
+        if (c.wickBottom > c.y + c.h) parent.appendChild(SC.svg('line', { 'class': 'sc-chart__wick', x1: c.cx, x2: c.cx, y1: c.y + c.h, y2: c.wickBottom }));
+        if (c.w <= 2) parent.appendChild(SC.svg('line', { 'class': cls, x1: c.cx, x2: c.cx, y1: c.y, y2: c.y + c.h, 'stroke-width': c.filled ? 2 : 1 }));
+        else parent.appendChild(SC.svg('rect', { 'class': cls, x: c.x, y: c.y, width: c.w, height: c.h }));
+      }
+      svg.appendChild(up); svg.appendChild(down); svg.appendChild(burstG);
+      if (options.closeLine) {
+        var qd = pathOf(g.closePoints);
+        if (qd) svg.appendChild(SC.svg('path', { 'class': 'sc-chart__close sc-chart__close--quiet', 'data-series': 'close', style: toneStyle('chart-emphasis'), d: qd }));
+      }
     }
-    svg.appendChild(up); svg.appendChild(down); svg.appendChild(burstG);
-    /* card marks under the bars: ▲ for the up-day run, ✕ for a 4% breakdown inside the base */
-    for (i = 0; i < g.upTicks.length; i++) svg.appendChild(SC.svg('text', { 'class': 'sc-chart__tick', 'data-mark': 'up', x: g.upTicks[i].x, y: g.upTicks[i].y, 'text-anchor': 'middle' }, '\u25B2'));
-    for (i = 0; i < g.breakdownMarks.length; i++) svg.appendChild(SC.svg('text', { 'class': 'sc-chart__tick', 'data-mark': 'breakdown', x: g.breakdownMarks[i].x, y: g.breakdownMarks[i].y, 'text-anchor': 'middle' }, '\u2715'));
-    if (g.rangeBracket) {
-      var rb = g.rangeBracket;
-      svg.appendChild(SC.svg('path', { 'class': 'sc-chart__bracket', d: 'M' + (rb.x + 3) + ',' + rb.y1 + 'h-3v' + r1(rb.y2 - rb.y1) + 'h3' }));
+    if (setup) {
+      /* card marks under the bars: ▲ for the up-day run, ✕ for a 4% breakdown inside the base */
+      for (i = 0; i < g.upTicks.length; i++) svg.appendChild(SC.svg('text', { 'class': 'sc-chart__tick', 'data-mark': 'up', x: g.upTicks[i].x, y: g.upTicks[i].y, 'text-anchor': 'middle' }, '▲'));
+      for (i = 0; i < g.breakdownMarks.length; i++) svg.appendChild(SC.svg('text', { 'class': 'sc-chart__tick', 'data-mark': 'breakdown', x: g.breakdownMarks[i].x, y: g.breakdownMarks[i].y, 'text-anchor': 'middle' }, '✕'));
+      if (g.rangeBracket) {
+        var rb = g.rangeBracket;
+        svg.appendChild(SC.svg('path', { 'class': 'sc-chart__bracket', d: 'M' + (rb.x + 3) + ',' + rb.y1 + 'h-3v' + r1(rb.y2 - rb.y1) + 'h3' }));
+      }
     }
-    /* levels */
+    /* levels, at their exact coordinates in every mode */
     if (g.stop) {
-      var sx1 = card && g.burst ? g.burst.column.x : plot.left;
+      var sx1 = card && g.burst && setup ? g.burst.column.x : plot.left;
       svg.appendChild(SC.svg('line', { 'class': 'sc-chart__level' + (card ? ' sc-chart__level--solid' : ' sc-chart__level--dashed'), 'data-level': 'stop', style: toneStyle('danger'), x1: sx1, x2: plot.right, y1: g.stop.y, y2: g.stop.y }));
     }
     if (g.trigger) svg.appendChild(SC.svg('line', { 'class': 'sc-chart__level sc-chart__level--dotted', 'data-level': 'trigger', style: toneStyle('warn'), x1: plot.left, x2: plot.right, y1: g.trigger.y, y2: g.trigger.y }));
@@ -665,39 +759,51 @@
       svg.appendChild(SC.svg('line', { 'class': 'sc-chart__level', style: toneStyle('chart-emphasis') + ';stroke-opacity:.5', x1: plot.left, x2: plot.right, y1: g.entry.y1, y2: g.entry.y1, 'stroke-width': 1 }));
       svg.appendChild(SC.svg('line', { 'class': 'sc-chart__level', style: toneStyle('chart-emphasis') + ';stroke-opacity:.5', x1: plot.left, x2: plot.right, y1: g.entry.y2, y2: g.entry.y2, 'stroke-width': 1 }));
     }
+    if (g.gutterLabels && g.lastClose !== null) {
+      /* the last close: a hairline from the last bar to the gutter, so the label reads off a level and not off the air */
+      var lcx = g.lastPoint ? g.lastPoint.x : plot.left;
+      svg.appendChild(SC.svg('line', { 'class': 'sc-chart__level sc-chart__level--close', 'data-level': 'close', x1: lcx, x2: plot.right, y1: g.y(g.lastClose), y2: g.y(g.lastClose) }));
+    }
     /* burst marker: a small triangle under the low, in the accent (harness) or the emphasis (card) */
-    if (g.burst) {
+    if (g.burst && setup) {
       var m = g.burst.marker, s = m.size;
       svg.appendChild(SC.svg('path', { 'class': 'sc-chart__flag', style: toneStyle(card ? 'chart-emphasis' : 'accent'), d: 'M' + m.x + ',' + m.y + 'l' + s + ',' + (s + 2) + 'h' + (-2 * s) + 'z' }));
     }
     /* labels, on surface plates so they read over candles */
     var labels = SC.svg('g');
-    if (g.box && g.box.label) plate(labels, SC, g.box.label);
+    if (g.box && g.box.label && setup) plate(labels, SC, g.box.label);
     for (i = 0; i < g.leftLabels.length; i++) {
       var ld = g.leftLabels[i].leader;
       if (ld) labels.appendChild(SC.svg('line', { 'class': 'sc-chart__leader', x1: ld.x, x2: ld.x, y1: ld.y1, y2: ld.y2 }));
       plate(labels, SC, g.leftLabels[i]);
     }
-    if (g.burst && g.burst.label) plate(labels, SC, g.burst.label, 'sc-chart__note--strong');
-    if (g.rangeBracket && g.rangeBracket.label) plate(labels, SC, g.rangeBracket.label);
-    if (g.entry && card) plate(labels, SC, g.entry.label, 'sc-chart__note--accent');
+    if (g.burst && g.burst.label && setup) plate(labels, SC, g.burst.label, 'sc-chart__note--strong');
+    if (g.rangeBracket && g.rangeBracket.label && setup) plate(labels, SC, g.rangeBracket.label);
+    if (g.entry && card && g.entry.label && setup) plate(labels, SC, g.entry.label, 'sc-chart__note--accent');
     if (g.stopTag) {
       labels.appendChild(SC.svg('rect', { 'class': 'sc-chart__pill', 'data-tag': 'stop', x: g.stopTag.x, y: g.stopTag.y, width: g.stopTag.w, height: g.stopTag.h, rx: 8 }));
       labels.appendChild(SC.svg('text', { 'class': 'sc-chart__pill-text', x: g.stop.label.x, y: g.stop.label.y, 'text-anchor': 'start' }, g.stopTag.text));
     }
-    if (g.tomorrow) labels.appendChild(SC.svg('text', { 'class': 'sc-chart__faint', x: g.tomorrow.x, y: g.tomorrow.y, 'text-anchor': g.tomorrow.anchor || 'start' }, g.tomorrow.text));
+    if (g.tomorrow && setup) labels.appendChild(SC.svg('text', { 'class': 'sc-chart__faint', x: g.tomorrow.x, y: g.tomorrow.y, 'text-anchor': g.tomorrow.anchor || 'start' }, g.tomorrow.text));
     svg.appendChild(labels);
-    /* right gutter: leaders then texts */
+    /* right gutter: leaders then texts; with gutterLabels the level labels wear a plate in their tone */
     var gutter = SC.svg('g');
     for (i = 0; i < g.rightLabels.length; i++) {
       var L = g.rightLabels[i];
       gutter.appendChild(SC.svg('line', { 'class': 'sc-chart__leader', x1: plot.right, y1: L.yTrue, x2: plot.right + 6, y2: L.y }));
-      var cls2 = L.kind === 'close' ? 'sc-chart__note sc-chart__note--strong' : L.kind === 'target' || L.kind === 'aim' ? 'sc-chart__note' : L.kind === 'ma' ? 'sc-chart__faint' : null;
-      gutter.appendChild(SC.svg('text', { 'class': cls2, 'data-kind': L.kind, x: L.x, y: L.y + 4, 'text-anchor': 'start' }, L.text));
+      var kind = L.kind, cls2;
+      if (g.gutterLabels && (kind === 'stop' || kind === 'trigger' || kind === 'limit' || kind === 'zone' || kind === 'close')) {
+        var pw = r1(L.text.length * CHAR + 8);
+        gutter.appendChild(SC.svg('rect', { 'class': kind === 'stop' ? 'sc-chart__pill' : 'sc-chart__gutter-plate' + (kind === 'close' ? ' sc-chart__gutter-plate--close' : kind === 'trigger' ? ' sc-chart__gutter-plate--warn' : ' sc-chart__gutter-plate--accent'), 'data-tag': kind, x: L.x - 4, y: L.y - 7, width: pw, height: LABEL_H + 1, rx: kind === 'stop' ? 8 : 3 }));
+        cls2 = kind === 'stop' ? 'sc-chart__pill-text' : kind === 'close' ? 'sc-chart__note sc-chart__note--strong sc-chart__note--onink' : kind === 'trigger' ? 'sc-chart__note sc-chart__note--warn' : 'sc-chart__note sc-chart__note--accent';
+      } else {
+        cls2 = kind === 'close' ? 'sc-chart__note sc-chart__note--strong' : kind === 'target' || kind === 'aim' ? 'sc-chart__note' : kind === 'ma' ? 'sc-chart__faint' : null;
+      }
+      gutter.appendChild(SC.svg('text', { 'class': cls2, 'data-kind': kind, x: L.x, y: L.y + 4, 'text-anchor': 'start' }, L.text));
     }
     svg.appendChild(gutter);
     /* volume pane caption and the date axis */
-    svg.appendChild(SC.svg('text', { 'class': 'sc-chart__faint', x: plot.left + 2, y: g.vol.top + 9 }, 'vol'));
+    svg.appendChild(SC.svg('text', { 'class': 'sc-chart__faint', x: plot.left + 2, y: g.gutterLabels ? g.vol.top - 1 : g.vol.top + 9 }, 'vol'));
     if (g.volMax) svg.appendChild(SC.svg('text', { 'class': 'sc-chart__faint', x: plot.right + 9, y: g.vol.top + 9 }, fmtVol(g.volMax)));
     var axis = SC.svg('g');
     for (i = 0; i < g.dateTicks.length; i++) {
@@ -725,9 +831,9 @@
     if (g.burst) rows.push(['burst', fmtPrice(g.burst.close), g.burst.date + ' · ' + fmtPct(g.burst.pct) + ' on the day · vol ' + fmtVol(g.burst.volume)]);
     if (g.box) rows.push(['base', fmtPrice(g.box.low) + ' – ' + fmtPrice(g.box.high), g.bars[g.box.start].date + ' → ' + g.bars[g.box.end].date + ' · ' + g.box.sessions + ' sessions']);
     if (g.trigger) rows.push(['trigger', fmtPrice(g.trigger.price), vs(g.trigger.price)]);
-    if (g.entry) rows.push(['buy zone', fmtPrice(g.entry.low) + ' – ' + fmtPrice(g.entry.high), 'width ' + fmtPct((g.entry.high / g.entry.low - 1) * 100).replace('+', '')]);
+    if (g.entry) rows.push([g.gutterLabels ? 'buy zone (to the limit)' : 'buy zone', fmtPrice(g.entry.low) + ' – ' + fmtPrice(g.entry.high), 'width ' + fmtPct((g.entry.high / g.entry.low - 1) * 100).replace('+', '')]);
     if (g.stop) rows.push(['stop', fmtPrice(g.stop.price), vs(g.stop.price)]);
-    if (g.target) rows.push([g.target.ruler ? 'aim' : 'target', fmtPrice(g.target.low) + ' – ' + fmtPrice(g.target.high), g.target.text + (g.target.ref !== null ? ' vs ' + fmtPrice(g.target.ref) : '')]);
+    if (g.target) rows.push([g.target.ruler ? 'aim' : 'target', fmtPrice(g.target.low) + ' – ' + fmtPrice(g.target.high), g.target.text + (g.target.ref !== null ? ' vs ' + fmtPrice(g.target.ref) : '') + (g.target.offscale ? ' · outside the visible range' : '')]);
     if (lc !== null) rows.push(['last close', fmtPrice(lc), g.bars.length ? g.bars[g.bars.length - 1].date : '']);
     return rows;
   }
@@ -761,28 +867,39 @@
       SC.svg('line', { 'class': 'sc-chart__wick', x1: 4, x2: 4, y1: 11, y2: 13 })
     ]);
   }
-  function buildHead(SC, options, g) {
-    var head = SC.el('div', { 'class': 'sc-chart__head' });
-    if (options.ticker) head.appendChild(SC.el('span', { 'class': 'sc-figure', text: options.ticker }));
-    if (options.title) head.appendChild(SC.el('span', { 'class': 'sc-muted', text: options.title }));
-    var legend = SC.el('div', { 'class': 'sc-legend' }, [
-      SC.el('span', null, [keyCandle(SC, 'chart-emphasis', false), 'up']),
-      SC.el('span', null, [keyCandle(SC, 'chart-context', true), 'down'])
+  function keyLine(SC, tone) {
+    return SC.svg('svg', { 'class': 'sc-chart__key', width: 14, height: 14, viewBox: '0 0 14 14', 'aria-hidden': 'true', style: toneStyle(tone) }, [
+      SC.svg('path', { 'class': 'sc-chart__close', d: 'M1,10L5,6L8,8L13,3' })
     ]);
-    if (g.burst) legend.appendChild(SC.el('span', null, [keyCandle(SC, 'accent', false), 'burst']));
+  }
+  /* the legend for a mode, on its own so the page's panel header can carry it */
+  function buildLegend(SC, g) {
+    var tones = candleTones(g), legend = SC.el('div', { 'class': 'sc-legend' });
+    if (g.mode === 'line') legend.appendChild(SC.el('span', null, [keyLine(SC, 'chart-emphasis'), 'close']));
+    else {
+      legend.appendChild(SC.el('span', null, [keyCandle(SC, tones.up, false), 'up']));
+      legend.appendChild(SC.el('span', null, [keyCandle(SC, tones.down, true), 'down']));
+      if (g.burst && g.mode === 'setup') legend.appendChild(SC.el('span', null, [keyCandle(SC, tones.burst, false), 'burst']));
+    }
     if (g.ma.length) {
       var names = [], i;
       for (i = 0; i < g.ma.length; i++) names.push(g.ma[i].n);
       legend.appendChild(SC.el('span', null, [SC.el('i', { style: 'background:' + SC.toneRef('chart-context') }), names.join('/') + '-day avg']));
     }
-    head.appendChild(legend);
+    return legend;
+  }
+  function buildHead(SC, options, g) {
+    var head = SC.el('div', { 'class': 'sc-chart__head' });
+    if (options.ticker) head.appendChild(SC.el('span', { 'class': 'sc-figure', text: options.ticker }));
+    if (options.title) head.appendChild(SC.el('span', { 'class': 'sc-muted', text: options.title }));
+    head.appendChild(buildLegend(SC, g));
     return head;
   }
 
   /* ---------- the chart ------------------------------------------------- */
   function ariaLabel(g, options) {
     if (typeof options.ariaLabel === 'string' && options.ariaLabel) return options.ariaLabel;
-    var s = (options.ticker || 'Price') + ' daily candlestick chart';
+    var s = (options.ticker || 'Price') + (g.mode === 'line' ? ' daily closing-price chart' : ' daily candlestick chart');
     if (g.n) s += ', ' + g.n + ' sessions from ' + g.bars[0].date + ' to ' + g.bars[g.n - 1].date;
     if (g.lastClose !== null) s += ', last close ' + fmtPrice(g.lastClose);
     if (g.burst) s += '. Burst ' + fmtPct(g.burst.pct) + ' on ' + g.burst.date;
@@ -797,17 +914,21 @@
     options = options || {};
     var SC = sc();
     ensureStyle();
-    var host = SC.el('div', { 'class': 'sc-chart sc-chart--stock', role: 'group', tabindex: '0' });
+    var host = SC.el('div', { 'class': 'sc-chart sc-chart--stock' + (options.gutterLabels ? ' is-panel' : ''), role: 'group', tabindex: '0' });
     var stage = SC.el('div', { 'class': 'sc-chart__stage' });
-    var state = { g: null, svg: null, index: null, pinned: false, width: 0 };
+    var state = { g: null, svg: null, index: null, pinned: false, width: 0, head: null, twin: null, disposed: false };
     var tip = SC.tooltip(stage, { live: true, top: 6, flip: 0.55, offsetX: 14 });
 
     function measure() {
       var wdt = host.clientWidth || (host.parentNode && host.parentNode.clientWidth) || 0;
       return wdt > 0 ? wdt : (options.width || 640);
     }
+    function barTone(b) {
+      var tones = candleTones(state.g);
+      return b.candle ? (b.candle.burst && state.g.mode === 'setup' ? tones.burst : b.candle.up ? tones.up : tones.down) : 'chart-context';
+    }
     function describe(i) {
-      var g = state.g, b = g.bars[i], tone = b.candle ? (b.candle.burst ? 'accent' : b.candle.up ? 'chart-emphasis' : 'chart-context') : 'chart-context';
+      var g = state.g, b = g.bars[i], tone = barTone(b);
       var rows = [
         { value: fmtPrice(b.o), label: 'open', tone: tone },
         { value: fmtPrice(b.h), label: 'high', tone: tone },
@@ -832,7 +953,7 @@
       lines[1].setAttribute('visibility', cy === null ? 'hidden' : 'visible');
       if (cy !== null) { lines[1].setAttribute('y1', cy); lines[1].setAttribute('y2', cy); dot.setAttribute('cx', cx); dot.setAttribute('cy', cy); }
       dot.setAttribute('visibility', cy === null ? 'hidden' : 'visible');
-      dot.setAttribute('style', toneStyle(b.candle ? (b.candle.burst ? 'accent' : b.candle.up ? 'chart-emphasis' : 'chart-context') : 'chart-context'));
+      dot.setAttribute('style', toneStyle(barTone(b)));
       cross.setAttribute('visibility', 'visible');
       tip.show(describe(i), { px: cx, py: 0 });
     }
@@ -858,19 +979,22 @@
       hit.addEventListener('pointerleave', function (e) { if (e.pointerType !== 'touch' && !state.pinned) clear(); });
     }
     function draw() {
+      if (state.disposed) return;
       var wdt = measure(), g = chartGeometry(series, options, wdt, options.height);
       state.g = g; state.width = wdt;
-      var svg = buildSvg(g, SC);
+      var svg = buildSvg(g, SC, options);
       wire(svg);
       if (state.svg) stage.replaceChild(svg, state.svg); else stage.insertBefore(svg, tip.node);
       state.svg = svg;
       host.setAttribute('aria-label', ariaLabel(g, options));
+      host.setAttribute('data-mode', g.mode);
       if (state.index !== null) focus(state.index);
     }
     draw();
-    if (!options.compact) host.insertBefore(buildHead(SC, options, state.g), host.firstChild);
+    if (!options.compact && options.head !== false) { state.head = buildHead(SC, options, state.g); host.insertBefore(state.head, host.firstChild); }
     host.appendChild(stage);
-    host.appendChild(buildTwin(SC, state.g, options));
+    state.twin = buildTwin(SC, state.g, options);
+    host.appendChild(state.twin);
 
     host.addEventListener('keydown', function (e) {
       var g = state.g, key = e.key, start = state.index !== null ? state.index : (g.burst ? g.burst.index : g.n - 1);
@@ -888,24 +1012,47 @@
     });
     /* the viewBox is the measured width, so text stays 11px at every size;
        re-measure when the host is resized (or first attached) */
-    var pending = false;
+    var pending = false, observer = null;
     function onResize() {
-      if (pending) return;
+      if (pending || state.disposed) return;
       pending = true;
       (w.requestAnimationFrame || function (f) { setTimeout(f, 16); })(function () {
         pending = false;
+        if (state.disposed) return;
         var wdt = measure();
         if (Math.abs(wdt - state.width) >= 4) draw();
       });
     }
-    if (w.ResizeObserver) new w.ResizeObserver(onResize).observe(host);
+    if (w.ResizeObserver) { observer = new w.ResizeObserver(onResize); observer.observe(host); }
     else w.addEventListener('resize', onResize);
     host.redraw = draw;
+    /* redraw in place with new options: the same host, the same observer,
+       the same tooltip; the twin and the head follow the new drawing */
+    host.update = function (next) {
+      var k;
+      next = next || {};
+      if (Object.prototype.hasOwnProperty.call(next, 'series')) series = next.series;
+      for (k in next) if (Object.prototype.hasOwnProperty.call(next, k) && k !== 'series') options[k] = next[k];
+      draw();
+      if (state.head) { var head = buildHead(SC, options, state.g); host.replaceChild(head, state.head); state.head = head; }
+      var twin = buildTwin(SC, state.g, options); host.replaceChild(twin, state.twin); state.twin = twin;
+      return host;
+    };
+    host.legend = function () { return buildLegend(SC, state.g); };
+    host.geometry = function () { return state.g; };
+    host.dispose = function () {
+      if (state.disposed) return;
+      state.disposed = true;
+      if (observer) observer.disconnect(); else w.removeEventListener('resize', onResize);
+      tip.hide();
+      if (tip.destroy) tip.destroy();
+    };
     return host;
   }
 
   SCStock.chart = chart;
   SCStock.chartGeometry = chartGeometry;
+  SCStock.chartModes = MODES.slice();
   SCStock.sma = sma;
   SCStock.format = { price: fmtPrice, pct: fmtPct, volume: fmtVol };
 })(window);

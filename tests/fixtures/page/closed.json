@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "6fc9cb588bdd"
+  "rules_version": "71fae25cfa97"
  },
  "cover": {
   "h1": "Market closed. Plans unchanged.",
@@ -317,7 +317,8 @@
     "A+"
    ],
    "series_bars": 120,
-   "series_top": 24
+   "series_top": 24,
+   "observation_days": 21
   },
   "breadth": {
    "burst_pct": 4.0,
@@ -832,6 +833,39 @@
   "sessions": 60,
   "note": "from bars alone, a model and not a brokerage record: a fill is booked only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold, settled by day 5"
  },
+ "observations": {
+  "as_of": "2026-09-09",
+  "days": 21,
+  "symbols": {
+   "NBIS": {
+    "date": "2026-09-09",
+    "o": 25.52,
+    "h": 25.8,
+    "l": 25.34,
+    "c": 25.6,
+    "v": 3340542.9456,
+    "since": "2026-09-09"
+   },
+   "SMCI": {
+    "date": "2026-09-09",
+    "o": 24.66,
+    "h": 24.85,
+    "l": 24.51,
+    "c": 24.71,
+    "v": 2922668.9783,
+    "since": "2026-09-09"
+   },
+   "VRT": {
+    "date": "2026-09-09",
+    "o": 197.1,
+    "h": 197.7,
+    "l": 196.9,
+    "c": 197.4,
+    "v": 3329998.9182,
+    "since": "2026-09-09"
+   }
+  }
+ },
  "closest_miss": null,
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
@@ -851,6 +885,7 @@
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
   "scorecard": "The rules' record over the published plans as a model of their fills, always with n, the read threshold and the uncertain count by reason. Rates are over settled plans alone. The rules' record, not yours. Null until a plan has settled.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
+  "observations": "The newest daily bar per symbol for the recorded signals -- the trades, the cut names, the charted bursts, the anticipation list, the open plans -- and, for the days the block names, the symbols an earlier record observed: date, o, h, l, c, v and the session each was first observed from. Read by the page's Following shelf; derived from bars already fetched, never a quote feed. A symbol without a bar tonight keeps its last observation, dated as it was.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."
  },
  "fixture": "closed"

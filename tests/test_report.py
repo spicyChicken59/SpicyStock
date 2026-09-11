@@ -739,3 +739,17 @@ def test_the_breadth_line_prints_the_ratio_to_two_places_like_the_page():
     breadth = _breadth()
     breadth["ratio_10d"] = 0.88
     assert "10-day ratio 0.88" in _rendered(report._breadth_line(breadth))
+
+
+def test_a_record_without_an_observation_block_or_with_a_malformed_one_is_refused():
+    data = build(**_night())
+    assert data["observations"] == {"as_of": None, "days": None, "symbols": {}}
+    data["observations"] = {"as_of": "2026-09-10"}
+    with pytest.raises(ValueError, match="observations is not an object with a symbols object"):
+        report.validate(data)
+    data["observations"] = {"as_of": "2026-09-10", "days": 21, "symbols": {"AAA": {"o": 1.0}}}
+    with pytest.raises(ValueError, match="observations.symbols\\['AAA'\\] is not a bar"):
+        report.validate(data)
+    data["observations"] = {"as_of": "2026-09-10", "days": 21, "symbols": {"AAA": {"date": "2026-09-10", "c": 1.0}}}
+    report.validate(data)
+    assert "observations.symbols" in contract_paths(data)
