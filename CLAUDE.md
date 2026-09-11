@@ -391,29 +391,26 @@ passed; `python tools/make_fixture.py --check` 7 fixtures current;
 `node tools/chart_check.mjs` 163/163 with its new panel section;
 `node tools/page_smoke.mjs --shots` 2277/2277 with `checkModes`,
 `checkMap`, `checkFollowing` and three more dropped fields. Its first run
-found eight holes, all closed: the notice and a two-row panel header had
+found eight holes, all closed: a two-row panel header and the notice had
 pushed the chart and the phone's search under the first screen (one
 strip, a one-line notice now); the store keys were dotted lowercase
 digit-bearing values beside the word `KEY`, what the secret scan reads
 as a credential (colons now); the browser's validation bubble swallowed
 the size sentence (`novalidate`); the record's instruction says
 "filled", so a followed card quotes it under *the record says*.
-Screenshots at 1280 and 390 px, dark and light, were looked at against
-the previous pass's.
+Screenshots at 1280 and 390 px, dark and light, were looked at.
 
-**Run live.** Run 45, a dry run on `74bff88` at 4:51 PM ET, and run 46,
-the first real publish (`skip_email`, commit `7380a97 run 2026-09-11`,
-Pages green): 3009 names from the Nasdaq directory, the fetch 36 seconds
-against the 900-second budget, 3008 measured and one stale, 400 bursts
-(51 A, 96 B, 68 C, 185 skip), twelve reads, 164 seconds end to end.
-Breadth was red (141 up 4% against 72 down, 10-day ratio 0.74), so
-*Stand aside.*, no plans, an empty `picks.json`, 40 observations. The
-record is 3.4 MB, 2.5 MB of it the 400 bursts at about 5.7 KB each and
-16 KB with bars: the page loads it, and a burst table that size is the
-first thing to trim. A red night offers no ticket, so the withheld count
-the ceiling decision needs is still unobserved. NOT claimable: Resend,
-and any judgement of the ticket and replay leads, live data quality or
-trading edge.
+**Run live.** Run 45, a dry run on `74bff88`, then run 46, the first
+real publish (`skip_email`, commit `7380a97 run 2026-09-11`, Pages
+green): 3009 names, the fetch 36 seconds against the 900-second budget,
+3008 measured, 400 bursts (51 A, 96 B, 68 C, 185 skip), twelve reads,
+164 seconds end to end. Breadth was red (141 up 4% against 72 down,
+10-day ratio 0.74), so *Stand aside.*, no plans, 40 observations. The
+record is 3.4 MB, 2.5 MB of it the 400 bursts at 5.7 KB each and 16 KB
+with bars: the burst table is the first thing to trim. A red night
+offers no ticket, so the withheld count the ceiling decision needs is
+still unobserved. NOT claimable: Resend, and any judgement of the ticket
+and replay leads, live data quality or trading edge.
 
 **Settled here.** One panel, one geometry, three modes; the map is the
 cards' twin, not a third stage; Following saves a snapshot, never a
