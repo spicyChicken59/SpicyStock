@@ -8,7 +8,23 @@
 
    series: [{date:'YYYY-MM-DD', o, h, l, c, v}] oldest first. A bar whose o/h/l
    is null is a GAP: no candle, the averages step over it, nothing is spliced.
-   Colour arrives through the --sc-tone channel only; no mark names a colour. */
+   Colour arrives through the --sc-tone channel only; no mark names a colour.
+
+   Card options (PRODUCT-SPEC section 6), every one off by default so the
+   geometry check in tools/chart_check.mjs reads the same numbers it always did:
+     futureSlots: 6      empty bar-widths right of the last bar ("tomorrow")
+     targetRuler: true   the target band is a right-gutter ruler with two ticks
+                         ("+8%", "+20%") clamped to the scale and never widens it
+     card: true          card labels: the buy zone is the accent fill from the
+                         burst bar across the gutter labelled "buy 12.34–12.71",
+                         the stop a solid danger line with a pill "stop 11.62",
+                         the base box "base · N sessions · D% deep" (box.depthPct),
+                         the burst bar "+6.1% · 1.9× vol" (burstVolumeRatio), a
+                         range bracket "2.4× range" (rangeExpansion), ▲ under the
+                         upDays bars before the burst, ✕ under breakdownIndexes,
+                         a "tomorrow →" gutter label and the 20-session volume
+                         average hairline "avg 20d" (volumeAvg)
+     ariaLabel           the host's accessible name (default: generated) */
 (function (w) {
   'use strict';
   var SCStock = w.SCStock = w.SCStock || {};
@@ -112,12 +128,18 @@
     if (targetLow !== null && targetHigh !== null && targetLow > targetHigh) { var t2 = targetLow; targetLow = targetHigh; targetHigh = t2; }
     var burstIndex = num(options.burstIndex);
     burstIndex = burstIndex !== null && burstIndex >= 0 && burstIndex < n && bars[burstIndex].candle ? Math.floor(burstIndex) : null;
+    var card = !!options.card, ruler = !!options.targetRuler;
+    var futureSlots = Math.max(0, Math.floor(num(options.futureSlots) || 0));
+    var upDays = Math.max(0, Math.floor(num(options.upDays) || 0));
+    var volRatio = num(options.burstVolumeRatio), rangeExp = num(options.rangeExpansion), volAvgN = num(options.volumeAvg);
 
-    /* domain */
+    /* domain: the visible bars plus the stop and the entry zone; the target
+       joins only when it is drawn as a band (default), never as the ruler */
     var lo = Infinity, hi = -Infinity;
     function widen(v) { if (v !== null && isFinite(v)) { if (v < lo) lo = v; if (v > hi) hi = v; } }
     for (i = 0; i < n; i++) { b = bars[i]; if (b.candle) { widen(b.l); widen(b.h); } else widen(b.c); }
-    widen(stop); widen(entryLow); widen(entryHigh); widen(trigger); widen(targetLow); widen(targetHigh);
+    widen(stop); widen(entryLow); widen(entryHigh); widen(trigger);
+    if (!ruler) { widen(targetLow); widen(targetHigh); }
     if (box) { widen(box.low); widen(box.high); }
     if (!isFinite(lo)) { lo = 0; hi = 1; }
     if (hi === lo) { var e = Math.max(1, Math.abs(lo) * 0.02); lo -= e; hi += e; }
@@ -156,7 +178,7 @@
     function span1(s) { if (s.length > widest) widest = s.length; }
     if (lastClose !== null) span1(fmtPrice(lastClose));
     for (i = 0; i < gridValues.length; i++) span1(fmtPrice(gridValues[i], decimals));
-    if (target) span1(target.text);
+    if (target) span1(ruler ? fmtPct(target.pctHigh).replace('.0', '') + ' ↑' : target.text);
     for (k = 0; k < mas.length; k++) span1(mas[k].n + 'd');
     var gutter = Math.max(compact ? 40 : 48, Math.round(widest * CHAR) + 16);
 
@@ -167,10 +189,16 @@
     plot.width = plot.right - plot.left; plot.height = plot.bottom - plot.top;
     var vol = { top: plot.bottom + gap, bottom: H - axisH };
     vol.height = vol.bottom - vol.top;
-    var slot = n ? plot.width / n : plot.width;
-    var bodyW = Math.max(1, Math.min(12, Math.round(slot * 0.62)));
+    /* the future gutter: futureSlots empty bar-widths after the last bar, so
+       the entry zone and the stop tag have somewhere to live that is not
+       over history; slot is the pitch over ALL slots, bars and empty alike */
+    var slots = n + futureSlots;
+    var slot = slots ? plot.width / slots : plot.width;
+    var minBody = card ? (slot >= 5.5 ? 4 : 2) : 1;
+    var bodyW = Math.max(minBody, Math.min(12, Math.round(slot * 0.62)));
     function x(i) { return r1(plot.left + (i + 0.5) * slot); }
     function y(p) { return r1(plot.bottom - (p - lo) / (hi - lo) * plot.height); }
+    var future = futureSlots ? { x: r1(plot.left + n * slot), w: r1(futureSlots * slot) } : null;
     var vmax = 0;
     for (i = 0; i < n; i++) if (bars[i].v !== null && bars[i].v > vmax) vmax = bars[i].v;
     function vy(v) { return r1(vol.bottom - (vmax ? v / vmax : 0) * vol.height); }
@@ -194,7 +222,8 @@
     if (burstIndex !== null) {
       b = bars[burstIndex];
       var bpct = b.pct !== null ? b.pct : (b.c / b.o - 1) * 100;
-      var text = 'burst ' + fmtPct(bpct), tw = text.length * CHAR + 8, lx = x(burstIndex), anchor = 'middle';
+      var text = card ? fmtPct(bpct) + (volRatio !== null ? ' · ' + (Math.round(volRatio * 10) / 10) + '× vol' : '') : 'burst ' + fmtPct(bpct);
+      var tw = text.length * CHAR + 8, lx = x(burstIndex), anchor = 'middle';
       if (lx - tw / 2 < plot.left) { anchor = 'start'; lx = plot.left + 2; }
       else if (lx + tw / 2 > plot.right) { anchor = 'end'; lx = plot.right - 2; }
       burst = { index: burstIndex, x: x(burstIndex), yHigh: y(b.h), yLow: y(b.l), pct: bpct, close: b.c, volume: b.v, date: b.date,
@@ -209,6 +238,7 @@
       var x1 = r1(plot.left + box.start * slot), x2 = r1(plot.left + (box.end + 1) * slot);
       var by1 = y(box.high), by2 = y(box.low), sessions = box.end - box.start + 1;
       var btext = 'base · ' + sessions + ' session' + (sessions === 1 ? '' : 's');
+      if (card && num(box.depthPct) !== null) btext += ' · ' + box.depthPct.toFixed(1) + '% deep';
       var above = by1 - LABEL_H - 2 >= plot.top - 6;
       var blx = x1 + 2, banchor = 'start';
       if (x1 + btext.length * CHAR + 8 > plot.right) { blx = x2 - 2; banchor = 'end'; }
@@ -241,15 +271,33 @@
     }
     var ey1 = null, ey2 = null;
     if (entryLow !== null && entryHigh !== null) { ey1 = y(entryHigh); ey2 = y(entryLow); }
-    if (stop !== null) stopG = { y: y(stop), price: stop, label: leftLabel(r1(y(stop) + 11), 'stop ' + fmtPrice(stop), 'stop', 'danger') };
+    /* where the buy zone starts on a card: the right edge of the burst bar
+       (else the last bar), so it reads as "from here, tomorrow" */
+    var zoneX = burstIndex !== null ? r1(x(burstIndex) + bodyW / 2 + 2) : n ? r1(x(n - 1) + bodyW / 2 + 2) : plot.left;
+    var stopTag = null;
+    if (stop !== null) {
+      if (card) {
+        var stext = 'stop ' + fmtPrice(stop).replace('$', ''), sw = r1(stext.length * CHAR + 10);
+        stopTag = { text: stext, w: sw, h: LABEL_H + 2, x: r1(plot.right - 2 - sw), y: r1(y(stop) - (LABEL_H + 2) / 2), price: stop };
+        stopG = { y: y(stop), price: stop, label: { x: stopTag.x + 5, y: r1(stopTag.y + LABEL_H - 2), yTrue: y(stop), text: stext, kind: 'stop', tone: 'danger', anchor: 'start', leader: null } };
+      } else stopG = { y: y(stop), price: stop, label: leftLabel(r1(y(stop) + 11), 'stop ' + fmtPrice(stop), 'stop', 'danger') };
+    }
     if (trigger !== null) {
       var tyy = y(trigger), under = ey2 !== null && ey2 >= tyy - LABEL_H - 2 && ey2 <= tyy + 2;
       triggerG = { y: tyy, price: trigger, label: leftLabel(r1(under ? tyy + 11 : tyy - 4), 'trigger ' + fmtPrice(trigger), 'trigger', 'warn') };
     }
     if (ey1 !== null) {
       var inside = ey2 - ey1 >= 2 * LABEL_H;
-      entryG = { y1: ey1, y2: ey2, h: Math.max(1, r1(ey2 - ey1)), low: entryLow, high: entryHigh,
-                 label: leftLabel(inside ? r1(ey1 + 11) : r1(ey1 - 4), 'buy zone ' + fmtPrice(entryLow) + '\u2013' + fmtPrice(entryHigh), 'entry', 'chart-emphasis') };
+      if (card) {
+        var etext = 'buy ' + fmtPrice(entryLow).replace('$', '') + '\u2013' + fmtPrice(entryHigh).replace('$', '');
+        var ew = etext.length * CHAR + 8, ex = zoneX + 4, eanchor = 'start';
+        if (ex + ew > plot.right) { ex = plot.right - 3; eanchor = 'end'; }
+        entryG = { y1: ey1, y2: ey2, h: Math.max(1, r1(ey2 - ey1)), low: entryLow, high: entryHigh, x: zoneX, w: Math.max(1, r1(plot.right - zoneX)),
+                   label: { x: ex, y: inside ? r1(ey1 + 11) : r1(ey1 - 4), yTrue: ey1, text: etext, kind: 'entry', tone: 'accent', anchor: eanchor, leader: null } };
+      } else {
+        entryG = { y1: ey1, y2: ey2, h: Math.max(1, r1(ey2 - ey1)), low: entryLow, high: entryHigh, x: plot.left, w: plot.width,
+                   label: leftLabel(inside ? r1(ey1 + 11) : r1(ey1 - 4), 'buy zone ' + fmtPrice(entryLow) + '\u2013' + fmtPrice(entryHigh), 'entry', 'chart-emphasis') };
+      }
     }
     var leftWidth = 0;
     for (i = 0; i < left.length; i++) leftWidth = Math.max(leftWidth, left[i].text.length * CHAR + 8);
@@ -270,7 +318,21 @@
     function near(list, y0, d) { for (var j = 0; j < list.length; j++) if (Math.abs(list[j].yTrue - y0) < d) return true; return false; }
     function rightLabel(y0, text, kind) { var it = { y: y0, yTrue: y0, text: text, kind: kind }; right.push(it); return it; }
     if (lastClose !== null) rightLabel(y(lastClose), fmtPrice(lastClose), 'close');
-    if (target) {
+    if (target && ruler) {
+      /* the ruler: a strip in the gutter from +8% to +20%, each tick clamped
+         to the pane and saying so with an arrow, so the band never sets the
+         scale and the eye still knows where the aim sits */
+      var ry1 = y(targetHigh), ry2 = y(targetLow), c1 = Math.max(plot.top, Math.min(plot.bottom, ry1)), c2 = Math.max(plot.top, Math.min(plot.bottom, ry2));
+      var tLow = fmtPct(target.pctLow).replace('.0', ''), tHigh = fmtPct(target.pctHigh).replace('.0', '');
+      var ticks = [
+        { y: c2, price: targetLow, text: tLow + (c2 !== ry2 ? (ry2 > plot.bottom ? ' ↓' : ' ↑') : ''), clamped: c2 !== ry2 },
+        { y: c1, price: targetHigh, text: tHigh + (c1 !== ry1 ? (ry1 < plot.top ? ' ↑' : ' ↓') : ''), clamped: c1 !== ry1 }
+      ];
+      targetG = { ruler: true, y1: c1, y2: c2, h: Math.max(1, r1(c2 - c1)), low: targetLow, high: targetHigh, ref: ref,
+                  pctLow: target.pctLow, pctHigh: target.pctHigh, text: target.text, ticks: ticks,
+                  strip: { x: plot.right + 2, w: 3 }, label: null };
+      for (i = 0; i < ticks.length; i++) ticks[i].label = rightLabel(ticks[i].y, ticks[i].text, 'aim');
+    } else if (target) {
       var ty1 = y(targetHigh), ty2 = y(targetLow);
       targetG = { y1: ty1, y2: ty2, h: Math.max(1, r1(ty2 - ty1)), low: targetLow, high: targetHigh, ref: ref,
                   pctLow: target.pctLow, pctHigh: target.pctHigh, text: target.text,
@@ -307,13 +369,41 @@
       dateTicks[i].x = tx; kept.push(dateTicks[i]); prevX = tx;
     }
 
+    /* card marks: ▲ under the up-day run before the burst, ✕ under any 4%
+       breakdown inside the base, the range bracket beside the burst bar, the
+       "tomorrow →" gutter label and the volume average hairline */
+    var upTicks = [], bdMarks = [], bracket = null, tomorrow = null, volAvg = null;
+    if (card && burstIndex !== null) {
+      for (i = burstIndex - upDays; i < burstIndex; i++) if (i >= 0 && bars[i].candle) upTicks.push({ index: i, x: x(i), y: r1(y(bars[i].l) + 12) });
+      var bds = options.breakdownIndexes || [];
+      for (i = 0; i < bds.length; i++) { var bi = num(bds[i]); if (bi !== null && bi >= 0 && bi < n && bars[bi].candle) bdMarks.push({ index: bi, x: x(bi), y: r1(y(bars[bi].l) + 12) }); }
+      if (rangeExp !== null) {
+        b = bars[burstIndex];
+        var rtext = (Math.round(rangeExp * 10) / 10) + '× range', bx0 = r1(x(burstIndex) - bodyW / 2 - 5);
+        bracket = { x: bx0, y1: y(b.h), y2: y(b.l), label: { x: r1(bx0 - 4), y: r1((y(b.h) + y(b.l)) / 2 + 4), text: rtext, anchor: 'end' } };
+      }
+    }
+    if (card && future) {
+      var ty0 = plot.top + 10;
+      if (entryG && entryG.y1 < ty0 + 8) ty0 = r1(Math.min(plot.bottom - 4, entryG.y2 + 14));
+      tomorrow = { x: r1(future.x + 4), y: ty0, text: 'tomorrow →' };
+    }
+    if (card && volAvgN !== null && volAvgN >= 1) {
+      var vols = [], vpts = [], vlast = null;
+      for (i = 0; i < n; i++) vols.push(bars[i].v);
+      var vavg = sma(vols, Math.floor(volAvgN));
+      for (i = 0; i < n; i++) { vpts.push(vavg[i] === null ? null : { x: x(i), y: vy(vavg[i]) }); if (vavg[i] !== null) vlast = { x: x(i), y: vy(vavg[i]), value: vavg[i] }; }
+      volAvg = { n: Math.floor(volAvgN), points: vpts, last: vlast, label: vlast ? { x: r1(Math.min(plot.right - 2, vlast.x)), y: r1(vlast.y - 3), text: 'avg ' + Math.floor(volAvgN) + 'd', anchor: 'end' } : null };
+    }
+
     return {
-      width: W, height: H, n: n, compact: compact, gutter: gutter,
-      plot: plot, vol: vol, axisY: H - 5, slot: slot, bodyWidth: bodyW,
+      width: W, height: H, n: n, compact: compact, card: card, gutter: gutter,
+      plot: plot, vol: vol, axisY: H - 5, slot: slot, bodyWidth: bodyW, futureSlots: futureSlots, future: future,
       domain: { lo: lo, hi: hi }, volMax: vmax, lastClose: lastClose, decimals: decimals,
       x: x, y: y, vy: vy,
       grid: grid, dateTicks: kept, bars: out, ma: maPaths,
-      box: boxG, burst: burst, stop: stopG, entry: entryG, trigger: triggerG, target: targetG,
+      box: boxG, burst: burst, stop: stopG, stopTag: stopTag, entry: entryG, trigger: triggerG, target: targetG,
+      upTicks: upTicks, breakdownMarks: bdMarks, rangeBracket: bracket, tomorrow: tomorrow, volAvg: volAvg,
       leftLabels: left, rightLabels: right
     };
   }
@@ -345,6 +435,18 @@
       '.sc-chart__level--dotted{stroke-dasharray:2 3}',
       '.sc-chart__flag{fill:var(--sc-tone,var(--sc-accent))}',
       '.sc-chart__leader{stroke:var(--sc-border-strong);stroke-width:1;fill:none}',
+      /* card marks */
+      '.sc-chart__band--zone{fill-opacity:.22}',
+      '.sc-chart__edge{stroke:var(--sc-tone,var(--sc-accent));stroke-width:1;fill:none}',
+      '.sc-chart__level--solid{stroke-width:1.5}',
+      '.sc-chart__pill{fill:var(--sc-danger-fill);stroke:var(--sc-danger);stroke-width:1}',
+      '.sc-chart--stock .sc-chart__pill-text{font:600 11px var(--sc-font-mono);fill:var(--sc-danger)}',
+      '.sc-chart--stock .sc-chart__note--accent{fill:var(--sc-accent)}',
+      '.sc-chart__ruler{fill:var(--sc-brand-fill);stroke:var(--sc-brand-line);stroke-width:1;stroke-dasharray:2 2}',
+      '.sc-chart__ruler-tick{stroke:var(--sc-brand-line);stroke-width:1}',
+      '.sc-chart--stock .sc-chart__tick{font-size:9px;fill:var(--sc-text-2)}',
+      '.sc-chart__bracket{stroke:var(--sc-border-strong);stroke-width:1;fill:none}',
+      '.sc-chart__avg{fill:none;stroke:var(--sc-tone,var(--sc-chart-context));stroke-width:1;stroke-dasharray:4 3}',
       '.sc-chart--stock .sc-chart__hit{fill:transparent;cursor:crosshair}',
       '.sc-chart--stock .sc-chart__crosshair{stroke-dasharray:3 3;pointer-events:none}',
       '.sc-chart__head{display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap;margin:0 0 6px}',
@@ -377,41 +479,59 @@
   }
   function buildSvg(g, SC) {
     var svg = SC.svg('svg', { viewBox: '0 0 ' + g.width + ' ' + g.height, width: g.width, height: g.height, 'aria-hidden': 'true', focusable: 'false' });
-    var plot = g.plot, i, b;
+    var plot = g.plot, i, b, card = g.card;
     /* gridlines */
     var grid = SC.svg('g');
     for (i = 0; i < g.grid.length; i++) grid.appendChild(SC.svg('line', { 'class': 'sc-chart__grid', x1: plot.left, x2: plot.right, y1: g.grid[i].y, y2: g.grid[i].y }));
     grid.appendChild(SC.svg('line', { 'class': 'sc-chart__grid', x1: plot.left, x2: plot.right, y1: g.vol.bottom, y2: g.vol.bottom }));
     svg.appendChild(grid);
     /* the burst column under everything but the grid, then the bands: target (faint, full width + gutter strip), buy zone, base box */
-    if (g.burst) svg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band sc-chart__band--faint', style: toneStyle('accent'), x: g.burst.column.x, y: g.burst.column.y, width: g.burst.column.w, height: g.burst.column.h }));
-    if (g.target) {
+    if (g.burst && !card) svg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band sc-chart__band--faint', style: toneStyle('accent'), x: g.burst.column.x, y: g.burst.column.y, width: g.burst.column.w, height: g.burst.column.h }));
+    if (g.target && g.target.ruler) {
+      /* the ruler lives in the gutter only: a rule band, never a forecast over history */
+      var rg = SC.svg('g');
+      rg.appendChild(SC.svg('rect', { 'class': 'sc-chart__ruler', x: g.target.strip.x, y: g.target.y1, width: g.target.strip.w, height: g.target.h }));
+      for (i = 0; i < g.target.ticks.length; i++) rg.appendChild(SC.svg('line', { 'class': 'sc-chart__ruler-tick', x1: g.target.strip.x - 2, x2: g.target.strip.x + g.target.strip.w + 3, y1: g.target.ticks[i].y, y2: g.target.ticks[i].y }));
+      svg.appendChild(rg);
+    } else if (g.target) {
       var tg = SC.svg('g', { style: toneStyle('good') });
       tg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band sc-chart__band--faint', x: plot.left, y: g.target.y1, width: plot.width, height: g.target.h }));
       tg.appendChild(SC.svg('rect', { 'class': 'sc-chart__strip', x: g.target.strip.x, y: g.target.y1, width: g.target.strip.w, height: g.target.h }));
       svg.appendChild(tg);
     }
-    if (g.entry) {
+    if (g.entry && card) {
+      /* THE PAGE'S SPICE: the accent fill from the burst bar across the future gutter, with 1px accent edges */
+      var zg = SC.svg('g', { style: toneStyle('accent') });
+      zg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band sc-chart__band--zone', x: g.entry.x, y: g.entry.y1, width: g.entry.w, height: g.entry.h }));
+      zg.appendChild(SC.svg('line', { 'class': 'sc-chart__edge', x1: g.entry.x, x2: g.entry.x + g.entry.w, y1: g.entry.y1, y2: g.entry.y1 }));
+      zg.appendChild(SC.svg('line', { 'class': 'sc-chart__edge', x1: g.entry.x, x2: g.entry.x + g.entry.w, y1: g.entry.y2, y2: g.entry.y2 }));
+      svg.appendChild(zg);
+    } else if (g.entry) {
       svg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band', style: toneStyle('chart-emphasis'), x: plot.left, y: g.entry.y1, width: plot.width, height: g.entry.h }));
     }
     if (g.box) {
       svg.appendChild(SC.svg('rect', { 'class': 'sc-chart__box', style: toneStyle('chart-context'), x: g.box.x, y: g.box.y, width: g.box.w, height: g.box.h }));
     }
     /* volume */
-    var vg = SC.svg('g', { style: toneStyle('chart-context') }), vb = SC.svg('g', { style: toneStyle('accent') });
+    var vg = SC.svg('g', { style: toneStyle('chart-context') }), vb = SC.svg('g', { style: toneStyle(card ? 'chart-emphasis' : 'accent') });
     for (i = 0; i < g.bars.length; i++) {
       b = g.bars[i].volume;
       if (!b || !b.h) continue;
       (b.burst ? vb : vg).appendChild(SC.svg('rect', { 'class': 'sc-chart__vol' + (b.burst ? ' is-emphasis' : ''), x: b.x, y: b.y, width: b.w, height: b.h }));
     }
     svg.appendChild(vg); svg.appendChild(vb);
+    if (g.volAvg) {
+      var vd = pathOf(g.volAvg.points);
+      if (vd) svg.appendChild(SC.svg('path', { 'class': 'sc-chart__avg', style: toneStyle('chart-context'), d: vd }));
+      if (g.volAvg.label) svg.appendChild(SC.svg('text', { 'class': 'sc-chart__faint', x: g.volAvg.label.x, y: g.volAvg.label.y, 'text-anchor': g.volAvg.label.anchor }, g.volAvg.label.text));
+    }
     /* moving averages: context tone, the 20 a touch heavier */
     for (i = 0; i < g.ma.length; i++) {
       var d = pathOf(g.ma[i].points);
       if (d) svg.appendChild(SC.svg('path', { 'class': 'sc-chart__series sc-chart__series--context', style: '--sc-weight:' + g.ma[i].weight, d: d }));
     }
-    /* candles: up hollow in emphasis, down filled in context, the burst in the accent */
-    var up = SC.svg('g', { style: toneStyle('chart-emphasis') }), down = SC.svg('g', { style: toneStyle('chart-context') }), burstG = SC.svg('g', { style: toneStyle('accent') });
+    /* candles: up hollow in emphasis, down filled in context; the burst in the accent on the harness chart, heavier emphasis on a card (the accent is the buy zone's there) */
+    var up = SC.svg('g', { style: toneStyle('chart-emphasis') }), down = SC.svg('g', { style: toneStyle('chart-context') }), burstG = SC.svg('g', { style: toneStyle(card ? 'chart-emphasis' : 'accent') });
     for (i = 0; i < g.bars.length; i++) {
       var c = g.bars[i].candle;
       if (!c) continue;
@@ -423,17 +543,27 @@
       else parent.appendChild(SC.svg('rect', { 'class': cls, x: c.x, y: c.y, width: c.w, height: c.h }));
     }
     svg.appendChild(up); svg.appendChild(down); svg.appendChild(burstG);
+    /* card marks under the bars: ▲ for the up-day run, ✕ for a 4% breakdown inside the base */
+    for (i = 0; i < g.upTicks.length; i++) svg.appendChild(SC.svg('text', { 'class': 'sc-chart__tick', 'data-mark': 'up', x: g.upTicks[i].x, y: g.upTicks[i].y, 'text-anchor': 'middle' }, '\u25B2'));
+    for (i = 0; i < g.breakdownMarks.length; i++) svg.appendChild(SC.svg('text', { 'class': 'sc-chart__tick', 'data-mark': 'breakdown', x: g.breakdownMarks[i].x, y: g.breakdownMarks[i].y, 'text-anchor': 'middle' }, '\u2715'));
+    if (g.rangeBracket) {
+      var rb = g.rangeBracket;
+      svg.appendChild(SC.svg('path', { 'class': 'sc-chart__bracket', d: 'M' + (rb.x + 3) + ',' + rb.y1 + 'h-3v' + r1(rb.y2 - rb.y1) + 'h3' }));
+    }
     /* levels */
-    if (g.stop) svg.appendChild(SC.svg('line', { 'class': 'sc-chart__level sc-chart__level--dashed', style: toneStyle('danger'), x1: plot.left, x2: plot.right, y1: g.stop.y, y2: g.stop.y }));
-    if (g.trigger) svg.appendChild(SC.svg('line', { 'class': 'sc-chart__level sc-chart__level--dotted', style: toneStyle('warn'), x1: plot.left, x2: plot.right, y1: g.trigger.y, y2: g.trigger.y }));
-    if (g.entry) {
+    if (g.stop) {
+      var sx1 = card && g.burst ? g.burst.column.x : plot.left;
+      svg.appendChild(SC.svg('line', { 'class': 'sc-chart__level' + (card ? ' sc-chart__level--solid' : ' sc-chart__level--dashed'), 'data-level': 'stop', style: toneStyle('danger'), x1: sx1, x2: plot.right, y1: g.stop.y, y2: g.stop.y }));
+    }
+    if (g.trigger) svg.appendChild(SC.svg('line', { 'class': 'sc-chart__level sc-chart__level--dotted', 'data-level': 'trigger', style: toneStyle('warn'), x1: plot.left, x2: plot.right, y1: g.trigger.y, y2: g.trigger.y }));
+    if (g.entry && !card) {
       svg.appendChild(SC.svg('line', { 'class': 'sc-chart__level', style: toneStyle('chart-emphasis') + ';stroke-opacity:.5', x1: plot.left, x2: plot.right, y1: g.entry.y1, y2: g.entry.y1, 'stroke-width': 1 }));
       svg.appendChild(SC.svg('line', { 'class': 'sc-chart__level', style: toneStyle('chart-emphasis') + ';stroke-opacity:.5', x1: plot.left, x2: plot.right, y1: g.entry.y2, y2: g.entry.y2, 'stroke-width': 1 }));
     }
-    /* burst marker: a small triangle under the low, in the accent */
+    /* burst marker: a small triangle under the low, in the accent (harness) or the emphasis (card) */
     if (g.burst) {
       var m = g.burst.marker, s = m.size;
-      svg.appendChild(SC.svg('path', { 'class': 'sc-chart__flag', style: toneStyle('accent'), d: 'M' + m.x + ',' + m.y + 'l' + s + ',' + (s + 2) + 'h' + (-2 * s) + 'z' }));
+      svg.appendChild(SC.svg('path', { 'class': 'sc-chart__flag', style: toneStyle(card ? 'chart-emphasis' : 'accent'), d: 'M' + m.x + ',' + m.y + 'l' + s + ',' + (s + 2) + 'h' + (-2 * s) + 'z' }));
     }
     /* labels, on surface plates so they read over candles */
     var labels = SC.svg('g');
@@ -444,14 +574,21 @@
       plate(labels, SC, g.leftLabels[i]);
     }
     if (g.burst) plate(labels, SC, g.burst.label, 'sc-chart__note--strong');
+    if (g.rangeBracket) plate(labels, SC, g.rangeBracket.label);
+    if (g.entry && card) plate(labels, SC, g.entry.label, 'sc-chart__note--accent');
+    if (g.stopTag) {
+      labels.appendChild(SC.svg('rect', { 'class': 'sc-chart__pill', 'data-tag': 'stop', x: g.stopTag.x, y: g.stopTag.y, width: g.stopTag.w, height: g.stopTag.h, rx: 8 }));
+      labels.appendChild(SC.svg('text', { 'class': 'sc-chart__pill-text', x: g.stop.label.x, y: g.stop.label.y, 'text-anchor': 'start' }, g.stopTag.text));
+    }
+    if (g.tomorrow) labels.appendChild(SC.svg('text', { 'class': 'sc-chart__faint', x: g.tomorrow.x, y: g.tomorrow.y }, g.tomorrow.text));
     svg.appendChild(labels);
     /* right gutter: leaders then texts */
     var gutter = SC.svg('g');
     for (i = 0; i < g.rightLabels.length; i++) {
       var L = g.rightLabels[i];
       gutter.appendChild(SC.svg('line', { 'class': 'sc-chart__leader', x1: plot.right, y1: L.yTrue, x2: plot.right + 6, y2: L.y }));
-      var cls2 = L.kind === 'close' ? 'sc-chart__note sc-chart__note--strong' : L.kind === 'target' ? 'sc-chart__note' : L.kind === 'ma' ? 'sc-chart__faint' : null;
-      gutter.appendChild(SC.svg('text', { 'class': cls2, x: L.x, y: L.y + 4, 'text-anchor': 'start' }, L.text));
+      var cls2 = L.kind === 'close' ? 'sc-chart__note sc-chart__note--strong' : L.kind === 'target' || L.kind === 'aim' ? 'sc-chart__note' : L.kind === 'ma' ? 'sc-chart__faint' : null;
+      gutter.appendChild(SC.svg('text', { 'class': cls2, 'data-kind': L.kind, x: L.x, y: L.y + 4, 'text-anchor': 'start' }, L.text));
     }
     svg.appendChild(gutter);
     /* volume pane caption and the date axis */
@@ -464,14 +601,15 @@
       axis.appendChild(SC.svg('text', { x: tkx + 3, y: g.axisY, 'text-anchor': 'start' }, g.dateTicks[i].label));
     }
     svg.appendChild(axis);
-    /* crosshair (hidden until a bar is focused) and the hit area */
+    /* crosshair (hidden until a bar is focused) and the hit area (over the bars, not the gutter) */
     var cross = SC.svg('g', { 'class': 'sc-chart__cross', visibility: 'hidden' }, [
       SC.svg('line', { 'class': 'sc-chart__crosshair', x1: 0, x2: 0, y1: plot.top, y2: g.vol.bottom }),
       SC.svg('line', { 'class': 'sc-chart__crosshair', x1: plot.left, x2: plot.right, y1: 0, y2: 0 }),
       SC.svg('circle', { 'class': 'sc-chart__marker', r: 4, cx: 0, cy: 0 })
     ]);
     svg.appendChild(cross);
-    svg.appendChild(SC.svg('rect', { 'class': 'sc-chart__hit', x: plot.left, y: plot.top, width: plot.width, height: g.vol.bottom - plot.top }));
+    var hitW = g.future ? g.future.x - plot.left : plot.width;
+    svg.appendChild(SC.svg('rect', { 'class': 'sc-chart__hit', x: plot.left, y: plot.top, width: hitW, height: g.vol.bottom - plot.top }));
     return svg;
   }
 
@@ -484,7 +622,7 @@
     if (g.trigger) rows.push(['trigger', fmtPrice(g.trigger.price), vs(g.trigger.price)]);
     if (g.entry) rows.push(['buy zone', fmtPrice(g.entry.low) + ' – ' + fmtPrice(g.entry.high), 'width ' + fmtPct((g.entry.high / g.entry.low - 1) * 100).replace('+', '')]);
     if (g.stop) rows.push(['stop', fmtPrice(g.stop.price), vs(g.stop.price)]);
-    if (g.target) rows.push(['target', fmtPrice(g.target.low) + ' – ' + fmtPrice(g.target.high), g.target.text + (g.target.ref !== null ? ' vs ' + fmtPrice(g.target.ref) : '')]);
+    if (g.target) rows.push([g.target.ruler ? 'aim' : 'target', fmtPrice(g.target.low) + ' – ' + fmtPrice(g.target.high), g.target.text + (g.target.ref !== null ? ' vs ' + fmtPrice(g.target.ref) : '')]);
     if (lc !== null) rows.push(['last close', fmtPrice(lc), g.bars.length ? g.bars[g.bars.length - 1].date : '']);
     return rows;
   }
@@ -538,6 +676,7 @@
 
   /* ---------- the chart ------------------------------------------------- */
   function ariaLabel(g, options) {
+    if (typeof options.ariaLabel === 'string' && options.ariaLabel) return options.ariaLabel;
     var s = (options.ticker || 'Price') + ' daily candlestick chart';
     if (g.n) s += ', ' + g.n + ' sessions from ' + g.bars[0].date + ' to ' + g.bars[g.n - 1].date;
     if (g.lastClose !== null) s += ', last close ' + fmtPrice(g.lastClose);

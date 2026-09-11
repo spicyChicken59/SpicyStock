@@ -279,11 +279,14 @@ def test_the_order_line_is_a_fidelity_buy_stop_limit_with_the_stop_attached():
                                "OTO sell 31 XYZ stop-loss $19.40 GTC")
     assert p["order_readback"] == ("Buy 31 XYZ stop limit 20.00 / 20.80 day, "
                                    "one-triggers-the-other sell 31 XYZ stop loss 19.40 GTC")
-    assert p["fallback_order_line"] == "Buy 31 XYZ limit $20.80 (day)"
+    assert p["fallback_line"] == ("If your app has no stop-limit: buy 31 XYZ limit $20.80 (day) "
+                                  "with the same sell stop attached.")
     assert p["order_json"] == {
-        "side": "buy", "shares": 31, "ticker": "XYZ", "order_type": "stop_limit",
-        "stop_price": 20.00, "limit_price": 20.80, "tif": "day",
-        "attached": {"type": "stop_loss", "stop_price": 19.40, "tif": "gtc"},
+        "symbol": "XYZ", "action": "buy", "quantity": 31, "order_type": "stop_limit",
+        "stop_price": 20.00, "limit_price": 20.80, "time_in_force": "day",
+        "conditional": "one_triggers_the_other",
+        "then": {"action": "sell", "quantity": 31, "order_type": "stop", "stop_price": 19.40,
+                 "time_in_force": "gtc"},
     }
 
 

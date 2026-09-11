@@ -27,6 +27,9 @@ sized at, so one number is compared everywhere.
 """
 from __future__ import annotations
 
+import calendar
+from datetime import date, timedelta
+
 import math
 import os
 from collections.abc import Mapping, Sequence
@@ -478,7 +481,11 @@ def hazards(gain_pct: float, extension_pct: float | None) -> list[dict[str, Any]
 
 #: The order block of a plan with nothing to place.
 NO_ORDER: dict[str, Any] = {"order_line": None, "order_json": None, "order_readback": None,
-                            "fallback_order_line": None}
+                            "fallback_line": None}
+
+#: The conditional word Fidelity's ticket uses for "then": the sell stop is
+#: placed the moment the buy fills, never before.
+OTO = "one_triggers_the_other"
 
 
 def fidelity_orders(ticker: str, shares: int, *, trigger: float, limit: float, stop: float) -> dict[str, Any]:
@@ -496,12 +503,17 @@ def fidelity_orders(ticker: str, shares: int, *, trigger: float, limit: float, s
     return {
         "order_line": (f"Buy {shares} {ticker} stop-limit: stop {_usd(trigger)} limit {_usd(limit)}, day · "
                        f"OTO sell {shares} {ticker} stop-loss {_usd(stop)} GTC"),
-        "order_json": {"side": "buy", "shares": shares, "ticker": ticker, "order_type": "stop_limit",
-                       "stop_price": trigger, "limit_price": limit, "tif": "day",
-                       "attached": {"type": "stop_loss", "stop_price": stop, "tif": "gtc"}},
+        # Fidelity's field order: action, quantity, symbol, order type, stop,
+        # limit, time in force; then the conditional leg, a stop-MARKET sell.
+        "order_json": {"symbol": ticker, "action": "buy", "quantity": shares, "order_type": "stop_limit",
+                       "stop_price": trigger, "limit_price": limit, "time_in_force": "day",
+                       "conditional": OTO,
+                       "then": {"action": "sell", "quantity": shares, "order_type": "stop",
+                                "stop_price": stop, "time_in_force": "gtc"}},
         "order_readback": (f"Buy {shares} {ticker} stop limit {trigger:.2f} / {limit:.2f} day, "
                            f"one-triggers-the-other sell {shares} {ticker} stop loss {stop:.2f} GTC"),
-        "fallback_order_line": f"Buy {shares} {ticker} limit {_usd(limit)} (day)",
+        "fallback_line": (f"If your app has no stop-limit: buy {shares} {ticker} limit {_usd(limit)} (day) "
+                          f"with the same sell stop attached."),
     }
 
 
@@ -576,6 +588,65 @@ def exit_schedule(entry_price: float, stop: float | None = None) -> list[dict[st
              "when": rule["when"].format(**values), "rule": rule["rule"].format(**values),
              "price": prices.get(rule["key"])}
             for rule in EXIT_RULES]
+
+
+def next_sessions(session: date, n: int) -> list[date]:
+    """The next ``n`` weekdays after ``session``. No holiday calendar: a
+    holiday shifts every later date by one, and the page says "day N" beside
+    each date so the day count is the authority."""
+    out: list[date] = []
+    d = session
+    while len(out) < n:
+        d = d + timedelta(days=1)
+        if d.weekday() < calendar.SATURDAY:
+            out.append(d)
+    return out
+
+
+def dated_schedule(p: Mapping[str, Any], session: date) -> list[dict[str, Any]]:
+    """The hold as a dated timeline for a plan published after ``session``:
+    day 1 is the next weekday. Every price comes off the plan (``exits``,
+    ``entry_low``/``entry_high`` or ``trigger``/``limit``, ``stop``); the
+    sentences are the exit rules in his order."""
+    days = next_sessions(session, FINAL_EXIT_DAY)
+    by_key = {row["key"]: row for row in p.get("exits") or []}
+    stop = p.get("stop")
+    stop_words = f"the sell stop at {_usd(stop)} is live from the fill" if stop is not None else "attach the sell stop at the fill"
+    if p.get("kind") == "anticipation":
+        entry = (f"buy only if it trades through {_usd(p['trigger'])} (limit {_usd(p['limit'])}) in the "
+                 f"{ENTRY_WINDOW}; {stop_words}.")
+    else:
+        lo, hi = p.get("entry_low"), p.get("entry_high")
+        entry = (f"buy in the {ENTRY_WINDOW} inside {_usd(lo)}\u2013{_usd(hi)}; {stop_words}. "
+                 f"Skip it if it opens above {_usd(hi)}.") if lo is not None and hi is not None else \
+                f"buy in the {ENTRY_WINDOW}; {stop_words}."
+    rows = [{"day": ENTRY_DAY, "date": days[0].isoformat(), "key": "entry", "instruction": entry}]
+
+    def add(day: int, key: str, text: str) -> None:
+        rows.append({"day": day, "date": days[day - 1].isoformat(), "key": key, "instruction": text})
+
+    half = by_key.get("sell_half_8pct")
+    if half:
+        add(ENTRY_DAY, "sell_half_8pct", f"if {half['when']}: {half['rule']}.")
+    low = by_key.get("entry_day_low")
+    if low:
+        add(ENTRY_DAY, "entry_day_low", f"at {low['when']}: {low['rule']}.")
+    nb = by_key.get("no_breakeven")
+    if nb:
+        add(2, "no_breakeven", f"if {nb['when']}: {nb['rule'].split(' (')[0]}.")
+    prog = by_key.get("day3_no_progress")
+    d3 = by_key.get("day3_sell_half")
+    if d3 or prog:
+        text = " ".join(x for x in ((f"at the {d3['when']}: {d3['rule']}." if d3 else ""),
+                                    (f"If {prog['when']}: {prog['rule']}." if prog else "")) if x)
+        add(SELL_HALF_DAY, "day3", text)
+    trail = by_key.get("trail_after_day3")
+    if trail and TRAIL_FROM_DAY + 1 <= FINAL_EXIT_DAY:
+        add(TRAIL_FROM_DAY + 1, "trail", f"{trail['rule']}; sell the rest into strength.")
+    last = by_key.get("day5_exit")
+    if last:
+        add(FINAL_EXIT_DAY, "day5_exit", f"at the {last['when']}: {last['rule']}.")
+    return rows
 
 
 # ------------------------------------------------------------- targets -----
@@ -740,6 +811,12 @@ def burst_plan(*, ticker: str, close: float, low: float, high: float, open_: flo
 
 
 # ------------------------------------------------------------- anticipation
+
+
+#: The one sentence over the anticipation list, from the numbers the plans use.
+ANTICIPATION_INSTRUCTION = (f"Buy only if it clears its trigger in the {ENTRY_WINDOW} on volume already above "
+                            f"yesterday's pace; an open more than {GAP_OK_PCT:g}% above the close is gapped and "
+                            f"needs a catalyst check before you buy.")
 
 
 def anticipation_plan(*, ticker: str, close: float, box_high: float, box_low: float,
@@ -1004,10 +1081,22 @@ def cash_budget(plans: Sequence[Mapping[str, Any]], account: Account,
             within.append(ticker)
     used = open_positions + len(within)
     already = f" ({open_positions} already open)" if open_positions else ""
+    at_risk = _money(sum(_money(p.get("risk_usd") or 0) for p in plans
+                         if p.get("ticker") in within))
+    cut = []
+    for row in beyond:
+        if row["reason"] == "slot_cap":
+            holders = ", ".join(within) if within else "the open plans"
+            reason = (f"the {account.max_open_positions}-slot cap: {open_positions} already open and "
+                      f"{holders} take the rest; take {row['ticker']} only if a HOLD above stops out")
+        else:
+            reason = (f"the equity: {_usd(row['position_usd'])} more than the {_usd(account.equity)} "
+                      f"account can commit beside the orders above")
+        cut.append({"ticker": row["ticker"], "reason": reason})
     return {
-        "committed_usd": committed, "equity": account.equity,
+        "committed_usd": committed, "at_risk_usd": at_risk, "equity": account.equity,
         "slots_used": used, "slots_max": account.max_open_positions, "open_positions": open_positions,
-        "within": within, "beyond": beyond, "skipped": skipped,
+        "within": within, "beyond": beyond, "cut": cut, "skipped": skipped,
         "sentence": (f"Tomorrow's plans commit {_usd(committed)} of {_usd(account.equity)}; "
                      f"{used} of {account.max_open_positions} slots{already}"),
     }

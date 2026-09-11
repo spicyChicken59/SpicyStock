@@ -1,0 +1,150 @@
+/* SpicyStock — page styles on top of the SpicyChicken system (sc.css 2.10.0).
+   Semantic tokens only; every class here is ss-* and composes sc-* components.
+   Nothing in this file names a colour, a threshold or a strategy number. */
+
+/* ---- masthead status ---------------------------------------------------- */
+.ss-status { display: inline-flex; align-items: center; gap: var(--sc-s2); }
+.ss-status .sc-chip { font-size: 11px; }
+
+/* the sentence under the masthead: one block, hidden when there is none */
+.ss-notice { margin-top: var(--sc-s3); }
+.ss-notice p { margin: 4px 0 0; }
+.ss-notice p:first-of-type { margin-top: 0; }
+
+/* ---- cover ------------------------------------------------------------- */
+.ss-cover { margin-top: var(--sc-s3); }
+.ss-cover .sc-cover__meta span { white-space: nowrap; }
+
+/* ---- the run strip: six stations, no route --------------------------------- */
+.ss-strip { --sc-stat-size: clamp(20px, 2.2vw, 28px); margin-top: var(--sc-s3); grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.ss-strip .sc-stat__value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 1000px) {
+  .ss-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ss-strip > .sc-stat:nth-child(4) { border-left: 0; }
+  .ss-strip > .sc-stat:nth-child(n+4) { border-top: 1px solid var(--sc-stat-line, var(--sc-border)); }
+}
+@media (max-width: 480px) {
+  .ss-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ss-strip > .sc-stat + .sc-stat { border-top: 0; }
+  .ss-strip > .sc-stat:nth-child(2n) { border-left: 1px solid var(--sc-stat-line); }
+  .ss-strip > .sc-stat:nth-child(2n+1) { border-left: 0; }
+  .ss-strip > .sc-stat:nth-child(n+3) { border-top: 1px solid var(--sc-stat-line, var(--sc-border)); }
+}
+
+/* ---- breadth ----------------------------------------------------------- */
+.ss-regime .sc-callout__figure { display: flex; align-items: center; gap: var(--sc-s2); flex-wrap: wrap; }
+.ss-regime ul { margin: var(--sc-s1) 0 0; padding-left: 1.2em; }
+.ss-regime li { margin: 2px 0; }
+.ss-breadth-chart .sc-plot-grid__y span { font: 500 10.5px var(--sc-font-mono); color: var(--sc-text-2); }
+.ss-breadth-chart .sc-chart { --sc-tone: var(--sc-chart-emphasis); }
+.ss-breadth-chart .ss-ref { stroke: var(--sc-border-strong); stroke-width: 1; stroke-dasharray: 6 4; fill: none; }
+.ss-breadth-chart .ss-ref-label { font: 600 10.5px var(--sc-font-mono); fill: var(--sc-text-2); }
+.ss-breadth-chart .sc-chart__hit { fill: transparent; }
+.ss-facts-grid { margin-top: var(--sc-s3); }
+.ss-facts-grid .sc-card { display: flex; flex-direction: column; }
+.ss-facts-grid .sc-facts { margin-top: var(--sc-s2); border-top: 0; padding-top: 0; }
+.ss-facts-grid .sc-note { margin-top: auto; padding-top: var(--sc-s2); }
+
+/* ---- tomorrow: the bento --------------------------------------------------- */
+.ss-bento { margin-top: var(--sc-s3); }
+.ss-bento .sc-bento__main { display: flex; flex-direction: column; gap: var(--sc-s3); }
+.ss-bento .sc-bento__aside > .sc-card { position: sticky; top: var(--sc-s3); align-self: start; }
+@media (max-width: 720px) {
+  .ss-bento .sc-bento__aside { order: -1; }
+  .ss-bento .sc-bento__aside > .sc-card { position: static; }
+}
+
+/* the trade card */
+.ss-trade .sc-card__head { align-items: flex-start; }
+.ss-trade__grade { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.ss-trade__chart { margin-top: var(--sc-s2); }
+.ss-trade__chart .sc-chart-caption { align-items: center; }
+.ss-trade__body { margin-top: var(--sc-s3); }
+.ss-trade .sc-split { gap: var(--sc-s3) var(--sc-s4); }
+@media (max-width: 720px) { .ss-trade .sc-split { grid-template-columns: minmax(0, 1fr); } }
+.ss-trade .sc-facts { margin-top: 0; padding-top: 0; border-top: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-s2) var(--sc-s3); }
+.ss-trade .sc-facts > .is-wide { grid-column: 1 / -1; }
+.ss-trade .sc-facts dd small { display: block; font-size: var(--sc-text-sm); color: var(--sc-text-2); }
+.ss-trade__foot { margin-top: var(--sc-s3); padding-top: var(--sc-s2); border-top: 1px solid var(--sc-border); display: flex; justify-content: space-between; gap: var(--sc-s2); flex-wrap: wrap; }
+.ss-trade .sc-timeline__item { padding-bottom: var(--sc-s3); }
+.ss-trade .sc-timeline__body > p { color: var(--sc-text); }
+.ss-trade .sc-insight { margin-top: var(--sc-s3); }
+.ss-trade .sc-insight p { margin: 0 0 var(--sc-s1); }
+.ss-hazards { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.ss-notes { margin: var(--sc-s1) 0 0; padding-left: 1.1em; font-size: var(--sc-text-sm); color: var(--sc-text-2); }
+
+/* the order block, in Fidelity's field order */
+.ss-order { margin-top: var(--sc-s3); }
+.ss-order__head { display: flex; align-items: center; justify-content: space-between; gap: var(--sc-s2); margin-bottom: 6px; }
+.ss-order__pre { margin: 0; padding: 12px 14px; background: var(--sc-raised); color: var(--sc-heading); border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); font: 500 13px/1.7 var(--sc-font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.ss-order__pre b { font-weight: 700; }
+.ss-order__readback { margin: var(--sc-s1) 0 0; font-size: var(--sc-text-sm); color: var(--sc-text); }
+.ss-order .sc-btn { min-height: 32px; }
+@media (pointer: coarse) { .ss-order .sc-btn { min-height: 44px; } }
+
+/* open plans rail */
+.ss-plan + .ss-plan { margin-top: var(--sc-s3); padding-top: var(--sc-s3); border-top: 1px solid var(--sc-border); }
+.ss-plan__row { display: flex; align-items: center; gap: var(--sc-s2); flex-wrap: wrap; }
+.ss-plan__row strong { font-size: var(--sc-text-lg); color: var(--sc-heading); }
+.ss-plan__meta { font: 500 11px/1.6 var(--sc-font-mono); color: var(--sc-text-2); }
+.ss-plan .sc-benchmark { margin-top: var(--sc-s2); }
+.ss-plan .sc-note { margin-top: var(--sc-s2); color: var(--sc-text); }
+
+/* budget line and the order sheet */
+.ss-budget { margin: var(--sc-s3) 0 0; font-size: var(--sc-text-md); color: var(--sc-text); }
+.ss-budget strong { color: var(--sc-heading); }
+.ss-orders { margin-top: var(--sc-s3); }
+.ss-orders tfoot td { border-top: 2px solid var(--sc-brand-line); font-weight: 600; color: var(--sc-heading); }
+.ss-orders .sc-mono { font-size: 12px; }
+
+/* alerts */
+.ss-alerts .sc-chip + .sc-chip { margin-left: 4px; }
+.ss-alerts td.ss-ticket { font: 500 11.5px/1.5 var(--sc-font-mono); white-space: nowrap; }
+
+/* the scan matrix */
+.ss-scan .sc-signal { min-height: 64px; }
+.ss-scan .sc-signal__note { display: block; font: 500 9.5px/1.3 var(--sc-font-mono); color: var(--sc-text-3); letter-spacing: .2px; }
+.ss-scan .sc-signal--good .sc-signal__note, .ss-scan .sc-signal--caution .sc-signal__note, .ss-scan .sc-signal--blocked .sc-signal__note { color: inherit; opacity: .8; }
+.ss-scan td.sc-signal-matrix__value { text-align: center; }
+.ss-scan .ss-grade-note { display: block; margin-top: 4px; font: 500 10px/1.4 var(--sc-font-mono); color: var(--sc-text-2); }
+.ss-scan .sc-table__sort { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-transform: inherit; letter-spacing: inherit; }
+.ss-scan th[aria-sort] .sc-table__sort::after { content: " ↕"; color: var(--sc-text-3); }
+.ss-scan th[aria-sort="descending"] .sc-table__sort::after { content: " ↓"; }
+.ss-scan th[aria-sort="ascending"] .sc-table__sort::after { content: " ↑"; }
+.ss-scan details > summary { margin-bottom: var(--sc-s2); }
+
+/* the rules' record */
+.ss-record .sc-grid { margin-top: var(--sc-s2); }
+.ss-nights { display: flex; gap: 6px; flex-wrap: wrap; list-style: none; padding: 0; margin: var(--sc-s2) 0 0; }
+.ss-night { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--sc-border-strong); background: var(--sc-raised); }
+.ss-night.is-ok { background: var(--sc-good); border-color: var(--sc-good); }
+.ss-night.is-degraded { background: var(--sc-warn); border-color: var(--sc-warn); }
+.ss-night.is-closed { background: var(--sc-border-strong); border-color: var(--sc-border-strong); }
+.ss-night.is-missing, .ss-night.is-failed { background: var(--sc-danger); border-color: var(--sc-danger); }
+.ss-nights-key { display: flex; gap: var(--sc-s2); flex-wrap: wrap; margin-top: var(--sc-s2); }
+.ss-nights-key span { display: inline-flex; align-items: center; gap: 6px; font: 500 11px/1.5 var(--sc-font-mono); color: var(--sc-text-2); }
+.ss-nights-key .ss-night { width: 10px; height: 10px; }
+
+/* the one next action */
+.ss-next { margin-top: var(--sc-s5); }
+.ss-next h3 { margin: 0 0 var(--sc-s1); }
+.ss-next p { margin: 0; }
+
+/* live run log line */
+.ss-runlog { font: 500 11px/1.6 var(--sc-font-mono); color: var(--sc-text-2); }
+
+/* ---- print: the cover verdict, the order sheet and the open plans --------- */
+.ss-print-only { display: none; }
+@media print {
+  .ss-print-hide, .sc-masthead, .sc-foot, .ss-notice, .ss-strip, .sc-cover__actions, .sc-cover__art { display: none !important; }
+  .ss-print-only { display: block; }
+  #tomorrow { display: flex; flex-direction: column; }
+  #tomorrow > .sc-chapter { order: 0; }
+  #tomorrow .ss-orders { order: 1; margin-top: 12pt; }
+  #tomorrow .ss-budget { order: 2; }
+  #tomorrow .ss-bento { order: 3; }
+  .ss-bento .sc-bento__main { display: none !important; }
+  .ss-bento .sc-bento__aside > .sc-card { position: static; }
+  .ss-cover { break-after: avoid; }
+  .ss-orders, .ss-plan { break-inside: avoid; }
+}
