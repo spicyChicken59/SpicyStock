@@ -34,6 +34,7 @@ MIN_COVERAGE_FRACTION = 0.5    # fewer names answering than this is a feed outag
 CLOSED_FRACTION = 0.05         # fewer names on the expected session than this is a closed market (P)
 MAX_ERROR_FRACTION = 0.05      # more names raising than this is a code fault, not a market (P)
 SERIES_BARS = 120              # bars the page chart carries per trade (plumbing)
+SERIES_TOP = 24                # bursts, by rank, that carry a chart beside the trades and the cut names (plumbing)
 NIGHTS_KEPT = record.NIGHTS_KEPT
 TRADE_GRADES = ("A+", "A")     # what gets an order (B: "don't settle for marginal setups")
 YELLOW_GRADES = ("A+",)        # what a yellow night admits (P)
@@ -60,6 +61,7 @@ RULES = {
     "pipeline.trade_grades": list(TRADE_GRADES),
     "pipeline.yellow_grades": list(YELLOW_GRADES),
     "pipeline.series_bars": SERIES_BARS,
+    "pipeline.series_top": SERIES_TOP,
 }
 
 
@@ -602,7 +604,11 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
 
         rep.stage = "publish"
         miss = report.closest_miss([_strip_private(b) for b in bursts], trades, beyond_cap)
-        keep_series = set(trades) | set(beyond_cap) | ({miss["ticker"]} if miss else set())   # every card gets its chart
+        # every card gets its chart: the trades, the cut names, the closest
+        # miss, and the top SERIES_TOP bursts by rank so the page can show a
+        # chosen burst's bars without a second fetch; the rest carry none
+        keep_series = set(trades) | set(beyond_cap) | ({miss["ticker"]} if miss else set()) \
+            | {b["ticker"] for b in bursts[:SERIES_TOP]}
         published_bursts = []
         for b in bursts:
             row = _strip_private(b)
@@ -673,13 +679,15 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         return rep
 
 
-#: An open plan in one of these states still occupies a slot: the position is
-#: held, or its ticket is live and may still fill.
-SLOT_STATUSES = ("hold", "sell_half", "sell_into_strength", "pending")
+#: An open model plan in one of these states still occupies a slot: the
+#: model holds it, its ticket is live and may still fill, or the bars cannot
+#: say whether it filled (an uncertain plan is not freed capacity).
+SLOT_STATUSES = ("hold", "sell_half", "sell_into_strength", "pending", record.UNCERTAIN)
 
 
 def slots_held(open_plans: list[dict]) -> int:
-    """How many of the account's slots last night's plans still occupy."""
+    """How many of the configured slots the open model plans occupy: model
+    allocation over configured sizing assumptions, not a holding count."""
     return sum(1 for o in open_plans if o.get("status") in SLOT_STATUSES)
 
 

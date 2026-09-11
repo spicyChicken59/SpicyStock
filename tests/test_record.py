@@ -168,32 +168,56 @@ def test_later_bars_on_nothing_is_nothing():
 
 
 # ------------------------------------------------------------ the fill ----
-@pytest.mark.parametrize("bar, status, price, words", [
-    ({"o": 100.5, "h": 103.0}, "filled", 100.5, "filled at the open"),          # at/above the trigger
-    ({"o": 100.0, "h": 101.0}, "filled", 100.0, "filled at the open"),          # exactly the trigger
-    ({"o": 99.5, "h": 101.0}, "filled", 100.0, "filled at the trigger"),        # under the trigger, day reaches it
-    ({"o": 99.5, "h": 100.0}, "filled", 100.0, "filled at the trigger"),        # the day's high exactly at the trigger
-    ({"o": 99.5, "h": 99.9}, record.NOT_FILLED, None, "never reached"),         # under the trigger, never reaches
-    ({"o": 102.01, "h": 104.0}, record.NOT_FILLED, None, "gap ate the trade"),  # above the limit
-    ({"o": 102.0, "h": 104.0}, "filled", 102.0, "filled at the open"),          # exactly the limit
-    ({"o": 98.99, "h": 104.0}, record.NOT_FILLED, None, "skip line"),           # under the skip line
-    ({"o": 99.0, "h": 104.0}, "filled", 100.0, "filled at the trigger"),        # exactly the skip line
+# pick(): trigger 100, skip line 99, limit 102, stop 96. What a daily bar can
+# say: the open fills (at or over the trigger, at or under the limit); the day
+# never reaching the trigger, or opening over the limit and staying there,
+# rules a fill out; everything else is uncertain, with its reason.
+@pytest.mark.parametrize("bar, status, price, words, why", [
+    ({"o": 100.5, "h": 103.0, "l": 100.0}, "filled", 100.5, "filled at the open", None),            # at/above the trigger
+    ({"o": 100.0, "h": 101.0, "l": 99.5}, "filled", 100.0, "filled at the open", None),             # exactly the trigger
+    ({"o": 102.0, "h": 104.0, "l": 101.0}, "filled", 102.0, "filled at the open", None),            # exactly the limit
+    ({"o": 99.5, "h": 101.0, "l": 99.2}, record.UNCERTAIN, None, "at a time the bar cannot give", "trigger_timing"),
+    ({"o": 99.5, "h": 100.0, "l": 99.2}, record.UNCERTAIN, None, "reached it", "trigger_timing"),   # high exactly at the trigger
+    ({"o": 99.5, "h": 101.0, "l": 96.0}, record.UNCERTAIN, None, "before or after", "stop_sequence"),   # low exactly at the stop
+    ({"o": 99.5, "h": 101.0, "l": 96.01}, record.UNCERTAIN, None, "cannot give", "trigger_timing"),    # a cent above the stop
+    ({"o": 99.5, "h": 99.9, "l": 99.2}, record.NOT_FILLED, None, "never reached", None),              # never reaches
+    ({"o": 102.01, "h": 104.0, "l": 102.5}, record.NOT_FILLED, None, "never traded back under", None),  # over the limit, stays there
+    ({"o": 102.01, "h": 104.0, "l": 102.0}, record.UNCERTAIN, None, "traded back under", "open_above_limit"),  # low exactly at the limit
+    ({"o": 98.99, "h": 99.9, "l": 98.5}, record.NOT_FILLED, None, "skip line", None),                # under the skip line, never reaches
+    ({"o": 98.99, "h": 100.0, "l": 98.5}, record.UNCERTAIN, None, "recovered through", "open_below_skip"),  # recovers to the trigger
+    ({"o": 99.0, "h": 104.0, "l": 98.0}, record.UNCERTAIN, None, "cannot give", "trigger_timing"),    # exactly the skip line: not skipped
 ])
-def test_the_burst_ticket_fills_the_way_a_stop_limit_does(bar, status, price, words):
-    got = record.fill(pick(), {**bar, "l": min(bar["o"], 95.0), "c": bar["o"], "date": "2026-09-02"})
-    assert got[0] == status and got[1] == price and words in got[2]
+def test_the_burst_ticket_fills_only_at_an_open_a_daily_bar_can_establish(bar, status, price, words, why):
+    got = record.fill(pick(), {**bar, "c": max(bar["l"], min(bar["h"], bar["o"])), "date": "2026-09-02"})
+    assert got[0] == status and got[1] == price and words in got[2] and got[3] == why
+    if why is not None:
+        assert why in record.UNCERTAIN_REASONS and record.UNCERTAIN_WORDS[why]
 
 
-@pytest.mark.parametrize("bar, status, price, words", [
-    ({"o": 50.2, "h": 51.0}, "filled", 50.2, "at the open"),
-    ({"o": 49.5, "h": 50.5}, "filled", 50.0, "at the trigger"),
-    ({"o": 49.5, "h": 49.9}, record.NOT_FILLED, None, "never reached"),
-    ({"o": 50.51, "h": 52.0}, record.NOT_FILLED, None, "above the"),
+@pytest.mark.parametrize("bar, status, price, words, why", [
+    ({"o": 50.2, "h": 51.0, "l": 49.0}, "filled", 50.2, "at the open", None),
+    ({"o": 49.5, "h": 50.5, "l": 49.0}, record.UNCERTAIN, None, "cannot give", "trigger_timing"),
+    ({"o": 49.5, "h": 50.5, "l": 47.9}, record.UNCERTAIN, None, "before or after", "stop_sequence"),
+    ({"o": 49.5, "h": 49.9, "l": 49.0}, record.NOT_FILLED, None, "never reached", None),
+    ({"o": 50.51, "h": 52.0, "l": 50.6}, record.NOT_FILLED, None, "never traded back under", None),
+    ({"o": 50.51, "h": 52.0, "l": 50.4}, record.UNCERTAIN, None, "traded back under", "open_above_limit"),
 ])
-def test_the_anticipation_ticket_fills_at_the_trigger_or_not_at_all(bar, status, price, words):
+def test_the_anticipation_ticket_fills_at_the_open_or_is_uncertain(bar, status, price, words, why):
     p = pick(kind="anticipation", entry_ref=50.0, trigger=50.0, limit=50.5, stop=48.0, entry_low=None, entry_high=None)
-    got = record.fill(p, {**bar, "l": 49.0, "c": bar["o"], "date": "2026-09-02"})
-    assert got[0] == status and got[1] == price and words in got[2]
+    got = record.fill(p, {**bar, "c": max(bar["l"], min(bar["h"], bar["o"])), "date": "2026-09-02"})
+    assert got[0] == status and got[1] == price and words in got[2] and got[3] == why
+
+
+def test_a_would_skip_is_the_plans_word_never_a_brokers():
+    """Case B: an open under the skip line is what the plan skips; a resting
+    order would still have triggered on the recovery. The note says both,
+    and neither is a rejection, a cancellation or a non-fill."""
+    status, price, note, why = record.fill(pick(), {"o": 98.5, "h": 100.5, "l": 98.0, "c": 100.2, "date": "2026-09-02"})
+    assert status == record.UNCERTAIN and why == "open_below_skip" and price is None
+    assert "the plan calls the burst failing and places no order" in note
+    assert "would still have triggered" in note
+    for word in ("rejected", "cancelled", "not filled"):
+        assert word not in note
 
 
 def test_a_pick_without_a_zone_fills_at_the_trigger_rule_alone():
@@ -213,32 +237,76 @@ def test_replay_walks_from_the_fill_price_and_carries_the_published_stop_and_tar
     assert row["picked"] == "2026-09-01" and row["kind"] == "burst" and row["grade"] == "A"
 
 
-def test_a_fill_at_the_trigger_is_walked_from_the_fill_not_from_that_mornings_open():
-    """The reviewer's case: a burst whose low sits inside the entry zone. The
-    day opens under the stop, runs through the trigger and fills there, and
-    closes up. The position never traded under the stop, so day 1 is a hold;
-    the walk used to read the pre-fill open as a stop-out and record -1R."""
+def test_a_day_that_reaches_the_trigger_after_the_open_is_uncertain_not_a_fill():
+    """The earlier audit's case, read honestly now: the day opens under the
+    stop, runs through the trigger and closes up. The old walk booked a fill
+    at the trigger and a hold; a daily bar cannot say when the trigger was
+    crossed, nor whether that morning's low came before or after it. The
+    row is uncertain, walks nothing, and tells a reader who took it what
+    the plan's own rules say. The same day opening at 106.10 is a known fill."""
     p = pick(entry_ref=106.0, entry_low=103.88, entry_high=110.24, stop=104.0, shares=8)
     bars = [{"date": "2026-09-02", "o": 103.9, "h": 106.5, "l": 103.9, "c": 106.2},
             {"date": "2026-09-03", "o": 106.5, "h": 108.0, "l": 106.0, "c": 107.5}]
     row = record.replay(p, bars)
-    assert row["fill"] == "filled at the trigger, $106.00" and row["entry_ref"] == 106.0
-    assert row["status"] == "hold" and row["day"] == 2 and row["exit_price"] is None
-    assert not [e for e in row["events"] if e["event"].startswith("stopped")]
-    # the same day at the open (inside the zone, above the stop) reads the whole bar
-    at_open = record.replay(p, [{**bars[0], "o": 106.1}])
-    assert at_open["fill"] == "filled at the open, $106.10"
+    assert row["status"] == record.UNCERTAIN and row["uncertainty"] == "stop_sequence"
+    assert row["day"] == 2 and row["exit_price"] is None and row["entry_ref"] == 106.0 and row["shares"] == 8
+    assert [e["event"] for e in row["events"]] == [record.UNCERTAIN] and "shares" not in row["events"][0]
+    assert "If you took this plan: the sell stop is $104.00" in row["instruction"]
+    assert "sell at least half by day 3's close and be out by day 5's close" in row["instruction"]
+    assert row["last_close"] == 107.5 and row["last_date"] == "2026-09-03" and row["remaining"] == 8
+    assert record.r_multiple(row, 104.0) is None
+    at_open = record.replay(p, [{**bars[0], "o": 106.1}, bars[1]])
+    assert at_open["fill"] == "filled at the open, $106.10" and at_open["uncertainty"] is None
+    # a known fill reads its whole bar: the day's low 103.90 is under the 104 stop
+    assert at_open["status"] == "stopped" and at_open["day"] == 1 and at_open["exit_price"] == 104.0
 
 
-def test_after_a_trigger_fill_only_the_close_decides_the_fill_day():
-    """A high the price left behind before the fill is not a sale into
-    strength; a close under the stop is a stop-out."""
-    p = pick(entry_ref=100.0, entry_low=99.0, entry_high=102.0, stop=96.0, shares=10)
-    ran_then_faded = [{"date": "2026-09-02", "o": 99.2, "h": 109.0, "l": 95.0, "c": 100.5}]
-    row = record.replay(p, ran_then_faded)
-    assert row["fill"] == "filled at the trigger, $100.00" and row["half_sold"] is False and row["status"] == "hold"
-    closed_under = [{"date": "2026-09-02", "o": 99.2, "h": 101.0, "l": 95.0, "c": 95.5}]
-    assert record.replay(p, closed_under)["status"] == "stopped"
+def test_case_c_a_fill_day_low_under_the_stop_is_never_a_definite_survivor():
+    """Trigger 100, stop 99: O 99.50, H 102, L 98.50, C 101.50. Low-before-
+    fill and fill-before-stop both fit the bar; the old walk read the low as
+    a cent above the stop and published a hold. Now: uncertain, no hold, no
+    stop-out, no R -- and the same bar with the low above the stop is still
+    uncertain on timing alone, never a hold."""
+    p = pick(entry_ref=100.0, entry_low=98.0, entry_high=104.0, stop=99.0, shares=3)
+    row = record.replay(p, [{"date": "2026-09-02", "o": 99.5, "h": 102.0, "l": 98.5, "c": 101.5}])
+    assert row["status"] == record.UNCERTAIN and row["uncertainty"] == "stop_sequence"
+    assert row["exit_price"] is None and row["result_pct"] is None and row["current_stop"] == 99.0
+    assert "its low $98.50 sat at or under the $99.00 stop" in row["fill"]
+    assert not [e for e in row["events"] if e["event"] in ("stopped", "stopped_at_open", "sell_half")]
+    timing = record.replay(p, [{"date": "2026-09-02", "o": 99.5, "h": 102.0, "l": 99.2, "c": 101.5}])
+    assert timing["status"] == record.UNCERTAIN and timing["uncertainty"] == "trigger_timing"
+    assert timing["status"] != "hold"
+
+
+def test_case_a_an_open_above_the_limit_is_uncertain_when_the_day_trades_back_under_it():
+    """Trigger 100, limit 102 (pick()): an open at 103 does not fill a
+    stop-limit at the open, but the resting order stays live; a low of
+    101.5 means it may have filled later. A low that stays over the limit
+    is the one case the bar can rule out."""
+    row = record.replay(pick(), [{"date": "2026-09-02", "o": 103.0, "h": 104.0, "l": 101.5, "c": 102.5}])
+    assert row["status"] == record.UNCERTAIN and row["uncertainty"] == "open_above_limit"
+    assert "which the plan says to skip" in row["fill"] and "may have filled later" in row["fill"]
+    out = record.replay(pick(), [{"date": "2026-09-02", "o": 103.0, "h": 104.0, "l": 102.5, "c": 103.5}])
+    assert out["status"] == record.NOT_FILLED and "never traded back under it" in out["fill"]
+
+
+def test_case_b_an_open_under_the_skip_line_that_recovers_is_uncertain_not_a_non_fill():
+    row = record.replay(pick(), [{"date": "2026-09-02", "o": 98.5, "h": 100.5, "l": 98.0, "c": 100.2}])
+    assert row["status"] == record.UNCERTAIN and row["uncertainty"] == "open_below_skip"
+    out = record.replay(pick(), [{"date": "2026-09-02", "o": 98.5, "h": 99.5, "l": 98.0, "c": 99.2}])
+    assert out["status"] == record.NOT_FILLED and "never reached the $100.00 trigger" in out["fill"]
+
+
+def test_an_uncertain_plan_stays_uncertain_over_later_bars_and_says_when_the_window_is_over():
+    bars = [{"date": "2026-09-02", "o": 99.5, "h": 101.0, "l": 99.2, "c": 100.8}] + \
+           [{"date": f"2026-09-0{d}", "o": 101.0, "h": 102.0, "l": 100.5, "c": 101.5} for d in (3, 4, 8, 9)] + \
+           [{"date": "2026-09-10", "o": 101.0, "h": 102.0, "l": 100.5, "c": 101.5}]
+    five = record.replay(pick(), bars[:5])
+    assert five["status"] == record.UNCERTAIN and five["day"] == 5 and five["sessions"] == 5
+    assert "window is over" not in five["instruction"] and five["last_date"] == "2026-09-09"
+    six = record.replay(pick(), bars)
+    assert six["status"] == record.UNCERTAIN and six["day"] == 5 and six["sessions"] == 6
+    assert "The 5-session window is over: if you still hold it, exit." in six["instruction"]
 
 
 def test_an_unreadable_first_bar_is_unreadable_not_a_confident_fill():
@@ -255,8 +323,8 @@ def test_a_ticket_that_never_filled_has_no_result_and_nothing_to_hold():
     bars = record.later_bars(frame([PICK_DAY, ("2026-09-02", 103.0, 105.0, 102.5, 104.0)]), "2026-09-01")
     row = record.replay(pick(), bars)
     assert row["status"] == record.NOT_FILLED and row["exit_price"] is None
-    assert "gap ate the trade" in row["instruction"] and "Nothing to hold" in row["instruction"]
-    assert row["events"][0]["event"] == record.NOT_FILLED
+    assert "the limit could not fill" in row["instruction"] and "Nothing to hold" in row["instruction"]
+    assert row["events"][0]["event"] == record.NOT_FILLED and row["uncertainty"] is None
 
 
 def test_a_later_bar_the_walk_refuses_is_reported_not_raised():
@@ -273,14 +341,44 @@ def test_the_red_regime_reaches_the_walks_instruction():
 
 
 # --------------------------------------------------------------- R --------
-def test_r_is_the_result_over_the_published_stop_with_the_half_weighted():
-    row = {"entry_ref": 100.0, "exit_price": 110.0, "half_sold": True,
-           "events": [{"event": "sell_half", "price": 108.0}, {"event": "day5_exit", "price": 110.0}]}
-    assert record.r_multiple(row, 96.0) == 2.25          # 0.5 * 8/4 + 0.5 * 10/4
-    assert record.r_multiple({**row, "half_sold": False}, 96.0) == 2.5
-    assert record.r_multiple({**row, "exit_price": 94.0, "half_sold": False}, 96.0) == -1.5
-    assert record.r_multiple({**row, "exit_price": None}, 96.0) is None
-    assert record.r_multiple(row, 100.0) is None         # no risk to divide by
+def test_r_is_the_result_over_the_published_stop_weighted_by_the_shares_each_sale_sold():
+    """Twenty shares at 100, stop 96 (one R = $4 a share): 10 sold at 108 and
+    10 at 110 is (10 x 8 + 10 x 10) / (20 x 4) = 2.25R -- the even case the
+    old halves got right. Three shares at 100, stop 99: 2 at 108 and 1 at
+    102 is (2 x 8 + 1 x 2) / (3 x 1) = +6R, where 50/50 said +5R."""
+    even = {"entry_ref": 100.0, "shares": 20, "exit_price": 110.0, "half_sold": True,
+            "events": [{"event": "sell_half", "price": 108.0, "shares": 10, "remaining": 10},
+                       {"event": "day5_exit", "price": 110.0, "shares": 10, "remaining": 0}]}
+    assert record.r_multiple(even, 96.0) == 2.25
+    three = {"entry_ref": 100.0, "shares": 3, "exit_price": 102.0, "half_sold": True,
+             "events": [{"event": "sell_half", "price": 108.0, "shares": 2, "remaining": 1},
+                        {"event": "stopped_at_open", "price": 102.0, "shares": 1, "remaining": 0}]}
+    assert record.r_multiple(three, 99.0) == 6.0
+    whole = {"entry_ref": 100.0, "shares": 20, "exit_price": 110.0, "half_sold": False,
+             "events": [{"event": "day5_exit", "price": 110.0, "shares": 20, "remaining": 0}]}
+    assert record.r_multiple(whole, 96.0) == 2.5
+    assert record.r_multiple({**whole, "exit_price": 94.0, "events": [{"event": "stopped", "price": 94.0, "shares": 20, "remaining": 0}]}, 96.0) == -1.5
+    assert record.r_multiple({**even, "events": even["events"][:1]}, 96.0) is None    # 10 of 20 sold: not settled
+    assert record.r_multiple({**even, "events": []}, 96.0) is None
+    assert record.r_multiple(even, 100.0) is None         # no risk to divide by
+    one = {"entry_ref": 100.0, "shares": 1, "exit_price": 108.0, "half_sold": True,
+           "events": [{"event": "sell_half", "price": 108.0, "shares": 1, "remaining": 0}]}
+    assert record.r_multiple(one, 99.0) == 8.0
+    assert record.r_multiple({"entry_ref": 100.0, "shares": 0, "exit_price": 110.0, "events": []}, 96.0) == 2.5   # no shares: prices alone
+
+
+def test_the_walked_r_matches_the_instruction_the_reader_was_given():
+    """The reviewer's three-share plan end to end: the walk sells 2 of 3 at
+    108 and the last 1 at the 102 open, and the R is the one those sales
+    make, +6, never the +5 of two imaginary halves."""
+    p = pick(entry_ref=100.0, entry_low=98.0, entry_high=104.0, stop=99.0, shares=3)
+    bars = [{"date": "2026-09-02", "o": 100.0, "h": 109.0, "l": 99.5, "c": 107.0},
+            {"date": "2026-09-03", "o": 102.0, "h": 103.0, "l": 101.0, "c": 102.5}]
+    row = record.replay(p, bars)
+    assert row["fill"] == "filled at the open, $100.00" and row["status"] == "stopped"
+    assert [(e["event"], e["price"], e["shares"]) for e in row["events"] if "shares" in e] == \
+        [("sell_half", 108.0, 2), ("stopped_at_open", 102.0, 1)]
+    assert record.r_multiple(row, 99.0) == 6.0
 
 
 # ------------------------------------------------------- open plans -------
@@ -392,11 +490,42 @@ def test_the_read_threshold_is_a_boundary(monkeypatch):
 
 def test_an_unfilled_ticket_counts_as_a_plan_but_not_a_fill_and_an_open_walk_is_not_settled():
     frames = calendar_frames()
-    frames["GAP"] = frame([PICK_DAY, ("2026-09-02", 103.0, 105.0, 102.5, 104.0)] + LATER[1:])
+    frames["GAP"] = frame([PICK_DAY, ("2026-09-02", 103.0, 105.0, 102.5, 104.0)] + LATER[1:])   # over the limit all day
     frames["OPEN"] = frame([PICK_DAY] + LATER[:2])       # two sessions in: still held
     rec = record.append(record.empty(), "2026-09-01", [pick(ticker="GAP"), pick(ticker="OPEN")])
     sc = record.scorecard(rec, frames, "2026-09-09")
     assert sc["plans"] == 2 and sc["filled"] == 1 and sc["settled"] == 0 and sc["open"] == 1
+    assert sc["not_filled"] == 1 and sc["uncertain"] == 0 and sc["uncertain_reasons"] == []
+
+
+def test_uncertain_fills_are_counted_by_reason_and_reach_no_rate_nor_the_read_threshold(monkeypatch):
+    """Two picks whose day 1 opened under the trigger and reached it (one
+    with the low under the stop), one that opened over the limit and traded
+    back, beside one settled win: the three are counted by reason, the rate
+    is over the one settled plan, and even a read threshold of 3 is not met
+    by them."""
+    monkeypatch.setattr(record, "SCORECARD_MIN_PLANS", 3)
+    frames = calendar_frames()
+    frames["WIN"] = frame([PICK_DAY] + LATER)
+    frames["TIME"] = frame([PICK_DAY, ("2026-09-02", 99.5, 101.0, 99.2, 100.8)] + LATER[1:])
+    frames["SEQ"] = frame([PICK_DAY, ("2026-09-02", 99.5, 101.0, 95.5, 100.8)] + LATER[1:])
+    frames["OVER"] = frame([PICK_DAY, ("2026-09-02", 103.0, 105.0, 101.5, 104.0)] + LATER[1:])
+    rec = record.append(record.empty(), "2026-09-01", [pick(ticker=t) for t in ("WIN", "TIME", "SEQ", "OVER")])
+    sc = record.scorecard(rec, frames, "2026-09-09")
+    assert (sc["plans"], sc["filled"], sc["settled"], sc["uncertain"], sc["not_filled"]) == (4, 1, 1, 3, 0)
+    assert sc["uncertain_reasons"] == [
+        {"kind": "trigger_timing", "count": 1, "words": record.UNCERTAIN_WORDS["trigger_timing"]},
+        {"kind": "stop_sequence", "count": 1, "words": record.UNCERTAIN_WORDS["stop_sequence"]},
+        {"kind": "open_above_limit", "count": 1, "words": record.UNCERTAIN_WORDS["open_above_limit"]}]
+    assert sc["wins"] == 1 and sc["losses"] == 0 and sc["readable"] is False and sc["win_rate"] is None
+    assert sc["sum_r"] == record.r_multiple(record.replay(pick(), record.later_bars(frames["WIN"], "2026-09-01")), 96.0)
+    assert "uncertain" in sc["note"] and "in no rate" in sc["note"] and sc["note"] == record.SCORECARD_NOTE
+
+
+def test_an_uncertain_plan_keeps_its_slot_in_the_model_allocation():
+    from src import pipeline
+    assert record.UNCERTAIN in pipeline.SLOT_STATUSES
+    assert pipeline.slots_held([{"status": record.UNCERTAIN}, {"status": record.NOT_FILLED}]) == 1
 
 
 def test_a_flat_exit_is_settled_but_neither_a_win_nor_a_loss():

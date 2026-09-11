@@ -1,14 +1,23 @@
 /* SpicyStock — the page. Renders docs/data.json (schema_version 2) on the
-   SpicyChicken system and computes exactly one thing of its own: the status
-   chip, from run.session / run.session_state / run.expected_session /
-   generated and the browser clock in ET — because a run that failed cannot
-   write its own obituary. Every other number is printed, never derived from
-   a rule: thresholds come out of the archived `rules` and `breadth.regime`
-   blocks, sizes out of `plan`, sentences out of `cover`, `open_plans[]` and
-   `breadth.regime.reasons[]`, verbatim.
+   SpicyChicken system as one small application: Explore (the market in a
+   line, then the stocks Setting up and the Bursts, one chosen stock at a
+   time with its annotated chart, its conditions and its conditional
+   ticket), Record (what the published model plans did), Market (Bonde's
+   Market Monitor in full) and Method (the run and its assumptions).
+
+   It computes exactly one thing of its own: the status chip, from
+   run.session / run.session_state / run.expected_session / generated and
+   the browser clock in ET — because a run that failed cannot write its own
+   obituary. Every other number is printed, never derived from a rule:
+   thresholds come out of the archived `rules` and `breadth.regime` blocks,
+   sizes out of `plan`, sentences out of `cover`, `open_plans[]` and
+   `breadth.regime.reasons[]`, verbatim. Selection, stage and view are page
+   state, kept in the hash (#/explore/bursts/AAPL) so a link reloads and the
+   Back button works; choosing a stock fetches nothing and grades nothing.
 
      SCStock.status(data, now)  -> {state, chip, tone, sentence, expected, behind}
      SCStock.render(data, now)  -> paints the page
+     SCStock.navigate(hash)     -> routes inside the page
      SCStock.data               -> the record the page last rendered
 
    Needs sc-charts.js (SC.el, SC.svg, SC.ticks, SC.tooltip, SC.tableTwin)
@@ -28,6 +37,8 @@
   const REPO = 'spicyChicken59/SpicyStock';
   const RUNS_API = 'https://api.github.com/repos/' + REPO + '/actions/workflows/evening.yml/runs?per_page=1';
   const RUNS_URL = 'https://github.com/' + REPO + '/actions/workflows/evening.yml';
+  const METHOD_URL = 'https://github.com/' + REPO + '/blob/main/knowledge/method.md';
+  const RULEBOOK_URL = 'https://github.com/' + REPO + '/blob/main/knowledge/strategy.md';
 
   // One fixed sentence per problem kind, the same seven src/report.py mails
   // (tests/test_docs.py holds the two lists equal); the message the run
@@ -41,14 +52,19 @@
     email_failed: "The digest could not be delivered; the page is the record.",
     push_retried: "Committing the record took more than one push."
   };
-  // One word per plan status, the same ten src/report.py mails (tests/test_docs.py holds the two equal).
+  // One word per plan status, the same eleven src/report.py mails (tests/test_docs.py holds the two equal).
   const PLAN_STATUS = {
     hold: ['HOLD', 'good'], sell_half: ['SELL HALF', 'brand'], sell_into_strength: ['SELL INTO STRENGTH', 'brand'],
     exit: ['SELL', 'brand'], stopped: ['STOPPED', 'danger'], expired: ['EXPIRED', 'neutral'], pending: ['PENDING', 'neutral'],
-    not_filled: ['NOT FILLED', 'neutral'], unreadable: ['UNREADABLE', 'warn'], unmeasured: ['UNMEASURED', 'warn']
+    not_filled: ['NOT FILLED', 'neutral'], uncertain: ['UNCERTAIN', 'warn'], unreadable: ['UNREADABLE', 'warn'], unmeasured: ['UNMEASURED', 'warn']
   };
+  // the statuses the model actually walked from a known fill; the others carry no position to draw
+  const WALKED = ['hold', 'sell_half', 'sell_into_strength', 'exit', 'stopped', 'expired'];
+  // why an A-quality plan has no ticket, as the budget's cut kinds spell it (src/plan.py CUT_KINDS)
+  const CUT_WORDS = { withheld: 'ticket withheld', slot_cap: 'beyond the slot cap', equity: 'beyond the configured equity', no_shares: 'no whole share', no_new_longs: 'no new longs' };
+  const CUT_TONE = { withheld: 'warn', slot_cap: 'neutral', equity: 'neutral', no_shares: 'neutral', no_new_longs: 'neutral' };
   const REGIME_TONE = { green: 'good', yellow: 'warn', red: 'danger' };
-  const FLAG_WORDS = { gain_over_15: 'gain over 15%', wide_stop: 'wide stop', position_capped: 'position capped', biotech: 'biotech', foreign: 'foreign', dollar_breakout: '$ breakout', refused: 'refused' };
+  const FLAG_WORDS = { gain_over_15: 'gain over 15%', wide_stop: 'stop past the line at the limit', position_capped: 'position capped', biotech: 'biotech', foreign: 'foreign', dollar_breakout: '$ breakout', refused: 'ticket withheld', risk_halved: 'risk halved', extended: 'extended' };
   // The checklist's own keys (src/quality.py): 2 L Y N C H, then RE and VOL.
   const CRITERIA_SHORT = {
     two_days: 'up days', linearity: 'linear', young_trend: 'young', narrow_or_negative: 'quiet',
@@ -56,6 +72,9 @@
   };
   const VETO_WORDS = { up_days: 'three up days in a row', not_linear: 'the prior leg is not linear' };
   const STOP_BASIS = { burst_low: 'the burst day’s low', half_range: 'the burst bar’s midpoint' };
+  const STAGES = ['bursts', 'setting-up'];
+  const STAGE_NAME = { bursts: 'Bursts', 'setting-up': 'Setting up' };
+  const VIEWS = ['explore', 'record', 'market', 'method'];
   const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -71,6 +90,10 @@
   const plain = (v) => isNum(v) ? String(v).replace(/\.0$/, '') : '—';
   const words = (s) => (s || '').replace(/_/g, ' ');
   const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  const text = (v) => typeof v === 'string' && v.trim() ? v.trim() : '';
+  const sentence = (s) => { s = text(s); return s ? (/[.!?]$/.test(s) ? s : s + '.') : ''; };
+  const firstSentence = (s) => { s = text(s); const m = /^(.+?[.!?])(\s|$)/.exec(s); return m ? m[1] : s; };
+  const plural = (n, noun) => n + ' ' + noun + (n === 1 ? '' : 's');
   function parseISO(iso) {
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
     return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], 12)) : null;
@@ -88,9 +111,10 @@
     return el('span', { 'class': 'sc-chip sc-chip--' + (tone || 'neutral') + (keepCase ? ' sc-chip--case' : ''), text: text });
   }
   const empty = (text) => el('p', { 'class': 'sc-empty', text: text });
-  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); return node; }
+  function clear(node) { while (node && node.firstChild) node.removeChild(node.firstChild); return node; }
   const $ = (id) => d.getElementById(id);
   const by = (list, key) => { const m = {}; (list || []).forEach((x) => { if (x && x.ticker) m[x.ticker] = x; }); return m; };
+  const narrow = () => !!(w.matchMedia && w.matchMedia('(max-width: 720px)').matches);
 
   // ---------------------------------------------------------------- ET clock
   function etParts(now) {
@@ -164,6 +188,9 @@
   }
   SCStock.status = status;
   SCStock.PROBLEM_SENTENCES = PROBLEMS;
+  // a page in one of these states offers no order: the tickets are withheld from the reader's hand
+  const BLOCKED = ['stale1', 'stale2', 'pending', 'failed'];
+  const blocked = (st) => BLOCKED.indexOf(st.state) >= 0;
 
   // ---------------------------------------------------------------- masthead
   function renderStatus(data, st) {
@@ -191,28 +218,29 @@
     line.hidden = false;
   }
 
-  // ---------------------------------------------------------------- cover
-  function renderCover(data, st) {
-    const run = data.run || {}, cover = data.cover || {}, app = data.app || {};
+  // ---------------------------------------------------------------- the market, in a line
+  function renderMarketBar(data, st) {
+    const run = data.run || {}, cover = data.cover || {}, b = data.breadth || {}, reg = b.regime || {};
     $('cover-eyebrow').textContent = 'spicystock · ' + (run.session || '—') + ' · evening run';
     $('cover-h1').textContent = cover.h1 || 'No verdict.';
     $('cover-dek').textContent = cover.dek || '';
-    const meta = clear($('cover-meta'));
-    const uni = run.universe || {};
-    meta.appendChild(el('span', { text: num(uni.size) + ' common stocks read' }));
-    meta.appendChild(el('span', { text: num(run.bursts) + ' bursts · Bonde’s median night is ' + BONDE_MEDIAN_NIGHT }));
-    meta.appendChild(el('span', { text: 'Alpaca ' + String(run.feed || '').toUpperCase() + ' daily bars' }));
-    meta.appendChild(el('span', { text: 'graded by ' + (run.model || '—') }));
-    meta.appendChild(el('span', { text: 'rules ' + (app.rules_version || '—') }));
-    const actions = clear($('cover-actions'));
-    const stale = st.state === 'stale1' || st.state === 'stale2' || st.state === 'pending' || st.state === 'failed';
-    const label = stale ? 'What you hold' : (cover.action_label || 'What you hold');
-    const target = stale ? '#hold' : (cover.action_target || '#hold');
-    actions.appendChild(el('a', { 'class': 'sc-btn sc-btn--primary', id: 'cover-action', href: target, text: label }));
-    actions.appendChild(el('button', { 'class': 'sc-btn sc-btn--secondary', type: 'button', text: 'Print', onclick: () => w.print() }));
+    const facts = clear($('market-facts'));
+    const fact = (dt, kids) => facts.appendChild(el('div', { 'data-fact': dt }, [el('dt', { text: dt }), el('dd', null, kids)]));
+    fact('session', [el('span', { text: dateWords(run.session) + (run.session_state === 'closed' ? ' · closed on ' + dateWords(run.expected_session) : '') })]);
+    const size = reg.size_multiplier;
+    const sizeWords = size === 1 ? 'full size' : size === 0 ? 'no new longs' : isNum(size) ? 'size at ' + (size * 100).toFixed(0) + '%' : '';
+    fact('regime', [chip((reg.verdict || 'unknown').toUpperCase(), REGIME_TONE[reg.verdict] || 'neutral', true), el('span', { text: sizeWords + (isNum(b.ratio_10d) ? ' · 10-day ratio ' + plain(b.ratio_10d) : '') })]);
+    fact('published', [el('span', { text: timeET(run.published_at) + ' · run ' + (run.status || '—') + ' · email ' + (run.email || '—') })]);
+    // the record's own call to action (Tomorrow's orders / Open model plans),
+    // falling back to the model plans on a page that offers no order
+    const links = clear($('market-links'));
+    const offered = !blocked(st), label = offered ? (cover.action_label || 'Open model plans') : 'Open model plans', target = offered ? (cover.action_target || '#hold') : '#hold';
+    links.appendChild(el('a', { 'class': 'sc-link--quiet', id: 'cover-action', href: target, text: label }));
+    links.appendChild(el('a', { 'class': 'sc-link--quiet', href: '#/market', text: 'market detail' }));
+    links.appendChild(el('a', { 'class': 'sc-link--quiet', href: '#/method', text: 'run details' }));
   }
 
-  // ---------------------------------------------------------------- run strip
+  // ---------------------------------------------------------------- run strip (the method view)
   function stat(label, value, note, lead) {
     return el('div', { 'class': 'sc-stat' + (lead ? ' sc-stat--lead' : '') }, [
       el('dt', { 'class': 'sc-stat__label', text: label }),
@@ -230,8 +258,31 @@
     strip.appendChild(stat('claude', num(reads.done) + ' of ' + num(reads.requested) + ' read', reads.unavailable_reason ? 'unavailable: ' + words(reads.unavailable_reason) : 'chart + numbers, may only lower a grade'));
     strip.appendChild(stat('published', timeET(run.published_at), 'email ' + (run.email || '—')));
   }
+  function renderMethod(data) {
+    renderStrip(data);
+    const run = data.run || {}, uni = run.universe || {}, app = data.app || {}, acct = data.account || {};
+    const meta = clear($('run-meta'));
+    const line = (t) => meta.appendChild(el('li', { text: t }));
+    line('Bars: Alpaca ' + String(run.feed || '').toUpperCase() + ', daily, the request window sixteen minutes behind the clock; ' + num(uni.size) + ' common stocks from ' + (uni.source || '—') + (uni.label ? ' (' + uni.label + ')' : '') + '.');
+    line('Graded by ' + (run.model || '—') + ' from the chart and the numbers; the model may only lower a grade, never raise it.');
+    line('Rules ' + (app.rules_version || '—') + ': a digest of every strategy constant in this record, so two nights under different numbers never read as one. Universe identity ' + (uni.identity || '—') + '.');
+    line('Timing: ' + num(run.elapsed_seconds) + ' s for the run, ' + num(run.fetch_seconds) + ' s of it fetching; generated ' + (run.published_at || '—') + '.');
+    (run.problems || []).forEach((p) => { if (p && PROBLEMS[p.kind]) line('Problem recorded (' + words(p.kind) + '): ' + PROBLEMS[p.kind]); });
+    if (run.run_id) {
+      const li = el('li', null, [el('a', { href: 'https://github.com/' + REPO + '/actions/runs/' + run.run_id, target: '_blank', rel: 'noopener', text: 'The run log for this record' }), d.createTextNode(' · '), el('a', { href: RUNS_URL, target: '_blank', rel: 'noopener', text: 'every evening run' })]);
+      meta.appendChild(li);
+    } else meta.appendChild(el('li', null, [el('a', { href: RUNS_URL, target: '_blank', rel: 'noopener', text: 'The evening runs on GitHub' })]));
+    const body = clear($('method-body'));
+    body.appendChild(el('p', { text: 'SpicyStock is an implementation of Pradeep Bonde’s momentum burst method with explicit assumptions: a 4% range-expansion day out of a quiet base, bought the next morning inside a narrow zone with the stop under the burst bar, sold into strength over three to five days, and only when breadth allows it. It is not a proven edge and it knows nothing about what you hold.' }));
+    body.appendChild(el('p', { text: 'Setting up is the anticipation list: quiet, coiled names inside established momentum, with a buy stop a few cents over the box. Bursts are the range-expansion days the scan found on the session, graded on Bonde’s checklist; a grade, a plan and a ticket are three different things, and the page says which a stock has. Every ticket is sized at its limit, the highest fill it permits, so the fixed quantity keeps the risk budget, the position cap and his 4% stop line at every fill it can take; a stop past that line at the limit withholds the ticket and keeps the setup.' }));
+    body.appendChild(el('p', { text: 'The Record is a model: a fill is booked only at the next open inside the ticket, the published stop is one R, sales are whole shares, and a fill the daily bars cannot establish is uncertain and scored nowhere. Paper prices, one venue’s prints, no slippage. Not investment advice.' }));
+    body.appendChild(el('p', null, [el('a', { href: METHOD_URL, target: '_blank', rel: 'noopener', text: 'Whose number each rule is (knowledge/method.md)' }), d.createTextNode(' · '), el('a', { href: RULEBOOK_URL, target: '_blank', rel: 'noopener', text: 'the rulebook the chart reader follows (knowledge/strategy.md)' })]));
+    const notes = clear($('account-notes'));
+    (acct.notes || []).forEach((n) => notes.appendChild(el('li', { text: n })));
+    if (!(acct.notes || []).length) notes.appendChild(el('li', { text: 'No sizing notes were recorded.' }));
+  }
 
-  // ---------------------------------------------------------------- breadth
+  // ---------------------------------------------------------------- breadth (the market view)
   function delta(now, before, unit) {
     if (!isNum(now) || !isNum(before)) return 'vs yesterday not recorded';
     const diff = now - before;
@@ -378,7 +429,7 @@
     ]));
   }
 
-  // ---------------------------------------------------------------- tomorrow
+  // ---------------------------------------------------------------- the ticket
   function ticket(o) {
     // Fidelity's field order: Action · Quantity · Symbol · Order type · Stop
     // price · Limit price · Time in force; then the conditional leg.
@@ -412,24 +463,32 @@
     });
     return btn;
   }
+  // the order, as written by the run: shown only when the plan carries one
+  // and the page is not stale, pending or without a verdict
   function orderBlock(plan, extraHint, withheld) {
     const lines = withheld ? null : ticket(plan.order_json);
     const wrap = el('div', { 'class': 'ss-order' });
     if (!lines) { wrap.appendChild(el('p', { 'class': 'sc-hint', text: extraHint || 'No order.' })); return wrap; }
-    const pre = el('pre', { 'class': 'ss-order__pre', 'data-order': '' });
+    const pre = el('pre', { 'class': 'ss-order__pre', 'data-order': '', 'data-ticker': plan.ticker || '' });
     lines.forEach((line, i) => { if (i) pre.appendChild(d.createTextNode('\n')); pre.appendChild(el('span', { text: line })); });
     wrap.appendChild(el('div', { 'class': 'ss-order__head' }, [el('span', { 'class': 'sc-eyebrow', style: 'margin:0', text: 'the order, in Fidelity’s field order' }), copyButton(() => pre.textContent, pre)]));
     wrap.appendChild(pre);
     if (plan.order_line) wrap.appendChild(el('p', { 'class': 'ss-order__readback', text: 'Read it back: ' + plan.order_line }));
-    if (plan.fallback_line) wrap.appendChild(el('p', { 'class': 'sc-hint', text: plan.fallback_line }));
+    const terms = (plan.order_terms || []).filter((t) => typeof t === 'string' && t);
+    if (terms.length) {
+      wrap.appendChild(el('div', { 'class': 'sc-eyebrow', style: 'margin-top:10px', text: 'what the ticket enforces, and what it leaves to you' }));
+      wrap.appendChild(el('ul', { 'class': 'ss-notes ss-order__terms' }, terms.map((t) => el('li', { text: t }))));
+    }
     return wrap;
   }
   function stopWords(plan) {
-    const basis = STOP_BASIS[plan.stop_basis] || (plan.stop_basis === 'max_stop' ? plain(plan.stop_pct) + '% under the close (the bar does not support it)' : words(plan.stop_basis));
+    const basis = STOP_BASIS[plan.stop_basis] || (plan.stop_basis === 'max_stop' ? plain(plan.stop_pct) + '% under the limit (the bar does not support it)' : words(plan.stop_basis));
     return usd(plan.stop) + ' · ' + basis;
   }
-  function chartOptions(b, series, account) {
-    const plan = b.plan || {}, q = b.quality || {}, base = q.base || {}, checks = by(q.checks || [], 'key');
+
+  // ---------------------------------------------------------------- the chart options, per stage
+  function burstChartOptions(b, series, height) {
+    const plan = b.plan || {}, q = b.quality || {}, base = q.base || {};
     const check = {}; (q.checks || []).forEach((c) => { if (c && c.key) check[c.key] = c; });
     const idx = (date) => series.findIndex((x) => x && x.date === date);
     let box = null;
@@ -440,228 +499,671 @@
     const up = check.two_days && check.two_days.values ? check.two_days.values.up_run : null;
     const rng = check.range_expansion ? check.range_expansion.value : null;
     return {
-      ticker: b.ticker, card: true, compact: true, futureSlots: 6, targetRuler: true, ma: [], volumeAvg: 20,
+      ticker: b.ticker, title: 'daily bars through ' + dateWords(series.length ? series[series.length - 1].date : null) + ' · the last bar is the burst',
+      card: true, compact: false, futureSlots: 6, targetRuler: true, ma: [], volumeAvg: 20,
       burstIndex: series.length - 1, box: box,
       stop: plan.stop, entryLow: plan.entry_low, entryHigh: plan.entry_high,
       targetLow: plan.targets ? plan.targets.low : null, targetHigh: plan.targets ? plan.targets.high : null, targetRef: plan.planned_entry,
       upDays: isNum(up) ? up : 0, breakdownIndexes: (base.breakdown_dates || []).map(idx).filter((i) => i >= 0),
       burstVolumeRatio: b.volume_vs_prior, rangeExpansion: isNum(rng) ? rng : null,
-      ariaLabel: b.summary || null, height: (w.innerWidth || 1280) < 480 ? 250 : 300
+      ariaLabel: b.summary || null, height: height
     };
   }
-  SCStock.chartOptions = chartOptions;
-  function mountChart(mount, b, n, account) {
-    const series = (b.series || []).slice(-n);
+  function coilChartOptions(c, series, height) {
+    const plan = c.plan || {}, box = c.box || {};
+    const idx = (date) => series.findIndex((x) => x && x.date === date);
+    let bx = null;
+    if (box.start && box.end && isNum(box.low) && isNum(box.high)) {
+      let bs = idx(box.start), be = idx(box.end);
+      if (be >= 0) { if (bs < 0) bs = 0; bx = { start: bs, end: be, low: box.low, high: box.high }; }
+    }
+    const t = plan.targets || {};
+    return {
+      ticker: c.ticker, title: 'daily bars through ' + dateWords(series.length ? series[series.length - 1].date : null) + ' · no burst yet: the box is the coil',
+      card: true, compact: false, futureSlots: 6, targetRuler: true, ma: [], volumeAvg: 20,
+      burstIndex: null, box: bx,
+      stop: plan.stop, trigger: plan.trigger, entryLow: plan.trigger, entryHigh: plan.limit,
+      targetLow: isNum(t.low) ? t.low : null, targetHigh: isNum(t.high) ? t.high : null, targetRef: plan.limit,
+      ariaLabel: c.ticker + ' daily chart: a coil of ' + plain(box.sessions) + ' sessions between ' + usd(box.low) + ' and ' + usd(box.high) + (isNum(plan.trigger) ? ', buy stop at ' + usd(plan.trigger) + ' with the limit ' + usd(plan.limit) + ' and the stop ' + usd(plan.stop) : ', no ticket') + '. Use the arrow keys to step through the sessions; the table view below lists the same numbers.',
+      height: height
+    };
+  }
+  SCStock.chartOptions = burstChartOptions;
+
+  // ---------------------------------------------------------------- the view model
+  // A small adapter over the record, and the only place the page decides
+  // which words describe a stock. Every status is read off a field the run
+  // wrote (trades[], cash_budget.cut[].kind, plan.eligible, plan.action,
+  // plan.shares, quality.vetoes, the grade against the archived
+  // rules.pipeline.trade_grades); every sentence beside it is the record's
+  // own. Nothing here scans, grades, sizes or fetches.
+  const STATUS_WORDS = {
+    ticket: ['ticket', 'good'], vetoed: ['vetoed', 'danger'], below_grade: ['no ticket', 'neutral'], not_admitted: ['no ticket', 'neutral'],
+    no_plan: ['no ticket', 'neutral'], no_order: ['no order', 'neutral'], watch: ['watch', 'neutral']
+  };
+  function statusWords(status) {
+    if (CUT_WORDS[status]) return [CUT_WORDS[status], CUT_TONE[status] || 'neutral'];
+    return STATUS_WORDS[status] || [words(status || 'no ticket'), 'neutral'];
+  }
+  const listRule = (data, key, fallback) => { const r = ((data.rules || {}).pipeline || {})[key]; return Array.isArray(r) && r.length ? r : fallback; };
+  function buildModel(data) {
+    const trades = data.trades || [], cb = data.cash_budget || {}, cuts = {};
+    (cb.cut || []).forEach((c) => { if (c && c.ticker && !cuts[c.ticker]) cuts[c.ticker] = c; });
+    const reg = (data.breadth || {}).regime || {}, verdict = reg.verdict;
+    const tradeGrades = listRule(data, 'trade_grades', ['A+', 'A']), yellowGrades = listRule(data, 'yellow_grades', ['A+']);
+    const bursts = (data.bursts || []).filter((b) => b && b.ticker).map((b, i) => {
+      const plan = b.plan || null, q = b.quality || {}, vetoes = q.vetoes || b.vetoes || [], cut = cuts[b.ticker] || null;
+      let status, reason;
+      if (trades.indexOf(b.ticker) >= 0 && plan && plan.order_json) { status = 'ticket'; reason = plan.order_line || ''; }
+      else if (cut && cut.kind) { status = cut.kind; reason = cut.reason || ''; }
+      else if (plan && plan.eligible === false) { status = 'withheld'; reason = plan.reason || ''; }
+      else if (plan && plan.action === 'no_new_longs') { status = 'no_new_longs'; reason = plan.reason || 'breadth sizes new positions at zero tonight'; }
+      else if (plan && plan.shares === 0) { status = 'no_shares'; reason = plan.reason || 'the size came to zero whole shares'; }
+      else if (vetoes.length) { status = 'vetoed'; reason = 'veto: ' + vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', '); }
+      else if (tradeGrades.indexOf(b.grade) < 0) {
+        const miss = (q.checks || []).find((c) => c && !c.pass);
+        status = 'below_grade';
+        reason = 'graded ' + (b.grade || '—') + ', under the ' + tradeGrades.join('/') + ' line' + (miss ? ' · misses ‘' + (miss.label || words(miss.key) || 'a check') + '’' : '');
+      }
+      else if (verdict === 'yellow' && yellowGrades.indexOf(b.grade) < 0) { status = 'not_admitted'; reason = 'a yellow night admits ' + yellowGrades.join('/') + ' only'; }
+      else if (reg.size_multiplier === 0 || verdict === 'red') { status = 'no_new_longs'; reason = 'no new longs: breadth is ' + (verdict || 'red'); }
+      else if (!plan) { status = 'no_plan'; reason = 'the run wrote no plan for this burst'; }
+      else { status = 'no_order'; reason = plan.reason || 'no order was written for this plan'; }
+      const flags = (b.flags || []).slice();
+      (plan && plan.flags || []).forEach((f) => { if (flags.indexOf(f) < 0) flags.push(f); });
+      return { id: 'bursts:' + b.ticker, stage: 'bursts', ticker: b.ticker, name: text(b.name), rank: isNum(b.rank) ? b.rank : i + 1,
+        grade: b.grade || null, score: b.score, status: status, reason: reason, cut: cut, plan: plan, row: b, quiet: false, flags: flags,
+        series: Array.isArray(b.series) ? b.series.filter((x) => x && x.date) : [],
+        measures: [['gain', pct(b.gain_pct)], ['vol', isNum(b.volume_vs_prior) ? b.volume_vs_prior.toFixed(1) + '×' : '—'], ['close', usd(b.close)]] };
+    });
+    const wl = data.watchlist || {};
+    const coil = (r, i, quiet) => {
+      const plan = quiet ? null : (r.plan || null), box = r.box || {};
+      let status, reason;
+      if (quiet) { status = 'watch'; reason = 'also quiet: on no list tonight, no plan and no ticket'; }
+      else if (plan && plan.eligible === false) { status = 'withheld'; reason = plan.reason || ''; }
+      else if (plan && plan.action === 'no_new_longs') { status = 'no_new_longs'; reason = plan.reason || 'breadth sizes new positions at zero tonight; keep the alert, place nothing'; }
+      else if (plan && plan.order_json) { status = 'ticket'; reason = plan.order_line || ''; }
+      else if (plan && plan.shares === 0) { status = 'no_shares'; reason = plan.reason || 'the size came to zero whole shares'; }
+      else if (plan) { status = 'no_order'; reason = plan.reason || 'no order was written for this plan'; }
+      else { status = 'watch'; reason = 'on the list; the run wrote no plan for it'; }
+      return { id: 'setting-up:' + r.ticker, stage: 'setting-up', ticker: r.ticker, name: text(r.name), rank: i + 1, grade: null, score: null,
+        status: status, reason: reason, cut: null, plan: plan, row: r, quiet: !!quiet, flags: plan && plan.flags ? plan.flags.slice() : [],
+        series: Array.isArray(r.series) ? r.series.filter((x) => x && x.date) : [],
+        measures: [['quiet', plain(r.quiet_days) + ' d'], ['range', plain(r.range_pct) + '%'], quiet ? ['close', usd(r.close)] : ['box', plain(box.sessions) + ' s']] };
+    };
+    const top = (wl.top || []).filter((r) => r && r.ticker), seen = {};
+    top.forEach((r) => { seen[r.ticker] = true; });
+    const settingUp = top.map((r, i) => coil(r, i, false))
+      .concat((wl.also_quiet || []).filter((r) => r && r.ticker && !seen[r.ticker]).map((r, i) => coil(r, top.length + i, true)));
+    const stages = { bursts: bursts, 'setting-up': settingUp }, byId = {};
+    STAGES.forEach((s) => stages[s].forEach((c) => { byId[c.id] = c; }));
+    const count = (list, f) => list.filter(f).length;
+    return { stages: stages, byId: byId, defaultStage: bursts.length ? 'bursts' : settingUp.length ? 'setting-up' : 'bursts',
+      tickets: { bursts: count(bursts, (c) => c.status === 'ticket'), 'setting-up': count(settingUp, (c) => c.status === 'ticket') },
+      counts: wl.counts || {}, tradeGrades: tradeGrades };
+  }
+  function pickReason(c) {
+    if (c.stage === 'bursts') {
+      const s = firstSentence(text(c.row.summary).replace(/^[A-Z0-9.\-]+:\s*/, ''));
+      return s || sentence(c.reason) || 'No summary recorded.';
+    }
+    const r = c.row, box = r.box || {};
+    return (r.setups && r.setups.length ? r.setups.join(', ') + ' · ' : '') + (c.quiet ? 'also quiet · ' : '') + plain(r.quiet_days) + ' quiet days' + (isNum(box.low) && isNum(box.high) ? ' · box ' + usd(box.low) + '–' + usd(box.high) : '');
+  }
+
+  // ---------------------------------------------------------------- state and routes
+  // The page's state is the hash: #/explore/<stage>/<TICKER>, #/record,
+  // #/market, #/method. The selection is remembered per stage for the
+  // session; a route without a symbol resolves to it, else to the stage's
+  // first name, and the hash is rewritten to the resolved route (no new
+  // history entry) so what is bookmarked is what is shown. The old
+  // one-page anchors (#hold, #orders, #trade-X, #burst-X, #closest-miss,
+  // #scan-details, #also-quiet) still land where they used to.
+  const state = { view: 'explore', stage: null, selected: { bursts: null, 'setting-up': null }, query: '', range: 60, notice: '', picksKey: null, detailKey: null, gesture: false };
+  let current = null, model = null, st = null, pendingNotice = '', pendingFocus = '', chooserOpener = null;
+  const LEGACY = {
+    hold: { view: 'record', anchor: 'hold' }, record: { view: 'record', anchor: 'record-card' }, breadth: { view: 'market' }, method: { view: 'method' },
+    orders: { view: 'explore', open: 'orders' }, scan: { view: 'explore', open: 'scan' }, 'scan-details': { view: 'explore', open: 'scan' },
+    'closest-miss': { view: 'explore', open: 'scan', anchor: 'closest-miss' }, tomorrow: { view: 'explore', stage: 'bursts' }, trades: { view: 'explore', stage: 'bursts' },
+    alerts: { view: 'explore', stage: 'setting-up' }, 'also-quiet': { view: 'explore', stage: 'setting-up' }, cover: { view: 'explore' }, main: { view: 'explore' }, next: { view: 'explore', anchor: 'next' }
+  };
+  function parseHash(hash) {
+    hash = String(hash || '').replace(/^#/, '');
+    if (!hash || hash === '/') return { view: 'explore' };
+    if (hash.charAt(0) === '/') {
+      const parts = hash.split('/').filter(Boolean).map((p) => { try { return decodeURIComponent(p); } catch (e) { return p; } });
+      if (VIEWS.indexOf(parts[0]) < 0) return { view: 'explore', unknown: '#' + hash };
+      if (parts[0] !== 'explore') return parts.length > 1 ? { view: parts[0], unknown: '#' + hash } : { view: parts[0] };
+      const out = { view: 'explore' };
+      if (parts.length > 1) { if (STAGES.indexOf(parts[1]) < 0) return { view: 'explore', unknown: '#' + hash }; out.stage = parts[1]; }
+      if (parts.length > 2) out.ticker = parts[2].toUpperCase();
+      if (parts.length > 3) out.unknown = '#' + hash;
+      return out;
+    }
+    if (LEGACY[hash]) return Object.assign({ legacy: true }, LEGACY[hash]);
+    let m = /^(?:trade|burst)-([A-Za-z0-9.\-]+)$/.exec(hash);
+    if (m) return { view: 'explore', stage: 'bursts', ticker: m[1].toUpperCase(), legacy: true };
+    m = /^alert-([A-Za-z0-9.\-]+)$/.exec(hash);
+    if (m) return { view: 'explore', stage: 'setting-up', ticker: m[1].toUpperCase(), legacy: true };
+    return { view: 'explore', unknown: '#' + hash };
+  }
+  SCStock.parseHash = parseHash;
+  function routeHash(stage, id) {
+    const c = id && model && model.byId[id];
+    return '#/explore/' + stage + (c ? '/' + encodeURIComponent(c.ticker) : '');
+  }
+  function navigate(hash) {
+    if (w.location.hash === hash) applyRoute(parseHash(hash));
+    else w.location.hash = hash;
+  }
+  SCStock.navigate = navigate;
+  const reducedMotion = () => !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const scrollTo = (node) => { if (node && node.scrollIntoView) node.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' }); };
+  function applyRoute(route, first) {
+    const previousView = state.view;
+    state.view = VIEWS.indexOf(route.view) >= 0 ? route.view : 'explore';
+    if (!model) { showView(false); return; }
+    state.notice = route.unknown ? 'There is no ' + route.unknown + ' on this page; showing ' + (route.view === 'explore' ? 'Explore' : cap(route.view)) + '.' : pendingNotice;
+    pendingNotice = '';
+    let canon = '#/' + state.view;
+    if (state.view === 'explore') {
+      let stage = route.stage || state.stage || model.defaultStage;
+      if (route.ticker) {
+        const here = stage + ':' + route.ticker;
+        if (model.byId[here]) state.selected[stage] = here;
+        else {
+          const other = STAGES.filter((s) => s !== stage).find((s) => model.byId[s + ':' + route.ticker]);
+          if (other) {
+            state.notice = route.ticker + ' is not in ' + STAGE_NAME[stage] + ' tonight; it is in ' + STAGE_NAME[other] + ', shown instead.';
+            stage = other; state.selected[other] = other + ':' + route.ticker;
+          } else state.notice = 'No stock ' + route.ticker + ' in tonight’s record' + (model.stages[stage].length ? '; showing ' + STAGE_NAME[stage] + ' instead.' : '.');
+        }
+      }
+      state.stage = stage;
+      const list = model.stages[stage];
+      if (!state.selected[stage] || !model.byId[state.selected[stage]]) state.selected[stage] = list.length ? list[0].id : null;
+      canon = routeHash(stage, state.selected[stage]);
+    }
+    showView(!first && previousView !== state.view);
+    if (state.view === 'explore') renderExplore();
+    if (w.location.hash !== canon && w.history && w.history.replaceState) { try { w.history.replaceState(null, '', canon); } catch (e) { /* a file: URL may refuse */ } }
+    if (route.open) { const det = $(route.open); if (det) det.open = true; }
+    if (route.open || route.anchor) { const target = $(route.anchor || route.open); if (target) scrollTo(target); }
+  }
+  function showView(scrollTop) {
+    d.querySelectorAll('.ss-view').forEach((sec) => { sec.hidden = sec.getAttribute('data-view') !== state.view; });
+    d.querySelectorAll('#nav a').forEach((a) => { if (a.getAttribute('data-view') === state.view) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    d.documentElement.setAttribute('data-ss-view', state.view);
+    if (scrollTop) w.scrollTo(0, 0);
+  }
+
+  // ---------------------------------------------------------------- Explore: the stages
+  function buildStages() {
+    const box = clear($('stages'));
+    STAGES.forEach((s) => {
+      const list = model.stages[s], n = list.length, tickets = model.tickets[s];
+      const sub = s === 'bursts'
+        ? (n ? tickets + ' with a ticket · ' + (n - tickets) + ' without' : 'range-expansion days, graded')
+        : (n ? tickets + ' with a ticket · ' + (n - tickets) + ' to watch' : 'quiet, coiled names inside momentum');
+      const btn = el('button', { 'class': 'ss-stage', type: 'button', 'data-stage': s, 'data-count': String(n), 'aria-pressed': 'false', 'aria-controls': 'workspace' }, [
+        el('span', null, [el('span', { 'class': 'ss-stage__name', text: STAGE_NAME[s] }), el('span', { 'class': 'ss-stage__sub', text: sub })]),
+        el('span', { 'class': 'ss-stage__count' }, [d.createTextNode(String(n)), el('small', { text: n === 1 ? 'stock' : 'stocks' })])
+      ]);
+      btn.addEventListener('click', () => { state.gesture = true; navigate(routeHash(s, state.selected[s])); });
+      box.appendChild(btn);
+    });
+  }
+  function syncStages() {
+    d.querySelectorAll('#stages .ss-stage').forEach((b) => b.setAttribute('aria-pressed', b.getAttribute('data-stage') === state.stage ? 'true' : 'false'));
+  }
+  function buildDatalist() {
+    const list = clear($('ticker-options')), seen = {};
+    STAGES.forEach((s) => model.stages[s].forEach((c) => { if (!seen[c.ticker]) { seen[c.ticker] = true; list.appendChild(el('option', { value: c.ticker, label: STAGE_NAME[s] })); } }));
+  }
+  function renderExplore() {
+    syncStages();
+    renderPicks();
+    renderDetail();
+  }
+
+  // ---------------------------------------------------------------- Explore: the stocks in a stage
+  const matches = (c, q) => !q || c.ticker.indexOf(q) >= 0 || (c.name && c.name.toUpperCase().indexOf(q) >= 0);
+  function setQuery(q) { state.query = q; $('search').value = q; if (model && state.view === 'explore') renderPicks(); }
+  function pickItem(c) {
+    const sw = statusWords(c.status);
+    const btn = el('button', { 'class': 'ss-pick', type: 'button', 'data-id': c.id, 'data-ticker': c.ticker, 'data-status': c.status, 'aria-pressed': 'false', 'aria-controls': 'detail', tabindex: '-1' }, [
+      el('span', { 'class': 'ss-pick__row' }, [
+        el('span', { 'class': 'ss-pick__ticker sc-case', text: c.ticker }),
+        c.grade ? chip(c.grade + (isNum(c.score) ? ' · ' + c.score.toFixed(1) : ''), 'brand', true) : null,
+        chip(sw[0], sw[1])
+      ]),
+      el('span', { 'class': 'ss-pick__reason', text: pickReason(c) }),
+      el('span', { 'class': 'ss-pick__measures' }, c.measures.map((m) => el('span', null, [m[0] + ' ', el('b', { text: m[1] })])))
+    ]);
+    btn.addEventListener('click', () => { state.gesture = true; navigate(routeHash(c.stage, c.id)); });
+    btn.addEventListener('focus', () => { d.querySelectorAll('#pick-list .ss-pick').forEach((p) => { p.tabIndex = p === btn ? 0 : -1; }); });
+    return el('div', { 'class': 'ss-pick-item', role: 'listitem' }, btn);
+  }
+  function emptyStage(stage) {
+    const box = el('div', { 'class': 'ss-picks__empty', 'data-empty': stage }), run = current.run || {}, counts = model.counts;
+    const other = STAGES.find((s) => s !== stage), otherN = model.stages[other].length;
+    let why;
+    if (stage === 'bursts') {
+      why = run.session_state === 'closed' ? 'The market was closed on ' + dateWords(run.expected_session || run.session) + '; no burst was scanned.'
+        : isNum(run.bursts) && run.bursts > 0 ? 'The scan found ' + num(run.bursts) + ' bursts; none was archived with its checks.'
+        : 'No burst tonight: the scan found no 4% range-expansion day on ' + dateWords(run.session) + '.';
+    } else {
+      why = 'Nothing setting up tonight.' + (isNum(counts.coiled) ? ' The anticipation scans found ' + num(counts.coiled) + ' quiet ' + (counts.coiled === 1 ? 'stock' : 'stocks') + ' inside momentum' + (isNum(counts.admitted) ? ', ' + num(counts.admitted) + ' admitted' : '') + '.' : '');
+    }
+    box.appendChild(el('p', { text: why }));
+    if (otherN) {
+      const b = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'See ' + STAGE_NAME[other] + ' · ' + otherN });
+      b.addEventListener('click', () => { state.gesture = true; navigate(routeHash(other, state.selected[other])); });
+      box.appendChild(b);
+    }
+    return box;
+  }
+  function noMatch(stage, q) {
+    const box = el('div', { 'class': 'ss-picks__empty', 'data-empty': 'search' });
+    const other = STAGES.find((s) => s !== stage), elsewhere = model.stages[other].filter((c) => matches(c, q));
+    box.appendChild(el('p', { text: 'No stock matching ‘' + q + '’ in ' + STAGE_NAME[stage] + (elsewhere.length ? '; ' + elsewhere.slice(0, 3).map((c) => c.ticker).join(', ') + (elsewhere.length === 1 ? ' matches' : ' match') + ' in ' + STAGE_NAME[other] + '.' : ', or anywhere in tonight’s record.') }));
+    if (elsewhere.length) {
+      const b = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Show ' + elsewhere[0].ticker + ' in ' + STAGE_NAME[other] });
+      b.addEventListener('click', () => { pendingNotice = elsewhere[0].ticker + ' is in ' + STAGE_NAME[other] + ' tonight; switched from ' + STAGE_NAME[stage] + '.'; setQuery(''); state.gesture = true; navigate(routeHash(other, elsewhere[0].id)); });
+      box.appendChild(b);
+    }
+    const clearBtn = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Clear search' });
+    clearBtn.addEventListener('click', () => { setQuery(''); $('search').focus(); });
+    box.appendChild(clearBtn);
+    return box;
+  }
+  function renderPicks() {
+    const stage = state.stage, list = model.stages[stage], q = state.query, host = $('pick-list');
+    const shown = list.filter((c) => matches(c, q)), key = stage + '|' + q;
+    $('picks-h2').textContent = STAGE_NAME[stage].toLowerCase() + ' · ' + list.length;
+    if (state.picksKey !== key) {
+      clear(host);
+      if (!list.length) host.appendChild(emptyStage(stage));
+      else if (!shown.length) host.appendChild(noMatch(stage, q));
+      else shown.forEach((c) => host.appendChild(pickItem(c)));
+      state.picksKey = key;
+    }
+    const sel = model.byId[state.selected[stage]];
+    let seenSelected = false;
+    host.querySelectorAll('.ss-pick').forEach((b) => { const on = !!sel && b.getAttribute('data-id') === sel.id; b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; if (on) seenSelected = true; });
+    if (!seenSelected) { const firstPick = host.querySelector('.ss-pick'); if (firstPick) firstPick.tabIndex = 0; }
+    if (sel && state.gesture && narrow()) { const b = host.querySelector('.ss-pick[aria-pressed="true"]'); if (b && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' }); }
+    let status;
+    if (!list.length) status = 'Nothing in ' + STAGE_NAME[stage] + ' tonight.';
+    else if (q) status = shown.length + ' of ' + list.length + ' match ‘' + q + '’' + (shown.length ? '; Enter chooses the first.' : '.');
+    else if (sel) status = sel.ticker + ' · ' + (list.indexOf(sel) + 1) + ' of ' + list.length + ' in ' + STAGE_NAME[stage] + '.';
+    else status = '';
+    $('picks-status').textContent = (state.notice ? state.notice + ' ' : '') + status;
+  }
+  function resolveSearch(q) {
+    const stage = state.stage, here = model.stages[stage], hereMatch = here.filter((c) => matches(c, q));
+    const exact = here.find((c) => c.ticker === q) || (hereMatch.length === 1 ? hereMatch[0] : null);
+    if (exact) { setQuery(''); state.gesture = true; navigate(routeHash(stage, exact.id)); return; }
+    const other = STAGES.find((s) => s !== stage), there = model.stages[other].filter((c) => matches(c, q));
+    const found = model.stages[other].find((c) => c.ticker === q) || (there.length === 1 ? there[0] : null);
+    if (found) { pendingNotice = found.ticker + ' is in ' + STAGE_NAME[other] + ' tonight; switched from ' + STAGE_NAME[stage] + '.'; setQuery(''); state.gesture = true; navigate(routeHash(other, found.id)); return; }
+    state.query = q; renderPicks();
+  }
+
+  // ---------------------------------------------------------------- Explore: the chosen stock
+  function detailEmpty(stage) {
+    const box = el('div', { 'class': 'ss-chart-empty', 'data-detail': 'empty' });
+    const cover = current.cover || {};
+    box.appendChild(el('strong', { text: model.stages[stage].length ? 'Choose a stock. ' : 'Nothing to show for ' + STAGE_NAME[stage] + ' tonight. ' }));
+    box.appendChild(d.createTextNode(model.stages[stage].length ? 'Its chart, its conditions and its conditional plan appear here.' : (cover.dek ? cover.dek + ' ' : '') + 'The market view has the breadth in full; the record view has the open model plans.'));
+    return box;
+  }
+  function detailHead(c) {
+    const b = c.row, run = current.run || {}, sw = statusWords(c.status), chips = [];
+    if (c.grade) chips.push(chip(c.grade + (isNum(c.score) ? ' · ' + c.score.toFixed(1) : ''), 'brand', true));
+    chips.push(chip(sw[0], sw[1]));
+    if (c.stage === 'setting-up') (b.setups || []).forEach((s) => chips.push(chip(String(s), 'neutral', true)));
+    c.flags.forEach((f) => chips.push(chip(FLAG_WORDS[f] || words(f), 'warn')));
+    const last = c.series.length ? c.series[c.series.length - 1].date : run.session;
+    const sub = c.stage === 'bursts'
+      ? (c.name ? c.name + ' · ' : '') + usd(b.close) + ' · ' + pct(b.gain_pct) + ' on ' + (isNum(b.volume_vs_prior) ? b.volume_vs_prior.toFixed(1) : '—') + '× volume' + (b.scan && b.scan !== 'burst' ? ' · ' + words(b.scan) + ' scan' : '') + ' · rank ' + plain(c.rank)
+      : (c.name ? c.name + ' · ' : '') + usd(b.close) + ' · ' + plain(b.quiet_days) + ' quiet days · ' + plain(b.range_pct) + '% range' + (c.quiet ? ' · also quiet' : ' · rank ' + plain(c.rank));
+    const back = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm ss-detail__back', type: 'button', text: '↑ all stocks' });
+    back.addEventListener('click', () => { scrollTo($('stages')); const sel = $('pick-list').querySelector('.ss-pick[aria-pressed="true"]'); if (sel) sel.focus({ preventScroll: true }); else $('search').focus({ preventScroll: true }); });
+    return el('header', { 'class': 'ss-detail__head' }, [
+      el('div', null, [
+        el('div', { 'class': 'sc-eyebrow', text: STAGE_NAME[c.stage].toLowerCase() + ' · ' + (c.stage === 'bursts' ? 'burst on ' + dateWords(last) : 'coiled through ' + dateWords(last)) }),
+        el('h2', { 'class': 'ss-detail__h2 sc-case', id: 'detail-h2', text: c.ticker }),
+        el('p', { 'class': 'sc-hint ss-detail__sub', text: sub })
+      ]),
+      el('div', { 'class': 'ss-detail__chips' }, chips.concat([back]))
+    ]);
+  }
+  function mountChart(mount, c) {
     clear(mount);
-    if (!series.length) { mount.appendChild(el('div', { 'class': 'sc-empty sc-empty--inline', text: 'No bars archived for this name; the grade stands on the numbers beside it.' })); return; }
-    const host = SCStock.chart(series, chartOptions(b, series, account));
+    if (!c.series.length) {
+      mount.appendChild(el('div', { 'class': 'ss-chart-empty', 'data-chart': 'unavailable' }, [
+        el('strong', { text: 'Chart unavailable. ' }),
+        'No daily bars are archived for ' + c.ticker + ' in tonight’s record' + (c.quiet ? ': it is on no list, so the run kept only its measures' : '') + '. The grade stands on the numbers; the conditions below carry them.'
+      ]));
+      return;
+    }
+    const series = c.series.slice(-state.range), height = narrow() ? 280 : 380;
+    const host = SCStock.chart(series, c.stage === 'bursts' ? burstChartOptions(c.row, series, height) : coilChartOptions(c.row, series, height));
     host.setAttribute('data-sessions', String(series.length));
-    host.setAttribute('data-ticker', b.ticker);
+    host.setAttribute('data-ticker', c.ticker);
+    host.setAttribute('data-stage', c.stage);
     mount.appendChild(host);
   }
-  function tradeCard(b, data, state) {
-    const plan = b.plan || {}, q = b.quality || {}, acct = data.account || {}, rules = (data.rules || {}).plan || {};
-    const beyond = (data.beyond_cap || []).indexOf(b.ticker) >= 0 || !plan.order_json;
-    const card = el('article', { 'class': 'sc-card ss-trade', id: 'trade-' + b.ticker, 'data-ticker': b.ticker });
-    const grade = el('div', { 'class': 'ss-trade__grade' }, [chip((b.grade || '—') + (isNum(b.score) ? ' · ' + b.score.toFixed(1) : ''), 'brand', true)]);
-    if (beyond) grade.appendChild(chip('beyond the slot cap', 'neutral'));
-    (b.flags || []).forEach((f) => grade.appendChild(chip(FLAG_WORDS[f] || words(f), 'warn')));
-    card.appendChild(el('div', { 'class': 'sc-card__head' }, [
-      el('div', null, [el('h3', { 'class': 'sc-case', text: b.ticker }),
-        el('p', { 'class': 'sc-hint', text: (b.name || b.ticker) + ' · ' + usd(b.close) + ' · ' + pct(b.gain_pct) + ' on ' + (isNum(b.volume_vs_prior) ? b.volume_vs_prior.toFixed(1) : '—') + '× volume' + (b.scan && b.scan !== 'burst' ? ' · ' + words(b.scan) + ' scan' : '') })]),
-      grade
-    ]));
-    // the chart, 60 sessions on the card, 120 on request
-    const chartWrap = el('div', { 'class': 'ss-trade__chart' });
-    const mount = el('div', { 'class': 'ss-trade__chart-mount' });
-    chartWrap.appendChild(mount);
+  function detailChart(c) {
+    const run = current.run || {}, fig = el('figure', { 'class': 'ss-detail__chart' });
+    const mount = el('div', { 'class': 'ss-chart-mount', id: 'chart-mount' });
+    fig.appendChild(mount);
     const tabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-label': 'Sessions shown' });
     [60, 120].forEach((n) => {
-      const t = el('button', { 'class': 'sc-tab', type: 'button', 'aria-pressed': n === 60 ? 'true' : 'false', text: n + ' sessions', 'data-sessions': String(n) });
-      t.addEventListener('click', () => { tabs.querySelectorAll('.sc-tab').forEach((x) => x.setAttribute('aria-pressed', x === t ? 'true' : 'false')); mountChart(mount, b, n, acct); });
+      const t = el('button', { 'class': 'sc-tab', type: 'button', 'aria-pressed': n === state.range ? 'true' : 'false', text: n + ' sessions', 'data-sessions': String(n), disabled: c.series.length ? null : '' });
+      t.addEventListener('click', () => { state.range = n; tabs.querySelectorAll('.sc-tab').forEach((x) => x.setAttribute('aria-pressed', x === t ? 'true' : 'false')); mountChart(mount, c); });
       tabs.appendChild(t);
     });
-    const captionKids = [el('p', { text: 'Alpaca SIP daily bars through ' + dateWords(b.series && b.series.length ? b.series[b.series.length - 1].date : data.run.session) + ' · drawn from the same numbers as the plan below.' + (b.chart ? ' ' : '') }, b.chart ? [el('a', { 'class': 'sc-link--quiet', href: b.chart, text: 'the chart the grader saw' })] : null), tabs];
-    chartWrap.appendChild(el('figcaption', { 'class': 'sc-chart-caption' }, captionKids));
-    card.appendChild(chartWrap);
-    mountChart(mount, b, 60, acct);
-
-    // the plan facts and the order, beside the exits and the read
-    const facts = el('dl', { 'class': 'sc-facts' });
-    const fact = (dt, dd, sub, wide) => facts.appendChild(el('div', { 'class': wide ? 'is-wide' : null }, [el('dt', { text: dt }), el('dd', null, [dd, sub ? el('small', { text: sub }) : null])]));
-    if (plan.entry_low !== undefined) {
-      fact('buy', usd(plan.entry_low) + ' – ' + usd(plan.entry_high), plan.entry_window || '', true);
-      fact('skip if it opens above', usd(plan.skip_if_open_above), 'the gap ate the trade', false);
-      fact('skip if it opens below', usd(plan.skip_if_open_below), 'the burst is failing', false);
-      fact('stop', stopWords(plan), 'move it to your entry day’s low once filled', true);
-      fact('risk per share', usd(plan.risk_per_share), null, false);
-      fact('shares', num(plan.shares), plan.capped_by === 'position_cap' ? 'cut by the position cap' : 'from ' + usd(plan.risk_usd) + ' ÷ ' + usd(plan.risk_per_share), false);
-      fact('position', usd(plan.position_usd), (isNum(plan.position_pct) ? plan.position_pct.toFixed(1) : '—') + '% of ' + usd(acct.equity, 0), false);
-      fact('at risk', usd(plan.risk_usd), plain(acct.risk_pct) + '% of equity', false);
-      const t = plan.targets || {};
-      fact('aim', '+' + plain(t.low_pct) + '% to +' + plain(t.high_pct) + '% by day ' + plain(rules.final_exit_day), usd(t.low) + ' – ' + usd(t.high) + (t.note ? ' · ' + t.note : ''), true);
+    const last = c.series.length ? c.series[c.series.length - 1].date : null;
+    fig.appendChild(el('figcaption', { 'class': 'sc-chart-caption' }, [
+      el('p', { text: (c.series.length ? 'Alpaca ' + String(run.feed || '').toUpperCase() + ' daily bars through ' + dateWords(last) + ' · drawn from the same numbers as the plan' : 'No bars archived for ' + c.ticker) + (c.row.chart ? ' · ' : '.') }, c.row.chart ? [el('a', { 'class': 'sc-link--quiet', href: c.row.chart, text: 'the chart the grader saw' })] : null),
+      tabs
+    ]));
+    mountChart(mount, c);
+    return fig;
+  }
+  function entryInstruction(plan) {
+    const s = ((plan || {}).exit_schedule || []).find((x) => x && (x.key === 'entry' || x.day === 1));
+    return s && text(s.instruction) ? cap(sentence(s.instruction)) : '';
+  }
+  function firstText() { for (let i = 0; i < arguments.length; i++) { const v = arguments[i]; if (typeof v === 'string' && v.trim()) return v; if (Array.isArray(v) && v.length && typeof v[0] === 'string' && v[0].trim()) return v[0]; } return ''; }
+  function burstDecision(c) {
+    const b = c.row, plan = c.plan || {}, q = b.quality || {}, cl = b.claude || {}, checks = q.checks || [];
+    const passes = checks.filter((x) => x && x.pass).length, miss = checks.find((x) => x && !x.pass);
+    const summary = sentence(firstSentence(text(b.summary).replace(/^[A-Z0-9.\-]+:\s*/, '')));
+    const why = [summary || 'No summary was recorded for this burst.',
+      checks.length ? passes + ' of ' + checks.length + ' checks pass (' + plain(q.passes) + ' of the ' + plain(q.of) + ' letters)' + (miss ? '; the miss is ‘' + (miss.label || words(miss.key) || 'a check') + '’ (' + (miss.display || '—') + ').' : '; nothing missed.') : '',
+      cl.source === 'claude' && text(cl.reason) ? 'The chart reader: ' + sentence(cl.reason) : ''];
+    const entry = entryInstruction(plan);
+    const need = c.status === 'ticket'
+      ? [entry || (text(plan.order_line) ? sentence(plan.order_line) : 'The plan carries no entry instruction.')]
+      : [c.plan ? 'No ticket tonight (' + statusWords(c.status)[0] + '). The setup would need: ' + (entry || 'an entry the plan does not spell out.') : 'Nothing: ' + sentence(c.reason)];
+    const wait = c.plan
+      ? [text(plan.pre_open_check) ? cap(sentence(plan.pre_open_check)) : '', isNum(plan.stop) ? 'Stop ' + stopWords(plan) + (plan.stop_basis !== 'max_stop' && isNum(plan.stop_pct) && isNum(plan.sizing_price) ? ' · ' + plain(plan.stop_pct) + '% under the ' + usd(plan.sizing_price) + ' limit' : '') + '.' : '']
+      : [cap(sentence(c.reason))];
+    const riskText = firstText(cl.key_risk, plan.stop_risk_reason, plan.hazards, plan.notes);
+    const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'None recorded beyond the method’s own: paper prices, one venue’s prints, no slippage.'),
+      c.series.length ? '' : 'No bars are archived for this name, so there is no chart to read.'];
+    return [['why', 'Why this stock?', why], ['need', 'What would need to happen?', need], ['wait', 'What invalidates it, or makes me wait?', wait], ['risk', 'Principal risk or limitation', risk]];
+  }
+  function coilDecision(c) {
+    const r = c.row, plan = c.plan || {}, box = r.box || {}, wl = current.watchlist || {};
+    const why = [(r.setups && r.setups.length ? r.setups.join(', ') + ': ' : '') + plain(r.quiet_days) + ' quiet days, ' + plain(r.range_pct) + '% range' + (isNum(box.sessions) ? ', a box of ' + plain(box.sessions) + ' sessions between ' + usd(box.low) + ' and ' + usd(box.high) : '') + (r.vol_dry ? ', volume dry' : '') + '.',
+      c.quiet ? 'Also quiet: quiet inside momentum, on no list tonight.' : ''];
+    const entry = entryInstruction(plan);
+    const need = c.status === 'ticket'
+      ? [entry || (text(plan.order_line) ? sentence(plan.order_line) : 'The plan carries no entry instruction.')]
+      : [c.plan ? 'No ticket tonight (' + statusWords(c.status)[0] + '). The setup would need: ' + (entry || sentence(wl.instruction) || 'an entry the plan does not spell out.') : (text(wl.instruction) ? sentence(wl.instruction) : 'The run wrote no plan for it.')];
+    const wait = c.plan
+      ? [text(plan.gap_rule) ? cap(sentence(plan.gap_rule)) : '', isNum(plan.stop) ? 'Stop ' + usd(plan.stop) + (text(plan.stop_basis) ? ' · ' + plan.stop_basis : '') + (isNum(plan.stop_pct) && isNum(plan.limit) ? ' · ' + plain(plan.stop_pct) + '% under the ' + usd(plan.limit) + ' limit' : '') + '.' : '']
+      : [cap(sentence(c.reason))];
+    const riskText = firstText(plan.stop_risk_reason, plan.hazards, plan.notes);
+    const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'None recorded beyond the method’s own: paper prices, one venue’s prints, no slippage.'),
+      c.series.length ? '' : 'No bars are archived for this name, so there is no chart to read.'];
+    return [['why', 'Why this stock?', why], ['need', 'What would need to happen?', need], ['wait', 'What invalidates it, or makes me wait?', wait], ['risk', 'Principal risk or limitation', risk]];
+  }
+  function decisionSummary(c) {
+    const items = c.stage === 'bursts' ? burstDecision(c) : coilDecision(c);
+    return el('section', { 'class': 'ss-decision', 'aria-label': 'Decision summary' }, items.map((it) =>
+      el('div', { 'class': 'ss-decision__item', 'data-item': it[0] }, [el('h3', { 'class': 'sc-eyebrow', text: it[1] })].concat(it[2].filter(Boolean).map((p) => el('p', { text: p }))))));
+  }
+  const stateWords = (s) => s.state === 'pending' ? 'waiting for tonight’s run' : s.state === 'failed' ? 'without a verdict' : 'stale';
+  function openDisclosure(id) {
+    const det = $(id); if (!det) return;
+    det.open = true; scrollTo(det);
+    const s = det.querySelector('summary'); if (s) { s.tabIndex = 0; s.focus({ preventScroll: true }); }
+  }
+  function actionArea(c) {
+    const sw = statusWords(c.status), blockedNow = !!(st && blocked(st)), plan = c.plan || {};
+    const box = el('div', { 'class': 'ss-action', 'data-ticket': c.status === 'ticket' ? (blockedNow ? 'blocked' : 'order') : c.status });
+    let line, btn;
+    if (c.status === 'ticket' && !blockedNow) {
+      line = 'Conditional ticket: ' + (text(plan.order_line) ? plan.order_line : 'see the plan') + '. It fills only on its own terms tomorrow; nothing here is placed for you.';
+      btn = el('button', { 'class': 'sc-btn sc-btn--secondary', type: 'button', text: 'View conditional plan', 'data-open': 'disc-plan' });
+      box.appendChild(chip(sw[0], sw[1]));
+    } else if (c.status === 'ticket') {
+      line = 'The ticket is not offered from a page that is ' + stateWords(st) + '. ' + sentence(st.sentence);
+      btn = el('button', { 'class': 'sc-btn sc-btn--secondary', type: 'button', text: 'Inspect conditions', 'data-open': 'disc-checklist' });
+      box.appendChild(chip('not offered', 'warn'));
+    } else {
+      line = (c.reason ? cap(sentence(c.reason)) : 'No ticket tonight.') + (c.plan ? ' The setup is kept here for inspection.' : '');
+      btn = el('button', { 'class': 'sc-btn sc-btn--secondary', type: 'button', text: 'Inspect conditions', 'data-open': 'disc-checklist' });
+      box.appendChild(chip(sw[0], sw[1]));
     }
-    if ((plan.flags && plan.flags.length) || (plan.notes && plan.notes.length)) {
-      const hz = el('div', { 'class': 'is-wide' }, [el('dt', { text: 'hazards' })]);
-      const dd = el('dd');
-      if (plan.flags && plan.flags.length) dd.appendChild(el('div', { 'class': 'ss-hazards' }, plan.flags.map((f) => chip(FLAG_WORDS[f] || words(f), 'warn'))));
-      if (plan.notes && plan.notes.length) dd.appendChild(el('ul', { 'class': 'ss-notes' }, plan.notes.map((n) => el('li', { text: n }))));
-      hz.appendChild(dd); facts.appendChild(hz);
+    box.appendChild(el('p', { text: line }));
+    btn.addEventListener('click', () => openDisclosure(btn.getAttribute('data-open')));
+    box.appendChild(btn);
+    return box;
+  }
+  function disclosure(id, title, hint, kids) {
+    return el('details', { 'class': 'sc-disclosure', id: id }, [
+      el('summary', null, [d.createTextNode(title), hint ? el('span', { 'class': 'sc-muted', text: ' · ' + hint }) : null]),
+      el('div', { 'class': 'sc-disclosure__body' }, kids)
+    ]);
+  }
+  function factList(pairs) {
+    const dl = el('dl', { 'class': 'sc-facts' });
+    pairs.forEach((p) => { if (!p) return; dl.appendChild(el('div', { 'class': p[3] ? 'is-wide' : null }, [el('dt', { text: p[0] }), el('dd', null, [p[1], p[2] ? el('small', { text: p[2] }) : null])])); });
+    return dl;
+  }
+  function checkTile(c, vetoed) {
+    const tone = vetoed ? 'blocked' : !c ? null : c.pass ? (c.marginal ? 'caution' : 'good') : 'blocked';
+    const glyph = vetoed ? '✕' : !c ? '—' : c.pass ? (c.marginal ? '~' : '✓') : '✕';
+    const word = vetoed ? 'veto' : !c ? 'not measured' : c.pass ? (c.marginal ? 'partial' : 'pass') : (c.status === 'unmeasured' ? 'not measured' : 'fail');
+    const display = c ? String(c.display || '') : '', threshold = c ? String(c.threshold || '') : '';
+    return el('div', { 'class': 'sc-signal' + (tone ? ' sc-signal--' + tone : ''), 'data-check': c ? c.key : null, 'data-verdict': word, title: c ? [display, threshold ? 'threshold: ' + threshold : '', c.note].filter(Boolean).join('\n') : null }, [
+      el('span', { 'class': 'ss-check__label', text: c ? (c.label || words(c.key)) : '—' }),
+      el('span', { 'class': 'sc-signal__glyph', 'aria-hidden': 'true', text: glyph }),
+      el('span', { 'class': 'sc-signal__label', text: word + (display ? ' · ' + display.split(' ')[0] : '') }),
+      c ? el('span', { 'class': 'sc-signal__note', text: threshold.length > 64 ? threshold.slice(0, 62).replace(/\s+\S*$/, '') + '…' : threshold }) : null
+    ]);
+  }
+  function discChecklist(c) {
+    const kids = [];
+    if (c.stage === 'bursts') {
+      const b = c.row, q = b.quality || {}, base = q.base || {}, checks = q.checks || [], vetoes = q.vetoes || [];
+      const passes = checks.filter((x) => x && x.pass).length;
+      kids.push(el('p', { 'class': 'sc-hint', text: checks.length ? 'Bonde’s ' + checks.length + ' A-quality criteria: the verdict in words, the measured value, his threshold. ' + passes + ' of ' + checks.length + ' pass (' + plain(q.passes) + ' of the ' + plain(q.of) + ' letters).' : 'No checklist was archived for this burst.' }));
+      if (checks.length) kids.push(el('div', { 'class': 'ss-checks' }, checks.map((x) => checkTile(x, (x.key === 'two_days' && vetoes.indexOf('up_days') >= 0) || (x.key === 'linearity' && vetoes.indexOf('not_linear') >= 0)))));
+      if (vetoes.length) kids.push(el('p', { 'class': 'sc-note', text: 'Veto: ' + vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') + '.' }));
+      kids.push(el('div', { 'class': 'sc-eyebrow', text: 'the measurements' }));
+      kids.push(factList([
+        ['the burst', pct(b.gain_pct) + ' · ' + (isNum(b.volume_vs_prior) ? b.volume_vs_prior.toFixed(1) : '—') + '× volume', 'open ' + usd(b.open) + ' · high ' + usd(b.high) + ' · low ' + usd(b.low) + ' · close ' + usd(b.close) + ' · prior close ' + usd(b.prev_close)],
+        ['the base', isNum(base.sessions) ? plain(base.sessions) + ' sessions · ' + plain(base.depth_pct) + '% deep' : '—', base.start && base.end ? dateShort(base.start) + ' to ' + dateShort(base.end) + ' · ' + usd(base.low) + '–' + usd(base.high) + ((base.breakdown_dates || []).length ? ' · ' + plural(base.breakdown_dates.length, 'breakdown') : '') : ''],
+        ['dollar volume', isNum(b.dollar_volume) ? usd(b.dollar_volume, 0) : '—', b.scan ? words(b.scan) + ' scan' : ''],
+        ['extension', isNum(b.extension_pct) ? pct(b.extension_pct) : '—', 'close against its 20-session average'],
+        ['grade', (b.grade || '—') + (isNum(b.score) ? ' · ' + b.score.toFixed(1) : ''), (b.grade_mechanical && b.grade_mechanical !== b.grade ? 'the checklist said ' + b.grade_mechanical : 'the checklist’s own grade') + (q.reclass ? ' · reclassified: ' + words(q.reclass) : '')]
+      ]));
+      if (q.notes && q.notes.length) kids.push(el('ul', { 'class': 'ss-notes' }, q.notes.map((n) => el('li', { text: n }))));
+    } else {
+      const r = c.row, box = r.box || {}, wl = current.watchlist || {};
+      kids.push(el('p', { 'class': 'sc-hint', text: c.quiet ? 'Quiet inside momentum, on no list tonight: the measures the scan kept.' : 'The anticipation scans’ measures for this coil; the plan reads the box.' }));
+      kids.push(factList([
+        ['setups', (r.setups || []).length ? r.setups.join(', ') : '—', (r.reasons_failed || []).length ? 'not: ' + r.reasons_failed.join(', ') : ''],
+        ['quiet', plain(r.quiet_days) + ' days', isNum(r.narrow_range_days) ? plain(r.narrow_range_days) + ' narrow-range days' + (r.tight_today ? ' · tight today' : '') : ''],
+        ['range', plain(r.range_pct) + '%', (isNum(r.range_recent_pct) ? 'recent ' + plain(r.range_recent_pct) + '%' : '') + (isNum(r.range_base_pct) ? ' · base ' + plain(r.range_base_pct) + '%' : '') + (isNum(r.adr20_pct) ? ' · 20-day ADR ' + plain(r.adr20_pct) + '%' : '')],
+        ['the box', isNum(box.sessions) ? plain(box.sessions) + ' sessions · ' + usd(box.low) + '–' + usd(box.high) : '—', box.start && box.end ? dateShort(box.start) + ' to ' + dateShort(box.end) + (isNum(box.spread) ? ' · spread ' + plain(box.spread) + '%' : '') : ''],
+        ['volume', isNum(r.volume_ratio) ? r.volume_ratio.toFixed(2) + '× its average' : '—', r.vol_dry ? 'dry' : ''],
+        ['momentum', isNum(r.ti65) ? 'TI65 ' + r.ti65.toFixed(3) : (isNum(r.extension) ? 'extension ' + r.extension.toFixed(2) : '—'), (isNum(r.up_run) ? plain(r.up_run) + ' up days in a row' : '') + (isNum(r.breakdowns) ? ' · ' + plural(r.breakdowns, 'breakdown') : '')],
+        ['close', usd(r.close), isNum(r.pct_change_today) ? pct(r.pct_change_today) + ' today' : '']
+      ]));
+      if (text(wl.instruction)) kids.push(el('p', { 'class': 'sc-note', text: 'The list’s rule: ' + sentence(wl.instruction) }));
     }
-    const left = el('div', null, [facts]);
-    const cut = (data.cash_budget && data.cash_budget.cut || []).filter((c) => c && c.ticker === b.ticker).map((c) => c.reason).join(' ');
-    left.appendChild(orderBlock(plan, beyond ? 'No order tonight: ' + (cut || 'beyond the slot cap.') : 'No order line was written for this plan.', beyond));
-    const right = el('div');
-    const sched = plan.exit_schedule || [];
-    if (sched.length) {
-      right.appendChild(el('div', { 'class': 'sc-eyebrow', text: 'the exits, dated' }));
-      right.appendChild(el('ol', { 'class': 'sc-timeline' }, sched.map((s) => el('li', { 'class': 'sc-timeline__item' }, [
+    return disclosure('disc-checklist', 'Conditions and measurements', c.stage === 'bursts' ? 'the checklist' : 'the coil', kids);
+  }
+  function discPlan(c) {
+    const plan = c.plan, acct = current.account || {}, rules = (current.rules || {}).plan || {}, kids = [];
+    if (!plan) {
+      kids.push(el('p', { 'class': 'sc-hint', text: 'No plan: ' + sentence(c.reason) + (c.stage === 'bursts' ? ' A grade, a plan and a ticket are three different things; this burst has the first.' : '') }));
+      return disclosure('disc-plan', 'Conditional plan, sizing and order', 'none', kids);
+    }
+    const blockedNow = !!(st && blocked(st)), withheld = c.status !== 'ticket' || blockedNow, t = plan.targets || {};
+    if (c.stage === 'bursts') {
+      kids.push(factList([
+        ['buy', usd(plan.entry_low) + ' – ' + usd(plan.entry_high), (plan.entry_window || '') + ' · a buy stop at ' + usd(plan.entry_ref) + ', limit ' + usd(plan.entry_high), true],
+        ['skip if it opens above', usd(plan.skip_if_open_above), 'day 2 is spent; a resting order could still fill on a pullback, so cancel it'],
+        ['skip if it opens below', usd(plan.skip_if_open_below), 'the burst is failing; do not place it'],
+        ['stop', stopWords(plan), 'judged at the ' + usd(plan.sizing_price) + ' limit · move it to your entry day’s low once filled', true],
+        ['sized at', usd(plan.sizing_price), 'the limit, the highest fill the ticket permits · indicative entry ' + usd(plan.planned_entry) + ' (not a fill)', true],
+        ['risk per share', usd(plan.risk_per_share), 'limit − stop'],
+        ['shares', num(plan.shares), plan.capped_by === 'position_cap' ? 'cut by the position cap' : 'from ' + usd(plan.risk_usd) + ' ÷ ' + usd(plan.risk_per_share)],
+        ['position', usd(plan.position_usd), (isNum(plan.position_pct) ? plan.position_pct.toFixed(1) : '—') + '% of the configured ' + usd(acct.equity, 0)],
+        ['planned risk', usd(plan.risk_usd), 'price-to-stop at the limit, not a maximum loss · budget ' + plain(acct.risk_pct) + '% of configured equity'],
+        ['aim', '+' + plain(t.low_pct) + '% to +' + plain(t.high_pct) + '% by day ' + plain(rules.final_exit_day), usd(t.low) + ' – ' + usd(t.high) + ' from the indicative entry' + (t.note ? ' · ' + t.note : ''), true]
+      ]));
+    } else {
+      kids.push(factList([
+        ['trigger', usd(plan.trigger), 'a buy stop ' + (isNum(plan.trigger_cushion) ? usd(plan.trigger_cushion) + ' ' : '') + 'over the box high ' + usd(plan.box_high), true],
+        ['limit', usd(plan.limit), 'the highest fill the ticket permits'],
+        ['stop', usd(plan.stop), (text(plan.stop_basis) ? plan.stop_basis + ' · ' : '') + plain(plan.stop_pct) + '% under the limit'],
+        ['sized at', usd(plan.sizing_price || plan.limit), text(plan.planned_entry_note) ? plan.planned_entry_note : 'the limit', true],
+        ['risk per share', usd(plan.risk_per_share), 'limit − stop'],
+        ['shares', plan.eligible === false ? '—' : num(plan.shares), plan.capped_by === 'position_cap' ? 'cut by the position cap' : 'from ' + usd(plan.risk_usd) + ' ÷ ' + usd(plan.risk_per_share)],
+        ['position', usd(plan.position_usd), (isNum(plan.position_pct) ? plan.position_pct.toFixed(1) : '—') + '% of the configured ' + usd(acct.equity, 0)],
+        ['planned risk', usd(plan.risk_usd), 'price-to-stop at the limit, not a maximum loss'],
+        ['aim', '+' + plain(t.low_pct) + '% to +' + plain(t.high_pct) + '% by day ' + plain(rules.final_exit_day), usd(t.low) + ' – ' + usd(t.high) + ' from the trigger' + (t.note ? ' · ' + t.note : ''), true],
+        text(plan.gap_rule) ? ['gap rule', cap(plan.gap_rule), text(plan.open_entry) ? plan.open_entry : '', true] : null
+      ]));
+    }
+    if ((plan.flags && plan.flags.length) || (plan.notes && plan.notes.length) || (plan.hazards && plan.hazards.length)) {
+      kids.push(el('div', { 'class': 'sc-eyebrow', text: 'hazards and notes' }));
+      if (plan.flags && plan.flags.length) kids.push(el('div', { 'class': 'ss-hazards' }, plan.flags.map((f) => chip(FLAG_WORDS[f] || words(f), 'warn'))));
+      const notes = (plan.hazards || []).concat(plan.notes || []);
+      if (notes.length) kids.push(el('ul', { 'class': 'ss-notes' }, notes.map((n) => el('li', { text: n }))));
+    }
+    if (text(plan.sizing_note)) kids.push(el('p', { 'class': 'sc-note', text: cap(sentence(plan.sizing_note)) }));
+    if (text(plan.resize_rule)) kids.push(el('p', { 'class': 'sc-note', text: cap(sentence(plan.resize_rule)) }));
+    const hint = blockedNow && c.status === 'ticket' ? 'No order is offered from a page that is ' + stateWords(st) + '.'
+      : c.status === 'ticket' ? 'No order line was written for this plan.'
+      : 'No ticket tonight: ' + (c.reason || statusWords(c.status)[0]) + '. The setup is kept here for inspection.';
+    kids.push(orderBlock(plan, hint, withheld));
+    return disclosure('disc-plan', 'Conditional plan, sizing and order', withheld ? (blockedNow && c.status === 'ticket' ? 'not offered' : statusWords(c.status)[0]) : 'sized at the limit', kids);
+  }
+  function discExits(c) {
+    const plan = c.plan, kids = [];
+    if (!plan) kids.push(el('p', { 'class': 'sc-hint', text: 'No plan, so no model exits.' }));
+    else {
+      const sched = plan.exit_schedule || [];
+      if (sched.length) kids.push(el('ol', { 'class': 'sc-timeline' }, sched.map((s) => el('li', { 'class': 'sc-timeline__item' }, [
         el('div', { 'class': 'sc-timeline__stamp', text: dateWords(s.date) + ' · day ' + plain(s.day) }),
         el('div', { 'class': 'sc-timeline__body' }, [el('p', { text: cap(s.instruction || '') })])
       ]))));
+      else kids.push(el('p', { 'class': 'sc-hint', text: 'The plan carries no dated schedule.' }));
+      const exits = (plan.exits || []).filter((x) => x && (x.when || x.rule));
+      if (exits.length) {
+        kids.push(el('div', { 'class': 'sc-eyebrow', text: 'the rules the schedule follows' }));
+        kids.push(el('ul', { 'class': 'ss-notes' }, exits.map((x) => el('li', { text: (x.when ? cap(x.when) + ': ' : '') + (x.rule || '') + (x.source ? ' (' + x.source + ')' : '') }))));
+      }
     }
-    const c = b.claude;
-    if (c && c.source === 'claude') {
-      right.appendChild(el('div', { 'class': 'sc-insight' }, [
-        el('div', { 'class': 'sc-eyebrow', text: 'claude read the chart' + (c.agree === false ? ' · lowered the grade' : '') }),
-        el('p', { text: c.reason || '' }),
-        c.key_risk ? el('p', null, [el('strong', { text: 'Key risk: ' }), c.key_risk]) : null,
-        c.entry_note ? el('p', null, [el('strong', { text: 'At the open: ' }), c.entry_note]) : null
-      ]));
-    } else {
-      right.appendChild(el('p', { 'class': 'sc-hint ss-trade__nomodel', text: 'Graded by the checklist alone; the model did not answer.' }));
-    }
-    card.appendChild(el('div', { 'class': 'sc-split ss-trade__body' }, [left, right]));
-    const checks = q.checks || [], passes = checks.filter((x) => x && x.pass).length, miss = checks.find((x) => x && !x.pass);
-    const footText = passes + ' of ' + checks.length + ' checks pass (' + plain(q.passes) + ' of the ' + plain(q.of) + ' letters)' + (miss ? ' · the miss is ‘' + (miss.label || words(miss.key) || 'a check') + '’ (' + (miss.display || '—') + ')' : ' · nothing missed') + (q.vetoes && q.vetoes.length ? ' · veto: ' + q.vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') : '');
-    card.appendChild(el('div', { 'class': 'ss-trade__foot' }, [el('span', { 'class': 'sc-hint', text: footText }), el('a', { 'class': 'sc-link--quiet', href: '#burst-' + b.ticker, 'data-matrix-link': '', text: 'row in the matrix ↓' })]));
-    return card;
+    kids.push(el('p', { 'class': 'sc-hint', text: 'Model guidance on daily bars: what the published ticket’s own rules would say on each day, not a record of a position.' }));
+    return disclosure('disc-exits', 'Model exit guidance', plan && (plan.exit_schedule || []).length ? plural(plan.exit_schedule.length, 'dated step') : 'none', kids);
   }
-  function planRow(p, red, holdDays) {
-    const st = PLAN_STATUS[p.status] || [words(String(p.status || '—')).toUpperCase(), 'neutral'];
-    const row = el('article', { 'class': 'ss-plan', 'data-ticker': p.ticker, 'data-status': p.status || '' });
-    row.appendChild(el('div', { 'class': 'ss-plan__row' }, [
-      el('strong', { 'class': 'sc-case', text: p.ticker }), chip(st[0], st[1], true),
-      el('span', { 'class': 'ss-plan__meta', text: 'day ' + plain(p.day) + (isNum(holdDays) ? ' of ' + plain(holdDays) : '') + ' · picked ' + dateMD(p.picked) + ' · ' + num(p.shares) + ' sh' })
+  function discProvenance(c) {
+    const b = c.row, run = current.run || {}, app = current.app || {}, cl = b.claude || null, kids = [];
+    if (c.stage === 'bursts') {
+      if (cl && cl.source === 'claude') {
+        kids.push(el('div', { 'class': 'sc-insight' }, [
+          el('div', { 'class': 'sc-eyebrow', text: 'claude read the chart' + (cl.agree === false ? ' · lowered the grade' : cl.agree === true ? ' · agreed' : '') }),
+          el('p', { text: cl.reason || '' }),
+          text(cl.key_risk) ? el('p', null, [el('strong', { text: 'Key risk: ' }), cl.key_risk]) : null,
+          text(cl.entry_note) ? el('p', null, [el('strong', { text: 'At the open: ' }), cl.entry_note]) : null,
+          el('p', { 'class': 'sc-hint', text: 'Model grade ' + (cl.grade || '—') + (isNum(cl.score) ? ' · ' + cl.score.toFixed(1) : '') + (cl.chart_seen === false ? ' · read from the numbers alone, no chart' : '') })
+        ]));
+      } else kids.push(el('p', { 'class': 'sc-hint ss-nomodel', text: 'Graded by the checklist alone; the model did not answer' + (cl && text(cl.error) ? ' (' + cl.error + ')' : '') + '.' }));
+    } else kids.push(el('p', { 'class': 'sc-hint', text: 'Anticipation names are measured, not graded: no chart reader, no letters.' }));
+    kids.push(factList([
+      ['bars', 'Alpaca ' + String(run.feed || '').toUpperCase() + ', daily', c.series.length ? plural(c.series.length, 'session') + ' archived through ' + dateWords(c.series[c.series.length - 1].date) : 'none archived for this name'],
+      ['rules', app.rules_version || '—', 'the digest of every strategy constant in this record'],
+      ['run', (run.status || '—') + ' · ' + dateWords(run.session), 'published ' + timeET(run.published_at)],
+      b.chart ? ['chart file', b.chart, 'the PNG the grader was shown, when the run rendered it'] : null
     ]));
-    const t = p.targets || {}, stop = isNum(p.current_stop) ? p.current_stop : p.stop, aim = isNum(t.high) ? t.high : null;
-    // the bar runs from the stop to the aim; the entry marker is drawn only
-    // while the entry still sits above the stop (a trailed stop can pass it)
-    if (isNum(p.last_close) && isNum(stop) && aim !== null && aim > stop && isNum(t.low) && isNum(p.entry_ref)) {
-      const pos = (v) => Math.max(0, Math.min(100, 100 * (v - stop) / (aim - stop)));
-      const entryAbove = p.entry_ref > stop;
-      const fig = el('figure', { 'class': 'sc-benchmark', style: '--sc-benchmark-position:' + pos(p.last_close).toFixed(1) + '%;' + (entryAbove ? '--sc-benchmark-reference:' + pos(p.entry_ref).toFixed(1) + '%;' : '') + '--sc-benchmark-band-start:' + pos(t.low).toFixed(1) + '%;--sc-benchmark-band-end:' + pos(t.high).toFixed(1) + '%' });
-      fig.appendChild(el('figcaption', { 'class': 'sc-benchmark__head' }, [el('span', { 'class': 'sc-benchmark__label', text: 'last close · ' + dateShort(p.last_date) }), el('strong', { 'class': 'sc-benchmark__value', text: usd(p.last_close) })]));
-      fig.appendChild(el('div', { 'class': 'sc-benchmark__track', 'aria-hidden': 'true' }, [el('span', { 'class': 'sc-benchmark__band' }), entryAbove ? el('span', { 'class': 'sc-benchmark__reference' }) : null, el('span', { 'class': 'sc-benchmark__point' })]));
-      const scale = [['stop', stop], ['entry', p.entry_ref], ['aim', aim]].sort((a, b) => a[1] - b[1]);
-      fig.appendChild(el('div', { 'class': 'sc-benchmark__scale', 'aria-hidden': 'true' }, scale.map((s) => el('span', { text: s[0] + ' ' + usd(s[1]) }))));
-      fig.appendChild(el('p', { 'class': 'sc-benchmark__note', text: pct(p.unrealised_pct, 2) + ' from the ' + usd(p.entry_ref) + ' entry · band ' + usd(t.low) + '–' + usd(t.high) + ' · stop ' + usd(stop) + (entryAbove ? '' : ' (the stop has been trailed above the entry)') }));
-      row.appendChild(fig);
-    }
-    row.appendChild(el('p', { 'class': 'sc-note ss-plan__instruction', text: p.instruction || '' }));
-    return row;
+    if (b.chart) kids.push(el('p', null, [el('a', { 'class': 'sc-link--quiet', href: b.chart, text: 'open the chart the grader saw' })]));
+    return disclosure('disc-provenance', 'Provenance and the chart reader', c.stage === 'bursts' ? (cl && cl.source === 'claude' ? 'model read' : 'checklist alone') : 'measured', kids);
   }
-  function renderTomorrow(data, st) {
-    const bursts = by(data.bursts || [], 'ticker'), trades = (data.trades || []).map((t) => bursts[t]).filter(Boolean);
-    const beyond = (data.beyond_cap || []).map((t) => bursts[t]).filter((b) => b && b.plan);
-    const main = clear($('trades'));
+  function renderDetail() {
+    const stage = state.stage, c = model.byId[state.selected[stage]], box = $('detail');
+    const key = c ? c.id : 'none:' + stage;
+    if (state.detailKey !== key) {
+      state.detailKey = key;
+      clear(box);
+      box.setAttribute('data-selected', c ? c.id : '');
+      if (!c) box.appendChild(detailEmpty(stage));
+      else {
+        box.appendChild(detailHead(c));
+        box.appendChild(detailChart(c));
+        box.appendChild(decisionSummary(c));
+        box.appendChild(actionArea(c));
+        box.appendChild(discChecklist(c));
+        box.appendChild(discPlan(c));
+        box.appendChild(discExits(c));
+        box.appendChild(discProvenance(c));
+      }
+      box.classList.remove('is-fresh');
+      void box.offsetWidth;
+      box.classList.add('is-fresh');
+    }
+    if (pendingFocus === 'detail') { pendingFocus = ''; box.focus({ preventScroll: true }); scrollTo(box); }
+    else if (state.gesture && narrow() && c) scrollTo(box);
+    state.gesture = false;
+  }
+
+  // ---------------------------------------------------------------- the tickets, as a disclosure
+  function renderTickets(data) {
+    const bursts = by(data.bursts || []), trades = (data.trades || []).map((t) => bursts[t]).filter(Boolean);
+    const withOrders = trades.filter((b) => b.plan && b.plan.order_json), blockedNow = !!(st && blocked(st));
     const regime = ((data.breadth || {}).regime || {}).verdict;
-    const rules = data.rules || {}, holdDays = (rules.plan || {}).final_exit_day, window = (rules.record || {}).open_plan_sessions;
-    const lede = $('tomorrow-lede');
-    const more = beyond.length ? ' ' + beyond.length + ' more A-quality burst' + (beyond.length === 1 ? ' is' : 's are') + ' cut by the slots or the equity and follow' + (beyond.length === 1 ? 's' : '') + ' with no order.' : '';
-    if (st.state === 'closed') lede.textContent = 'The market was closed; nothing new was planned. What you hold is on the right, unchanged.';
-    else if (regime === 'red') lede.textContent = 'Breadth is red: no new longs. What you hold is the only work.';
-    else if (!trades.length) lede.textContent = 'No burst reached A-quality with an order tonight. What you hold is the only work; the closest miss is under the scan.' + more;
-    else lede.textContent = trades.length + ' A-quality burst' + (trades.length === 1 ? '' : 's') + ' with ' + (trades.length === 1 ? 'its' : 'their') + ' plans, ranked. Read the chart first; the order block is in Fidelity’s field order.' + more;
-    if (!trades.length && !beyond.length) main.appendChild(el('div', { 'class': 'sc-card' }, [empty(st.state === 'closed' ? 'Market closed. Plans unchanged; nothing new to place.' : regime === 'red' ? 'Stand aside. Breadth is red and no new long is offered.' : 'Nothing qualifies. Keep cash; every burst the scan found is in the table below.')]));
-    trades.concat(beyond).forEach((b) => main.appendChild(tradeCard(b, data, st)));
-
-    const hold = clear($('hold-rows'));
-    const plans = data.open_plans || [];
-    const hint = $('hold-hint');
-    if (hint) hint.textContent = 'Every pick from the last ' + (isNum(window) ? plain(window) : 'five') + ' sessions, judged from bars alone. If you never bought it, ignore its row.';
-    if (!plans.length) hold.appendChild(empty('No open plans. Nothing was picked in the last ' + (isNum(window) ? plain(window) : 'five') + ' sessions.'));
-    plans.forEach((p) => hold.appendChild(planRow(p, regime === 'red', holdDays)));
-
+    $('orders-summary').textContent = 'Tomorrow’s tickets · ' + (withOrders.length ? plural(withOrders.length, 'order') + (blockedNow ? ', not offered' : '') : 'none');
     const cb = data.cash_budget || {}, acct = data.account || {};
     const budget = clear($('budget'));
-    budget.appendChild(el('strong', { text: 'Tomorrow’s orders commit ' + usd(cb.committed_usd, 0) + ' of ' + usd(acct.equity, 0) + ' · ' + plain(cb.slots_used) + ' of ' + plain(cb.slots_max) + ' slots' }));
-    if (isNum(cb.at_risk_usd)) budget.appendChild(d.createTextNode(' · ' + usd(cb.at_risk_usd, 0) + ' at risk'));
-    (cb.cut || []).forEach((c) => budget.appendChild(el('span', { 'class': 'sc-note', text: 'Cut: ' + c.ticker + ' — ' + c.reason })));
-
+    budget.appendChild(el('strong', { text: cb.sentence || ('Model allocation: tomorrow’s tickets would commit ' + usd(cb.committed_usd, 0) + ' of the configured ' + usd(acct.equity, 0) + ' · ' + plain(cb.slots_used) + ' of ' + plain(cb.slots_max) + ' slots') }));
+    if (isNum(cb.at_risk_usd)) budget.appendChild(d.createTextNode(' · ' + usd(cb.at_risk_usd, 0) + ' planned price-to-stop risk'));
+    budget.appendChild(d.createTextNode(' · over the configured sizing assumptions, not a balance, settled cash or buying power'));
+    (cb.cut || []).forEach((c) => budget.appendChild(el('span', { 'class': 'sc-note', text: 'No ticket: ' + c.ticker + ' — ' + c.reason })));
     const sheet = clear($('orders-table'));
-    const withOrders = trades.filter((b) => b.plan && b.plan.order_json);
-    const table = el('table', { 'class': 'sc-table sc-table--compact', id: 'order-sheet' });
+    const table = el('table', { 'class': 'sc-table sc-table--compact ss-orders', id: 'order-sheet' });
     table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Tomorrow’s orders in Fidelity’s field order' }));
-    table.appendChild(el('thead', null, el('tr', null, ['symbol', 'action', 'shares', 'type', 'stop (trigger)', 'limit', 'tif', 'then OTO sell stop', 'skip above', 'at risk'].map((h, i) => el('th', { scope: 'col', 'class': i >= 2 && i !== 3 && i !== 6 ? 'sc-num' : null, text: h })))));
+    table.appendChild(el('thead', null, el('tr', null, ['symbol', 'action', 'shares', 'type', 'stop (trigger)', 'limit', 'tif', 'then OTO sell stop', 'skip above', 'planned risk'].map((h, i) => el('th', { scope: 'col', 'class': i >= 2 && i !== 3 && i !== 6 ? 'sc-num' : null, text: h })))));
     const body = el('tbody');
-    withOrders.forEach((b) => {
+    const rows = blockedNow ? [] : withOrders;
+    rows.forEach((b) => {
       const o = b.plan.order_json, t = o.then || {};
+      const name = el('button', { 'class': 'sc-signal-matrix__name', type: 'button', text: b.ticker, 'data-go': routeHash('bursts', 'bursts:' + b.ticker) });
+      name.addEventListener('click', () => { pendingFocus = 'detail'; state.gesture = true; navigate(name.getAttribute('data-go')); });
       body.appendChild(el('tr', { 'data-ticker': b.ticker }, [
-        el('th', { scope: 'row', 'class': 'sc-case', text: b.ticker }), el('td', { text: String(o.action || '').toUpperCase() }),
+        el('th', { scope: 'row', 'class': 'sc-case' }, name), el('td', { text: String(o.action || '').toUpperCase() }),
         el('td', { 'class': 'sc-num', text: num(o.quantity) }), el('td', { text: words(o.order_type || '').toUpperCase() }),
         el('td', { 'class': 'sc-num', text: usd(o.stop_price) }), el('td', { 'class': 'sc-num', text: usd(o.limit_price) }),
         el('td', { text: String(o.time_in_force || '').toUpperCase() }), el('td', { 'class': 'sc-num', text: usd(t.stop_price) + ' ' + String(t.time_in_force || '').toUpperCase() }),
         el('td', { 'class': 'sc-num', text: usd(b.plan.skip_if_open_above) }), el('td', { 'class': 'sc-num', text: usd(b.plan.risk_usd) })
       ]));
     });
-    if (!withOrders.length) body.appendChild(el('tr', { 'class': 'sc-empty' }, el('td', { colspan: '10', text: st.state === 'closed' ? 'No orders: the market was closed and the plans stand.' : regime === 'red' ? 'No orders: breadth is red.' : 'No orders tomorrow.' })));
+    if (!rows.length) body.appendChild(el('tr', { 'class': 'sc-empty' }, el('td', { colspan: '10', text: blockedNow && withOrders.length ? 'No orders offered: the page is ' + stateWords(st) + '.' : st && st.state === 'closed' ? 'No orders: the market was closed and the plans stand.' : regime === 'red' ? 'No orders: breadth is red.' : 'No orders tomorrow.' })));
     table.appendChild(body);
-    const committed = withOrders.reduce((a, b) => a + (b.plan.position_usd || 0), 0), risk = withOrders.reduce((a, b) => a + (b.plan.risk_usd || 0), 0);
-    table.appendChild(el('tfoot', null, el('tr', null, el('td', { colspan: '10', text: withOrders.length + ' order' + (withOrders.length === 1 ? '' : 's') + ' · ' + usd(committed, 0) + ' committed · ' + usd(risk, 0) + ' at risk · ' + (isNum(acct.equity) && acct.equity ? (100 * committed / acct.equity).toFixed(1) : '—') + '% of equity' }))));
+    const committed = rows.reduce((a, b) => a + (b.plan.position_usd || 0), 0), risk = rows.reduce((a, b) => a + (b.plan.risk_usd || 0), 0);
+    table.appendChild(el('tfoot', null, el('tr', null, el('td', { colspan: '10', text: plural(rows.length, 'order') + ' · ' + usd(committed, 0) + ' would be committed at the limits · ' + usd(risk, 0) + ' planned price-to-stop risk · ' + (isNum(acct.equity) && acct.equity ? (100 * committed / acct.equity).toFixed(1) : '—') + '% of the configured equity' }))));
     sheet.appendChild(table);
     const notes = acct.notes || [];
-    if (notes.length) sheet.appendChild(el('details', { 'class': 'sc-details' }, [el('summary', { text: 'the sizing rules this sheet follows' }), el('ul', { 'class': 'ss-notes' }, notes.map((n) => el('li', { text: n })))]));
+    if (notes.length) sheet.appendChild(el('details', { 'class': 'sc-details' }, [el('summary', { text: 'the configured sizing assumptions this sheet follows' }), el('ul', { 'class': 'ss-notes' }, notes.map((n) => el('li', { text: n })))]));
   }
 
-  // ---------------------------------------------------------------- alerts
-  function renderAlerts(data) {
-    const wl = data.watchlist || {}, top = wl.top || [], also = wl.also_quiet || [];
-    $('alerts-lede').textContent = wl.instruction || 'Quiet, coiled names inside established momentum.';
-    const body = clear($('alerts-body'));
-    if (!top.length) { body.appendChild(empty('No coiled names tonight.' + (isNum((wl.counts || {}).coiled) ? ' The anticipation scans found ' + num(wl.counts.coiled) + ' quiet stocks inside momentum.' : ''))); }
-    else {
-      const table = el('table', { 'class': 'sc-table sc-table--compact', id: 'alerts-table' });
-      table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Anticipation watchlist with a buy-stop plan per name' }));
-      table.appendChild(el('thead', null, el('tr', null, ['ticker', 'setups', 'box', 'close', 'trigger', 'limit', 'stop', 'shares', 'risk', 'the ticket'].map((h, i) => el('th', { scope: 'col', 'class': i >= 3 && i <= 8 ? 'sc-num' : null, text: h })))));
-      const tb = el('tbody');
-      top.forEach((r) => {
-        const p = r.plan || {}, box = r.box || {};
-        tb.appendChild(el('tr', { 'data-ticker': r.ticker }, [
-          el('th', { scope: 'row' }, [el('span', { 'class': 'sc-figure', text: r.ticker }), el('span', { 'class': 'sc-note', text: (r.name || '') + ' · ' + plain(r.quiet_days) + ' quiet days · ' + plain(r.range_pct) + '% range' })]),
-          el('td', null, (r.setups || []).map((s) => chip(s, 'neutral', true))),
-          el('td', { text: plain(box.sessions) + ' sessions · ' + usd(box.low) + '–' + usd(box.high) }),
-          el('td', { 'class': 'sc-num', text: usd(r.close) }), el('td', { 'class': 'sc-num', text: usd(p.trigger) }), el('td', { 'class': 'sc-num', text: usd(p.limit) }),
-          el('td', { 'class': 'sc-num', text: usd(p.stop) }), el('td', { 'class': 'sc-num', text: p.eligible === false ? '—' : num(p.shares) }),
-          el('td', { 'class': 'sc-num', text: plain(p.stop_pct) + '%' + (isNum(p.risk_usd) && p.eligible !== false ? ' · ' + usd(p.risk_usd, 0) : '') }),
-          el('td', { 'class': 'ss-ticket' }, p.eligible === false ? [chip('refused', 'danger'), ' ', el('span', { 'class': 'sc-note', text: p.reason || '' })] : p.order_line ? [el('span', { text: p.order_line })] : [chip('no order', 'neutral'), ' ', el('span', { 'class': 'sc-note', text: p.action === 'no_new_longs' ? 'breadth sizes new positions at zero tonight; keep the alert, place nothing' : (p.reason || 'the size came to zero shares') })])
-        ]));
-      });
-      table.appendChild(tb);
-      body.appendChild(el('div', { 'class': 'sc-table-scroll' }, table));
-      const gap = top.map((r) => r.plan && r.plan.gap_rule).find(Boolean);
-      if (gap) body.appendChild(el('p', { 'class': 'sc-hint', text: 'Gap rule, from the plan: ' + gap }));
-    }
-    if (also.length) {
-      const det = el('details', { 'class': 'sc-details', id: 'also-quiet' });
-      det.appendChild(el('summary', { text: 'also quiet · ' + also.length + ' more, no ticket' }));
-      const t = el('table', { 'class': 'sc-table sc-table--compact' });
-      t.appendChild(el('thead', null, el('tr', null, ['ticker', 'setups', 'close', 'quiet days', 'range'].map((h, i) => el('th', { scope: 'col', 'class': i >= 2 ? 'sc-num' : null, text: h })))));
-      t.appendChild(el('tbody', null, also.map((r) => el('tr', null, [el('th', { scope: 'row', text: r.ticker }), el('td', null, (r.setups || []).map((s) => chip(s, 'neutral', true))), el('td', { 'class': 'sc-num', text: usd(r.close) }), el('td', { 'class': 'sc-num', text: plain(r.quiet_days) }), el('td', { 'class': 'sc-num', text: plain(r.range_pct) + '%' })]))));
-      det.appendChild(el('div', { 'class': 'sc-table-scroll' }, t));
-      body.appendChild(det);
-    }
-  }
-
-  // ---------------------------------------------------------------- the scan
+  // ---------------------------------------------------------------- the scan, as a disclosure
   function signalCell(c, vetoed) {
     const tone = vetoed ? 'blocked' : !c ? null : c.pass ? (c.marginal ? 'caution' : 'good') : 'blocked';
     const glyph = vetoed ? '✕' : !c ? '—' : c.pass ? (c.marginal ? '~' : '✓') : '✕';
-    const word = vetoed ? 'veto' : !c ? 'not measured' : c.pass ? (c.marginal ? 'partial' : 'pass') : 'fail';
-    // the tile carries the verdict and the primary measurement; the full
-    // display, his threshold and the note sit on the tile's title
-    const primary = c ? String(c.display || '').split(' ')[0] : '';
-    const threshold = c ? String(c.threshold || '') : '';
+    const word = vetoed ? 'veto' : !c ? 'not measured' : c.pass ? (c.marginal ? 'partial' : 'pass') : (c.status === 'unmeasured' ? 'not measured' : c.marginal ? 'partial' : 'fail');
+    const primary = c ? String(c.display || '').split(' ')[0] : '', threshold = c ? String(c.threshold || '') : '';
     const cell = el('span', { 'class': 'sc-signal' + (tone ? ' sc-signal--' + tone : ''), title: c ? [c.display, threshold ? 'threshold: ' + threshold : '', c.note].filter(Boolean).join('\n') : null }, [
       el('span', { 'class': 'sc-signal__glyph', 'aria-hidden': 'true', text: glyph }),
       el('span', { 'class': 'sc-signal__label', text: word + (primary ? ' · ' + primary : '') }),
@@ -670,18 +1172,16 @@
     return el('td', null, cell);
   }
   function renderScan(data) {
-    const bursts = (data.bursts || []).slice(), trades = data.trades || [], body = clear($('scan-body'));
-    const run = data.run || {};
+    const bursts = (data.bursts || []).filter((b) => b && b.ticker), trades = data.trades || [], body = clear($('scan-body')), run = data.run || {};
     const nCriteria = bursts.length && bursts[0].quality && bursts[0].quality.checks ? bursts[0].quality.checks.length : Object.keys(CRITERIA_SHORT).length;
-    $('scan-lede').textContent = 'Every burst against Bonde’s ' + nCriteria + ' A-quality criteria: the measured value, his threshold, and the verdict in words.' + (isNum(run.bursts) && run.bursts > bursts.length ? ' ' + bursts.length + ' of the ' + num(run.bursts) + ' bursts found are archived with their checks.' : '');
+    $('scan-summary').textContent = 'Everything the scan found · ' + (bursts.length ? plural(bursts.length, 'burst') : 'no burst');
+    $('scan-lede').textContent = 'Every burst against Bonde’s ' + nCriteria + ' A-quality criteria: the measured value, his threshold, and the verdict in words. A name opens its card above.' + (isNum(run.bursts) && run.bursts > bursts.length ? ' ' + bursts.length + ' of the ' + num(run.bursts) + ' bursts found are archived with their checks.' : '');
     const cm = data.closest_miss;
     if (cm && cm.sentence && !trades.length) body.appendChild(el('aside', { 'class': 'sc-callout sc-callout--core', id: 'closest-miss' }, [el('div', { 'class': 'sc-callout__label', text: 'closest miss' }), el('p', { 'class': 'sc-callout__figure', text: cm.sentence })]));
     if (!bursts.length) { body.appendChild(empty('The scan found no burst.')); return; }
     const keys = Object.keys(CRITERIA_SHORT);
     const labels = {}; bursts.forEach((b) => ((b.quality || {}).checks || []).forEach((c) => { if (c && c.key && !labels[c.key]) labels[c.key] = c.label; }));
-    const det = el('details', { 'class': 'sc-details sc-disclosure', id: 'scan-details' });
-    det.appendChild(el('summary', { text: 'show all ' + bursts.length + ' bursts · sortable by score' }));
-    det.appendChild(el('p', { 'class': 'sc-hint', id: 'scan-help', text: 'Jump to a criterion or swipe across. Keyboard: focus the table and use the arrow keys. Hover a tile for every measurement, his full threshold and the note.' }));
+    body.appendChild(el('p', { 'class': 'sc-hint', id: 'scan-help', text: 'Jump to a criterion or swipe across. Keyboard: focus the table and use the arrow keys. Hover a tile for every measurement, his full threshold and the note.' }));
     const scroll = el('div', { 'class': 'sc-table-scroll', 'data-sc-matrix-nav': '', tabindex: '0', role: 'region', 'aria-label': 'Every burst against the ' + nCriteria + ' criteria', 'aria-describedby': 'scan-help' });
     const table = el('table', { 'class': 'sc-table sc-signal-matrix', id: 'scan-table' });
     table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Bursts found on ' + (run.session || '') + ' compared on Bonde’s ' + nCriteria + ' A-quality criteria. Green passes, amber is marginal, red fails or is vetoed, neutral was not measured.' }));
@@ -689,14 +1189,14 @@
     const sortTh = el('th', { scope: 'col', 'class': 'is-sortable', 'aria-sort': 'descending' }, sortBtn);
     table.appendChild(el('thead', null, el('tr', null, [el('th', { scope: 'col', text: 'burst' })].concat(keys.map((k) => el('th', { scope: 'col', 'data-sc-label': CRITERIA_SHORT[k], text: labels[k] || words(k) }))).concat([sortTh]))));
     const tbody = el('tbody');
-    const rowOf = {};
     bursts.forEach((b) => {
       const q = b.quality || {}, checks = {}; (q.checks || []).forEach((c) => { if (c && c.key) checks[c.key] = c; });
       const vetoes = q.vetoes || [];
       const tr = el('tr', { id: 'burst-' + b.ticker, 'data-ticker': b.ticker, 'data-score': isNum(b.score) ? String(b.score) : '' });
       const isTrade = trades.indexOf(b.ticker) >= 0;
-      tr.appendChild(el('th', { scope: 'row' }, [
-        isTrade ? el('a', { 'class': 'sc-signal-matrix__name', href: '#trade-' + b.ticker, text: b.ticker }) : el('span', { 'class': 'sc-signal-matrix__name', text: b.ticker }),
+      const name = el('button', { 'class': 'sc-signal-matrix__name', type: 'button', text: b.ticker, 'data-go': routeHash('bursts', 'bursts:' + b.ticker) });
+      name.addEventListener('click', () => { pendingFocus = 'detail'; state.gesture = true; navigate(name.getAttribute('data-go')); });
+      tr.appendChild(el('th', { scope: 'row' }, [name,
         el('span', { 'class': 'sc-signal-matrix__note', text: pct(b.gain_pct) + ' · ' + (isNum(b.volume_vs_prior) ? b.volume_vs_prior.toFixed(1) : '—') + '× vol · ' + usd(b.close) + (b.scan === 'dollar' ? ' · $ scan' : '') })
       ]));
       keys.forEach((k) => tr.appendChild(signalCell(checks[k], (k === 'two_days' && vetoes.indexOf('up_days') >= 0) || (k === 'linearity' && vetoes.indexOf('not_linear') >= 0))));
@@ -705,7 +1205,7 @@
       const gradeTone = b.grade === 'A+' || b.grade === 'A' ? 'brand' : 'neutral';
       tr.appendChild(el('td', { 'class': 'sc-signal-matrix__value' }, [chip((b.grade || '—') + (isNum(b.score) ? ' · ' + b.score.toFixed(1) : ''), gradeTone, true),
         el('span', { 'class': 'ss-grade-note', text: gradeNote + (b.claude && b.claude.source === 'claude' && b.claude.agree === false ? ' · Claude lowered it' : '') + (isTrade ? ' · trade' : '') })]));
-      tbody.appendChild(tr); rowOf[b.ticker] = tr;
+      tbody.appendChild(tr);
     });
     table.appendChild(tbody);
     let dir = 'descending';
@@ -721,18 +1221,37 @@
     sortBtn.addEventListener('click', () => { dir = dir === 'descending' ? 'ascending' : 'descending'; sort(); });
     sort();
     scroll.appendChild(table);
-    det.appendChild(scroll);
-    det.appendChild(el('p', { 'class': 'sc-hint', text: 'Green = passes his threshold. Amber = partial. Red = fails, or vetoed outright. A+ and A need the close near the high and no two up days in a row; the grade word is the verdict, the score its rank.' }));
-    body.appendChild(det);
-    // a link into the matrix opens the disclosure first
-    d.addEventListener('click', (e) => {
-      const a = e.target.closest && e.target.closest('a[data-matrix-link]');
-      if (a) det.open = true;
-    });
-    if (w.location.hash && /^#burst-/.test(w.location.hash) && rowOf[w.location.hash.slice(7)]) det.open = true;
+    body.appendChild(scroll);
+    body.appendChild(el('p', { 'class': 'sc-hint', text: 'Green = passes his threshold. Amber = partial. Red = fails, or vetoed outright. A+ and A need the close near the high and no two up days in a row; the grade word is the verdict, the score its rank.' }));
   }
 
-  // ---------------------------------------------------------------- record
+  // ---------------------------------------------------------------- the record view
+  function planRow(p, holdDays) {
+    const words_ = PLAN_STATUS[p.status] || [words(String(p.status || '—')).toUpperCase(), 'neutral'];
+    const row = el('article', { 'class': 'ss-plan', 'data-ticker': p.ticker, 'data-status': p.status || '' });
+    row.appendChild(el('div', { 'class': 'ss-plan__row' }, [
+      el('strong', { 'class': 'sc-case', text: p.ticker }), chip(words_[0], words_[1], true),
+      el('span', { 'class': 'ss-plan__meta', text: 'day ' + plain(p.day) + (isNum(holdDays) ? ' of ' + plain(holdDays) : '') + ' · picked ' + dateMD(p.picked) + ' · ' + num(p.shares) + ' sh' })
+    ]));
+    const t = p.targets || {}, stop = isNum(p.current_stop) ? p.current_stop : p.stop, aim = isNum(t.high) ? t.high : null;
+    // the bar runs from the stop to the aim; the entry marker is drawn only
+    // while the entry still sits above the stop (a trailed stop can pass it),
+    // and only for a plan the model walked from a known fill
+    if (WALKED.indexOf(p.status) >= 0 && isNum(p.last_close) && isNum(stop) && aim !== null && aim > stop && isNum(t.low) && isNum(p.entry_ref)) {
+      const pos = (v) => Math.max(0, Math.min(100, 100 * (v - stop) / (aim - stop)));
+      const entryAbove = p.entry_ref > stop;
+      const fig = el('figure', { 'class': 'sc-benchmark', style: '--sc-benchmark-position:' + pos(p.last_close).toFixed(1) + '%;' + (entryAbove ? '--sc-benchmark-reference:' + pos(p.entry_ref).toFixed(1) + '%;' : '') + '--sc-benchmark-band-start:' + pos(t.low).toFixed(1) + '%;--sc-benchmark-band-end:' + pos(t.high).toFixed(1) + '%' });
+      fig.appendChild(el('figcaption', { 'class': 'sc-benchmark__head' }, [el('span', { 'class': 'sc-benchmark__label', text: 'last close · ' + dateShort(p.last_date) }), el('strong', { 'class': 'sc-benchmark__value', text: usd(p.last_close) })]));
+      fig.appendChild(el('div', { 'class': 'sc-benchmark__track', 'aria-hidden': 'true' }, [el('span', { 'class': 'sc-benchmark__band' }), entryAbove ? el('span', { 'class': 'sc-benchmark__reference' }) : null, el('span', { 'class': 'sc-benchmark__point' })]));
+      const scale = [['stop', stop], ['entry', p.entry_ref], ['aim', aim]].sort((a, b) => a[1] - b[1]);
+      fig.appendChild(el('div', { 'class': 'sc-benchmark__scale', 'aria-hidden': 'true' }, scale.map((s) => el('span', { text: s[0] + ' ' + usd(s[1]) }))));
+      fig.appendChild(el('p', { 'class': 'sc-benchmark__note', text: pct(p.unrealised_pct, 2) + ' from the ' + usd(p.entry_ref) + ' entry · band ' + usd(t.low) + '–' + usd(t.high) + ' · stop ' + usd(stop) + (entryAbove ? '' : ' (the stop has been trailed above the entry)') }));
+      row.appendChild(fig);
+    }
+    row.appendChild(el('p', { 'class': 'sc-note ss-plan__instruction', text: p.instruction || '' }));
+    if (p.status === 'uncertain') row.appendChild(el('p', { 'class': 'sc-hint', text: 'Uncertain: the bars cannot establish this fill, so the model holds no position here and scores none; it keeps its slot in the model allocation.' }));
+    return row;
+  }
   function tile(label, value, sub) {
     return el('div', { 'class': 'sc-tile' }, [el('div', { 'class': 'sc-tile__label', text: label }), el('div', { 'class': 'sc-tile__value sc-tile__value--sm', text: value }), el('div', { 'class': 'sc-tile__sub', text: sub })]);
   }
@@ -740,15 +1259,18 @@
     const sc = data.scorecard || {}, card = clear($('record-card'));
     const settled = isNum(sc.settled) ? sc.settled : 0, minRead = sc.min_read, readable = sc.readable === true;
     card.appendChild(el('div', { 'class': 'sc-card__head' }, [
-      el('div', null, [el('h3', { text: 'The scorecard' }), el('p', { 'class': 'sc-hint', text: 'read from ' + plain(minRead) + ' settled plans: the rules’ record, not yours' + (readable ? '' : ' · ' + settled + ' settled so far, so nothing below is a rate yet') })]),
+      el('div', null, [el('h3', { text: 'The scorecard' }), el('p', { 'class': 'sc-hint', text: 'a model of the published plans’ fills, the rules’ record and not yours: rates from ' + plain(minRead) + ' settled plans, an uncertain fill in no rate' + (readable ? '' : ' · ' + settled + ' settled so far, so nothing below is a rate yet') })]),
       chip(readable ? 'readable' : 'not yet readable', readable ? 'good' : 'neutral')
     ]));
+    const uncertain = isNum(sc.uncertain) ? sc.uncertain : 0;
     card.appendChild(el('div', { 'class': 'sc-grid sc-grid--4' }, [
-      tile('plans', num(sc.plans), num(sc.settled) + ' settled · reads at ' + plain(minRead)),
-      tile('filled', num(sc.filled), 'at the next open, inside the zone'),
-      tile('win rate', isNum(sc.win_rate) ? (100 * sc.win_rate).toFixed(0) + '%' : '—', num(sc.wins) + ' wins · ' + num(sc.losses) + ' losses'),
-      tile('avg R', isNum(sc.avg_r) ? (sc.avg_r > 0 ? '+' : '') + sc.avg_r.toFixed(2) : '—', 'sum R ' + (isNum(sc.sum_r) ? (sc.sum_r > 0 ? '+' : '') + sc.sum_r.toFixed(1) : '—'))
+      tile('plans', num(sc.plans), num(sc.settled) + ' settled · ' + num(uncertain) + ' uncertain · reads at ' + plain(minRead)),
+      tile('filled', num(sc.filled), 'at the next open, at or over the trigger and at or under the limit'),
+      tile('win rate', isNum(sc.win_rate) ? (100 * sc.win_rate).toFixed(0) + '%' : '—', num(sc.wins) + ' wins · ' + num(sc.losses) + ' losses, settled plans only'),
+      tile('avg R', isNum(sc.avg_r) ? (sc.avg_r > 0 ? '+' : '') + sc.avg_r.toFixed(2) : '—', 'sum R ' + (isNum(sc.sum_r) ? (sc.sum_r > 0 ? '+' : '') + sc.sum_r.toFixed(1) : '—') + ' · sales weighted by whole shares')
     ]));
+    const reasons = (sc.uncertain_reasons || []).filter((r) => r && isNum(r.count) && r.words);
+    if (uncertain || reasons.length) card.appendChild(el('p', { 'class': 'sc-note', id: 'scorecard-uncertain', text: num(uncertain) + ' uncertain, in no rate: ' + (reasons.length ? reasons.map((r) => num(r.count) + ' ' + r.words).join('; ') : 'the bars could not establish the fill') + '.' }));
     card.appendChild(el('p', { 'class': 'sc-note', text: 'SPY over the same days: ' + pct(sc.spy_avg_pct, 2) + ' — one comparison line, not a benchmark. ' + (sc.note || '') }));
     // fourteen nights of reliability, from nights[]: ok, degraded, closed, missing
     const nights = {}; (data.nights || []).forEach((x) => { if (x && x.session) nights[x.session] = x; });
@@ -769,23 +1291,30 @@
       el('span', null, [el('i', { 'class': 'ss-night is-missing' }), (counts.missing + counts.failed) + ' missing'])
     ]));
   }
+  function renderRecordView(data) {
+    const rules = data.rules || {}, holdDays = (rules.plan || {}).final_exit_day, window = (rules.record || {}).open_plan_sessions;
+    const hold = clear($('hold-rows')), plans = data.open_plans || [], hint = $('hold-hint');
+    if (hint) hint.textContent = 'Model plans from the last ' + (isNum(window) ? plain(window) : 'five') + ' sessions, walked from daily bars by the published ticket’s own rules. SpicyStock does not know what you hold: if you took a plan, this is what its rules say next; if you did not, ignore its row. UNCERTAIN means the bars cannot say whether it filled.';
+    if (!plans.length) hold.appendChild(empty('No open model plans. Nothing was picked in the last ' + (isNum(window) ? plain(window) : 'five') + ' sessions.'));
+    plans.forEach((p) => { if (p && p.ticker) hold.appendChild(planRow(p, holdDays)); });
+    renderRecord(data);
+  }
 
   // ---------------------------------------------------------------- next
-  function nextAction(data, st) {
-    const bursts = by(data.bursts || [], 'ticker');
+  function nextAction(data, s) {
+    const bursts = by(data.bursts || []);
     const orders = (data.trades || []).map((t) => bursts[t]).filter((b) => b && b.plan && b.plan.order_json).length;
     const open = (data.open_plans || []).length, red = ((data.breadth || {}).regime || {}).verdict === 'red';
-    if (st.state === 'stale1' || st.state === 'stale2' || st.state === 'pending' || st.state === 'failed') {
-      return ['Do not place these orders.', 'Wait for tonight’s run to publish, or check the run log. Nothing on this page is tomorrow’s plan.', 'stale'];
-    }
-    if (st.state === 'closed') return ['Plans unchanged. Check what you hold before ' + ORDERS_BY + '.', 'The market was closed; there is nothing new to place.', 'closed'];
-    if (red) return ['No new longs. Work the exits above before ' + ORDERS_BY + '.', 'Breadth is red: tighten the stops and sell into strength.', 'red'];
-    if (orders) return ['Place the ' + orders + ' order' + (orders === 1 ? '' : 's') + ' above in Fidelity before ' + ORDERS_BY + '. Exits first.', 'Attach each sell stop the moment its buy fills.', 'orders'];
-    if (open) return ['Nothing new to place. Work the exits above before ' + ORDERS_BY + '.', 'No burst qualified tonight; the open plans still carry their instructions.', 'quiet'];
+    if (blocked(s)) return ['Do not place these orders.', 'Wait for tonight’s run to publish, or check the run log. Nothing on this page is tomorrow’s plan.', 'stale'];
+    const window = ((data.rules || {}).plan || {}).entry_window || 'entry window';
+    if (s.state === 'closed') return ['Plans unchanged. Check the open model plans before ' + ORDERS_BY + '.', 'The market was closed; there is nothing new to place.', 'closed'];
+    if (red) return ['No new longs. Work the exits in the record before ' + ORDERS_BY + '.', 'Breadth is red: tighten the stops and sell into strength.', 'red'];
+    if (orders) return ['Place the ' + plural(orders, 'order') + ' from tomorrow’s tickets in Fidelity before ' + ORDERS_BY + '. Exits first.', 'Attach each sell stop the moment its buy fills, and cancel any order that has not filled by the end of the ' + window + '.', 'orders'];
+    if (open) return ['Nothing new to place. Work the exits in the record before ' + ORDERS_BY + '.', 'No burst qualified with a ticket tonight; the open model plans still carry their instructions.', 'quiet'];
     return ['Nothing to place. Keep cash.', 'No burst qualified and nothing is held. Come back after the next run.', 'quiet'];
   }
-  function renderNext(data, st) {
-    const n = nextAction(data, st);
+  function renderNext(data, s) {
+    const n = nextAction(data, s);
     $('next-h3').textContent = n[0]; $('next-p').textContent = n[1];
     $('next').setAttribute('data-variant', n[2]);
   }
@@ -819,35 +1348,89 @@
       .catch(() => { /* the static link stands */ });
   }
 
-  // Under 720px the open-plans rail comes FIRST in the DOM, not just on
-  // screen: a phone reader (and a screen reader) meets "what do I do with
-  // what I hold" before "what do I buy". Desktop puts it back beside the cards.
-  const NARROW = '(max-width: 720px)';
-  function placeRail() {
-    const bento = d.querySelector('.ss-bento'); if (!bento) return;
-    const main = bento.querySelector('.sc-bento__main'), aside = bento.querySelector('.sc-bento__aside');
-    if (!main || !aside) return;
-    const narrow = w.matchMedia && w.matchMedia(NARROW).matches;
-    if (narrow && aside.nextElementSibling !== main) bento.insertBefore(aside, main);
-    else if (!narrow && main.nextElementSibling !== aside) bento.appendChild(aside);
+  // ---------------------------------------------------------------- the chooser
+  function fillChooser(q) {
+    const list = clear($('chooser-list')); let n = 0, first = null;
+    STAGES.forEach((s) => {
+      const items = model.stages[s].filter((c) => matches(c, q));
+      if (!items.length) return;
+      list.appendChild(el('div', { 'class': 'sc-eyebrow ss-chooser__group', text: STAGE_NAME[s].toLowerCase() + ' · ' + items.length }));
+      items.forEach((c) => {
+        n++;
+        const sw = statusWords(c.status);
+        const b = el('button', { 'class': 'ss-chooser__item', type: 'button', 'data-id': c.id, 'aria-pressed': state.selected[s] === c.id ? 'true' : 'false' }, [
+          el('b', { 'class': 'sc-case', text: c.ticker }), el('span', { text: pickReason(c) }), chip(sw[0], sw[1])
+        ]);
+        b.addEventListener('click', (e) => { e.preventDefault(); choose(c); });
+        if (!first) first = b;
+        list.appendChild(b);
+      });
+    });
+    $('chooser-status').textContent = n ? n + ' stock' + (n === 1 ? '' : 's') + (q ? ' match ‘' + q + '’' : ' in tonight’s record') + '; Enter chooses the first.' : 'No stock matching ‘' + q + '’ in tonight’s record.';
+    return first;
   }
-  if (w.matchMedia) { const mq = w.matchMedia(NARROW); if (mq.addEventListener) mq.addEventListener('change', placeRail); else if (mq.addListener) mq.addListener(placeRail); }
+  function openChooser() {
+    const dlg = $('chooser');
+    if (!dlg || !model) return;
+    chooserOpener = d.activeElement;
+    dlg.returnValue = '';
+    $('chooser-search').value = '';
+    fillChooser('');
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+    $('chooser-search').focus();
+  }
+  function choose(c) {
+    const dlg = $('chooser');
+    if (dlg.close) dlg.close('chosen'); else dlg.removeAttribute('open');
+    pendingFocus = 'detail'; state.gesture = true;
+    navigate(routeHash(c.stage, c.id));
+  }
+
+  // ---------------------------------------------------------------- wiring (once)
+  function wire() {
+    const input = $('search');
+    input.addEventListener('input', () => { state.query = input.value.trim().toUpperCase(); if (model && state.view === 'explore') renderPicks(); });
+    $('search-form').addEventListener('submit', (e) => { e.preventDefault(); if (!model) return; const q = input.value.trim().toUpperCase(); if (q) resolveSearch(q); });
+    $('pick-list').addEventListener('keydown', (e) => {
+      const picks = Array.from($('pick-list').querySelectorAll('.ss-pick')), i = picks.indexOf(d.activeElement);
+      if (i < 0) return;
+      let j;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') j = Math.min(picks.length - 1, i + 1);
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') j = Math.max(0, i - 1);
+      else if (e.key === 'Home') j = 0;
+      else if (e.key === 'End') j = picks.length - 1;
+      else return;
+      e.preventDefault();
+      picks[j].focus();
+    });
+    $('choose-open').addEventListener('click', openChooser);
+    const dlg = $('chooser'), cs = $('chooser-search');
+    cs.addEventListener('input', () => { fillChooser(cs.value.trim().toUpperCase()); });
+    cs.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); const first = $('chooser-list').querySelector('.ss-chooser__item'); if (first) first.click(); } });
+    dlg.addEventListener('close', () => { if (dlg.returnValue !== 'chosen') { const back = chooserOpener && chooserOpener.focus ? chooserOpener : $('choose-open'); back.focus(); } chooserOpener = null; });
+    dlg.addEventListener('click', (e) => { if (e.target === dlg && dlg.close) dlg.close('backdrop'); });
+    w.addEventListener('hashchange', () => applyRoute(parseHash(w.location.hash)));
+  }
 
   // ---------------------------------------------------------------- render
   function render(data, now) {
-    SCStock.data = data;
-    const st = status(data, now);
-    SCStock.state = st;
+    current = data; SCStock.data = data;
+    st = status(data, now); SCStock.state = st;
+    model = buildModel(data); SCStock.model = model;
+    state.stage = null; state.selected = { bursts: null, 'setting-up': null }; state.query = ''; state.picksKey = null; state.detailKey = null; state.notice = '';
+    $('search').value = '';
     renderStatus(data, st);
-    renderCover(data, st);
-    renderStrip(data);
+    renderMarketBar(data, st);
+    renderMethod(data);
     renderBreadth(data);
-    renderTomorrow(data, st);
-    renderAlerts(data);
+    buildStages();
+    buildDatalist();
+    renderTickets(data);
     renderScan(data);
-    renderRecord(data);
+    renderRecordView(data);
     renderNext(data, st);
     renderFooter(data);
+    applyRoute(parseHash(w.location.hash), true);
     d.title = 'SpicyStock · ' + ((data.cover || {}).h1 || 'no verdict');
     if (w.SC && w.SC.reading && w.SC.reading.refresh) { try { w.SC.reading.refresh(); } catch (e) { /* optional */ } }
     d.documentElement.setAttribute('data-ss-rendered', st.state);
@@ -862,9 +1445,19 @@
     clear($('status-slot')).appendChild(chip('no record', 'danger'));
     $('next-h3').textContent = 'Do not place any order from this page.';
     $('next-p').textContent = 'docs/data.json did not load; check the run log.';
+    clear($('stages')).appendChild(el('div', { 'class': 'ss-picks__empty', 'data-empty': 'record', text: 'No record loaded: there are no stages to choose from.' }));
+    clear($('pick-list')).appendChild(el('div', { 'class': 'ss-picks__empty', 'data-empty': 'record', text: 'No record, no stocks.' }));
+    clear($('detail')).appendChild(el('div', { 'class': 'ss-chart-empty', 'data-detail': 'error' }, [el('strong', { text: 'No record. ' }), 'The page could not read docs/data.json, so there is nothing to explore. Check the run log; do not place any order from this page.']));
+    $('picks-status').textContent = 'No record loaded.';
+    $('orders-summary').textContent = 'Tomorrow’s tickets · none';
+    $('scan-summary').textContent = 'Everything the scan found · no record';
+    clear($('hold-rows')).appendChild(empty('No record loaded.'));
+    clear($('record-card')).appendChild(empty('No record loaded.'));
+    applyRoute(parseHash(w.location.hash), true);
     d.documentElement.setAttribute('data-ss-rendered', 'error');
   }
   function boot() {
+    wire();
     const src = (w.SCStock && w.SCStock.dataUrl) || 'data.json';
     w.fetch(src, { cache: 'no-store' })
       .then((r) => { if (!r.ok) throw new Error('data.json answered ' + r.status); return r.json(); })

@@ -75,7 +75,13 @@ and 4% the risk is halved (P). Next-morning entry only if not extended (B):
 a buy zone from 2% under the burst close to 4% above it (P), a skip at +8%
 (B: the level at which he sells half). The order is a buy stop-limit with an
 attached stop-market loss (B: "if they reverse then get stopped out"; stop
-type per Qullamaggie "market stops, never limit stops"). Exits (B, 2018):
+type per Qullamaggie "market stops, never limit stops"). The ticket's shares,
+its stop distance and the halving are judged at its limit, the highest fill
+it permits (P): a fixed quantity that keeps the budget and the 4% line at
+every fill it can take, or no ticket. His 4% is measured from his own fill;
+at a +4% ceiling that reading withholds any burst whose usable stop sits
+more than about 0.16% under the close, which is most of them -- an
+implementation choice, recorded as an open question, not his number. Exits (B, 2018):
 +8% same or next day → sell half and raise the stop under that day's high;
 10%+ abnormal day → partial; 20%+ gap after entry → out at the open; day 3
 close → sell at least half; no progress by day 3 → out; after day 3 trail the
@@ -111,10 +117,15 @@ per-post URLs, his bootcamp notes on GitHub, and search-engine snippets. The
 
 ## The record (`src/record.py`)
 
-Every published plan is kept (`docs/picks.json`) and replayed from bars alone
-(P): a burst ticket fills at the next open inside its zone or at the trigger
-when the day trades through it, an anticipation ticket at its trigger; the
-published stop is one R; a half sold at +8% or at day 3 is half the
-position; everything settles by day 5 (B, the hold). The scorecard prints
-counts from the first night and rates only from twenty settled plans (P),
-with SPY over the same days as one comparison line, not a benchmark (P).
+Every published plan is kept (`docs/picks.json`) and replayed from daily bars
+alone as a model (P): a ticket is booked filled only at the next open, at or
+over its trigger and at or under its limit. A day that reached the trigger
+after the open, an open past the limit or under the skip line that could
+still have filled a resting order, and a fill-day low under the stop are
+uncertain -- no fill, no R, counted by reason -- because a daily bar cannot
+give the crossing time the first-30-minute entry (B) needs, nor the order of
+a fill and a low. The published stop is one R on the whole position; "at
+least half" is whole shares (2 of 3, 1 of 1) and every sale is weighted by
+the shares it sold; everything settles by day 5 (B, the hold). The scorecard
+prints counts from the first night and rates only from twenty settled plans
+(P), with SPY over the same days as one comparison line, not a benchmark (P).

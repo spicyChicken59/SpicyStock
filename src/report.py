@@ -81,7 +81,7 @@ H1_FAILED = "No verdict for {expected}."
 
 VERBS: tuple[str, ...] = ("trade", "trade small", "stand aside", "keep cash", "hold", "none")
 ORDERS_ACTION = ("Tomorrow's orders", "#orders")
-HOLD_ACTION = ("What you hold", "#hold")
+HOLD_ACTION = ("Open model plans", "#hold")
 
 #: What the regime's size multiplier says in words. Read off the published
 #: number, never off the verdict, so a moved multiplier moves the sentence.
@@ -89,12 +89,13 @@ SIZE_WORDS: dict[float, str] = {1.0: "Full size.", 0.5: "Half size.", 0.0: "No n
 
 #: The chip word for an open plan's status. An unknown word is printed as
 #: itself, upper-cased, rather than mapped onto the nearest known one.
-#: One word per status src.record can write; docs/app.js prints the same ten
-#: (tests/test_docs.py holds the two equal).
+#: One word per status src.record can write; docs/app.js prints the same
+#: eleven (tests/test_docs.py holds the two equal). UNCERTAIN is a fill the
+#: bars cannot establish: not held, not out, not freed.
 PLAN_STATUS_WORDS: dict[str, str] = {
     "hold": "HOLD", "sell_half": "SELL HALF", "sell_into_strength": "SELL INTO STRENGTH",
     "exit": "SELL", "stopped": "STOPPED", "expired": "EXPIRED", "pending": "PENDING",
-    "not_filled": "NOT FILLED", "unreadable": "UNREADABLE", "unmeasured": "UNMEASURED",
+    "not_filled": "NOT FILLED", "uncertain": "UNCERTAIN", "unreadable": "UNREADABLE", "unmeasured": "UNMEASURED",
 }
 
 CLOSED_SUBJECT = "Market closed — plans unchanged"
@@ -115,7 +116,8 @@ CONTRACT: dict[str, str] = {
            "page prints one fixed sentence per kind), coverage, counts, email state, timings. run.sanitised "
            "counts the non-finite numbers replaced with null on the way in.",
     "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
-    "account": "The sizing inputs every plan below was computed from. Not a balance.",
+    "account": "The configured sizing assumptions every plan below was computed from: equity, risk per "
+               "trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
     "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",
     "breadth": "The Market Monitor for the session and the regime verdict with its reasons verbatim. "
                "The size multiplier is the regime's; the plans already carry it.",
@@ -124,13 +126,19 @@ CONTRACT: dict[str, str] = {
               "a burst is here; a name that never burst is not.",
     "trades": "Tickers of the bursts to trade tomorrow, ranked; those with order lines first. On a red "
               "regime this is empty whatever the grades say.",
-    "beyond_cap": "Tickers that qualified and got no order line because the slots were full. Not refusals.",
-    "cash_budget": "What tomorrow's orders commit, the slots used, and what was cut and why.",
+    "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the "
+                  "limit, past the slots or the configured equity, or sized to no whole share. Each has a "
+                  "reason in cash_budget.cut. Not checklist refusals.",
+    "cash_budget": "Model allocation: what tomorrow's tickets would commit against the configured equity, the "
+                   "model slots used (open model plans count), and every plan without a ticket with its kind "
+                   "and reason. Never a balance or buying power.",
     "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
-    "open_plans": "Every published plan still inside its window, replayed to this session: status word and "
-                  "the instruction sentence. A plan you never bought is a row to ignore.",
-    "scorecard": "The rules' record over the published plans, always with n and the read threshold. "
-                 "The rules' record, not yours. Null until a plan has settled.",
+    "open_plans": "Every published plan still inside its window, replayed to this session as a model: status "
+                  "word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not "
+                  "know what you hold: a plan you never took is a row to ignore.",
+    "scorecard": "The rules' record over the published plans as a model of their fills, always with n, the "
+                 "read threshold and the uncertain count by reason. Rates are over settled plans alone. The "
+                 "rules' record, not yours. Null until a plan has settled.",
     "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows "
                     "it when trades is empty. Null when every burst is a trade or there were none.",
     "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused.",
@@ -288,10 +296,19 @@ def breadth_sentence(breadth: Any) -> str:
 
 
 def no_trade_sentence(bursts: Any, closest_miss: Any) -> str:
-    """"14 bursts found, none A-quality. The closest miss is below.\""""
-    n = len(bursts) if isinstance(bursts, list) else 0
+    """"14 bursts found, none A-quality. The closest miss is below." -- or,
+    when a burst qualified and its ticket did not, "14 bursts found, 2 with
+    a qualifying setup and no ticket; each card says why." A qualifying
+    setup is a burst that carries a plan (the run plans admitted grades
+    only); its ticket was withheld by the stop rule, or cut."""
+    rows = bursts if isinstance(bursts, list) else []
+    n = len(rows)
+    planned = sum(1 for b in rows if isinstance(b, dict) and isinstance(b.get("plan"), dict))
     if n == 0:
         head = "No bursts found."
+    elif planned:
+        head = (f"{n} {_plural(n, 'burst')} found, {planned} with a qualifying setup and no ticket "
+                f"(withheld by the stop rule at the limit, or cut); each card says why.")
     elif n == 1:
         head = "1 burst found, not A-quality."
     else:
@@ -318,7 +335,7 @@ def cover(run: dict, breadth: dict | None, trades: list, bursts: list,
     session = _text(run.get("session"))
     problems = problem_sentences(run.get("problems"))
     if run.get("status") == "failed":
-        dek = "The evening run stopped before it published a plan. What you hold is unchanged."
+        dek = "The evening run stopped before it published a plan. The open model plans are unchanged."
         if problems:
             dek += " " + problems[0]
         return _cover(H1_FAILED.format(expected=expected), dek, HOLD_ACTION, "none")
@@ -706,7 +723,7 @@ _CHIP_TONES = {
 }
 _GRADE_TONE = {"A+": "good", "A": "good", "B": "brand", "C": "neutral", "skip": "neutral"}
 _STATUS_TONE = {"HOLD": "brand", "SELL HALF": "spice", "SELL INTO STRENGTH": "spice", "SELL": "danger",
-                "STOPPED": "danger", "EXPIRED": "neutral", "NOT FILLED": "neutral"}
+                "STOPPED": "danger", "EXPIRED": "neutral", "NOT FILLED": "neutral", "UNCERTAIN": "spice"}
 
 
 def _chip(text: str, tone: str = "brand", code: bool = True) -> str:
@@ -747,6 +764,12 @@ def _trade_block(burst: dict, breadth: dict | None) -> str:
              f'<p style="margin:8px 0 0">{" · ".join(facts)}</p>']
     if order:
         parts.append(f'<pre style="{_S_PRE}">{esc(order)}</pre>')
+    sizing_note = _text(plan.get("sizing_note"))
+    if sizing_note:
+        parts.append(f'<p style="{_S_MUTED}">{esc(sizing_note)}.</p>')
+    terms = [t for t in (plan.get("order_terms") or []) if _text(t)] if isinstance(plan.get("order_terms"), list) else []
+    if terms:
+        parts.append(f'<p style="{_S_MUTED}">{esc(terms[0])}</p>')
     parts.append(f'<p style="{_S_MUTED}">{esc(burst.get("summary") or summary(burst))}</p>')
     if reason:
         parts.append(f'<p style="{_S_MUTED}">Why: {esc(reason)}</p>')
@@ -790,6 +813,18 @@ def _alert_row(row: dict) -> str:
     return (f'<div style="{_S_CARD}"><div><span style="{_S_TICKER}">{esc(row.get("ticker"))}</span>'
             + (f" &nbsp;{chips}" if chips else "")
             + f'</div><p style="margin:8px 0 0">{" · ".join(facts)}</p>' + ticket + "</div>")
+
+
+def _no_ticket_lines(data: dict) -> list[str]:
+    """One line per A-quality plan without a ticket, with the budget's
+    reason: withheld by the stop rule, past the slots or the equity, or
+    sized to no whole share."""
+    beyond = [t for t in data.get("beyond_cap", []) if _text(str(t))] if isinstance(data.get("beyond_cap"), list) else []
+    if not beyond:
+        return []
+    reasons = {c.get("ticker"): _text(c.get("reason")) for c in (_get(data, "cash_budget", "cut") or [])
+               if isinstance(c, dict)}
+    return [f'<p style="{_S_MUTED}">No ticket for {esc(t)}: {esc(reasons.get(t) or "see the page")}.</p>' for t in beyond]
 
 
 def _problems_block(problems: Any) -> str:
@@ -855,25 +890,31 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
     out.append(f'<h2 style="{_S_H2}">Tomorrow\'s orders</h2>')
     if trades:
         out.extend(_trade_block(b, data.get("breadth")) for b in trades)
-        beyond = [t for t in data.get("beyond_cap", []) if _text(str(t))] if isinstance(data.get("beyond_cap"), list) else []
-        if beyond:
-            out.append(f'<p style="{_S_MUTED}">Beyond the slot cap: {esc(", ".join(str(t) for t in beyond))}.</p>')
-        committed, equity = _money(_get(data, "cash_budget", "committed_usd")), _money(_get(data, "account", "equity"))
-        used, slots = _int(_get(data, "cash_budget", "slots_used")), _int(_get(data, "cash_budget", "slots_max"))
-        budget = []
-        if committed and equity:
-            budget.append(f"Tomorrow's orders commit {committed} of {equity}")
-        if used is not None and slots is not None:
-            budget.append(f"{used} of {slots} slots")
-        if budget:
-            out.append(f'<p style="{_S_MUTED}">{esc(" · ".join(budget))}.</p>')
     else:
         out.append(f'<p style="margin:0 0 12px">No orders for tomorrow.</p>')
-    out.append(f'<h2 style="{_S_H2}">What you hold</h2>')
+    out.extend(_no_ticket_lines(data))
+    if trades:
+        sentence = _text(_get(data, "cash_budget", "sentence"))
+        if sentence is None:
+            committed, equity = _money(_get(data, "cash_budget", "committed_usd")), _money(_get(data, "account", "equity"))
+            used, slots = _int(_get(data, "cash_budget", "slots_used")), _int(_get(data, "cash_budget", "slots_max"))
+            budget = []
+            if committed and equity:
+                budget.append(f"Model allocation: tomorrow's tickets would commit {committed} of the configured {equity}")
+            if used is not None and slots is not None:
+                budget.append(f"{used} of {slots} slots")
+            sentence = " · ".join(budget) if budget else None
+        if sentence:
+            out.append(f'<p style="{_S_MUTED}">{esc(sentence)}. Not a balance or buying power.</p>')
+    out.append(f'<h2 style="{_S_H2}">Open model plans</h2>')
     hold_days = _get(data, "rules", "plan", "final_exit_day")
+    if open_plans:
+        out.append(f'<p style="{_S_MUTED}">Walked from daily bars by the published ticket\'s own rules; SpicyStock '
+                   f'does not know what you hold. If you took a plan, this is what its rules say next.</p>')
     out.extend(_open_plan_row(p, hold_days) for p in open_plans)
     if not open_plans:
-        out.append('<p style="margin:0 0 12px">No open plans. If you hold nothing from this screener, nothing to do.</p>')
+        out.append('<p style="margin:0 0 12px">No open model plans. SpicyStock does not know what you hold; '
+                   'if you hold nothing from this screener, nothing to do.</p>')
     out.append(f'<h2 style="{_S_H2}">Alerts — set these before the open</h2>')
     out.extend(_alert_row(r) for r in alerts)
     if not alerts:
@@ -897,8 +938,8 @@ def failure_html(run_type: str, problems: list[dict], expected: str) -> str:
         f'<p style="{_S_EYEBROW}"><span style="{_S_EYEBROW_SLASH}">// </span>spicystock · {esc(run_type)} run</p>',
         f'<div style="{_S_INK}"><p style="{_S_INK_LABEL}">// tonight\'s verdict</p>'
         f'<h1 style="{_S_H1}">{esc(H1_FAILED.format(expected=expected))}</h1>'
-        f'<p style="margin:0">The {esc(run_type)} run stopped before it published a plan. What you hold is '
-        f'unchanged: keep the stops from the last plan you acted on.</p></div>',
+        f'<p style="margin:0">The {esc(run_type)} run stopped before it published a plan. The open model plans '
+        f'are unchanged: if you hold one, keep the stops from the last plan you acted on.</p></div>',
         _problems_block(problems) or f'<p style="margin:0 0 12px">No problem was recorded before it stopped.</p>',
         f'<p style="margin:16px 0 0">The last published plan: '
         f'<a href="{esc(PAGE_URL)}" style="{_S_LINK}">{esc(PAGE_URL)}</a></p></div>',

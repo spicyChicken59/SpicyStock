@@ -11,9 +11,9 @@
    "entry_low": 27.68,
    "entry_high": 29.37,
    "trigger": null,
-   "limit": null,
+   "limit": 29.37,
    "stop": 27.11,
-   "shares": 87,
+   "shares": 21,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -26,7 +26,7 @@
    "order_json": {
     "symbol": "UBER",
     "action": "buy",
-    "quantity": 87,
+    "quantity": 21,
     "order_type": "stop_limit",
     "stop_price": 28.24,
     "limit_price": 29.37,
@@ -34,9 +34,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 87,
+     "quantity": 21,
      "order_type": "stop",
-     "stop_price": 28.11,
+     "stop_price": 27.11,
      "time_in_force": "gtc"
     }
    },
@@ -52,9 +52,9 @@
    "entry_low": 23.38,
    "entry_high": 24.81,
    "trigger": null,
-   "limit": null,
+   "limit": 24.81,
    "stop": 22.91,
-   "shares": 103,
+   "shares": 25,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -67,7 +67,7 @@
    "order_json": {
     "symbol": "TOST",
     "action": "buy",
-    "quantity": 103,
+    "quantity": 25,
     "order_type": "stop_limit",
     "stop_price": 23.86,
     "limit_price": 24.81,
@@ -75,9 +75,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 103,
+     "quantity": 25,
      "order_type": "stop",
-     "stop_price": 23.66,
+     "stop_price": 22.91,
      "time_in_force": "gtc"
     }
    },
@@ -93,9 +93,9 @@
    "entry_low": 24.2,
    "entry_high": 25.68,
    "trigger": null,
-   "limit": null,
+   "limit": 25.68,
    "stop": 23.7,
-   "shares": 100,
+   "shares": 48,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -108,7 +108,7 @@
    "order_json": {
     "symbol": "SMCI",
     "action": "buy",
-    "quantity": 100,
+    "quantity": 48,
     "order_type": "stop_limit",
     "stop_price": 24.69,
     "limit_price": 25.68,
@@ -116,9 +116,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 100,
+     "quantity": 48,
      "order_type": "stop",
-     "stop_price": 24.55,
+     "stop_price": 23.7,
      "time_in_force": "gtc"
     }
    },
@@ -134,9 +134,9 @@
    "entry_low": 27.74,
    "entry_high": 29.44,
    "trigger": null,
-   "limit": null,
+   "limit": 29.44,
    "stop": 27.18,
-   "shares": 87,
+   "shares": 21,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -149,7 +149,7 @@
    "order_json": {
     "symbol": "RKLB",
     "action": "buy",
-    "quantity": 87,
+    "quantity": 21,
     "order_type": "stop_limit",
     "stop_price": 28.31,
     "limit_price": 29.44,
@@ -157,9 +157,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 87,
+     "quantity": 21,
      "order_type": "stop",
-     "stop_price": 28.13,
+     "stop_price": 27.18,
      "time_in_force": "gtc"
     }
    },
@@ -175,9 +175,9 @@
    "entry_low": 25.01,
    "entry_high": 26.54,
    "trigger": null,
-   "limit": null,
+   "limit": 26.54,
    "stop": 24.5,
-   "shares": 96,
+   "shares": 23,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -190,7 +190,7 @@
    "order_json": {
     "symbol": "QTWO",
     "action": "buy",
-    "quantity": 96,
+    "quantity": 23,
     "order_type": "stop_limit",
     "stop_price": 25.52,
     "limit_price": 26.54,
@@ -198,9 +198,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 96,
+     "quantity": 23,
      "order_type": "stop",
-     "stop_price": 25.38,
+     "stop_price": 24.5,
      "time_in_force": "gtc"
     }
    },
@@ -216,9 +216,9 @@
    "entry_low": 26.62,
    "entry_high": 28.25,
    "trigger": null,
-   "limit": null,
+   "limit": 28.25,
    "stop": 26.07,
-   "shares": 91,
+   "shares": 22,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -231,7 +231,7 @@
    "order_json": {
     "symbol": "PLTR",
     "action": "buy",
-    "quantity": 91,
+    "quantity": 22,
     "order_type": "stop_limit",
     "stop_price": 27.16,
     "limit_price": 28.25,
@@ -239,9 +239,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 91,
+     "quantity": 22,
      "order_type": "stop",
-     "stop_price": 26.99,
+     "stop_price": 26.07,
      "time_in_force": "gtc"
     }
    },
@@ -257,9 +257,9 @@
    "entry_low": 20.7,
    "entry_high": 21.96,
    "trigger": null,
-   "limit": null,
+   "limit": 21.96,
    "stop": 20.28,
-   "shares": 117,
+   "shares": 56,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -272,7 +272,7 @@
    "order_json": {
     "symbol": "ONTO",
     "action": "buy",
-    "quantity": 117,
+    "quantity": 56,
     "order_type": "stop_limit",
     "stop_price": 21.12,
     "limit_price": 21.96,
@@ -280,9 +280,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 117,
+     "quantity": 56,
      "order_type": "stop",
-     "stop_price": 21.0,
+     "stop_price": 20.28,
      "time_in_force": "gtc"
     }
    },
@@ -298,9 +298,9 @@
    "entry_low": 23.88,
    "entry_high": 25.34,
    "trigger": null,
-   "limit": null,
+   "limit": 25.34,
    "stop": 23.4,
-   "shares": 101,
+   "shares": 24,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -313,7 +313,7 @@
    "order_json": {
     "symbol": "NBIS",
     "action": "buy",
-    "quantity": 101,
+    "quantity": 24,
     "order_type": "stop_limit",
     "stop_price": 24.37,
     "limit_price": 25.34,
@@ -321,9 +321,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 101,
+     "quantity": 24,
      "order_type": "stop",
-     "stop_price": 24.27,
+     "stop_price": 23.4,
      "time_in_force": "gtc"
     }
    },
@@ -339,9 +339,9 @@
    "entry_low": 26.7,
    "entry_high": 28.34,
    "trigger": null,
-   "limit": null,
+   "limit": 28.34,
    "stop": 26.16,
-   "shares": 90,
+   "shares": 22,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -354,7 +354,7 @@
    "order_json": {
     "symbol": "MU",
     "action": "buy",
-    "quantity": 90,
+    "quantity": 22,
     "order_type": "stop_limit",
     "stop_price": 27.25,
     "limit_price": 28.34,
@@ -362,9 +362,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 90,
+     "quantity": 22,
      "order_type": "stop",
-     "stop_price": 27.01,
+     "stop_price": 26.16,
      "time_in_force": "gtc"
     }
    },
@@ -380,9 +380,9 @@
    "entry_low": 21.25,
    "entry_high": 22.55,
    "trigger": null,
-   "limit": null,
+   "limit": 22.55,
    "stop": 20.81,
-   "shares": 114,
+   "shares": 27,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -395,7 +395,7 @@
    "order_json": {
     "symbol": "LITE",
     "action": "buy",
-    "quantity": 114,
+    "quantity": 27,
     "order_type": "stop_limit",
     "stop_price": 21.68,
     "limit_price": 22.55,
@@ -403,9 +403,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 114,
+     "quantity": 27,
      "order_type": "stop",
-     "stop_price": 21.59,
+     "stop_price": 20.81,
      "time_in_force": "gtc"
     }
    },
@@ -421,9 +421,9 @@
    "entry_low": 24.37,
    "entry_high": 25.86,
    "trigger": null,
-   "limit": null,
+   "limit": 25.86,
    "stop": 23.88,
-   "shares": 99,
+   "shares": 24,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -436,7 +436,7 @@
    "order_json": {
     "symbol": "KTOS",
     "action": "buy",
-    "quantity": 99,
+    "quantity": 24,
     "order_type": "stop_limit",
     "stop_price": 24.87,
     "limit_price": 25.86,
@@ -444,9 +444,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 99,
+     "quantity": 24,
      "order_type": "stop",
-     "stop_price": 24.67,
+     "stop_price": 23.88,
      "time_in_force": "gtc"
     }
    },
@@ -462,9 +462,9 @@
    "entry_low": 28.16,
    "entry_high": 29.88,
    "trigger": null,
-   "limit": null,
+   "limit": 29.88,
    "stop": 27.58,
-   "shares": 86,
+   "shares": 41,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -477,7 +477,7 @@
    "order_json": {
     "symbol": "JBL",
     "action": "buy",
-    "quantity": 86,
+    "quantity": 41,
     "order_type": "stop_limit",
     "stop_price": 28.73,
     "limit_price": 29.88,
@@ -485,9 +485,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 86,
+     "quantity": 41,
      "order_type": "stop",
-     "stop_price": 28.54,
+     "stop_price": 27.58,
      "time_in_force": "gtc"
     }
    },
@@ -503,9 +503,9 @@
    "entry_low": 24.85,
    "entry_high": 26.37,
    "trigger": null,
-   "limit": null,
+   "limit": 26.37,
    "stop": 24.35,
-   "shares": 97,
+   "shares": 23,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -518,7 +518,7 @@
    "order_json": {
     "symbol": "IONQ",
     "action": "buy",
-    "quantity": 97,
+    "quantity": 23,
     "order_type": "stop_limit",
     "stop_price": 25.36,
     "limit_price": 26.37,
@@ -526,9 +526,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 97,
+     "quantity": 23,
      "order_type": "stop",
-     "stop_price": 25.23,
+     "stop_price": 24.35,
      "time_in_force": "gtc"
     }
    },
@@ -544,9 +544,9 @@
    "entry_low": 24.83,
    "entry_high": 26.35,
    "trigger": null,
-   "limit": null,
+   "limit": 26.35,
    "stop": 24.33,
-   "shares": 97,
+   "shares": 23,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -559,7 +559,7 @@
    "order_json": {
     "symbol": "HOOD",
     "action": "buy",
-    "quantity": 97,
+    "quantity": 23,
     "order_type": "stop_limit",
     "stop_price": 25.34,
     "limit_price": 26.35,
@@ -567,9 +567,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 97,
+     "quantity": 23,
      "order_type": "stop",
-     "stop_price": 25.08,
+     "stop_price": 24.33,
      "time_in_force": "gtc"
     }
    },
@@ -585,9 +585,9 @@
    "entry_low": 27.62,
    "entry_high": 29.31,
    "trigger": null,
-   "limit": null,
+   "limit": 29.31,
    "stop": 27.05,
-   "shares": 87,
+   "shares": 21,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -600,7 +600,7 @@
    "order_json": {
     "symbol": "GLW",
     "action": "buy",
-    "quantity": 87,
+    "quantity": 21,
     "order_type": "stop_limit",
     "stop_price": 28.18,
     "limit_price": 29.31,
@@ -608,9 +608,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 87,
+     "quantity": 21,
      "order_type": "stop",
-     "stop_price": 27.96,
+     "stop_price": 27.05,
      "time_in_force": "gtc"
     }
    },
@@ -626,9 +626,9 @@
    "entry_low": 26.44,
    "entry_high": 28.06,
    "trigger": null,
-   "limit": null,
+   "limit": 28.06,
    "stop": 25.9,
-   "shares": 91,
+   "shares": 22,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -641,7 +641,7 @@
    "order_json": {
     "symbol": "FIX",
     "action": "buy",
-    "quantity": 91,
+    "quantity": 22,
     "order_type": "stop_limit",
     "stop_price": 26.98,
     "limit_price": 28.06,
@@ -649,9 +649,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 91,
+     "quantity": 22,
      "order_type": "stop",
-     "stop_price": 26.82,
+     "stop_price": 25.9,
      "time_in_force": "gtc"
     }
    },
@@ -667,9 +667,9 @@
    "entry_low": 21.36,
    "entry_high": 22.67,
    "trigger": null,
-   "limit": null,
+   "limit": 22.67,
    "stop": 20.93,
-   "shares": 113,
+   "shares": 28,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -682,7 +682,7 @@
    "order_json": {
     "symbol": "ELF",
     "action": "buy",
-    "quantity": 113,
+    "quantity": 28,
     "order_type": "stop_limit",
     "stop_price": 21.8,
     "limit_price": 22.67,
@@ -690,9 +690,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 113,
+     "quantity": 28,
      "order_type": "stop",
-     "stop_price": 21.72,
+     "stop_price": 20.93,
      "time_in_force": "gtc"
     }
    },
@@ -708,9 +708,9 @@
    "entry_low": 26.85,
    "entry_high": 28.5,
    "trigger": null,
-   "limit": null,
+   "limit": 28.5,
    "stop": 26.3,
-   "shares": 90,
+   "shares": 22,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -723,7 +723,7 @@
    "order_json": {
     "symbol": "DELL",
     "action": "buy",
-    "quantity": 90,
+    "quantity": 22,
     "order_type": "stop_limit",
     "stop_price": 27.4,
     "limit_price": 28.5,
@@ -731,9 +731,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 90,
+     "quantity": 22,
      "order_type": "stop",
-     "stop_price": 27.23,
+     "stop_price": 26.3,
      "time_in_force": "gtc"
     }
    },
@@ -749,9 +749,9 @@
    "entry_low": 29.83,
    "entry_high": 31.66,
    "trigger": null,
-   "limit": null,
+   "limit": 31.66,
    "stop": 29.22,
-   "shares": 81,
+   "shares": 39,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -764,7 +764,7 @@
    "order_json": {
     "symbol": "CRDO",
     "action": "buy",
-    "quantity": 81,
+    "quantity": 39,
     "order_type": "stop_limit",
     "stop_price": 30.44,
     "limit_price": 31.66,
@@ -772,9 +772,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 81,
+     "quantity": 39,
      "order_type": "stop",
-     "stop_price": 30.19,
+     "stop_price": 29.22,
      "time_in_force": "gtc"
     }
    },
@@ -790,9 +790,9 @@
    "entry_low": 28.56,
    "entry_high": 30.31,
    "trigger": null,
-   "limit": null,
+   "limit": 30.31,
    "stop": 27.97,
-   "shares": 84,
+   "shares": 20,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -805,7 +805,7 @@
    "order_json": {
     "symbol": "ANET",
     "action": "buy",
-    "quantity": 84,
+    "quantity": 20,
     "order_type": "stop_limit",
     "stop_price": 29.14,
     "limit_price": 30.31,
@@ -813,9 +813,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 84,
+     "quantity": 20,
      "order_type": "stop",
-     "stop_price": 28.87,
+     "stop_price": 27.97,
      "time_in_force": "gtc"
     }
    },
@@ -831,9 +831,9 @@
    "entry_low": 28.13,
    "entry_high": 29.85,
    "trigger": null,
-   "limit": null,
+   "limit": 29.85,
    "stop": 27.55,
-   "shares": 86,
+   "shares": 21,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -846,7 +846,7 @@
    "order_json": {
     "symbol": "ZS",
     "action": "buy",
-    "quantity": 86,
+    "quantity": 21,
     "order_type": "stop_limit",
     "stop_price": 28.7,
     "limit_price": 29.85,
@@ -854,9 +854,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 86,
+     "quantity": 21,
      "order_type": "stop",
-     "stop_price": 28.46,
+     "stop_price": 27.55,
      "time_in_force": "gtc"
     }
    },
@@ -872,9 +872,9 @@
    "entry_low": 43.54,
    "entry_high": 46.21,
    "trigger": null,
-   "limit": null,
+   "limit": 46.21,
    "stop": 42.65,
-   "shares": 55,
+   "shares": 13,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -887,7 +887,7 @@
    "order_json": {
     "symbol": "XPEV",
     "action": "buy",
-    "quantity": 55,
+    "quantity": 13,
     "order_type": "stop_limit",
     "stop_price": 44.43,
     "limit_price": 46.21,
@@ -895,9 +895,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 55,
+     "quantity": 13,
      "order_type": "stop",
-     "stop_price": 44.19,
+     "stop_price": 42.65,
      "time_in_force": "gtc"
     }
    },
@@ -913,9 +913,9 @@
    "entry_low": 21.2,
    "entry_high": 22.5,
    "trigger": null,
-   "limit": null,
+   "limit": 22.5,
    "stop": 20.76,
-   "shares": 114,
+   "shares": 27,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -928,7 +928,7 @@
    "order_json": {
     "symbol": "WDC",
     "action": "buy",
-    "quantity": 114,
+    "quantity": 27,
     "order_type": "stop_limit",
     "stop_price": 21.63,
     "limit_price": 22.5,
@@ -936,9 +936,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 114,
+     "quantity": 27,
      "order_type": "stop",
-     "stop_price": 21.5,
+     "stop_price": 20.76,
      "time_in_force": "gtc"
     }
    },
@@ -950,36 +950,36 @@
    "kind": "burst",
    "grade": "A",
    "score": 8.5,
-   "entry_ref": 16.56,
-   "entry_low": 16.23,
-   "entry_high": 17.22,
+   "entry_ref": 173.73,
+   "entry_low": 170.26,
+   "entry_high": 180.68,
    "trigger": null,
-   "limit": null,
-   "stop": 15.78,
-   "shares": 47,
+   "limit": 180.68,
+   "stop": 165.58,
+   "shares": 3,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
-    "low": 18.07,
-    "high": 20.08,
-    "note": null,
-    "dollar_low": null,
-    "dollar_high": null
+    "low": 189.51,
+    "high": 210.56,
+    "note": "above $40 he measures the move in dollars: $5-25",
+    "dollar_low": 180.47,
+    "dollar_high": 200.47
    },
    "order_json": {
     "symbol": "VRT",
     "action": "buy",
-    "quantity": 47,
+    "quantity": 3,
     "order_type": "stop_limit",
-    "stop_price": 16.56,
-    "limit_price": 17.22,
+    "stop_price": 173.73,
+    "limit_price": 180.68,
     "time_in_force": "day",
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 47,
+     "quantity": 3,
      "order_type": "stop",
-     "stop_price": 16.2,
+     "stop_price": 165.58,
      "time_in_force": "gtc"
     }
    },
@@ -995,9 +995,9 @@
    "entry_low": 27.78,
    "entry_high": 29.48,
    "trigger": null,
-   "limit": null,
+   "limit": 29.48,
    "stop": 27.22,
-   "shares": 87,
+   "shares": 21,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1010,7 +1010,7 @@
    "order_json": {
     "symbol": "UBER",
     "action": "buy",
-    "quantity": 87,
+    "quantity": 21,
     "order_type": "stop_limit",
     "stop_price": 28.35,
     "limit_price": 29.48,
@@ -1018,9 +1018,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 87,
+     "quantity": 21,
      "order_type": "stop",
-     "stop_price": 28.18,
+     "stop_price": 27.22,
      "time_in_force": "gtc"
     }
    },
@@ -1036,9 +1036,9 @@
    "entry_low": 22.37,
    "entry_high": 23.74,
    "trigger": null,
-   "limit": null,
+   "limit": 23.74,
    "stop": 21.92,
-   "shares": 108,
+   "shares": 26,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1051,7 +1051,7 @@
    "order_json": {
     "symbol": "TOST",
     "action": "buy",
-    "quantity": 108,
+    "quantity": 26,
     "order_type": "stop_limit",
     "stop_price": 22.83,
     "limit_price": 23.74,
@@ -1059,9 +1059,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 108,
+     "quantity": 26,
      "order_type": "stop",
-     "stop_price": 22.65,
+     "stop_price": 21.92,
      "time_in_force": "gtc"
     }
    },
@@ -1077,9 +1077,9 @@
    "entry_low": 21.44,
    "entry_high": 22.76,
    "trigger": null,
-   "limit": null,
+   "limit": 22.76,
    "stop": 21.0,
-   "shares": 113,
+   "shares": 27,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1092,7 +1092,7 @@
    "order_json": {
     "symbol": "SMCI",
     "action": "buy",
-    "quantity": 113,
+    "quantity": 27,
     "order_type": "stop_limit",
     "stop_price": 21.88,
     "limit_price": 22.76,
@@ -1100,9 +1100,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 113,
+     "quantity": 27,
      "order_type": "stop",
-     "stop_price": 21.8,
+     "stop_price": 21.0,
      "time_in_force": "gtc"
     }
    },
@@ -1118,9 +1118,9 @@
    "entry_low": 29.2,
    "entry_high": 30.99,
    "trigger": null,
-   "limit": null,
+   "limit": 30.99,
    "stop": 28.61,
-   "shares": 83,
+   "shares": 20,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1133,7 +1133,7 @@
    "order_json": {
     "symbol": "RKLB",
     "action": "buy",
-    "quantity": 83,
+    "quantity": 20,
     "order_type": "stop_limit",
     "stop_price": 29.8,
     "limit_price": 30.99,
@@ -1141,9 +1141,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 83,
+     "quantity": 20,
      "order_type": "stop",
-     "stop_price": 29.63,
+     "stop_price": 28.61,
      "time_in_force": "gtc"
     }
    },
@@ -1159,9 +1159,9 @@
    "entry_low": 24.56,
    "entry_high": 26.06,
    "trigger": null,
-   "limit": null,
+   "limit": 26.06,
    "stop": 24.06,
-   "shares": 42,
+   "shares": 24,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1174,7 +1174,7 @@
    "order_json": {
     "symbol": "QTWO",
     "action": "buy",
-    "quantity": 42,
+    "quantity": 24,
     "order_type": "stop_limit",
     "stop_price": 25.06,
     "limit_price": 26.06,
@@ -1182,9 +1182,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 42,
+     "quantity": 24,
      "order_type": "stop",
-     "stop_price": 24.72,
+     "stop_price": 24.06,
      "time_in_force": "gtc"
     }
    },
@@ -1200,9 +1200,9 @@
    "entry_low": 24.2,
    "entry_high": 25.68,
    "trigger": null,
-   "limit": null,
+   "limit": 25.68,
    "stop": 23.7,
-   "shares": 100,
+   "shares": 48,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1215,7 +1215,7 @@
    "order_json": {
     "symbol": "PLTR",
     "action": "buy",
-    "quantity": 100,
+    "quantity": 48,
     "order_type": "stop_limit",
     "stop_price": 24.69,
     "limit_price": 25.68,
@@ -1223,9 +1223,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 100,
+     "quantity": 48,
      "order_type": "stop",
-     "stop_price": 24.56,
+     "stop_price": 23.7,
      "time_in_force": "gtc"
     }
    },
@@ -1241,9 +1241,9 @@
    "entry_low": 20.36,
    "entry_high": 21.61,
    "trigger": null,
-   "limit": null,
+   "limit": 21.61,
    "stop": 19.95,
-   "shares": 119,
+   "shares": 29,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1256,7 +1256,7 @@
    "order_json": {
     "symbol": "ONTO",
     "action": "buy",
-    "quantity": 119,
+    "quantity": 29,
     "order_type": "stop_limit",
     "stop_price": 20.78,
     "limit_price": 21.61,
@@ -1264,9 +1264,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 119,
+     "quantity": 29,
      "order_type": "stop",
-     "stop_price": 20.7,
+     "stop_price": 19.95,
      "time_in_force": "gtc"
     }
    },
@@ -1282,9 +1282,9 @@
    "entry_low": 24.86,
    "entry_high": 26.38,
    "trigger": null,
-   "limit": null,
+   "limit": 26.38,
    "stop": 24.36,
-   "shares": 97,
+   "shares": 47,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1297,7 +1297,7 @@
    "order_json": {
     "symbol": "NBIS",
     "action": "buy",
-    "quantity": 97,
+    "quantity": 47,
     "order_type": "stop_limit",
     "stop_price": 25.37,
     "limit_price": 26.38,
@@ -1305,9 +1305,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 97,
+     "quantity": 47,
      "order_type": "stop",
-     "stop_price": 25.25,
+     "stop_price": 24.36,
      "time_in_force": "gtc"
     }
    },
@@ -1323,9 +1323,9 @@
    "entry_low": 26.49,
    "entry_high": 28.11,
    "trigger": null,
-   "limit": null,
+   "limit": 28.11,
    "stop": 25.95,
-   "shares": 91,
+   "shares": 22,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1338,7 +1338,7 @@
    "order_json": {
     "symbol": "MU",
     "action": "buy",
-    "quantity": 91,
+    "quantity": 22,
     "order_type": "stop_limit",
     "stop_price": 27.03,
     "limit_price": 28.11,
@@ -1346,9 +1346,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 91,
+     "quantity": 22,
      "order_type": "stop",
-     "stop_price": 26.84,
+     "stop_price": 25.95,
      "time_in_force": "gtc"
     }
    },
@@ -1364,9 +1364,9 @@
    "entry_low": 22.02,
    "entry_high": 23.37,
    "trigger": null,
-   "limit": null,
+   "limit": 23.37,
    "stop": 21.57,
-   "shares": 110,
+   "shares": 27,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1379,7 +1379,7 @@
    "order_json": {
     "symbol": "LITE",
     "action": "buy",
-    "quantity": 110,
+    "quantity": 27,
     "order_type": "stop_limit",
     "stop_price": 22.47,
     "limit_price": 23.37,
@@ -1387,9 +1387,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 110,
+     "quantity": 27,
      "order_type": "stop",
-     "stop_price": 22.35,
+     "stop_price": 21.57,
      "time_in_force": "gtc"
     }
    },
@@ -1405,9 +1405,9 @@
    "entry_low": 23.69,
    "entry_high": 25.14,
    "trigger": null,
-   "limit": null,
+   "limit": 25.14,
    "stop": 23.2,
-   "shares": 40,
+   "shares": 49,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1420,7 +1420,7 @@
    "order_json": {
     "symbol": "KTOS",
     "action": "buy",
-    "quantity": 40,
+    "quantity": 49,
     "order_type": "stop_limit",
     "stop_price": 24.17,
     "limit_price": 25.14,
@@ -1428,9 +1428,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 40,
+     "quantity": 49,
      "order_type": "stop",
-     "stop_price": 23.79,
+     "stop_price": 23.2,
      "time_in_force": "gtc"
     }
    },
@@ -1446,9 +1446,9 @@
    "entry_low": 27.2,
    "entry_high": 28.87,
    "trigger": null,
-   "limit": null,
+   "limit": 28.87,
    "stop": 26.65,
-   "shares": 40,
+   "shares": 21,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1461,7 +1461,7 @@
    "order_json": {
     "symbol": "JBL",
     "action": "buy",
-    "quantity": 40,
+    "quantity": 21,
     "order_type": "stop_limit",
     "stop_price": 27.76,
     "limit_price": 28.87,
@@ -1469,9 +1469,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 40,
+     "quantity": 21,
      "order_type": "stop",
-     "stop_price": 27.42,
+     "stop_price": 26.65,
      "time_in_force": "gtc"
     }
    },
@@ -1487,9 +1487,9 @@
    "entry_low": 24.87,
    "entry_high": 26.4,
    "trigger": null,
-   "limit": null,
+   "limit": 26.4,
    "stop": 24.36,
-   "shares": 97,
+   "shares": 24,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1502,7 +1502,7 @@
    "order_json": {
     "symbol": "IONQ",
     "action": "buy",
-    "quantity": 97,
+    "quantity": 24,
     "order_type": "stop_limit",
     "stop_price": 25.38,
     "limit_price": 26.4,
@@ -1510,9 +1510,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 97,
+     "quantity": 24,
      "order_type": "stop",
-     "stop_price": 25.15,
+     "stop_price": 24.36,
      "time_in_force": "gtc"
     }
    },
@@ -1528,9 +1528,9 @@
    "entry_low": 25.51,
    "entry_high": 27.07,
    "trigger": null,
-   "limit": null,
+   "limit": 27.07,
    "stop": 24.99,
-   "shares": 95,
+   "shares": 23,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1543,7 +1543,7 @@
    "order_json": {
     "symbol": "HOOD",
     "action": "buy",
-    "quantity": 95,
+    "quantity": 23,
     "order_type": "stop_limit",
     "stop_price": 26.03,
     "limit_price": 27.07,
@@ -1551,9 +1551,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 95,
+     "quantity": 23,
      "order_type": "stop",
-     "stop_price": 25.83,
+     "stop_price": 24.99,
      "time_in_force": "gtc"
     }
    },
@@ -1569,9 +1569,9 @@
    "entry_low": 27.98,
    "entry_high": 29.69,
    "trigger": null,
-   "limit": null,
+   "limit": 29.69,
    "stop": 27.41,
-   "shares": 86,
+   "shares": 21,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1584,7 +1584,7 @@
    "order_json": {
     "symbol": "GLW",
     "action": "buy",
-    "quantity": 86,
+    "quantity": 21,
     "order_type": "stop_limit",
     "stop_price": 28.55,
     "limit_price": 29.69,
@@ -1592,9 +1592,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 86,
+     "quantity": 21,
      "order_type": "stop",
-     "stop_price": 28.32,
+     "stop_price": 27.41,
      "time_in_force": "gtc"
     }
    },
@@ -1610,9 +1610,9 @@
    "entry_low": 24.21,
    "entry_high": 25.69,
    "trigger": null,
-   "limit": null,
+   "limit": 25.69,
    "stop": 23.71,
-   "shares": 100,
+   "shares": 25,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1625,7 +1625,7 @@
    "order_json": {
     "symbol": "FIX",
     "action": "buy",
-    "quantity": 100,
+    "quantity": 25,
     "order_type": "stop_limit",
     "stop_price": 24.7,
     "limit_price": 25.69,
@@ -1633,9 +1633,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 100,
+     "quantity": 25,
      "order_type": "stop",
-     "stop_price": 24.52,
+     "stop_price": 23.71,
      "time_in_force": "gtc"
     }
    },
@@ -1651,9 +1651,9 @@
    "entry_low": 22.82,
    "entry_high": 24.22,
    "trigger": null,
-   "limit": null,
+   "limit": 24.22,
    "stop": 22.36,
-   "shares": 106,
+   "shares": 26,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1666,7 +1666,7 @@
    "order_json": {
     "symbol": "ELF",
     "action": "buy",
-    "quantity": 106,
+    "quantity": 26,
     "order_type": "stop_limit",
     "stop_price": 23.29,
     "limit_price": 24.22,
@@ -1674,9 +1674,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 106,
+     "quantity": 26,
      "order_type": "stop",
-     "stop_price": 23.14,
+     "stop_price": 22.36,
      "time_in_force": "gtc"
     }
    },
@@ -1692,9 +1692,9 @@
    "entry_low": 27.17,
    "entry_high": 28.83,
    "trigger": null,
-   "limit": null,
+   "limit": 28.83,
    "stop": 26.61,
-   "shares": 89,
+   "shares": 21,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1707,7 +1707,7 @@
    "order_json": {
     "symbol": "DELL",
     "action": "buy",
-    "quantity": 89,
+    "quantity": 21,
     "order_type": "stop_limit",
     "stop_price": 27.72,
     "limit_price": 28.83,
@@ -1715,9 +1715,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 89,
+     "quantity": 21,
      "order_type": "stop",
-     "stop_price": 27.53,
+     "stop_price": 26.61,
      "time_in_force": "gtc"
     }
    },
@@ -1733,9 +1733,9 @@
    "entry_low": 29.68,
    "entry_high": 31.5,
    "trigger": null,
-   "limit": null,
+   "limit": 31.5,
    "stop": 29.08,
-   "shares": 37,
+   "shares": 19,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1748,7 +1748,7 @@
    "order_json": {
     "symbol": "CRDO",
     "action": "buy",
-    "quantity": 37,
+    "quantity": 19,
     "order_type": "stop_limit",
     "stop_price": 30.29,
     "limit_price": 31.5,
@@ -1756,9 +1756,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 37,
+     "quantity": 19,
      "order_type": "stop",
-     "stop_price": 29.93,
+     "stop_price": 29.08,
      "time_in_force": "gtc"
     }
    },
@@ -1774,9 +1774,9 @@
    "entry_low": 29.07,
    "entry_high": 30.85,
    "trigger": null,
-   "limit": null,
+   "limit": 30.85,
    "stop": 28.47,
-   "shares": 83,
+   "shares": 20,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1789,7 +1789,7 @@
    "order_json": {
     "symbol": "ANET",
     "action": "buy",
-    "quantity": 83,
+    "quantity": 20,
     "order_type": "stop_limit",
     "stop_price": 29.66,
     "limit_price": 30.85,
@@ -1797,9 +1797,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 83,
+     "quantity": 20,
      "order_type": "stop",
-     "stop_price": 29.39,
+     "stop_price": 28.47,
      "time_in_force": "gtc"
     }
    },
@@ -1811,40 +1811,81 @@
    "kind": "burst",
    "grade": "A",
    "score": 8.5,
-   "entry_ref": 17.15,
-   "entry_low": 16.81,
-   "entry_high": 17.84,
+   "entry_ref": 180.0,
+   "entry_low": 176.4,
+   "entry_high": 187.2,
    "trigger": null,
-   "limit": null,
-   "stop": 16.46,
-   "shares": 144,
+   "limit": 187.2,
+   "stop": 172.8,
+   "shares": 3,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
-    "low": 18.71,
-    "high": 20.78,
+    "low": 196.34,
+    "high": 218.16,
+    "note": "above $40 he measures the move in dollars: $5-25",
+    "dollar_low": 186.8,
+    "dollar_high": 206.8
+   },
+   "order_json": {
+    "symbol": "VRT",
+    "action": "buy",
+    "quantity": 3,
+    "order_type": "stop_limit",
+    "stop_price": 180.0,
+    "limit_price": 187.2,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 3,
+     "order_type": "stop",
+     "stop_price": 172.8,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-09-04",
+   "regime": "green"
+  },
+  {
+   "ticker": "SMCI",
+   "kind": "burst",
+   "grade": "A",
+   "score": 8.5,
+   "entry_ref": 24.56,
+   "entry_low": 24.07,
+   "entry_high": 25.54,
+   "trigger": null,
+   "limit": 25.54,
+   "stop": 23.58,
+   "shares": 25,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 26.79,
+    "high": 29.77,
     "note": null,
     "dollar_low": null,
     "dollar_high": null
    },
    "order_json": {
-    "symbol": "VRT",
+    "symbol": "SMCI",
     "action": "buy",
-    "quantity": 144,
+    "quantity": 25,
     "order_type": "stop_limit",
-    "stop_price": 17.15,
-    "limit_price": 17.84,
+    "stop_price": 24.56,
+    "limit_price": 25.54,
     "time_in_force": "day",
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 144,
+     "quantity": 25,
      "order_type": "stop",
-     "stop_price": 16.98,
+     "stop_price": 23.58,
      "time_in_force": "gtc"
     }
    },
-   "date": "2026-09-04",
+   "date": "2026-09-07",
    "regime": "green"
   },
   {
@@ -1856,9 +1897,9 @@
    "entry_low": 24.94,
    "entry_high": 26.47,
    "trigger": null,
-   "limit": null,
+   "limit": 26.47,
    "stop": 24.43,
-   "shares": 97,
+   "shares": 23,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1871,7 +1912,7 @@
    "order_json": {
     "symbol": "NBIS",
     "action": "buy",
-    "quantity": 97,
+    "quantity": 23,
     "order_type": "stop_limit",
     "stop_price": 25.45,
     "limit_price": 26.47,
@@ -1879,9 +1920,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 97,
+     "quantity": 23,
      "order_type": "stop",
-     "stop_price": 25.2,
+     "stop_price": 24.43,
      "time_in_force": "gtc"
     }
    },
@@ -1897,9 +1938,9 @@
    "entry_low": 121.73,
    "entry_high": 129.18,
    "trigger": null,
-   "limit": null,
-   "stop": 121.42,
-   "shares": 6,
+   "limit": 129.18,
+   "stop": 124.08,
+   "shares": 4,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
@@ -1912,7 +1953,7 @@
    "order_json": {
     "symbol": "AAPL",
     "action": "buy",
-    "quantity": 6,
+    "quantity": 4,
     "order_type": "stop_limit",
     "stop_price": 124.21,
     "limit_price": 129.18,
@@ -1920,50 +1961,9 @@
     "conditional": "one_triggers_the_other",
     "then": {
      "action": "sell",
-     "quantity": 6,
+     "quantity": 4,
      "order_type": "stop",
-     "stop_price": 121.42,
-     "time_in_force": "gtc"
-    }
-   },
-   "date": "2026-09-10",
-   "regime": "green"
-  },
-  {
-   "ticker": "AMD",
-   "kind": "burst",
-   "grade": "A+",
-   "score": 10.0,
-   "entry_ref": 123.27,
-   "entry_low": 120.8,
-   "entry_high": 128.2,
-   "trigger": null,
-   "limit": null,
-   "stop": 121.07,
-   "shares": 7,
-   "targets": {
-    "low_pct": 8.0,
-    "high_pct": 20.0,
-    "low": 134.46,
-    "high": 149.4,
-    "note": "above $40 he measures the move in dollars: $5-25",
-    "dollar_low": 129.5,
-    "dollar_high": 149.5
-   },
-   "order_json": {
-    "symbol": "AMD",
-    "action": "buy",
-    "quantity": 7,
-    "order_type": "stop_limit",
-    "stop_price": 123.27,
-    "limit_price": 128.2,
-    "time_in_force": "day",
-    "conditional": "one_triggers_the_other",
-    "then": {
-     "action": "sell",
-     "quantity": 7,
-     "order_type": "stop",
-     "stop_price": 121.07,
+     "stop_price": 124.08,
      "time_in_force": "gtc"
     }
    },
