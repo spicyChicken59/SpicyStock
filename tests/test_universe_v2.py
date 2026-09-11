@@ -292,8 +292,12 @@ def test_an_unexpected_error_falls_back_with_a_controlled_sentence(monkeypatch, 
     ({"name": "Issuer 5.875% Notes due 2059"}, "not verified common stock"),
     ({"name": "Nuveen Income Fund Common Shares of Beneficial Interest"}, "not verified common stock"),
     ({"name": ""}, "not verified common stock"),
-    ({"country": "China"}, "foreign or unknown issuer"),
-    ({"country": ""}, "foreign or unknown issuer"),
+    ({"name": "Visa Inc."}, "not verified common stock"),
+    ({"name": "Issuer American Depositary Shares, each representing two Ordinary Shares", "country": "United Kingdom"},
+     "not verified common stock"),
+    ({"name": "CHS Inc Class B Cumulative Redeemable Preferred Stock Series 4"}, "not verified common stock"),
+    ({"name": "Pennsylvania Real Estate Investment Trust Common Shares of Beneficial Interest"}, "not verified common stock"),
+    ({"name": "abrdn Healthcare Investors Shares of Beneficial Interest"}, "not verified common stock"),
     ({"industry": "Blank Checks"}, "blank check company"),
     ({"industry": "blank checks"}, "blank check company"),
     ({"industry": ""}, "unknown industry"),
@@ -346,6 +350,63 @@ def test_the_flag_reads_both_the_sector_and_the_industry():
     assert universe.flags_for(company(sector="Health Care", industry="Other")) == {"biotech"}
     assert universe.flags_for(company(sector="Industrials", industry="Biotechnology: Instruments")) == {"biotech"}
     assert universe.flags_for(company(sector="Industrials", industry="Aluminum")) == set()
+    assert universe.flags_for(company(country="Israel", sector="Health Care")) == {"biotech", "foreign"}
+
+
+@pytest.mark.parametrize("values", [
+    {"name": "Shopify Inc. Class A Subordinate Voting Shares", "country": "Canada"},
+    {"name": "Ardagh Metal Packaging S.A. Ordinary Shares", "country": "Luxembourg"},
+    {"name": "lululemon athletica inc. Common Stock", "country": "Canada"},
+    {"name": "Applied Aerospace & Defense Inc. Common Stock", "country": ""},
+])
+def test_a_foreign_domiciled_common_share_is_admitted_with_the_foreign_flag(values):
+    """Bonde's TC2000 list does not exclude US-listed shares of foreign-domiciled
+    companies, so the country is a flag. A blank country carries it too: the
+    directory then vouches for no domicile at all."""
+    row = company("FRGN", **values)
+    assert universe.classify(row, set()) is None
+    symbols, names, flags, counts = universe.admit([row], [])
+    assert symbols == ["FRGN"] and flags == {"FRGN": {universe.FOREIGN_FLAG}}
+    assert counts == {"listed": 1, "admitted": 1}
+    assert universe.FOREIGN_FLAG == "foreign"
+
+
+def test_a_depositary_receipt_is_still_refused_whatever_its_country():
+    """The domicile stopped refusing; the receipt did not. This name matches
+    `_NAME` through "Ordinary Shares", so only `_REJECT` stands between it and
+    the universe."""
+    for country in ("United Kingdom", "United States", ""):
+        row = company("ADR", name="Issuer American Depositary Shares, each representing two Ordinary Shares",
+                      country=country)
+        assert universe.classify(row, set()) == "not verified common stock", country
+        assert universe.admit([row], [])[0] == []
+
+
+@pytest.mark.parametrize("name", [
+    "Zillow Group Inc. Class C Capital Stock",
+    "Alphabet Inc. Class C Capital Stock",
+    "Acme Holdings Capital Stock",
+    "Eastman Kodak Company Common New",
+    "Brookfield Renewable Corporation Class A Subordinate Voting Shares",
+    "Acme Corp. Common Stock, par value $0.01",
+])
+def test_a_common_share_named_without_the_words_common_stock_is_admitted(name):
+    """Each pattern has a case only IT admits: "Acme Holdings Capital Stock"
+    carries no class, so dropping `capital stock` is red here even though the
+    two real Class C names would still enter through the class pattern."""
+    row = company("NYSE", name=name)
+    assert universe.classify(row, set()) is None
+    assert universe.admit([row], [])[0] == ["NYSE"]
+
+
+def test_shares_of_beneficial_interest_are_a_trust_and_refused():
+    """A REIT or closed-end trust lists "Common Shares of Beneficial Interest",
+    which the common-share wording alone would admit."""
+    for name in ("Pennsylvania Real Estate Investment Trust Common Shares of Beneficial Interest",
+                 "BlackRock Science and Technology Trust Common Shares of Beneficial Interest",
+                 "abrdn Healthcare Investors Shares of Beneficial Interest"):
+        assert universe.classify(company("REIT", name=name), set()) == "not verified common stock", name
+    assert universe.classify(company("REIT", name="Acme REIT Inc. Common Stock"), set()) is None
 
 
 def test_the_floors_are_bondes_numbers_and_inclusive_at_the_edge():
@@ -383,17 +444,18 @@ def test_a_seed_name_the_rules_would_admit_anyway_is_not_an_exception(monkeypatc
 def test_the_counts_add_up_to_what_was_listed_plus_the_seeds_the_directory_lacked(monkeypatch, docs, seed_file):
     seed_file.write_text("AAPL\nMSFT\nZZZZ\nYYYY\n")
     rows = listings(500, company("AAPL"), company("MSFT", lastsale="$1"),
-                    company(name="Some Trust ETF"), company(country="Canada"), company(industry="Blank Checks"),
+                    company(name="Some Trust ETF"), company("CANA", country="Canada"), company(industry="Blank Checks"),
                     company(industry=""), company(lastsale="$2"), company(volume="5"), company(symbol="BRK.B"),
                     "not a row at all")
     Endpoint(monkeypatch, response(rows=rows))
     built = universe.build(docs, now=NOW)
     exclusions = {k: v for k, v in built.counts.items() if k not in {"listed", "admitted", universe.SEED_EXCEPTION}}
     assert built.counts["listed"] == 509, "a row that is not an object is not a listing"
-    assert set(exclusions) == {"not verified common stock", "foreign or unknown issuer", "blank check company",
+    assert set(exclusions) == {"not verified common stock", "blank check company",
                                "unknown industry", "price under $3", "volume under 100,000 shares", "symbol format"}
     assert built.counts["admitted"] + sum(exclusions.values()) == built.counts["listed"] + 2
     assert built.counts[universe.SEED_EXCEPTION] == 3
+    assert "CANA" in built.symbols and built.flags["CANA"] == {"foreign"}, "a domicile is a flag, not a cut"
 
 
 # ------------------------------------------------------------ overrides ----
@@ -492,11 +554,12 @@ def test_the_real_seed_file_parses_and_a_typo_refuses_the_run(tmp_path):
 
 
 def test_the_label_names_the_source_the_floors_and_the_flag_count(monkeypatch, docs):
-    rows = listings(500, company("BIO", industry="Biotechnology: Pharmaceutical Preparations"))
+    rows = listings(500, company("BIO", industry="Biotechnology: Pharmaceutical Preparations"),
+                    company("SHOP", country="Canada"), company("TEVA", country="Israel", sector="Health Care"))
     Endpoint(monkeypatch, response(rows=rows))
     built = universe.build(docs, now=NOW)
-    assert built.label == ("503 US common stocks from the Nasdaq directory 2026-09-11, "
-                           "$3+ and 100,000+ shares last session (1 flagged biotech)")
+    assert built.label == ("505 US-listed common stocks from the Nasdaq directory 2026-09-11, "
+                           "$3+ and 100,000+ shares last session (2 flagged biotech, 2 flagged foreign)")
     Endpoint(monkeypatch, requests.ReadTimeout)
     cached = universe.build(docs, now=NOW + timedelta(days=2))
-    assert cached.label.startswith("503 US common stocks from the Nasdaq directory captured 2026-09-11, ")
+    assert cached.label.startswith("505 US-listed common stocks from the Nasdaq directory captured 2026-09-11, ")

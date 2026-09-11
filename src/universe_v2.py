@@ -4,10 +4,13 @@ a volume floor, and nothing narrower.
 TC2000's "Common Stock" list is what Bonde scans -- about 6,500 names, with no
 float, market-cap or sector exclusion and a stated preference for the low-float,
 low-priced end. This module builds the closest thing the Nasdaq stock directory
-can supply: classified US common stock (the name says "Common Stock", the issuer
-is domestic, it is not a blank-check shell), at `MIN_PRICE` and `MIN_VOLUME`.
-Healthcare and biotech are ADMITTED and flagged, so the page can warn about
-binary-event risk without the screener deciding on the owner's behalf.
+can supply: classified common stock (the name says it is a common share and not
+a depositary receipt, a preferred, a warrant, a note, a fund or a trust; it is
+not a blank-check shell), at `MIN_PRICE` and `MIN_VOLUME`. Healthcare and
+biotech are ADMITTED and flagged, and so are US-listed shares of
+foreign-domiciled companies -- his list excludes neither -- so the page can
+warn about binary-event and domicile risk without the screener deciding on the
+owner's behalf.
 
 Nasdaq supplies the classification and the last session's price and volume; it
 never supplies the bars the scans read. The transport -- the browser headers,
@@ -53,7 +56,7 @@ MIN_PRICE = 3.0
 MIN_VOLUME = 100_000
 #: A safety bound on how many names one scan may ask for, NOT a selection
 #: rule: Bonde's list runs to ~6,500 and the 10 Sep 2026 directory admits
-#: 2,570 under the floors above, so this binds only if the endpoint expands
+#: 3,027 under the floors above, so this binds only if the endpoint expands
 #: past anything seen. When it does, the least-liquid tail is cut, the cut is
 #: counted under "discovery capacity" and the warning says so.
 MAX_DISCOVERY = 8000
@@ -90,18 +93,35 @@ DIRECTORY_HEADERS = {
 }
 
 _SYMBOL = re.compile(r"[A-Z]{1,5}")
-_NAME = re.compile(r"\b(common stock|common shares|ordinary shares?)\b", re.I)
+#: What a directory name must say before the row is read as a common share.
+#: Wider than "common stock" because NYSE rows carry whatever suffix the
+#: listing agent typed -- "Class C Capital Stock", "Common New", "Class A
+#: Subordinate Voting Shares" -- and a class pattern is safe only because
+#: `_REJECT` still refuses the preferreds and depositary shares it also
+#: matches. A name with no security wording at all ("Yum! Brands Inc.",
+#: "Visa Inc.") is still refused and belongs in the seed if wanted: 60 such
+#: otherwise-admissible US names on the 10 Sep 2026 directory.
+_NAME = re.compile(r"\b(common stock|common shares|ordinary shares?|capital stock|common new"
+                   r"|class [abc]\b.*\b(?:stock|shares))\b", re.I)
 _REJECT = re.compile(r"\b(depositary|depository|ADR|ADS|preferred|preference|warrants?|rights?|units?|notes?|ETF|ETN|funds?)\b", re.I)
+#: A trust, whatever else the name says: REITs and closed-end trusts list
+#: "Common Shares of Beneficial Interest", which `_NAME` alone reads as common
+#: stock. Refused; 25 previously admitted names on the 10 Sep 2026 directory.
+_BENEFICIAL = re.compile(r"\bshares of beneficial interest\b", re.I)
 _BIOTECH = re.compile(r"biotech|pharma|medicinal", re.I)
 UNITED_STATES = "United States"
 HEALTH_CARE_SECTOR = "Health Care"
 BLANK_CHECK_INDUSTRY = "blank checks"
-#: The one flag this module raises. Nasdaq prefixes "Biotechnology:" onto
-#: several industries that are not biotech at all (Agilent's is
-#: "Biotechnology: Laboratory Analytical Instruments"), so the flag is a
-#: warning for the reader and never a verdict: on the 10 Sep 2026 directory
-#: 476 of the 2,570 admitted names carry it, 465 of them in Health Care.
+#: The two flags this module raises; a flag is a warning for the reader and
+#: never a verdict. Nasdaq prefixes "Biotechnology:" onto several industries
+#: that are not biotech at all (Agilent's is "Biotechnology: Laboratory
+#: Analytical Instruments"). `foreign` is any row whose country is not
+#: "United States", a BLANK country included, since the directory then does
+#: not vouch for a US domicile either. On the 10 Sep 2026 directory, of the
+#: 3,027 admitted names, 538 carry `biotech` and 481 carry `foreign`, 74 of
+#: those with no country stated.
 BIOTECH_FLAG = "biotech"
+FOREIGN_FLAG = "foreign"
 
 #: SCAN_UNIVERSE's spellings. "adaptive" is what the workflow variable has
 #: said since the selector this replaces; it means the directory now.
@@ -127,7 +147,7 @@ class Universe:
 
     `names` holds a company name only for a symbol the directory listed; a
     seed or explicit name the directory lacks has no entry. `flags` holds a
-    set for every symbol, empty when nothing is known against it. `counts`
+    set for every symbol -- `biotech`, `foreign`, both or neither. `counts`
     is every exclusion reason with its count, plus `listed` (directory rows
     seen) and `admitted` (symbols kept); `warning` names a fallback or a
     bound that bit, and is None on a clean directory build.
@@ -303,6 +323,8 @@ def flags_for(row: dict) -> set[str]:
     flagged: set[str] = set()
     if row.get("sector") == HEALTH_CARE_SECTOR or _BIOTECH.search(str(row.get("industry") or "")):
         flagged.add(BIOTECH_FLAG)
+    if row.get("country") != UNITED_STATES:
+        flagged.add(FOREIGN_FLAG)
     return flagged
 
 
@@ -321,10 +343,8 @@ def classify(row: dict, seeds: set[str]) -> str | None:
     if symbol in seeds:
         return None
     name = str(row.get("name") or "")
-    if not _NAME.search(name) or _REJECT.search(name):
+    if not _NAME.search(name) or _REJECT.search(name) or _BENEFICIAL.search(name):
         return "not verified common stock"
-    if row.get("country") != UNITED_STATES:
-        return "foreign or unknown issuer"
     sector, industry = row.get("sector"), row.get("industry")
     if not sector or not industry:
         return "unknown industry"
@@ -474,8 +494,9 @@ def build(docs: Path, *, explicit: list[str] | None = None, now: datetime | None
         warning = cut if warning is None else f"{warning} {cut}"
         log.warning("%s", cut)
     biotech = sum(BIOTECH_FLAG in flagged for flagged in flags.values())
-    label = (f"{len(symbols)} US common stocks from the {provenance}, {_floors()}"
-             f" ({biotech} flagged {BIOTECH_FLAG})")
+    foreign = sum(FOREIGN_FLAG in flagged for flagged in flags.values())
+    label = (f"{len(symbols)} US-listed common stocks from the {provenance}, {_floors()}"
+             f" ({biotech} flagged {BIOTECH_FLAG}, {foreign} flagged {FOREIGN_FLAG})")
     log.info("Universe: %s", label)
     return Universe(symbols=symbols, names=names, flags=flags, source=source,
                     fetched_at=captured.isoformat(), counts=counts, label=label, warning=warning)
