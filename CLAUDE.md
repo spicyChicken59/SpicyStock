@@ -99,12 +99,28 @@ including the six cover sentences and the plan instructions. The chart
 (`docs/app-chart.js`) is annotated SVG on the SpicyChicken design system
 snapshot under `docs/design-system/`.
 
-What is measured offline: 961 tests, the chart check, and the page smoke
+What is measured offline: 970 tests, the chart check, and the page smoke
 over six fixtures plus the stale and no-record states. What is NOT: the
 full-market fetch time from a runner (the dry-run dispatch measures it), a
 real Claude reply to a real chart, Resend delivering, Pages building after
 the commit-back. Each of those is observed on the first live night, and
 this file should record what each one found.
+
+## The v2 mutation pass
+
+Twenty-one mutants over the rules this build added (the fill rule's three
+boundaries, the R halves, the open-plan window, the read threshold, a
+flat exit, the re-run replacement, the fixture refusal, a NaN bar, the
+nights cap, tonight's picks in the window; the grade clamp, the graded
+keys, the closed status, the fixture nights, the slot count, the
+unavailable count, the coverage fraction; the budget's at-risk sum and the
+dated schedule's first day). Twelve killed on the first pass. Of the nine
+survivors, eight were holes in the tests and were closed with the test each
+showed was missing -- the clamp was tested only downward, the day's high
+exactly at the trigger sat on no case, an exit at R = 0 was counted
+nowhere, the fixture-inheritance test ran on the fixture's own session so
+the inherited night was replaced by tonight's and hid -- and one was two
+spellings of one rule (`run_status()` now, one place). All twenty-one die.
 
 ## Open leads, written down rather than worked
 

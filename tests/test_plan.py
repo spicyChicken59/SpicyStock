@@ -790,3 +790,17 @@ def test_follow_never_lowers_the_stop():
 def test_follow_sells_at_least_half_of_an_odd_count():
     f = plan.follow({**PICK, "shares": 21}, [bar(101, 109, 100.5, 107)])
     assert "sell half (11 of 21 XYZ)" in f["instruction"]
+
+
+def test_the_budget_counts_dollars_at_risk_over_the_plans_within_the_slots_alone():
+    """Three plans, two free slots: the third is cut and its risk is not in
+    the total, and the cut carries a sentence naming the cap."""
+    account = plan.Account(equity=10_000, risk_pct=0.5, max_position_pct=25, max_open_positions=4)
+    rows = [{"ticker": t, "action": "buy_at_open", "shares": 10, "position_usd": 1_000.0, "risk_usd": 50.0 + i}
+            for i, t in enumerate(("AAA", "BBB", "CCC"))]
+    budget = plan.cash_budget(rows, account, open_positions=2)
+    assert budget["within"] == ["AAA", "BBB"] and [c["ticker"] for c in budget["cut"]] == ["CCC"]
+    assert budget["at_risk_usd"] == 101.0
+    assert "4-slot cap" in budget["cut"][0]["reason"] and "AAA, BBB" in budget["cut"][0]["reason"]
+    over = plan.cash_budget([{**rows[0], "position_usd": 9_000.0}, {**rows[1], "position_usd": 2_000.0}], account)
+    assert over["within"] == ["AAA"] and over["cut"][0]["reason"].startswith("the equity")

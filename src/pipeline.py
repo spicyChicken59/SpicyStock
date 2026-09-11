@@ -543,7 +543,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         if rec.get("problem"):
             log.warning("picks.json: %s", rec["problem"])
         open_now = record.open_plans(rec, frames, session.isoformat(), regime.get("verdict", "green"))
-        held = sum(1 for o in open_now if o.get("status") in ("hold", "sell_half", "sell_into_strength", "pending"))
+        held = slots_held(open_now)
         # a first pass of plans sizes the stop the chart draws; the final plans come after Claude
         make_plans(bursts, fresh, account, regime, held, session)
 
@@ -587,7 +587,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         run_block = {
             "session": session.isoformat(), "session_state": "closed" if closed else "open",
             "expected_session": expected.isoformat(),
-            "status": "closed" if closed and rep.status == "ok" else rep.status, "problems": list(rep.problems),
+            "status": run_status(rep, closed), "problems": list(rep.problems),
             "dry_run": dry_run, "model": grader.MODEL, "feed": getattr(feed, "value", str(feed)),
             "universe": {"label": uni.label, "size": len(uni.symbols), "source": uni.source,
                          "fetched_at": uni.fetched_at, "identity": uni.identity},
@@ -624,7 +624,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                 report.write(data, docs / DATA_FILE)
                 rep.fail(exc)
                 return rep
-        data["run"]["status"] = "closed" if closed and rep.status == "ok" else rep.status
+        data["run"]["status"] = run_status(rep, closed)
         data["run"]["problems"] = list(rep.problems)
         report.write(data, docs / DATA_FILE)
         return rep
@@ -635,6 +635,23 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         if not rep.published:
             notify_failure(rep, dry_run, expected_session(now))
         return rep
+
+
+#: An open plan in one of these states still occupies a slot: the position is
+#: held, or its ticket is live and may still fill.
+SLOT_STATUSES = ("hold", "sell_half", "sell_into_strength", "pending")
+
+
+def slots_held(open_plans: list[dict]) -> int:
+    """How many of the account's slots last night's plans still occupy."""
+    return sum(1 for o in open_plans if o.get("status") in SLOT_STATUSES)
+
+
+def run_status(rep: RunReport, closed: bool) -> str:
+    """The run's status word: a clean closed night says so, any problem says
+    degraded, a failure after publishing says degraded too (the record is
+    whole; only delivery failed), and failed is for a run that never published."""
+    return "closed" if closed and rep.status == "ok" else rep.status
 
 
 def pick_of(p: dict, kind: str, grade: str, score) -> dict:

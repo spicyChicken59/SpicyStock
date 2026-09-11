@@ -169,6 +169,7 @@ def test_later_bars_on_nothing_is_nothing():
     ({"o": 100.5, "h": 103.0}, "filled", 100.5, "filled at the open"),          # at/above the trigger
     ({"o": 100.0, "h": 101.0}, "filled", 100.0, "filled at the open"),          # exactly the trigger
     ({"o": 99.5, "h": 101.0}, "filled", 100.0, "filled at the trigger"),        # under the trigger, day reaches it
+    ({"o": 99.5, "h": 100.0}, "filled", 100.0, "filled at the trigger"),        # the day's high exactly at the trigger
     ({"o": 99.5, "h": 99.9}, record.NOT_FILLED, None, "never reached"),         # under the trigger, never reaches
     ({"o": 102.01, "h": 104.0}, record.NOT_FILLED, None, "gap ate the trade"),  # above the limit
     ({"o": 102.0, "h": 104.0}, "filled", 102.0, "filled at the open"),          # exactly the limit
@@ -341,6 +342,19 @@ def test_an_unfilled_ticket_counts_as_a_plan_but_not_a_fill_and_an_open_walk_is_
     rec = record.append(record.empty(), "2026-09-01", [pick(ticker="GAP"), pick(ticker="OPEN")])
     sc = record.scorecard(rec, frames, "2026-09-09")
     assert sc["plans"] == 2 and sc["filled"] == 1 and sc["settled"] == 0 and sc["open"] == 1
+
+
+def test_a_flat_exit_is_settled_but_neither_a_win_nor_a_loss():
+    """Day 3 closes exactly at the fill: the no-progress exit at R = 0."""
+    flat = [PICK_DAY, ("2026-09-02", 100.5, 102.0, 100.0, 101.0), ("2026-09-03", 101.0, 102.0, 100.2, 101.5),
+            ("2026-09-04", 101.0, 102.0, 100.2, 100.5)] + LATER[3:]
+    frames = calendar_frames()
+    frames["FLAT"] = frame(flat)
+    row = record.replay(pick(ticker="FLAT"), record.later_bars(frames["FLAT"], "2026-09-01"))
+    assert row["status"] == "exit" and row["exit_price"] == 100.5 and row["entry_ref"] == 100.5
+    assert record.r_multiple(row, 96.0) == 0.0
+    sc = record.scorecard(record.append(record.empty(), "2026-09-01", [pick(ticker="FLAT")]), frames, "2026-09-09")
+    assert (sc["settled"], sc["wins"], sc["losses"]) == (1, 0, 0)
 
 
 def test_the_scorecard_window_can_fail(monkeypatch):
