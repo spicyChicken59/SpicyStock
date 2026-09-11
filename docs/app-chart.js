@@ -198,20 +198,9 @@
       if (lx - tw / 2 < plot.left) { anchor = 'start'; lx = plot.left + 2; }
       else if (lx + tw / 2 > plot.right) { anchor = 'end'; lx = plot.right - 2; }
       burst = { index: burstIndex, x: x(burstIndex), yHigh: y(b.h), yLow: y(b.l), pct: bpct, close: b.c, volume: b.v, date: b.date,
+                column: { x: r1(plot.left + burstIndex * slot), w: r1(slot), y: plot.top, h: r1(vol.bottom - plot.top) },
                 marker: { x: x(burstIndex), y: r1(y(b.l) + 4), size: 5 },
                 label: { x: lx, y: Math.max(top - 4, r1(y(b.h) - 9)), text: text, anchor: anchor } };
-    }
-
-    /* moving averages */
-    var maPaths = [];
-    for (k = 0; k < mas.length; k++) {
-      var pts = [], last = null;
-      for (i = 0; i < n; i++) {
-        var mv = mas[k].values[i];
-        pts.push(mv === null ? null : { x: x(i), y: y(mv) });
-        if (mv !== null) last = { x: x(i), y: y(mv), value: mv };
-      }
-      maPaths.push({ n: mas[k].n, weight: mas[k].weight, points: pts, last: last });
     }
 
     /* base box */
@@ -227,21 +216,54 @@
                label: { x: blx, y: above ? r1(by1 - 4) : r1(by2 + 12), text: btext, anchor: banchor } };
     }
 
-    /* levels — labelled at the left edge, spread so they never overlap */
+    /* moving averages */
+    var maPaths = [];
+    for (k = 0; k < mas.length; k++) {
+      var pts = [], last = null;
+      for (i = 0; i < n; i++) {
+        var mv = mas[k].values[i];
+        pts.push(mv === null ? null : { x: x(i), y: y(mv) });
+        if (mv !== null) last = { x: x(i), y: y(mv), value: mv };
+      }
+      maPaths.push({ n: mas[k].n, weight: mas[k].weight, points: pts, last: last });
+    }
+
+    /* levels — labelled at the left edge. The stop reads under its line, the
+       trigger over its line (under it when the buy zone starts there), the
+       buy zone inside its band when the band is tall enough and over it
+       otherwise; then one collision pass, and a label the pass moved gets a
+       leader back to the level it names. The base label joins the pass when
+       its box starts under these. */
     var left = [], stopG = null, entryG = null, triggerG = null, targetG = null;
     function leftLabel(y0, text, kind, tone) {
-      var it = { y: y0, yTrue: y0, x: plot.left + 4, text: text, kind: kind, tone: tone };
+      var it = { y: y0, yTrue: y0, x: plot.left + 4, text: text, kind: kind, tone: tone, leader: null };
       left.push(it); return it;
     }
-    if (stop !== null) stopG = { y: y(stop), price: stop, label: leftLabel(r1(y(stop) - 4), 'stop ' + fmtPrice(stop), 'stop', 'danger') };
-    if (trigger !== null) triggerG = { y: y(trigger), price: trigger, label: leftLabel(r1(y(trigger) - 4), 'trigger ' + fmtPrice(trigger), 'trigger', 'warn') };
-    if (entryLow !== null && entryHigh !== null) {
-      var ey1 = y(entryHigh), ey2 = y(entryLow), inside = ey2 - ey1 >= LABEL_H + 4;
-      entryG = { y1: ey1, y2: ey2, h: Math.max(1, r1(ey2 - ey1)), low: entryLow, high: entryHigh,
-                 label: leftLabel(inside ? r1(ey1 + 11) : r1(ey1 - 4), 'buy zone ' + fmtPrice(entryLow) + '–' + fmtPrice(entryHigh), 'entry', 'chart-emphasis') };
+    var ey1 = null, ey2 = null;
+    if (entryLow !== null && entryHigh !== null) { ey1 = y(entryHigh); ey2 = y(entryLow); }
+    if (stop !== null) stopG = { y: y(stop), price: stop, label: leftLabel(r1(y(stop) + 11), 'stop ' + fmtPrice(stop), 'stop', 'danger') };
+    if (trigger !== null) {
+      var tyy = y(trigger), under = ey2 !== null && ey2 >= tyy - LABEL_H - 2 && ey2 <= tyy + 2;
+      triggerG = { y: tyy, price: trigger, label: leftLabel(r1(under ? tyy + 11 : tyy - 4), 'trigger ' + fmtPrice(trigger), 'trigger', 'warn') };
     }
+    if (ey1 !== null) {
+      var inside = ey2 - ey1 >= 2 * LABEL_H;
+      entryG = { y1: ey1, y2: ey2, h: Math.max(1, r1(ey2 - ey1)), low: entryLow, high: entryHigh,
+                 label: leftLabel(inside ? r1(ey1 + 11) : r1(ey1 - 4), 'buy zone ' + fmtPrice(entryLow) + '\u2013' + fmtPrice(entryHigh), 'entry', 'chart-emphasis') };
+    }
+    var leftWidth = 0;
+    for (i = 0; i < left.length; i++) leftWidth = Math.max(leftWidth, left[i].text.length * CHAR + 8);
+    var boxJoined = boxG && boxG.label.anchor === 'start' && boxG.label.x < plot.left + leftWidth;
+    if (boxJoined) { boxG.label.yTrue = boxG.label.y; left.push(boxG.label); }
     SC.spreadLabels(left, { gap: LABEL_H + 1, min: plot.top + 9, max: plot.bottom - 3 });
-    for (i = 0; i < left.length; i++) left[i].y = r1(left[i].y);
+    for (i = 0; i < left.length; i++) {
+      left[i].y = r1(left[i].y);
+      if (left[i].kind && Math.abs(left[i].y - left[i].yTrue) > 2) {
+        var levelY = left[i].kind === 'stop' ? stopG.y : left[i].kind === 'trigger' ? triggerG.y : entryG.y1;
+        left[i].leader = { x: plot.left + 1, y1: levelY, y2: r1(left[i].y - 5) };
+      }
+    }
+    if (boxJoined) left.pop();
 
     /* right gutter — last close, the target band, gridline values, MA ends */
     var right = [];
@@ -317,7 +339,7 @@
       '.sc-chart__band{fill:var(--sc-tone,var(--sc-chart-context));fill-opacity:.14;stroke:none}',
       '.sc-chart__band--faint{fill-opacity:.07}',
       '.sc-chart__strip{fill:var(--sc-tone,var(--sc-chart-context));fill-opacity:.9}',
-      '.sc-chart__box{fill:var(--sc-tone,var(--sc-chart-context));fill-opacity:.07;stroke:var(--sc-tone,var(--sc-chart-context));stroke-width:1;stroke-dasharray:3 3}',
+      '.sc-chart__box{fill:var(--sc-tone,var(--sc-chart-context));fill-opacity:.2;stroke:var(--sc-tone,var(--sc-chart-context));stroke-width:1.3;stroke-dasharray:4 3}',
       '.sc-chart__level{fill:none;stroke:var(--sc-tone,var(--sc-chart-context));stroke-width:1.3}',
       '.sc-chart__level--dashed{stroke-dasharray:6 4}',
       '.sc-chart__level--dotted{stroke-dasharray:2 3}',
@@ -361,7 +383,8 @@
     for (i = 0; i < g.grid.length; i++) grid.appendChild(SC.svg('line', { 'class': 'sc-chart__grid', x1: plot.left, x2: plot.right, y1: g.grid[i].y, y2: g.grid[i].y }));
     grid.appendChild(SC.svg('line', { 'class': 'sc-chart__grid', x1: plot.left, x2: plot.right, y1: g.vol.bottom, y2: g.vol.bottom }));
     svg.appendChild(grid);
-    /* bands: target (faint, full width + gutter strip), buy zone, base box */
+    /* the burst column under everything but the grid, then the bands: target (faint, full width + gutter strip), buy zone, base box */
+    if (g.burst) svg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band sc-chart__band--faint', style: toneStyle('accent'), x: g.burst.column.x, y: g.burst.column.y, width: g.burst.column.w, height: g.burst.column.h }));
     if (g.target) {
       var tg = SC.svg('g', { style: toneStyle('good') });
       tg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band sc-chart__band--faint', x: plot.left, y: g.target.y1, width: plot.width, height: g.target.h }));
@@ -415,7 +438,11 @@
     /* labels, on surface plates so they read over candles */
     var labels = SC.svg('g');
     if (g.box) plate(labels, SC, g.box.label);
-    for (i = 0; i < g.leftLabels.length; i++) plate(labels, SC, g.leftLabels[i]);
+    for (i = 0; i < g.leftLabels.length; i++) {
+      var ld = g.leftLabels[i].leader;
+      if (ld) labels.appendChild(SC.svg('line', { 'class': 'sc-chart__leader', x1: ld.x, x2: ld.x, y1: ld.y1, y2: ld.y2 }));
+      plate(labels, SC, g.leftLabels[i]);
+    }
     if (g.burst) plate(labels, SC, g.burst.label, 'sc-chart__note--strong');
     svg.appendChild(labels);
     /* right gutter: leaders then texts */

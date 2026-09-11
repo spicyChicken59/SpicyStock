@@ -53,12 +53,12 @@ export function synthetic() {
     let drift, noise, volBase = 1.4e6;
     if (i < 65) { drift = 0.0075; noise = 0.014; }                       // advance
     else if (i < base.start) { drift = -0.004; noise = 0.012; }          // pullback
-    else if (i <= base.end) { drift = 0.0005; noise = 0.004; volBase = 0.8e6; } // tight base, volume dries up
+    else if (i <= base.end) { drift = 0.0005; noise = 0.007; volBase = 0.8e6; } // tight base, volume dries up
     else if (i === BURST) { drift = 0.07; noise = 0.002; volBase = 4.2e6; } // burst
     else { drift = 0.006; noise = 0.012; volBase = 2.2e6; }              // follow-through
-    const o = i === BURST ? close * 1.012 : close * (1 + (r() - 0.5) * noise);
+    const o = i === BURST ? close * 1.003 : close * (1 + (r() - 0.5) * noise);
     const c = i === BURST ? close * 1.07 : close * (1 + drift + (r() - 0.5) * noise * 2);
-    const h = Math.max(o, c) * (1 + r() * noise * 0.8), l = Math.min(o, c) * (1 - r() * noise * 0.8);
+    const h = Math.max(o, c) * (1 + r() * noise * 0.8), l = i === BURST ? o * 0.994 : Math.min(o, c) * (1 - r() * noise * 0.8);
     const v = Math.round(volBase * (0.7 + r() * 0.6));
     const round = (x) => Math.round(x * 100) / 100;
     bars.push({ date: dates[i], o: round(o), h: round(h), l: round(l), c: round(c), v });
@@ -81,7 +81,11 @@ export function synthetic() {
 
 // --- 1. geometry, no DOM ------------------------------------------------------
 const SRC_CHARTS = await readFile(join(DS, 'sc-charts.js'), 'utf8');
-const SRC_APP = await readFile(join(ROOT, 'app-chart.js'), 'utf8');
+// SCSTOCK_CHART=<path> checks a copy of the module instead of docs/app-chart.js,
+// which is how a mutant is run without editing the tree; the browser half
+// serves the same bytes at /app-chart.js.
+const APP = process.env.SCSTOCK_CHART ? resolve(process.env.SCSTOCK_CHART) : join(ROOT, 'app-chart.js');
+const SRC_APP = await readFile(APP, 'utf8');
 function loadInSandbox() {
   const sb = { console }; sb.window = sb; vm.createContext(sb);
   vm.runInContext(SRC_CHARTS, sb, { filename: 'sc-charts.js' });
@@ -129,6 +133,10 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
   const yMax = g.y(Math.max(...highs)), yMin = g.y(Math.min(...lows));
   ok('the stop line y is between the price extremes', g.stop && g.stop.y > yMax && g.stop.y < yMin && g.stop.y >= g.plot.top && g.stop.y <= g.plot.bottom);
   ok('the stop sits below the burst bar', g.stop.y >= g.burst.yLow - 0.5);
+  ok('the stop is under the trigger, which is under the buy zone', g.stop.y > g.trigger.y && g.trigger.y >= g.entry.y2 - 0.6);
+  ok('a level label the collision pass moved carries a leader back to its line', g.leftLabels.filter((l) => Math.abs(l.y - l.yTrue) > 2).every((l) => l.leader && Math.abs(l.leader.y1 - (l.kind === 'stop' ? g.stop.y : l.kind === 'trigger' ? g.trigger.y : g.entry.y1)) < 0.6) && g.leftLabels.filter((l) => Math.abs(l.y - l.yTrue) <= 2).every((l) => !l.leader));
+  ok('the burst column spans both panes over the burst slot', g.burst.column && g.burst.column.y === g.plot.top && Math.abs(g.burst.column.y + g.burst.column.h - g.vol.bottom) < 0.2 && g.burst.column.x <= g.burst.x && g.burst.column.x + g.burst.column.w >= g.burst.x);
+  ok('at 360px the base label does not sit on a level label', g360.leftLabels.every((l) => Math.abs(l.y - g360.box.label.y) >= 14 || g360.box.label.x >= l.x + l.text.length * 6.6 + 8));
   ok('the target band is above the entry zone', g.target && g.entry && g.target.y2 <= g.entry.y1 && g.target.y1 < g.target.y2);
   ok('the target label reads +8% … +20% off the entry reference', g.target.text === '+8% … +20%' && g.target.pctLow === 8 && g.target.pctHigh === 20);
   ok('the entry zone is inside the pane and its label names both bounds', g.entry.y1 >= g.plot.top && g.entry.y2 <= g.plot.bottom && /^buy zone \$[\d.,]+–\$[\d.,]+$/.test(g.entry.label.text));
@@ -155,6 +163,14 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
   ok('date ticks fall on month boundaries, spaced apart', g.dateTicks.length >= 4 && g.dateTicks.every((t) => bars[t.index].date.slice(8, 10) <= '03') && g.dateTicks.every((t, i) => !i || t.x - g.dateTicks[i - 1].x >= 30));
   ok('gridlines lie inside the domain', g.grid.length >= 3 && g.grid.every((t) => t.value > g.domain.lo && t.value < g.domain.hi));
   ok('the domain includes every level, padded', g.domain.lo < options.stop && g.domain.hi > options.targetHigh && g.domain.lo < Math.min(...lows));
+  {
+    // a level OUTSIDE the price range must stretch the domain, or the line is drawn off the pane
+    const tail = bars.slice(90), tLow = Math.min(...tail.map((b) => b.l)), tHigh = Math.max(...tail.map((b) => b.h));
+    const far = SCStock.chartGeometry(tail, { stop: tLow * 0.8, targetLow: tHigh * 1.15, targetHigh: tHigh * 1.3, trigger: tHigh * 1.05, entryLow: tHigh * 1.05, entryHigh: tHigh * 1.07 }, 640, 320);
+    ok('a stop far below the bars still lands inside the pane', far.stop.y <= far.plot.bottom && far.stop.y > far.y(tLow));
+    ok('a target far above the bars still lands inside the pane', far.target.y1 >= far.plot.top && far.target.y2 < far.y(tHigh));
+    ok('a trigger and buy zone above every bar still land inside the pane', far.trigger.y >= far.plot.top && far.entry.y1 >= far.plot.top);
+  }
   let threw = null;
   try {
     const empty = SCStock.chartGeometry([], {}, 400, 200);
@@ -212,6 +228,7 @@ if (!chromium) {
   const server = createServer(async (req, res) => {
     const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     if (p === '/chart-harness.html') { res.writeHead(200, { 'content-type': TYPES['.html'] }).end(HARNESS); return; }
+    if (p === '/app-chart.js') { res.writeHead(200, { 'content-type': TYPES['.js'] }).end(SRC_APP); return; }
     const file = resolve(join(ROOT, p));
     if (!file.startsWith(ROOT)) { res.writeHead(403).end(); return; }
     let body;
