@@ -27,56 +27,89 @@ real money: twenty settled model plans make a rate readable, not an edge.
 
 ## What the page says
 
-Top to bottom, in the order a reader needs it:
+The page is a small application over one record: four views behind the
+masthead, the state kept in the hash (`#/explore/bursts/AAPL`,
+`#/explore/setting-up/COIL`, `#/record`, `#/market`, `#/method`) so a link
+reloads to the same stock and the Back button works; the old one-page
+anchors (`#hold`, `#orders`, `#trade-X`, `#burst-X`, `#closest-miss`) still
+land where they used to. Choosing a stock fetches nothing, grades nothing
+and sizes nothing; a route the page does not know, or a symbol the record
+does not carry, falls back to Explore and says so.
 
-1. **The verdict.** One of six sentences: *Trade tomorrow. N A-quality
-   bursts.* · *Trade small. N A+ bursts.* (a yellow regime) · *Stand aside.*
-   (red) · *Nothing qualifies. Keep cash.* · *Market closed. Plans
-   unchanged.* · *No verdict for <session>.* (the run failed before it
-   published). The dek carries the breadth numbers and the size rule.
-2. **The status chip.** The one thing the page computes: from the record's
+1. **The status chip.** The one thing the page computes: from the record's
    session and the browser's clock in ET it says *fresh*, *tonight's run
    pending*, *STALE · 1 session behind* (closed or failed, it cannot tell),
    *STALE · N sessions behind* (never a closure: no two US market holidays
    are adjacent), *market closed* or *degraded*, with one fixed sentence per
-   problem kind. A stale page says *Do not place these orders* and points
-   at the run log.
-3. **Is it a night to trade?** Bonde's Market Monitor over every stock that
-   printed today: up and down 4% on volume, the 5- and 10-day ratios, the
+   problem kind. A stale page says *Do not place these orders*, points at
+   the run log, and withholds every ticket from the action area, the plan
+   and the order sheet, keeping the setups.
+2. **Explore**, the default view. The market in a line: the verdict, one
+   of six sentences — *Trade tomorrow. N A-quality bursts.* · *Trade small.
+   N A+ bursts.* (a yellow regime) · *Stand aside.* (red) · *Nothing
+   qualifies. Keep cash.* · *Market closed. Plans unchanged.* · *No verdict
+   for <session>.* (the run failed before it published) — with the dek's
+   breadth numbers, the regime chip and the size rule, the session, and the
+   record's own call to action. Then two stage cards, **Bursts · N** (the
+   range-expansion days the scan graded) and **Setting up · N** (the
+   anticipation list: quiet, coiled names inside established momentum),
+   and inside the chosen stage one selectable card per stock with its
+   grade and its status in the record's words — *ticket*, *ticket
+   withheld*, *beyond the slot cap*, *beyond the configured equity*, *no
+   whole share*, *no new longs*, *vetoed*, *no ticket*, *watch* — a search
+   that finds a ticker in either stage and says when it switched, and on a
+   phone a rail of cards with a *Choose stock* dialog. The first load shows
+   Bursts when the scan found any, Setting up otherwise, and a chosen stage
+   is never switched away from: an empty one says why it is empty. Each
+   stage remembers its last chosen stock.
+3. **The chosen stock.** Its annotated chart (the base box, the burst bar,
+   the buy zone, the stop, the +8%/+20% ruler, the last sixty or hundred
+   and twenty sessions; a coil draws its box and its trigger and no burst
+   candle; a name without archived bars says *Chart unavailable* and keeps
+   its conditions). Four answers, each from the record's own sentences:
+   *why this stock?*, *what would need to happen?*, *what invalidates it,
+   or makes me wait?*, *principal risk or limitation*. Then the action
+   area: the conditional ticket's order line with *View conditional plan*,
+   or the reason there is no ticket with *Inspect conditions* — never a buy
+   button. Under it four disclosures: the conditions (one tile per
+   criterion with the measured value, his threshold and the verdict in
+   words, then the base, the burst and the grade); the plan, sizing and
+   order (the buy zone and the two skip lines, the stop and its basis, the
+   shares sized at the limit — the highest fill the ticket permits, so the
+   fixed quantity keeps the risk budget, the position cap and his 4% stop
+   line at every fill it can take — the position, the planned
+   price-to-stop risk, the aim, the hazards, and the order in Fidelity's
+   field order with a copy button: a buy stop-limit with a
+   one-triggers-the-other sell stop attached, and under it what the ticket
+   enforces and what it leaves to the reader); the model exit guidance,
+   dated; and the provenance (what Claude saw in the chart, the bars, the
+   rules digest). A burst whose stop is past the line at the limit keeps
+   its card and has its ticket withheld, with the reason in the action
+   area. Below the workspace, two more disclosures: **Tomorrow's
+   tickets** (the model allocation over the configured sizing assumptions
+   and the order sheet, every cut name explained) and **Everything the
+   scan found** (every burst against the checklist — the six letters,
+   range expansion and volume — sortable by score, each name a way to its
+   card, the closest miss named above it).
+4. **Record.** **Open model plans** is every pick from the last five
+   sessions walked from bars alone as a model: *day 3: sell half*,
+   *stopped*, *not filled*, *uncertain* (the bars cannot say whether it
+   filled), with the stop the rules would have moved it to; SpicyStock
+   does not know what you hold. Then the bars-only scorecard (plans, fills,
+   win rate, average R, SPY over the same days) and fourteen dots for the
+   last fourteen evenings: ok, degraded, closed, missing.
+5. **Market.** Bonde's Market Monitor over every stock that printed today:
+   up and down 4% on volume, the 5- and 10-day ratios, the
    25%-in-a-quarter and 25%/50%-in-a-month counts, the share above the
    40-day average, the 10-day ratio over the last thirty sessions with his
    line drawn on it, and the regime verdict with every rule that fired.
    Thresholds are scaled to the measured universe against his ~6,500.
-4. **What to do tomorrow.** One card per A-quality burst, ranked: the
-   annotated chart (the base box, the burst bar, the buy zone, the stop, the
-   +8%/+20% ruler, the last sixty or hundred and twenty sessions), the buy
-   zone and the two skip lines, the stop and its basis, the shares and the
-   position, the planned price-to-stop risk, the aim, the hazards, and the
-   order in Fidelity's field order with a copy button: a buy stop-limit
-   (stop at the burst close, limit at the ceiling) with a one-triggers-the-
-   other sell stop attached. The shares are sized at the limit, the highest
-   fill the ticket permits, so the fixed quantity keeps the risk budget,
-   the position cap and his 4% stop line at every fill it can take; a
-   burst whose stop is past the line at the limit keeps its card and has
-   its ticket withheld, with the reason. Under the ticket, what it enforces
-   and what it leaves to the reader: a day order is not a 30-minute order,
-   and SpicyStock places and cancels nothing. Beside it the exits, dated,
-   and what Claude saw in the chart. **Open model plans** is every pick from
-   the last five sessions walked from bars alone as a model: *day 3: sell
-   half*, *stopped*, *not filled*, *uncertain* (the bars cannot say whether
-   it filled), with the stop the rules would have moved it to; SpicyStock
-   does not know what you hold. On a phone that rail comes first. Then the
-   model allocation and the order sheet.
-5. **Alerts.** The anticipation list: quiet, coiled names inside
-   established momentum, each with a buy stop over its box, a limit, a stop
-   under the last three lows and a ticket. Set them before the open.
-6. **Everything the scan found.** Every burst against the checklist — the
-   six letters, range expansion and volume — with the measured value, his
-   threshold and the verdict in words; sortable by score; the closest miss
-   named above it.
-7. **The rules' record.** The bars-only scorecard (plans, fills, win rate,
-   average R, SPY over the same days) and fourteen dots for the last
-   fourteen evenings: ok, degraded, closed, missing.
+6. **Method.** Tonight's run (coverage, grades, reads, delivery, timing,
+   the run log), how to read the page, and the configured sizing
+   assumptions every ticket was computed from.
+7. **The next action**, under every view: place the N orders from
+   tomorrow's tickets before 9:28 AM, nothing to place, no new longs, plans
+   unchanged, or do not place these orders.
 
 The email is the same record in fewer words: the verdict, the breadth line,
 one block per trade with its order line and the day-order term, the plans
@@ -200,9 +233,12 @@ over a synthetic market through the same doubles the tests use, one per
 state the page can be in (`full`, `degraded`, `notrade`, `yellow`, `red`,
 `closed`), and `docs/data.json` on a fresh clone is the `full` one until the
 first real night replaces it. The page smoke opens each in Chromium and
-compares what it reads back with the record it was handed, then views the
-`full` record at three later instants for the stale states and once with no
-record at all.
+compares what it reads back with the record it was handed — every stock in
+both stages, the search, the chooser and the rail on a phone, the keyboard,
+deep links and Back, the old anchors, unknown routes and symbols, rapid
+switching — then views the `full` record at three later instants for the
+stale states, drops fourteen fields in turn (a burst without bars must say
+*Chart unavailable*), and opens it once with no record at all.
 
 ## The record
 

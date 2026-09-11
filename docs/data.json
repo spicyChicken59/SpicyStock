@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "f0a83a8dacf6"
+  "rules_version": "6fc9cb588bdd"
  },
  "cover": {
   "h1": "Trade tomorrow. 1 A-quality burst.",
@@ -316,7 +316,8 @@
    "yellow_grades": [
     "A+"
    ],
-   "series_bars": 120
+   "series_bars": 120,
+   "series_top": 24
   },
   "breadth": {
    "burst_pct": 4.0,

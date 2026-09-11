@@ -101,11 +101,28 @@ open plans, scorecard) → `report.build()` and validate → email. Exit codes
 0/1/2/3; seven problem words; `run.status` closed on a closed night.
 `run_intraday()` is dispatch-only and never commits.
 
-The page (`docs/app.js`) computes one thing — the status chip from the
-record's session and the ET clock — and prints everything else verbatim,
-including the six cover sentences and the plan instructions. The chart
-(`docs/app-chart.js`) is annotated SVG on the SpicyChicken design system
-snapshot under `docs/design-system/`.
+The page (`docs/app.js`) is a small hash-routed application over the
+record: Explore (the market in a line, two stage cards, one selectable card
+per stock, one stock in focus with its chart, four decision answers, the
+action area and four disclosures), Record, Market and Method, with the
+tickets and the scan as disclosures under the workspace and one next action
+under every view. It computes one thing of the market — the status chip
+from the record's session and the ET clock (`status()`) — and prints
+everything else verbatim, including the six cover sentences and the plan
+instructions. `buildModel()` is the one adapter, and every status it gives a
+stock is read off a field the run wrote (`trades[]`,
+`cash_budget.cut[].kind`, `plan.eligible`, `plan.action`, `quality.vetoes`,
+the grade against `rules.pipeline.trade_grades`); nothing in the browser
+scans, grades, sizes or fetches. `parseHash()` and `applyRoute()` are the
+router: the selection is remembered per stage, the hash is rewritten to the
+resolved route without a history entry, so Back works and a bookmark
+reloads to its stock, and the old one-page anchors map onto the routes. The
+chart (`docs/app-chart.js`) is annotated SVG on the SpicyChicken design
+system snapshot under `docs/design-system/`; a coil is drawn with its box
+and its trigger and no burst candle, and a name without archived bars gets
+the chart-unavailable state. `pipeline.SERIES_TOP` bursts by rank carry
+their bars beside the trades, the cut names and the closest miss, so a
+chosen burst has its chart without a second fetch.
 
 Three contracts the ticket-record closeout fixed, each pinned by tests:
 a fixed-quantity ticket is sized and its stop judged at its LIMIT, the
@@ -123,11 +140,13 @@ The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
 What is measured offline: 1019 tests, the chart check, and the page smoke
-over six fixtures plus the stale and no-record states. What is NOT: the
-full-market fetch time from a runner (the dry-run dispatch measures it), a
-real Claude reply to a real chart, Resend delivering, Pages building after
-the commit-back. Each of those is observed on the first live night, and
-this file should record what each one found.
+over six fixtures walked through every view, stock, search, the chooser,
+the keyboard, deep links and the old anchors, then the phone and the stale,
+failed, field-dropped and no-record states. What is NOT: the full-market
+fetch time from a runner (the dry-run dispatch measures it), a real Claude
+reply to a real chart, Resend delivering, Pages building after the
+commit-back. Each of those is observed on the first live night, and this
+file should record what each one found.
 
 ## The v2 mutation pass
 
@@ -260,3 +279,65 @@ execution.
 **Next action.** Dispatch `evening.yml` with dry_run on a real trading day
 and read how many A-quality bursts are withheld at the limit; that number
 is the input to the ceiling decision.
+
+## Checkpoint, 11 Sep 2026 — the visual discovery experience
+
+**Revision.** Branch `claude/spicystock-ticket-record-fixes-su1nh1`, one
+commit on top of the closeout `d6b0b95`: the page rebuilt as a small
+client-side app on the same static hosting (no framework, no server, no
+new data service), the smoke rewritten for it, the fixtures regenerated
+for `SERIES_TOP`.
+
+**What was built.** Four views behind the masthead, the state in the hash.
+Explore: a compact market bar (verdict, dek, regime and size, session, the
+record's own call to action; the run metadata moved to Method), two stage
+cards with counts, a column (a rail on a phone) of selectable stock cards
+with grade and status chips, a ticker search that switches stage visibly,
+a *Choose stock* dialog with focus management, and one stock in focus: the
+annotated chart with 60/120-session tabs, a four-item decision summary
+from the record's own sentences, an action area whose only button is
+*View conditional plan* or *Inspect conditions*, and four disclosures
+(conditions, plan/sizing/order, model exits, provenance). The tickets and
+the scan are disclosures under the workspace, every name a way to its
+card. Record, Market and Method carry what the one-page layout had;
+the old anchors map onto the routes.
+
+**Checks run** (offline, through the doubles): `pytest tests/ -q` 1019
+passed; `python tools/make_fixture.py --check` 7 fixtures current after
+regeneration; `node tools/chart_check.mjs` 139/139; `node
+tools/page_smoke.mjs --shots` 2000/2000, the clipboard read back equal to
+the printed ticket. Five page mutants were run against the new smoke: an
+unnamed unknown symbol, an unnamed chart-unavailable state, a cut reason
+dropped from the action area, and a per-stage selection forgotten on
+every route each turned it red (24 failures for the first three, 385 for
+the fourth); a stage button navigating without the remembered symbol was
+equivalent (the memory lives in `applyRoute()`), not a hole. Screenshots at 1280×900 and 390×844, dark and light, were
+looked at: the first screen shows the market bar, the stages, the first
+stock and the upper chart (desktop) or the stage cards, the search and
+the chooser button (phone); the withheld TSLA card with its reason and no
+order; COIL's coil chart (box, trigger, no burst candle); the record view;
+the stale page with every ticket withheld; the no-record page. The
+chooser's items were squeezed by the dialog's column flex on the first
+pass and fixed (`flex: 0 0 auto`).
+
+**Not run, not claimable.** A live fetch, a real Claude reply, Resend,
+Pages building, and any judgement of the ticket/replay open leads or of
+trading edge: this milestone is the page, not the method.
+
+**Keep / fix / defer / omit.** Keep: `buildModel()` as the one adapter,
+the hash as the state, statuses read off record fields, the decision
+summary from supplied sentences only, one secondary button per stock and
+one spice callout per page. Fix next if it bites: the chart's card labels
+can crowd the top-right gutter at 1280 on a tight bar (a chart-module
+matter, covered by `chart_check`); a pick card's status chip wraps under
+its grade in a narrow column; `test_claude_md_is_short_and_names_the_
+fixture_count` measures the line count of prose that has had its line
+breaks collapsed, so its cap cannot fail. Defer to Astra: the +4% ceiling
+versus his 4% stop line (unchanged); whether `SERIES_TOP` should be every
+burst (the record grows by roughly 12 KB per name). Omit: purchase entry,
+a journal, portfolio balances, a scenario engine.
+
+**Next action.** Dispatch `evening.yml` with dry_run on a real trading day,
+open the committed page against the record it writes, and walk the
+ten-step journey once on a phone: the first live night is the only test
+of the full-market record's size and of Pages serving the hash routes.

@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#111F31">
 <title>SpicyStock</title>
-<meta name="description" content="SpicyStock — the evening verdict for tomorrow's 4% momentum bursts: breadth, the A-quality trades with their Fidelity order tickets, the open plans and their exits.">
+<meta name="description" content="SpicyStock — the evening verdict for tomorrow's 4% momentum bursts: the market, the stocks setting up and the bursts, each with its annotated chart, its conditions and its conditional ticket.">
 <!-- SpicyChicken Design System · exact local snapshot recorded in design-system/provenance.json -->
 <link rel="icon" href="design-system/assets/favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="icon" href="design-system/assets/sc-avatar-tile.svg" type="image/svg+xml">
@@ -18,7 +18,6 @@
 <script src="design-system/sc-theme.js"></script>
 <script src="design-system/sc-charts.js"></script>
 <script src="design-system/sc-motion.js" defer></script>
-<script src="design-system/sc-reading.js" defer></script>
 <link rel="stylesheet" href="app.css">
 <script src="app-chart.js"></script>
 <script src="app.js" defer></script>
@@ -26,14 +25,20 @@
 <body>
 <a class="sc-skip" href="#main">Skip to content</a>
 <header class="sc-masthead">
-  <a class="sc-brand" href="./">
+  <a class="sc-brand" href="#/explore">
     <img class="sc-mark" src="design-system/assets/sc-mark-color-dark.svg" alt="" width="342" height="405">
     <span>
       <span class="sc-brand__name">SpicyStock</span>
       <span class="sc-brand__sub">momentum burst desk</span>
     </span>
   </a>
-  <div class="sc-masthead__right">
+  <div class="sc-masthead__right ss-masthead__right">
+    <nav class="sc-nav ss-nav" id="nav" aria-label="Views">
+      <a href="#/explore" data-view="explore">Explore</a>
+      <a href="#/record" data-view="record">Record</a>
+      <a href="#/market" data-view="market">Market</a>
+      <a href="#/method" data-view="method">Method</a>
+    </nav>
     <span class="ss-status" id="status-slot" aria-live="polite"><span class="sc-chip sc-chip--neutral">loading</span></span>
     <span class="sc-sep" aria-hidden="true"></span>
     <div class="sc-theme-toggle" role="group" aria-label="Theme">
@@ -44,28 +49,86 @@
   </div>
 </header>
 
-<main class="sc-wrap sc-wrap--wide sc-page sc-print-report" id="main">
+<main class="sc-wrap sc-wrap--wide sc-page" id="main">
   <div id="status-line" hidden></div>
 
-  <section class="sc-cover sc-on-ink sc-cover--compact ss-cover" id="cover" aria-labelledby="cover-h1">
-    <div class="sc-cover__content">
-      <div class="sc-eyebrow" id="cover-eyebrow">spicystock · evening run</div>
-      <h1 class="sc-cover__title" id="cover-h1">Reading tonight's record…</h1>
-      <p class="sc-cover__dek" id="cover-dek"></p>
-      <div class="sc-cover__meta" id="cover-meta"></div>
-      <div class="sc-cover__actions" id="cover-actions"></div>
+  <!-- 01 · Explore: the market in one line, then the stocks -->
+  <section class="ss-view" id="view-explore" data-view="explore" aria-labelledby="cover-h1">
+    <div class="sc-card ss-market" id="market-bar">
+      <div class="ss-market__verdict">
+        <div class="sc-eyebrow" id="cover-eyebrow">spicystock · evening run</div>
+        <h1 class="ss-market__h1" id="cover-h1">Reading tonight's record…</h1>
+        <p class="ss-market__dek" id="cover-dek"></p>
+      </div>
+      <div class="ss-market__side">
+        <dl class="ss-market__facts" id="market-facts"></dl>
+        <p class="ss-market__links" id="market-links"></p>
+      </div>
     </div>
-    <div class="sc-cover__art sc-brand-stage sc-brand-stage--orbit" aria-hidden="true">
-      <img class="sc-mark" src="design-system/assets/sc-mark-color-dark.svg" alt="" width="342" height="405">
-      <span class="sc-cover__caption sc-brand-stage__caption">a SpicyChicken project</span>
+
+    <div class="ss-stages" id="stages" role="group" aria-label="Choose a stage"></div>
+
+    <div class="ss-workspace" id="workspace">
+      <aside class="ss-picks" id="picks" aria-labelledby="picks-h2">
+        <div class="ss-picks__head">
+          <h2 class="sc-eyebrow ss-picks__title" id="picks-h2">stocks</h2>
+          <form class="ss-search" id="search-form" role="search">
+            <label class="sc-sr-only" for="search">Find a stock by ticker</label>
+            <input class="sc-input ss-search__input" id="search" type="search" list="ticker-options" placeholder="ticker" autocomplete="off" spellcheck="false" autocapitalize="characters">
+            <datalist id="ticker-options"></datalist>
+            <button class="sc-btn sc-btn--secondary sc-btn--sm" type="submit">Go</button>
+          </form>
+          <button class="sc-btn sc-btn--secondary sc-btn--sm ss-choose" type="button" id="choose-open" aria-haspopup="dialog" aria-controls="chooser">Choose stock</button>
+          <p class="sc-hint ss-picks__status" id="picks-status" role="status" aria-live="polite"></p>
+        </div>
+        <div class="ss-picks__list" id="pick-list" role="list" aria-label="Stocks in this stage"></div>
+      </aside>
+      <section class="ss-detail" id="detail" aria-labelledby="detail-h2" tabindex="-1"></section>
     </div>
+
+    <details class="sc-disclosure ss-tickets" id="orders">
+      <summary id="orders-summary">Tomorrow's tickets</summary>
+      <div class="ss-tickets__body">
+        <p class="ss-budget" id="budget"></p>
+        <div class="sc-table-scroll" id="orders-table"></div>
+      </div>
+    </details>
+
+    <details class="sc-disclosure ss-scan" id="scan">
+      <summary id="scan-summary">Everything the scan found</summary>
+      <div class="ss-scan__body">
+        <p class="sc-hint" id="scan-lede"></p>
+        <div id="scan-body"></div>
+      </div>
+    </details>
+
   </section>
 
-  <dl class="sc-stat-strip sc-stat-strip--instrument ss-strip ss-print-hide" id="run-strip" aria-label="Tonight's run"></dl>
-
-  <section class="ss-print-hide" id="breadth" aria-labelledby="breadth-h2">
+  <!-- 02 · Record: what the published model plans did, from bars alone -->
+  <section class="ss-view" id="view-record" data-view="record" aria-labelledby="record-h2" hidden>
     <header class="sc-chapter">
-      <span class="sc-chapter__index" aria-hidden="true">01</span>
+      <span class="sc-chapter__index" aria-hidden="true">02</span>
+      <div class="sc-chapter__body">
+        <h2 id="record-h2">The rules' record</h2>
+        <p>What the published plans did, as a model from daily bars: a fill only at the next open inside the ticket, the published stop as one R, whole-share sales. An implementation of the method with explicit assumptions (the archived rules), not a brokerage record and not proof of an edge — the rules' record, not yours.</p>
+      </div>
+    </header>
+    <div class="sc-card" id="hold" aria-labelledby="hold-h3">
+      <div class="sc-card__head">
+        <div>
+          <h3 id="hold-h3">Open model plans</h3>
+          <p class="sc-hint" id="hold-hint">Model plans from the last five sessions, walked from daily bars by the published ticket’s own rules. SpicyStock does not know what you hold: if you took a plan, this is what its rules say next; if you did not, ignore its row.</p>
+        </div>
+      </div>
+      <div id="hold-rows"></div>
+    </div>
+    <div class="sc-card" id="record-card"></div>
+  </section>
+
+  <!-- 03 · Market: Bonde's Market Monitor in full -->
+  <section class="ss-view" id="view-market" data-view="market" aria-labelledby="breadth-h2" hidden>
+    <header class="sc-chapter">
+      <span class="sc-chapter__index" aria-hidden="true">03</span>
       <div class="sc-chapter__body">
         <h2 id="breadth-h2">Is it a night to trade?</h2>
         <p>Bonde's Market Monitor, computed over every common stock that printed today.</p>
@@ -77,79 +140,50 @@
     <div class="sc-grid sc-grid--3 ss-facts-grid" id="breadth-facts"></div>
   </section>
 
-  <section id="tomorrow" aria-labelledby="tomorrow-h2">
-    <header class="sc-chapter">
-      <span class="sc-chapter__index" aria-hidden="true">02</span>
-      <div class="sc-chapter__body">
-        <h2 id="tomorrow-h2">What to do tomorrow</h2>
-        <p id="tomorrow-lede">The A-quality bursts with their plans, and the open model plans.</p>
-      </div>
-    </header>
-    <div class="sc-bento ss-bento">
-      <div class="sc-bento__main" id="trades"></div>
-      <aside class="sc-bento__aside">
-        <div class="sc-card" id="hold" aria-labelledby="hold-h3">
-          <div class="sc-card__head">
-            <div>
-              <h3 id="hold-h3">Open model plans</h3>
-              <p class="sc-hint" id="hold-hint">Model plans from the last five sessions, walked from daily bars by the published ticket’s own rules. SpicyStock does not know what you hold: if you took a plan, this is what its rules say next; if you did not, ignore its row.</p>
-            </div>
-          </div>
-          <div id="hold-rows"></div>
-        </div>
-      </aside>
-    </div>
-    <p class="ss-budget" id="budget"></p>
-    <div class="sc-card ss-orders" id="orders" aria-labelledby="orders-h3">
-      <div class="sc-card__head">
-        <div>
-          <h3 id="orders-h3">Order sheet</h3>
-          <p class="sc-hint">In Fidelity's field order, each ticket sized at its limit. Exits first: work the open model plans before placing anything new.</p>
-        </div>
-      </div>
-      <div class="sc-table-scroll" id="orders-table"></div>
-    </div>
-  </section>
-
-  <section class="ss-print-hide ss-alerts" id="alerts" aria-labelledby="alerts-h2">
-    <header class="sc-chapter">
-      <span class="sc-chapter__index" aria-hidden="true">03</span>
-      <div class="sc-chapter__body">
-        <h2 id="alerts-h2">Alerts — set these before the open</h2>
-        <p id="alerts-lede">Quiet, coiled names inside established momentum. A buy stop over the box, the stop under the last lows.</p>
-      </div>
-    </header>
-    <div id="alerts-body"></div>
-  </section>
-
-  <section class="ss-print-hide ss-scan" id="scan" aria-labelledby="scan-h2">
+  <!-- 04 · Method: how to read the page, the run and its assumptions -->
+  <section class="ss-view" id="view-method" data-view="method" aria-labelledby="method-h2" hidden>
     <header class="sc-chapter">
       <span class="sc-chapter__index" aria-hidden="true">04</span>
       <div class="sc-chapter__body">
-        <h2 id="scan-h2">Everything the scan found</h2>
-        <p id="scan-lede">Every burst against Bonde's A-quality criteria: the measured value, his threshold, and the verdict in words.</p>
+        <h2 id="method-h2">Method and run details</h2>
+        <p>Whose number each rule is, what tonight's run read, and the sizing assumptions every ticket was computed from.</p>
       </div>
     </header>
-    <div id="scan-body"></div>
+    <div class="sc-card" id="run-details" aria-labelledby="run-h3">
+      <div class="sc-card__head"><div><h3 id="run-h3">Tonight's run</h3><p class="sc-hint">Coverage, grading and delivery, as the run recorded them.</p></div></div>
+      <dl class="sc-stat-strip sc-stat-strip--instrument ss-strip" id="run-strip" aria-label="Tonight's run"></dl>
+      <ul class="ss-notes" id="run-meta"></ul>
+    </div>
+    <div class="sc-card" id="method-card" aria-labelledby="method-h3">
+      <div class="sc-card__head"><div><h3 id="method-h3">How to read this page</h3></div></div>
+      <div class="sc-doc sc-doc--flat" id="method-body"></div>
+    </div>
+    <div class="sc-card" id="account-card" aria-labelledby="account-h3">
+      <div class="sc-card__head"><div><h3 id="account-h3">The configured sizing assumptions</h3><p class="sc-hint">Not a balance, settled cash or buying power: the inputs every plan is sized from.</p></div></div>
+      <ul class="ss-notes" id="account-notes"></ul>
+    </div>
   </section>
 
-  <section class="ss-print-hide ss-record" id="record" aria-labelledby="record-h2">
-    <header class="sc-chapter">
-      <span class="sc-chapter__index" aria-hidden="true">05</span>
-      <div class="sc-chapter__body">
-        <h2 id="record-h2">The rules' record</h2>
-        <p>What the published plans did, as a model from daily bars: a fill only at the next open inside the ticket, the published stop as one R, whole-share sales. An implementation of the method with explicit assumptions (the archived rules), not a brokerage record and not proof of an edge — the rules' record, not yours.</p>
-      </div>
-    </header>
-    <div class="sc-card" id="record-card"></div>
-  </section>
-
-  <section class="sc-callout sc-callout--spice ss-next ss-print-hide" id="next" aria-label="Next action">
+  <!-- the one next action, whatever the view -->
+  <section class="sc-callout sc-callout--spice ss-next" id="next" aria-label="Next action">
     <div class="sc-callout__label">next</div>
     <h3 id="next-h3">Reading tonight's record…</h3>
     <p id="next-p"></p>
   </section>
 </main>
+
+<dialog class="ss-chooser" id="chooser" aria-labelledby="chooser-h2">
+  <form method="dialog" class="ss-chooser__form">
+    <div class="ss-chooser__head">
+      <h2 id="chooser-h2">Choose a stock</h2>
+      <button class="sc-btn sc-btn--ghost sc-btn--sm" type="submit" value="cancel" id="chooser-close">Close</button>
+    </div>
+    <label class="sc-sr-only" for="chooser-search">Filter by ticker</label>
+    <input class="sc-input ss-chooser__search" id="chooser-search" type="search" placeholder="type a ticker" autocomplete="off" spellcheck="false" autocapitalize="characters">
+    <p class="sc-hint" id="chooser-status" role="status" aria-live="polite"></p>
+    <div class="ss-chooser__list" id="chooser-list" role="group" aria-label="Every stock in this record"></div>
+  </form>
+</dialog>
 
 <footer class="sc-foot">
   <span id="foot-line">SpicyStock · paper prices, one venue's prints, no slippage · not investment advice</span>
