@@ -676,6 +676,39 @@ def test_the_bars_the_feed_sent_twice_are_counted_for_the_caller(ohlcv):
     assert twice == {"X": 3}, "every bar dropped as a duplicate is counted, not just the sessions"
 
 
+def test_a_bar_with_every_field_empty_is_not_a_bar(ohlcv):
+    """A row the feed sends with nothing in it is dropped before the frame
+    is read, so the newest bar is the newest bar WITH something in it and
+    the stale rule cannot call a name fresh on an empty row; a row with one
+    empty field stays, since the rules that read it decide what it means.
+    Found by mutation: removing the drop left the whole suite green."""
+    from tests.fakes import FakeBarSet
+
+    frame = ohlcv("burst", days=10)
+    lower = frame.rename(columns=str.lower).copy()
+    lower.index = pd.DatetimeIndex(pd.bdate_range(end=pd.Timestamp(SESSION), periods=len(frame)),
+                                   name="timestamp")
+    lower.iloc[-1, lower.columns.get_loc("open")] = float("nan")   # one empty field on the session bar
+    nothing = pd.DataFrame([[float("nan")] * len(lower.columns)], columns=lower.columns,
+                           index=pd.DatetimeIndex([pd.Timestamp(SESSION) + pd.offsets.BDay(1)],
+                                                  name="timestamp"))
+    lower = pd.concat([lower, nothing])                      # a bar of nothing, after the session
+    assert len(lower) == len(frame) + 1 and lower.iloc[-1].isna().all(), "precondition: the empty row is there"
+    wire = pd.concat([lower, lower * float("nan")], keys=["X", "EMPTY"], names=["symbol", "timestamp"])
+
+    class Client:
+        def get_stock_bars(self, request):
+            return FakeBarSet(wire)
+
+    out = _batch(Client(), ["X", "EMPTY"], SESSION)
+
+    assert list(out) == ["X"], "a symbol whose every bar is empty answered with nothing"
+    assert last_bar_date(out["X"]) == SESSION, "the empty row after the session is not the newest bar"
+    assert len(out["X"]) == len(frame)
+    assert pd.isna(out["X"]["Open"].iloc[-1]) and not pd.isna(out["X"]["Close"].iloc[-1]), (
+        "a bar with one empty field is kept as it came")
+
+
 def test_a_session_sent_twice_under_two_timestamps_is_a_shape_this_does_not_count(ohlcv):
     """`duplicated()` sees the index: the same SESSION under two different
     timestamps (04:00 and 05:00 on one date) is neither counted nor dropped,
