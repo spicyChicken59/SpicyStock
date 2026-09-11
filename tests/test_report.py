@@ -158,16 +158,26 @@ def test_the_size_rule_is_read_off_the_multiplier_and_not_off_the_verdict():
 
 
 def test_the_no_trade_dek_counts_the_bursts_and_points_at_the_closest_miss():
-    bursts = [_burst(grade="B"), _miss()]
+    bursts = [_burst(grade="B", plan=None), _miss()]
     with_miss = cover(_run(), _breadth("green"), [], bursts, {"ticker": "ABC"})["dek"]
     without = cover(_run(), _breadth("green"), [], [], None)["dek"]
     assert with_miss == "2 bursts found, none A-quality. The closest miss is below."
     assert without == "No bursts found."
 
 
+def test_the_no_trade_dek_says_when_a_setup_qualified_and_its_ticket_did_not():
+    """A burst that carries a plan qualified; without a ticket it is withheld
+    or cut, and the dek must not call it 'none A-quality'."""
+    withheld = _burst(plan=_plan(action="refused", eligible=False, order_line=None))
+    dek = cover(_run(), _breadth("green"), [], [withheld, _miss()], None)["dek"]
+    assert dek == ("2 bursts found, 1 with a qualifying setup and no ticket (withheld by the stop rule at the "
+                   "limit, or cut); each card says why.")
+    assert cover(_run(), _breadth("green"), [], [withheld], None)["dek"].startswith("1 burst found, 1 with")
+
+
 @pytest.mark.parametrize("trades, label, target", [
     (["XYZ"], "Tomorrow's orders", "#orders"),
-    ([], "What you hold", "#hold"),
+    ([], "Open model plans", "#hold"),
 ])
 def test_the_primary_action_points_at_the_orders_when_there_are_any(trades, label, target):
     result = cover(_run(), _breadth("green"), trades, [_burst()], None)
@@ -500,7 +510,8 @@ def test_the_open_plan_chip_words_are_the_six_the_page_uses_and_an_unknown_one_i
 def test_the_digest_says_what_a_night_with_nothing_to_do_holds():
     data = build(**_night(trades=[], open_plans=[], watchlist={"top": [], "also_quiet": [], "counts": {}}))
     text = _rendered(digest_html(data))
-    assert "No orders for tomorrow." in text and "No open plans." in text and "No anticipation names tonight." in text
+    assert "No orders for tomorrow." in text and "No open model plans." in text and "No anticipation names tonight." in text
+    assert "SpicyStock does not know what you hold" in text and "What you hold" not in text
 
 
 # --- delivery: the ported transport ---------------------------------------------------------
@@ -674,7 +685,7 @@ def test_the_hold_action_points_at_an_element_the_page_has():
     page = (Path(__file__).resolve().parent.parent / "docs" / "index.html").read_text()
     for label, target in (report.HOLD_ACTION, report.ORDERS_ACTION):
         assert f'id="{target[1:]}"' in page, target
-    assert report.HOLD_ACTION == ("What you hold", "#hold")
+    assert report.HOLD_ACTION == ("Open model plans", "#hold")
 
 
 def test_the_problems_block_prints_the_fixed_sentence_and_never_the_recorded_message():
@@ -696,6 +707,32 @@ def test_an_alert_with_no_ticket_says_why_in_the_pages_words():
 def test_the_open_plan_row_names_the_hold_length_off_the_rules():
     data = build(**_night(rules={"plan": {"final_exit_day": 5}, "scans": {}}))
     assert "day 2 of 5" in _rendered(digest_html(data))
+
+
+def test_the_digest_prints_an_uncertain_plan_and_a_withheld_ticket_in_the_pages_words():
+    uncertain = {"ticker": "UNC", "picked": "2026-09-09", "day": 1, "status": "uncertain", "uncertainty": "trigger_timing",
+                 "instruction": "Day 1 (2026-09-10): opened under the trigger; the day reached it at a time the bar cannot give. The model books no fill."}
+    withheld = _burst("WHD", plan=_plan(action="refused", eligible=False, order_line=None, order_json=None,
+                                        reason="ticket withheld: at the $12.71 limit the stop is 8.6% away"))
+    night = _night(bursts=[_burst(), withheld, _miss()], trades=["XYZ"], beyond_cap=["WHD"], open_plans=[uncertain],
+                   cash_budget={"committed_usd": 852, "slots_used": 2, "slots_max": 4,
+                                "sentence": "Model allocation: tomorrow's tickets would commit $852.00 of the configured $10,000.00; 2 of 4 slots (1 open model plan)",
+                                "cut": [{"ticker": "WHD", "kind": "withheld", "reason": withheld["plan"]["reason"]}]})
+    text = _rendered(digest_html(build(**night)))
+    assert "UNCERTAIN" in text and uncertain["instruction"] in text
+    assert "No ticket for WHD: ticket withheld: at the $12.71 limit the stop is 8.6% away." in text
+    assert "Beyond the slot cap" not in text
+    assert "Model allocation: tomorrow's tickets would commit $852.00 of the configured $10,000.00; 2 of 4 slots (1 open model plan). Not a balance or buying power." in text
+    assert "Open model plans" in text and "What you hold" not in text
+
+
+def test_the_trade_block_carries_the_sizing_note_and_the_day_order_term():
+    burst = _burst(plan=_plan(sizing_note="sized at the $12.71 limit, the highest fill the ticket permits: 69 shares put $75.21 between that fill and the $11.62 stop, planned price-to-stop risk, not a maximum loss",
+                              order_terms=["A day order rests until the close unless you cancel it.", "second term"]))
+    text = _rendered(report._trade_block(burst, None))
+    assert "sized at the $12.71 limit" in text and "not a maximum loss" in text
+    assert "A day order rests until the close unless you cancel it." in text and "second term" not in text
+    assert "fallback" not in text.lower()
 
 
 def test_the_breadth_line_prints_the_ratio_to_two_places_like_the_page():

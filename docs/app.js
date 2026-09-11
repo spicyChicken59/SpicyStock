@@ -41,14 +41,18 @@
     email_failed: "The digest could not be delivered; the page is the record.",
     push_retried: "Committing the record took more than one push."
   };
-  // One word per plan status, the same ten src/report.py mails (tests/test_docs.py holds the two equal).
+  // One word per plan status, the same eleven src/report.py mails (tests/test_docs.py holds the two equal).
   const PLAN_STATUS = {
     hold: ['HOLD', 'good'], sell_half: ['SELL HALF', 'brand'], sell_into_strength: ['SELL INTO STRENGTH', 'brand'],
     exit: ['SELL', 'brand'], stopped: ['STOPPED', 'danger'], expired: ['EXPIRED', 'neutral'], pending: ['PENDING', 'neutral'],
-    not_filled: ['NOT FILLED', 'neutral'], unreadable: ['UNREADABLE', 'warn'], unmeasured: ['UNMEASURED', 'warn']
+    not_filled: ['NOT FILLED', 'neutral'], uncertain: ['UNCERTAIN', 'warn'], unreadable: ['UNREADABLE', 'warn'], unmeasured: ['UNMEASURED', 'warn']
   };
+  // the statuses the model actually walked from a known fill; the others carry no position to draw
+  const WALKED = ['hold', 'sell_half', 'sell_into_strength', 'exit', 'stopped', 'expired'];
+  // why an A-quality plan has no ticket, as the budget's cut kinds spell it (src/plan.py CUT_KINDS)
+  const CUT_WORDS = { withheld: 'ticket withheld', slot_cap: 'beyond the slot cap', equity: 'beyond the configured equity', no_shares: 'no whole share', no_new_longs: 'no new longs' };
   const REGIME_TONE = { green: 'good', yellow: 'warn', red: 'danger' };
-  const FLAG_WORDS = { gain_over_15: 'gain over 15%', wide_stop: 'wide stop', position_capped: 'position capped', biotech: 'biotech', foreign: 'foreign', dollar_breakout: '$ breakout', refused: 'refused' };
+  const FLAG_WORDS = { gain_over_15: 'gain over 15%', wide_stop: 'stop past the line at the limit', position_capped: 'position capped', biotech: 'biotech', foreign: 'foreign', dollar_breakout: '$ breakout', refused: 'ticket withheld' };
   // The checklist's own keys (src/quality.py): 2 L Y N C H, then RE and VOL.
   const CRITERIA_SHORT = {
     two_days: 'up days', linearity: 'linear', young_trend: 'young', narrow_or_negative: 'quiet',
@@ -206,7 +210,7 @@
     meta.appendChild(el('span', { text: 'rules ' + (app.rules_version || '—') }));
     const actions = clear($('cover-actions'));
     const stale = st.state === 'stale1' || st.state === 'stale2' || st.state === 'pending' || st.state === 'failed';
-    const label = stale ? 'What you hold' : (cover.action_label || 'What you hold');
+    const label = stale ? 'Open model plans' : (cover.action_label || 'Open model plans');
     const target = stale ? '#hold' : (cover.action_target || '#hold');
     actions.appendChild(el('a', { 'class': 'sc-btn sc-btn--primary', id: 'cover-action', href: target, text: label }));
     actions.appendChild(el('button', { 'class': 'sc-btn sc-btn--secondary', type: 'button', text: 'Print', onclick: () => w.print() }));
@@ -421,7 +425,11 @@
     wrap.appendChild(el('div', { 'class': 'ss-order__head' }, [el('span', { 'class': 'sc-eyebrow', style: 'margin:0', text: 'the order, in Fidelity’s field order' }), copyButton(() => pre.textContent, pre)]));
     wrap.appendChild(pre);
     if (plan.order_line) wrap.appendChild(el('p', { 'class': 'ss-order__readback', text: 'Read it back: ' + plan.order_line }));
-    if (plan.fallback_line) wrap.appendChild(el('p', { 'class': 'sc-hint', text: plan.fallback_line }));
+    const terms = (plan.order_terms || []).filter((t) => typeof t === 'string' && t);
+    if (terms.length) {
+      wrap.appendChild(el('div', { 'class': 'sc-eyebrow', style: 'margin-top:10px', text: 'what the ticket enforces, and what it leaves to you' }));
+      wrap.appendChild(el('ul', { 'class': 'ss-notes ss-order__terms' }, terms.map((t) => el('li', { text: t }))));
+    }
     return wrap;
   }
   function stopWords(plan) {
@@ -462,9 +470,11 @@
   function tradeCard(b, data, state) {
     const plan = b.plan || {}, q = b.quality || {}, acct = data.account || {}, rules = (data.rules || {}).plan || {};
     const beyond = (data.beyond_cap || []).indexOf(b.ticker) >= 0 || !plan.order_json;
-    const card = el('article', { 'class': 'sc-card ss-trade', id: 'trade-' + b.ticker, 'data-ticker': b.ticker });
+    const cutRow = (data.cash_budget && data.cash_budget.cut || []).find((c) => c && c.ticker === b.ticker) || null;
+    const cutKind = cutRow && cutRow.kind ? cutRow.kind : (plan.eligible === false ? 'withheld' : 'slot_cap');
+    const card = el('article', { 'class': 'sc-card ss-trade', id: 'trade-' + b.ticker, 'data-ticker': b.ticker, 'data-ticket': beyond ? cutKind : 'order' });
     const grade = el('div', { 'class': 'ss-trade__grade' }, [chip((b.grade || '—') + (isNum(b.score) ? ' · ' + b.score.toFixed(1) : ''), 'brand', true)]);
-    if (beyond) grade.appendChild(chip('beyond the slot cap', 'neutral'));
+    if (beyond) grade.appendChild(chip(CUT_WORDS[cutKind] || words(cutKind), cutKind === 'withheld' ? 'warn' : 'neutral'));
     (b.flags || []).forEach((f) => grade.appendChild(chip(FLAG_WORDS[f] || words(f), 'warn')));
     card.appendChild(el('div', { 'class': 'sc-card__head' }, [
       el('div', null, [el('h3', { 'class': 'sc-case', text: b.ticker }),
@@ -490,16 +500,17 @@
     const facts = el('dl', { 'class': 'sc-facts' });
     const fact = (dt, dd, sub, wide) => facts.appendChild(el('div', { 'class': wide ? 'is-wide' : null }, [el('dt', { text: dt }), el('dd', null, [dd, sub ? el('small', { text: sub }) : null])]));
     if (plan.entry_low !== undefined) {
-      fact('buy', usd(plan.entry_low) + ' – ' + usd(plan.entry_high), plan.entry_window || '', true);
-      fact('skip if it opens above', usd(plan.skip_if_open_above), 'the gap ate the trade', false);
-      fact('skip if it opens below', usd(plan.skip_if_open_below), 'the burst is failing', false);
-      fact('stop', stopWords(plan), 'move it to your entry day’s low once filled', true);
-      fact('risk per share', usd(plan.risk_per_share), null, false);
+      fact('buy', usd(plan.entry_low) + ' – ' + usd(plan.entry_high), (plan.entry_window || '') + ' · a buy stop at ' + usd(plan.entry_ref) + ', limit ' + usd(plan.entry_high), true);
+      fact('skip if it opens above', usd(plan.skip_if_open_above), 'day 2 is spent; a resting order could still fill on a pullback, so cancel it', false);
+      fact('skip if it opens below', usd(plan.skip_if_open_below), 'the burst is failing; do not place it', false);
+      fact('stop', stopWords(plan), 'judged at the ' + usd(plan.sizing_price) + ' limit · move it to your entry day’s low once filled', true);
+      fact('sized at', usd(plan.sizing_price), 'the limit, the highest fill the ticket permits · indicative entry ' + usd(plan.planned_entry) + ' (not a fill)', true);
+      fact('risk per share', usd(plan.risk_per_share), 'limit − stop', false);
       fact('shares', num(plan.shares), plan.capped_by === 'position_cap' ? 'cut by the position cap' : 'from ' + usd(plan.risk_usd) + ' ÷ ' + usd(plan.risk_per_share), false);
-      fact('position', usd(plan.position_usd), (isNum(plan.position_pct) ? plan.position_pct.toFixed(1) : '—') + '% of ' + usd(acct.equity, 0), false);
-      fact('at risk', usd(plan.risk_usd), plain(acct.risk_pct) + '% of equity', false);
+      fact('position', usd(plan.position_usd), (isNum(plan.position_pct) ? plan.position_pct.toFixed(1) : '—') + '% of the configured ' + usd(acct.equity, 0), false);
+      fact('planned risk', usd(plan.risk_usd), 'price-to-stop at the limit, not a maximum loss · budget ' + plain(acct.risk_pct) + '% of configured equity', false);
       const t = plan.targets || {};
-      fact('aim', '+' + plain(t.low_pct) + '% to +' + plain(t.high_pct) + '% by day ' + plain(rules.final_exit_day), usd(t.low) + ' – ' + usd(t.high) + (t.note ? ' · ' + t.note : ''), true);
+      fact('aim', '+' + plain(t.low_pct) + '% to +' + plain(t.high_pct) + '% by day ' + plain(rules.final_exit_day), usd(t.low) + ' – ' + usd(t.high) + ' from the indicative entry' + (t.note ? ' · ' + t.note : ''), true);
     }
     if ((plan.flags && plan.flags.length) || (plan.notes && plan.notes.length)) {
       const hz = el('div', { 'class': 'is-wide' }, [el('dt', { text: 'hazards' })]);
@@ -509,8 +520,8 @@
       hz.appendChild(dd); facts.appendChild(hz);
     }
     const left = el('div', null, [facts]);
-    const cut = (data.cash_budget && data.cash_budget.cut || []).filter((c) => c && c.ticker === b.ticker).map((c) => c.reason).join(' ');
-    left.appendChild(orderBlock(plan, beyond ? 'No order tonight: ' + (cut || 'beyond the slot cap.') : 'No order line was written for this plan.', beyond));
+    const cut = cutRow && cutRow.reason ? cutRow.reason : (plan.reason || '');
+    left.appendChild(orderBlock(plan, beyond ? 'No ticket tonight: ' + (cut || 'beyond the slot cap') + '. The setup is kept here for inspection.' : 'No order line was written for this plan.', beyond));
     const right = el('div');
     const sched = plan.exit_schedule || [];
     if (sched.length) {
@@ -546,8 +557,9 @@
     ]));
     const t = p.targets || {}, stop = isNum(p.current_stop) ? p.current_stop : p.stop, aim = isNum(t.high) ? t.high : null;
     // the bar runs from the stop to the aim; the entry marker is drawn only
-    // while the entry still sits above the stop (a trailed stop can pass it)
-    if (isNum(p.last_close) && isNum(stop) && aim !== null && aim > stop && isNum(t.low) && isNum(p.entry_ref)) {
+    // while the entry still sits above the stop (a trailed stop can pass it),
+    // and only for a plan the model walked from a known fill
+    if (WALKED.indexOf(p.status) >= 0 && isNum(p.last_close) && isNum(stop) && aim !== null && aim > stop && isNum(t.low) && isNum(p.entry_ref)) {
       const pos = (v) => Math.max(0, Math.min(100, 100 * (v - stop) / (aim - stop)));
       const entryAbove = p.entry_ref > stop;
       const fig = el('figure', { 'class': 'sc-benchmark', style: '--sc-benchmark-position:' + pos(p.last_close).toFixed(1) + '%;' + (entryAbove ? '--sc-benchmark-reference:' + pos(p.entry_ref).toFixed(1) + '%;' : '') + '--sc-benchmark-band-start:' + pos(t.low).toFixed(1) + '%;--sc-benchmark-band-end:' + pos(t.high).toFixed(1) + '%' });
@@ -559,6 +571,7 @@
       row.appendChild(fig);
     }
     row.appendChild(el('p', { 'class': 'sc-note ss-plan__instruction', text: p.instruction || '' }));
+    if (p.status === 'uncertain') row.appendChild(el('p', { 'class': 'sc-hint', text: 'Uncertain: the bars cannot establish this fill, so the model holds no position here and scores none; it keeps its slot in the model allocation.' }));
     return row;
   }
   function renderTomorrow(data, st) {
@@ -568,32 +581,33 @@
     const regime = ((data.breadth || {}).regime || {}).verdict;
     const rules = data.rules || {}, holdDays = (rules.plan || {}).final_exit_day, window = (rules.record || {}).open_plan_sessions;
     const lede = $('tomorrow-lede');
-    const more = beyond.length ? ' ' + beyond.length + ' more A-quality burst' + (beyond.length === 1 ? ' is' : 's are') + ' cut by the slots or the equity and follow' + (beyond.length === 1 ? 's' : '') + ' with no order.' : '';
-    if (st.state === 'closed') lede.textContent = 'The market was closed; nothing new was planned. What you hold is on the right, unchanged.';
-    else if (regime === 'red') lede.textContent = 'Breadth is red: no new longs. What you hold is the only work.';
-    else if (!trades.length) lede.textContent = 'No burst reached A-quality with an order tonight. What you hold is the only work; the closest miss is under the scan.' + more;
-    else lede.textContent = trades.length + ' A-quality burst' + (trades.length === 1 ? '' : 's') + ' with ' + (trades.length === 1 ? 'its' : 'their') + ' plans, ranked. Read the chart first; the order block is in Fidelity’s field order.' + more;
+    const more = beyond.length ? ' ' + beyond.length + ' more A-quality burst' + (beyond.length === 1 ? ' has' : 's have') + ' no ticket — withheld by the stop rule at the limit, or cut by the slots or the configured equity — and follow' + (beyond.length === 1 ? 's' : '') + ' with the reason on the card.' : '';
+    if (st.state === 'closed') lede.textContent = 'The market was closed; nothing new was planned. The open model plans are on the right, unchanged.';
+    else if (regime === 'red') lede.textContent = 'Breadth is red: no new longs. The open model plans are the only work.';
+    else if (!trades.length) lede.textContent = 'No burst reached A-quality with a ticket tonight. The open model plans are the only work; the closest miss is under the scan.' + more;
+    else lede.textContent = trades.length + ' A-quality burst' + (trades.length === 1 ? '' : 's') + ' with ' + (trades.length === 1 ? 'its' : 'their') + ' plans, ranked. Read the chart first; the order block is in Fidelity’s field order, sized at the limit.' + more;
     if (!trades.length && !beyond.length) main.appendChild(el('div', { 'class': 'sc-card' }, [empty(st.state === 'closed' ? 'Market closed. Plans unchanged; nothing new to place.' : regime === 'red' ? 'Stand aside. Breadth is red and no new long is offered.' : 'Nothing qualifies. Keep cash; every burst the scan found is in the table below.')]));
     trades.concat(beyond).forEach((b) => main.appendChild(tradeCard(b, data, st)));
 
     const hold = clear($('hold-rows'));
     const plans = data.open_plans || [];
     const hint = $('hold-hint');
-    if (hint) hint.textContent = 'Every pick from the last ' + (isNum(window) ? plain(window) : 'five') + ' sessions, judged from bars alone. If you never bought it, ignore its row.';
-    if (!plans.length) hold.appendChild(empty('No open plans. Nothing was picked in the last ' + (isNum(window) ? plain(window) : 'five') + ' sessions.'));
+    if (hint) hint.textContent = 'Model plans from the last ' + (isNum(window) ? plain(window) : 'five') + ' sessions, walked from daily bars by the published ticket’s own rules. SpicyStock does not know what you hold: if you took a plan, this is what its rules say next; if you did not, ignore its row. UNCERTAIN means the bars cannot say whether it filled.';
+    if (!plans.length) hold.appendChild(empty('No open model plans. Nothing was picked in the last ' + (isNum(window) ? plain(window) : 'five') + ' sessions.'));
     plans.forEach((p) => hold.appendChild(planRow(p, regime === 'red', holdDays)));
 
     const cb = data.cash_budget || {}, acct = data.account || {};
     const budget = clear($('budget'));
-    budget.appendChild(el('strong', { text: 'Tomorrow’s orders commit ' + usd(cb.committed_usd, 0) + ' of ' + usd(acct.equity, 0) + ' · ' + plain(cb.slots_used) + ' of ' + plain(cb.slots_max) + ' slots' }));
-    if (isNum(cb.at_risk_usd)) budget.appendChild(d.createTextNode(' · ' + usd(cb.at_risk_usd, 0) + ' at risk'));
-    (cb.cut || []).forEach((c) => budget.appendChild(el('span', { 'class': 'sc-note', text: 'Cut: ' + c.ticker + ' — ' + c.reason })));
+    budget.appendChild(el('strong', { text: cb.sentence || ('Model allocation: tomorrow’s tickets would commit ' + usd(cb.committed_usd, 0) + ' of the configured ' + usd(acct.equity, 0) + ' · ' + plain(cb.slots_used) + ' of ' + plain(cb.slots_max) + ' slots') }));
+    if (isNum(cb.at_risk_usd)) budget.appendChild(d.createTextNode(' · ' + usd(cb.at_risk_usd, 0) + ' planned price-to-stop risk'));
+    budget.appendChild(d.createTextNode(' · over the configured sizing assumptions, not a balance, settled cash or buying power'));
+    (cb.cut || []).forEach((c) => budget.appendChild(el('span', { 'class': 'sc-note', text: 'No ticket: ' + c.ticker + ' — ' + c.reason })));
 
     const sheet = clear($('orders-table'));
     const withOrders = trades.filter((b) => b.plan && b.plan.order_json);
     const table = el('table', { 'class': 'sc-table sc-table--compact', id: 'order-sheet' });
     table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Tomorrow’s orders in Fidelity’s field order' }));
-    table.appendChild(el('thead', null, el('tr', null, ['symbol', 'action', 'shares', 'type', 'stop (trigger)', 'limit', 'tif', 'then OTO sell stop', 'skip above', 'at risk'].map((h, i) => el('th', { scope: 'col', 'class': i >= 2 && i !== 3 && i !== 6 ? 'sc-num' : null, text: h })))));
+    table.appendChild(el('thead', null, el('tr', null, ['symbol', 'action', 'shares', 'type', 'stop (trigger)', 'limit', 'tif', 'then OTO sell stop', 'skip above', 'planned risk'].map((h, i) => el('th', { scope: 'col', 'class': i >= 2 && i !== 3 && i !== 6 ? 'sc-num' : null, text: h })))));
     const body = el('tbody');
     withOrders.forEach((b) => {
       const o = b.plan.order_json, t = o.then || {};
@@ -608,10 +622,10 @@
     if (!withOrders.length) body.appendChild(el('tr', { 'class': 'sc-empty' }, el('td', { colspan: '10', text: st.state === 'closed' ? 'No orders: the market was closed and the plans stand.' : regime === 'red' ? 'No orders: breadth is red.' : 'No orders tomorrow.' })));
     table.appendChild(body);
     const committed = withOrders.reduce((a, b) => a + (b.plan.position_usd || 0), 0), risk = withOrders.reduce((a, b) => a + (b.plan.risk_usd || 0), 0);
-    table.appendChild(el('tfoot', null, el('tr', null, el('td', { colspan: '10', text: withOrders.length + ' order' + (withOrders.length === 1 ? '' : 's') + ' · ' + usd(committed, 0) + ' committed · ' + usd(risk, 0) + ' at risk · ' + (isNum(acct.equity) && acct.equity ? (100 * committed / acct.equity).toFixed(1) : '—') + '% of equity' }))));
+    table.appendChild(el('tfoot', null, el('tr', null, el('td', { colspan: '10', text: withOrders.length + ' order' + (withOrders.length === 1 ? '' : 's') + ' · ' + usd(committed, 0) + ' would be committed at the limits · ' + usd(risk, 0) + ' planned price-to-stop risk · ' + (isNum(acct.equity) && acct.equity ? (100 * committed / acct.equity).toFixed(1) : '—') + '% of the configured equity' }))));
     sheet.appendChild(table);
     const notes = acct.notes || [];
-    if (notes.length) sheet.appendChild(el('details', { 'class': 'sc-details' }, [el('summary', { text: 'the sizing rules this sheet follows' }), el('ul', { 'class': 'ss-notes' }, notes.map((n) => el('li', { text: n })))]));
+    if (notes.length) sheet.appendChild(el('details', { 'class': 'sc-details' }, [el('summary', { text: 'the configured sizing assumptions this sheet follows' }), el('ul', { 'class': 'ss-notes' }, notes.map((n) => el('li', { text: n })))]));
   }
 
   // ---------------------------------------------------------------- alerts
@@ -623,7 +637,7 @@
     else {
       const table = el('table', { 'class': 'sc-table sc-table--compact', id: 'alerts-table' });
       table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Anticipation watchlist with a buy-stop plan per name' }));
-      table.appendChild(el('thead', null, el('tr', null, ['ticker', 'setups', 'box', 'close', 'trigger', 'limit', 'stop', 'shares', 'risk', 'the ticket'].map((h, i) => el('th', { scope: 'col', 'class': i >= 3 && i <= 8 ? 'sc-num' : null, text: h })))));
+      table.appendChild(el('thead', null, el('tr', null, ['ticker', 'setups', 'box', 'close', 'trigger', 'limit', 'stop', 'shares', 'stop at the limit · planned risk', 'the ticket'].map((h, i) => el('th', { scope: 'col', 'class': i >= 3 && i <= 8 ? 'sc-num' : null, text: h })))));
       const tb = el('tbody');
       top.forEach((r) => {
         const p = r.plan || {}, box = r.box || {};
@@ -634,7 +648,7 @@
           el('td', { 'class': 'sc-num', text: usd(r.close) }), el('td', { 'class': 'sc-num', text: usd(p.trigger) }), el('td', { 'class': 'sc-num', text: usd(p.limit) }),
           el('td', { 'class': 'sc-num', text: usd(p.stop) }), el('td', { 'class': 'sc-num', text: p.eligible === false ? '—' : num(p.shares) }),
           el('td', { 'class': 'sc-num', text: plain(p.stop_pct) + '%' + (isNum(p.risk_usd) && p.eligible !== false ? ' · ' + usd(p.risk_usd, 0) : '') }),
-          el('td', { 'class': 'ss-ticket' }, p.eligible === false ? [chip('refused', 'danger'), ' ', el('span', { 'class': 'sc-note', text: p.reason || '' })] : p.order_line ? [el('span', { text: p.order_line })] : [chip('no order', 'neutral'), ' ', el('span', { 'class': 'sc-note', text: p.action === 'no_new_longs' ? 'breadth sizes new positions at zero tonight; keep the alert, place nothing' : (p.reason || 'the size came to zero shares') })])
+          el('td', { 'class': 'ss-ticket' }, p.eligible === false ? [chip('ticket withheld', 'warn'), ' ', el('span', { 'class': 'sc-note', text: p.reason || '' })] : p.order_line ? [el('span', { text: p.order_line }), el('span', { 'class': 'sc-note', text: p.sizing_note ? ' · ' + p.sizing_note : '' })] : [chip('no order', 'neutral'), ' ', el('span', { 'class': 'sc-note', text: p.action === 'no_new_longs' ? 'breadth sizes new positions at zero tonight; keep the alert, place nothing' : (p.reason || 'the size came to zero shares') })])
         ]));
       });
       table.appendChild(tb);
@@ -740,15 +754,18 @@
     const sc = data.scorecard || {}, card = clear($('record-card'));
     const settled = isNum(sc.settled) ? sc.settled : 0, minRead = sc.min_read, readable = sc.readable === true;
     card.appendChild(el('div', { 'class': 'sc-card__head' }, [
-      el('div', null, [el('h3', { text: 'The scorecard' }), el('p', { 'class': 'sc-hint', text: 'read from ' + plain(minRead) + ' settled plans: the rules’ record, not yours' + (readable ? '' : ' · ' + settled + ' settled so far, so nothing below is a rate yet') })]),
+      el('div', null, [el('h3', { text: 'The scorecard' }), el('p', { 'class': 'sc-hint', text: 'a model of the published plans’ fills, the rules’ record and not yours: rates from ' + plain(minRead) + ' settled plans, an uncertain fill in no rate' + (readable ? '' : ' · ' + settled + ' settled so far, so nothing below is a rate yet') })]),
       chip(readable ? 'readable' : 'not yet readable', readable ? 'good' : 'neutral')
     ]));
+    const uncertain = isNum(sc.uncertain) ? sc.uncertain : 0;
     card.appendChild(el('div', { 'class': 'sc-grid sc-grid--4' }, [
-      tile('plans', num(sc.plans), num(sc.settled) + ' settled · reads at ' + plain(minRead)),
-      tile('filled', num(sc.filled), 'at the next open, inside the zone'),
-      tile('win rate', isNum(sc.win_rate) ? (100 * sc.win_rate).toFixed(0) + '%' : '—', num(sc.wins) + ' wins · ' + num(sc.losses) + ' losses'),
-      tile('avg R', isNum(sc.avg_r) ? (sc.avg_r > 0 ? '+' : '') + sc.avg_r.toFixed(2) : '—', 'sum R ' + (isNum(sc.sum_r) ? (sc.sum_r > 0 ? '+' : '') + sc.sum_r.toFixed(1) : '—'))
+      tile('plans', num(sc.plans), num(sc.settled) + ' settled · ' + num(uncertain) + ' uncertain · reads at ' + plain(minRead)),
+      tile('filled', num(sc.filled), 'at the next open, at or over the trigger and at or under the limit'),
+      tile('win rate', isNum(sc.win_rate) ? (100 * sc.win_rate).toFixed(0) + '%' : '—', num(sc.wins) + ' wins · ' + num(sc.losses) + ' losses, settled plans only'),
+      tile('avg R', isNum(sc.avg_r) ? (sc.avg_r > 0 ? '+' : '') + sc.avg_r.toFixed(2) : '—', 'sum R ' + (isNum(sc.sum_r) ? (sc.sum_r > 0 ? '+' : '') + sc.sum_r.toFixed(1) : '—') + ' · sales weighted by whole shares')
     ]));
+    const reasons = (sc.uncertain_reasons || []).filter((r) => r && isNum(r.count) && r.words);
+    if (uncertain || reasons.length) card.appendChild(el('p', { 'class': 'sc-note', id: 'scorecard-uncertain', text: num(uncertain) + ' uncertain, in no rate: ' + (reasons.length ? reasons.map((r) => num(r.count) + ' ' + r.words).join('; ') : 'the bars could not establish the fill') + '.' }));
     card.appendChild(el('p', { 'class': 'sc-note', text: 'SPY over the same days: ' + pct(sc.spy_avg_pct, 2) + ' — one comparison line, not a benchmark. ' + (sc.note || '') }));
     // fourteen nights of reliability, from nights[]: ok, degraded, closed, missing
     const nights = {}; (data.nights || []).forEach((x) => { if (x && x.session) nights[x.session] = x; });
@@ -778,10 +795,11 @@
     if (st.state === 'stale1' || st.state === 'stale2' || st.state === 'pending' || st.state === 'failed') {
       return ['Do not place these orders.', 'Wait for tonight’s run to publish, or check the run log. Nothing on this page is tomorrow’s plan.', 'stale'];
     }
-    if (st.state === 'closed') return ['Plans unchanged. Check what you hold before ' + ORDERS_BY + '.', 'The market was closed; there is nothing new to place.', 'closed'];
+    const window = ((data.rules || {}).plan || {}).entry_window || 'entry window';
+    if (st.state === 'closed') return ['Plans unchanged. Check the open model plans before ' + ORDERS_BY + '.', 'The market was closed; there is nothing new to place.', 'closed'];
     if (red) return ['No new longs. Work the exits above before ' + ORDERS_BY + '.', 'Breadth is red: tighten the stops and sell into strength.', 'red'];
-    if (orders) return ['Place the ' + orders + ' order' + (orders === 1 ? '' : 's') + ' above in Fidelity before ' + ORDERS_BY + '. Exits first.', 'Attach each sell stop the moment its buy fills.', 'orders'];
-    if (open) return ['Nothing new to place. Work the exits above before ' + ORDERS_BY + '.', 'No burst qualified tonight; the open plans still carry their instructions.', 'quiet'];
+    if (orders) return ['Place the ' + orders + ' order' + (orders === 1 ? '' : 's') + ' above in Fidelity before ' + ORDERS_BY + '. Exits first.', 'Attach each sell stop the moment its buy fills, and cancel any order that has not filled by the end of the ' + window + '.', 'orders'];
+    if (open) return ['Nothing new to place. Work the exits above before ' + ORDERS_BY + '.', 'No burst qualified with a ticket tonight; the open model plans still carry their instructions.', 'quiet'];
     return ['Nothing to place. Keep cash.', 'No burst qualified and nothing is held. Come back after the next run.', 'quiet'];
   }
   function renderNext(data, st) {

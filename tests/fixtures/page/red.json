@@ -4,12 +4,12 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "11e153a50cc1"
+  "rules_version": "f0a83a8dacf6"
  },
  "cover": {
   "h1": "Stand aside.",
-  "dek": "Breadth is red: 5 up 4% vs 6 down, 10-day ratio 1. No new positions. down 4%: 6 >= the scaled alarm of 3.2 (700 of 6,500): major deterioration.",
-  "action_label": "What you hold",
+  "dek": "Breadth is red: 5 up 4% vs 6 down, 10-day ratio 1.1. No new positions. down 4%: 6 >= the scaled alarm of 3.2 (700 of 6,500): major deterioration.",
+  "action_label": "Open model plans",
   "action_target": "#hold",
   "verb": "stand aside"
  },
@@ -43,8 +43,8 @@
   },
   "bursts": 5,
   "graded": {
-   "a_plus": 3,
-   "a": 1,
+   "a_plus": 4,
+   "a": 0,
    "b": 0,
    "c": 1,
    "skip": 0
@@ -218,6 +218,7 @@
    "skip_gap_pct": 8.0,
    "entry_window": "first 30 minutes",
    "assumed_slippage_pct": 1.0,
+   "sizing_basis": "order_limit",
    "max_stop_pct": 4.0,
    "ideal_stop_pct": 2.0,
    "stop_risk_multiplier": 0.5,
@@ -298,7 +299,8 @@
    "scorecard_min_plans": 20,
    "nights_kept": 20,
    "max_picks": 260,
-   "benchmark": "SPY"
+   "benchmark": "SPY",
+   "known_fill": "open_inside_zone"
   },
   "pipeline": {
    "max_reads": 12,
@@ -362,15 +364,15 @@
   "down25_month": 0,
   "up50_month": 0,
   "down50_month": 0,
-  "up13_34d": 6,
+  "up13_34d": 7,
   "down13_34d": 1,
   "pct_above_40ma": 50.0,
   "universe": 30,
-  "ratio_5d": 0.88,
-  "ratio_10d": 1.0,
-  "up4_5d": 7,
+  "ratio_5d": 1.0,
+  "ratio_10d": 1.1,
+  "up4_5d": 8,
   "down4_5d": 8,
-  "up4_10d": 10,
+  "up4_10d": 11,
   "down4_10d": 10,
   "regime": {
    "verdict": "red",
@@ -391,11 +393,11 @@
    },
    "inputs": {
     "date": "2026-09-10",
-    "ratio_10d": 1.0,
-    "ratio_5d": 0.88,
-    "up4_10d": 10,
+    "ratio_10d": 1.1,
+    "ratio_5d": 1.0,
+    "up4_10d": 11,
     "down4_10d": 10,
-    "up4_5d": 7,
+    "up4_5d": 8,
     "down4_5d": 8,
     "up4": 5,
     "down4": 6,
@@ -562,27 +564,27 @@
    },
    {
     "date": "2026-09-07",
-    "up4": 0,
+    "up4": 1,
     "down4": 1,
-    "ratio_10d": 1.6
+    "ratio_10d": 1.8
    },
    {
     "date": "2026-09-08",
     "up4": 0,
     "down4": 1,
-    "ratio_10d": 1.4
+    "ratio_10d": 1.6
    },
    {
     "date": "2026-09-09",
     "up4": 1,
     "down4": 0,
-    "ratio_10d": 1.2
+    "ratio_10d": 1.4
    },
    {
     "date": "2026-09-10",
     "up4": 5,
     "down4": 6,
-    "ratio_10d": 1.0
+    "ratio_10d": 1.1
    }
   ],
   "rules": {
@@ -638,17 +640,17 @@
    "ticker": "AAPL",
    "name": "",
    "flags": [],
-   "scan": "both",
+   "scan": "burst",
    "close": 124.21,
    "prev_close": 117.18,
-   "open": 118.96,
-   "high": 124.49,
-   "low": 118.35,
+   "open": 123.95,
+   "high": 124.23,
+   "low": 123.92,
    "gain_pct": 6.0,
    "volume": 3000000.0,
    "volume_vs_prior": 5.0,
    "dollar_volume": 372630000,
-   "dollar_move": 5.25,
+   "dollar_move": null,
    "extension_pct": 5.2,
    "quality": {
     "checks": [
@@ -719,18 +721,18 @@
       "label": "narrow or negative day before",
       "values": {
        "prior_day_pct": -0.17,
-       "prior_range_pct": 0.8,
+       "prior_range_pct": 0.3,
        "negative": true,
        "narrow": true,
-       "median_range_pct": 1.0
+       "median_range_pct": 0.3
       },
       "value": -0.17,
-      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=1.0",
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.3 negative=True narrow=True median_range_pct=0.3",
       "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
       "passed": true,
       "pass": true,
       "marginal": false,
-      "a_plus": true,
+      "a_plus": false,
       "note": "",
       "partial": false,
       "status": "PASS"
@@ -743,13 +745,13 @@
        "base_sessions": 17,
        "breakdowns": 0,
        "bursts_in_base": 0,
-       "giveback": 0.19,
-       "tightness": 0.64,
+       "giveback": 0.18,
+       "tightness": 0.25,
        "base_volume_vs_leg": 0.41,
        "base_volume_vs_avg": 0.59
       },
       "value": 17,
-      "display": "base_sessions=17 breakdowns=0 bursts_in_base=0 giveback=0.19 tightness=0.64 base_volume_vs_leg=0.41 base_volume_vs_avg=0.59",
+      "display": "base_sessions=17 breakdowns=0 bursts_in_base=0 giveback=0.18 tightness=0.25 base_volume_vs_leg=0.41 base_volume_vs_avg=0.59",
       "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
       "passed": true,
       "pass": true,
@@ -764,11 +766,11 @@
       "letter": "H",
       "label": "close near the high",
       "values": {
-       "close_pos": 0.95,
+       "close_pos": 0.94,
        "close_above_open": true
       },
-      "value": 0.95,
-      "display": "close_pos=0.95 close_above_open=True",
+      "value": 0.94,
+      "display": "close_pos=0.94 close_above_open=True",
       "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
       "passed": true,
       "pass": true,
@@ -783,20 +785,20 @@
       "letter": "RE",
       "label": "range expansion",
       "values": {
-       "vs_prior_5": 4.9,
-       "vs_prior_10": 4.9,
-       "bar_range_pct": 4.9
+       "vs_prior_5": 0.67,
+       "vs_prior_10": 0.67,
+       "bar_range_pct": 0.2
       },
-      "value": 4.9,
-      "display": "vs_prior_5=4.9 vs_prior_10=4.9 bar_range_pct=4.9",
+      "value": 0.67,
+      "display": "vs_prior_5=0.67 vs_prior_10=0.67 bar_range_pct=0.2",
       "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
-      "passed": true,
-      "pass": true,
+      "passed": false,
+      "pass": false,
       "marginal": false,
-      "a_plus": true,
-      "note": "",
+      "a_plus": false,
+      "note": "the burst bar is not the widest of the last five",
       "partial": false,
-      "status": "PASS"
+      "status": "FAIL"
      },
      {
       "key": "volume",
@@ -823,7 +825,7 @@
     "vetoes": [],
     "passes": 6,
     "of": 6,
-    "a_plus_count": 8,
+    "a_plus_count": 6,
     "score": 10.0,
     "grade": "A+",
     "reclass": null,
@@ -837,8 +839,8 @@
      "end_index": 111,
      "sessions": 17,
      "high": 121.09,
-     "low": 116.83,
-     "depth_pct": 3.5,
+     "low": 117.12,
+     "depth_pct": 3.3,
      "breakdown_dates": []
     },
     "leg": {
@@ -853,9 +855,9 @@
     },
     "burst": {
      "gain_pct": 6.0,
-     "gap_pct": 1.5,
-     "bar_range_pct": 4.9,
-     "close_pos": 0.95,
+     "gap_pct": 5.8,
+     "bar_range_pct": 0.2,
+     "close_pos": 0.94,
      "volume_vs_prior": 5.0,
      "volume_vs_avg50": 2.96,
      "volume_rank_60": 1
@@ -1653,165 +1655,165 @@
     {
      "date": "2026-08-18",
      "o": 120.49,
-     "h": 120.96,
-     "l": 117.11,
+     "h": 120.58,
+     "l": 117.49,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-19",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-20",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-21",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-24",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-25",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-26",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-27",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-28",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-31",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-01",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-02",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-03",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-04",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-07",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-08",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-09",
      "o": 117.38,
-     "h": 117.73,
-     "l": 116.83,
+     "h": 117.44,
+     "l": 117.12,
      "c": 117.18,
      "v": 600000.0
     },
     {
      "date": "2026-09-10",
-     "o": 118.96,
-     "h": 124.49,
-     "l": 118.35,
+     "o": 123.95,
+     "h": 124.23,
+     "l": 123.92,
      "c": 124.21,
      "v": 3000000.0
     }
    ],
-   "summary": "AAPL: +6.0% on 5.0× volume out of a base 3.5% deep. A+ 10.0, 6 of 6 criteria."
+   "summary": "AAPL: +6.0% on 5.0× volume out of a base 3.3% deep. A+ 10.0, 6 of 6 criteria."
   },
   {
    "ticker": "AMD",
    "name": "",
    "flags": [],
-   "scan": "both",
+   "scan": "burst",
    "close": 123.27,
    "prev_close": 117.18,
-   "open": 118.89,
-   "high": 123.79,
-   "low": 118.35,
+   "open": 123.02,
+   "high": 123.3,
+   "low": 122.99,
    "gain_pct": 5.2,
    "volume": 2600000.0,
    "volume_vs_prior": 4.3333,
    "dollar_volume": 320502000,
-   "dollar_move": 4.38,
+   "dollar_move": null,
    "extension_pct": 4.9,
    "quality": {
     "checks": [
@@ -1882,18 +1884,18 @@
       "label": "narrow or negative day before",
       "values": {
        "prior_day_pct": -0.17,
-       "prior_range_pct": 0.8,
+       "prior_range_pct": 0.3,
        "negative": true,
        "narrow": true,
-       "median_range_pct": 1.0
+       "median_range_pct": 0.3
       },
       "value": -0.17,
-      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=1.0",
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.3 negative=True narrow=True median_range_pct=0.3",
       "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
       "passed": true,
       "pass": true,
       "marginal": false,
-      "a_plus": true,
+      "a_plus": false,
       "note": "",
       "partial": false,
       "status": "PASS"
@@ -1906,13 +1908,13 @@
        "base_sessions": 13,
        "breakdowns": 0,
        "bursts_in_base": 0,
-       "giveback": 0.19,
-       "tightness": 0.66,
+       "giveback": 0.18,
+       "tightness": 0.27,
        "base_volume_vs_leg": 0.41,
        "base_volume_vs_avg": 0.57
       },
       "value": 13,
-      "display": "base_sessions=13 breakdowns=0 bursts_in_base=0 giveback=0.19 tightness=0.66 base_volume_vs_leg=0.41 base_volume_vs_avg=0.57",
+      "display": "base_sessions=13 breakdowns=0 bursts_in_base=0 giveback=0.18 tightness=0.27 base_volume_vs_leg=0.41 base_volume_vs_avg=0.57",
       "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
       "passed": true,
       "pass": true,
@@ -1946,12 +1948,12 @@
       "letter": "RE",
       "label": "range expansion",
       "values": {
-       "vs_prior_5": 4.4,
-       "vs_prior_10": 4.4,
-       "bar_range_pct": 4.4
+       "vs_prior_5": 1.0,
+       "vs_prior_10": 1.0,
+       "bar_range_pct": 0.3
       },
-      "value": 4.4,
-      "display": "vs_prior_5=4.4 vs_prior_10=4.4 bar_range_pct=4.4",
+      "value": 1.0,
+      "display": "vs_prior_5=1.0 vs_prior_10=1.0 bar_range_pct=0.3",
       "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
       "passed": true,
       "pass": true,
@@ -1986,7 +1988,7 @@
     "vetoes": [],
     "passes": 6,
     "of": 6,
-    "a_plus_count": 8,
+    "a_plus_count": 7,
     "score": 10.0,
     "grade": "A+",
     "reclass": null,
@@ -2000,8 +2002,8 @@
      "end_index": 107,
      "sessions": 13,
      "high": 121.09,
-     "low": 116.83,
-     "depth_pct": 3.5,
+     "low": 117.12,
+     "depth_pct": 3.3,
      "breakdown_dates": []
     },
     "leg": {
@@ -2016,8 +2018,8 @@
     },
     "burst": {
      "gain_pct": 5.2,
-     "gap_pct": 1.5,
-     "bar_range_pct": 4.4,
+     "gap_pct": 5.0,
+     "bar_range_pct": 0.3,
      "close_pos": 0.9,
      "volume_vs_prior": 4.33,
      "volume_vs_avg50": 2.49,
@@ -2053,23 +2055,23 @@
    },
    "rank": 2,
    "series": [],
-   "summary": "AMD: +5.2% on 4.3× volume out of a base 3.5% deep. A+ 10.0, 6 of 6 criteria."
+   "summary": "AMD: +5.2% on 4.3× volume out of a base 3.3% deep. A+ 10.0, 6 of 6 criteria."
   },
   {
    "ticker": "NVDA",
    "name": "",
    "flags": [],
-   "scan": "both",
+   "scan": "burst",
    "close": 126.88,
    "prev_close": 118.14,
-   "open": 120.2,
-   "high": 128.17,
-   "low": 119.32,
+   "open": 126.64,
+   "high": 126.93,
+   "low": 126.61,
    "gain_pct": 7.4,
    "volume": 3400000.0,
    "volume_vs_prior": 5.6667,
    "dollar_volume": 431392000,
-   "dollar_move": 6.68,
+   "dollar_move": null,
    "extension_pct": 6.8,
    "quality": {
     "checks": [
@@ -2140,18 +2142,18 @@
       "label": "narrow or negative day before",
       "values": {
        "prior_day_pct": -0.17,
-       "prior_range_pct": 0.8,
+       "prior_range_pct": 0.3,
        "negative": true,
        "narrow": true,
-       "median_range_pct": 1.0
+       "median_range_pct": 0.3
       },
       "value": -0.17,
-      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=1.0",
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.3 negative=True narrow=True median_range_pct=0.3",
       "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
       "passed": true,
       "pass": true,
       "marginal": false,
-      "a_plus": true,
+      "a_plus": false,
       "note": "",
       "partial": false,
       "status": "PASS"
@@ -2164,13 +2166,13 @@
        "base_sessions": 19,
        "breakdowns": 0,
        "bursts_in_base": 0,
-       "giveback": 0.19,
-       "tightness": 0.62,
+       "giveback": 0.18,
+       "tightness": 0.24,
        "base_volume_vs_leg": 0.41,
        "base_volume_vs_avg": 0.61
       },
       "value": 19,
-      "display": "base_sessions=19 breakdowns=0 bursts_in_base=0 giveback=0.19 tightness=0.62 base_volume_vs_leg=0.41 base_volume_vs_avg=0.61",
+      "display": "base_sessions=19 breakdowns=0 bursts_in_base=0 giveback=0.18 tightness=0.24 base_volume_vs_leg=0.41 base_volume_vs_avg=0.61",
       "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
       "passed": true,
       "pass": true,
@@ -2185,11 +2187,11 @@
       "letter": "H",
       "label": "close near the high",
       "values": {
-       "close_pos": 0.85,
+       "close_pos": 0.84,
        "close_above_open": true
       },
-      "value": 0.85,
-      "display": "close_pos=0.85 close_above_open=True",
+      "value": 0.84,
+      "display": "close_pos=0.84 close_above_open=True",
       "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
       "passed": true,
       "pass": true,
@@ -2204,12 +2206,12 @@
       "letter": "RE",
       "label": "range expansion",
       "values": {
-       "vs_prior_5": 7.0,
-       "vs_prior_10": 7.0,
-       "bar_range_pct": 7.0
+       "vs_prior_5": 1.0,
+       "vs_prior_10": 1.0,
+       "bar_range_pct": 0.3
       },
-      "value": 7.0,
-      "display": "vs_prior_5=7.0 vs_prior_10=7.0 bar_range_pct=7.0",
+      "value": 1.0,
+      "display": "vs_prior_5=1.0 vs_prior_10=1.0 bar_range_pct=0.3",
       "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
       "passed": true,
       "pass": true,
@@ -2244,7 +2246,7 @@
     "vetoes": [],
     "passes": 6,
     "of": 6,
-    "a_plus_count": 7,
+    "a_plus_count": 6,
     "score": 10.0,
     "grade": "A+",
     "reclass": null,
@@ -2258,8 +2260,8 @@
      "end_index": 112,
      "sessions": 19,
      "high": 122.09,
-     "low": 117.79,
-     "depth_pct": 3.5,
+     "low": 118.08,
+     "depth_pct": 3.3,
      "breakdown_dates": []
     },
     "leg": {
@@ -2274,9 +2276,9 @@
     },
     "burst": {
      "gain_pct": 7.4,
-     "gap_pct": 1.7,
-     "bar_range_pct": 7.0,
-     "close_pos": 0.85,
+     "gap_pct": 7.2,
+     "bar_range_pct": 0.3,
+     "close_pos": 0.84,
      "volume_vs_prior": 5.67,
      "volume_vs_avg50": 3.44,
      "volume_rank_60": 1
@@ -2311,24 +2313,24 @@
    },
    "rank": 3,
    "series": [],
-   "summary": "NVDA: +7.4% on 5.7× volume out of a base 3.5% deep. A+ 10.0, 6 of 6 criteria."
+   "summary": "NVDA: +7.4% on 5.7× volume out of a base 3.3% deep. A+ 10.0, 6 of 6 criteria."
   },
   {
    "ticker": "TSLA",
    "name": "",
    "flags": [],
    "scan": "both",
-   "close": 121.73,
-   "prev_close": 116.38,
-   "open": 118.05,
-   "high": 122.62,
-   "low": 117.54,
-   "gain_pct": 4.6,
+   "close": 124.21,
+   "prev_close": 117.18,
+   "open": 118.96,
+   "high": 124.49,
+   "low": 118.35,
+   "gain_pct": 6.0,
    "volume": 3000000.0,
    "volume_vs_prior": 5.0,
-   "dollar_volume": 365190000,
-   "dollar_move": 3.68,
-   "extension_pct": 3.5,
+   "dollar_volume": 372630000,
+   "dollar_move": 5.25,
+   "extension_pct": 5.2,
    "quality": {
     "checks": [
      {
@@ -2356,13 +2358,13 @@
       "letter": "L",
       "label": "linearity of the prior leg",
       "values": {
-       "er": 0.81,
-       "r2": 0.99,
-       "leg_sessions": 17,
-       "leg_gain_pct": 18.4
+       "er": 1.0,
+       "r2": 1.0,
+       "leg_sessions": 16,
+       "leg_gain_pct": 20.5
       },
-      "value": 0.81,
-      "display": "er=0.81 r2=0.99 leg_sessions=17 leg_gain_pct=18.4",
+      "value": 1.0,
+      "display": "er=1.0 r2=1.0 leg_sessions=16 leg_gain_pct=20.5",
       "threshold": "ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
       "passed": true,
       "pass": true,
@@ -2378,11 +2380,11 @@
       "label": "young trend: first or second breakout",
       "values": {
        "breakouts_in_move": 0,
-       "sessions_since_move_start": 41,
-       "gain_since_move_start_pct": 21.7
+       "sessions_since_move_start": 33,
+       "gain_since_move_start_pct": 24.2
       },
       "value": 0,
-      "display": "breakouts_in_move=0 sessions_since_move_start=41 gain_since_move_start_pct=21.7",
+      "display": "breakouts_in_move=0 sessions_since_move_start=33 gain_since_move_start_pct=24.2",
       "threshold": "prior breakouts since the move started <= 1 (0 for A+)",
       "passed": true,
       "pass": true,
@@ -2401,10 +2403,10 @@
        "prior_range_pct": 0.8,
        "negative": true,
        "narrow": true,
-       "median_range_pct": 3.9
+       "median_range_pct": 1.0
       },
       "value": -0.17,
-      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=3.9",
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=1.0",
       "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
       "passed": true,
       "pass": true,
@@ -2419,40 +2421,40 @@
       "letter": "C",
       "label": "consolidation quality",
       "values": {
-       "base_sessions": 24,
+       "base_sessions": 17,
        "breakdowns": 0,
        "bursts_in_base": 0,
-       "giveback": 0.3,
-       "tightness": 2.1,
-       "base_volume_vs_leg": 0.42,
-       "base_volume_vs_avg": 0.63
+       "giveback": 0.19,
+       "tightness": 0.64,
+       "base_volume_vs_leg": 0.41,
+       "base_volume_vs_avg": 0.59
       },
-      "value": 24,
-      "display": "base_sessions=24 breakdowns=0 bursts_in_base=0 giveback=0.3 tightness=2.1 base_volume_vs_leg=0.42 base_volume_vs_avg=0.63",
+      "value": 17,
+      "display": "base_sessions=17 breakdowns=0 bursts_in_base=0 giveback=0.19 tightness=0.64 base_volume_vs_leg=0.41 base_volume_vs_avg=0.59",
       "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
-      "passed": false,
-      "pass": false,
+      "passed": true,
+      "pass": true,
       "marginal": false,
-      "a_plus": false,
-      "note": "base of 24 sessions is outside Bonde's 3-20; the base ranged wider than the sessions before it",
+      "a_plus": true,
+      "note": "",
       "partial": false,
-      "status": "FAIL"
+      "status": "PASS"
      },
      {
       "key": "close_near_high",
       "letter": "H",
       "label": "close near the high",
       "values": {
-       "close_pos": 0.82,
+       "close_pos": 0.95,
        "close_above_open": true
       },
-      "value": 0.82,
-      "display": "close_pos=0.82 close_above_open=True",
+      "value": 0.95,
+      "display": "close_pos=0.95 close_above_open=True",
       "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
       "passed": true,
       "pass": true,
       "marginal": false,
-      "a_plus": false,
+      "a_plus": true,
       "note": "",
       "partial": false,
       "status": "PASS"
@@ -2462,12 +2464,12 @@
       "letter": "RE",
       "label": "range expansion",
       "values": {
-       "vs_prior_5": 1.08,
-       "vs_prior_10": 1.08,
-       "bar_range_pct": 4.2
+       "vs_prior_5": 4.9,
+       "vs_prior_10": 4.9,
+       "bar_range_pct": 4.9
       },
-      "value": 1.08,
-      "display": "vs_prior_5=1.08 vs_prior_10=1.08 bar_range_pct=4.2",
+      "value": 4.9,
+      "display": "vs_prior_5=4.9 vs_prior_10=4.9 bar_range_pct=4.9",
       "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
       "passed": true,
       "pass": true,
@@ -2483,60 +2485,60 @@
       "label": "higher volume",
       "values": {
        "volume_vs_prior": 5.0,
-       "volume_vs_avg50": 3.16,
+       "volume_vs_avg50": 2.96,
        "volume_rank_60": 1,
-       "cv_required": true
+       "cv_required": false
       },
       "value": 5.0,
-      "display": "volume_vs_prior=5.0 volume_vs_avg50=3.16 volume_rank_60=1 cv_required=True",
+      "display": "volume_vs_prior=5.0 volume_vs_avg50=2.96 volume_rank_60=1 cv_required=False",
       "threshold": "volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average",
       "passed": true,
       "pass": true,
       "marginal": false,
       "a_plus": true,
-      "note": "base over 21 sessions: +CV applies, volume must be >= 1.5x average and a catalyst is needed, which bars cannot show",
+      "note": "",
       "partial": false,
       "status": "PASS"
      }
     ],
     "vetoes": [],
-    "passes": 5,
+    "passes": 6,
     "of": 6,
-    "a_plus_count": 6,
-    "score": 8.0,
-    "grade": "A",
+    "a_plus_count": 8,
+    "score": 10.0,
+    "grade": "A+",
     "reclass": null,
     "notes": [
-     "extension: close 3.5% vs its 20-SMA, 4.4% over 20 sessions"
+     "extension: close 5.2% vs its 20-SMA, 5.7% over 20 sessions"
     ],
     "base": {
-     "start": "2026-08-07",
+     "start": "2026-08-18",
      "end": "2026-09-09",
-     "start_index": 96,
-     "end_index": 119,
-     "sessions": 24,
-     "high": 121.91,
-     "low": 115.16,
-     "depth_pct": 5.5,
+     "start_index": 95,
+     "end_index": 111,
+     "sessions": 17,
+     "high": 121.09,
+     "low": 116.83,
+     "depth_pct": 3.5,
      "breakdown_dates": []
     },
     "leg": {
      "start": 79,
-     "end": 95,
-     "length": 17,
-     "gain_pct": 18.4,
-     "high": 121.91,
+     "end": 94,
+     "length": 16,
+     "gain_pct": 20.5,
+     "high": 121.09,
      "low": 99.2,
-     "er": 0.81,
-     "r2": 0.99
+     "er": 1.0,
+     "r2": 1.0
     },
     "burst": {
-     "gain_pct": 4.6,
-     "gap_pct": 1.4,
-     "bar_range_pct": 4.2,
-     "close_pos": 0.82,
+     "gain_pct": 6.0,
+     "gap_pct": 1.5,
+     "bar_range_pct": 4.9,
+     "close_pos": 0.95,
      "volume_vs_prior": 5.0,
-     "volume_vs_avg50": 3.16,
+     "volume_vs_avg50": 2.96,
      "volume_rank_60": 1
     },
     "unreadable": null,
@@ -2549,27 +2551,27 @@
      "H": 1.5
     }
    },
-   "grade_mechanical": "A",
-   "score": 8.0,
+   "grade_mechanical": "A+",
+   "score": 10.0,
    "vetoes": [],
    "reclass": null,
-   "grade": "A",
+   "grade": "A+",
    "plan": null,
    "chart": "charts/TSLA.png",
    "claude": {
     "agree": true,
-    "grade": "A",
-    "score": 8.4,
-    "reason": "The base is orderly and the burst is real, but the close sits inside the top fifth of the range rather than at the high.",
-    "key_risk": "A weak open would put the entry under the burst bar's midpoint.",
-    "entry_note": "Buy only inside the zone in the first thirty minutes.",
+    "grade": "A+",
+    "score": 9.3,
+    "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
+    "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
+    "entry_note": "Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.",
     "source": "claude",
     "chart_seen": true,
     "error": null
    },
    "rank": 4,
    "series": [],
-   "summary": "TSLA: +4.6% on 5.0× volume out of a base 5.5% deep. A 8.0, 5 of 6 criteria."
+   "summary": "TSLA: +6.0% on 5.0× volume out of a base 3.5% deep. A+ 10.0, 6 of 6 criteria."
   },
   {
    "ticker": "PLUG",
@@ -2837,14 +2839,14 @@
   "committed_usd": 0.0,
   "at_risk_usd": 0.0,
   "equity": 10000.0,
-  "slots_used": 2,
+  "slots_used": 3,
   "slots_max": 4,
-  "open_positions": 2,
+  "open_positions": 3,
   "within": [],
   "beyond": [],
   "cut": [],
   "skipped": [],
-  "sentence": "Tomorrow's plans commit $0.00 of $10,000.00; 2 of 4 slots (2 already open)"
+  "sentence": "Model allocation: tomorrow's tickets would commit $0.00 of the configured $10,000.00; 3 of 4 slots (3 open model plans)"
  },
  "watchlist": {
   "top": [
@@ -2911,13 +2913,15 @@
      "stop": 109.5,
      "stop_alt": 109.5,
      "stop_basis": "lowest low of the last 3 sessions",
-     "stop_pct": 1.01,
+     "stop_pct": 1.99,
      "lows_last3": [
       109.5,
       109.5,
       109.5
      ],
-     "risk_per_share": 1.11,
+     "planned_entry": 110.61,
+     "planned_entry_note": "the $110.61 trigger is the indicative entry the exit levels and targets are quoted from; the shares are sized at the $111.72 limit",
+     "risk_per_share": 2.22,
      "shares": 0,
      "position_usd": 0.0,
      "position_pct": 0.0,
@@ -2929,14 +2933,18 @@
       "position_usd": 0.0,
       "position_pct": 0.0,
       "risk_usd": 0.0,
-      "risk_per_share": 1.11,
-      "stop_pct": 1.0,
+      "risk_per_share": 2.22,
+      "stop_pct": 1.99,
       "capped_by": "multiplier",
       "note": "no new longs: the size multiplier is 0",
       "multiplier": 0.0,
       "budget_usd": 0.0,
-      "cap_usd": 2500.0
+      "cap_usd": 2500.0,
+      "price": 111.72
      },
+     "sizing_price": 111.72,
+     "sizing_basis": "order_limit",
+     "sizing_note": "sized at the $111.72 limit, the highest fill the ticket permits: 0 shares put $0.00 between that fill and the $109.50 stop, planned price-to-stop risk, not a maximum loss",
      "resize_rule": "if your fill differs, shares = $0.00 / (fill - $109.50), and no more than $2,500.00 of stock",
      "multipliers": {
       "regime": 0.0,
@@ -3035,7 +3043,7 @@
      "order_line": null,
      "order_json": null,
      "order_readback": null,
-     "fallback_line": null,
+     "order_terms": null,
      "flags": [],
      "notes": [
       "no new longs: the size multiplier is 0"
@@ -3045,7 +3053,7 @@
        "day": 1,
        "date": "2026-09-11",
        "key": "entry",
-       "instruction": "buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill."
+       "instruction": "buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes."
       },
       {
        "day": 1,
@@ -4099,55 +4107,102 @@
    "day": 4,
    "sessions": 4,
    "status": "sell_into_strength",
-   "instruction": "Day 4: closed at $17.56 (+2.1%); half is sold, sell the rest into strength by day 5 with the stop at $17.38. Breadth is red: sell into any strength; do not add.",
+   "instruction": "Day 4: closed at $198.00 (+10.0%); 2 of 3 VRT sold, sell the remaining 1 into strength by day 5 with the stop at $198.05. Breadth is red: sell into any strength; do not add.",
    "events": [
     {
      "day": 1,
      "date": "2026-09-07",
-     "event": "stop_raised_to_entry_low",
-     "price": 17.08
+     "event": "sell_half",
+     "price": 194.4,
+     "shares": 2,
+     "remaining": 1
     },
     {
-     "day": 3,
-     "date": "2026-09-09",
-     "event": "sell_half",
-     "price": 17.46
+     "day": 1,
+     "date": "2026-09-07",
+     "event": "stop_raised",
+     "price": 195.95
     },
     {
      "day": 3,
      "date": "2026-09-09",
      "event": "stop_trailed",
-     "price": 17.29
+     "price": 196.9
     },
     {
      "day": 4,
      "date": "2026-09-10",
-     "event": "stop_trailed",
-     "price": 17.38
+     "event": "abnormal_day",
+     "price": 198.0
     }
    ],
    "regime": "red",
-   "entry_ref": 17.2,
-   "shares": 144,
-   "current_stop": 17.38,
-   "last_close": 17.56,
+   "entry_ref": 180.0,
+   "shares": 3,
+   "current_stop": 198.05,
+   "last_close": 198.0,
    "last_date": "2026-09-10",
-   "unrealised_pct": 2.09,
+   "unrealised_pct": 10.0,
    "exit_price": null,
    "result_pct": null,
    "half_sold": true,
+   "sold": 2,
+   "remaining": 1,
    "grade": "A",
-   "stop": 16.46,
+   "stop": 172.8,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
-    "low": 18.71,
-    "high": 20.78,
+    "low": 196.34,
+    "high": 218.16,
+    "note": "above $40 he measures the move in dollars: $5-25",
+    "dollar_low": 186.8,
+    "dollar_high": 206.8
+   },
+   "fill": "filled at the open, $180.00",
+   "uncertainty": null
+  },
+  {
+   "ticker": "SMCI",
+   "kind": "burst",
+   "picked": "2026-09-07",
+   "grade": "A",
+   "stop": 23.58,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 26.79,
+    "high": 29.77,
     "note": null,
     "dollar_low": null,
     "dollar_high": null
    },
-   "fill": "filled at the open, $17.20"
+   "fill": "opened at $24.44, under the $24.56 trigger; the day reached it (high $24.81) at a time the bar cannot give, and the plan's entry is the first 30 minutes",
+   "uncertainty": "trigger_timing",
+   "sessions": 3,
+   "day": 3,
+   "status": "uncertain",
+   "instruction": "Day 1 (2026-09-08): opened at $24.44, under the $24.56 trigger; the day reached it (high $24.81) at a time the bar cannot give, and the plan's entry is the first 30 minutes. The model books no fill. If you took this plan: the sell stop is $23.58; sell at least half by day 3's close and be out by day 5's close.",
+   "events": [
+    {
+     "day": 1,
+     "date": "2026-09-08",
+     "event": "uncertain",
+     "price": null
+    }
+   ],
+   "regime": "red",
+   "entry_ref": 24.56,
+   "shares": 25,
+   "current_stop": 23.58,
+   "last_close": 24.71,
+   "last_date": "2026-09-10",
+   "unrealised_pct": null,
+   "exit_price": null,
+   "result_pct": null,
+   "half_sold": false,
+   "sold": 0,
+   "remaining": 25
   },
   {
    "ticker": "NBIS",
@@ -4156,7 +4211,7 @@
    "day": 2,
    "sessions": 2,
    "status": "hold",
-   "instruction": "Day 2: hold 97 NBIS with the stop at $25.34 (closed $25.75, +0.9%). Breadth is red: sell into any strength; do not add.",
+   "instruction": "Day 2: hold 23 NBIS with the stop at $25.34 (closed $25.75, +0.9%). Breadth is red: sell into any strength; do not add.",
    "events": [
     {
      "day": 1,
@@ -4167,7 +4222,7 @@
    ],
    "regime": "red",
    "entry_ref": 25.52,
-   "shares": 97,
+   "shares": 23,
    "current_stop": 25.34,
    "last_close": 25.75,
    "last_date": "2026-09-10",
@@ -4175,6 +4230,8 @@
    "exit_price": null,
    "result_pct": null,
    "half_sold": false,
+   "sold": 0,
+   "remaining": 23,
    "grade": "A",
    "stop": 24.43,
    "targets": {
@@ -4186,31 +4243,48 @@
     "dollar_low": null,
     "dollar_high": null
    },
-   "fill": "filled at the open, $25.52"
+   "fill": "filled at the open, $25.52",
+   "uncertainty": null
   }
  ],
  "scorecard": {
-  "plans": 46,
-  "filled": 33,
-  "settled": 31,
+  "plans": 47,
+  "filled": 22,
+  "settled": 20,
   "open": 2,
-  "wins": 8,
-  "losses": 22,
-  "win_rate": 0.258,
-  "avg_r": -0.15,
-  "sum_r": -4.55,
-  "spy_avg_pct": 0.23,
+  "uncertain": 12,
+  "uncertain_reasons": [
+   {
+    "kind": "trigger_timing",
+    "count": 11,
+    "words": "reached the trigger after the open, at a time the bar cannot give"
+   },
+   {
+    "kind": "stop_sequence",
+    "count": 1,
+    "words": "reached the trigger with the day's low under the stop: fill and stop in unknown order"
+   }
+  ],
+  "not_filled": 13,
+  "unreadable": 0,
+  "unscored": 0,
+  "wins": 5,
+  "losses": 15,
+  "win_rate": 0.25,
+  "avg_r": -0.09,
+  "sum_r": -1.75,
+  "spy_avg_pct": 0.34,
   "min_read": 20,
   "readable": true,
   "sessions": 60,
-  "note": "from bars alone: filled at the next open inside the zone (or at the trigger when the day reaches it), the published stop is one R, halves weighted, settled by day 5"
+  "note": "from bars alone, a model and not a brokerage record: a fill is booked only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold, settled by day 5"
  },
  "closest_miss": {
   "ticker": "AAPL",
   "grade": "A+",
   "score": 10.0,
-  "why": null,
-  "sentence": "AAPL came closest at A+ 10.0."
+  "why": "fails range expansion",
+  "sentence": "AAPL came closest at A+ 10.0: fails range expansion."
  },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
@@ -4219,16 +4293,16 @@
   "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
   "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), coverage, counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
-  "account": "The sizing inputs every plan below was computed from. Not a balance.",
+  "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",
   "breadth": "The Market Monitor for the session and the regime verdict with its reasons verbatim. The size multiplier is the regime's; the plans already carry it.",
   "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not.",
   "trades": "Tickers of the bursts to trade tomorrow, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
-  "beyond_cap": "Tickers that qualified and got no order line because the slots were full. Not refusals.",
-  "cash_budget": "What tomorrow's orders commit, the slots used, and what was cut and why.",
+  "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the limit, past the slots or the configured equity, or sized to no whole share. Each has a reason in cash_budget.cut. Not checklist refusals.",
+  "cash_budget": "Model allocation: what tomorrow's tickets would commit against the configured equity, the model slots used (open model plans count), and every plan without a ticket with its kind and reason. Never a balance or buying power.",
   "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
-  "open_plans": "Every published plan still inside its window, replayed to this session: status word and the instruction sentence. A plan you never bought is a row to ignore.",
-  "scorecard": "The rules' record over the published plans, always with n and the read threshold. The rules' record, not yours. Null until a plan has settled.",
+  "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
+  "scorecard": "The rules' record over the published plans as a model of their fills, always with n, the read threshold and the uncertain count by reason. Rates are over settled plans alone. The rules' record, not yours. Null until a plan has settled.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."
  },

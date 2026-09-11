@@ -8,12 +8,24 @@ every night, both computed from the bars the run already fetched:
 * ``open_plans()``: every pick from the last ``OPEN_PLAN_SESSIONS`` sessions
   walked through ``plan.follow()`` -- the fill rule the ticket implies, then
   his exit rules in order -- so the page can say "day 3: sell half" without
-  a human having typed a fill.
+  a human having typed a fill. It is a model of the published plan; nothing
+  here knows what the reader holds.
 * ``scorecard()``: the same walk over the last ``SCORECARD_SESSIONS`` sessions
-  of picks, settled at day 5, in R (the published stop is one R) with the
-  halves weighted, beside SPY over the same days as one comparison line. It
-  is the rules' record, not the reader's, and it is unreadable as a rate
-  below ``SCORECARD_MIN_PLANS`` -- the page prints the count and says so.
+  of picks, settled at day 5, in R (the published stop is one R on the whole
+  position, every sale weighted by the whole shares it sold), beside SPY over
+  the same days as one comparison line. It is the rules' record, not the
+  reader's, and it is unreadable as a rate below ``SCORECARD_MIN_PLANS`` --
+  the page prints the count and says so.
+
+What a daily bar can and cannot establish is the whole fill rule
+(``fill()``). It CAN say a stop-limit filled when the open sits at or over
+the trigger and at or under the limit: the fill is the open, inside the
+plan's window. It CANNOT say when a day that opened under the trigger
+crossed it, whether an open past the limit or under the skip line later
+filled the resting order, or whether a fill-day low under the stop came
+before or after the fill. Those are ``UNCERTAIN`` with a reason code from
+``UNCERTAIN_REASONS``: no fill is booked, no R is scored, the plan is not
+read as held, not held, or freed, and the scorecard counts it by reason.
 
 Nothing here is a strategy number except ``OPEN_PLAN_SESSIONS``, which is
 his five-session hold. Every price a walk reads is the plan's own.
@@ -46,8 +58,21 @@ MAX_PICKS = 260                            # (P) picks kept in the file, newest 
 BENCHMARK = "SPY"                          # the one comparison line
 KINDS = plan.KINDS
 SETTLED = ("stopped", "exit", "expired")   # the walk ended; the plan has a result
-NOT_FILLED = "not_filled"                  # the ticket never filled: no result, no R
+NOT_FILLED = "not_filled"                  # the ticket could not have filled: no result, no R
 UNREADABLE = "unreadable"                  # a later bar the walk refused
+UNCERTAIN = "uncertain"                    # the bars cannot say whether, when or in what order the ticket filled
+#: (P) the one fill a daily bar can establish: the open, at or over the trigger
+#: and at or under the limit. Everything else the bar suggests is uncertain.
+KNOWN_FILL = "open_inside_zone"
+#: Why a fill is uncertain, one code each; ``UNCERTAIN_WORDS`` is the short
+#: phrase the page and the mail print beside a count.
+UNCERTAIN_REASONS = ("trigger_timing", "stop_sequence", "open_above_limit", "open_below_skip")
+UNCERTAIN_WORDS = {
+    "trigger_timing": "reached the trigger after the open, at a time the bar cannot give",
+    "stop_sequence": "reached the trigger with the day's low under the stop: fill and stop in unknown order",
+    "open_above_limit": "opened above the limit, which the plan skips, then traded back under it",
+    "open_below_skip": "opened under the skip line, which the plan skips, then recovered through the trigger",
+}
 
 RULES: dict[str, Any] = {
     "record.open_plan_sessions": OPEN_PLAN_SESSIONS,
@@ -56,11 +81,15 @@ RULES: dict[str, Any] = {
     "record.nights_kept": NIGHTS_KEPT,
     "record.max_picks": MAX_PICKS,
     "record.benchmark": BENCHMARK,
+    "record.known_fill": KNOWN_FILL,
 }
 
-SCORECARD_NOTE = ("from bars alone: filled at the next open inside the zone (or at the trigger when the "
-                  "day reaches it), the published stop is one R, halves weighted, settled by day "
-                  f"{plan.FINAL_EXIT_DAY}")
+SCORECARD_NOTE = ("from bars alone, a model and not a brokerage record: a fill is booked only at the next "
+                  "open at or over the trigger and at or under the limit; a day that reaches the trigger after "
+                  "the open, an open past the limit or under the skip line that could still have filled, and a "
+                  "fill-day low under the stop are uncertain, counted here and in no rate; the published stop "
+                  "is one R on the whole position, every sale weighted by the whole shares it sold, settled by "
+                  f"day {plan.FINAL_EXIT_DAY}")
 
 #: The keys a pick must carry to be walked; anything else it carries is kept.
 PICK_KEYS = ("ticker", "date", "kind", "entry_ref", "stop", "shares")
@@ -242,114 +271,155 @@ def later_bars(df: pd.DataFrame | None, after: str, through: str | None = None) 
     return rows
 
 
-def fill(pick: dict, bar: dict) -> tuple[str, float | None, str]:
-    """What the ticket does on its first session, from that bar alone.
+def fill(pick: dict, bar: dict) -> tuple[str, float | None, str, str | None]:
+    """What the ticket did on its first session, as far as that daily bar
+    can say.
 
     A burst ticket is a buy stop-limit: trigger ``entry_ref`` (the burst
     close), limit ``entry_high``; the plan says to skip an open under
-    ``entry_low``. So: an open above the limit never fills (the gap ate it);
-    an open under the skip line is skipped; an open at or above the trigger
-    fills at the open; an open between the skip line and the trigger fills
-    at the trigger if the day trades up through it, else the day order
-    expires. An anticipation ticket is the same shape with ``trigger`` and
-    ``limit``, and no skip line.
-    Returns ``(status, price, note)``: ``filled`` with the price, or
-    ``not_filled`` with why.
+    ``entry_low``. An anticipation ticket is the same shape with ``trigger``
+    and ``limit`` and no skip line. The bar establishes exactly one fill,
+    ``KNOWN_FILL``: an open at or over the trigger and at or under the limit
+    fills at the open, inside the plan's window. It rules a fill out when
+    the day never reached the trigger, or opened above the limit and never
+    traded back under it. Everything else is ``UNCERTAIN`` with a reason
+    from ``UNCERTAIN_REASONS``: a day that opened under the trigger and
+    reached it (the crossing time is unknown, and the plan's entry is the
+    first 30 minutes), the same with the low at or under the stop (the order
+    of fill and stop is unknown), an open above the limit that traded back
+    under it (a resting order does not fill at that open but stays live),
+    and an open under the skip line that recovered through the trigger (the
+    plan skips it; a resting order would still have triggered). The
+    strategy's "would skip" is stated as the plan's, never as a broker's
+    rejection.
+    Returns ``(status, price, note, reason)``; ``price`` and ``reason`` are
+    each None unless the status calls for them.
     """
-    o, h = bar["o"], bar["h"]
+    o, h, l = bar["o"], bar["h"], bar["l"]
+    stop = float(pick["stop"])
     if pick.get("kind") == "anticipation":
-        trigger, limit = float(pick.get("trigger") or pick["entry_ref"]), pick.get("limit")
-        if limit is not None and o > float(limit):
-            return NOT_FILLED, None, f"opened at {plan._usd(o)}, above the {plan._usd(float(limit))} limit: not filled"
-        if o >= trigger:
-            return "filled", o, f"filled at the open, {plan._usd(o)}"
+        trigger, limit, skip = float(pick.get("trigger") or pick["entry_ref"]), pick.get("limit"), None
+    else:
+        trigger, limit, skip = float(pick["entry_ref"]), pick.get("entry_high"), pick.get("entry_low")
+    usd = plan._usd
+    if limit is not None and o > float(limit):
+        limit = float(limit)
+        if l <= limit:
+            return UNCERTAIN, None, (f"opened at {usd(o)}, above the {usd(limit)} limit, which the plan says to "
+                                     f"skip; a resting stop-limit does not fill at that open but stays live, and "
+                                     f"the day traded back under {usd(limit)} (low {usd(l)}), so it may have filled "
+                                     f"later at a time the bar cannot give"), "open_above_limit"
+        return NOT_FILLED, None, (f"opened at {usd(o)}, above the {usd(limit)} limit, and never traded back under "
+                                  f"it (low {usd(l)}): the limit could not fill"), None
+    if skip is not None and o < float(skip):
+        skip = float(skip)
         if h >= trigger:
-            return "filled", trigger, f"filled at the trigger, {plan._usd(trigger)}"
-        return NOT_FILLED, None, (f"never reached the {plan._usd(trigger)} trigger (high {plan._usd(h)}): "
-                                  "the day order expired")
-    trigger = float(pick["entry_ref"])
-    low, high = pick.get("entry_low"), pick.get("entry_high")
-    if high is not None and o > float(high):
-        return NOT_FILLED, None, f"opened at {plan._usd(o)}, above the {plan._usd(float(high))} limit: the gap ate the trade"
-    if low is not None and o < float(low):
-        return NOT_FILLED, None, f"opened at {plan._usd(o)}, under the {plan._usd(float(low))} skip line: the burst was failing"
+            return UNCERTAIN, None, (f"opened at {usd(o)}, under the {usd(skip)} skip line: the plan calls the burst "
+                                     f"failing and places no order, but a resting order would still have triggered "
+                                     f"when the day recovered through {usd(trigger)} (high {usd(h)}), at a time the "
+                                     f"bar cannot give"), "open_below_skip"
+        return NOT_FILLED, None, (f"opened at {usd(o)}, under the {usd(skip)} skip line, and never reached the "
+                                  f"{usd(trigger)} trigger (high {usd(h)}): not filled"), None
     if o >= trigger:
-        return "filled", o, f"filled at the open, {plan._usd(o)}"
+        return "filled", o, f"filled at the open, {usd(o)}", None
     if h >= trigger:
-        return "filled", trigger, f"filled at the trigger, {plan._usd(trigger)}"
-    return NOT_FILLED, None, (f"never reached the {plan._usd(trigger)} trigger (high {plan._usd(h)}): "
-                              "the day order expired")
+        if l <= stop:
+            return UNCERTAIN, None, (f"opened at {usd(o)}, under the {usd(trigger)} trigger; the day reached it "
+                                     f"(high {usd(h)}) and its low {usd(l)} sat at or under the {usd(stop)} stop: "
+                                     f"the bar cannot say whether the fill came inside the {plan.ENTRY_WINDOW}, "
+                                     f"nor whether the low came before or after it"), "stop_sequence"
+        return UNCERTAIN, None, (f"opened at {usd(o)}, under the {usd(trigger)} trigger; the day reached it "
+                                 f"(high {usd(h)}) at a time the bar cannot give, and the plan's entry is the "
+                                 f"{plan.ENTRY_WINDOW}"), "trigger_timing"
+    return NOT_FILLED, None, (f"never reached the {usd(trigger)} trigger (high {usd(h)}): the day order "
+                              "expired"), None
+
+
+def _no_walk(base: dict, pick: dict, first: dict | None, *, day: int, status: str, fill_note: str | None,
+             instruction: str, events: list[dict], regime: str, uncertainty: str | None = None) -> dict:
+    """A row for a plan the model did not walk: not filled, uncertain, or a
+    bar it could not read. The published numbers are carried; nothing is
+    booked."""
+    return {**base, "day": day, "status": status, "fill": fill_note, "uncertainty": uncertainty,
+            "instruction": instruction, "events": events, "regime": regime,
+            "entry_ref": pick["entry_ref"], "shares": pick.get("shares", 0), "current_stop": pick["stop"],
+            "last_close": first["c"] if first else None, "last_date": first["date"] if first else None,
+            "unrealised_pct": None, "exit_price": None, "result_pct": None, "half_sold": False,
+            "sold": 0, "remaining": pick.get("shares", 0)}
+
+
+#: What an uncertain plan's row tells a reader who took it: the plan's own
+#: stop and the two dated exits, since the model books nothing for it.
+IF_TAKEN = ("The model books no fill. If you took this plan: the sell stop is {stop}; sell at least half by "
+            "day {sell_half_day}'s close and be out by day {final_day}'s close.")
 
 
 def replay(pick: dict, bars: list[dict], regime: str = "green") -> dict:
     """One pick walked over its later bars: the fill rule, then
-    ``plan.follow()`` from the fill price (see the note on a trigger fill
-    inside). The row carries the published stop and targets beside the
-    walk's own numbers, so the page can draw stop, entry and aim on one
-    scale. A first bar the walk could not read is ``unreadable``, the way a
-    later one is."""
+    ``plan.follow()`` from the open fill over whole bars. The row carries the
+    published stop and targets beside the walk's own numbers, so the page
+    can draw stop, entry and aim on one scale. A first bar the walk could
+    not read is ``unreadable``, the way a later one is; a fill the bar
+    cannot establish is ``uncertain`` with its reason, and is never walked."""
     base = {"ticker": pick["ticker"], "kind": pick.get("kind", "burst"), "picked": pick["date"],
             "grade": pick.get("grade"), "stop": pick["stop"], "targets": pick.get("targets"),
-            "fill": None, "sessions": len(bars)}
+            "fill": None, "uncertainty": None, "sessions": len(bars)}
     if not bars:
         walk = plan.follow(pick, [], regime)
         return {**walk, **base, "day": 0}
     first = bars[0]
     if not (first["l"] <= min(first["o"], first["c"]) and max(first["o"], first["c"]) <= first["h"]):
-        return {**base, "day": 1, "status": UNREADABLE, "fill": None,
-                "instruction": (f"Day 1 ({first['date']}): the bar could not be read (open {first['o']}, close "
-                                f"{first['c']} outside {first['l']}-{first['h']}); follow the plan's own stop."),
-                "events": [], "regime": regime, "entry_ref": pick["entry_ref"], "shares": pick.get("shares", 0),
-                "current_stop": pick["stop"], "last_close": None, "last_date": None,
-                "unrealised_pct": None, "exit_price": None, "result_pct": None, "half_sold": False}
-    status, price, note = fill(pick, bars[0])
+        return _no_walk(base, pick, None, day=1, status=UNREADABLE, fill_note=None,
+                        instruction=(f"Day 1 ({first['date']}): the bar could not be read (open {first['o']}, close "
+                                     f"{first['c']} outside {first['l']}-{first['h']}); follow the plan's own stop."),
+                        events=[], regime=regime)
+    status, price, note, why = fill(pick, first)
     if status == NOT_FILLED:
-        first = bars[0]
-        return {**base, "day": 1, "status": NOT_FILLED, "fill": note,
-                "instruction": f"Day 1 ({first['date']}): {note}. Nothing to hold.",
-                "events": [{"day": 1, "date": first["date"], "event": NOT_FILLED, "price": first["o"]}],
-                "regime": regime, "entry_ref": pick["entry_ref"], "shares": pick.get("shares", 0),
-                "current_stop": pick["stop"], "last_close": first["c"], "last_date": first["date"],
-                "unrealised_pct": None, "exit_price": None, "result_pct": None, "half_sold": False}
+        return _no_walk(base, pick, first, day=1, status=NOT_FILLED, fill_note=note,
+                        instruction=f"Day 1 ({first['date']}): {note}. Nothing to hold.",
+                        events=[{"day": 1, "date": first["date"], "event": NOT_FILLED, "price": first["o"]}],
+                        regime=regime)
+    if status == UNCERTAIN:
+        taken = IF_TAKEN.format(stop=plan._usd(float(pick["stop"])), sell_half_day=plan.SELL_HALF_DAY,
+                                final_day=plan.FINAL_EXIT_DAY)
+        day = min(len(bars), plan.FINAL_EXIT_DAY)
+        over = (f" The {plan.FINAL_EXIT_DAY}-session window is over: if you still hold it, exit."
+                if len(bars) > plan.FINAL_EXIT_DAY else "")
+        return _no_walk(base, pick, bars[-1], day=day, status=UNCERTAIN, fill_note=note,
+                        instruction=f"Day 1 ({first['date']}): {note}. {taken}{over}",
+                        events=[{"day": 1, "date": first["date"], "event": UNCERTAIN, "price": None}],
+                        regime=regime, uncertainty=why)
     filled = {**pick, "entry_ref": price}
-    walked = list(bars)
-    if price != first["o"]:
-        # Filled at the trigger, some time after the open. A daily bar cannot
-        # say whether the day's low or high came before or after that fill;
-        # only the close is known to come after it. So the fill day is walked
-        # as the bar from the fill to the close: the open under the stop that
-        # the ticket waited out is not a stop-out of a position that did not
-        # exist yet, and a high the price left behind before filling is not a
-        # sale into strength. The day's low is kept when it is above the stop
-        # (it is the entry-day low the stop rises to); a low under the stop
-        # may have printed before the fill, so it is read as a cent above the
-        # stop -- the stop stays where it was published. Day 2 reads whole bars.
-        stop = float(pick["stop"])
-        low = first["l"] if first["l"] > stop else round(stop + 0.01, 2)
-        walked[0] = {**first, "o": price, "h": max(price, first["c"]), "l": min(low, price, first["c"])}
     try:
-        walk = plan.follow(filled, walked, regime)
+        walk = plan.follow(filled, bars, regime)
     except ValueError as exc:
-        return {**base, "day": len(bars), "status": UNREADABLE, "fill": note,
-                "instruction": f"A later bar could not be read ({exc}); follow the plan's own stop.",
-                "events": [], "regime": regime, "entry_ref": price, "shares": pick.get("shares", 0),
-                "current_stop": pick["stop"], "last_close": None, "last_date": None,
-                "unrealised_pct": None, "exit_price": None, "result_pct": None, "half_sold": False}
+        return _no_walk({**base, "entry_ref": price}, {**pick, "entry_ref": price}, None, day=len(bars),
+                        status=UNREADABLE, fill_note=note,
+                        instruction=f"A later bar could not be read ({exc}); follow the plan's own stop.",
+                        events=[], regime=regime)
     return {**walk, **base, "fill": note}
 
 
 def r_multiple(row: dict, stop: float) -> float | None:
-    """The result in R: the published stop is one R, and a half sold at
-    +8% (or at day 3) is half the position at that price. None until the
-    walk has an exit price."""
-    entry, exit_price = row.get("entry_ref"), row.get("exit_price")
-    if not _finite(entry) or not _finite(exit_price) or not _finite(stop) or entry <= stop:
+    """The result in R, weighted by the whole shares each sale event sold:
+    ``sum(shares_sold * (price - entry)) / (shares * (entry - stop))``, the
+    published stop being one R on the whole position. None until every share
+    the model held has been sold (an open walk, an expired one, an uncertain
+    one), or when the sales do not reconcile to the share count. A walk with
+    no shares has no partial exits and is read on prices alone."""
+    entry, shares = row.get("entry_ref"), row.get("shares")
+    if not _finite(entry) or not _finite(stop) or entry <= stop:
         return None
     risk = entry - stop
-    if row.get("half_sold"):
-        half = next((e.get("price") for e in row.get("events", []) if e.get("event") == "sell_half"), None)
-        if _finite(half):
-            return round(0.5 * (half - entry) / risk + 0.5 * (exit_price - entry) / risk, 2)
+    sales = [e for e in row.get("events", []) if isinstance(e, dict) and _finite(e.get("shares"))
+             and e["shares"] > 0 and _finite(e.get("price"))]
+    if isinstance(shares, int) and not isinstance(shares, bool) and shares > 0:
+        if sum(e["shares"] for e in sales) != shares:
+            return None
+        return round(math.fsum(e["shares"] * (e["price"] - entry) for e in sales) / (shares * risk), 2)
+    exit_price = row.get("exit_price")
+    if not _finite(exit_price):
+        return None
     return round((exit_price - entry) / risk, 2)
 
 
@@ -416,13 +486,16 @@ def _spy_move(spy: pd.DataFrame | None, entry_date: str, exit_date: str) -> floa
 
 def scorecard(rec: dict, frames: dict[str, pd.DataFrame], session: str) -> dict:
     """The rules' record over the last ``SCORECARD_SESSIONS`` sessions of
-    picks: how many plans, how many filled, wins and losses among the
-    settled ones, average and summed R, and SPY over the same days. Every
-    count is a count; the rate is None until ``SCORECARD_MIN_PLANS`` plans
-    have settled, and the page prints the count either way."""
+    picks: how many plans, how many the bars can say filled, how many are
+    uncertain (by reason) or could not have filled, wins and losses among
+    the settled ones, average and summed R, and SPY over the same days.
+    Every count is a count; the rates are over the settled plans alone, None
+    until ``SCORECARD_MIN_PLANS`` have settled -- an uncertain plan never
+    counts toward that -- and the page prints the counts either way."""
     window = set(sessions_before(frames, session, SCORECARD_SESSIONS))
     spy = frames.get(BENCHMARK)
-    plans = filled = wins = losses = settled = open_now = 0
+    plans = filled = wins = losses = settled = open_now = uncertain = not_filled = unreadable = unscored = 0
+    reasons: dict[str, int] = {}
     rs: list[float] = []
     spy_moves: list[float] = []
     for pick in rec.get("picks", []):
@@ -436,7 +509,15 @@ def scorecard(rec: dict, frames: dict[str, pd.DataFrame], session: str) -> dict:
             continue
         row = replay(pick, bars, "green")
         plans += 1
-        if row["status"] in (NOT_FILLED, UNREADABLE):
+        if row["status"] == UNCERTAIN:
+            uncertain += 1
+            reasons[row["uncertainty"]] = reasons.get(row["uncertainty"], 0) + 1
+            continue
+        if row["status"] == NOT_FILLED:
+            not_filled += 1
+            continue
+        if row["status"] == UNREADABLE:
+            unreadable += 1
             continue
         filled += 1
         if row["status"] not in SETTLED:
@@ -444,6 +525,7 @@ def scorecard(rec: dict, frames: dict[str, pd.DataFrame], session: str) -> dict:
             continue
         r = r_multiple(row, pick["stop"])
         if r is None:
+            unscored += 1
             continue
         settled += 1
         rs.append(r)
@@ -458,6 +540,10 @@ def scorecard(rec: dict, frames: dict[str, pd.DataFrame], session: str) -> dict:
     readable = settled >= SCORECARD_MIN_PLANS
     return {
         "plans": plans, "filled": filled, "settled": settled, "open": open_now,
+        "uncertain": uncertain,
+        "uncertain_reasons": [{"kind": k, "count": reasons[k], "words": UNCERTAIN_WORDS[k]}
+                              for k in UNCERTAIN_REASONS if reasons.get(k)],
+        "not_filled": not_filled, "unreadable": unreadable, "unscored": unscored,
         "wins": wins, "losses": losses,
         "win_rate": round(wins / settled, 3) if readable and settled else None,
         "avg_r": round(math.fsum(rs) / settled, 2) if readable and settled else None,

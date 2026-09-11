@@ -18,16 +18,22 @@ from src.plan import Account, size
 
 SOURCE = Path(plan.__file__)
 
-#: close 20.00, low 19.85: the stop is 1.73% under the planned fill of 20.20,
-#: inside his ideal 2%, so the risk budget is the full $50.
+#: close 20.00, low 19.85, high 20.10: the ticket's limit (+4%) is 20.80, the
+#: highest fill it permits. The burst low is 4.57% under it, past his line;
+#: the bar's midpoint, 19.975 -> 19.98 to cents, is 3.94% under it and under
+#: the 20.00 buy stop: that is the stop. Between his ideal 2% and his 4%, so
+#: the risk is halved to $25: $25 / $0.82 = 30 shares, $624.00 at the limit.
 TIGHT = dict(ticker="XYZ", close=20.00, low=19.85, high=20.10, open_=19.90, prev_close=19.00, gain_pct=5.26)
-#: close 20.00, low 19.40: 3.96% under the fill, between the ideal and the
-#: maximum, so the risk is halved to $25.
-MID = dict(ticker="XYZ", close=20.00, low=19.40, high=20.10, open_=19.60, prev_close=19.00, gain_pct=5.26)
+#: close 20.00, low 19.40, high 20.10: at the 20.80 limit the low is 6.73%
+#: away and the midpoint 19.75 is 5.05%, both past his line: the ticket is
+#: withheld, the setup kept. (Every burst whose bar reaches more than about
+#: 0.16% under its close is this case: at +4% the ceiling and his 4% stop
+#: line leave no room, a strategy question the checkpoint records.)
+WIDE = dict(ticker="XYZ", close=20.00, low=19.40, high=20.10, open_=19.60, prev_close=19.00, gain_pct=5.26)
 
 
 def burst(**overrides):
-    return plan.burst_plan(**{**MID, "account": Account(), **overrides})
+    return plan.burst_plan(**{**TIGHT, "account": Account(), **overrides})
 
 
 def bar(o, h, l, c, date="2026-09-11"):
@@ -174,61 +180,106 @@ def test_the_buy_zone_and_the_skip_thresholds():
     assert "$49.00" in p["pre_open_check"] and "$52.00" in p["pre_open_check"] and "$54.00" in p["pre_open_check"]
 
 
-def test_the_stop_cascade_takes_the_burst_low_when_it_is_within_four_percent():
-    p = burst(close=100.0, low=97.50, high=101.0, open_=98.0, prev_close=95.0)
+def test_the_stop_cascade_takes_the_burst_low_when_it_is_within_four_percent_of_the_limit():
+    """Close 100, limit 104: the low 99.90 is 4.10 / 104 = 3.94% under it."""
+    p = burst(close=100.0, low=99.90, high=100.60, open_=99.95, prev_close=95.0)
     assert p["stop_basis"] == "burst_low"
-    assert p["stop"] == 97.50
-    assert p["stop_pct"] == 3.47          # (101.00 - 97.50) / 101.00
+    assert p["stop"] == 99.90
+    assert p["stop_pct"] == 3.94
     assert p["stop_note"] is None
     assert p["eligible"] and p["reason"] is None
+    assert p["sizing_price"] == 104.0 and p["limit"] == 104.0 == p["order_json"]["limit_price"]
 
 
 def test_the_stop_cascade_falls_to_the_range_midpoint_when_the_low_is_wide():
-    """Low 95 is 5.94% under the 101.00 fill; the midpoint 98.00 is 2.97%."""
-    p = burst(close=100.0, low=95.0, high=101.0, open_=96.0, prev_close=95.0)
+    """Low 99.70 is 4.30 / 104 = 4.13% under the 104 limit; the midpoint
+    (99.70 + 100.10) / 2 = 99.90 is 3.94%, and under the 100 buy stop."""
+    p = burst(close=100.0, low=99.70, high=100.10, open_=99.80, prev_close=95.0)
     assert p["stop_basis"] == "half_range"
-    assert p["stop"] == 98.00
-    assert p["stop_pct"] == 2.97
+    assert p["stop"] == 99.90
+    assert p["stop_pct"] == 3.94
     assert [c["within_max"] for c in p["stop_candidates"]] == [False, True]
+    assert [c["under_trigger"] for c in p["stop_candidates"]] == [True, True]
     assert p["eligible"]
 
 
-def test_the_stop_cascade_sets_four_percent_and_refuses_when_both_are_wide():
-    """Low 90 is 10.89% under 101.00, the midpoint 95 is 5.94%: 4% = 96.96."""
+def test_the_stop_cascade_sets_four_percent_and_withholds_the_ticket_when_both_are_wide():
+    """Low 90 is 14 / 104 = 13.46% under the 104 limit, the midpoint 95 is
+    9 / 104 = 8.65%: the stop is set 4% under the limit, 99.84, a level the
+    bar does not support, and the ticket is withheld with the setup kept."""
     p = burst(close=100.0, low=90.0, high=100.0, open_=91.0, prev_close=95.0)
     assert p["stop_basis"] == "max_stop"
-    assert p["stop"] == 96.96
+    assert p["stop"] == 99.84
     assert p["stop_pct"] == 4.0
-    assert "10.89%" in p["stop_note"] and "5.94%" in p["stop_note"] and "$96.96" in p["stop_note"]
+    assert "13.46%" in p["stop_note"] and "8.65%" in p["stop_note"] and "$99.84" in p["stop_note"]
     assert not p["eligible"]
-    assert p["reason"].startswith("stop wider than 4%") and "10.89%" in p["reason"]
+    assert p["reason"].startswith("ticket withheld: at the $104.00 limit") and "13.46%" in p["reason"] \
+        and "8.65%" in p["reason"] and "the setup stands, the ticket does not" in p["reason"]
     assert p["action"] == "refused"
     assert p["order_line"] is None and p["order_json"] is None and p["order_readback"] is None
+    assert p["order_terms"] is None
     assert "wide_stop" in p["flags"]
-    assert p["shares"] > 0        # the card still shows a size
+    assert p["shares"] == 6        # the card still shows a size: $25 / $4.16 at the 104 limit
 
 
-def test_the_sizing_is_at_the_planned_fill_and_the_resize_rule_carries_the_numbers():
-    p = burst()     # MID: fill 20.20, stop 19.40, 3.96% -> risk halved to $25
-    assert p["planned_entry"] == 20.20
-    assert p["risk_per_share"] == 0.80
+def test_the_reviewers_ticket_is_withheld_rather_than_published_as_safe():
+    """Close 100, low 99.50, high 100.50. Sized at the old +1% fill the ticket
+    read 24 shares (the cap) with $36 at risk; at its 104 limit those shares
+    risk $108 against a $50 budget and the 99.50 stop is 4.33% away. The
+    bar's midpoint, 100.00, is not under the 100.00 buy stop, so no stop the
+    bar supports is inside his line: the ticket is withheld, the setup kept."""
+    p = burst(close=100.0, low=99.50, high=100.50, open_=99.60, prev_close=95.0)
+    assert p["action"] == "refused" and p["eligible"] is False and p["order_json"] is None
+    assert "4.33% under the $104.00 limit" in p["reason"] and "not under the $100.00 buy stop" in p["reason"]
+    assert [c["under_trigger"] for c in p["stop_candidates"]] == [True, False]
+    assert p["stop_basis"] == "max_stop" and p["stop"] == 99.84 and p["sizing_price"] == 104.0
+    assert p["shares"] == 6 and p["ticker"] == "XYZ" and p["exits"]      # kept for inspection
+    assert "wide_stop" in p["flags"] and p["reason"] not in p["notes"]      # said once, beside the missing ticket
+    assert p["stop_note"] not in p["notes"] and any("multiplied by 0.5" in n for n in p["notes"])
+
+
+def test_an_eligible_ticket_keeps_the_budget_and_the_cap_at_the_limit():
+    """Close 100, low 99.90: stop 99.90, 3.94% under the 104 limit, halved
+    budget $25 / $4.10 = 6 shares. 6 x 4.10 = $24.60 <= $25 and 6 x 104 =
+    $624 <= $2,500; a seventh share would break the budget."""
+    p = burst(close=100.0, low=99.90, high=100.60, open_=99.95, prev_close=95.0)
+    assert p["action"] == "buy_at_open" and p["shares"] == 6
+    o = p["order_json"]
+    assert o["quantity"] == o["then"]["quantity"] == 6 and o["limit_price"] == 104.0 and o["then"]["stop_price"] == 99.90
+    assert p["risk_per_share"] == 4.10 and p["risk_usd"] == 24.60 and p["position_usd"] == 624.0
+    assert p["shares"] * (o["limit_price"] - p["stop"]) <= p["sizing"]["budget_usd"] == 25.0
+    assert (p["shares"] + 1) * (o["limit_price"] - p["stop"]) > p["sizing"]["budget_usd"]
+    assert p["shares"] * o["limit_price"] <= p["sizing"]["cap_usd"] == 2500.0
+    assert "Buy 6 XYZ" in p["order_line"] and p["sizing_basis"] == "order_limit" == plan.SIZING_BASIS
+    assert "sized at the $104.00 limit" in p["sizing_note"] and "not a maximum loss" in p["sizing_note"]
+
+
+def test_the_sizing_is_at_the_limit_and_the_resize_rule_carries_the_numbers():
+    p = burst()     # TIGHT: limit 20.80, stop 19.98, 3.94% -> risk halved to $25
+    assert p["sizing_price"] == 20.80 and p["planned_entry"] == 20.20
+    assert "indicative" in p["planned_entry_note"] and "not a fill" in p["planned_entry_note"]
+    assert p["risk_per_share"] == 0.82
     assert p["multipliers"] == {"regime": 1.0, "hazard": 1.0, "stop_risk": 0.5, "total": 0.5}
     assert p["stop_risk_multiplier"] == 0.5
-    assert p["shares"] == 31                     # $25 / $0.80
-    assert p["position_usd"] == 626.20
-    assert p["risk_usd"] == 24.80
+    assert p["shares"] == 30                     # $25 / $0.82
+    assert p["position_usd"] == 624.0            # 30 x 20.80, the most the ticket can commit
+    assert p["risk_usd"] == 24.60                # 30 x 0.82, the most a permitted fill puts at risk
     assert "risk_halved" in p["flags"]
-    assert "wider than his ideal 2%" in p["stop_risk_reason"]
-    assert p["resize_rule"] == "if your fill differs, shares = $25.00 / (fill - $19.40), and no more than $2,500.00 of stock"
+    assert "wider than his ideal 2%" in p["stop_risk_reason"] and "ticket's limit" in p["stop_risk_reason"]
+    assert p["resize_rule"] == "if your fill differs, shares = $25.00 / (fill - $19.98), and no more than $2,500.00 of stock"
 
 
-def test_a_tight_stop_keeps_the_full_budget_and_the_cap_can_bind_inside_a_plan():
-    p = burst(**TIGHT)   # fill 20.20, stop 19.85 = 1.73%: $50 / $0.35 = 142 -> cap $2,500 / 20.20 = 123
-    assert p["stop_pct"] == 1.73
-    assert p["multipliers"]["stop_risk"] == 1.0 and p["stop_risk_reason"] is None
-    assert p["shares"] == 123
-    assert p["capped_by"] == "position_cap"
-    assert "position_capped" in p["flags"] and "risk_halved" not in p["flags"]
+def test_every_eligible_burst_is_sized_at_half_risk_and_the_cap_can_bind_inside_a_plan():
+    """The limit sits 4% over the close and the stop under it, so an eligible
+    burst's stop is never inside his ideal 2% of the limit: the halving
+    always applies. The position cap binds only with a larger risk budget:
+    3% risk is $300, halved $150 / $0.82 = 182 shares, over $2,500 / 20.80 = 120."""
+    p = burst(account=Account(risk_pct=3))
+    assert p["stop_pct"] == 3.94 and p["multipliers"]["stop_risk"] == 0.5
+    assert p["shares"] == 120 and p["capped_by"] == "position_cap"
+    assert p["position_usd"] == 2496.0 and p["risk_usd"] == 98.40
+    assert "position_capped" in p["flags"] and "risk_halved" in p["flags"]
+    assert p["shares"] * p["sizing_price"] <= 2500.0 < (p["shares"] + 1) * p["sizing_price"]
 
 
 def test_targets_by_price_band():
@@ -266,28 +317,48 @@ def test_every_exit_rule_is_present_with_the_right_prices():
     assert "the stop" in {r["key"]: r for r in plan.exit_schedule(50.50)}["stop"]["when"]
 
 
-def test_the_plans_exits_are_from_the_planned_fill():
+def test_the_plans_exits_are_from_the_indicative_entry():
     p = burst()
     assert [r["price"] for r in p["exits"][:3]] == [21.82, 22.22, 24.24]   # 20.20 x 1.08 / 1.10 / 1.20
-    assert p["exits"] == plan.exit_schedule(20.20, 19.40)
+    assert p["exits"] == plan.exit_schedule(20.20, 19.98)
+    assert p["targets"] == plan.targets(20.20, 20.00)
 
 
 def test_the_order_line_is_a_fidelity_buy_stop_limit_with_the_stop_attached():
     p = burst()
     assert p["action"] == "buy_at_open"
-    assert p["order_line"] == ("Buy 31 XYZ stop-limit: stop $20.00 limit $20.80, day · "
-                               "OTO sell 31 XYZ stop-loss $19.40 GTC")
-    assert p["order_readback"] == ("Buy 31 XYZ stop limit 20.00 / 20.80 day, "
-                                   "one-triggers-the-other sell 31 XYZ stop loss 19.40 GTC")
-    assert p["fallback_line"] == ("If your app has no stop-limit: buy 31 XYZ limit $20.80 (day) "
-                                  "with the same sell stop attached.")
+    assert p["order_line"] == ("Buy 30 XYZ stop-limit: stop $20.00 limit $20.80, day · "
+                               "OTO sell 30 XYZ stop-loss $19.98 GTC")
+    assert p["order_readback"] == ("Buy 30 XYZ stop limit 20.00 / 20.80 day, "
+                                   "one-triggers-the-other sell 30 XYZ stop loss 19.98 GTC")
     assert p["order_json"] == {
-        "symbol": "XYZ", "action": "buy", "quantity": 31, "order_type": "stop_limit",
+        "symbol": "XYZ", "action": "buy", "quantity": 30, "order_type": "stop_limit",
         "stop_price": 20.00, "limit_price": 20.80, "time_in_force": "day",
         "conditional": "one_triggers_the_other",
-        "then": {"action": "sell", "quantity": 31, "order_type": "stop", "stop_price": 19.40,
+        "then": {"action": "sell", "quantity": 30, "order_type": "stop", "stop_price": 19.98,
                  "time_in_force": "gtc"},
     }
+
+
+def test_no_plain_limit_fallback_is_published():
+    """A limit order has no trigger and is not this ticket: nothing offers it."""
+    assert "fallback_line" not in burst() and "fallback_line" not in plan.NO_ORDER
+    assert "fallback" not in " ".join(burst()["order_terms"]).lower()
+
+
+def test_the_ticket_states_what_it_enforces_and_what_it_leaves_to_the_reader():
+    terms = burst()["order_terms"]
+    assert len(terms) == 4
+    assert terms[0].startswith("A day order rests until the close unless you cancel it.")
+    assert "first 30 minutes" in terms[0] and "cancel it yourself" in terms[0] and "SpicyStock places and cancels nothing" in terms[0]
+    assert terms[1].startswith("An open above the $20.80 limit does not fill at the open") and "cancel it" in terms[1]
+    assert terms[2].startswith("An open under $19.60 is the burst failing") and "$20.00" in terms[2]
+    assert terms[3].startswith("The sell stop at $19.98 is attached the moment the buy fills")
+    assert "30 minutes" not in terms[1] + terms[2] + terms[3]      # DAY is never said to expire with the window
+    anticipation = plan.anticipation_plan(ticker="ABC", close=5.00, box_high=5.10, box_low=4.90,
+                                          lows_last3=[5.00, 5.02, 5.05], account=Account())
+    assert len(anticipation["order_terms"]) == 3 and "skip line" not in " ".join(anticipation["order_terms"])
+    assert "cancel the day order yourself" in plan.dated_schedule(burst(), __import__("datetime").date(2026, 9, 10))[0]["instruction"]
 
 
 def test_fidelity_orders_refuse_a_shape_that_cannot_be_placed():
@@ -304,9 +375,9 @@ def test_the_regime_multiplier_zero_means_no_new_longs_and_half_halves():
     assert red["shares"] == 0 and red["action"] == "no_new_longs"
     assert red["order_line"] is None and red["capped_by"] == "multiplier"
     assert red["multipliers"]["total"] == 0
-    yellow = burst(**TIGHT, size_multiplier=0.5)   # $25 / $0.35 = 71
-    assert yellow["shares"] == 71 and yellow["action"] == "buy_at_open"
-    assert yellow["multipliers"] == {"regime": 0.5, "hazard": 1.0, "stop_risk": 1.0, "total": 0.5}
+    yellow = burst(size_multiplier=0.5)   # $50 x 0.5 x 0.5 = $12.50 / $0.82 = 15
+    assert yellow["shares"] == 15 and yellow["action"] == "buy_at_open"
+    assert yellow["multipliers"] == {"regime": 0.5, "hazard": 1.0, "stop_risk": 0.5, "total": 0.25}
 
 
 def test_hazards_halve_the_size_with_the_reason_and_never_veto():
@@ -315,7 +386,7 @@ def test_hazards_halve_the_size_with_the_reason_and_never_veto():
                                "detail": hot["hazards"][0]["detail"]}]
     assert "worst cell in the only event study" in hot["hazards"][0]["detail"]
     assert hot["hazard_multiplier"] == 0.5
-    assert hot["multipliers"]["total"] == 0.25 and hot["shares"] == 15     # $12.50 / $0.80
+    assert hot["multipliers"]["total"] == 0.25 and hot["shares"] == 15     # $12.50 / $0.82
     assert hot["eligible"] and hot["action"] == "buy_at_open" and "gain_over_15" in hot["flags"]
     assert burst(gain_pct=14.99)["hazards"] == []
     extended = burst(extension_pct=20.01)
@@ -329,7 +400,7 @@ def test_hazards_halve_the_size_with_the_reason_and_never_veto():
 
 
 def test_the_burst_block_records_the_bar_it_was_planned_from():
-    p = burst()
+    p = burst(**WIDE)
     assert p["burst"] == {"close": 20.0, "low": 19.4, "high": 20.1, "open": 19.6, "prev_close": 19.0,
                           "gain_pct": 5.26, "gap_pct": 3.16, "dollar_move": 0.40, "close_in_range_pct": 85.71}
     assert p["kind"] == "burst" and p["scan"] == "4pct"
@@ -349,53 +420,68 @@ def test_burst_plan_refuses_unreadable_inputs(bad):
 
 
 def test_anticipation_trigger_is_cents_on_a_cheap_name_and_a_fraction_on_a_dear_one():
+    """Cheap: trigger 5.10 + 0.02 = 5.12, limit 5.12 x 1.01 = 5.1712 -> 5.17;
+    the stop 5.00 is 0.17 / 5.17 = 3.29% under the limit, halved budget
+    $25 / $0.17 = 147. Dear: trigger 81.00 + 0.08 = 81.08, limit 81.89; the
+    stop 80.00 is 1.89 / 81.89 = 2.31% under it, halved: $25 / $1.89 = 13,
+    under the $2,500 / 81.89 = 30 the cap allows."""
     cheap = plan.anticipation_plan(ticker="ABC", close=5.00, box_high=5.10, box_low=4.90,
-                                   lows_last3=[4.95, 4.98, 5.00], account=Account())
+                                   lows_last3=[5.00, 5.02, 5.05], account=Account())
     assert cheap["trigger_cushion"] == 0.02 and cheap["trigger"] == 5.12
-    assert cheap["limit"] == 5.17                       # 5.12 x 1.01 = 5.1712
-    assert cheap["stop"] == 4.95 and cheap["stop_alt"] == 5.00
-    assert cheap["stop_pct"] == 3.43                    # 5.12 / 4.95 - 1
+    assert cheap["limit"] == 5.17
+    assert cheap["stop"] == 5.00 and cheap["stop_alt"] == 5.05
+    assert cheap["stop_pct"] == 3.29 and cheap["sizing_price"] == 5.17
     assert cheap["eligible"] and cheap["action"] == "place_buy_stop"
-    assert cheap["multipliers"]["stop_risk"] == 0.5 and cheap["shares"] == 147   # $25 / $0.17
+    assert cheap["multipliers"]["stop_risk"] == 0.5 and cheap["shares"] == 147
+    assert cheap["risk_usd"] == 24.99 and cheap["position_usd"] == 759.99
     assert cheap["order_line"] == ("Buy 147 ABC stop-limit: stop $5.12 limit $5.17, day · "
-                                   "OTO sell 147 ABC stop-loss $4.95 GTC")
+                                   "OTO sell 147 ABC stop-loss $5.00 GTC")
     assert cheap["order_json"]["order_type"] == "stop_limit" and cheap["order_json"]["stop_price"] == 5.12
+    assert cheap["planned_entry"] == 5.12 and "sized at the $5.17 limit" in cheap["planned_entry_note"]
     dear = plan.anticipation_plan(ticker="DEF", close=80.0, box_high=81.0, box_low=78.0,
                                   lows_last3=[80.0, 80.2, 80.5], account=Account())
     assert dear["trigger_cushion"] == 0.08 and dear["trigger"] == 81.08
     assert dear["limit"] == 81.89
-    assert dear["stop"] == 80.0 and dear["stop_pct"] == 1.35
-    assert dear["multipliers"]["stop_risk"] == 1.0
-    assert dear["shares"] == 30 and dear["capped_by"] == "position_cap"    # 46 by risk, $2,500 / 81.08 = 30
+    assert dear["stop"] == 80.0 and dear["stop_pct"] == 2.31
+    assert dear["multipliers"]["stop_risk"] == 0.5
+    assert dear["shares"] == 13 and dear["capped_by"] == "risk"
+    assert dear["shares"] * (dear["limit"] - dear["stop"]) <= 25.0 < (dear["shares"] + 1) * (dear["limit"] - dear["stop"])
     assert dear["entry_ref"] == 81.08 and dear["kind"] == "anticipation"
 
 
-def test_anticipation_refuses_a_stop_past_four_percent():
+def test_anticipation_withholds_the_ticket_when_the_stop_is_past_four_percent_of_the_limit():
+    """Trigger 5.12, limit 5.17, stop 4.80: 0.37 / 5.17 = 7.16%."""
     p = plan.anticipation_plan(ticker="ABC", close=5.00, box_high=5.10, box_low=4.70,
                                lows_last3=[4.80, 4.85, 4.90], account=Account())
-    assert p["stop_pct"] == 6.67
+    assert p["stop_pct"] == 7.16
     assert not p["eligible"] and p["action"] == "refused"
-    assert p["reason"].startswith("stop wider than 4%") and "6.67%" in p["reason"]
-    assert p["order_line"] is None and "wide_stop" in p["flags"]
+    assert p["reason"].startswith("ticket withheld: at the $5.17 limit") and "7.16%" in p["reason"]
+    assert p["order_line"] is None and p["order_terms"] is None and "wide_stop" in p["flags"]
+    assert p["shares"] > 0 and p["exits"]                                    # the setup is kept
+    # the old rule measured the stop from the trigger: 4.95 is 3.43% under 5.12 and
+    # was eligible; at the 5.17 limit it is 0.22 / 5.17 = 4.26%, past the line
+    old = plan.anticipation_plan(ticker="ABC", close=5.00, box_high=5.10, box_low=4.90,
+                                 lows_last3=[4.95, 4.98, 5.00], account=Account())
+    assert old["stop_pct"] == 4.26 and old["action"] == "refused"
 
 
 def test_anticipation_publishes_the_gap_rule_the_open_entry_and_the_exits():
     p = plan.anticipation_plan(ticker="ABC", close=5.00, box_high=5.10, box_low=4.90,
-                               lows_last3=[4.95, 4.98, 5.00], account=Account())
+                               lows_last3=[5.00, 5.02, 5.05], account=Account())
     assert p["gap_ok_above"] == 5.10
     assert p["gap_rule"] == "an open more than 2% above $5.00 (over $5.10) is gapped: catalyst check before buying"
     assert p["open_entry"].startswith("MOO/OPG at the open only for the top 2 names")
-    assert p["exits"] == plan.exit_schedule(5.12, 4.95)
+    assert p["exits"] == plan.exit_schedule(5.12, 5.00)
     assert p["targets"]["low"] == 5.53 and p["targets"]["note"] is None     # $5.00 is not under $5
     cheap = plan.anticipation_plan(ticker="ABC", close=4.99, box_high=5.10, box_low=4.90,
-                                   lows_last3=[4.95, 4.98, 4.99], account=Account())
+                                   lows_last3=[4.99, 5.02, 5.05], account=Account())
     assert cheap["targets"]["note"] == "under $5 bursts can run 20-40%"
     assert p["stop_basis"] == "lowest low of the last 3 sessions"
     one = plan.anticipation_plan(ticker="ABC", close=5.00, box_high=5.10, box_low=4.90,
                                  lows_last3=[5.00], account=Account())
     assert one["stop"] == 5.00 and one["stop_basis"] == "lowest low of the last 1 sessions"
     assert plan.anticipation_plan(ticker="ABC", close=5.00, box_high=5.10, box_low=4.90,
-                                  lows_last3=[4.95], account=Account(), size_multiplier=0)["action"] == "no_new_longs"
+                                  lows_last3=[5.00], account=Account(), size_multiplier=0)["action"] == "no_new_longs"
 
 
 @pytest.mark.parametrize("bad", [
@@ -415,22 +501,23 @@ def test_follow_is_pending_with_no_sessions():
     f = plan.follow(PICK, [])
     assert f["status"] == "pending" and f["day"] == 0 and f["sessions"] == 0
     assert f["events"] == [] and f["last_close"] is None and f["unrealised_pct"] is None
-    assert f["current_stop"] == 96.0
-    assert "buy 20 XYZ per the plan" in f["instruction"] and "$96.00" in f["instruction"]
+    assert f["current_stop"] == 96.0 and f["remaining"] == 20 and f["sold"] == 0
+    assert "If you take this plan, buy 20 XYZ per the ticket" in f["instruction"] and "$96.00" in f["instruction"]
 
 
 def test_follow_stops_on_a_day_one_low_at_the_stop():
     f = plan.follow(PICK, [bar(100, 101, 95.5, 97)])
     assert f["status"] == "stopped" and f["day"] == 1
-    assert f["events"] == [{"day": 1, "date": "2026-09-11", "event": "stopped", "price": 96.0}]
-    assert f["exit_price"] == 96.0 and f["result_pct"] == -4.0
-    assert f["instruction"] == "Day 1: stopped at $96.00 (-4.0%)."
+    assert f["events"] == [{"day": 1, "date": "2026-09-11", "event": "stopped", "price": 96.0, "shares": 20, "remaining": 0}]
+    assert f["exit_price"] == 96.0 and f["result_pct"] == -4.0 and f["remaining"] == 0 and f["sold"] == 20
+    assert f["instruction"] == "Day 1: 20 XYZ stopped at $96.00 (-4.0%)."
 
 
 def test_follow_stops_at_the_open_on_a_gap_below_the_stop():
     f = plan.follow(PICK, [bar(94, 95, 93, 94.5)])
     assert f["status"] == "stopped"
     assert f["events"][0]["event"] == "stopped_at_open" and f["events"][0]["price"] == 94.0
+    assert (f["events"][0]["shares"], f["events"][0]["remaining"]) == (20, 0)
     assert f["result_pct"] == -6.0
     assert "opened at $94.00" in f["instruction"]
 
@@ -488,7 +575,7 @@ def test_follow_sells_half_at_the_day_three_close_and_starts_trailing():
 def test_follow_exits_on_day_three_with_no_progress():
     f = plan.follow(PICK, [bar(101, 102, 99, 100.5), bar(100.5, 101, 99.5, 100.2), bar(100.2, 101, 99.2, 100.0)])
     assert f["status"] == "exit" and f["day"] == 3
-    assert f["events"][-1] == {"day": 3, "date": "2026-09-11", "event": "no_progress", "price": 100.0}
+    assert f["events"][-1] == {"day": 3, "date": "2026-09-11", "event": "no_progress", "price": 100.0, "shares": 20, "remaining": 0}
     assert f["exit_price"] == 100.0 and f["result_pct"] == 0.0
     assert "at or below the $100.00 entry: no follow-through, exit 20 XYZ" in f["instruction"]
 
@@ -502,12 +589,13 @@ def test_follow_trails_after_day_three_then_exits_on_day_five():
     assert four["status"] == "sell_into_strength" and four["day"] == 4
     assert four["current_stop"] == 103.0
     assert four["events"][-1] == {"day": 4, "date": "2026-09-11", "event": "stop_trailed", "price": 103.0}
-    assert "sell the rest into strength by day 5 with the stop at $103.00" in four["instruction"]
+    assert "10 of 20 XYZ sold, sell the remaining 10 into strength by day 5 with the stop at $103.00" in four["instruction"]
+    assert four["sold"] == 10 and four["remaining"] == 10
     five = plan.follow(PICK, FIVE)
     assert five["status"] == "exit" and five["day"] == 5
-    assert five["events"][-1]["event"] == "day5_exit" and five["exit_price"] == 105.5
-    assert five["result_pct"] == 5.5 and five["current_stop"] == 104.0
-    assert five["instruction"] == "Day 5: closed at $105.50 (+5.5%): exit the remainder of 20 XYZ into strength."
+    assert five["events"][-1] == {"day": 5, "date": "2026-09-11", "event": "day5_exit", "price": 105.5, "shares": 10, "remaining": 0}
+    assert five["result_pct"] == 5.5 and five["current_stop"] == 104.0 and five["remaining"] == 0
+    assert five["instruction"] == "Day 5: closed at $105.50 (+5.5%): exit the remainder (10 of 20 XYZ) into strength."
 
 
 def test_follow_expires_past_the_window():
@@ -519,7 +607,7 @@ def test_follow_expires_past_the_window():
 def test_follow_exits_at_the_open_on_a_twenty_percent_gap():
     f = plan.follow(PICK, [bar(121, 125, 120, 123)])
     assert f["status"] == "exit"
-    assert f["events"] == [{"day": 1, "date": "2026-09-11", "event": "gap_exit", "price": 121.0}]
+    assert f["events"] == [{"day": 1, "date": "2026-09-11", "event": "gap_exit", "price": 121.0, "shares": 20, "remaining": 0}]
     assert f["result_pct"] == 21.0
     assert "a +20% gap): sell 20 XYZ at the open" in f["instruction"]
     assert plan.follow(PICK, [bar(119.99, 125, 119, 123)])["status"] == "sell_half"
@@ -588,7 +676,11 @@ def test_cash_budget_counts_slots_and_dollars_in_rank_order():
     assert b["within"] == ["T1", "T2", "T3", "T4"]
     assert b["beyond"] == [{"ticker": "T5", "rank": 5, "reason": "slot_cap", "position_usd": 2400.0}]
     assert b["skipped"] == [{"ticker": "T1", "rank": 6, "reason": "no_order"}]
-    assert b["sentence"] == "Tomorrow's plans commit $9,600.00 of $10,000.00; 4 of 4 slots"
+    assert b["sentence"] == "Model allocation: tomorrow's tickets would commit $9,600.00 of the configured $10,000.00; 4 of 4 slots"
+    kinds = {(c["ticker"], c["kind"]) for c in b["cut"]}
+    assert kinds == {("T5", "slot_cap"), ("T1", "withheld")} and all(c["kind"] in plan.CUT_KINDS for c in b["cut"])
+    withheld = next(c for c in b["cut"] if c["kind"] == "withheld")
+    assert withheld["reason"].startswith("ticket withheld")      # the sixth plan is the refused one, looked up by rank
 
 
 def test_cash_budget_cuts_on_the_equity_and_counts_positions_already_open():
@@ -597,18 +689,24 @@ def test_cash_budget_cuts_on_the_equity_and_counts_positions_already_open():
     assert b["beyond"][0]["reason"] == "equity"
     two_open = plan.cash_budget(_plans(2400, 2400, 2400), Account(), open_positions=2)
     assert two_open["within"] == ["T1", "T2"] and two_open["beyond"][0]["reason"] == "slot_cap"
-    assert two_open["sentence"] == "Tomorrow's plans commit $4,800.00 of $10,000.00; 4 of 4 slots (2 already open)"
-    assert plan.cash_budget([], Account())["sentence"] == "Tomorrow's plans commit $0.00 of $10,000.00; 0 of 4 slots"
+    assert two_open["sentence"] == "Model allocation: tomorrow's tickets would commit $4,800.00 of the configured $10,000.00; 4 of 4 slots (2 open model plans)"
+    assert "(1 open model plan)" in plan.cash_budget(_plans(2400), Account(), open_positions=1)["sentence"]
+    assert plan.cash_budget([], Account())["sentence"] == "Model allocation: tomorrow's tickets would commit $0.00 of the configured $10,000.00; 0 of 4 slots"
     assert plan.cash_budget(_plans(0, action="no_new_longs"), Account())["skipped"][0]["reason"] == "no_order"
     with pytest.raises(ValueError):
         plan.cash_budget([], Account(), open_positions=-1)
 
 
 def test_cash_budget_reads_real_plans():
-    plans = [burst(**TIGHT), burst(), burst(size_multiplier=0)]
+    """XYZ: 30 x 20.80 = $624.00. ABC: close 50, limit 52, low 49.95 is
+    2.05 / 52 = 3.94% under it; halved $25 / $2.05 = 12 shares, $624.00.
+    RED is sized at zero by breadth; WIDE's ticket is withheld by the stop rule."""
+    plans = [burst(), burst(ticker="ABC", close=50.00, low=49.95, high=50.20, open_=49.98, prev_close=47.00),
+             burst(ticker="RED", size_multiplier=0), burst(ticker="WID", **{k: v for k, v in WIDE.items() if k != "ticker"})]
     b = plan.cash_budget(plans, Account())
-    assert b["within"] == ["XYZ", "XYZ"] and b["committed_usd"] == 2484.60 + 626.20
-    assert b["skipped"][0]["reason"] == "no_order"
+    assert b["within"] == ["XYZ", "ABC"] and b["committed_usd"] == 624.0 + 624.0
+    assert [(c["ticker"], c["kind"]) for c in b["cut"]] == [("RED", "no_new_longs"), ("WID", "withheld")]
+    assert b["cut"][1]["reason"] == plans[3]["reason"]
 
 
 # ------------------------------------------------------------- notes -------
@@ -743,16 +841,36 @@ def test_a_risk_count_that_exactly_meets_the_cap_is_the_risk_budgets_decision():
     assert s.shares == 125 and s.capped_by == "risk" and s.note is None
 
 
-def test_a_burst_low_exactly_four_percent_under_the_fill_is_within_the_line():
-    p = burst(close=100.0, low=96.96, high=101.0, open_=97.0, prev_close=95.0)   # 101.00 x 0.96
+def test_a_burst_low_exactly_four_percent_under_the_limit_is_within_the_line():
+    """104 x 0.96 = 99.84: 4.16 / 104 = 4.0%, inside; a cent lower is 4.01%,
+    and the midpoint 100.415 is not under the buy stop, so the ticket is withheld."""
+    p = burst(close=100.0, low=99.84, high=101.0, open_=99.9, prev_close=95.0)
     assert p["stop_basis"] == "burst_low" and p["stop_pct"] == 4.0 and p["eligible"]
+    q = burst(close=100.0, low=99.83, high=101.0, open_=99.9, prev_close=95.0)
+    assert q["stop_candidates"][0]["pct_below_entry"] == 4.01 and not q["eligible"] and q["action"] == "refused"
 
 
-def test_an_anticipation_stop_exactly_four_percent_under_the_trigger_is_eligible():
+def test_a_candidate_stop_at_or_over_the_buy_stop_is_no_stop():
+    """A bar whose midpoint sits at its close: the low is past the line and
+    the midpoint is not under the 100.00 buy stop, so nothing the bar
+    supports is a stop, whatever its distance from the limit."""
+    p = burst(close=100.0, low=99.50, high=100.50, open_=99.60, prev_close=95.0)
+    assert p["stop_candidates"][1]["price"] == 100.0 and p["stop_candidates"][1]["pct_below_entry"] == 3.85
+    assert p["stop_candidates"][1]["under_trigger"] is False and p["stop_candidates"][1]["within_max"] is False
+    assert p["stop_basis"] == "max_stop" and not p["eligible"]
+    assert plan.burst_stop(104.0, 99.5, 100.5)["stop_basis"] == "half_range"     # with no trigger the guard is off
+
+
+def test_an_anticipation_stop_exactly_four_percent_under_the_limit_is_eligible():
+    """Trigger 10.38 + 0.02 = 10.40, limit 10.40 x 1.01 = 10.504 -> 10.50;
+    the stop 10.08 is 0.42 / 10.50 = 4.0% under it. A cent lower is 4.1%."""
     p = plan.anticipation_plan(ticker="ABC", close=10.30, box_high=10.38, box_low=9.90,
-                               lows_last3=[10.00, 10.10, 10.20], account=Account())
-    assert p["trigger"] == 10.40 and p["stop"] == 10.00 and p["stop_pct"] == 4.0
+                               lows_last3=[10.08, 10.10, 10.20], account=Account())
+    assert p["trigger"] == 10.40 and p["limit"] == 10.50 and p["stop"] == 10.08 and p["stop_pct"] == 4.0
     assert p["eligible"] and p["action"] == "place_buy_stop"
+    q = plan.anticipation_plan(ticker="ABC", close=10.30, box_high=10.38, box_low=9.90,
+                               lows_last3=[10.07, 10.10, 10.20], account=Account())
+    assert q["stop_pct"] == 4.1 and not q["eligible"] and q["action"] == "refused"
 
 
 def test_a_low_at_the_box_high_is_still_a_consolidation():
@@ -762,10 +880,15 @@ def test_a_low_at_the_box_high_is_still_a_consolidation():
 
 
 def test_a_plan_whose_budget_cannot_buy_one_share_places_no_order():
-    p = burst(close=5000.0, low=4990.0, high=5010.0, open_=4995.0, prev_close=4800.0)
+    """Close 5,000, limit 5,200, low 4,995 is 205 / 5,200 = 3.94% under it:
+    eligible, but the halved $25 cannot buy one share at $205 of risk."""
+    p = burst(close=5000.0, low=4995.0, high=5010.0, open_=4998.0, prev_close=4800.0)
     assert p["shares"] == 0 and p["capped_by"] == "none"
     assert p["action"] == "no_order" and p["order_line"] is None and p["eligible"]
     assert any("cannot buy one share" in n for n in p["notes"])
+    b = plan.cash_budget([p], Account())
+    assert b["cut"] == [{"ticker": "XYZ", "kind": "no_shares", "reason": ("the configured account cannot size it: $205.00 at risk "
+                                                                          "per share against a $50.00 risk budget comes to no whole share")}]
 
 
 def test_follow_boundaries_sit_on_the_exact_prices():
@@ -790,6 +913,49 @@ def test_follow_never_lowers_the_stop():
 def test_follow_sells_at_least_half_of_an_odd_count():
     f = plan.follow({**PICK, "shares": 21}, [bar(101, 109, 100.5, 107)])
     assert "sell half (11 of 21 XYZ)" in f["instruction"]
+    assert f["events"][0] == {"day": 1, "date": "2026-09-11", "event": "sell_half", "price": 108.0, "shares": 11, "remaining": 10}
+    assert f["sold"] == 11 and f["remaining"] == 10
+
+
+def test_a_three_share_plan_sells_two_then_one_and_the_quantities_reconcile():
+    """The reviewer's case: 3 shares at 100, stop 99; day 1 reaches +8%, so
+    2 of 3 go at 108 and the stop rises to 108.75; day 2 opens at 102 under
+    it, so the remaining 1 goes at the open. 2 + 1 = 3, nothing negative."""
+    three = {**PICK, "shares": 3, "stop": 99.0}
+    f = plan.follow(three, [bar(101, 109, 100.5, 107), bar(102, 103, 101, 102.5)])
+    sales = [(e["event"], e["price"], e["shares"], e["remaining"]) for e in f["events"] if "shares" in e]
+    assert sales == [("sell_half", 108.0, 2, 1), ("stopped_at_open", 102.0, 1, 0)]
+    assert f["status"] == "stopped" and f["exit_price"] == 102.0 and f["remaining"] == 0 and f["sold"] == 3
+    assert "sell half (2 of 3 XYZ)" in plan.follow(three, [bar(101, 109, 100.5, 107)])["instruction"]
+    assert "1 XYZ stopped at the open" in f["instruction"]
+    assert sum(e["shares"] for e in f["events"] if "shares" in e) == 3
+    assert all(e["remaining"] >= 0 for e in f["events"] if "remaining" in e)
+
+
+def test_a_one_share_plan_sells_whole_and_settles_with_no_phantom_half():
+    """A single share cannot be halved: the +8% rule sells it and the model
+    holds nothing after, so a later bar under the raised stop books no exit."""
+    one = {**PICK, "shares": 1, "stop": 99.0}
+    f = plan.follow(one, [bar(101, 109, 100.5, 107), bar(102, 103, 101, 102.5)])
+    assert f["events"] == [{"day": 1, "date": "2026-09-11", "event": "sell_half", "price": 108.0, "shares": 1, "remaining": 0}]
+    assert f["status"] == "exit" and f["exit_price"] == 108.0 and f["day"] == 1
+    assert f["remaining"] == 0 and f["sold"] == 1 and f["half_sold"]
+    assert "sell all 1 XYZ (a position of 1 cannot be halved)" in f["instruction"] and "the +8% rule closes it" in f["instruction"]
+    at_close = plan.follow(one, [bar(101, 102, 100.5, 101.5), bar(101.5, 103, 101, 102.5), bar(102.5, 104, 102, 103.5)])
+    assert at_close["status"] == "exit" and at_close["exit_price"] == 103.5
+    assert at_close["events"][-1] == {"day": 3, "date": "2026-09-11", "event": "sell_half", "price": 103.5, "shares": 1, "remaining": 0}
+    assert "the day-3 rule closes it" in at_close["instruction"]
+
+
+def test_an_even_count_sells_exactly_half_then_the_rest():
+    """Half (10 of 20) at 108 on day 1, the stop raised to 108.75; every
+    later bar opens and holds above it and closes under the +10% abnormal
+    line, so the other 10 leave at the day-5 close."""
+    f = plan.follow(PICK, [bar(101, 109, 100.5, 107), bar(109, 109.5, 108.9, 109.2), bar(109.2, 109.8, 109.0, 109.5),
+                           bar(109.5, 109.9, 109.3, 109.7), bar(109.7, 109.95, 109.5, 109.8)])
+    sales = [(e["event"], e["shares"], e["remaining"]) for e in f["events"] if "shares" in e]
+    assert sales == [("sell_half", 10, 10), ("day5_exit", 10, 0)]
+    assert f["status"] == "exit" and f["remaining"] == 0 and f["sold"] == 20 and f["exit_price"] == 109.8
 
 
 def test_the_budget_counts_dollars_at_risk_over_the_plans_within_the_slots_alone():
@@ -801,9 +967,10 @@ def test_the_budget_counts_dollars_at_risk_over_the_plans_within_the_slots_alone
     budget = plan.cash_budget(rows, account, open_positions=2)
     assert budget["within"] == ["AAA", "BBB"] and [c["ticker"] for c in budget["cut"]] == ["CCC"]
     assert budget["at_risk_usd"] == 101.0
-    assert "4-slot cap" in budget["cut"][0]["reason"] and "AAA, BBB" in budget["cut"][0]["reason"]
+    assert "4-slot model cap" in budget["cut"][0]["reason"] and "AAA, BBB" in budget["cut"][0]["reason"]
+    assert "2 open model plans" in budget["cut"][0]["reason"] and budget["cut"][0]["kind"] == "slot_cap"
     over = plan.cash_budget([{**rows[0], "position_usd": 9_000.0}, {**rows[1], "position_usd": 2_000.0}], account)
-    assert over["within"] == ["AAA"] and over["cut"][0]["reason"].startswith("the equity")
+    assert over["within"] == ["AAA"] and over["cut"][0]["reason"].startswith("the configured equity") and over["cut"][0]["kind"] == "equity"
 
 
 def test_a_plan_the_account_cannot_size_is_cut_and_says_why():
@@ -813,5 +980,6 @@ def test_a_plan_the_account_cannot_size_is_cut_and_says_why():
     budget = plan.cash_budget(rows, account)
     assert budget["within"] == [] and budget["at_risk_usd"] == 0.0
     cut = {c["ticker"]: c["reason"] for c in budget["cut"]}
-    assert cut["BIG"] == "the account cannot size it: $4.03 at risk per share against a $0.50 risk budget comes to no whole share"
+    assert cut["BIG"] == "the configured account cannot size it: $4.03 at risk per share against a $0.50 risk budget comes to no whole share"
     assert cut["RED"] == "breadth sizes new positions at zero tonight"
+    assert {c["ticker"]: c["kind"] for c in budget["cut"]} == {"BIG": "no_shares", "RED": "no_new_longs"}

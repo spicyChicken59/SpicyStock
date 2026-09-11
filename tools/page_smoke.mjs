@@ -56,8 +56,10 @@ async function serve() {
   return { server, base: `http://127.0.0.1:${server.address().port}` };
 }
 
+const CUT_WORDS = { withheld: 'ticket withheld', slot_cap: 'beyond the slot cap', equity: 'beyond the configured equity', no_shares: 'no whole share', no_new_longs: 'no new longs' };
+
 async function open(browser, base, dataUrl, now, width, theme) {
-  const context = await browser.newContext({ viewport: { width, height: 900 }, colorScheme: theme || 'dark' });
+  const context = await browser.newContext({ viewport: { width, height: 900 }, colorScheme: theme || 'dark', permissions: ['clipboard-read', 'clipboard-write'] });
   const page = await context.newPage();
   const errors = [], aborted = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
@@ -160,11 +162,25 @@ async function checkVariant(browser, base, variant, data) {
       const pre = await card.locator('pre[data-order]').innerText();
       const o = b.plan.order_json;
       check(`${variant} ${b.ticker} ticket line 1`, pre.startsWith(`BUY ${o.quantity} ${o.symbol}`), pre);
-      check(`${variant} ${b.ticket} ticket stop and limit`, pre.includes('stop ' + usd(o.stop_price)) && pre.includes('limit ' + usd(o.limit_price)), pre);
+      check(`${variant} ${b.ticker} ticket stop and limit`, pre.includes('stop ' + usd(o.stop_price)) && pre.includes('limit ' + usd(o.limit_price)), pre);
       check(`${variant} ${b.ticker} ticket OTO leg`, pre.includes('then OTO → SELL ' + o.then.quantity) && pre.includes(usd(o.then.stop_price)), pre);
       check(`${variant} ${b.ticker} read-back`, body.includes(b.plan.order_line), 'order_line');
+      check(`${variant} ${b.ticker} ticket quantity is the plan's shares`, o.quantity === b.plan.shares && o.then.quantity === b.plan.shares, `${o.quantity} vs ${b.plan.shares}`);
+      check(`${variant} ${b.ticker} sized at the limit`, body.includes('sized at\n' + usd(b.plan.sizing_price)) || body.includes('sized at ' + usd(b.plan.sizing_price)), 'sizing_price');
+      check(`${variant} ${b.ticker} risk and cap hold at the limit`, b.plan.shares * (o.limit_price - b.plan.stop) <= b.plan.sizing.budget_usd + 1e-9 && b.plan.shares * o.limit_price <= b.plan.sizing.cap_usd + 1e-9, 'inequalities');
+      for (const term of b.plan.order_terms || []) check(`${variant} ${b.ticker} order term printed`, body.includes(term), term.slice(0, 40));
+      check(`${variant} ${b.ticker} no plain-limit fallback`, !/If your app has no stop-limit/.test(body), 'fallback');
+      // the copy button hands the clipboard the ticket as printed
+      await card.locator('button[data-copy]').first().click();
+      const copied = await page.evaluate(() => navigator.clipboard.readText()).catch(() => null);
+      if (copied !== null) eq(`${variant} ${b.ticker} copied text is the ticket`, copied, pre);
+      else console.log(`  (clipboard not readable for ${b.ticker}; the copy check was skipped)`);
     } else {
-      check(`${variant} ${b.ticker} says beyond the cap`, body.includes('beyond the slot cap'), body.slice(0, 300));
+      const cut = data.cash_budget.cut.find((c) => c.ticker === b.ticker) || {};
+      const words = CUT_WORDS[cut.kind] || 'beyond the slot cap';
+      check(`${variant} ${b.ticker} says why there is no ticket (${cut.kind})`, body.includes(words), body.slice(0, 300));
+      if (cut.reason) check(`${variant} ${b.ticker} no-ticket reason printed`, body.includes(cut.reason), cut.reason.slice(0, 60));
+      if (cut.kind === 'withheld') check(`${variant} ${b.ticker} withheld card keeps the setup`, body.includes(usd(b.plan.stop)) && body.includes(String(b.plan.shares)), 'setup');
     }
     eq(`${variant} ${b.ticker} exit timeline rows`, await card.locator('.sc-timeline__item').count(), b.plan.exit_schedule.length);
     if (b.claude && b.claude.source === 'claude') check(`${variant} ${b.ticker} claude read`, body.includes(b.claude.reason), 'reason');
@@ -176,22 +192,28 @@ async function checkVariant(browser, base, variant, data) {
   const lede = await text(page, '#tomorrow-lede');
   if (!trades.length) check(`${variant} lede explains no trades`, /No burst reached|red|closed/.test(lede), lede);
 
-  // what you hold
+  // the open model plans
+  const WALKED = ['hold', 'sell_half', 'sell_into_strength', 'exit', 'stopped', 'expired'];
   eq(`${variant} open plan rows`, await count(page, '#hold-rows article.ss-plan'), data.open_plans.length);
+  check(`${variant} the rail is labelled as model plans, not holdings`, (await text(page, '#hold')).includes('Open model plans') && !(await text(page, '#hold')).includes('What you hold'), 'label');
   for (const p of data.open_plans) {
     const row = page.locator(`#hold-rows article.ss-plan[data-ticker="${p.ticker}"]`);
     const body = await row.innerText();
     check(`${variant} ${p.ticker} instruction verbatim`, body.includes(p.instruction), body.slice(0, 200));
     check(`${variant} ${p.ticker} day and shares`, body.includes(`day ${p.day} of 5`) && body.includes(`${p.shares} sh`), body.slice(0, 120));
     eq(`${variant} ${p.ticker} status attr`, await row.getAttribute('data-status'), p.status);
-    if (p.last_close !== null && p.targets) check(`${variant} ${p.ticker} benchmark drawn`, (await row.locator('.sc-benchmark').count()) === 1, 'benchmark');
+    const drawn = WALKED.includes(p.status) && p.last_close !== null && p.targets;
+    eq(`${variant} ${p.ticker} benchmark ${drawn ? 'drawn' : 'not drawn'}`, await row.locator('.sc-benchmark').count(), drawn ? 1 : 0);
+    if (p.status === 'uncertain') check(`${variant} ${p.ticker} uncertain row says the model holds nothing`, body.includes('UNCERTAIN') && body.includes('the model holds no position here'), body.slice(-200));
+    if (typeof p.sold === 'number' && p.sold > 0 && p.remaining > 0) check(`${variant} ${p.ticker} whole-share sale in the instruction`, body.includes(`${p.sold} of ${p.shares}`) && body.includes(`remaining ${p.remaining}`), p.instruction);
   }
-  if (!data.open_plans.length) check(`${variant} says no open plans`, (await text(page, '#hold-rows')).includes('No open plans'), 'hold');
+  if (!data.open_plans.length) check(`${variant} says no open plans`, (await text(page, '#hold-rows')).includes('No open model plans'), 'hold');
 
   // the budget and the order sheet
   const budget = await text(page, '#budget');
-  check(`${variant} budget commits`, budget.includes(usd(data.cash_budget.committed_usd, 0)) && budget.includes(`${data.cash_budget.slots_used} of ${data.cash_budget.slots_max} slots`), budget);
-  for (const c of data.cash_budget.cut) check(`${variant} cut ${c.ticker} explained`, budget.includes('Cut: ' + c.ticker) && budget.includes(c.reason), budget);
+  check(`${variant} budget prints the record's own allocation sentence`, budget.includes(data.cash_budget.sentence) && budget.includes(`${data.cash_budget.slots_used} of ${data.cash_budget.slots_max} slots`), budget);
+  check(`${variant} budget is labelled model allocation`, budget.includes('Model allocation') && budget.includes('not a balance'), budget);
+  for (const c of data.cash_budget.cut) check(`${variant} cut ${c.ticker} explained`, budget.includes('No ticket: ' + c.ticker) && budget.includes(c.reason), budget);
   const withOrders = trades.filter((b) => b.plan && b.plan.order_json);
   eq(`${variant} order sheet rows`, await count(page, '#order-sheet tbody tr[data-ticker]'), withOrders.length);
   if (!withOrders.length) check(`${variant} order sheet says no orders`, (await text(page, '#order-sheet')).includes('No orders'), 'sheet');
@@ -241,6 +263,8 @@ async function checkVariant(browser, base, variant, data) {
   check(`${variant} scorecard plans`, record.includes(`plans\n${sc.plans}`) || record.includes(`plans ${sc.plans}`), record.slice(0, 200));
   check(`${variant} scorecard readable chip`, record.includes(sc.readable ? 'readable' : 'not yet readable'), 'chip');
   check(`${variant} scorecard settled count`, record.includes(`${sc.settled} settled`), record.slice(0, 300));
+  check(`${variant} scorecard uncertain count`, record.includes(`${sc.uncertain} uncertain`), record.slice(0, 300));
+  if (sc.uncertain) for (const r of sc.uncertain_reasons) check(`${variant} scorecard uncertain reason ${r.kind}`, record.includes(`${r.count} ${r.words}`), r.kind);
   if (sc.readable) check(`${variant} scorecard win rate`, record.includes((100 * sc.win_rate).toFixed(0) + '%'), record);
   else check(`${variant} scorecard prints no rate`, !/win rate\n\d+%/.test(record), record);
   eq(`${variant} fourteen nights`, await count(page, '#nights .ss-night'), 14);
@@ -302,7 +326,7 @@ async function checkStates(browser, base, data) {
     check(`${name} chip`, chipRe.test(chip), chip);
     eq(`${name} state`, await page.getAttribute('html', 'data-ss-rendered'), state);
     check(`${name} next says do not place`, (await text(page, '#next-h3')).startsWith('Do not place these orders'), 'next');
-    eq(`${name} cover action falls back to the holds`, await text(page, '#cover-action'), 'What you hold');
+    eq(`${name} cover action falls back to the model plans`, await text(page, '#cover-action'), 'Open model plans');
     if (state !== 'pending') check(`${name} status line links the run log`, (await page.locator('#status-line a[href*="actions/workflows/evening.yml"]').count()) === 1, 'link');
     eq(`${name} page errors`, errors, []);
     if (shotsDir && name === 'stale2') await page.screenshot({ path: path.join(shotsDir, 'stale2-1280-dark.png'), fullPage: true });

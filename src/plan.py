@@ -22,8 +22,11 @@ a reader sees is the number the rule compared. Share counts are computed in
 integer cents (``_cents_int``), never by flooring a float quotient, so $50
 over an $0.80 stop is exactly 62 shares on every interpreter. And every
 distance a plan judges -- the stop cascade, eligibility, the stop-risk
-multiplier -- is measured from the PLANNED FILL, the price the shares are
-sized at, so one number is compared everywhere.
+multiplier -- is measured from the ORDER'S LIMIT, the highest fill the ticket
+permits, and the shares are sized there too, so a fixed-quantity ticket keeps
+its risk budget, its position cap and his stop line at EVERY fill it can
+take. The burst close plus ``ASSUMED_SLIPPAGE_PCT`` is kept as an indicative
+entry for the exit levels and the targets; it is an estimate, never a fill.
 """
 from __future__ import annotations
 
@@ -65,9 +68,14 @@ ENTRY_ABOVE_PCT = 4.0
 SKIP_GAP_PCT = 8.0
 #: (B) "I enter most breakouts in first 30 minutes."
 ENTRY_WINDOW = "first 30 minutes"
-#: (P) the fill the shares are sized at: the burst close plus this. A real
-#: fill is re-sized by the resize rule the plan prints.
+#: (P) an INDICATIVE entry, the burst close plus this: the exit levels and the
+#: targets are quoted from it. The shares are not sized here but at the
+#: limit (``SIZING_BASIS``); a real fill is re-sized by the resize rule.
 ASSUMED_SLIPPAGE_PCT = 1.0
+#: (P) the price a fixed-quantity ticket is sized and judged at: the order's
+#: limit, the highest fill it permits. A fill under it risks less than the
+#: budget; no permitted fill risks more, and none puts the stop past his line.
+SIZING_BASIS = "order_limit"
 
 # --- the stop --------------------------------------------------------------
 #: (B) "as far as possible I try and keep stop less than 4%". Wider is
@@ -192,6 +200,7 @@ RULES: dict[str, Any] = {
     "plan.skip_gap_pct": SKIP_GAP_PCT,
     "plan.entry_window": ENTRY_WINDOW,
     "plan.assumed_slippage_pct": ASSUMED_SLIPPAGE_PCT,
+    "plan.sizing_basis": SIZING_BASIS,
     "plan.max_stop_pct": MAX_STOP_PCT,
     "plan.ideal_stop_pct": IDEAL_STOP_PCT,
     "plan.stop_risk_multiplier": STOP_RISK_MULTIPLIER,
@@ -248,6 +257,9 @@ ENV_VARS = {
 
 #: What a sizing was decided by.
 CAPPED_BY = ("risk", "position_cap", "multiplier", "none")
+#: Why a plan in the budget has no order: the slots, the equity, breadth's
+#: zero multiplier, a size of no whole share, or a ticket the stop rule withheld.
+CUT_KINDS = ("slot_cap", "equity", "no_new_longs", "no_shares", "withheld")
 #: What a plan tells the reader to do. Only the first two carry an order.
 ACTIONS = ("buy_at_open", "place_buy_stop", "no_new_longs", "no_order", "refused")
 ORDER_ACTIONS = ("buy_at_open", "place_buy_stop")
@@ -402,6 +414,7 @@ class Sizing:
     multiplier: float
     budget_usd: float
     cap_usd: float
+    price: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -410,6 +423,9 @@ class Sizing:
 def size(entry: float, stop: float, account: Account, multiplier: float = 1.0) -> Sizing:
     """Shares = floor(equity * risk% * multiplier / (entry - stop)), then no
     more than the position cap buys. (B: "shares = risk$/(entry - stop)".)
+    ``entry`` is the price the shares are sized at -- for a ticket, its
+    limit, so ``shares * (entry - stop)`` is the most any permitted fill can
+    put at risk and ``shares * entry`` the most it can commit.
 
     Prices are rounded to cents first; the division is done in whole cents.
     """
@@ -430,7 +446,7 @@ def size(entry: float, stop: float, account: Account, multiplier: float = 1.0) -
                       position_pct=_pct(100 * position / account.equity),
                       risk_usd=_money(shares * risk_per_share), risk_per_share=risk_per_share,
                       stop_pct=stop_pct, capped_by=capped_by, note=note, multiplier=multiplier,
-                      budget_usd=budget, cap_usd=cap_usd)
+                      budget_usd=budget, cap_usd=cap_usd, price=entry)
 
     if multiplier == 0:
         return built(0, "multiplier", "no new longs: the size multiplier is 0")
@@ -457,9 +473,9 @@ def stop_risk(stop_pct: float) -> tuple[float, str | None]:
     the ideal and the maximum, and 1 past the maximum (that plan is refused
     on eligibility, not sized down)."""
     if IDEAL_STOP_PCT < stop_pct <= MAX_STOP_PCT:
-        return STOP_RISK_MULTIPLIER, (f"the stop is {stop_pct:g}% from the planned fill: inside his "
-                                      f"{MAX_STOP_PCT:g}% line, wider than his ideal {IDEAL_STOP_PCT:g}%, "
-                                      f"so the risk is multiplied by {STOP_RISK_MULTIPLIER:g}")
+        return STOP_RISK_MULTIPLIER, (f"the stop is {stop_pct:g}% under the ticket's limit, the highest fill "
+                                      f"it permits: inside his {MAX_STOP_PCT:g}% line, wider than his ideal "
+                                      f"{IDEAL_STOP_PCT:g}%, so the risk is multiplied by {STOP_RISK_MULTIPLIER:g}")
     return 1.0, None
 
 
@@ -481,16 +497,44 @@ def hazards(gain_pct: float, extension_pct: float | None) -> list[dict[str, Any]
 
 #: The order block of a plan with nothing to place.
 NO_ORDER: dict[str, Any] = {"order_line": None, "order_json": None, "order_readback": None,
-                            "fallback_line": None}
+                            "order_terms": None}
 
 #: The conditional word Fidelity's ticket uses for "then": the sell stop is
 #: placed the moment the buy fills, never before.
 OTO = "one_triggers_the_other"
 
+#: What the ticket enforces and what it leaves to the reader, printed beside
+#: it. A day order is not a {window} order, and nothing here cancels it; the
+#: strategy's opening checks are the reader's own.
+ORDER_TERM_DAY = ("A day order rests until the close unless you cancel it. The plan's entry is the {window}: "
+                  "if it has not filled by then, cancel it yourself; SpicyStock places and cancels nothing.")
+ORDER_TERM_ABOVE_LIMIT = ("An open above the {limit} limit does not fill at the open, but the resting order stays "
+                          "live and can fill on a pullback under {limit} later in the day: cancel it rather than "
+                          "let it.")
+ORDER_TERM_BELOW_SKIP = ("An open under {skip_below} is the burst failing: do not place the order, or cancel it; "
+                         "the buy stop at {trigger} would still trigger if the price recovered.")
+ORDER_TERM_STOP = ("The sell stop at {stop} is attached the moment the buy fills (OTO), as a stop-market order; "
+                   "nothing is protected before the fill.")
 
-def fidelity_orders(ticker: str, shares: int, *, trigger: float, limit: float, stop: float) -> dict[str, Any]:
+
+def order_terms(*, trigger: float, limit: float, stop: float, skip_below: float | None = None) -> list[str]:
+    """The sentences beside a ticket: the day order and the window, the open
+    above the limit, the open under the skip line (bursts), the attached stop."""
+    values = {"window": ENTRY_WINDOW, "trigger": _usd(trigger), "limit": _usd(limit), "stop": _usd(stop),
+              "skip_below": _usd(skip_below) if skip_below is not None else None}
+    terms = [ORDER_TERM_DAY, ORDER_TERM_ABOVE_LIMIT]
+    if skip_below is not None:
+        terms.append(ORDER_TERM_BELOW_SKIP)
+    terms.append(ORDER_TERM_STOP)
+    return [t.format(**values) for t in terms]
+
+
+def fidelity_orders(ticker: str, shares: int, *, trigger: float, limit: float, stop: float,
+                    skip_below: float | None = None) -> dict[str, Any]:
     """A Fidelity buy stop-limit with the protective stop attached, as the
-    line to type, the JSON, the preview read-back and a plain-limit fallback.
+    line to type, the JSON, the preview read-back and the terms the ticket
+    does and does not enforce. There is no plain-limit fallback: a limit
+    order has no trigger and is not this ticket.
 
     The exit leg is a stop-MARKET order (never a stop-limit: a gap through the
     limit leaves it unfilled), the risk lens's rule 2.
@@ -512,8 +556,7 @@ def fidelity_orders(ticker: str, shares: int, *, trigger: float, limit: float, s
                                 "stop_price": stop, "time_in_force": "gtc"}},
         "order_readback": (f"Buy {shares} {ticker} stop limit {trigger:.2f} / {limit:.2f} day, "
                            f"one-triggers-the-other sell {shares} {ticker} stop loss {stop:.2f} GTC"),
-        "fallback_line": (f"If your app has no stop-limit: buy {shares} {ticker} limit {_usd(limit)} (day) "
-                          f"with the same sell stop attached."),
+        "order_terms": order_terms(trigger=trigger, limit=limit, stop=stop, skip_below=skip_below),
     }
 
 
@@ -612,14 +655,15 @@ def dated_schedule(p: Mapping[str, Any], session: date) -> list[dict[str, Any]]:
     by_key = {row["key"]: row for row in p.get("exits") or []}
     stop = p.get("stop")
     stop_words = f"the sell stop at {_usd(stop)} is live from the fill" if stop is not None else "attach the sell stop at the fill"
+    cancel = f"cancel the day order yourself if it has not filled by the end of the {ENTRY_WINDOW}"
     if p.get("kind") == "anticipation":
         entry = (f"buy only if it trades through {_usd(p['trigger'])} (limit {_usd(p['limit'])}) in the "
-                 f"{ENTRY_WINDOW}; {stop_words}.")
+                 f"{ENTRY_WINDOW}; {stop_words}; {cancel}.")
     else:
         lo, hi = p.get("entry_low"), p.get("entry_high")
         entry = (f"buy in the {ENTRY_WINDOW} inside {_usd(lo)}\u2013{_usd(hi)}; {stop_words}. "
-                 f"Skip it if it opens above {_usd(hi)}.") if lo is not None and hi is not None else \
-                f"buy in the {ENTRY_WINDOW}; {stop_words}."
+                 f"Skip it if it opens above {_usd(hi)} or under {_usd(lo)}; {cancel}.") \
+            if lo is not None and hi is not None else f"buy in the {ENTRY_WINDOW}; {stop_words}; {cancel}."
     rows = [{"day": ENTRY_DAY, "date": days[0].isoformat(), "key": "entry", "instruction": entry}]
 
     def add(day: int, key: str, text: str) -> None:
@@ -675,17 +719,21 @@ def targets(entry_price: float, close: float) -> dict[str, Any]:
 # ------------------------------------------------------------- the stop ----
 
 
-def burst_stop(entry: float, low: float, high: float) -> dict[str, Any]:
-    """The stop cascade, measured from the planned fill: the burst day's low,
-    else its range midpoint, the first within MAX_STOP_PCT of ``entry``; else
-    MAX_STOP_PCT under ``entry`` with a note (P), which is a stop the bar does
-    not support and the plan refuses."""
+def burst_stop(entry: float, low: float, high: float, trigger: float | None = None) -> dict[str, Any]:
+    """The stop cascade, measured from ``entry`` -- the ticket's limit, the
+    highest fill it permits: the burst day's low, else its range midpoint,
+    the first within MAX_STOP_PCT of ``entry`` and under ``trigger`` (a stop
+    at or over the buy stop is no stop); else MAX_STOP_PCT under ``entry``
+    with a note (P), which is a stop the bar does not support and the plan
+    withholds the ticket for."""
     entry, low, high = _price(entry, "entry"), _price(low, "low"), _price(high, "high")
+    trigger = _price(trigger, "trigger") if trigger is not None else None
     candidates = []
     for basis, price in (("burst_low", low), ("half_range", _money((low + high) / 2))):
         pct = _pct(100 * (entry - price) / entry)
+        under = trigger is None or price < trigger
         candidates.append({"basis": basis, "price": price, "pct_below_entry": pct,
-                           "within_max": pct <= MAX_STOP_PCT})
+                           "within_max": pct <= MAX_STOP_PCT and under, "under_trigger": under})
     for cand in candidates:
         if cand["within_max"]:
             return {"stop": cand["price"], "stop_basis": cand["basis"],
@@ -693,11 +741,18 @@ def burst_stop(entry: float, low: float, high: float) -> dict[str, Any]:
                     "stop_candidates": candidates}
     stop = _at_pct(entry, -MAX_STOP_PCT)
     return {"stop": stop, "stop_basis": "max_stop", "stop_pct": _pct(100 * (entry - stop) / entry),
-            "stop_note": (f"the bar's low {_usd(low)} is {candidates[0]['pct_below_entry']:g}% below the "
-                          f"planned fill {_usd(entry)} and its midpoint {candidates[1]['pct_below_entry']:g}%, "
-                          f"both past his {MAX_STOP_PCT:g}% line; the stop was set at {MAX_STOP_PCT:g}% "
+            "stop_note": (f"the bar's low {_usd(low)} is {stop_candidate_words(candidates[0], entry, trigger)} and "
+                          f"its midpoint {_usd(candidates[1]['price'])} {stop_candidate_words(candidates[1], entry, trigger)}, "
+                          f"past his {MAX_STOP_PCT:g}% line either way; the stop was set at {MAX_STOP_PCT:g}% "
                           f"({_usd(stop)}), a level the bar does not support"),
             "stop_candidates": candidates}
+
+
+def stop_candidate_words(cand: Mapping[str, Any], entry: float, trigger: float | None) -> str:
+    """Why a candidate stop is or is not usable, at the limit."""
+    if not cand["under_trigger"] and trigger is not None:
+        return f"not under the {_usd(trigger)} buy stop"
+    return f"{cand['pct_below_entry']:g}% under the {_usd(entry)} limit"
 
 
 # ------------------------------------------------------------- burst plan --
@@ -714,11 +769,18 @@ def _action(eligible: bool, sizing: Sizing, when_sized: str) -> str:
 
 
 def _sizing_block(sizing: Sizing, stop: float) -> dict[str, Any]:
+    """The share count and what it means: ``risk_usd`` is the planned
+    price-to-stop risk at the sizing price (the limit), the most a permitted
+    fill can put at risk before a gap through the stop; never a maximum loss."""
     return {
         "risk_per_share": sizing.risk_per_share, "shares": sizing.shares,
         "position_usd": sizing.position_usd, "position_pct": sizing.position_pct,
         "risk_usd": sizing.risk_usd, "capped_by": sizing.capped_by,
         "size_multiplier": sizing.multiplier, "sizing": sizing.to_dict(),
+        "sizing_price": sizing.price, "sizing_basis": SIZING_BASIS,
+        "sizing_note": (f"sized at the {_usd(sizing.price)} limit, the highest fill the ticket permits: "
+                        f"{sizing.shares} shares put {_usd(sizing.risk_usd)} between that fill and the "
+                        f"{_usd(stop)} stop, planned price-to-stop risk, not a maximum loss"),
         "resize_rule": resize_rule(sizing.budget_usd, stop, sizing.cap_usd),
     }
 
@@ -732,8 +794,13 @@ def burst_plan(*, ticker: str, close: float, low: float, high: float, open_: flo
     only the ones that are "not extended").
 
     The order is a buy stop-limit with the stop AT the burst close and the
-    limit at entry_high, so a gap down never fills. ``size_multiplier`` is
-    the breadth regime's; the hazards and the stop width multiply it.
+    limit at entry_high, the highest fill it permits: the stop cascade, the
+    eligibility, the stop-risk multiplier and the shares are all judged at
+    that limit, so the fixed quantity keeps the budget, the cap and his stop
+    line at every fill the ticket can take. A ticket whose stop is past his
+    line at the limit is withheld (``action`` refused, ``reason`` says why)
+    and the setup is kept for inspection. ``size_multiplier`` is the breadth
+    regime's; the hazards and the stop width multiply it.
     Prices are validated as a bar: low <= open, close <= high.
     """
     if not isinstance(ticker, str) or not ticker.strip():
@@ -748,43 +815,46 @@ def burst_plan(*, ticker: str, close: float, low: float, high: float, open_: flo
     entry_ref = close
     entry_low, entry_high = _at_pct(close, -ENTRY_BELOW_PCT), _at_pct(close, ENTRY_ABOVE_PCT)
     extended_above = _at_pct(close, SKIP_GAP_PCT)
-    planned_entry = _at_pct(close, ASSUMED_SLIPPAGE_PCT)
-    stop_block = burst_stop(planned_entry, low, high)
+    limit = entry_high                                  # the highest fill the ticket permits
+    planned_entry = _at_pct(close, ASSUMED_SLIPPAGE_PCT)  # indicative: exit levels and targets
+    stop_block = burst_stop(limit, low, high, trigger=close)
     stop = stop_block["stop"]
     eligible = stop_block["stop_basis"] != "max_stop"
+    cands = stop_block["stop_candidates"]
     reason = None if eligible else (
-        f"stop wider than {MAX_STOP_PCT:g}%: the burst low {_usd(low)} is "
-        f"{stop_block['stop_candidates'][0]['pct_below_entry']:g}% under the planned fill {_usd(planned_entry)}")
+        f"ticket withheld: at the {_usd(limit)} limit, the highest fill the ticket permits, the burst low "
+        f"{_usd(low)} is {stop_candidate_words(cands[0], limit, close)} and the bar's midpoint "
+        f"{_usd(cands[1]['price'])} is {stop_candidate_words(cands[1], limit, close)}, past his "
+        f"{MAX_STOP_PCT:g}% line either way; the setup stands, the ticket does not")
 
     found = hazards(gain_pct, extension_pct)
     hazard_multiplier = min([h["multiplier"] for h in found], default=1.0)
     regime_multiplier = _number(size_multiplier, "size_multiplier")
     stop_multiplier, stop_reason = stop_risk(stop_block["stop_pct"])
     total = regime_multiplier * hazard_multiplier * stop_multiplier
-    sizing = size(planned_entry, stop, account, total)
+    sizing = size(limit, stop, account, total)
     action = _action(eligible, sizing, "buy_at_open")
 
+    # a withheld ticket's reason is printed beside the missing order, once;
+    # the cascade's note says the same numbers, so neither joins the notes
     flags = [h["kind"] for h in found]
     notes = [h["detail"] for h in found]
     if not eligible:
         flags.append("wide_stop")
-        notes.append(reason)
     if stop_reason:
         flags.append("risk_halved")
         notes.append(stop_reason)
     if sizing.capped_by == "position_cap":
         flags.append("position_capped")
-    if stop_block["stop_note"]:
-        notes.append(stop_block["stop_note"])
     if sizing.note:
         notes.append(sizing.note)
-    orders = (fidelity_orders(ticker, sizing.shares, trigger=close, limit=entry_high, stop=stop)
+    orders = (fidelity_orders(ticker, sizing.shares, trigger=close, limit=limit, stop=stop, skip_below=entry_low)
               if action == "buy_at_open" else dict(NO_ORDER))
 
     return {
         "ticker": ticker, "kind": "burst", "scan": scan, "action": action,
         "eligible": eligible, "reason": reason,
-        "entry_ref": entry_ref, "entry_low": entry_low, "entry_high": entry_high,
+        "entry_ref": entry_ref, "entry_low": entry_low, "entry_high": entry_high, "limit": limit,
         "skip_if_open_above": entry_high, "skip_if_open_below": entry_low,
         "extended_above": extended_above, "entry_window": ENTRY_WINDOW,
         "pre_open_check": (f"before the open: if the pre-market print is under {_usd(entry_low)} the burst "
@@ -792,6 +862,8 @@ def burst_plan(*, ticker: str, close: float, low: float, high: float, open_: flo
                            f"{_usd(extended_above)} (+{SKIP_GAP_PCT:g}%) he would be selling; do not "
                            f"place the order in any of the three"),
         "planned_entry": planned_entry, "assumed_slippage_pct": ASSUMED_SLIPPAGE_PCT,
+        "planned_entry_note": (f"an indicative entry, the close plus {ASSUMED_SLIPPAGE_PCT:g}%, that the exit "
+                               f"levels and targets are quoted from; not a fill, and not the sizing price"),
         **stop_block,
         **_sizing_block(sizing, stop),
         "multipliers": {"regime": regime_multiplier, "hazard": hazard_multiplier,
@@ -823,7 +895,9 @@ def anticipation_plan(*, ticker: str, close: float, box_high: float, box_low: fl
                       lows_last3: Sequence[float], account: Account,
                       size_multiplier: float = 1.0) -> dict[str, Any]:
     """A buy stop-limit a few cents over the consolidation high, the stop under
-    the last sessions' low, refused when the stop is past MAX_STOP_PCT."""
+    the last sessions' low. The stop distance, the stop-risk multiplier and
+    the shares are judged at the limit, the highest fill the ticket permits;
+    a stop past MAX_STOP_PCT there withholds the ticket (``action`` refused)."""
     if not isinstance(ticker, str) or not ticker.strip():
         raise ValueError(f"ticker must be a non-empty string, got {ticker!r}")
     close, box_high, box_low = _price(close, "close"), _price(box_high, "box_high"), _price(box_low, "box_low")
@@ -840,14 +914,15 @@ def anticipation_plan(*, ticker: str, close: float, box_high: float, box_low: fl
     trigger = _money(box_high + cushion)
     limit = _at_pct(trigger, TRIGGER_LIMIT_PCT)
     stop_primary, stop_alt = min(lows), lows[-1]
-    risk_pct = _pct(100 * (trigger / stop_primary - 1))
+    risk_pct = _pct(100 * (limit - stop_primary) / limit)
     eligible = risk_pct <= MAX_STOP_PCT
-    reason = None if eligible else (f"stop wider than {MAX_STOP_PCT:g}%: the stop {_usd(stop_primary)} is "
-                                    f"{risk_pct:g}% under the trigger {_usd(trigger)}")
+    reason = None if eligible else (f"ticket withheld: at the {_usd(limit)} limit, the highest fill the ticket "
+                                    f"permits, the stop {_usd(stop_primary)} is {risk_pct:g}% away, past his "
+                                    f"{MAX_STOP_PCT:g}% line; the setup stands, the ticket does not")
     regime_multiplier = _number(size_multiplier, "size_multiplier")
     stop_multiplier, stop_reason = stop_risk(risk_pct)
     total = regime_multiplier * stop_multiplier
-    sizing = size(trigger, stop_primary, account, total)
+    sizing = size(limit, stop_primary, account, total)
     action = _action(eligible, sizing, "place_buy_stop")
     gap_ok_above = _at_pct(close, GAP_OK_PCT)
     orders = (fidelity_orders(ticker, sizing.shares, trigger=trigger, limit=limit, stop=stop_primary)
@@ -856,8 +931,7 @@ def anticipation_plan(*, ticker: str, close: float, box_high: float, box_low: fl
     flags: list[str] = []
     notes: list[str] = []
     if not eligible:
-        flags.append("wide_stop")
-        notes.append(reason)
+        flags.append("wide_stop")          # the reason is printed beside the missing ticket
     if stop_reason:
         flags.append("risk_halved")
         notes.append(stop_reason)
@@ -871,6 +945,9 @@ def anticipation_plan(*, ticker: str, close: float, box_high: float, box_low: fl
         "box_high": box_high, "box_low": box_low, "close": close,
         "stop": stop_primary, "stop_alt": stop_alt, "stop_basis": f"lowest low of the last {len(lows)} sessions",
         "stop_pct": risk_pct, "lows_last3": lows,
+        "planned_entry": trigger,
+        "planned_entry_note": (f"the {_usd(trigger)} trigger is the indicative entry the exit levels and targets "
+                               f"are quoted from; the shares are sized at the {_usd(limit)} limit"),
         **_sizing_block(sizing, stop_primary),
         "multipliers": {"regime": regime_multiplier, "hazard": 1.0, "stop_risk": stop_multiplier,
                         "total": total},
@@ -914,8 +991,12 @@ def follow(pick: Mapping[str, Any], later: Sequence[Mapping[str, Any]],
     stop (the order of a bar's high and low is unknown, so the stop wins),
     then the high against the sell-half level, then the close. At the close
     of day 1 the stop rises to the entry day's low; from day 3 it trails each
-    day's low; it never moves down. Under a red ``regime`` a held plan's
-    instruction gains ``RED_CLAUSE``; the status is the walk's.
+    day's low; it never moves down. Every sale is in whole shares -- "at
+    least half" of 3 is 2, of 1 is 1 -- and each sale event carries
+    ``shares`` sold and ``remaining``; a position whose remaining count
+    reaches zero is settled there, with no phantom half left to walk. Under a
+    red ``regime`` a held plan's instruction gains ``RED_CLAUSE``; the status
+    is the walk's. It is a model of the published plan, not a position.
     """
     ticker = pick.get("ticker")
     kind = pick.get("kind", "burst")
@@ -931,8 +1012,11 @@ def follow(pick: Mapping[str, Any], later: Sequence[Mapping[str, Any]],
         raise ValueError(f"entry_ref {entry} must be above stop {stop}")
     bars = [_bar(raw, i) for i, raw in enumerate(later)]
     levels = exit_levels(entry)
-    half = shares - shares // 2  # "at least half"
+    half = shares - shares // 2  # "at least half", in whole shares: 2 of 3, 1 of 1, 10 of 20
+    remaining = shares
     tag = f"{shares} {ticker}".strip()
+    half_words = (f"all {shares} {ticker} (a position of {shares} cannot be halved)" if shares and half == shares
+                  else f"half ({half} of {tag})")
 
     def pct(price: float) -> float:
         return _pct(100 * (price / entry - 1))
@@ -943,9 +1027,17 @@ def follow(pick: Mapping[str, Any], later: Sequence[Mapping[str, Any]],
     half_sold = False
     last: dict[str, Any] | None = None
 
+    def sale(day: int, date: Any, event: str, price: float, qty: int) -> None:
+        """A sale of ``qty`` whole shares: the event carries what was sold and
+        what the model still holds, so the R can be weighted by quantity."""
+        nonlocal remaining
+        remaining -= qty
+        events.append({"day": day, "date": date, "event": event, "price": price, "shares": qty,
+                       "remaining": remaining})
+
     if not bars:
-        instruction = (f"No session since the {pick.get('date')} pick yet: buy {tag} per the plan and "
-                       f"attach the sell stop at {_usd(stop)}.")
+        instruction = (f"No session since the {pick.get('date')} pick yet. If you take this plan, buy {tag} per "
+                       f"the ticket and attach the sell stop at {_usd(stop)}.")
 
     for day, bar in enumerate(bars, 1):
         if day > FINAL_EXIT_DAY:
@@ -963,32 +1055,39 @@ def follow(pick: Mapping[str, Any], later: Sequence[Mapping[str, Any]],
             instruction = (f"Day {day}: the buy stop at {_usd(entry)} was never reached (high {_usd(h)}); "
                            f"the day order expired unfilled.")
             break
+        held = f"{remaining} {ticker}".strip()
         if o <= stop:
             status, exit_price = "stopped", o
-            events.append({"day": day, "date": date, "event": "stopped_at_open", "price": o})
-            instruction = (f"Day {day}: opened at {_usd(o)}, under the {_usd(stop)} stop: stopped at the "
+            sale(day, date, "stopped_at_open", o, remaining)
+            instruction = (f"Day {day}: opened at {_usd(o)}, under the {_usd(stop)} stop: {held} stopped at the "
                            f"open ({_plus_pct(pct(o))}).")
             break
         if o >= levels["gap_exit"]:
             status, exit_price = "exit", o
-            events.append({"day": day, "date": date, "event": "gap_exit", "price": o})
+            sale(day, date, "gap_exit", o, remaining)
             instruction = (f"Day {day}: opened at {_usd(o)} ({_plus_pct(pct(o))}, a +{GAP_EXIT_PCT:g}% "
-                           f"gap): sell {tag} at the open.")
+                           f"gap): sell {held} at the open.")
             break
         if l <= stop:
             status, exit_price = "stopped", stop
-            events.append({"day": day, "date": date, "event": "stopped", "price": stop})
-            instruction = f"Day {day}: stopped at {_usd(stop)} ({_plus_pct(pct(stop))})."
+            sale(day, date, "stopped", stop, remaining)
+            instruction = f"Day {day}: {held} stopped at {_usd(stop)} ({_plus_pct(pct(stop))})."
             break
 
         sold_today = False
         if h >= levels["sell_half"] and not half_sold:
             price = max(o, levels["sell_half"])
-            stop = max(stop, _money(h - TRAIL_CENTS))
             half_sold, sold_today = True, True
-            events.append({"day": day, "date": date, "event": "sell_half", "price": price})
+            sale(day, date, "sell_half", price, half)
+            if shares and remaining == 0:
+                # a position that cannot be halved leaves whole: nothing is left to trail
+                status, exit_price = "exit", price
+                instruction = (f"Day {day}: sell {half_words} at {_usd(price)} ({_plus_pct(pct(price))}): "
+                               f"the +{SELL_HALF_PCT:g}% rule closes it.")
+                break
+            stop = max(stop, _money(h - TRAIL_CENTS))
             events.append({"day": day, "date": date, "event": "stop_raised", "price": stop})
-            instruction = (f"Day {day}: sell half ({half} of {tag}) at {_usd(price)} "
+            instruction = (f"Day {day}: sell {half_words} at {_usd(price)} "
                            f"({_plus_pct(pct(price))}) and raise the stop to {_usd(stop)} "
                            f"({_cents_int(TRAIL_CENTS)} cents under the day's high {_usd(h)}).")
         if c >= levels["abnormal"]:
@@ -1000,15 +1099,21 @@ def follow(pick: Mapping[str, Any], later: Sequence[Mapping[str, Any]],
                                f"stop at {_usd(stop)}.")
         if day == NO_PROGRESS_DAY and c <= entry:
             status, exit_price = "exit", c
-            events.append({"day": day, "date": date, "event": "no_progress", "price": c})
+            held = f"{remaining} {ticker}".strip()
+            sale(day, date, "no_progress", c, remaining)
             instruction = (f"Day {NO_PROGRESS_DAY}: closed at {_usd(c)}, at or below the {_usd(entry)} "
-                           f"entry: no follow-through, exit {tag}.")
+                           f"entry: no follow-through, exit {held}.")
             break
         if day == SELL_HALF_DAY and not half_sold:
             half_sold, sold_today = True, True
-            events.append({"day": day, "date": date, "event": "sell_half", "price": c})
+            sale(day, date, "sell_half", c, half)
+            if shares and remaining == 0:
+                status, exit_price = "exit", c
+                instruction = (f"Day {SELL_HALF_DAY}: closed at {_usd(c)} ({_plus_pct(pct(c))}): sell "
+                               f"{half_words} at the close; the day-{SELL_HALF_DAY} rule closes it.")
+                break
             instruction = (f"Day {SELL_HALF_DAY}: closed at {_usd(c)} ({_plus_pct(pct(c))}): sell at "
-                           f"least half ({half} of {tag}) at the close.")
+                           f"least {half_words} at the close.")
         if day == ENTRY_DAY and l > stop:
             stop = l
             events.append({"day": day, "date": date, "event": "stop_raised_to_entry_low", "price": stop})
@@ -1017,17 +1122,19 @@ def follow(pick: Mapping[str, Any], later: Sequence[Mapping[str, Any]],
             events.append({"day": day, "date": date, "event": "stop_trailed", "price": stop})
         if day >= FINAL_EXIT_DAY:
             status, exit_price = "exit", c
-            events.append({"day": day, "date": date, "event": "day5_exit", "price": c})
+            left = remaining
+            sale(day, date, "day5_exit", c, remaining)
             instruction = (f"Day {FINAL_EXIT_DAY}: closed at {_usd(c)} ({_plus_pct(pct(c))}): exit the "
-                           f"remainder of {tag} into strength.")
+                           f"remainder ({left} of {tag}) into strength.")
             continue
         if sold_today:
             status = "sell_half"
             instruction = f"{instruction} The stop is {_usd(stop)}."
         elif half_sold:
             status = "sell_into_strength"
-            instruction = (f"Day {day}: closed at {_usd(c)} ({_plus_pct(pct(c))}); half is sold, sell "
-                           f"the rest into strength by day {FINAL_EXIT_DAY} with the stop at {_usd(stop)}.")
+            instruction = (f"Day {day}: closed at {_usd(c)} ({_plus_pct(pct(c))}); {shares - remaining} of {tag} "
+                           f"sold, sell the remaining {remaining} into strength by day {FINAL_EXIT_DAY} with "
+                           f"the stop at {_usd(stop)}.")
         else:
             status = "hold"
             instruction = (f"Day {day}: hold {tag} with the stop at {_usd(stop)} (closed {_usd(c)}, "
@@ -1047,7 +1154,7 @@ def follow(pick: Mapping[str, Any], later: Sequence[Mapping[str, Any]],
         "last_date": last["date"] if last else None,
         "unrealised_pct": pct(last["c"]) if last else None,
         "exit_price": exit_price, "result_pct": pct(exit_price) if exit_price is not None else None,
-        "half_sold": half_sold,
+        "half_sold": half_sold, "sold": shares - remaining, "remaining": remaining,
     }
 
 
@@ -1056,9 +1163,13 @@ def follow(pick: Mapping[str, Any], later: Sequence[Mapping[str, Any]],
 
 def cash_budget(plans: Sequence[Mapping[str, Any]], account: Account,
                 open_positions: int = 0) -> dict[str, Any]:
-    """What tomorrow's plans commit, in rank order, against the slot cap and
-    the equity: a plan with no order takes no slot; a plan past the free
-    slots or past the equity is listed under ``beyond`` with its reason."""
+    """What tomorrow's tickets would commit, in rank order, against the slot
+    cap and the configured equity: a plan with no order takes no slot; a plan
+    past the free slots or past the equity is listed under ``beyond`` with its
+    reason. This is model allocation over configured sizing assumptions --
+    ``open_positions`` is the count of open model plans -- never a balance,
+    settled cash or buying power. Every plan without an order is in ``cut``
+    with a ``kind`` from ``CUT_KINDS`` and a sentence."""
     if isinstance(open_positions, bool) or not isinstance(open_positions, int) or open_positions < 0:
         raise ValueError(f"open_positions must be a whole number, got {open_positions!r}")
     free = max(0, account.max_open_positions - open_positions)
@@ -1080,35 +1191,42 @@ def cash_budget(plans: Sequence[Mapping[str, Any]], account: Account,
             committed = _money(committed + position)
             within.append(ticker)
     used = open_positions + len(within)
-    already = f" ({open_positions} already open)" if open_positions else ""
+    already = (f" ({open_positions} open model plan{'s' if open_positions != 1 else ''})"
+               if open_positions else "")
     at_risk = _money(sum(_money(p.get("risk_usd") or 0) for p in plans
                          if p.get("ticker") in within))
     cut = []
     for row in skipped:
-        # an eligible plan the account could not size is cut, and says why
-        src = next((p for p in plans if p.get("ticker") == row["ticker"]), {})
+        # a plan with no order is cut, and says why: breadth, the stop rule, or the size
+        src = plans[row["rank"] - 1]
         if src.get("action") == "no_new_longs":
-            cut.append({"ticker": row["ticker"], "reason": "breadth sizes new positions at zero tonight"})
+            cut.append({"ticker": row["ticker"], "kind": "no_new_longs",
+                        "reason": "breadth sizes new positions at zero tonight"})
+        elif src.get("action") == "refused" or src.get("eligible") is False:
+            cut.append({"ticker": row["ticker"], "kind": "withheld",
+                        "reason": src.get("reason") or "ticket withheld: the stop rule fails at the limit"})
         else:
             rps = src.get("risk_per_share")
-            cut.append({"ticker": row["ticker"], "reason": (f"the account cannot size it: {_usd(rps)} at risk per share against a "
-                                                            f"{_usd(account.risk_usd)} risk budget comes to no whole share") if rps
-                        else "the account cannot size it: the plan comes to no whole share"})
+            cut.append({"ticker": row["ticker"], "kind": "no_shares",
+                        "reason": (f"the configured account cannot size it: {_usd(rps)} at risk per share against a "
+                                   f"{_usd(account.risk_usd)} risk budget comes to no whole share") if rps
+                        else "the configured account cannot size it: the plan comes to no whole share"})
     for row in beyond:
         if row["reason"] == "slot_cap":
-            holders = ", ".join(within) if within else "the open plans"
-            reason = (f"the {account.max_open_positions}-slot cap: {open_positions} already open and "
-                      f"{holders} take the rest; take {row['ticker']} only if a HOLD above stops out")
+            holders = ", ".join(within) if within else "the open model plans"
+            reason = (f"the {account.max_open_positions}-slot model cap: {open_positions} open model plans and "
+                      f"{holders} take the rest; take {row['ticker']} only if a plan above is not held or "
+                      f"stops out")
         else:
-            reason = (f"the equity: {_usd(row['position_usd'])} more than the {_usd(account.equity)} "
-                      f"account can commit beside the orders above")
-        cut.append({"ticker": row["ticker"], "reason": reason})
+            reason = (f"the configured equity: {_usd(row['position_usd'])} more than the {_usd(account.equity)} "
+                      f"can commit beside the tickets above")
+        cut.append({"ticker": row["ticker"], "kind": row["reason"], "reason": reason})
     return {
         "committed_usd": committed, "at_risk_usd": at_risk, "equity": account.equity,
         "slots_used": used, "slots_max": account.max_open_positions, "open_positions": open_positions,
         "within": within, "beyond": beyond, "cut": cut, "skipped": skipped,
-        "sentence": (f"Tomorrow's plans commit {_usd(committed)} of {_usd(account.equity)}; "
-                     f"{used} of {account.max_open_positions} slots{already}"),
+        "sentence": (f"Model allocation: tomorrow's tickets would commit {_usd(committed)} of the configured "
+                     f"{_usd(account.equity)}; {used} of {account.max_open_positions} slots{already}"),
     }
 
 

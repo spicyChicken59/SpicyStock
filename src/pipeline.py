@@ -673,13 +673,15 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         return rep
 
 
-#: An open plan in one of these states still occupies a slot: the position is
-#: held, or its ticket is live and may still fill.
-SLOT_STATUSES = ("hold", "sell_half", "sell_into_strength", "pending")
+#: An open model plan in one of these states still occupies a slot: the
+#: model holds it, its ticket is live and may still fill, or the bars cannot
+#: say whether it filled (an uncertain plan is not freed capacity).
+SLOT_STATUSES = ("hold", "sell_half", "sell_into_strength", "pending", record.UNCERTAIN)
 
 
 def slots_held(open_plans: list[dict]) -> int:
-    """How many of the account's slots last night's plans still occupy."""
+    """How many of the configured slots the open model plans occupy: model
+    allocation over configured sizing assumptions, not a holding count."""
     return sum(1 for o in open_plans if o.get("status") in SLOT_STATUSES)
 
 

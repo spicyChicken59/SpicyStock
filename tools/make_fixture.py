@@ -12,8 +12,11 @@ pipeline.
     python tools/make_fixture.py --check    # exit 1 if any fixture is stale
 
 Variants (each a night, all pinned to the same Thursday evening):
-  full      three A-quality bursts, one beyond the slot cap, a coiled name,
-            two open plans, a readable scorecard          -> "Trade tomorrow."
+  full      four A-quality bursts: one ticket, two cut by the slot cap, one
+            withheld by the stop rule at its limit (the textbook bar); a
+            coiled name; three open model plans (a hold, a whole-share half
+            sale holding its last share, an uncertain fill); a readable
+            scorecard with uncertain fills counted      -> "Trade tomorrow."
   degraded  Claude down and a chart that would not render -> the same night,
             graded by the checklist alone, run.status degraded
   notrade   Claude lowers every grade to C                -> "Nothing qualifies."
@@ -67,14 +70,22 @@ BASE_NAMES = ["ANET", "CRDO", "DELL", "ELF", "FIX", "GLW", "HOOD", "IONQ", "JBL"
 
 
 # ---------------------------------------------------------------- market ---
+#: A burst bar this many percent of its close wide keeps its midpoint inside
+#: his 4% stop line at the +4% ceiling (the ticket's limit). The field guide's
+#: textbook bar, with its low 4.7% under the close, does not: its ticket is
+#: withheld at the limit, and TSLA below carries it to show that.
+TIGHT_BAR = dict(burst_range_pct=0.25, base_range=0.15, prior_range=0.1)
+
+
 def burst_frames() -> dict[str, pd.DataFrame]:
-    """Three A-quality bursts, one loose-base B, one H-only miss (an
-    anticipation setup), and the coil."""
+    """Four A-quality bursts -- three whose tickets qualify at their limit and
+    the textbook one whose ticket is withheld -- one loose-base B, one H-only
+    miss (an anticipation setup), and the coil."""
     return {
-        "AAPL": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000)),
-        "AMD": qframe(ideal_bars(burst_gain=5.2, close_pos=0.9, burst_vol=2_600_000, base_quiet=12)),
-        "NVDA": qframe(ideal_bars(burst_gain=7.4, close_pos=0.85, burst_vol=3_400_000, base_quiet=18, leg_steps=[1.4] * 14)),
-        "TSLA": qframe(ideal_bars(burst_gain=4.6, close_pos=0.82, base_quiet=24, base_range=2.4, base_wobble=0.9)),
+        "AAPL": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000, **TIGHT_BAR)),
+        "AMD": qframe(ideal_bars(burst_gain=5.2, close_pos=0.9, burst_vol=2_600_000, base_quiet=12, **TIGHT_BAR)),
+        "NVDA": qframe(ideal_bars(burst_gain=7.4, close_pos=0.85, burst_vol=3_400_000, base_quiet=18, leg_steps=[1.4] * 14, **TIGHT_BAR)),
+        "TSLA": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000)),
         "PLUG": qframe(ideal_bars(burst_gain=5.0, close_pos=0.55)),
         "COIL": coil(),
     }
@@ -86,7 +97,9 @@ def base_frames() -> dict[str, pd.DataFrame]:
     ratios have a denominator and a history worth a chart."""
     frames = {}
     for i, name in enumerate(BASE_NAMES):
-        df = make_ohlcv("base", seed=[SEED, i], days=280)
+        # VRT trades near $200 so its model plan is three shares: the
+        # whole-share half sale (2 of 3) shows on the page
+        df = make_ohlcv("base", seed=[SEED, i], days=280, start_price=200.0 if name == "VRT" else 25.0)
         big_day(df, -(3 + (i * 7) % 37), 0.955)
         big_day(df, -(2 + (i * 11) % 39), 1.045)
         frames[name] = df
@@ -122,10 +135,16 @@ def red_tape(frames: dict[str, pd.DataFrame], names: int) -> None:
 
 
 def hold_tape(frames: dict[str, pd.DataFrame]) -> None:
-    """The two open-plan names rise gently over their last six sessions, so
-    the walk holds them: every low above the pick's stop, closes up a
-    little each day, nothing near the +8% sell-half level."""
-    for name in ("NBIS", "VRT"):
+    """The three open-plan tapes, each written so the walk reads one thing.
+    NBIS rises gently over its last six sessions: every open at or over the
+    pick's close (a known fill at the open), every low above the stop, and
+    nothing near +8%: a hold. VRT (three shares) reaches +9% on its first
+    session after the pick, so the model sells 2 of 3 at +8% and raises the
+    stop under that high; the days after open and hold above it and close
+    under +10%: the last share is held into strength. SMCI opens under its
+    pick's close and reaches it later in the day: a fill the bars cannot
+    time, uncertain."""
+    for name in ("NBIS", "VRT", "SMCI"):
         df = frames[name]
         start = float(df["Close"].iloc[-7])
         for k, pos in enumerate(range(-6, 0), 1):
@@ -134,6 +153,35 @@ def hold_tape(frames: dict[str, pd.DataFrame]) -> None:
             df.iloc[pos, df.columns.get_loc("High")] = round(close * 1.008, 2)
             df.iloc[pos, df.columns.get_loc("Low")] = round(close * 0.99, 2)
             df.iloc[pos, df.columns.get_loc("Close")] = close
+
+    def write(df: pd.DataFrame, pos: int, o: float, h: float, l: float, c: float) -> None:
+        for col, value in (("Open", o), ("High", h), ("Low", l), ("Close", c)):
+            df.iloc[pos, df.columns.get_loc(col)] = round(value, 2)
+
+    # VRT: picked four sessions back (position -5). The whole frame is scaled
+    # so that close is 180 (no invented jump inside the breadth window) and
+    # the pick-day bar is pinned around it, so the plan is three shares:
+    # $25 (halved) over the $7.49 between the 187.20 limit and its 4% line.
+    # Its first session after the pick opens at the close and runs +9%.
+    vrt = frames["VRT"]
+    scale = 180.0 / float(vrt["Close"].iloc[-5])
+    for col in ("Open", "High", "Low", "Close"):
+        vrt[col] = (vrt[col] * scale).round(2)
+    write(vrt, -5, 177.0, 181.0, 176.5, 180.0)
+    picked = float(vrt["Close"].iloc[-5])
+    high = round(picked * 1.09, 2)
+    write(vrt, -4, picked, high, picked * 0.998, picked * 1.07)
+    level = high
+    for pos in (-3, -2, -1):
+        write(vrt, pos, level + 0.30, level + 0.90, level + 0.10, level + 0.60)
+        level += 0.60
+    # SMCI: picked three sessions back (position -4); its first session after
+    # opens 0.5% under the close and reaches +1% at a time the bar cannot give
+    smci = frames["SMCI"]
+    picked = float(smci["Close"].iloc[-4])
+    write(smci, -3, picked * 0.995, picked * 1.01, picked * 0.99, picked * 1.004)
+    for pos in (-2, -1):
+        write(smci, pos, picked * 1.004, picked * 1.012, picked * 0.998, picked * 1.006)
 
 
 def register(fake: FakeAlpaca, variant: str) -> list[str]:
@@ -153,10 +201,13 @@ def register(fake: FakeAlpaca, variant: str) -> list[str]:
 
 # ---------------------------------------------------------------- picks ----
 def prior_picks(fake: FakeAlpaca) -> dict:
-    """A picks.json the night inherits: two picks from the last five sessions
-    (the open plans, on names whose tape then rises so both are held) and one
-    a session for the forty-four before those (a readable scorecard), each
-    priced off the frame it names as the double will serve it."""
+    """A picks.json the night inherits: three picks from the last five
+    sessions (the open model plans: a hold, the whole-share half sale, an
+    uncertain fill) and one a session for the forty-four before those (a
+    readable scorecard, uncertain fills among them), each priced off the
+    frame it names as the double will serve it. The stop is the pick day's
+    low or 4% under the close, whichever is lower, and the recorded ticket's
+    sell leg carries that same stop."""
     sessions = pd.bdate_range(end=SESSION, periods=60)
     picks = []
 
@@ -172,9 +223,13 @@ def prior_picks(fake: FakeAlpaca) -> dict:
                             gain_pct=5.0, account=account, size_multiplier=1.0, scan="4pct", extension_pct=None)
         row = pipeline.pick_of(p, kind, "A", 8.5)
         row["stop"] = stop
+        if p["shares"] > 0:
+            row["order_json"] = plan.fidelity_orders(name, p["shares"], trigger=close, limit=p["entry_high"], stop=stop,
+                                                     skip_below=p["entry_low"])["order_json"]
         return {**row, "date": sessions[-1 - back].date().isoformat(), "regime": "green"}
 
     picks.append(pick("NBIS", 2))
+    picks.append(pick("SMCI", 3))
     picks.append(pick("VRT", 4))
     for i, back in enumerate(range(6, 50)):
         picks.append(pick(BASE_NAMES[i % len(BASE_NAMES)], back))
@@ -264,10 +319,15 @@ def expected_shape(variant: str, data: dict) -> None:
     problems = [p["kind"] for p in data["run"]["problems"]]
     if variant == "full":
         assert h1.startswith("Trade tomorrow."), h1
-        assert len(data["trades"]) >= 2 and data["beyond_cap"], (data["trades"], data["beyond_cap"])
-        assert len(data["open_plans"]) == 2 and data["scorecard"]["readable"], data["scorecard"]
-        assert {p["status"] for p in data["open_plans"]} <= {"hold", "sell_half", "sell_into_strength"}, \
-            [(p["ticker"], p["status"]) for p in data["open_plans"]]
+        assert len(data["trades"]) >= 1 and data["beyond_cap"], (data["trades"], data["beyond_cap"])
+        kinds = {c["ticker"]: c["kind"] for c in data["cash_budget"]["cut"]}
+        assert "withheld" in kinds.values() and "slot_cap" in kinds.values(), kinds
+        assert kinds.get("TSLA") == "withheld", kinds
+        assert data["scorecard"]["readable"] and data["scorecard"]["uncertain"] > 0, data["scorecard"]
+        statuses = {p["ticker"]: p["status"] for p in data["open_plans"]}
+        assert statuses == {"NBIS": "hold", "SMCI": record.UNCERTAIN, "VRT": "sell_into_strength"}, statuses
+        vrt = next(p for p in data["open_plans"] if p["ticker"] == "VRT")
+        assert vrt["shares"] == 3 and vrt["sold"] == 2 and vrt["remaining"] == 1, (vrt["shares"], vrt["sold"], vrt["remaining"])
         assert data["watchlist"]["top"], "no coiled name"
         assert problems == []
     elif variant == "degraded":

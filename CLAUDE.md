@@ -107,7 +107,22 @@ including the six cover sentences and the plan instructions. The chart
 (`docs/app-chart.js`) is annotated SVG on the SpicyChicken design system
 snapshot under `docs/design-system/`.
 
-What is measured offline: 994 tests, the chart check, and the page smoke
+Three contracts the ticket-record closeout fixed, each pinned by tests:
+a fixed-quantity ticket is sized and its stop judged at its LIMIT, the
+highest fill it permits (`plan.burst_plan()`, `plan.anticipation_plan()`,
+`plan.SIZING_BASIS`), and a ticket whose stop is past his 4% line there is
+withheld with its setup kept; a daily bar establishes a fill only at the
+next open inside the ticket (`record.fill()`, `record.KNOWN_FILL`), and a
+trigger crossed after the open, an open past the limit or under the skip
+line that could still have filled, or a fill-day low under the stop is
+`uncertain` with a reason, walked nowhere, scored nowhere, counted by
+reason and still holding its model slot; every sale in `plan.follow()` is
+whole shares with `shares` and `remaining` on the event, a position that
+reaches zero settles there, and `record.r_multiple()` weights by quantity.
+The page and the mail say "open model plans" and "model allocation over
+configured sizing assumptions", never what the reader holds.
+
+What is measured offline: 1019 tests, the chart check, and the page smoke
 over six fixtures plus the stale and no-record states. What is NOT: the
 full-market fetch time from a runner (the dry-run dispatch measures it), a
 real Claude reply to a real chart, Resend delivering, Pages building after
@@ -178,8 +193,70 @@ message, an alert with no ticket and no caveat, ratios at one decimal.
 - An upper bound on the day's gain is a strategy decision this build does
   not take; a ≥15% day halves the size as a hazard and is never a veto.
 - The scorecard's fill rule is the ticket's own mechanics on daily bars; a
-  fill inside the zone at the open is assumed to be at the open, and a
-  day order on a session the name's frame lacks is walked from its next bar.
+  fill at or over the trigger at the open is assumed to be at the open, and
+  a day order on a session the name's frame lacks is walked from its next bar.
 - `MAX_READS` is twelve by mechanical grade; a night with more A-quality
   bursts than that grades the rest by the checklist alone (`claude_partial`
   is not raised for those, only for names asked and unanswered).
+- **The +4% ceiling and his 4% stop line cannot both hold at the limit.**
+  Judged at the ticket's limit, a burst's stop is inside his line only when
+  the usable stop (the low, else the bar's midpoint under the buy stop)
+  sits within about 0.16% of the close: the field guide's textbook bar,
+  low 4.7% under the close, is withheld, and so is nearly every real burst.
+  The closeout implemented the withhold as specified rather than narrow the
+  ticket's band; the one-rule alternative, a limit capped at the price 4%
+  over the stop (`min(entry_high, stop / 0.96)`), keeps tickets and the
+  stop rule at every fill but narrows the permitted range. A method
+  decision, deferred to Astra; the fixtures carry three tight-bar bursts so
+  the page still shows a ticket.
+
+## Checkpoint, 11 Sep 2026 — the ticket-record closeout
+
+**Revision.** Branch `claude/spicystock-ticket-record-fixes-su1nh1`, cut
+from `main` at `fd9b79e` (the merge of the reviewed `claude/amazing-
+ritchie-k95p6g` tip `22459ef`; the trees are identical). The commit on top
+of it is the closeout; nothing else is on the branch. The two project
+inputs the review named (`SpicyStock_Project_Context.md`, the field-guide
+PDF) were not present in the workspace and were not read.
+
+**Reproduced, then fixed, all three findings**, by `scratchpad/repro/`
+scripts against `fd9b79e` before any edit: the 24-share ticket sized at
+close+1% risked $108 at its $104 limit against a $50 budget with the stop
+4.33% away (now withheld, the setup kept); cases A, B and C read as
+`not_filled`, `not_filled` and `hold` (now `uncertain` with
+`open_above_limit`, `open_below_skip`, `stop_sequence`); the three-share
+plan told the reader to sell 2 of 3 and scored +5R at 50/50 (now +6R, and a
+one-share plan settles at its one sale with no phantom half). Nothing was
+already fixed on the branch; nothing was disproved.
+
+**Checks run at the closeout commit** (all offline, through the doubles):
+`pytest tests/ -q` 1019 passed; `python tools/make_fixture.py --check` 7
+fixtures current; `node tools/chart_check.mjs` 139/139; `node
+tools/page_smoke.mjs --shots <scratch>` 764/764 with the clipboard read
+back equal to the printed ticket; the digest rendered from the full
+fixture through `report.digest_html()` and read for the affected fields,
+not sent. Screenshots at 1280 and 390 px, dark and light, were looked at:
+the trade card's new facts (sized at, planned risk, the four ticket terms),
+the withheld TSLA card, the three-row model-plan rail (a hold, an
+uncertain fill, a 2-of-3 sale), the allocation line, the scorecard's
+uncertain count. NOT run, and not claimable: a live fetch, a real Claude
+reply, Resend delivering, Pages building.
+
+**Settled here.** Sizing price = the order's limit for both families;
+withhold rather than rescue a ticket; `uncertain` is one status with four
+reason codes and holds a slot; whole-share sales with quantity-weighted R;
+no plain-limit fallback; the ticket's terms printed beside it; the page and
+mail vocabulary (`Open model plans`, `Model allocation`, `ticket withheld`,
+`No ticket:`); `rules_version` moved with `plan.sizing_basis` and
+`record.known_fill`, so older records cannot be read as this one.
+
+**Keep / fix / defer / omit.** Keep: everything above and the design.
+Fix next if it bites: a withheld A-quality burst shares `beyond_cap` with
+slot-cap cuts (the `kind` tells them apart; the contract says so). Defer
+to Astra: the ceiling-versus-stop-line question above; intraday data for
+the uncertain cases, if the count of them matters. Omit: a scenario engine, a portfolio view, brokerage
+execution.
+
+**Next action.** Dispatch `evening.yml` with dry_run on a real trading day
+and read how many A-quality bursts are withheld at the limit; that number
+is the input to the ceiling decision.

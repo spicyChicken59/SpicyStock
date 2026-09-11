@@ -191,5 +191,5 @@ def test_the_page_prints_the_same_plan_status_words_the_mail_does():
     words = dict(re.findall(r"(\w+): \['([^']+)'", block))
     assert words == report.PLAN_STATUS_WORDS
     for status in ("hold", "sell_half", "sell_into_strength", "exit", "stopped", "expired", "pending",
-                   record.NOT_FILLED, record.UNREADABLE, "unmeasured"):
+                   record.NOT_FILLED, record.UNCERTAIN, record.UNREADABLE, "unmeasured"):
         assert status in words, status

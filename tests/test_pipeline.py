@@ -26,7 +26,11 @@ CLAUDE_A_PLUS = {"score": 9.2, "grade": "A+", "reason": "a clean leg into a tigh
 
 
 def a_plus_frame() -> pd.DataFrame:
-    return qframe(ideal_bars())
+    """An A+ burst whose ticket qualifies at its limit: the burst bar spans
+    0.25% of its close, so the bar's midpoint sits inside his 4% line under
+    the +4% ceiling. (The textbook bar, whose low sits 4.7% under the close,
+    grades A+ too and has its ticket withheld: see test_a_textbook_burst...)"""
+    return qframe(ideal_bars(burst_range_pct=0.25, base_range=0.15, prior_range=0.1))
 
 
 def base_frames(n: int, seed: int) -> dict[str, pd.DataFrame]:
@@ -75,7 +79,7 @@ def test_a_clean_night_publishes_a_trade_with_its_ticket_and_records_the_pick(ma
 
     assert data["trades"] == ["AAA"] and data["beyond_cap"] == []
     burst = data["bursts"][0]
-    assert burst["ticker"] == "AAA" and burst["grade"] == "A+" and burst["scan"] == "both"   # a 6% day on a $100 name is also a $ breakout
+    assert burst["ticker"] == "AAA" and burst["grade"] == "A+" and burst["scan"] == "burst"   # a 0.25%-wide bar is not a $ breakout (close - open)
     assert burst["quality"]["grade"] == "A+" and burst["quality"]["checks"][0]["pass"] is True
     assert burst["claude"]["source"] == "claude" and burst["claude"]["agree"] is True
     base = burst["quality"]["base"]
@@ -116,7 +120,7 @@ def test_the_next_night_follows_the_pick_from_bars_alone(market, claude, fake_re
     held = {p["ticker"]: p for p in data["open_plans"]}
     assert set(held) == {"AAA", "COIL"}
     assert held["AAA"]["picked"] == SESSION and held["AAA"]["day"] == 1 and held["AAA"]["targets"]
-    assert held["AAA"]["status"] in ("hold", "sell_half", "stopped", "exit", record.NOT_FILLED)
+    assert held["AAA"]["status"] in ("hold", "sell_half", "stopped", "exit", record.NOT_FILLED, record.UNCERTAIN)
     assert len(data["nights"]) == 2 and data["scorecard"]["plans"] == 2
 
 
@@ -185,9 +189,9 @@ def test_claude_cannot_raise_a_grade_the_checklist_capped(fake_alpaca, seed, cla
 
 def test_the_slot_count_and_the_status_word_are_the_named_rules():
     plans = [{"status": s} for s in ("hold", "sell_half", "sell_into_strength", "pending", "stopped", "exit",
-                                      "expired", record.NOT_FILLED, "unmeasured")]
-    assert pipeline.slots_held(plans) == 4
-    assert pipeline.SLOT_STATUSES == ("hold", "sell_half", "sell_into_strength", "pending")
+                                      "expired", record.NOT_FILLED, record.UNCERTAIN, "unmeasured")]
+    assert pipeline.slots_held(plans) == 5
+    assert pipeline.SLOT_STATUSES == ("hold", "sell_half", "sell_into_strength", "pending", record.UNCERTAIN)
     rep = pipeline.RunReport()
     assert pipeline.run_status(rep, closed=True) == "closed" and pipeline.run_status(rep, closed=False) == "ok"
     rep.problem("chart_missing", "x")
@@ -253,8 +257,30 @@ def test_an_a_plus_burst_the_account_cannot_size_is_cut_not_traded(market, claud
     assert rep.exit_code() == 0, rep.problems
     assert data["trades"] == [] and data["beyond_cap"] == ["AAA"]
     assert data["cover"]["h1"] == report.H1_KEEP_CASH
-    assert data["cash_budget"]["cut"][0]["ticker"] == "AAA" and "cannot size it" in data["cash_budget"]["cut"][0]["reason"]
+    assert "1 with a qualifying setup and no ticket" in data["cover"]["dek"]
+    cut = data["cash_budget"]["cut"][0]
+    assert cut["ticker"] == "AAA" and cut["kind"] == "no_shares" and "cannot size it" in cut["reason"]
     assert data["bursts"][0]["plan"]["shares"] == 0 and data["bursts"][0]["plan"]["order_json"] is None
+    assert json.loads((docs / record.PICKS_FILE).read_text())["picks"] == []
+
+
+def test_a_textbook_burst_grades_a_plus_and_has_its_ticket_withheld_at_the_limit(fake_alpaca, seed, claude, fake_resend, tmp_path):
+    """The field guide's own bar: its low sits 4.7% under the close, so at
+    the +4% ceiling neither the low nor the midpoint is inside his 4% line.
+    The setup is published with its card and its reason; no ticket, no pick."""
+    fake_alpaca.add_history("WIDE", qframe(ideal_bars()))
+    for name, df in base_frames(11, seed).items():
+        fake_alpaca.add_history(name, df)
+    fake_alpaca.add_history("SPY", make_ohlcv("base", seed=[seed, 999], days=260))
+    rep, data, docs = evening(tmp_path, ["WIDE"] + [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(11)])
+    assert rep.exit_code() == 0, rep.problems
+    burst = data["bursts"][0]
+    assert burst["grade"] == "A+" and burst["plan"]["eligible"] is False and burst["plan"]["action"] == "refused"
+    assert burst["plan"]["reason"].startswith("ticket withheld: at the") and burst["plan"]["order_json"] is None
+    assert data["trades"] == [] and data["beyond_cap"] == ["WIDE"]
+    assert data["cash_budget"]["cut"] == [{"ticker": "WIDE", "kind": "withheld", "reason": burst["plan"]["reason"]}]
+    assert data["cover"]["h1"] == report.H1_KEEP_CASH and "1 with a qualifying setup and no ticket" in data["cover"]["dek"]
+    assert data["closest_miss"] is None                      # a withheld ticket is not a miss
     assert json.loads((docs / record.PICKS_FILE).read_text())["picks"] == []
 
 

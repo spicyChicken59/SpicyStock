@@ -12,14 +12,18 @@ The page is the product. It is generated, static, and renders one file,
 `docs/data.json`; it computes nothing of its own except whether the record
 it is showing is tonight's. Everything else — the regime, the grades, the
 share counts, the order tickets, the exits, the record — is written by the
-run and printed verbatim.
+run and printed verbatim. It is an implementation of the method with
+explicit assumptions (the archived rules, and `knowledge/method.md` on whose
+number each is), not a proven edge, and it knows nothing about what anyone
+holds: every plan it follows is a model of the published ticket.
 
 **Fourteen days.** Week one is paper: read the page every evening, place the
 orders in Fidelity's paper view or not at all, and read the open-plan rail
 each morning. Week two is the $10,000 account at the default 0.5% risk
 (0.25% is the more conservative end of his band and one variable away). Day
-fourteen is the decision, made on the page's own reliability row and its
-bars-only scorecard, not on a feeling.
+fourteen is a decision point, made on the page's own reliability row and
+its bars-only scorecard, not on a feeling — and not an automatic switch to
+real money: twenty settled model plans make a rate readable, not an edge.
 
 ## What the page says
 
@@ -47,14 +51,22 @@ Top to bottom, in the order a reader needs it:
    annotated chart (the base box, the burst bar, the buy zone, the stop, the
    +8%/+20% ruler, the last sixty or hundred and twenty sessions), the buy
    zone and the two skip lines, the stop and its basis, the shares and the
-   position, the dollars at risk, the aim, the hazards, and the order in
-   Fidelity's field order with a copy button: a buy stop-limit (stop at the
-   burst close, limit at the ceiling) with a one-triggers-the-other sell
-   stop attached. Beside it the exits, dated, and what Claude saw in the
-   chart. **What you hold** is every pick from the last five sessions
-   walked from bars alone: *day 3: sell half*, *stopped*, *not filled*,
-   with the stop the rules would have moved it to. On a phone that rail
-   comes first. Then the budget and the order sheet.
+   position, the planned price-to-stop risk, the aim, the hazards, and the
+   order in Fidelity's field order with a copy button: a buy stop-limit
+   (stop at the burst close, limit at the ceiling) with a one-triggers-the-
+   other sell stop attached. The shares are sized at the limit, the highest
+   fill the ticket permits, so the fixed quantity keeps the risk budget,
+   the position cap and his 4% stop line at every fill it can take; a
+   burst whose stop is past the line at the limit keeps its card and has
+   its ticket withheld, with the reason. Under the ticket, what it enforces
+   and what it leaves to the reader: a day order is not a 30-minute order,
+   and SpicyStock places and cancels nothing. Beside it the exits, dated,
+   and what Claude saw in the chart. **Open model plans** is every pick from
+   the last five sessions walked from bars alone as a model: *day 3: sell
+   half*, *stopped*, *not filled*, *uncertain* (the bars cannot say whether
+   it filled), with the stop the rules would have moved it to; SpicyStock
+   does not know what you hold. On a phone that rail comes first. Then the
+   model allocation and the order sheet.
 5. **Alerts.** The anticipation list: quiet, coiled names inside
    established momentum, each with a buy stop over its box, a limit, a stop
    under the last three lows and a ticket. Set them before the open.
@@ -67,8 +79,9 @@ Top to bottom, in the order a reader needs it:
    fourteen evenings: ok, degraded, closed, missing.
 
 The email is the same record in fewer words: the verdict, the breadth line,
-one block per trade with its order line, the open-plan instructions, the
-alerts, the problems and a link. Delivery failing never costs the page.
+one block per trade with its order line and the day-order term, the plans
+without a ticket and why, the open model plans' instructions, the alerts,
+the problems and a link. Delivery failing never costs the page.
 
 ## How a night runs
 
@@ -109,12 +122,15 @@ session. The run:
   the rulebook it reads is `knowledge/strategy.md`. No reply, or a refused
   key, leaves the checklist's grade standing and marks the night
   `claude_unavailable`.
-- **plan** — every A-quality burst gets a plan sized from the account
-  (default $10,000, 0.5% risk, 25% cap, four slots): entry zone, stop (the
-  burst low, or the bar's midpoint when the low is too far, refused past
-  4%), shares, the ticket, the exits and the targets. A trade is a plan with
-  an order: plans past the free slots or the equity, and a plan the account
-  cannot size to a whole share, are listed as cut with the reason.
+- **plan** — every A-quality burst gets a plan sized from the configured
+  account (default $10,000, 0.5% risk, 25% cap, four slots): entry zone,
+  stop (the burst low, or the bar's midpoint when the low is too far,
+  judged at the ticket's limit and refused past 4% there), shares sized at
+  that limit, the ticket, the exits and the targets from an indicative
+  entry. A trade is a plan with an order: a ticket the stop rule withholds,
+  plans past the free slots or the equity, and a plan the account cannot
+  size to a whole share, are listed as cut with the kind and the reason.
+  An anticipation ticket is judged and sized at its limit the same way.
 - **record** — the picks go to `docs/picks.json`; the open plans and the
   scorecard are computed from it and the bars.
 - **publish** — `docs/data.json` is written and validated, then the email
@@ -201,17 +217,21 @@ session, kind, the entry zone or trigger, the stop, the shares, the targets,
 the ticket. It holds nothing about what anyone did with them.
 
 **The scorecard is the rules' record, not yours.** Every pick is replayed
-from bars alone: a burst ticket fills at the next open if the open sits
-inside the zone (or at the trigger if the day trades up through it), an
-anticipation ticket at its trigger; the published stop is one R; a half
-sold at +8% or at day 3 is half the position; everything settles by day 5.
-A fill at the trigger is walked from the fill: on that day only the close
-is known to have printed after it, so a low under the stop that morning is
-not a stop-out and a high before the fill is not a sale.
+from daily bars alone, as a model: a ticket is booked filled only at the
+next open, at or over its trigger and at or under its limit. A day that
+opened under the trigger and reached it later, an open above the limit or
+under the skip line that could still have filled a resting order, and a
+fill-day low at or under the stop are *uncertain*: no fill is booked, no R
+is scored, the plan keeps its slot in the model allocation, and the
+scorecard counts them by reason. The published stop is one R on the whole
+position; a half sold at +8% or at day 3 is "at least half" in whole shares
+(2 of 3, 1 of 1) and every sale is weighted by the shares it sold;
+everything settles by day 5.
 It prints counts from the first night and rates only from twenty settled
-plans, and SPY over the same days is one comparison line beside it, not a
-benchmark. What it cannot see — a fill you never took, slippage, a stop
-that gapped — it says so under the tiles.
+plans (an uncertain plan never counts toward that), and SPY over the same
+days is one comparison line beside it, not a benchmark. What it cannot
+see — a fill you never took, slippage, a stop that gapped — it says so
+under the tiles.
 
 ## What was cut, and why
 

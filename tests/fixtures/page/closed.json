@@ -4,12 +4,12 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "11e153a50cc1"
+  "rules_version": "f0a83a8dacf6"
  },
  "cover": {
   "h1": "Market closed. Plans unchanged.",
   "dek": "No session on 2026-09-10. The plans from 2026-09-09 stand; day counts did not advance.",
-  "action_label": "What you hold",
+  "action_label": "Open model plans",
   "action_target": "#hold",
   "verb": "hold"
  },
@@ -218,6 +218,7 @@
    "skip_gap_pct": 8.0,
    "entry_window": "first 30 minutes",
    "assumed_slippage_pct": 1.0,
+   "sizing_basis": "order_limit",
    "max_stop_pct": 4.0,
    "ideal_stop_pct": 2.0,
    "stop_risk_multiplier": 0.5,
@@ -298,7 +299,8 @@
    "scorecard_min_plans": 20,
    "nights_kept": 20,
    "max_picks": 260,
-   "benchmark": "SPY"
+   "benchmark": "SPY",
+   "known_fill": "open_inside_zone"
   },
   "pipeline": {
    "max_reads": 12,
@@ -362,21 +364,21 @@
   "down25_month": 0,
   "up50_month": 0,
   "down50_month": 0,
-  "up13_34d": 6,
+  "up13_34d": 7,
   "down13_34d": 0,
   "pct_above_40ma": 63.3,
   "universe": 30,
-  "ratio_5d": 1.5,
-  "ratio_10d": 1.2,
-  "up4_5d": 3,
+  "ratio_5d": 2.0,
+  "ratio_10d": 1.4,
+  "up4_5d": 4,
   "down4_5d": 2,
-  "up4_10d": 6,
+  "up4_10d": 7,
   "down4_10d": 5,
   "regime": {
    "verdict": "yellow",
    "size_multiplier": 0.5,
    "reasons": [
-    "10-session ratio 1.2 (6 up, 5 down) < 2.0: not an ideal time for swing longs"
+    "10-session ratio 1.4 (7 up, 5 down) < 2.0: not an ideal time for swing longs"
    ],
    "oversold_extreme": true,
    "thresholds": {
@@ -391,11 +393,11 @@
    },
    "inputs": {
     "date": "2026-09-09",
-    "ratio_10d": 1.2,
-    "ratio_5d": 1.5,
-    "up4_10d": 6,
+    "ratio_10d": 1.4,
+    "ratio_5d": 2.0,
+    "up4_10d": 7,
     "down4_10d": 5,
-    "up4_5d": 3,
+    "up4_5d": 4,
     "down4_5d": 2,
     "up4": 1,
     "down4": 0,
@@ -568,21 +570,21 @@
    },
    {
     "date": "2026-09-07",
-    "up4": 0,
+    "up4": 1,
     "down4": 1,
-    "ratio_10d": 1.6
+    "ratio_10d": 1.8
    },
    {
     "date": "2026-09-08",
     "up4": 0,
     "down4": 1,
-    "ratio_10d": 1.4
+    "ratio_10d": 1.6
    },
    {
     "date": "2026-09-09",
     "up4": 1,
     "down4": 0,
-    "ratio_10d": 1.2
+    "ratio_10d": 1.4
    }
   ],
   "rules": {
@@ -640,14 +642,14 @@
   "committed_usd": 0.0,
   "at_risk_usd": 0.0,
   "equity": 10000.0,
-  "slots_used": 2,
+  "slots_used": 3,
   "slots_max": 4,
-  "open_positions": 2,
+  "open_positions": 3,
   "within": [],
   "beyond": [],
   "cut": [],
   "skipped": [],
-  "sentence": "Tomorrow's plans commit $0.00 of $10,000.00; 2 of 4 slots (2 already open)"
+  "sentence": "Model allocation: tomorrow's tickets would commit $0.00 of the configured $10,000.00; 3 of 4 slots (3 open model plans)"
  },
  "watchlist": {
   "top": [],
@@ -662,50 +664,97 @@
    "picked": "2026-09-04",
    "day": 3,
    "sessions": 3,
-   "status": "sell_half",
-   "instruction": "Day 3: closed at $17.46 (+1.5%): sell at least half (72 of 144 VRT) at the close. The stop is $17.29.",
+   "status": "sell_into_strength",
+   "instruction": "Day 3: closed at $197.40 (+9.7%); 2 of 3 VRT sold, sell the remaining 1 into strength by day 5 with the stop at $196.90.",
    "events": [
     {
      "day": 1,
      "date": "2026-09-07",
-     "event": "stop_raised_to_entry_low",
-     "price": 17.08
+     "event": "sell_half",
+     "price": 194.4,
+     "shares": 2,
+     "remaining": 1
     },
     {
-     "day": 3,
-     "date": "2026-09-09",
-     "event": "sell_half",
-     "price": 17.46
+     "day": 1,
+     "date": "2026-09-07",
+     "event": "stop_raised",
+     "price": 195.95
     },
     {
      "day": 3,
      "date": "2026-09-09",
      "event": "stop_trailed",
-     "price": 17.29
+     "price": 196.9
     }
    ],
    "regime": "yellow",
-   "entry_ref": 17.2,
-   "shares": 144,
-   "current_stop": 17.29,
-   "last_close": 17.46,
+   "entry_ref": 180.0,
+   "shares": 3,
+   "current_stop": 196.9,
+   "last_close": 197.4,
    "last_date": "2026-09-09",
-   "unrealised_pct": 1.51,
+   "unrealised_pct": 9.67,
    "exit_price": null,
    "result_pct": null,
    "half_sold": true,
+   "sold": 2,
+   "remaining": 1,
    "grade": "A",
-   "stop": 16.46,
+   "stop": 172.8,
    "targets": {
     "low_pct": 8.0,
     "high_pct": 20.0,
-    "low": 18.71,
-    "high": 20.78,
+    "low": 196.34,
+    "high": 218.16,
+    "note": "above $40 he measures the move in dollars: $5-25",
+    "dollar_low": 186.8,
+    "dollar_high": 206.8
+   },
+   "fill": "filled at the open, $180.00",
+   "uncertainty": null
+  },
+  {
+   "ticker": "SMCI",
+   "kind": "burst",
+   "picked": "2026-09-07",
+   "grade": "A",
+   "stop": 23.58,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 26.79,
+    "high": 29.77,
     "note": null,
     "dollar_low": null,
     "dollar_high": null
    },
-   "fill": "filled at the open, $17.20"
+   "fill": "opened at $24.44, under the $24.56 trigger; the day reached it (high $24.81) at a time the bar cannot give, and the plan's entry is the first 30 minutes",
+   "uncertainty": "trigger_timing",
+   "sessions": 2,
+   "day": 2,
+   "status": "uncertain",
+   "instruction": "Day 1 (2026-09-08): opened at $24.44, under the $24.56 trigger; the day reached it (high $24.81) at a time the bar cannot give, and the plan's entry is the first 30 minutes. The model books no fill. If you took this plan: the sell stop is $23.58; sell at least half by day 3's close and be out by day 5's close.",
+   "events": [
+    {
+     "day": 1,
+     "date": "2026-09-08",
+     "event": "uncertain",
+     "price": null
+    }
+   ],
+   "regime": "yellow",
+   "entry_ref": 24.56,
+   "shares": 25,
+   "current_stop": 23.58,
+   "last_close": 24.71,
+   "last_date": "2026-09-09",
+   "unrealised_pct": null,
+   "exit_price": null,
+   "result_pct": null,
+   "half_sold": false,
+   "sold": 0,
+   "remaining": 25
   },
   {
    "ticker": "NBIS",
@@ -714,7 +763,7 @@
    "day": 1,
    "sessions": 1,
    "status": "hold",
-   "instruction": "Day 1: hold 97 NBIS with the stop at $25.34 (closed $25.60, +0.3%).",
+   "instruction": "Day 1: hold 23 NBIS with the stop at $25.34 (closed $25.60, +0.3%).",
    "events": [
     {
      "day": 1,
@@ -725,7 +774,7 @@
    ],
    "regime": "yellow",
    "entry_ref": 25.52,
-   "shares": 97,
+   "shares": 23,
    "current_stop": 25.34,
    "last_close": 25.6,
    "last_date": "2026-09-09",
@@ -733,6 +782,8 @@
    "exit_price": null,
    "result_pct": null,
    "half_sold": false,
+   "sold": 0,
+   "remaining": 23,
    "grade": "A",
    "stop": 24.43,
    "targets": {
@@ -744,24 +795,41 @@
     "dollar_low": null,
     "dollar_high": null
    },
-   "fill": "filled at the open, $25.52"
+   "fill": "filled at the open, $25.52",
+   "uncertainty": null
   }
  ],
  "scorecard": {
-  "plans": 46,
-  "filled": 33,
-  "settled": 31,
+  "plans": 47,
+  "filled": 22,
+  "settled": 20,
   "open": 2,
-  "wins": 8,
-  "losses": 22,
-  "win_rate": 0.258,
-  "avg_r": -0.15,
-  "sum_r": -4.55,
-  "spy_avg_pct": 0.23,
+  "uncertain": 12,
+  "uncertain_reasons": [
+   {
+    "kind": "trigger_timing",
+    "count": 11,
+    "words": "reached the trigger after the open, at a time the bar cannot give"
+   },
+   {
+    "kind": "stop_sequence",
+    "count": 1,
+    "words": "reached the trigger with the day's low under the stop: fill and stop in unknown order"
+   }
+  ],
+  "not_filled": 13,
+  "unreadable": 0,
+  "unscored": 0,
+  "wins": 5,
+  "losses": 15,
+  "win_rate": 0.25,
+  "avg_r": -0.09,
+  "sum_r": -1.75,
+  "spy_avg_pct": 0.34,
   "min_read": 20,
   "readable": true,
   "sessions": 60,
-  "note": "from bars alone: filled at the next open inside the zone (or at the trigger when the day reaches it), the published stop is one R, halves weighted, settled by day 5"
+  "note": "from bars alone, a model and not a brokerage record: a fill is booked only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold, settled by day 5"
  },
  "closest_miss": null,
  "_contract": {
@@ -771,16 +839,16 @@
   "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
   "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), coverage, counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
-  "account": "The sizing inputs every plan below was computed from. Not a balance.",
+  "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",
   "breadth": "The Market Monitor for the session and the regime verdict with its reasons verbatim. The size multiplier is the regime's; the plans already carry it.",
   "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not.",
   "trades": "Tickers of the bursts to trade tomorrow, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
-  "beyond_cap": "Tickers that qualified and got no order line because the slots were full. Not refusals.",
-  "cash_budget": "What tomorrow's orders commit, the slots used, and what was cut and why.",
+  "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the limit, past the slots or the configured equity, or sized to no whole share. Each has a reason in cash_budget.cut. Not checklist refusals.",
+  "cash_budget": "Model allocation: what tomorrow's tickets would commit against the configured equity, the model slots used (open model plans count), and every plan without a ticket with its kind and reason. Never a balance or buying power.",
   "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
-  "open_plans": "Every published plan still inside its window, replayed to this session: status word and the instruction sentence. A plan you never bought is a row to ignore.",
-  "scorecard": "The rules' record over the published plans, always with n and the read threshold. The rules' record, not yours. Null until a plan has settled.",
+  "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
+  "scorecard": "The rules' record over the published plans as a model of their fills, always with n, the read threshold and the uncertain count by reason. Rates are over settled plans alone. The rules' record, not yours. Null until a plan has settled.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."
  },
