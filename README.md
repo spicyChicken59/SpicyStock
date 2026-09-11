@@ -56,7 +56,10 @@ does not carry, falls back to Explore and says so.
    and inside the chosen stage — as cards, or for the bursts as a **map**
    of the session's gain against its volume relative to the previous
    session, every point the same selection as its card, the unmeasured
-   listed beside it, position a measurement and not a return — one
+   listed beside it, position a measurement and not a return (the ratio
+   is the scan's own for every burst, the dollar scan's days included;
+   a record from before 12 Sep 2026 holds it for those days only in the
+   checklist's block, and the page reads that copy and says so) — one
    selectable card per stock with its grade and its status in the record's
    words — *ticket*, *ticket
    withheld*, *beyond the slot cap*, *beyond the configured equity*, *no

@@ -13,7 +13,10 @@
              statusTone, source: 'claude'|'checklist'|null, chartSeen}]
    gain   = bursts[].gain_pct, the session's close against the previous close
    volume = bursts[].volume_vs_prior, the session's volume over the previous
-            session's (NOT a 50-day relative volume) */
+            session's (NOT a 50-day relative volume), as docs/app.js
+            volumeRatio() reads it: the row's own field, else the checklist's
+            two-place copy in a record from before the dollar scan carried
+            it, else null -- and a null point is listed, never invented */
 (function (w) {
   'use strict';
   const SCStock = w.SCStock = w.SCStock || {};

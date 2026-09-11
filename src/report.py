@@ -123,7 +123,9 @@ CONTRACT: dict[str, str] = {
                "The size multiplier is the regime's; the plans already carry it.",
     "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary "
               "sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, "
-              "a burst is here; a name that never burst is not.",
+              "a burst is here; a name that never burst is not. volume_vs_prior is the session's volume over "
+              "the previous session's for every row, the $-only ones included (null when the previous session "
+              "printed none); quality.burst holds the checklist's copy at two places.",
     "trades": "Tickers of the bursts to trade tomorrow, ranked; those with order lines first. On a red "
               "regime this is empty whatever the grades say.",
     "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the "

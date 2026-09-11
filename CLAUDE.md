@@ -132,7 +132,12 @@ chosen burst has its chart without a second fetch. Under Bursts the cards
 have a Map twin (`docs/app-map.js`, restored from the `29e3205` signal
 map): the session's gain against its volume ratio, every point a recorded
 number, the selection shared with the cards, the search and the chooser,
-a table under it and the names it cannot plot listed by reason.
+a table under
+it and the names it cannot plot listed by reason. The ratio is read one way
+everywhere (`volumeRatio()`: the row's own field, the scan's measurement
+for every burst since the dollar scan carried it; for a record from before
+that, run 46 and earlier, the checklist's two-place copy, said to be the
+checklist's in the measurements; else missing and said so, zero a value).
 Following (`docs/app-follow.js`) is a shelf at the end of Explore: one
 click keeps a setup's own snapshot and suggested whole-share quantity in
 this browser only (`spicystock:following:v1`, versioned, keyed by kind,
@@ -159,7 +164,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-What is measured offline: 1023 tests, the chart check, and the page smoke
+What is measured offline: 1027 tests, the chart check, and the page smoke
 over six fixtures walked through every view, stock, search, the chooser,
 the keyboard, deep links and the old anchors, then the phone and the stale,
 failed, field-dropped and no-record states. What is NOT: the full-market
@@ -426,3 +431,65 @@ engine.
 run again and count the A-quality bursts withheld at the limit from its
 artifact, downloaded outside this sandbox; then open the page over that
 record on a phone and walk the three modes, the map and one follow.
+
+## Checkpoint, 11 Sep 2026 — first real-data acceptance and the volume-ratio repair
+
+**Revision.** Branch `claude/spicystock-ticket-record-fixes-su1nh1` from
+`e93a423`, `origin/main` merged in twice: `7380a97` (run 46, the first real
+record, SHA-256 `dd516119…`) as `b16b0a9`, then `ece47f1` (run 47, the
+6:16 PM schedule). One work commit on top; the published record untouched.
+
+**Reproduced.** Over the unchanged run-46 record in Chromium: *400 bursts ·
+142 plotted · 258 without a measurement*; every omitted row a $-only scan
+row, `volume_vs_prior` null beside a numeric `quality.burst.volume_vs_prior`
+(RVTY: null against 0.86), and every consumer printed "—". Cause:
+`scans._dollar()` never measured volume against the previous session, so
+`scan_frames()` wrote null for a day only that scan saw.
+
+**Changed.** The dollar scan carries `prev_volume` and `volume_vs_prior` by
+the same `_ratio(v, v1)` at `scans.RATIO_DECIMALS`, None when the previous
+session printed nothing, and the day still matches. `scan_frames()` reads
+`burst or dollar`; the checklist's two-place copy is untouched. The page
+reads the ratio one way (`volumeRatio()`): the row's field when a finite
+number of zero or more, else the checklist's copy and the measurements say
+so, else missing and said so; a copy that is not the field's rounding is
+printed beside it; every consumer goes through it. The chart reader's
+metrics carry the ratio for a $-only read now. The fixture market has a
+$-only day (DLLR, 0.8649 in the row, 0.86 in the block).
+
+**After.** 400 of 400 plotted (401 of 401 on run 47's record); RVTY at
++2.79% and 0.86×, "+2.8% on 0.9× volume" everywhere. Tests 1027, four new.
+Smoke 2507/2507 with `checkVolumeReadings`. Chart check 163/163.
+
+**The journey, over the real record** (Playwright, 89/89, 1280×900 and
+390×844): *Stand aside.*, no ticket chip, no order on any route; RVTY card
+→ detail → Setup | Candles | Line agree on dates, prices, levels and
+tooltip; the Map selects by click and by ArrowRight + Enter; search and
+the chooser reach CVX and MPC, which have no archived bars: the
+chart-unavailable sentence, never another chart; rapid switching lands on
+the last card; one click follows RVTY "for observation, no ticket", the
+reference size is the reader's, nothing public changes, the follow
+survives a reload and *Open chart* reopens it. Unthrottled: 3.37 MB
+fetched in 28 ms, parsed and first rendered in 210 ms, a selection
+in 24–36 ms, the map in 100 ms. Phone-shaped, CPU 4×, 4 Mbit/s: the fetch
+is 6.8 s of a 9.4 s wall (uncompressed; gzip is 287 KB), parse and first
+render 1.2 s, a selection 65–150 ms, the map 370 ms. Not a physical phone or
+the public network (the proxy refuses github.io). Uncertain outcomes
+have nothing to show on a red night.
+
+**Observed, not fixed.** On the phone the map's corner is one stack (RVTY
++199) under a 182× outlier and a tap at ATEC's centre lands on a
+stack-mate; keyboard, table and the stack sentence reach every point. Run 47 (email delivered) re-ran the session on later bars: PDS
+joined at rank 1, 116 volumes moved; the 4:51 PM window is not final.
+
+**Settled.** One field, one meaning, whichever scan measured it; the page
+never invents a measurement.
+
+**Keep / fix / defer / omit.** Keep everything above. Fix next if it bites:
+a log or clamped volume axis. Defer to Astra: the +4% ceiling against his
+4% stop line (unchanged); `SERIES_TOP`; the withheld count, still
+unobserved. Omit: trade logging, a portfolio, execution.
+
+**Next action.** Merge this branch so the next run writes the ratio; on the
+next green or yellow session dispatch the dry run and count the A-quality
+bursts withheld at the limit.

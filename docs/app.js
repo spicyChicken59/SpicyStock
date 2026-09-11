@@ -87,6 +87,23 @@
   const num = (v, dec) => isNum(v) ? thousands(v.toFixed(dec === undefined ? 0 : dec)) : '—';
   const usd = (v, dec) => isNum(v) ? (v < 0 ? '−' : '') + '$' + thousands(Math.abs(v).toFixed(dec === undefined ? 2 : dec)) : '—';
   const pct = (v, dec) => isNum(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(dec === undefined ? 1 : dec) + '%' : '—';
+  // The session's volume over the previous session's, read one way for every
+  // consumer (the card, the detail line, the measurements, the map, the scan
+  // table, the chart's burst label). The row's own field is the scan's
+  // measurement and the canonical value; a record written before the dollar
+  // scan carried it (run 46 and earlier) holds the same measurement at two
+  // places in the checklist's burst block, and that stands in when the field
+  // is null. A ratio is a finite number of zero or more -- zero is a value --
+  // and anything else is missing, said to be missing, never invented.
+  const RATIO_ROUNDING = 0.005 + 1e-9;   // a two-place copy of a four-place value sits within this of it
+  function volumeRatio(b) {
+    const own = b ? b.volume_vs_prior : null, q = b && b.quality && b.quality.burst ? b.quality.burst.volume_vs_prior : null;
+    if (isNum(own) && own >= 0) return { value: own, source: 'scan', disagrees: isNum(q) && q >= 0 && Math.abs(own - q) > RATIO_ROUNDING ? q : null };
+    if (isNum(q) && q >= 0) return { value: q, source: 'checklist', disagrees: null };
+    return { value: null, source: null, disagrees: null };
+  }
+  const volumeTimes = (b) => { const v = volumeRatio(b).value; return isNum(v) ? v.toFixed(1) : '—'; };
+  SCStock.volumeRatio = volumeRatio;
   const plain = (v) => isNum(v) ? String(v).replace(/\.0$/, '') : '—';
   const words = (s) => (s || '').replace(/_/g, ' ');
   const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
@@ -555,7 +572,7 @@
       stop: plan.stop, trigger: plan.entry_ref, entryLow: plan.entry_low, entryHigh: plan.entry_high,
       targetLow: plan.targets ? plan.targets.low : null, targetHigh: plan.targets ? plan.targets.high : null, targetRef: plan.planned_entry,
       upDays: isNum(up) ? up : 0, breakdownIndexes: (base.breakdown_dates || []).map((d) => idxOf(series, d)).filter((i) => i >= 0),
-      burstVolumeRatio: b.volume_vs_prior, rangeExpansion: isNum(rng) ? rng : null,
+      burstVolumeRatio: volumeRatio(b).value, rangeExpansion: isNum(rng) ? rng : null,
       ariaLabel: b.summary || null, height: height
     };
   }
@@ -623,7 +640,7 @@
       return { id: 'bursts:' + b.ticker, stage: 'bursts', ticker: b.ticker, name: text(b.name), rank: isNum(b.rank) ? b.rank : i + 1,
         grade: b.grade || null, score: b.score, status: status, reason: reason, cut: cut, plan: plan, row: b, quiet: false, flags: flags,
         series: Array.isArray(b.series) ? b.series.filter((x) => x && x.date) : [],
-        measures: [['gain', pct(b.gain_pct)], ['vol', isNum(b.volume_vs_prior) ? b.volume_vs_prior.toFixed(1) + '×' : '—'], ['close', usd(b.close)]] };
+        measures: [['gain', pct(b.gain_pct)], ['vol', isNum(volumeRatio(b).value) ? volumeTimes(b) + '×' : '—'], ['close', usd(b.close)]] };
     });
     const wl = data.watchlist || {};
     const coil = (r, i, quiet) => {
@@ -879,7 +896,7 @@
     c.flags.forEach((f) => chips.push(chip(FLAG_WORDS[f] || words(f), 'warn')));
     const last = c.series.length ? c.series[c.series.length - 1].date : run.session;
     const sub = c.stage === 'bursts'
-      ? (c.name ? c.name + ' · ' : '') + usd(b.close) + ' · ' + pct(b.gain_pct) + ' on ' + (isNum(b.volume_vs_prior) ? b.volume_vs_prior.toFixed(1) : '—') + '× volume' + (b.scan && b.scan !== 'burst' ? ' · ' + words(b.scan) + ' scan' : '') + ' · rank ' + plain(c.rank)
+      ? (c.name ? c.name + ' · ' : '') + usd(b.close) + ' · ' + pct(b.gain_pct) + ' on ' + volumeTimes(b) + '× volume' + (b.scan && b.scan !== 'burst' ? ' · ' + words(b.scan) + ' scan' : '') + ' · rank ' + plain(c.rank)
       : (c.name ? c.name + ' · ' : '') + usd(b.close) + ' · ' + plain(b.quiet_days) + ' quiet days · ' + plain(b.range_pct) + '% range' + (c.quiet ? ' · also quiet' : ' · rank ' + plain(c.rank));
     const back = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm ss-detail__back', type: 'button', text: '↑ all stocks' });
     back.addEventListener('click', () => { scrollTo($('stages')); const sel = $('pick-list').querySelector('.ss-pick[aria-pressed="true"]'); if (sel) sel.focus({ preventScroll: true }); else $('search').focus({ preventScroll: true }); });
@@ -999,7 +1016,7 @@
   function saveDiscover() { try { w.localStorage.setItem(DISCOVER_KEY, discover); } catch (e) { /* not remembered */ } }
   function mapPoints() {
     return model.stages.bursts.map((c) => ({
-      id: c.id, ticker: c.ticker, gain: isNum(c.row.gain_pct) ? c.row.gain_pct : null, volume: isNum(c.row.volume_vs_prior) ? c.row.volume_vs_prior : null,
+      id: c.id, ticker: c.ticker, gain: isNum(c.row.gain_pct) ? c.row.gain_pct : null, volume: volumeRatio(c.row).value,
       grade: c.grade, score: c.score, rank: c.rank, statusWords: statusWords(c.status)[0], statusTone: statusWords(c.status)[1],
       source: c.row.claude && c.row.claude.source === 'claude' ? 'claude' : (c.row.quality && c.row.quality.checks ? 'checklist' : null),
       chartSeen: c.row.claude ? c.row.claude.chart_seen : null
@@ -1287,8 +1304,12 @@
       if (checks.length) kids.push(el('div', { 'class': 'ss-checks' }, checks.map((x) => checkTile(x, (x.key === 'two_days' && vetoes.indexOf('up_days') >= 0) || (x.key === 'linearity' && vetoes.indexOf('not_linear') >= 0)))));
       if (vetoes.length) kids.push(el('p', { 'class': 'sc-note', text: 'Veto: ' + vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') + '.' }));
       kids.push(el('div', { 'class': 'sc-eyebrow', text: 'the measurements' }));
+      const vr = volumeRatio(b);
+      const volumeNote = vr.source === 'checklist' ? ' · volume ratio read from the checklist’s block, the scan’s own field being empty in this record'
+        : vr.source === null ? ' · volume ratio not recorded'
+        : isNum(vr.disagrees) ? ' · the checklist’s block says ' + vr.disagrees.toFixed(2) + '× volume' : '';
       kids.push(factList([
-        ['the burst', pct(b.gain_pct) + ' · ' + (isNum(b.volume_vs_prior) ? b.volume_vs_prior.toFixed(1) : '—') + '× volume', 'open ' + usd(b.open) + ' · high ' + usd(b.high) + ' · low ' + usd(b.low) + ' · close ' + usd(b.close) + ' · prior close ' + usd(b.prev_close)],
+        ['the burst', pct(b.gain_pct) + ' · ' + volumeTimes(b) + '× volume', 'open ' + usd(b.open) + ' · high ' + usd(b.high) + ' · low ' + usd(b.low) + ' · close ' + usd(b.close) + ' · prior close ' + usd(b.prev_close) + volumeNote],
         ['the base', isNum(base.sessions) ? plain(base.sessions) + ' sessions · ' + plain(base.depth_pct) + '% deep' : '—', base.start && base.end ? dateShort(base.start) + ' to ' + dateShort(base.end) + ' · ' + usd(base.low) + '–' + usd(base.high) + ((base.breakdown_dates || []).length ? ' · ' + plural(base.breakdown_dates.length, 'breakdown') : '') : ''],
         ['dollar volume', isNum(b.dollar_volume) ? usd(b.dollar_volume, 0) : '—', b.scan ? words(b.scan) + ' scan' : ''],
         ['extension', isNum(b.extension_pct) ? pct(b.extension_pct) : '—', 'close against its 20-session average'],
@@ -1507,7 +1528,7 @@
       const name = el('button', { 'class': 'sc-signal-matrix__name', type: 'button', text: b.ticker, 'data-go': routeHash('bursts', 'bursts:' + b.ticker) });
       name.addEventListener('click', () => { pendingFocus = 'detail'; state.gesture = true; navigate(name.getAttribute('data-go')); });
       tr.appendChild(el('th', { scope: 'row' }, [name,
-        el('span', { 'class': 'sc-signal-matrix__note', text: pct(b.gain_pct) + ' · ' + (isNum(b.volume_vs_prior) ? b.volume_vs_prior.toFixed(1) : '—') + '× vol · ' + usd(b.close) + (b.scan === 'dollar' ? ' · $ scan' : '') })
+        el('span', { 'class': 'sc-signal-matrix__note', text: pct(b.gain_pct) + ' · ' + volumeTimes(b) + '× vol · ' + usd(b.close) + (b.scan === 'dollar' ? ' · $ scan' : '') })
       ]));
       keys.forEach((k) => tr.appendChild(signalCell(checks[k], (k === 'two_days' && vetoes.indexOf('up_days') >= 0) || (k === 'linearity' && vetoes.indexOf('not_linear') >= 0))));
       const miss = (q.checks || []).find((c) => c && !c.pass);

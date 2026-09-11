@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "71fae25cfa97"
+  "rules_version": "46fceafaaffd"
  },
  "cover": {
   "h1": "Trade tomorrow. 1 A-quality burst.",
@@ -27,24 +27,24 @@
    {
     "stage": "grade",
     "kind": "claude_unavailable",
-    "message": "no reply for any of 5 names"
+    "message": "no reply for any of 6 names"
    }
   ],
   "dry_run": false,
   "model": "claude-sonnet-4-6",
   "feed": "sip",
   "universe": {
-   "label": "30 named on the command line (--tickers)",
-   "size": 30,
+   "label": "31 named on the command line (--tickers)",
+   "size": 31,
    "source": "explicit",
    "fetched_at": null,
-   "identity": "47798ad00621ade5"
+   "identity": "f97bc6805de5df88"
   },
   "coverage": {
-   "requested": 31,
-   "with_bars": 31,
-   "on_session": 31,
-   "measured": 30,
+   "requested": 32,
+   "with_bars": 32,
+   "on_session": 32,
+   "measured": 31,
    "stale": 0,
    "gapped": 0,
    "no_bars": 0,
@@ -52,16 +52,16 @@
    "errors": 0,
    "duplicate_bars": 0
   },
-  "bursts": 5,
+  "bursts": 6,
   "graded": {
    "a_plus": 4,
    "a": 0,
-   "b": 1,
+   "b": 2,
    "c": 0,
    "skip": 0
   },
   "reads": {
-   "requested": 5,
+   "requested": 6,
    "done": 0,
    "unavailable_reason": "see problems"
   },
@@ -364,7 +364,7 @@
    "min_price": 3.0,
    "min_volume": 100000,
    "max_discovery": 8000,
-   "identity": "47798ad00621ade5"
+   "identity": "f97bc6805de5df88"
   }
  },
  "breadth": {
@@ -379,8 +379,8 @@
   "down50_month": 0,
   "up13_34d": 7,
   "down13_34d": 0,
-  "pct_above_40ma": 56.7,
-  "universe": 30,
+  "pct_above_40ma": 58.1,
+  "universe": 31,
   "ratio_5d": 4.0,
   "ratio_10d": 2.75,
   "up4_5d": 8,
@@ -391,7 +391,7 @@
    "verdict": "green",
    "size_multiplier": 1.0,
    "reasons": [
-    "down 4%: 0 < the scaled alarm of 3.2 (700 of 6,500)",
+    "down 4%: 0 < the scaled alarm of 3.3 (700 of 6,500)",
     "10-session ratio 2.75 (11 up, 4 down) >= 1.0",
     "5-session ratio 4.0 (8 up, 2 down) >= 0.5",
     "10-session ratio 2.75 (11 up, 4 down) >= 2.0",
@@ -399,11 +399,11 @@
    ],
    "oversold_extreme": true,
    "thresholds": {
-    "universe": 30,
+    "universe": 31,
     "reference_universe": 6500,
-    "down4_alarm": 3.2,
+    "down4_alarm": 3.3,
     "up50_month_hot": 0.1,
-    "down25_quarter_oversold": 0.9,
+    "down25_quarter_oversold": 1.0,
     "ratio_10d_red": 1.0,
     "ratio_5d_red": 0.5,
     "ratio_10d_yellow": 2.0
@@ -644,7 +644,7 @@
    },
    {
     "key": "down25_quarter",
-    "text": "fewer than 0.9 names down 25% in a quarter is an oversold extreme; bounces follow in one to six weeks"
+    "text": "fewer than 1 names down 25% in a quarter is an oversold extreme; bounces follow in one to six weeks"
    },
    {
     "key": "pct_above_40ma",
@@ -7392,6 +7392,1226 @@
     }
    ],
    "summary": "PLUG: +5.0% on 5.0× volume out of a base 3.5% deep. B 8.5, 5 of 6 criteria."
+  },
+  {
+   "ticker": "DLLR",
+   "name": "",
+   "flags": [],
+   "scan": "dollar",
+   "close": 72.93,
+   "prev_close": 71.4989,
+   "open": 71.5,
+   "high": 74.13,
+   "low": 71.2,
+   "gain_pct": 2.0,
+   "volume": 2781939.0,
+   "volume_vs_prior": 0.8649,
+   "dollar_volume": 202886811.27,
+   "dollar_move": 1.43,
+   "extension_pct": 3.3,
+   "quality": {
+    "checks": [
+     {
+      "key": "two_days",
+      "letter": "2",
+      "label": "not up two days in a row",
+      "values": {
+       "up_run": 0,
+       "up_closes": 0,
+       "prior_day_pct": -2.32
+      },
+      "value": 0,
+      "display": "up_run=0 up_closes=0 prior_day_pct=-2.32",
+      "threshold": "up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "linearity",
+      "letter": "L",
+      "label": "linearity of the prior leg",
+      "values": {
+       "er": 0.43,
+       "r2": 0.64,
+       "leg_sessions": 20,
+       "leg_gain_pct": 9.3
+      },
+      "value": 0.43,
+      "display": "er=0.43 r2=0.64 leg_sessions=20 leg_gain_pct=9.3",
+      "threshold": "ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "young_trend",
+      "letter": "Y",
+      "label": "young trend: first or second breakout",
+      "values": {
+       "breakouts_in_move": 0,
+       "sessions_since_move_start": 21,
+       "gain_since_move_start_pct": 8.9
+      },
+      "value": 0,
+      "display": "breakouts_in_move=0 sessions_since_move_start=21 gain_since_move_start_pct=8.9",
+      "threshold": "prior breakouts since the move started <= 1 (0 for A+)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "narrow_or_negative",
+      "letter": "N",
+      "label": "narrow or negative day before",
+      "values": {
+       "prior_day_pct": -2.32,
+       "prior_range_pct": 2.2,
+       "negative": true,
+       "narrow": false,
+       "median_range_pct": 1.5
+      },
+      "value": -2.32,
+      "display": "prior_day_pct=-2.32 prior_range_pct=2.2 negative=True narrow=False median_range_pct=1.5",
+      "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": false,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "consolidation",
+      "letter": "C",
+      "label": "consolidation quality",
+      "values": {
+       "base_sessions": 1,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.38,
+       "tightness": 1.46,
+       "base_volume_vs_leg": 1.09,
+       "base_volume_vs_avg": 1.04
+      },
+      "value": 1,
+      "display": "base_sessions=1 breakdowns=0 bursts_in_base=0 giveback=0.38 tightness=1.46 base_volume_vs_leg=1.09 base_volume_vs_avg=1.04",
+      "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+      "passed": false,
+      "pass": false,
+      "marginal": false,
+      "a_plus": false,
+      "note": "base of 1 sessions is outside Bonde's 3-20; the base gave back 0.38 of the leg; the base ranged wider than the sessions before it",
+      "partial": false,
+      "status": "FAIL"
+     },
+     {
+      "key": "close_near_high",
+      "letter": "H",
+      "label": "close near the high",
+      "values": {
+       "close_pos": 0.59,
+       "close_above_open": true
+      },
+      "value": 0.59,
+      "display": "close_pos=0.59 close_above_open=True",
+      "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+      "passed": false,
+      "pass": false,
+      "marginal": false,
+      "a_plus": false,
+      "note": "closed well off the high",
+      "partial": false,
+      "status": "FAIL"
+     },
+     {
+      "key": "range_expansion",
+      "letter": "RE",
+      "label": "range expansion",
+      "values": {
+       "vs_prior_5": 1.82,
+       "vs_prior_10": 1.82,
+       "bar_range_pct": 4.0
+      },
+      "value": 1.82,
+      "display": "vs_prior_5=1.82 vs_prior_10=1.82 bar_range_pct=4.0",
+      "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "volume",
+      "letter": "VOL",
+      "label": "higher volume",
+      "values": {
+       "volume_vs_prior": 0.86,
+       "volume_vs_avg50": 0.9,
+       "volume_rank_60": 40,
+       "cv_required": false
+      },
+      "value": 0.86,
+      "display": "volume_vs_prior=0.86 volume_vs_avg50=0.9 volume_rank_60=40 cv_required=False",
+      "threshold": "volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average",
+      "passed": false,
+      "pass": false,
+      "marginal": false,
+      "a_plus": false,
+      "note": "volume did not exceed the prior session's",
+      "partial": false,
+      "status": "FAIL"
+     }
+    ],
+    "vetoes": [],
+    "passes": 4,
+    "of": 6,
+    "a_plus_count": 4,
+    "score": 6.5,
+    "grade": "B",
+    "reclass": null,
+    "notes": [
+     "extension: close 3.3% vs its 20-SMA, 7.0% over 20 sessions",
+     "capped at B: closed at 59% of its range"
+    ],
+    "base": {
+     "start": "2026-09-09",
+     "end": "2026-09-09",
+     "start_index": 278,
+     "end_index": 278,
+     "sessions": 1,
+     "high": 73.44,
+     "low": 70.88,
+     "depth_pct": 3.5,
+     "breakdown_dates": []
+    },
+    "leg": {
+     "start": 258,
+     "end": 277,
+     "length": 20,
+     "gain_pct": 9.3,
+     "high": 73.44,
+     "low": 66.63,
+     "er": 0.43,
+     "r2": 0.64
+    },
+    "burst": {
+     "gain_pct": 2.0,
+     "gap_pct": 0.0,
+     "bar_range_pct": 4.0,
+     "close_pos": 0.59,
+     "volume_vs_prior": 0.86,
+     "volume_vs_avg50": 0.9,
+     "volume_rank_60": 40
+    },
+    "unreadable": null,
+    "weights": {
+     "2": 1.5,
+     "L": 2.0,
+     "Y": 1.5,
+     "N": 1.5,
+     "C": 2.0,
+     "H": 1.5
+    }
+   },
+   "grade_mechanical": "B",
+   "score": 6.5,
+   "vetoes": [],
+   "reclass": null,
+   "grade": "B",
+   "plan": null,
+   "chart": "charts/DLLR.png",
+   "claude": {
+    "agree": null,
+    "grade": null,
+    "score": null,
+    "reason": null,
+    "key_risk": null,
+    "entry_note": null,
+    "source": "fallback",
+    "chart_seen": false,
+    "error": "RuntimeError: upstream connect error"
+   },
+   "rank": 6,
+   "series": [
+    {
+     "date": "2026-03-27",
+     "o": 75.439,
+     "h": 75.832,
+     "l": 75.0851,
+     "c": 75.478,
+     "v": 1916687.3141
+    },
+    {
+     "date": "2026-03-30",
+     "o": 76.2284,
+     "h": 76.5265,
+     "l": 75.3605,
+     "c": 75.6564,
+     "v": 3192069.2155
+    },
+    {
+     "date": "2026-03-31",
+     "o": 75.319,
+     "h": 76.098,
+     "l": 74.7894,
+     "c": 75.5667,
+     "v": 3393949.5655
+    },
+    {
+     "date": "2026-04-01",
+     "o": 75.8028,
+     "h": 76.2807,
+     "l": 75.1654,
+     "c": 75.6423,
+     "v": 2842004.9015
+    },
+    {
+     "date": "2026-04-02",
+     "o": 76.6694,
+     "h": 76.9805,
+     "l": 75.9033,
+     "c": 76.2125,
+     "v": 4055607.6738
+    },
+    {
+     "date": "2026-04-03",
+     "o": 76.5425,
+     "h": 76.9946,
+     "l": 75.6055,
+     "c": 76.0548,
+     "v": 2226211.6427
+    },
+    {
+     "date": "2026-04-06",
+     "o": 75.0888,
+     "h": 75.922,
+     "l": 74.5049,
+     "c": 75.3362,
+     "v": 3699019.5729
+    },
+    {
+     "date": "2026-04-07",
+     "o": 74.9323,
+     "h": 75.1195,
+     "l": 74.4163,
+     "c": 74.6026,
+     "v": 3010829.4085
+    },
+    {
+     "date": "2026-04-08",
+     "o": 73.8845,
+     "h": 74.0793,
+     "l": 73.6776,
+     "c": 73.8724,
+     "v": 2642503.6691
+    },
+    {
+     "date": "2026-04-09",
+     "o": 73.8862,
+     "h": 74.8613,
+     "l": 73.2371,
+     "c": 74.2094,
+     "v": 2584255.47
+    },
+    {
+     "date": "2026-04-10",
+     "o": 73.9489,
+     "h": 74.5831,
+     "l": 73.6323,
+     "c": 74.2652,
+     "v": 3384413.5185
+    },
+    {
+     "date": "2026-04-13",
+     "o": 75.917,
+     "h": 76.5158,
+     "l": 74.8464,
+     "c": 75.4416,
+     "v": 2865196.1744
+    },
+    {
+     "date": "2026-04-14",
+     "o": 76.4752,
+     "h": 76.9256,
+     "l": 75.9794,
+     "c": 76.4295,
+     "v": 3967420.6238
+    },
+    {
+     "date": "2026-04-15",
+     "o": 77.3516,
+     "h": 77.8897,
+     "l": 76.8537,
+     "c": 77.3915,
+     "v": 3839000.9984
+    },
+    {
+     "date": "2026-04-16",
+     "o": 76.8334,
+     "h": 77.6426,
+     "l": 76.246,
+     "c": 77.0535,
+     "v": 2816513.453
+    },
+    {
+     "date": "2026-04-17",
+     "o": 76.5895,
+     "h": 77.3516,
+     "l": 76.1392,
+     "c": 76.8995,
+     "v": 2620439.3206
+    },
+    {
+     "date": "2026-04-20",
+     "o": 76.8405,
+     "h": 77.3006,
+     "l": 76.2629,
+     "c": 76.7223,
+     "v": 5466356.4012
+    },
+    {
+     "date": "2026-04-21",
+     "o": 78.0901,
+     "h": 78.7099,
+     "l": 77.4991,
+     "c": 78.1187,
+     "v": 2564926.2717
+    },
+    {
+     "date": "2026-04-22",
+     "o": 77.9254,
+     "h": 78.2173,
+     "l": 77.5033,
+     "c": 77.7948,
+     "v": 2877798.3222
+    },
+    {
+     "date": "2026-04-23",
+     "o": 77.6162,
+     "h": 78.2707,
+     "l": 77.1945,
+     "c": 77.8477,
+     "v": 3069962.7202
+    },
+    {
+     "date": "2026-04-24",
+     "o": 76.928,
+     "h": 77.8297,
+     "l": 76.507,
+     "c": 77.406,
+     "v": 2231468.2853
+    },
+    {
+     "date": "2026-04-27",
+     "o": 77.7712,
+     "h": 78.6804,
+     "l": 77.2166,
+     "c": 78.1233,
+     "v": 2643036.4833
+    },
+    {
+     "date": "2026-04-28",
+     "o": 79.3272,
+     "h": 79.5924,
+     "l": 79.0677,
+     "c": 79.3329,
+     "v": 3140658.2703
+    },
+    {
+     "date": "2026-04-29",
+     "o": 78.6304,
+     "h": 79.0268,
+     "l": 77.6852,
+     "c": 78.0788,
+     "v": 3480910.3345
+    },
+    {
+     "date": "2026-04-30",
+     "o": 78.7434,
+     "h": 79.1189,
+     "l": 78.0715,
+     "c": 78.4456,
+     "v": 2132138.604
+    },
+    {
+     "date": "2026-05-01",
+     "o": 79.3694,
+     "h": 79.7096,
+     "l": 78.4666,
+     "c": 78.8044,
+     "v": 3679345.1884
+    },
+    {
+     "date": "2026-05-04",
+     "o": 77.332,
+     "h": 77.8966,
+     "l": 76.8619,
+     "c": 77.426,
+     "v": 3204220.3556
+    },
+    {
+     "date": "2026-05-05",
+     "o": 76.8696,
+     "h": 77.9549,
+     "l": 76.2631,
+     "c": 77.3446,
+     "v": 4516421.3597
+    },
+    {
+     "date": "2026-05-06",
+     "o": 76.0847,
+     "h": 76.5601,
+     "l": 75.1466,
+     "c": 75.6191,
+     "v": 2721290.1207
+    },
+    {
+     "date": "2026-05-07",
+     "o": 75.4277,
+     "h": 76.2523,
+     "l": 75.0027,
+     "c": 75.825,
+     "v": 2623737.1683
+    },
+    {
+     "date": "2026-05-08",
+     "o": 76.0341,
+     "h": 76.6166,
+     "l": 75.2874,
+     "c": 75.8686,
+     "v": 3416903.1135
+    },
+    {
+     "date": "2026-05-11",
+     "o": 74.4856,
+     "h": 75.2011,
+     "l": 73.8907,
+     "c": 74.6052,
+     "v": 2975764.3858
+    },
+    {
+     "date": "2026-05-12",
+     "o": 76.2729,
+     "h": 76.8222,
+     "l": 75.6775,
+     "c": 76.2264,
+     "v": 3028276.8364
+    },
+    {
+     "date": "2026-05-13",
+     "o": 74.4445,
+     "h": 74.9819,
+     "l": 73.8076,
+     "c": 74.3444,
+     "v": 3210722.3314
+    },
+    {
+     "date": "2026-05-14",
+     "o": 74.5438,
+     "h": 75.552,
+     "l": 73.9139,
+     "c": 74.919,
+     "v": 3260407.3384
+    },
+    {
+     "date": "2026-05-15",
+     "o": 76.3055,
+     "h": 76.7331,
+     "l": 75.478,
+     "c": 75.9034,
+     "v": 3740534.514
+    },
+    {
+     "date": "2026-05-18",
+     "o": 76.2045,
+     "h": 77.1082,
+     "l": 75.3406,
+     "c": 76.2438,
+     "v": 3460702.5927
+    },
+    {
+     "date": "2026-05-19",
+     "o": 76.6505,
+     "h": 77.1854,
+     "l": 75.9832,
+     "c": 76.5171,
+     "v": 3188357.5075
+    },
+    {
+     "date": "2026-05-20",
+     "o": 77.0732,
+     "h": 77.4973,
+     "l": 76.6069,
+     "c": 77.0308,
+     "v": 2120402.9928
+    },
+    {
+     "date": "2026-05-21",
+     "o": 75.2,
+     "h": 76.1481,
+     "l": 74.6992,
+     "c": 75.6444,
+     "v": 2823366.0843
+    },
+    {
+     "date": "2026-05-22",
+     "o": 76.6172,
+     "h": 77.0776,
+     "l": 75.9252,
+     "c": 76.3842,
+     "v": 2872022.5387
+    },
+    {
+     "date": "2026-05-25",
+     "o": 76.2814,
+     "h": 76.5023,
+     "l": 76.0314,
+     "c": 76.2522,
+     "v": 3619846.0462
+    },
+    {
+     "date": "2026-05-26",
+     "o": 77.2661,
+     "h": 77.6685,
+     "l": 76.8235,
+     "c": 77.2257,
+     "v": 2305399.7468
+    },
+    {
+     "date": "2026-05-27",
+     "o": 77.0687,
+     "h": 77.7033,
+     "l": 76.6759,
+     "c": 77.3093,
+     "v": 3376813.0515
+    },
+    {
+     "date": "2026-05-28",
+     "o": 76.3991,
+     "h": 77.1581,
+     "l": 75.8536,
+     "c": 76.6111,
+     "v": 2728066.7495
+    },
+    {
+     "date": "2026-05-29",
+     "o": 75.2538,
+     "h": 75.6678,
+     "l": 74.4825,
+     "c": 74.8946,
+     "v": 3337563.044
+    },
+    {
+     "date": "2026-06-01",
+     "o": 75.0157,
+     "h": 75.5902,
+     "l": 74.4854,
+     "c": 75.0596,
+     "v": 1908473.932
+    },
+    {
+     "date": "2026-06-02",
+     "o": 76.1451,
+     "h": 76.2298,
+     "l": 75.7779,
+     "c": 75.8623,
+     "v": 2974109.4353
+    },
+    {
+     "date": "2026-06-03",
+     "o": 76.2343,
+     "h": 76.7627,
+     "l": 75.3744,
+     "c": 75.9005,
+     "v": 3399200.6084
+    },
+    {
+     "date": "2026-06-04",
+     "o": 75.0513,
+     "h": 75.423,
+     "l": 74.1702,
+     "c": 74.5394,
+     "v": 3055035.5361
+    },
+    {
+     "date": "2026-06-05",
+     "o": 72.7162,
+     "h": 73.5426,
+     "l": 72.2548,
+     "c": 73.0789,
+     "v": 3875977.1022
+    },
+    {
+     "date": "2026-06-08",
+     "o": 71.7569,
+     "h": 72.3521,
+     "l": 71.3696,
+     "c": 71.9636,
+     "v": 2585143.4686
+    },
+    {
+     "date": "2026-06-09",
+     "o": 72.1223,
+     "h": 72.5804,
+     "l": 71.6934,
+     "c": 72.1513,
+     "v": 3923381.8314
+    },
+    {
+     "date": "2026-06-10",
+     "o": 71.4323,
+     "h": 72.5055,
+     "l": 70.9317,
+     "c": 72.0008,
+     "v": 2865524.1336
+    },
+    {
+     "date": "2026-06-11",
+     "o": 71.7581,
+     "h": 71.9987,
+     "l": 70.8703,
+     "c": 71.1087,
+     "v": 2658311.4072
+    },
+    {
+     "date": "2026-06-12",
+     "o": 70.919,
+     "h": 71.6955,
+     "l": 70.3207,
+     "c": 71.0957,
+     "v": 3039078.1115
+    },
+    {
+     "date": "2026-06-15",
+     "o": 70.6624,
+     "h": 72.0361,
+     "l": 69.9553,
+     "c": 71.3224,
+     "v": 3224009.5419
+    },
+    {
+     "date": "2026-06-16",
+     "o": 71.5063,
+     "h": 71.6094,
+     "l": 70.8462,
+     "c": 70.9485,
+     "v": 3354643.3415
+    },
+    {
+     "date": "2026-06-17",
+     "o": 70.8395,
+     "h": 71.285,
+     "l": 70.2727,
+     "c": 70.7175,
+     "v": 2271733.8048
+    },
+    {
+     "date": "2026-06-18",
+     "o": 70.9724,
+     "h": 71.4749,
+     "l": 70.0142,
+     "c": 70.5134,
+     "v": 4910025.4059
+    },
+    {
+     "date": "2026-06-19",
+     "o": 70.09,
+     "h": 70.7201,
+     "l": 69.7381,
+     "c": 70.3669,
+     "v": 2754890.9094
+    },
+    {
+     "date": "2026-06-22",
+     "o": 68.2972,
+     "h": 68.9458,
+     "l": 68.226,
+     "c": 68.874,
+     "v": 3782477.1832
+    },
+    {
+     "date": "2026-06-23",
+     "o": 67.9344,
+     "h": 68.8953,
+     "l": 67.4485,
+     "c": 68.406,
+     "v": 2305108.2719
+    },
+    {
+     "date": "2026-06-24",
+     "o": 67.7309,
+     "h": 67.8503,
+     "l": 67.4744,
+     "c": 67.5935,
+     "v": 2632794.1928
+    },
+    {
+     "date": "2026-06-25",
+     "o": 67.6754,
+     "h": 68.0214,
+     "l": 67.297,
+     "c": 67.6429,
+     "v": 3207244.4358
+    },
+    {
+     "date": "2026-06-26",
+     "o": 68.3406,
+     "h": 68.8136,
+     "l": 68.0837,
+     "c": 68.5559,
+     "v": 3740631.9656
+    },
+    {
+     "date": "2026-06-29",
+     "o": 67.878,
+     "h": 68.2951,
+     "l": 67.3421,
+     "c": 67.7585,
+     "v": 2930097.8154
+    },
+    {
+     "date": "2026-06-30",
+     "o": 68.619,
+     "h": 68.7981,
+     "l": 68.124,
+     "c": 68.3022,
+     "v": 2070605.7221
+    },
+    {
+     "date": "2026-07-01",
+     "o": 69.2611,
+     "h": 69.7117,
+     "l": 68.8198,
+     "c": 69.2703,
+     "v": 2158253.6805
+    },
+    {
+     "date": "2026-07-02",
+     "o": 70.7532,
+     "h": 71.1082,
+     "l": 70.017,
+     "c": 70.37,
+     "v": 2912096.5924
+    },
+    {
+     "date": "2026-07-03",
+     "o": 69.7543,
+     "h": 70.295,
+     "l": 68.8416,
+     "c": 69.3795,
+     "v": 3934913.1615
+    },
+    {
+     "date": "2026-07-06",
+     "o": 68.8097,
+     "h": 69.4647,
+     "l": 68.1036,
+     "c": 68.7581,
+     "v": 2771425.3205
+    },
+    {
+     "date": "2026-07-07",
+     "o": 68.3381,
+     "h": 68.7743,
+     "l": 67.5906,
+     "c": 68.0248,
+     "v": 3197836.5128
+    },
+    {
+     "date": "2026-07-08",
+     "o": 69.3727,
+     "h": 69.5036,
+     "l": 68.782,
+     "c": 68.912,
+     "v": 3308426.5956
+    },
+    {
+     "date": "2026-07-09",
+     "o": 68.8183,
+     "h": 69.3142,
+     "l": 68.3403,
+     "c": 68.836,
+     "v": 3356679.6518
+    },
+    {
+     "date": "2026-07-10",
+     "o": 69.0184,
+     "h": 69.7765,
+     "l": 68.5783,
+     "c": 69.3343,
+     "v": 2560147.1412
+    },
+    {
+     "date": "2026-07-13",
+     "o": 69.312,
+     "h": 69.8025,
+     "l": 68.375,
+     "c": 68.8623,
+     "v": 3788722.9734
+    },
+    {
+     "date": "2026-07-14",
+     "o": 68.9566,
+     "h": 69.3218,
+     "l": 68.6062,
+     "c": 68.9713,
+     "v": 2835587.9204
+    },
+    {
+     "date": "2026-07-15",
+     "o": 67.765,
+     "h": 68.6567,
+     "l": 67.0278,
+     "c": 67.9179,
+     "v": 2998646.9227
+    },
+    {
+     "date": "2026-07-16",
+     "o": 68.3722,
+     "h": 68.9731,
+     "l": 67.8689,
+     "c": 68.4691,
+     "v": 3200206.0457
+    },
+    {
+     "date": "2026-07-17",
+     "o": 69.2609,
+     "h": 69.7321,
+     "l": 68.7975,
+     "c": 69.2687,
+     "v": 2820849.2927
+    },
+    {
+     "date": "2026-07-20",
+     "o": 69.752,
+     "h": 70.1503,
+     "l": 69.2108,
+     "c": 69.6083,
+     "v": 2491506.3011
+    },
+    {
+     "date": "2026-07-21",
+     "o": 69.4893,
+     "h": 70.2192,
+     "l": 68.9584,
+     "c": 69.6867,
+     "v": 2516224.1615
+    },
+    {
+     "date": "2026-07-22",
+     "o": 68.2411,
+     "h": 69.1445,
+     "l": 67.9804,
+     "c": 68.8814,
+     "v": 3575056.6732
+    },
+    {
+     "date": "2026-07-23",
+     "o": 69.8926,
+     "h": 70.2884,
+     "l": 69.2145,
+     "c": 69.6087,
+     "v": 3341209.8802
+    },
+    {
+     "date": "2026-07-24",
+     "o": 69.5156,
+     "h": 69.9264,
+     "l": 69.0502,
+     "c": 69.4607,
+     "v": 3191403.9516
+    },
+    {
+     "date": "2026-07-27",
+     "o": 69.8199,
+     "h": 70.1015,
+     "l": 69.4289,
+     "c": 69.7101,
+     "v": 4199377.6419
+    },
+    {
+     "date": "2026-07-28",
+     "o": 70.8328,
+     "h": 71.2531,
+     "l": 70.0223,
+     "c": 70.4402,
+     "v": 4267074.5902
+    },
+    {
+     "date": "2026-07-29",
+     "o": 69.8855,
+     "h": 70.3594,
+     "l": 69.1253,
+     "c": 69.5973,
+     "v": 2699294.3144
+    },
+    {
+     "date": "2026-07-30",
+     "o": 69.7053,
+     "h": 70.1999,
+     "l": 69.0674,
+     "c": 69.561,
+     "v": 3539112.9985
+    },
+    {
+     "date": "2026-07-31",
+     "o": 69.3445,
+     "h": 70.2827,
+     "l": 68.8048,
+     "c": 69.74,
+     "v": 3710116.475
+    },
+    {
+     "date": "2026-08-03",
+     "o": 69.7532,
+     "h": 70.5135,
+     "l": 69.1992,
+     "c": 69.958,
+     "v": 2162092.3993
+    },
+    {
+     "date": "2026-08-04",
+     "o": 69.7787,
+     "h": 70.0603,
+     "l": 69.4827,
+     "c": 69.7642,
+     "v": 3695491.6241
+    },
+    {
+     "date": "2026-08-05",
+     "o": 69.5001,
+     "h": 70.036,
+     "l": 68.5363,
+     "c": 69.0689,
+     "v": 2914511.1984
+    },
+    {
+     "date": "2026-08-06",
+     "o": 67.9657,
+     "h": 68.3922,
+     "l": 67.5313,
+     "c": 67.9578,
+     "v": 3004804.7576
+    },
+    {
+     "date": "2026-08-07",
+     "o": 68.0745,
+     "h": 68.1909,
+     "l": 67.4961,
+     "c": 67.6118,
+     "v": 3726541.6676
+    },
+    {
+     "date": "2026-08-10",
+     "o": 68.4337,
+     "h": 69.2163,
+     "l": 67.8331,
+     "c": 68.614,
+     "v": 4100151.2302
+    },
+    {
+     "date": "2026-08-11",
+     "o": 67.5716,
+     "h": 67.9861,
+     "l": 66.983,
+     "c": 67.3964,
+     "v": 1962336.646
+    },
+    {
+     "date": "2026-08-12",
+     "o": 66.8276,
+     "h": 67.1866,
+     "l": 66.6282,
+     "c": 66.9868,
+     "v": 4270998.4807
+    },
+    {
+     "date": "2026-08-13",
+     "o": 68.4209,
+     "h": 68.8306,
+     "l": 67.7366,
+     "c": 68.1447,
+     "v": 2965051.9067
+    },
+    {
+     "date": "2026-08-14",
+     "o": 68.4559,
+     "h": 69.1192,
+     "l": 67.9764,
+     "c": 68.6385,
+     "v": 2910769.6873
+    },
+    {
+     "date": "2026-08-17",
+     "o": 68.5543,
+     "h": 68.7925,
+     "l": 68.2047,
+     "c": 68.4424,
+     "v": 2845964.517
+    },
+    {
+     "date": "2026-08-18",
+     "o": 68.5107,
+     "h": 69.1183,
+     "l": 68.0479,
+     "c": 68.6544,
+     "v": 2673471.2404
+    },
+    {
+     "date": "2026-08-19",
+     "o": 68.9116,
+     "h": 69.6375,
+     "l": 68.4647,
+     "c": 69.1888,
+     "v": 2479601.5581
+    },
+    {
+     "date": "2026-08-20",
+     "o": 69.7276,
+     "h": 70.2961,
+     "l": 68.8531,
+     "c": 69.4191,
+     "v": 2818283.2016
+    },
+    {
+     "date": "2026-08-21",
+     "o": 69.7891,
+     "h": 70.2604,
+     "l": 69.5193,
+     "c": 69.9898,
+     "v": 4287878.7942
+    },
+    {
+     "date": "2026-08-24",
+     "o": 70.7836,
+     "h": 71.4642,
+     "l": 70.4414,
+     "c": 71.1203,
+     "v": 2341826.639
+    },
+    {
+     "date": "2026-08-25",
+     "o": 71.5771,
+     "h": 72.5113,
+     "l": 71.1147,
+     "c": 72.0459,
+     "v": 3322798.2496
+    },
+    {
+     "date": "2026-08-26",
+     "o": 70.7114,
+     "h": 71.128,
+     "l": 70.1968,
+     "c": 70.6128,
+     "v": 2367428.061
+    },
+    {
+     "date": "2026-08-27",
+     "o": 70.4168,
+     "h": 71.498,
+     "l": 70.0505,
+     "c": 71.128,
+     "v": 2725210.2416
+    },
+    {
+     "date": "2026-08-28",
+     "o": 71.5893,
+     "h": 72.176,
+     "l": 70.7507,
+     "c": 71.3352,
+     "v": 2811169.7823
+    },
+    {
+     "date": "2026-08-31",
+     "o": 69.9979,
+     "h": 70.6953,
+     "l": 69.2073,
+     "c": 69.9037,
+     "v": 2805380.6782
+    },
+    {
+     "date": "2026-09-01",
+     "o": 69.246,
+     "h": 69.6408,
+     "l": 68.8746,
+     "c": 69.2692,
+     "v": 3307728.0774
+    },
+    {
+     "date": "2026-09-02",
+     "o": 70.3979,
+     "h": 70.9192,
+     "l": 70.0626,
+     "c": 70.583,
+     "v": 2965112.597
+    },
+    {
+     "date": "2026-09-03",
+     "o": 70.236,
+     "h": 70.6171,
+     "l": 69.8511,
+     "c": 70.2322,
+     "v": 2703625.3325
+    },
+    {
+     "date": "2026-09-04",
+     "o": 70.7534,
+     "h": 71.5832,
+     "l": 70.294,
+     "c": 71.1214,
+     "v": 2419549.3477
+    },
+    {
+     "date": "2026-09-07",
+     "o": 71.9474,
+     "h": 72.2322,
+     "l": 71.8045,
+     "c": 72.0889,
+     "v": 3530846.8429
+    },
+    {
+     "date": "2026-09-08",
+     "o": 72.6625,
+     "h": 73.444,
+     "l": 72.4181,
+     "c": 73.1977,
+     "v": 2659089.6725
+    },
+    {
+     "date": "2026-09-09",
+     "o": 71.8171,
+     "h": 72.4419,
+     "l": 70.8769,
+     "c": 71.4989,
+     "v": 3216486.7484
+    },
+    {
+     "date": "2026-09-10",
+     "o": 71.5,
+     "h": 74.13,
+     "l": 71.2,
+     "c": 72.93,
+     "v": 2781939.0
+    }
+   ],
+   "summary": "DLLR: +2.0% on 0.9× volume out of a base 3.5% deep. B 6.5, 4 of 6 criteria."
   }
  ],
  "trades": [
@@ -8932,6 +10152,15 @@
     "v": 120000.0,
     "since": "2026-09-10"
    },
+   "DLLR": {
+    "date": "2026-09-10",
+    "o": 71.5,
+    "h": 74.13,
+    "l": 71.2,
+    "c": 72.93,
+    "v": 2781939.0,
+    "since": "2026-09-10"
+   },
    "NBIS": {
     "date": "2026-09-10",
     "o": 25.67,
@@ -9005,7 +10234,7 @@
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",
   "breadth": "The Market Monitor for the session and the regime verdict with its reasons verbatim. The size multiplier is the regime's; the plans already carry it.",
-  "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not.",
+  "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not. volume_vs_prior is the session's volume over the previous session's for every row, the $-only ones included (null when the previous session printed none); quality.burst holds the checklist's copy at two places.",
   "trades": "Tickers of the bursts to trade tomorrow, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
   "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the limit, past the slots or the configured equity, or sized to no whole share. Each has a reason in cash_budget.cut. Not checklist refusals.",
   "cash_budget": "Model allocation: what tomorrow's tickets would commit against the configured equity, the model slots used (open model plans count), and every plan without a ticket with its kind and reason. Never a balance or buying power.",

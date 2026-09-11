@@ -8,11 +8,12 @@ from __future__ import annotations
 import json
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
 
-from src import pipeline, plan, record, report
+from src import pipeline, plan, record, report, scans
 from tests.synthetic import make_ohlcv
 from tests.test_quality import frame as qframe, ideal_bars
 from tests.test_watchlist import coil
@@ -185,6 +186,71 @@ def test_claude_cannot_raise_a_grade_the_checklist_capped(fake_alpaca, seed, cla
     assert burst["quality"]["grade"] == "B" and burst["claude"]["source"] == "claude"
     assert burst["grade"] == "B" and burst["claude"]["grade"] == "B" and burst["claude"]["agree"] is True
     assert data["trades"] == [] and data["run"]["graded"] == {"a_plus": 0, "a": 0, "b": 1, "c": 0, "skip": 0}
+
+
+def dollar_day(seed: int, variant: int, *, ratio: float, gain: float = 2.0, prev_volume: float | None = None) -> pd.DataFrame:
+    """A quiet walk rescaled so the previous close is $100, whose last session
+    opens there and closes ``gain`` percent up on ``ratio`` of the previous
+    session's volume: at 2% the dollar scan's day alone (a $2 body, no 4%
+    burst); at 5% on more volume both scans' day. ``prev_volume`` rewrites
+    the previous session's volume (0 for a halt)."""
+    df = make_ohlcv("base", seed=[seed, variant], days=260)
+    prices = ["Open", "High", "Low", "Close"]
+    df[prices] = df[prices] * (100.0 / float(df["Close"].iloc[-2]))
+    if prev_volume is not None:
+        df.iloc[-2, df.columns.get_loc("Volume")] = prev_volume
+    v1 = float(df["Volume"].iloc[-2])
+    close = round(100.0 * (1 + gain / 100), 2)
+    df.iloc[-1, df.columns.get_loc("Open")] = 100.0
+    df.iloc[-1, df.columns.get_loc("High")] = round(close + 0.9, 2)
+    df.iloc[-1, df.columns.get_loc("Low")] = 99.6
+    df.iloc[-1, df.columns.get_loc("Close")] = close
+    df.iloc[-1, df.columns.get_loc("Volume")] = round((v1 or 3_000_000.0) * ratio)
+    return df
+
+
+def test_a_dollar_only_day_carries_the_scans_volume_ratio_into_its_row(seed):
+    """RVTY on the first real night: a $1.91 body on 0.86x the previous
+    session's volume, +2.8%, the dollar scan's day alone -- and its row's
+    volume_vs_prior was null while the checklist's block held 0.86, so the
+    page listed it as unmeasured. The row carries the scan's own ratio now,
+    at the scan's four places (the checklist's two-place copy is a copy, not
+    what is written over it); a day both scans see carries the 4% scan's;
+    and a previous session that printed nothing leaves both readings None,
+    the row still in the list, so the page says the measurement is missing
+    rather than inventing one."""
+    frames = {"AAA": a_plus_frame(), "DLR": dollar_day(seed, 7, ratio=0.8649), "BOTH": dollar_day(seed, 9, ratio=1.5, gain=5.0),
+              "HALT": dollar_day(seed, 8, ratio=0.9, prev_volume=0)}
+    uni = SimpleNamespace(names={"DLR": "Dollar Day Inc"}, flags={})
+    rows = {r["ticker"]: r for r in pipeline.scan_frames(frames, uni, pipeline.RunReport())[0]}
+    dlr = rows["DLR"]
+    assert dlr["scan"] == "dollar" and dlr["gain_pct"] == 2.0 and dlr["dollar_move"] == 2.0
+    assert dlr["volume_vs_prior"] == scans.dollar_breakout(frames["DLR"])["volume_vs_prior"] == 0.8649
+    assert dlr["quality"]["burst"]["volume_vs_prior"] == 0.86
+    aaa = rows["AAA"]
+    assert aaa["scan"] == "burst" and aaa["volume_vs_prior"] == scans.burst_4pct(frames["AAA"])["volume_vs_prior"] > 1
+    both = rows["BOTH"]
+    assert both["scan"] == "both" and both["gain_pct"] == 5.0
+    assert both["volume_vs_prior"] == scans.burst_4pct(frames["BOTH"])["volume_vs_prior"] == scans.dollar_breakout(frames["BOTH"])["volume_vs_prior"] == 1.5
+    halt = rows["HALT"]
+    assert halt["scan"] == "dollar" and halt["volume_vs_prior"] is None and halt["quality"]["burst"]["volume_vs_prior"] is None
+    assert set(rows) == {"AAA", "DLR", "BOTH", "HALT"}
+
+
+def test_the_committed_fixture_carries_the_dollar_scans_ratio_beside_the_checklists_copy():
+    """The full fixture holds a $-only burst (DLLR), and its row's ratio is the
+    scan's own: the last two bars of its archived series at four places, the
+    checklist's block the same number at two, the summary sentence saying it.
+    A fixture that lost the row, or the ratio, fails here rather than at the
+    page smoke."""
+    data = json.loads((Path(__file__).resolve().parent / "fixtures" / "page" / "full.json").read_text())
+    dollar = [b for b in data["bursts"] if b["scan"] == "dollar"]
+    assert dollar and all(len(b.get("series") or []) >= 2 for b in dollar), [b["ticker"] for b in dollar]
+    for b in dollar:
+        last, prev = b["series"][-1], b["series"][-2]
+        assert b["volume_vs_prior"] == round(last["v"] / prev["v"], scans.RATIO_DECIMALS) < 1, (b["ticker"], b["volume_vs_prior"])
+        assert b["quality"]["burst"]["volume_vs_prior"] == round(b["volume_vs_prior"], 2), b["ticker"]
+        assert f"on {b['volume_vs_prior']:.1f}× volume" in b["summary"], b["summary"]
 
 
 def test_the_slot_count_and_the_status_word_are_the_named_rules():

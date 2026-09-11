@@ -44,7 +44,7 @@ sys.path.insert(0, str(ROOT))
 
 import pandas as pd  # noqa: E402
 
-from src import charts, market_data, pipeline, plan, record  # noqa: E402
+from src import charts, market_data, pipeline, plan, record, scans  # noqa: E402
 from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient  # noqa: E402
 from tests.synthetic import make_ohlcv  # noqa: E402
 from tests.test_quality import frame as qframe, ideal_bars  # noqa: E402
@@ -80,15 +80,35 @@ TIGHT_BAR = dict(burst_range_pct=0.25, base_range=0.15, prior_range=0.1)
 def burst_frames() -> dict[str, pd.DataFrame]:
     """Four A-quality bursts -- three whose tickets qualify at their limit and
     the textbook one whose ticket is withheld -- one loose-base B, one H-only
-    miss (an anticipation setup), and the coil."""
+    miss (an anticipation setup), one $-only day, and the coil."""
     return {
         "AAPL": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000, **TIGHT_BAR)),
         "AMD": qframe(ideal_bars(burst_gain=5.2, close_pos=0.9, burst_vol=2_600_000, base_quiet=12, **TIGHT_BAR)),
         "NVDA": qframe(ideal_bars(burst_gain=7.4, close_pos=0.85, burst_vol=3_400_000, base_quiet=18, leg_steps=[1.4] * 14, **TIGHT_BAR)),
         "TSLA": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000)),
         "PLUG": qframe(ideal_bars(burst_gain=5.0, close_pos=0.55)),
+        "DLLR": dollar_only(),
         "COIL": coil(),
     }
+
+
+def dollar_only() -> pd.DataFrame:
+    """A quiet walk near $70 whose last session opens at the previous close and
+    closes 2% up on 0.8649 of the previous session's volume: the dollar
+    scan's day alone (a body over $0.90, no 4% burst), with a volume ratio
+    under 1 that is a measurement and not a hole -- RVTY's shape on the first
+    real night, a $1.91 body, +2.8%, on 0.86x the previous session. Four
+    places in the row, two in the checklist's block, as the real record has."""
+    df = make_ohlcv("base", seed=[SEED, 501], days=280, start_price=60.0)
+    prev_close, prev_volume = float(df["Close"].iloc[-2]), float(df["Volume"].iloc[-2])
+    o, c = round(prev_close, 2), round(prev_close * 1.02, 2)
+    assert c / prev_close < scans.BURST_RATIO and c - o >= scans.DOLLAR_MOVE, (prev_close, c)
+    df.iloc[-1, df.columns.get_loc("Open")] = o
+    df.iloc[-1, df.columns.get_loc("High")] = round(c + 1.2, 2)
+    df.iloc[-1, df.columns.get_loc("Low")] = round(o - 0.3, 2)
+    df.iloc[-1, df.columns.get_loc("Close")] = c
+    df.iloc[-1, df.columns.get_loc("Volume")] = round(prev_volume * 0.8649)
+    return df
 
 
 def base_frames() -> dict[str, pd.DataFrame]:
@@ -329,6 +349,9 @@ def expected_shape(variant: str, data: dict) -> None:
         vrt = next(p for p in data["open_plans"] if p["ticker"] == "VRT")
         assert vrt["shares"] == 3 and vrt["sold"] == 2 and vrt["remaining"] == 1, (vrt["shares"], vrt["sold"], vrt["remaining"])
         assert data["watchlist"]["top"], "no coiled name"
+        dollar = [b for b in data["bursts"] if b["scan"] == "dollar"]
+        assert dollar and all(isinstance(b["volume_vs_prior"], float) and 0 < b["volume_vs_prior"] < 1 for b in dollar), \
+            [(b["ticker"], b.get("volume_vs_prior")) for b in dollar]
         assert problems == []
     elif variant == "degraded":
         assert set(problems) == {"claude_unavailable", "chart_missing"}, problems

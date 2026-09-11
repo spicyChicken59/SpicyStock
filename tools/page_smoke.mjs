@@ -116,6 +116,10 @@ function setupSessions(series, base) {
   const pad = Math.max(8, Math.round((be - bs + 1) * 0.6));
   return series.length - Math.max(0, bs - pad);
 }
+// the volume ratio the page reads for a burst: the row's own field, else the checklist's two-place copy;
+// a finite number of zero or more, else null (docs/app.js volumeRatio(); the smoke reads it again, on its own)
+const ratioOf = (b) => { const own = b.volume_vs_prior, q = b.quality && b.quality.burst ? b.quality.burst.volume_vs_prior : null; return typeof own === 'number' && isFinite(own) && own >= 0 ? own : typeof q === 'number' && isFinite(q) && q >= 0 ? q : null; };
+const times = (v) => v === null ? '—' : v.toFixed(1);
 // what the record says each stock's status is (the page reads the same fields; the smoke reads them again, on its own)
 function burstStatus(b, data) {
   const cut = (data.cash_budget.cut || []).find((c) => c.ticker === b.ticker);
@@ -215,7 +219,8 @@ async function checkDetail(page, variant, b, data, blocked) {
   const want = q.checks.map((c) => (q.vetoes.includes('up_days') && c.key === 'two_days') || (q.vetoes.includes('not_linear') && c.key === 'linearity') ? 'veto' : c.pass ? (c.marginal ? 'partial' : 'pass') : (c.status === 'unmeasured' ? 'not measured' : 'fail'));
   eq(`${variant} ${b.ticker} tile verdicts`, tiles.map((t) => t[1]), want);
   const conditions = await text(page, '#disc-checklist');
-  check(`${variant} ${b.ticker} conditions carry the gain and the volume`, conditions.includes(`+${b.gain_pct.toFixed(1)}%`) && conditions.includes(b.volume_vs_prior.toFixed(1) + '× volume'), conditions.slice(0, 200));
+  check(`${variant} ${b.ticker} conditions carry the gain and the volume`, conditions.includes(`+${b.gain_pct.toFixed(1)}%`) && conditions.includes(times(ratioOf(b)) + '× volume'), conditions.slice(0, 200));
+  if (b.scan === 'dollar') check(`${variant} ${b.ticker} a $-only day carries its volume ratio like any other`, ratioOf(b) !== null && ratioOf(b) === b.volume_vs_prior && conditions.includes(times(ratioOf(b)) + '× volume') && !conditions.includes('read from the checklist'), [b.volume_vs_prior, conditions.slice(0, 120)]);
   if (q.base && q.base.sessions) check(`${variant} ${b.ticker} conditions carry the base`, conditions.includes(`${q.base.sessions} sessions`), 'base');
   // the plan and the order
   const planText = await text(page, '#disc-plan');
@@ -786,13 +791,14 @@ async function checkModes(browser, base, data) {
 async function checkMap(browser, base, data) {
   console.log('-- the burst map');
   const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280);
-  const plottable = data.bursts.filter((b) => typeof b.gain_pct === 'number' && typeof b.volume_vs_prior === 'number');
+  const plottable = data.bursts.filter((b) => typeof b.gain_pct === 'number' && ratioOf(b) !== null);
+  eq('every burst of the fixture has a ratio the page can read', plottable.length, data.bursts.length);
   eq('the Cards | Map control is offered for the bursts', await page.locator('#discover').isVisible(), true);
   await page.click('#discover .sc-tab[data-discover="map"]'); await page.waitForTimeout(300);
   eq('map mode lays the map across the workspace', await page.getAttribute('#workspace', 'data-discover'), 'map');
   eq('one point per burst with both measurements', await count(page, '#burst-map .ss-map__point'), plottable.length);
   const pts = await page.locator('#burst-map .ss-map__point').evaluateAll((els) => els.map((e) => [e.dataset.ticker, +e.dataset.gain, +e.dataset.volume, e.getAttribute('aria-pressed')]));
-  for (const b of plottable) { const p = pts.find((x) => x[0] === b.ticker); eq(`${b.ticker} is plotted at its recorded gain and volume ratio`, p && [p[1], p[2]], [b.gain_pct, b.volume_vs_prior]); }
+  for (const b of plottable) { const p = pts.find((x) => x[0] === b.ticker); eq(`${b.ticker} is plotted at its recorded gain and volume ratio`, p && [p[1], p[2]], [b.gain_pct, ratioOf(b)]); }
   check('the map names the session and the counts', (await text(page, '#burst-map .ss-map__stamp')).includes('session ' + dateWords(data.run.session)) && (await text(page, '[data-counts]')).includes(`${data.bursts.length} bursts · ${plottable.length} plotted`), await text(page, '[data-counts]'));
   check('the axes name the exact measurements', (await text(page, '#burst-map')).includes('Volume vs previous session (×)') && (await text(page, '#burst-map')).includes('Gain on the session vs previous close (%)'), 'axes');
   check('the map says position is a measurement, not a return', (await text(page, '#burst-map .ss-map__note')).includes('not a predicted return'), 'note');
@@ -977,12 +983,18 @@ async function checkStates(browser, base, data) {
         eq('without base dates the fallback shows 60 sessions', await page.locator('#detail .sc-chart--stock').getAttribute('data-sessions'), String(Math.min(60, data.bursts[0].series.length)));
       }
       if (field === 'bursts.volume_vs_prior') {
+        // a record from before the dollar scan carried the ratio: the row's own field is null and the
+        // checklist's two-place copy stands in -- plotted, printed everywhere, and said to be the checklist's
+        const first = data.bursts[0], q = first.quality.burst.volume_vs_prior;
         await page.click('#discover .sc-tab[data-discover="map"]'); await page.waitForTimeout(250);
-        eq('a burst without a volume measurement is not plotted', await page.locator('#burst-map').getAttribute('data-missing'), '1');
-        check('the unplotted burst stays listed and reachable', (await count(page, `#burst-map .ss-map__missing button[data-id="bursts:${data.bursts[0].ticker}"]`)) === 1 && (await text(page, '[data-counts]')).includes('1 without a measurement'), await text(page, '[data-counts]'));
-        await page.click(`#burst-map .ss-map__missing button[data-id="bursts:${data.bursts[0].ticker}"]`); await page.waitForTimeout(200);
-        eq('the unplotted burst opens its detail', await text(page, '#detail-h2'), data.bursts[0].ticker);
-        await page.click('#discover .sc-tab[data-discover="cards"]');
+        eq('without the row’s own ratio the checklist’s copy plots the burst', await page.locator(`#burst-map .ss-map__point[data-ticker="${first.ticker}"]`).evaluateAll((els) => els.map((e) => [+e.dataset.gain, +e.dataset.volume])), [[first.gain_pct, q]]);
+        eq('without the row’s own ratio nothing is listed as unmeasured', await page.getAttribute('#burst-map', 'data-missing'), '0');
+        await page.click('#discover .sc-tab[data-discover="cards"]'); await page.waitForTimeout(150);
+        await openAll(page, 'details');
+        const r = await readings(page, first.ticker);
+        check('the card, the detail line and the scan table print the checklist’s copy', r.card.includes('vol ' + q.toFixed(1) + '×') && r.sub.includes('on ' + q.toFixed(1) + '× volume') && r.table.includes(q.toFixed(1) + '× vol'), [r.card, r.sub, r.table]);
+        check('the measurements say the ratio was read from the checklist', r.facts.includes(q.toFixed(1) + '× volume') && r.facts.includes('read from the checklist'), r.facts.slice(0, 300));
+        eq('the chart’s burst label carries the checklist’s copy', r.labels, [(Math.round(q * 10) / 10) + '× vol']);
       }
       if (field === 'observations') check('without the observation block the shelf still renders', (await count(page, '#following .ss-following__empty')) === 1 || (await count(page, '#following .ss-followed')) >= 0, 'shelf');
       if (field === 'bursts.series') {
@@ -1023,6 +1035,86 @@ async function loadChromium() {
   return null;
 }
 
+// every place the page prints a burst's volume ratio, read back at once
+async function readings(page, ticker) {
+  return {
+    card: (await text(page, `#pick-list .ss-pick[data-ticker="${ticker}"]`)).replace(/\s+/g, ' '),
+    sub: await text(page, '#detail .ss-detail__sub'),
+    facts: (await text(page, '#disc-checklist')).replace(/\s+/g, ' '),
+    table: await text(page, `#burst-${ticker} .sc-signal-matrix__note`),
+    labels: await page.locator('#detail .sc-chart--stock text').evaluateAll((els) => els.map((e) => (e.textContent || '').match(/[0-9.]+× vol/)).filter(Boolean).map((m) => m[0]))
+  };
+}
+// a copy of the record with one alteration, served beside the fixtures and removed afterwards
+async function openMutant(browser, base, data, mutate) {
+  const copy = JSON.parse(JSON.stringify(data)); mutate(copy);
+  const p = '/tests/fixtures/page/.mutant.json';
+  await writeFile(path.join(ROOT, p), JSON.stringify(copy));
+  const opened = await open(browser, base, p, FRESH_NOW, 1280);
+  return { page: opened.page, errors: opened.errors, close: async () => { await opened.context.close(); await unlink(path.join(ROOT, p)); } };
+}
+// the volume ratio: zero is a value, an invalid or absent one is missing and said so, and a checklist copy
+// that contradicts the row's own field is printed beside it rather than hidden
+async function checkVolumeReadings(browser, base, data) {
+  console.log('-- the volume ratio readings');
+  const first = data.bursts[0], own = first.volume_vs_prior;
+  const missingCase = async (name, mutate) => {
+    const m = await openMutant(browser, base, data, mutate);
+    await m.page.click('#discover .sc-tab[data-discover="map"]'); await m.page.waitForTimeout(250);
+    eq(`${name}: the burst is not plotted`, await m.page.getAttribute('#burst-map', 'data-missing'), '1');
+    check(`${name}: the burst stays listed and reachable`, (await count(m.page, `#burst-map .ss-map__missing button[data-id="bursts:${first.ticker}"]`)) === 1 && (await text(m.page, '[data-counts]')).includes('1 without a measurement'), await text(m.page, '[data-counts]'));
+    await m.page.click(`#burst-map .ss-map__missing button[data-id="bursts:${first.ticker}"]`); await m.page.waitForTimeout(200);
+    eq(`${name}: the unplotted burst opens its detail`, await text(m.page, '#detail-h2'), first.ticker);
+    await m.page.click('#discover .sc-tab[data-discover="cards"]'); await m.page.waitForTimeout(150);
+    await openAll(m.page, 'details');
+    const r = await readings(m.page, first.ticker);
+    check(`${name}: the card, the detail line and the scan table say the ratio is missing`, r.card.includes('vol —') && r.sub.includes('on —× volume') && r.table.includes('—× vol'), [r.card, r.sub, r.table]);
+    check(`${name}: the measurements say the ratio was not recorded`, r.facts.includes('—× volume') && r.facts.includes('volume ratio not recorded'), r.facts.slice(0, 300));
+    eq(`${name}: the chart’s burst label carries no ratio`, r.labels, []);
+    eq(`${name}: page errors`, m.errors, []);
+    await m.close();
+  };
+  await missingCase('both representations absent', (c) => { c.bursts[0].volume_vs_prior = null; delete c.bursts[0].quality.burst.volume_vs_prior; });
+  await missingCase('a negative ratio and a text one', (c) => { c.bursts[0].volume_vs_prior = -1; c.bursts[0].quality.burst.volume_vs_prior = '0.9'; });
+  // zero is a value: a session that printed nothing against one that did
+  {
+    const m = await openMutant(browser, base, data, (c) => { c.bursts[0].volume_vs_prior = 0; c.bursts[0].quality.burst.volume_vs_prior = 0; });
+    await m.page.click('#discover .sc-tab[data-discover="map"]'); await m.page.waitForTimeout(250);
+    eq('a zero ratio is plotted at zero', await m.page.locator(`#burst-map .ss-map__point[data-ticker="${first.ticker}"]`).evaluateAll((els) => els.map((e) => [+e.dataset.gain, +e.dataset.volume])), [[first.gain_pct, 0]]);
+    eq('a zero ratio is not listed as unmeasured', await m.page.getAttribute('#burst-map', 'data-missing'), '0');
+    await m.page.click('#discover .sc-tab[data-discover="cards"]'); await m.page.waitForTimeout(150);
+    await openAll(m.page, 'details');
+    const r = await readings(m.page, first.ticker);
+    check('a zero ratio prints as 0.0×, never as missing', r.card.includes('vol 0.0×') && r.sub.includes('on 0.0× volume') && r.table.includes('0.0× vol') && r.facts.includes('0.0× volume') && !r.facts.includes('not recorded') && !r.facts.includes('read from the checklist'), [r.card, r.sub, r.table]);
+    eq('the chart’s burst label carries the zero', r.labels, ['0× vol']);
+    eq('zero ratio page errors', m.errors, []);
+    await m.close();
+  }
+  // the row's own field stands, and a checklist copy that is not its rounding is printed beside it
+  {
+    const other = Math.round((own + 0.5) * 100) / 100;
+    const m = await openMutant(browser, base, data, (c) => { c.bursts[0].quality.burst.volume_vs_prior = other; });
+    await m.page.click('#discover .sc-tab[data-discover="map"]'); await m.page.waitForTimeout(250);
+    eq('the row’s own ratio plots the burst, not the checklist’s', await m.page.locator(`#burst-map .ss-map__point[data-ticker="${first.ticker}"]`).evaluateAll((els) => els.map((e) => [+e.dataset.gain, +e.dataset.volume])), [[first.gain_pct, own]]);
+    await m.page.click('#discover .sc-tab[data-discover="cards"]'); await m.page.waitForTimeout(150);
+    await openAll(m.page, 'details');
+    const r = await readings(m.page, first.ticker);
+    check('the measurements print the row’s own ratio and the checklist’s disagreeing copy beside it', r.facts.includes(own.toFixed(1) + '× volume') && r.facts.includes('the checklist’s block says ' + other.toFixed(2) + '× volume'), r.facts.slice(0, 300));
+    check('the card and the detail line print the row’s own ratio', r.card.includes('vol ' + own.toFixed(1) + '×') && r.sub.includes('on ' + own.toFixed(1) + '× volume'), [r.card, r.sub]);
+    eq('disagreeing copy page errors', m.errors, []);
+    await m.close();
+  }
+  // a two-place copy of the row's own four-place ratio is its rounding, not a disagreement
+  {
+    const m = await openMutant(browser, base, data, (c) => { c.bursts[0].volume_vs_prior = 1.645; c.bursts[0].quality.burst.volume_vs_prior = 1.64; });
+    await openAll(m.page, 'details');
+    const r = await readings(m.page, first.ticker);
+    check('a rounded copy is not called a disagreement', r.facts.includes('1.6× volume') && !r.facts.includes('checklist’s block says'), r.facts.slice(0, 300));
+    eq('rounded copy page errors', m.errors, []);
+    await m.close();
+  }
+}
+
 async function main() {
   const chromium = await loadChromium();
   if (!chromium) { console.log('playwright is not installed: npm install --no-save playwright'); process.exit(1); }
@@ -1039,6 +1131,7 @@ async function main() {
     await checkMobile(browser, base, full);
     await checkModes(browser, base, full);
     await checkMap(browser, base, full);
+    await checkVolumeReadings(browser, base, full);
     await checkFollowing(browser, base, full);
     await checkStates(browser, base, full);
   } finally {

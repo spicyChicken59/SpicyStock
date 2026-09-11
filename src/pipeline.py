@@ -294,6 +294,11 @@ def scan_frames(frames: dict[str, pd.DataFrame], uni: universe.Universe,
             continue
         last, prev = df.iloc[-1], df.iloc[-2]
         source = burst or {}
+        # the session's volume over the previous session's: one field with
+        # one meaning whichever scan measured it, so a $-only day carries the
+        # dollar scan's ratio (a value under 1 is a value) and the page never
+        # has to read the checklist's rounded copy for a row the run wrote
+        volume_ratio = (burst or dollar or {}).get("volume_vs_prior")
         row = {
             "ticker": ticker,
             "name": uni.names.get(ticker, ""),
@@ -302,7 +307,7 @@ def scan_frames(frames: dict[str, pd.DataFrame], uni: universe.Universe,
             "close": _num(last["Close"]), "prev_close": _num(prev["Close"]),
             "open": _num(last["Open"]), "high": _num(last["High"]), "low": _num(last["Low"]),
             "gain_pct": source.get("gain_pct", _gain(last, prev)),
-            "volume": _num(last["Volume"]), "volume_vs_prior": source.get("volume_vs_prior"),
+            "volume": _num(last["Volume"]), "volume_vs_prior": volume_ratio,
             "dollar_volume": source.get("dollar_volume", _num(float(last["Close"]) * float(last["Volume"]))),
             "dollar_move": (dollar or {}).get("move"),
             "extension_pct": extension_pct(df),
