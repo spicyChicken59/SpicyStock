@@ -1,0 +1,788 @@
+{
+ "schema_version": 2,
+ "generated": "2026-09-10T22:30:00+00:00",
+ "app": {
+  "name": "SpicyStock",
+  "version": "2.0",
+  "rules_version": "11e153a50cc1"
+ },
+ "cover": {
+  "h1": "Market closed. Plans unchanged.",
+  "dek": "No session on 2026-09-10. The plans from 2026-09-09 stand; day counts did not advance.",
+  "action_label": "What you hold",
+  "action_target": "#hold",
+  "verb": "hold"
+ },
+ "run": {
+  "session": "2026-09-09",
+  "session_state": "closed",
+  "expected_session": "2026-09-10",
+  "status": "closed",
+  "problems": [],
+  "dry_run": false,
+  "model": "claude-sonnet-4-6",
+  "feed": "sip",
+  "universe": {
+   "label": "30 named on the command line (--tickers)",
+   "size": 30,
+   "source": "explicit",
+   "fetched_at": null,
+   "identity": "47798ad00621ade5"
+  },
+  "coverage": {
+   "requested": 31,
+   "with_bars": 31,
+   "on_session": 0,
+   "measured": 0,
+   "stale": 0,
+   "gapped": 0,
+   "no_bars": 0,
+   "dropped": 0,
+   "errors": 0,
+   "duplicate_bars": 0
+  },
+  "bursts": 0,
+  "graded": {
+   "a_plus": 0,
+   "a": 0,
+   "b": 0,
+   "c": 0,
+   "skip": 0
+  },
+  "reads": {
+   "requested": 0,
+   "done": 0,
+   "unavailable_reason": null
+  },
+  "email": "skipped",
+  "published_at": "2026-09-10T22:30:00+00:00",
+  "run_id": null,
+  "elapsed_seconds": 0.0,
+  "fetch_seconds": 0.0,
+  "rules_version": "v2.0",
+  "type": "evening",
+  "sanitised": {
+   "replaced": 0,
+   "paths": []
+  }
+ },
+ "nights": [
+  {
+   "session": "2026-09-10",
+   "status": "closed",
+   "published_at": "2026-09-10T22:30:00+00:00"
+  }
+ ],
+ "account": {
+  "equity": 10000.0,
+  "risk_pct": 0.5,
+  "max_position_pct": 25.0,
+  "max_open_positions": 4,
+  "notes": [
+   "Risk per trade: $50.00 (0.5% of $10,000.00; his band is 0.25-1%).",
+   "Position cap: $2,500.00 (25% of equity) in any one name.",
+   "Max 4 open positions (100% of equity if all are at the cap).",
+   "Day trades: FINRA deleted the pattern-day-trader count on 2026-06-04, but Fidelity has announced no migration date and may keep applying it per account until 2027-10-20, so run the account as if the old rule binds: at most 3 same-day round trips per rolling 5 business days in a margin account under $25,000.00; a same-day stop-out counts; a position held overnight never counts.",
+   "Account type: margin with debt protection (no borrowing, no good-faith violations). In a cash account buy only against settled cash (T+1); 3 good-faith violations in 12 months means 90 days of settled-cash-only.",
+   "Attach the protective stop the moment the buy fills, as a stop-MARKET order and never a stop-limit (Fidelity mobile: \"Market + Stop Loss Protection\"; Active Trader Pro: OTO/OTOCO)."
+  ]
+ },
+ "rules": {
+  "burst": {
+   "min_ratio": 1.04,
+   "volume_above_prior": true,
+   "min_volume": 100000
+  },
+  "breakdown": {
+   "max_ratio": 0.96,
+   "volume_above_prior": true,
+   "min_volume": 100000
+  },
+  "dollar": {
+   "min_move": 0.9,
+   "min_volume_exclusive": 100000
+  },
+  "dt": {
+   "min_ratio": 1.8,
+   "low_sessions": 252,
+   "min_prior_volume": 100000
+  },
+  "ti65": {
+   "min_ratio_exclusive": 1.05,
+   "short_sessions": 7,
+   "long_sessions": 65,
+   "min_prior_volume_exclusive": 100000
+  },
+  "mdt": {
+   "min_ratio_exclusive": 1.19,
+   "avg_sessions": 126,
+   "min_prior_volume_exclusive": 100000
+  },
+  "quiet": {
+   "max_abs_pct": 1.0
+  },
+  "prior_volume": {
+   "sessions": 3
+  },
+  "lre": {
+   "min_prior_volume": 100000,
+   "min_price": 3.0,
+   "min_ti65": 1.05,
+   "max_prior_ratio_exclusive": 1.02
+  },
+  "ep": {
+   "min_ratio_exclusive": 1.04,
+   "volume_mult_exclusive": 3,
+   "avg_volume_sessions": 50,
+   "min_volume": 300000
+  },
+  "ep_9m": {
+   "min_volume": 9000000,
+   "min_price": 3.0
+  },
+  "anticipation": {
+   "narrow_lookback": 7,
+   "range_norm_sessions": 20
+  },
+  "precision": {
+   "ratio_decimals": 4,
+   "pct_decimals": 2,
+   "price_decimals": 2
+  },
+  "quality": {
+   "base_search_sessions": 40,
+   "leg_search_sessions": 60,
+   "min_leg_sessions": 5,
+   "up_day_pct_exclusive": 1.0,
+   "max_up_run": 1,
+   "veto_up_days": 3,
+   "min_er": 0.4,
+   "min_r2": 0.55,
+   "move_search_sessions": 60,
+   "move_sma_sessions": 50,
+   "breakout_min_close_pos": 0.7,
+   "max_prior_breakouts": 1,
+   "narrow_range_pct_exclusive": 2.0,
+   "narrow_norm_sessions": 20,
+   "base_min": 3,
+   "base_max": 20,
+   "partial_base_min": 2,
+   "max_breakdowns": 1,
+   "max_giveback": 0.34,
+   "a_plus_max_giveback": 0.25,
+   "max_tightness": 1.0,
+   "a_plus_max_tightness": 0.7,
+   "tightness_norm_sessions": 60,
+   "volume_avg_sessions": 50,
+   "min_close_pos": 0.8,
+   "a_plus_close_pos": 0.9,
+   "partial_close_pos": 0.7,
+   "re_window": 5,
+   "re_window_long": 10,
+   "min_range_expansion": 1.0,
+   "volume_rank_sessions": 60,
+   "a_plus_max_volume_rank": 3,
+   "cv_base_sessions_exclusive": 21,
+   "cv_min_volume": 1.5,
+   "extension_sma_sessions": 20,
+   "run_up_sessions": 20,
+   "low_price_exclusive": 5.0,
+   "high_gain_pct": 15.0,
+   "history_sessions": 60,
+   "history_max_breakouts": 4,
+   "history_follow_sessions": 3,
+   "fast_leg_min_gain_pct": 15.0,
+   "fast_leg_max_sessions": 10,
+   "weight_l": 2.0,
+   "weight_c": 2.0,
+   "weight_2": 1.5,
+   "weight_y": 1.5,
+   "weight_n": 1.5,
+   "weight_h": 1.5,
+   "min_a_plus_letters": 4,
+   "precision.ratio_decimals": 2,
+   "precision.pct_decimals": 1,
+   "precision.price_decimals": 2,
+   "burst_ratio": 1.04,
+   "breakdown_ratio": 0.96
+  },
+  "plan": {
+   "default_equity": 10000.0,
+   "default_risk_pct": 0.5,
+   "default_max_position_pct": 25.0,
+   "default_max_open_positions": 4,
+   "risk_pct_band_low": 0.25,
+   "risk_pct_band_high": 1.0,
+   "entry_below_pct": 2.0,
+   "entry_above_pct": 4.0,
+   "skip_gap_pct": 8.0,
+   "entry_window": "first 30 minutes",
+   "assumed_slippage_pct": 1.0,
+   "max_stop_pct": 4.0,
+   "ideal_stop_pct": 2.0,
+   "stop_risk_multiplier": 0.5,
+   "gain_ceiling_pct": 15.0,
+   "extension_hazard_pct": 20.0,
+   "extension_sessions": 20,
+   "hazard_multiplier": 0.5,
+   "target_low_pct": 8.0,
+   "target_high_pct": 20.0,
+   "low_price_band_usd": 5.0,
+   "low_price_target_low_pct": 20.0,
+   "low_price_target_high_pct": 40.0,
+   "high_price_band_usd": 40.0,
+   "high_price_target_low_usd": 5.0,
+   "high_price_target_high_usd": 25.0,
+   "sell_half_pct": 8.0,
+   "abnormal_day_pct": 10.0,
+   "gap_exit_pct": 20.0,
+   "trail_cents": 0.25,
+   "trail_cents_max": 0.5,
+   "sell_half_day": 3,
+   "no_progress_day": 3,
+   "trail_from_day": 3,
+   "final_exit_day": 5,
+   "entry_day": 1,
+   "no_breakeven_before_day": 5,
+   "trigger_cents": 0.02,
+   "trigger_fraction": 0.001,
+   "trigger_limit_pct": 1.0,
+   "gap_ok_pct": 2.0,
+   "stop_lookback_sessions": 3,
+   "open_entry_top_n": 2,
+   "pdt_equity_usd": 25000.0,
+   "pdt_max_day_trades": 3,
+   "pdt_window_days": 5,
+   "pdt_rule_deleted_on": "2026-06-04",
+   "pdt_phase_in_ends": "2027-10-20",
+   "settlement_days": 1,
+   "gfv_limit": 3,
+   "gfv_window_months": 12,
+   "gfv_restriction_days": 90,
+   "precision.cents": 2,
+   "precision.pct_decimals": 2
+  },
+  "watchlist": {
+   "adr_sessions": 20,
+   "tight_lookback": 10,
+   "tight_fraction_exclusive": 0.7,
+   "ttt_sessions": 3,
+   "tt_sessions": 2,
+   "min_tight": 3,
+   "compress_recent_sessions": 7,
+   "compress_base_sessions": 60,
+   "max_compress": 0.75,
+   "vol_dry_recent_sessions": 5,
+   "vol_dry_base_sessions": 50,
+   "breakdown_lookback": 10,
+   "max_breakdowns": 1,
+   "max_up_run": 2,
+   "extension_sessions": 20,
+   "max_extension": 1.1,
+   "box_min_sessions": 3,
+   "box_max_sessions": 10,
+   "box_spread_adrs": 1.0,
+   "trigger_cents": 0.02,
+   "trigger_fraction": 0.001,
+   "stop_sessions": 3,
+   "max_risk_pct": 4.0,
+   "top_n": 5,
+   "also_n": 10,
+   "ratio_decimals": 2,
+   "pct_decimals": 1,
+   "price_decimals": 2
+  },
+  "record": {
+   "open_plan_sessions": 5,
+   "scorecard_sessions": 60,
+   "scorecard_min_plans": 20,
+   "nights_kept": 20,
+   "max_picks": 260,
+   "benchmark": "SPY"
+  },
+  "pipeline": {
+   "max_reads": 12,
+   "fetch_budget_seconds": 900,
+   "lookback_days": 260,
+   "min_coverage_fraction": 0.5,
+   "closed_fraction": 0.05,
+   "max_error_fraction": 0.05,
+   "trade_grades": [
+    "A+",
+    "A"
+   ],
+   "yellow_grades": [
+    "A+"
+   ],
+   "series_bars": 120
+  },
+  "breadth": {
+   "burst_pct": 4.0,
+   "min_volume": 100000,
+   "min_dollar_volume_20": 250000,
+   "month_sessions": 20,
+   "quarter_sessions": 65,
+   "sessions_34": 34,
+   "ma_sessions": 40,
+   "min_month_price": 5.0,
+   "quarter_move_pct": 25.0,
+   "month_move_pct": 25.0,
+   "month_big_move_pct": 50.0,
+   "move_13_pct": 13.0,
+   "penny": 0.01,
+   "ratio_short_sessions": 5,
+   "ratio_long_sessions": 10,
+   "reference_universe": 6500,
+   "down4_alarm": 700,
+   "red_ratio_10d": 1.0,
+   "red_ratio_5d": 0.5,
+   "yellow_ratio_10d": 2.0,
+   "up50_month_hot": 20,
+   "down25_quarter_oversold": 200,
+   "size_multiplier": {
+    "green": 1.0,
+    "yellow": 0.5,
+    "red": 0.0
+   }
+  },
+  "universe": {
+   "min_price": 3.0,
+   "min_volume": 100000,
+   "max_discovery": 8000,
+   "identity": "47798ad00621ade5"
+  }
+ },
+ "breadth": {
+  "date": "2026-09-09",
+  "up4": 1,
+  "down4": 0,
+  "up25_quarter": 0,
+  "down25_quarter": 0,
+  "up25_month": 0,
+  "down25_month": 0,
+  "up50_month": 0,
+  "down50_month": 0,
+  "up13_34d": 6,
+  "down13_34d": 0,
+  "pct_above_40ma": 63.3,
+  "universe": 30,
+  "ratio_5d": 1.5,
+  "ratio_10d": 1.2,
+  "up4_5d": 3,
+  "down4_5d": 2,
+  "up4_10d": 6,
+  "down4_10d": 5,
+  "regime": {
+   "verdict": "yellow",
+   "size_multiplier": 0.5,
+   "reasons": [
+    "10-session ratio 1.2 (6 up, 5 down) < 2.0: not an ideal time for swing longs"
+   ],
+   "oversold_extreme": true,
+   "thresholds": {
+    "universe": 30,
+    "reference_universe": 6500,
+    "down4_alarm": 3.2,
+    "up50_month_hot": 0.1,
+    "down25_quarter_oversold": 0.9,
+    "ratio_10d_red": 1.0,
+    "ratio_5d_red": 0.5,
+    "ratio_10d_yellow": 2.0
+   },
+   "inputs": {
+    "date": "2026-09-09",
+    "ratio_10d": 1.2,
+    "ratio_5d": 1.5,
+    "up4_10d": 6,
+    "down4_10d": 5,
+    "up4_5d": 3,
+    "down4_5d": 2,
+    "up4": 1,
+    "down4": 0,
+    "up50_month": 0,
+    "down25_quarter": 0
+   }
+  },
+  "history": [
+   {
+    "date": "2026-07-30",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-07-31",
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 0.83
+   },
+   {
+    "date": "2026-08-03",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 0.83
+   },
+   {
+    "date": "2026-08-04",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-05",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-06",
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 1.2
+   },
+   {
+    "date": "2026-08-07",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 0.83
+   },
+   {
+    "date": "2026-08-10",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 0.83
+   },
+   {
+    "date": "2026-08-11",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 0.83
+   },
+   {
+    "date": "2026-08-12",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-13",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.4
+   },
+   {
+    "date": "2026-08-14",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.17
+   },
+   {
+    "date": "2026-08-17",
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 1.2
+   },
+   {
+    "date": "2026-08-18",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-19",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-20",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-21",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-24",
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-25",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 0.86
+   },
+   {
+    "date": "2026-08-26",
+    "up4": 2,
+    "down4": 0,
+    "ratio_10d": 1.17
+   },
+   {
+    "date": "2026-08-27",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-28",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.14
+   },
+   {
+    "date": "2026-08-31",
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 1.14
+   },
+   {
+    "date": "2026-09-01",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-09-02",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.17
+   },
+   {
+    "date": "2026-09-03",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.4
+   },
+   {
+    "date": "2026-09-04",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 2.0
+   },
+   {
+    "date": "2026-09-07",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.6
+   },
+   {
+    "date": "2026-09-08",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.4
+   },
+   {
+    "date": "2026-09-09",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.2
+   }
+  ],
+  "rules": {
+   "burst_pct": 4.0,
+   "min_volume": 100000,
+   "min_dollar_volume_20": 250000,
+   "month_sessions": 20,
+   "quarter_sessions": 65,
+   "sessions_34": 34,
+   "ma_sessions": 40,
+   "min_month_price": 5.0,
+   "quarter_move_pct": 25.0,
+   "month_move_pct": 25.0,
+   "month_big_move_pct": 50.0,
+   "move_13_pct": 13.0,
+   "penny": 0.01,
+   "ratio_short_sessions": 5,
+   "ratio_long_sessions": 10,
+   "reference_universe": 6500,
+   "down4_alarm": 700,
+   "red_ratio_10d": 1.0,
+   "red_ratio_5d": 0.5,
+   "yellow_ratio_10d": 2.0,
+   "up50_month_hot": 20,
+   "down25_quarter_oversold": 200,
+   "size_multiplier": {
+    "green": 1.0,
+    "yellow": 0.5,
+    "red": 0.0
+   }
+  },
+  "notes": [
+   {
+    "key": "ratio_10d",
+    "text": "a 10-day ratio below 2 is not an ideal time for swing longs"
+   },
+   {
+    "key": "up50_month",
+    "text": "more than 0.1 names up 50% in a month is froth; a pullback usually follows"
+   },
+   {
+    "key": "down25_quarter",
+    "text": "fewer than 0.9 names down 25% in a quarter is an oversold extreme; bounces follow in one to six weeks"
+   },
+   {
+    "key": "pct_above_40ma",
+    "text": "T2108: under 20% is washed out, over 80% is stretched"
+   }
+  ]
+ },
+ "bursts": [],
+ "trades": [],
+ "beyond_cap": [],
+ "cash_budget": {
+  "committed_usd": 0.0,
+  "at_risk_usd": 0.0,
+  "equity": 10000.0,
+  "slots_used": 2,
+  "slots_max": 4,
+  "open_positions": 2,
+  "within": [],
+  "beyond": [],
+  "cut": [],
+  "skipped": [],
+  "sentence": "Tomorrow's plans commit $0.00 of $10,000.00; 2 of 4 slots (2 already open)"
+ },
+ "watchlist": {
+  "top": [],
+  "also_quiet": [],
+  "counts": {},
+  "instruction": "Buy only if it clears its trigger in the first 30 minutes on volume already above yesterday's pace; an open more than 2% above the close is gapped and needs a catalyst check before you buy."
+ },
+ "open_plans": [
+  {
+   "ticker": "VRT",
+   "kind": "burst",
+   "picked": "2026-09-04",
+   "day": 3,
+   "sessions": 3,
+   "status": "sell_half",
+   "instruction": "Day 3: closed at $17.46 (+1.5%): sell at least half (72 of 144 VRT) at the close. The stop is $17.29.",
+   "events": [
+    {
+     "day": 1,
+     "date": "2026-09-07",
+     "event": "stop_raised_to_entry_low",
+     "price": 17.08
+    },
+    {
+     "day": 3,
+     "date": "2026-09-09",
+     "event": "sell_half",
+     "price": 17.46
+    },
+    {
+     "day": 3,
+     "date": "2026-09-09",
+     "event": "stop_trailed",
+     "price": 17.29
+    }
+   ],
+   "regime": "yellow",
+   "entry_ref": 17.2,
+   "shares": 144,
+   "current_stop": 17.29,
+   "last_close": 17.46,
+   "last_date": "2026-09-09",
+   "unrealised_pct": 1.51,
+   "exit_price": null,
+   "result_pct": null,
+   "half_sold": true,
+   "grade": "A",
+   "stop": 16.46,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 18.71,
+    "high": 20.78,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "fill": "filled at the open, $17.20"
+  },
+  {
+   "ticker": "NBIS",
+   "kind": "burst",
+   "picked": "2026-09-08",
+   "day": 1,
+   "sessions": 1,
+   "status": "hold",
+   "instruction": "Day 1: hold 97 NBIS with the stop at $25.34 (closed $25.60, +0.3%).",
+   "events": [
+    {
+     "day": 1,
+     "date": "2026-09-09",
+     "event": "stop_raised_to_entry_low",
+     "price": 25.34
+    }
+   ],
+   "regime": "yellow",
+   "entry_ref": 25.52,
+   "shares": 97,
+   "current_stop": 25.34,
+   "last_close": 25.6,
+   "last_date": "2026-09-09",
+   "unrealised_pct": 0.31,
+   "exit_price": null,
+   "result_pct": null,
+   "half_sold": false,
+   "grade": "A",
+   "stop": 24.43,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 27.76,
+    "high": 30.84,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "fill": "filled at the open, $25.52"
+  }
+ ],
+ "scorecard": {
+  "plans": 46,
+  "filled": 33,
+  "settled": 31,
+  "open": 2,
+  "wins": 8,
+  "losses": 22,
+  "win_rate": 0.258,
+  "avg_r": -0.15,
+  "sum_r": -4.55,
+  "spy_avg_pct": 0.23,
+  "min_read": 20,
+  "readable": true,
+  "sessions": 60,
+  "note": "from bars alone: filled at the next open inside the zone (or at the trigger when the day reaches it), the published stop is one R, halves weighted, settled by day 5"
+ },
+ "closest_miss": null,
+ "_contract": {
+  "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
+  "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.session_state and this, against the browser's clock in ET.",
+  "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
+  "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), coverage, counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in.",
+  "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
+  "account": "The sizing inputs every plan below was computed from. Not a balance.",
+  "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",
+  "breadth": "The Market Monitor for the session and the regime verdict with its reasons verbatim. The size multiplier is the regime's; the plans already carry it.",
+  "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not.",
+  "trades": "Tickers of the bursts to trade tomorrow, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
+  "beyond_cap": "Tickers that qualified and got no order line because the slots were full. Not refusals.",
+  "cash_budget": "What tomorrow's orders commit, the slots used, and what was cut and why.",
+  "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
+  "open_plans": "Every published plan still inside its window, replayed to this session: status word and the instruction sentence. A plan you never bought is a row to ignore.",
+  "scorecard": "The rules' record over the published plans, always with n and the read threshold. The rules' record, not yours. Null until a plan has settled.",
+  "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
+  "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."
+ },
+ "fixture": "closed"
+}

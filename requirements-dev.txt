@@ -4,14 +4,13 @@
 # pulls them in so one command sets up a machine that can run the suite.
 # .github/workflows/tests.yml installs this file and nothing else.
 -r requirements.txt
--r requirements-bridge.txt
 
 pytest>=8.0
 
 # Exercise Anthropic's real HTTP transport without opening sockets.
 httpx2>=2.12
 
-# tests/test_docs_are_true.py parses .github/workflows/*.yml and asserts on the
+# tests/test_workflows.py parses .github/workflows/*.yml and asserts on the
 # PARSED structure, because what went wrong there twice was a structural
 # property of an `if:` condition and not a spelling. It is here rather than in
 # requirements.txt because nothing the pipeline runs reads YAML.

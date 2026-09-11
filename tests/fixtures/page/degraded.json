@@ -17,8 +17,19 @@
   "session": "2026-09-10",
   "session_state": "open",
   "expected_session": "2026-09-10",
-  "status": "ok",
-  "problems": [],
+  "status": "degraded",
+  "problems": [
+   {
+    "stage": "grade",
+    "kind": "chart_missing",
+    "message": "AMD: RuntimeError"
+   },
+   {
+    "stage": "grade",
+    "kind": "claude_unavailable",
+    "message": "no reply for any of 5 names"
+   }
+  ],
   "dry_run": false,
   "model": "claude-sonnet-4-6",
   "feed": "sip",
@@ -45,14 +56,14 @@
   "graded": {
    "a_plus": 3,
    "a": 1,
-   "b": 0,
-   "c": 1,
+   "b": 1,
+   "c": 0,
    "skip": 0
   },
   "reads": {
    "requested": 5,
-   "done": 5,
-   "unavailable_reason": null
+   "done": 0,
+   "unavailable_reason": "see problems"
   },
   "email": "skipped",
   "published_at": "2026-09-10T22:30:00+00:00",
@@ -69,7 +80,7 @@
  "nights": [
   {
    "session": "2026-09-10",
-   "status": "ok",
+   "status": "degraded",
    "published_at": "2026-09-10T22:30:00+00:00"
   }
  ],
@@ -1111,15 +1122,15 @@
    },
    "chart": "charts/AAPL.png",
    "claude": {
-    "agree": true,
-    "grade": "A+",
-    "score": 9.3,
-    "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
-    "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
-    "entry_note": "Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.",
-    "source": "claude",
-    "chart_seen": true,
-    "error": null
+    "agree": null,
+    "grade": null,
+    "score": null,
+    "reason": null,
+    "key_risk": null,
+    "entry_note": null,
+    "source": "fallback",
+    "chart_seen": false,
+    "error": "RuntimeError: upstream connect error"
    },
    "rank": 1,
    "series": [
@@ -2501,17 +2512,17 @@
      }
     ]
    },
-   "chart": "charts/AMD.png",
+   "chart": null,
    "claude": {
-    "agree": true,
-    "grade": "A+",
-    "score": 9.3,
-    "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
-    "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
-    "entry_note": "Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.",
-    "source": "claude",
-    "chart_seen": true,
-    "error": null
+    "agree": null,
+    "grade": null,
+    "score": null,
+    "reason": null,
+    "key_risk": null,
+    "entry_note": null,
+    "source": "fallback",
+    "chart_seen": false,
+    "error": "RuntimeError: upstream connect error"
    },
    "rank": 2,
    "series": [
@@ -3863,15 +3874,15 @@
    },
    "chart": "charts/NVDA.png",
    "claude": {
-    "agree": true,
-    "grade": "A+",
-    "score": 9.3,
-    "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
-    "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
-    "entry_note": "Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.",
-    "source": "claude",
-    "chart_seen": true,
-    "error": null
+    "agree": null,
+    "grade": null,
+    "score": null,
+    "reason": null,
+    "key_risk": null,
+    "entry_note": null,
+    "source": "fallback",
+    "chart_seen": false,
+    "error": "RuntimeError: upstream connect error"
    },
    "rank": 3,
    "series": [
@@ -5263,15 +5274,15 @@
    },
    "chart": "charts/TSLA.png",
    "claude": {
-    "agree": true,
-    "grade": "A",
-    "score": 8.4,
-    "reason": "The base is orderly and the burst is real, but the close sits inside the top fifth of the range rather than at the high.",
-    "key_risk": "A weak open would put the entry under the burst bar's midpoint.",
-    "entry_note": "Buy only inside the zone in the first thirty minutes.",
-    "source": "claude",
-    "chart_seen": true,
-    "error": null
+    "agree": null,
+    "grade": null,
+    "score": null,
+    "reason": null,
+    "key_risk": null,
+    "entry_note": null,
+    "source": "fallback",
+    "chart_seen": false,
+    "error": "RuntimeError: upstream connect error"
    },
    "rank": 4,
    "series": [
@@ -6479,19 +6490,19 @@
    "score": 8.5,
    "vetoes": [],
    "reclass": "anticipation",
-   "grade": "C",
+   "grade": "B",
    "plan": null,
    "chart": "charts/PLUG.png",
    "claude": {
-    "agree": false,
-    "grade": "C",
-    "score": 5.2,
-    "reason": "The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.",
-    "key_risk": "It reverses through the burst low.",
-    "entry_note": "Pass.",
-    "source": "claude",
-    "chart_seen": true,
-    "error": null
+    "agree": null,
+    "grade": null,
+    "score": null,
+    "reason": null,
+    "key_risk": null,
+    "entry_note": null,
+    "source": "fallback",
+    "chart_seen": false,
+    "error": "RuntimeError: upstream connect error"
    },
    "rank": 5,
    "series": [
@@ -7400,7 +7411,7 @@
      "v": 3000000.0
     }
    ],
-   "summary": "PLUG: +5.0% on 5.0× volume out of a base 3.5% deep. C 8.5, 5 of 6 criteria."
+   "summary": "PLUG: +5.0% on 5.0× volume out of a base 3.5% deep. B 8.5, 5 of 6 criteria."
   }
  ],
  "trades": [
@@ -8828,10 +8839,10 @@
  },
  "closest_miss": {
   "ticker": "PLUG",
-  "grade": "C",
+  "grade": "B",
   "score": 8.5,
   "why": "fails close near the high",
-  "sentence": "PLUG came closest at C 8.5: fails close near the high."
+  "sentence": "PLUG came closest at B 8.5: fails close near the high."
  },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
@@ -8853,5 +8864,5 @@
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."
  },
- "fixture": "full"
+ "fixture": "degraded"
 }
