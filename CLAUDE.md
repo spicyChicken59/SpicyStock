@@ -364,65 +364,67 @@ of the full-market record's size and of Pages serving the hash routes.
 
 ## Checkpoint, 11 Sep 2026 — visual exploration and one-click follow-up
 
-**Revision.** Branch `claude/spicystock-ticket-record-fixes-su1nh1`, one
-commit on top of `2bea66f` (the merge of #50). SpicyHome was read at
-`9c24129` and not written: taken from it were the bounded panel with a
-compact header strip, segmented controls in one row and the button
-hierarchy, in the design system's own tokens. The component restored is
-the burst map of `29e3205` (`docs/signal-map.js`: a button per point,
-stacked coincident points, a table twin, one selection with the cards);
-the history holds no other candle or line renderer.
+**Revision.** `a63a6d9` on `claude/spicystock-ticket-record-fixes-su1nh1`,
+merged to `main` as `74bff88` (#51). SpicyHome was read at `9c24129` and
+not written: taken from it were the bounded panel with a compact header
+strip, segmented controls in one row and the button hierarchy. The
+component restored is the burst map of `29e3205` (`docs/signal-map.js`:
+a button per point, stacked coincident points, a table twin, one
+selection with the cards).
 
 **What was built.** One chart panel (`detailChart()`): Setup | Candles |
 Line share `SCStock.chartGeometry()`, so levels, labels and tooltips
 agree in every mode; the Setup range frames the base, the caption
 discloses the sessions, the levels and an off-range aim, and the labels
-sit in a gutter (`rightLabel()`) while the lines stay at
-their prices. The Map is `SCStock.map.render()` over `gain_pct` and
-`volume_vs_prior` as recorded, the unplottable listed by reason.
-Following is `SCStock.follow` over a versioned browser store; a followed
-card prints the saved levels, the latest close from the record's new
-`observations` block and the movement since the signal close, marked as
-not a P&L; `pipeline.observations()` derives the block from bars already
-fetched, `report.validate()` refuses a malformed one. A page over a fixture
-wears `data-ss-demo`, a notice naming the fixture and a marked simulated
-chart-reader reply.
+sit in a gutter (`rightLabel()`) while the lines stay at their prices.
+The Map is `SCStock.map.render()` over `gain_pct` and `volume_vs_prior`
+as recorded. Following is `SCStock.follow` over a versioned browser
+store; a followed card prints the saved levels, the latest close from
+the record's new `observations` block (`pipeline.observations()`, from
+bars already fetched, refused by `report.validate()` when malformed) and
+the movement since the signal close, marked as not a P&L. A page over a
+fixture wears `data-ss-demo`, a notice naming the fixture and a marked
+simulated chart-reader reply.
 
 **Checks run** (offline, through the doubles): `pytest tests/ -q` 1023
 passed; `python tools/make_fixture.py --check` 7 fixtures current;
 `node tools/chart_check.mjs` 163/163 with its new panel section;
-`node tools/page_smoke.mjs --shots` 2277/2277 with `checkModes`, `checkMap`,
-`checkFollowing` and three more dropped fields. Its first run found eight
-holes, all closed: the notice and a two-row panel header had pushed the
-chart and the phone's search under the first screen (one strip, the
-legend under the chart, a one-line notice); the store keys were dotted
-lowercase digit-bearing values beside the word `KEY`, what the secret
-scan reads as a credential (colons now); the browser's validation bubble
-swallowed the size sentence (`novalidate`); the record's instruction
-says "filled", so a followed card quotes it under *the record says*. Screenshots
-at 1280 and 390 px, dark and light, were looked at against the previous
-pass's: COIL in three modes, the map with AAPL and TSLA sharing a spot,
-the followed setup, the stale page. NOT run, not claimable: a live
-fetch, a real Claude reply, Resend, Pages, and any judgement of the
-ticket and replay leads, live data quality or trading edge.
+`node tools/page_smoke.mjs --shots` 2277/2277 with `checkModes`,
+`checkMap`, `checkFollowing` and three more dropped fields. Its first run
+found eight holes, all closed: the notice and a two-row panel header had
+pushed the chart and the phone's search under the first screen (one
+strip, a one-line notice now); the store keys were dotted lowercase
+digit-bearing values beside the word `KEY`, what the secret scan reads
+as a credential (colons now); the browser's validation bubble swallowed
+the size sentence (`novalidate`); the record's instruction says
+"filled", so a followed card quotes it under *the record says*.
+Screenshots at 1280 and 390 px, dark and light, were looked at against
+the previous pass's.
 
-**Settled here.** One panel, one geometry, three modes, the Setup range
-the default; labels in the gutter, lines at their prices; the map is the
+**Run live** (`evening.yml` dry run, run 45 on `74bff88`, 4:51 PM ET):
+3008 names from the Nasdaq directory, 3009 symbols fetched in about
+forty seconds against the 900-second budget, one without a bar for the
+session (ATAI), twelve Claude reads with 15,477 prompt tokens from the
+cache, verdict *Stand aside.*, exit 0, nothing committed or mailed. The
+record went to the run's artifact, whose host the sandbox proxy refuses,
+so it was not read here; a red night offers no ticket, so the withheld
+count the ceiling decision needs is still unobserved. NOT claimable:
+Resend, and any judgement of the ticket and replay leads, live data
+quality or trading edge.
+
+**Settled here.** One panel, one geometry, three modes; the map is the
 cards' twin, not a third stage; Following saves a snapshot, never a
-purchase, a fill or a P&L, in this browser only; observations derived,
-never fetched.
+purchase, a fill or a P&L, in this browser only.
 
 **Keep / fix / defer / omit.** Keep: everything above. Fix next if it
-bites: the header strip holds one line at 1280 with fifty pixels to
-spare and wraps on a narrower column; a map under `LABEL_MIN_WIDTH`
-labels only the chosen, focused and hovered point; the volume pane's
-average label sits under a burst's bar. Defer to Astra:
-the +4% ceiling versus his 4% stop line (unchanged); whether a followed
-setup keeps an observation older than `OBSERVATION_DAYS`. Omit: trade
-logging, a portfolio, a journal, a scenario engine.
+bites: the header strip holds one line at 1280 by fifty pixels and wraps
+on a narrower column; a map under `LABEL_MIN_WIDTH` labels only the
+chosen, focused and hovered point. Defer to Astra: the +4% ceiling
+versus his 4% stop line (unchanged); whether a followed setup keeps an
+observation older than `OBSERVATION_DAYS`. Omit: trade logging, a
+portfolio, a journal, a scenario engine.
 
-**Next action.** Dispatch `evening.yml` with dry_run after today's close
-and read its log: the fetch time against the budget, the coverage, the
-bursts and the A-quality bursts withheld at the limit (the ceiling
-decision's input); then open the page over its record on a phone and
-walk the three modes, the map and one follow.
+**Next action.** On the next green or yellow session, dispatch the dry
+run again and count the A-quality bursts withheld at the limit from its
+artifact, downloaded outside this sandbox; then open the page over that
+record on a phone and walk the three modes, the map and one follow.
