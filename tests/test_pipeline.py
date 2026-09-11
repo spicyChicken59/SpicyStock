@@ -204,16 +204,84 @@ def test_an_email_failure_keeps_the_record_and_exits_three(market, claude, fake_
 
 
 # --------------------------------------------------------------- closed ---
-def test_a_closed_market_republishes_the_plans_unchanged(market, claude, fake_resend, fake_alpaca, tmp_path):
+def test_a_closed_market_republishes_the_previous_sessions_plans_unchanged(market, claude, fake_resend, fake_alpaca, tmp_path):
+    """Night one publishes a trade for the 9th; the 10th is a holiday. The
+    closed night re-presents the 9th's tickets verbatim, walks its picks as
+    plans that have had no session yet, and records nothing new."""
     from datetime import date
+    first, first_data, docs = evening(tmp_path, market, now=datetime(2026, 9, 9, 22, 30, tzinfo=timezone.utc))
+    assert first_data["trades"] == ["AAA"]
+    picks_before = (docs / record.PICKS_FILE).read_text()
     fake_alpaca.close_session(date(2026, 9, 10))
     rep, data, docs = evening(tmp_path, market)
     assert rep.exit_code() == 0, rep.problems
     run = data["run"]
     assert run["session_state"] == "closed" and run["status"] == "closed"
     assert run["expected_session"] == SESSION and run["session"] == "2026-09-09"
-    assert data["cover"]["h1"] == report.H1_CLOSED and data["bursts"] == [] and data["trades"] == []
+    assert data["cover"]["h1"] == report.H1_CLOSED and "The plans from 2026-09-09 stand" in data["cover"]["dek"]
+    assert data["trades"] == ["AAA"] and [b["ticker"] for b in data["bursts"]] == [b["ticker"] for b in first_data["bursts"]]
+    assert data["bursts"][0]["plan"]["order_json"] == first_data["bursts"][0]["plan"]["order_json"]
+    assert data["watchlist"]["top"][0]["ticker"] == "COIL"
+    held = {p["ticker"]: p for p in data["open_plans"]}
+    assert held["AAA"]["status"] == "pending" and "No session since the 2026-09-09 pick" in held["AAA"]["instruction"]
+    assert (docs / record.PICKS_FILE).read_text() == picks_before
     assert data["nights"][-1]["status"] == "closed"
+
+
+def test_a_closed_first_night_has_nothing_to_carry_and_says_so(market, claude, fake_resend, fake_alpaca, tmp_path):
+    from datetime import date
+    fake_alpaca.close_session(date(2026, 9, 10))
+    rep, data, docs = evening(tmp_path, market)
+    assert rep.exit_code() == 0 and data["cover"]["h1"] == report.H1_CLOSED
+    assert data["bursts"] == [] and data["trades"] == [] and data["open_plans"] == []
+
+
+def test_a_closed_night_whose_email_failed_is_a_degraded_night_in_the_row(market, claude, fake_resend, fake_alpaca, tmp_path):
+    from datetime import date
+    fake_alpaca.close_session(date(2026, 9, 10))
+    fake_resend.raises = RuntimeError("refused")
+    rep, data, docs = evening(tmp_path, market)
+    assert rep.exit_code() == pipeline.EXIT_FAILED_AFTER_PUBLISH
+    assert data["run"]["status"] == "degraded" and data["nights"][-1]["status"] == "degraded"
+
+
+def test_an_a_plus_burst_the_account_cannot_size_is_cut_not_traded(market, claude, fake_resend, tmp_path, monkeypatch):
+    monkeypatch.setenv("ACCOUNT_EQUITY", "100")
+    rep, data, docs = evening(tmp_path, market)
+    assert rep.exit_code() == 0, rep.problems
+    assert data["trades"] == [] and data["beyond_cap"] == ["AAA"]
+    assert data["cover"]["h1"] == report.H1_KEEP_CASH
+    assert data["cash_budget"]["cut"][0]["ticker"] == "AAA" and "cannot size it" in data["cash_budget"]["cut"][0]["reason"]
+    assert data["bursts"][0]["plan"]["shares"] == 0 and data["bursts"][0]["plan"]["order_json"] is None
+    assert json.loads((docs / record.PICKS_FILE).read_text())["picks"] == []
+
+
+def test_a_thin_night_degrades_and_publishes_over_the_names_that_printed(market, claude, fake_resend, fake_alpaca, tmp_path):
+    """Eight of thirteen names one session stale: under half carry the
+    session, over five percent do. The run continues over the five that
+    printed, says coverage_thin, and breadth counts those five."""
+    stale = [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(8)]
+    for name in stale:
+        fake_alpaca.add_history(name, fake_alpaca.history[name], stale_sessions=1)
+    rep, data, docs = evening(tmp_path, market)
+    assert rep.exit_code() == pipeline.EXIT_DEGRADED, rep.failure
+    assert [p["kind"] for p in data["run"]["problems"]] == ["coverage_thin"]
+    assert data["run"]["session"] == SESSION and data["run"]["coverage"]["stale"] == 8
+    assert data["breadth"]["universe"] == 5 and data["trades"] == ["AAA"]
+
+
+@pytest.mark.parametrize("name, value, words", [
+    ("SCAN_SESSION_DATE", "tomorrow", "SCAN_SESSION_DATE"),
+    ("ACCOUNT_EQUITY", "ten grand", "the account variables"),
+    ("SCAN_SEND_EMAIL", "maybe", "SCAN_SEND_EMAIL"),
+    ("SCAN_FEED", "bloomberg", "SCAN_FEED"),
+    ("SCAN_UNIVERSE", "everything", "SCAN_UNIVERSE"),
+])
+def test_a_variable_the_code_does_not_understand_is_a_preflight_failure(market, claude, fake_resend, tmp_path, monkeypatch, name, value, words):
+    monkeypatch.setenv(name, value)
+    with pytest.raises(pipeline.PreflightError, match=words):
+        pipeline.run_evening(tickers=market, docs=tmp_path / "docs", now=EVENING)
+    assert not (tmp_path / "docs" / pipeline.DATA_FILE).exists() and fake_resend.sent == []
 
 
 # --------------------------------------------------------------- failed ---
@@ -333,3 +401,7 @@ def test_main_returns_the_reports_exit_code(market, claude, fake_resend, tmp_pat
     monkeypatch.setattr(pipeline, "run_evening", lambda **kw: real(**{**kw, "docs": tmp_path / "docs", "now": EVENING}))
     assert pipeline.main(["evening", "--tickers", ",".join(market)]) == 0
     assert pipeline.main(["evening", "--tickers", ",".join(market), "--dry-run"]) == 0
+    claude.set_error(RuntimeError("down"))
+    assert pipeline.main(["evening", "--tickers", ",".join(market)]) == pipeline.EXIT_DEGRADED
+    monkeypatch.setenv("SCAN_SEND_EMAIL", "maybe")
+    assert pipeline.main(["evening", "--tickers", ",".join(market)]) == pipeline.EXIT_FAILED

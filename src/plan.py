@@ -1084,6 +1084,16 @@ def cash_budget(plans: Sequence[Mapping[str, Any]], account: Account,
     at_risk = _money(sum(_money(p.get("risk_usd") or 0) for p in plans
                          if p.get("ticker") in within))
     cut = []
+    for row in skipped:
+        # an eligible plan the account could not size is cut, and says why
+        src = next((p for p in plans if p.get("ticker") == row["ticker"]), {})
+        if src.get("action") == "no_new_longs":
+            cut.append({"ticker": row["ticker"], "reason": "breadth sizes new positions at zero tonight"})
+        else:
+            rps = src.get("risk_per_share")
+            cut.append({"ticker": row["ticker"], "reason": (f"the account cannot size it: {_usd(rps)} at risk per share against a "
+                                                            f"{_usd(account.risk_usd)} risk budget comes to no whole share") if rps
+                        else "the account cannot size it: the plan comes to no whole share"})
     for row in beyond:
         if row["reason"] == "slot_cap":
             holders = ", ".join(within) if within else "the open plans"

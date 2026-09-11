@@ -804,3 +804,14 @@ def test_the_budget_counts_dollars_at_risk_over_the_plans_within_the_slots_alone
     assert "4-slot cap" in budget["cut"][0]["reason"] and "AAA, BBB" in budget["cut"][0]["reason"]
     over = plan.cash_budget([{**rows[0], "position_usd": 9_000.0}, {**rows[1], "position_usd": 2_000.0}], account)
     assert over["within"] == ["AAA"] and over["cut"][0]["reason"].startswith("the equity")
+
+
+def test_a_plan_the_account_cannot_size_is_cut_and_says_why():
+    account = plan.Account(equity=100, risk_pct=0.5, max_position_pct=25, max_open_positions=4)
+    rows = [{"ticker": "BIG", "action": "no_order", "shares": 0, "position_usd": 0.0, "risk_usd": 0.0, "risk_per_share": 4.03},
+            {"ticker": "RED", "action": "no_new_longs", "shares": 0, "position_usd": 0.0, "risk_usd": 0.0}]
+    budget = plan.cash_budget(rows, account)
+    assert budget["within"] == [] and budget["at_risk_usd"] == 0.0
+    cut = {c["ticker"]: c["reason"] for c in budget["cut"]}
+    assert cut["BIG"] == "the account cannot size it: $4.03 at risk per share against a $0.50 risk budget comes to no whole share"
+    assert cut["RED"] == "breadth sizes new positions at zero tonight"

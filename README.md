@@ -89,8 +89,11 @@ session. The run:
   else. SPY rides along for the scorecard's comparison line.
 - **session** — from the bars alone: if half the names carry a bar for the
   expected session the market was open; if almost none do but the previous
-  session is there, it was closed and the run republishes the standing
-  plans with the day counts unadvanced; anything else is an outage.
+  session is there, it was closed and the run republishes the previous
+  session's tickets verbatim with its picks as plans that have had no
+  session yet; between the two it is a thin night, `coverage_thin`, and the
+  run goes on over the names that printed; fewer than that with the previous
+  session absent too is an outage and the run fails.
 - **breadth** — the Market Monitor columns and the regime: green (full
   size), yellow (half size, A+ only), red (no new longs; the open plans get
   a tighten-and-sell clause).
@@ -109,8 +112,9 @@ session. The run:
 - **plan** — every A-quality burst gets a plan sized from the account
   (default $10,000, 0.5% risk, 25% cap, four slots): entry zone, stop (the
   burst low, or the bar's midpoint when the low is too far, refused past
-  4%), shares, the ticket, the exits and the targets. Plans past the free
-  slots or the equity are listed as *beyond the cap* with the reason.
+  4%), shares, the ticket, the exits and the targets. A trade is a plan with
+  an order: plans past the free slots or the equity, and a plan the account
+  cannot size to a whole share, are listed as cut with the reason.
 - **record** — the picks go to `docs/picks.json`; the open plans and the
   scorecard are computed from it and the bars.
 - **publish** — `docs/data.json` is written and validated, then the email
@@ -119,8 +123,11 @@ session. The run:
   because a token push does not trigger one.
 
 Exit codes are the workflow's contract: **0** clean, **1** failed before
-publishing (the failure notice is mailed instead), **2** degraded but
+publishing (the failure notice is mailed instead, when the failure came
+after preflight and the delivery keys are there), **2** degraded but
 published (a warning, not a red run), **3** published but the email failed.
+Preflight checks every variable the run reads, for presence and for a value
+the code understands, before anything is fetched or paid for.
 A degraded night names its problem with one of seven words —
 `universe_cached`, `coverage_thin`, `claude_unavailable`, `claude_partial`,
 `chart_missing`, `email_failed`, `push_retried` — and the page has one fixed
@@ -198,6 +205,9 @@ from bars alone: a burst ticket fills at the next open if the open sits
 inside the zone (or at the trigger if the day trades up through it), an
 anticipation ticket at its trigger; the published stop is one R; a half
 sold at +8% or at day 3 is half the position; everything settles by day 5.
+A fill at the trigger is walked from the fill: on that day only the close
+is known to have printed after it, so a low under the stop that morning is
+not a stop-out and a high before the fill is not a sale.
 It prints counts from the first night and rates only from twenty settled
 plans, and SPY over the same days is one comparison line beside it, not a
 benchmark. What it cannot see — a fill you never took, slippage, a stop

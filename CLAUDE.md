@@ -99,7 +99,7 @@ including the six cover sentences and the plan instructions. The chart
 (`docs/app-chart.js`) is annotated SVG on the SpicyChicken design system
 snapshot under `docs/design-system/`.
 
-What is measured offline: 970 tests, the chart check, and the page smoke
+What is measured offline: 987 tests, the chart check, and the page smoke
 over six fixtures plus the stale and no-record states. What is NOT: the
 full-market fetch time from a runner (the dry-run dispatch measures it), a
 real Claude reply to a real chart, Resend delivering, Pages building after
@@ -122,12 +122,35 @@ nowhere, the fixture-inheritance test ran on the fixture's own session so
 the inherited night was replaced by tonight's and hid -- and one was two
 spellings of one rule (`run_status()` now, one place). All twenty-one die.
 
+## The v2 audit, worked
+
+Two reviewers by execution over the merged commit, one on the run and the
+record, one on the page and the mail. The first returned eleven findings,
+every one reproduced here before it was touched; the two highs were both
+about a sentence the record would have published as fact. A fill at the
+trigger later in the day was read against that morning's open, so a burst
+whose low sat inside the entry zone was "stopped at the open" of a position
+that did not exist yet, and the scorecard booked -1R on a hold: the fill day
+is walked from the fill now, and only its close is known to have printed
+after it. And a closed night said "the plans from <session> stand" over an
+empty page: the previous session's tickets are carried verbatim now and its
+picks read as plans that have had no session yet. The mediums: an A+ burst
+the account could not size to a whole share headlined as a trade and
+entered the record as a zero-share pick (a trade is a plan with an order);
+the thin-night branch died in breadth over a calendar that lacked the
+session (breadth counts the names that printed); a name that stopped
+printing after its pick read "buy per the plan" and held a slot; a typo in a
+workflow variable was a traceback rather than a preflight sentence; the SPY
+line's test could not fail because the fixture's SPY moved the same every
+day. Each is pinned by the test the finding named.
+
 ## Open leads, written down rather than worked
 
 - An upper bound on the day's gain is a strategy decision this build does
   not take; a ≥15% day halves the size as a hazard and is never a veto.
 - The scorecard's fill rule is the ticket's own mechanics on daily bars; a
-  fill inside the zone at the open is assumed to be at the open.
+  fill inside the zone at the open is assumed to be at the open, and a
+  day order on a session the name's frame lacks is walked from its next bar.
 - `MAX_READS` is twelve by mechanical grade; a night with more A-quality
   bursts than that grades the rest by the checklist alone (`claude_partial`
   is not raised for those, only for names asked and unanswered).

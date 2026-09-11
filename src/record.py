@@ -100,6 +100,14 @@ def pick_problem(pick: Any) -> str | None:
     for key in ("entry_low", "entry_high", "limit", "trigger"):
         if key in pick and pick[key] is not None and not _finite(pick[key]):
             return f"{pick['ticker']}: {key} is not a number"
+    low, high = pick.get("entry_low"), pick.get("entry_high")
+    if low is not None and high is not None and not low <= pick["entry_ref"] <= high:
+        return f"{pick['ticker']}: entry_ref {pick['entry_ref']} is outside its zone {low}-{high}"
+    trigger, limit = pick.get("trigger"), pick.get("limit")
+    if trigger is not None and trigger <= pick["stop"]:
+        return f"{pick['ticker']}: trigger {trigger} is not above the stop {pick['stop']}"
+    if trigger is not None and limit is not None and limit < trigger:
+        return f"{pick['ticker']}: limit {limit} is under the trigger {trigger}"
     return None
 
 
@@ -275,15 +283,25 @@ def fill(pick: dict, bar: dict) -> tuple[str, float | None, str]:
 
 def replay(pick: dict, bars: list[dict], regime: str = "green") -> dict:
     """One pick walked over its later bars: the fill rule, then
-    ``plan.follow()`` from the fill price. The row carries the published
-    stop and targets beside the walk's own numbers, so the page can draw
-    stop, entry and aim on one scale."""
+    ``plan.follow()`` from the fill price (see the note on a trigger fill
+    inside). The row carries the published stop and targets beside the
+    walk's own numbers, so the page can draw stop, entry and aim on one
+    scale. A first bar the walk could not read is ``unreadable``, the way a
+    later one is."""
     base = {"ticker": pick["ticker"], "kind": pick.get("kind", "burst"), "picked": pick["date"],
             "grade": pick.get("grade"), "stop": pick["stop"], "targets": pick.get("targets"),
             "fill": None, "sessions": len(bars)}
     if not bars:
         walk = plan.follow(pick, [], regime)
         return {**walk, **base, "day": 0}
+    first = bars[0]
+    if not (first["l"] <= min(first["o"], first["c"]) and max(first["o"], first["c"]) <= first["h"]):
+        return {**base, "day": 1, "status": UNREADABLE, "fill": None,
+                "instruction": (f"Day 1 ({first['date']}): the bar could not be read (open {first['o']}, close "
+                                f"{first['c']} outside {first['l']}-{first['h']}); follow the plan's own stop."),
+                "events": [], "regime": regime, "entry_ref": pick["entry_ref"], "shares": pick.get("shares", 0),
+                "current_stop": pick["stop"], "last_close": None, "last_date": None,
+                "unrealised_pct": None, "exit_price": None, "result_pct": None, "half_sold": False}
     status, price, note = fill(pick, bars[0])
     if status == NOT_FILLED:
         first = bars[0]
@@ -294,8 +312,23 @@ def replay(pick: dict, bars: list[dict], regime: str = "green") -> dict:
                 "current_stop": pick["stop"], "last_close": first["c"], "last_date": first["date"],
                 "unrealised_pct": None, "exit_price": None, "result_pct": None, "half_sold": False}
     filled = {**pick, "entry_ref": price}
+    walked = list(bars)
+    if price != first["o"]:
+        # Filled at the trigger, some time after the open. A daily bar cannot
+        # say whether the day's low or high came before or after that fill;
+        # only the close is known to come after it. So the fill day is walked
+        # as the bar from the fill to the close: the open under the stop that
+        # the ticket waited out is not a stop-out of a position that did not
+        # exist yet, and a high the price left behind before filling is not a
+        # sale into strength. The day's low is kept when it is above the stop
+        # (it is the entry-day low the stop rises to); a low under the stop
+        # may have printed before the fill, so it is read as a cent above the
+        # stop -- the stop stays where it was published. Day 2 reads whole bars.
+        stop = float(pick["stop"])
+        low = first["l"] if first["l"] > stop else round(stop + 0.01, 2)
+        walked[0] = {**first, "o": price, "h": max(price, first["c"]), "l": min(low, price, first["c"])}
     try:
-        walk = plan.follow(filled, bars, regime)
+        walk = plan.follow(filled, walked, regime)
     except ValueError as exc:
         return {**base, "day": len(bars), "status": UNREADABLE, "fill": note,
                 "instruction": f"A later bar could not be read ({exc}); follow the plan's own stop.",
@@ -345,7 +378,9 @@ def open_plans(rec: dict, frames: dict[str, pd.DataFrame], session: str, regime:
     ``session``, walked through ``session``'s bars, oldest pick first (the
     one nearest its day-5 exit is the most urgent). A pick whose name the
     night did not fetch is returned with no bars and says so."""
+    from src import market_data
     window = set(sessions_before(frames, session, OPEN_PLAN_SESSIONS))
+    calendar_dates = [d.isoformat() for d in market_data.session_calendar(frames)] if frames else []
     rows = []
     for pick in rec.get("picks", []):
         if pick["date"] not in window:
@@ -353,8 +388,13 @@ def open_plans(rec: dict, frames: dict[str, pd.DataFrame], session: str, regime:
         df = frames.get(pick["ticker"])
         bars = later_bars(df, pick["date"], session)
         row = replay(pick, bars, regime)
-        if df is None:
-            row["instruction"] = (f"No bars for {pick['ticker']} tonight; follow the plan's own stop at "
+        passed = [d for d in calendar_dates if pick["date"] < d <= session]
+        if df is None or (not bars and passed):
+            # the night did not fetch the name, or the market printed sessions
+            # this name did not: a ticket that "has not had a session yet" is
+            # the wrong sentence for a name that has stopped printing
+            why = "No bars for" if df is None else f"No bar since the pick for"
+            row["instruction"] = (f"{why} {pick['ticker']} tonight; follow the plan's own stop at "
                                   f"{plan._usd(pick['stop'])} and its day-{plan.FINAL_EXIT_DAY} exit.")
             row["status"] = "unmeasured"
         rows.append(row)

@@ -117,6 +117,18 @@ def missing_env(run_type: str = "evening", dry_run: bool = False) -> list[str]:
 
 
 def preflight(run_type: str = "evening", dry_run: bool = False) -> None:
+    """Every variable the run reads, checked before anything is fetched or
+    paid for: the required ones for presence, the optional ones for a value
+    the code understands. A typo in a workflow variable is a preflight
+    failure with its own sentence, not a traceback from the middle of the run."""
+    checks = (("SCAN_SEND_EMAIL", delivery_enabled), ("SCAN_SESSION_DATE", clock.pinned_session),
+              ("SCAN_FEED", market_data.feed_from_env), ("SCAN_UNIVERSE", universe.mode),
+              ("the account variables", plan.Account.from_env))
+    for name, read in checks:
+        try:
+            read()
+        except ValueError as exc:
+            raise PreflightError(f"{name}: {exc}. Nothing has been spent. See .env.example.") from exc
     missing = missing_env(run_type, dry_run)
     if missing:
         raise PreflightError("missing or empty required environment: " + ", ".join(missing)
@@ -373,7 +385,8 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
 def make_plans(bursts: list[dict], frames: dict[str, pd.DataFrame], account: plan.Account,
                regime: dict, open_count: int, session: date | None = None) -> tuple[list[str], list[str], dict]:
     """A plan for every A-grade burst the regime admits; the trades list in
-    rank order and the cash budget over them."""
+    rank order (the plans with an order that fit the slots and the equity)
+    and the cash budget over them, with every cut plan named and its reason."""
     verdict = regime.get("verdict", "green")
     multiplier = float(regime.get("size_multiplier", 1.0))
     admitted = () if verdict == "red" else (YELLOW_GRADES if verdict == "yellow" else TRADE_GRADES)
@@ -396,9 +409,10 @@ def make_plans(bursts: list[dict], frames: dict[str, pd.DataFrame], account: pla
         b["plan"] = p
         plans.append(p)
     budget = plan.cash_budget(plans, account, open_positions=open_count)
-    beyond = {row["ticker"] for row in budget.get("beyond", [])}
-    trades = [p["ticker"] for p in plans if p.get("eligible") and p["ticker"] not in beyond]
-    return trades, sorted(beyond), budget
+    cut = {row["ticker"] for row in budget.get("cut", [])}
+    trades = [p["ticker"] for p in plans if p.get("eligible") and p.get("action") in plan.ORDER_ACTIONS
+              and p["ticker"] not in cut]
+    return trades, sorted(cut), budget
 
 
 def make_watchlist(frames: dict[str, pd.DataFrame], account: plan.Account, regime: dict,
@@ -527,9 +541,15 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             raise RuntimeError("the frames carry no common session")
         stats.session = session
         fresh = market_data.apply_session_rules(frames, session, stats) if not closed else {}
+        # a closed night re-presents the plans the previous session published,
+        # when the record on disk is that session's; the tickets still stand
+        carried = previous if (closed and (previous.get("run") or {}).get("session") == session.isoformat()) else {}
 
         rep.stage = "breadth"
-        breadth_block = breadth.snapshot({t: df for t, df in frames.items() if t != BENCHMARK_SYMBOL}, session)
+        # the Market Monitor is over the names that printed on the session:
+        # on a thin night the minority that answered, never the stale majority
+        counted = fresh if not closed else frames
+        breadth_block = breadth.snapshot({t: df for t, df in counted.items() if t != BENCHMARK_SYMBOL}, session)
         breadth_block["notes"] = breadth_notes(breadth_block)
         regime = breadth_block.get("regime", {"verdict": "green", "size_multiplier": 1.0, "reasons": []})
 
@@ -561,12 +581,23 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                  else {"top": [], "also_quiet": [], "counts": {}, "instruction": plan.ANTICIPATION_INSTRUCTION})
 
         rep.stage = "record"
+        if carried:
+            # the previous session's tickets, verbatim; its picks are walked as
+            # open plans against the session that did not happen, so each
+            # reads "no session since the pick yet" with its stop
+            published_carried = [dict(b) for b in carried.get("bursts", []) if isinstance(b, dict)]
+            trades = [t for t in carried.get("trades", []) if t in {b["ticker"] for b in published_carried}]
+            beyond_cap = [t for t in carried.get("beyond_cap", []) if t in {b["ticker"] for b in published_carried}]
+            budget = carried.get("cash_budget") or budget
+            lists = carried.get("watchlist") or lists
         if not closed and not dry_run:
             picks = [pick_of(b["plan"], "burst", b["grade"], b["score"]) for b in bursts if b["ticker"] in trades]
             picks += [pick_of(row["plan"], "anticipation", "watch", row.get("ti65"))
-                      for row in lists.get("top", []) if row.get("plan") and row["plan"].get("eligible")]
+                      for row in lists.get("top", [])
+                      if row.get("plan") and row["plan"].get("eligible") and row["plan"].get("action") in plan.ORDER_ACTIONS]
             rec = record.append(rec, session.isoformat(), picks, regime.get("verdict", "green"))
-        open_plans = record.open_plans(rec, frames, session.isoformat(), regime.get("verdict", "green"))
+        walk_session = expected if closed else session
+        open_plans = record.open_plans(rec, frames, walk_session.isoformat(), regime.get("verdict", "green"))
         scorecard = record.scorecard(rec, frames, session.isoformat())
 
         rep.stage = "publish"
@@ -578,6 +609,8 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             row["series"] = series_of(fresh[b["ticker"]]) if b["ticker"] in keep_series else []
             row["summary"] = report.summary(row)
             published_bursts.append(row)
+        if carried:
+            published_bursts = published_carried
         graded = {key: sum(1 for b in bursts if b["grade"] == g) for key, g in GRADE_KEYS.items()}
         coverage = {"requested": stats.requested, "with_bars": stats.with_bars, "on_session": len(fresh),
                     "measured": measured, "stale": len(stats.stale), "gapped": len(stats.gapped),
@@ -598,7 +631,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             "rules_version": RULES_VERSION_NOTE, "type": "evening",
         }
         nights = record.nights(previous.get("nights"), {"session": session.isoformat(),
-                                                        "status": "closed" if closed else rep.status,
+                                                        "status": run_status(rep, closed),
                                                         "published_at": generated})
         account_block = account.to_dict() | {"notes": plan.account_notes(account)}
         data = report.build(run_block, account_block, build_rules(uni), breadth_block, published_bursts,
@@ -619,13 +652,11 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             except Exception as exc:  # noqa: BLE001
                 rep.problem("email_failed", f"{type(exc).__name__}: {exc}")
                 data["run"]["email"] = "failed"
-                data["run"]["problems"] = list(rep.problems)
-                data["run"]["status"] = rep.status
+                restamp(data, rep, closed)
                 report.write(data, docs / DATA_FILE)
                 rep.fail(exc)
                 return rep
-        data["run"]["status"] = run_status(rep, closed)
-        data["run"]["problems"] = list(rep.problems)
+        restamp(data, rep, closed)
         report.write(data, docs / DATA_FILE)
         return rep
     except PreflightError:
@@ -633,7 +664,10 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
     except Exception as exc:  # noqa: BLE001
         rep.fail(exc)
         if not rep.published:
-            notify_failure(rep, dry_run, expected_session(now))
+            try:
+                notify_failure(rep, dry_run, expected_session(now))
+            except Exception as notice_exc:  # noqa: BLE001
+                log.error("the failure notice could not be composed: %s", notice_exc)
         return rep
 
 
@@ -645,6 +679,18 @@ SLOT_STATUSES = ("hold", "sell_half", "sell_into_strength", "pending")
 def slots_held(open_plans: list[dict]) -> int:
     """How many of the account's slots last night's plans still occupy."""
     return sum(1 for o in open_plans if o.get("status") in SLOT_STATUSES)
+
+
+def restamp(data: dict, rep: RunReport, closed: bool) -> None:
+    """The status word and the problems, written into the run block AND the
+    night's own row in the reliability list, after a stage that can add a
+    problem (delivery). One rule for both, so the row can never call a
+    degraded night clean."""
+    data["run"]["status"] = run_status(rep, closed)
+    data["run"]["problems"] = list(rep.problems)
+    for night in data.get("nights", []):
+        if night.get("session") == data["run"].get("session"):
+            night["status"] = data["run"]["status"]
 
 
 def run_status(rep: RunReport, closed: bool) -> str:

@@ -657,63 +657,6 @@
  },
  "open_plans": [
   {
-   "ticker": "ANET",
-   "kind": "burst",
-   "picked": "2026-09-02",
-   "day": 4,
-   "sessions": 5,
-   "status": "stopped",
-   "instruction": "Day 4: opened at $30.38, under the $30.38 stop: stopped at the open (+2.4%).",
-   "events": [
-    {
-     "day": 1,
-     "date": "2026-09-03",
-     "event": "stop_raised_to_entry_low",
-     "price": 29.47
-    },
-    {
-     "day": 3,
-     "date": "2026-09-07",
-     "event": "sell_half",
-     "price": 30.54
-    },
-    {
-     "day": 3,
-     "date": "2026-09-07",
-     "event": "stop_trailed",
-     "price": 30.38
-    },
-    {
-     "day": 4,
-     "date": "2026-09-08",
-     "event": "stopped_at_open",
-     "price": 30.38
-    }
-   ],
-   "regime": "yellow",
-   "entry_ref": 29.67,
-   "shares": 83,
-   "current_stop": 30.38,
-   "last_close": 29.16,
-   "last_date": "2026-09-08",
-   "unrealised_pct": -1.72,
-   "exit_price": 30.38,
-   "result_pct": 2.39,
-   "half_sold": true,
-   "grade": "A",
-   "stop": 28.47,
-   "targets": {
-    "low_pct": 8.0,
-    "high_pct": 20.0,
-    "low": 32.36,
-    "high": 35.95,
-    "note": null,
-    "dollar_low": null,
-    "dollar_high": null
-   },
-   "fill": "filled at the open, $29.67"
-  },
-  {
    "ticker": "VRT",
    "kind": "burst",
    "picked": "2026-09-04",

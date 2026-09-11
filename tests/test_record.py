@@ -103,6 +103,9 @@ MALFORMED_PICKS = [
     (pick(shares=2.5), "shares is not a whole number"),
     (pick(shares=True), "shares is not a whole number"),
     (pick(entry_high="high"), "entry_high is not a number"),
+    (pick(entry_high=99.5), "outside its zone"),
+    (pick(kind="anticipation", trigger=95.0, limit=96.0), "trigger 95.0 is not above the stop"),
+    (pick(kind="anticipation", trigger=100.0, limit=99.0), "limit 99.0 is under the trigger"),
 ]
 
 
@@ -210,6 +213,39 @@ def test_replay_walks_from_the_fill_price_and_carries_the_published_stop_and_tar
     assert row["picked"] == "2026-09-01" and row["kind"] == "burst" and row["grade"] == "A"
 
 
+def test_a_fill_at_the_trigger_is_walked_from_the_fill_not_from_that_mornings_open():
+    """The reviewer's case: a burst whose low sits inside the entry zone. The
+    day opens under the stop, runs through the trigger and fills there, and
+    closes up. The position never traded under the stop, so day 1 is a hold;
+    the walk used to read the pre-fill open as a stop-out and record -1R."""
+    p = pick(entry_ref=106.0, entry_low=103.88, entry_high=110.24, stop=104.0, shares=8)
+    bars = [{"date": "2026-09-02", "o": 103.9, "h": 106.5, "l": 103.9, "c": 106.2},
+            {"date": "2026-09-03", "o": 106.5, "h": 108.0, "l": 106.0, "c": 107.5}]
+    row = record.replay(p, bars)
+    assert row["fill"] == "filled at the trigger, $106.00" and row["entry_ref"] == 106.0
+    assert row["status"] == "hold" and row["day"] == 2 and row["exit_price"] is None
+    assert not [e for e in row["events"] if e["event"].startswith("stopped")]
+    # the same day at the open (inside the zone, above the stop) reads the whole bar
+    at_open = record.replay(p, [{**bars[0], "o": 106.1}])
+    assert at_open["fill"] == "filled at the open, $106.10"
+
+
+def test_after_a_trigger_fill_only_the_close_decides_the_fill_day():
+    """A high the price left behind before the fill is not a sale into
+    strength; a close under the stop is a stop-out."""
+    p = pick(entry_ref=100.0, entry_low=99.0, entry_high=102.0, stop=96.0, shares=10)
+    ran_then_faded = [{"date": "2026-09-02", "o": 99.2, "h": 109.0, "l": 95.0, "c": 100.5}]
+    row = record.replay(p, ran_then_faded)
+    assert row["fill"] == "filled at the trigger, $100.00" and row["half_sold"] is False and row["status"] == "hold"
+    closed_under = [{"date": "2026-09-02", "o": 99.2, "h": 101.0, "l": 95.0, "c": 95.5}]
+    assert record.replay(p, closed_under)["status"] == "stopped"
+
+
+def test_an_unreadable_first_bar_is_unreadable_not_a_confident_fill():
+    row = record.replay(pick(), [{"date": "2026-09-02", "o": 200.0, "h": 103.0, "l": 100.0, "c": 102.0}])
+    assert row["status"] == record.UNREADABLE and "could not be read" in row["instruction"]
+
+
 def test_replay_with_no_bars_is_pending_and_says_so():
     row = record.replay(pick(), [])
     assert row["status"] == "pending" and row["day"] == 0 and "No session since" in row["instruction"]
@@ -286,6 +322,21 @@ def test_a_pick_whose_name_the_night_did_not_fetch_is_unmeasured_not_invented():
     assert rows[0]["status"] == "unmeasured" and "No bars for GONE" in rows[0]["instruction"]
 
 
+def test_a_name_with_no_bar_since_its_pick_is_unmeasured_not_a_live_ticket():
+    """The market printed six sessions; this name printed none of them. A
+    'buy per the plan' instruction would be about a name that stopped
+    trading, and the plan must not hold a slot."""
+    frames = calendar_frames()
+    frames["HALT"] = frame([PICK_DAY])
+    rec = record.append(record.empty(), "2026-09-01", [pick(ticker="HALT")])
+    rows = record.open_plans(rec, frames, "2026-09-09")
+    assert rows[0]["status"] == "unmeasured" and "No bar since the pick for HALT" in rows[0]["instruction"]
+    # the same name on a night no session has passed is a ticket that stands
+    frames_tonight = {k: frame([PICK_DAY]) for k in ("C0", "C1", "C2", "HALT")}
+    rows = record.open_plans(rec, frames_tonight, "2026-09-02")
+    assert rows[0]["status"] == "pending" and "No session since" in rows[0]["instruction"]
+
+
 def test_sessions_before_falls_back_to_weekdays_without_a_calendar():
     assert record.sessions_before({}, "2026-09-09", 3) == ["2026-09-04", "2026-09-07", "2026-09-08"]
     assert record.sessions_before({}, "bad", 3) == []
@@ -305,7 +356,9 @@ def _scored(n_wins: int, n_losses: int, monkeypatch, min_read: int | None = None
         frames[f"W{i}"] = frame(rows); names.append(f"W{i}")
     for i in range(n_losses):
         frames[f"L{i}"] = frame(losing); names.append(f"L{i}")
-    frames["SPY"] = frame([(d, 500.0, 502.0, 499.0, 505.0) for d, *_ in rows])
+    # SPY moves every day, so the pairing (entry-day open to exit-day close)
+    # is the only reading that gives the number the test computes by hand
+    frames["SPY"] = frame([(d, 500.0 + 3 * i, 503.0 + 3 * i, 499.0 + 3 * i, 501.0 + 3 * i) for i, (d, *_) in enumerate(rows)])
     rec = record.append(rec, "2026-09-01", [pick(ticker=t) for t in names])
     return record.scorecard(rec, frames, "2026-09-09")
 
@@ -319,7 +372,9 @@ def test_the_scorecard_counts_plans_fills_wins_and_losses_and_sums_r(monkeypatch
     assert win_r > 0
     assert sc["sum_r"] == round(3 * win_r + 2 * -1.0, 2)
     assert sc["avg_r"] == round(sc["sum_r"] / 5, 2)
-    assert sc["spy_avg_pct"] == 1.0                      # 500 open -> 505 close, every pick
+    # a win exits on day 5 (9 Sep: SPY 516 close), a loss on day 1 (2 Sep: 504 close); both enter at the 2 Sep open, 503
+    win_spy, loss_spy = 100 * (516.0 / 503.0 - 1), 100 * (504.0 / 503.0 - 1)
+    assert sc["spy_avg_pct"] == round((3 * win_spy + 2 * loss_spy) / 5, 2)
     assert sc["min_read"] == 5 and sc["note"] == record.SCORECARD_NOTE
 
 
