@@ -83,6 +83,14 @@ CI holds the committed fixtures to it.
 - **Do not edit the tree while a mutation harness is running**, and commit
   only the files of agents that have finished: two WIP commits captured
   mutants mid-harness.
+- **`secret-scan.yml` reads a rule key with digits as a credential.**
+  gitleaks' generic-api-key rule fires when a `key` field holds a lowercase
+  value with digits in it, such as `abnormal_10pct`, in a module, the record
+  or a fixture; `.gitleaks.toml` allowlists a lowercase underscored value on
+  those paths only, and nothing else. A push scan covers only the pushed
+  commit, so a red on one push is green on the next: a pull request scans
+  them all, and so does this note if it spells the field out. Watch the
+  scan, not only the tests.
 
 ## The shape now
 

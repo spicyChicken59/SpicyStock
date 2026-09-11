@@ -1,7 +1,14 @@
-# Keep every default detector. This exact public localStorage namespace is
-# a browser record label, not a credential; its assignment/comparison triggers
-# generic-api-key. Both the extracted value AND an exact code path must
-# match. No file, commit, or detector is excluded.
+# Keep every default detector. No file, commit or detector is excluded; the
+# one allowlist below is narrow on both the value and the path, and the
+# condition is AND, so both have to match.
+#
+# The run's rules are records with a "key" field ("abnormal_10pct",
+# "down25_quarter", "pct_above_40ma"): a lowercase identifier with digits
+# next to the word key is what generic-api-key looks for, and every fixture
+# and the record carry them. A credential does not look like that -- Alpaca
+# keys are upper case, Anthropic's carry hyphens, Resend's mixed case -- so
+# the value has to be a lowercase word with an underscore in it, and the
+# path has to be a module, the record or a page fixture.
 [extend]
 useDefault = true
 
@@ -9,15 +16,8 @@ useDefault = true
 id = "generic-api-key"
 
 [[rules.allowlists]]
-description = "Public trade-journal localStorage namespace in its module and browser test"
+description = "A rule key (lowercase, underscored, digits allowed) in a module, the record or a page fixture"
 condition = "AND"
 regexTarget = "secret"
-regexes = ['''^spicystock\.trade-journal\.v1$''']
-paths = ['''^(docs/stockbee-plan\.js|docs/trade-state\.js|tools/research_cockpit_smoke\.mjs|tools/trade_state_checks\.mjs)$''']
-
-[[rules.allowlists]]
-description = "Public v2 trading-state localStorage namespace"
-condition = "AND"
-regexTarget = "secret"
-regexes = ['''^spicystock\.trades\.v2$''']
-paths = ['''^(docs/trade-state\.js|tools/trade_state_checks\.mjs|tools/trade_workflow_smoke\.mjs)$''']
+regexes = ['''^[a-z]+[a-z0-9]*(_[a-z0-9]+)+$''']
+paths = ['''^(src/[a-z0-9_]+\.py|docs/(data|picks)\.json|tests/fixtures/page/[a-z]+\.json)$''']
