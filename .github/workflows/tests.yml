@@ -26,6 +26,13 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Run tests
         run: pytest tests/ -q
+      - name: The fixtures are what the pipeline writes
+        # tests/fixtures/page/*.json and docs/data.json + docs/picks.json are
+        # records the real pipeline wrote over a synthetic market; a change to
+        # the pipeline that moves them without regenerating them fails here.
+        env:
+          MPLBACKEND: Agg
+        run: python tools/make_fixture.py --check
       - name: Fail if the suite dirtied the working tree
         run: |
           set -euo pipefail

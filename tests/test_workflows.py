@@ -106,9 +106,10 @@ def test_the_intraday_check_is_dispatch_only_reads_only_and_never_commits():
 
 
 # ------------------------------------------------------------- tests -----
-def test_ci_runs_the_suite_the_chart_check_and_the_page_smoke():
+def test_ci_runs_the_suite_the_fixture_check_the_chart_check_and_the_page_smoke():
     wf = load("tests.yml")
     assert steps(wf, "pytest")["Run tests"]["run"].strip() == "pytest tests/ -q"
+    assert steps(wf, "pytest")["The fixtures are what the pipeline writes"]["run"].strip() == "python tools/make_fixture.py --check"
     page = steps(wf, "page")["Open the page against every fixture and read it back"]["run"]
     assert "node tools/chart_check.mjs" in page and "node tools/page_smoke.mjs --shots" in page
     assert "set -o pipefail" in page and "playwright@1.56.1" in page
