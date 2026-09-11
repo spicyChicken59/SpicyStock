@@ -147,16 +147,15 @@ class _Bars:
     def window(self, column: str, sessions: int, back: int = 0) -> np.ndarray | None:
         """``sessions`` values ending ``back`` sessions before the judged one.
 
-        None unless every value is readable: finite, positive for a price,
-        non-negative for a volume.
+        None unless every value is readable: positive for a price, non-negative
+        for a volume. A NaN -- which is what _bars() made of every non-finite or
+        non-numeric value -- fails either comparison, so nothing else is checked.
         """
         stop = self.pos - back
         start = stop - sessions + 1
         if start < 0:
             return None
         window = self._values[column][start:stop + 1]
-        if not np.isfinite(window).all():
-            return None
         readable = (window > 0).all() if column in _PRICES else (window >= 0).all()
         return window if readable else None
 
@@ -240,7 +239,7 @@ def _close_to_close(b: _Bars, *, down: bool) -> dict | None:
     ratio = _ratio(c, c1)
     if ratio is None or v is None or v1 is None:
         return None
-    moved = ratio <= BREAKDOWN_RATIO if down else ratio >= BURST_RATIO
+    moved = ratio <= BREAKDOWN_RATIO if down else ratio > BURST_RATIO
     if not (moved and v > v1 and v >= MIN_VOLUME):
         return None
     return {

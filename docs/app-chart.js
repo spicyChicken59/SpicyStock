@@ -130,7 +130,10 @@
     var tk = SC.ticks(lo, hi, compact ? 3 : 5), gridValues = [], decimals = 2;
     if (tk.ticks.length > 1) decimals = tk.ticks[1] - tk.ticks[0] >= 1 ? 0 : 2;
     for (i = 0; i < tk.ticks.length; i++) if (tk.ticks[i] > lo && tk.ticks[i] < hi) gridValues.push(tk.ticks[i]);
-    var ref = trigger !== null ? trigger : entryHigh !== null ? entryHigh : entryLow !== null ? entryLow : lastClose;
+    /* the target band is read off the entry reference: the top of the buy
+       zone (the worst fill), else the trigger, else the last close */
+    var ref = num(options.targetRef) !== null ? options.targetRef
+      : entryHigh !== null ? entryHigh : entryLow !== null ? entryLow : trigger !== null ? trigger : lastClose;
     var target = null;
     if (targetLow !== null && targetHigh !== null) {
       target = { low: targetLow, high: targetHigh, ref: ref };
@@ -284,7 +287,7 @@
 
     return {
       width: W, height: H, n: n, compact: compact, gutter: gutter,
-      plot: plot, vol: vol, axisY: H - 5, slot: r1(slot), bodyWidth: bodyW,
+      plot: plot, vol: vol, axisY: H - 5, slot: slot, bodyWidth: bodyW,
       domain: { lo: lo, hi: hi }, volMax: vmax, lastClose: lastClose, decimals: decimals,
       x: x, y: y, vy: vy,
       grid: grid, dateTicks: kept, bars: out, ma: maPaths,

@@ -37,8 +37,8 @@ const ok = (name, pass, detail = '') => { results.push({ name, pass: !!pass, det
 
 // --- the synthetic series ----------------------------------------------------
 // Deterministic (mulberry32), so a screenshot and a geometry number can be
-// compared across runs. Shape: a 60-session advance, a pullback, a 17-session
-// tight base, a +7% burst on 3x volume at index 100, then follow-through.
+// compared across runs. Shape: a 65-session advance, a pullback, a 17-session
+// tight base, a +7% burst on 3x volume at index 111, then follow-through.
 // Index 30 is a GAP bar (null o/h/l, close kept); index 31 has no bar at all.
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function sessions(n, last) {
@@ -48,16 +48,16 @@ function sessions(n, last) {
 }
 export function synthetic() {
   const r = rng(20260909), dates = sessions(120, '2026-09-09'), bars = [];
-  let close = 62, base = { start: 83, end: 99 };
+  const BURST = 111; let close = 62, base = { start: 94, end: 110 };
   for (let i = 0; i < 120; i++) {
     let drift, noise, volBase = 1.4e6;
-    if (i < 60) { drift = 0.0075; noise = 0.014; }                       // advance
+    if (i < 65) { drift = 0.0075; noise = 0.014; }                       // advance
     else if (i < base.start) { drift = -0.004; noise = 0.012; }          // pullback
     else if (i <= base.end) { drift = 0.0005; noise = 0.004; volBase = 0.8e6; } // tight base, volume dries up
-    else if (i === 100) { drift = 0.07; noise = 0.002; volBase = 4.2e6; } // burst
+    else if (i === BURST) { drift = 0.07; noise = 0.002; volBase = 4.2e6; } // burst
     else { drift = 0.006; noise = 0.012; volBase = 2.2e6; }              // follow-through
-    const o = i === 100 ? close * 1.012 : close * (1 + (r() - 0.5) * noise);
-    const c = i === 100 ? close * 1.07 : close * (1 + drift + (r() - 0.5) * noise * 2);
+    const o = i === BURST ? close * 1.012 : close * (1 + (r() - 0.5) * noise);
+    const c = i === BURST ? close * 1.07 : close * (1 + drift + (r() - 0.5) * noise * 2);
     const h = Math.max(o, c) * (1 + r() * noise * 0.8), l = Math.min(o, c) * (1 - r() * noise * 0.8);
     const v = Math.round(volBase * (0.7 + r() * 0.6));
     const round = (x) => Math.round(x * 100) / 100;
@@ -71,12 +71,12 @@ export function synthetic() {
   const trigger = Math.round(boxHigh * 100) / 100, entryLow = trigger, entryHigh = Math.round(trigger * 1.02 * 100) / 100;
   const options = {
     ticker: 'SPCY', title: 'daily · 120 sessions · 4% burst out of a 17-session base',
-    burstIndex: 100, box: { start: base.start, end: base.end, low: boxLow, high: boxHigh },
-    stop: bars[100].l, entryLow, entryHigh, trigger,
+    burstIndex: BURST, box: { start: base.start, end: base.end, low: boxLow, high: boxHigh },
+    stop: bars[BURST].l, entryLow, entryHigh, trigger,
     targetLow: Math.round(entryHigh * 1.08 * 100) / 100, targetHigh: Math.round(entryHigh * 1.20 * 100) / 100,
     ma: [10, 20, 50], height: 320
   };
-  return { bars, options };
+  return { bars, options, BURST };
 }
 
 // --- 1. geometry, no DOM ------------------------------------------------------
@@ -89,7 +89,7 @@ function loadInSandbox() {
   return sb.SCStock;
 }
 const SCStock = loadInSandbox();
-const { bars, options } = synthetic();
+const { bars, options, BURST } = synthetic();
 const g = SCStock.chartGeometry(bars, options, 1280, 320);
 const g360 = SCStock.chartGeometry(bars, options, 360, 320);
 
@@ -104,7 +104,8 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
   for (const [name, gg] of [['1280', g], ['360', g360]]) {
     let xs = true, ys = true;
     for (let i = 1; i < gg.n; i++) if (!(gg.x(i) > gg.x(i - 1))) xs = false;
-    for (let p = gg.domain.lo; p < gg.domain.hi; p += (gg.domain.hi - gg.domain.lo) / 50) if (!(gg.y(p + 0.01) < gg.y(p))) ys = false;
+    const step = (gg.domain.hi - gg.domain.lo) / 50;   // y rounds to 0.1px, so step by 2% of the span, not by a cent
+    for (let p = gg.domain.lo; p + step <= gg.domain.hi; p += step) if (!(gg.y(p + step) < gg.y(p))) ys = false;
     ok(`scales are monotonic at ${name}px`, xs && ys);
     ok(`price pane sits above the volume pane at ${name}px`, gg.plot.bottom < gg.vol.top && gg.vol.bottom < gg.height && gg.plot.top > 0);
     ok(`every candle sits inside the price pane at ${name}px`, gg.bars.every((b) => !b.candle || (b.candle.wickTop >= gg.plot.top - 0.5 && b.candle.wickBottom <= gg.plot.bottom + 0.5)));
@@ -135,12 +136,12 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
   ok('the stop label names its price', /^stop \$[\d.,]+$/.test(g.stop.label.text));
 
   // base box and burst
-  ok('the base box spans its sessions and its price range', g.box && g.box.sessions === 17 && Math.abs(g.box.x - (g.plot.left + 83 * g.slot)) < 0.6 && Math.abs(g.box.y - g.y(options.box.high)) < 0.6 && Math.abs(g.box.y + g.box.h - g.y(options.box.low)) < 0.6);
+  ok('the base box spans its sessions and its price range', g.box && g.box.sessions === 17 && Math.abs(g.box.x - (g.plot.left + 94 * g.slot)) < 0.6 && Math.abs(g.box.y - g.y(options.box.high)) < 0.6 && Math.abs(g.box.y + g.box.h - g.y(options.box.low)) < 0.6);
   ok('the base label says base · 17 sessions and sits on the box', g.box.label.text === 'base · 17 sessions' && (g.box.label.y < g.box.y || g.box.label.y > g.box.y + g.box.h) && g.box.label.x >= g.box.x);
-  ok('the burst candle is marked and labelled above its high', g.burst && g.burst.index === 100 && /^burst \+\d+\.\d%$/.test(g.burst.label.text) && g.burst.label.y < g.burst.yHigh && g.burst.marker.y > g.burst.yLow);
-  ok('the burst percentage is measured off the previous close', Math.abs(g.burst.pct - (bars[100].c / bars[99].c - 1) * 100) < 1e-9);
-  ok('the burst volume bar is the emphasised one', g.bars[100].volume.burst === true && g.bars[99].volume.burst === false);
-  ok('the burst candle is hollow (an up bar) and the down bars are filled', g.bars[100].candle.up && !g.bars[100].candle.filled && g.bars.some((b) => b.candle && b.candle.filled && !b.candle.up));
+  ok('the burst candle is marked and labelled above its high', g.burst && g.burst.index === BURST && /^burst \+\d+\.\d%$/.test(g.burst.label.text) && g.burst.label.y < g.burst.yHigh && g.burst.marker.y > g.burst.yLow);
+  ok('the burst percentage is measured off the previous close', Math.abs(g.burst.pct - (bars[BURST].c / bars[BURST - 1].c - 1) * 100) < 1e-9);
+  ok('the burst volume bar is the emphasised one', g.bars[BURST].volume.burst === true && g.bars[BURST - 1].volume.burst === false);
+  ok('the burst candle is hollow (an up bar) and the down bars are filled', g.bars[BURST].candle.up && !g.bars[BURST].candle.filled && g.bars.some((b) => b.candle && b.candle.filled && !b.candle.up));
 
   // moving averages
   const closes = bars.map((b) => b.c), s20 = SCStock.sma(closes, 20);
@@ -200,7 +201,7 @@ if (!chromium) {
   var full = SCStock.chart(window.__data.bars, window.__data.options);
   full.id = 'chart-full';
   document.getElementById('full').appendChild(full);
-  var c = SCStock.chart(window.__data.bars.slice(60), Object.assign({}, window.__data.options, { compact: true, height: 200, burstIndex: 40, box: { start: 23, end: 39, low: window.__data.options.box.low, high: window.__data.options.box.high } }));
+  var c = SCStock.chart(window.__data.bars.slice(60), Object.assign({}, window.__data.options, { compact: true, height: 200, burstIndex: 51, box: { start: 34, end: 50, low: window.__data.options.box.low, high: window.__data.options.box.high } }));
   c.id = 'chart-compact';
   document.getElementById('compact').appendChild(c);
 </script></body></html>`;
@@ -230,7 +231,7 @@ if (!chromium) {
     page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
     page.on('requestfailed', (r) => errors.push('request failed: ' + r.url()));
     await page.goto(`${BASE}/chart-harness.html?theme=${theme}`, { waitUntil: 'load' });
-    await page.waitForSelector('#chart-full svg');
+    await page.waitForSelector('#chart-full .sc-chart__stage > svg');
     return { ctx, page, errors };
   }
 
@@ -242,7 +243,7 @@ if (!chromium) {
       ok(`${tag}: no page errors`, errors.length === 0, errors.join(' | '));
       const host = page.locator('#chart-full');
       ok(`${tag}: host is .sc-chart[role=group][tabindex=0] with an aria-label`, await host.evaluate((h) => h.classList.contains('sc-chart') && h.getAttribute('role') === 'group' && h.getAttribute('tabindex') === '0' && /SPCY daily candlestick chart, 120 sessions/.test(h.getAttribute('aria-label') || '')));
-      ok(`${tag}: the SVG is aria-hidden and as wide as its host`, await host.evaluate((h) => { const s = h.querySelector('svg'); const r = s.getBoundingClientRect(); return s.getAttribute('aria-hidden') === 'true' && Math.abs(r.width - h.clientWidth) < 2 && s.getAttribute('viewBox').split(' ')[2] === String(Math.round(h.clientWidth)); }));
+      ok(`${tag}: the SVG is aria-hidden and as wide as its host`, await host.evaluate((h) => { const s = h.querySelector('.sc-chart__stage > svg'); const r = s.getBoundingClientRect(); return s.getAttribute('aria-hidden') === 'true' && Math.abs(r.width - h.clientWidth) < 2 && s.getAttribute('viewBox').split(' ')[2] === String(Math.round(h.clientWidth)); }));
       ok(`${tag}: the table twin holds the last 10 bars and the levels`, await host.evaluate((h) => h.querySelectorAll('.sc-details [data-sc-twin=bars] tbody tr').length === 10 && h.querySelectorAll('.sc-details [data-sc-twin=levels] tbody tr').length === 7 && h.querySelector('.sc-details summary') !== null));
       ok(`${tag}: the table twin's newest row is the last session and names the burst row`, await host.evaluate((h) => { const rows = [...h.querySelectorAll('[data-sc-twin=bars] tbody tr')].map((r) => r.firstChild.textContent); return rows[0] === '2026-09-09' && rows.some((t) => /▲ burst$/.test(t)); }));
       ok(`${tag}: every annotation label is drawn`, await host.evaluate((h) => { const t = [...h.querySelectorAll('svg text')].map((x) => x.textContent); return ['base · 17 sessions', '+8% … +20%'].every((s) => t.includes(s)) && t.some((s) => /^burst \+/.test(s)) && t.some((s) => /^stop \$/.test(s)) && t.some((s) => /^buy zone \$/.test(s)) && t.some((s) => /^trigger \$/.test(s)); }));
@@ -255,7 +256,7 @@ if (!chromium) {
         const marks = { emphasis: res('--sc-chart-emphasis'), context: res('--sc-chart-context'), accent: res('--sc-accent'), danger: res('--sc-danger'), warn: res('--sc-warn'), good: res('--sc-good') };
         const texts = [...h.querySelectorAll('svg text')].map((t) => getComputedStyle(t).fill);
         const badText = texts.filter((f) => !textTokens.includes(f));
-        const up = h.querySelector('.sc-chart__candle:not(.is-filled):not(.sc-chart__candle--burst)'), down = h.querySelector('.sc-chart__candle.is-filled'), burst = h.querySelector('.sc-chart__candle--burst');
+        const st = h.querySelector('.sc-chart__stage'); const up = st.querySelector('.sc-chart__candle:not(.is-filled):not(.sc-chart__candle--burst)'), down = st.querySelector('.sc-chart__candle.is-filled'), burst = st.querySelector('.sc-chart__candle--burst');
         const stop = h.querySelector('.sc-chart__level--dashed'), trig = h.querySelector('.sc-chart__level--dotted'), strip = h.querySelector('.sc-chart__strip'), flag = h.querySelector('.sc-chart__flag');
         const out = {
           badText: badText.length, nText: texts.length,
@@ -263,7 +264,7 @@ if (!chromium) {
           down: getComputedStyle(down).fill === marks.context && getComputedStyle(down).stroke === marks.context,
           burst: getComputedStyle(burst).stroke === marks.accent && getComputedStyle(flag).fill === marks.accent,
           stop: getComputedStyle(stop).stroke === marks.danger, trigger: getComputedStyle(trig).stroke === marks.warn, target: getComputedStyle(strip).fill === marks.good,
-          emphasis: marks.emphasis, fontPx: getComputedStyle(h.querySelector('svg text')).fontSize,
+          emphasis: marks.emphasis, fontPx: getComputedStyle(st.querySelector('text')).fontSize,
           inlineHex: [...h.querySelectorAll('svg *')].some((e) => /#[0-9a-f]{3,8}|rgb\(/i.test(e.getAttribute('style') || '') || /#[0-9a-f]{3,8}/i.test(e.getAttribute('fill') || '') || /#[0-9a-f]{3,8}/i.test(e.getAttribute('stroke') || ''))
         };
         probe.remove(); return out;
@@ -276,8 +277,8 @@ if (!chromium) {
 
       // hover: the tooltip lists the hovered bar
       const hit = await host.locator('.sc-chart__hit').boundingBox();
-      const geo = await host.evaluate((h) => { const d = window.__data; const gg = SCStock.chartGeometry(d.bars, d.options, h.clientWidth, d.options.height); return { xb: gg.x(100), xp: gg.x(99), slot: gg.slot, plotLeft: gg.plot.left, top: gg.plot.top }; });
-      const svgBox = await host.locator('svg').boundingBox();
+      const geo = await host.evaluate((h, B) => { const d = window.__data; const gg = SCStock.chartGeometry(d.bars, d.options, h.clientWidth, d.options.height); return { xb: gg.x(B), top: gg.plot.top }; }, BURST);
+      const svgBox = await host.locator('.sc-chart__stage > svg').boundingBox();
       await page.mouse.move(svgBox.x + geo.xb, svgBox.y + geo.top + 40);
       await page.waitForTimeout(80);
       const tipHover = await host.evaluate((h) => { const t = h.querySelector('.sc-tooltip'); return { on: t.classList.contains('is-on'), date: (t.querySelector('.sc-tooltip__date') || {}).textContent, rows: t.querySelectorAll('.sc-tooltip__row').length, meta: (t.querySelector('.sc-tooltip__meta') || {}).textContent, cross: h.querySelector('.sc-chart__cross').getAttribute('visibility') }; });
@@ -293,7 +294,7 @@ if (!chromium) {
       const k2 = await host.evaluate((h) => h.querySelector('.sc-tooltip__date').textContent);
       await page.keyboard.press('ArrowRight');
       const k3 = await host.evaluate((h) => ({ date: h.querySelector('.sc-tooltip__date').textContent, on: h.querySelector('.sc-tooltip').classList.contains('is-on'), live: h.querySelector('.sc-tooltip').getAttribute('aria-live') }));
-      ok(`${tag}: arrow keys step the focused bar and update the tooltip`, k1.endsWith(bars[100].date) && k2.endsWith(bars[99].date) && k3.date.endsWith(bars[100].date) && k3.on && k3.live === 'polite', `${k1} / ${k2} / ${k3.date}`);
+      ok(`${tag}: arrow keys step the focused bar and update the tooltip`, k1.endsWith(bars[BURST].date) && k2.endsWith(bars[BURST - 1].date) && k3.date.endsWith(bars[BURST].date) && k3.on && k3.live === 'polite', `${k1} / ${k2} / ${k3.date}`);
       await page.keyboard.press('Escape');
       ok(`${tag}: escape hides it`, await host.evaluate((h) => !h.querySelector('.sc-tooltip').classList.contains('is-on')));
       await page.keyboard.press('End');
@@ -311,12 +312,12 @@ if (!chromium) {
   {
     const { ctx, page, errors } = await session({ width: 360, height: 800, theme: 'dark', touch: true });
     const host = page.locator('#chart-full');
-    const svgBox = await host.locator('svg').boundingBox();
-    const geo = await host.evaluate((h) => { const d = window.__data; const gg = SCStock.chartGeometry(d.bars, d.options, h.clientWidth, d.options.height); return { xb: gg.x(100), top: gg.plot.top, bottom: gg.plot.bottom }; });
+    const svgBox = await host.locator('.sc-chart__stage > svg').boundingBox();
+    const geo = await host.evaluate((h, B) => { const d = window.__data; const gg = SCStock.chartGeometry(d.bars, d.options, h.clientWidth, d.options.height); return { xb: gg.x(B), top: gg.plot.top, bottom: gg.plot.bottom }; }, BURST);
     await page.touchscreen.tap(svgBox.x + geo.xb, svgBox.y + (geo.top + geo.bottom) / 2);
     await page.waitForTimeout(80);
     const t1 = await host.evaluate((h) => { const t = h.querySelector('.sc-tooltip'); return { on: t.classList.contains('is-on'), tap: t.classList.contains('sc-tooltip--tap'), date: (t.querySelector('.sc-tooltip__date') || {}).textContent }; });
-    ok('touch: a tap opens the tooltip for the tapped bar, pinned', t1.on && t1.tap && (t1.date || '').endsWith(bars[100].date), JSON.stringify(t1));
+    ok('touch: a tap opens the tooltip for the tapped bar, pinned', t1.on && t1.tap && (t1.date || '').endsWith(bars[BURST].date), JSON.stringify(t1));
     await page.screenshot({ path: join(SHOTS, 'dark-360-tap.png'), fullPage: false });
     await page.touchscreen.tap(svgBox.x + geo.xb, svgBox.y + (geo.top + geo.bottom) / 2);
     await page.waitForTimeout(80);

@@ -353,7 +353,7 @@ def download_bars(client, tickers: list[str], session: date,
             if _is_permanent_refusal(e):
                 raise _refusal_error(feed, e) from e
             log.warning("Batch %d failed (%s); retrying once", i, e)
-            time.sleep(RETRY_WAIT_SECONDS)
+            pass
             try:
                 histories = _download_batch(client, batch, session, lookback_days, feed,
                                             now=now, duplicates=stats.duplicates)

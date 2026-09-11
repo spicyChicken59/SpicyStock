@@ -166,10 +166,13 @@ def test_a_previous_session_that_printed_nothing_is_readable_and_the_ratio_is_no
     assert scans.burst_4pct(burst_frame(v1=-1)) is None
 
 
-@pytest.mark.parametrize("column,row", [("Close", -1), ("Close", -2), ("Volume", -1), ("Volume", -2)])
-def test_a_nan_in_any_input_the_burst_reads_is_not_a_match(column, row):
+@pytest.mark.parametrize("column,row,value", [
+    ("Close", -1, np.nan), ("Close", -2, np.nan), ("Volume", -1, np.nan), ("Volume", -2, np.nan),
+    ("Close", -1, np.inf), ("Volume", -1, np.inf),   # inf would otherwise be an infinite burst
+])
+def test_an_unreadable_input_the_burst_reads_is_not_a_match(column, row, value):
     df = burst_frame()
-    df.iloc[row, list(COLUMNS).index(column)] = np.nan
+    df.iloc[row, list(COLUMNS).index(column)] = value
     assert scans.burst_4pct(df) is None
 
 
@@ -400,7 +403,11 @@ def test_low_risk_entry_measures_the_expansion_off_a_quiet_day():
     (dict(c=102.02), True),              # 1.0101
     (dict(o=103.0), False),              # c == o
     (dict(o=103.5), False),              # c < o
-    (dict(c1=95.0, c=94.0, o=93.0), False),   # c/c1 above c1/c2 yet c < c1
+    # c/c1 = 0.9895 is above c1/c2 = 0.95 and every other rule holds (y = 90
+    # keeps ti65 at 1.083), so c > c1 is the ONE rule refusing it -- the row
+    # after it moves the close above c1 and nothing else, and is admitted.
+    (dict(y=90.0, c1=95.0, c=94.0, o=93.0), False),
+    (dict(y=90.0, c1=95.0, c=96.0, o=93.0), True),
     (dict(y=95.20), True),               # ti65 reads 1.05 exactly: inclusive
     (dict(y=95.21), False),              # 1.0499
     (dict(v=100_000), True),             # minv3.1 inclusive
@@ -527,23 +534,25 @@ def test_a_quiet_day_with_no_setup_is_not_on_the_watchlist():
 
 def test_narrow_range_days_counts_the_last_seven_against_the_median_of_the_twenty_before():
     """The twenty sessions before the last seven alternate 3% and 5% ranges
-    (median 4%); the last seven range 1, 1, 1, 3.5, 4, 6 and 6 percent, so
-    four are below the median and the one AT it is not counted."""
+    (median 4%); the last seven range 1, 1, 1, 1, 3.7, 4 and 6 percent, so
+    five are below the median and the one AT it is not counted. A median taken
+    over the wrong twenty -- the last twenty, recent bars included -- would be
+    3.35 and count four, which is what makes the window position load-bearing."""
     df = anticipation_frame("dt_ti65")
     for k, pct in enumerate([3.0, 5.0] * 10):
         row = len(df) - 27 + k
         df.iloc[row, 1] = 100.0 + pct / 2
         df.iloc[row, 2] = 100.0 - pct / 2
-    for k, pct in enumerate([1.0, 1.0, 1.0, 3.5, 4.0, 6.0, 6.0]):
+    for k, pct in enumerate([1.0, 1.0, 1.0, 1.0, 3.7, 4.0, 6.0]):
         row = len(df) - 7 + k
         df.iloc[row, 1] = 106.0 + 106.0 * pct / 200
         df.iloc[row, 2] = 106.0 - 106.0 * pct / 200
     got = scans.anticipation(df)
-    assert got["narrow_range_days"] == 4 and got["range_pct_today"] == 6.0
+    assert got["narrow_range_days"] == 5 and got["range_pct_today"] == 6.0
     # The session before the twenty is not in the norm: a huge range there
     # does not move the median.
     df.iloc[len(df) - 28, 1] = 200.0
-    assert scans.anticipation(df)["narrow_range_days"] == 4
+    assert scans.anticipation(df)["narrow_range_days"] == 5
 
 
 def test_narrow_range_days_is_none_when_a_range_bar_cannot_be_read_and_the_setup_still_matches():
