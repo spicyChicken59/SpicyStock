@@ -456,8 +456,10 @@ def closest_miss(bursts: list, trades: list) -> dict | None:
         return None
     best = min(rest, key=lambda b: (-(_num(b.get("score")) if _num(b.get("score")) is not None else -math.inf),
                                     str(b.get("ticker"))))
-    return {"ticker": best.get("ticker"), "grade": best.get("grade"),
-            "score": _num(best.get("score")), "why": miss_reason(best)}
+    ticker, grade, score, why = best.get("ticker"), best.get("grade"), _num(best.get("score")), miss_reason(best)
+    verdict = " ".join(str(x) for x in (grade, f"{score:.1f}" if score is not None else None) if x)
+    sentence = f"{ticker} came closest" + (f" at {verdict}" if verdict else "") + (f": {why}." if why else ".")
+    return {"ticker": ticker, "grade": grade, "score": score, "why": why, "sentence": sentence}
 
 
 # --- the file ---------------------------------------------------------------------

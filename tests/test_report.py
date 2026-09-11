@@ -388,7 +388,8 @@ def test_every_burst_leaves_build_with_a_summary_sentence():
 
 def test_the_closest_miss_is_the_best_burst_not_traded_and_says_why():
     data = build(**_night())
-    assert data["closest_miss"] == {"ticker": "ABC", "grade": "B", "score": 7.8, "why": "vetoed: up_days"}
+    assert data["closest_miss"] == {"ticker": "ABC", "grade": "B", "score": 7.8, "why": "vetoed: up_days",
+                                    "sentence": "ABC came closest at B 7.8: vetoed: up_days."}
     assert build(**_night(trades=["XYZ", "ABC"]))["closest_miss"] is None
 
 

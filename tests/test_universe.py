@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 import requests
 
-from src import universe_v2 as universe
+from src import universe as universe
 
 NOW = datetime(2026, 9, 11, 1, tzinfo=timezone.utc)
 REAL_SEED = Path(__file__).resolve().parent.parent / "data" / "symbols.txt"

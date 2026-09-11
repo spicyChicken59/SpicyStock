@@ -34,9 +34,9 @@ from tests.synthetic import make_ohlcv, seed_for  # noqa: E402
 def _isolated_cwd(monkeypatch, tmp_path):
     """Run every test inside its own tmp_path.
 
-    archive() writes Path("results") and render_chart() defaults to "charts",
-    both relative to the process working directory. Without this the suite
-    would litter the repo the way the old script did.
+    render_chart() defaults to "charts", relative to the process working
+    directory, and the pipeline writes docs/ wherever it is pointed. Without
+    this the suite would litter the repo.
     """
     monkeypatch.chdir(tmp_path)
     return tmp_path
@@ -88,9 +88,9 @@ def ohlcv(seed):
 
 @pytest.fixture
 def fake_alpaca(monkeypatch) -> FakeAlpaca:
-    """Replace the Alpaca client(s) in src.scanner with in-memory doubles.
+    """Replace the Alpaca client in src.market_data with an in-memory double.
 
-    Patched where they are looked up (the scanner module's namespace) rather
+    Patched where it is looked up (the market_data module's namespace) rather
     than in alpaca-py, so this keeps working if the SDK import style changes.
     Register bars with fake_alpaca.add_history(ticker, frame).
 
@@ -101,18 +101,14 @@ def fake_alpaca(monkeypatch) -> FakeAlpaca:
     so a test that mocks Alpaca and then fails preflight would be testing the
     fixture rather than the code.
     """
-    import src.scanner as scanner
+    import src.market_data as market_data
 
     monkeypatch.setenv("ALPACA_API_KEY", "test-not-a-real-key")
     monkeypatch.setenv("ALPACA_SECRET_KEY", "test-not-a-real-secret")
     parent = FakeAlpaca()
     monkeypatch.setattr(
-        scanner, "StockHistoricalDataClient", lambda *a, **k: FakeDataClient(parent, *a, **k)
+        market_data, "StockHistoricalDataClient", lambda *a, **k: FakeDataClient(parent, *a, **k)
     )
-    # There is no TradingClient boundary any more: step 2 replaced the
-    # asset-list call with data/symbols.txt. Patching it with raising=False
-    # would CREATE an attribute src.scanner does not have, so every test would
-    # run against a module shaped differently from production.
     return parent
 
 
@@ -141,7 +137,7 @@ class _AnthropicControl:
 def fake_anthropic(monkeypatch) -> _AnthropicControl:
     """Replace anthropic.Anthropic with a double that needs no API key.
 
-    src.scorer does `import anthropic; anthropic.Anthropic()` inside
+    src.grader does `import anthropic; anthropic.Anthropic()` inside
     _client(), so the module attribute is the boundary. A fresh subclass per
     test keeps the recorded calls from leaking between tests.
 

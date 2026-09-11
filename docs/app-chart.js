@@ -396,6 +396,98 @@
       volAvg = { n: Math.floor(volAvgN), points: vpts, last: vlast, label: vlast ? { x: r1(Math.min(plot.right - 2, vlast.x)), y: r1(vlast.y - 3), text: 'avg ' + Math.floor(volAvgN) + 'd', anchor: 'end' } : null };
     }
 
+    /* card labels: one collision pass. Every card label has a preferred
+       spot and a few fallbacks; each is placed at the first spot that does
+       not overlap what is already down (the stop pill goes first, it is the
+       one label a reader must never lose). A burst at the last bar under a
+       compressed top strip is the common case, and without this the buy
+       zone, the burst text, the base text and the bracket all land in the
+       same forty pixels. */
+    if (card) {
+      var placed = [], yMin = plot.top + 9, yMax = plot.bottom - 3;
+      function boxOf(L) {
+        var w = L.text.length * CHAR + 8, x0 = L.anchor === 'end' ? L.x - w : L.anchor === 'middle' ? L.x - w / 2 : L.x;
+        return { x: x0, y: L.y - 11, w: w, h: LABEL_H };
+      }
+      function hits(a, b) { return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h; }
+      function fits(L) {
+        if (L.y < yMin || L.y > yMax) return false;
+        var bx = boxOf(L);
+        if (bx.x < plot.left - 2 || bx.x + bx.w > plot.right + 2) return false;
+        for (var j = 0; j < placed.length; j++) if (hits(bx, placed[j])) return false;
+        return true;
+      }
+      function settle(target, candidates, optional) {
+        if (!target) return false;
+        for (var j = 0; j < candidates.length; j++) {
+          var c = candidates[j];
+          var trial = { x: r1(c.x), y: r1(c.y), text: target.text, anchor: c.anchor };
+          if (fits(trial)) { target.x = trial.x; target.y = trial.y; target.anchor = trial.anchor; placed.push(boxOf(trial)); return true; }
+        }
+        if (optional) return false;   /* a label the reader can do without is dropped, never stacked */
+        placed.push(boxOf(target));   /* nothing fit: keep the preferred spot */
+        return true;
+      }
+      if (stopTag) placed.push({ x: stopTag.x, y: stopTag.y, w: stopTag.w, h: stopTag.h });
+      if (entryG && entryG.label) {
+        var eL = entryG.label, eW = eL.text.length * CHAR + 8;
+        settle(eL, [
+          { x: zoneX + 4, y: ey1 + 11, anchor: 'start' },
+          { x: plot.right - 3, y: ey1 + 11, anchor: 'end' },
+          { x: plot.right - 3, y: ey1 + 11 + LABEL_H, anchor: 'end' },
+          { x: plot.right - 3, y: ey1 - 4, anchor: 'end' },
+          { x: plot.right - 3, y: ey2 + 12, anchor: 'end' },
+          { x: zoneX - eW - 4 > plot.left ? zoneX - 4 : plot.left + 2, y: ey1 - 4, anchor: zoneX - eW - 4 > plot.left ? 'end' : 'start' },
+          { x: plot.left + 2, y: ey1 + 11, anchor: 'start' }
+        ]);
+      }
+      if (burst && burst.label) {
+        var bb = bars[burstIndex], bxc = x(burstIndex), bL = burst.label;
+        settle(bL, [
+          { x: bxc, y: y(bb.h) - 9, anchor: 'middle' },
+          { x: bxc - bodyW / 2 - 4, y: y(bb.h) - 2, anchor: 'end' },
+          { x: bxc, y: y(bb.l) + 14, anchor: 'middle' },
+          { x: bxc - bodyW / 2 - 4, y: y(bb.l) + 14, anchor: 'end' },
+          { x: bxc - bodyW / 2 - 4, y: (y(bb.h) + y(bb.l)) / 2 + 4, anchor: 'end' }
+        ]);
+      }
+      if (boxG && boxG.label) {
+        settle(boxG.label, [
+          { x: boxG.x + 2, y: boxG.y - 4, anchor: 'start' },
+          { x: boxG.x + 2, y: boxG.y + boxG.h + 12, anchor: 'start' },
+          { x: boxG.x + boxG.w - 2, y: boxG.y - 4, anchor: 'end' },
+          { x: boxG.x + boxG.w - 2, y: boxG.y + boxG.h + 12, anchor: 'end' },
+          { x: boxG.x + 2, y: boxG.y - 4 - LABEL_H, anchor: 'start' },
+          { x: boxG.x + 2, y: boxG.y + boxG.h + 12 + LABEL_H, anchor: 'start' }
+        ]);
+      }
+      if (bracket && bracket.label) {
+        var rb2 = bars[burstIndex], rx = x(burstIndex), rmid = (bracket.y1 + bracket.y2) / 2 + 4;
+        var kept = settle(bracket.label, [
+          { x: bracket.x - 4, y: rmid, anchor: 'end' },
+          { x: rx, y: y(rb2.l) + 14, anchor: 'middle' },
+          { x: rx, y: y(rb2.l) + 14 + LABEL_H, anchor: 'middle' },
+          { x: bracket.x - 4, y: bracket.y2 + 12, anchor: 'end' },
+          { x: bracket.x - 4, y: bracket.y1 - 4, anchor: 'end' },
+          { x: bracket.x - 4, y: rmid + LABEL_H, anchor: 'end' },
+          { x: bracket.x - 4, y: rmid - LABEL_H, anchor: 'end' },
+          { x: rx, y: y(rb2.l) + 14 + 2 * LABEL_H, anchor: 'middle' }
+        ], true);
+        if (!kept) bracket.label = null;   /* the bracket itself stays; the matrix row carries the number */
+      }
+      if (tomorrow) {
+        var tL = { x: tomorrow.x, y: tomorrow.y, text: tomorrow.text, anchor: 'start' };
+        var keptT = settle(tL, [
+          { x: tomorrow.x, y: plot.top + 10, anchor: 'start' },
+          { x: tomorrow.x, y: plot.bottom - 4, anchor: 'start' },
+          { x: tomorrow.x, y: (entryG ? entryG.y2 : plot.top) + 14, anchor: 'start' },
+          { x: plot.right - 2, y: plot.bottom - 4, anchor: 'end' },
+          { x: plot.right - 2, y: plot.top + 10, anchor: 'end' }
+        ], true);
+        if (keptT) { tomorrow.x = tL.x; tomorrow.y = tL.y; tomorrow.anchor = tL.anchor; } else tomorrow = null;
+      }
+    }
+
     return {
       width: W, height: H, n: n, compact: compact, card: card, gutter: gutter,
       plot: plot, vol: vol, axisY: H - 5, slot: slot, bodyWidth: bodyW, futureSlots: futureSlots, future: future,
@@ -574,13 +666,13 @@
       plate(labels, SC, g.leftLabels[i]);
     }
     if (g.burst) plate(labels, SC, g.burst.label, 'sc-chart__note--strong');
-    if (g.rangeBracket) plate(labels, SC, g.rangeBracket.label);
+    if (g.rangeBracket && g.rangeBracket.label) plate(labels, SC, g.rangeBracket.label);
     if (g.entry && card) plate(labels, SC, g.entry.label, 'sc-chart__note--accent');
     if (g.stopTag) {
       labels.appendChild(SC.svg('rect', { 'class': 'sc-chart__pill', 'data-tag': 'stop', x: g.stopTag.x, y: g.stopTag.y, width: g.stopTag.w, height: g.stopTag.h, rx: 8 }));
       labels.appendChild(SC.svg('text', { 'class': 'sc-chart__pill-text', x: g.stop.label.x, y: g.stop.label.y, 'text-anchor': 'start' }, g.stopTag.text));
     }
-    if (g.tomorrow) labels.appendChild(SC.svg('text', { 'class': 'sc-chart__faint', x: g.tomorrow.x, y: g.tomorrow.y }, g.tomorrow.text));
+    if (g.tomorrow) labels.appendChild(SC.svg('text', { 'class': 'sc-chart__faint', x: g.tomorrow.x, y: g.tomorrow.y, 'text-anchor': g.tomorrow.anchor || 'start' }, g.tomorrow.text));
     svg.appendChild(labels);
     /* right gutter: leaders then texts */
     var gutter = SC.svg('g');

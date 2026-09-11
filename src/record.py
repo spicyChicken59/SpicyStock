@@ -104,9 +104,10 @@ def pick_problem(pick: Any) -> str | None:
 
 
 def load(docs: Path) -> dict:
-    """The record off disk. A missing file is an empty record; an unreadable
-    one is set aside beside itself (never overwritten) and reported in
-    ``problem``; a malformed pick is dropped and counted there too."""
+    """The record off disk. A missing file is an empty record, and so is the
+    committed fixture (a fresh clone's placeholder, marked ``fixture``); an
+    unreadable one is set aside beside itself (never overwritten) and
+    reported in ``problem``; a malformed pick is dropped and counted there too."""
     path = Path(docs) / PICKS_FILE
     if not path.exists():
         return empty()
@@ -122,6 +123,11 @@ def load(docs: Path) -> dict:
         rec = empty()
         rec["problem"] = f"{PICKS_FILE} is not a record with a picks list; set aside as {aside.name}"
         return rec
+    if raw.get("fixture"):
+        # the committed placeholder a fresh clone carries: invented picks that
+        # must never be walked as history. Not set aside -- save() replaces it.
+        log.info("%s is the %s fixture; starting a fresh record", PICKS_FILE, raw["fixture"])
+        return empty()
     kept, dropped = [], []
     for pick in raw["picks"]:
         problem = pick_problem(pick)

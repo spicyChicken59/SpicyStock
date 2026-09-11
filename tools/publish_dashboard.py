@@ -19,7 +19,7 @@ from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 
 
-PUBLIC_FILES = ("index.html", "data.json", "picks.json", "app.js")
+PUBLIC_FILES = ("index.html", "data.json", "picks.json", "app.js", "app.css", "app-chart.js")
 WAIT_SECONDS = 480
 
 

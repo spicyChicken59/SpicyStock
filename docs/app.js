@@ -28,16 +28,17 @@
   const RUNS_API = 'https://api.github.com/repos/' + REPO + '/actions/workflows/evening.yml/runs?per_page=1';
   const RUNS_URL = 'https://github.com/' + REPO + '/actions/workflows/evening.yml';
 
-  // One fixed sentence per problem kind (PRODUCT-SPEC section 3); the message
-  // the run recorded never reaches the page.
+  // One fixed sentence per problem kind, the same seven src/report.py mails
+  // (tests/test_docs.py holds the two lists equal); the message the run
+  // recorded never reaches the page.
   const PROBLEMS = {
-    universe_cached: 'The stock directory did not refresh; last night’s list was used.',
-    coverage_thin: 'Bars arrived for only part of the universe; breadth and the scan are over what answered.',
-    claude_unavailable: 'Claude did not answer; every grade below is the checklist’s alone.',
-    claude_partial: 'Claude answered for some names only; the others are graded by the checklist alone.',
-    chart_missing: 'A chart did not render; that grade stands on the numbers.',
-    email_failed: 'The email did not send; this page is the record.',
-    push_retried: 'The record reached the repository on a retry.'
+    universe_cached: "The stock directory could not be refreshed; tonight's universe is the cached one.",
+    coverage_thin: "Part of the universe was not read: the bars fetch ran out of time or names answered late.",
+    claude_unavailable: "The model did not answer; every grade tonight is the checklist's alone.",
+    claude_partial: "The model answered for some names and not others; the rest are graded by the checklist alone.",
+    chart_missing: "A chart did not render; the grade stands on the numbers.",
+    email_failed: "The digest could not be delivered; the page is the record.",
+    push_retried: "Committing the record took more than one push."
   };
   const PLAN_STATUS = {
     hold: ['HOLD', 'good'], sell_half: ['SELL HALF', 'brand'], sell_into_strength: ['SELL INTO STRENGTH', 'brand'],
@@ -136,7 +137,7 @@
     }
     if (behind >= 2) {
       return Object.assign(base, { state: 'stale2', chip: 'STALE · ' + behind + ' sessions behind', tone: 'danger', keepCase: true,
-        sentence: 'The run has not published for ' + behind + ' sessions. Something is broken; nothing below is tomorrow’s plan.' });
+        sentence: 'The run has not published for ' + behind + ' sessions. Something is broken — check the run log; nothing below is tomorrow’s plan.' });
     }
     if (behind === 1 && pending) {
       return Object.assign(base, { state: 'pending', chip: 'tonight’s run pending', tone: 'info',
@@ -292,7 +293,7 @@
     const stage = el('div', { 'class': 'sc-chart__stage', style: 'position:relative' });
     host.appendChild(stage);
     fig.appendChild(host);
-    if (!hist.length) { stage.appendChild(empty('No breadth history in this record.')); return; }
+    if (!hist.length) { stage.appendChild(empty((b.history || []).length ? 'No 10-day ratio yet: no name broke down 4% in the last ten sessions, so the ratio has no denominator.' : 'No breadth history in this record.')); return; }
     const tip = SC().tooltip(stage, { live: true, top: 6, flip: 0.55, offsetX: 14 });
     const state = { node: null, index: null, g: null };
     function geometry(W) {
@@ -367,8 +368,9 @@
     SC().tableTwin(twin, { caption: '10-day ratio by session, oldest first', summary: 'table view · ' + hist.length + ' sessions',
       head: ['session', 'up 4%', 'down 4%', '10-day ratio'], rows: hist.map((h) => [h.date, num(h.up4), num(h.down4), plain(h.ratio_10d)]) });
     fig.appendChild(twin.firstChild);
+    const ratioNote = (b.notes || []).find((n) => n && n.key === 'ratio_10d');
     fig.appendChild(el('figcaption', { 'class': 'sc-chart-caption' }, [
-      el('p', { text: 'Counts over ' + num(b.universe) + ' common stocks with a bar on ' + dateWords(b.date) + '; ratio = Σ up 4% ÷ Σ down 4% over ' + plain((b.rules || {}).ratio_long_sessions) + ' sessions. The dashed line is the archived yellow threshold.' })
+      el('p', { text: 'Counts over ' + num(b.universe) + ' common stocks with a bar on ' + dateWords(b.date) + '; ratio = Σ up 4% ÷ Σ down 4% over ' + plain((b.rules || {}).ratio_long_sessions) + ' sessions. The dashed line is the archived yellow threshold.' + (ratioNote ? ' Bonde: ' + ratioNote.text + '.' : '') })
     ]));
   }
 
@@ -527,7 +529,7 @@
     }
     card.appendChild(el('div', { 'class': 'sc-split ss-trade__body' }, [left, right]));
     const checks = q.checks || [], passes = checks.filter((x) => x && x.pass).length, miss = checks.find((x) => x && !x.pass);
-    const footText = plain(q.of) + ' criteria: ' + passes + ' pass' + (miss ? ' · the miss is ‘' + miss.label + '’ (' + miss.display + ')' : ' · nothing missed') + (q.vetoes && q.vetoes.length ? ' · veto: ' + q.vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') : '');
+    const footText = passes + ' of ' + checks.length + ' checks pass (' + plain(q.passes) + ' of the ' + plain(q.of) + ' letters)' + (miss ? ' · the miss is ‘' + miss.label + '’ (' + miss.display + ')' : ' · nothing missed') + (q.vetoes && q.vetoes.length ? ' · veto: ' + q.vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') : '');
     card.appendChild(el('div', { 'class': 'ss-trade__foot' }, [el('span', { 'class': 'sc-hint', text: footText }), el('a', { 'class': 'sc-link--quiet', href: '#burst-' + b.ticker, 'data-matrix-link': '', text: 'row in the matrix ↓' })]));
     return card;
   }
@@ -619,7 +621,7 @@
           el('td', { 'class': 'sc-num', text: usd(r.close) }), el('td', { 'class': 'sc-num', text: usd(p.trigger) }), el('td', { 'class': 'sc-num', text: usd(p.limit) }),
           el('td', { 'class': 'sc-num', text: usd(p.stop) }), el('td', { 'class': 'sc-num', text: p.eligible === false ? '—' : num(p.shares) }),
           el('td', { 'class': 'sc-num', text: plain(p.stop_pct) + '%' + (isNum(p.risk_usd) && p.eligible !== false ? ' · ' + usd(p.risk_usd, 0) : '') }),
-          el('td', { 'class': 'ss-ticket' }, p.eligible === false ? [chip('refused', 'danger'), ' ', el('span', { 'class': 'sc-note', text: p.reason || '' })] : [el('span', { text: p.order_line || '' })])
+          el('td', { 'class': 'ss-ticket' }, p.eligible === false ? [chip('refused', 'danger'), ' ', el('span', { 'class': 'sc-note', text: p.reason || '' })] : p.order_line ? [el('span', { text: p.order_line })] : [chip('no order', 'neutral'), ' ', el('span', { 'class': 'sc-note', text: p.action === 'no_new_longs' ? 'breadth sizes new positions at zero tonight; keep the alert, place nothing' : (p.reason || 'the size came to zero shares') })])
         ]));
       });
       table.appendChild(tb);
@@ -643,10 +645,13 @@
     const tone = vetoed ? 'blocked' : !c ? null : c.pass ? (c.marginal ? 'caution' : 'good') : 'blocked';
     const glyph = vetoed ? '✕' : !c ? '—' : c.pass ? (c.marginal ? '~' : '✓') : '✕';
     const word = vetoed ? 'veto' : !c ? 'not measured' : c.pass ? (c.marginal ? 'partial' : 'pass') : 'fail';
-    const cell = el('span', { 'class': 'sc-signal' + (tone ? ' sc-signal--' + tone : ''), title: c && c.note ? c.note : null }, [
+    // the tile carries the verdict and the primary measurement; the full
+    // display, his threshold and the note sit on the tile's title
+    const primary = c ? String(c.display || '').split(' ')[0] : '';
+    const cell = el('span', { 'class': 'sc-signal' + (tone ? ' sc-signal--' + tone : ''), title: c ? [c.display, 'threshold: ' + c.threshold, c.note].filter(Boolean).join('\n') : null }, [
       el('span', { 'class': 'sc-signal__glyph', 'aria-hidden': 'true', text: glyph }),
-      el('span', { 'class': 'sc-signal__label', text: word + (c ? ' · ' + c.display : '') }),
-      c ? el('span', { 'class': 'sc-signal__note', text: c.threshold }) : null
+      el('span', { 'class': 'sc-signal__label', text: word + (primary ? ' · ' + primary : '') }),
+      c ? el('span', { 'class': 'sc-signal__note', text: c.threshold.length > 42 ? c.threshold.slice(0, 40).replace(/\s+\S*$/, '') + '…' : c.threshold }) : null
     ]);
     return el('td', null, cell);
   }
@@ -662,7 +667,7 @@
     const labels = {}; bursts.forEach((b) => ((b.quality || {}).checks || []).forEach((c) => { if (c && c.key && !labels[c.key]) labels[c.key] = c.label; }));
     const det = el('details', { 'class': 'sc-details sc-disclosure', id: 'scan-details' });
     det.appendChild(el('summary', { text: 'show all ' + bursts.length + ' bursts · sortable by score' }));
-    det.appendChild(el('p', { 'class': 'sc-hint', id: 'scan-help', text: 'Jump to a criterion or swipe across. Keyboard: focus the table and use the arrow keys. Hover a tile for the measurement’s note.' }));
+    det.appendChild(el('p', { 'class': 'sc-hint', id: 'scan-help', text: 'Jump to a criterion or swipe across. Keyboard: focus the table and use the arrow keys. Hover a tile for every measurement, his full threshold and the note.' }));
     const scroll = el('div', { 'class': 'sc-table-scroll', 'data-sc-matrix-nav': '', tabindex: '0', role: 'region', 'aria-label': 'Every burst against the ' + nCriteria + ' criteria', 'aria-describedby': 'scan-help' });
     const table = el('table', { 'class': 'sc-table sc-signal-matrix', id: 'scan-table' });
     table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Bursts found on ' + (run.session || '') + ' compared on Bonde’s ' + nCriteria + ' A-quality criteria. Green passes, amber is marginal, red fails or is vetoed, neutral was not measured.' }));

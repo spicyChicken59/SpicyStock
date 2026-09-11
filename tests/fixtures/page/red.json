@@ -1,10 +1,17 @@
 {
  "schema_version": 2,
- "generated": "2026-09-10T22:33:20Z",
+ "generated": "2026-09-10T22:30:00+00:00",
  "app": {
   "name": "SpicyStock",
-  "version": "2.0.0",
-  "rules_version": "v2.0"
+  "version": "2.0",
+  "rules_version": "11e153a50cc1"
+ },
+ "cover": {
+  "h1": "Stand aside.",
+  "dek": "Breadth is red: 5 up 4% vs 6 down, 10-day ratio 1.0. No new positions. down 4%: 6 >= the scaled alarm of 3.2 (700 of 6,500): major deterioration.",
+  "action_label": "What you hold",
+  "action_target": "#open-plans",
+  "verb": "stand aside"
  },
  "run": {
   "session": "2026-09-10",
@@ -16,1573 +23,4214 @@
   "model": "claude-sonnet-4-6",
   "feed": "sip",
   "universe": {
-   "label": "US common stocks, $3 and 100k shares",
-   "size": 6231,
-   "source": "nasdaq directory 2026-09-10",
-   "fetched_at": "2026-09-10T22:17:04Z"
+   "label": "30 named on the command line (--tickers)",
+   "size": 30,
+   "source": "explicit",
+   "fetched_at": null,
+   "identity": "47798ad00621ade5"
   },
   "coverage": {
-   "requested": 6240,
-   "with_bars": 6213,
-   "on_session": 6198,
-   "measured": 6170,
-   "stale": 15,
-   "gapped": 13,
-   "no_bars": 27,
-   "dropped": 0
+   "requested": 31,
+   "with_bars": 31,
+   "on_session": 31,
+   "measured": 30,
+   "stale": 0,
+   "gapped": 0,
+   "no_bars": 0,
+   "dropped": 0,
+   "errors": 0,
+   "duplicate_bars": 0
   },
-  "bursts": 143,
+  "bursts": 5,
   "graded": {
    "a_plus": 3,
-   "a": 0,
-   "b": 1,
-   "c": 0,
-   "skip": 1
+   "a": 1,
+   "b": 0,
+   "c": 1,
+   "skip": 0
   },
   "reads": {
-   "requested": 2,
-   "done": 2,
+   "requested": 5,
+   "done": 5,
    "unavailable_reason": null
   },
-  "email": "delivered",
-  "published_at": "2026-09-10T22:33:20Z",
-  "run_id": "34531077221",
-  "elapsed_seconds": 1043,
-  "fetch_seconds": 612
+  "email": "skipped",
+  "published_at": "2026-09-10T22:30:00+00:00",
+  "run_id": null,
+  "elapsed_seconds": 0.0,
+  "fetch_seconds": 0.0,
+  "rules_version": "v2.0",
+  "type": "evening",
+  "sanitised": {
+   "replaced": 0,
+   "paths": []
+  }
  },
  "nights": [
   {
-   "session": "2026-08-14",
-   "status": "ok",
-   "published_at": "2026-08-14T22:31:00Z"
-  },
-  {
-   "session": "2026-08-17",
-   "status": "ok",
-   "published_at": "2026-08-17T22:30:00Z"
-  },
-  {
-   "session": "2026-08-18",
-   "status": "ok",
-   "published_at": "2026-08-18T22:38:00Z"
-  },
-  {
-   "session": "2026-08-19",
-   "status": "ok",
-   "published_at": "2026-08-19T22:37:00Z"
-  },
-  {
-   "session": "2026-08-20",
-   "status": "ok",
-   "published_at": "2026-08-20T22:36:00Z"
-  },
-  {
-   "session": "2026-08-21",
-   "status": "ok",
-   "published_at": "2026-08-21T22:35:00Z"
-  },
-  {
-   "session": "2026-08-24",
-   "status": "ok",
-   "published_at": "2026-08-24T22:34:00Z"
-  },
-  {
-   "session": "2026-08-25",
-   "status": "ok",
-   "published_at": "2026-08-25T22:33:00Z"
-  },
-  {
-   "session": "2026-08-26",
-   "status": "ok",
-   "published_at": "2026-08-26T22:32:00Z"
-  },
-  {
-   "session": "2026-08-27",
-   "status": "ok",
-   "published_at": "2026-08-27T22:31:00Z"
-  },
-  {
-   "session": "2026-08-28",
-   "status": "ok",
-   "published_at": "2026-08-28T22:30:00Z"
-  },
-  {
-   "session": "2026-08-31",
-   "status": "ok",
-   "published_at": "2026-08-31T22:38:00Z"
-  },
-  {
-   "session": "2026-09-01",
-   "status": "ok",
-   "published_at": "2026-09-01T22:37:00Z"
-  },
-  {
-   "session": "2026-09-02",
-   "status": "degraded",
-   "published_at": "2026-09-02T22:36:00Z"
-  },
-  {
-   "session": "2026-09-03",
-   "status": "ok",
-   "published_at": "2026-09-03T22:35:00Z"
-  },
-  {
-   "session": "2026-09-04",
-   "status": "ok",
-   "published_at": "2026-09-04T22:34:00Z"
-  },
-  {
-   "session": "2026-09-07",
-   "status": "closed",
-   "published_at": "2026-09-07T22:33:00Z"
-  },
-  {
-   "session": "2026-09-08",
-   "status": "ok",
-   "published_at": "2026-09-08T22:32:00Z"
-  },
-  {
-   "session": "2026-09-09",
-   "status": "ok",
-   "published_at": "2026-09-09T22:31:00Z"
-  },
-  {
    "session": "2026-09-10",
    "status": "ok",
-   "published_at": "2026-09-10T22:30:00Z"
+   "published_at": "2026-09-10T22:30:00+00:00"
   }
  ],
  "account": {
-  "equity": 10000,
+  "equity": 10000.0,
   "risk_pct": 0.5,
-  "max_position_pct": 25,
+  "max_position_pct": 25.0,
   "max_open_positions": 4,
   "notes": [
    "Risk per trade: $50.00 (0.5% of $10,000.00; his band is 0.25-1%).",
    "Position cap: $2,500.00 (25% of equity) in any one name.",
    "Max 4 open positions (100% of equity if all are at the cap).",
-   "Attach the stop the moment the buy fills (Fidelity conditional order: one-triggers-the-other)."
+   "Day trades: FINRA deleted the pattern-day-trader count on 2026-06-04, but Fidelity has announced no migration date and may keep applying it per account until 2027-10-20, so run the account as if the old rule binds: at most 3 same-day round trips per rolling 5 business days in a margin account under $25,000.00; a same-day stop-out counts; a position held overnight never counts.",
+   "Account type: margin with debt protection (no borrowing, no good-faith violations). In a cash account buy only against settled cash (T+1); 3 good-faith violations in 12 months means 90 days of settled-cash-only.",
+   "Attach the protective stop the moment the buy fills, as a stop-MARKET order and never a stop-limit (Fidelity mobile: \"Market + Stop Loss Protection\"; Active Trader Pro: OTO/OTOCO)."
   ]
  },
  "rules": {
-  "breadth": {
-   "burst_pct": 4,
-   "min_volume": 100000,
-   "ratio_short_sessions": 5,
-   "ratio_long_sessions": 10,
-   "reference_universe": 6500,
-   "down4_alarm": 700,
-   "red_ratio_10d": 1,
-   "red_ratio_5d": 0.5,
-   "yellow_ratio_10d": 2,
-   "up50_month_hot": 20,
-   "down25_quarter_oversold": 200,
-   "ma_sessions": 40
+  "burst": {
+   "min_ratio": 1.04,
+   "volume_above_prior": true,
+   "min_volume": 100000
   },
-  "scans": {
-   "burst_ratio": 1.04,
-   "breakdown_ratio": 0.96,
-   "min_volume": 100000,
-   "dollar_move": 0.9,
-   "dt_ratio": 1.8,
-   "mdt_ratio": 1.19,
-   "quiet_pct": 1,
-   "min_price": 3
+  "breakdown": {
+   "max_ratio": 0.96,
+   "volume_above_prior": true,
+   "min_volume": 100000
+  },
+  "dollar": {
+   "min_move": 0.9,
+   "min_volume_exclusive": 100000
+  },
+  "dt": {
+   "min_ratio": 1.8,
+   "low_sessions": 252,
+   "min_prior_volume": 100000
+  },
+  "ti65": {
+   "min_ratio_exclusive": 1.05,
+   "short_sessions": 7,
+   "long_sessions": 65,
+   "min_prior_volume_exclusive": 100000
+  },
+  "mdt": {
+   "min_ratio_exclusive": 1.19,
+   "avg_sessions": 126,
+   "min_prior_volume_exclusive": 100000
+  },
+  "quiet": {
+   "max_abs_pct": 1.0
+  },
+  "prior_volume": {
+   "sessions": 3
+  },
+  "lre": {
+   "min_prior_volume": 100000,
+   "min_price": 3.0,
+   "min_ti65": 1.05,
+   "max_prior_ratio_exclusive": 1.02
+  },
+  "ep": {
+   "min_ratio_exclusive": 1.04,
+   "volume_mult_exclusive": 3,
+   "avg_volume_sessions": 50,
+   "min_volume": 300000
+  },
+  "ep_9m": {
+   "min_volume": 9000000,
+   "min_price": 3.0
+  },
+  "anticipation": {
+   "narrow_lookback": 7,
+   "range_norm_sessions": 20
+  },
+  "precision": {
+   "ratio_decimals": 4,
+   "pct_decimals": 2,
+   "price_decimals": 2
   },
   "quality": {
-   "criteria": 9,
-   "range_expansion_min": 1.5,
-   "breakdowns_max": 1,
-   "linearity_min_r2": 0.6,
-   "base_min_sessions": 3,
-   "base_max_sessions": 20,
-   "base_max_depth_pct": 12,
-   "young_max_breakouts": 3,
-   "close_near_high_min_pct": 80,
-   "up_days_max": 2,
+   "base_search_sessions": 40,
+   "leg_search_sessions": 60,
+   "min_leg_sessions": 5,
+   "up_day_pct_exclusive": 1.0,
+   "max_up_run": 1,
    "veto_up_days": 3,
-   "a_plus_min_passes": 8,
-   "a_min_passes": 7
+   "min_er": 0.4,
+   "min_r2": 0.55,
+   "move_search_sessions": 60,
+   "move_sma_sessions": 50,
+   "breakout_min_close_pos": 0.7,
+   "max_prior_breakouts": 1,
+   "narrow_range_pct_exclusive": 2.0,
+   "narrow_norm_sessions": 20,
+   "base_min": 3,
+   "base_max": 20,
+   "partial_base_min": 2,
+   "max_breakdowns": 1,
+   "max_giveback": 0.34,
+   "a_plus_max_giveback": 0.25,
+   "max_tightness": 1.0,
+   "a_plus_max_tightness": 0.7,
+   "tightness_norm_sessions": 60,
+   "volume_avg_sessions": 50,
+   "min_close_pos": 0.8,
+   "a_plus_close_pos": 0.9,
+   "partial_close_pos": 0.7,
+   "re_window": 5,
+   "re_window_long": 10,
+   "min_range_expansion": 1.0,
+   "volume_rank_sessions": 60,
+   "a_plus_max_volume_rank": 3,
+   "cv_base_sessions_exclusive": 21,
+   "cv_min_volume": 1.5,
+   "extension_sma_sessions": 20,
+   "run_up_sessions": 20,
+   "low_price_exclusive": 5.0,
+   "high_gain_pct": 15.0,
+   "history_sessions": 60,
+   "history_max_breakouts": 4,
+   "history_follow_sessions": 3,
+   "fast_leg_min_gain_pct": 15.0,
+   "fast_leg_max_sessions": 10,
+   "weight_l": 2.0,
+   "weight_c": 2.0,
+   "weight_2": 1.5,
+   "weight_y": 1.5,
+   "weight_n": 1.5,
+   "weight_h": 1.5,
+   "min_a_plus_letters": 4,
+   "precision.ratio_decimals": 2,
+   "precision.pct_decimals": 1,
+   "precision.price_decimals": 2,
+   "burst_ratio": 1.04,
+   "breakdown_ratio": 0.96
   },
   "plan": {
-   "default_equity": 10000,
+   "default_equity": 10000.0,
    "default_risk_pct": 0.5,
-   "default_max_position_pct": 25,
+   "default_max_position_pct": 25.0,
    "default_max_open_positions": 4,
-   "entry_below_pct": 2,
-   "entry_above_pct": 4,
-   "skip_gap_pct": 8,
-   "assumed_slippage_pct": 1,
-   "max_stop_pct": 4,
-   "ideal_stop_pct": 2,
-   "target_low_pct": 8,
-   "target_high_pct": 20,
-   "sell_half_pct": 8,
-   "abnormal_day_pct": 10,
-   "gap_exit_pct": 20,
+   "risk_pct_band_low": 0.25,
+   "risk_pct_band_high": 1.0,
+   "entry_below_pct": 2.0,
+   "entry_above_pct": 4.0,
+   "skip_gap_pct": 8.0,
+   "entry_window": "first 30 minutes",
+   "assumed_slippage_pct": 1.0,
+   "max_stop_pct": 4.0,
+   "ideal_stop_pct": 2.0,
+   "stop_risk_multiplier": 0.5,
+   "gain_ceiling_pct": 15.0,
+   "extension_hazard_pct": 20.0,
+   "extension_sessions": 20,
+   "hazard_multiplier": 0.5,
+   "target_low_pct": 8.0,
+   "target_high_pct": 20.0,
+   "low_price_band_usd": 5.0,
+   "low_price_target_low_pct": 20.0,
+   "low_price_target_high_pct": 40.0,
+   "high_price_band_usd": 40.0,
+   "high_price_target_low_usd": 5.0,
+   "high_price_target_high_usd": 25.0,
+   "sell_half_pct": 8.0,
+   "abnormal_day_pct": 10.0,
+   "gap_exit_pct": 20.0,
+   "trail_cents": 0.25,
+   "trail_cents_max": 0.5,
    "sell_half_day": 3,
    "no_progress_day": 3,
    "trail_from_day": 3,
    "final_exit_day": 5,
+   "entry_day": 1,
    "no_breakeven_before_day": 5,
-   "gain_ceiling_pct": 15,
    "trigger_cents": 0.02,
-   "trigger_limit_pct": 1,
-   "gap_ok_pct": 2,
-   "stop_lookback_sessions": 3
+   "trigger_fraction": 0.001,
+   "trigger_limit_pct": 1.0,
+   "gap_ok_pct": 2.0,
+   "stop_lookback_sessions": 3,
+   "open_entry_top_n": 2,
+   "pdt_equity_usd": 25000.0,
+   "pdt_max_day_trades": 3,
+   "pdt_window_days": 5,
+   "pdt_rule_deleted_on": "2026-06-04",
+   "pdt_phase_in_ends": "2027-10-20",
+   "settlement_days": 1,
+   "gfv_limit": 3,
+   "gfv_window_months": 12,
+   "gfv_restriction_days": 90,
+   "precision.cents": 2,
+   "precision.pct_decimals": 2
   },
   "watchlist": {
+   "adr_sessions": 20,
+   "tight_lookback": 10,
+   "tight_fraction_exclusive": 0.7,
+   "ttt_sessions": 3,
+   "tt_sessions": 2,
+   "min_tight": 3,
+   "compress_recent_sessions": 7,
+   "compress_base_sessions": 60,
+   "max_compress": 0.75,
+   "vol_dry_recent_sessions": 5,
+   "vol_dry_base_sessions": 50,
+   "breakdown_lookback": 10,
+   "max_breakdowns": 1,
+   "max_up_run": 2,
+   "extension_sessions": 20,
+   "max_extension": 1.1,
+   "box_min_sessions": 3,
+   "box_max_sessions": 10,
+   "box_spread_adrs": 1.0,
+   "trigger_cents": 0.02,
+   "trigger_fraction": 0.001,
+   "stop_sessions": 3,
+   "max_risk_pct": 4.0,
    "top_n": 5,
-   "also_quiet_n": 10,
-   "entry_window_minutes": 40
+   "also_n": 10,
+   "ratio_decimals": 2,
+   "pct_decimals": 1,
+   "price_decimals": 2
   },
-  "universe": {
-   "min_price": 3,
-   "min_volume": 100000,
-   "common_stock_only": true
-  }
- },
- "cover": {
-  "h1": "Stand aside.",
-  "dek": "Breadth is red: 812 stocks down 4% today and a 10-day ratio of 0.8. No new longs; manage what you hold.",
-  "action_label": "What you hold",
-  "action_target": "#hold"
- },
- "breadth": {
-  "date": "2026-09-10",
-  "up4": 143,
-  "down4": 812,
-  "up25_quarter": 410,
-  "down25_quarter": 180,
-  "up25_month": 40,
-  "down25_month": 210,
-  "up50_month": 3,
-  "down50_month": 22,
-  "up13_34d": 0,
-  "down13_34d": 0,
-  "pct_above_40ma": 18.4,
-  "universe": 6150,
-  "ratio_5d": 0.2,
-  "ratio_10d": 0.26,
-  "up4_5d": 764,
-  "down4_5d": 3736,
-  "up4_10d": 1728,
-  "down4_10d": 6689,
-  "regime": {
-   "verdict": "red",
-   "size_multiplier": 0,
-   "reasons": [
-    "down 4%: 812 >= the scaled alarm of 662.3 (700 of 6,500): major deterioration",
-    "10-session ratio 0.26 (1728 up, 6689 down) < 1.0: more breakdowns than breakouts",
-    "5-session ratio 0.2 (764 up, 3736 down) < 0.5 with 812 down vs 143 up today: a fast selling phase"
+  "record": {
+   "open_plan_sessions": 5,
+   "scorecard_sessions": 60,
+   "scorecard_min_plans": 20,
+   "nights_kept": 20,
+   "max_picks": 260,
+   "benchmark": "SPY"
+  },
+  "pipeline": {
+   "max_reads": 12,
+   "fetch_budget_seconds": 900,
+   "lookback_days": 260,
+   "min_coverage_fraction": 0.5,
+   "closed_fraction": 0.05,
+   "max_error_fraction": 0.05,
+   "trade_grades": [
+    "A+",
+    "A"
    ],
-   "oversold_extreme": true,
-   "thresholds": {
-    "universe": 6150,
-    "reference_universe": 6500,
-    "down4_alarm": 662.3,
-    "up50_month_hot": 18.9,
-    "down25_quarter_oversold": 189.2,
-    "ratio_10d_red": 1,
-    "ratio_5d_red": 0.5,
-    "ratio_10d_yellow": 2
-   },
-   "inputs": {
-    "date": "2026-09-10",
-    "ratio_10d": 0.26,
-    "ratio_5d": 0.2,
-    "up4_10d": 1728,
-    "down4_10d": 6689,
-    "up4_5d": 764,
-    "down4_5d": 3736,
-    "up4": 143,
-    "down4": 812,
-    "up50_month": 3,
-    "down25_quarter": 180
-   }
+   "yellow_grades": [
+    "A+"
+   ],
+   "series_bars": 120
   },
-  "history": [
-   {
-    "date": "2026-07-30",
-    "up4": 335,
-    "down4": 152,
-    "ratio_10d": 2.76
-   },
-   {
-    "date": "2026-07-31",
-    "up4": 339,
-    "down4": 146,
-    "ratio_10d": 2.67
-   },
-   {
-    "date": "2026-08-03",
-    "up4": 333,
-    "down4": 183,
-    "ratio_10d": 2.51
-   },
-   {
-    "date": "2026-08-04",
-    "up4": 316,
-    "down4": 210,
-    "ratio_10d": 2.31
-   },
-   {
-    "date": "2026-08-05",
-    "up4": 333,
-    "down4": 218,
-    "ratio_10d": 2.16
-   },
-   {
-    "date": "2026-08-06",
-    "up4": 297,
-    "down4": 222,
-    "ratio_10d": 1.99
-   },
-   {
-    "date": "2026-08-07",
-    "up4": 286,
-    "down4": 202,
-    "ratio_10d": 1.89
-   },
-   {
-    "date": "2026-08-10",
-    "up4": 309,
-    "down4": 273,
-    "ratio_10d": 1.74
-   },
-   {
-    "date": "2026-08-11",
-    "up4": 276,
-    "down4": 239,
-    "ratio_10d": 1.59
-   },
-   {
-    "date": "2026-08-12",
-    "up4": 296,
-    "down4": 268,
-    "ratio_10d": 1.48
-   },
-   {
-    "date": "2026-08-13",
-    "up4": 278,
-    "down4": 300,
-    "ratio_10d": 1.35
-   },
-   {
-    "date": "2026-08-14",
-    "up4": 289,
-    "down4": 292,
-    "ratio_10d": 1.25
-   },
-   {
-    "date": "2026-08-17",
-    "up4": 283,
-    "down4": 353,
-    "ratio_10d": 1.15
-   },
-   {
-    "date": "2026-08-18",
-    "up4": 248,
-    "down4": 326,
-    "ratio_10d": 1.08
-   },
-   {
-    "date": "2026-08-19",
-    "up4": 223,
-    "down4": 397,
-    "ratio_10d": 0.97
-   },
-   {
-    "date": "2026-08-20",
-    "up4": 242,
-    "down4": 401,
-    "ratio_10d": 0.89
-   },
-   {
-    "date": "2026-08-21",
-    "up4": 222,
-    "down4": 423,
-    "ratio_10d": 0.81
-   },
-   {
-    "date": "2026-08-24",
-    "up4": 243,
-    "down4": 423,
-    "ratio_10d": 0.76
-   },
-   {
-    "date": "2026-08-25",
-    "up4": 231,
-    "down4": 446,
-    "ratio_10d": 0.7
-   },
-   {
-    "date": "2026-08-26",
-    "up4": 212,
-    "down4": 508,
-    "ratio_10d": 0.64
-   },
-   {
-    "date": "2026-08-27",
-    "up4": 238,
-    "down4": 523,
-    "ratio_10d": 0.59
-   },
-   {
-    "date": "2026-08-28",
-    "up4": 201,
-    "down4": 547,
-    "ratio_10d": 0.54
-   },
-   {
-    "date": "2026-08-31",
-    "up4": 169,
-    "down4": 600,
-    "ratio_10d": 0.49
-   },
-   {
-    "date": "2026-09-01",
-    "up4": 185,
-    "down4": 632,
-    "ratio_10d": 0.44
-   },
-   {
-    "date": "2026-09-02",
-    "up4": 171,
-    "down4": 651,
-    "ratio_10d": 0.41
-   },
-   {
-    "date": "2026-09-03",
-    "up4": 167,
-    "down4": 701,
-    "ratio_10d": 0.37
-   },
-   {
-    "date": "2026-09-04",
-    "up4": 149,
-    "down4": 691,
-    "ratio_10d": 0.34
-   },
-   {
-    "date": "2026-09-08",
-    "up4": 171,
-    "down4": 756,
-    "ratio_10d": 0.31
-   },
-   {
-    "date": "2026-09-09",
-    "up4": 134,
-    "down4": 776,
-    "ratio_10d": 0.28
-   },
-   {
-    "date": "2026-09-10",
-    "up4": 143,
-    "down4": 812,
-    "ratio_10d": 0.26
-   }
-  ],
-  "rules": {
-   "burst_pct": 4,
+  "breadth": {
+   "burst_pct": 4.0,
    "min_volume": 100000,
+   "min_dollar_volume_20": 250000,
    "month_sessions": 20,
    "quarter_sessions": 65,
+   "sessions_34": 34,
    "ma_sessions": 40,
-   "min_month_price": 5,
-   "quarter_move_pct": 25,
-   "month_move_pct": 25,
-   "month_big_move_pct": 50,
+   "min_month_price": 5.0,
+   "quarter_move_pct": 25.0,
+   "month_move_pct": 25.0,
+   "month_big_move_pct": 50.0,
+   "move_13_pct": 13.0,
+   "penny": 0.01,
    "ratio_short_sessions": 5,
    "ratio_long_sessions": 10,
    "reference_universe": 6500,
    "down4_alarm": 700,
-   "red_ratio_10d": 1,
+   "red_ratio_10d": 1.0,
    "red_ratio_5d": 0.5,
-   "yellow_ratio_10d": 2,
+   "yellow_ratio_10d": 2.0,
    "up50_month_hot": 20,
    "down25_quarter_oversold": 200,
    "size_multiplier": {
-    "green": 1,
+    "green": 1.0,
     "yellow": 0.5,
-    "red": 0
+    "red": 0.0
+   }
+  },
+  "universe": {
+   "min_price": 3.0,
+   "min_volume": 100000,
+   "max_discovery": 8000,
+   "identity": "47798ad00621ade5"
+  }
+ },
+ "breadth": {
+  "date": "2026-09-10",
+  "up4": 5,
+  "down4": 6,
+  "up25_quarter": 1,
+  "down25_quarter": 0,
+  "up25_month": 0,
+  "down25_month": 0,
+  "up50_month": 0,
+  "down50_month": 0,
+  "up13_34d": 6,
+  "down13_34d": 1,
+  "pct_above_40ma": 50.0,
+  "universe": 30,
+  "ratio_5d": 0.88,
+  "ratio_10d": 1.0,
+  "up4_5d": 7,
+  "down4_5d": 8,
+  "up4_10d": 10,
+  "down4_10d": 10,
+  "regime": {
+   "verdict": "red",
+   "size_multiplier": 0.0,
+   "reasons": [
+    "down 4%: 6 >= the scaled alarm of 3.2 (700 of 6,500): major deterioration"
+   ],
+   "oversold_extreme": true,
+   "thresholds": {
+    "universe": 30,
+    "reference_universe": 6500,
+    "down4_alarm": 3.2,
+    "up50_month_hot": 0.1,
+    "down25_quarter_oversold": 0.9,
+    "ratio_10d_red": 1.0,
+    "ratio_5d_red": 0.5,
+    "ratio_10d_yellow": 2.0
+   },
+   "inputs": {
+    "date": "2026-09-10",
+    "ratio_10d": 1.0,
+    "ratio_5d": 0.88,
+    "up4_10d": 10,
+    "down4_10d": 10,
+    "up4_5d": 7,
+    "down4_5d": 8,
+    "up4": 5,
+    "down4": 6,
+    "up50_month": 0,
+    "down25_quarter": 0
+   }
+  },
+  "history": [
+   {
+    "date": "2026-07-31",
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 0.83
+   },
+   {
+    "date": "2026-08-03",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 0.83
+   },
+   {
+    "date": "2026-08-04",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-05",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-06",
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 1.2
+   },
+   {
+    "date": "2026-08-07",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 0.83
+   },
+   {
+    "date": "2026-08-10",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 0.83
+   },
+   {
+    "date": "2026-08-11",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 0.83
+   },
+   {
+    "date": "2026-08-12",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-13",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.4
+   },
+   {
+    "date": "2026-08-14",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.17
+   },
+   {
+    "date": "2026-08-17",
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 1.2
+   },
+   {
+    "date": "2026-08-18",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-19",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-20",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-21",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-24",
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-25",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 0.86
+   },
+   {
+    "date": "2026-08-26",
+    "up4": 2,
+    "down4": 0,
+    "ratio_10d": 1.17
+   },
+   {
+    "date": "2026-08-27",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-08-28",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.14
+   },
+   {
+    "date": "2026-08-31",
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 1.14
+   },
+   {
+    "date": "2026-09-01",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.0
+   },
+   {
+    "date": "2026-09-02",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.17
+   },
+   {
+    "date": "2026-09-03",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.4
+   },
+   {
+    "date": "2026-09-04",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 2.0
+   },
+   {
+    "date": "2026-09-07",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.6
+   },
+   {
+    "date": "2026-09-08",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.4
+   },
+   {
+    "date": "2026-09-09",
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.2
+   },
+   {
+    "date": "2026-09-10",
+    "up4": 5,
+    "down4": 6,
+    "ratio_10d": 1.0
+   }
+  ],
+  "rules": {
+   "burst_pct": 4.0,
+   "min_volume": 100000,
+   "min_dollar_volume_20": 250000,
+   "month_sessions": 20,
+   "quarter_sessions": 65,
+   "sessions_34": 34,
+   "ma_sessions": 40,
+   "min_month_price": 5.0,
+   "quarter_move_pct": 25.0,
+   "month_move_pct": 25.0,
+   "month_big_move_pct": 50.0,
+   "move_13_pct": 13.0,
+   "penny": 0.01,
+   "ratio_short_sessions": 5,
+   "ratio_long_sessions": 10,
+   "reference_universe": 6500,
+   "down4_alarm": 700,
+   "red_ratio_10d": 1.0,
+   "red_ratio_5d": 0.5,
+   "yellow_ratio_10d": 2.0,
+   "up50_month_hot": 20,
+   "down25_quarter_oversold": 200,
+   "size_multiplier": {
+    "green": 1.0,
+    "yellow": 0.5,
+    "red": 0.0
    }
   },
   "notes": [
    {
     "key": "ratio_10d",
-    "text": "A 10-day ratio below about 2 may not be an ideal time for swing longs."
-   },
-   {
-    "key": "down4",
-    "text": "A series of days with 700+ stocks down 4% signals major deterioration."
+    "text": "a 10-day ratio below 2 is not an ideal time for swing longs"
    },
    {
     "key": "up50_month",
-    "text": "Above 20 = high bullishness, a pullback is likely; below about 3 = extreme bearishness, which is bullish."
+    "text": "more than 0.1 names up 50% in a month is froth; a pullback usually follows"
    },
    {
     "key": "down25_quarter",
-    "text": "Below about 200 marks an oversold extreme; low readings lead to tradable bounces in 1–6 weeks."
-   },
-   {
-    "key": "up25_quarter",
-    "text": "How many names moved 25% either way over 65 sessions; both sides high is churn."
+    "text": "fewer than 0.9 names down 25% in a quarter is an oversold extreme; bounces follow in one to six weeks"
    },
    {
     "key": "pct_above_40ma",
-    "text": "T2108, the share of stocks above their 40-day average: extremes happen near turns, before price."
+    "text": "T2108: under 20% is washed out, over 80% is stretched"
    }
   ]
  },
  "bursts": [
   {
-   "ticker": "KTOS",
-   "name": "Kratos Defense",
+   "ticker": "AAPL",
+   "name": "",
    "flags": [],
-   "scan": "burst",
-   "close": 49.71,
-   "prev_close": 47.12,
-   "open": 47.31,
-   "high": 49.91,
-   "low": 46.93,
-   "gain_pct": 5.5,
-   "volume": 3122020,
-   "volume_vs_prior": 3.49,
-   "dollar_volume": 155195614,
+   "scan": "both",
+   "close": 124.21,
+   "prev_close": 117.18,
+   "open": 118.96,
+   "high": 124.49,
+   "low": 118.35,
+   "gain_pct": 6.0,
+   "volume": 3000000.0,
+   "volume_vs_prior": 5.0,
+   "dollar_volume": 372630000,
+   "dollar_move": 5.25,
+   "extension_pct": 5.2,
    "quality": {
-    "grade_mechanical": "A+",
-    "score": 10,
-    "passes": 9,
-    "of": 9,
     "checks": [
      {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "4.3× prior 10",
-      "value": 4.3,
-      "note": "the burst bar's range is 4.3× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "3.5× yesterday",
-      "value": 3.49,
-      "note": "volume 3.5× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": true,
-      "marginal": false,
-      "display": "+0.6% · 0.7% range",
-      "value": 0.7,
-      "note": "the session before was narrow: the coil had tightened"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": true,
-      "marginal": false,
-      "display": "0 in base",
+      "key": "two_days",
+      "letter": "2",
+      "label": "not up two days in a row",
+      "values": {
+       "up_run": 0,
+       "up_closes": 0,
+       "prior_day_pct": -0.17
+      },
       "value": 0,
-      "note": "no 4% down day inside the base"
+      "display": "up_run=0 up_closes=0 prior_day_pct=-0.17",
+      "threshold": "up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
+      "letter": "L",
+      "label": "linearity of the prior leg",
+      "values": {
+       "er": 1.0,
+       "r2": 1.0,
+       "leg_sessions": 16,
+       "leg_gain_pct": 20.5
+      },
+      "value": 1.0,
+      "display": "er=1.0 r2=1.0 leg_sessions=16 leg_gain_pct=20.5",
+      "threshold": "ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "R² 0.96",
-      "value": 0.96,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": true,
-      "marginal": false,
-      "display": "10 s · 6.0% deep",
-      "value": 6,
-      "note": "a 10-session base 6.0% deep: supply absorbed"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
+      "letter": "Y",
+      "label": "young trend: first or second breakout",
+      "values": {
+       "breakouts_in_move": 0,
+       "sessions_since_move_start": 33,
+       "gain_since_move_start_pct": 24.2
+      },
+      "value": 0,
+      "display": "breakouts_in_move=0 sessions_since_move_start=33 gain_since_move_start_pct=24.2",
+      "threshold": "prior breakouts since the move started <= 1 (0 for A+)",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "2nd burst",
-      "value": 2,
-      "note": "breakout 2 of this trend"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "narrow_or_negative",
+      "letter": "N",
+      "label": "narrow or negative day before",
+      "values": {
+       "prior_day_pct": -0.17,
+       "prior_range_pct": 0.8,
+       "negative": true,
+       "narrow": true,
+       "median_range_pct": 1.0
+      },
+      "value": -0.17,
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=1.0",
+      "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "consolidation",
+      "letter": "C",
+      "label": "consolidation quality",
+      "values": {
+       "base_sessions": 17,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.19,
+       "tightness": 0.64,
+       "base_volume_vs_leg": 0.41,
+       "base_volume_vs_avg": 0.59
+      },
+      "value": 17,
+      "display": "base_sessions=17 breakdowns=0 bursts_in_base=0 giveback=0.19 tightness=0.64 base_volume_vs_leg=0.41 base_volume_vs_avg=0.59",
+      "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
+      "letter": "H",
+      "label": "close near the high",
+      "values": {
+       "close_pos": 0.95,
+       "close_above_open": true
+      },
+      "value": 0.95,
+      "display": "close_pos=0.95 close_above_open=True",
+      "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "93% of range",
-      "value": 93,
-      "note": "closed strong: buyers in control into the close"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
+      "key": "range_expansion",
+      "letter": "RE",
+      "label": "range expansion",
+      "values": {
+       "vs_prior_5": 4.9,
+       "vs_prior_10": 4.9,
+       "bar_range_pct": 4.9
+      },
+      "value": 4.9,
+      "display": "vs_prior_5=4.9 vs_prior_10=4.9 bar_range_pct=4.9",
+      "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "1 up day before",
-      "value": 1,
-      "note": "not already up two days in a row"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "volume",
+      "letter": "VOL",
+      "label": "higher volume",
+      "values": {
+       "volume_vs_prior": 5.0,
+       "volume_vs_avg50": 2.96,
+       "volume_rank_60": 1,
+       "cv_required": false
+      },
+      "value": 5.0,
+      "display": "volume_vs_prior=5.0 volume_vs_avg50=2.96 volume_rank_60=1 cv_required=False",
+      "threshold": "volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      }
     ],
     "vetoes": [],
+    "passes": 6,
+    "of": 6,
+    "a_plus_count": 8,
+    "score": 10.0,
+    "grade": "A+",
     "reclass": null,
+    "notes": [
+     "extension: close 5.2% vs its 20-SMA, 5.7% over 20 sessions"
+    ],
     "base": {
-     "start": "2026-08-26",
+     "start": "2026-08-18",
      "end": "2026-09-09",
-     "sessions": 10,
-     "low": 45.35,
-     "high": 48.24,
-     "depth_pct": 6,
+     "start_index": 95,
+     "end_index": 111,
+     "sessions": 17,
+     "high": 121.09,
+     "low": 116.83,
+     "depth_pct": 3.5,
      "breakdown_dates": []
+    },
+    "leg": {
+     "start": 79,
+     "end": 94,
+     "length": 16,
+     "gain_pct": 20.5,
+     "high": 121.09,
+     "low": 99.2,
+     "er": 1.0,
+     "r2": 1.0
+    },
+    "burst": {
+     "gain_pct": 6.0,
+     "gap_pct": 1.5,
+     "bar_range_pct": 4.9,
+     "close_pos": 0.95,
+     "volume_vs_prior": 5.0,
+     "volume_vs_avg50": 2.96,
+     "volume_rank_60": 1
+    },
+    "unreadable": null,
+    "weights": {
+     "2": 1.5,
+     "L": 2.0,
+     "Y": 1.5,
+     "N": 1.5,
+     "C": 2.0,
+     "H": 1.5
     }
    },
+   "grade_mechanical": "A+",
+   "score": 10.0,
+   "vetoes": [],
+   "reclass": null,
+   "grade": "A+",
+   "plan": null,
+   "chart": "charts/AAPL.png",
    "claude": {
     "agree": true,
     "grade": "A+",
-    "score": 9.9,
-    "reason": "KTOS broke out of a 10-session base on 3.5× volume with a 4.3× range bar that closed at 93% of its range; the advance before the base was orderly and the day before was quiet.",
-    "key_risk": "the base is 6.0% deep and a gap over $51.70 at the open would leave no stop the bar supports.",
-    "entry_note": "skip it if the open prints above $51.70; a print under $48.72 says the burst is failing.",
+    "score": 9.3,
+    "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
+    "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
+    "entry_note": "Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.",
     "source": "claude",
     "chart_seen": true,
     "error": null
    },
-   "grade": "A+",
-   "score": 9.9,
    "rank": 1,
-   "plan": {
-    "ticker": "KTOS",
-    "kind": "burst",
-    "scan": "burst",
-    "action": "no_new_longs",
-    "entry_ref": 49.71,
-    "entry_low": 48.72,
-    "entry_high": 51.7,
-    "skip_if_open_above": 51.7,
-    "skip_if_open_below": 48.72,
-    "extended_above": 53.69,
-    "entry_window": "first 30 minutes",
-    "planned_entry": 50.21,
-    "assumed_slippage_pct": 1,
-    "stop": 48.42,
-    "stop_basis": "half_range",
-    "stop_pct": 2.6,
-    "stop_note": null,
-    "risk_per_share": 1.79,
-    "shares": 0,
-    "position_usd": 0,
-    "position_pct": 0,
-    "risk_usd": 0,
-    "capped_by": "multiplier",
-    "size_multiplier": 0,
-    "resize_rule": "if your fill differs, shares = $0.00 / (fill - $48.42), and no more than $2,500.00 of stock",
-    "targets": {
-     "low_pct": 8,
-     "high_pct": 20,
-     "low": 54.23,
-     "high": 60.25,
-     "note": "above $40 he measures the move in dollars: $5-25",
-     "dollar_low": 55.21,
-     "dollar_high": 75.21
+   "series": [
+    {
+     "date": "2026-04-07",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
     },
-    "exit_schedule": [
-     {
-      "day": 1,
-      "date": "2026-09-11",
-      "key": "entry",
-      "instruction": "buy in the first 30 minutes inside $48.72–$51.70; the sell stop at $48.42 is live from the fill. Skip it if it opens above $51.70."
-     },
-     {
-      "day": 2,
-      "date": "2026-09-14",
-      "key": "hold",
-      "instruction": "hold. Raise the stop to your entry day's low. If it closes below the stop you are out (the stop order does it). Do not move it to break-even just because day 2 is green."
-     },
-     {
-      "day": 3,
-      "date": "2026-09-15",
-      "key": "day3",
-      "instruction": "sell at least half at the close. If it reaches $54.23 (+8%) sell half there and move the stop to 25–50 cents under that day's high. If it closes at or below $50.21, exit: no follow-through."
-     },
-     {
-      "day": 4,
-      "date": "2026-09-16",
-      "key": "trail",
-      "instruction": "trail the stop under each day's low; on any +10% day ($55.23) take profit into strength."
-     },
-     {
-      "day": 5,
-      "date": "2026-09-17",
-      "key": "exit",
-      "instruction": "exit the remainder at the close. Bursts die; $60.25 (+20%) is the top of the band, not a hope."
-     }
-    ],
-    "order_json": null,
-    "order_line": null,
-    "fallback_line": null,
-    "burst": {
-     "close": 49.71,
-     "low": 46.93,
-     "high": 49.91,
-     "open": 47.31,
-     "prev_close": 47.12,
-     "gain_pct": 5.5,
-     "gap_pct": 0.4
+    {
+     "date": "2026-04-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
     },
-    "flags": [],
-    "notes": [
-     "the stop is 3.57% from the planned fill: inside his 4% line, wider than his ideal 2%",
-     "no new longs: the regime multiplier is 0"
-    ]
-   },
-   "summary": "KTOS: +5.5% on 3.5× volume out of a 10-session base 6.0% deep. A+ 9.9, 9 of 9 criteria.",
-   "chart": null,
-   "series": null
+    {
+     "date": "2026-04-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-14",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-27",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-28",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-30",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-04",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-05",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-06",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-07",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-11",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-12",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-14",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-18",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-19",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-25",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-26",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-27",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-28",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-02",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-03",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-04",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-05",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-11",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-12",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-18",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-19",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-25",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-26",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-30",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-02",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-03",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-06",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-07",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-14",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-27",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-28",
+     "o": 100.0,
+     "h": 101.76,
+     "l": 99.5,
+     "c": 101.25,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-07-29",
+     "o": 101.25,
+     "h": 103.03,
+     "l": 100.74,
+     "c": 102.52,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-07-30",
+     "o": 102.52,
+     "h": 104.32,
+     "l": 102.01,
+     "c": 103.8,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-07-31",
+     "o": 103.8,
+     "h": 105.63,
+     "l": 103.28,
+     "c": 105.1,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-03",
+     "o": 105.1,
+     "h": 106.94,
+     "l": 104.57,
+     "c": 106.41,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-04",
+     "o": 106.41,
+     "h": 108.28,
+     "l": 105.88,
+     "c": 107.74,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-05",
+     "o": 107.74,
+     "h": 109.64,
+     "l": 107.2,
+     "c": 109.09,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-06",
+     "o": 109.09,
+     "h": 111.0,
+     "l": 108.54,
+     "c": 110.45,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-07",
+     "o": 110.45,
+     "h": 112.39,
+     "l": 109.9,
+     "c": 111.83,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-10",
+     "o": 111.83,
+     "h": 113.8,
+     "l": 111.27,
+     "c": 113.23,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-11",
+     "o": 113.23,
+     "h": 115.22,
+     "l": 112.66,
+     "c": 114.65,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-12",
+     "o": 114.65,
+     "h": 116.66,
+     "l": 114.08,
+     "c": 116.08,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-13",
+     "o": 116.08,
+     "h": 118.12,
+     "l": 115.5,
+     "c": 117.53,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-14",
+     "o": 117.53,
+     "h": 119.59,
+     "l": 116.94,
+     "c": 119.0,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-17",
+     "o": 119.0,
+     "h": 121.09,
+     "l": 118.41,
+     "c": 120.49,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-18",
+     "o": 120.49,
+     "h": 120.96,
+     "l": 117.11,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-19",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-20",
+     "o": 117.38,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-21",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-24",
+     "o": 117.38,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-25",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-26",
+     "o": 117.38,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-27",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-28",
+     "o": 117.38,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-31",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-01",
+     "o": 117.38,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-02",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-03",
+     "o": 117.38,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-04",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-07",
+     "o": 117.38,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-08",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-09",
+     "o": 117.38,
+     "h": 117.73,
+     "l": 116.83,
+     "c": 117.18,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-10",
+     "o": 118.96,
+     "h": 124.49,
+     "l": 118.35,
+     "c": 124.21,
+     "v": 3000000.0
+    }
+   ],
+   "summary": "AAPL: +6.0% on 5.0× volume out of a base 3.5% deep. A+ 10.0, 6 of 6 criteria."
   },
   {
-   "ticker": "BE",
-   "name": "Bloom Energy",
+   "ticker": "AMD",
+   "name": "",
    "flags": [],
-   "scan": "burst",
-   "close": 31.1,
-   "prev_close": 29.65,
-   "open": 29.77,
-   "high": 31.23,
-   "low": 29.53,
-   "gain_pct": 4.89,
-   "volume": 2547353,
-   "volume_vs_prior": 3.75,
-   "dollar_volume": 79222678,
+   "scan": "both",
+   "close": 123.27,
+   "prev_close": 117.18,
+   "open": 118.89,
+   "high": 123.79,
+   "low": 118.35,
+   "gain_pct": 5.2,
+   "volume": 2600000.0,
+   "volume_vs_prior": 4.3333,
+   "dollar_volume": 320502000,
+   "dollar_move": 4.38,
+   "extension_pct": 4.9,
    "quality": {
-    "grade_mechanical": "A+",
-    "score": 9.8,
-    "passes": 9,
-    "of": 9,
     "checks": [
      {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "2.9× prior 10",
-      "value": 2.9,
-      "note": "the burst bar's range is 2.9× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "3.8× yesterday",
-      "value": 3.75,
-      "note": "volume 3.8× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": true,
-      "marginal": false,
-      "display": "+0.6% · 0.7% range",
-      "value": 0.7,
-      "note": "the session before was narrow: the coil had tightened"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": true,
-      "marginal": false,
-      "display": "0 in base",
+      "key": "two_days",
+      "letter": "2",
+      "label": "not up two days in a row",
+      "values": {
+       "up_run": 0,
+       "up_closes": 0,
+       "prior_day_pct": -0.17
+      },
       "value": 0,
-      "note": "no 4% down day inside the base"
+      "display": "up_run=0 up_closes=0 prior_day_pct=-0.17",
+      "threshold": "up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
+      "letter": "L",
+      "label": "linearity of the prior leg",
+      "values": {
+       "er": 1.0,
+       "r2": 1.0,
+       "leg_sessions": 16,
+       "leg_gain_pct": 20.5
+      },
+      "value": 1.0,
+      "display": "er=1.0 r2=1.0 leg_sessions=16 leg_gain_pct=20.5",
+      "threshold": "ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "R² 0.99",
-      "value": 0.99,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": true,
-      "marginal": false,
-      "display": "8 s · 8.3% deep",
-      "value": 8.3,
-      "note": "a 8-session base 8.3% deep: supply absorbed"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
+      "letter": "Y",
+      "label": "young trend: first or second breakout",
+      "values": {
+       "breakouts_in_move": 0,
+       "sessions_since_move_start": 29,
+       "gain_since_move_start_pct": 23.3
+      },
+      "value": 0,
+      "display": "breakouts_in_move=0 sessions_since_move_start=29 gain_since_move_start_pct=23.3",
+      "threshold": "prior breakouts since the move started <= 1 (0 for A+)",
+      "passed": true,
       "pass": true,
-      "marginal": true,
-      "display": "3rd burst",
-      "value": 3,
-      "note": "breakout 3 of this trend"
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "narrow_or_negative",
+      "letter": "N",
+      "label": "narrow or negative day before",
+      "values": {
+       "prior_day_pct": -0.17,
+       "prior_range_pct": 0.8,
+       "negative": true,
+       "narrow": true,
+       "median_range_pct": 1.0
+      },
+      "value": -0.17,
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=1.0",
+      "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "consolidation",
+      "letter": "C",
+      "label": "consolidation quality",
+      "values": {
+       "base_sessions": 13,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.19,
+       "tightness": 0.66,
+       "base_volume_vs_leg": 0.41,
+       "base_volume_vs_avg": 0.57
+      },
+      "value": 13,
+      "display": "base_sessions=13 breakdowns=0 bursts_in_base=0 giveback=0.19 tightness=0.66 base_volume_vs_leg=0.41 base_volume_vs_avg=0.57",
+      "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
+      "letter": "H",
+      "label": "close near the high",
+      "values": {
+       "close_pos": 0.9,
+       "close_above_open": true
+      },
+      "value": 0.9,
+      "display": "close_pos=0.9 close_above_open=True",
+      "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "92% of range",
-      "value": 92,
-      "note": "closed strong: buyers in control into the close"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
+      "key": "range_expansion",
+      "letter": "RE",
+      "label": "range expansion",
+      "values": {
+       "vs_prior_5": 4.4,
+       "vs_prior_10": 4.4,
+       "bar_range_pct": 4.4
+      },
+      "value": 4.4,
+      "display": "vs_prior_5=4.4 vs_prior_10=4.4 bar_range_pct=4.4",
+      "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "1 up day before",
-      "value": 1,
-      "note": "not already up two days in a row"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "volume",
+      "letter": "VOL",
+      "label": "higher volume",
+      "values": {
+       "volume_vs_prior": 4.33,
+       "volume_vs_avg50": 2.49,
+       "volume_rank_60": 1,
+       "cv_required": false
+      },
+      "value": 4.33,
+      "display": "volume_vs_prior=4.33 volume_vs_avg50=2.49 volume_rank_60=1 cv_required=False",
+      "threshold": "volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      }
     ],
     "vetoes": [],
+    "passes": 6,
+    "of": 6,
+    "a_plus_count": 8,
+    "score": 10.0,
+    "grade": "A+",
     "reclass": null,
+    "notes": [
+     "extension: close 4.9% vs its 20-SMA, 10.2% over 20 sessions"
+    ],
     "base": {
-     "start": "2026-08-28",
+     "start": "2026-08-24",
      "end": "2026-09-09",
-     "sessions": 8,
-     "low": 28.73,
-     "high": 31.32,
-     "depth_pct": 8.3,
+     "start_index": 95,
+     "end_index": 107,
+     "sessions": 13,
+     "high": 121.09,
+     "low": 116.83,
+     "depth_pct": 3.5,
      "breakdown_dates": []
+    },
+    "leg": {
+     "start": 79,
+     "end": 94,
+     "length": 16,
+     "gain_pct": 20.5,
+     "high": 121.09,
+     "low": 99.2,
+     "er": 1.0,
+     "r2": 1.0
+    },
+    "burst": {
+     "gain_pct": 5.2,
+     "gap_pct": 1.5,
+     "bar_range_pct": 4.4,
+     "close_pos": 0.9,
+     "volume_vs_prior": 4.33,
+     "volume_vs_avg50": 2.49,
+     "volume_rank_60": 1
+    },
+    "unreadable": null,
+    "weights": {
+     "2": 1.5,
+     "L": 2.0,
+     "Y": 1.5,
+     "N": 1.5,
+     "C": 2.0,
+     "H": 1.5
     }
    },
+   "grade_mechanical": "A+",
+   "score": 10.0,
+   "vetoes": [],
+   "reclass": null,
+   "grade": "A+",
+   "plan": null,
+   "chart": "charts/AMD.png",
    "claude": {
     "agree": true,
     "grade": "A+",
-    "score": 9.4,
-    "reason": "BE broke out of a 8-session base on 3.8× volume with a 2.9× range bar that closed at 92% of its range; the advance before the base was orderly and the day before was quiet.",
-    "key_risk": "the base is 8.3% deep and a gap over $32.34 at the open would leave no stop the bar supports.",
-    "entry_note": "skip it if the open prints above $32.34; a print under $30.48 says the burst is failing.",
+    "score": 9.3,
+    "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
+    "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
+    "entry_note": "Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.",
     "source": "claude",
     "chart_seen": true,
     "error": null
    },
-   "grade": "A+",
-   "score": 9.4,
    "rank": 2,
-   "plan": {
-    "ticker": "BE",
-    "kind": "burst",
-    "scan": "burst",
-    "action": "no_new_longs",
-    "entry_ref": 31.1,
-    "entry_low": 30.48,
-    "entry_high": 32.34,
-    "skip_if_open_above": 32.34,
-    "skip_if_open_below": 30.48,
-    "extended_above": 33.59,
-    "entry_window": "first 30 minutes",
-    "planned_entry": 31.41,
-    "assumed_slippage_pct": 1,
-    "stop": 30.38,
-    "stop_basis": "half_range",
-    "stop_pct": 2.32,
-    "stop_note": null,
-    "risk_per_share": 1.03,
-    "shares": 0,
-    "position_usd": 0,
-    "position_pct": 0,
-    "risk_usd": 0,
-    "capped_by": "multiplier",
-    "size_multiplier": 0,
-    "resize_rule": "if your fill differs, shares = $0.00 / (fill - $30.38), and no more than $2,500.00 of stock",
-    "targets": {
-     "low_pct": 8,
-     "high_pct": 20,
-     "low": 33.92,
-     "high": 37.69,
-     "note": null,
-     "dollar_low": null,
-     "dollar_high": null
-    },
-    "exit_schedule": [
-     {
-      "day": 1,
-      "date": "2026-09-11",
-      "key": "entry",
-      "instruction": "buy in the first 30 minutes inside $30.48–$32.34; the sell stop at $30.38 is live from the fill. Skip it if it opens above $32.34."
-     },
-     {
-      "day": 2,
-      "date": "2026-09-14",
-      "key": "hold",
-      "instruction": "hold. Raise the stop to your entry day's low. If it closes below the stop you are out (the stop order does it). Do not move it to break-even just because day 2 is green."
-     },
-     {
-      "day": 3,
-      "date": "2026-09-15",
-      "key": "day3",
-      "instruction": "sell at least half at the close. If it reaches $33.92 (+8%) sell half there and move the stop to 25–50 cents under that day's high. If it closes at or below $31.41, exit: no follow-through."
-     },
-     {
-      "day": 4,
-      "date": "2026-09-16",
-      "key": "trail",
-      "instruction": "trail the stop under each day's low; on any +10% day ($34.55) take profit into strength."
-     },
-     {
-      "day": 5,
-      "date": "2026-09-17",
-      "key": "exit",
-      "instruction": "exit the remainder at the close. Bursts die; $37.69 (+20%) is the top of the band, not a hope."
-     }
-    ],
-    "order_json": null,
-    "order_line": null,
-    "fallback_line": null,
-    "burst": {
-     "close": 31.1,
-     "low": 29.53,
-     "high": 31.23,
-     "open": 29.77,
-     "prev_close": 29.65,
-     "gain_pct": 4.89,
-     "gap_pct": 0.4
-    },
-    "flags": [],
-    "notes": [
-     "the stop is 3.28% from the planned fill: inside his 4% line, wider than his ideal 2%",
-     "no new longs: the regime multiplier is 0"
-    ]
-   },
-   "summary": "BE: +4.9% on 3.8× volume out of a 8-session base 8.3% deep. A+ 9.4, 9 of 9 criteria.",
-   "chart": null,
-   "series": null
+   "series": [],
+   "summary": "AMD: +5.2% on 4.3× volume out of a base 3.5% deep. A+ 10.0, 6 of 6 criteria."
   },
   {
-   "ticker": "AFRM",
-   "name": "Affirm",
+   "ticker": "NVDA",
+   "name": "",
    "flags": [],
-   "scan": "burst",
-   "close": 74.25,
-   "prev_close": 70.92,
-   "open": 71.2,
-   "high": 74.55,
-   "low": 70.64,
-   "gain_pct": 4.7,
-   "volume": 1758217,
-   "volume_vs_prior": 1.99,
-   "dollar_volume": 130547612,
+   "scan": "both",
+   "close": 126.88,
+   "prev_close": 118.14,
+   "open": 120.2,
+   "high": 128.17,
+   "low": 119.32,
+   "gain_pct": 7.4,
+   "volume": 3400000.0,
+   "volume_vs_prior": 5.6667,
+   "dollar_volume": 431392000,
+   "dollar_move": 6.68,
+   "extension_pct": 6.8,
    "quality": {
-    "grade_mechanical": "A+",
-    "score": 9,
-    "passes": 8,
-    "of": 9,
     "checks": [
      {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "2.1× prior 10",
-      "value": 2.1,
-      "note": "the burst bar's range is 2.1× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "2.0× yesterday",
-      "value": 1.99,
-      "note": "volume 2.0× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": false,
-      "marginal": false,
-      "display": "+2.8% · 5.4% range",
-      "value": 5.4,
-      "note": "the session before was up 2.8% on a 5.4% range: already in range expansion"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": true,
-      "marginal": false,
-      "display": "0 in base",
+      "key": "two_days",
+      "letter": "2",
+      "label": "not up two days in a row",
+      "values": {
+       "up_run": 0,
+       "up_closes": 0,
+       "prior_day_pct": -0.17
+      },
       "value": 0,
-      "note": "no 4% down day inside the base"
+      "display": "up_run=0 up_closes=0 prior_day_pct=-0.17",
+      "threshold": "up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
+      "letter": "L",
+      "label": "linearity of the prior leg",
+      "values": {
+       "er": 1.0,
+       "r2": 1.0,
+       "leg_sessions": 15,
+       "leg_gain_pct": 21.5
+      },
+      "value": 1.0,
+      "display": "er=1.0 r2=1.0 leg_sessions=15 leg_gain_pct=21.5",
+      "threshold": "ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "R² 0.99",
-      "value": 0.99,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": true,
-      "marginal": false,
-      "display": "11 s · 9.7% deep",
-      "value": 9.7,
-      "note": "a 11-session base 9.7% deep: supply absorbed"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
+      "letter": "Y",
+      "label": "young trend: first or second breakout",
+      "values": {
+       "breakouts_in_move": 0,
+       "sessions_since_move_start": 34,
+       "gain_since_move_start_pct": 26.9
+      },
+      "value": 0,
+      "display": "breakouts_in_move=0 sessions_since_move_start=34 gain_since_move_start_pct=26.9",
+      "threshold": "prior breakouts since the move started <= 1 (0 for A+)",
+      "passed": true,
       "pass": true,
-      "marginal": true,
-      "display": "3rd burst",
-      "value": 3,
-      "note": "breakout 3 of this trend"
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "narrow_or_negative",
+      "letter": "N",
+      "label": "narrow or negative day before",
+      "values": {
+       "prior_day_pct": -0.17,
+       "prior_range_pct": 0.8,
+       "negative": true,
+       "narrow": true,
+       "median_range_pct": 1.0
+      },
+      "value": -0.17,
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=1.0",
+      "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "consolidation",
+      "letter": "C",
+      "label": "consolidation quality",
+      "values": {
+       "base_sessions": 19,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.19,
+       "tightness": 0.62,
+       "base_volume_vs_leg": 0.41,
+       "base_volume_vs_avg": 0.61
+      },
+      "value": 19,
+      "display": "base_sessions=19 breakdowns=0 bursts_in_base=0 giveback=0.19 tightness=0.62 base_volume_vs_leg=0.41 base_volume_vs_avg=0.61",
+      "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
+      "letter": "H",
+      "label": "close near the high",
+      "values": {
+       "close_pos": 0.85,
+       "close_above_open": true
+      },
+      "value": 0.85,
+      "display": "close_pos=0.85 close_above_open=True",
+      "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "92% of range",
-      "value": 92,
-      "note": "closed strong: buyers in control into the close"
+      "a_plus": false,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
+      "key": "range_expansion",
+      "letter": "RE",
+      "label": "range expansion",
+      "values": {
+       "vs_prior_5": 7.0,
+       "vs_prior_10": 7.0,
+       "bar_range_pct": 7.0
+      },
+      "value": 7.0,
+      "display": "vs_prior_5=7.0 vs_prior_10=7.0 bar_range_pct=7.0",
+      "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "1 up day before",
-      "value": 1,
-      "note": "not already up two days in a row"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "volume",
+      "letter": "VOL",
+      "label": "higher volume",
+      "values": {
+       "volume_vs_prior": 5.67,
+       "volume_vs_avg50": 3.44,
+       "volume_rank_60": 1,
+       "cv_required": false
+      },
+      "value": 5.67,
+      "display": "volume_vs_prior=5.67 volume_vs_avg50=3.44 volume_rank_60=1 cv_required=False",
+      "threshold": "volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      }
     ],
     "vetoes": [],
+    "passes": 6,
+    "of": 6,
+    "a_plus_count": 7,
+    "score": 10.0,
+    "grade": "A+",
     "reclass": null,
+    "notes": [
+     "extension: close 6.8% vs its 20-SMA, 4.4% over 20 sessions"
+    ],
     "base": {
-     "start": "2026-08-25",
+     "start": "2026-08-14",
      "end": "2026-09-09",
-     "sessions": 11,
-     "low": 65.09,
-     "high": 72.09,
-     "depth_pct": 9.7,
+     "start_index": 94,
+     "end_index": 112,
+     "sessions": 19,
+     "high": 122.09,
+     "low": 117.79,
+     "depth_pct": 3.5,
      "breakdown_dates": []
+    },
+    "leg": {
+     "start": 79,
+     "end": 93,
+     "length": 15,
+     "gain_pct": 21.5,
+     "high": 122.09,
+     "low": 99.2,
+     "er": 1.0,
+     "r2": 1.0
+    },
+    "burst": {
+     "gain_pct": 7.4,
+     "gap_pct": 1.7,
+     "bar_range_pct": 7.0,
+     "close_pos": 0.85,
+     "volume_vs_prior": 5.67,
+     "volume_vs_avg50": 3.44,
+     "volume_rank_60": 1
+    },
+    "unreadable": null,
+    "weights": {
+     "2": 1.5,
+     "L": 2.0,
+     "Y": 1.5,
+     "N": 1.5,
+     "C": 2.0,
+     "H": 1.5
     }
    },
-   "claude": null,
+   "grade_mechanical": "A+",
+   "score": 10.0,
+   "vetoes": [],
+   "reclass": null,
    "grade": "A+",
-   "score": 9,
-   "rank": 3,
-   "plan": {
-    "ticker": "AFRM",
-    "kind": "burst",
-    "scan": "burst",
-    "action": "no_new_longs",
-    "entry_ref": 74.25,
-    "entry_low": 72.77,
-    "entry_high": 77.22,
-    "skip_if_open_above": 77.22,
-    "skip_if_open_below": 72.77,
-    "extended_above": 80.19,
-    "entry_window": "first 30 minutes",
-    "planned_entry": 74.99,
-    "assumed_slippage_pct": 1,
-    "stop": 72.6,
-    "stop_basis": "half_range",
-    "stop_pct": 2.22,
-    "stop_note": null,
-    "risk_per_share": 2.39,
-    "shares": 0,
-    "position_usd": 0,
-    "position_pct": 0,
-    "risk_usd": 0,
-    "capped_by": "multiplier",
-    "size_multiplier": 0,
-    "resize_rule": "if your fill differs, shares = $0.00 / (fill - $72.60), and no more than $2,500.00 of stock",
-    "targets": {
-     "low_pct": 8,
-     "high_pct": 20,
-     "low": 80.99,
-     "high": 89.99,
-     "note": "above $40 he measures the move in dollars: $5-25",
-     "dollar_low": 79.99,
-     "dollar_high": 99.99
-    },
-    "exit_schedule": [
-     {
-      "day": 1,
-      "date": "2026-09-11",
-      "key": "entry",
-      "instruction": "buy in the first 30 minutes inside $72.77–$77.22; the sell stop at $72.60 is live from the fill. Skip it if it opens above $77.22."
-     },
-     {
-      "day": 2,
-      "date": "2026-09-14",
-      "key": "hold",
-      "instruction": "hold. Raise the stop to your entry day's low. If it closes below the stop you are out (the stop order does it). Do not move it to break-even just because day 2 is green."
-     },
-     {
-      "day": 3,
-      "date": "2026-09-15",
-      "key": "day3",
-      "instruction": "sell at least half at the close. If it reaches $80.99 (+8%) sell half there and move the stop to 25–50 cents under that day's high. If it closes at or below $74.99, exit: no follow-through."
-     },
-     {
-      "day": 4,
-      "date": "2026-09-16",
-      "key": "trail",
-      "instruction": "trail the stop under each day's low; on any +10% day ($82.49) take profit into strength."
-     },
-     {
-      "day": 5,
-      "date": "2026-09-17",
-      "key": "exit",
-      "instruction": "exit the remainder at the close. Bursts die; $89.99 (+20%) is the top of the band, not a hope."
-     }
-    ],
-    "order_json": null,
-    "order_line": null,
-    "fallback_line": null,
-    "burst": {
-     "close": 74.25,
-     "low": 70.64,
-     "high": 74.55,
-     "open": 71.2,
-     "prev_close": 70.92,
-     "gain_pct": 4.7,
-     "gap_pct": 0.39
-    },
-    "flags": [],
-    "notes": [
-     "the stop is 3.19% from the planned fill: inside his 4% line, wider than his ideal 2%",
-     "no new longs: the regime multiplier is 0"
-    ]
+   "plan": null,
+   "chart": "charts/NVDA.png",
+   "claude": {
+    "agree": true,
+    "grade": "A+",
+    "score": 9.3,
+    "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
+    "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
+    "entry_note": "Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.",
+    "source": "claude",
+    "chart_seen": true,
+    "error": null
    },
-   "summary": "AFRM: +4.7% on 2.0× volume out of a 11-session base 9.7% deep. A+ 9.0, 8 of 9 criteria; the miss is quiet day before.",
-   "chart": null,
-   "series": null
+   "rank": 3,
+   "series": [],
+   "summary": "NVDA: +7.4% on 5.7× volume out of a base 3.5% deep. A+ 10.0, 6 of 6 criteria."
   },
   {
-   "ticker": "LMND",
-   "name": "Lemonade",
+   "ticker": "TSLA",
+   "name": "",
    "flags": [],
-   "scan": "burst",
-   "close": 56.87,
-   "prev_close": 53.55,
-   "open": 53.76,
-   "high": 57.1,
-   "low": 53.33,
-   "gain_pct": 6.2,
-   "volume": 2912324,
-   "volume_vs_prior": 3.1,
-   "dollar_volume": 165623866,
+   "scan": "both",
+   "close": 121.73,
+   "prev_close": 116.38,
+   "open": 118.05,
+   "high": 122.62,
+   "low": 117.54,
+   "gain_pct": 4.6,
+   "volume": 3000000.0,
+   "volume_vs_prior": 5.0,
+   "dollar_volume": 365190000,
+   "dollar_move": 3.68,
+   "extension_pct": 3.5,
    "quality": {
-    "grade_mechanical": "B",
-    "score": 6.8,
-    "passes": 7,
-    "of": 9,
     "checks": [
      {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "3.2× prior 10",
-      "value": 3.2,
-      "note": "the burst bar's range is 3.2× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "3.1× yesterday",
-      "value": 3.1,
-      "note": "volume 3.1× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": true,
-      "marginal": false,
-      "display": "+0.6% · 0.7% range",
-      "value": 0.7,
-      "note": "the session before was narrow: the coil had tightened"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": true,
-      "marginal": false,
-      "display": "0 in base",
+      "key": "two_days",
+      "letter": "2",
+      "label": "not up two days in a row",
+      "values": {
+       "up_run": 0,
+       "up_closes": 0,
+       "prior_day_pct": -0.17
+      },
       "value": 0,
-      "note": "no 4% down day inside the base"
+      "display": "up_run=0 up_closes=0 prior_day_pct=-0.17",
+      "threshold": "up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
+      "letter": "L",
+      "label": "linearity of the prior leg",
+      "values": {
+       "er": 0.81,
+       "r2": 0.99,
+       "leg_sessions": 17,
+       "leg_gain_pct": 18.4
+      },
+      "value": 0.81,
+      "display": "er=0.81 r2=0.99 leg_sessions=17 leg_gain_pct=18.4",
+      "threshold": "ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "R² 0.99",
-      "value": 0.99,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": false,
-      "marginal": true,
-      "display": "14 s · 12.9% deep",
-      "value": 12.9,
-      "note": "base 14 sessions, outside 3–20"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
+      "letter": "Y",
+      "label": "young trend: first or second breakout",
+      "values": {
+       "breakouts_in_move": 0,
+       "sessions_since_move_start": 41,
+       "gain_since_move_start_pct": 21.7
+      },
+      "value": 0,
+      "display": "breakouts_in_move=0 sessions_since_move_start=41 gain_since_move_start_pct=21.7",
+      "threshold": "prior breakouts since the move started <= 1 (0 for A+)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "narrow_or_negative",
+      "letter": "N",
+      "label": "narrow or negative day before",
+      "values": {
+       "prior_day_pct": -0.17,
+       "prior_range_pct": 0.8,
+       "negative": true,
+       "narrow": true,
+       "median_range_pct": 3.9
+      },
+      "value": -0.17,
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=3.9",
+      "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "consolidation",
+      "letter": "C",
+      "label": "consolidation quality",
+      "values": {
+       "base_sessions": 24,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.3,
+       "tightness": 2.1,
+       "base_volume_vs_leg": 0.42,
+       "base_volume_vs_avg": 0.63
+      },
+      "value": 24,
+      "display": "base_sessions=24 breakdowns=0 bursts_in_base=0 giveback=0.3 tightness=2.1 base_volume_vs_leg=0.42 base_volume_vs_avg=0.63",
+      "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+      "passed": false,
       "pass": false,
       "marginal": false,
-      "display": "4th burst",
-      "value": 4,
-      "note": "breakout 4 of this trend: extended stocks are dangerous"
+      "a_plus": false,
+      "note": "base of 24 sessions is outside Bonde's 3-20; the base ranged wider than the sessions before it",
+      "partial": false,
+      "status": "FAIL"
      },
      {
       "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
+      "letter": "H",
+      "label": "close near the high",
+      "values": {
+       "close_pos": 0.82,
+       "close_above_open": true
+      },
+      "value": 0.82,
+      "display": "close_pos=0.82 close_above_open=True",
+      "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "94% of range",
-      "value": 94,
-      "note": "closed strong: buyers in control into the close"
+      "a_plus": false,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
+      "key": "range_expansion",
+      "letter": "RE",
+      "label": "range expansion",
+      "values": {
+       "vs_prior_5": 1.08,
+       "vs_prior_10": 1.08,
+       "bar_range_pct": 4.2
+      },
+      "value": 1.08,
+      "display": "vs_prior_5=1.08 vs_prior_10=1.08 bar_range_pct=4.2",
+      "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "2 up days before",
-      "value": 2,
-      "note": "not already up two days in a row"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "volume",
+      "letter": "VOL",
+      "label": "higher volume",
+      "values": {
+       "volume_vs_prior": 5.0,
+       "volume_vs_avg50": 3.16,
+       "volume_rank_60": 1,
+       "cv_required": true
+      },
+      "value": 5.0,
+      "display": "volume_vs_prior=5.0 volume_vs_avg50=3.16 volume_rank_60=1 cv_required=True",
+      "threshold": "volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "base over 21 sessions: +CV applies, volume must be >= 1.5x average and a catalyst is needed, which bars cannot show",
+      "partial": false,
+      "status": "PASS"
      }
     ],
     "vetoes": [],
+    "passes": 5,
+    "of": 6,
+    "a_plus_count": 6,
+    "score": 8.0,
+    "grade": "A",
     "reclass": null,
+    "notes": [
+     "extension: close 3.5% vs its 20-SMA, 4.4% over 20 sessions"
+    ],
     "base": {
-     "start": "2026-08-20",
+     "start": "2026-08-07",
      "end": "2026-09-09",
-     "sessions": 14,
-     "low": 48.89,
-     "high": 56.1,
-     "depth_pct": 12.9,
+     "start_index": 96,
+     "end_index": 119,
+     "sessions": 24,
+     "high": 121.91,
+     "low": 115.16,
+     "depth_pct": 5.5,
      "breakdown_dates": []
+    },
+    "leg": {
+     "start": 79,
+     "end": 95,
+     "length": 17,
+     "gain_pct": 18.4,
+     "high": 121.91,
+     "low": 99.2,
+     "er": 0.81,
+     "r2": 0.99
+    },
+    "burst": {
+     "gain_pct": 4.6,
+     "gap_pct": 1.4,
+     "bar_range_pct": 4.2,
+     "close_pos": 0.82,
+     "volume_vs_prior": 5.0,
+     "volume_vs_avg50": 3.16,
+     "volume_rank_60": 1
+    },
+    "unreadable": null,
+    "weights": {
+     "2": 1.5,
+     "L": 2.0,
+     "Y": 1.5,
+     "N": 1.5,
+     "C": 2.0,
+     "H": 1.5
     }
    },
-   "claude": null,
-   "grade": "B",
-   "score": 6.8,
-   "rank": 4,
+   "grade_mechanical": "A",
+   "score": 8.0,
+   "vetoes": [],
+   "reclass": null,
+   "grade": "A",
    "plan": null,
-   "summary": "LMND: +6.2% on 3.1× volume out of a 14-session base 12.9% deep. B 6.8, 7 of 9 criteria; the miss is tight base.",
-   "chart": null,
-   "series": null
+   "chart": "charts/TSLA.png",
+   "claude": {
+    "agree": true,
+    "grade": "A",
+    "score": 8.4,
+    "reason": "The base is orderly and the burst is real, but the close sits inside the top fifth of the range rather than at the high.",
+    "key_risk": "A weak open would put the entry under the burst bar's midpoint.",
+    "entry_note": "Buy only inside the zone in the first thirty minutes.",
+    "source": "claude",
+    "chart_seen": true,
+    "error": null
+   },
+   "rank": 4,
+   "series": [],
+   "summary": "TSLA: +4.6% on 5.0× volume out of a base 5.5% deep. A 8.0, 5 of 6 criteria."
   },
   {
-   "ticker": "ZETA",
-   "name": "Zeta Global",
+   "ticker": "PLUG",
+   "name": "",
    "flags": [],
-   "scan": "burst",
-   "close": 21.8,
-   "prev_close": 20.9,
-   "open": 20.98,
-   "high": 21.88,
-   "low": 20.81,
-   "gain_pct": 4.31,
-   "volume": 2594368,
-   "volume_vs_prior": 3.2,
-   "dollar_volume": 56557222,
+   "scan": "both",
+   "close": 123.04,
+   "prev_close": 117.18,
+   "open": 119.2,
+   "high": 126.81,
+   "low": 118.35,
+   "gain_pct": 5.0,
+   "volume": 3000000.0,
+   "volume_vs_prior": 5.0,
+   "dollar_volume": 369120000,
+   "dollar_move": 3.84,
+   "extension_pct": 4.3,
    "quality": {
-    "grade_mechanical": "skip",
-    "score": 3.6,
-    "passes": 8,
-    "of": 9,
     "checks": [
      {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
+      "key": "two_days",
+      "letter": "2",
+      "label": "not up two days in a row",
+      "values": {
+       "up_run": 0,
+       "up_closes": 0,
+       "prior_day_pct": -0.17
+      },
+      "value": 0,
+      "display": "up_run=0 up_closes=0 prior_day_pct=-0.17",
+      "threshold": "up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "2.2× prior 10",
-      "value": 2.2,
-      "note": "the burst bar's range is 2.2× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "3.2× yesterday",
-      "value": 3.2,
-      "note": "volume 3.2× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": true,
-      "marginal": false,
-      "display": "+0.6% · 0.7% range",
-      "value": 0.7,
-      "note": "the session before was narrow: the coil had tightened"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": true,
-      "marginal": true,
-      "display": "1 in base",
-      "value": 1,
-      "note": "1 four-percent down day inside the base"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
+      "letter": "L",
+      "label": "linearity of the prior leg",
+      "values": {
+       "er": 1.0,
+       "r2": 1.0,
+       "leg_sessions": 16,
+       "leg_gain_pct": 20.5
+      },
+      "value": 1.0,
+      "display": "er=1.0 r2=1.0 leg_sessions=16 leg_gain_pct=20.5",
+      "threshold": "ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "R² 0.97",
-      "value": 0.97,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": true,
-      "marginal": false,
-      "display": "6 s · 7.4% deep",
-      "value": 7.4,
-      "note": "a 6-session base 7.4% deep: supply absorbed"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
+      "letter": "Y",
+      "label": "young trend: first or second breakout",
+      "values": {
+       "breakouts_in_move": 0,
+       "sessions_since_move_start": 33,
+       "gain_since_move_start_pct": 23.0
+      },
+      "value": 0,
+      "display": "breakouts_in_move=0 sessions_since_move_start=33 gain_since_move_start_pct=23.0",
+      "threshold": "prior breakouts since the move started <= 1 (0 for A+)",
+      "passed": true,
       "pass": true,
       "marginal": false,
-      "display": "2nd burst",
-      "value": 2,
-      "note": "breakout 2 of this trend"
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "narrow_or_negative",
+      "letter": "N",
+      "label": "narrow or negative day before",
+      "values": {
+       "prior_day_pct": -0.17,
+       "prior_range_pct": 0.8,
+       "negative": true,
+       "narrow": true,
+       "median_range_pct": 1.0
+      },
+      "value": -0.17,
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=1.0",
+      "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "consolidation",
+      "letter": "C",
+      "label": "consolidation quality",
+      "values": {
+       "base_sessions": 17,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.19,
+       "tightness": 0.64,
+       "base_volume_vs_leg": 0.41,
+       "base_volume_vs_avg": 0.59
+      },
+      "value": 17,
+      "display": "base_sessions=17 breakdowns=0 bursts_in_base=0 giveback=0.19 tightness=0.64 base_volume_vs_leg=0.41 base_volume_vs_avg=0.59",
+      "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      },
      {
       "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "93% of range",
-      "value": 93,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
+      "letter": "H",
+      "label": "close near the high",
+      "values": {
+       "close_pos": 0.55,
+       "close_above_open": true
+      },
+      "value": 0.55,
+      "display": "close_pos=0.55 close_above_open=True",
+      "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+      "passed": false,
       "pass": false,
       "marginal": false,
-      "display": "3 up days before",
-      "value": 3,
-      "note": "up 3 days in a row before the burst: the third-day buyer becomes the bag holder"
+      "a_plus": false,
+      "note": "closed well off the high",
+      "partial": false,
+      "status": "FAIL"
+     },
+     {
+      "key": "range_expansion",
+      "letter": "RE",
+      "label": "range expansion",
+      "values": {
+       "vs_prior_5": 6.9,
+       "vs_prior_10": 6.9,
+       "bar_range_pct": 6.9
+      },
+      "value": 6.9,
+      "display": "vs_prior_5=6.9 vs_prior_10=6.9 bar_range_pct=6.9",
+      "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "volume",
+      "letter": "VOL",
+      "label": "higher volume",
+      "values": {
+       "volume_vs_prior": 5.0,
+       "volume_vs_avg50": 2.96,
+       "volume_rank_60": 1,
+       "cv_required": false
+      },
+      "value": 5.0,
+      "display": "volume_vs_prior=5.0 volume_vs_avg50=2.96 volume_rank_60=1 cv_required=False",
+      "threshold": "volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
      }
     ],
-    "vetoes": [
-     "up_days"
+    "vetoes": [],
+    "passes": 5,
+    "of": 6,
+    "a_plus_count": 7,
+    "score": 8.5,
+    "grade": "B",
+    "reclass": "anticipation",
+    "notes": [
+     "extension: close 4.3% vs its 20-SMA, 4.7% over 20 sessions",
+     "capped at B: closed at 55% of its range"
     ],
-    "reclass": null,
     "base": {
-     "start": "2026-09-01",
+     "start": "2026-08-18",
      "end": "2026-09-09",
-     "sessions": 6,
-     "low": 20.41,
-     "high": 22.03,
-     "depth_pct": 7.4,
-     "breakdown_dates": [
-      "2026-09-03"
-     ]
+     "start_index": 95,
+     "end_index": 111,
+     "sessions": 17,
+     "high": 121.09,
+     "low": 116.83,
+     "depth_pct": 3.5,
+     "breakdown_dates": []
+    },
+    "leg": {
+     "start": 79,
+     "end": 94,
+     "length": 16,
+     "gain_pct": 20.5,
+     "high": 121.09,
+     "low": 99.2,
+     "er": 1.0,
+     "r2": 1.0
+    },
+    "burst": {
+     "gain_pct": 5.0,
+     "gap_pct": 1.7,
+     "bar_range_pct": 6.9,
+     "close_pos": 0.55,
+     "volume_vs_prior": 5.0,
+     "volume_vs_avg50": 2.96,
+     "volume_rank_60": 1
+    },
+    "unreadable": null,
+    "weights": {
+     "2": 1.5,
+     "L": 2.0,
+     "Y": 1.5,
+     "N": 1.5,
+     "C": 2.0,
+     "H": 1.5
     }
    },
-   "claude": null,
-   "grade": "skip",
-   "score": 3.6,
-   "rank": 5,
+   "grade_mechanical": "B",
+   "score": 8.5,
+   "vetoes": [],
+   "reclass": "anticipation",
+   "grade": "C",
    "plan": null,
-   "summary": "ZETA: +4.3% on 3.2× volume out of a 6-session base 7.4% deep. skip 3.6, 8 of 9 criteria; the miss is not up 2 in a row; vetoed: up_days.",
-   "chart": null,
-   "series": null
+   "chart": "charts/PLUG.png",
+   "claude": {
+    "agree": false,
+    "grade": "C",
+    "score": 5.2,
+    "reason": "The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.",
+    "key_risk": "It reverses through the burst low.",
+    "entry_note": "Pass.",
+    "source": "claude",
+    "chart_seen": true,
+    "error": null
+   },
+   "rank": 5,
+   "series": [],
+   "summary": "PLUG: +5.0% on 5.0× volume out of a base 3.5% deep. C 8.5, 5 of 6 criteria."
   }
  ],
  "trades": [],
  "beyond_cap": [],
  "cash_budget": {
-  "committed_usd": 0,
-  "at_risk_usd": 0,
-  "slots_used": 0,
+  "committed_usd": 0.0,
+  "at_risk_usd": 0.0,
+  "equity": 10000.0,
+  "slots_used": 2,
   "slots_max": 4,
-  "cut": [
-   {
-    "ticker": "KTOS",
-    "reason": "regime red: no new longs"
-   },
-   {
-    "ticker": "BE",
-    "reason": "regime red: no new longs"
-   },
-   {
-    "ticker": "AFRM",
-    "reason": "regime red: no new longs"
-   }
-  ]
+  "open_positions": 2,
+  "within": [],
+  "beyond": [],
+  "cut": [],
+  "skipped": [],
+  "sentence": "Tomorrow's plans commit $0.00 of $10,000.00; 2 of 4 slots (2 already open)"
  },
  "watchlist": {
-  "top": [],
+  "top": [
+   {
+    "ticker": "COIL",
+    "setups": [
+     "TI65"
+    ],
+    "ti65": 1.085,
+    "dt": null,
+    "mdt": null,
+    "pct_change_today": 0.0,
+    "narrow_range_days": 7,
+    "close": 110.0,
+    "adr20_pct": 2.5,
+    "tight_limit_pct": 1.8,
+    "range_pct_today": 0.9,
+    "tight_today": true,
+    "tight_n": 10,
+    "ttt": true,
+    "tt": true,
+    "range_recent_pct": 1.0,
+    "range_base_pct": 3.0,
+    "compress": 0.33,
+    "volume_ratio": 0.61,
+    "vol_dry": true,
+    "breakdowns": 0,
+    "up_run": 0,
+    "close_avg": 107.05,
+    "extension": 1.03,
+    "box": {
+     "high": 110.5,
+     "low": 109.5,
+     "length": 5,
+     "spread": 0.0,
+     "spread_limit": 2.75,
+     "start": "2026-09-04",
+     "end": "2026-09-10",
+     "sessions": 5
+    },
+    "trigger": 110.61,
+    "stop_primary": 109.5,
+    "stop_alt": 109.5,
+    "risk_pct": 1.0,
+    "eligible": true,
+    "admitted": true,
+    "reasons_failed": [],
+    "name": "",
+    "quiet_days": 7,
+    "range_pct": 0.9,
+    "plan": {
+     "ticker": "COIL",
+     "kind": "anticipation",
+     "action": "no_new_longs",
+     "eligible": true,
+     "reason": null,
+     "entry_ref": 110.61,
+     "trigger": 110.61,
+     "limit": 111.72,
+     "trigger_cushion": 0.11,
+     "box_high": 110.5,
+     "box_low": 109.5,
+     "close": 110.0,
+     "stop": 109.5,
+     "stop_alt": 109.5,
+     "stop_basis": "lowest low of the last 3 sessions",
+     "stop_pct": 1.01,
+     "lows_last3": [
+      109.5,
+      109.5,
+      109.5
+     ],
+     "risk_per_share": 1.11,
+     "shares": 0,
+     "position_usd": 0.0,
+     "position_pct": 0.0,
+     "risk_usd": 0.0,
+     "capped_by": "multiplier",
+     "size_multiplier": 0.0,
+     "sizing": {
+      "shares": 0,
+      "position_usd": 0.0,
+      "position_pct": 0.0,
+      "risk_usd": 0.0,
+      "risk_per_share": 1.11,
+      "stop_pct": 1.0,
+      "capped_by": "multiplier",
+      "note": "no new longs: the size multiplier is 0",
+      "multiplier": 0.0,
+      "budget_usd": 0.0,
+      "cap_usd": 2500.0
+     },
+     "resize_rule": "if your fill differs, shares = $0.00 / (fill - $109.50), and no more than $2,500.00 of stock",
+     "multipliers": {
+      "regime": 0.0,
+      "hazard": 1.0,
+      "stop_risk": 1.0,
+      "total": 0.0
+     },
+     "hazards": [],
+     "hazard_multiplier": 1.0,
+     "stop_risk_multiplier": 1.0,
+     "stop_risk_reason": null,
+     "gap_ok_above": 112.2,
+     "gap_rule": "an open more than 2% above $110.00 (over $112.20) is gapped: catalyst check before buying",
+     "open_entry": "MOO/OPG at the open only for the top 2 names on the list, and only if it opens within +2% of $110.00",
+     "targets": {
+      "low_pct": 8.0,
+      "high_pct": 20.0,
+      "low": 119.46,
+      "high": 132.73,
+      "note": "above $40 he measures the move in dollars: $5-25",
+      "dollar_low": 115.61,
+      "dollar_high": 135.61
+     },
+     "exits": [
+      {
+       "key": "sell_half_8pct",
+       "source": "B",
+       "when": "same or next day, the price reaches $119.46 (+8% from $110.61)",
+       "rule": "sell half and move the stop to 25-50 cents under that day's high",
+       "price": 119.46
+      },
+      {
+       "key": "abnormal_10pct",
+       "source": "B",
+       "when": "any single day closes at or above $121.67 (+10%)",
+       "rule": "take at least partial profit and move the stop up to protect the rest",
+       "price": 121.67
+      },
+      {
+       "key": "gap_20pct",
+       "source": "B",
+       "when": "it opens at or above $132.73 (+20%) after entry",
+       "rule": "sell at the open (or pre-market)",
+       "price": 132.73
+      },
+      {
+       "key": "entry_day_low",
+       "source": "B",
+       "when": "the close of day 1",
+       "rule": "the stop rises to the entry day's low if that is above $109.50",
+       "price": null
+      },
+      {
+       "key": "day3_sell_half",
+       "source": "B",
+       "when": "day 3 close",
+       "rule": "sell at least half at the close",
+       "price": null
+      },
+      {
+       "key": "day3_no_progress",
+       "source": "B",
+       "when": "day 3 closes at or below $110.61",
+       "rule": "exit: no follow-through",
+       "price": 110.61
+      },
+      {
+       "key": "trail_after_day3",
+       "source": "P",
+       "when": "from the close of day 3",
+       "rule": "raise the stop to each day's low (it never moves down)",
+       "price": null
+      },
+      {
+       "key": "day5_exit",
+       "source": "B",
+       "when": "day 5 close",
+       "rule": "exit the remainder into strength",
+       "price": null
+      },
+      {
+       "key": "stop",
+       "source": "B",
+       "when": "the protective stop at $109.50 is a stop-market order, live intraday from the moment the buy fills",
+       "rule": "if it is somehow not filled, exit on any close below it",
+       "price": 109.5
+      },
+      {
+       "key": "no_breakeven",
+       "source": "T",
+       "when": "day 2 is green",
+       "rule": "do not move the stop to break-even before day 5 just because it is green (theStrat Lab EP9M backtest: the win rate collapses from 29.8% to 7.25%; delaying to day 5 restores it); the +8% raise above is a different rule",
+       "price": null
+      }
+     ],
+     "order_line": null,
+     "order_json": null,
+     "order_readback": null,
+     "fallback_line": null,
+     "flags": [],
+     "notes": [
+      "no new longs: the size multiplier is 0"
+     ],
+     "exit_schedule": [
+      {
+       "day": 1,
+       "date": "2026-09-11",
+       "key": "entry",
+       "instruction": "buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill."
+      },
+      {
+       "day": 1,
+       "date": "2026-09-11",
+       "key": "sell_half_8pct",
+       "instruction": "if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high."
+      },
+      {
+       "day": 1,
+       "date": "2026-09-11",
+       "key": "entry_day_low",
+       "instruction": "at the close of day 1: the stop rises to the entry day's low if that is above $109.50."
+      },
+      {
+       "day": 2,
+       "date": "2026-09-14",
+       "key": "no_breakeven",
+       "instruction": "if day 2 is green: do not move the stop to break-even before day 5 just because it is green."
+      },
+      {
+       "day": 3,
+       "date": "2026-09-15",
+       "key": "day3",
+       "instruction": "at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through."
+      },
+      {
+       "day": 4,
+       "date": "2026-09-16",
+       "key": "trail",
+       "instruction": "raise the stop to each day's low (it never moves down); sell the rest into strength."
+      },
+      {
+       "day": 5,
+       "date": "2026-09-17",
+       "key": "day5_exit",
+       "instruction": "at the day 5 close: exit the remainder into strength."
+      }
+     ]
+    },
+    "series": [
+     {
+      "date": "2026-03-27",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-03-30",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-03-31",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-01",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-02",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-03",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-06",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-07",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-08",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-09",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-10",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-13",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-14",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-15",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-16",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-17",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-20",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-21",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-22",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-23",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-24",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-27",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-28",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-29",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-04-30",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-01",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-04",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-05",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-06",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-07",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-08",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-11",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-12",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-13",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-14",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-15",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-18",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-19",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-20",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-21",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-22",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-25",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-26",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-27",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-28",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-05-29",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-01",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-02",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-03",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-04",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-05",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-08",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-09",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-10",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-11",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-12",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-15",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-16",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-17",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-18",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-19",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-22",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-23",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-24",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-25",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-26",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-29",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-06-30",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-01",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-02",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-03",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-06",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-07",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-08",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-09",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-10",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-13",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-14",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-15",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-16",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-17",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-20",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-21",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-22",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-23",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-24",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-27",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-28",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-29",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-30",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-07-31",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-03",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-04",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-05",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-06",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-07",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-10",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-11",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-12",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-13",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-14",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-17",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-18",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-19",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-20",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-21",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-24",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-25",
+      "o": 100.0,
+      "h": 101.5,
+      "l": 98.5,
+      "c": 100.0,
+      "v": 200000.0
+     },
+     {
+      "date": "2026-08-26",
+      "o": 100.0,
+      "h": 114.0,
+      "l": 100.0,
+      "c": 113.0,
+      "v": 600000.0
+     },
+     {
+      "date": "2026-08-27",
+      "o": 113.0,
+      "h": 114.0,
+      "l": 112.6,
+      "c": 113.0,
+      "v": 180000.0
+     },
+     {
+      "date": "2026-08-28",
+      "o": 113.0,
+      "h": 114.0,
+      "l": 112.6,
+      "c": 113.0,
+      "v": 180000.0
+     },
+     {
+      "date": "2026-08-31",
+      "o": 113.0,
+      "h": 114.0,
+      "l": 112.6,
+      "c": 113.0,
+      "v": 180000.0
+     },
+     {
+      "date": "2026-09-01",
+      "o": 113.0,
+      "h": 114.0,
+      "l": 112.6,
+      "c": 113.0,
+      "v": 180000.0
+     },
+     {
+      "date": "2026-09-02",
+      "o": 113.0,
+      "h": 114.0,
+      "l": 112.6,
+      "c": 113.0,
+      "v": 180000.0
+     },
+     {
+      "date": "2026-09-03",
+      "o": 113.0,
+      "h": 114.0,
+      "l": 112.6,
+      "c": 113.0,
+      "v": 180000.0
+     },
+     {
+      "date": "2026-09-04",
+      "o": 110.0,
+      "h": 110.5,
+      "l": 109.5,
+      "c": 110.0,
+      "v": 120000.0
+     },
+     {
+      "date": "2026-09-07",
+      "o": 110.0,
+      "h": 110.5,
+      "l": 109.5,
+      "c": 110.0,
+      "v": 120000.0
+     },
+     {
+      "date": "2026-09-08",
+      "o": 110.0,
+      "h": 110.5,
+      "l": 109.5,
+      "c": 110.0,
+      "v": 120000.0
+     },
+     {
+      "date": "2026-09-09",
+      "o": 110.0,
+      "h": 110.5,
+      "l": 109.5,
+      "c": 110.0,
+      "v": 120000.0
+     },
+     {
+      "date": "2026-09-10",
+      "o": 110.0,
+      "h": 110.5,
+      "l": 109.5,
+      "c": 110.0,
+      "v": 120000.0
+     }
+    ]
+   }
+  ],
   "also_quiet": [],
   "counts": {
-   "top": 0,
-   "also_quiet": 0,
-   "coiled": 0
+   "momentum": 9,
+   "quiet": 4,
+   "admitted": 1,
+   "eligible": 1,
+   "coiled": 1,
+   "top": 1,
+   "also_quiet": 0
   },
-  "instruction": "No alerts on a red night: the anticipation list is not offered while breadth says stand aside."
+  "rules": {
+   "watchlist.adr_sessions": 20,
+   "watchlist.tight_lookback": 10,
+   "watchlist.tight_fraction_exclusive": 0.7,
+   "watchlist.ttt_sessions": 3,
+   "watchlist.tt_sessions": 2,
+   "watchlist.min_tight": 3,
+   "watchlist.compress_recent_sessions": 7,
+   "watchlist.compress_base_sessions": 60,
+   "watchlist.max_compress": 0.75,
+   "watchlist.vol_dry_recent_sessions": 5,
+   "watchlist.vol_dry_base_sessions": 50,
+   "watchlist.breakdown_lookback": 10,
+   "watchlist.max_breakdowns": 1,
+   "watchlist.max_up_run": 2,
+   "watchlist.extension_sessions": 20,
+   "watchlist.max_extension": 1.1,
+   "watchlist.box_min_sessions": 3,
+   "watchlist.box_max_sessions": 10,
+   "watchlist.box_spread_adrs": 1.0,
+   "watchlist.trigger_cents": 0.02,
+   "watchlist.trigger_fraction": 0.001,
+   "watchlist.stop_sessions": 3,
+   "watchlist.max_risk_pct": 4.0,
+   "watchlist.top_n": 5,
+   "watchlist.also_n": 10,
+   "watchlist.ratio_decimals": 2,
+   "watchlist.pct_decimals": 1,
+   "watchlist.price_decimals": 2
+  },
+  "instruction": "Buy only if it clears its trigger in the first 30 minutes on volume already above yesterday's pace; an open more than 2% above the close is gapped and needs a catalyst check before you buy."
  },
  "open_plans": [
-  {
-   "ticker": "NBIS",
-   "kind": "burst",
-   "picked": "2026-09-08",
-   "day": 2,
-   "sessions": 2,
-   "entry_ref": 92.4,
-   "stop": 89.1,
-   "current_stop": 91.7,
-   "shares": 15,
-   "last_close": 93.1,
-   "last_date": "2026-09-10",
-   "unrealised_pct": 0.76,
-   "status": "hold",
-   "instruction": "Day 2: hold 15 NBIS with the stop at $91.70 (closed $93.10, +0.76%). Breadth turned red: tighten the stop to yesterday's low and sell into any strength.",
-   "events": [],
-   "targets": {
-    "low": 99.79,
-    "high": 110.88
-   }
-  },
   {
    "ticker": "VRT",
    "kind": "burst",
    "picked": "2026-09-04",
    "day": 4,
    "sessions": 4,
-   "entry_ref": 118.6,
-   "stop": 114.9,
-   "current_stop": 124.3,
-   "shares": 13,
-   "last_close": 125.2,
-   "last_date": "2026-09-10",
-   "unrealised_pct": 5.56,
    "status": "sell_into_strength",
-   "instruction": "Day 4: half is sold; sell the rest into strength tomorrow. Breadth turned red: tighten the stop to yesterday's low and do not wait for day 5.",
+   "instruction": "Day 4: closed at $17.56 (+2.1%); half is sold, sell the rest into strength by day 5 with the stop at $17.38. Breadth is red: sell into any strength; do not add.",
    "events": [
+    {
+     "day": 1,
+     "date": "2026-09-07",
+     "event": "stop_raised_to_entry_low",
+     "price": 17.08
+    },
     {
      "day": 3,
      "date": "2026-09-09",
      "event": "sell_half",
-     "price": 128.09
+     "price": 17.46
+    },
+    {
+     "day": 3,
+     "date": "2026-09-09",
+     "event": "stop_trailed",
+     "price": 17.29
+    },
+    {
+     "day": 4,
+     "date": "2026-09-10",
+     "event": "stop_trailed",
+     "price": 17.38
     }
    ],
+   "regime": "red",
+   "entry_ref": 17.2,
+   "shares": 144,
+   "current_stop": 17.38,
+   "last_close": 17.56,
+   "last_date": "2026-09-10",
+   "unrealised_pct": 2.09,
+   "exit_price": null,
+   "result_pct": null,
+   "half_sold": true,
+   "grade": "A",
+   "stop": 16.46,
    "targets": {
-    "low": 128.09,
-    "high": 142.32
-   }
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 18.71,
+    "high": 20.78,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "fill": "filled at the open, $17.20"
+  },
+  {
+   "ticker": "NBIS",
+   "kind": "burst",
+   "picked": "2026-09-08",
+   "day": 2,
+   "sessions": 2,
+   "status": "hold",
+   "instruction": "Day 2: hold 97 NBIS with the stop at $25.34 (closed $25.75, +0.9%). Breadth is red: sell into any strength; do not add.",
+   "events": [
+    {
+     "day": 1,
+     "date": "2026-09-09",
+     "event": "stop_raised_to_entry_low",
+     "price": 25.34
+    }
+   ],
+   "regime": "red",
+   "entry_ref": 25.52,
+   "shares": 97,
+   "current_stop": 25.34,
+   "last_close": 25.75,
+   "last_date": "2026-09-10",
+   "unrealised_pct": 0.9,
+   "exit_price": null,
+   "result_pct": null,
+   "half_sold": false,
+   "grade": "A",
+   "stop": 24.43,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 27.76,
+    "high": 30.84,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "fill": "filled at the open, $25.52"
   }
  ],
  "scorecard": {
-  "plans": 7,
-  "filled": 5,
-  "wins": 3,
-  "losses": 2,
-  "win_rate": 0.6,
-  "avg_r": 0.42,
-  "sum_r": 2.1,
-  "spy_avg_pct": 0.31,
+  "plans": 46,
+  "filled": 33,
+  "settled": 31,
+  "open": 2,
+  "wins": 8,
+  "losses": 22,
+  "win_rate": 0.258,
+  "avg_r": -0.15,
+  "sum_r": -4.55,
+  "spy_avg_pct": 0.23,
   "min_read": 20,
-  "note": "from bars alone at the next open with the published stop; halves weighted; settled at day 5"
+  "readable": true,
+  "sessions": 60,
+  "note": "from bars alone: filled at the next open inside the zone (or at the trigger when the day reaches it), the published stop is one R, halves weighted, settled by day 5"
  },
- "closest_miss": null,
+ "closest_miss": {
+  "ticker": "AAPL",
+  "grade": "A+",
+  "score": 10.0,
+  "why": null,
+  "sentence": "AAPL came closest at A+ 10.0."
+ },
  "_contract": {
-  "run": "What the run did and how much of the market it read. session is the session the bars describe; expected_session is the session the run set out to read (they differ only on a closed day, when session is the previous one). status ok means every stage finished; degraded means it published with a problem listed in problems; closed means the market held no session; failed means nothing below is a verdict. problems carry one of seven kinds and never free text the page must render.",
-  "nights": "The last twenty evenings, newest last: session, status, published_at. A session absent from the ring was never published for.",
-  "account": "The account every plan is sized for, from the environment: equity, risk per trade in percent, the position cap in percent, and the slot cap.",
-  "rules": "Every constant the run applied, keyed by module. The page prints these; it never restates one.",
-  "cover": "The verdict as sentences: h1, dek, and the one action the page offers. Generated by the pipeline from the regime and the trade count; the page renders them verbatim.",
-  "breadth": "Bonde's Market Monitor over every common stock that printed: today's counts, the 5- and 10-session ratios with their sums, the regime with its reasons verbatim and the scaled thresholds it compared, the last 30 sessions, and notes carrying his readings.",
-  "bursts": "Every 4% or dollar breakout the scan found, graded on the nine A-quality criteria. quality is the checklist alone; claude is the chart read, null when none was asked for; grade is the final word after the clamp (Claude may only lower it). plan is present for A and A+ bursts and null otherwise. series carries the last 120 bars for trades and the closest miss only.",
-  "trades": "Tickers with a final grade of A or A+, ranked, not vetoed, plan eligible, regime not red. The first slots get order lines; the rest are beyond_cap.",
-  "beyond_cap": "Trades that qualified after the open slots were filled. A card, no order line.",
-  "cash_budget": "What tomorrow's orders commit, the slots they use, and what was cut and why.",
-  "watchlist": "The anticipation list: quiet names inside established momentum, the top five with a buy-stop plan each, the rest also quiet.",
-  "open_plans": "Every pick from the last five sessions judged from bars alone, with the instruction for tomorrow. If you never bought it, ignore the row.",
-  "scorecard": "The rules' record from bars alone: plans, fills, wins, losses, win rate, average and summed R, and SPY over the same days. Read only from min_read plans; it measures the rules, not your fills.",
-  "closest_miss": "On a night with no trade: the best burst that did not qualify and, in one sentence, why."
- }
+  "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
+  "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.session_state and this, against the browser's clock in ET.",
+  "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
+  "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), coverage, counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in.",
+  "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
+  "account": "The sizing inputs every plan below was computed from. Not a balance.",
+  "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",
+  "breadth": "The Market Monitor for the session and the regime verdict with its reasons verbatim. The size multiplier is the regime's; the plans already carry it.",
+  "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not.",
+  "trades": "Tickers of the bursts to trade tomorrow, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
+  "beyond_cap": "Tickers that qualified and got no order line because the slots were full. Not refusals.",
+  "cash_budget": "What tomorrow's orders commit, the slots used, and what was cut and why.",
+  "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
+  "open_plans": "Every published plan still inside its window, replayed to this session: status word and the instruction sentence. A plan you never bought is a row to ignore.",
+  "scorecard": "The rules' record over the published plans, always with n and the read threshold. The rules' record, not yours. Null until a plan has settled.",
+  "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
+  "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."
+ },
+ "fixture": "red"
 }

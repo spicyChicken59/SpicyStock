@@ -1,3164 +1,845 @@
 {
  "schema_version": 2,
- "generated": "2026-09-11T22:31:40Z",
+ "generated": "2026-09-10T22:30:00+00:00",
  "app": {
   "name": "SpicyStock",
-  "version": "2.0.0",
-  "rules_version": "v2.0"
+  "version": "2.0",
+  "rules_version": "11e153a50cc1"
+ },
+ "cover": {
+  "h1": "Market closed. Plans unchanged.",
+  "dek": "No session on 2026-09-10. The plans from 2026-09-09 stand; day counts did not advance.",
+  "action_label": "What you hold",
+  "action_target": "#open-plans",
+  "verb": "hold"
  },
  "run": {
-  "session": "2026-09-10",
+  "session": "2026-09-09",
   "session_state": "closed",
-  "expected_session": "2026-09-11",
+  "expected_session": "2026-09-10",
   "status": "closed",
   "problems": [],
   "dry_run": false,
   "model": "claude-sonnet-4-6",
   "feed": "sip",
   "universe": {
-   "label": "US common stocks, $3 and 100k shares",
-   "size": 6231,
-   "source": "nasdaq directory 2026-09-10",
-   "fetched_at": "2026-09-10T22:17:04Z"
+   "label": "30 named on the command line (--tickers)",
+   "size": 30,
+   "source": "explicit",
+   "fetched_at": null,
+   "identity": "47798ad00621ade5"
   },
   "coverage": {
-   "requested": 6240,
-   "with_bars": 6213,
+   "requested": 31,
+   "with_bars": 31,
    "on_session": 0,
-   "measured": 6170,
-   "stale": 6213,
+   "measured": 0,
+   "stale": 0,
    "gapped": 0,
-   "no_bars": 27,
-   "dropped": 0
+   "no_bars": 0,
+   "dropped": 0,
+   "errors": 0,
+   "duplicate_bars": 0
   },
-  "bursts": 214,
+  "bursts": 0,
   "graded": {
-   "a_plus": 1,
-   "a": 2,
-   "b": 6,
-   "c": 3,
-   "skip": 2
+   "a_plus": 0,
+   "a": 0,
+   "b": 0,
+   "c": 0,
+   "skip": 0
   },
   "reads": {
    "requested": 0,
    "done": 0,
    "unavailable_reason": null
   },
-  "email": "delivered",
-  "published_at": "2026-09-11T22:31:40Z",
-  "run_id": "34531077221",
-  "elapsed_seconds": 1043,
-  "fetch_seconds": 612
+  "email": "skipped",
+  "published_at": "2026-09-10T22:30:00+00:00",
+  "run_id": null,
+  "elapsed_seconds": 0.0,
+  "fetch_seconds": 0.0,
+  "rules_version": "v2.0",
+  "type": "evening",
+  "sanitised": {
+   "replaced": 0,
+   "paths": []
+  }
  },
  "nights": [
   {
-   "session": "2026-08-17",
-   "status": "ok",
-   "published_at": "2026-08-17T22:31:00Z"
-  },
-  {
-   "session": "2026-08-18",
-   "status": "ok",
-   "published_at": "2026-08-18T22:30:00Z"
-  },
-  {
-   "session": "2026-08-19",
-   "status": "ok",
-   "published_at": "2026-08-19T22:38:00Z"
-  },
-  {
-   "session": "2026-08-20",
-   "status": "ok",
-   "published_at": "2026-08-20T22:37:00Z"
-  },
-  {
-   "session": "2026-08-21",
-   "status": "ok",
-   "published_at": "2026-08-21T22:36:00Z"
-  },
-  {
-   "session": "2026-08-24",
-   "status": "ok",
-   "published_at": "2026-08-24T22:35:00Z"
-  },
-  {
-   "session": "2026-08-25",
-   "status": "ok",
-   "published_at": "2026-08-25T22:34:00Z"
-  },
-  {
-   "session": "2026-08-26",
-   "status": "ok",
-   "published_at": "2026-08-26T22:33:00Z"
-  },
-  {
-   "session": "2026-08-27",
-   "status": "ok",
-   "published_at": "2026-08-27T22:32:00Z"
-  },
-  {
-   "session": "2026-08-28",
-   "status": "ok",
-   "published_at": "2026-08-28T22:31:00Z"
-  },
-  {
-   "session": "2026-08-31",
-   "status": "ok",
-   "published_at": "2026-08-31T22:30:00Z"
-  },
-  {
-   "session": "2026-09-01",
-   "status": "ok",
-   "published_at": "2026-09-01T22:38:00Z"
-  },
-  {
-   "session": "2026-09-02",
-   "status": "degraded",
-   "published_at": "2026-09-02T22:37:00Z"
-  },
-  {
-   "session": "2026-09-03",
-   "status": "ok",
-   "published_at": "2026-09-03T22:36:00Z"
-  },
-  {
-   "session": "2026-09-04",
-   "status": "ok",
-   "published_at": "2026-09-04T22:35:00Z"
-  },
-  {
-   "session": "2026-09-07",
-   "status": "closed",
-   "published_at": "2026-09-07T22:34:00Z"
-  },
-  {
-   "session": "2026-09-08",
-   "status": "ok",
-   "published_at": "2026-09-08T22:33:00Z"
-  },
-  {
    "session": "2026-09-09",
-   "status": "ok",
-   "published_at": "2026-09-09T22:32:00Z"
-  },
-  {
-   "session": "2026-09-10",
-   "status": "ok",
-   "published_at": "2026-09-10T22:31:00Z"
-  },
-  {
-   "session": "2026-09-11",
    "status": "closed",
-   "published_at": "2026-09-11T22:30:00Z"
+   "published_at": "2026-09-10T22:30:00+00:00"
   }
  ],
  "account": {
-  "equity": 10000,
+  "equity": 10000.0,
   "risk_pct": 0.5,
-  "max_position_pct": 25,
+  "max_position_pct": 25.0,
   "max_open_positions": 4,
   "notes": [
    "Risk per trade: $50.00 (0.5% of $10,000.00; his band is 0.25-1%).",
    "Position cap: $2,500.00 (25% of equity) in any one name.",
    "Max 4 open positions (100% of equity if all are at the cap).",
-   "Attach the stop the moment the buy fills (Fidelity conditional order: one-triggers-the-other)."
+   "Day trades: FINRA deleted the pattern-day-trader count on 2026-06-04, but Fidelity has announced no migration date and may keep applying it per account until 2027-10-20, so run the account as if the old rule binds: at most 3 same-day round trips per rolling 5 business days in a margin account under $25,000.00; a same-day stop-out counts; a position held overnight never counts.",
+   "Account type: margin with debt protection (no borrowing, no good-faith violations). In a cash account buy only against settled cash (T+1); 3 good-faith violations in 12 months means 90 days of settled-cash-only.",
+   "Attach the protective stop the moment the buy fills, as a stop-MARKET order and never a stop-limit (Fidelity mobile: \"Market + Stop Loss Protection\"; Active Trader Pro: OTO/OTOCO)."
   ]
  },
  "rules": {
-  "breadth": {
-   "burst_pct": 4,
-   "min_volume": 100000,
-   "ratio_short_sessions": 5,
-   "ratio_long_sessions": 10,
-   "reference_universe": 6500,
-   "down4_alarm": 700,
-   "red_ratio_10d": 1,
-   "red_ratio_5d": 0.5,
-   "yellow_ratio_10d": 2,
-   "up50_month_hot": 20,
-   "down25_quarter_oversold": 200,
-   "ma_sessions": 40
+  "burst": {
+   "min_ratio": 1.04,
+   "volume_above_prior": true,
+   "min_volume": 100000
   },
-  "scans": {
-   "burst_ratio": 1.04,
-   "breakdown_ratio": 0.96,
-   "min_volume": 100000,
-   "dollar_move": 0.9,
-   "dt_ratio": 1.8,
-   "mdt_ratio": 1.19,
-   "quiet_pct": 1,
-   "min_price": 3
+  "breakdown": {
+   "max_ratio": 0.96,
+   "volume_above_prior": true,
+   "min_volume": 100000
+  },
+  "dollar": {
+   "min_move": 0.9,
+   "min_volume_exclusive": 100000
+  },
+  "dt": {
+   "min_ratio": 1.8,
+   "low_sessions": 252,
+   "min_prior_volume": 100000
+  },
+  "ti65": {
+   "min_ratio_exclusive": 1.05,
+   "short_sessions": 7,
+   "long_sessions": 65,
+   "min_prior_volume_exclusive": 100000
+  },
+  "mdt": {
+   "min_ratio_exclusive": 1.19,
+   "avg_sessions": 126,
+   "min_prior_volume_exclusive": 100000
+  },
+  "quiet": {
+   "max_abs_pct": 1.0
+  },
+  "prior_volume": {
+   "sessions": 3
+  },
+  "lre": {
+   "min_prior_volume": 100000,
+   "min_price": 3.0,
+   "min_ti65": 1.05,
+   "max_prior_ratio_exclusive": 1.02
+  },
+  "ep": {
+   "min_ratio_exclusive": 1.04,
+   "volume_mult_exclusive": 3,
+   "avg_volume_sessions": 50,
+   "min_volume": 300000
+  },
+  "ep_9m": {
+   "min_volume": 9000000,
+   "min_price": 3.0
+  },
+  "anticipation": {
+   "narrow_lookback": 7,
+   "range_norm_sessions": 20
+  },
+  "precision": {
+   "ratio_decimals": 4,
+   "pct_decimals": 2,
+   "price_decimals": 2
   },
   "quality": {
-   "criteria": 9,
-   "range_expansion_min": 1.5,
-   "breakdowns_max": 1,
-   "linearity_min_r2": 0.6,
-   "base_min_sessions": 3,
-   "base_max_sessions": 20,
-   "base_max_depth_pct": 12,
-   "young_max_breakouts": 3,
-   "close_near_high_min_pct": 80,
-   "up_days_max": 2,
+   "base_search_sessions": 40,
+   "leg_search_sessions": 60,
+   "min_leg_sessions": 5,
+   "up_day_pct_exclusive": 1.0,
+   "max_up_run": 1,
    "veto_up_days": 3,
-   "a_plus_min_passes": 8,
-   "a_min_passes": 7
+   "min_er": 0.4,
+   "min_r2": 0.55,
+   "move_search_sessions": 60,
+   "move_sma_sessions": 50,
+   "breakout_min_close_pos": 0.7,
+   "max_prior_breakouts": 1,
+   "narrow_range_pct_exclusive": 2.0,
+   "narrow_norm_sessions": 20,
+   "base_min": 3,
+   "base_max": 20,
+   "partial_base_min": 2,
+   "max_breakdowns": 1,
+   "max_giveback": 0.34,
+   "a_plus_max_giveback": 0.25,
+   "max_tightness": 1.0,
+   "a_plus_max_tightness": 0.7,
+   "tightness_norm_sessions": 60,
+   "volume_avg_sessions": 50,
+   "min_close_pos": 0.8,
+   "a_plus_close_pos": 0.9,
+   "partial_close_pos": 0.7,
+   "re_window": 5,
+   "re_window_long": 10,
+   "min_range_expansion": 1.0,
+   "volume_rank_sessions": 60,
+   "a_plus_max_volume_rank": 3,
+   "cv_base_sessions_exclusive": 21,
+   "cv_min_volume": 1.5,
+   "extension_sma_sessions": 20,
+   "run_up_sessions": 20,
+   "low_price_exclusive": 5.0,
+   "high_gain_pct": 15.0,
+   "history_sessions": 60,
+   "history_max_breakouts": 4,
+   "history_follow_sessions": 3,
+   "fast_leg_min_gain_pct": 15.0,
+   "fast_leg_max_sessions": 10,
+   "weight_l": 2.0,
+   "weight_c": 2.0,
+   "weight_2": 1.5,
+   "weight_y": 1.5,
+   "weight_n": 1.5,
+   "weight_h": 1.5,
+   "min_a_plus_letters": 4,
+   "precision.ratio_decimals": 2,
+   "precision.pct_decimals": 1,
+   "precision.price_decimals": 2,
+   "burst_ratio": 1.04,
+   "breakdown_ratio": 0.96
   },
   "plan": {
-   "default_equity": 10000,
+   "default_equity": 10000.0,
    "default_risk_pct": 0.5,
-   "default_max_position_pct": 25,
+   "default_max_position_pct": 25.0,
    "default_max_open_positions": 4,
-   "entry_below_pct": 2,
-   "entry_above_pct": 4,
-   "skip_gap_pct": 8,
-   "assumed_slippage_pct": 1,
-   "max_stop_pct": 4,
-   "ideal_stop_pct": 2,
-   "target_low_pct": 8,
-   "target_high_pct": 20,
-   "sell_half_pct": 8,
-   "abnormal_day_pct": 10,
-   "gap_exit_pct": 20,
+   "risk_pct_band_low": 0.25,
+   "risk_pct_band_high": 1.0,
+   "entry_below_pct": 2.0,
+   "entry_above_pct": 4.0,
+   "skip_gap_pct": 8.0,
+   "entry_window": "first 30 minutes",
+   "assumed_slippage_pct": 1.0,
+   "max_stop_pct": 4.0,
+   "ideal_stop_pct": 2.0,
+   "stop_risk_multiplier": 0.5,
+   "gain_ceiling_pct": 15.0,
+   "extension_hazard_pct": 20.0,
+   "extension_sessions": 20,
+   "hazard_multiplier": 0.5,
+   "target_low_pct": 8.0,
+   "target_high_pct": 20.0,
+   "low_price_band_usd": 5.0,
+   "low_price_target_low_pct": 20.0,
+   "low_price_target_high_pct": 40.0,
+   "high_price_band_usd": 40.0,
+   "high_price_target_low_usd": 5.0,
+   "high_price_target_high_usd": 25.0,
+   "sell_half_pct": 8.0,
+   "abnormal_day_pct": 10.0,
+   "gap_exit_pct": 20.0,
+   "trail_cents": 0.25,
+   "trail_cents_max": 0.5,
    "sell_half_day": 3,
    "no_progress_day": 3,
    "trail_from_day": 3,
    "final_exit_day": 5,
+   "entry_day": 1,
    "no_breakeven_before_day": 5,
-   "gain_ceiling_pct": 15,
    "trigger_cents": 0.02,
-   "trigger_limit_pct": 1,
-   "gap_ok_pct": 2,
-   "stop_lookback_sessions": 3
+   "trigger_fraction": 0.001,
+   "trigger_limit_pct": 1.0,
+   "gap_ok_pct": 2.0,
+   "stop_lookback_sessions": 3,
+   "open_entry_top_n": 2,
+   "pdt_equity_usd": 25000.0,
+   "pdt_max_day_trades": 3,
+   "pdt_window_days": 5,
+   "pdt_rule_deleted_on": "2026-06-04",
+   "pdt_phase_in_ends": "2027-10-20",
+   "settlement_days": 1,
+   "gfv_limit": 3,
+   "gfv_window_months": 12,
+   "gfv_restriction_days": 90,
+   "precision.cents": 2,
+   "precision.pct_decimals": 2
   },
   "watchlist": {
+   "adr_sessions": 20,
+   "tight_lookback": 10,
+   "tight_fraction_exclusive": 0.7,
+   "ttt_sessions": 3,
+   "tt_sessions": 2,
+   "min_tight": 3,
+   "compress_recent_sessions": 7,
+   "compress_base_sessions": 60,
+   "max_compress": 0.75,
+   "vol_dry_recent_sessions": 5,
+   "vol_dry_base_sessions": 50,
+   "breakdown_lookback": 10,
+   "max_breakdowns": 1,
+   "max_up_run": 2,
+   "extension_sessions": 20,
+   "max_extension": 1.1,
+   "box_min_sessions": 3,
+   "box_max_sessions": 10,
+   "box_spread_adrs": 1.0,
+   "trigger_cents": 0.02,
+   "trigger_fraction": 0.001,
+   "stop_sessions": 3,
+   "max_risk_pct": 4.0,
    "top_n": 5,
-   "also_quiet_n": 10,
-   "entry_window_minutes": 40
+   "also_n": 10,
+   "ratio_decimals": 2,
+   "pct_decimals": 1,
+   "price_decimals": 2
+  },
+  "record": {
+   "open_plan_sessions": 5,
+   "scorecard_sessions": 60,
+   "scorecard_min_plans": 20,
+   "nights_kept": 20,
+   "max_picks": 260,
+   "benchmark": "SPY"
+  },
+  "pipeline": {
+   "max_reads": 12,
+   "fetch_budget_seconds": 900,
+   "lookback_days": 260,
+   "min_coverage_fraction": 0.5,
+   "closed_fraction": 0.05,
+   "max_error_fraction": 0.05,
+   "trade_grades": [
+    "A+",
+    "A"
+   ],
+   "yellow_grades": [
+    "A+"
+   ],
+   "series_bars": 120
+  },
+  "breadth": {
+   "burst_pct": 4.0,
+   "min_volume": 100000,
+   "min_dollar_volume_20": 250000,
+   "month_sessions": 20,
+   "quarter_sessions": 65,
+   "sessions_34": 34,
+   "ma_sessions": 40,
+   "min_month_price": 5.0,
+   "quarter_move_pct": 25.0,
+   "month_move_pct": 25.0,
+   "month_big_move_pct": 50.0,
+   "move_13_pct": 13.0,
+   "penny": 0.01,
+   "ratio_short_sessions": 5,
+   "ratio_long_sessions": 10,
+   "reference_universe": 6500,
+   "down4_alarm": 700,
+   "red_ratio_10d": 1.0,
+   "red_ratio_5d": 0.5,
+   "yellow_ratio_10d": 2.0,
+   "up50_month_hot": 20,
+   "down25_quarter_oversold": 200,
+   "size_multiplier": {
+    "green": 1.0,
+    "yellow": 0.5,
+    "red": 0.0
+   }
   },
   "universe": {
-   "min_price": 3,
+   "min_price": 3.0,
    "min_volume": 100000,
-   "common_stock_only": true
+   "max_discovery": 8000,
+   "identity": "47798ad00621ade5"
   }
  },
- "cover": {
-  "h1": "Market closed. Plans unchanged.",
-  "dek": "No session printed on Fri 11 Sep. Thu 10 Sep's breadth and grades stand; open plans did not advance a day.",
-  "action_label": "What you hold",
-  "action_target": "#hold"
- },
  "breadth": {
-  "date": "2026-09-10",
-  "up4": 412,
-  "down4": 96,
-  "up25_quarter": 812,
-  "down25_quarter": 240,
-  "up25_month": 140,
-  "down25_month": 60,
-  "up50_month": 12,
-  "down50_month": 4,
-  "up13_34d": 0,
+  "date": "2026-09-09",
+  "up4": 1,
+  "down4": 0,
+  "up25_quarter": 0,
+  "down25_quarter": 0,
+  "up25_month": 0,
+  "down25_month": 0,
+  "up50_month": 0,
+  "down50_month": 0,
+  "up13_34d": 6,
   "down13_34d": 0,
-  "pct_above_40ma": 61.2,
-  "universe": 6170,
-  "ratio_5d": 3.56,
-  "ratio_10d": 3.47,
-  "up4_5d": 2083,
-  "down4_5d": 585,
-  "up4_10d": 4052,
-  "down4_10d": 1167,
+  "pct_above_40ma": 63.3,
+  "universe": 30,
+  "ratio_5d": 1.5,
+  "ratio_10d": 1.2,
+  "up4_5d": 3,
+  "down4_5d": 2,
+  "up4_10d": 6,
+  "down4_10d": 5,
   "regime": {
-   "verdict": "green",
-   "size_multiplier": 1,
+   "verdict": "yellow",
+   "size_multiplier": 0.5,
    "reasons": [
-    "down 4%: 96 < the scaled alarm of 664.5 (700 of 6,500)",
-    "10-session ratio 3.47 (4052 up, 1167 down) >= 1.0",
-    "5-session ratio 3.56 (2083 up, 585 down) >= 0.5",
-    "10-session ratio 3.47 (4052 up, 1167 down) >= 2.0",
-    "up 50% in a month: 12 <= the scaled hot mark of 19 (20 of 6,500)"
+    "10-session ratio 1.2 (6 up, 5 down) < 2.0: not an ideal time for swing longs"
    ],
-   "oversold_extreme": false,
+   "oversold_extreme": true,
    "thresholds": {
-    "universe": 6170,
+    "universe": 30,
     "reference_universe": 6500,
-    "down4_alarm": 664.5,
-    "up50_month_hot": 19,
-    "down25_quarter_oversold": 189.8,
-    "ratio_10d_red": 1,
+    "down4_alarm": 3.2,
+    "up50_month_hot": 0.1,
+    "down25_quarter_oversold": 0.9,
+    "ratio_10d_red": 1.0,
     "ratio_5d_red": 0.5,
-    "ratio_10d_yellow": 2
+    "ratio_10d_yellow": 2.0
    },
    "inputs": {
-    "date": "2026-09-10",
-    "ratio_10d": 3.47,
-    "ratio_5d": 3.56,
-    "up4_10d": 4052,
-    "down4_10d": 1167,
-    "up4_5d": 2083,
-    "down4_5d": 585,
-    "up4": 412,
-    "down4": 96,
-    "up50_month": 12,
-    "down25_quarter": 240
+    "date": "2026-09-09",
+    "ratio_10d": 1.2,
+    "ratio_5d": 1.5,
+    "up4_10d": 6,
+    "down4_10d": 5,
+    "up4_5d": 3,
+    "down4_5d": 2,
+    "up4": 1,
+    "down4": 0,
+    "up50_month": 0,
+    "down25_quarter": 0
    }
   },
   "history": [
    {
     "date": "2026-07-30",
-    "up4": 300,
-    "down4": 159,
-    "ratio_10d": 2.28
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.0
    },
    {
     "date": "2026-07-31",
-    "up4": 296,
-    "down4": 152,
-    "ratio_10d": 2.27
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 0.83
    },
    {
     "date": "2026-08-03",
-    "up4": 291,
-    "down4": 107,
-    "ratio_10d": 2.28
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 0.83
    },
    {
     "date": "2026-08-04",
-    "up4": 290,
-    "down4": 115,
-    "ratio_10d": 2.3
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.0
    },
    {
     "date": "2026-08-05",
-    "up4": 348,
-    "down4": 142,
-    "ratio_10d": 2.29
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
    },
    {
     "date": "2026-08-06",
-    "up4": 285,
-    "down4": 150,
-    "ratio_10d": 2.27
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 1.2
    },
    {
     "date": "2026-08-07",
-    "up4": 355,
-    "down4": 132,
-    "ratio_10d": 2.29
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 0.83
    },
    {
     "date": "2026-08-10",
-    "up4": 376,
-    "down4": 151,
-    "ratio_10d": 2.28
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 0.83
    },
    {
     "date": "2026-08-11",
-    "up4": 371,
-    "down4": 147,
-    "ratio_10d": 2.31
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 0.83
    },
    {
     "date": "2026-08-12",
-    "up4": 403,
-    "down4": 93,
-    "ratio_10d": 2.46
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
    },
    {
     "date": "2026-08-13",
-    "up4": 314,
-    "down4": 111,
-    "ratio_10d": 2.56
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.4
    },
    {
     "date": "2026-08-14",
-    "up4": 353,
-    "down4": 90,
-    "ratio_10d": 2.74
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.17
    },
    {
     "date": "2026-08-17",
-    "up4": 309,
-    "down4": 134,
-    "ratio_10d": 2.69
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 1.2
    },
    {
     "date": "2026-08-18",
-    "up4": 351,
-    "down4": 112,
-    "ratio_10d": 2.75
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
    },
    {
     "date": "2026-08-19",
-    "up4": 368,
-    "down4": 143,
-    "ratio_10d": 2.76
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
    },
    {
     "date": "2026-08-20",
-    "up4": 404,
-    "down4": 126,
-    "ratio_10d": 2.91
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
    },
    {
     "date": "2026-08-21",
-    "up4": 355,
-    "down4": 105,
-    "ratio_10d": 2.97
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.0
    },
    {
     "date": "2026-08-24",
-    "up4": 332,
-    "down4": 91,
-    "ratio_10d": 3.09
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 1.0
    },
    {
     "date": "2026-08-25",
-    "up4": 443,
-    "down4": 101,
-    "ratio_10d": 3.28
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 0.86
    },
    {
     "date": "2026-08-26",
-    "up4": 345,
-    "down4": 118,
-    "ratio_10d": 3.16
+    "up4": 2,
+    "down4": 0,
+    "ratio_10d": 1.17
    },
    {
     "date": "2026-08-27",
-    "up4": 369,
-    "down4": 82,
-    "ratio_10d": 3.29
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
    },
    {
     "date": "2026-08-28",
-    "up4": 421,
-    "down4": 134,
-    "ratio_10d": 3.23
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.14
    },
    {
     "date": "2026-08-31",
-    "up4": 405,
-    "down4": 127,
-    "ratio_10d": 3.33
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": 1.14
    },
    {
     "date": "2026-09-01",
-    "up4": 423,
-    "down4": 132,
-    "ratio_10d": 3.33
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.0
    },
    {
     "date": "2026-09-02",
-    "up4": 351,
-    "down4": 107,
-    "ratio_10d": 3.43
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.17
    },
    {
     "date": "2026-09-03",
-    "up4": 428,
-    "down4": 128,
-    "ratio_10d": 3.44
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.4
    },
    {
     "date": "2026-09-04",
-    "up4": 475,
-    "down4": 123,
-    "ratio_10d": 3.49
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 2.0
+   },
+   {
+    "date": "2026-09-07",
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.6
    },
    {
     "date": "2026-09-08",
-    "up4": 427,
-    "down4": 130,
-    "ratio_10d": 3.46
+    "up4": 0,
+    "down4": 1,
+    "ratio_10d": 1.4
    },
    {
     "date": "2026-09-09",
-    "up4": 341,
-    "down4": 108,
-    "ratio_10d": 3.35
-   },
-   {
-    "date": "2026-09-10",
-    "up4": 412,
-    "down4": 96,
-    "ratio_10d": 3.47
+    "up4": 1,
+    "down4": 0,
+    "ratio_10d": 1.2
    }
   ],
   "rules": {
-   "burst_pct": 4,
+   "burst_pct": 4.0,
    "min_volume": 100000,
+   "min_dollar_volume_20": 250000,
    "month_sessions": 20,
    "quarter_sessions": 65,
+   "sessions_34": 34,
    "ma_sessions": 40,
-   "min_month_price": 5,
-   "quarter_move_pct": 25,
-   "month_move_pct": 25,
-   "month_big_move_pct": 50,
+   "min_month_price": 5.0,
+   "quarter_move_pct": 25.0,
+   "month_move_pct": 25.0,
+   "month_big_move_pct": 50.0,
+   "move_13_pct": 13.0,
+   "penny": 0.01,
    "ratio_short_sessions": 5,
    "ratio_long_sessions": 10,
    "reference_universe": 6500,
    "down4_alarm": 700,
-   "red_ratio_10d": 1,
+   "red_ratio_10d": 1.0,
    "red_ratio_5d": 0.5,
-   "yellow_ratio_10d": 2,
+   "yellow_ratio_10d": 2.0,
    "up50_month_hot": 20,
    "down25_quarter_oversold": 200,
    "size_multiplier": {
-    "green": 1,
+    "green": 1.0,
     "yellow": 0.5,
-    "red": 0
+    "red": 0.0
    }
   },
   "notes": [
    {
     "key": "ratio_10d",
-    "text": "A 10-day ratio below about 2 may not be an ideal time for swing longs."
-   },
-   {
-    "key": "down4",
-    "text": "A series of days with 700+ stocks down 4% signals major deterioration."
+    "text": "a 10-day ratio below 2 is not an ideal time for swing longs"
    },
    {
     "key": "up50_month",
-    "text": "Above 20 = high bullishness, a pullback is likely; below about 3 = extreme bearishness, which is bullish."
+    "text": "more than 0.1 names up 50% in a month is froth; a pullback usually follows"
    },
    {
     "key": "down25_quarter",
-    "text": "Below about 200 marks an oversold extreme; low readings lead to tradable bounces in 1–6 weeks."
-   },
-   {
-    "key": "up25_quarter",
-    "text": "How many names moved 25% either way over 65 sessions; both sides high is churn."
+    "text": "fewer than 0.9 names down 25% in a quarter is an oversold extreme; bounces follow in one to six weeks"
    },
    {
     "key": "pct_above_40ma",
-    "text": "T2108, the share of stocks above their 40-day average: extremes happen near turns, before price."
+    "text": "T2108: under 20% is washed out, over 80% is stretched"
    }
   ]
  },
- "bursts": [
-  {
-   "ticker": "CRDO",
-   "name": "Credo Technology",
-   "flags": [],
-   "scan": "burst",
-   "close": 50.78,
-   "prev_close": 47.86,
-   "open": 48.05,
-   "high": 50.98,
-   "low": 47.67,
-   "gain_pct": 6.1,
-   "volume": 3006644,
-   "volume_vs_prior": 3.9,
-   "dollar_volume": 152677382,
-   "quality": {
-    "grade_mechanical": "A+",
-    "score": 10,
-    "passes": 9,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "5.2× prior 10",
-      "value": 5.2,
-      "note": "the burst bar's range is 5.2× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "3.9× yesterday",
-      "value": 3.9,
-      "note": "volume 3.9× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": true,
-      "marginal": false,
-      "display": "+0.6% · 0.7% range",
-      "value": 0.7,
-      "note": "the session before was narrow: the coil had tightened"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": true,
-      "marginal": false,
-      "display": "0 in base",
-      "value": 0,
-      "note": "no 4% down day inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.92",
-      "value": 0.92,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": true,
-      "marginal": false,
-      "display": "14 s · 5.7% deep",
-      "value": 5.7,
-      "note": "a 14-session base 5.7% deep: supply absorbed"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": true,
-      "marginal": false,
-      "display": "2nd burst",
-      "value": 2,
-      "note": "breakout 2 of this trend"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "94% of range",
-      "value": 94,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": true,
-      "marginal": false,
-      "display": "1 up day before",
-      "value": 1,
-      "note": "not already up two days in a row"
-     }
-    ],
-    "vetoes": [],
-    "reclass": null,
-    "base": {
-     "start": "2026-08-20",
-     "end": "2026-09-09",
-     "sessions": 14,
-     "low": 45.75,
-     "high": 48.53,
-     "depth_pct": 5.7,
-     "breakdown_dates": []
-    }
-   },
-   "claude": {
-    "agree": true,
-    "grade": "A+",
-    "score": 9.4,
-    "reason": "CRDO broke out of a 14-session base on 3.9× volume with a 5.2× range bar that closed at 94% of its range; the advance before the base was orderly and the day before was quiet.",
-    "key_risk": "the base is 5.7% deep and a gap over $52.81 at the open would leave no stop the bar supports.",
-    "entry_note": "skip it if the open prints above $52.81; a print under $49.76 says the burst is failing.",
-    "source": "claude",
-    "chart_seen": true,
-    "error": null
-   },
-   "grade": "A+",
-   "score": 9.4,
-   "rank": 1,
-   "plan": null,
-   "summary": "CRDO: +6.1% on 3.9× volume out of a 14-session base 5.7% deep. Buy $49.76–$52.81 tomorrow in the first 30 minutes, stop $49.33, aim $55.39–$61.55 by day 5. A+ 9.4, 9 of 9 criteria.",
-   "chart": null,
-   "series": null
-  },
-  {
-   "ticker": "ALAB",
-   "name": "Astera Labs",
-   "flags": [],
-   "scan": "burst",
-   "close": 72.43,
-   "prev_close": 68.85,
-   "open": 69.12,
-   "high": 72.72,
-   "low": 68.57,
-   "gain_pct": 5.2,
-   "volume": 3552538,
-   "volume_vs_prior": 3.4,
-   "dollar_volume": 257310327,
-   "quality": {
-    "grade_mechanical": "A+",
-    "score": 10,
-    "passes": 9,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "3.8× prior 10",
-      "value": 3.8,
-      "note": "the burst bar's range is 3.8× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "3.4× yesterday",
-      "value": 3.4,
-      "note": "volume 3.4× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": true,
-      "marginal": false,
-      "display": "+0.6% · 0.7% range",
-      "value": 0.7,
-      "note": "the session before was narrow: the coil had tightened"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": true,
-      "marginal": false,
-      "display": "0 in base",
-      "value": 0,
-      "note": "no 4% down day inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.97",
-      "value": 0.97,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": true,
-      "marginal": false,
-      "display": "11 s · 6.8% deep",
-      "value": 6.8,
-      "note": "a 11-session base 6.8% deep: supply absorbed"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": true,
-      "marginal": false,
-      "display": "1st burst",
-      "value": 1,
-      "note": "breakout 1 of this trend"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "93% of range",
-      "value": 93,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": true,
-      "marginal": false,
-      "display": "1 up day before",
-      "value": 1,
-      "note": "not already up two days in a row"
-     }
-    ],
-    "vetoes": [],
-    "reclass": null,
-    "base": {
-     "start": "2026-08-25",
-     "end": "2026-09-09",
-     "sessions": 11,
-     "low": 65.52,
-     "high": 70.3,
-     "depth_pct": 6.8,
-     "breakdown_dates": []
-    }
-   },
-   "claude": {
-    "agree": false,
-    "grade": "A",
-    "score": 8.6,
-    "reason": "ALAB is a first breakout from an 11-session shelf on 2.3× volume, closing on its high; the advance into the base was orderly. A, not A+: the base is 7% deep and the range bar is only 1.6× the prior ten, so the expansion is real but not violent.",
-    "key_risk": "the whole move is one bar; a red open under the base high leaves the stop 3% away with no support between.",
-    "entry_note": "take it only inside the zone in the first 30 minutes; a print over the ceiling means day 2 is spent.",
-    "source": "claude",
-    "chart_seen": true,
-    "error": null
-   },
-   "grade": "A",
-   "score": 8.6,
-   "rank": 2,
-   "plan": null,
-   "summary": "ALAB: +5.2% on 3.4× volume out of a 11-session base 6.8% deep. Buy $70.98–$75.33 tomorrow in the first 30 minutes, stop $70.65, aim $79.00–$87.78 by day 5. A 8.6, 9 of 9 criteria.",
-   "chart": null,
-   "series": null
-  },
-  {
-   "ticker": "IONQ",
-   "name": "IonQ",
-   "flags": [],
-   "scan": "burst",
-   "close": 39.52,
-   "prev_close": 36.83,
-   "open": 36.98,
-   "high": 39.68,
-   "low": 36.69,
-   "gain_pct": 7.3,
-   "volume": 2289832,
-   "volume_vs_prior": 3.36,
-   "dollar_volume": 90494161,
-   "quality": {
-    "grade_mechanical": "A+",
-    "score": 9.8,
-    "passes": 9,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "6.0× prior 10",
-      "value": 6,
-      "note": "the burst bar's range is 6.0× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "3.4× yesterday",
-      "value": 3.36,
-      "note": "volume 3.4× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": true,
-      "marginal": false,
-      "display": "+0.6% · 0.7% range",
-      "value": 0.7,
-      "note": "the session before was narrow: the coil had tightened"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": true,
-      "marginal": false,
-      "display": "0 in base",
-      "value": 0,
-      "note": "no 4% down day inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.97",
-      "value": 0.97,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": true,
-      "marginal": false,
-      "display": "17 s · 7.9% deep",
-      "value": 7.9,
-      "note": "a 17-session base 7.9% deep: supply absorbed"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": true,
-      "marginal": true,
-      "display": "3rd burst",
-      "value": 3,
-      "note": "breakout 3 of this trend"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "95% of range",
-      "value": 95,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": true,
-      "marginal": false,
-      "display": "2 up days before",
-      "value": 2,
-      "note": "not already up two days in a row"
-     }
-    ],
-    "vetoes": [],
-    "reclass": null,
-    "base": {
-     "start": "2026-08-17",
-     "end": "2026-09-09",
-     "sessions": 17,
-     "low": 34.39,
-     "high": 37.36,
-     "depth_pct": 7.9,
-     "breakdown_dates": []
-    }
-   },
-   "claude": {
-    "agree": false,
-    "grade": "A",
-    "score": 8.1,
-    "reason": "IONQ cleared a 17-session base on 1.6× volume with a 7.3% bar; the third breakout of this trend and two up days before it are the two things that keep it under A+.",
-    "key_risk": "a third breakout in a trend that has already doubled; the crowd is in, and a 4% stop on a $30 name is 1.30 of pure noise.",
-    "entry_note": "only if a slot opens; do not chase above the ceiling.",
-    "source": "claude",
-    "chart_seen": true,
-    "error": null
-   },
-   "grade": "A",
-   "score": 8.1,
-   "rank": 3,
-   "plan": null,
-   "summary": "IONQ: +7.3% on 3.4× volume out of a 17-session base 7.9% deep. Buy $38.73–$41.10 tomorrow in the first 30 minutes, stop $38.19, aim $43.11–$47.90 by day 5. A 8.1, 9 of 9 criteria.",
-   "chart": null,
-   "series": null
-  },
-  {
-   "ticker": "RKLB",
-   "name": "Rocket Lab",
-   "flags": [],
-   "scan": "burst",
-   "close": 28.24,
-   "prev_close": 26.97,
-   "open": 27.08,
-   "high": 28.35,
-   "low": 26.86,
-   "gain_pct": 4.71,
-   "volume": 1827345,
-   "volume_vs_prior": 2.54,
-   "dollar_volume": 51604223,
-   "quality": {
-    "grade_mechanical": "A+",
-    "score": 9,
-    "passes": 8,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "2.2× prior 10",
-      "value": 2.2,
-      "note": "the burst bar's range is 2.2× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "2.5× yesterday",
-      "value": 2.54,
-      "note": "volume 2.5× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": false,
-      "marginal": false,
-      "display": "+2.8% · 5.4% range",
-      "value": 5.4,
-      "note": "the session before was up 2.8% on a 5.4% range: already in range expansion"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": true,
-      "marginal": false,
-      "display": "0 in base",
-      "value": 0,
-      "note": "no 4% down day inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.98",
-      "value": 0.98,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": true,
-      "marginal": false,
-      "display": "9 s · 8.6% deep",
-      "value": 8.6,
-      "note": "a 9-session base 8.6% deep: supply absorbed"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": true,
-      "marginal": false,
-      "display": "2nd burst",
-      "value": 2,
-      "note": "breakout 2 of this trend"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "93% of range",
-      "value": 93,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": true,
-      "marginal": false,
-      "display": "1 up day before",
-      "value": 1,
-      "note": "not already up two days in a row"
-     }
-    ],
-    "vetoes": [],
-    "reclass": null,
-    "base": {
-     "start": "2026-08-27",
-     "end": "2026-09-09",
-     "sessions": 9,
-     "low": 25.16,
-     "high": 27.52,
-     "depth_pct": 8.6,
-     "breakdown_dates": []
-    }
-   },
-   "claude": {
-    "agree": false,
-    "grade": "B",
-    "score": 7.6,
-    "reason": "RKLB cleared the base but the day before was already a 2.8% up day on a wide range: the coil had not tightened, and the volume is only 1.4× yesterday.",
-    "key_risk": "a second day of expansion often reverses; the stop under a wide bar is 5% away.",
-    "entry_note": "only on a pullback to the base high, not at the open.",
-    "source": "claude",
-    "chart_seen": true,
-    "error": null
-   },
-   "grade": "B",
-   "score": 7.6,
-   "rank": 4,
-   "plan": null,
-   "summary": "RKLB: +4.7% on 2.5× volume out of a 9-session base 8.6% deep. Buy $27.68–$29.37 tomorrow in the first 30 minutes, stop $27.61, aim $30.80–$34.22 by day 5. B 7.6, 8 of 9 criteria; the miss is quiet day before.",
-   "chart": null,
-   "series": null
-  },
-  {
-   "ticker": "APP",
-   "name": "AppLovin",
-   "flags": [],
-   "scan": "burst",
-   "close": 254.66,
-   "prev_close": 243.93,
-   "open": 244.91,
-   "high": 255.68,
-   "low": 242.95,
-   "gain_pct": 4.4,
-   "volume": 1714886,
-   "volume_vs_prior": 2.16,
-   "dollar_volume": 436712869,
-   "quality": {
-    "grade_mechanical": "B",
-    "score": 6.7,
-    "passes": 6,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "2.0× prior 10",
-      "value": 2,
-      "note": "the burst bar's range is 2.0× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "2.2× yesterday",
-      "value": 2.16,
-      "note": "volume 2.2× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": false,
-      "marginal": false,
-      "display": "+2.8% · 5.4% range",
-      "value": 5.4,
-      "note": "the session before was up 2.8% on a 5.4% range: already in range expansion"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": false,
-      "marginal": false,
-      "display": "2 in base",
-      "value": 2,
-      "note": "2 four-percent down days inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.98",
-      "value": 0.98,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": true,
-      "marginal": false,
-      "display": "8 s · 11.2% deep",
-      "value": 11.2,
-      "note": "a 8-session base 11.2% deep: supply absorbed"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": false,
-      "marginal": false,
-      "display": "4th burst",
-      "value": 4,
-      "note": "breakout 4 of this trend: extended stocks are dangerous"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "92% of range",
-      "value": 92,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": true,
-      "marginal": false,
-      "display": "1 up day before",
-      "value": 1,
-      "note": "not already up two days in a row"
-     }
-    ],
-    "vetoes": [],
-    "reclass": null,
-    "base": {
-     "start": "2026-08-28",
-     "end": "2026-09-09",
-     "sessions": 8,
-     "low": 233.74,
-     "high": 263.25,
-     "depth_pct": 11.2,
-     "breakdown_dates": [
-      "2026-09-01",
-      "2026-09-04"
-     ]
-    }
-   },
-   "claude": {
-    "agree": true,
-    "grade": "B",
-    "score": 6.4,
-    "reason": "APP broke out of a 8-session base on 2.2× volume with a 2.0× range bar that closed at 92% of its range; the advance before the base was orderly and the day before was quiet.",
-    "key_risk": "the base is 11.2% deep and a gap over $264.85 at the open would leave no stop the bar supports.",
-    "entry_note": "skip it if the open prints above $264.85; a print under $249.57 says the burst is failing.",
-    "source": "claude",
-    "chart_seen": true,
-    "error": null
-   },
-   "grade": "B",
-   "score": 6.4,
-   "rank": 5,
-   "plan": null,
-   "summary": "APP: +4.4% on 2.2× volume out of a 8-session base 11.2% deep. B 6.4, 6 of 9 criteria; the miss is quiet day before.",
-   "chart": null,
-   "series": null
-  },
-  {
-   "ticker": "PLTR",
-   "name": "Palantir",
-   "flags": [],
-   "scan": "burst",
-   "close": 231.75,
-   "prev_close": 222.2,
-   "open": 223.09,
-   "high": 232.68,
-   "low": 221.3,
-   "gain_pct": 4.3,
-   "volume": 1625733,
-   "volume_vs_prior": 1.81,
-   "dollar_volume": 376763623,
-   "quality": {
-    "grade_mechanical": "B",
-    "score": 6,
-    "passes": 6,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "2.9× prior 10",
-      "value": 2.9,
-      "note": "the burst bar's range is 2.9× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "1.8× yesterday",
-      "value": 1.81,
-      "note": "volume 1.8× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": false,
-      "marginal": false,
-      "display": "+2.8% · 5.4% range",
-      "value": 5.4,
-      "note": "the session before was up 2.8% on a 5.4% range: already in range expansion"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": true,
-      "marginal": false,
-      "display": "0 in base",
-      "value": 0,
-      "note": "no 4% down day inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.99",
-      "value": 0.99,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": false,
-      "marginal": true,
-      "display": "22 s · 10.7% deep",
-      "value": 10.7,
-      "note": "base 22 sessions, outside 3–20"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": false,
-      "marginal": false,
-      "display": "5th burst",
-      "value": 5,
-      "note": "breakout 5 of this trend: extended stocks are dangerous"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "92% of range",
-      "value": 92,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": true,
-      "marginal": false,
-      "display": "1 up day before",
-      "value": 1,
-      "note": "not already up two days in a row"
-     }
-    ],
-    "vetoes": [],
-    "reclass": null,
-    "base": {
-     "start": "2026-08-10",
-     "end": "2026-09-09",
-     "sessions": 22,
-     "low": 200.77,
-     "high": 224.86,
-     "depth_pct": 10.7,
-     "breakdown_dates": []
-    }
-   },
-   "claude": null,
-   "grade": "B",
-   "score": 6,
-   "rank": 6,
-   "plan": null,
-   "summary": "PLTR: +4.3% on 1.8× volume out of a 22-session base 10.7% deep. B 6.0, 6 of 9 criteria; the miss is quiet day before.",
-   "chart": null,
-   "series": null
-  },
-  {
-   "ticker": "TMDX",
-   "name": "TransMedics",
-   "flags": [],
-   "scan": "burst",
-   "close": 138.28,
-   "prev_close": 129.35,
-   "open": 129.87,
-   "high": 138.83,
-   "low": 128.83,
-   "gain_pct": 6.9,
-   "volume": 2915926,
-   "volume_vs_prior": 2.84,
-   "dollar_volume": 403214247,
-   "quality": {
-    "grade_mechanical": "B",
-    "score": 6,
-    "passes": 6,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "2.4× prior 10",
-      "value": 2.4,
-      "note": "the burst bar's range is 2.4× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "2.8× yesterday",
-      "value": 2.84,
-      "note": "volume 2.8× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": true,
-      "marginal": false,
-      "display": "+0.6% · 0.7% range",
-      "value": 0.7,
-      "note": "the session before was narrow: the coil had tightened"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": false,
-      "marginal": false,
-      "display": "2 in base",
-      "value": 2,
-      "note": "2 four-percent down days inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.99",
-      "value": 0.99,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": false,
-      "marginal": false,
-      "display": "12 s · 15.4% deep",
-      "value": 15.4,
-      "note": "base 12 sessions, outside 3–20"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": false,
-      "marginal": false,
-      "display": "4th burst",
-      "value": 4,
-      "note": "breakout 4 of this trend: extended stocks are dangerous"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "94% of range",
-      "value": 94,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": true,
-      "marginal": false,
-      "display": "2 up days before",
-      "value": 2,
-      "note": "not already up two days in a row"
-     }
-    ],
-    "vetoes": [],
-    "reclass": null,
-    "base": {
-     "start": "2026-08-24",
-     "end": "2026-09-09",
-     "sessions": 12,
-     "low": 117.06,
-     "high": 138.37,
-     "depth_pct": 15.4,
-     "breakdown_dates": [
-      "2026-08-26",
-      "2026-08-31"
-     ]
-    }
-   },
-   "claude": null,
-   "grade": "B",
-   "score": 6,
-   "rank": 7,
-   "plan": null,
-   "summary": "TMDX: +6.9% on 2.8× volume out of a 12-session base 15.4% deep. B 6.0, 6 of 9 criteria; the miss is no 4% breakdown.",
-   "chart": null,
-   "series": null
-  },
-  {
-   "ticker": "CVNA",
-   "name": "Carvana",
-   "flags": [],
-   "scan": "burst",
-   "close": 406.35,
-   "prev_close": 388.48,
-   "open": 390.03,
-   "high": 407.97,
-   "low": 386.91,
-   "gain_pct": 4.6,
-   "volume": 1915967,
-   "volume_vs_prior": 1.73,
-   "dollar_volume": 778553190,
-   "quality": {
-    "grade_mechanical": "B",
-    "score": 6,
-    "passes": 6,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "2.2× prior 10",
-      "value": 2.2,
-      "note": "the burst bar's range is 2.2× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "1.7× yesterday",
-      "value": 1.73,
-      "note": "volume 1.7× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": true,
-      "marginal": false,
-      "display": "+0.6% · 0.7% range",
-      "value": 0.7,
-      "note": "the session before was narrow: the coil had tightened"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": false,
-      "marginal": false,
-      "display": "2 in base",
-      "value": 2,
-      "note": "2 four-percent down days inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.96",
-      "value": 0.96,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": false,
-      "marginal": true,
-      "display": "15 s · 15.0% deep",
-      "value": 15,
-      "note": "base 15 sessions, outside 3–20"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": false,
-      "marginal": false,
-      "display": "4th burst",
-      "value": 4,
-      "note": "breakout 4 of this trend: extended stocks are dangerous"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "92% of range",
-      "value": 92,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": true,
-      "marginal": false,
-      "display": "1 up day before",
-      "value": 1,
-      "note": "not already up two days in a row"
-     }
-    ],
-    "vetoes": [],
-    "reclass": null,
-    "base": {
-     "start": "2026-08-19",
-     "end": "2026-09-09",
-     "sessions": 15,
-     "low": 341.32,
-     "high": 401.61,
-     "depth_pct": 15,
-     "breakdown_dates": [
-      "2026-08-21",
-      "2026-08-26"
-     ]
-    }
-   },
-   "claude": null,
-   "grade": "B",
-   "score": 6,
-   "rank": 8,
-   "plan": null,
-   "summary": "CVNA: +4.6% on 1.7× volume out of a 15-session base 15.0% deep. B 6.0, 6 of 9 criteria; the miss is no 4% breakdown.",
-   "chart": null,
-   "series": null
-  },
-  {
-   "ticker": "MSTR",
-   "name": "Strategy",
-   "flags": [
-    "dollar_breakout"
-   ],
-   "scan": "dollar",
-   "close": 502.52,
-   "prev_close": 480.88,
-   "open": 482.8,
-   "high": 504.53,
-   "low": 478.94,
-   "gain_pct": 4.5,
-   "volume": 1901715,
-   "volume_vs_prior": 2.12,
-   "dollar_volume": 955649822,
-   "quality": {
-    "grade_mechanical": "B",
-    "score": 6,
-    "passes": 6,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "2.3× prior 10",
-      "value": 2.3,
-      "note": "the burst bar's range is 2.3× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "2.1× yesterday",
-      "value": 2.12,
-      "note": "volume 2.1× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": false,
-      "marginal": false,
-      "display": "+2.8% · 5.4% range",
-      "value": 5.4,
-      "note": "the session before was up 2.8% on a 5.4% range: already in range expansion"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": true,
-      "marginal": false,
-      "display": "0 in base",
-      "value": 0,
-      "note": "no 4% down day inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.98",
-      "value": 0.98,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": false,
-      "marginal": true,
-      "display": "19 s · 13.9% deep",
-      "value": 13.9,
-      "note": "base 19 sessions, outside 3–20"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": false,
-      "marginal": false,
-      "display": "4th burst",
-      "value": 4,
-      "note": "breakout 4 of this trend: extended stocks are dangerous"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "92% of range",
-      "value": 92,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": true,
-      "marginal": false,
-      "display": "2 up days before",
-      "value": 2,
-      "note": "not already up two days in a row"
-     }
-    ],
-    "vetoes": [],
-    "reclass": null,
-    "base": {
-     "start": "2026-08-13",
-     "end": "2026-09-09",
-     "sessions": 19,
-     "low": 419.23,
-     "high": 486.65,
-     "depth_pct": 13.9,
-     "breakdown_dates": []
-    }
-   },
-   "claude": null,
-   "grade": "B",
-   "score": 6,
-   "rank": 9,
-   "plan": null,
-   "summary": "MSTR: +4.5% on 2.1× volume out of a 19-session base 13.9% deep. B 6.0, 6 of 9 criteria; the miss is quiet day before.",
-   "chart": null,
-   "series": null
-  },
-  {
-   "ticker": "OKLO",
-   "name": "Oklo",
-   "flags": [
-    "gain_over_15"
-   ],
-   "scan": "burst",
-   "close": 68.84,
-   "prev_close": 59.45,
-   "open": 59.69,
-   "high": 69.12,
-   "low": 59.21,
-   "gain_pct": 15.79,
-   "volume": 4804928,
-   "volume_vs_prior": 4.98,
-   "dollar_volume": 330771244,
-   "quality": {
-    "grade_mechanical": "C",
-    "score": 4.6,
-    "passes": 5,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "4.0× prior 10",
-      "value": 4,
-      "note": "the burst bar's range is 4.0× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "5.0× yesterday",
-      "value": 4.98,
-      "note": "volume 5.0× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": false,
-      "marginal": false,
-      "display": "+2.8% · 5.4% range",
-      "value": 5.4,
-      "note": "the session before was up 2.8% on a 5.4% range: already in range expansion"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": false,
-      "marginal": false,
-      "display": "2 in base",
-      "value": 2,
-      "note": "2 four-percent down days inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.99",
-      "value": 0.99,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": false,
-      "marginal": true,
-      "display": "12 s · 14.4% deep",
-      "value": 14.4,
-      "note": "base 12 sessions, outside 3–20"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": false,
-      "marginal": false,
-      "display": "4th burst",
-      "value": 4,
-      "note": "breakout 4 of this trend: extended stocks are dangerous"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "97% of range",
-      "value": 97,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": true,
-      "marginal": false,
-      "display": "1 up day before",
-      "value": 1,
-      "note": "not already up two days in a row"
-     }
-    ],
-    "vetoes": [],
-    "reclass": null,
-    "base": {
-     "start": "2026-08-24",
-     "end": "2026-09-09",
-     "sessions": 12,
-     "low": 51.58,
-     "high": 60.28,
-     "depth_pct": 14.4,
-     "breakdown_dates": [
-      "2026-08-26",
-      "2026-08-31"
-     ]
-    }
-   },
-   "claude": null,
-   "grade": "C",
-   "score": 4.6,
-   "rank": 10,
-   "plan": null,
-   "summary": "OKLO: +15.8% on 5.0× volume out of a 12-session base 14.4% deep. C 4.6, 5 of 9 criteria; the miss is quiet day before.",
-   "chart": null,
-   "series": null
-  },
-  {
-   "ticker": "SMCI",
-   "name": "Super Micro Computer",
-   "flags": [],
-   "scan": "burst",
-   "close": 58.6,
-   "prev_close": 56.3,
-   "open": 56.52,
-   "high": 58.84,
-   "low": 56.07,
-   "gain_pct": 4.09,
-   "volume": 2066899,
-   "volume_vs_prior": 2.43,
-   "dollar_volume": 121120281,
-   "quality": {
-    "grade_mechanical": "C",
-    "score": 4.6,
-    "passes": 5,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "1.7× prior 10",
-      "value": 1.7,
-      "note": "the burst bar's range is 1.7× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "2.4× yesterday",
-      "value": 2.43,
-      "note": "volume 2.4× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": false,
-      "marginal": false,
-      "display": "+2.8% · 5.4% range",
-      "value": 5.4,
-      "note": "the session before was up 2.8% on a 5.4% range: already in range expansion"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": false,
-      "marginal": false,
-      "display": "2 in base",
-      "value": 2,
-      "note": "2 four-percent down days inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.98",
-      "value": 0.98,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": false,
-      "marginal": true,
-      "display": "13 s · 12.5% deep",
-      "value": 12.5,
-      "note": "base 13 sessions, outside 3–20"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": false,
-      "marginal": false,
-      "display": "4th burst",
-      "value": 4,
-      "note": "breakout 4 of this trend: extended stocks are dangerous"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "91% of range",
-      "value": 91,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": true,
-      "marginal": false,
-      "display": "1 up day before",
-      "value": 1,
-      "note": "not already up two days in a row"
-     }
-    ],
-    "vetoes": [],
-    "reclass": null,
-    "base": {
-     "start": "2026-08-21",
-     "end": "2026-09-09",
-     "sessions": 13,
-     "low": 49.87,
-     "high": 56.97,
-     "depth_pct": 12.5,
-     "breakdown_dates": [
-      "2026-08-25",
-      "2026-08-28"
-     ]
-    }
-   },
-   "claude": null,
-   "grade": "C",
-   "score": 4.6,
-   "rank": 11,
-   "plan": null,
-   "summary": "SMCI: +4.1% on 2.4× volume out of a 13-session base 12.5% deep. C 4.6, 5 of 9 criteria; the miss is quiet day before.",
-   "chart": null,
-   "series": null
-  },
-  {
-   "ticker": "SOUN",
-   "name": "SoundHound AI",
-   "flags": [],
-   "scan": "burst",
-   "close": 13.65,
-   "prev_close": 12.54,
-   "open": 12.59,
-   "high": 13.71,
-   "low": 12.49,
-   "gain_pct": 8.85,
-   "volume": 5017231,
-   "volume_vs_prior": 5.31,
-   "dollar_volume": 68485203,
-   "quality": {
-    "grade_mechanical": "C",
-    "score": 4.8,
-    "passes": 5,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "2.3× prior 10",
-      "value": 2.3,
-      "note": "the burst bar's range is 2.3× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "5.3× yesterday",
-      "value": 5.31,
-      "note": "volume 5.3× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": false,
-      "marginal": false,
-      "display": "+2.8% · 5.4% range",
-      "value": 5.4,
-      "note": "the session before was up 2.8% on a 5.4% range: already in range expansion"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": false,
-      "marginal": false,
-      "display": "2 in base",
-      "value": 2,
-      "note": "2 four-percent down days inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.98",
-      "value": 0.98,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": false,
-      "marginal": false,
-      "display": "12 s · 15.5% deep",
-      "value": 15.5,
-      "note": "base 12 sessions, outside 3–20"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": false,
-      "marginal": false,
-      "display": "4th burst",
-      "value": 4,
-      "note": "breakout 4 of this trend: extended stocks are dangerous"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "95% of range",
-      "value": 95,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": true,
-      "marginal": false,
-      "display": "1 up day before",
-      "value": 1,
-      "note": "not already up two days in a row"
-     }
-    ],
-    "vetoes": [],
-    "reclass": null,
-    "base": {
-     "start": "2026-08-24",
-     "end": "2026-09-09",
-     "sessions": 12,
-     "low": 10.84,
-     "high": 12.83,
-     "depth_pct": 15.5,
-     "breakdown_dates": [
-      "2026-08-26",
-      "2026-08-31"
-     ]
-    }
-   },
-   "claude": {
-    "agree": true,
-    "grade": "C",
-    "score": 4.3,
-    "reason": "SOUN broke out of a 12-session base on 5.3× volume with a 2.3× range bar that closed at 95% of its range; the advance before the base was orderly and the day before was quiet.",
-    "key_risk": "the base is 15.5% deep and a gap over $14.20 at the open would leave no stop the bar supports.",
-    "entry_note": "skip it if the open prints above $14.20; a print under $13.38 says the burst is failing.",
-    "source": "claude",
-    "chart_seen": true,
-    "error": null
-   },
-   "grade": "C",
-   "score": 4.3,
-   "rank": 12,
-   "plan": null,
-   "summary": "SOUN: +8.8% on 5.3× volume out of a 12-session base 15.5% deep. C 4.3, 5 of 9 criteria; the miss is quiet day before.",
-   "chart": null,
-   "series": null
-  },
-  {
-   "ticker": "HIMS",
-   "name": "Hims & Hers Health",
-   "flags": [],
-   "scan": "burst",
-   "close": 49.07,
-   "prev_close": 46.69,
-   "open": 46.87,
-   "high": 49.26,
-   "low": 46.5,
-   "gain_pct": 5.1,
-   "volume": 2742604,
-   "volume_vs_prior": 3.07,
-   "dollar_volume": 134579578,
-   "quality": {
-    "grade_mechanical": "skip",
-    "score": 3.6,
-    "passes": 8,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "3.9× prior 10",
-      "value": 3.9,
-      "note": "the burst bar's range is 3.9× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "3.1× yesterday",
-      "value": 3.07,
-      "note": "volume 3.1× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": true,
-      "marginal": false,
-      "display": "+0.6% · 0.7% range",
-      "value": 0.7,
-      "note": "the session before was narrow: the coil had tightened"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": true,
-      "marginal": false,
-      "display": "0 in base",
-      "value": 0,
-      "note": "no 4% down day inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.99",
-      "value": 0.99,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": true,
-      "marginal": false,
-      "display": "6 s · 3.7% deep",
-      "value": 3.7,
-      "note": "a 6-session base 3.7% deep: supply absorbed"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": true,
-      "marginal": false,
-      "display": "2nd burst",
-      "value": 2,
-      "note": "breakout 2 of this trend"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "93% of range",
-      "value": 93,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": false,
-      "marginal": false,
-      "display": "3 up days before",
-      "value": 3,
-      "note": "up 3 days in a row before the burst: the third-day buyer becomes the bag holder"
-     }
-    ],
-    "vetoes": [
-     "up_days"
-    ],
-    "reclass": null,
-    "base": {
-     "start": "2026-09-01",
-     "end": "2026-09-09",
-     "sessions": 6,
-     "low": 45.4,
-     "high": 47.12,
-     "depth_pct": 3.7,
-     "breakdown_dates": []
-    }
-   },
-   "claude": null,
-   "grade": "skip",
-   "score": 3.6,
-   "rank": 13,
-   "plan": null,
-   "summary": "HIMS: +5.1% on 3.1× volume out of a 6-session base 3.7% deep. skip 3.6, 8 of 9 criteria; the miss is not up 2 in a row; vetoed: up_days.",
-   "chart": null,
-   "series": null
-  },
-  {
-   "ticker": "ASTS",
-   "name": "AST SpaceMobile",
-   "flags": [],
-   "scan": "burst",
-   "close": 40.02,
-   "prev_close": 37.82,
-   "open": 37.97,
-   "high": 40.18,
-   "low": 37.67,
-   "gain_pct": 5.82,
-   "volume": 3258330,
-   "volume_vs_prior": 2.94,
-   "dollar_volume": 130398367,
-   "quality": {
-    "grade_mechanical": "skip",
-    "score": 3.6,
-    "passes": 8,
-    "of": 9,
-    "checks": [
-     {
-      "key": "range_expansion",
-      "label": "range expansion",
-      "threshold": "≥ 1.5× the prior 10 sessions",
-      "pass": true,
-      "marginal": false,
-      "display": "4.2× prior 10",
-      "value": 4.2,
-      "note": "the burst bar's range is 4.2× the average of the ten before it"
-     },
-     {
-      "key": "volume_up",
-      "label": "volume up",
-      "threshold": "> yesterday",
-      "pass": true,
-      "marginal": false,
-      "display": "2.9× yesterday",
-      "value": 2.94,
-      "note": "volume 2.9× the session before"
-     },
-     {
-      "key": "narrow_or_negative_prior",
-      "label": "quiet day before",
-      "threshold": "narrow range or down",
-      "pass": true,
-      "marginal": false,
-      "display": "+0.6% · 0.7% range",
-      "value": 0.7,
-      "note": "the session before was narrow: the coil had tightened"
-     },
-     {
-      "key": "breakdowns_in_base",
-      "label": "no 4% breakdown",
-      "threshold": "≤ 1 in the base",
-      "pass": true,
-      "marginal": false,
-      "display": "0 in base",
-      "value": 0,
-      "note": "no 4% down day inside the base"
-     },
-     {
-      "key": "linearity",
-      "label": "linear prior move",
-      "threshold": "R² ≥ 0.60",
-      "pass": true,
-      "marginal": false,
-      "display": "R² 0.99",
-      "value": 0.99,
-      "note": "the advance before the base was orderly"
-     },
-     {
-      "key": "base_quality",
-      "label": "tight base",
-      "threshold": "3–20 sessions · ≤ 12% deep",
-      "pass": true,
-      "marginal": false,
-      "display": "10 s · 6.9% deep",
-      "value": 6.9,
-      "note": "a 10-session base 6.9% deep: supply absorbed"
-     },
-     {
-      "key": "young_trend",
-      "label": "young trend",
-      "threshold": "1st–3rd breakout",
-      "pass": true,
-      "marginal": false,
-      "display": "2nd burst",
-      "value": 2,
-      "note": "breakout 2 of this trend"
-     },
-     {
-      "key": "close_near_high",
-      "label": "close near high",
-      "threshold": "≥ 80% of the range",
-      "pass": true,
-      "marginal": false,
-      "display": "94% of range",
-      "value": 94,
-      "note": "closed strong: buyers in control into the close"
-     },
-     {
-      "key": "consecutive_up_days",
-      "label": "not up 2 in a row",
-      "threshold": "≤ 2 up days before",
-      "pass": false,
-      "marginal": false,
-      "display": "4 up days before",
-      "value": 4,
-      "note": "up 4 days in a row before the burst: the third-day buyer becomes the bag holder"
-     }
-    ],
-    "vetoes": [
-     "up_days"
-    ],
-    "reclass": null,
-    "base": {
-     "start": "2026-08-26",
-     "end": "2026-09-09",
-     "sessions": 10,
-     "low": 36.16,
-     "high": 38.86,
-     "depth_pct": 6.9,
-     "breakdown_dates": []
-    }
-   },
-   "claude": null,
-   "grade": "skip",
-   "score": 3.6,
-   "rank": 14,
-   "plan": null,
-   "summary": "ASTS: +5.8% on 2.9× volume out of a 10-session base 6.9% deep. skip 3.6, 8 of 9 criteria; the miss is not up 2 in a row; vetoed: up_days.",
-   "chart": null,
-   "series": null
-  }
- ],
+ "bursts": [],
  "trades": [],
  "beyond_cap": [],
  "cash_budget": {
-  "committed_usd": 0,
-  "at_risk_usd": 0,
-  "slots_used": 0,
+  "committed_usd": 0.0,
+  "at_risk_usd": 0.0,
+  "equity": 10000.0,
+  "slots_used": 2,
   "slots_max": 4,
-  "cut": []
+  "open_positions": 2,
+  "within": [],
+  "beyond": [],
+  "cut": [],
+  "skipped": [],
+  "sentence": "Tomorrow's plans commit $0.00 of $10,000.00; 2 of 4 slots (2 already open)"
  },
  "watchlist": {
-  "top": [
-   {
-    "ticker": "ANET",
-    "name": "Arista Networks",
-    "setups": [
-     "TI65"
-    ],
-    "close": 88.1,
-    "quiet_days": 3,
-    "range_pct": 1.1,
-    "box": {
-     "sessions": 9,
-     "high": 89.4,
-     "low": 85.9
-    },
-    "closes": [
-     82.2,
-     82.49,
-     82.92,
-     83.32,
-     84.15,
-     84.47,
-     84.01,
-     84.32,
-     84.75,
-     84.92,
-     85.14,
-     85.98,
-     86.1,
-     86.65,
-     87.23,
-     86.9,
-     86.6,
-     86.47,
-     86.55,
-     88.1
-    ],
-    "plan": {
-     "ticker": "ANET",
-     "kind": "anticipation",
-     "action": "place_buy_stop",
-     "eligible": true,
-     "reason": null,
-     "entry_ref": 89.49,
-     "trigger": 89.49,
-     "limit": 90.38,
-     "trigger_cushion": 0.09,
-     "box_high": 89.4,
-     "box_low": 85.9,
-     "close": 88.1,
-     "stop": 86.05,
-     "stop_basis": "lowest low of the last 3 sessions",
-     "stop_pct": 3.84,
-     "lows_last3": [
-      86.05,
-      86.4,
-      86.2
-     ],
-     "risk_per_share": 3.44,
-     "shares": 14,
-     "position_usd": 1252.86,
-     "position_pct": 12.53,
-     "risk_usd": 48.16,
-     "capped_by": "risk",
-     "size_multiplier": 1,
-     "gap_ok_above": 89.86,
-     "gap_rule": "an open more than 2% above $88.10 (over $89.86) is gapped: catalyst check before buying",
-     "targets": {
-      "low_pct": 8,
-      "high_pct": 20,
-      "low": 96.65,
-      "high": 107.39,
-      "note": null
-     },
-     "order_json": {
-      "symbol": "ANET",
-      "action": "buy",
-      "quantity": 14,
-      "order_type": "stop_limit",
-      "stop_price": 89.49,
-      "limit_price": 90.38,
-      "time_in_force": "day",
-      "conditional": "one_triggers_the_other",
-      "then": {
-       "action": "sell",
-       "quantity": 14,
-       "order_type": "stop",
-       "stop_price": 86.05,
-       "time_in_force": "gtc"
-      }
-     },
-     "order_line": "Buy stop-limit 14 ANET · stop $89.49 limit $90.38 (day) · then sell stop $86.05",
-     "flags": []
-    }
-   },
-   {
-    "ticker": "AXON",
-    "name": "Axon Enterprise",
-    "setups": [
-     "DT",
-     "TI65"
-    ],
-    "close": 41.62,
-    "quiet_days": 4,
-    "range_pct": 0.9,
-    "box": {
-     "sessions": 7,
-     "high": 42.1,
-     "low": 40.55
-    },
-    "closes": [
-     38.66,
-     38.45,
-     38.62,
-     39.08,
-     38.93,
-     38.66,
-     38.93,
-     39.16,
-     39.32,
-     39.62,
-     39.37,
-     39.82,
-     39.81,
-     39.94,
-     40.26,
-     40.5,
-     40.65,
-     41.01,
-     41.54,
-     41.62
-    ],
-    "plan": {
-     "ticker": "AXON",
-     "kind": "anticipation",
-     "action": "place_buy_stop",
-     "eligible": true,
-     "reason": null,
-     "entry_ref": 42.14,
-     "trigger": 42.14,
-     "limit": 42.56,
-     "trigger_cushion": 0.04,
-     "box_high": 42.1,
-     "box_low": 40.55,
-     "close": 41.62,
-     "stop": 40.7,
-     "stop_basis": "lowest low of the last 3 sessions",
-     "stop_pct": 3.42,
-     "lows_last3": [
-      40.9,
-      40.7,
-      41
-     ],
-     "risk_per_share": 1.44,
-     "shares": 34,
-     "position_usd": 1432.76,
-     "position_pct": 14.33,
-     "risk_usd": 48.96,
-     "capped_by": "risk",
-     "size_multiplier": 1,
-     "gap_ok_above": 42.45,
-     "gap_rule": "an open more than 2% above $41.62 (over $42.45) is gapped: catalyst check before buying",
-     "targets": {
-      "low_pct": 8,
-      "high_pct": 20,
-      "low": 45.51,
-      "high": 50.57,
-      "note": null
-     },
-     "order_json": {
-      "symbol": "AXON",
-      "action": "buy",
-      "quantity": 34,
-      "order_type": "stop_limit",
-      "stop_price": 42.14,
-      "limit_price": 42.56,
-      "time_in_force": "day",
-      "conditional": "one_triggers_the_other",
-      "then": {
-       "action": "sell",
-       "quantity": 34,
-       "order_type": "stop",
-       "stop_price": 40.7,
-       "time_in_force": "gtc"
-      }
-     },
-     "order_line": "Buy stop-limit 34 AXON · stop $42.14 limit $42.56 (day) · then sell stop $40.70",
-     "flags": []
-    }
-   },
-   {
-    "ticker": "CLS",
-    "name": "Celestica",
-    "setups": [
-     "MDT"
-    ],
-    "close": 23.44,
-    "quiet_days": 2,
-    "range_pct": 1.3,
-    "box": {
-     "sessions": 6,
-     "high": 23.8,
-     "low": 22.9
-    },
-    "closes": [
-     21.89,
-     21.9,
-     21.78,
-     21.64,
-     21.51,
-     21.36,
-     21.25,
-     21.25,
-     21.34,
-     21.56,
-     21.69,
-     21.87,
-     21.85,
-     21.77,
-     21.86,
-     21.86,
-     21.96,
-     22.08,
-     21.98,
-     23.44
-    ],
-    "plan": {
-     "ticker": "CLS",
-     "kind": "anticipation",
-     "action": "place_buy_stop",
-     "eligible": true,
-     "reason": null,
-     "entry_ref": 23.82,
-     "trigger": 23.82,
-     "limit": 24.06,
-     "trigger_cushion": 0.02,
-     "box_high": 23.8,
-     "box_low": 22.9,
-     "close": 23.44,
-     "stop": 22.95,
-     "stop_basis": "lowest low of the last 3 sessions",
-     "stop_pct": 3.65,
-     "lows_last3": [
-      23.05,
-      22.95,
-      23.1
-     ],
-     "risk_per_share": 0.87,
-     "shares": 57,
-     "position_usd": 1357.74,
-     "position_pct": 13.58,
-     "risk_usd": 49.59,
-     "capped_by": "risk",
-     "size_multiplier": 1,
-     "gap_ok_above": 23.91,
-     "gap_rule": "an open more than 2% above $23.44 (over $23.91) is gapped: catalyst check before buying",
-     "targets": {
-      "low_pct": 8,
-      "high_pct": 20,
-      "low": 25.73,
-      "high": 28.58,
-      "note": null
-     },
-     "order_json": {
-      "symbol": "CLS",
-      "action": "buy",
-      "quantity": 57,
-      "order_type": "stop_limit",
-      "stop_price": 23.82,
-      "limit_price": 24.06,
-      "time_in_force": "day",
-      "conditional": "one_triggers_the_other",
-      "then": {
-       "action": "sell",
-       "quantity": 57,
-       "order_type": "stop",
-       "stop_price": 22.95,
-       "time_in_force": "gtc"
-      }
-     },
-     "order_line": "Buy stop-limit 57 CLS · stop $23.82 limit $24.06 (day) · then sell stop $22.95",
-     "flags": []
-    }
-   },
-   {
-    "ticker": "DUOL",
-    "name": "Duolingo",
-    "setups": [
-     "TI65"
-    ],
-    "close": 62.3,
-    "quiet_days": 5,
-    "range_pct": 0.8,
-    "box": {
-     "sessions": 11,
-     "high": 63.1,
-     "low": 60.4
-    },
-    "closes": [
-     58.05,
-     58.14,
-     58.33,
-     58.33,
-     58.15,
-     58.24,
-     58.61,
-     58.22,
-     58.9,
-     59.52,
-     59.53,
-     59.19,
-     59.67,
-     59.27,
-     59.05,
-     59.03,
-     59.12,
-     59.81,
-     59.47,
-     62.3
-    ],
-    "plan": {
-     "ticker": "DUOL",
-     "kind": "anticipation",
-     "action": "place_buy_stop",
-     "eligible": true,
-     "reason": null,
-     "entry_ref": 63.16,
-     "trigger": 63.16,
-     "limit": 63.79,
-     "trigger_cushion": 0.06,
-     "box_high": 63.1,
-     "box_low": 60.4,
-     "close": 62.3,
-     "stop": 60.9,
-     "stop_basis": "lowest low of the last 3 sessions",
-     "stop_pct": 3.58,
-     "lows_last3": [
-      61.1,
-      60.9,
-      61.4
-     ],
-     "risk_per_share": 2.26,
-     "shares": 22,
-     "position_usd": 1389.52,
-     "position_pct": 13.9,
-     "risk_usd": 49.72,
-     "capped_by": "risk",
-     "size_multiplier": 1,
-     "gap_ok_above": 63.55,
-     "gap_rule": "an open more than 2% above $62.30 (over $63.55) is gapped: catalyst check before buying",
-     "targets": {
-      "low_pct": 8,
-      "high_pct": 20,
-      "low": 68.21,
-      "high": 75.79,
-      "note": null
-     },
-     "order_json": {
-      "symbol": "DUOL",
-      "action": "buy",
-      "quantity": 22,
-      "order_type": "stop_limit",
-      "stop_price": 63.16,
-      "limit_price": 63.79,
-      "time_in_force": "day",
-      "conditional": "one_triggers_the_other",
-      "then": {
-       "action": "sell",
-       "quantity": 22,
-       "order_type": "stop",
-       "stop_price": 60.9,
-       "time_in_force": "gtc"
-      }
-     },
-     "order_line": "Buy stop-limit 22 DUOL · stop $63.16 limit $63.79 (day) · then sell stop $60.90",
-     "flags": []
-    }
-   },
-   {
-    "ticker": "HOOD",
-    "name": "Robinhood Markets",
-    "setups": [
-     "DT"
-    ],
-    "close": 14.92,
-    "quiet_days": 3,
-    "range_pct": 1,
-    "box": {
-     "sessions": 8,
-     "high": 15.2,
-     "low": 14.3
-    },
-    "closes": [
-     13.84,
-     13.86,
-     13.87,
-     13.9,
-     13.87,
-     13.95,
-     14.12,
-     14.1,
-     14.02,
-     14.03,
-     14.04,
-     14.02,
-     13.93,
-     14.04,
-     14,
-     13.98,
-     13.91,
-     14.08,
-     14.25,
-     14.92
-    ],
-    "plan": {
-     "ticker": "HOOD",
-     "kind": "anticipation",
-     "action": "refused",
-     "eligible": false,
-     "reason": "the stop $14.55 is 4.4% under the trigger $15.22, past his 4% line",
-     "entry_ref": 15.22,
-     "trigger": 15.22,
-     "limit": 15.37,
-     "trigger_cushion": 0.02,
-     "box_high": 15.2,
-     "box_low": 14.3,
-     "close": 14.92,
-     "stop": 14.55,
-     "stop_basis": "lowest low of the last 3 sessions",
-     "stop_pct": 4.4,
-     "lows_last3": [
-      14.55,
-      14.6,
-      14.7
-     ],
-     "risk_per_share": 0.67,
-     "shares": 0,
-     "position_usd": 0,
-     "position_pct": 0,
-     "risk_usd": 0,
-     "capped_by": "none",
-     "size_multiplier": 1,
-     "gap_ok_above": 15.22,
-     "gap_rule": "an open more than 2% above $14.92 (over $15.22) is gapped: catalyst check before buying",
-     "targets": {
-      "low_pct": 8,
-      "high_pct": 20,
-      "low": 16.44,
-      "high": 18.26,
-      "note": null
-     },
-     "order_json": null,
-     "order_line": null,
-     "flags": [
-      "refused"
-     ]
-    }
-   }
-  ],
-  "also_quiet": [
-   {
-    "ticker": "COHR",
-    "name": "Coherent",
-    "setups": [
-     "TI65"
-    ],
-    "close": 20,
-    "quiet_days": 2,
-    "range_pct": 0.7
-   },
-   {
-    "ticker": "LITE",
-    "name": "Lumentum",
-    "setups": [
-     "DT"
-    ],
-    "close": 27.3,
-    "quiet_days": 3,
-    "range_pct": 0.9
-   },
-   {
-    "ticker": "RDDT",
-    "name": "Reddit",
-    "setups": [
-     "MDT"
-    ],
-    "close": 34.6,
-    "quiet_days": 4,
-    "range_pct": 1.1
-   },
-   {
-    "ticker": "CIEN",
-    "name": "Ciena",
-    "setups": [
-     "TI65",
-     "MDT"
-    ],
-    "close": 41.9,
-    "quiet_days": 2,
-    "range_pct": 1.3
-   },
-   {
-    "ticker": "GEV",
-    "name": "GE Vernova",
-    "setups": [
-     "DT"
-    ],
-    "close": 49.2,
-    "quiet_days": 3,
-    "range_pct": 0.7
-   },
-   {
-    "ticker": "AFRM",
-    "name": "Affirm",
-    "setups": [
-     "TI65"
-    ],
-    "close": 56.5,
-    "quiet_days": 4,
-    "range_pct": 0.9
-   },
-   {
-    "ticker": "ZETA",
-    "name": "Zeta Global",
-    "setups": [
-     "DT"
-    ],
-    "close": 63.8,
-    "quiet_days": 2,
-    "range_pct": 1.1
-   },
-   {
-    "ticker": "LMND",
-    "name": "Lemonade",
-    "setups": [
-     "MDT"
-    ],
-    "close": 71.1,
-    "quiet_days": 3,
-    "range_pct": 1.3
-   },
-   {
-    "ticker": "BE",
-    "name": "Bloom Energy",
-    "setups": [
-     "TI65",
-     "MDT"
-    ],
-    "close": 78.4,
-    "quiet_days": 4,
-    "range_pct": 0.7
-   },
-   {
-    "ticker": "KTOS",
-    "name": "Kratos Defense",
-    "setups": [
-     "DT"
-    ],
-    "close": 85.7,
-    "quiet_days": 2,
-    "range_pct": 0.9
-   }
-  ],
-  "counts": {
-   "top": 5,
-   "also_quiet": 10,
-   "coiled": 41
-  },
-  "instruction": "Buy only if it clears the trigger in the first 40 minutes on volume above yesterday's pace; a gap over 2% at the open needs a catalyst check."
+  "top": [],
+  "also_quiet": [],
+  "counts": {},
+  "instruction": "Buy only if it clears its trigger in the first 30 minutes on volume already above yesterday's pace; an open more than 2% above the close is gapped and needs a catalyst check before you buy."
  },
  "open_plans": [
   {
-   "ticker": "NBIS",
+   "ticker": "ANET",
    "kind": "burst",
-   "picked": "2026-09-08",
-   "day": 2,
-   "sessions": 2,
-   "entry_ref": 92.4,
-   "stop": 89.1,
-   "current_stop": 90.15,
-   "shares": 15,
-   "last_close": 96.3,
-   "last_date": "2026-09-10",
-   "unrealised_pct": 4.22,
-   "status": "hold",
-   "instruction": "Day 2: hold 15 NBIS with the stop at $90.15 (closed $96.30, +4.22%). The market was closed; the day count did not advance.",
-   "events": [],
+   "picked": "2026-09-02",
+   "day": 4,
+   "sessions": 5,
+   "status": "stopped",
+   "instruction": "Day 4: opened at $30.38, under the $30.38 stop: stopped at the open (+2.4%).",
+   "events": [
+    {
+     "day": 1,
+     "date": "2026-09-03",
+     "event": "stop_raised_to_entry_low",
+     "price": 29.47
+    },
+    {
+     "day": 3,
+     "date": "2026-09-07",
+     "event": "sell_half",
+     "price": 30.54
+    },
+    {
+     "day": 3,
+     "date": "2026-09-07",
+     "event": "stop_trailed",
+     "price": 30.38
+    },
+    {
+     "day": 4,
+     "date": "2026-09-08",
+     "event": "stopped_at_open",
+     "price": 30.38
+    }
+   ],
+   "regime": "yellow",
+   "entry_ref": 29.67,
+   "shares": 83,
+   "current_stop": 30.38,
+   "last_close": 29.16,
+   "last_date": "2026-09-08",
+   "unrealised_pct": -1.72,
+   "exit_price": 30.38,
+   "result_pct": 2.39,
+   "half_sold": true,
+   "grade": "A",
+   "stop": 28.47,
    "targets": {
-    "low": 99.79,
-    "high": 110.88
-   }
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 32.36,
+    "high": 35.95,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "fill": "filled at the open, $29.67"
   },
   {
    "ticker": "VRT",
    "kind": "burst",
    "picked": "2026-09-04",
-   "day": 4,
-   "sessions": 4,
-   "entry_ref": 118.6,
-   "stop": 114.9,
-   "current_stop": 121.4,
-   "shares": 13,
-   "last_close": 127.9,
-   "last_date": "2026-09-10",
-   "unrealised_pct": 7.84,
-   "status": "sell_into_strength",
-   "instruction": "Day 4: half is sold, sell the rest into strength on the next session and trail the stop under each day's low. The stop is $121.40.",
+   "day": 3,
+   "sessions": 3,
+   "status": "sell_half",
+   "instruction": "Day 3: closed at $17.46 (+1.5%): sell at least half (72 of 144 VRT) at the close. The stop is $17.29.",
    "events": [
+    {
+     "day": 1,
+     "date": "2026-09-07",
+     "event": "stop_raised_to_entry_low",
+     "price": 17.08
+    },
     {
      "day": 3,
      "date": "2026-09-09",
      "event": "sell_half",
-     "price": 128.09
+     "price": 17.46
+    },
+    {
+     "day": 3,
+     "date": "2026-09-09",
+     "event": "stop_trailed",
+     "price": 17.29
     }
    ],
+   "regime": "yellow",
+   "entry_ref": 17.2,
+   "shares": 144,
+   "current_stop": 17.29,
+   "last_close": 17.46,
+   "last_date": "2026-09-09",
+   "unrealised_pct": 1.51,
+   "exit_price": null,
+   "result_pct": null,
+   "half_sold": true,
+   "grade": "A",
+   "stop": 16.46,
    "targets": {
-    "low": 128.09,
-    "high": 142.32
-   }
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 18.71,
+    "high": 20.78,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "fill": "filled at the open, $17.20"
   },
   {
-   "ticker": "UPST",
+   "ticker": "NBIS",
    "kind": "burst",
-   "picked": "2026-09-09",
+   "picked": "2026-09-08",
    "day": 1,
    "sessions": 1,
-   "entry_ref": 54.2,
-   "stop": 52.05,
-   "current_stop": 52.05,
-   "shares": 23,
-   "last_close": 51.4,
-   "last_date": "2026-09-10",
-   "unrealised_pct": -5.17,
-   "status": "stopped",
-   "instruction": "Day 1: stopped at $52.05 (−3.97%). The slot is free.",
+   "status": "hold",
+   "instruction": "Day 1: hold 97 NBIS with the stop at $25.34 (closed $25.60, +0.3%).",
    "events": [
     {
      "day": 1,
-     "date": "2026-09-10",
-     "event": "stopped",
-     "price": 52.05
+     "date": "2026-09-09",
+     "event": "stop_raised_to_entry_low",
+     "price": 25.34
     }
    ],
+   "regime": "yellow",
+   "entry_ref": 25.52,
+   "shares": 97,
+   "current_stop": 25.34,
+   "last_close": 25.6,
+   "last_date": "2026-09-09",
+   "unrealised_pct": 0.31,
+   "exit_price": null,
+   "result_pct": null,
+   "half_sold": false,
+   "grade": "A",
+   "stop": 24.43,
    "targets": {
-    "low": 58.54,
-    "high": 65.04
-   }
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 27.76,
+    "high": 30.84,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "fill": "filled at the open, $25.52"
   }
  ],
  "scorecard": {
-  "plans": 7,
-  "filled": 5,
-  "wins": 3,
-  "losses": 2,
-  "win_rate": 0.6,
-  "avg_r": 0.42,
-  "sum_r": 2.1,
-  "spy_avg_pct": 0.31,
+  "plans": 46,
+  "filled": 33,
+  "settled": 31,
+  "open": 2,
+  "wins": 8,
+  "losses": 22,
+  "win_rate": 0.258,
+  "avg_r": -0.15,
+  "sum_r": -4.55,
+  "spy_avg_pct": 0.23,
   "min_read": 20,
-  "note": "from bars alone at the next open with the published stop; halves weighted; settled at day 5"
+  "readable": true,
+  "sessions": 60,
+  "note": "from bars alone: filled at the next open inside the zone (or at the trigger when the day reaches it), the published stop is one R, halves weighted, settled by day 5"
  },
  "closest_miss": null,
  "_contract": {
-  "run": "What the run did and how much of the market it read. session is the session the bars describe; expected_session is the session the run set out to read (they differ only on a closed day, when session is the previous one). status ok means every stage finished; degraded means it published with a problem listed in problems; closed means the market held no session; failed means nothing below is a verdict. problems carry one of seven kinds and never free text the page must render.",
-  "nights": "The last twenty evenings, newest last: session, status, published_at. A session absent from the ring was never published for.",
-  "account": "The account every plan is sized for, from the environment: equity, risk per trade in percent, the position cap in percent, and the slot cap.",
-  "rules": "Every constant the run applied, keyed by module. The page prints these; it never restates one.",
-  "cover": "The verdict as sentences: h1, dek, and the one action the page offers. Generated by the pipeline from the regime and the trade count; the page renders them verbatim.",
-  "breadth": "Bonde's Market Monitor over every common stock that printed: today's counts, the 5- and 10-session ratios with their sums, the regime with its reasons verbatim and the scaled thresholds it compared, the last 30 sessions, and notes carrying his readings.",
-  "bursts": "Every 4% or dollar breakout the scan found, graded on the nine A-quality criteria. quality is the checklist alone; claude is the chart read, null when none was asked for; grade is the final word after the clamp (Claude may only lower it). plan is present for A and A+ bursts and null otherwise. series carries the last 120 bars for trades and the closest miss only.",
-  "trades": "Tickers with a final grade of A or A+, ranked, not vetoed, plan eligible, regime not red. The first slots get order lines; the rest are beyond_cap.",
-  "beyond_cap": "Trades that qualified after the open slots were filled. A card, no order line.",
-  "cash_budget": "What tomorrow's orders commit, the slots they use, and what was cut and why.",
-  "watchlist": "The anticipation list: quiet names inside established momentum, the top five with a buy-stop plan each, the rest also quiet.",
-  "open_plans": "Every pick from the last five sessions judged from bars alone, with the instruction for tomorrow. If you never bought it, ignore the row.",
-  "scorecard": "The rules' record from bars alone: plans, fills, wins, losses, win rate, average and summed R, and SPY over the same days. Read only from min_read plans; it measures the rules, not your fills.",
-  "closest_miss": "On a night with no trade: the best burst that did not qualify and, in one sentence, why."
- }
+  "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
+  "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.session_state and this, against the browser's clock in ET.",
+  "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
+  "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), coverage, counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in.",
+  "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
+  "account": "The sizing inputs every plan below was computed from. Not a balance.",
+  "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",
+  "breadth": "The Market Monitor for the session and the regime verdict with its reasons verbatim. The size multiplier is the regime's; the plans already carry it.",
+  "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not.",
+  "trades": "Tickers of the bursts to trade tomorrow, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
+  "beyond_cap": "Tickers that qualified and got no order line because the slots were full. Not refusals.",
+  "cash_budget": "What tomorrow's orders commit, the slots used, and what was cut and why.",
+  "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
+  "open_plans": "Every published plan still inside its window, replayed to this session: status word and the instruction sentence. A plan you never bought is a row to ignore.",
+  "scorecard": "The rules' record over the published plans, always with n and the read threshold. The rules' record, not yours. Null until a plan has settled.",
+  "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
+  "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."
+ },
+ "fixture": "closed"
 }

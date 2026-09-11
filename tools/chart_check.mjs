@@ -138,6 +138,31 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
   ok('the burst column spans both panes over the burst slot', g.burst.column && g.burst.column.y === g.plot.top && Math.abs(g.burst.column.y + g.burst.column.h - g.vol.bottom) < 0.2 && g.burst.column.x <= g.burst.x && g.burst.column.x + g.burst.column.w >= g.burst.x);
   ok('at 360px the base label does not sit on a level label', g360.leftLabels.every((l) => Math.abs(l.y - g360.box.label.y) >= 14 || g360.box.label.x >= l.x + l.text.length * 6.6 + 8));
   ok('the target band is above the entry zone', g.target && g.entry && g.target.y2 <= g.entry.y1 && g.target.y1 < g.target.y2);
+
+  // the card: the page's trade card asks for the last 60 sessions with the
+  // burst as the LAST bar, six empty slots after it and the target as a
+  // ruler -- the shape that crowds every label into the top-right corner.
+  // No two card labels may overlap, and none may leave the plot.
+  {
+    const CHAR = 6.6, LABEL_H = 14;
+    const boxOf = (L) => { const w = L.text.length * CHAR + 8, x0 = L.anchor === 'end' ? L.x - w : L.anchor === 'middle' ? L.x - w / 2 : L.x; return { x: x0, y: L.y - 11, w, h: LABEL_H, text: L.text }; };
+    const hits = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    const tail = bars.slice(BURST - 59, BURST + 1);
+    const cardOpts = { ticker: 'SPCY', card: true, compact: true, futureSlots: 6, targetRuler: true, ma: [], volumeAvg: 20,
+      burstIndex: tail.length - 1, box: { start: options.box.start - (BURST - 59), end: options.box.end - (BURST - 59), low: options.box.low, high: options.box.high, depthPct: 2.4 },
+      stop: options.stop, entryLow: options.entryLow, entryHigh: options.entryHigh, targetLow: options.targetLow, targetHigh: options.targetHigh, targetRef: options.entryHigh,
+      upDays: 2, burstVolumeRatio: 5.0, rangeExpansion: 4.9 };
+    for (const [W, H] of [[340, 250], [640, 300], [1180, 300]]) {
+      const gc = SCStock.chartGeometry(tail, cardOpts, W, H);
+      const labels = [gc.entry && gc.entry.label, gc.burst && gc.burst.label, gc.box && gc.box.label, gc.rangeBracket && gc.rangeBracket.label, gc.tomorrow].filter(Boolean).map(boxOf);
+      if (gc.stopTag) labels.push({ x: gc.stopTag.x, y: gc.stopTag.y, w: gc.stopTag.w, h: gc.stopTag.h, text: gc.stopTag.text });
+      const clashes = [];
+      for (let i = 0; i < labels.length; i++) for (let j = i + 1; j < labels.length; j++) if (hits(labels[i], labels[j])) clashes.push(labels[i].text + ' / ' + labels[j].text);
+      ok(`card labels never overlap at ${W}x${H}`, clashes.length === 0, clashes.join('; '));
+      ok(`card labels stay inside the plot at ${W}x${H}`, labels.every((L) => L.x >= gc.plot.left - 2 && L.x + L.w <= gc.plot.right + 2 && L.y >= gc.plot.top - 3 && L.y + L.h <= gc.plot.bottom + 12), labels.map((L) => `${L.text}@${L.x},${L.y}`).join('; '));
+      ok(`the future gutter is drawn and the burst is the last bar at ${W}x${H}`, gc.future && gc.future.w > 0 && gc.burst && gc.burst.index === tail.length - 1);
+    }
+  }
   ok('the target label reads +8% … +20% off the entry reference', g.target.text === '+8% … +20%' && g.target.pctLow === 8 && g.target.pctHigh === 20);
   ok('the entry zone is inside the pane and its label names both bounds', g.entry.y1 >= g.plot.top && g.entry.y2 <= g.plot.bottom && /^buy zone \$[\d.,]+–\$[\d.,]+$/.test(g.entry.label.text));
   ok('the trigger line carries a labelled price', g.trigger && /^trigger \$/.test(g.trigger.label.text) && Math.abs(g.trigger.y - g.entry.y2) < 0.6);

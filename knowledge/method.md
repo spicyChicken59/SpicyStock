@@ -108,3 +108,13 @@ stockbee.blogspot.com, x.com, YouTube and archive.org were all blocked; every
 (B) quote came through a research archive that quotes his posts verbatim with
 per-post URLs, his bootcamp notes on GitHub, and search-engine snippets. The
 2018 video numbers (2%, 20% of the high) should be re-listened to once.
+
+## The record (`src/record.py`)
+
+Every published plan is kept (`docs/picks.json`) and replayed from bars alone
+(P): a burst ticket fills at the next open inside its zone or at the trigger
+when the day trades through it, an anticipation ticket at its trigger; the
+published stop is one R; a half sold at +8% or at day 3 is half the
+position; everything settles by day 5 (B, the hold). The scorecard prints
+counts from the first night and rates only from twenty settled plans (P),
+with SPY over the same days as one comparison line, not a benchmark (P).

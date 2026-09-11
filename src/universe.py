@@ -1,13 +1,27 @@
-"""A dated, bounded research universe; never a broker order permission.
+"""Bonde's universe: every US common stock the directory lists, at a price and
+a volume floor, and nothing narrower.
 
-Nasdaq supplies security classification, not the prices used for ranking.
-Alpaca's split-adjusted, delayed SIP daily bars supply that evidence. Unknown
-classification is excluded. The original curated file is a labelled fallback.
+TC2000's "Common Stock" list is what Bonde scans -- about 6,500 names, with no
+float, market-cap or sector exclusion and a stated preference for the low-float,
+low-priced end. This module builds the closest thing the Nasdaq stock directory
+can supply: classified common stock (the name says it is a common share and not
+a depositary receipt, a preferred, a warrant, a note, a fund or a trust; it is
+not a blank-check shell), at `MIN_PRICE` and `MIN_VOLUME`. Healthcare and
+biotech are ADMITTED and flagged, and so are US-listed shares of
+foreign-domiciled companies -- his list excludes neither -- so the page can
+warn about binary-event and domicile risk without the screener deciding on the
+owner's behalf.
+
+Nasdaq supplies the classification and the last session's price and volume; it
+never supplies the bars the scans read. The transport -- the browser headers,
+the bounded retry, the dated gzip cache and the fallback to the checked-in seed
+-- is carried over unchanged from the module this replaces, because every one
+of those rules was established by execution on a GitHub runner.
 """
 from __future__ import annotations
 
-import hashlib
 import gzip
+import hashlib
 import json
 import logging
 import math
@@ -16,67 +30,48 @@ import re
 import tempfile
 import time
 import zlib
-from dataclasses import replace
-from datetime import date, datetime, timedelta, timezone
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
 
-from src import scanner
-from src.scanner import ScanConfig
-
 log = logging.getLogger(__name__)
-LABEL = "adaptive US common stocks (Nasdaq + Alpaca)"
-VERSION = "nasdaq-sip-rotation-v1"
+
 SOURCE_URL = "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true"
-#: How many selected names get a full scan. Raised 500 -> 1000 for a $50,000
-#: account, and the stopping point is the CALL BUDGET rather than taste: the
-#: 2026-09-09 scan of 500 names found 11 bursts and scored 6, so ~1000 names
-#: is the largest value that keeps MAX_TO_SCORE from biting on a typical
-#: night. Above it the crowded-out population starts filling and the cost of
-#: widening becomes a Claude-spend decision instead of a coverage one. The
-#: 35-session screen already runs over the whole classified pool, so this
-#: costs only the 250-session scan fetch for the extra names.
-CAPACITY = 1000
-#: The absolute liquidity floor, and since this round the ONLY one -- rule 6's
-#: percentile is off (ScanConfig.min_dollar_volume_pctile), which the comment
-#: there records. Lowered $20M -> $5M because the floor's job changed: at a
-#: $50,000 account a 25% position is $12,500, which is 0.003% of the median
-#: archived burst's $399M day, so participation is not the binding constraint
-#: at any floor this could plausibly take. Cost is. $5M/day at a $20+ price is
-#: ~250,000 shares, comfortably above the ~100,000-share ADV line where quoted
-#: spreads run past 50 bps, and a $12,500 order is 0.25% of that day.
-#: Measured on the committed directory over the classified pool: 1,393 names
-#: survived $20M and 1,863 survive $5M, out of 2,485 fetched either way.
-MIN_DOLLARS = 5_000_000
-LOOKBACK = 20
-MAX_DISCOVERY = 6000
-#: How many of the selected names each reason may claim, before the leftover
-#: fill. Named rather than typed into rotate(), for the reason round 8 named
-#: six windows in src.lynch and round 14 read ANTICIPATION_RULES out of its
-#: own dict: a strategy number left as a bare literal is one
-#: rules_fingerprint() cannot see, and the record then reports one screener
-#: across a change that moved which names can burst at all.
-QUOTAS = {"recent setup": 100, "4% move": 150, "20-session momentum": 150,
-          "liquid leader": 100, "rotating discovery": 50}
-#: Which of this module's numbers decide WHICH NAMES CAN PRODUCE A BURST, and
-#: which decide how the selection is carried out. Two lists and a guard -- the
-#: shape ScanConfig.STRATEGY_FIELDS and src.stockbee.STRATEGY_CONSTANTS keep,
-#: for the reason they keep it: a constant added later must not arrive
-#: unclassified and take a default in silence.
-#:
-#: MAX_DISCOVERY is STRATEGY and the section caps in src.stockbee are not,
-#: which looks inconsistent and is not: a section cap truncates the ARCHIVE
-#: and changes no verdict, while this one cuts the liquidity-ranked tail out
-#: of the pool, so a name past it is never fetched, never measured and can
-#: never burst.
-STRATEGY_CONSTANTS = ("CAPACITY", "MIN_DOLLARS", "LOOKBACK", "MAX_DISCOVERY")
-PLUMBING_CONSTANTS = ("DIRECTORY_CACHE_SCHEMA", "DIRECTORY_MAX_BYTES")
+#: The reviewed seed: Bonde's rules are bypassed for a name listed here, and a
+#: name listed here is in the universe even when the directory has no row for
+#: it. The seed is also the whole universe under SCAN_UNIVERSE=seed and the
+#: fallback when neither a live directory nor a valid cache can be had.
+SEED_FILE = Path(__file__).resolve().parent.parent / "data" / "symbols.txt"
+#: Bonde's floors, from his own scan (`c/c1>=1.04 and v>v1 and v>=100000`) and
+#: the field guide's "typically price >= $3". Both are read off the directory
+#: row: `lastsale` is the last print and `volume` is the LAST SESSION's share
+#: volume, not an average -- so a name that was quiet yesterday and bursts
+#: today is refused tonight and admitted tomorrow. That is the cost of a
+#: floor read from a listing rather than from bars, and it is stated here
+#: rather than hidden. A price exactly at the floor and a volume exactly at
+#: the floor are admitted, as `v>=100000` says.
+MIN_PRICE = 3.0
+MIN_VOLUME = 100_000
+#: A safety bound on how many names one scan may ask for, NOT a selection
+#: rule: Bonde's list runs to ~6,500 and the 10 Sep 2026 directory admits
+#: 3,027 under the floors above, so this binds only if the endpoint expands
+#: past anything seen. When it does, the least-liquid tail is cut, the cut is
+#: counted under "discovery capacity" and the warning says so.
+MAX_DISCOVERY = 8000
+
 DIRECTORY_CACHE = "universe-directory.json.gz"
 DIRECTORY_CACHE_SCHEMA = 1
 DIRECTORY_MAX_AGE = timedelta(days=7)
 DIRECTORY_MAX_BYTES = 10 * 1024 * 1024
+DIRECTORY_MIN_ROWS = 500
+DIRECTORY_MAX_ROWS = 10_000
 DIRECTORY_FIELDS = ("symbol", "name", "country", "sector", "industry", "lastsale", "volume")
+DIRECTORY_TIMEOUT = (5, 45)
+DIRECTORY_ATTEMPTS = 3
+DIRECTORY_RETRY_PAUSES = (1, 3)
+TRANSIENT_STATUSES = frozenset({500, 502, 503, 504})
 #: What api.nasdaq.com is asked with. A BROWSER's User-Agent, on purpose and on
 #: evidence: from a GitHub-hosted runner the endpoint holds every non-browser
 #: string open, unanswered, until the read times out -- the pipeline's own
@@ -96,43 +91,154 @@ DIRECTORY_HEADERS = {
                    "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"),
     "Accept": "application/json, text/plain, */*",
 }
-_NAME = re.compile(r"\b(common stock|common shares|ordinary shares?)\b", re.I)
+
+_SYMBOL = re.compile(r"[A-Z]{1,5}")
+#: What a directory name must say before the row is read as a common share.
+#: Wider than "common stock" because NYSE rows carry whatever suffix the
+#: listing agent typed -- "Class C Capital Stock", "Common New", "Class A
+#: Subordinate Voting Shares" -- and a class pattern is safe only because
+#: `_REJECT` still refuses the preferreds and depositary shares it also
+#: matches. A name with no security wording at all ("Yum! Brands Inc.",
+#: "Visa Inc.") is still refused and belongs in the seed if wanted: 60 such
+#: otherwise-admissible US names on the 10 Sep 2026 directory.
+_NAME = re.compile(r"\b(common stock|common shares|ordinary shares?|capital stock|common new"
+                   r"|class [abc]\b.*\b(?:stock|shares))\b", re.I)
 _REJECT = re.compile(r"\b(depositary|depository|ADR|ADS|preferred|preference|warrants?|rights?|units?|notes?|ETF|ETN|funds?)\b", re.I)
+#: A trust, whatever else the name says: REITs and closed-end trusts list
+#: "Common Shares of Beneficial Interest", which `_NAME` alone reads as common
+#: stock. Refused; 25 previously admitted names on the 10 Sep 2026 directory.
+_BENEFICIAL = re.compile(r"\bshares of beneficial interest\b", re.I)
 _BIOTECH = re.compile(r"biotech|pharma|medicinal", re.I)
+UNITED_STATES = "United States"
+HEALTH_CARE_SECTOR = "Health Care"
+BLANK_CHECK_INDUSTRY = "blank checks"
+#: The two flags this module raises; a flag is a warning for the reader and
+#: never a verdict. Nasdaq prefixes "Biotechnology:" onto several industries
+#: that are not biotech at all (Agilent's is "Biotechnology: Laboratory
+#: Analytical Instruments"). `foreign` is any row whose country is not
+#: "United States", a BLANK country included, since the directory then does
+#: not vouch for a US domicile either. On the 10 Sep 2026 directory, of the
+#: 3,027 admitted names, 538 carry `biotech` and 481 carry `foreign`, 74 of
+#: those with no country stated.
+BIOTECH_FLAG = "biotech"
+FOREIGN_FLAG = "foreign"
+
+#: SCAN_UNIVERSE's spellings. "adaptive" is what the workflow variable has
+#: said since the selector this replaces; it means the directory now.
+MODES = {"directory": "directory", "adaptive": "directory", "seed": "seed"}
+DEFAULT_MODE = "directory"
+
+SOURCE_LIVE = "nasdaq directory live"
+SOURCE_CACHE = "nasdaq directory cache"
+SOURCE_SEED = "seed file"
+SOURCE_EXPLICIT = "explicit"
+
+SEED_EXCEPTION = "seed exception"
+CAPACITY_REASON = "discovery capacity"
+
+
+class SymbolFileError(ValueError):
+    """The seed file holds something that is not a ticker."""
+
+
+@dataclass(frozen=True)
+class Universe:
+    """What one run scans, and where the list came from.
+
+    `names` holds a company name only for a symbol the directory listed; a
+    seed or explicit name the directory lacks has no entry. `flags` holds a
+    set for every symbol -- `biotech`, `foreign`, both or neither. `counts`
+    is every exclusion reason with its count, plus `listed` (directory rows
+    seen) and `admitted` (symbols kept); `warning` names a fallback or a
+    bound that bit, and is None on a clean directory build.
+    """
+    symbols: list[str]
+    names: dict[str, str]
+    flags: dict[str, set[str]]
+    source: str
+    fetched_at: str | None
+    counts: dict[str, int]
+    label: str
+    warning: str | None = None
+
+    @property
+    def identity(self) -> str:
+        return identity(self.symbols)
+
+
+def mode() -> str:
+    """'directory' or 'seed', from SCAN_UNIVERSE; both old spellings accepted."""
+    value = os.getenv("SCAN_UNIVERSE", DEFAULT_MODE).strip().lower() or DEFAULT_MODE
+    if value not in MODES:
+        raise ValueError("SCAN_UNIVERSE must be 'directory' (or its old spelling 'adaptive') or 'seed'")
+    return MODES[value]
 
 
 def enabled() -> bool:
-    value = os.getenv("SCAN_UNIVERSE", "seed").strip().lower() or "seed"
-    if value not in {"adaptive", "seed"}:
-        raise ValueError("SCAN_UNIVERSE must be 'adaptive' or 'seed'")
-    return value == "adaptive"
+    """True when the directory is the universe; False for the seed alone."""
+    return mode() == "directory"
+
+
+def read_seed(path: Path | None = None) -> list[str]:
+    """The checked-in symbol file, in file order.
+
+    Blank lines and `#` comments are ignored; any other line that is not one
+    A-Z ticker of one to five characters, or is a repeat, raises -- a typo must
+    fail the run rather than quietly shrink the universe.
+    """
+    path = SEED_FILE if path is None else Path(path)
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise SymbolFileError(f"cannot read symbol file {path}: {exc}") from exc
+    tickers: list[str] = []
+    first_seen: dict[str, int] = {}
+    for lineno, raw in enumerate(text.splitlines(), start=1):
+        line = raw.split("#", 1)[0].strip()
+        if not line:
+            continue
+        if not _SYMBOL.fullmatch(line):
+            raise SymbolFileError(f"{path} line {lineno}: {line!r} is not a ticker "
+                                  "(expected one A-Z symbol of 1-5 characters per line)")
+        if line in first_seen:
+            raise SymbolFileError(f"{path} line {lineno}: {line} is already listed on line {first_seen[line]}")
+        first_seen[line] = lineno
+        tickers.append(line)
+    if not tickers:
+        raise SymbolFileError(f"{path}: no symbols found")
+    return tickers
+
+
+# ------------------------------------------------------------- transport ----
 
 
 def fetch_directory() -> list[dict]:
-    # A failed directory refresh never silently approves an unclassified
-    # company. The first five production refreshes timed out, and this used to
-    # say "downloading this ~2 MB response": they were never answered at all,
-    # because of the User-Agent they sent (DIRECTORY_HEADERS says which and
-    # how that was established). The retry stays for what it was written for:
-    # a genuinely transient transport or server failure, with a bounded wait.
-    # Access refusals and incomplete classifications still fail immediately.
-    for attempt in range(3):
+    """The live directory, or an exception; never a partial answer.
+
+    The retry is for a genuinely transient transport or server failure, with
+    a bounded wait. An access refusal (any status outside TRANSIENT_STATUSES)
+    raises on the first attempt, and a reply short of DIRECTORY_MIN_ROWS is
+    refused rather than scanned, because a failed refresh must never quietly
+    approve an unclassified company.
+    """
+    for attempt in range(DIRECTORY_ATTEMPTS):
         try:
-            log.info("Refreshing Nasdaq stock directory (attempt %s/3)", attempt + 1)
-            response = requests.get(SOURCE_URL, headers=dict(DIRECTORY_HEADERS), timeout=(5, 45))
+            log.info("Refreshing Nasdaq stock directory (attempt %s/%s)", attempt + 1, DIRECTORY_ATTEMPTS)
+            response = requests.get(SOURCE_URL, headers=dict(DIRECTORY_HEADERS), timeout=DIRECTORY_TIMEOUT)
             response.raise_for_status()
             break
         except (requests.Timeout, requests.ConnectionError, requests.HTTPError) as exc:
             if isinstance(exc, requests.HTTPError) and (
-                exc.response is None or exc.response.status_code not in {500, 502, 503, 504}
+                exc.response is None or exc.response.status_code not in TRANSIENT_STATUSES
             ):
                 raise
-            if attempt == 2:
+            if attempt == DIRECTORY_ATTEMPTS - 1:
                 raise
-            log.warning("Directory request %s/3 failed (%s); retrying", attempt + 1, type(exc).__name__)
-            time.sleep((1, 3)[attempt])
+            log.warning("Directory request %s/%s failed (%s); retrying",
+                        attempt + 1, DIRECTORY_ATTEMPTS, type(exc).__name__)
+            time.sleep(DIRECTORY_RETRY_PAUSES[attempt])
     rows = response.json().get("data", {}).get("rows")
-    if not isinstance(rows, list) or len(rows) < 500:
+    if not isinstance(rows, list) or len(rows) < DIRECTORY_MIN_ROWS:
         raise ValueError("Nasdaq returned an incomplete stock directory")
     log.info("Nasdaq directory returned %s listings", len(rows))
     return rows
@@ -141,11 +247,11 @@ def fetch_directory() -> list[dict]:
 def _transient_directory_error(exc: Exception) -> bool:
     return isinstance(exc, (requests.Timeout, requests.ConnectionError)) or (
         isinstance(exc, requests.HTTPError) and exc.response is not None
-        and exc.response.status_code in {500, 502, 503, 504})
+        and exc.response.status_code in TRANSIENT_STATUSES)
 
 
-def _read_directory_cache(docs: Path, now: datetime) -> tuple[list[dict], dict]:
-    """A captured classification directory is useful only for a bounded time."""
+def _read_directory_cache(docs: Path, now: datetime) -> tuple[list[dict], datetime]:
+    """A captured directory, while it is younger than DIRECTORY_MAX_AGE."""
     try:
         path = docs / DIRECTORY_CACHE
         if path.stat().st_size > DIRECTORY_MAX_BYTES:
@@ -167,31 +273,18 @@ def _read_directory_cache(docs: Path, now: datetime) -> tuple[list[dict], dict]:
         if not timedelta(0) <= age <= DIRECTORY_MAX_AGE:
             raise ValueError
         rows = cached["rows"]
-        if (not isinstance(rows, list) or not 500 <= len(rows) <= 10_000
+        if (not isinstance(rows, list) or not DIRECTORY_MIN_ROWS <= len(rows) <= DIRECTORY_MAX_ROWS
                 or not all(isinstance(row, dict) and all(key in row for key in DIRECTORY_FIELDS)
                            for row in rows)):
             raise ValueError
     except (OSError, ValueError, TypeError, KeyError, OverflowError, EOFError, zlib.error):
-        raise ValueError("Live directory unavailable and no valid Nasdaq directory captured within seven days; using the curated seed") from None
-    return rows, {"directory_status": "cached", "directory_fetched_at": captured.isoformat(),
-                  "directory_age_days": round(age.total_seconds() / 86400, 4)}
-
-
-def _directory(docs: Path) -> tuple[list[dict], dict]:
-    try:
-        rows = fetch_directory()
-    except Exception as exc:
-        # An access refusal or an invalid live payload is not a transport
-        # outage. Keep its normal seed fallback rather than borrowing a cache.
-        if not _transient_directory_error(exc):
-            raise
-        return _read_directory_cache(docs, datetime.now(timezone.utc))
-    return rows, {"directory_status": "live", "directory_fetched_at": datetime.now(timezone.utc).isoformat(),
-                  "directory_age_days": 0}
+        raise ValueError("Live directory unavailable and no valid Nasdaq directory captured "
+                         "within seven days; using the curated seed") from None
+    return rows, captured
 
 
 def _save_directory_cache(docs: Path, rows: list[dict], fetched_at: str) -> None:
-    """Atomically retain only the official fields that current rules inspect."""
+    """Atomically retain only the official fields the rules inspect."""
     payload = {"schema_version": DIRECTORY_CACHE_SCHEMA, "source_url": SOURCE_URL,
                "fetched_at": fetched_at,
                "rows": [{key: row.get(key) for key in DIRECTORY_FIELDS} for row in rows
@@ -214,28 +307,7 @@ def _save_directory_cache(docs: Path, rows: list[dict], fetched_at: str) -> None
             temporary.unlink(missing_ok=True)
 
 
-def classification(row: dict, seeds: set[str]) -> str | None:
-    """Return the explicit exclusion, or None for a known eligible security."""
-    symbol = row.get("symbol", "")
-    if not isinstance(symbol, str) or not re.fullmatch(r"[A-Z]{1,5}", symbol):
-        return "symbol format"
-    # The checked-in names are individually reviewed exceptions (including
-    # diversified pharma). They do not approve any other security by name.
-    if symbol in seeds:
-        return None
-    name = str(row.get("name") or "")
-    if not _NAME.search(name) or _REJECT.search(name):
-        return "not verified common stock"
-    if row.get("country") != "United States":
-        return "foreign or unknown issuer"
-    sector, industry = row.get("sector"), row.get("industry")
-    if not sector or not industry:
-        return "unknown industry"
-    if sector == "Health Care" or _BIOTECH.search(str(industry)):
-        return "healthcare or biotech exclusion"
-    if str(industry).lower() == "blank checks":
-        return "blank check company"
-    return None
+# -------------------------------------------------------- classification ----
 
 
 def _number(raw) -> float | None:
@@ -246,232 +318,185 @@ def _number(raw) -> float | None:
         return None
 
 
-def directory_pool(rows: list[dict], seeds: list[str], *,
-                   min_price: float | None = None) -> tuple[list[str], dict]:
-    approved, reasons = {}, {}
+def flags_for(row: dict) -> set[str]:
+    """What the page should warn about; never a reason to refuse."""
+    flagged: set[str] = set()
+    if row.get("sector") == HEALTH_CARE_SECTOR or _BIOTECH.search(str(row.get("industry") or "")):
+        flagged.add(BIOTECH_FLAG)
+    if row.get("country") != UNITED_STATES:
+        flagged.add(FOREIGN_FLAG)
+    return flagged
+
+
+def classify(row: dict, seeds: set[str]) -> str | None:
+    """The reason a directory row is refused, or None when it is admitted.
+
+    A seed name bypasses every rule below by design: the file is the owner's
+    reviewed list. A row whose sector or industry is blank is refused as
+    unknown because the blank-check rule cannot be applied to it -- on the
+    10 Sep 2026 directory 67 of the 102 such rows were acquisition shells
+    by name.
+    """
+    symbol = row.get("symbol", "")
+    if not isinstance(symbol, str) or not _SYMBOL.fullmatch(symbol):
+        return "symbol format"
+    if symbol in seeds:
+        return None
+    name = str(row.get("name") or "")
+    if not _NAME.search(name) or _REJECT.search(name) or _BENEFICIAL.search(name):
+        return "not verified common stock"
+    sector, industry = row.get("sector"), row.get("industry")
+    if not sector or not industry:
+        return "unknown industry"
+    if str(industry).lower() == BLANK_CHECK_INDUSTRY:
+        return "blank check company"
+    price, volume = _number(row.get("lastsale")), _number(row.get("volume"))
+    if price is None or price < MIN_PRICE:
+        return f"price under ${MIN_PRICE:g}"
+    if volume is None or volume < MIN_VOLUME:
+        return f"volume under {MIN_VOLUME:,} shares"
+    return None
+
+
+def admit(rows: list[dict], seeds: list[str]) -> tuple[list[str], dict[str, str], dict[str, set[str]], dict[str, int]]:
+    """Every admitted symbol with its name, flags and the exclusion counts.
+
+    Seeds are admitted whether or not the directory carries them, and counted
+    under SEED_EXCEPTION when the rules alone would not have admitted them.
+    Past MAX_DISCOVERY the least-liquid tail (last price times last volume) is
+    cut and counted under CAPACITY_REASON; seeds are never cut.
+    """
     seed_set = set(seeds)
+    names: dict[str, str] = {}
+    flags: dict[str, set[str]] = {}
+    dollars: dict[str, float] = {}
+    counts: dict[str, int] = {"listed": 0}
+    exceptions = 0
     for row in rows:
         if not isinstance(row, dict):
             continue
-        reason = classification(row, seed_set)
+        counts["listed"] += 1
+        reason = classify(row, seed_set)
+        if reason is not None:
+            counts[reason] = counts.get(reason, 0) + 1
+            continue
+        symbol = row["symbol"]
+        if symbol in seed_set and classify(row, set()) is not None:
+            exceptions += 1
+        if isinstance(row.get("name"), str) and row["name"].strip():
+            names[symbol] = row["name"].strip()
+        flags[symbol] = flags.get(symbol, set()) | flags_for(row)
         price, volume = _number(row.get("lastsale")), _number(row.get("volume"))
-        # scanner.ScanConfig's floor, READ, not retyped. It was a bare 4 here
-        # and the config's own min_price is in the rules fingerprint, so
-        # raising the config to $10 left this admitting a $6 name -- two price
-        # floors under one archived number, and only one of them movable.
-        floor = ScanConfig.min_price if min_price is None else min_price
-        if reason is None and (price is None or price <= floor or volume is None or volume <= 0):
-            reason = "no recent trading above $%g" % floor
-        if reason:
-            reasons[reason] = reasons.get(reason, 0) + 1
-        else:
-            approved[row["symbol"]] = price * volume
-    # A future endpoint expansion cannot create an unbounded market-data job.
-    # This cap is reported; prices here only bound discovery, never rank picks.
-    ordered = sorted(approved, key=lambda symbol: (-approved[symbol], symbol))
-    if len(ordered) > MAX_DISCOVERY:
-        reasons["discovery capacity"] = len(ordered) - MAX_DISCOVERY
-    return sorted(ordered[:MAX_DISCOVERY]), reasons
+        dollars[symbol] = max(dollars.get(symbol, 0.0), (price or 0.0) * (volume or 0.0))
+    for symbol in seed_set - set(dollars):
+        exceptions += 1
+        flags.setdefault(symbol, set())
+        dollars[symbol] = math.inf
+    if exceptions:
+        counts[SEED_EXCEPTION] = exceptions
+    ranked = sorted(dollars, key=lambda symbol: (symbol not in seed_set, -dollars[symbol], symbol))
+    if len(ranked) > MAX_DISCOVERY:
+        counts[CAPACITY_REASON] = len(ranked) - MAX_DISCOVERY
+        for symbol in ranked[MAX_DISCOVERY:]:
+            flags.pop(symbol, None)
+            names.pop(symbol, None)
+        ranked = ranked[:MAX_DISCOVERY]
+    symbols = sorted(ranked)
+    counts["admitted"] = len(symbols)
+    return symbols, names, flags, counts
 
 
-def measure(frame, session: date, *, min_price: float | None = None) -> dict | None:
-    """Twenty settled prior sessions plus the target day's participation."""
-    if frame is None or len(frame) < LOOKBACK + 1:
-        return None
-    if scanner._last_bar_date(frame) != session or scanner._session_bar_problem(frame):
-        return None
-    tail = frame.tail(LOOKBACK + 1)
-    if tail[["Close", "Volume"]].isna().any().any():
-        return None
-    closes, volumes = tail["Close"].astype(float), tail["Volume"].astype(float)
-    if not all(math.isfinite(x) and x > 0 for x in [*closes, *volumes]):
-        return None
-    close = float(closes.iloc[-1])
-    average = float((closes.iloc[:-1] * volumes.iloc[:-1]).median())
-    today = close * float(volumes.iloc[-1])
-    # Absolute consolidated-tape protection is necessary: a percentile alone
-    # becomes easier when thousands of illiquid names are added to its pool.
-    # The THIRD spelling of the price floor this module carried, found by
-    # sweeping for the next instance after directory_pool() and rotate() were
-    # fixed -- the sweep this project's own rule asks for before a class is
-    # called closed. Reproduced: with min_price at $10 a $6 name was still
-    # measured and still selectable.
-    floor = ScanConfig.min_price if min_price is None else min_price
-    if close <= floor or average < MIN_DOLLARS or today < MIN_DOLLARS:
-        return None
-    return {
-        "momentum": close / float(closes.iloc[0]) - 1,
-        "gain": close / float(closes.iloc[-2]) - 1,
-        "participation": float(volumes.iloc[-1]) / float(volumes.iloc[:-1].mean()),
-        "liquidity": average,
-    }
-
-
-def rotate(metrics: dict[str, dict], session: date, retained=(), capacity=CAPACITY,
-           *, min_gain_pct: float | None = None) -> tuple[list[str], dict]:
-    """Separate room for breakouts, building momentum, liquidity and discovery."""
-    selected, reasons = [], {}
-    def take(names, limit, reason, ceiling=None):
-        count = 0
-        for symbol in names:
-            if symbol not in metrics or symbol in reasons:
-                continue
-            ceiling = capacity if ceiling is None else ceiling
-            if len(selected) >= ceiling or count >= limit:
-                break
-            selected.append(symbol)
-            reasons[symbol] = reason
-            count += 1
-    primary_capacity = max(0, capacity - min(QUOTAS["rotating discovery"], capacity))
-    take(retained, min(QUOTAS["recent setup"], capacity), "recent setup", primary_capacity)
-    # ScanConfig's own burst threshold, READ, in the ratio this dict stores.
-    # It was a bare .04 and the config's min_gain_pct is in the rules
-    # fingerprint, so raising the config to 10% left this quota still
-    # reserving room for 4.5% movers -- one number with two spellings, and
-    # the record archiving only the one that did not decide.
-    gain_floor = (ScanConfig.min_gain_pct if min_gain_pct is None else min_gain_pct) / 100
-    breakout = sorted((s for s in metrics if metrics[s]["gain"] >= gain_floor),
-                      key=lambda s: (-metrics[s]["participation"], -metrics[s]["liquidity"], s))
-    take(breakout, min(QUOTAS["4% move"], capacity), "4% move", primary_capacity)
-    leaders = sorted(metrics, key=lambda s: (-metrics[s]["momentum"], -metrics[s]["participation"], s))
-    take(leaders, min(QUOTAS["20-session momentum"], capacity), "20-session momentum", primary_capacity)
-    liquid = sorted(metrics, key=lambda s: (-metrics[s]["liquidity"], s))
-    take(liquid, min(QUOTAS["liquid leader"], capacity), "liquid leader", primary_capacity)
-    # Stable per session, changes between sessions, not biased by ticker order.
-    exploration = sorted(metrics, key=lambda s: hashlib.sha256(f"{session}:{s}".encode()).hexdigest())
-    take(exploration, QUOTAS["rotating discovery"], "rotating discovery")
-    # THE LEFTOVER FILL, and it is not a sixth quota: every slot the five
-    # above did not claim goes to trailing momentum, under the same reason
-    # word as its own quota, so reason_counts cannot tell the 150 that was
-    # decided from the rest that defaulted. Measured on the record: 312 of 500
-    # on 2026-09-09 and 270 on the 8th, against a quota of 150.
-    take(leaders, capacity, "20-session momentum")
-    return sorted(selected), {r: sum(v == r for v in reasons.values()) for r in sorted(set(reasons.values()))}
-
-
-def _previous(docs: Path) -> dict:
-    try:
-        snapshot = json.loads((docs / "data.json").read_text())
-        return snapshot if isinstance(snapshot, dict) and not snapshot.get("run", {}).get("fixture") else {}
-    except (OSError, ValueError, TypeError):
-        return {}
-
-
-def _recent_symbols(docs: Path, session: date) -> list[str]:
-    try:
-        book = json.loads((docs / "ledger.json").read_text())
-        rows = []
-        for run in book.get("runs", []):
-            age = (session - date.fromisoformat(run["date"])).days
-            if 0 < age <= 8:
-                rows.extend(row["ticker"] for key in ("candidates", "gated")
-                            for row in run.get(key, []) if isinstance(row.get("ticker"), str))
-        return list(dict.fromkeys(rows))
-    except (OSError, ValueError, KeyError, TypeError):
-        return []
-
-
-def select(cfg: scanner.ScanConfig, docs: Path, *, data_client=None) -> tuple[list[str], dict]:
-    """Refresh production discovery, with an honest bounded fallback."""
-    seeds = scanner.get_universe()
-    session = cfg.session_date or scanner.current_session()
-    previous = _previous(docs)
-    prior = previous.get("run", {}).get("universe", {})
-    old = prior.get("tickers", seeds)
-    if not isinstance(old, list) or not all(isinstance(s, str) for s in old):
-        old = seeds
-    meta = {"version": VERSION, "mode": "adaptive", "source": "Nasdaq stock screener + Alpaca daily bars",
-            "source_url": SOURCE_URL, "refreshed_at": datetime.now(timezone.utc).isoformat(),
-            "directory_status": None, "directory_fetched_at": None, "directory_age_days": None,
-            "source_date": None, "session": session.isoformat(), "discovered": 0, "eligible": 0,
-            "screened": 0, "selected": 0, "capacity": CAPACITY, "lookback_sessions": LOOKBACK,
-            "liquidity_min_dollars": MIN_DOLLARS, "warning": None,
-            "classification": "US common stock; new healthcare, biotech and pharma excluded; curated exceptions",
-            "reason_counts": {}, "exclusions": {}}
-    try:
-        if cfg.feed != scanner.DataFeed.SIP:
-            raise ValueError("Adaptive selection needs consolidated SIP volume; using the curated seed on this feed")
-        # Never apply today's directory to a genuinely historical session.
-        if cfg.session_date is not None and cfg.session_date != scanner.current_session():
-            raise ValueError("Historical backfill uses the curated seed; today's membership is not historical evidence")
-        rows, directory_meta = _directory(docs)
-        meta.update(directory_meta)
-        pool, excluded = directory_pool(rows, seeds, min_price=cfg.min_price)
-        meta.update(discovered=len(rows), eligible=len(pool), exclusions=excluded)
-        if len(pool) < 100:
-            raise ValueError("Too few securities had verified US common-stock classification")
-        if meta["directory_status"] == "cached":
-            meta["warning"] = (f"Live listings refresh unavailable; using Nasdaq listings captured "
-                               f"{meta['directory_fetched_at'][:10]} (maximum age seven days). "
-                               f"Prices and selection are refreshed for {session.isoformat()}.")
-        else:
-            try:
-                _save_directory_cache(docs, rows, meta["directory_fetched_at"])
-            except Exception as exc:
-                # A storage problem must not discard a valid live directory.
-                log.warning("Directory cache could not be saved (%s)", type(exc).__name__)
-        client = data_client or scanner.get_clients()
-        short_cfg = replace(cfg, lookback_days=35)
-        metrics, returned, fresh = {}, 0, 0
-        for start in range(0, len(pool), cfg.batch_size):
-            frames = scanner._download_batch(client, pool[start:start + cfg.batch_size], short_cfg, session)
-            returned += len(frames)
-            for symbol, frame in frames.items():
-                fresh += scanner._last_bar_date(frame) == session
-                values = measure(frame, session, min_price=cfg.min_price)
-                if values is not None:
-                    metrics[symbol] = values
-        meta["screened"] = returned
-        meta["fresh"] = fresh
-        if returned < len(pool) * .8 or fresh < returned * .8 or len(metrics) < 50:
-            raise ValueError("Broad liquidity screen was incomplete; keeping a known classified basket")
-        chosen, reasons = rotate(metrics, session, _recent_symbols(docs, session),
-                                 min_gain_pct=cfg.min_gain_pct)
-        meta["reason_counts"] = reasons
-    except Exception as exc:
-        # Do not mask market-data auth failures: the actual scan below still
-        # uses the normal loud failure guards. Exception bodies can contain
-        # provider details, so publish only a controlled type and explanation.
-        meta["mode"] = "fallback"
-        meta["warning"] = (str(exc) if isinstance(exc, ValueError) else
-                           f"Universe refresh unavailable ({type(exc).__name__}); using the curated seed")
-        chosen = seeds
-        log.warning("%s", meta["warning"])
-    meta.update(selected=len(chosen), added=sorted(set(chosen) - set(old)),
-                removed=sorted(set(old) - set(chosen)), retained=len(set(chosen) & set(old)))
-    return chosen, meta
+# ------------------------------------------------------------------ build ----
 
 
 def identity(symbols: list[str]) -> str:
+    """A short, order-independent digest of a symbol list."""
     return hashlib.sha256("\n".join(sorted(symbols)).encode()).hexdigest()[:16]
 
 
-def benchmark_history(book, cfg, through, available):
-    """Short windows for original rotating baskets; no survivor substitution."""
-    needed = set()
-    seed = None
-    for run in book._fill_window():
-        block = run.get("universe") or {}
-        legacy_seed = block.get("label") == "data/symbols.txt (checked in)"
-        if not isinstance(block.get("selection"), dict) and not legacy_seed:
-            continue
-        benchmark = run.get("benchmark") or {}
-        if all(benchmark.get(f"d{h}") is not None and
-               (benchmark.get("from_open") or {}).get(f"d{h}") is not None for h in (1, 3, 5)):
-            continue
-        day = date.fromisoformat(run["date"])
-        # An old failed fill stays pending; a short window cannot recreate it.
-        if not 0 < (through - day).days <= 14:
-            continue
-        if legacy_seed:
-            seed = seed if seed is not None else scanner.get_universe()
-        members = seed if legacy_seed else block.get("tickers", [])
-        needed.update(t for t in members if t not in available)
-    result = dict(available)
-    if needed:
-        client = scanner.get_clients()
-        short_cfg = replace(cfg, lookback_days=15)
-        symbols = sorted(needed)
-        for start in range(0, len(symbols), cfg.batch_size):
-            result.update(scanner._download_batch(client, symbols[start:start + cfg.batch_size], short_cfg, through))
-    return result
+def _floors() -> str:
+    return f"${MIN_PRICE:g}+ and {MIN_VOLUME:,}+ shares last session"
+
+
+def _seed_universe(seeds: list[str], warning: str | None) -> Universe:
+    symbols = sorted(seeds)
+    return Universe(symbols=symbols, names={}, flags={s: set() for s in symbols}, source=SOURCE_SEED,
+                    fetched_at=None, counts={"admitted": len(symbols)},
+                    label=f"{len(symbols)} checked-in US common stocks (data/symbols.txt)", warning=warning)
+
+
+def _explicit_universe(explicit: list[str]) -> Universe:
+    symbols = sorted({s.strip().upper() for s in explicit})
+    bad = [s for s in symbols if not _SYMBOL.fullmatch(s)]
+    if bad or not symbols:
+        raise ValueError(f"explicit tickers must be A-Z symbols of 1-5 characters; refused {bad or 'an empty list'}")
+    return Universe(symbols=symbols, names={}, flags={s: set() for s in symbols}, source=SOURCE_EXPLICIT,
+                    fetched_at=None, counts={"admitted": len(symbols)},
+                    label=f"{len(symbols)} named on the command line (--tickers)")
+
+
+def _directory(docs: Path, now: datetime) -> tuple[list[dict], str, datetime]:
+    """Rows, source and capture time: live, else the cache, else an error.
+
+    The cache is borrowed only for a transient transport failure. An access
+    refusal or an incomplete live reply is not an outage, and raises through
+    to the seed fallback instead -- the rule the previous module set.
+    """
+    try:
+        rows = fetch_directory()
+    except Exception as exc:
+        if not _transient_directory_error(exc):
+            raise
+        rows, captured = _read_directory_cache(docs, now)
+        return rows, SOURCE_CACHE, captured
+    try:
+        _save_directory_cache(docs, rows, now.isoformat())
+    except Exception as exc:
+        # A storage problem must not discard a valid live directory.
+        log.warning("Directory cache could not be saved (%s)", type(exc).__name__)
+    return rows, SOURCE_LIVE, now
+
+
+def build(docs: Path, *, explicit: list[str] | None = None, now: datetime | None = None) -> Universe:
+    """The universe for one run.
+
+    `explicit` (the --tickers override) wins over everything and asks nothing
+    of the network. Otherwise SCAN_UNIVERSE decides: the seed file alone, or
+    the directory -- live, then the gzip cache under `docs`, then the seed
+    with a warning that says which fallback was taken and why, in a
+    controlled sentence that never quotes a provider's reply.
+    """
+    if explicit is not None:
+        return _explicit_universe(explicit)
+    seeds = read_seed()
+    if mode() == "seed":
+        return _seed_universe(seeds, None)
+    now = datetime.now(timezone.utc) if now is None else now
+    try:
+        rows, source, captured = _directory(docs, now)
+    except Exception as exc:
+        warning = (str(exc) if isinstance(exc, ValueError) else
+                   f"Universe refresh unavailable ({type(exc).__name__}); using the curated seed")
+        log.warning("%s", warning)
+        return _seed_universe(seeds, warning)
+    symbols, names, flags, counts = admit(rows, seeds)
+    age_days = (now - captured).total_seconds() / 86400
+    if source == SOURCE_CACHE:
+        source = f"{SOURCE_CACHE} {age_days:.1f} days old"
+        provenance = f"Nasdaq directory captured {captured.date().isoformat()}"
+        warning = (f"Live listings refresh unavailable; using Nasdaq listings captured "
+                   f"{captured.date().isoformat()} (maximum age seven days).")
+    else:
+        provenance = f"Nasdaq directory {captured.date().isoformat()}"
+        warning = None
+    if CAPACITY_REASON in counts:
+        cut = f"MAX_DISCOVERY bound: {counts[CAPACITY_REASON]} least-liquid names cut at {MAX_DISCOVERY}."
+        warning = cut if warning is None else f"{warning} {cut}"
+        log.warning("%s", cut)
+    biotech = sum(BIOTECH_FLAG in flagged for flagged in flags.values())
+    foreign = sum(FOREIGN_FLAG in flagged for flagged in flags.values())
+    label = (f"{len(symbols)} US-listed common stocks from the {provenance}, {_floors()}"
+             f" ({biotech} flagged {BIOTECH_FLAG}, {foreign} flagged {FOREIGN_FLAG})")
+    log.info("Universe: %s", label)
+    return Universe(symbols=symbols, names=names, flags=flags, source=source,
+                    fetched_at=captured.isoformat(), counts=counts, label=label, warning=warning)

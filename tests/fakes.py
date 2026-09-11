@@ -371,7 +371,11 @@ class FakeResend:
 
     sent: list[dict] = field(default_factory=list)
     response: dict = field(default_factory=lambda: {"id": "fake-email-id"})
+    #: when set, every send raises it -- the provider refusing the request
+    raises: Exception | None = None
 
     def send(self, params: dict, options: Any = None) -> dict:
+        if self.raises is not None:
+            raise self.raises
         self.sent.append(params)
         return dict(self.response)

@@ -80,7 +80,7 @@ DENIAL = "subscription does not permit querying recent SIP data"
 @pytest.fixture
 def fake_alpaca(monkeypatch) -> FakeAlpaca:
     """tests/fakes.py's Alpaca double, patched where this module looks the
-    client up. conftest's fixture of the same name patches src.scanner, which
+    client up. conftest's fixture of the same name patches src.market_data, which
     this module never imports, so it is overridden here rather than copied."""
     monkeypatch.setenv("ALPACA_API_KEY", "test-not-a-real-key")
     monkeypatch.setenv("ALPACA_SECRET_KEY", "test-not-a-real-secret")

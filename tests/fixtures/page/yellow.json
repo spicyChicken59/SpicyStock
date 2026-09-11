@@ -7,11 +7,11 @@
   "rules_version": "11e153a50cc1"
  },
  "cover": {
-  "h1": "Nothing qualifies. Keep cash.",
-  "dek": "5 bursts found, none A-quality. The closest miss is below.",
-  "action_label": "What you hold",
-  "action_target": "#open-plans",
-  "verb": "keep cash"
+  "h1": "Trade small. 2 A+ bursts.",
+  "dek": "Breadth is yellow: 5 up 4% vs 3 down, 10-day ratio 1.4. Half size. 10-session ratio 1.43 (10 up, 7 down) < 2.0: not an ideal time for swing longs.",
+  "action_label": "Tomorrow's orders",
+  "action_target": "#orders",
+  "verb": "trade small"
  },
  "run": {
   "session": "2026-09-10",
@@ -43,10 +43,10 @@
   },
   "bursts": 5,
   "graded": {
-   "a_plus": 0,
-   "a": 0,
+   "a_plus": 3,
+   "a": 1,
    "b": 0,
-   "c": 5,
+   "c": 1,
    "skip": 0
   },
   "reads": {
@@ -355,7 +355,7 @@
  "breadth": {
   "date": "2026-09-10",
   "up4": 5,
-  "down4": 0,
+  "down4": 3,
   "up25_quarter": 1,
   "down25_quarter": 0,
   "up25_month": 0,
@@ -364,23 +364,19 @@
   "down50_month": 0,
   "up13_34d": 6,
   "down13_34d": 0,
-  "pct_above_40ma": 56.7,
+  "pct_above_40ma": 50.0,
   "universe": 30,
-  "ratio_5d": 3.5,
-  "ratio_10d": 2.5,
+  "ratio_5d": 1.4,
+  "ratio_10d": 1.43,
   "up4_5d": 7,
-  "down4_5d": 2,
+  "down4_5d": 5,
   "up4_10d": 10,
-  "down4_10d": 4,
+  "down4_10d": 7,
   "regime": {
-   "verdict": "green",
-   "size_multiplier": 1.0,
+   "verdict": "yellow",
+   "size_multiplier": 0.5,
    "reasons": [
-    "down 4%: 0 < the scaled alarm of 3.2 (700 of 6,500)",
-    "10-session ratio 2.5 (10 up, 4 down) >= 1.0",
-    "5-session ratio 3.5 (7 up, 2 down) >= 0.5",
-    "10-session ratio 2.5 (10 up, 4 down) >= 2.0",
-    "up 50% in a month: 0 <= the scaled hot mark of 0.1 (20 of 6,500)"
+    "10-session ratio 1.43 (10 up, 7 down) < 2.0: not an ideal time for swing longs"
    ],
    "oversold_extreme": true,
    "thresholds": {
@@ -395,14 +391,14 @@
    },
    "inputs": {
     "date": "2026-09-10",
-    "ratio_10d": 2.5,
-    "ratio_5d": 3.5,
+    "ratio_10d": 1.43,
+    "ratio_5d": 1.4,
     "up4_10d": 10,
-    "down4_10d": 4,
+    "down4_10d": 7,
     "up4_5d": 7,
-    "down4_5d": 2,
+    "down4_5d": 5,
     "up4": 5,
-    "down4": 0,
+    "down4": 3,
     "up50_month": 0,
     "down25_quarter": 0
    }
@@ -585,8 +581,8 @@
    {
     "date": "2026-09-10",
     "up4": 5,
-    "down4": 0,
-    "ratio_10d": 2.5
+    "down4": 3,
+    "ratio_10d": 1.43
    }
   ],
   "rules": {
@@ -878,7 +874,7 @@
    "score": 10.0,
    "vetoes": [],
    "reclass": null,
-   "grade": "C",
+   "grade": "A+",
    "plan": {
     "ticker": "AAPL",
     "kind": "burst",
@@ -915,31 +911,31 @@
      }
     ],
     "risk_per_share": 4.03,
-    "shares": 6,
-    "position_usd": 752.7,
-    "position_pct": 7.53,
-    "risk_usd": 24.18,
+    "shares": 3,
+    "position_usd": 376.35,
+    "position_pct": 3.76,
+    "risk_usd": 12.09,
     "capped_by": "risk",
-    "size_multiplier": 0.5,
+    "size_multiplier": 0.25,
     "sizing": {
-     "shares": 6,
-     "position_usd": 752.7,
-     "position_pct": 7.53,
-     "risk_usd": 24.18,
+     "shares": 3,
+     "position_usd": 376.35,
+     "position_pct": 3.76,
+     "risk_usd": 12.09,
      "risk_per_share": 4.03,
      "stop_pct": 3.21,
      "capped_by": "risk",
      "note": null,
-     "multiplier": 0.5,
-     "budget_usd": 25.0,
+     "multiplier": 0.25,
+     "budget_usd": 12.5,
      "cap_usd": 2500.0
     },
-    "resize_rule": "if your fill differs, shares = $25.00 / (fill - $121.42), and no more than $2,500.00 of stock",
+    "resize_rule": "if your fill differs, shares = $12.50 / (fill - $121.42), and no more than $2,500.00 of stock",
     "multipliers": {
-     "regime": 1.0,
+     "regime": 0.5,
      "hazard": 1.0,
      "stop_risk": 0.5,
-     "total": 0.5
+     "total": 0.25
     },
     "hazards": [],
     "hazard_multiplier": 1.0,
@@ -1027,11 +1023,11 @@
       "price": null
      }
     ],
-    "order_line": "Buy 6 AAPL stop-limit: stop $124.21 limit $129.18, day · OTO sell 6 AAPL stop-loss $121.42 GTC",
+    "order_line": "Buy 3 AAPL stop-limit: stop $124.21 limit $129.18, day · OTO sell 3 AAPL stop-loss $121.42 GTC",
     "order_json": {
      "symbol": "AAPL",
      "action": "buy",
-     "quantity": 6,
+     "quantity": 3,
      "order_type": "stop_limit",
      "stop_price": 124.21,
      "limit_price": 129.18,
@@ -1039,14 +1035,14 @@
      "conditional": "one_triggers_the_other",
      "then": {
       "action": "sell",
-      "quantity": 6,
+      "quantity": 3,
       "order_type": "stop",
       "stop_price": 121.42,
       "time_in_force": "gtc"
      }
     },
-    "order_readback": "Buy 6 AAPL stop limit 124.21 / 129.18 day, one-triggers-the-other sell 6 AAPL stop loss 121.42 GTC",
-    "fallback_line": "If your app has no stop-limit: buy 6 AAPL limit $129.18 (day) with the same sell stop attached.",
+    "order_readback": "Buy 3 AAPL stop limit 124.21 / 129.18 day, one-triggers-the-other sell 3 AAPL stop loss 121.42 GTC",
+    "fallback_line": "If your app has no stop-limit: buy 3 AAPL limit $129.18 (day) with the same sell stop attached.",
     "burst": {
      "close": 124.21,
      "low": 118.35,
@@ -1111,12 +1107,12 @@
    },
    "chart": "charts/AAPL.png",
    "claude": {
-    "agree": false,
-    "grade": "C",
-    "score": 5.2,
-    "reason": "The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.",
-    "key_risk": "It reverses through the burst low.",
-    "entry_note": "Pass.",
+    "agree": true,
+    "grade": "A+",
+    "score": 9.3,
+    "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
+    "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
+    "entry_note": "Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.",
     "source": "claude",
     "chart_seen": true,
     "error": null
@@ -2028,7 +2024,7 @@
      "v": 3000000.0
     }
    ],
-   "summary": "AAPL: +6.0% on 5.0× volume out of a base 3.5% deep. Buy 121.73–129.18 tomorrow in the first 30 minutes, stop 121.42, aim 135.49–150.54. C 10.0, 6 of 6 criteria."
+   "summary": "AAPL: +6.0% on 5.0× volume out of a base 3.5% deep. Buy 121.73–129.18 tomorrow in the first 30 minutes, stop 121.42, aim 135.49–150.54. A+ 10.0, 6 of 6 criteria."
   },
   {
    "ticker": "AMD",
@@ -2270,7 +2266,7 @@
    "score": 10.0,
    "vetoes": [],
    "reclass": null,
-   "grade": "C",
+   "grade": "A+",
    "plan": {
     "ticker": "AMD",
     "kind": "burst",
@@ -2307,31 +2303,31 @@
      }
     ],
     "risk_per_share": 3.43,
-    "shares": 7,
-    "position_usd": 871.5,
-    "position_pct": 8.71,
-    "risk_usd": 24.01,
+    "shares": 3,
+    "position_usd": 373.5,
+    "position_pct": 3.73,
+    "risk_usd": 10.29,
     "capped_by": "risk",
-    "size_multiplier": 0.5,
+    "size_multiplier": 0.25,
     "sizing": {
-     "shares": 7,
-     "position_usd": 871.5,
-     "position_pct": 8.71,
-     "risk_usd": 24.01,
+     "shares": 3,
+     "position_usd": 373.5,
+     "position_pct": 3.73,
+     "risk_usd": 10.29,
      "risk_per_share": 3.43,
      "stop_pct": 2.76,
      "capped_by": "risk",
      "note": null,
-     "multiplier": 0.5,
-     "budget_usd": 25.0,
+     "multiplier": 0.25,
+     "budget_usd": 12.5,
      "cap_usd": 2500.0
     },
-    "resize_rule": "if your fill differs, shares = $25.00 / (fill - $121.07), and no more than $2,500.00 of stock",
+    "resize_rule": "if your fill differs, shares = $12.50 / (fill - $121.07), and no more than $2,500.00 of stock",
     "multipliers": {
-     "regime": 1.0,
+     "regime": 0.5,
      "hazard": 1.0,
      "stop_risk": 0.5,
-     "total": 0.5
+     "total": 0.25
     },
     "hazards": [],
     "hazard_multiplier": 1.0,
@@ -2419,11 +2415,11 @@
       "price": null
      }
     ],
-    "order_line": "Buy 7 AMD stop-limit: stop $123.27 limit $128.20, day · OTO sell 7 AMD stop-loss $121.07 GTC",
+    "order_line": "Buy 3 AMD stop-limit: stop $123.27 limit $128.20, day · OTO sell 3 AMD stop-loss $121.07 GTC",
     "order_json": {
      "symbol": "AMD",
      "action": "buy",
-     "quantity": 7,
+     "quantity": 3,
      "order_type": "stop_limit",
      "stop_price": 123.27,
      "limit_price": 128.2,
@@ -2431,14 +2427,14 @@
      "conditional": "one_triggers_the_other",
      "then": {
       "action": "sell",
-      "quantity": 7,
+      "quantity": 3,
       "order_type": "stop",
       "stop_price": 121.07,
       "time_in_force": "gtc"
      }
     },
-    "order_readback": "Buy 7 AMD stop limit 123.27 / 128.20 day, one-triggers-the-other sell 7 AMD stop loss 121.07 GTC",
-    "fallback_line": "If your app has no stop-limit: buy 7 AMD limit $128.20 (day) with the same sell stop attached.",
+    "order_readback": "Buy 3 AMD stop limit 123.27 / 128.20 day, one-triggers-the-other sell 3 AMD stop loss 121.07 GTC",
+    "fallback_line": "If your app has no stop-limit: buy 3 AMD limit $128.20 (day) with the same sell stop attached.",
     "burst": {
      "close": 123.27,
      "low": 118.35,
@@ -2503,19 +2499,892 @@
    },
    "chart": "charts/AMD.png",
    "claude": {
-    "agree": false,
-    "grade": "C",
-    "score": 5.2,
-    "reason": "The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.",
-    "key_risk": "It reverses through the burst low.",
-    "entry_note": "Pass.",
+    "agree": true,
+    "grade": "A+",
+    "score": 9.3,
+    "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
+    "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
+    "entry_note": "Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.",
     "source": "claude",
     "chart_seen": true,
     "error": null
    },
    "rank": 2,
-   "series": [],
-   "summary": "AMD: +5.2% on 4.3× volume out of a base 3.5% deep. Buy 120.80–128.20 tomorrow in the first 30 minutes, stop 121.07, aim 134.46–149.40. C 10.0, 6 of 6 criteria."
+   "series": [
+    {
+     "date": "2026-04-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-14",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-27",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-28",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-30",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-04",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-05",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-06",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-07",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-11",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-12",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-14",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-18",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-19",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-25",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-26",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-27",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-28",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-02",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-03",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-04",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-05",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-11",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-12",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-18",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-19",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-25",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-26",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-30",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-02",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-03",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-06",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-07",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-14",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-27",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-28",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-30",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-31",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-08-03",
+     "o": 100.0,
+     "h": 101.76,
+     "l": 99.5,
+     "c": 101.25,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-04",
+     "o": 101.25,
+     "h": 103.03,
+     "l": 100.74,
+     "c": 102.52,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-05",
+     "o": 102.52,
+     "h": 104.32,
+     "l": 102.01,
+     "c": 103.8,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-06",
+     "o": 103.8,
+     "h": 105.63,
+     "l": 103.28,
+     "c": 105.1,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-07",
+     "o": 105.1,
+     "h": 106.94,
+     "l": 104.57,
+     "c": 106.41,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-10",
+     "o": 106.41,
+     "h": 108.28,
+     "l": 105.88,
+     "c": 107.74,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-11",
+     "o": 107.74,
+     "h": 109.64,
+     "l": 107.2,
+     "c": 109.09,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-12",
+     "o": 109.09,
+     "h": 111.0,
+     "l": 108.54,
+     "c": 110.45,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-13",
+     "o": 110.45,
+     "h": 112.39,
+     "l": 109.9,
+     "c": 111.83,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-14",
+     "o": 111.83,
+     "h": 113.8,
+     "l": 111.27,
+     "c": 113.23,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-17",
+     "o": 113.23,
+     "h": 115.22,
+     "l": 112.66,
+     "c": 114.65,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-18",
+     "o": 114.65,
+     "h": 116.66,
+     "l": 114.08,
+     "c": 116.08,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-19",
+     "o": 116.08,
+     "h": 118.12,
+     "l": 115.5,
+     "c": 117.53,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-20",
+     "o": 117.53,
+     "h": 119.59,
+     "l": 116.94,
+     "c": 119.0,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-21",
+     "o": 119.0,
+     "h": 121.09,
+     "l": 118.41,
+     "c": 120.49,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-24",
+     "o": 120.49,
+     "h": 120.96,
+     "l": 117.11,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-25",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-26",
+     "o": 117.38,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-27",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-28",
+     "o": 117.38,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-31",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-01",
+     "o": 117.38,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-02",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-03",
+     "o": 117.38,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-04",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-07",
+     "o": 117.38,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-08",
+     "o": 117.58,
+     "h": 118.05,
+     "l": 116.91,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-09",
+     "o": 117.38,
+     "h": 117.73,
+     "l": 116.83,
+     "c": 117.18,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-10",
+     "o": 118.89,
+     "h": 123.79,
+     "l": 118.35,
+     "c": 123.27,
+     "v": 2600000.0
+    }
+   ],
+   "summary": "AMD: +5.2% on 4.3× volume out of a base 3.5% deep. Buy 120.80–128.20 tomorrow in the first 30 minutes, stop 121.07, aim 134.46–149.40. A+ 10.0, 6 of 6 criteria."
   },
   {
    "ticker": "NVDA",
@@ -2757,7 +3626,7 @@
    "score": 10.0,
    "vetoes": [],
    "reclass": null,
-   "grade": "C",
+   "grade": "A+",
    "plan": {
     "ticker": "NVDA",
     "kind": "burst",
@@ -2794,31 +3663,31 @@
      }
     ],
     "risk_per_share": 4.41,
-    "shares": 5,
-    "position_usd": 640.75,
-    "position_pct": 6.41,
-    "risk_usd": 22.05,
+    "shares": 2,
+    "position_usd": 256.3,
+    "position_pct": 2.56,
+    "risk_usd": 8.82,
     "capped_by": "risk",
-    "size_multiplier": 0.5,
+    "size_multiplier": 0.25,
     "sizing": {
-     "shares": 5,
-     "position_usd": 640.75,
-     "position_pct": 6.41,
-     "risk_usd": 22.05,
+     "shares": 2,
+     "position_usd": 256.3,
+     "position_pct": 2.56,
+     "risk_usd": 8.82,
      "risk_per_share": 4.41,
      "stop_pct": 3.44,
      "capped_by": "risk",
      "note": null,
-     "multiplier": 0.5,
-     "budget_usd": 25.0,
+     "multiplier": 0.25,
+     "budget_usd": 12.5,
      "cap_usd": 2500.0
     },
-    "resize_rule": "if your fill differs, shares = $25.00 / (fill - $123.74), and no more than $2,500.00 of stock",
+    "resize_rule": "if your fill differs, shares = $12.50 / (fill - $123.74), and no more than $2,500.00 of stock",
     "multipliers": {
-     "regime": 1.0,
+     "regime": 0.5,
      "hazard": 1.0,
      "stop_risk": 0.5,
-     "total": 0.5
+     "total": 0.25
     },
     "hazards": [],
     "hazard_multiplier": 1.0,
@@ -2906,11 +3775,11 @@
       "price": null
      }
     ],
-    "order_line": "Buy 5 NVDA stop-limit: stop $126.88 limit $131.96, day · OTO sell 5 NVDA stop-loss $123.74 GTC",
+    "order_line": "Buy 2 NVDA stop-limit: stop $126.88 limit $131.96, day · OTO sell 2 NVDA stop-loss $123.74 GTC",
     "order_json": {
      "symbol": "NVDA",
      "action": "buy",
-     "quantity": 5,
+     "quantity": 2,
      "order_type": "stop_limit",
      "stop_price": 126.88,
      "limit_price": 131.96,
@@ -2918,14 +3787,14 @@
      "conditional": "one_triggers_the_other",
      "then": {
       "action": "sell",
-      "quantity": 5,
+      "quantity": 2,
       "order_type": "stop",
       "stop_price": 123.74,
       "time_in_force": "gtc"
      }
     },
-    "order_readback": "Buy 5 NVDA stop limit 126.88 / 131.96 day, one-triggers-the-other sell 5 NVDA stop loss 123.74 GTC",
-    "fallback_line": "If your app has no stop-limit: buy 5 NVDA limit $131.96 (day) with the same sell stop attached.",
+    "order_readback": "Buy 2 NVDA stop limit 126.88 / 131.96 day, one-triggers-the-other sell 2 NVDA stop loss 123.74 GTC",
+    "fallback_line": "If your app has no stop-limit: buy 2 NVDA limit $131.96 (day) with the same sell stop attached.",
     "burst": {
      "close": 126.88,
      "low": 119.32,
@@ -2990,19 +3859,1190 @@
    },
    "chart": "charts/NVDA.png",
    "claude": {
-    "agree": false,
-    "grade": "C",
-    "score": 5.2,
-    "reason": "The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.",
-    "key_risk": "It reverses through the burst low.",
-    "entry_note": "Pass.",
+    "agree": true,
+    "grade": "A+",
+    "score": 9.3,
+    "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
+    "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
+    "entry_note": "Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.",
     "source": "claude",
     "chart_seen": true,
     "error": null
    },
    "rank": 3,
+   "series": [
+    {
+     "date": "2026-04-06",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-07",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-14",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-27",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-28",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-30",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-04",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-05",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-06",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-07",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-11",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-12",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-14",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-18",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-19",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-25",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-26",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-27",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-28",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-02",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-03",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-04",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-05",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-11",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-12",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-18",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-19",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-25",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-26",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-30",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-02",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-03",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-06",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-07",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-14",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-27",
+     "o": 100.0,
+     "h": 101.91,
+     "l": 99.5,
+     "c": 101.4,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-07-28",
+     "o": 101.4,
+     "h": 103.33,
+     "l": 100.89,
+     "c": 102.82,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-07-29",
+     "o": 102.82,
+     "h": 104.78,
+     "l": 102.31,
+     "c": 104.26,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-07-30",
+     "o": 104.26,
+     "h": 106.25,
+     "l": 103.74,
+     "c": 105.72,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-07-31",
+     "o": 105.72,
+     "h": 107.74,
+     "l": 105.19,
+     "c": 107.2,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-03",
+     "o": 107.2,
+     "h": 109.24,
+     "l": 106.66,
+     "c": 108.7,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-04",
+     "o": 108.7,
+     "h": 110.77,
+     "l": 108.16,
+     "c": 110.22,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-05",
+     "o": 110.22,
+     "h": 112.32,
+     "l": 109.67,
+     "c": 111.76,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-06",
+     "o": 111.76,
+     "h": 113.89,
+     "l": 111.2,
+     "c": 113.32,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-07",
+     "o": 113.32,
+     "h": 115.48,
+     "l": 112.75,
+     "c": 114.91,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-10",
+     "o": 114.91,
+     "h": 117.1,
+     "l": 114.34,
+     "c": 116.52,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-11",
+     "o": 116.52,
+     "h": 118.74,
+     "l": 115.94,
+     "c": 118.15,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-12",
+     "o": 118.15,
+     "h": 120.4,
+     "l": 117.56,
+     "c": 119.8,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-13",
+     "o": 119.8,
+     "h": 122.09,
+     "l": 119.2,
+     "c": 121.48,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-14",
+     "o": 121.48,
+     "h": 121.95,
+     "l": 118.07,
+     "c": 118.54,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-17",
+     "o": 118.54,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.34,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-18",
+     "o": 118.34,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.54,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-19",
+     "o": 118.54,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.34,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-20",
+     "o": 118.34,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.54,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-21",
+     "o": 118.54,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.34,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-24",
+     "o": 118.34,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.54,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-25",
+     "o": 118.54,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.34,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-26",
+     "o": 118.34,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.54,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-27",
+     "o": 118.54,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.34,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-28",
+     "o": 118.34,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.54,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-31",
+     "o": 118.54,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.34,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-01",
+     "o": 118.34,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.54,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-02",
+     "o": 118.54,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.34,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-03",
+     "o": 118.34,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.54,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-04",
+     "o": 118.54,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.34,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-07",
+     "o": 118.34,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.54,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-08",
+     "o": 118.54,
+     "h": 119.01,
+     "l": 117.87,
+     "c": 118.34,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-09",
+     "o": 118.34,
+     "h": 118.69,
+     "l": 117.79,
+     "c": 118.14,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-10",
+     "o": 120.2,
+     "h": 128.17,
+     "l": 119.32,
+     "c": 126.88,
+     "v": 3400000.0
+    }
+   ],
+   "summary": "NVDA: +7.4% on 5.7× volume out of a base 3.5% deep. Buy 124.34–131.96 tomorrow in the first 30 minutes, stop 123.74, aim 138.40–153.78. A+ 10.0, 6 of 6 criteria."
+  },
+  {
+   "ticker": "TSLA",
+   "name": "",
+   "flags": [],
+   "scan": "both",
+   "close": 121.73,
+   "prev_close": 116.38,
+   "open": 118.05,
+   "high": 122.62,
+   "low": 117.54,
+   "gain_pct": 4.6,
+   "volume": 3000000.0,
+   "volume_vs_prior": 5.0,
+   "dollar_volume": 365190000,
+   "dollar_move": 3.68,
+   "extension_pct": 3.5,
+   "quality": {
+    "checks": [
+     {
+      "key": "two_days",
+      "letter": "2",
+      "label": "not up two days in a row",
+      "values": {
+       "up_run": 0,
+       "up_closes": 0,
+       "prior_day_pct": -0.17
+      },
+      "value": 0,
+      "display": "up_run=0 up_closes=0 prior_day_pct=-0.17",
+      "threshold": "up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "linearity",
+      "letter": "L",
+      "label": "linearity of the prior leg",
+      "values": {
+       "er": 0.81,
+       "r2": 0.99,
+       "leg_sessions": 17,
+       "leg_gain_pct": 18.4
+      },
+      "value": 0.81,
+      "display": "er=0.81 r2=0.99 leg_sessions=17 leg_gain_pct=18.4",
+      "threshold": "ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "young_trend",
+      "letter": "Y",
+      "label": "young trend: first or second breakout",
+      "values": {
+       "breakouts_in_move": 0,
+       "sessions_since_move_start": 41,
+       "gain_since_move_start_pct": 21.7
+      },
+      "value": 0,
+      "display": "breakouts_in_move=0 sessions_since_move_start=41 gain_since_move_start_pct=21.7",
+      "threshold": "prior breakouts since the move started <= 1 (0 for A+)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "narrow_or_negative",
+      "letter": "N",
+      "label": "narrow or negative day before",
+      "values": {
+       "prior_day_pct": -0.17,
+       "prior_range_pct": 0.8,
+       "negative": true,
+       "narrow": true,
+       "median_range_pct": 3.9
+      },
+      "value": -0.17,
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=3.9",
+      "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "consolidation",
+      "letter": "C",
+      "label": "consolidation quality",
+      "values": {
+       "base_sessions": 24,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.3,
+       "tightness": 2.1,
+       "base_volume_vs_leg": 0.42,
+       "base_volume_vs_avg": 0.63
+      },
+      "value": 24,
+      "display": "base_sessions=24 breakdowns=0 bursts_in_base=0 giveback=0.3 tightness=2.1 base_volume_vs_leg=0.42 base_volume_vs_avg=0.63",
+      "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+      "passed": false,
+      "pass": false,
+      "marginal": false,
+      "a_plus": false,
+      "note": "base of 24 sessions is outside Bonde's 3-20; the base ranged wider than the sessions before it",
+      "partial": false,
+      "status": "FAIL"
+     },
+     {
+      "key": "close_near_high",
+      "letter": "H",
+      "label": "close near the high",
+      "values": {
+       "close_pos": 0.82,
+       "close_above_open": true
+      },
+      "value": 0.82,
+      "display": "close_pos=0.82 close_above_open=True",
+      "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": false,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "range_expansion",
+      "letter": "RE",
+      "label": "range expansion",
+      "values": {
+       "vs_prior_5": 1.08,
+       "vs_prior_10": 1.08,
+       "bar_range_pct": 4.2
+      },
+      "value": 1.08,
+      "display": "vs_prior_5=1.08 vs_prior_10=1.08 bar_range_pct=4.2",
+      "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "volume",
+      "letter": "VOL",
+      "label": "higher volume",
+      "values": {
+       "volume_vs_prior": 5.0,
+       "volume_vs_avg50": 3.16,
+       "volume_rank_60": 1,
+       "cv_required": true
+      },
+      "value": 5.0,
+      "display": "volume_vs_prior=5.0 volume_vs_avg50=3.16 volume_rank_60=1 cv_required=True",
+      "threshold": "volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "base over 21 sessions: +CV applies, volume must be >= 1.5x average and a catalyst is needed, which bars cannot show",
+      "partial": false,
+      "status": "PASS"
+     }
+    ],
+    "vetoes": [],
+    "passes": 5,
+    "of": 6,
+    "a_plus_count": 6,
+    "score": 8.0,
+    "grade": "A",
+    "reclass": null,
+    "notes": [
+     "extension: close 3.5% vs its 20-SMA, 4.4% over 20 sessions"
+    ],
+    "base": {
+     "start": "2026-08-07",
+     "end": "2026-09-09",
+     "start_index": 96,
+     "end_index": 119,
+     "sessions": 24,
+     "high": 121.91,
+     "low": 115.16,
+     "depth_pct": 5.5,
+     "breakdown_dates": []
+    },
+    "leg": {
+     "start": 79,
+     "end": 95,
+     "length": 17,
+     "gain_pct": 18.4,
+     "high": 121.91,
+     "low": 99.2,
+     "er": 0.81,
+     "r2": 0.99
+    },
+    "burst": {
+     "gain_pct": 4.6,
+     "gap_pct": 1.4,
+     "bar_range_pct": 4.2,
+     "close_pos": 0.82,
+     "volume_vs_prior": 5.0,
+     "volume_vs_avg50": 3.16,
+     "volume_rank_60": 1
+    },
+    "unreadable": null,
+    "weights": {
+     "2": 1.5,
+     "L": 2.0,
+     "Y": 1.5,
+     "N": 1.5,
+     "C": 2.0,
+     "H": 1.5
+    }
+   },
+   "grade_mechanical": "A",
+   "score": 8.0,
+   "vetoes": [],
+   "reclass": null,
+   "grade": "A",
+   "plan": null,
+   "chart": "charts/TSLA.png",
+   "claude": {
+    "agree": true,
+    "grade": "A",
+    "score": 8.4,
+    "reason": "The base is orderly and the burst is real, but the close sits inside the top fifth of the range rather than at the high.",
+    "key_risk": "A weak open would put the entry under the burst bar's midpoint.",
+    "entry_note": "Buy only inside the zone in the first thirty minutes.",
+    "source": "claude",
+    "chart_seen": true,
+    "error": null
+   },
+   "rank": 4,
    "series": [],
-   "summary": "NVDA: +7.4% on 5.7× volume out of a base 3.5% deep. Buy 124.34–131.96 tomorrow in the first 30 minutes, stop 123.74, aim 138.40–153.78. C 10.0, 6 of 6 criteria."
+   "summary": "TSLA: +4.6% on 5.0× volume out of a base 5.5% deep. A 8.0, 5 of 6 criteria."
   },
   {
    "ticker": "PLUG",
@@ -3259,512 +5299,45 @@
     "chart_seen": true,
     "error": null
    },
-   "rank": 4,
-   "series": [],
-   "summary": "PLUG: +5.0% on 5.0× volume out of a base 3.5% deep. C 8.5, 5 of 6 criteria."
-  },
-  {
-   "ticker": "TSLA",
-   "name": "",
-   "flags": [],
-   "scan": "both",
-   "close": 121.73,
-   "prev_close": 116.38,
-   "open": 118.05,
-   "high": 122.62,
-   "low": 117.54,
-   "gain_pct": 4.6,
-   "volume": 3000000.0,
-   "volume_vs_prior": 5.0,
-   "dollar_volume": 365190000,
-   "dollar_move": 3.68,
-   "extension_pct": 3.5,
-   "quality": {
-    "checks": [
-     {
-      "key": "two_days",
-      "letter": "2",
-      "label": "not up two days in a row",
-      "values": {
-       "up_run": 0,
-       "up_closes": 0,
-       "prior_day_pct": -0.17
-      },
-      "value": 0,
-      "display": "up_run=0 up_closes=0 prior_day_pct=-0.17",
-      "threshold": "up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
-      "passed": true,
-      "pass": true,
-      "marginal": false,
-      "a_plus": true,
-      "note": "",
-      "partial": false,
-      "status": "PASS"
-     },
-     {
-      "key": "linearity",
-      "letter": "L",
-      "label": "linearity of the prior leg",
-      "values": {
-       "er": 0.81,
-       "r2": 0.99,
-       "leg_sessions": 17,
-       "leg_gain_pct": 18.4
-      },
-      "value": 0.81,
-      "display": "er=0.81 r2=0.99 leg_sessions=17 leg_gain_pct=18.4",
-      "threshold": "ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
-      "passed": true,
-      "pass": true,
-      "marginal": false,
-      "a_plus": true,
-      "note": "",
-      "partial": false,
-      "status": "PASS"
-     },
-     {
-      "key": "young_trend",
-      "letter": "Y",
-      "label": "young trend: first or second breakout",
-      "values": {
-       "breakouts_in_move": 0,
-       "sessions_since_move_start": 41,
-       "gain_since_move_start_pct": 21.7
-      },
-      "value": 0,
-      "display": "breakouts_in_move=0 sessions_since_move_start=41 gain_since_move_start_pct=21.7",
-      "threshold": "prior breakouts since the move started <= 1 (0 for A+)",
-      "passed": true,
-      "pass": true,
-      "marginal": false,
-      "a_plus": true,
-      "note": "",
-      "partial": false,
-      "status": "PASS"
-     },
-     {
-      "key": "narrow_or_negative",
-      "letter": "N",
-      "label": "narrow or negative day before",
-      "values": {
-       "prior_day_pct": -0.17,
-       "prior_range_pct": 0.8,
-       "negative": true,
-       "narrow": true,
-       "median_range_pct": 3.9
-      },
-      "value": -0.17,
-      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=3.9",
-      "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
-      "passed": true,
-      "pass": true,
-      "marginal": false,
-      "a_plus": true,
-      "note": "",
-      "partial": false,
-      "status": "PASS"
-     },
-     {
-      "key": "consolidation",
-      "letter": "C",
-      "label": "consolidation quality",
-      "values": {
-       "base_sessions": 24,
-       "breakdowns": 0,
-       "bursts_in_base": 0,
-       "giveback": 0.3,
-       "tightness": 2.1,
-       "base_volume_vs_leg": 0.42,
-       "base_volume_vs_avg": 0.63
-      },
-      "value": 24,
-      "display": "base_sessions=24 breakdowns=0 bursts_in_base=0 giveback=0.3 tightness=2.1 base_volume_vs_leg=0.42 base_volume_vs_avg=0.63",
-      "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
-      "passed": false,
-      "pass": false,
-      "marginal": false,
-      "a_plus": false,
-      "note": "base of 24 sessions is outside Bonde's 3-20; the base ranged wider than the sessions before it",
-      "partial": false,
-      "status": "FAIL"
-     },
-     {
-      "key": "close_near_high",
-      "letter": "H",
-      "label": "close near the high",
-      "values": {
-       "close_pos": 0.82,
-       "close_above_open": true
-      },
-      "value": 0.82,
-      "display": "close_pos=0.82 close_above_open=True",
-      "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
-      "passed": true,
-      "pass": true,
-      "marginal": false,
-      "a_plus": false,
-      "note": "",
-      "partial": false,
-      "status": "PASS"
-     },
-     {
-      "key": "range_expansion",
-      "letter": "RE",
-      "label": "range expansion",
-      "values": {
-       "vs_prior_5": 1.08,
-       "vs_prior_10": 1.08,
-       "bar_range_pct": 4.2
-      },
-      "value": 1.08,
-      "display": "vs_prior_5=1.08 vs_prior_10=1.08 bar_range_pct=4.2",
-      "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
-      "passed": true,
-      "pass": true,
-      "marginal": false,
-      "a_plus": true,
-      "note": "",
-      "partial": false,
-      "status": "PASS"
-     },
-     {
-      "key": "volume",
-      "letter": "VOL",
-      "label": "higher volume",
-      "values": {
-       "volume_vs_prior": 5.0,
-       "volume_vs_avg50": 3.16,
-       "volume_rank_60": 1,
-       "cv_required": true
-      },
-      "value": 5.0,
-      "display": "volume_vs_prior=5.0 volume_vs_avg50=3.16 volume_rank_60=1 cv_required=True",
-      "threshold": "volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average",
-      "passed": true,
-      "pass": true,
-      "marginal": false,
-      "a_plus": true,
-      "note": "base over 21 sessions: +CV applies, volume must be >= 1.5x average and a catalyst is needed, which bars cannot show",
-      "partial": false,
-      "status": "PASS"
-     }
-    ],
-    "vetoes": [],
-    "passes": 5,
-    "of": 6,
-    "a_plus_count": 6,
-    "score": 8.0,
-    "grade": "A",
-    "reclass": null,
-    "notes": [
-     "extension: close 3.5% vs its 20-SMA, 4.4% over 20 sessions"
-    ],
-    "base": {
-     "start": "2026-08-07",
-     "end": "2026-09-09",
-     "start_index": 96,
-     "end_index": 119,
-     "sessions": 24,
-     "high": 121.91,
-     "low": 115.16,
-     "depth_pct": 5.5,
-     "breakdown_dates": []
-    },
-    "leg": {
-     "start": 79,
-     "end": 95,
-     "length": 17,
-     "gain_pct": 18.4,
-     "high": 121.91,
-     "low": 99.2,
-     "er": 0.81,
-     "r2": 0.99
-    },
-    "burst": {
-     "gain_pct": 4.6,
-     "gap_pct": 1.4,
-     "bar_range_pct": 4.2,
-     "close_pos": 0.82,
-     "volume_vs_prior": 5.0,
-     "volume_vs_avg50": 3.16,
-     "volume_rank_60": 1
-    },
-    "unreadable": null,
-    "weights": {
-     "2": 1.5,
-     "L": 2.0,
-     "Y": 1.5,
-     "N": 1.5,
-     "C": 2.0,
-     "H": 1.5
-    }
-   },
-   "grade_mechanical": "A",
-   "score": 8.0,
-   "vetoes": [],
-   "reclass": null,
-   "grade": "C",
-   "plan": {
-    "ticker": "TSLA",
-    "kind": "burst",
-    "scan": "4pct",
-    "action": "buy_at_open",
-    "eligible": true,
-    "reason": null,
-    "entry_ref": 121.73,
-    "entry_low": 119.3,
-    "entry_high": 126.6,
-    "skip_if_open_above": 126.6,
-    "skip_if_open_below": 119.3,
-    "extended_above": 131.47,
-    "entry_window": "first 30 minutes",
-    "pre_open_check": "before the open: if the pre-market print is under $119.30 the burst is failing, over $126.60 day 2 is spent, and over $131.47 (+8%) he would be selling; do not place the order in any of the three",
-    "planned_entry": 122.95,
-    "assumed_slippage_pct": 1.0,
-    "stop": 120.08,
-    "stop_basis": "half_range",
-    "stop_pct": 2.33,
-    "stop_note": null,
-    "stop_candidates": [
-     {
-      "basis": "burst_low",
-      "price": 117.54,
-      "pct_below_entry": 4.4,
-      "within_max": false
-     },
-     {
-      "basis": "half_range",
-      "price": 120.08,
-      "pct_below_entry": 2.33,
-      "within_max": true
-     }
-    ],
-    "risk_per_share": 2.87,
-    "shares": 8,
-    "position_usd": 983.6,
-    "position_pct": 9.84,
-    "risk_usd": 22.96,
-    "capped_by": "risk",
-    "size_multiplier": 0.5,
-    "sizing": {
-     "shares": 8,
-     "position_usd": 983.6,
-     "position_pct": 9.84,
-     "risk_usd": 22.96,
-     "risk_per_share": 2.87,
-     "stop_pct": 2.33,
-     "capped_by": "risk",
-     "note": null,
-     "multiplier": 0.5,
-     "budget_usd": 25.0,
-     "cap_usd": 2500.0
-    },
-    "resize_rule": "if your fill differs, shares = $25.00 / (fill - $120.08), and no more than $2,500.00 of stock",
-    "multipliers": {
-     "regime": 1.0,
-     "hazard": 1.0,
-     "stop_risk": 0.5,
-     "total": 0.5
-    },
-    "hazards": [],
-    "hazard_multiplier": 1.0,
-    "stop_risk_multiplier": 0.5,
-    "stop_risk_reason": "the stop is 2.33% from the planned fill: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5",
-    "extension_pct": 3.5,
-    "targets": {
-     "low_pct": 8.0,
-     "high_pct": 20.0,
-     "low": 132.79,
-     "high": 147.54,
-     "note": "above $40 he measures the move in dollars: $5-25",
-     "dollar_low": 127.95,
-     "dollar_high": 147.95
-    },
-    "exits": [
-     {
-      "key": "sell_half_8pct",
-      "source": "B",
-      "when": "same or next day, the price reaches $132.79 (+8% from $122.95)",
-      "rule": "sell half and move the stop to 25-50 cents under that day's high",
-      "price": 132.79
-     },
-     {
-      "key": "abnormal_10pct",
-      "source": "B",
-      "when": "any single day closes at or above $135.25 (+10%)",
-      "rule": "take at least partial profit and move the stop up to protect the rest",
-      "price": 135.25
-     },
-     {
-      "key": "gap_20pct",
-      "source": "B",
-      "when": "it opens at or above $147.54 (+20%) after entry",
-      "rule": "sell at the open (or pre-market)",
-      "price": 147.54
-     },
-     {
-      "key": "entry_day_low",
-      "source": "B",
-      "when": "the close of day 1",
-      "rule": "the stop rises to the entry day's low if that is above $120.08",
-      "price": null
-     },
-     {
-      "key": "day3_sell_half",
-      "source": "B",
-      "when": "day 3 close",
-      "rule": "sell at least half at the close",
-      "price": null
-     },
-     {
-      "key": "day3_no_progress",
-      "source": "B",
-      "when": "day 3 closes at or below $122.95",
-      "rule": "exit: no follow-through",
-      "price": 122.95
-     },
-     {
-      "key": "trail_after_day3",
-      "source": "P",
-      "when": "from the close of day 3",
-      "rule": "raise the stop to each day's low (it never moves down)",
-      "price": null
-     },
-     {
-      "key": "day5_exit",
-      "source": "B",
-      "when": "day 5 close",
-      "rule": "exit the remainder into strength",
-      "price": null
-     },
-     {
-      "key": "stop",
-      "source": "B",
-      "when": "the protective stop at $120.08 is a stop-market order, live intraday from the moment the buy fills",
-      "rule": "if it is somehow not filled, exit on any close below it",
-      "price": 120.08
-     },
-     {
-      "key": "no_breakeven",
-      "source": "T",
-      "when": "day 2 is green",
-      "rule": "do not move the stop to break-even before day 5 just because it is green (theStrat Lab EP9M backtest: the win rate collapses from 29.8% to 7.25%; delaying to day 5 restores it); the +8% raise above is a different rule",
-      "price": null
-     }
-    ],
-    "order_line": "Buy 8 TSLA stop-limit: stop $121.73 limit $126.60, day · OTO sell 8 TSLA stop-loss $120.08 GTC",
-    "order_json": {
-     "symbol": "TSLA",
-     "action": "buy",
-     "quantity": 8,
-     "order_type": "stop_limit",
-     "stop_price": 121.73,
-     "limit_price": 126.6,
-     "time_in_force": "day",
-     "conditional": "one_triggers_the_other",
-     "then": {
-      "action": "sell",
-      "quantity": 8,
-      "order_type": "stop",
-      "stop_price": 120.08,
-      "time_in_force": "gtc"
-     }
-    },
-    "order_readback": "Buy 8 TSLA stop limit 121.73 / 126.60 day, one-triggers-the-other sell 8 TSLA stop loss 120.08 GTC",
-    "fallback_line": "If your app has no stop-limit: buy 8 TSLA limit $126.60 (day) with the same sell stop attached.",
-    "burst": {
-     "close": 121.73,
-     "low": 117.54,
-     "high": 122.62,
-     "open": 118.05,
-     "prev_close": 116.38,
-     "gain_pct": 4.6,
-     "gap_pct": 1.43,
-     "dollar_move": 3.68,
-     "close_in_range_pct": 82.48
-    },
-    "flags": [
-     "risk_halved"
-    ],
-    "notes": [
-     "the stop is 2.33% from the planned fill: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5"
-    ],
-    "exit_schedule": [
-     {
-      "day": 1,
-      "date": "2026-09-11",
-      "key": "entry",
-      "instruction": "buy in the first 30 minutes inside $119.30–$126.60; the sell stop at $120.08 is live from the fill. Skip it if it opens above $126.60."
-     },
-     {
-      "day": 1,
-      "date": "2026-09-11",
-      "key": "sell_half_8pct",
-      "instruction": "if same or next day, the price reaches $132.79 (+8% from $122.95): sell half and move the stop to 25-50 cents under that day's high."
-     },
-     {
-      "day": 1,
-      "date": "2026-09-11",
-      "key": "entry_day_low",
-      "instruction": "at the close of day 1: the stop rises to the entry day's low if that is above $120.08."
-     },
-     {
-      "day": 2,
-      "date": "2026-09-14",
-      "key": "no_breakeven",
-      "instruction": "if day 2 is green: do not move the stop to break-even before day 5 just because it is green."
-     },
-     {
-      "day": 3,
-      "date": "2026-09-15",
-      "key": "day3",
-      "instruction": "at the day 3 close: sell at least half at the close. If day 3 closes at or below $122.95: exit: no follow-through."
-     },
-     {
-      "day": 4,
-      "date": "2026-09-16",
-      "key": "trail",
-      "instruction": "raise the stop to each day's low (it never moves down); sell the rest into strength."
-     },
-     {
-      "day": 5,
-      "date": "2026-09-17",
-      "key": "day5_exit",
-      "instruction": "at the day 5 close: exit the remainder into strength."
-     }
-    ]
-   },
-   "chart": "charts/TSLA.png",
-   "claude": {
-    "agree": false,
-    "grade": "C",
-    "score": 5.2,
-    "reason": "The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.",
-    "key_risk": "It reverses through the burst low.",
-    "entry_note": "Pass.",
-    "source": "claude",
-    "chart_seen": true,
-    "error": null
-   },
    "rank": 5,
    "series": [],
-   "summary": "TSLA: +4.6% on 5.0× volume out of a base 5.5% deep. Buy 119.30–126.60 tomorrow in the first 30 minutes, stop 120.08, aim 132.79–147.54. C 8.0, 5 of 6 criteria."
+   "summary": "PLUG: +5.0% on 5.0× volume out of a base 3.5% deep. C 8.5, 5 of 6 criteria."
   }
  ],
- "trades": [],
- "beyond_cap": [],
+ "trades": [
+  "AAPL",
+  "AMD"
+ ],
+ "beyond_cap": [
+  "NVDA"
+ ],
  "cash_budget": {
-  "committed_usd": 0.0,
-  "at_risk_usd": 0.0,
+  "committed_usd": 749.85,
+  "at_risk_usd": 22.38,
   "equity": 10000.0,
-  "slots_used": 2,
+  "slots_used": 4,
   "slots_max": 4,
   "open_positions": 2,
-  "within": [],
-  "beyond": [],
-  "cut": [],
+  "within": [
+   "AAPL",
+   "AMD"
+  ],
+  "beyond": [
+   {
+    "ticker": "NVDA",
+    "rank": 3,
+    "reason": "slot_cap",
+    "position_usd": 256.3
+   }
+  ],
+  "cut": [
+   {
+    "ticker": "NVDA",
+    "reason": "the 4-slot cap: 2 already open and AAPL, AMD take the rest; take NVDA only if a HOLD above stops out"
+   }
+  ],
   "skipped": [],
-  "sentence": "Tomorrow's plans commit $0.00 of $10,000.00; 2 of 4 slots (2 already open)"
+  "sentence": "Tomorrow's plans commit $749.85 of $10,000.00; 4 of 4 slots (2 already open)"
  },
  "watchlist": {
   "top": [
@@ -3842,8 +5415,8 @@
      "position_usd": 2433.42,
      "position_pct": 24.33,
      "risk_usd": 24.42,
-     "capped_by": "position_cap",
-     "size_multiplier": 1.0,
+     "capped_by": "risk",
+     "size_multiplier": 0.5,
      "sizing": {
       "shares": 22,
       "position_usd": 2433.42,
@@ -3851,18 +5424,18 @@
       "risk_usd": 24.42,
       "risk_per_share": 1.11,
       "stop_pct": 1.0,
-      "capped_by": "position_cap",
-      "note": "the risk budget buys 45 shares ($4,977.45), over the 25% cap of $2,500.00: cut to 22",
-      "multiplier": 1.0,
-      "budget_usd": 50.0,
+      "capped_by": "risk",
+      "note": null,
+      "multiplier": 0.5,
+      "budget_usd": 25.0,
       "cap_usd": 2500.0
      },
-     "resize_rule": "if your fill differs, shares = $50.00 / (fill - $109.50), and no more than $2,500.00 of stock",
+     "resize_rule": "if your fill differs, shares = $25.00 / (fill - $109.50), and no more than $2,500.00 of stock",
      "multipliers": {
-      "regime": 1.0,
+      "regime": 0.5,
       "hazard": 1.0,
       "stop_risk": 1.0,
-      "total": 1.0
+      "total": 0.5
      },
      "hazards": [],
      "hazard_multiplier": 1.0,
@@ -3972,12 +5545,8 @@
      },
      "order_readback": "Buy 22 COIL stop limit 110.61 / 111.72 day, one-triggers-the-other sell 22 COIL stop loss 109.50 GTC",
      "fallback_line": "If your app has no stop-limit: buy 22 COIL limit $111.72 (day) with the same sell stop attached.",
-     "flags": [
-      "position_capped"
-     ],
-     "notes": [
-      "the risk budget buys 45 shares ($4,977.45), over the 25% cap of $2,500.00: cut to 22"
-     ],
+     "flags": [],
+     "notes": [],
      "exit_schedule": [
       {
        "day": 1,
@@ -5064,7 +6633,7 @@
      "price": 17.38
     }
    ],
-   "regime": "green",
+   "regime": "yellow",
    "entry_ref": 17.2,
    "shares": 144,
    "current_stop": 17.38,
@@ -5103,7 +6672,7 @@
      "price": 25.34
     }
    ],
-   "regime": "green",
+   "regime": "yellow",
    "entry_ref": 25.52,
    "shares": 97,
    "current_stop": 25.34,
@@ -5144,11 +6713,11 @@
   "note": "from bars alone: filled at the next open inside the zone (or at the trigger when the day reaches it), the published stop is one R, halves weighted, settled by day 5"
  },
  "closest_miss": {
-  "ticker": "AAPL",
-  "grade": "C",
+  "ticker": "NVDA",
+  "grade": "A+",
   "score": 10.0,
   "why": null,
-  "sentence": "AAPL came closest at C 10.0."
+  "sentence": "NVDA came closest at A+ 10.0."
  },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
@@ -5170,5 +6739,5 @@
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."
  },
- "fixture": "notrade"
+ "fixture": "yellow"
 }

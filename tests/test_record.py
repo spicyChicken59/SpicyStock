@@ -71,6 +71,19 @@ def test_an_unreadable_file_is_set_aside_not_overwritten(tmp_path):
     assert not (tmp_path / record.PICKS_FILE).exists()
 
 
+def test_the_committed_fixture_is_never_walked_as_history(tmp_path):
+    """A fresh clone carries tests/fixtures/page/full-picks.json as
+    docs/picks.json so the page has something to show; its picks are
+    invented and the first real night must start from nothing."""
+    body = {"fixture": "full", "schema_version": 1, "picks": [pick()]}
+    (tmp_path / record.PICKS_FILE).write_text(json.dumps(body))
+    rec = record.load(tmp_path)
+    assert rec == record.empty()
+    assert (tmp_path / record.PICKS_FILE).exists()          # not set aside: save() replaces it
+    record.save(record.append(rec, "2026-09-01", [pick(ticker="REAL")]), tmp_path)
+    assert [p["ticker"] for p in record.load(tmp_path)["picks"]] == ["REAL"]
+
+
 def test_a_record_without_a_picks_list_is_set_aside(tmp_path):
     (tmp_path / record.PICKS_FILE).write_text(json.dumps({"picks": "nope"}))
     rec = record.load(tmp_path)

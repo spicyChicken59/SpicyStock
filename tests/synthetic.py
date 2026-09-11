@@ -22,7 +22,7 @@ import pandas as pd
 
 KINDS = ("flat", "base", "choppy", "burst")
 
-# Column order the scanner, lynch and scorer layers all expect.
+# Column order every layer expects.
 COLUMNS = ["Open", "High", "Low", "Close", "Volume"]
 
 
@@ -72,7 +72,7 @@ def make_ohlcv(
 
     `up_run` is how many sessions in a row close up ENDING THE DAY BEFORE the
     burst, and it applies to `burst` frames only. It is a parameter and not
-    whatever the walk happened to do, because src.lynch vetoes a burst that
+    whatever the walk happened to do, because src.quality vetoes a burst that
     follows three or more up days: measured over 200 seeds, the walk produced
     three or more on 8.5% of them, so without this every end-to-end test in
     the suite held an undeclared one-in-twelve chance of scanning a universe
