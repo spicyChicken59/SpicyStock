@@ -1410,6 +1410,16 @@ async function checkMapScale(browser, base, data) {
   }
 }
 
+// one fact row's own value, with its <small> note stripped. The plan
+// disclosure names several prices in its notes, so a check that searched the
+// whole block passed while the ROW under it showed the wrong one: a mutant
+// that put the ticket's limit in the day-2 row survived exactly that way.
+async function factValue(page, label) {
+  const row = page.locator('#disc-plan .sc-facts > div').filter({ has: page.locator('dt', { hasText: new RegExp('^' + label + '$') }) }).first();
+  if (!(await row.count())) return null;
+  return row.locator('dd').first().evaluate((dd) => { const k = dd.cloneNode(true); k.querySelectorAll('small').forEach((n) => n.remove()); return k.textContent.trim(); });
+}
+
 // the four prices a burst ticket keeps apart -- the trigger, the ticket's own
 // executable limit, the outer +4% line where day 2 is spent, and the
 // indicative entry -- read back off the page, the order sheet, the clipboard
@@ -1432,8 +1442,12 @@ async function checkTicketPrices(browser, base, data) {
     await openAll(page, '#detail details');
     const plan = await text(page, '#disc-plan');
     const p = b.plan;
-    check(`${b.ticker}: the buy row names the ticket's own limit`, plan.includes(usd(p.entry_low) + ' – ' + usd(p.limit)) && plan.includes('limit ' + usd(p.limit)), plan.slice(0, 400));
-    check(`${b.ticker}: the skip row names the day-2 line`, plan.includes(usd(p.day2_spent_above)) && plan.includes('day 2 is spent'), plan.slice(0, 600));
+    // each row's OWN value, not merely a price named somewhere in the block
+    eq(`${b.ticker}: the buy row's value is the zone up to the ticket limit`, await factValue(page, 'buy'), usd(p.entry_low) + ' – ' + usd(p.limit));
+    eq(`${b.ticker}: the skip-above row's value is the day-2 line, not the limit`, await factValue(page, 'skip if it opens above'), usd(p.day2_spent_above));
+    eq(`${b.ticker}: the skip-below row's value is the failing line`, await factValue(page, 'skip if it opens below'), usd(p.skip_if_open_below));
+    eq(`${b.ticker}: the sized-at row's value is the ticket limit`, await factValue(page, 'sized at'), usd(p.limit));
+    check(`${b.ticker}: the buy row still says what the limit is`, plan.includes('limit ' + usd(p.limit)) && plan.includes('day 2 is spent'), plan.slice(0, 600));
     if (p.limit !== p.day2_spent_above) {
       check(`${b.ticker}: the two prices are told apart in words`, plan.includes('the outer threshold and not the ' + usd(p.limit) + ' ticket limit'), plan.slice(0, 800));
       check(`${b.ticker}: the narrowing is disclosed`, plan.includes(p.limit_note), plan.slice(0, 800));

@@ -691,62 +691,62 @@ and check the study's arithmetic against what the run actually withholds.
 
 ## Checkpoint, 12 Sep 2026 — the constrained ticket limit
 
-**Revision.** Branch `claude/volume-repair-mobile-entry-zo54u9` from
-`cdc9d56`. `docs/data.json`, `docs/picks.json` and the universe stay
-`origin/main`'s to the byte; nothing merged, deployed, dispatched or mailed.
+**Revision.** Branch `claude/volume-repair-mobile-entry-zo54u9` from `cdc9d56`;
+the published record stays `origin/main`'s to the byte, and nothing was merged,
+deployed, dispatched or mailed.
 
 **The decision, implemented.** The reading found 381 of 401 bursts withheld:
 the +4% line and his 4% stop line cannot both hold at the limit. The limit is
-now `plan.burst_limit()`, the day-2 ceiling narrowed to the highest price at
-which the structural stop is still inside his line,
+`plan.burst_limit()` now,
 `min(close +4%, floor_to_cents(stop / (1 - MAX_STOP_PCT/100)))`
-over `stop_candidates()`, the burst low then the midpoint — one list the
-cascade and the ceiling both read. `max_stop` is not a candidate, so nothing
-manufactures eligibility. A candidate is taken only when `stop < trigger <
-limit`: strictly under and strictly OVER, since a ceiling landing ON the buy
-stop is a ticket with no band, withheld with the setup kept and a named
-`ticket_refusal`. The ceiling floors to cents (`CENT_FLOOR_EPSILON`): rounding
-up puts the stop past the line at the highest permitted fill: at $1.14 a $1.09
-stop is 4.39% away. `burst_plan` raises rather than publish a limit its
-cascade would not hold at.
+over `stop_candidates()` — one list the cascade and the ceiling both
+read, without `max_stop`, so nothing manufactures eligibility. A candidate is taken only when `stop < trigger <
+limit` — strictly OVER too, since a ceiling landing ON the buy stop is a ticket
+with no band, withheld with a named `ticket_refusal`. The ceiling floors to
+cents (`CENT_FLOOR_EPSILON`): rounding up puts the stop past the line at the
+highest permitted fill, 4.39% away at $1.14 for a $1.09 stop. `burst_plan`
+raises rather than publish a limit its cascade would not hold.
 
 **Four prices, four rules, four fields.** `entry_ref` the trigger; `limit`
 (and `entry_high`, the zone's top) the executable limit;
 **`day2_spent_above`** the outer +4% threshold — `skip_if_open_above`, its own
 clause in `pre_open_check`, never an order's limit; `planned_entry` =
-`min(close +1%, limit)`, the targets' and exits' basis. Swept: `pick_of`
-archives the day-2 line, `pick_problem` holds `entry_high <=
-day2_spent_above`, `record.fill()` stopped calling an open over the limit a
-skip, the digest prints *Too extended over* only where the record carries a
-second price, and the buy row discloses the narrowing while the skip row and
-the order sheet name the outer rule.
+`min(close +1%, limit)`, the targets' and exits' basis. Swept through
+`pick_of`, `pick_problem`, `record.fill()`, the digest and the page.
 
 **Measured offline.** 1076 tests (32 new, over a 200-odd bar-shape sweep that
 asserts it reached every branch); 7 fixtures current, `full` reshaped to carry
 all four states — AAPL the textbook bar, once withheld, now a $126.47 ticket
-against a $129.18 day-2 line; AMD at the ceiling, NVDA capped, TSLA withheld;
-chart check 163/163; smoke 2680/2680 with `checkTicketPrices`. **Looking at
-the screenshots found what the sweep had not:** the Following card quoted
-`dated_schedule()`'s entry line, still saying "Skip it if it opens above
+under a $129.18 day-2 line; AMD at the ceiling, NVDA capped, TSLA withheld;
+chart check 163/163; smoke 2690/2690. **The
+screenshots found what the sweep had not:** `dated_schedule()`'s entry line,
+which the Following card quotes, still said "Skip it if it opens above
 $126.47" — the ticket's limit as a skip rule, the overload this milestone
-removes. It buys to the limit and skips at the day-2 line now. Of fourteen
-mutants, **`the oracle's band drifts from production` survived**: no page
-fixture has a ceiling exactly on its trigger, so the sweep carries those bars
-itself now.
+removes. It buys to the limit and skips at the day-2 line now.
 
-**The study, reconciled.** `tools/entry_limit_study.py` changed sides rather
-than compare production with itself: the retired ceiling is carried there,
-since no module has it now; production is `burst_plan()`; and an oracle re-
-derives the rule from the spec and raises if it is not what was written. Over
-the unchanged run-47 record: coverage 401; fixed 20 / 381, unchanged;
-production 378 / 23 against the proposal's 380 / 21: three rows had a ceiling
-exactly on the trigger — PENN fell through to the midpoint, SBET and JVA are
-refused. Green-night 52 / 0 / 50 / **47**, the reading's line. All 378 limits
-are under the day-2 line; 93 indicative entries are capped.
+**The mutants.** Fifteen over the code, seven over the page; two survived the
+first pass, each a hole. `the oracle's band drifts from production` lived
+because no page fixture has a ceiling landing exactly on its trigger, so the
+study's sweep carries those bars itself. `the skip row shows the limit`
+lived on the first shape this file names: the check searched the whole plan
+disclosure for the day-2 price, which the buy row's narrowing sentence names,
+so a row printing the WRONG price stayed green. Each row is read by its own
+value now (`factValue()`). Both die. A third was in the wrong harness — it
+patches `src/plan.py`, which the page smoke cannot see — and dies in pytest.
 
-**Settled.** The limit is a fillable price; the +4% is an extension rule,
-never an order term. **Not claimable:** a live fetch, Resend, Pages, CI, or
-expectancy — this changes which tickets exist, not whether they win.
+**The study, reconciled.** It changed sides rather than compare production
+with itself: it carries the retired ceiling, which no module has now, beside
+`burst_plan()` and an oracle that re-derives the rule and raises if it is not
+what was written. Over the unchanged run-47 record: coverage 401; fixed
+20 / 381, unchanged; production 378 / 23 against the proposal's 380 / 21,
+three rows having a ceiling exactly on the trigger — PENN fell to the midpoint,
+SBET and JVA are refused. Green-night 52 / 0 / 50 / **47**, the reading's
+line; 93 indicative entries are capped.
+
+**Settled.** The limit is a fillable price, the +4% an extension rule. Fix if
+it bites: `limit_narrowed` is derivable from `limit_basis`. **Not claimable:**
+a live fetch, Resend, Pages, CI, or expectancy — this changes which tickets
+exist, not whether they win.
 
 **Next action.** On the next green or yellow session dispatch the dry run and
 check the study against what the run withholds and writes.
