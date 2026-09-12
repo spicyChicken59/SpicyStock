@@ -164,7 +164,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-What is measured offline: 1028 tests, the chart check, and the page smoke
+What is measured offline: 1056 tests, the chart check, and the page smoke
 over six fixtures walked through every view, stock, search, the chooser,
 the keyboard, deep links and the old anchors, then the phone and the stale,
 failed, field-dropped and no-record states. What is NOT: the full-market
@@ -610,3 +610,85 @@ portfolio, execution.
 
 **Next action.** On the next green or yellow session dispatch the dry run and
 count the A-quality bursts withheld at the limit from its artifact.
+
+## Checkpoint, 12 Sep 2026 — the entry-limit reading
+
+`tools/entry_limit_study.py` is a reading, not a check and not a rule: it
+changes no production number, no record, no regime, no historical ticket and no
+scorecard, writes nothing but an explicit `--json`, reads no forward return, and
+is not a backtest or a claim about either ceiling. It answers the question this
+file has deferred three times.
+
+**What it compares.** The current fixed ceiling (`close + ENTRY_ABOVE_PCT`)
+against `min(entry_high, floor_to_cents(stop / (1 - MAX_STOP_PCT/100)))` over
+`plan.burst_stop`'s existing candidates in their existing order (`burst_low`,
+then `half_range`). The synthetic `max_stop` is never read, so it can rescue
+nothing; a proposal is admitted only where `stop < trigger <= limit` still holds
+— the assertion `plan.fidelity_orders` already makes — and both columns are
+sized at the effective limit under the record's OWN regime multiplier. The
+"current" column is `plan.burst_plan()` itself, and `verify()` reproduces every
+plan a record carries down to the share count, the action and the money; a drift
+is an exit code, not a printed line.
+
+**It is the same cascade at a narrower ceiling, proved per row.**
+`production_agrees()` runs `plan.burst_stop` AT the proposed limit and requires
+the same basis at the same price inside his line; the study raises rather than
+reports if it ever fails. 380 of 380 proposals agree over run 47's record. The
+first pass did not: the record carries raw four-decimal lows (ULTA 531.5625) and
+`burst_plan` rounds the bar once on the way in, so candidates priced off the
+unrounded value proposed stops a cent from the ones the run would write. The bar
+is cent-rounded once now, as `burst_plan` rounds it.
+
+**What it found on run 47** (401 bursts, session 2026-09-11, red). Coverage 401,
+missing inputs 0. The stop rule rejects **381 today and 21 under the proposal**;
+360 are rescued, 350 of them sizing to a whole share at full size. All 20
+currently eligible move, their basis going from `half_range` to the tighter
+`burst_low`. Kept apart from the stop rule, each under its own gate: the regime
+excluded all 401, grade 349, a veto 148, the budget none. Of the **52 that would
+reach the stop rule on a green night, 0 are eligible today, 50 under the
+proposal, and 47 of those size to a whole share** — that last is the number the
+ceiling decision wants, and a red night could not otherwise have shown it.
+Downstream of a narrower limit: the indicative entry (close +
+`ASSUMED_SLIPPAGE_PCT`, what `targets()` and `exit_schedule()` are quoted from)
+sits ABOVE the proposed limit for 96 of 380; the displayed +4% skip line stops
+being the limit for all 380 — `skip_if_open_above`, `pre_open_check`, the order
+disclosure, the Fidelity ticket and the Following snapshot all quote it — and 3
+proposals leave a buy stop-limit no room at all above its own trigger, 38 less
+than half a percent.
+
+**The review, worked.** A reviewer by execution returned eight findings over the
+study, every one reproduced, every one fixed. The one that mattered was a
+contract breach: "excluded by the budget" tallied every `cash_budget.cut[].kind`,
+and `withheld` IS the stop rule's own refusal — so a withheld burst was counted
+in the stop-rule block AND under the budget, the very separation the study
+exists to keep (`BUDGET_CUT_KINDS` is `slot_cap` and `equity` now; `withheld`,
+`no_new_longs` and `no_shares` are each reported under their own gate). Then:
+the current column had been sized at a neutral 1.0 while the report said it was
+the run's answer, so on a yellow night the run's 2-share ticket read 4 — both
+columns take the record's multiplier now, `verify()` holds the share count, and
+a full-size counterfactual is printed beside it and labelled; "rescued" counted
+plans the account cannot size to a whole share, which production refuses as
+`no_order`; a burst row with a bad `gain_pct` or no ticker killed the run with a
+traceback where `make_plans()` logs and skips; the degenerate band counted
+(`limit == stop`) was impossible by the admission rule while the one that
+happens (`limit == trigger`) went uncounted; a drift exited 0; and `--json`
+keyed by basename, collapsing the natural comparison of two `data.json`s. Two of
+the tests were shapes this file names: the yellow-night grade test leaned on
+yellow.json having no grade-A burst, so both grade lines selected the same rows;
+and the separation test asserted only `count(X) + count(not X) == total`, which
+holds for any predicate — the current column could have been replaced wholesale
+by the proposed one and stayed green.
+
+**Checks.** 1056 tests (28 new). Eight study mutants, all dead; two survived the
+first pass and both were holes — one mutant was equivalent until it was
+sharpened to admit `max_stop` as a candidate of its own, and `verify()` compared
+only fields independent of the bar's gain.
+
+**Settled here.** The study reads; it does not decide. Adopting the proposal is a
+method decision with two questions attached: what the indicative entry becomes
+when it is above the limit, and what the displayed skip line says when it is no
+longer the limit.
+
+**Next action.** Put this to Astra with the 52 / 0 / 50 / 47 line and those two
+questions; separately, on the next green or yellow session dispatch the dry run
+and check the study's arithmetic against what the run actually withholds.

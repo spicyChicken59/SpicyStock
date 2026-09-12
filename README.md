@@ -283,6 +283,21 @@ node tools/page_smoke.mjs --shots /tmp/shots   # the page against every fixture,
 python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
 ```
 
+One tool is not a check but a reading. `python tools/entry_limit_study.py
+[record.json ...]` compares two entry ceilings over a record that has already
+been written: the current fixed one (the close +4%, `plan.ENTRY_ABOVE_PCT`)
+against a ceiling constrained by the structural stop,
+`min(entry_high, floor_to_cents(stop / (1 - plan.MAX_STOP_PCT/100)))`, over
+`plan.burst_stop`'s existing candidates in their existing order. It never
+reads the synthetic `max_stop` fallback, so that level can rescue nothing; it
+admits a proposal only where `stop < trigger <= limit` still holds, the same
+assertion `plan.fidelity_orders` makes; and it sizes at the effective limit.
+It reports candidate coverage, today's stop-rule rejections, the proposed
+eligible cases, what remains rejected and what inputs are missing, each kept
+apart from the regime, grade and budget exclusions, and it names the fields a
+narrower limit would drag with it. It changes no rule, writes nothing, reads
+no forward return, and is not a backtest or a claim about either ceiling.
+
 The fixtures under `tests/fixtures/page/` are records the real pipeline wrote
 over a synthetic market through the same doubles the tests use, one per
 state the page can be in (`full`, `degraded`, `notrade`, `yellow`, `red`,
@@ -348,6 +363,7 @@ docs/           index.html · app.js · app.css · app-chart.js · app-map.js ·
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py
+                entry_limit_study.py (read-only: two entry ceilings over an archived record)
 .github/        evening.yml · intraday.yml · tests.yml · publish-dashboard.yml · secret-scan.yml
 ```
 
