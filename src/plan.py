@@ -76,6 +76,11 @@ ASSUMED_SLIPPAGE_PCT = 1.0
 #: limit, the highest fill it permits. A fill under it risks less than the
 #: budget; no permitted fill risks more, and none puts the stop past his line.
 SIZING_BASIS = "order_limit"
+#: (P) what sets that limit, archived so a record written under the fixed
+#: ceiling cannot be read as one written under this rule: the day-2 ceiling
+#: narrowed to the highest price at which the structural stop is still inside
+#: MAX_STOP_PCT. ``day2_ceiling`` was the rule until 12 Sep 2026.
+LIMIT_RULE = "stop_constrained"
 
 # --- the stop --------------------------------------------------------------
 #: (B) "as far as possible I try and keep stop less than 4%". Wider is
@@ -184,6 +189,10 @@ GFV_RESTRICTION_DAYS = 90
 CENTS = 2
 #: Percentages are published to two decimals.
 PCT_DECIMALS = 2
+#: (P) the slack the cent FLOOR allows before it drops a cent. Binary
+#: floating point makes 12.34 * 100 = 1233.9999999999998, and flooring that
+#: would name a ceiling a cent under the one the arithmetic gives.
+CENT_FLOOR_EPSILON = 1e-9
 
 #: The archived constants. Every upper-case number this module names is read
 #: here (a test derives that from the source), so a number added later cannot
@@ -201,6 +210,7 @@ RULES: dict[str, Any] = {
     "plan.entry_window": ENTRY_WINDOW,
     "plan.assumed_slippage_pct": ASSUMED_SLIPPAGE_PCT,
     "plan.sizing_basis": SIZING_BASIS,
+    "plan.limit_rule": LIMIT_RULE,
     "plan.max_stop_pct": MAX_STOP_PCT,
     "plan.ideal_stop_pct": IDEAL_STOP_PCT,
     "plan.stop_risk_multiplier": STOP_RISK_MULTIPLIER,
@@ -244,6 +254,7 @@ RULES: dict[str, Any] = {
     "plan.gfv_restriction_days": GFV_RESTRICTION_DAYS,
     "plan.precision.cents": CENTS,
     "plan.precision.pct_decimals": PCT_DECIMALS,
+    "plan.precision.cent_floor_epsilon": CENT_FLOOR_EPSILON,
 }
 
 #: The environment variables ``Account.from_env()`` reads, and the field each
@@ -269,6 +280,19 @@ FOLLOW_STATUSES = ("pending", "hold", "sell_half", "sell_into_strength", "exit",
 HELD_STATUSES = ("hold", "sell_half", "sell_into_strength")
 #: Where a burst stop came from.
 STOP_BASES = ("burst_low", "half_range", "max_stop")
+#: The structural stops in the reader's words, for the sentences that name
+#: one. ``max_stop`` is not here: it is a level the bar does not support and
+#: it never buys a ticket.
+STOP_BASIS_WORDS = {"burst_low": "the burst day's low", "half_range": "the bar's midpoint"}
+#: What set a burst ticket's LIMIT: the outer ceiling (the close plus
+#: ``ENTRY_ABOVE_PCT``, the price above which day 2 is spent), or the highest
+#: price at which the structural stop is still inside his ``MAX_STOP_PCT``
+#: line. The two are different prices and different rules.
+LIMIT_BASES = ("outer_ceiling", "stop_line")
+#: Why a burst carries no ticket at all: no structural stop is under the buy
+#: stop, or the ceiling each one allows leaves the ticket no band above it.
+#: The setup is kept either way.
+TICKET_REFUSALS = ("no_structural_stop", "no_room_above_the_trigger")
 #: The two kinds of pick ``follow()`` walks.
 KINDS = ("burst", "anticipation")
 #: The breadth verdict that changes an open plan's instruction.
@@ -289,6 +313,14 @@ def _money(value: float) -> float:
 
 def _pct(value: float) -> float:
     return round(float(value), PCT_DECIMALS)
+
+
+def _floor_cents(value: float) -> float:
+    """A price rounded DOWN to cents. A ceiling derived from a stop must
+    round down: rounding it up would put that stop past his line at the
+    highest fill the ticket permits, which is the one price the ceiling
+    exists to keep it inside."""
+    return math.floor(value * 100 + CENT_FLOOR_EPSILON) / 100
 
 
 def _cents_int(value: float) -> int:
@@ -650,7 +682,11 @@ def dated_schedule(p: Mapping[str, Any], session: date) -> list[dict[str, Any]]:
     """The hold as a dated timeline for a plan published after ``session``:
     day 1 is the next weekday. Every price comes off the plan (``exits``,
     ``entry_low``/``entry_high`` or ``trigger``/``limit``, ``stop``); the
-    sentences are the exit rules in his order."""
+    sentences are the exit rules in his order. The buy RANGE's top is the
+    ticket's limit and the SKIP line is ``skip_if_open_above``, the day-2
+    threshold: an open between them is not a skip, it is an open the resting
+    order cannot fill at. A plan from before the two were told apart carries
+    only ``entry_high``, which was both."""
     days = next_sessions(session, FINAL_EXIT_DAY)
     by_key = {row["key"]: row for row in p.get("exits") or []}
     stop = p.get("stop")
@@ -661,9 +697,11 @@ def dated_schedule(p: Mapping[str, Any], session: date) -> list[dict[str, Any]]:
                  f"{ENTRY_WINDOW}; {stop_words}; {cancel}.")
     else:
         lo, hi = p.get("entry_low"), p.get("entry_high")
+        spent = p.get("skip_if_open_above", hi)
         entry = (f"buy in the {ENTRY_WINDOW} inside {_usd(lo)}\u2013{_usd(hi)}; {stop_words}. "
-                 f"Skip it if it opens above {_usd(hi)} or under {_usd(lo)}; {cancel}.") \
-            if lo is not None and hi is not None else f"buy in the {ENTRY_WINDOW}; {stop_words}; {cancel}."
+                 f"Skip it if it opens above {_usd(spent)} or under {_usd(lo)}; {cancel}.") \
+            if lo is not None and hi is not None and spent is not None \
+            else f"buy in the {ENTRY_WINDOW}; {stop_words}; {cancel}."
     rows = [{"day": ENTRY_DAY, "date": days[0].isoformat(), "key": "entry", "instruction": entry}]
 
     def add(day: int, key: str, text: str) -> None:
@@ -719,6 +757,75 @@ def targets(entry_price: float, close: float) -> dict[str, Any]:
 # ------------------------------------------------------------- the stop ----
 
 
+def stop_candidates(low: float, high: float) -> list[tuple[str, float]]:
+    """The structural stops a burst bar supports, in the order ``burst_stop``
+    tries them: the burst day's low, then the bar's range midpoint. One list,
+    read by the stop cascade AND by the ticket's ceiling, so the price the
+    limit is derived from and the price the stop is set at cannot drift
+    apart. ``max_stop`` is not here: it is the cascade's synthetic fallback,
+    a level the bar does not support, and it buys nothing."""
+    return [("burst_low", low), ("half_range", _money((low + high) / 2))]
+
+
+def stop_line_ceiling(stop: float) -> float:
+    """The highest limit at which ``stop`` is still inside his MAX_STOP_PCT
+    line, in whole cents (rounded DOWN, so the rounding cannot widen it past
+    the line). Above this price the same stop is a wider risk than he takes.
+    """
+    return _floor_cents(_price(stop, "stop") / (1 - MAX_STOP_PCT / 100))
+
+
+def burst_limit(close: float, low: float, high: float) -> dict[str, Any]:
+    """The burst ticket's executable limit, or the refusal.
+
+    The outer ceiling is unchanged -- the close plus ``ENTRY_ABOVE_PCT``, the
+    price above which his day-2 follow-through is already spent -- but the
+    TICKET may not reach it. The limit is that ceiling narrowed to the
+    highest price at which the structural stop is still inside his
+    ``MAX_STOP_PCT`` line, over ``stop_candidates()`` in their existing
+    order. The synthetic ``max_stop`` is not a candidate: a level the bar
+    does not support cannot buy a ticket, so nothing here can manufacture
+    eligibility.
+
+    A candidate is taken only when it leaves a real buy stop-limit: the stop
+    strictly under the buy stop (a stop at or over the trigger is no stop),
+    and the limit strictly ABOVE it, so the ticket has a band to fill in. A
+    ceiling that lands at or under the buy stop -- or that cent rounding
+    leaves there -- is no ticket: the setup is kept and the ticket withheld.
+    The returned ``limit`` is then the outer ceiling, which is what the page
+    and the record already print for a withheld setup, and ``admitted`` is
+    False.
+    """
+    close, low, high = _price(close, "close"), _price(low, "low"), _price(high, "high")
+    trigger = close
+    outer = _at_pct(close, ENTRY_ABOVE_PCT)
+    tried: list[dict[str, Any]] = []
+    for basis, stop in stop_candidates(low, high):
+        ceiling = stop_line_ceiling(stop)
+        limit = min(outer, ceiling)
+        under, room = stop < trigger, trigger < limit
+        tried.append({"basis": basis, "stop": stop, "ceiling": ceiling, "limit": limit,
+                      "under_trigger": under, "room_above_trigger": room, "taken": under and room})
+        if under and room:
+            return {"limit": limit, "limit_basis": "stop_line" if limit < outer else "outer_ceiling",
+                    "stop_basis": basis, "stop": stop, "outer_ceiling": outer, "trigger": trigger,
+                    "narrowed": limit < outer, "admitted": True, "refusal": None, "tried": tried}
+    return {"limit": outer, "limit_basis": "outer_ceiling", "stop_basis": None, "stop": None,
+            "outer_ceiling": outer, "trigger": trigger, "narrowed": False, "admitted": False,
+            "refusal": ("no_room_above_the_trigger" if any(c["under_trigger"] for c in tried)
+                        else "no_structural_stop"),
+            "tried": tried}
+
+
+def ticket_candidate_words(cand: Mapping[str, Any], trigger: float) -> str:
+    """Why one structural stop cannot buy a ticket, in its own terms."""
+    words = STOP_BASIS_WORDS.get(cand["basis"], cand["basis"])
+    if not cand["under_trigger"]:
+        return f"{words} {_usd(cand['stop'])} is not under the {_usd(trigger)} buy stop"
+    return (f"{words} {_usd(cand['stop'])} caps the limit at {_usd(cand['ceiling'])}, "
+            f"at or under that buy stop")
+
+
 def burst_stop(entry: float, low: float, high: float, trigger: float | None = None) -> dict[str, Any]:
     """The stop cascade, measured from ``entry`` -- the ticket's limit, the
     highest fill it permits: the burst day's low, else its range midpoint,
@@ -729,7 +836,7 @@ def burst_stop(entry: float, low: float, high: float, trigger: float | None = No
     entry, low, high = _price(entry, "entry"), _price(low, "low"), _price(high, "high")
     trigger = _price(trigger, "trigger") if trigger is not None else None
     candidates = []
-    for basis, price in (("burst_low", low), ("half_range", _money((low + high) / 2))):
+    for basis, price in stop_candidates(low, high):
         pct = _pct(100 * (entry - price) / entry)
         under = trigger is None or price < trigger
         candidates.append({"basis": basis, "price": price, "pct_below_entry": pct,
@@ -793,14 +900,28 @@ def burst_plan(*, ticker: str, close: float, low: float, high: float, open_: flo
     can also use it for end of the day scanning and enter next day", taking
     only the ones that are "not extended").
 
-    The order is a buy stop-limit with the stop AT the burst close and the
-    limit at entry_high, the highest fill it permits: the stop cascade, the
-    eligibility, the stop-risk multiplier and the shares are all judged at
-    that limit, so the fixed quantity keeps the budget, the cap and his stop
-    line at every fill the ticket can take. A ticket whose stop is past his
-    line at the limit is withheld (``action`` refused, ``reason`` says why)
-    and the setup is kept for inspection. ``size_multiplier`` is the breadth
-    regime's; the hazards and the stop width multiply it.
+    The order is a buy stop-limit with the stop AT the burst close. Four
+    prices this plan keeps apart, because they are four rules:
+
+    * ``entry_ref`` -- the TRIGGER, the buy stop at the burst close.
+    * ``limit`` (and ``entry_high``, the top of the zone it can fill in) --
+      the ticket's EXECUTABLE LIMIT, from ``burst_limit()``: the outer
+      ceiling narrowed to the highest price at which the structural stop is
+      still inside his MAX_STOP_PCT line.
+    * ``day2_spent_above`` -- the OUTER extension threshold, the close plus
+      ENTRY_ABOVE_PCT, above which his day-2 follow-through is spent. It is
+      the skip rule (``skip_if_open_above``) and never the order's limit.
+    * ``planned_entry`` -- an INDICATIVE entry, the close plus
+      ASSUMED_SLIPPAGE_PCT capped at the limit, that the targets and the exit
+      levels are quoted from. Never a fill, and never the sizing price.
+
+    The stop cascade, the eligibility, the stop-risk multiplier and the
+    shares are all judged at the limit, the highest fill the ticket permits,
+    so the fixed quantity keeps the budget, the cap and his stop line at
+    every fill the ticket can take. A setup no limit above the buy stop can
+    hold a stop under is withheld (``action`` refused, ``reason`` says why)
+    and kept for inspection. ``size_multiplier`` is the breadth regime's; the
+    hazards and the stop width multiply it.
     Prices are validated as a bar: low <= open, close <= high.
     """
     if not isinstance(ticker, str) or not ticker.strip():
@@ -812,20 +933,42 @@ def burst_plan(*, ticker: str, close: float, low: float, high: float, open_: flo
         raise ValueError(f"{ticker}: open {open_} and close {close} must sit inside the bar "
                          f"{low}-{high}")
 
-    entry_ref = close
-    entry_low, entry_high = _at_pct(close, -ENTRY_BELOW_PCT), _at_pct(close, ENTRY_ABOVE_PCT)
+    entry_ref = close                                   # the buy stop: the trigger
+    entry_low = _at_pct(close, -ENTRY_BELOW_PCT)
+    # the OUTER extension threshold, and never the ticket's limit: over this
+    # price his day-2 follow-through is already spent
+    day2_spent_above = _at_pct(close, ENTRY_ABOVE_PCT)
     extended_above = _at_pct(close, SKIP_GAP_PCT)
-    limit = entry_high                                  # the highest fill the ticket permits
-    planned_entry = _at_pct(close, ASSUMED_SLIPPAGE_PCT)  # indicative: exit levels and targets
+    ticket = burst_limit(close, low, high)
+    limit = ticket["limit"]                             # the highest fill the ticket permits
+    entry_high = limit                                  # the top of the zone it can fill in
     stop_block = burst_stop(limit, low, high, trigger=close)
     stop = stop_block["stop"]
-    eligible = stop_block["stop_basis"] != "max_stop"
-    cands = stop_block["stop_candidates"]
+    eligible = ticket["admitted"]
+    if eligible and (stop_block["stop_basis"] != ticket["stop_basis"] or stop != ticket["stop"]):
+        # the ceiling is derived from a stop the cascade must reach at it. If
+        # it ever does not, the two are no longer one rule and nothing is
+        # published for this name: make_plans() logs and skips a ValueError.
+        raise ValueError(f"{ticker}: the {_usd(limit)} limit was derived from the {ticket['stop_basis']} stop "
+                         f"{_usd(ticket['stop'])} but the cascade reaches {stop_block['stop_basis']} "
+                         f"{_usd(stop)} there")
+    # an indicative entry never above the price the ticket can actually fill at
+    planned_entry = min(_at_pct(close, ASSUMED_SLIPPAGE_PCT), limit)
+    planned_entry_capped = planned_entry < _at_pct(close, ASSUMED_SLIPPAGE_PCT)
     reason = None if eligible else (
-        f"ticket withheld: at the {_usd(limit)} limit, the highest fill the ticket permits, the burst low "
-        f"{_usd(low)} is {stop_candidate_words(cands[0], limit, close)} and the bar's midpoint "
-        f"{_usd(cands[1]['price'])} is {stop_candidate_words(cands[1], limit, close)}, past his "
-        f"{MAX_STOP_PCT:g}% line either way; the setup stands, the ticket does not")
+        f"ticket withheld: no limit above the {_usd(close)} buy stop keeps a stop inside his "
+        f"{MAX_STOP_PCT:g}% line \u2014 "
+        + "; ".join(ticket_candidate_words(c, close) for c in ticket["tried"])
+        + "; the setup stands, the ticket does not")
+    limit_note = (
+        f"the ticket's limit is {_usd(limit)}: the {_usd(day2_spent_above)} day-2 ceiling "
+        f"(the close +{ENTRY_ABOVE_PCT:g}%) narrowed to the highest price at which "
+        f"{STOP_BASIS_WORDS.get(ticket['stop_basis'], ticket['stop_basis'])} {_usd(stop)} is still inside "
+        f"his {MAX_STOP_PCT:g}% line" if eligible and ticket["narrowed"] else
+        f"the ticket's limit is {_usd(limit)}, the day-2 ceiling itself (the close "
+        f"+{ENTRY_ABOVE_PCT:g}%): the stop is inside his {MAX_STOP_PCT:g}% line there" if eligible else
+        f"no ticket: the {_usd(day2_spent_above)} day-2 ceiling (the close +{ENTRY_ABOVE_PCT:g}%) is the "
+        f"outer extension threshold, not a limit this setup can be bought at")
 
     found = hazards(gain_pct, extension_pct)
     hazard_multiplier = min([h["multiplier"] for h in found], default=1.0)
@@ -840,7 +983,9 @@ def burst_plan(*, ticker: str, close: float, low: float, high: float, open_: flo
     flags = [h["kind"] for h in found]
     notes = [h["detail"] for h in found]
     if not eligible:
-        flags.append("wide_stop")
+        flags.append("wide_stop" if ticket["refusal"] == "no_structural_stop" else "no_ticket_band")
+    elif ticket["narrowed"]:
+        flags.append("limit_narrowed")
     if stop_reason:
         flags.append("risk_halved")
         notes.append(stop_reason)
@@ -855,15 +1000,26 @@ def burst_plan(*, ticker: str, close: float, low: float, high: float, open_: flo
         "ticker": ticker, "kind": "burst", "scan": scan, "action": action,
         "eligible": eligible, "reason": reason,
         "entry_ref": entry_ref, "entry_low": entry_low, "entry_high": entry_high, "limit": limit,
-        "skip_if_open_above": entry_high, "skip_if_open_below": entry_low,
+        "limit_basis": ticket["limit_basis"], "limit_narrowed": ticket["narrowed"], "limit_note": limit_note,
+        "day2_spent_above": day2_spent_above, "day2_spent_pct": ENTRY_ABOVE_PCT,
+        "ticket_refusal": ticket["refusal"],
+        "skip_if_open_above": day2_spent_above, "skip_if_open_below": entry_low,
         "extended_above": extended_above, "entry_window": ENTRY_WINDOW,
         "pre_open_check": (f"before the open: if the pre-market print is under {_usd(entry_low)} the burst "
-                           f"is failing, over {_usd(entry_high)} day 2 is spent, and over "
-                           f"{_usd(extended_above)} (+{SKIP_GAP_PCT:g}%) he would be selling; do not "
-                           f"place the order in any of the three"),
+                           f"is failing, over {_usd(day2_spent_above)} (+{ENTRY_ABOVE_PCT:g}%) day 2 is "
+                           f"spent, and over {_usd(extended_above)} (+{SKIP_GAP_PCT:g}%) he would be "
+                           f"selling; do not place the order in any of the three"
+                           + (f". The ticket's own limit is {_usd(limit)}"
+                              + (", under that day-2 line" if ticket["narrowed"] else ", the day-2 line itself")
+                              + ": an open above it does not fill at the open, though a resting order stays "
+                                "live" if eligible else ". There is no ticket to place")),
         "planned_entry": planned_entry, "assumed_slippage_pct": ASSUMED_SLIPPAGE_PCT,
-        "planned_entry_note": (f"an indicative entry, the close plus {ASSUMED_SLIPPAGE_PCT:g}%, that the exit "
-                               f"levels and targets are quoted from; not a fill, and not the sizing price"),
+        "planned_entry_capped": planned_entry_capped,
+        "planned_entry_note": (f"an indicative entry, the close plus {ASSUMED_SLIPPAGE_PCT:g}%"
+                               + (f" capped at the {_usd(limit)} limit, which it would otherwise sit above"
+                                  if planned_entry_capped else "")
+                               + ", that the exit levels and targets are quoted from; not a fill, and not "
+                                 "the sizing price"),
         **stop_block,
         **_sizing_block(sizing, stop),
         "multipliers": {"regime": regime_multiplier, "hazard": hazard_multiplier,

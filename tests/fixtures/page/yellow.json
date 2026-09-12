@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "46fceafaaffd"
+  "rules_version": "4e3d4ead892c"
  },
  "cover": {
   "h1": "Trade small. 1 A+ burst.",
@@ -219,6 +219,7 @@
    "entry_window": "first 30 minutes",
    "assumed_slippage_pct": 1.0,
    "sizing_basis": "order_limit",
+   "limit_rule": "stop_constrained",
    "max_stop_pct": 4.0,
    "ideal_stop_pct": 2.0,
    "stop_risk_multiplier": 0.5,
@@ -261,7 +262,8 @@
    "gfv_window_months": 12,
    "gfv_restriction_days": 90,
    "precision.cents": 2,
-   "precision.pct_decimals": 2
+   "precision.pct_decimals": 2,
+   "precision.cent_floor_epsilon": 1e-09
   },
   "watchlist": {
    "adr_sessions": 20,
@@ -642,17 +644,17 @@
    "ticker": "AAPL",
    "name": "",
    "flags": [],
-   "scan": "burst",
+   "scan": "both",
    "close": 124.21,
    "prev_close": 117.18,
-   "open": 123.95,
-   "high": 124.23,
-   "low": 123.92,
+   "open": 118.96,
+   "high": 124.49,
+   "low": 118.35,
    "gain_pct": 6.0,
    "volume": 3000000.0,
    "volume_vs_prior": 5.0,
    "dollar_volume": 372630000,
-   "dollar_move": null,
+   "dollar_move": 5.25,
    "extension_pct": 5.2,
    "quality": {
     "checks": [
@@ -723,18 +725,18 @@
       "label": "narrow or negative day before",
       "values": {
        "prior_day_pct": -0.17,
-       "prior_range_pct": 0.3,
+       "prior_range_pct": 0.8,
        "negative": true,
        "narrow": true,
-       "median_range_pct": 0.3
+       "median_range_pct": 1.0
       },
       "value": -0.17,
-      "display": "prior_day_pct=-0.17 prior_range_pct=0.3 negative=True narrow=True median_range_pct=0.3",
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=1.0",
       "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
       "passed": true,
       "pass": true,
       "marginal": false,
-      "a_plus": false,
+      "a_plus": true,
       "note": "",
       "partial": false,
       "status": "PASS"
@@ -747,13 +749,13 @@
        "base_sessions": 17,
        "breakdowns": 0,
        "bursts_in_base": 0,
-       "giveback": 0.18,
-       "tightness": 0.25,
+       "giveback": 0.19,
+       "tightness": 0.64,
        "base_volume_vs_leg": 0.41,
        "base_volume_vs_avg": 0.59
       },
       "value": 17,
-      "display": "base_sessions=17 breakdowns=0 bursts_in_base=0 giveback=0.18 tightness=0.25 base_volume_vs_leg=0.41 base_volume_vs_avg=0.59",
+      "display": "base_sessions=17 breakdowns=0 bursts_in_base=0 giveback=0.19 tightness=0.64 base_volume_vs_leg=0.41 base_volume_vs_avg=0.59",
       "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
       "passed": true,
       "pass": true,
@@ -768,11 +770,11 @@
       "letter": "H",
       "label": "close near the high",
       "values": {
-       "close_pos": 0.94,
+       "close_pos": 0.95,
        "close_above_open": true
       },
-      "value": 0.94,
-      "display": "close_pos=0.94 close_above_open=True",
+      "value": 0.95,
+      "display": "close_pos=0.95 close_above_open=True",
       "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
       "passed": true,
       "pass": true,
@@ -787,20 +789,20 @@
       "letter": "RE",
       "label": "range expansion",
       "values": {
-       "vs_prior_5": 0.67,
-       "vs_prior_10": 0.67,
-       "bar_range_pct": 0.2
+       "vs_prior_5": 4.9,
+       "vs_prior_10": 4.9,
+       "bar_range_pct": 4.9
       },
-      "value": 0.67,
-      "display": "vs_prior_5=0.67 vs_prior_10=0.67 bar_range_pct=0.2",
+      "value": 4.9,
+      "display": "vs_prior_5=4.9 vs_prior_10=4.9 bar_range_pct=4.9",
       "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
-      "passed": false,
-      "pass": false,
+      "passed": true,
+      "pass": true,
       "marginal": false,
-      "a_plus": false,
-      "note": "the burst bar is not the widest of the last five",
+      "a_plus": true,
+      "note": "",
       "partial": false,
-      "status": "FAIL"
+      "status": "PASS"
      },
      {
       "key": "volume",
@@ -827,7 +829,7 @@
     "vetoes": [],
     "passes": 6,
     "of": 6,
-    "a_plus_count": 6,
+    "a_plus_count": 8,
     "score": 10.0,
     "grade": "A+",
     "reclass": null,
@@ -841,8 +843,8 @@
      "end_index": 111,
      "sessions": 17,
      "high": 121.09,
-     "low": 117.12,
-     "depth_pct": 3.3,
+     "low": 116.83,
+     "depth_pct": 3.5,
      "breakdown_dates": []
     },
     "leg": {
@@ -857,9 +859,9 @@
     },
     "burst": {
      "gain_pct": 6.0,
-     "gap_pct": 5.8,
-     "bar_range_pct": 0.2,
-     "close_pos": 0.94,
+     "gap_pct": 1.5,
+     "bar_range_pct": 4.9,
+     "close_pos": 0.95,
      "volume_vs_prior": 5.0,
      "volume_vs_avg50": 2.96,
      "volume_rank_60": 1
@@ -888,61 +890,68 @@
     "reason": null,
     "entry_ref": 124.21,
     "entry_low": 121.73,
-    "entry_high": 129.18,
-    "limit": 129.18,
+    "entry_high": 126.47,
+    "limit": 126.47,
+    "limit_basis": "stop_line",
+    "limit_narrowed": true,
+    "limit_note": "the ticket's limit is $126.47: the $129.18 day-2 ceiling (the close +4%) narrowed to the highest price at which the bar's midpoint $121.42 is still inside his 4% line",
+    "day2_spent_above": 129.18,
+    "day2_spent_pct": 4.0,
+    "ticket_refusal": null,
     "skip_if_open_above": 129.18,
     "skip_if_open_below": 121.73,
     "extended_above": 134.15,
     "entry_window": "first 30 minutes",
-    "pre_open_check": "before the open: if the pre-market print is under $121.73 the burst is failing, over $129.18 day 2 is spent, and over $134.15 (+8%) he would be selling; do not place the order in any of the three",
+    "pre_open_check": "before the open: if the pre-market print is under $121.73 the burst is failing, over $129.18 (+4%) day 2 is spent, and over $134.15 (+8%) he would be selling; do not place the order in any of the three. The ticket's own limit is $126.47, under that day-2 line: an open above it does not fill at the open, though a resting order stays live",
     "planned_entry": 125.45,
     "assumed_slippage_pct": 1.0,
+    "planned_entry_capped": false,
     "planned_entry_note": "an indicative entry, the close plus 1%, that the exit levels and targets are quoted from; not a fill, and not the sizing price",
-    "stop": 124.08,
+    "stop": 121.42,
     "stop_basis": "half_range",
-    "stop_pct": 3.95,
+    "stop_pct": 3.99,
     "stop_note": null,
     "stop_candidates": [
      {
       "basis": "burst_low",
-      "price": 123.92,
-      "pct_below_entry": 4.07,
+      "price": 118.35,
+      "pct_below_entry": 6.42,
       "within_max": false,
       "under_trigger": true
      },
      {
       "basis": "half_range",
-      "price": 124.08,
-      "pct_below_entry": 3.95,
+      "price": 121.42,
+      "pct_below_entry": 3.99,
       "within_max": true,
       "under_trigger": true
      }
     ],
-    "risk_per_share": 5.1,
+    "risk_per_share": 5.05,
     "shares": 2,
-    "position_usd": 258.36,
-    "position_pct": 2.58,
-    "risk_usd": 10.2,
+    "position_usd": 252.94,
+    "position_pct": 2.53,
+    "risk_usd": 10.1,
     "capped_by": "risk",
     "size_multiplier": 0.25,
     "sizing": {
      "shares": 2,
-     "position_usd": 258.36,
-     "position_pct": 2.58,
-     "risk_usd": 10.2,
-     "risk_per_share": 5.1,
-     "stop_pct": 3.95,
+     "position_usd": 252.94,
+     "position_pct": 2.53,
+     "risk_usd": 10.1,
+     "risk_per_share": 5.05,
+     "stop_pct": 3.99,
      "capped_by": "risk",
      "note": null,
      "multiplier": 0.25,
      "budget_usd": 12.5,
      "cap_usd": 2500.0,
-     "price": 129.18
+     "price": 126.47
     },
-    "sizing_price": 129.18,
+    "sizing_price": 126.47,
     "sizing_basis": "order_limit",
-    "sizing_note": "sized at the $129.18 limit, the highest fill the ticket permits: 2 shares put $10.20 between that fill and the $124.08 stop, planned price-to-stop risk, not a maximum loss",
-    "resize_rule": "if your fill differs, shares = $12.50 / (fill - $124.08), and no more than $2,500.00 of stock",
+    "sizing_note": "sized at the $126.47 limit, the highest fill the ticket permits: 2 shares put $10.10 between that fill and the $121.42 stop, planned price-to-stop risk, not a maximum loss",
+    "resize_rule": "if your fill differs, shares = $12.50 / (fill - $121.42), and no more than $2,500.00 of stock",
     "multipliers": {
      "regime": 0.5,
      "hazard": 1.0,
@@ -952,7 +961,7 @@
     "hazards": [],
     "hazard_multiplier": 1.0,
     "stop_risk_multiplier": 0.5,
-    "stop_risk_reason": "the stop is 3.95% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5",
+    "stop_risk_reason": "the stop is 3.99% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5",
     "extension_pct": 5.2,
     "targets": {
      "low_pct": 8.0,
@@ -989,7 +998,7 @@
       "key": "entry_day_low",
       "source": "B",
       "when": "the close of day 1",
-      "rule": "the stop rises to the entry day's low if that is above $124.08",
+      "rule": "the stop rises to the entry day's low if that is above $121.42",
       "price": null
      },
      {
@@ -1023,9 +1032,9 @@
      {
       "key": "stop",
       "source": "B",
-      "when": "the protective stop at $124.08 is a stop-market order, live intraday from the moment the buy fills",
+      "when": "the protective stop at $121.42 is a stop-market order, live intraday from the moment the buy fills",
       "rule": "if it is somehow not filled, exit on any close below it",
-      "price": 124.08
+      "price": 121.42
      },
      {
       "key": "no_breakeven",
@@ -1035,54 +1044,55 @@
       "price": null
      }
     ],
-    "order_line": "Buy 2 AAPL stop-limit: stop $124.21 limit $129.18, day · OTO sell 2 AAPL stop-loss $124.08 GTC",
+    "order_line": "Buy 2 AAPL stop-limit: stop $124.21 limit $126.47, day · OTO sell 2 AAPL stop-loss $121.42 GTC",
     "order_json": {
      "symbol": "AAPL",
      "action": "buy",
      "quantity": 2,
      "order_type": "stop_limit",
      "stop_price": 124.21,
-     "limit_price": 129.18,
+     "limit_price": 126.47,
      "time_in_force": "day",
      "conditional": "one_triggers_the_other",
      "then": {
       "action": "sell",
       "quantity": 2,
       "order_type": "stop",
-      "stop_price": 124.08,
+      "stop_price": 121.42,
       "time_in_force": "gtc"
      }
     },
-    "order_readback": "Buy 2 AAPL stop limit 124.21 / 129.18 day, one-triggers-the-other sell 2 AAPL stop loss 124.08 GTC",
+    "order_readback": "Buy 2 AAPL stop limit 124.21 / 126.47 day, one-triggers-the-other sell 2 AAPL stop loss 121.42 GTC",
     "order_terms": [
      "A day order rests until the close unless you cancel it. The plan's entry is the first 30 minutes: if it has not filled by then, cancel it yourself; SpicyStock places and cancels nothing.",
-     "An open above the $129.18 limit does not fill at the open, but the resting order stays live and can fill on a pullback under $129.18 later in the day: cancel it rather than let it.",
+     "An open above the $126.47 limit does not fill at the open, but the resting order stays live and can fill on a pullback under $126.47 later in the day: cancel it rather than let it.",
      "An open under $121.73 is the burst failing: do not place the order, or cancel it; the buy stop at $124.21 would still trigger if the price recovered.",
-     "The sell stop at $124.08 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill."
+     "The sell stop at $121.42 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill."
     ],
     "burst": {
      "close": 124.21,
-     "low": 123.92,
-     "high": 124.23,
-     "open": 123.95,
+     "low": 118.35,
+     "high": 124.49,
+     "open": 118.96,
      "prev_close": 117.18,
      "gain_pct": 6.0,
-     "gap_pct": 5.78,
-     "dollar_move": 0.26,
-     "close_in_range_pct": 93.55
+     "gap_pct": 1.52,
+     "dollar_move": 5.25,
+     "close_in_range_pct": 95.44
     },
     "flags": [
+     "limit_narrowed",
      "risk_halved"
     ],
     "notes": [
-     "the stop is 3.95% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5"
+     "the stop is 3.99% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5"
     ],
     "exit_schedule": [
      {
       "day": 1,
       "date": "2026-09-11",
       "key": "entry",
-      "instruction": "buy in the first 30 minutes inside $121.73–$129.18; the sell stop at $124.08 is live from the fill. Skip it if it opens above $129.18 or under $121.73; cancel the day order yourself if it has not filled by the end of the first 30 minutes."
+      "instruction": "buy in the first 30 minutes inside $121.73–$126.47; the sell stop at $121.42 is live from the fill. Skip it if it opens above $129.18 or under $121.73; cancel the day order yourself if it has not filled by the end of the first 30 minutes."
      },
      {
       "day": 1,
@@ -1094,7 +1104,7 @@
       "day": 1,
       "date": "2026-09-11",
       "key": "entry_day_low",
-      "instruction": "at the close of day 1: the stop rises to the entry day's low if that is above $124.08."
+      "instruction": "at the close of day 1: the stop rises to the entry day's low if that is above $121.42."
      },
      {
       "day": 2,
@@ -1899,149 +1909,149 @@
     {
      "date": "2026-08-18",
      "o": 120.49,
-     "h": 120.58,
-     "l": 117.49,
+     "h": 120.96,
+     "l": 117.11,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-19",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-20",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-21",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-24",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-25",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-26",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-27",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-28",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-31",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-01",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-02",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-03",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-04",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-07",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-08",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-09",
      "o": 117.38,
-     "h": 117.44,
-     "l": 117.12,
+     "h": 117.73,
+     "l": 116.83,
      "c": 117.18,
      "v": 600000.0
     },
     {
      "date": "2026-09-10",
-     "o": 123.95,
-     "h": 124.23,
-     "l": 123.92,
+     "o": 118.96,
+     "h": 124.49,
+     "l": 118.35,
      "c": 124.21,
      "v": 3000000.0
     }
    ],
-   "summary": "AAPL: +6.0% on 5.0× volume out of a base 3.3% deep. Buy 121.73–129.18 tomorrow in the first 30 minutes, stop 124.08, aim 135.49–150.54. A+ 10.0, 6 of 6 criteria."
+   "summary": "AAPL: +6.0% on 5.0× volume out of a base 3.5% deep. Buy 121.73–126.47 tomorrow in the first 30 minutes, stop 121.42, aim 135.49–150.54. A+ 10.0, 6 of 6 criteria."
   },
   {
    "ticker": "AMD",
@@ -2050,9 +2060,9 @@
    "scan": "burst",
    "close": 123.27,
    "prev_close": 117.18,
-   "open": 123.02,
-   "high": 123.3,
-   "low": 122.99,
+   "open": 123.12,
+   "high": 123.28,
+   "low": 123.1,
    "gain_pct": 5.2,
    "volume": 2600000.0,
    "volume_vs_prior": 4.3333,
@@ -2173,11 +2183,11 @@
       "letter": "H",
       "label": "close near the high",
       "values": {
-       "close_pos": 0.9,
+       "close_pos": 0.94,
        "close_above_open": true
       },
-      "value": 0.9,
-      "display": "close_pos=0.9 close_above_open=True",
+      "value": 0.94,
+      "display": "close_pos=0.94 close_above_open=True",
       "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
       "passed": true,
       "pass": true,
@@ -2192,20 +2202,20 @@
       "letter": "RE",
       "label": "range expansion",
       "values": {
-       "vs_prior_5": 1.0,
-       "vs_prior_10": 1.0,
-       "bar_range_pct": 0.3
+       "vs_prior_5": 0.33,
+       "vs_prior_10": 0.33,
+       "bar_range_pct": 0.1
       },
-      "value": 1.0,
-      "display": "vs_prior_5=1.0 vs_prior_10=1.0 bar_range_pct=0.3",
+      "value": 0.33,
+      "display": "vs_prior_5=0.33 vs_prior_10=0.33 bar_range_pct=0.1",
       "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
-      "passed": true,
-      "pass": true,
+      "passed": false,
+      "pass": false,
       "marginal": false,
-      "a_plus": true,
-      "note": "",
+      "a_plus": false,
+      "note": "the burst bar is not the widest of the last five",
       "partial": false,
-      "status": "PASS"
+      "status": "FAIL"
      },
      {
       "key": "volume",
@@ -2232,7 +2242,7 @@
     "vetoes": [],
     "passes": 6,
     "of": 6,
-    "a_plus_count": 7,
+    "a_plus_count": 6,
     "score": 10.0,
     "grade": "A+",
     "reclass": null,
@@ -2262,9 +2272,9 @@
     },
     "burst": {
      "gain_pct": 5.2,
-     "gap_pct": 5.0,
-     "bar_range_pct": 0.3,
-     "close_pos": 0.9,
+     "gap_pct": 5.1,
+     "bar_range_pct": 0.1,
+     "close_pos": 0.94,
      "volume_vs_prior": 4.33,
      "volume_vs_avg50": 2.49,
      "volume_rank_60": 1
@@ -2295,48 +2305,55 @@
     "entry_low": 120.8,
     "entry_high": 128.2,
     "limit": 128.2,
+    "limit_basis": "outer_ceiling",
+    "limit_narrowed": false,
+    "limit_note": "the ticket's limit is $128.20, the day-2 ceiling itself (the close +4%): the stop is inside his 4% line there",
+    "day2_spent_above": 128.2,
+    "day2_spent_pct": 4.0,
+    "ticket_refusal": null,
     "skip_if_open_above": 128.2,
     "skip_if_open_below": 120.8,
     "extended_above": 133.13,
     "entry_window": "first 30 minutes",
-    "pre_open_check": "before the open: if the pre-market print is under $120.80 the burst is failing, over $128.20 day 2 is spent, and over $133.13 (+8%) he would be selling; do not place the order in any of the three",
+    "pre_open_check": "before the open: if the pre-market print is under $120.80 the burst is failing, over $128.20 (+4%) day 2 is spent, and over $133.13 (+8%) he would be selling; do not place the order in any of the three. The ticket's own limit is $128.20, the day-2 line itself: an open above it does not fill at the open, though a resting order stays live",
     "planned_entry": 124.5,
     "assumed_slippage_pct": 1.0,
+    "planned_entry_capped": false,
     "planned_entry_note": "an indicative entry, the close plus 1%, that the exit levels and targets are quoted from; not a fill, and not the sizing price",
-    "stop": 123.14,
-    "stop_basis": "half_range",
-    "stop_pct": 3.95,
+    "stop": 123.1,
+    "stop_basis": "burst_low",
+    "stop_pct": 3.98,
     "stop_note": null,
     "stop_candidates": [
      {
       "basis": "burst_low",
-      "price": 122.99,
-      "pct_below_entry": 4.06,
-      "within_max": false,
+      "price": 123.1,
+      "pct_below_entry": 3.98,
+      "within_max": true,
       "under_trigger": true
      },
      {
       "basis": "half_range",
-      "price": 123.14,
-      "pct_below_entry": 3.95,
+      "price": 123.19,
+      "pct_below_entry": 3.91,
       "within_max": true,
       "under_trigger": true
      }
     ],
-    "risk_per_share": 5.06,
+    "risk_per_share": 5.1,
     "shares": 2,
     "position_usd": 256.4,
     "position_pct": 2.56,
-    "risk_usd": 10.12,
+    "risk_usd": 10.2,
     "capped_by": "risk",
     "size_multiplier": 0.25,
     "sizing": {
      "shares": 2,
      "position_usd": 256.4,
      "position_pct": 2.56,
-     "risk_usd": 10.12,
-     "risk_per_share": 5.06,
-     "stop_pct": 3.95,
+     "risk_usd": 10.2,
+     "risk_per_share": 5.1,
+     "stop_pct": 3.98,
      "capped_by": "risk",
      "note": null,
      "multiplier": 0.25,
@@ -2346,8 +2363,8 @@
     },
     "sizing_price": 128.2,
     "sizing_basis": "order_limit",
-    "sizing_note": "sized at the $128.20 limit, the highest fill the ticket permits: 2 shares put $10.12 between that fill and the $123.14 stop, planned price-to-stop risk, not a maximum loss",
-    "resize_rule": "if your fill differs, shares = $12.50 / (fill - $123.14), and no more than $2,500.00 of stock",
+    "sizing_note": "sized at the $128.20 limit, the highest fill the ticket permits: 2 shares put $10.20 between that fill and the $123.10 stop, planned price-to-stop risk, not a maximum loss",
+    "resize_rule": "if your fill differs, shares = $12.50 / (fill - $123.10), and no more than $2,500.00 of stock",
     "multipliers": {
      "regime": 0.5,
      "hazard": 1.0,
@@ -2357,7 +2374,7 @@
     "hazards": [],
     "hazard_multiplier": 1.0,
     "stop_risk_multiplier": 0.5,
-    "stop_risk_reason": "the stop is 3.95% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5",
+    "stop_risk_reason": "the stop is 3.98% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5",
     "extension_pct": 4.9,
     "targets": {
      "low_pct": 8.0,
@@ -2394,7 +2411,7 @@
       "key": "entry_day_low",
       "source": "B",
       "when": "the close of day 1",
-      "rule": "the stop rises to the entry day's low if that is above $123.14",
+      "rule": "the stop rises to the entry day's low if that is above $123.10",
       "price": null
      },
      {
@@ -2428,9 +2445,9 @@
      {
       "key": "stop",
       "source": "B",
-      "when": "the protective stop at $123.14 is a stop-market order, live intraday from the moment the buy fills",
+      "when": "the protective stop at $123.10 is a stop-market order, live intraday from the moment the buy fills",
       "rule": "if it is somehow not filled, exit on any close below it",
-      "price": 123.14
+      "price": 123.1
      },
      {
       "key": "no_breakeven",
@@ -2440,7 +2457,7 @@
       "price": null
      }
     ],
-    "order_line": "Buy 2 AMD stop-limit: stop $123.27 limit $128.20, day · OTO sell 2 AMD stop-loss $123.14 GTC",
+    "order_line": "Buy 2 AMD stop-limit: stop $123.27 limit $128.20, day · OTO sell 2 AMD stop-loss $123.10 GTC",
     "order_json": {
      "symbol": "AMD",
      "action": "buy",
@@ -2454,40 +2471,40 @@
       "action": "sell",
       "quantity": 2,
       "order_type": "stop",
-      "stop_price": 123.14,
+      "stop_price": 123.1,
       "time_in_force": "gtc"
      }
     },
-    "order_readback": "Buy 2 AMD stop limit 123.27 / 128.20 day, one-triggers-the-other sell 2 AMD stop loss 123.14 GTC",
+    "order_readback": "Buy 2 AMD stop limit 123.27 / 128.20 day, one-triggers-the-other sell 2 AMD stop loss 123.10 GTC",
     "order_terms": [
      "A day order rests until the close unless you cancel it. The plan's entry is the first 30 minutes: if it has not filled by then, cancel it yourself; SpicyStock places and cancels nothing.",
      "An open above the $128.20 limit does not fill at the open, but the resting order stays live and can fill on a pullback under $128.20 later in the day: cancel it rather than let it.",
      "An open under $120.80 is the burst failing: do not place the order, or cancel it; the buy stop at $123.27 would still trigger if the price recovered.",
-     "The sell stop at $123.14 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill."
+     "The sell stop at $123.10 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill."
     ],
     "burst": {
      "close": 123.27,
-     "low": 122.99,
-     "high": 123.3,
-     "open": 123.02,
+     "low": 123.1,
+     "high": 123.28,
+     "open": 123.12,
      "prev_close": 117.18,
      "gain_pct": 5.2,
-     "gap_pct": 4.98,
-     "dollar_move": 0.25,
-     "close_in_range_pct": 90.32
+     "gap_pct": 5.07,
+     "dollar_move": 0.15,
+     "close_in_range_pct": 94.44
     },
     "flags": [
      "risk_halved"
     ],
     "notes": [
-     "the stop is 3.95% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5"
+     "the stop is 3.98% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5"
     ],
     "exit_schedule": [
      {
       "day": 1,
       "date": "2026-09-11",
       "key": "entry",
-      "instruction": "buy in the first 30 minutes inside $120.80–$128.20; the sell stop at $123.14 is live from the fill. Skip it if it opens above $128.20 or under $120.80; cancel the day order yourself if it has not filled by the end of the first 30 minutes."
+      "instruction": "buy in the first 30 minutes inside $120.80–$128.20; the sell stop at $123.10 is live from the fill. Skip it if it opens above $128.20 or under $120.80; cancel the day order yourself if it has not filled by the end of the first 30 minutes."
      },
      {
       "day": 1,
@@ -2499,7 +2516,7 @@
       "day": 1,
       "date": "2026-09-11",
       "key": "entry_day_low",
-      "instruction": "at the close of day 1: the stop rises to the entry day's low if that is above $123.14."
+      "instruction": "at the close of day 1: the stop rises to the entry day's low if that is above $123.10."
      },
      {
       "day": 2,
@@ -3407,30 +3424,30 @@
     },
     {
      "date": "2026-09-10",
-     "o": 123.02,
-     "h": 123.3,
-     "l": 122.99,
+     "o": 123.12,
+     "h": 123.28,
+     "l": 123.1,
      "c": 123.27,
      "v": 2600000.0
     }
    ],
-   "summary": "AMD: +5.2% on 4.3× volume out of a base 3.3% deep. Buy 120.80–128.20 tomorrow in the first 30 minutes, stop 123.14, aim 134.46–149.40. A+ 10.0, 6 of 6 criteria."
+   "summary": "AMD: +5.2% on 4.3× volume out of a base 3.3% deep. Buy 120.80–128.20 tomorrow in the first 30 minutes, stop 123.10, aim 134.46–149.40. A+ 10.0, 6 of 6 criteria."
   },
   {
    "ticker": "NVDA",
    "name": "",
    "flags": [],
-   "scan": "burst",
+   "scan": "both",
    "close": 126.88,
    "prev_close": 118.14,
-   "open": 126.64,
-   "high": 126.93,
-   "low": 126.61,
+   "open": 123.46,
+   "high": 127.57,
+   "low": 123.0,
    "gain_pct": 7.4,
    "volume": 3400000.0,
    "volume_vs_prior": 5.6667,
    "dollar_volume": 431392000,
-   "dollar_move": null,
+   "dollar_move": 3.42,
    "extension_pct": 6.8,
    "quality": {
     "checks": [
@@ -3546,11 +3563,11 @@
       "letter": "H",
       "label": "close near the high",
       "values": {
-       "close_pos": 0.84,
+       "close_pos": 0.85,
        "close_above_open": true
       },
-      "value": 0.84,
-      "display": "close_pos=0.84 close_above_open=True",
+      "value": 0.85,
+      "display": "close_pos=0.85 close_above_open=True",
       "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
       "passed": true,
       "pass": true,
@@ -3565,12 +3582,12 @@
       "letter": "RE",
       "label": "range expansion",
       "values": {
-       "vs_prior_5": 1.0,
-       "vs_prior_10": 1.0,
-       "bar_range_pct": 0.3
+       "vs_prior_5": 12.0,
+       "vs_prior_10": 12.0,
+       "bar_range_pct": 3.6
       },
-      "value": 1.0,
-      "display": "vs_prior_5=1.0 vs_prior_10=1.0 bar_range_pct=0.3",
+      "value": 12.0,
+      "display": "vs_prior_5=12.0 vs_prior_10=12.0 bar_range_pct=3.6",
       "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
       "passed": true,
       "pass": true,
@@ -3635,9 +3652,9 @@
     },
     "burst": {
      "gain_pct": 7.4,
-     "gap_pct": 7.2,
-     "bar_range_pct": 0.3,
-     "close_pos": 0.84,
+     "gap_pct": 4.5,
+     "bar_range_pct": 3.6,
+     "close_pos": 0.85,
      "volume_vs_prior": 5.67,
      "volume_vs_avg50": 3.44,
      "volume_rank_60": 1
@@ -3666,61 +3683,68 @@
     "reason": null,
     "entry_ref": 126.88,
     "entry_low": 124.34,
-    "entry_high": 131.96,
-    "limit": 131.96,
+    "entry_high": 128.12,
+    "limit": 128.12,
+    "limit_basis": "stop_line",
+    "limit_narrowed": true,
+    "limit_note": "the ticket's limit is $128.12: the $131.96 day-2 ceiling (the close +4%) narrowed to the highest price at which the burst day's low $123.00 is still inside his 4% line",
+    "day2_spent_above": 131.96,
+    "day2_spent_pct": 4.0,
+    "ticket_refusal": null,
     "skip_if_open_above": 131.96,
     "skip_if_open_below": 124.34,
     "extended_above": 137.03,
     "entry_window": "first 30 minutes",
-    "pre_open_check": "before the open: if the pre-market print is under $124.34 the burst is failing, over $131.96 day 2 is spent, and over $137.03 (+8%) he would be selling; do not place the order in any of the three",
-    "planned_entry": 128.15,
+    "pre_open_check": "before the open: if the pre-market print is under $124.34 the burst is failing, over $131.96 (+4%) day 2 is spent, and over $137.03 (+8%) he would be selling; do not place the order in any of the three. The ticket's own limit is $128.12, under that day-2 line: an open above it does not fill at the open, though a resting order stays live",
+    "planned_entry": 128.12,
     "assumed_slippage_pct": 1.0,
-    "planned_entry_note": "an indicative entry, the close plus 1%, that the exit levels and targets are quoted from; not a fill, and not the sizing price",
-    "stop": 126.77,
-    "stop_basis": "half_range",
-    "stop_pct": 3.93,
+    "planned_entry_capped": true,
+    "planned_entry_note": "an indicative entry, the close plus 1% capped at the $128.12 limit, which it would otherwise sit above, that the exit levels and targets are quoted from; not a fill, and not the sizing price",
+    "stop": 123.0,
+    "stop_basis": "burst_low",
+    "stop_pct": 4.0,
     "stop_note": null,
     "stop_candidates": [
      {
       "basis": "burst_low",
-      "price": 126.61,
-      "pct_below_entry": 4.05,
-      "within_max": false,
+      "price": 123.0,
+      "pct_below_entry": 4.0,
+      "within_max": true,
       "under_trigger": true
      },
      {
       "basis": "half_range",
-      "price": 126.77,
-      "pct_below_entry": 3.93,
+      "price": 125.28,
+      "pct_below_entry": 2.22,
       "within_max": true,
       "under_trigger": true
      }
     ],
-    "risk_per_share": 5.19,
+    "risk_per_share": 5.12,
     "shares": 2,
-    "position_usd": 263.92,
-    "position_pct": 2.64,
-    "risk_usd": 10.38,
+    "position_usd": 256.24,
+    "position_pct": 2.56,
+    "risk_usd": 10.24,
     "capped_by": "risk",
     "size_multiplier": 0.25,
     "sizing": {
      "shares": 2,
-     "position_usd": 263.92,
-     "position_pct": 2.64,
-     "risk_usd": 10.38,
-     "risk_per_share": 5.19,
-     "stop_pct": 3.93,
+     "position_usd": 256.24,
+     "position_pct": 2.56,
+     "risk_usd": 10.24,
+     "risk_per_share": 5.12,
+     "stop_pct": 4.0,
      "capped_by": "risk",
      "note": null,
      "multiplier": 0.25,
      "budget_usd": 12.5,
      "cap_usd": 2500.0,
-     "price": 131.96
+     "price": 128.12
     },
-    "sizing_price": 131.96,
+    "sizing_price": 128.12,
     "sizing_basis": "order_limit",
-    "sizing_note": "sized at the $131.96 limit, the highest fill the ticket permits: 2 shares put $10.38 between that fill and the $126.77 stop, planned price-to-stop risk, not a maximum loss",
-    "resize_rule": "if your fill differs, shares = $12.50 / (fill - $126.77), and no more than $2,500.00 of stock",
+    "sizing_note": "sized at the $128.12 limit, the highest fill the ticket permits: 2 shares put $10.24 between that fill and the $123.00 stop, planned price-to-stop risk, not a maximum loss",
+    "resize_rule": "if your fill differs, shares = $12.50 / (fill - $123.00), and no more than $2,500.00 of stock",
     "multipliers": {
      "regime": 0.5,
      "hazard": 1.0,
@@ -3730,44 +3754,44 @@
     "hazards": [],
     "hazard_multiplier": 1.0,
     "stop_risk_multiplier": 0.5,
-    "stop_risk_reason": "the stop is 3.93% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5",
+    "stop_risk_reason": "the stop is 4% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5",
     "extension_pct": 6.8,
     "targets": {
      "low_pct": 8.0,
      "high_pct": 20.0,
-     "low": 138.4,
-     "high": 153.78,
+     "low": 138.37,
+     "high": 153.74,
      "note": "above $40 he measures the move in dollars: $5-25",
-     "dollar_low": 133.15,
-     "dollar_high": 153.15
+     "dollar_low": 133.12,
+     "dollar_high": 153.12
     },
     "exits": [
      {
       "key": "sell_half_8pct",
       "source": "B",
-      "when": "same or next day, the price reaches $138.40 (+8% from $128.15)",
+      "when": "same or next day, the price reaches $138.37 (+8% from $128.12)",
       "rule": "sell half and move the stop to 25-50 cents under that day's high",
-      "price": 138.4
+      "price": 138.37
      },
      {
       "key": "abnormal_10pct",
       "source": "B",
-      "when": "any single day closes at or above $140.97 (+10%)",
+      "when": "any single day closes at or above $140.93 (+10%)",
       "rule": "take at least partial profit and move the stop up to protect the rest",
-      "price": 140.97
+      "price": 140.93
      },
      {
       "key": "gap_20pct",
       "source": "B",
-      "when": "it opens at or above $153.78 (+20%) after entry",
+      "when": "it opens at or above $153.74 (+20%) after entry",
       "rule": "sell at the open (or pre-market)",
-      "price": 153.78
+      "price": 153.74
      },
      {
       "key": "entry_day_low",
       "source": "B",
       "when": "the close of day 1",
-      "rule": "the stop rises to the entry day's low if that is above $126.77",
+      "rule": "the stop rises to the entry day's low if that is above $123.00",
       "price": null
      },
      {
@@ -3780,9 +3804,9 @@
      {
       "key": "day3_no_progress",
       "source": "B",
-      "when": "day 3 closes at or below $128.15",
+      "when": "day 3 closes at or below $128.12",
       "rule": "exit: no follow-through",
-      "price": 128.15
+      "price": 128.12
      },
      {
       "key": "trail_after_day3",
@@ -3801,9 +3825,9 @@
      {
       "key": "stop",
       "source": "B",
-      "when": "the protective stop at $126.77 is a stop-market order, live intraday from the moment the buy fills",
+      "when": "the protective stop at $123.00 is a stop-market order, live intraday from the moment the buy fills",
       "rule": "if it is somehow not filled, exit on any close below it",
-      "price": 126.77
+      "price": 123.0
      },
      {
       "key": "no_breakeven",
@@ -3813,66 +3837,67 @@
       "price": null
      }
     ],
-    "order_line": "Buy 2 NVDA stop-limit: stop $126.88 limit $131.96, day · OTO sell 2 NVDA stop-loss $126.77 GTC",
+    "order_line": "Buy 2 NVDA stop-limit: stop $126.88 limit $128.12, day · OTO sell 2 NVDA stop-loss $123.00 GTC",
     "order_json": {
      "symbol": "NVDA",
      "action": "buy",
      "quantity": 2,
      "order_type": "stop_limit",
      "stop_price": 126.88,
-     "limit_price": 131.96,
+     "limit_price": 128.12,
      "time_in_force": "day",
      "conditional": "one_triggers_the_other",
      "then": {
       "action": "sell",
       "quantity": 2,
       "order_type": "stop",
-      "stop_price": 126.77,
+      "stop_price": 123.0,
       "time_in_force": "gtc"
      }
     },
-    "order_readback": "Buy 2 NVDA stop limit 126.88 / 131.96 day, one-triggers-the-other sell 2 NVDA stop loss 126.77 GTC",
+    "order_readback": "Buy 2 NVDA stop limit 126.88 / 128.12 day, one-triggers-the-other sell 2 NVDA stop loss 123.00 GTC",
     "order_terms": [
      "A day order rests until the close unless you cancel it. The plan's entry is the first 30 minutes: if it has not filled by then, cancel it yourself; SpicyStock places and cancels nothing.",
-     "An open above the $131.96 limit does not fill at the open, but the resting order stays live and can fill on a pullback under $131.96 later in the day: cancel it rather than let it.",
+     "An open above the $128.12 limit does not fill at the open, but the resting order stays live and can fill on a pullback under $128.12 later in the day: cancel it rather than let it.",
      "An open under $124.34 is the burst failing: do not place the order, or cancel it; the buy stop at $126.88 would still trigger if the price recovered.",
-     "The sell stop at $126.77 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill."
+     "The sell stop at $123.00 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill."
     ],
     "burst": {
      "close": 126.88,
-     "low": 126.61,
-     "high": 126.93,
-     "open": 126.64,
+     "low": 123.0,
+     "high": 127.57,
+     "open": 123.46,
      "prev_close": 118.14,
      "gain_pct": 7.4,
-     "gap_pct": 7.19,
-     "dollar_move": 0.24,
-     "close_in_range_pct": 84.37
+     "gap_pct": 4.5,
+     "dollar_move": 3.42,
+     "close_in_range_pct": 84.9
     },
     "flags": [
+     "limit_narrowed",
      "risk_halved"
     ],
     "notes": [
-     "the stop is 3.93% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5"
+     "the stop is 4% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5"
     ],
     "exit_schedule": [
      {
       "day": 1,
       "date": "2026-09-11",
       "key": "entry",
-      "instruction": "buy in the first 30 minutes inside $124.34–$131.96; the sell stop at $126.77 is live from the fill. Skip it if it opens above $131.96 or under $124.34; cancel the day order yourself if it has not filled by the end of the first 30 minutes."
+      "instruction": "buy in the first 30 minutes inside $124.34–$128.12; the sell stop at $123.00 is live from the fill. Skip it if it opens above $131.96 or under $124.34; cancel the day order yourself if it has not filled by the end of the first 30 minutes."
      },
      {
       "day": 1,
       "date": "2026-09-11",
       "key": "sell_half_8pct",
-      "instruction": "if same or next day, the price reaches $138.40 (+8% from $128.15): sell half and move the stop to 25-50 cents under that day's high."
+      "instruction": "if same or next day, the price reaches $138.37 (+8% from $128.12): sell half and move the stop to 25-50 cents under that day's high."
      },
      {
       "day": 1,
       "date": "2026-09-11",
       "key": "entry_day_low",
-      "instruction": "at the close of day 1: the stop rises to the entry day's low if that is above $126.77."
+      "instruction": "at the close of day 1: the stop rises to the entry day's low if that is above $123.00."
      },
      {
       "day": 2,
@@ -3884,7 +3909,7 @@
       "day": 3,
       "date": "2026-09-15",
       "key": "day3",
-      "instruction": "at the day 3 close: sell at least half at the close. If day 3 closes at or below $128.15: exit: no follow-through."
+      "instruction": "at the day 3 close: sell at least half at the close. If day 3 closes at or below $128.12: exit: no follow-through."
      },
      {
       "day": 4,
@@ -4820,14 +4845,14 @@
     },
     {
      "date": "2026-09-10",
-     "o": 126.64,
-     "h": 126.93,
-     "l": 126.61,
+     "o": 123.46,
+     "h": 127.57,
+     "l": 123.0,
      "c": 126.88,
      "v": 3400000.0
     }
    ],
-   "summary": "NVDA: +7.4% on 5.7× volume out of a base 3.3% deep. Buy 124.34–131.96 tomorrow in the first 30 minutes, stop 126.77, aim 138.40–153.78. A+ 10.0, 6 of 6 criteria."
+   "summary": "NVDA: +7.4% on 5.7× volume out of a base 3.3% deep. Buy 124.34–128.12 tomorrow in the first 30 minutes, stop 123.00, aim 138.37–153.74. A+ 10.0, 6 of 6 criteria."
   },
   {
    "ticker": "TSLA",
@@ -4836,14 +4861,14 @@
    "scan": "both",
    "close": 124.21,
    "prev_close": 117.18,
-   "open": 118.96,
-   "high": 124.49,
-   "low": 118.35,
+   "open": 114.71,
+   "high": 124.77,
+   "low": 113.59,
    "gain_pct": 6.0,
    "volume": 3000000.0,
    "volume_vs_prior": 5.0,
    "dollar_volume": 372630000,
-   "dollar_move": 5.25,
+   "dollar_move": 9.5,
    "extension_pct": 5.2,
    "quality": {
     "checks": [
@@ -4914,18 +4939,18 @@
       "label": "narrow or negative day before",
       "values": {
        "prior_day_pct": -0.17,
-       "prior_range_pct": 0.8,
+       "prior_range_pct": 0.3,
        "negative": true,
        "narrow": true,
-       "median_range_pct": 1.0
+       "median_range_pct": 0.3
       },
       "value": -0.17,
-      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=1.0",
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.3 negative=True narrow=True median_range_pct=0.3",
       "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
       "passed": true,
       "pass": true,
       "marginal": false,
-      "a_plus": true,
+      "a_plus": false,
       "note": "",
       "partial": false,
       "status": "PASS"
@@ -4938,13 +4963,13 @@
        "base_sessions": 17,
        "breakdowns": 0,
        "bursts_in_base": 0,
-       "giveback": 0.19,
-       "tightness": 0.64,
+       "giveback": 0.18,
+       "tightness": 0.25,
        "base_volume_vs_leg": 0.41,
        "base_volume_vs_avg": 0.59
       },
       "value": 17,
-      "display": "base_sessions=17 breakdowns=0 bursts_in_base=0 giveback=0.19 tightness=0.64 base_volume_vs_leg=0.41 base_volume_vs_avg=0.59",
+      "display": "base_sessions=17 breakdowns=0 bursts_in_base=0 giveback=0.18 tightness=0.25 base_volume_vs_leg=0.41 base_volume_vs_avg=0.59",
       "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
       "passed": true,
       "pass": true,
@@ -4978,12 +5003,12 @@
       "letter": "RE",
       "label": "range expansion",
       "values": {
-       "vs_prior_5": 4.9,
-       "vs_prior_10": 4.9,
-       "bar_range_pct": 4.9
+       "vs_prior_5": 30.0,
+       "vs_prior_10": 30.0,
+       "bar_range_pct": 9.0
       },
-      "value": 4.9,
-      "display": "vs_prior_5=4.9 vs_prior_10=4.9 bar_range_pct=4.9",
+      "value": 30.0,
+      "display": "vs_prior_5=30.0 vs_prior_10=30.0 bar_range_pct=9.0",
       "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
       "passed": true,
       "pass": true,
@@ -5018,7 +5043,7 @@
     "vetoes": [],
     "passes": 6,
     "of": 6,
-    "a_plus_count": 8,
+    "a_plus_count": 7,
     "score": 10.0,
     "grade": "A+",
     "reclass": null,
@@ -5032,8 +5057,8 @@
      "end_index": 111,
      "sessions": 17,
      "high": 121.09,
-     "low": 116.83,
-     "depth_pct": 3.5,
+     "low": 117.12,
+     "depth_pct": 3.3,
      "breakdown_dates": []
     },
     "leg": {
@@ -5048,8 +5073,8 @@
     },
     "burst": {
      "gain_pct": 6.0,
-     "gap_pct": 1.5,
-     "bar_range_pct": 4.9,
+     "gap_pct": -2.1,
+     "bar_range_pct": 9.0,
      "close_pos": 0.95,
      "volume_vs_prior": 5.0,
      "volume_vs_avg50": 2.96,
@@ -5076,35 +5101,42 @@
     "scan": "4pct",
     "action": "refused",
     "eligible": false,
-    "reason": "ticket withheld: at the $129.18 limit, the highest fill the ticket permits, the burst low $118.35 is 8.38% under the $129.18 limit and the bar's midpoint $121.42 is 6.01% under the $129.18 limit, past his 4% line either way; the setup stands, the ticket does not",
+    "reason": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not",
     "entry_ref": 124.21,
     "entry_low": 121.73,
     "entry_high": 129.18,
     "limit": 129.18,
+    "limit_basis": "outer_ceiling",
+    "limit_narrowed": false,
+    "limit_note": "no ticket: the $129.18 day-2 ceiling (the close +4%) is the outer extension threshold, not a limit this setup can be bought at",
+    "day2_spent_above": 129.18,
+    "day2_spent_pct": 4.0,
+    "ticket_refusal": "no_room_above_the_trigger",
     "skip_if_open_above": 129.18,
     "skip_if_open_below": 121.73,
     "extended_above": 134.15,
     "entry_window": "first 30 minutes",
-    "pre_open_check": "before the open: if the pre-market print is under $121.73 the burst is failing, over $129.18 day 2 is spent, and over $134.15 (+8%) he would be selling; do not place the order in any of the three",
+    "pre_open_check": "before the open: if the pre-market print is under $121.73 the burst is failing, over $129.18 (+4%) day 2 is spent, and over $134.15 (+8%) he would be selling; do not place the order in any of the three. There is no ticket to place",
     "planned_entry": 125.45,
     "assumed_slippage_pct": 1.0,
+    "planned_entry_capped": false,
     "planned_entry_note": "an indicative entry, the close plus 1%, that the exit levels and targets are quoted from; not a fill, and not the sizing price",
     "stop": 124.01,
     "stop_basis": "max_stop",
     "stop_pct": 4.0,
-    "stop_note": "the bar's low $118.35 is 8.38% under the $129.18 limit and its midpoint $121.42 6.01% under the $129.18 limit, past his 4% line either way; the stop was set at 4% ($124.01), a level the bar does not support",
+    "stop_note": "the bar's low $113.59 is 12.07% under the $129.18 limit and its midpoint $119.18 7.74% under the $129.18 limit, past his 4% line either way; the stop was set at 4% ($124.01), a level the bar does not support",
     "stop_candidates": [
      {
       "basis": "burst_low",
-      "price": 118.35,
-      "pct_below_entry": 8.38,
+      "price": 113.59,
+      "pct_below_entry": 12.07,
       "within_max": false,
       "under_trigger": true
      },
      {
       "basis": "half_range",
-      "price": 121.42,
-      "pct_below_entry": 6.01,
+      "price": 119.18,
+      "pct_below_entry": 7.74,
       "within_max": false,
       "under_trigger": true
      }
@@ -5232,17 +5264,17 @@
     "order_terms": null,
     "burst": {
      "close": 124.21,
-     "low": 118.35,
-     "high": 124.49,
-     "open": 118.96,
+     "low": 113.59,
+     "high": 124.77,
+     "open": 114.71,
      "prev_close": 117.18,
      "gain_pct": 6.0,
-     "gap_pct": 1.52,
-     "dollar_move": 5.25,
-     "close_in_range_pct": 95.44
+     "gap_pct": -2.11,
+     "dollar_move": 9.5,
+     "close_in_range_pct": 94.99
     },
     "flags": [
-     "wide_stop",
+     "no_ticket_band",
      "risk_halved"
     ],
     "notes": [
@@ -6070,149 +6102,149 @@
     {
      "date": "2026-08-18",
      "o": 120.49,
-     "h": 120.96,
-     "l": 117.11,
+     "h": 120.58,
+     "l": 117.49,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-19",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-20",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-21",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-24",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-25",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-26",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-27",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-28",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-31",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-01",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-02",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-03",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-04",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-07",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-08",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-09",
      "o": 117.38,
-     "h": 117.73,
-     "l": 116.83,
+     "h": 117.44,
+     "l": 117.12,
      "c": 117.18,
      "v": 600000.0
     },
     {
      "date": "2026-09-10",
-     "o": 118.96,
-     "h": 124.49,
-     "l": 118.35,
+     "o": 114.71,
+     "h": 124.77,
+     "l": 113.59,
      "c": 124.21,
      "v": 3000000.0
     }
    ],
-   "summary": "TSLA: +6.0% on 5.0× volume out of a base 3.5% deep. Buy 121.73–129.18 tomorrow in the first 30 minutes, stop 124.01, aim 135.49–150.54. A+ 10.0, 6 of 6 criteria."
+   "summary": "TSLA: +6.0% on 5.0× volume out of a base 3.3% deep. Buy 121.73–129.18 tomorrow in the first 30 minutes, stop 124.01, aim 135.49–150.54. A+ 10.0, 6 of 6 criteria."
   },
   {
    "ticker": "PLUG",
@@ -8608,8 +8640,8 @@
   "TSLA"
  ],
  "cash_budget": {
-  "committed_usd": 258.36,
-  "at_risk_usd": 10.2,
+  "committed_usd": 252.94,
+  "at_risk_usd": 10.1,
   "equity": 10000.0,
   "slots_used": 4,
   "slots_max": 4,
@@ -8628,14 +8660,14 @@
     "ticker": "NVDA",
     "rank": 3,
     "reason": "slot_cap",
-    "position_usd": 263.92
+    "position_usd": 256.24
    }
   ],
   "cut": [
    {
     "ticker": "TSLA",
     "kind": "withheld",
-    "reason": "ticket withheld: at the $129.18 limit, the highest fill the ticket permits, the burst low $118.35 is 8.38% under the $129.18 limit and the bar's midpoint $121.42 is 6.01% under the $129.18 limit, past his 4% line either way; the setup stands, the ticket does not"
+    "reason": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
    },
    {
     "ticker": "AMD",
@@ -8655,7 +8687,7 @@
     "reason": "no_order"
    }
   ],
-  "sentence": "Model allocation: tomorrow's tickets would commit $258.36 of the configured $10,000.00; 4 of 4 slots (3 open model plans)"
+  "sentence": "Model allocation: tomorrow's tickets would commit $252.94 of the configured $10,000.00; 4 of 4 slots (3 open model plans)"
  },
  "watchlist": {
   "top": [
@@ -10020,7 +10052,7 @@
    ],
    "regime": "yellow",
    "entry_ref": 24.56,
-   "shares": 25,
+   "shares": 24,
    "current_stop": 23.58,
    "last_close": 24.71,
    "last_date": "2026-09-10",
@@ -10029,7 +10061,7 @@
    "result_pct": null,
    "half_sold": false,
    "sold": 0,
-   "remaining": 25
+   "remaining": 24
   },
   {
    "ticker": "NBIS",
@@ -10112,18 +10144,18 @@
   "symbols": {
    "AAPL": {
     "date": "2026-09-10",
-    "o": 123.95,
-    "h": 124.23,
-    "l": 123.92,
+    "o": 118.96,
+    "h": 124.49,
+    "l": 118.35,
     "c": 124.21,
     "v": 3000000.0,
     "since": "2026-09-10"
    },
    "AMD": {
     "date": "2026-09-10",
-    "o": 123.02,
-    "h": 123.3,
-    "l": 122.99,
+    "o": 123.12,
+    "h": 123.28,
+    "l": 123.1,
     "c": 123.27,
     "v": 2600000.0,
     "since": "2026-09-10"
@@ -10157,9 +10189,9 @@
    },
    "NVDA": {
     "date": "2026-09-10",
-    "o": 126.64,
-    "h": 126.93,
-    "l": 126.61,
+    "o": 123.46,
+    "h": 127.57,
+    "l": 123.0,
     "c": 126.88,
     "v": 3400000.0,
     "since": "2026-09-10"
@@ -10184,9 +10216,9 @@
    },
    "TSLA": {
     "date": "2026-09-10",
-    "o": 118.96,
-    "h": 124.49,
-    "l": 118.35,
+    "o": 114.71,
+    "h": 124.77,
+    "l": 113.59,
     "c": 124.21,
     "v": 3000000.0,
     "since": "2026-09-10"

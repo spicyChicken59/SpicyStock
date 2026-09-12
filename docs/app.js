@@ -954,6 +954,7 @@
     if (isNum(plan.stop)) parts.push('stop ' + usd(plan.stop));
     if (isNum(trig)) parts.push('trigger ' + usd(trig));
     if (isNum(lim)) parts.push('limit ' + usd(lim));
+    if (burst && isNum(plan.day2_spent_above) && plan.day2_spent_above !== lim) parts.push('too extended over ' + usd(plan.day2_spent_above));
     if (burst && isNum(plan.entry_low) && isNum(trig) && Math.abs(plan.entry_low - trig) / trig > 0.005) parts.push('zone low ' + usd(plan.entry_low));
     const t = plan.targets || {};
     if (isNum(t.low) && isNum(t.high)) parts.push('aim +' + plain(t.low_pct) + '% ' + usd(t.low) + ' / +' + plain(t.high_pct) + '% ' + usd(t.high) + (g && g.target && g.target.offscale ? ' (outside the visible range)' : ''));
@@ -1105,7 +1106,8 @@
         name: c.name || '', close: isNum(b.close) ? b.close : null, close_date: run.session || '', grade: c.grade || null, score: isNum(c.score) ? c.score : null,
         status: c.status, status_words: statusWords(c.status)[0],
         levels: { entry_low: burst ? plan.entry_low : plan.trigger, entry_high: burst ? plan.entry_high : plan.limit, trigger: burst ? plan.entry_ref : plan.trigger,
-          limit: burst ? plan.entry_high : plan.limit, stop: plan.stop, stop_basis: plan.stop_basis || null,
+          limit: burst ? plan.entry_high : plan.limit, day2_spent_above: burst && isNum(plan.day2_spent_above) ? plan.day2_spent_above : null,
+          stop: plan.stop, stop_basis: plan.stop_basis || null,
           target_low: t.low, target_high: t.high, target_low_pct: t.low_pct, target_high_pct: t.high_pct },
         order_line: text(plan.order_line), instruction: entryInstruction(plan), summary: burst ? sentence(firstSentence(text(b.summary).replace(/^[A-Z0-9.\-]+:\s*/, ''))) : pickReason(c),
         withheld_reason: c.status !== 'ticket' ? text(c.reason) : ''
@@ -1199,6 +1201,7 @@
     const levels = [];
     if (isNum(lv.trigger)) levels.push('trigger ' + usd(lv.trigger));
     if (isNum(lv.limit)) levels.push('limit ' + usd(lv.limit));
+    if (isNum(lv.day2_spent_above) && lv.day2_spent_above !== lv.limit) levels.push('too extended over ' + usd(lv.day2_spent_above));
     if (isNum(lv.stop)) levels.push('stop ' + usd(lv.stop));
     if (isNum(lv.target_low) && isNum(lv.target_high)) levels.push('aim ' + usd(lv.target_low) + '–' + usd(lv.target_high));
     row('saved plan', levels.length ? levels.join(' · ') : 'no plan levels');
@@ -1375,11 +1378,11 @@
     const blockedNow = !!(st && blocked(st)), withheld = c.status !== 'ticket' || blockedNow, t = plan.targets || {};
     if (c.stage === 'bursts') {
       kids.push(factList([
-        ['buy', usd(plan.entry_low) + ' – ' + usd(plan.entry_high), (plan.entry_window || '') + ' · a buy stop at ' + usd(plan.entry_ref) + ', limit ' + usd(plan.entry_high), true],
-        ['skip if it opens above', usd(plan.skip_if_open_above), 'day 2 is spent; a resting order could still fill on a pullback, so cancel it'],
+        ['buy', usd(plan.entry_low) + ' – ' + usd(plan.entry_high), (plan.entry_window || '') + ' · a buy stop at ' + usd(plan.entry_ref) + ', limit ' + usd(plan.entry_high) + (text(plan.limit_note) ? ' · ' + plan.limit_note : ''), true],
+        ['skip if it opens above', usd(plan.skip_if_open_above), 'day 2 is spent' + (isNum(plan.limit) && isNum(plan.skip_if_open_above) && plan.limit !== plan.skip_if_open_above ? ', the outer threshold and not the ' + usd(plan.limit) + ' ticket limit' : '') + '; a resting order could still fill on a pullback, so cancel it'],
         ['skip if it opens below', usd(plan.skip_if_open_below), 'the burst is failing; do not place it'],
         ['stop', stopWords(plan), 'judged at the ' + usd(plan.sizing_price) + ' limit · move it to your entry day’s low once filled', true],
-        ['sized at', usd(plan.sizing_price), 'the limit, the highest fill the ticket permits · indicative entry ' + usd(plan.planned_entry) + ' (not a fill)', true],
+        ['sized at', usd(plan.sizing_price), 'the limit, the highest fill the ticket permits · indicative entry ' + usd(plan.planned_entry) + (plan.planned_entry_capped ? ' (not a fill; the close +1% would sit over the limit, so it is the limit)' : ' (not a fill)'), true],
         ['risk per share', usd(plan.risk_per_share), 'limit − stop'],
         ['shares', num(plan.shares), plan.capped_by === 'position_cap' ? 'cut by the position cap' : 'from ' + usd(plan.risk_usd) + ' ÷ ' + usd(plan.risk_per_share)],
         ['position', usd(plan.position_usd), (isNum(plan.position_pct) ? plan.position_pct.toFixed(1) : '—') + '% of the configured ' + usd(acct.equity, 0)],
@@ -1502,7 +1505,7 @@
     const sheet = clear($('orders-table'));
     const table = el('table', { 'class': 'sc-table sc-table--compact ss-orders', id: 'order-sheet' });
     table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Tomorrow’s orders in Fidelity’s field order' }));
-    table.appendChild(el('thead', null, el('tr', null, ['symbol', 'action', 'shares', 'type', 'stop (trigger)', 'limit', 'tif', 'then OTO sell stop', 'skip above', 'planned risk'].map((h, i) => el('th', { scope: 'col', 'class': i >= 2 && i !== 3 && i !== 6 ? 'sc-num' : null, text: h })))));
+    table.appendChild(el('thead', null, el('tr', null, ['symbol', 'action', 'shares', 'type', 'stop (trigger)', 'limit', 'tif', 'then OTO sell stop', 'too extended over', 'planned risk'].map((h, i) => el('th', { scope: 'col', 'class': i >= 2 && i !== 3 && i !== 6 ? 'sc-num' : null, text: h })))));
     const body = el('tbody');
     const rows = blockedNow ? [] : withOrders;
     rows.forEach((b) => {

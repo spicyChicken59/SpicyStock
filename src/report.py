@@ -771,6 +771,12 @@ def _trade_block(burst: dict, breadth: dict | None) -> str:
     zone = f"{lo}–{hi}" if lo and hi else _show(lo or hi)
     facts = [f"Buy zone {esc(zone)}", f"Stop {esc(_show(_price(plan.get('stop'))))}",
              f"Shares {esc(_show(str(_int(plan.get('shares'))) if _int(plan.get('shares')) is not None else None))}"]
+    # the ticket's limit and the day-2 line are two prices; where the record
+    # carries both and they differ, the mail says so rather than let the top
+    # of the buy zone be read as the extension threshold
+    outer = _price(plan.get("day2_spent_above"))
+    if outer and hi and outer != hi:
+        facts.append(f"Too extended over {esc(outer)}")
     position = _money(plan.get("position_usd"))
     if position:
         facts.append(f"Position {esc(position)}")

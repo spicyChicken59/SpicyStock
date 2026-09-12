@@ -772,6 +772,10 @@ def pick_of(p: dict, kind: str, grade: str, score) -> dict:
     draws beside it (the targets, the ticket)."""
     return {"ticker": p["ticker"], "kind": kind, "grade": grade, "score": score,
             "entry_ref": p["entry_ref"], "entry_low": p.get("entry_low"), "entry_high": p.get("entry_high"),
+            # the ticket's limit and the outer threshold are two prices: the
+            # walk fills against the limit (``entry_high``), and the skip
+            # rule is the day-2 line, which the pick carries by its own name
+            "day2_spent_above": p.get("day2_spent_above"), "limit_basis": p.get("limit_basis"),
             "trigger": p.get("trigger"), "limit": p.get("limit"),
             "stop": p["stop"], "shares": p["shares"], "targets": p.get("targets"),
             "order_json": p.get("order_json")}
@@ -846,7 +850,11 @@ def intraday_rows(data: dict, snaps: dict[str, dict]) -> list[dict]:
         snap = snaps.get(ticker) or {}
         src = watch.get(ticker) or bursts.get(ticker) or {}
         p = src.get("plan") or {}
-        level = p.get("trigger") if ticker in watch else p.get("entry_high")
+        # the level the snapshot is read against: an anticipation name's
+        # trigger, and for a burst the day-2 line it was before the ticket's
+        # limit became a narrower price of its own (older records carry it
+        # only as ``entry_high``)
+        level = p.get("trigger") if ticker in watch else (p.get("day2_spent_above") or p.get("entry_high"))
         last, prev_close = snap.get("last"), snap.get("prev_close")
         pv, prev_v = snap.get("partial_volume"), snap.get("prev_volume")
         pct = round(100 * (last / prev_close - 1), 2) if last and prev_close else None

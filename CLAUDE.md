@@ -164,7 +164,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-What is measured offline: 1056 tests, the chart check, and the page smoke
+What is measured offline: 1076 tests, the chart check, and the page smoke
 over six fixtures walked through every view, stock, search, the chooser,
 the keyboard, deep links and the old anchors, then the phone and the stale,
 failed, field-dropped and no-record states. What is NOT: the full-market
@@ -243,16 +243,12 @@ message, an alert with no ticket and no caveat, ratios at one decimal.
   bursts than that grades the rest by the checklist alone (`claude_partial`
   is not raised for those, only for names asked and unanswered).
 - **The +4% ceiling and his 4% stop line cannot both hold at the limit.**
-  Judged at the ticket's limit, a burst's stop is inside his line only when
-  the usable stop (the low, else the bar's midpoint under the buy stop)
-  sits within about 0.16% of the close: the field guide's textbook bar,
-  low 4.7% under the close, is withheld, and so is nearly every real burst.
-  The closeout implemented the withhold as specified rather than narrow the
-  ticket's band; the one-rule alternative, a limit capped at the price 4%
-  over the stop (`min(entry_high, stop / 0.96)`), keeps tickets and the
-  stop rule at every fill but narrows the permitted range. A method
-  decision, deferred to Astra; the fixtures carry three tight-bar bursts so
-  the page still shows a ticket.
+  SETTLED 12 Sep 2026, the one-rule alternative adopted: the ticket's limit
+  is `min(day2_spent_above, floor_to_cents(stop / (1 - MAX_STOP_PCT/100)))`
+  (`plan.burst_limit()`), and the +4% is the outer extension threshold on
+  its own field. The last checkpoint carries what it cost and what it
+  rescued. What it does NOT settle: whether the narrower permitted range
+  fills as often in the market, which no archived record can say.
 
 ## Checkpoint, 11 Sep 2026 — the ticket-record closeout
 
@@ -692,3 +688,65 @@ longer the limit.
 **Next action.** Put this to Astra with the 52 / 0 / 50 / 47 line and those two
 questions; separately, on the next green or yellow session dispatch the dry run
 and check the study's arithmetic against what the run actually withholds.
+
+## Checkpoint, 12 Sep 2026 — the constrained ticket limit
+
+**Revision.** Branch `claude/volume-repair-mobile-entry-zo54u9` from
+`cdc9d56`. `docs/data.json`, `docs/picks.json` and the universe stay
+`origin/main`'s to the byte; nothing merged, deployed, dispatched or mailed.
+
+**The decision, implemented.** The reading found 381 of 401 bursts withheld:
+the +4% line and his 4% stop line cannot both hold at the limit. The limit is
+now `plan.burst_limit()`, the day-2 ceiling narrowed to the highest price at
+which the structural stop is still inside his line,
+`min(close +4%, floor_to_cents(stop / (1 - MAX_STOP_PCT/100)))`
+over `stop_candidates()`, the burst low then the midpoint — one list the
+cascade and the ceiling both read. `max_stop` is not a candidate, so nothing
+manufactures eligibility. A candidate is taken only when `stop < trigger <
+limit`: strictly under and strictly OVER, since a ceiling landing ON the buy
+stop is a ticket with no band, withheld with the setup kept and a named
+`ticket_refusal`. The ceiling floors to cents (`CENT_FLOOR_EPSILON`): rounding
+up puts the stop past the line at the highest permitted fill: at $1.14 a $1.09
+stop is 4.39% away. `burst_plan` raises rather than publish a limit its
+cascade would not hold at.
+
+**Four prices, four rules, four fields.** `entry_ref` the trigger; `limit`
+(and `entry_high`, the zone's top) the executable limit;
+**`day2_spent_above`** the outer +4% threshold — `skip_if_open_above`, its own
+clause in `pre_open_check`, never an order's limit; `planned_entry` =
+`min(close +1%, limit)`, the targets' and exits' basis. Swept: `pick_of`
+archives the day-2 line, `pick_problem` holds `entry_high <=
+day2_spent_above`, `record.fill()` stopped calling an open over the limit a
+skip, the digest prints *Too extended over* only where the record carries a
+second price, and the buy row discloses the narrowing while the skip row and
+the order sheet name the outer rule.
+
+**Measured offline.** 1076 tests (32 new, over a 200-odd bar-shape sweep that
+asserts it reached every branch); 7 fixtures current, `full` reshaped to carry
+all four states — AAPL the textbook bar, once withheld, now a $126.47 ticket
+against a $129.18 day-2 line; AMD at the ceiling, NVDA capped, TSLA withheld;
+chart check 163/163; smoke 2680/2680 with `checkTicketPrices`. **Looking at
+the screenshots found what the sweep had not:** the Following card quoted
+`dated_schedule()`'s entry line, still saying "Skip it if it opens above
+$126.47" — the ticket's limit as a skip rule, the overload this milestone
+removes. It buys to the limit and skips at the day-2 line now. Of fourteen
+mutants, **`the oracle's band drifts from production` survived**: no page
+fixture has a ceiling exactly on its trigger, so the sweep carries those bars
+itself now.
+
+**The study, reconciled.** `tools/entry_limit_study.py` changed sides rather
+than compare production with itself: the retired ceiling is carried there,
+since no module has it now; production is `burst_plan()`; and an oracle re-
+derives the rule from the spec and raises if it is not what was written. Over
+the unchanged run-47 record: coverage 401; fixed 20 / 381, unchanged;
+production 378 / 23 against the proposal's 380 / 21: three rows had a ceiling
+exactly on the trigger — PENN fell through to the midpoint, SBET and JVA are
+refused. Green-night 52 / 0 / 50 / **47**, the reading's line. All 378 limits
+are under the day-2 line; 93 indicative entries are capped.
+
+**Settled.** The limit is a fillable price; the +4% is an extension rule,
+never an order term. **Not claimable:** a live fetch, Resend, Pages, CI, or
+expectancy — this changes which tickets exist, not whether they win.
+
+**Next action.** On the next green or yellow session dispatch the dry run and
+check the study against what the run withholds and writes.

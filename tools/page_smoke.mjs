@@ -1410,6 +1410,109 @@ async function checkMapScale(browser, base, data) {
   }
 }
 
+// the four prices a burst ticket keeps apart -- the trigger, the ticket's own
+// executable limit, the outer +4% line where day 2 is spent, and the
+// indicative entry -- read back off the page, the order sheet, the clipboard
+// and the Following snapshot. The fixture carries one of each state.
+async function checkTicketPrices(browser, base, data) {
+  console.log('-- the ticket limit, the day-2 line and the indicative entry');
+  const planned = data.bursts.filter((b) => b.plan);
+  const narrowed = planned.find((b) => b.plan.eligible && b.plan.limit < b.plan.day2_spent_above);
+  const atCeiling = planned.find((b) => b.plan.eligible && b.plan.limit === b.plan.day2_spent_above);
+  const capped = planned.find((b) => b.plan.planned_entry_capped);
+  const withheld = planned.find((b) => !b.plan.eligible);
+  check('the fixture carries a narrowed ticket, one at the day-2 line, a capped entry and a withheld setup',
+        !!(narrowed && atCeiling && capped && withheld),
+        [narrowed && narrowed.ticker, atCeiling && atCeiling.ticker, capped && capped.ticker, withheld && withheld.ticker]);
+  if (!(narrowed && atCeiling && capped && withheld)) return;
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280);
+
+  for (const b of [narrowed, atCeiling, capped, withheld]) {
+    await go(page, `#/explore/bursts/${b.ticker}`);
+    await openAll(page, '#detail details');
+    const plan = await text(page, '#disc-plan');
+    const p = b.plan;
+    check(`${b.ticker}: the buy row names the ticket's own limit`, plan.includes(usd(p.entry_low) + ' – ' + usd(p.limit)) && plan.includes('limit ' + usd(p.limit)), plan.slice(0, 400));
+    check(`${b.ticker}: the skip row names the day-2 line`, plan.includes(usd(p.day2_spent_above)) && plan.includes('day 2 is spent'), plan.slice(0, 600));
+    if (p.limit !== p.day2_spent_above) {
+      check(`${b.ticker}: the two prices are told apart in words`, plan.includes('the outer threshold and not the ' + usd(p.limit) + ' ticket limit'), plan.slice(0, 800));
+      check(`${b.ticker}: the narrowing is disclosed`, plan.includes(p.limit_note), plan.slice(0, 800));
+    }
+    const refs = await text(page, '#detail [data-refs]').catch(() => '');
+    if (refs) {
+      check(`${b.ticker}: the levels line names the limit`, refs.includes('limit ' + usd(p.limit)), refs);
+      eq(`${b.ticker}: the levels line names the day-2 line only when it differs`, refs.includes('too extended over ' + usd(p.day2_spent_above)), p.limit !== p.day2_spent_above);
+    }
+    if (p.planned_entry_capped) {
+      check(`${b.ticker}: the sized-at row says the indicative entry was capped at the limit`, plan.includes(usd(p.planned_entry) + ' (not a fill; the close +1% would sit over the limit'), plan.slice(0, 900));
+      check(`${b.ticker}: the indicative entry equals the limit`, p.planned_entry === p.limit, [p.planned_entry, p.limit]);
+    }
+    // the entry instruction the decision summary quotes and Following saves:
+    // the range's top is the ticket's limit, the SKIP price the day-2 line
+    const entry = (b.plan.exit_schedule || []).find((x) => x && x.key === 'entry');
+    if (entry) {
+      check(`${b.ticker}: the entry instruction buys up to the ticket's limit`, entry.instruction.includes(usd(p.entry_low) + '–' + usd(p.limit)), entry.instruction);
+      check(`${b.ticker}: the entry instruction skips at the day-2 line`, entry.instruction.includes('Skip it if it opens above ' + usd(p.day2_spent_above)), entry.instruction);
+      if (p.limit !== p.day2_spent_above) check(`${b.ticker}: the entry instruction never calls the limit a skip line`, !entry.instruction.includes('opens above ' + usd(p.limit)), entry.instruction);
+    }
+    const pre = await text(page, '#detail');
+    check(`${b.ticker}: the pre-open check names the +4% line as the extension rule`, pre.includes(usd(p.day2_spent_above) + ' (+4%) day 2 is spent'), pre.slice(0, 600));
+    if (p.eligible) check(`${b.ticker}: the pre-open check names the ticket's own limit apart from it`, pre.includes("The ticket's own limit is " + usd(p.limit)), pre.slice(0, 900));
+    else check(`${b.ticker}: a withheld setup is told there is no ticket to place`, pre.includes('There is no ticket to place'), pre.slice(0, 900));
+  }
+
+  // the order sheet: the limit column is the ticket's, the extension column the day-2 line
+  await go(page, '#/explore');
+  await openAll(page, 'details');
+  const head = await page.locator('#order-sheet thead th').allInnerTexts();
+  check('the order sheet names the extension column for the rule, not the action', head.includes('too extended over') && head.includes('limit'), head);
+  const iLimit = head.indexOf('limit'), iOuter = head.indexOf('too extended over');
+  // the sheet lists only the names the budget left an order with, so it is
+  // read for the rows it actually has rather than for every planned burst
+  const listed = await page.locator('#order-sheet tbody tr[data-ticker]').evaluateAll((rs) => rs.map((r) => r.dataset.ticker));
+  check('the order sheet lists the tickets the record left with an order', listed.length > 0, listed);
+  for (const t of listed) {
+    const b = planned.find((x) => x.ticker === t);
+    const row = page.locator(`#order-sheet tbody tr[data-ticker="${t}"] td`);
+    eq(`${t}: the order sheet's limit is the ticket's`, (await row.nth(iLimit - 1).innerText()), usd(b.plan.limit));
+    eq(`${t}: the order sheet's extension column is the day-2 line`, (await row.nth(iOuter - 1).innerText()), usd(b.plan.day2_spent_above));
+  }
+  for (const b of planned.filter((x) => x.plan.order_json)) {
+    check(`${b.ticker}: the order's own JSON limit is the ticket's limit`, b.plan.order_json.limit_price === b.plan.limit && b.plan.order_json.stop_price === b.plan.entry_ref && b.plan.order_json.stop_price < b.plan.limit, b.plan.order_json);
+  }
+
+  // the clipboard read-back and the Following snapshot carry the same prices
+  const trade = planned.find((b) => b.plan.order_json);
+  if (trade) {
+    await go(page, `#/explore/bursts/${trade.ticker}`);
+    await openAll(page, '#detail details');
+    const back = await text(page, '#detail pre[data-order]');
+    check(`${trade.ticker}: the printed ticket carries the trigger and the ticket limit`, back.includes(usd(trade.plan.entry_ref)) && back.includes(usd(trade.plan.limit)), back);
+    check(`${trade.ticker}: the printed ticket never quotes the day-2 line as its limit`, trade.plan.limit === trade.plan.day2_spent_above || !back.includes(usd(trade.plan.day2_spent_above)), back);
+    await page.locator('#detail button[data-copy]').first().click();
+    const copied = await page.evaluate(() => navigator.clipboard.readText()).catch(() => null);
+    if (copied !== null) eq(`${trade.ticker}: the clipboard is the printed ticket`, copied.trim(), back.trim());
+    await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
+    const card = await text(page, `#following .ss-followed[data-ticker="${trade.ticker}"]`);
+    check(`${trade.ticker}: the followed card saves the ticket's limit`, card.includes('limit ' + usd(trade.plan.limit)), card);
+    eq(`${trade.ticker}: the followed card names the day-2 line only when it differs`, card.includes('too extended over ' + usd(trade.plan.day2_spent_above)), trade.plan.limit !== trade.plan.day2_spent_above);
+  }
+
+  // a record from before the split carries no day-2 field: nothing invents one
+  const older = await openMutant(browser, base, data, (c) => c.bursts.forEach((b) => { if (b.plan) delete b.plan.day2_spent_above; }));
+  await go(older.page, `#/explore/bursts/${narrowed.ticker}`);
+  await openAll(older.page, '#detail details');
+  const shown = await text(older.page, '#detail');
+  check('without the day-2 field the page prints no invented price', !shown.includes('too extended over'), shown.slice(0, 400));
+  eq('without the day-2 field the page still renders', await text(older.page, '#detail-h2'), narrowed.ticker);
+  eq('without the day-2 field: page errors', older.errors, []);
+  await older.close();
+
+  eq('the ticket-price journey: page errors', errors, []);
+  await context.close();
+}
+
+
 async function main() {
   const chromium = await loadChromium();
   if (!chromium) { console.log('playwright is not installed: npm install --no-save playwright'); process.exit(1); }
@@ -1429,6 +1532,7 @@ async function main() {
     await checkVolumeReadings(browser, base, full);
     await checkMapScale(browser, base, full);
     await checkFollowing(browser, base, full);
+    await checkTicketPrices(browser, base, full);
     await checkStates(browser, base, full);
   } finally {
     await browser.close();

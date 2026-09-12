@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "46fceafaaffd"
+  "rules_version": "4e3d4ead892c"
  },
  "cover": {
   "h1": "Stand aside.",
@@ -219,6 +219,7 @@
    "entry_window": "first 30 minutes",
    "assumed_slippage_pct": 1.0,
    "sizing_basis": "order_limit",
+   "limit_rule": "stop_constrained",
    "max_stop_pct": 4.0,
    "ideal_stop_pct": 2.0,
    "stop_risk_multiplier": 0.5,
@@ -261,7 +262,8 @@
    "gfv_window_months": 12,
    "gfv_restriction_days": 90,
    "precision.cents": 2,
-   "precision.pct_decimals": 2
+   "precision.pct_decimals": 2,
+   "precision.cent_floor_epsilon": 1e-09
   },
   "watchlist": {
    "adr_sessions": 20,
@@ -642,17 +644,17 @@
    "ticker": "AAPL",
    "name": "",
    "flags": [],
-   "scan": "burst",
+   "scan": "both",
    "close": 124.21,
    "prev_close": 117.18,
-   "open": 123.95,
-   "high": 124.23,
-   "low": 123.92,
+   "open": 118.96,
+   "high": 124.49,
+   "low": 118.35,
    "gain_pct": 6.0,
    "volume": 3000000.0,
    "volume_vs_prior": 5.0,
    "dollar_volume": 372630000,
-   "dollar_move": null,
+   "dollar_move": 5.25,
    "extension_pct": 5.2,
    "quality": {
     "checks": [
@@ -723,18 +725,18 @@
       "label": "narrow or negative day before",
       "values": {
        "prior_day_pct": -0.17,
-       "prior_range_pct": 0.3,
+       "prior_range_pct": 0.8,
        "negative": true,
        "narrow": true,
-       "median_range_pct": 0.3
+       "median_range_pct": 1.0
       },
       "value": -0.17,
-      "display": "prior_day_pct=-0.17 prior_range_pct=0.3 negative=True narrow=True median_range_pct=0.3",
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=1.0",
       "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
       "passed": true,
       "pass": true,
       "marginal": false,
-      "a_plus": false,
+      "a_plus": true,
       "note": "",
       "partial": false,
       "status": "PASS"
@@ -747,13 +749,13 @@
        "base_sessions": 17,
        "breakdowns": 0,
        "bursts_in_base": 0,
-       "giveback": 0.18,
-       "tightness": 0.25,
+       "giveback": 0.19,
+       "tightness": 0.64,
        "base_volume_vs_leg": 0.41,
        "base_volume_vs_avg": 0.59
       },
       "value": 17,
-      "display": "base_sessions=17 breakdowns=0 bursts_in_base=0 giveback=0.18 tightness=0.25 base_volume_vs_leg=0.41 base_volume_vs_avg=0.59",
+      "display": "base_sessions=17 breakdowns=0 bursts_in_base=0 giveback=0.19 tightness=0.64 base_volume_vs_leg=0.41 base_volume_vs_avg=0.59",
       "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
       "passed": true,
       "pass": true,
@@ -768,11 +770,11 @@
       "letter": "H",
       "label": "close near the high",
       "values": {
-       "close_pos": 0.94,
+       "close_pos": 0.95,
        "close_above_open": true
       },
-      "value": 0.94,
-      "display": "close_pos=0.94 close_above_open=True",
+      "value": 0.95,
+      "display": "close_pos=0.95 close_above_open=True",
       "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
       "passed": true,
       "pass": true,
@@ -787,20 +789,20 @@
       "letter": "RE",
       "label": "range expansion",
       "values": {
-       "vs_prior_5": 0.67,
-       "vs_prior_10": 0.67,
-       "bar_range_pct": 0.2
+       "vs_prior_5": 4.9,
+       "vs_prior_10": 4.9,
+       "bar_range_pct": 4.9
       },
-      "value": 0.67,
-      "display": "vs_prior_5=0.67 vs_prior_10=0.67 bar_range_pct=0.2",
+      "value": 4.9,
+      "display": "vs_prior_5=4.9 vs_prior_10=4.9 bar_range_pct=4.9",
       "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
-      "passed": false,
-      "pass": false,
+      "passed": true,
+      "pass": true,
       "marginal": false,
-      "a_plus": false,
-      "note": "the burst bar is not the widest of the last five",
+      "a_plus": true,
+      "note": "",
       "partial": false,
-      "status": "FAIL"
+      "status": "PASS"
      },
      {
       "key": "volume",
@@ -827,7 +829,7 @@
     "vetoes": [],
     "passes": 6,
     "of": 6,
-    "a_plus_count": 6,
+    "a_plus_count": 8,
     "score": 10.0,
     "grade": "A+",
     "reclass": null,
@@ -841,8 +843,8 @@
      "end_index": 111,
      "sessions": 17,
      "high": 121.09,
-     "low": 117.12,
-     "depth_pct": 3.3,
+     "low": 116.83,
+     "depth_pct": 3.5,
      "breakdown_dates": []
     },
     "leg": {
@@ -857,9 +859,9 @@
     },
     "burst": {
      "gain_pct": 6.0,
-     "gap_pct": 5.8,
-     "bar_range_pct": 0.2,
-     "close_pos": 0.94,
+     "gap_pct": 1.5,
+     "bar_range_pct": 4.9,
+     "close_pos": 0.95,
      "volume_vs_prior": 5.0,
      "volume_vs_avg50": 2.96,
      "volume_rank_60": 1
@@ -1657,149 +1659,149 @@
     {
      "date": "2026-08-18",
      "o": 120.49,
-     "h": 120.58,
-     "l": 117.49,
+     "h": 120.96,
+     "l": 117.11,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-19",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-20",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-21",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-24",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-25",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-26",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-27",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-28",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-31",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-01",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-02",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-03",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-04",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-07",
      "o": 117.38,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-08",
      "o": 117.58,
-     "h": 117.67,
-     "l": 117.29,
+     "h": 118.05,
+     "l": 116.91,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-09",
      "o": 117.38,
-     "h": 117.44,
-     "l": 117.12,
+     "h": 117.73,
+     "l": 116.83,
      "c": 117.18,
      "v": 600000.0
     },
     {
      "date": "2026-09-10",
-     "o": 123.95,
-     "h": 124.23,
-     "l": 123.92,
+     "o": 118.96,
+     "h": 124.49,
+     "l": 118.35,
      "c": 124.21,
      "v": 3000000.0
     }
    ],
-   "summary": "AAPL: +6.0% on 5.0× volume out of a base 3.3% deep. A+ 10.0, 6 of 6 criteria."
+   "summary": "AAPL: +6.0% on 5.0× volume out of a base 3.5% deep. A+ 10.0, 6 of 6 criteria."
   },
   {
    "ticker": "AMD",
@@ -1808,9 +1810,9 @@
    "scan": "burst",
    "close": 123.27,
    "prev_close": 117.18,
-   "open": 123.02,
-   "high": 123.3,
-   "low": 122.99,
+   "open": 123.12,
+   "high": 123.28,
+   "low": 123.1,
    "gain_pct": 5.2,
    "volume": 2600000.0,
    "volume_vs_prior": 4.3333,
@@ -1931,11 +1933,11 @@
       "letter": "H",
       "label": "close near the high",
       "values": {
-       "close_pos": 0.9,
+       "close_pos": 0.94,
        "close_above_open": true
       },
-      "value": 0.9,
-      "display": "close_pos=0.9 close_above_open=True",
+      "value": 0.94,
+      "display": "close_pos=0.94 close_above_open=True",
       "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
       "passed": true,
       "pass": true,
@@ -1950,20 +1952,20 @@
       "letter": "RE",
       "label": "range expansion",
       "values": {
-       "vs_prior_5": 1.0,
-       "vs_prior_10": 1.0,
-       "bar_range_pct": 0.3
+       "vs_prior_5": 0.33,
+       "vs_prior_10": 0.33,
+       "bar_range_pct": 0.1
       },
-      "value": 1.0,
-      "display": "vs_prior_5=1.0 vs_prior_10=1.0 bar_range_pct=0.3",
+      "value": 0.33,
+      "display": "vs_prior_5=0.33 vs_prior_10=0.33 bar_range_pct=0.1",
       "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
-      "passed": true,
-      "pass": true,
+      "passed": false,
+      "pass": false,
       "marginal": false,
-      "a_plus": true,
-      "note": "",
+      "a_plus": false,
+      "note": "the burst bar is not the widest of the last five",
       "partial": false,
-      "status": "PASS"
+      "status": "FAIL"
      },
      {
       "key": "volume",
@@ -1990,7 +1992,7 @@
     "vetoes": [],
     "passes": 6,
     "of": 6,
-    "a_plus_count": 7,
+    "a_plus_count": 6,
     "score": 10.0,
     "grade": "A+",
     "reclass": null,
@@ -2020,9 +2022,9 @@
     },
     "burst": {
      "gain_pct": 5.2,
-     "gap_pct": 5.0,
-     "bar_range_pct": 0.3,
-     "close_pos": 0.9,
+     "gap_pct": 5.1,
+     "bar_range_pct": 0.1,
+     "close_pos": 0.94,
      "volume_vs_prior": 4.33,
      "volume_vs_avg50": 2.49,
      "volume_rank_60": 1
@@ -2923,9 +2925,9 @@
     },
     {
      "date": "2026-09-10",
-     "o": 123.02,
-     "h": 123.3,
-     "l": 122.99,
+     "o": 123.12,
+     "h": 123.28,
+     "l": 123.1,
      "c": 123.27,
      "v": 2600000.0
     }
@@ -2936,17 +2938,17 @@
    "ticker": "NVDA",
    "name": "",
    "flags": [],
-   "scan": "burst",
+   "scan": "both",
    "close": 126.88,
    "prev_close": 118.14,
-   "open": 126.64,
-   "high": 126.93,
-   "low": 126.61,
+   "open": 123.46,
+   "high": 127.57,
+   "low": 123.0,
    "gain_pct": 7.4,
    "volume": 3400000.0,
    "volume_vs_prior": 5.6667,
    "dollar_volume": 431392000,
-   "dollar_move": null,
+   "dollar_move": 3.42,
    "extension_pct": 6.8,
    "quality": {
     "checks": [
@@ -3062,11 +3064,11 @@
       "letter": "H",
       "label": "close near the high",
       "values": {
-       "close_pos": 0.84,
+       "close_pos": 0.85,
        "close_above_open": true
       },
-      "value": 0.84,
-      "display": "close_pos=0.84 close_above_open=True",
+      "value": 0.85,
+      "display": "close_pos=0.85 close_above_open=True",
       "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
       "passed": true,
       "pass": true,
@@ -3081,12 +3083,12 @@
       "letter": "RE",
       "label": "range expansion",
       "values": {
-       "vs_prior_5": 1.0,
-       "vs_prior_10": 1.0,
-       "bar_range_pct": 0.3
+       "vs_prior_5": 12.0,
+       "vs_prior_10": 12.0,
+       "bar_range_pct": 3.6
       },
-      "value": 1.0,
-      "display": "vs_prior_5=1.0 vs_prior_10=1.0 bar_range_pct=0.3",
+      "value": 12.0,
+      "display": "vs_prior_5=12.0 vs_prior_10=12.0 bar_range_pct=3.6",
       "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
       "passed": true,
       "pass": true,
@@ -3151,9 +3153,9 @@
     },
     "burst": {
      "gain_pct": 7.4,
-     "gap_pct": 7.2,
-     "bar_range_pct": 0.3,
-     "close_pos": 0.84,
+     "gap_pct": 4.5,
+     "bar_range_pct": 3.6,
+     "close_pos": 0.85,
      "volume_vs_prior": 5.67,
      "volume_vs_avg50": 3.44,
      "volume_rank_60": 1
@@ -4094,9 +4096,9 @@
     },
     {
      "date": "2026-09-10",
-     "o": 126.64,
-     "h": 126.93,
-     "l": 126.61,
+     "o": 123.46,
+     "h": 127.57,
+     "l": 123.0,
      "c": 126.88,
      "v": 3400000.0
     }
@@ -4110,14 +4112,14 @@
    "scan": "both",
    "close": 124.21,
    "prev_close": 117.18,
-   "open": 118.96,
-   "high": 124.49,
-   "low": 118.35,
+   "open": 114.71,
+   "high": 124.77,
+   "low": 113.59,
    "gain_pct": 6.0,
    "volume": 3000000.0,
    "volume_vs_prior": 5.0,
    "dollar_volume": 372630000,
-   "dollar_move": 5.25,
+   "dollar_move": 9.5,
    "extension_pct": 5.2,
    "quality": {
     "checks": [
@@ -4188,18 +4190,18 @@
       "label": "narrow or negative day before",
       "values": {
        "prior_day_pct": -0.17,
-       "prior_range_pct": 0.8,
+       "prior_range_pct": 0.3,
        "negative": true,
        "narrow": true,
-       "median_range_pct": 1.0
+       "median_range_pct": 0.3
       },
       "value": -0.17,
-      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=1.0",
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.3 negative=True narrow=True median_range_pct=0.3",
       "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
       "passed": true,
       "pass": true,
       "marginal": false,
-      "a_plus": true,
+      "a_plus": false,
       "note": "",
       "partial": false,
       "status": "PASS"
@@ -4212,13 +4214,13 @@
        "base_sessions": 17,
        "breakdowns": 0,
        "bursts_in_base": 0,
-       "giveback": 0.19,
-       "tightness": 0.64,
+       "giveback": 0.18,
+       "tightness": 0.25,
        "base_volume_vs_leg": 0.41,
        "base_volume_vs_avg": 0.59
       },
       "value": 17,
-      "display": "base_sessions=17 breakdowns=0 bursts_in_base=0 giveback=0.19 tightness=0.64 base_volume_vs_leg=0.41 base_volume_vs_avg=0.59",
+      "display": "base_sessions=17 breakdowns=0 bursts_in_base=0 giveback=0.18 tightness=0.25 base_volume_vs_leg=0.41 base_volume_vs_avg=0.59",
       "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
       "passed": true,
       "pass": true,
@@ -4252,12 +4254,12 @@
       "letter": "RE",
       "label": "range expansion",
       "values": {
-       "vs_prior_5": 4.9,
-       "vs_prior_10": 4.9,
-       "bar_range_pct": 4.9
+       "vs_prior_5": 30.0,
+       "vs_prior_10": 30.0,
+       "bar_range_pct": 9.0
       },
-      "value": 4.9,
-      "display": "vs_prior_5=4.9 vs_prior_10=4.9 bar_range_pct=4.9",
+      "value": 30.0,
+      "display": "vs_prior_5=30.0 vs_prior_10=30.0 bar_range_pct=9.0",
       "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
       "passed": true,
       "pass": true,
@@ -4292,7 +4294,7 @@
     "vetoes": [],
     "passes": 6,
     "of": 6,
-    "a_plus_count": 8,
+    "a_plus_count": 7,
     "score": 10.0,
     "grade": "A+",
     "reclass": null,
@@ -4306,8 +4308,8 @@
      "end_index": 111,
      "sessions": 17,
      "high": 121.09,
-     "low": 116.83,
-     "depth_pct": 3.5,
+     "low": 117.12,
+     "depth_pct": 3.3,
      "breakdown_dates": []
     },
     "leg": {
@@ -4322,8 +4324,8 @@
     },
     "burst": {
      "gain_pct": 6.0,
-     "gap_pct": 1.5,
-     "bar_range_pct": 4.9,
+     "gap_pct": -2.1,
+     "bar_range_pct": 9.0,
      "close_pos": 0.95,
      "volume_vs_prior": 5.0,
      "volume_vs_avg50": 2.96,
@@ -5122,149 +5124,149 @@
     {
      "date": "2026-08-18",
      "o": 120.49,
-     "h": 120.96,
-     "l": 117.11,
+     "h": 120.58,
+     "l": 117.49,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-19",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-20",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-21",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-24",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-25",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-26",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-27",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-08-28",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-08-31",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-01",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-02",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-03",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-04",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-07",
      "o": 117.38,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.58,
      "v": 600000.0
     },
     {
      "date": "2026-09-08",
      "o": 117.58,
-     "h": 118.05,
-     "l": 116.91,
+     "h": 117.67,
+     "l": 117.29,
      "c": 117.38,
      "v": 600000.0
     },
     {
      "date": "2026-09-09",
      "o": 117.38,
-     "h": 117.73,
-     "l": 116.83,
+     "h": 117.44,
+     "l": 117.12,
      "c": 117.18,
      "v": 600000.0
     },
     {
      "date": "2026-09-10",
-     "o": 118.96,
-     "h": 124.49,
-     "l": 118.35,
+     "o": 114.71,
+     "h": 124.77,
+     "l": 113.59,
      "c": 124.21,
      "v": 3000000.0
     }
    ],
-   "summary": "TSLA: +6.0% on 5.0× volume out of a base 3.5% deep. A+ 10.0, 6 of 6 criteria."
+   "summary": "TSLA: +6.0% on 5.0× volume out of a base 3.3% deep. A+ 10.0, 6 of 6 criteria."
   },
   {
    "ticker": "PLUG",
@@ -9011,7 +9013,7 @@
    ],
    "regime": "red",
    "entry_ref": 24.56,
-   "shares": 25,
+   "shares": 24,
    "current_stop": 23.58,
    "last_close": 24.71,
    "last_date": "2026-09-10",
@@ -9020,7 +9022,7 @@
    "result_pct": null,
    "half_sold": false,
    "sold": 0,
-   "remaining": 25
+   "remaining": 24
   },
   {
    "ticker": "NBIS",
@@ -9103,18 +9105,18 @@
   "symbols": {
    "AAPL": {
     "date": "2026-09-10",
-    "o": 123.95,
-    "h": 124.23,
-    "l": 123.92,
+    "o": 118.96,
+    "h": 124.49,
+    "l": 118.35,
     "c": 124.21,
     "v": 3000000.0,
     "since": "2026-09-10"
    },
    "AMD": {
     "date": "2026-09-10",
-    "o": 123.02,
-    "h": 123.3,
-    "l": 122.99,
+    "o": 123.12,
+    "h": 123.28,
+    "l": 123.1,
     "c": 123.27,
     "v": 2600000.0,
     "since": "2026-09-10"
@@ -9148,9 +9150,9 @@
    },
    "NVDA": {
     "date": "2026-09-10",
-    "o": 126.64,
-    "h": 126.93,
-    "l": 126.61,
+    "o": 123.46,
+    "h": 127.57,
+    "l": 123.0,
     "c": 126.88,
     "v": 3400000.0,
     "since": "2026-09-10"
@@ -9175,9 +9177,9 @@
    },
    "TSLA": {
     "date": "2026-09-10",
-    "o": 118.96,
-    "h": 124.49,
-    "l": 118.35,
+    "o": 114.71,
+    "h": 124.77,
+    "l": 113.59,
     "c": 124.21,
     "v": 3000000.0,
     "since": "2026-09-10"
@@ -9197,8 +9199,8 @@
   "ticker": "AAPL",
   "grade": "A+",
   "score": 10.0,
-  "why": "fails range expansion",
-  "sentence": "AAPL came closest at A+ 10.0: fails range expansion."
+  "why": null,
+  "sentence": "AAPL came closest at A+ 10.0."
  },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",

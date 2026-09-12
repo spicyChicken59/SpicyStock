@@ -330,10 +330,12 @@ def test_an_a_plus_burst_the_account_cannot_size_is_cut_not_traded(market, claud
     assert json.loads((docs / record.PICKS_FILE).read_text())["picks"] == []
 
 
-def test_a_textbook_burst_grades_a_plus_and_has_its_ticket_withheld_at_the_limit(fake_alpaca, seed, claude, fake_resend, tmp_path):
-    """The field guide's own bar: its low sits 4.7% under the close, so at
-    the +4% ceiling neither the low nor the midpoint is inside his 4% line.
-    The setup is published with its card and its reason; no ticket, no pick."""
+def test_a_textbook_burst_grades_a_plus_and_gets_a_ticket_narrowed_to_its_stop(fake_alpaca, seed, claude, fake_resend, tmp_path):
+    """The field guide's own bar: its low sits 4.7% under the close, so at a
+    fixed +4% ceiling neither the low nor the midpoint was inside his 4%
+    line and the closeout withheld it. The limit is the stop's own ceiling
+    now -- the midpoint 121.42 / 0.96 = 126.47, under the 129.18 day-2 line
+    -- so the setup carries an executable ticket and a pick."""
     fake_alpaca.add_history("WIDE", qframe(ideal_bars()))
     for name, df in base_frames(11, seed).items():
         fake_alpaca.add_history(name, df)
@@ -341,10 +343,33 @@ def test_a_textbook_burst_grades_a_plus_and_has_its_ticket_withheld_at_the_limit
     rep, data, docs = evening(tmp_path, ["WIDE"] + [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(11)])
     assert rep.exit_code() == 0, rep.problems
     burst = data["bursts"][0]
-    assert burst["grade"] == "A+" and burst["plan"]["eligible"] is False and burst["plan"]["action"] == "refused"
-    assert burst["plan"]["reason"].startswith("ticket withheld: at the") and burst["plan"]["order_json"] is None
+    p = burst["plan"]
+    assert burst["grade"] == "A+" and p["eligible"] is True and p["action"] == "buy_at_open"
+    assert p["limit"] == 126.47 and p["day2_spent_above"] == 129.18 and p["limit_basis"] == "stop_line"
+    assert p["stop"] == 121.42 and p["stop_basis"] == "half_range" and p["stop_pct"] <= plan.MAX_STOP_PCT
+    assert p["order_json"]["limit_price"] == 126.47 and p["order_json"]["stop_price"] == p["entry_ref"]
+    assert data["trades"] == ["WIDE"] and data["cash_budget"]["cut"] == []
+    pick = json.loads((docs / record.PICKS_FILE).read_text())["picks"][0]
+    assert pick["ticker"] == "WIDE" and pick["entry_high"] == 126.47 and pick["day2_spent_above"] == 129.18
+
+
+def test_a_burst_no_limit_can_hold_a_stop_under_is_published_without_a_ticket(fake_alpaca, seed, claude, fake_resend, tmp_path):
+    """The same shape with a 9% range: the low caps the limit at 118.32 and
+    the midpoint at 123.83, both under the 124.21 buy stop, so no limit
+    exists this bar can hold a stop under. The setup is published with its
+    card and its reason; no ticket, no pick."""
+    fake_alpaca.add_history("WIDE", qframe(ideal_bars(burst_range_pct=9.0)))
+    for name, df in base_frames(11, seed).items():
+        fake_alpaca.add_history(name, df)
+    fake_alpaca.add_history("SPY", make_ohlcv("base", seed=[seed, 999], days=260))
+    rep, data, docs = evening(tmp_path, ["WIDE"] + [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(11)])
+    assert rep.exit_code() == 0, rep.problems
+    burst = data["bursts"][0]
+    p = burst["plan"]
+    assert p["eligible"] is False and p["action"] == "refused" and p["ticket_refusal"] == "no_room_above_the_trigger"
+    assert p["reason"].startswith("ticket withheld: no limit above the") and p["order_json"] is None
     assert data["trades"] == [] and data["beyond_cap"] == ["WIDE"]
-    assert data["cash_budget"]["cut"] == [{"ticker": "WIDE", "kind": "withheld", "reason": burst["plan"]["reason"]}]
+    assert data["cash_budget"]["cut"] == [{"ticker": "WIDE", "kind": "withheld", "reason": p["reason"]}]
     assert data["cover"]["h1"] == report.H1_KEEP_CASH and "1 with a qualifying setup and no ticket" in data["cover"]["dek"]
     assert data["closest_miss"] is None                      # a withheld ticket is not a miss
     assert json.loads((docs / record.PICKS_FILE).read_text())["picks"] == []
@@ -456,7 +481,11 @@ def test_the_intraday_check_reads_the_previous_evenings_names_and_mails_only_a_c
     assert live["session"] == SESSION
     assert rows["COIL"]["kind"] == "anticipation" and rows["COIL"]["level"] == trigger
     assert rows["COIL"]["above_level"] is True and rows["COIL"]["volume_state"] == "confirmed"
-    assert rows["AAA"]["kind"] == "burst" and rows["AAA"]["level"] == data["bursts"][0]["plan"]["entry_high"]
+    aaa = data["bursts"][0]["plan"]
+    # the burst's level is its DAY-2 line, not the narrower price its ticket
+    # can fill at: on this bar the two differ, so the field it reads is proved
+    assert aaa["day2_spent_above"] != aaa["entry_high"]
+    assert rows["AAA"]["kind"] == "burst" and rows["AAA"]["level"] == aaa["day2_spent_above"]
     assert rows["AAA"]["above_level"] is False and rows["AAA"]["volume_state"] == "not_yet"
     assert len(fake_resend.sent) == 2 and fake_resend.sent[-1]["subject"] == "Breakout in progress — COIL"
     assert "COIL" in fake_resend.sent[-1]["html"] and "AAA" not in fake_resend.sent[-1]["html"].split("above its level")[0].rsplit("<p>", 1)[-1]

@@ -1,29 +1,43 @@
 """Read-only comparison of two entry ceilings over an archived record.
 
-The question is the one CLAUDE.md defers: his +4% ceiling and his 4% stop
-line cannot both hold at the ticket's limit, so nearly every real burst is
-withheld. This reads a record that has already been written, recomputes each
-burst's plan through ``plan.burst_plan()`` -- the production path, unchanged
--- and beside it computes what the ticket WOULD be if the ceiling were
-constrained by the structural stop instead of fixed:
+The question CLAUDE.md deferred three times -- his +4% ceiling and his 4%
+stop line cannot both hold at the ticket's limit, so nearly every real burst
+was withheld -- has been decided: the constrained ceiling
 
-    limit' = min(entry_high, floor_to_cents(stop / (1 - MAX_STOP_PCT/100)))
+    limit = min(close + ENTRY_ABOVE_PCT, floor_to_cents(stop / (1 - MAX_STOP_PCT/100)))
 
-The structural stop candidates are the existing ones in their existing
-priority order (``plan.burst_stop``'s cascade: the burst day's low, then the
-bar's midpoint). The synthetic ``max_stop`` fallback -- a level the bar does
-not support -- is never consulted here: it can rescue nothing, which is the
-whole point of the comparison. A proposal is admitted only when
-``stop < trigger <= limit`` still holds at the rounded ceiling, and the
-shares are sized at that effective limit, as ``plan.SIZING_BASIS`` requires.
+is production (``plan.burst_limit``). This tool outlived that decision by
+changing sides, not by comparing production with itself. It now reads a
+record that has already been written and puts THREE readings beside each
+other, per burst:
+
+* **fixed** -- the retired ceiling, the close plus ``ENTRY_ABOVE_PCT`` with
+  the stop cascade judged there. It is no longer in ``src/``, so the study
+  carries it: this is the counterfactual column, and the only place that
+  arithmetic still exists.
+* **production** -- ``plan.burst_plan()`` itself, unchanged and uncalled-out.
+  ``verify()`` reproduces every plan the record carries down to the share
+  count, the action and the money, so this column IS the run's own answer.
+* **oracle** -- the constrained ceiling re-derived HERE from the spec, over
+  ``plan.burst_stop``'s candidates in their order, and held against what
+  production wrote. Two implementations of one rule is a defect in ``src/``;
+  as an independent check of an adopted rule against the words it was
+  adopted under, it is the point. A disagreement raises rather than prints.
+
+The synthetic ``max_stop`` fallback -- a level the bar does not support -- is
+never read by the oracle, so nothing here can manufacture eligibility. A
+ticket is admitted only where ``stop < trigger < limit`` still holds at the
+rounded ceiling: strictly under and strictly over, because a limit at the
+buy stop is a ticket with no band to fill in, which production withholds.
 
 It writes nothing. It changes no rule, no record, no regime, no ticket and no
 scorecard, and it is not a backtest: it counts eligibility under two ceilings
-over one archived session and reports what a narrower limit would drag with
+over one archived session and reports what the narrower limit carried with
 it. No forward return is read, computed or implied.
 
     python tools/entry_limit_study.py [record.json ...] [--json out.json]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,12 +52,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src import pipeline, plan  # noqa: E402
 
 
-#: The candidates the proposal may read, in ``plan.burst_stop``'s own order.
+#: The candidates the oracle may read, in ``plan.burst_stop``'s own order.
 #: ``plan.STOP_BASES`` ends with the synthetic fallback; this is that tuple
 #: with the fallback dropped, so a new structural basis appears here by
 #: adding it there and nothing else.
 STRUCTURAL_BASES = tuple(b for b in plan.STOP_BASES if b != "max_stop")
-#: The synthetic level the proposal must never read. Named so the refusal is
+#: The synthetic level the oracle must never read. Named so the refusal is
 #: a rule with a name and not an omission.
 SYNTHETIC_BASIS = "max_stop"
 #: What the ceiling is rounded to. The order's limit is a price.
@@ -54,6 +68,13 @@ CEILING_DECIMALS = plan.CENTS
 #: burst under two gates; ``no_new_longs`` is the regime and ``no_shares`` is
 #: the sizing. Each is reported under its own heading instead.
 BUDGET_CUT_KINDS = ("slot_cap", "equity")
+#: A band this thin is a ticket that can only fill within a rounding error of
+#: its own trigger. Reported, never a rule: production refuses only a band of
+#: nothing at all.
+BAND_THIN_PCT = 0.5
+#: How many of each kind of case the report prints.
+EXAMPLES = 5
+EXAMPLES_SHOWN, EXAMPLES_REFUSED, EXAMPLES_MOVED = 3, 2, 2
 
 
 def _plural(n: int, noun: str) -> str:
@@ -69,12 +90,13 @@ def floor_to_cents(value: float) -> float:
 
 def structural_candidates(low: float, high: float) -> list[tuple[str, float]]:
     """The structural stops ``plan.burst_stop`` would try, in its order, off
-    the same cent-rounded bar it reads. The record carries raw four-decimal
-    lows for some names; ``burst_plan`` rounds the bar once on the way in, and
-    a study that skipped that step proposed stops a cent away from the ones
-    the run would write. A basis named in ``plan.STOP_BASES`` that this has no
-    price for is refused out loud: a study that silently skipped one would
-    answer a question about a cascade it had not read."""
+    the same cent-rounded bar it reads -- derived HERE rather than read from
+    ``plan.stop_candidates()``, because this is the oracle and an oracle that
+    called the code it checks would check nothing. The record carries raw
+    four-decimal lows for some names; ``burst_plan`` rounds the bar once on
+    the way in, and a study that skipped that step proposed stops a cent away
+    from the ones the run would write. A basis named in ``plan.STOP_BASES``
+    that this has no price for is refused out loud."""
     low, high = plan._price(low, "low"), plan._price(high, "high")
     prices = {"burst_low": low, "half_range": plan._money((low + high) / 2)}
     unknown = [b for b in STRUCTURAL_BASES if b not in prices]
@@ -84,9 +106,12 @@ def structural_candidates(low: float, high: float) -> list[tuple[str, float]]:
 
 
 def constrained_ceiling(close: float, low: float, high: float) -> dict[str, Any] | None:
-    """The proposed ticket for one burst bar, or None when no structural stop
-    supports one. ``close`` is the buy stop (the trigger) as ``burst_plan``
-    sets it, and the bar is cent-rounded once, as ``burst_plan`` rounds it."""
+    """THE ORACLE: the constrained ticket for one burst bar, re-derived from
+    the spec, or a refusal when no structural stop supports one. ``close`` is
+    the buy stop (the trigger) as ``burst_plan`` sets it, and the bar is
+    cent-rounded once, as ``burst_plan`` rounds it. The band must be strictly
+    open -- ``stop < trigger < limit`` -- because a limit AT the buy stop is a
+    ticket with no room to fill in, which production withholds."""
     close = plan._price(close, "close")
     trigger = close
     fixed = plan._at_pct(close, plan.ENTRY_ABOVE_PCT)
@@ -94,7 +119,7 @@ def constrained_ceiling(close: float, low: float, high: float) -> dict[str, Any]
     for basis, stop in structural_candidates(low, high):
         cap = floor_to_cents(stop / (1 - plan.MAX_STOP_PCT / 100.0))
         limit = min(fixed, cap)
-        ok = stop < trigger <= limit
+        ok = stop < trigger < limit
         tried.append({"basis": basis, "stop": stop, "cap": cap, "limit": limit, "admitted": ok})
         if ok:
             return {
@@ -107,26 +132,49 @@ def constrained_ceiling(close: float, low: float, high: float) -> dict[str, Any]
     return {"basis": None, "tried": tried, "fixed_limit": fixed, "trigger": trigger} if tried else None
 
 
-def production_agrees(proposal: Mapping[str, Any], low: float, high: float) -> bool:
-    """The proposal is a narrower CEILING, not a second stop rule: run
-    ``plan.burst_stop`` -- the production cascade, untouched -- at the proposed
-    limit and it must reach the same structural basis at the same price, inside
-    his line. If it ever does not, the study is proposing something the
-    existing rule would not accept, and says so rather than reporting it."""
-    got = plan.burst_stop(proposal["limit"], low, high, trigger=proposal["trigger"])
-    return (got["stop_basis"] == proposal["basis"] and got["stop"] == proposal["stop"]
-            and got["stop_pct"] <= plan.MAX_STOP_PCT)
+def production_matches(oracle: Mapping[str, Any], row: Mapping[str, Any], now: Mapping[str, Any]) -> str | None:
+    """Why production and the oracle disagree about this bar, or None. The
+    oracle's limit, stop and basis must be what ``plan.burst_limit()`` names
+    AND what ``plan.burst_plan()`` wrote, and the cascade run at that limit
+    must reach the same stop inside his line. A disagreement means the
+    adopted rule is not the rule it was adopted as, and the study raises."""
+    got = plan.burst_limit(row["close"], row["low"], row["high"])
+    admitted = oracle["basis"] is not None
+    if bool(got["admitted"]) != admitted:
+        return f"oracle admits {admitted}, plan.burst_limit admits {got['admitted']}"
+    if not admitted:
+        return None if not now["eligible"] else "oracle refuses a ticket the run published"
+    for field, mine in (("limit", oracle["limit"]), ("stop", oracle["stop"]), ("stop_basis", oracle["basis"])):
+        if got[field] != mine:
+            return f"oracle {field} {mine!r} != plan.burst_limit {got[field]!r}"
+        if now[field] != mine:
+            return f"oracle {field} {mine!r} != the published plan's {now[field]!r}"
+    cascade = plan.burst_stop(oracle["limit"], row["low"], row["high"], trigger=oracle["trigger"])
+    if (cascade["stop_basis"] != oracle["basis"] or cascade["stop"] != oracle["stop"]
+            or cascade["stop_pct"] > plan.MAX_STOP_PCT):
+        return (f"the cascade at {oracle['limit']} reaches {cascade['stop_basis']} {cascade['stop']} "
+                f"at {cascade['stop_pct']}%, not {oracle['basis']} {oracle['stop']}")
+    return None
 
 
-def proposed_sizing(row: dict, proposal: dict, multiplier: float) -> plan.Sizing:
-    """The proposed ticket's shares, at the effective limit and under the same
-    multiplier chain the production plan applies -- the regime's, the hazards
-    from the bar, and the stop-risk halving from the stop's own width -- so
-    the two columns are the same arithmetic over two ceilings."""
+def fixed_ceiling_plan(row: dict, multiplier: float) -> dict[str, Any]:
+    """THE COUNTERFACTUAL: the ticket the retired fixed ceiling would write.
+    The limit is the close plus ``ENTRY_ABOVE_PCT`` whatever the bar says; the
+    stop cascade, the eligibility and the shares are judged there, which is
+    what ``burst_plan`` did before ``burst_limit`` existed. This arithmetic is
+    no longer in ``src/``, so it lives here or nowhere."""
+    close = plan._price(row["close"], "close")
+    limit = plan._at_pct(close, plan.ENTRY_ABOVE_PCT)
+    block = plan.burst_stop(limit, row["low"], row["high"], trigger=close)
+    eligible = block["stop_basis"] != SYNTHETIC_BASIS
     found = plan.hazards(row.get("gain_pct") or 0.0, row.get("extension_pct"))
     hazard = min([h["multiplier"] for h in found], default=1.0)
-    stop_multiplier, _ = plan.stop_risk(proposal["stop_pct_at_limit"])
-    return plan.size(proposal["limit"], proposal["stop"], plan.Account(), multiplier * hazard * stop_multiplier)
+    stop_multiplier, _ = plan.stop_risk(block["stop_pct"])
+    sizing = plan.size(limit, block["stop"], plan.Account(), multiplier * hazard * stop_multiplier)
+    full = plan.size(limit, block["stop"], plan.Account(), hazard * stop_multiplier)
+    return {"limit": limit, "stop": block["stop"], "basis": block["stop_basis"], "eligible": eligible,
+            "stop_pct": block["stop_pct"], "shares": sizing.shares, "shares_at_full_size": full.shares,
+            "risk_usd": sizing.risk_usd, "risk_usd_at_full_size": full.risk_usd}
 
 
 def usable_bar(row: dict) -> str | None:
@@ -192,59 +240,56 @@ def study(record: dict) -> dict[str, Any]:
             # and the same ticket at full size, so the two columns can be
             # compared on a night whose regime sized everything at zero
             now_full = current_plan(row, 1.0)
+            fixed = fixed_ceiling_plan(row, multiplier)
         except (ValueError, KeyError) as exc:   # the pipeline logs and skips; so does this
             missing.append({"ticker": row.get("ticker"), "why": str(exc)[:80]})
             continue
-        proposal = constrained_ceiling(row["close"], row["low"], row["high"])
-        admitted = proposal.get("basis") is not None
-        sized = None
-        if admitted:
-            if not production_agrees(proposal, row["low"], row["high"]):
-                raise AssertionError(
-                    f"{row['ticker']}: plan.burst_stop at the proposed {proposal['limit']} limit does not "
-                    f"reach {proposal['basis']} at {proposal['stop']}; the proposal is not the same rule")
-            sized = proposed_sizing(row, proposal, multiplier)
-            # and at full size, because the regime's multiplier is 0 on a red
-            # night and the ceiling question is about the nights that trade
-            full = proposed_sizing(row, proposal, 1.0)
+        oracle = constrained_ceiling(row["close"], row["low"], row["high"])
+        disagreement = production_matches(oracle, row, now)
+        if disagreement:
+            raise AssertionError(f"{row['ticker']}: {disagreement}; the adopted rule is not the rule "
+                                 f"this study re-derives from the spec")
         rows.append({
             "ticker": row["ticker"], "grade": row.get("grade"), "vetoed": bool(row.get("vetoes")),
             "admitted_by_regime": row.get("grade") in admits and not row.get("vetoes"),
             "cut_kind": cut.get(row["ticker"]),
             "close": row["close"], "low": row["low"], "high": row["high"],
-            "current": {"limit": now["limit"], "stop": now["stop"], "basis": now["stop_basis"],
-                        "eligible": now["eligible"], "shares": now["shares"],
-                        "shares_at_full_size": now_full["shares"],
-                        "stop_pct": now["stop_pct"], "action": now["action"]},
-            "proposed": ({"limit": proposal["limit"], "stop": proposal["stop"], "basis": proposal["basis"],
-                          "narrowed": proposal["narrowed"], "stop_pct": proposal["stop_pct_at_limit"],
-                          "band_pct": proposal["band_pct"], "shares": sized.shares,
-                          "shares_at_full_size": full.shares, "risk_usd": sized.risk_usd,
-                          "risk_usd_at_full_size": full.risk_usd}
-                         if admitted else {"limit": None, "basis": None,
-                                           "tried": proposal.get("tried", [])}),
+            "fixed": fixed,
+            "production": {"limit": now["limit"], "stop": now["stop"], "basis": now["stop_basis"],
+                           "limit_basis": now["limit_basis"], "narrowed": now["limit_narrowed"],
+                           "day2_spent_above": now["day2_spent_above"], "refusal": now["ticket_refusal"],
+                           "eligible": now["eligible"], "shares": now["shares"],
+                           "shares_at_full_size": now_full["shares"], "risk_usd": now["risk_usd"],
+                           "risk_usd_at_full_size": now_full["risk_usd"],
+                           "stop_pct": now["stop_pct"], "action": now["action"],
+                           "planned_entry": now["planned_entry"], "planned_entry_capped": now["planned_entry_capped"],
+                           "band_pct": plan._pct(100 * (now["limit"] / plan._price(row["close"], "close") - 1))},
         })
 
     counts = {
         "bursts": len(bursts),
         "missing_inputs": len(missing),
         "candidate_coverage": len(rows),
-        "current_eligible": sum(1 for r in rows if r["current"]["eligible"]),
-        "current_stop_rule_rejections": sum(1 for r in rows if not r["current"]["eligible"]),
-        "proposed_eligible": sum(1 for r in rows if r["proposed"]["basis"]),
-        "proposed_rejections": sum(1 for r in rows if not r["proposed"]["basis"]),
-        "rescued": sum(1 for r in rows if r["proposed"]["basis"] and not r["current"]["eligible"]),
+        "fixed_eligible": sum(1 for r in rows if r["fixed"]["eligible"]),
+        "fixed_stop_rule_rejections": sum(1 for r in rows if not r["fixed"]["eligible"]),
+        "production_eligible": sum(1 for r in rows if r["production"]["eligible"]),
+        "production_rejections": sum(1 for r in rows if not r["production"]["eligible"]),
+        "rescued": sum(1 for r in rows if r["production"]["eligible"] and not r["fixed"]["eligible"]),
         # a plan the account cannot size to a whole share is not a ticket:
         # production writes no_order and the budget cuts it as no_shares
-        "rescued_with_an_order": sum(1 for r in rows if r["proposed"]["basis"] and not r["current"]["eligible"]
-                                     and (r["proposed"].get("shares") or 0) >= 1),
+        "rescued_with_an_order": sum(1 for r in rows if r["production"]["eligible"] and not r["fixed"]["eligible"]
+                                     and (r["production"].get("shares") or 0) >= 1),
         "rescued_with_an_order_at_full_size": sum(
-            1 for r in rows if r["proposed"]["basis"] and not r["current"]["eligible"]
-            and (r["proposed"].get("shares_at_full_size") or 0) >= 1),
+            1 for r in rows if r["production"]["eligible"] and not r["fixed"]["eligible"]
+            and (r["production"].get("shares_at_full_size") or 0) >= 1),
         "narrowed_while_already_eligible": sum(
-            1 for r in rows if r["current"]["eligible"] and r["proposed"]["basis"]
-            and r["proposed"]["limit"] != r["current"]["limit"]),
-        "by_proposed_basis": {b: sum(1 for r in rows if r["proposed"]["basis"] == b) for b in STRUCTURAL_BASES},
+            1 for r in rows if r["fixed"]["eligible"] and r["production"]["eligible"]
+            and r["production"]["limit"] != r["fixed"]["limit"]),
+        "by_production_basis": {b: sum(1 for r in rows if r["production"]["eligible"]
+                                       and r["production"]["basis"] == b) for b in STRUCTURAL_BASES},
+        "by_limit_basis": {b: sum(1 for r in rows if r["production"]["eligible"]
+                                  and r["production"]["limit_basis"] == b) for b in plan.LIMIT_BASES},
+        "by_refusal": {k: sum(1 for r in rows if r["production"]["refusal"] == k) for k in plan.TICKET_REFUSALS},
     }
     exclusions = {
         "regime_verdict": verdict,
@@ -269,66 +314,64 @@ def study(record: dict) -> dict[str, Any]:
     green = [r for r in rows if r["grade"] in pipeline.TRADE_GRADES and not r["vetoed"]]
     counts["green_night"] = {
         "population": len(green),
-        "current_eligible": sum(1 for r in green if r["current"]["eligible"]),
-        "current_stop_rule_rejections": sum(1 for r in green if not r["current"]["eligible"]),
-        "proposed_eligible": sum(1 for r in green if r["proposed"]["basis"]),
-        "proposed_rejections": sum(1 for r in green if not r["proposed"]["basis"]),
-        "proposed_with_an_order_at_full_size": sum(
-            1 for r in green if (r["proposed"].get("shares_at_full_size") or 0) >= 1),
+        "fixed_eligible": sum(1 for r in green if r["fixed"]["eligible"]),
+        "fixed_stop_rule_rejections": sum(1 for r in green if not r["fixed"]["eligible"]),
+        "production_eligible": sum(1 for r in green if r["production"]["eligible"]),
+        "production_rejections": sum(1 for r in green if not r["production"]["eligible"]),
+        # a refused plan still carries a share count -- production sizes it at
+        # the day-2 ceiling against the synthetic stop so the card can show a
+        # size -- and counting those would report tickets that do not exist
+        "production_with_an_order_at_full_size": sum(
+            1 for r in green if r["production"]["eligible"]
+            and (r["production"].get("shares_at_full_size") or 0) >= 1),
     }
     return {"session": (record.get("run") or {}).get("session"), "counts": counts,
             "exclusions": exclusions, "missing": missing, "rows": rows,
-            "downstream": downstream(rows)}
+            "adopted": adopted(rows)}
 
 
-def downstream(rows: list[dict]) -> dict[str, Any]:
-    """What a narrower limit drags with it. Each entry is a field the run
-    writes or the page prints that is derived from the close or from the
-    fixed ceiling and would no longer agree with the order."""
-    eligible = [r for r in rows if r["proposed"]["basis"]]
-    if not eligible:
-        return {"proposed_eligible": 0}
-    indicative_above = [r for r in eligible
-                        if plan._at_pct(r["close"], plan.ASSUMED_SLIPPAGE_PCT) > r["proposed"]["limit"]]
-    narrowed = [r for r in eligible if r["proposed"]["narrowed"]]
-    # the band the ticket can still fill in. limit == stop is impossible by
-    # the admission rule; limit == trigger is not, and it is a buy stop-limit
-    # with no room above its own trigger at all
-    no_band = [r for r in eligible if r["proposed"]["limit"] == plan._price(r["close"], "close")]
-    thin_band = [r for r in eligible if r["proposed"]["band_pct"] < 0.5]
+def adopted(rows: list[dict]) -> dict[str, Any]:
+    """What the narrower limit CARRIED WITH IT, read off the fields the run
+    wrote rather than predicted. Each entry was a downstream assumption of
+    the fixed ceiling that the adoption had to settle."""
+    live = [r for r in rows if r["production"]["eligible"]]
+    if not live:
+        return {"production_eligible": 0}
+    capped = [r for r in live if r["production"]["planned_entry_capped"]]
+    narrowed = [r for r in live if r["production"]["narrowed"]]
+    thin_band = [r for r in live if r["production"]["band_pct"] < BAND_THIN_PCT]
     return {
-        "proposed_eligible": len(eligible),
-        "indicative_entry_above_the_limit": len(indicative_above),
+        "production_eligible": len(live),
+        "indicative_entry_capped_at_the_limit": len(capped),
         "indicative_entry_examples": [
             {"ticker": r["ticker"], "close": r["close"],
-             "indicative": plan._at_pct(r["close"], plan.ASSUMED_SLIPPAGE_PCT),
-             "proposed_limit": r["proposed"]["limit"]}
-            for r in indicative_above[:5]],
-        "limit_below_the_displayed_skip_line": len(narrowed),
-        "no_band_at_all": len(no_band),
+             "uncapped": plan._at_pct(r["close"], plan.ASSUMED_SLIPPAGE_PCT),
+             "planned_entry": r["production"]["planned_entry"], "limit": r["production"]["limit"]}
+            for r in capped[:EXAMPLES]],
+        "limit_below_the_day2_line": len(narrowed),
         "band_under_half_a_percent": len(thin_band),
-        "fields_affected": [
-            "plan.limit and the Fidelity ticket's limit price (plan.fidelity_orders)",
-            f"plan.planned_entry, the indicative entry at the close +{plan.ASSUMED_SLIPPAGE_PCT:g}%,"
-            " which plan.targets() and plan.exit_schedule() are quoted from",
-            f"plan.skip_if_open_above and plan.entry_high, printed as the +{plan.ENTRY_ABOVE_PCT:g}%"
-            " line in the page's order disclosure and in plan.pre_open_check",
-            "plan.sizing_price and the share count, sized at the effective limit"
-            f" ({plan.SIZING_BASIS})",
-            "the Following snapshot's saved levels and suggested quantity (docs/app-follow.js)",
-            "report.digest_html()'s ticket terms and the page's order disclosure",
+        "fields_settled": [
+            "plan.limit and plan.entry_high are the ticket's executable limit, and the Fidelity"
+            " ticket is written at it (plan.fidelity_orders)",
+            f"plan.planned_entry is min(close +{plan.ASSUMED_SLIPPAGE_PCT:g}%, that limit), so the"
+            " targets and the exit schedule quoted from it are never over a price the ticket can fill at",
+            f"plan.day2_spent_above carries the close +{plan.ENTRY_ABOVE_PCT:g}% on its own, as"
+            " plan.skip_if_open_above and in plan.pre_open_check: the outer extension threshold, not the limit",
+            f"plan.sizing_price and the share count are at the effective limit ({plan.SIZING_BASIS})",
+            "the Following snapshot saves both prices (docs/app-follow.js, buildModel)",
+            "report.digest_html()'s ticket facts and the page's order disclosure name both",
         ],
     }
 
 
 def report_text(name: str, s: dict[str, Any]) -> str:
-    c, x, d = s["counts"], s["exclusions"], s["downstream"]
-    x_mult = f"{x['size_multiplier']:g}×"
+    c, x, d = s["counts"], s["exclusions"], s["adopted"]
+    x_mult = f"{x['size_multiplier']:g}\u00d7"
     out: list[str] = []
     w = out.append
-    w(f"=== {name} — session {s['session']} ===")
-    w(f"the current ceiling is the close +{plan.ENTRY_ABOVE_PCT:g}% ({plan.SIZING_BASIS} sizing);")
-    w(f"the proposed ceiling is min(that, stop / (1 - {plan.MAX_STOP_PCT:g}%)) rounded down to cents,")
+    w(f"=== {name} \u2014 session {s['session']} ===")
+    w(f"the RETIRED ceiling is the close +{plan.ENTRY_ABOVE_PCT:g}% ({plan.SIZING_BASIS} sizing), carried here;")
+    w(f"PRODUCTION is min(that, stop / (1 - {plan.MAX_STOP_PCT:g}%)) rounded down to cents,")
     w(f"over {', '.join(STRUCTURAL_BASES)} in that order; {SYNTHETIC_BASIS} is never read.")
     w("")
     w(f"  bursts in the record                         {c['bursts']}")
@@ -336,15 +379,16 @@ def report_text(name: str, s: dict[str, Any]) -> str:
     w(f"  candidate coverage (a bar the cascade reads) {c['candidate_coverage']}")
     w("")
     w("  -- the stop rule, over the covered candidates --")
-    w(f"  eligible under the current ceiling           {c['current_eligible']}")
-    w(f"  rejected by the stop rule today              {c['current_stop_rule_rejections']}")
-    w(f"  eligible under the proposed ceiling          {c['proposed_eligible']}")
-    w(f"  still rejected under the proposal            {c['proposed_rejections']}")
-    w(f"     of which rescued (withheld now, eligible) {c['rescued']}")
+    w(f"  eligible under the retired fixed ceiling     {c['fixed_eligible']}")
+    w(f"  rejected by the stop rule at that ceiling    {c['fixed_stop_rule_rejections']}")
+    w(f"  eligible in production                       {c['production_eligible']}")
+    w(f"  still refused in production                  {c['production_rejections']} {c['by_refusal']}")
+    w(f"     of which rescued (withheld then, live now) {c['rescued']}")
     w(f"     of those, sized to a whole share            {c['rescued_with_an_order']}"
       f" at the regime's {x_mult}, {c['rescued_with_an_order_at_full_size']} at full size")
-    w(f"     already eligible, limit moved             {c['narrowed_while_already_eligible']}")
-    w(f"  structural basis the proposal used           {c['by_proposed_basis']}")
+    w(f"     eligible either way, limit moved          {c['narrowed_while_already_eligible']}")
+    w(f"  structural basis production used             {c['by_production_basis']}")
+    w(f"  what set the limit                           {c['by_limit_basis']}")
     w("")
     w("  -- not the stop rule: the gates before and after it --")
     w(f"  regime verdict                               {x['regime_verdict']} (admits {x['grades_admitted'] or 'no grade'})")
@@ -355,34 +399,34 @@ def report_text(name: str, s: dict[str, Any]) -> str:
           f"{x['excluded_by_grade_tonight']}")
     w(f"  excluded by a veto                           {x['excluded_by_veto']}")
     w(f"  excluded by the budget (slot cap, equity)    {x['excluded_by_budget'] or 'none recorded'}")
-    w(f"  cut as withheld — the stop rule's own refusal, counted above, not here: {x['cut_as_withheld_by_the_stop_rule']}")
+    w(f"  cut as withheld \u2014 the stop rule's own refusal, counted above, not here: {x['cut_as_withheld_by_the_stop_rule']}")
     w(f"  cut for no new longs (the regime) {x['cut_for_no_new_longs']}; for no whole share (the sizing) {x['cut_for_no_whole_share']}")
-    w(f"  the regime's size multiplier, which both columns are sized at: {x['size_multiplier']:g}×")
+    w(f"  the regime's size multiplier, which both columns are sized at: {x['size_multiplier']:g}\u00d7")
     g = c["green_night"]
     w(f"  would reach the stop rule on a green night   {g['population']}")
-    w(f"     of those: eligible today {g['current_eligible']}, rejected today {g['current_stop_rule_rejections']};"
-      f" eligible proposed {g['proposed_eligible']}, rejected proposed {g['proposed_rejections']},"
-      f" of which {g['proposed_with_an_order_at_full_size']} size to a whole share at full size")
+    w(f"     of those: eligible at the fixed ceiling {g['fixed_eligible']}, rejected there {g['fixed_stop_rule_rejections']};"
+      f" eligible in production {g['production_eligible']}, refused {g['production_rejections']},"
+      f" of which {g['production_with_an_order_at_full_size']} size to a whole share at full size")
     w("")
     w("  -- representative cases --")
     for line in examples(s):
         w("  " + line)
     w("")
-    w("  -- downstream of a narrower limit --")
-    if d.get("proposed_eligible"):
-        w(f"  indicative entry (close +{plan.ASSUMED_SLIPPAGE_PCT:g}%) above the proposed limit:"
-          f" {d['indicative_entry_above_the_limit']} of {d['proposed_eligible']}")
+    w("  -- what the narrower limit carried with it --")
+    if d.get("production_eligible"):
+        w(f"  indicative entry capped at the limit (close +{plan.ASSUMED_SLIPPAGE_PCT:g}% would be over it):"
+          f" {d['indicative_entry_capped_at_the_limit']} of {d['production_eligible']}")
         for e in d["indicative_entry_examples"]:
-            w(f"     {e['ticker']}: close {plan._usd(e['close'])}, indicative {plan._usd(e['indicative'])},"
-              f" proposed limit {plan._usd(e['proposed_limit'])}")
-        w(f"  limit below the displayed +{plan.ENTRY_ABOVE_PCT:g}% skip line:"
-          f" {d['limit_below_the_displayed_skip_line']} of {d['proposed_eligible']}")
-        w(f"  a limit with no room above its own trigger: {d['no_band_at_all']};"
-          f" a band under 0.5%: {d['band_under_half_a_percent']}")
-        for f in d["fields_affected"]:
-            w(f"     · {f}")
+            w(f"     {e['ticker']}: close {plan._usd(e['close'])}, uncapped {plan._usd(e['uncapped'])},"
+              f" planned entry {plan._usd(e['planned_entry'])} = the {plan._usd(e['limit'])} limit")
+        w(f"  limit under the +{plan.ENTRY_ABOVE_PCT:g}% day-2 line:"
+          f" {d['limit_below_the_day2_line']} of {d['production_eligible']}")
+        w(f"  a band under {BAND_THIN_PCT:g}%: {d['band_under_half_a_percent']}"
+          f" (a limit at the buy stop is refused, not narrowed: see by_refusal above)")
+        for f in d["fields_settled"]:
+            w(f"     \u00b7 {f}")
     else:
-        w("  no proposed ticket on this record")
+        w("  no ticket in production on this record")
     w("")
     w("  This counts eligibility under two ceilings on one archived session.")
     w("  It reads no forward return and makes no claim about either ceiling's edge.")
@@ -392,27 +436,27 @@ def report_text(name: str, s: dict[str, Any]) -> str:
 def examples(s: dict[str, Any]) -> list[str]:
     rows = s["rows"]
     picks: list[str] = []
-    rescued = [r for r in rows if r["proposed"]["basis"] and not r["current"]["eligible"]]
+    rescued = [r for r in rows if r["production"]["eligible"] and not r["fixed"]["eligible"]]
     rescued.sort(key=lambda r: (r["grade"] != "A+", r["grade"] != "A", r["ticker"]))
-    for r in rescued[:3]:
-        p, n = r["proposed"], r["current"]
-        picks.append(f"rescued  {r['ticker']:6s} {r['grade']:3s} close {plan._usd(r['close'])}: "
-                     f"today limit {plan._usd(n['limit'])} stop {plan._usd(n['stop'])} ({n['basis']}, "
-                     f"{n['stop_pct']:g}%) -> withheld; proposed limit {plan._usd(p['limit'])} "
+    for r in rescued[:EXAMPLES_SHOWN]:
+        p, n = r["production"], r["fixed"]
+        picks.append(f"rescued  {r['ticker']:6s} {str(r['grade']):3s} close {plan._usd(r['close'])}: "
+                     f"at the fixed {plan._usd(n['limit'])} the stop was {plan._usd(n['stop'])} ({n['basis']}, "
+                     f"{n['stop_pct']:g}%) -> withheld; production limit {plan._usd(p['limit'])} "
                      f"stop {plan._usd(p['stop'])} ({p['basis']}, {p['stop_pct']:g}%), "
                      f"band +{p['band_pct']:g}%, {_plural(p['shares_at_full_size'], 'share')} at full size")
-    still = [r for r in rows if not r["proposed"]["basis"]]
-    for r in still[:2]:
+    still = [r for r in rows if not r["production"]["eligible"]]
+    for r in still[:EXAMPLES_REFUSED]:
         tried = ", ".join(f"{t['basis']} {plan._usd(t['stop'])} -> ceiling {plan._usd(t['cap'])}"
-                          for t in r["proposed"].get("tried", []))
-        picks.append(f"refused  {r['ticker']:6s} {r['grade']:3s} close {plan._usd(r['close'])}: "
-                     f"{tried or 'no structural candidate'}; none leaves the trigger inside the limit")
-    moved = [r for r in rows if r["current"]["eligible"] and r["proposed"]["basis"]
-             and r["proposed"]["limit"] != r["current"]["limit"]]
-    for r in moved[:2]:
-        p, n = r["proposed"], r["current"]
-        picks.append(f"moved    {r['ticker']:6s} {r['grade']:3s} close {plan._usd(r['close'])}: "
-                     f"eligible today at {plan._usd(n['limit'])} ({n['basis']}); proposed "
+                          for t in constrained_ceiling(r["close"], r["low"], r["high"])["tried"])
+        picks.append(f"refused  {r['ticker']:6s} {str(r['grade']):3s} close {plan._usd(r['close'])}: "
+                     f"{tried or 'no structural candidate'}; {r['production']['refusal']}")
+    moved = [r for r in rows if r["fixed"]["eligible"] and r["production"]["eligible"]
+             and r["production"]["limit"] != r["fixed"]["limit"]]
+    for r in moved[:EXAMPLES_MOVED]:
+        p, n = r["production"], r["fixed"]
+        picks.append(f"moved    {r['ticker']:6s} {str(r['grade']):3s} close {plan._usd(r['close'])}: "
+                     f"eligible either way; fixed {plan._usd(n['limit'])} ({n['basis']}) -> production "
                      f"{plan._usd(p['limit'])} ({p['basis']}), stop {plan._usd(n['stop'])} -> "
                      f"{plan._usd(p['stop'])}, at full size {_plural(n['shares_at_full_size'], 'share')} -> "
                      f"{_plural(p['shares_at_full_size'], 'share')}")
@@ -438,8 +482,8 @@ def verify(record: dict) -> list[str]:
         # raises -- and the share count, the action and the money, because the
         # study sizes at the regime's own multiplier and so does the run. If
         # this reproduces, the "current" column IS the record's answer.
-        for field in ("limit", "stop", "stop_basis", "stop_pct", "eligible", "reason",
-                      "entry_low", "entry_high", "planned_entry", "extended_above",
+        for field in ("limit", "limit_basis", "stop", "stop_basis", "stop_pct", "eligible", "reason",
+                      "entry_low", "entry_high", "day2_spent_above", "planned_entry", "extended_above",
                       "hazards", "hazard_multiplier", "stop_risk_multiplier",
                       "shares", "action", "risk_usd", "position_usd"):
             if now[field] != recorded.get(field):

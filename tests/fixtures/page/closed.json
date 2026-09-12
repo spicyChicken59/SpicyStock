@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "46fceafaaffd"
+  "rules_version": "4e3d4ead892c"
  },
  "cover": {
   "h1": "Market closed. Plans unchanged.",
@@ -219,6 +219,7 @@
    "entry_window": "first 30 minutes",
    "assumed_slippage_pct": 1.0,
    "sizing_basis": "order_limit",
+   "limit_rule": "stop_constrained",
    "max_stop_pct": 4.0,
    "ideal_stop_pct": 2.0,
    "stop_risk_multiplier": 0.5,
@@ -261,7 +262,8 @@
    "gfv_window_months": 12,
    "gfv_restriction_days": 90,
    "precision.cents": 2,
-   "precision.pct_decimals": 2
+   "precision.pct_decimals": 2,
+   "precision.cent_floor_epsilon": 1e-09
   },
   "watchlist": {
    "adr_sessions": 20,
@@ -747,7 +749,7 @@
    ],
    "regime": "yellow",
    "entry_ref": 24.56,
-   "shares": 25,
+   "shares": 24,
    "current_stop": 23.58,
    "last_close": 24.71,
    "last_date": "2026-09-09",
@@ -756,7 +758,7 @@
    "result_pct": null,
    "half_sold": false,
    "sold": 0,
-   "remaining": 25
+   "remaining": 24
   },
   {
    "ticker": "NBIS",

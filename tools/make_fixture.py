@@ -70,22 +70,33 @@ BASE_NAMES = ["ANET", "CRDO", "DELL", "ELF", "FIX", "GLW", "HOOD", "IONQ", "JBL"
 
 
 # ---------------------------------------------------------------- market ---
-#: A burst bar this many percent of its close wide keeps its midpoint inside
-#: his 4% stop line at the +4% ceiling (the ticket's limit). The field guide's
-#: textbook bar, with its low 4.7% under the close, does not: its ticket is
-#: withheld at the limit, and TSLA below carries it to show that.
-TIGHT_BAR = dict(burst_range_pct=0.25, base_range=0.15, prior_range=0.1)
+#: The bar shapes the four A-quality bursts carry, so the page shows every
+#: state the constrained ticket limit can be in. A bar whose low sits within
+#: about 0.16% of its close keeps the day-2 ceiling as its limit; anything
+#: deeper narrows it to the stop's own ceiling, and a bar reaching more than
+#: about 4.2% under the close (with the close near the high) can hold no
+#: limit above its buy stop at all.
+#: (P) the limit is the day-2 ceiling itself: the low is 0.14% under the close.
+AT_CEILING = dict(burst_range_pct=0.15, base_range=0.15, prior_range=0.1)
+#: (P) narrowed under the close +1%, so the indicative entry is capped at the
+#: limit: the low is 3.4% under the close.
+CAPPED_ENTRY = dict(burst_range_pct=3.6, base_range=0.15, prior_range=0.1)
+#: (P) no limit above the buy stop: the low is 8.6% under the close.
+NO_TICKET_BAR = dict(burst_range_pct=9.0, base_range=0.15, prior_range=0.1)
 
 
 def burst_frames() -> dict[str, pd.DataFrame]:
-    """Four A-quality bursts -- three whose tickets qualify at their limit and
-    the textbook one whose ticket is withheld -- one loose-base B, one H-only
+    """Four A-quality bursts -- the field guide's textbook bar, whose ticket
+    the fixed +4% ceiling withheld and the stop's own ceiling now narrows to;
+    one whose limit IS the day-2 ceiling; one narrowed under the close +1%,
+    so the indicative entry is capped at the limit; and one no limit above
+    its buy stop can hold a stop under -- then one loose-base B, one H-only
     miss (an anticipation setup), one $-only day, and the coil."""
     return {
-        "AAPL": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000, **TIGHT_BAR)),
-        "AMD": qframe(ideal_bars(burst_gain=5.2, close_pos=0.9, burst_vol=2_600_000, base_quiet=12, **TIGHT_BAR)),
-        "NVDA": qframe(ideal_bars(burst_gain=7.4, close_pos=0.85, burst_vol=3_400_000, base_quiet=18, leg_steps=[1.4] * 14, **TIGHT_BAR)),
-        "TSLA": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000)),
+        "AAPL": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000)),
+        "AMD": qframe(ideal_bars(burst_gain=5.2, close_pos=0.9, burst_vol=2_600_000, base_quiet=12, **AT_CEILING)),
+        "NVDA": qframe(ideal_bars(burst_gain=7.4, close_pos=0.85, burst_vol=3_400_000, base_quiet=18, leg_steps=[1.4] * 14, **CAPPED_ENTRY)),
+        "TSLA": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000, **NO_TICKET_BAR)),
         "PLUG": qframe(ideal_bars(burst_gain=5.0, close_pos=0.55)),
         "DLLR": dollar_only(),
         "COIL": coil(),
@@ -343,6 +354,18 @@ def expected_shape(variant: str, data: dict) -> None:
         kinds = {c["ticker"]: c["kind"] for c in data["cash_budget"]["cut"]}
         assert "withheld" in kinds.values() and "slot_cap" in kinds.values(), kinds
         assert kinds.get("TSLA") == "withheld", kinds
+        # every state the constrained ticket limit can be in, so the page has
+        # a card for each: a limit AT the day-2 ceiling, one narrowed under
+        # it, one narrowed under the close +1% (the indicative entry capped),
+        # and one no limit above the buy stop can hold a stop under
+        states = set()
+        for b in data["bursts"]:
+            pl = b.get("plan")
+            if not pl:
+                continue
+            states.add("withheld" if not pl["eligible"] else
+                       "capped" if pl["planned_entry_capped"] else pl["limit_basis"])
+        assert states == {"outer_ceiling", "stop_line", "capped", "withheld"}, states
         assert data["scorecard"]["readable"] and data["scorecard"]["uncertain"] > 0, data["scorecard"]
         statuses = {p["ticker"]: p["status"] for p in data["open_plans"]}
         assert statuses == {"NBIS": "hold", "SMCI": record.UNCERTAIN, "VRT": "sell_into_strength"}, statuses

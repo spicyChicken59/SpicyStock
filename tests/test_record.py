@@ -285,7 +285,8 @@ def test_case_a_an_open_above_the_limit_is_uncertain_when_the_day_trades_back_un
     is the one case the bar can rule out."""
     row = record.replay(pick(), [{"date": "2026-09-02", "o": 103.0, "h": 104.0, "l": 101.5, "c": 102.5}])
     assert row["status"] == record.UNCERTAIN and row["uncertainty"] == "open_above_limit"
-    assert "which the plan says to skip" in row["fill"] and "may have filled later" in row["fill"]
+    assert "above the $102.00 limit the ticket permits" in row["fill"] and "may have filled later" in row["fill"]
+    assert "says to skip" not in row["fill"]     # the ticket could not fill there; the plan says no such thing
     out = record.replay(pick(), [{"date": "2026-09-02", "o": 103.0, "h": 104.0, "l": 102.5, "c": 103.5}])
     assert out["status"] == record.NOT_FILLED and "never traded back under it" in out["fill"]
 
@@ -595,3 +596,36 @@ def test_every_upper_case_number_in_the_module_is_archived_in_rules():
     archived = set(record.RULES.values())
     unarchived = {k: v for k, v in numbers.items() if v not in archived and k not in ("SCHEMA_VERSION",)}
     assert not unarchived, unarchived
+
+
+# ------------------------------------- records from before the narrowing ----
+
+
+def test_a_pick_from_before_the_constrained_limit_is_walked_without_inventing_one():
+    """Picks written before ``day2_spent_above`` existed carry ``entry_high``
+    as both the ticket's limit and the +4% line. The walk reads it as the
+    limit, which is what it was, and nothing fills in the missing field or
+    guesses at a second price."""
+    old = pick()                                 # no day2_spent_above at all
+    assert "day2_spent_above" not in old
+    assert record.pick_problem(old) is None
+    status, price, note, why = record.fill(old, {"o": 103.0, "h": 104.0, "l": 101.5, "c": 102.5})
+    assert status == record.UNCERTAIN and why == "open_above_limit"
+    assert "$102.00 limit" in note                # entry_high, the only limit it has
+    # a pick that carries both is held to them: the limit never over the line
+    both = pick(entry_high=101.5, day2_spent_above=104.0)
+    assert record.pick_problem(both) is None
+    assert record.pick_problem(pick(entry_high=105.0, day2_spent_above=104.0)) \
+        == "AAA: entry_high 105.0 is over its day-2 line 104.0"
+    assert record.pick_problem(pick(day2_spent_above="soon")) == "AAA: day2_spent_above is not a number"
+
+
+def test_the_walk_never_calls_an_open_over_the_limit_a_skip_the_plan_asked_for():
+    """Between the ticket's limit and the day-2 line the plan says nothing
+    about skipping: the order simply cannot fill at that open. The note says
+    that and not more."""
+    row = record.replay(pick(entry_high=102.0, day2_spent_above=104.0),
+                        [{"date": "2026-09-02", "o": 103.0, "h": 104.0, "l": 101.5, "c": 102.5}])
+    assert row["status"] == record.UNCERTAIN and row["uncertainty"] == "open_above_limit"
+    assert "above the $102.00 limit the ticket permits" in row["fill"]
+    assert "skip" not in row["fill"]

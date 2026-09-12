@@ -139,10 +139,10 @@ def test_every_proposal_satisfies_the_order_the_ticket_would_carry():
     assert seen, "the full fixture should propose at least one ticket"
 
 
-def test_the_proposal_is_the_production_cascade_at_a_narrower_ceiling():
-    """Not a second stop rule: plan.burst_stop, run at the proposed limit,
-    must reach the same structural basis at the same price, inside his line.
-    Over every record here, for every proposal."""
+def test_the_oracle_and_production_reach_the_same_ticket_on_every_bar():
+    """The oracle re-derives the constrained ceiling from the spec; the rule
+    it derives must be the limit, the stop and the basis plan.burst_limit
+    names and plan.burst_plan wrote. Over every record here, every bar."""
     for name in ("full", "degraded", "red", "yellow", "notrade"):
         data = json.loads((FIXTURES / f"{name}.json").read_text())
         seen = 0
@@ -150,11 +150,36 @@ def test_the_proposal_is_the_production_cascade_at_a_narrower_ceiling():
             if study.usable_bar(row):
                 continue
             got = study.constrained_ceiling(row["close"], row["low"], row["high"])
-            if not got["basis"]:
-                continue
-            seen += 1
-            assert study.production_agrees(got, row["low"], row["high"]), (name, row["ticker"], got)
+            now = study.current_plan(row, study.regime_multiplier(data))
+            assert study.production_matches(got, row, now) is None, (name, row["ticker"], got)
+            if got["basis"]:
+                seen += 1
+                assert now["limit"] == got["limit"] and now["stop"] == got["stop"]
         assert seen or not (data.get("bursts") or []), name
+
+
+def test_the_oracle_is_held_to_the_band_rule_on_the_bars_the_fixtures_lack():
+    """The fixtures happen to carry no bar whose ceiling lands EXACTLY on the
+    buy stop, and that is where the oracle and production can part: the rule
+    as proposed admitted ``trigger <= limit`` and production requires
+    ``trigger < limit``. A mutant that loosens the oracle back survived a
+    sweep of the fixtures alone, so the sweep carries those bars itself --
+    one where production falls through to the other candidate, one where it
+    refuses outright -- and asserts it reached both."""
+    reached = set()
+    for close, low, high in ((100.0, 96.00, 100.0), (100.0, 96.00, 104.0),
+                             (100.0, 96.01, 100.0), (100.0, 99.50, 100.50),
+                             (50.0, 47.0, 51.0), (1.10, 1.09, 1.15),
+                             (100.0, 90.0, 100.0), (100.0, 100.0, 105.0)):
+        row = bar(close, low, high)
+        got = study.constrained_ceiling(close, low, high)
+        now = study.current_plan(row, 1.0)
+        assert study.production_matches(got, row, now) is None, (close, low, high, got)
+        first = plan.burst_limit(close, low, high)["tried"][0]
+        if first["under_trigger"] and not first["room_above_trigger"] \
+                and first["ceiling"] == plan._price(close, "close"):
+            reached.add("ceiling on the trigger: " + ("fell through" if now["eligible"] else "refused"))
+    assert reached == {"ceiling on the trigger: fell through", "ceiling on the trigger: refused"}, reached
 
 
 def test_the_bar_is_cent_rounded_once_as_the_production_path_rounds_it():
@@ -166,14 +191,20 @@ def test_the_bar_is_cent_rounded_once_as_the_production_path_rounds_it():
     assert got["basis"] == "burst_low"
     assert got["stop"] == plan._price(raw_low, "low") == 531.56
     assert got["stop"] != raw_low
-    assert study.production_agrees(got, raw_low, high)
+    assert plan.burst_limit(close, raw_low, high)["stop"] == got["stop"] == 531.56
+    # priced off the raw low the ceiling is a cent higher, and a limit there
+    # puts the stop the run would actually write past his line
+    assert study.floor_to_cents(raw_low / 0.96) == 553.71 != study.floor_to_cents(531.56 / 0.96) == 553.70
+    assert got["limit"] == 553.70 and plan.burst_limit(close, raw_low, high)["limit"] == 553.70
 
 
-def test_a_proposal_the_production_cascade_would_refuse_is_raised_not_reported(monkeypatch):
-    """The invariant is checked while the study runs, not asserted in prose."""
+def test_an_oracle_that_drifts_from_production_is_raised_not_reported(monkeypatch):
+    """The invariant is checked while the study runs, not asserted in prose:
+    if the oracle's arithmetic ever stops being production's, the reading
+    stops rather than reporting a comparison of two different rules."""
     monkeypatch.setattr(study, "floor_to_cents", lambda v: math.ceil(v * 100) / 100 + 1.0)
     data = json.loads((FIXTURES / "full.json").read_text())
-    with pytest.raises(AssertionError, match="not the same rule"):
+    with pytest.raises(AssertionError, match="the adopted rule is not the rule"):
         study.study(data)
 
 
@@ -186,19 +217,22 @@ def test_the_study_separates_the_stop_rule_from_the_other_gates():
     out = study.study(data)
     c, x = out["counts"], out["exclusions"]
     assert c["candidate_coverage"] + c["missing_inputs"] == c["bursts"]
-    assert c["current_eligible"] + c["current_stop_rule_rejections"] == c["candidate_coverage"]
-    assert c["proposed_eligible"] + c["proposed_rejections"] == c["candidate_coverage"]
+    assert c["fixed_eligible"] + c["fixed_stop_rule_rejections"] == c["candidate_coverage"]
+    assert c["production_eligible"] + c["production_rejections"] == c["candidate_coverage"]
     # the values, read off the record's own plans
     carried = {b["ticker"]: b["plan"] for b in data["bursts"] if b.get("plan")}
     assert carried, "the full fixture should carry plans"
-    assert c["current_eligible"] == sum(1 for pl in carried.values() if pl["eligible"]) + \
+    assert c["production_eligible"] == sum(1 for pl in carried.values() if pl["eligible"]) + \
         sum(1 for b in data["bursts"] if not b.get("plan")
             and study.current_plan(b, study.regime_multiplier(data))["eligible"])
-    assert c["current_eligible"] != c["proposed_eligible"], "the two ceilings must not agree on this fixture"
+    assert c["fixed_eligible"] != c["production_eligible"], "the two ceilings must not agree on this fixture"
     for r in out["rows"]:
         if r["ticker"] in carried:
-            assert r["current"]["eligible"] == carried[r["ticker"]]["eligible"], r["ticker"]
-            assert r["current"]["limit"] == carried[r["ticker"]]["limit"], r["ticker"]
+            assert r["production"]["eligible"] == carried[r["ticker"]]["eligible"], r["ticker"]
+            assert r["production"]["limit"] == carried[r["ticker"]]["limit"], r["ticker"]
+            # and the retired column is NOT the record's: it is the arithmetic
+            # that is no longer in src/, so it must be able to differ
+            assert r["fixed"]["limit"] == plan._at_pct(plan._price(r["close"], "c"), plan.ENTRY_ABOVE_PCT)
     assert x["grades_admitted"] == list(pipeline.TRADE_GRADES)
     assert x["excluded_by_grade"] == sum(1 for b in data["bursts"] if b["grade"] not in pipeline.TRADE_GRADES)
     assert c["green_night"]["population"] == x["would_reach_the_stop_rule_on_a_green_night"]
@@ -265,32 +299,41 @@ def test_the_json_is_keyed_by_the_path_as_given(tmp_path):
     assert set(json.loads(out.read_text())) == {str(a), str(b)}
 
 
-def test_the_degenerate_band_counted_is_the_one_that_can_happen():
+def test_the_degenerate_band_is_a_refusal_and_not_a_thin_ticket():
     """limit == stop is excluded by the admission rule, so counting it would
     report a constant zero; limit == trigger is a buy stop-limit with no room
-    above its own trigger, and it does happen."""
+    above its own trigger, which production refuses outright -- so it appears
+    under by_refusal and can never appear as an eligible thin band."""
     data = json.loads((FIXTURES / "full.json").read_text())
-    d = study.study(data)["downstream"]
-    assert "no_band_at_all" in d and "band_under_half_a_percent" in d
-    rows = study.study(data)["rows"]
-    counted = sum(1 for r in rows if r["proposed"]["basis"]
-                  and r["proposed"]["limit"] == plan._price(r["close"], "close"))
-    assert d["no_band_at_all"] == counted
+    out = study.study(data)
+    d, rows = out["adopted"], out["rows"]
+    assert "band_under_half_a_percent" in d
+    assert set(out["counts"]["by_refusal"]) == set(plan.TICKET_REFUSALS)
     for r in rows:
-        if r["proposed"]["basis"]:
-            assert r["proposed"]["limit"] != r["proposed"]["stop"]   # never possible
+        if r["production"]["eligible"]:
+            assert r["production"]["limit"] > plan._price(r["close"], "close")   # a real band
+            assert r["production"]["limit"] != r["production"]["stop"]           # never possible
+        else:
+            assert r["production"]["refusal"] in plan.TICKET_REFUSALS
+    assert sum(out["counts"]["by_refusal"].values()) == out["counts"]["production_rejections"]
 
 
 def test_a_rescue_the_account_cannot_size_is_counted_apart():
     """A plan with no whole share is not a ticket: production writes no_order
     and the budget cuts it as no_shares."""
     data = json.loads((FIXTURES / "full.json").read_text())
-    c = study.study(data)["counts"]
-    rows = study.study(data)["rows"]
-    with_order = sum(1 for r in rows if r["proposed"]["basis"] and not r["current"]["eligible"]
-                     and r["proposed"]["shares_at_full_size"] >= 1)
+    out = study.study(data)
+    c, rows = out["counts"], out["rows"]
+    with_order = sum(1 for r in rows if r["production"]["eligible"] and not r["fixed"]["eligible"]
+                     and r["production"]["shares_at_full_size"] >= 1)
     assert c["rescued_with_an_order_at_full_size"] == with_order
     assert c["rescued_with_an_order_at_full_size"] <= c["rescued"]
+    # a refused plan still carries a share count: it must never be counted
+    refused = [r for r in rows if not r["production"]["eligible"]]
+    assert all(r["production"]["shares_at_full_size"] >= 0 for r in refused)
+    green = [r for r in rows if r["grade"] in pipeline.TRADE_GRADES and not r["vetoed"]]
+    assert c["green_night"]["production_with_an_order_at_full_size"] == sum(
+        1 for r in green if r["production"]["eligible"] and r["production"]["shares_at_full_size"] >= 1)
 
 
 def test_a_yellow_night_counts_its_own_narrower_grade_line_as_well():
@@ -323,7 +366,7 @@ def test_a_red_night_is_counted_as_a_regime_exclusion_not_a_stop_rejection():
     assert out["exclusions"]["grades_admitted"] == []
     assert out["exclusions"]["excluded_by_regime"] == out["counts"]["candidate_coverage"]
     # the stop rule is still counted over the same bars, separately
-    assert out["counts"]["current_stop_rule_rejections"] + out["counts"]["current_eligible"] \
+    assert out["counts"]["fixed_stop_rule_rejections"] + out["counts"]["fixed_eligible"] \
         == out["counts"]["candidate_coverage"]
 
 
@@ -337,7 +380,7 @@ def test_a_row_without_a_readable_bar_is_counted_as_a_missing_input():
     assert out["counts"]["candidate_coverage"] == len(data["bursts"]) - 2
 
 
-def test_the_current_column_is_the_production_path_not_a_second_reading():
+def test_the_production_column_is_the_production_path_not_a_second_reading():
     """Every plan a record already carries is reproduced exactly, so the
     comparison's 'today' column is the run's own answer."""
     data = json.loads((FIXTURES / "degraded.json").read_text())
@@ -346,21 +389,24 @@ def test_the_current_column_is_the_production_path_not_a_second_reading():
     assert study.verify(data) == []
 
 
-def test_the_downstream_block_names_the_indicative_entry_a_narrower_limit_passes():
+def test_the_adopted_block_counts_the_indicative_entries_the_limit_capped():
     data = json.loads((FIXTURES / "full.json").read_text())
     out = study.study(data)
-    d = out["downstream"]
-    assert d["proposed_eligible"] == out["counts"]["proposed_eligible"]
-    # every example named is a case that really is over the proposed limit
+    d = out["adopted"]
+    assert d["production_eligible"] == out["counts"]["production_eligible"]
+    # every example named really is a case the close +1% would have overshot,
+    # and the published plan says so in its own field
     named = {e["ticker"] for e in d["indicative_entry_examples"]}
+    assert named, "the full fixture should carry a capped indicative entry"
     by_ticker = {r["ticker"]: r for r in out["rows"]}
     for t in named:
         r = by_ticker[t]
-        assert plan._at_pct(r["close"], plan.ASSUMED_SLIPPAGE_PCT) > r["proposed"]["limit"], t
-    counted = sum(1 for r in out["rows"] if r["proposed"]["basis"]
-                  and plan._at_pct(r["close"], plan.ASSUMED_SLIPPAGE_PCT) > r["proposed"]["limit"])
-    assert d["indicative_entry_above_the_limit"] == counted
-    assert any("planned_entry" in f for f in d["fields_affected"])
+        assert plan._at_pct(plan._price(r["close"], "c"), plan.ASSUMED_SLIPPAGE_PCT) > r["production"]["limit"], t
+        assert r["production"]["planned_entry"] == r["production"]["limit"], t
+    counted = sum(1 for r in out["rows"] if r["production"]["eligible"]
+                  and r["production"]["planned_entry_capped"])
+    assert d["indicative_entry_capped_at_the_limit"] == counted
+    assert any("planned_entry" in f for f in d["fields_settled"])
 
 
 # ------------------------------------------------------- read-only --------
@@ -388,12 +434,15 @@ def test_the_study_does_not_move_the_production_ceiling_or_the_stop_line():
     assert got["eligible"] is False and got["stop_basis"] == study.SYNTHETIC_BASIS
 
 
-def test_the_sizing_is_at_the_effective_limit():
+def test_the_sizing_is_at_the_effective_limit_in_both_columns():
     row = bar(100.0, 98.0, 104.0)
     got = study.constrained_ceiling(row["close"], row["low"], row["high"])
-    sized = study.proposed_sizing(row, got, 1.0)
-    assert sized.price == got["limit"]
-    assert sized.risk_per_share == plan._money(got["limit"] - got["stop"])
+    now = study.current_plan(row, 1.0)
+    assert now["sizing_price"] == now["limit"] == got["limit"]
+    assert now["risk_per_share"] == plan._money(got["limit"] - got["stop"])
     # and the regime's multiplier is carried through, not quietly dropped
-    assert study.proposed_sizing(row, got, 0.0).shares == 0
-    assert study.proposed_sizing(row, got, 0.5).shares <= sized.shares
+    assert study.current_plan(row, 0.0)["shares"] == 0
+    assert study.current_plan(row, 0.5)["shares"] <= now["shares"]
+    # the retired column sizes at ITS limit, which is a different price here
+    fixed = study.fixed_ceiling_plan(row, 1.0)
+    assert fixed["limit"] == plan._at_pct(100.0, plan.ENTRY_ABOVE_PCT) > now["limit"]
