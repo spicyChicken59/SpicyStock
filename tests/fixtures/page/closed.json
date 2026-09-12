@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "71fae25cfa97"
+  "rules_version": "4e3d4ead892c"
  },
  "cover": {
   "h1": "Market closed. Plans unchanged.",
@@ -23,15 +23,15 @@
   "model": "claude-sonnet-4-6",
   "feed": "sip",
   "universe": {
-   "label": "30 named on the command line (--tickers)",
-   "size": 30,
+   "label": "31 named on the command line (--tickers)",
+   "size": 31,
    "source": "explicit",
    "fetched_at": null,
-   "identity": "47798ad00621ade5"
+   "identity": "f97bc6805de5df88"
   },
   "coverage": {
-   "requested": 31,
-   "with_bars": 31,
+   "requested": 32,
+   "with_bars": 32,
    "on_session": 0,
    "measured": 0,
    "stale": 0,
@@ -219,6 +219,7 @@
    "entry_window": "first 30 minutes",
    "assumed_slippage_pct": 1.0,
    "sizing_basis": "order_limit",
+   "limit_rule": "stop_constrained",
    "max_stop_pct": 4.0,
    "ideal_stop_pct": 2.0,
    "stop_risk_multiplier": 0.5,
@@ -261,7 +262,8 @@
    "gfv_window_months": 12,
    "gfv_restriction_days": 90,
    "precision.cents": 2,
-   "precision.pct_decimals": 2
+   "precision.pct_decimals": 2,
+   "precision.cent_floor_epsilon": 1e-09
   },
   "watchlist": {
    "adr_sessions": 20,
@@ -353,7 +355,7 @@
    "min_price": 3.0,
    "min_volume": 100000,
    "max_discovery": 8000,
-   "identity": "47798ad00621ade5"
+   "identity": "f97bc6805de5df88"
   }
  },
  "breadth": {
@@ -368,8 +370,8 @@
   "down50_month": 0,
   "up13_34d": 7,
   "down13_34d": 0,
-  "pct_above_40ma": 63.3,
-  "universe": 30,
+  "pct_above_40ma": 64.5,
+  "universe": 31,
   "ratio_5d": 2.0,
   "ratio_10d": 1.4,
   "up4_5d": 4,
@@ -384,11 +386,11 @@
    ],
    "oversold_extreme": true,
    "thresholds": {
-    "universe": 30,
+    "universe": 31,
     "reference_universe": 6500,
-    "down4_alarm": 3.2,
+    "down4_alarm": 3.3,
     "up50_month_hot": 0.1,
-    "down25_quarter_oversold": 0.9,
+    "down25_quarter_oversold": 1.0,
     "ratio_10d_red": 1.0,
     "ratio_5d_red": 0.5,
     "ratio_10d_yellow": 2.0
@@ -629,7 +631,7 @@
    },
    {
     "key": "down25_quarter",
-    "text": "fewer than 0.9 names down 25% in a quarter is an oversold extreme; bounces follow in one to six weeks"
+    "text": "fewer than 1 names down 25% in a quarter is an oversold extreme; bounces follow in one to six weeks"
    },
    {
     "key": "pct_above_40ma",
@@ -747,7 +749,7 @@
    ],
    "regime": "yellow",
    "entry_ref": 24.56,
-   "shares": 25,
+   "shares": 24,
    "current_stop": 23.58,
    "last_close": 24.71,
    "last_date": "2026-09-09",
@@ -756,7 +758,7 @@
    "result_pct": null,
    "half_sold": false,
    "sold": 0,
-   "remaining": 25
+   "remaining": 24
   },
   {
    "ticker": "NBIS",
@@ -877,7 +879,7 @@
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",
   "breadth": "The Market Monitor for the session and the regime verdict with its reasons verbatim. The size multiplier is the regime's; the plans already carry it.",
-  "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not.",
+  "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not. volume_vs_prior is the session's volume over the previous session's for every row, the $-only ones included (null when the previous session printed none); quality.burst holds the checklist's copy at two places.",
   "trades": "Tickers of the bursts to trade tomorrow, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
   "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the limit, past the slots or the configured equity, or sized to no whole share. Each has a reason in cash_budget.cut. Not checklist refusals.",
   "cash_budget": "Model allocation: what tomorrow's tickets would commit against the configured equity, the model slots used (open model plans count), and every plan without a ticket with its kind and reason. Never a balance or buying power.",

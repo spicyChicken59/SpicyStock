@@ -132,7 +132,12 @@ chosen burst has its chart without a second fetch. Under Bursts the cards
 have a Map twin (`docs/app-map.js`, restored from the `29e3205` signal
 map): the session's gain against its volume ratio, every point a recorded
 number, the selection shared with the cards, the search and the chooser,
-a table under it and the names it cannot plot listed by reason.
+a table under
+it and the names it cannot plot listed by reason. The ratio is read one way
+everywhere (`volumeRatio()`: the row's own field, the scan's measurement
+for every burst since the dollar scan carried it; for a record from before
+that, run 46 and earlier, the checklist's two-place copy, said to be the
+checklist's in the measurements; else missing and said so, zero a value).
 Following (`docs/app-follow.js`) is a shelf at the end of Explore: one
 click keeps a setup's own snapshot and suggested whole-share quantity in
 this browser only (`spicystock:following:v1`, versioned, keyed by kind,
@@ -159,7 +164,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-What is measured offline: 1023 tests, the chart check, and the page smoke
+What is measured offline: 1076 tests, the chart check, and the page smoke
 over six fixtures walked through every view, stock, search, the chooser,
 the keyboard, deep links and the old anchors, then the phone and the stale,
 failed, field-dropped and no-record states. What is NOT: the full-market
@@ -238,16 +243,12 @@ message, an alert with no ticket and no caveat, ratios at one decimal.
   bursts than that grades the rest by the checklist alone (`claude_partial`
   is not raised for those, only for names asked and unanswered).
 - **The +4% ceiling and his 4% stop line cannot both hold at the limit.**
-  Judged at the ticket's limit, a burst's stop is inside his line only when
-  the usable stop (the low, else the bar's midpoint under the buy stop)
-  sits within about 0.16% of the close: the field guide's textbook bar,
-  low 4.7% under the close, is withheld, and so is nearly every real burst.
-  The closeout implemented the withhold as specified rather than narrow the
-  ticket's band; the one-rule alternative, a limit capped at the price 4%
-  over the stop (`min(entry_high, stop / 0.96)`), keeps tickets and the
-  stop rule at every fill but narrows the permitted range. A method
-  decision, deferred to Astra; the fixtures carry three tight-bar bursts so
-  the page still shows a ticket.
+  SETTLED 12 Sep 2026, the one-rule alternative adopted: the ticket's limit
+  is `min(day2_spent_above, floor_to_cents(stop / (1 - MAX_STOP_PCT/100)))`
+  (`plan.burst_limit()`), and the +4% is the outer extension threshold on
+  its own field. The last checkpoint carries what it cost and what it
+  rescued. What it does NOT settle: whether the narrower permitted range
+  fills as often in the market, which no archived record can say.
 
 ## Checkpoint, 11 Sep 2026 — the ticket-record closeout
 
@@ -364,65 +365,448 @@ of the full-market record's size and of Pages serving the hash routes.
 
 ## Checkpoint, 11 Sep 2026 — visual exploration and one-click follow-up
 
-**Revision.** Branch `claude/spicystock-ticket-record-fixes-su1nh1`, one
-commit on top of `2bea66f` (the merge of #50). SpicyHome was read at
-`9c24129` and not written: taken from it were the bounded panel with a
-compact header strip, segmented controls in one row and the button
-hierarchy, in the design system's own tokens. The component restored is
-the burst map of `29e3205` (`docs/signal-map.js`: a button per point,
-stacked coincident points, a table twin, one selection with the cards);
-the history holds no other candle or line renderer.
+**Revision.** `a63a6d9` on `claude/spicystock-ticket-record-fixes-su1nh1`,
+merged to `main` as `74bff88` (#51). SpicyHome was read at `9c24129` and
+not written: taken from it were the bounded panel with a compact header
+strip, segmented controls in one row and the button hierarchy. The
+component restored is the burst map of `29e3205` (`docs/signal-map.js`:
+a button per point, stacked coincident points, a table twin, one
+selection with the cards).
 
 **What was built.** One chart panel (`detailChart()`): Setup | Candles |
 Line share `SCStock.chartGeometry()`, so levels, labels and tooltips
 agree in every mode; the Setup range frames the base, the caption
 discloses the sessions, the levels and an off-range aim, and the labels
-sit in a gutter (`rightLabel()`) while the lines stay at
-their prices. The Map is `SCStock.map.render()` over `gain_pct` and
-`volume_vs_prior` as recorded, the unplottable listed by reason.
-Following is `SCStock.follow` over a versioned browser store; a followed
-card prints the saved levels, the latest close from the record's new
-`observations` block and the movement since the signal close, marked as
-not a P&L; `pipeline.observations()` derives the block from bars already
-fetched, `report.validate()` refuses a malformed one. A page over a fixture
-wears `data-ss-demo`, a notice naming the fixture and a marked simulated
-chart-reader reply.
+sit in a gutter (`rightLabel()`) while the lines stay at their prices.
+The Map is `SCStock.map.render()` over `gain_pct` and `volume_vs_prior`.
+Following is `SCStock.follow` over a versioned browser store; a followed card prints the saved levels, the latest close from
+the record's new `observations` block (`pipeline.observations()`, from
+bars already fetched, refused by `report.validate()` when malformed) and
+the movement since the signal close, marked as not a P&L. A page over a
+fixture wears `data-ss-demo`, a notice naming the fixture and a marked
+simulated chart-reader reply.
 
 **Checks run** (offline, through the doubles): `pytest tests/ -q` 1023
 passed; `python tools/make_fixture.py --check` 7 fixtures current;
 `node tools/chart_check.mjs` 163/163 with its new panel section;
-`node tools/page_smoke.mjs --shots` 2277/2277 with `checkModes`, `checkMap`,
-`checkFollowing` and three more dropped fields. Its first run found eight
-holes, all closed: the notice and a two-row panel header had pushed the
-chart and the phone's search under the first screen (one strip, the
-legend under the chart, a one-line notice); the store keys were dotted
-lowercase digit-bearing values beside the word `KEY`, what the secret
-scan reads as a credential (colons now); the browser's validation bubble
-swallowed the size sentence (`novalidate`); the record's instruction
-says "filled", so a followed card quotes it under *the record says*. Screenshots
-at 1280 and 390 px, dark and light, were looked at against the previous
-pass's: COIL in three modes, the map with AAPL and TSLA sharing a spot,
-the followed setup, the stale page. NOT run, not claimable: a live
-fetch, a real Claude reply, Resend, Pages, and any judgement of the
-ticket and replay leads, live data quality or trading edge.
+`node tools/page_smoke.mjs --shots` 2277/2277 with `checkModes`,
+`checkMap`, `checkFollowing` and three more dropped fields. Its first run
+found eight holes, all closed: a two-row panel header and the notice had
+pushed the chart and the phone's search under the first screen (one
+strip, a one-line notice now); the store keys were dotted lowercase
+digit-bearing values beside the word `KEY`, what the secret scan reads
+as a credential (colons now); the browser's validation bubble swallowed
+the size sentence (`novalidate`); the record's instruction says
+"filled", so a followed card quotes it under *the record says*.
+Screenshots at 1280 and 390 px, dark and light, were looked at.
 
-**Settled here.** One panel, one geometry, three modes, the Setup range
-the default; labels in the gutter, lines at their prices; the map is the
+**Run live.** Run 45, a dry run on `74bff88`, then run 46, the first
+real publish (`skip_email`, commit `7380a97 run 2026-09-11`, Pages
+green): 3009 names, the fetch 36 seconds against the 900-second budget,
+3008 measured, 400 bursts (51 A, 96 B, 68 C, 185 skip), twelve reads,
+164 seconds end to end. Breadth was red (141 up 4% against 72 down,
+10-day ratio 0.74), so *Stand aside.*, no plans, 40 observations. The
+record is 3.4 MB, 2.5 MB of it the 400 bursts at 5.7 KB each and 16 KB
+with bars: the burst table is the first thing to trim. A red night
+offers no ticket, so the withheld count the ceiling decision needs is
+still unobserved. NOT claimable: Resend, and any judgement of the ticket
+and replay leads, live data quality or trading edge.
+
+**Settled here.** One panel, one geometry, three modes; the map is the
 cards' twin, not a third stage; Following saves a snapshot, never a
-purchase, a fill or a P&L, in this browser only; observations derived,
-never fetched.
+purchase, a fill or a P&L, in this browser only.
 
 **Keep / fix / defer / omit.** Keep: everything above. Fix next if it
-bites: the header strip holds one line at 1280 with fifty pixels to
-spare and wraps on a narrower column; a map under `LABEL_MIN_WIDTH`
-labels only the chosen, focused and hovered point; the volume pane's
-average label sits under a burst's bar. Defer to Astra:
-the +4% ceiling versus his 4% stop line (unchanged); whether a followed
-setup keeps an observation older than `OBSERVATION_DAYS`. Omit: trade
-logging, a portfolio, a journal, a scenario engine.
+bites: the header strip holds one line at 1280 by fifty pixels; a map
+under `LABEL_MIN_WIDTH` labels only the chosen, focused and hovered
+point. Defer to Astra: the +4% ceiling versus his 4% stop line
+(unchanged). Omit: trade logging, a portfolio, a journal, a scenario
+engine.
 
-**Next action.** Dispatch `evening.yml` with dry_run after today's close
-and read its log: the fetch time against the budget, the coverage, the
-bursts and the A-quality bursts withheld at the limit (the ceiling
-decision's input); then open the page over its record on a phone and
-walk the three modes, the map and one follow.
+**Next action.** On the next green or yellow session, dispatch the dry
+run again and count the A-quality bursts withheld at the limit from its
+artifact, downloaded outside this sandbox; then open the page over that
+record on a phone and walk the three modes, the map and one follow.
+
+## Checkpoint, 11 Sep 2026 — first real-data acceptance and the volume-ratio repair
+
+**Revision.** Branch `claude/spicystock-ticket-record-fixes-su1nh1` from
+`e93a423`, `origin/main` merged in twice: `7380a97` (run 46, the first real
+record, SHA-256 `dd516119…`) as `b16b0a9`, then `ece47f1` (run 47, the
+6:16 PM schedule). One work commit on top; the published record untouched.
+
+**Reproduced.** Over the unchanged run-46 record in Chromium: *400 bursts ·
+142 plotted · 258 without a measurement*; every omitted row a $-only scan
+row, `volume_vs_prior` null beside a numeric `quality.burst.volume_vs_prior`
+(RVTY: null against 0.86), and every consumer printed "—". Cause:
+`scans._dollar()` never measured volume against the previous session, so
+`scan_frames()` wrote null for a day only that scan saw.
+
+**Changed.** The dollar scan carries `prev_volume` and `volume_vs_prior` by
+the same `_ratio(v, v1)` at `scans.RATIO_DECIMALS`, None when the previous
+session printed nothing, and the day still matches. `scan_frames()` reads
+`burst or dollar`; the checklist's two-place copy is untouched. The page
+reads the ratio one way (`volumeRatio()`): the row's field when a finite
+number of zero or more, else the checklist's copy and the measurements say
+so, else missing and said so; a copy that is not the field's rounding is
+printed beside it; every consumer goes through it. The chart reader's
+metrics carry the ratio for a $-only read now. The fixture market has a
+$-only day (DLLR, 0.8649 in the row, 0.86 in the block).
+
+**After.** 400 of 400 plotted (401 of 401 on run 47's record); RVTY at
++2.79% and 0.86×, "+2.8% on 0.9× volume" everywhere. Tests 1027, four new.
+Smoke 2507/2507 with `checkVolumeReadings`. Chart check 163/163.
+
+**The journey, over the real record** (Playwright, 89/89, 1280×900 and
+390×844): *Stand aside.*, no ticket chip, no order on any route; RVTY card
+→ detail → Setup | Candles | Line agree on dates, prices, levels and
+tooltip; the Map selects by click and by ArrowRight + Enter; search and
+the chooser reach CVX and MPC, which have no archived bars: the
+chart-unavailable sentence, never another chart; rapid switching lands on
+the last card; one click follows RVTY "for observation, no ticket", the
+reference size is the reader's, nothing public changes, the follow
+survives a reload and *Open chart* reopens it. Unthrottled: 3.37 MB
+fetched in 28 ms, parsed and first rendered in 210 ms, a selection
+in 24–36 ms, the map in 100 ms. Phone-shaped, CPU 4×, 4 Mbit/s: the fetch
+is 6.8 s of a 9.4 s wall (uncompressed; gzip is 287 KB), parse and first
+render 1.2 s, a selection 65–150 ms, the map 370 ms. Not a physical phone or
+the public network (the proxy refuses github.io). Uncertain outcomes
+have nothing to show on a red night.
+
+**Observed, not fixed.** On the phone the map's corner is one stack (RVTY
++199) under a 182× outlier and a tap at ATEC's centre lands on a
+stack-mate; keyboard, table and the stack sentence reach every point. Run 47 (email delivered) re-ran the session on later bars: PDS
+joined at rank 1, 116 volumes moved; the 4:51 PM window is not final.
+
+**Settled.** One field, one meaning, whichever scan measured it; the page
+never invents a measurement.
+
+**Keep / fix / defer / omit.** Keep everything above. Fix next if it bites:
+a log or clamped volume axis. Defer to Astra: the +4% ceiling against his
+4% stop line (unchanged); `SERIES_TOP`; the withheld count, still
+unobserved. Omit: trade logging, a portfolio, execution.
+
+**Next action.** Merge this branch so the next run writes the ratio; on the
+next green or yellow session dispatch the dry run and count the A-quality
+bursts withheld at the limit.
+
+## Checkpoint, 12 Sep 2026 — the map's scale and its taps
+
+**Revision.** Branch `claude/volume-repair-mobile-entry-zo54u9`, started at
+`5649c71`: the volume repair `d1fb272` with `origin/main` (run 47) merged in,
+never merged to `main` and carrying no pull request of its own. `docs/data.json`,
+`docs/picks.json` and the universe directory are byte-for-byte `origin/main`'s
+throughout, and the repair itself was not re-done.
+
+**The repair is merge-ready, measured at `5649c71`** (offline, through the
+doubles): 1027 tests, `make_fixture.py --check` 7 fixtures current, chart check
+163/163, page smoke 2507/2507. Not run here, not claimable: a live fetch,
+Resend, Pages, CI itself.
+
+**Reproduced in Chromium over that unchanged record** (401 bursts, session
+2026-09-11, `scratchpad/repro/map_repro.mjs`): the volume axis read 0.0×, 45.8×,
+91.5×, 137.3×, 183.0× against a median burst of 1.08×, and 391 of 401 points sat
+within five pixels of the pane floor on a phone, across twelve distinct pixel
+rows; the selection sentence listed forty-nine tickers as sharing one spot. A
+point's hit box is 44 px, so 393 of 401 markers had another stock's button over
+their own centre: a tap at RVTY's own centre selected PDS on a phone, QCOM at
+1280. Over the six page fixtures, thirteen stock pages printed "for observation,
+no ticket: no ticket".
+
+**Changed.** The volume axis is compressed and the gain axis is not
+(`SCStock.map.volumeScale()`): `log1p(v / VOLUME_KNEE)` over
+`log1p(top / VOLUME_KNEE)`, the top still the largest recorded ratio with the
+headroom the linear axis had. It is a POSITION and nothing else — the ticks are
+real ratios off a ladder thinned by `TICK_MIN_GAP`, every point keeps its
+recorded value, nothing is clipped, binned or winsorised, and `log1p(0)` is 0, so
+a zero ratio is ON the axis line and still told apart from a burst with no
+measurement, which is not plotted and is listed by name. A tap is resolved by
+distance from the tap within `TAP_RADIUS` (half the 44 px box the browser
+hit-tests), never by which marker was appended last: one point in reach is chosen
+outright, more than one opens a compact nearby chooser, nearest first, that
+chooses nothing until the reader does. Enter or Space on a focused point names
+one point and takes it — measured in Chromium, a mouse click and a touch tap both
+report `detail` 1 and a `pointerType`, Enter reports 0 and `''` — and the crowd
+stays reachable by a *Nearby stocks (N)* button beside the selection. One radius
+feeds the badge, the spoken label and the chooser. The duplicated copy is one
+helper each way (`noTicketLead()` for the decision summary, the short status
+words; `noTicketPhrase()` for the plan disclosure, the record's reason once and
+never after a lead that already said it; the Following hint takes the short
+words, because the action area above it has just printed the reason in full).
+
+**After** (same script, same record): ticks 0×, 0.25×, 1×, 3×, 10×, 25×, 50×,
+183× on a phone; 62 distinct pixel rows for 401 points against 12, one point on
+the floor against 391, 325 distinct spots against 129. A tap at RVTY's centre
+opens a chooser of the 323 stocks within a finger, RVTY first, and choosing it
+selects RVTY in the map, the cards, the chart and the table. Zero duplicated
+phrases over the same 35 stock pages. **Not fixed, and not fixable this way:**
+401 points in a 262×200 px pane is 0.13 points per square pixel, so even at an
+8 px radius the median point has 72 neighbours on a phone. The map is now a
+readable distribution with an honest way out of any tap; the cards, the search
+and the table are still the precise way to a named stock.
+
+**Checks run** (offline): 1028 tests; 7 fixtures current; chart check 163/163;
+page smoke 2623 with `checkMapScale` — the outlier, zero, missing, the
+crowded tap at real coordinates (a finger on the phone, a mouse at 1280) and the
+chooser's lifecycle. Its first run found four holes, all closed: `data-nearby`
+did not exist until a chooser had opened; two points recorded alike had a third
+neighbour, so the count assertion was over-specific; and the decision summary had
+swallowed the whole withhold reason where a short status word belongs.
+
+**The mutants and the review.** Eleven page mutants; eight died on the first pass and
+**`zero off the floor` survived** — a hole of the third shape this file names: the
+check compared the zero POINT against the 0× LABEL, and both are drawn through the
+same `at()`, so moving one moved the other. The pane floor is read off the vertical
+grid lines now, which the scale never touches, and it dies. A second check could
+not fail for the reason it named: "the ticks are not evenly spaced, because the
+axis is compressed" was reading the tick LADDER, which is uneven on a linear axis
+too; it asks where the 1× tick sits now, which on a linear axis over a 183× top
+would be half a percent off the floor. And `stale panel survives` survived twice
+before it bit: the panel closed anyway because the click moved the focus out of it,
+and because selecting a different stock lengthened the page, raised a scrollbar,
+narrowed the pane and redrew the map. A deep link moves the shared selection and
+nothing else, and that is the case the check uses.
+
+Three survived and each showed a hole, closed with the check it was missing.
+
+A reviewer reading the chooser back in Chromium returned four, all reproduced, all
+fixed. Two were the same defect twice over: cancelling handed the focus to the
+marker the browser had HIT-TESTED — the one the chooser exists to refuse — so a
+reader who tapped LMAT, pressed Escape and then Enter got QCOM, a stock the chooser
+had not even listed (the silent topmost, one keystroke later); and a selection made
+elsewhere left the panel standing over a fifth of the pane, still describing a tap
+that was over. Then: the panel claimed `aria-modal` over a page that stayed live
+behind it — 1646 buttons still tabbable — and held Tab in against the claim, so it
+is a labelled popover now that Tab may leave and leaving closes; and dismissing it
+by a press on bare pane or a redraw dropped the focus on `<body>`, because the
+press's own default action runs after the handler. A fifth, that a crowded point's
+accessible name promised "choosing it opens the nearby list" when the keyboard
+does the opposite, is a wording fix. A reviewer over the whole diff added one
+more that the standing rule demands and I had not swept: the same doubled phrase
+was still in the MAIL (`report._no_ticket_lines()` printed "No ticket for TSLA:
+ticket withheld: ...") and in the page's own budget line. One list of leading
+words now (`report.NO_TICKET_LEADS`, `saysNoTicket()` on the page), and
+`tests/test_docs.py` holds the two equal, as it does the status words. The same
+review found the smoke's scratch records — full copies of a record, carrying the
+rule `key` fields the secret scan reads as credentials — written inside
+`tests/fixtures/page/` on a path `.gitleaks.toml` does not allowlist and nothing
+ignored; one anchored `.gitignore` line covers them. A sixth is measured and left alone: on a
+401-burst night 397 of 401 points have a neighbour within a finger on a phone, so
+nearly every tap opens the chooser. Narrowing the auto-choose radius to the dot's
+own was tried and moves 4 of 401 to 16 of 401 — a second constant for nothing. The
+map is a readable distribution with an honest way out of any tap; the cards, the
+search and the table are the one-step path to a named stock.
+
+**Keep / fix / defer / omit.** Keep everything above. Fix next if it bites: on a
+record whose smallest ratio is well over zero the pane's bottom fifth is empty,
+the price of keeping 0× on the axis; `test_claude_md_is_short_and_names_the_
+fixture_count` still measures collapsed prose, so its cap cannot fail. Defer to
+Astra: the +4% ceiling against his 4% stop line. Omit: trade logging, a
+portfolio, execution.
+
+**Next action.** On the next green or yellow session dispatch the dry run and
+count the A-quality bursts withheld at the limit from its artifact.
+
+## Checkpoint, 12 Sep 2026 — the entry-limit reading
+
+`tools/entry_limit_study.py` is a reading, not a check and not a rule: it
+changes no production number, no record, no regime, no historical ticket and no
+scorecard, writes nothing but an explicit `--json`, reads no forward return, and
+is not a backtest or a claim about either ceiling. It answers the question this
+file has deferred three times.
+
+**What it compares.** The current fixed ceiling (`close + ENTRY_ABOVE_PCT`)
+against `min(entry_high, floor_to_cents(stop / (1 - MAX_STOP_PCT/100)))` over
+`plan.burst_stop`'s existing candidates in their existing order (`burst_low`,
+then `half_range`). The synthetic `max_stop` is never read, so it can rescue
+nothing; a proposal is admitted only where `stop < trigger <= limit` still holds
+— the assertion `plan.fidelity_orders` already makes — and both columns are
+sized at the effective limit under the record's OWN regime multiplier. The
+"current" column is `plan.burst_plan()` itself, and `verify()` reproduces every
+plan a record carries down to the share count, the action and the money; a drift
+is an exit code, not a printed line.
+
+**It is the same cascade at a narrower ceiling, proved per row.**
+`production_agrees()` runs `plan.burst_stop` AT the proposed limit and requires
+the same basis at the same price inside his line; the study raises rather than
+reports if it ever fails. 380 of 380 proposals agree over run 47's record. The
+first pass did not: the record carries raw four-decimal lows (ULTA 531.5625) and
+`burst_plan` rounds the bar once on the way in, so candidates priced off the
+unrounded value proposed stops a cent from the ones the run would write. The bar
+is cent-rounded once now, as `burst_plan` rounds it.
+
+**What it found on run 47** (401 bursts, session 2026-09-11, red). Coverage 401,
+missing inputs 0. The stop rule rejects **381 today and 21 under the proposal**;
+360 are rescued, 350 of them sizing to a whole share at full size. All 20
+currently eligible move, their basis going from `half_range` to the tighter
+`burst_low`. Kept apart from the stop rule, each under its own gate: the regime
+excluded all 401, grade 349, a veto 148, the budget none. Of the **52 that would
+reach the stop rule on a green night, 0 are eligible today, 50 under the
+proposal, and 47 of those size to a whole share** — that last is the number the
+ceiling decision wants, and a red night could not otherwise have shown it.
+Downstream of a narrower limit: the indicative entry (close +
+`ASSUMED_SLIPPAGE_PCT`, what `targets()` and `exit_schedule()` are quoted from)
+sits ABOVE the proposed limit for 96 of 380; the displayed +4% skip line stops
+being the limit for all 380 — `skip_if_open_above`, `pre_open_check`, the order
+disclosure, the Fidelity ticket and the Following snapshot all quote it — and 3
+proposals leave a buy stop-limit no room at all above its own trigger, 38 less
+than half a percent.
+
+**The review, worked.** A reviewer by execution returned eight findings over the
+study, every one reproduced, every one fixed. The one that mattered was a
+contract breach: "excluded by the budget" tallied every `cash_budget.cut[].kind`,
+and `withheld` IS the stop rule's own refusal — so a withheld burst was counted
+in the stop-rule block AND under the budget, the very separation the study
+exists to keep (`BUDGET_CUT_KINDS` is `slot_cap` and `equity` now; `withheld`,
+`no_new_longs` and `no_shares` are each reported under their own gate). Then:
+the current column had been sized at a neutral 1.0 while the report said it was
+the run's answer, so on a yellow night the run's 2-share ticket read 4 — both
+columns take the record's multiplier now, `verify()` holds the share count, and
+a full-size counterfactual is printed beside it and labelled; "rescued" counted
+plans the account cannot size to a whole share, which production refuses as
+`no_order`; a burst row with a bad `gain_pct` or no ticker killed the run with a
+traceback where `make_plans()` logs and skips; the degenerate band counted
+(`limit == stop`) was impossible by the admission rule while the one that
+happens (`limit == trigger`) went uncounted; a drift exited 0; and `--json`
+keyed by basename, collapsing the natural comparison of two `data.json`s. Two of
+the tests were shapes this file names: the yellow-night grade test leaned on
+yellow.json having no grade-A burst, so both grade lines selected the same rows;
+and the separation test asserted only `count(X) + count(not X) == total`, which
+holds for any predicate — the current column could have been replaced wholesale
+by the proposed one and stayed green.
+
+**Checks.** 1056 tests (28 new). Eight study mutants, all dead; two survived the
+first pass and both were holes — one mutant was equivalent until it was
+sharpened to admit `max_stop` as a candidate of its own, and `verify()` compared
+only fields independent of the bar's gain.
+
+**Settled here.** The study reads; it does not decide. Adopting the proposal is a
+method decision with two questions attached: what the indicative entry becomes
+when it is above the limit, and what the displayed skip line says when it is no
+longer the limit.
+
+**Next action.** Put this to Astra with the 52 / 0 / 50 / 47 line and those two
+questions; separately, on the next green or yellow session dispatch the dry run
+and check the study's arithmetic against what the run actually withholds.
+
+## Checkpoint, 12 Sep 2026 — the constrained ticket limit
+
+**Revision.** Branch `claude/volume-repair-mobile-entry-zo54u9` from `cdc9d56`;
+the published record stays `origin/main`'s to the byte, and nothing was merged,
+deployed, dispatched or mailed.
+
+**The decision, implemented.** The reading found 381 of 401 bursts withheld:
+the +4% line and his 4% stop line cannot both hold at the limit. The limit is
+`plan.burst_limit()` now,
+`min(close +4%, floor_to_cents(stop / (1 - MAX_STOP_PCT/100)))`
+over `stop_candidates()` — one list the cascade and the ceiling both
+read, without `max_stop`, so nothing manufactures eligibility. A candidate is taken only when `stop < trigger <
+limit` — strictly OVER too, since a ceiling landing ON the buy stop is a ticket
+with no band, withheld with a named `ticket_refusal`. The ceiling floors to
+cents (`CENT_FLOOR_EPSILON`): rounding up puts the stop past the line at the
+highest permitted fill, 4.39% away at $1.14 for a $1.09 stop. `burst_plan`
+raises rather than publish a limit its cascade would not hold.
+
+**Four prices, four rules, four fields.** `entry_ref` the trigger; `limit`
+(and `entry_high`, the zone's top) the executable limit;
+**`day2_spent_above`** the outer +4% threshold — `skip_if_open_above`, its own
+clause in `pre_open_check`, never an order's limit; `planned_entry` =
+`min(close +1%, limit)`, the targets' and exits' basis. Swept through
+`pick_of`, `pick_problem`, `record.fill()`, the digest and the page.
+
+**Measured offline.** 1076 tests (32 new, over a 200-odd bar-shape sweep that
+asserts it reached every branch); 7 fixtures current, `full` reshaped to carry
+all four states — AAPL the textbook bar, once withheld, now a $126.47 ticket
+under a $129.18 day-2 line; AMD at the ceiling, NVDA capped, TSLA withheld;
+chart check 163/163; smoke 2690/2690. **The
+screenshots found what the sweep had not:** `dated_schedule()`'s entry line,
+which the Following card quotes, still said "Skip it if it opens above
+$126.47" — the ticket's limit as a skip rule, the overload this milestone
+removes. It buys to the limit and skips at the day-2 line now.
+
+**The mutants.** Fifteen over the code, seven over the page; two survived the
+first pass, each a hole. `the oracle's band drifts from production` lived
+because no page fixture has a ceiling landing exactly on its trigger, so the
+study's sweep carries those bars itself. `the skip row shows the limit`
+lived on the first shape this file names: the check searched the whole plan
+disclosure for the day-2 price, which the buy row's narrowing sentence names,
+so a row printing the WRONG price stayed green. Each row is read by its own
+value now (`factValue()`). Both die. A third was in the wrong harness — it
+patches `src/plan.py`, which the page smoke cannot see — and dies in pytest.
+
+**The study, reconciled.** It changed sides rather than compare production
+with itself: it carries the retired ceiling, which no module has now, beside
+`burst_plan()` and an oracle that re-derives the rule and raises if it is not
+what was written. Over the unchanged run-47 record: coverage 401; fixed
+20 / 381, unchanged; production 378 / 23 against the proposal's 380 / 21,
+three rows having a ceiling exactly on the trigger — PENN fell to the midpoint,
+SBET and JVA are refused. Green-night 52 / 0 / 50 / **47**, the reading's
+line; 93 indicative entries are capped.
+
+**Settled.** The limit is a fillable price, the +4% an extension rule. Fix if
+it bites: `limit_narrowed` is derivable from `limit_basis`. **Not claimable:**
+a live fetch, Resend, Pages, CI, or expectancy — this changes which tickets
+exist, not whether they win.
+
+**Next action.** On the next green or yellow session dispatch the dry run and
+check the study against what the run withholds and writes.
+
+## Checkpoint, 12 Sep 2026 — the handoff, validated by execution
+
+**Revision.** Branch `claude/volume-repair-mobile-entry-zo54u9` at
+`31628d8`, taken over from an interrupted builder. Verified before anything was
+touched: a clean tree, no stray file, no disabled test, no TODO left by
+the two commits, the published record still `origin/main`'s to the byte. This checkpoint is the only commit added;
+nothing was merged, deployed, dispatched or mailed.
+
+**Every check rerun here rather than inherited.** 1076 tests pass, none
+skipped; the seven fixtures are current through the real generator; the
+chart check is 163/163. The page smoke is 2690/2690 bare and **2692/2692
+with `--shots`** — two checks (the light-theme page's errors, the
+Following store recovering after a blocked write) run only when shots are
+asked for, and `--shots` is what CI runs, so the tip's 2690 is the bare
+number and not a stale one. The suite and the fixture check were also run
+under **Python 3.12**, CI's interpreter rather than this sandbox's 3.11:
+1076 pass and the seven fixtures still reproduce. GitHub says the secret
+scan is green on this tip and on `3248093`.
+
+**The rule recomputed, not read.** `plan.burst_limit()` was run again over
+the `full` fixture's four bars: AAPL narrowed to $126.47 under its $129.18
+day-2 line, AMD at the outer ceiling ($128.20 both), NVDA's indicative
+entry capped at its $128.12 limit, TSLA withheld because both candidates
+cap at or under its $124.21 buy stop ($118.32, $124.14). The screenshots
+were looked at, not only the exit code: each plan row carries its own
+price, the Fidelity sheet writes the ticket's limit with the day-2 line in
+its own *too extended over* column, the followed card saves both, and the
+phone's map keeps its compressed volume axis and its nearby chooser.
+
+**The study reproduced.** Over the unchanged run-47 record: coverage 401;
+the retired fixed ceiling 20 / 381; production 378 / 23; 358 rescued;
+every limit at or under its day-2 line; 93 indicative entries capped; the
+green-night decision set **52 / 0 / 50 / 47**. PENN, SBET and JVA are the
+three ceilings landing exactly on the trigger — PENN falls to the
+midpoint, the other two are refused — so the three rows that differ from
+the reading's proposal are the band rule, not a rounding accident.
+
+**The mutants killed again.** Fifteen over the code (the cent floor, both
+band strictnesses, a synthetic candidate, the entry cap, the day-2 field,
+the skip rule, the dated schedule, the order and sizing prices, the pick,
+the record's shape check, the fill sentence, the mail) all die, each in
+the tests that name its rule and not only in the study's oracle; a bare
+`0.96` in `stop_line_ceiling()` dies against the literal guard. Three page
+mutants die too: the ticket limit in the *skip if it opens above* row (the
+one the tip commit exists for) fails two row-scoped assertions, the same
+price in the order sheet's limit column fails one, and a Following
+snapshot saving the day-2 line as the limit fails three.
+
+**No defect found, nothing corrected.** Kept as recorded: `limit_narrowed`
+is derivable from `limit_basis`; the CLAUDE.md line cap cannot fail
+because `prose()` collapses the file to one line.
+
+**Blockers.** None offline. Not run and not claimable: a live fetch, a
+real chart read, Resend, Pages, and the CI test job, which runs on `main`
+and on pull requests only — this branch has had the secret scan alone.
+
+**Next action.** Unchanged: dispatch `evening.yml` with dry_run on a green
+or yellow session and check the study against what the run withholds and
+writes.

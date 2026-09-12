@@ -77,6 +77,15 @@ __pycache__/
 .vscode/
 *.swp
 
+# The page smoke serves altered copies of a fixture (openMutant, and the
+# crowded-tap cases) from inside the tree and unlinks them when the block
+# ends; a run that is interrupted or throws leaves one behind. They are full
+# copies of a record, so they carry the rule `key` fields that gitleaks'
+# generic-api-key rule reads as credentials -- and `.gitleaks.toml` allowlists
+# `tests/fixtures/page/[a-z]+.json`, which a leading dot does not match.
+# Anchored, and dot-prefixed, so no committed fixture can be hidden by it.
+/tests/fixtures/page/.*.json
+
 # Installed by `npm install --no-save playwright` for tools/dashboard_smoke.mjs,
 # in the repo root because that is where npm puts it and where CI installs it
 # too. Anchored, like the rules above: a bare `node_modules/` would also hide

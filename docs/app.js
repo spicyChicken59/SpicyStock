@@ -87,6 +87,23 @@
   const num = (v, dec) => isNum(v) ? thousands(v.toFixed(dec === undefined ? 0 : dec)) : '—';
   const usd = (v, dec) => isNum(v) ? (v < 0 ? '−' : '') + '$' + thousands(Math.abs(v).toFixed(dec === undefined ? 2 : dec)) : '—';
   const pct = (v, dec) => isNum(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(dec === undefined ? 1 : dec) + '%' : '—';
+  // The session's volume over the previous session's, read one way for every
+  // consumer (the card, the detail line, the measurements, the map, the scan
+  // table, the chart's burst label). The row's own field is the scan's
+  // measurement and the canonical value; a record written before the dollar
+  // scan carried it (run 46 and earlier) holds the same measurement at two
+  // places in the checklist's burst block, and that stands in when the field
+  // is null. A ratio is a finite number of zero or more -- zero is a value --
+  // and anything else is missing, said to be missing, never invented.
+  const RATIO_ROUNDING = 0.005 + 1e-9;   // a two-place copy of a four-place value sits within this of it
+  function volumeRatio(b) {
+    const own = b ? b.volume_vs_prior : null, q = b && b.quality && b.quality.burst ? b.quality.burst.volume_vs_prior : null;
+    if (isNum(own) && own >= 0) return { value: own, source: 'scan', disagrees: isNum(q) && q >= 0 && Math.abs(own - q) > RATIO_ROUNDING ? q : null };
+    if (isNum(q) && q >= 0) return { value: q, source: 'checklist', disagrees: null };
+    return { value: null, source: null, disagrees: null };
+  }
+  const volumeTimes = (b) => { const v = volumeRatio(b).value; return isNum(v) ? v.toFixed(1) : '—'; };
+  SCStock.volumeRatio = volumeRatio;
   const plain = (v) => isNum(v) ? String(v).replace(/\.0$/, '') : '—';
   const words = (s) => (s || '').replace(/_/g, ' ');
   const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
@@ -555,7 +572,7 @@
       stop: plan.stop, trigger: plan.entry_ref, entryLow: plan.entry_low, entryHigh: plan.entry_high,
       targetLow: plan.targets ? plan.targets.low : null, targetHigh: plan.targets ? plan.targets.high : null, targetRef: plan.planned_entry,
       upDays: isNum(up) ? up : 0, breakdownIndexes: (base.breakdown_dates || []).map((d) => idxOf(series, d)).filter((i) => i >= 0),
-      burstVolumeRatio: b.volume_vs_prior, rangeExpansion: isNum(rng) ? rng : null,
+      burstVolumeRatio: volumeRatio(b).value, rangeExpansion: isNum(rng) ? rng : null,
       ariaLabel: b.summary || null, height: height
     };
   }
@@ -594,6 +611,40 @@
     if (CUT_WORDS[status]) return [CUT_WORDS[status], CUT_TONE[status] || 'neutral'];
     return STATUS_WORDS[status] || [words(status || 'no ticket'), 'neutral'];
   }
+  // Saying there is no ticket, once. STATUS_WORDS already answers "no ticket"
+  // for below_grade, not_admitted and no_plan and CUT_WORDS answers "ticket
+  // withheld", so a sentence that leads with those words must not close with
+  // them too: the page printed "for observation, no ticket: no ticket" on
+  // thirteen fixture stock pages, and "No ticket tonight (no ticket)".
+  const NO_TICKET = 'no ticket';
+  // a reason that already opens with the words for "there is no ticket"
+  const saysNoTicket = (s) => { s = text(s).toLowerCase(); return s.indexOf(NO_TICKET) === 0 || s.indexOf(CUT_WORDS.withheld) === 0; };
+  // the record's own reason, else the status words -- but never the bare
+  // words "no ticket", which every caller here has already said
+  function noTicketWhy(c) {
+    const own = text(c && c.reason);
+    if (own) return own.replace(/[.]$/, '');
+    const w = statusWords(c && c.status)[0];
+    return w && w !== NO_TICKET ? w : '';
+  }
+  // `lead`, then the record's own reason -- or the reason alone when it
+  // already leads with those words, so neither is said twice.
+  function noTicketPhrase(lead, c) {
+    const why = noTicketWhy(c);
+    if (!why) return lead;
+    return saysNoTicket(why) ? why : lead + ': ' + why;
+  }
+  // the long form, for the plan disclosure: the reason in full, once
+  const noTicketLine = (c) => cap(sentence(noTicketPhrase('No ticket tonight', c)));
+  // the short form, for the decision summary, which is a summary: the words
+  // the card's chip already wears, with no parenthesis when they are the lead
+  // itself. The reason in full belongs to the action area and the disclosure,
+  // and the Following hint takes these same short words because it sits
+  // directly under the action area that has just printed the reason.
+  const noTicketLead = (c) => {
+    const w = statusWords(c && c.status)[0];
+    return 'No ticket tonight' + (w && w !== NO_TICKET ? ' (' + w + ')' : '') + '.';
+  };
   const listRule = (data, key, fallback) => { const r = ((data.rules || {}).pipeline || {})[key]; return Array.isArray(r) && r.length ? r : fallback; };
   function buildModel(data) {
     const trades = data.trades || [], cb = data.cash_budget || {}, cuts = {};
@@ -623,7 +674,7 @@
       return { id: 'bursts:' + b.ticker, stage: 'bursts', ticker: b.ticker, name: text(b.name), rank: isNum(b.rank) ? b.rank : i + 1,
         grade: b.grade || null, score: b.score, status: status, reason: reason, cut: cut, plan: plan, row: b, quiet: false, flags: flags,
         series: Array.isArray(b.series) ? b.series.filter((x) => x && x.date) : [],
-        measures: [['gain', pct(b.gain_pct)], ['vol', isNum(b.volume_vs_prior) ? b.volume_vs_prior.toFixed(1) + '×' : '—'], ['close', usd(b.close)]] };
+        measures: [['gain', pct(b.gain_pct)], ['vol', isNum(volumeRatio(b).value) ? volumeTimes(b) + '×' : '—'], ['close', usd(b.close)]] };
     });
     const wl = data.watchlist || {};
     const coil = (r, i, quiet) => {
@@ -879,7 +930,7 @@
     c.flags.forEach((f) => chips.push(chip(FLAG_WORDS[f] || words(f), 'warn')));
     const last = c.series.length ? c.series[c.series.length - 1].date : run.session;
     const sub = c.stage === 'bursts'
-      ? (c.name ? c.name + ' · ' : '') + usd(b.close) + ' · ' + pct(b.gain_pct) + ' on ' + (isNum(b.volume_vs_prior) ? b.volume_vs_prior.toFixed(1) : '—') + '× volume' + (b.scan && b.scan !== 'burst' ? ' · ' + words(b.scan) + ' scan' : '') + ' · rank ' + plain(c.rank)
+      ? (c.name ? c.name + ' · ' : '') + usd(b.close) + ' · ' + pct(b.gain_pct) + ' on ' + volumeTimes(b) + '× volume' + (b.scan && b.scan !== 'burst' ? ' · ' + words(b.scan) + ' scan' : '') + ' · rank ' + plain(c.rank)
       : (c.name ? c.name + ' · ' : '') + usd(b.close) + ' · ' + plain(b.quiet_days) + ' quiet days · ' + plain(b.range_pct) + '% range' + (c.quiet ? ' · also quiet' : ' · rank ' + plain(c.rank));
     const back = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm ss-detail__back', type: 'button', text: '↑ all stocks' });
     back.addEventListener('click', () => { scrollTo($('stages')); const sel = $('pick-list').querySelector('.ss-pick[aria-pressed="true"]'); if (sel) sel.focus({ preventScroll: true }); else $('search').focus({ preventScroll: true }); });
@@ -903,6 +954,7 @@
     if (isNum(plan.stop)) parts.push('stop ' + usd(plan.stop));
     if (isNum(trig)) parts.push('trigger ' + usd(trig));
     if (isNum(lim)) parts.push('limit ' + usd(lim));
+    if (burst && isNum(plan.day2_spent_above) && plan.day2_spent_above !== lim) parts.push('too extended over ' + usd(plan.day2_spent_above));
     if (burst && isNum(plan.entry_low) && isNum(trig) && Math.abs(plan.entry_low - trig) / trig > 0.005) parts.push('zone low ' + usd(plan.entry_low));
     const t = plan.targets || {};
     if (isNum(t.low) && isNum(t.high)) parts.push('aim +' + plain(t.low_pct) + '% ' + usd(t.low) + ' / +' + plain(t.high_pct) + '% ' + usd(t.high) + (g && g.target && g.target.offscale ? ' (outside the visible range)' : ''));
@@ -999,7 +1051,7 @@
   function saveDiscover() { try { w.localStorage.setItem(DISCOVER_KEY, discover); } catch (e) { /* not remembered */ } }
   function mapPoints() {
     return model.stages.bursts.map((c) => ({
-      id: c.id, ticker: c.ticker, gain: isNum(c.row.gain_pct) ? c.row.gain_pct : null, volume: isNum(c.row.volume_vs_prior) ? c.row.volume_vs_prior : null,
+      id: c.id, ticker: c.ticker, gain: isNum(c.row.gain_pct) ? c.row.gain_pct : null, volume: volumeRatio(c.row).value,
       grade: c.grade, score: c.score, rank: c.rank, statusWords: statusWords(c.status)[0], statusTone: statusWords(c.status)[1],
       source: c.row.claude && c.row.claude.source === 'claude' ? 'claude' : (c.row.quality && c.row.quality.checks ? 'checklist' : null),
       chartSeen: c.row.claude ? c.row.claude.chart_seen : null
@@ -1054,7 +1106,8 @@
         name: c.name || '', close: isNum(b.close) ? b.close : null, close_date: run.session || '', grade: c.grade || null, score: isNum(c.score) ? c.score : null,
         status: c.status, status_words: statusWords(c.status)[0],
         levels: { entry_low: burst ? plan.entry_low : plan.trigger, entry_high: burst ? plan.entry_high : plan.limit, trigger: burst ? plan.entry_ref : plan.trigger,
-          limit: burst ? plan.entry_high : plan.limit, stop: plan.stop, stop_basis: plan.stop_basis || null,
+          limit: burst ? plan.entry_high : plan.limit, day2_spent_above: burst && isNum(plan.day2_spent_above) ? plan.day2_spent_above : null,
+          stop: plan.stop, stop_basis: plan.stop_basis || null,
           target_low: t.low, target_high: t.high, target_low_pct: t.low_pct, target_high_pct: t.high_pct },
         order_line: text(plan.order_line), instruction: entryInstruction(plan), summary: burst ? sentence(firstSentence(text(b.summary).replace(/^[A-Z0-9.\-]+:\s*/, ''))) : pickReason(c),
         withheld_reason: c.status !== 'ticket' ? text(c.reason) : ''
@@ -1101,7 +1154,7 @@
         redraw(); renderFollowing(); followJump();
       });
       box.appendChild(btn);
-      box.appendChild(el('p', { 'class': 'ss-follow__hint', text: setup.suggested_shares ? plural(setup.suggested_shares, 'share') + ' suggested by the plan · saved in this browser only' : (c.status === 'ticket' ? 'for observation, no size suggested' : 'for observation, no ticket: ' + (statusWords(c.status)[0]) + ' · saved in this browser only') }));
+      box.appendChild(el('p', { 'class': 'ss-follow__hint', text: setup.suggested_shares ? plural(setup.suggested_shares, 'share') + ' suggested by the plan · saved in this browser only' : (c.status === 'ticket' ? 'for observation, no size suggested' : 'for observation, ' + statusWords(c.status)[0] + ' · saved in this browser only') }));
       return box;
     }
     box.appendChild(chip('following', 'good'));
@@ -1148,6 +1201,7 @@
     const levels = [];
     if (isNum(lv.trigger)) levels.push('trigger ' + usd(lv.trigger));
     if (isNum(lv.limit)) levels.push('limit ' + usd(lv.limit));
+    if (isNum(lv.day2_spent_above) && lv.day2_spent_above !== lv.limit) levels.push('too extended over ' + usd(lv.day2_spent_above));
     if (isNum(lv.stop)) levels.push('stop ' + usd(lv.stop));
     if (isNum(lv.target_low) && isNum(lv.target_high)) levels.push('aim ' + usd(lv.target_low) + '–' + usd(lv.target_high));
     row('saved plan', levels.length ? levels.join(' · ') : 'no plan levels');
@@ -1196,7 +1250,7 @@
     const entry = entryInstruction(plan);
     const need = c.status === 'ticket'
       ? [entry || (text(plan.order_line) ? sentence(plan.order_line) : 'The plan carries no entry instruction.')]
-      : [c.plan ? 'No ticket tonight (' + statusWords(c.status)[0] + '). The setup would need: ' + (entry || 'an entry the plan does not spell out.') : 'Nothing: ' + sentence(c.reason)];
+      : [c.plan ? noTicketLead(c) + ' The setup would need: ' + (entry || 'an entry the plan does not spell out.') : 'Nothing: ' + sentence(c.reason)];
     const wait = c.plan
       ? [text(plan.pre_open_check) ? cap(sentence(plan.pre_open_check)) : '', isNum(plan.stop) ? 'Stop ' + stopWords(plan) + (plan.stop_basis !== 'max_stop' && isNum(plan.stop_pct) && isNum(plan.sizing_price) ? ' · ' + plain(plan.stop_pct) + '% under the ' + usd(plan.sizing_price) + ' limit' : '') + '.' : '']
       : [cap(sentence(c.reason))];
@@ -1212,7 +1266,7 @@
     const entry = entryInstruction(plan);
     const need = c.status === 'ticket'
       ? [entry || (text(plan.order_line) ? sentence(plan.order_line) : 'The plan carries no entry instruction.')]
-      : [c.plan ? 'No ticket tonight (' + statusWords(c.status)[0] + '). The setup would need: ' + (entry || sentence(wl.instruction) || 'an entry the plan does not spell out.') : (text(wl.instruction) ? sentence(wl.instruction) : 'The run wrote no plan for it.')];
+      : [c.plan ? noTicketLead(c) + ' The setup would need: ' + (entry || sentence(wl.instruction) || 'an entry the plan does not spell out.') : (text(wl.instruction) ? sentence(wl.instruction) : 'The run wrote no plan for it.')];
     const wait = c.plan
       ? [text(plan.gap_rule) ? cap(sentence(plan.gap_rule)) : '', isNum(plan.stop) ? 'Stop ' + usd(plan.stop) + (text(plan.stop_basis) ? ' · ' + plan.stop_basis : '') + (isNum(plan.stop_pct) && isNum(plan.limit) ? ' · ' + plain(plan.stop_pct) + '% under the ' + usd(plan.limit) + ' limit' : '') + '.' : '']
       : [cap(sentence(c.reason))];
@@ -1287,8 +1341,12 @@
       if (checks.length) kids.push(el('div', { 'class': 'ss-checks' }, checks.map((x) => checkTile(x, (x.key === 'two_days' && vetoes.indexOf('up_days') >= 0) || (x.key === 'linearity' && vetoes.indexOf('not_linear') >= 0)))));
       if (vetoes.length) kids.push(el('p', { 'class': 'sc-note', text: 'Veto: ' + vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') + '.' }));
       kids.push(el('div', { 'class': 'sc-eyebrow', text: 'the measurements' }));
+      const vr = volumeRatio(b);
+      const volumeNote = vr.source === 'checklist' ? ' · volume ratio read from the checklist’s block, the scan’s own field being empty in this record'
+        : vr.source === null ? ' · volume ratio not recorded'
+        : isNum(vr.disagrees) ? ' · the checklist’s block says ' + vr.disagrees.toFixed(2) + '× volume' : '';
       kids.push(factList([
-        ['the burst', pct(b.gain_pct) + ' · ' + (isNum(b.volume_vs_prior) ? b.volume_vs_prior.toFixed(1) : '—') + '× volume', 'open ' + usd(b.open) + ' · high ' + usd(b.high) + ' · low ' + usd(b.low) + ' · close ' + usd(b.close) + ' · prior close ' + usd(b.prev_close)],
+        ['the burst', pct(b.gain_pct) + ' · ' + volumeTimes(b) + '× volume', 'open ' + usd(b.open) + ' · high ' + usd(b.high) + ' · low ' + usd(b.low) + ' · close ' + usd(b.close) + ' · prior close ' + usd(b.prev_close) + volumeNote],
         ['the base', isNum(base.sessions) ? plain(base.sessions) + ' sessions · ' + plain(base.depth_pct) + '% deep' : '—', base.start && base.end ? dateShort(base.start) + ' to ' + dateShort(base.end) + ' · ' + usd(base.low) + '–' + usd(base.high) + ((base.breakdown_dates || []).length ? ' · ' + plural(base.breakdown_dates.length, 'breakdown') : '') : ''],
         ['dollar volume', isNum(b.dollar_volume) ? usd(b.dollar_volume, 0) : '—', b.scan ? words(b.scan) + ' scan' : ''],
         ['extension', isNum(b.extension_pct) ? pct(b.extension_pct) : '—', 'close against its 20-session average'],
@@ -1320,11 +1378,11 @@
     const blockedNow = !!(st && blocked(st)), withheld = c.status !== 'ticket' || blockedNow, t = plan.targets || {};
     if (c.stage === 'bursts') {
       kids.push(factList([
-        ['buy', usd(plan.entry_low) + ' – ' + usd(plan.entry_high), (plan.entry_window || '') + ' · a buy stop at ' + usd(plan.entry_ref) + ', limit ' + usd(plan.entry_high), true],
-        ['skip if it opens above', usd(plan.skip_if_open_above), 'day 2 is spent; a resting order could still fill on a pullback, so cancel it'],
+        ['buy', usd(plan.entry_low) + ' – ' + usd(plan.entry_high), (plan.entry_window || '') + ' · a buy stop at ' + usd(plan.entry_ref) + ', limit ' + usd(plan.entry_high) + (text(plan.limit_note) ? ' · ' + plan.limit_note : ''), true],
+        ['skip if it opens above', usd(plan.skip_if_open_above), 'day 2 is spent' + (isNum(plan.limit) && isNum(plan.skip_if_open_above) && plan.limit !== plan.skip_if_open_above ? ', the outer threshold and not the ' + usd(plan.limit) + ' ticket limit' : '') + '; a resting order could still fill on a pullback, so cancel it'],
         ['skip if it opens below', usd(plan.skip_if_open_below), 'the burst is failing; do not place it'],
         ['stop', stopWords(plan), 'judged at the ' + usd(plan.sizing_price) + ' limit · move it to your entry day’s low once filled', true],
-        ['sized at', usd(plan.sizing_price), 'the limit, the highest fill the ticket permits · indicative entry ' + usd(plan.planned_entry) + ' (not a fill)', true],
+        ['sized at', usd(plan.sizing_price), 'the limit, the highest fill the ticket permits · indicative entry ' + usd(plan.planned_entry) + (plan.planned_entry_capped ? ' (not a fill; the close +1% would sit over the limit, so it is the limit)' : ' (not a fill)'), true],
         ['risk per share', usd(plan.risk_per_share), 'limit − stop'],
         ['shares', num(plan.shares), plan.capped_by === 'position_cap' ? 'cut by the position cap' : 'from ' + usd(plan.risk_usd) + ' ÷ ' + usd(plan.risk_per_share)],
         ['position', usd(plan.position_usd), (isNum(plan.position_pct) ? plan.position_pct.toFixed(1) : '—') + '% of the configured ' + usd(acct.equity, 0)],
@@ -1355,7 +1413,7 @@
     if (text(plan.resize_rule)) kids.push(el('p', { 'class': 'sc-note', text: cap(sentence(plan.resize_rule)) }));
     const hint = blockedNow && c.status === 'ticket' ? 'No order is offered from a page that is ' + stateWords(st) + '.'
       : c.status === 'ticket' ? 'No order line was written for this plan.'
-      : 'No ticket tonight: ' + (c.reason || statusWords(c.status)[0]) + '. The setup is kept here for inspection.';
+      : noTicketLine(c) + ' The setup is kept here for inspection.';
     kids.push(orderBlock(plan, hint, withheld));
     return disclosure('disc-plan', 'Conditional plan, sizing and order', withheld ? (blockedNow && c.status === 'ticket' ? 'not offered' : statusWords(c.status)[0]) : 'sized at the limit', kids);
   }
@@ -1440,11 +1498,14 @@
     budget.appendChild(el('strong', { text: cb.sentence || ('Model allocation: tomorrow’s tickets would commit ' + usd(cb.committed_usd, 0) + ' of the configured ' + usd(acct.equity, 0) + ' · ' + plain(cb.slots_used) + ' of ' + plain(cb.slots_max) + ' slots') }));
     if (isNum(cb.at_risk_usd)) budget.appendChild(d.createTextNode(' · ' + usd(cb.at_risk_usd, 0) + ' planned price-to-stop risk'));
     budget.appendChild(d.createTextNode(' · over the configured sizing assumptions, not a balance, settled cash or buying power'));
-    (cb.cut || []).forEach((c) => budget.appendChild(el('span', { 'class': 'sc-note', text: 'No ticket: ' + c.ticker + ' — ' + c.reason })));
+    // the cut's own reason already opens with "ticket withheld" when the stop
+    // rule refused it, so the lead is dropped rather than said twice
+    (cb.cut || []).forEach((c) => budget.appendChild(el('span', { 'class': 'sc-note',
+      text: saysNoTicket(c.reason) ? c.ticker + ' — ' + c.reason : 'No ticket: ' + c.ticker + ' — ' + c.reason })));
     const sheet = clear($('orders-table'));
     const table = el('table', { 'class': 'sc-table sc-table--compact ss-orders', id: 'order-sheet' });
     table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Tomorrow’s orders in Fidelity’s field order' }));
-    table.appendChild(el('thead', null, el('tr', null, ['symbol', 'action', 'shares', 'type', 'stop (trigger)', 'limit', 'tif', 'then OTO sell stop', 'skip above', 'planned risk'].map((h, i) => el('th', { scope: 'col', 'class': i >= 2 && i !== 3 && i !== 6 ? 'sc-num' : null, text: h })))));
+    table.appendChild(el('thead', null, el('tr', null, ['symbol', 'action', 'shares', 'type', 'stop (trigger)', 'limit', 'tif', 'then OTO sell stop', 'too extended over', 'planned risk'].map((h, i) => el('th', { scope: 'col', 'class': i >= 2 && i !== 3 && i !== 6 ? 'sc-num' : null, text: h })))));
     const body = el('tbody');
     const rows = blockedNow ? [] : withOrders;
     rows.forEach((b) => {
@@ -1507,7 +1568,7 @@
       const name = el('button', { 'class': 'sc-signal-matrix__name', type: 'button', text: b.ticker, 'data-go': routeHash('bursts', 'bursts:' + b.ticker) });
       name.addEventListener('click', () => { pendingFocus = 'detail'; state.gesture = true; navigate(name.getAttribute('data-go')); });
       tr.appendChild(el('th', { scope: 'row' }, [name,
-        el('span', { 'class': 'sc-signal-matrix__note', text: pct(b.gain_pct) + ' · ' + (isNum(b.volume_vs_prior) ? b.volume_vs_prior.toFixed(1) : '—') + '× vol · ' + usd(b.close) + (b.scan === 'dollar' ? ' · $ scan' : '') })
+        el('span', { 'class': 'sc-signal-matrix__note', text: pct(b.gain_pct) + ' · ' + volumeTimes(b) + '× vol · ' + usd(b.close) + (b.scan === 'dollar' ? ' · $ scan' : '') })
       ]));
       keys.forEach((k) => tr.appendChild(signalCell(checks[k], (k === 'two_days' && vetoes.indexOf('up_days') >= 0) || (k === 'linearity' && vetoes.indexOf('not_linear') >= 0))));
       const miss = (q.checks || []).find((c) => c && !c.pass);

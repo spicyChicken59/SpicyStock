@@ -8,11 +8,12 @@ from __future__ import annotations
 import json
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
 
-from src import pipeline, plan, record, report
+from src import pipeline, plan, record, report, scans
 from tests.synthetic import make_ohlcv
 from tests.test_quality import frame as qframe, ideal_bars
 from tests.test_watchlist import coil
@@ -187,6 +188,71 @@ def test_claude_cannot_raise_a_grade_the_checklist_capped(fake_alpaca, seed, cla
     assert data["trades"] == [] and data["run"]["graded"] == {"a_plus": 0, "a": 0, "b": 1, "c": 0, "skip": 0}
 
 
+def dollar_day(seed: int, variant: int, *, ratio: float, gain: float = 2.0, prev_volume: float | None = None) -> pd.DataFrame:
+    """A quiet walk rescaled so the previous close is $100, whose last session
+    opens there and closes ``gain`` percent up on ``ratio`` of the previous
+    session's volume: at 2% the dollar scan's day alone (a $2 body, no 4%
+    burst); at 5% on more volume both scans' day. ``prev_volume`` rewrites
+    the previous session's volume (0 for a halt)."""
+    df = make_ohlcv("base", seed=[seed, variant], days=260)
+    prices = ["Open", "High", "Low", "Close"]
+    df[prices] = df[prices] * (100.0 / float(df["Close"].iloc[-2]))
+    if prev_volume is not None:
+        df.iloc[-2, df.columns.get_loc("Volume")] = prev_volume
+    v1 = float(df["Volume"].iloc[-2])
+    close = round(100.0 * (1 + gain / 100), 2)
+    df.iloc[-1, df.columns.get_loc("Open")] = 100.0
+    df.iloc[-1, df.columns.get_loc("High")] = round(close + 0.9, 2)
+    df.iloc[-1, df.columns.get_loc("Low")] = 99.6
+    df.iloc[-1, df.columns.get_loc("Close")] = close
+    df.iloc[-1, df.columns.get_loc("Volume")] = round((v1 or 3_000_000.0) * ratio)
+    return df
+
+
+def test_a_dollar_only_day_carries_the_scans_volume_ratio_into_its_row(seed):
+    """RVTY on the first real night: a $1.91 body on 0.86x the previous
+    session's volume, +2.8%, the dollar scan's day alone -- and its row's
+    volume_vs_prior was null while the checklist's block held 0.86, so the
+    page listed it as unmeasured. The row carries the scan's own ratio now,
+    at the scan's four places (the checklist's two-place copy is a copy, not
+    what is written over it); a day both scans see carries the 4% scan's;
+    and a previous session that printed nothing leaves both readings None,
+    the row still in the list, so the page says the measurement is missing
+    rather than inventing one."""
+    frames = {"AAA": a_plus_frame(), "DLR": dollar_day(seed, 7, ratio=0.8649), "BOTH": dollar_day(seed, 9, ratio=1.5, gain=5.0),
+              "HALT": dollar_day(seed, 8, ratio=0.9, prev_volume=0)}
+    uni = SimpleNamespace(names={"DLR": "Dollar Day Inc"}, flags={})
+    rows = {r["ticker"]: r for r in pipeline.scan_frames(frames, uni, pipeline.RunReport())[0]}
+    dlr = rows["DLR"]
+    assert dlr["scan"] == "dollar" and dlr["gain_pct"] == 2.0 and dlr["dollar_move"] == 2.0
+    assert dlr["volume_vs_prior"] == scans.dollar_breakout(frames["DLR"])["volume_vs_prior"] == 0.8649
+    assert dlr["quality"]["burst"]["volume_vs_prior"] == 0.86
+    aaa = rows["AAA"]
+    assert aaa["scan"] == "burst" and aaa["volume_vs_prior"] == scans.burst_4pct(frames["AAA"])["volume_vs_prior"] > 1
+    both = rows["BOTH"]
+    assert both["scan"] == "both" and both["gain_pct"] == 5.0
+    assert both["volume_vs_prior"] == scans.burst_4pct(frames["BOTH"])["volume_vs_prior"] == scans.dollar_breakout(frames["BOTH"])["volume_vs_prior"] == 1.5
+    halt = rows["HALT"]
+    assert halt["scan"] == "dollar" and halt["volume_vs_prior"] is None and halt["quality"]["burst"]["volume_vs_prior"] is None
+    assert set(rows) == {"AAA", "DLR", "BOTH", "HALT"}
+
+
+def test_the_committed_fixture_carries_the_dollar_scans_ratio_beside_the_checklists_copy():
+    """The full fixture holds a $-only burst (DLLR), and its row's ratio is the
+    scan's own: the last two bars of its archived series at four places, the
+    checklist's block the same number at two, the summary sentence saying it.
+    A fixture that lost the row, or the ratio, fails here rather than at the
+    page smoke."""
+    data = json.loads((Path(__file__).resolve().parent / "fixtures" / "page" / "full.json").read_text())
+    dollar = [b for b in data["bursts"] if b["scan"] == "dollar"]
+    assert dollar and all(len(b.get("series") or []) >= 2 for b in dollar), [b["ticker"] for b in dollar]
+    for b in dollar:
+        last, prev = b["series"][-1], b["series"][-2]
+        assert b["volume_vs_prior"] == round(last["v"] / prev["v"], scans.RATIO_DECIMALS) < 1, (b["ticker"], b["volume_vs_prior"])
+        assert b["quality"]["burst"]["volume_vs_prior"] == round(b["volume_vs_prior"], 2), b["ticker"]
+        assert f"on {b['volume_vs_prior']:.1f}× volume" in b["summary"], b["summary"]
+
+
 def test_the_slot_count_and_the_status_word_are_the_named_rules():
     plans = [{"status": s} for s in ("hold", "sell_half", "sell_into_strength", "pending", "stopped", "exit",
                                       "expired", record.NOT_FILLED, record.UNCERTAIN, "unmeasured")]
@@ -264,10 +330,12 @@ def test_an_a_plus_burst_the_account_cannot_size_is_cut_not_traded(market, claud
     assert json.loads((docs / record.PICKS_FILE).read_text())["picks"] == []
 
 
-def test_a_textbook_burst_grades_a_plus_and_has_its_ticket_withheld_at_the_limit(fake_alpaca, seed, claude, fake_resend, tmp_path):
-    """The field guide's own bar: its low sits 4.7% under the close, so at
-    the +4% ceiling neither the low nor the midpoint is inside his 4% line.
-    The setup is published with its card and its reason; no ticket, no pick."""
+def test_a_textbook_burst_grades_a_plus_and_gets_a_ticket_narrowed_to_its_stop(fake_alpaca, seed, claude, fake_resend, tmp_path):
+    """The field guide's own bar: its low sits 4.7% under the close, so at a
+    fixed +4% ceiling neither the low nor the midpoint was inside his 4%
+    line and the closeout withheld it. The limit is the stop's own ceiling
+    now -- the midpoint 121.42 / 0.96 = 126.47, under the 129.18 day-2 line
+    -- so the setup carries an executable ticket and a pick."""
     fake_alpaca.add_history("WIDE", qframe(ideal_bars()))
     for name, df in base_frames(11, seed).items():
         fake_alpaca.add_history(name, df)
@@ -275,10 +343,33 @@ def test_a_textbook_burst_grades_a_plus_and_has_its_ticket_withheld_at_the_limit
     rep, data, docs = evening(tmp_path, ["WIDE"] + [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(11)])
     assert rep.exit_code() == 0, rep.problems
     burst = data["bursts"][0]
-    assert burst["grade"] == "A+" and burst["plan"]["eligible"] is False and burst["plan"]["action"] == "refused"
-    assert burst["plan"]["reason"].startswith("ticket withheld: at the") and burst["plan"]["order_json"] is None
+    p = burst["plan"]
+    assert burst["grade"] == "A+" and p["eligible"] is True and p["action"] == "buy_at_open"
+    assert p["limit"] == 126.47 and p["day2_spent_above"] == 129.18 and p["limit_basis"] == "stop_line"
+    assert p["stop"] == 121.42 and p["stop_basis"] == "half_range" and p["stop_pct"] <= plan.MAX_STOP_PCT
+    assert p["order_json"]["limit_price"] == 126.47 and p["order_json"]["stop_price"] == p["entry_ref"]
+    assert data["trades"] == ["WIDE"] and data["cash_budget"]["cut"] == []
+    pick = json.loads((docs / record.PICKS_FILE).read_text())["picks"][0]
+    assert pick["ticker"] == "WIDE" and pick["entry_high"] == 126.47 and pick["day2_spent_above"] == 129.18
+
+
+def test_a_burst_no_limit_can_hold_a_stop_under_is_published_without_a_ticket(fake_alpaca, seed, claude, fake_resend, tmp_path):
+    """The same shape with a 9% range: the low caps the limit at 118.32 and
+    the midpoint at 123.83, both under the 124.21 buy stop, so no limit
+    exists this bar can hold a stop under. The setup is published with its
+    card and its reason; no ticket, no pick."""
+    fake_alpaca.add_history("WIDE", qframe(ideal_bars(burst_range_pct=9.0)))
+    for name, df in base_frames(11, seed).items():
+        fake_alpaca.add_history(name, df)
+    fake_alpaca.add_history("SPY", make_ohlcv("base", seed=[seed, 999], days=260))
+    rep, data, docs = evening(tmp_path, ["WIDE"] + [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(11)])
+    assert rep.exit_code() == 0, rep.problems
+    burst = data["bursts"][0]
+    p = burst["plan"]
+    assert p["eligible"] is False and p["action"] == "refused" and p["ticket_refusal"] == "no_room_above_the_trigger"
+    assert p["reason"].startswith("ticket withheld: no limit above the") and p["order_json"] is None
     assert data["trades"] == [] and data["beyond_cap"] == ["WIDE"]
-    assert data["cash_budget"]["cut"] == [{"ticker": "WIDE", "kind": "withheld", "reason": burst["plan"]["reason"]}]
+    assert data["cash_budget"]["cut"] == [{"ticker": "WIDE", "kind": "withheld", "reason": p["reason"]}]
     assert data["cover"]["h1"] == report.H1_KEEP_CASH and "1 with a qualifying setup and no ticket" in data["cover"]["dek"]
     assert data["closest_miss"] is None                      # a withheld ticket is not a miss
     assert json.loads((docs / record.PICKS_FILE).read_text())["picks"] == []
@@ -390,7 +481,11 @@ def test_the_intraday_check_reads_the_previous_evenings_names_and_mails_only_a_c
     assert live["session"] == SESSION
     assert rows["COIL"]["kind"] == "anticipation" and rows["COIL"]["level"] == trigger
     assert rows["COIL"]["above_level"] is True and rows["COIL"]["volume_state"] == "confirmed"
-    assert rows["AAA"]["kind"] == "burst" and rows["AAA"]["level"] == data["bursts"][0]["plan"]["entry_high"]
+    aaa = data["bursts"][0]["plan"]
+    # the burst's level is its DAY-2 line, not the narrower price its ticket
+    # can fill at: on this bar the two differ, so the field it reads is proved
+    assert aaa["day2_spent_above"] != aaa["entry_high"]
+    assert rows["AAA"]["kind"] == "burst" and rows["AAA"]["level"] == aaa["day2_spent_above"]
     assert rows["AAA"]["above_level"] is False and rows["AAA"]["volume_state"] == "not_yet"
     assert len(fake_resend.sent) == 2 and fake_resend.sent[-1]["subject"] == "Breakout in progress — COIL"
     assert "COIL" in fake_resend.sent[-1]["html"] and "AAA" not in fake_resend.sent[-1]["html"].split("above its level")[0].rsplit("<p>", 1)[-1]

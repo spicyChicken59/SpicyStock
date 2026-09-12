@@ -123,7 +123,9 @@ CONTRACT: dict[str, str] = {
                "The size multiplier is the regime's; the plans already carry it.",
     "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary "
               "sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, "
-              "a burst is here; a name that never burst is not.",
+              "a burst is here; a name that never burst is not. volume_vs_prior is the session's volume over "
+              "the previous session's for every row, the $-only ones included (null when the previous session "
+              "printed none); quality.burst holds the checklist's copy at two places.",
     "trades": "Tickers of the bursts to trade tomorrow, ranked; those with order lines first. On a red "
               "regime this is empty whatever the grades say.",
     "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the "
@@ -769,6 +771,12 @@ def _trade_block(burst: dict, breadth: dict | None) -> str:
     zone = f"{lo}–{hi}" if lo and hi else _show(lo or hi)
     facts = [f"Buy zone {esc(zone)}", f"Stop {esc(_show(_price(plan.get('stop'))))}",
              f"Shares {esc(_show(str(_int(plan.get('shares'))) if _int(plan.get('shares')) is not None else None))}"]
+    # the ticket's limit and the day-2 line are two prices; where the record
+    # carries both and they differ, the mail says so rather than let the top
+    # of the buy zone be read as the extension threshold
+    outer = _price(plan.get("day2_spent_above"))
+    if outer and hi and outer != hi:
+        facts.append(f"Too extended over {esc(outer)}")
     position = _money(plan.get("position_usd"))
     if position:
         facts.append(f"Position {esc(position)}")
@@ -830,16 +838,36 @@ def _alert_row(row: dict) -> str:
             + f'</div><p style="margin:8px 0 0">{" · ".join(facts)}</p>' + ticket + "</div>")
 
 
+#: The words that already say a stock has no ticket. A reason that opens with
+#: one of them must not be introduced by another: the budget's own reason for
+#: a withheld plan begins "ticket withheld: at the $X limit ...", and
+#: "No ticket for TSLA: ticket withheld: ..." says it twice. The page holds
+#: the same rule in ``docs/app.js`` (``saysNoTicket``), and
+#: ``tests/test_docs.py`` holds the two equal.
+NO_TICKET_LEADS = ("no ticket", "ticket withheld")
+
+
+def says_no_ticket(reason: str) -> bool:
+    """Does this reason already open with the words for 'there is no ticket'?"""
+    low = _text(reason).lower()
+    return any(low.startswith(lead) for lead in NO_TICKET_LEADS)
+
+
 def _no_ticket_lines(data: dict) -> list[str]:
     """One line per A-quality plan without a ticket, with the budget's
     reason: withheld by the stop rule, past the slots or the equity, or
-    sized to no whole share."""
+    sized to no whole share. The reason is said ONCE."""
     beyond = [t for t in data.get("beyond_cap", []) if _text(str(t))] if isinstance(data.get("beyond_cap"), list) else []
     if not beyond:
         return []
     reasons = {c.get("ticker"): _text(c.get("reason")) for c in (_get(data, "cash_budget", "cut") or [])
                if isinstance(c, dict)}
-    return [f'<p style="{_S_MUTED}">No ticket for {esc(t)}: {esc(reasons.get(t) or "see the page")}.</p>' for t in beyond]
+    lines = []
+    for t in beyond:
+        why = reasons.get(t) or "see the page"
+        head = f"{esc(t)} — " if says_no_ticket(why) else f"No ticket for {esc(t)}: "
+        lines.append(f'<p style="{_S_MUTED}">{head}{esc(why)}.</p>')
+    return lines
 
 
 def _problems_block(problems: Any) -> str:

@@ -126,12 +126,15 @@ def pick_problem(pick: Any) -> str | None:
     shares = pick["shares"]
     if isinstance(shares, bool) or not isinstance(shares, int) or shares < 0:
         return f"{pick['ticker']}: shares is not a whole number"
-    for key in ("entry_low", "entry_high", "limit", "trigger"):
+    for key in ("entry_low", "entry_high", "limit", "trigger", "day2_spent_above"):
         if key in pick and pick[key] is not None and not _finite(pick[key]):
             return f"{pick['ticker']}: {key} is not a number"
     low, high = pick.get("entry_low"), pick.get("entry_high")
     if low is not None and high is not None and not low <= pick["entry_ref"] <= high:
         return f"{pick['ticker']}: entry_ref {pick['entry_ref']} is outside its zone {low}-{high}"
+    outer = pick.get("day2_spent_above")
+    if outer is not None and high is not None and high > outer:
+        return f"{pick['ticker']}: entry_high {high} is over its day-2 line {outer}"
     trigger, limit = pick.get("trigger"), pick.get("limit")
     if trigger is not None and trigger <= pick["stop"]:
         return f"{pick['ticker']}: trigger {trigger} is not above the stop {pick['stop']}"
@@ -276,9 +279,12 @@ def fill(pick: dict, bar: dict) -> tuple[str, float | None, str, str | None]:
     can say.
 
     A burst ticket is a buy stop-limit: trigger ``entry_ref`` (the burst
-    close), limit ``entry_high``; the plan says to skip an open under
-    ``entry_low``. An anticipation ticket is the same shape with ``trigger``
-    and ``limit`` and no skip line. The bar establishes exactly one fill,
+    close), limit ``entry_high`` -- the ticket's own executable limit, which
+    the constrained ceiling usually puts UNDER the plan's ``day2_spent_above``
+    line and never over it, so an open between the two is not a skip the plan
+    asked for but an open this order cannot fill at; the plan does say to skip
+    an open under ``entry_low``. An anticipation ticket is the same shape with
+    ``trigger`` and ``limit`` and no skip line. The bar establishes exactly one fill,
     ``KNOWN_FILL``: an open at or over the trigger and at or under the limit
     fills at the open, inside the plan's window. It rules a fill out when
     the day never reached the trigger, or opened above the limit and never
@@ -305,8 +311,8 @@ def fill(pick: dict, bar: dict) -> tuple[str, float | None, str, str | None]:
     if limit is not None and o > float(limit):
         limit = float(limit)
         if l <= limit:
-            return UNCERTAIN, None, (f"opened at {usd(o)}, above the {usd(limit)} limit, which the plan says to "
-                                     f"skip; a resting stop-limit does not fill at that open but stays live, and "
+            return UNCERTAIN, None, (f"opened at {usd(o)}, above the {usd(limit)} limit the ticket permits; "
+                                     f"a resting stop-limit does not fill at that open but stays live, and "
                                      f"the day traded back under {usd(limit)} (low {usd(l)}), so it may have filled "
                                      f"later at a time the bar cannot give"), "open_above_limit"
         return NOT_FILLED, None, (f"opened at {usd(o)}, above the {usd(limit)} limit, and never traded back under "

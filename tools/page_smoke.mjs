@@ -66,7 +66,7 @@ const CUT_WORDS = { withheld: 'ticket withheld', slot_cap: 'beyond the slot cap'
 
 async function open(browser, base, dataUrl, now, width, opts) {
   opts = opts || {};
-  const context = await browser.newContext({ viewport: { width, height: opts.height || 900 }, colorScheme: opts.theme || 'dark', reducedMotion: opts.reducedMotion || 'no-preference', permissions: ['clipboard-read', 'clipboard-write'] });
+  const context = await browser.newContext({ viewport: { width, height: opts.height || 900 }, colorScheme: opts.theme || 'dark', reducedMotion: opts.reducedMotion || 'no-preference', hasTouch: !!opts.touch, permissions: ['clipboard-read', 'clipboard-write'] });
   const page = await context.newPage();
   const errors = [], aborted = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
@@ -116,6 +116,10 @@ function setupSessions(series, base) {
   const pad = Math.max(8, Math.round((be - bs + 1) * 0.6));
   return series.length - Math.max(0, bs - pad);
 }
+// the volume ratio the page reads for a burst: the row's own field, else the checklist's two-place copy;
+// a finite number of zero or more, else null (docs/app.js volumeRatio(); the smoke reads it again, on its own)
+const ratioOf = (b) => { const own = b.volume_vs_prior, q = b.quality && b.quality.burst ? b.quality.burst.volume_vs_prior : null; return typeof own === 'number' && isFinite(own) && own >= 0 ? own : typeof q === 'number' && isFinite(q) && q >= 0 ? q : null; };
+const times = (v) => v === null ? '—' : v.toFixed(1);
 // what the record says each stock's status is (the page reads the same fields; the smoke reads them again, on its own)
 function burstStatus(b, data) {
   const cut = (data.cash_budget.cut || []).find((c) => c.ticker === b.ticker);
@@ -215,7 +219,8 @@ async function checkDetail(page, variant, b, data, blocked) {
   const want = q.checks.map((c) => (q.vetoes.includes('up_days') && c.key === 'two_days') || (q.vetoes.includes('not_linear') && c.key === 'linearity') ? 'veto' : c.pass ? (c.marginal ? 'partial' : 'pass') : (c.status === 'unmeasured' ? 'not measured' : 'fail'));
   eq(`${variant} ${b.ticker} tile verdicts`, tiles.map((t) => t[1]), want);
   const conditions = await text(page, '#disc-checklist');
-  check(`${variant} ${b.ticker} conditions carry the gain and the volume`, conditions.includes(`+${b.gain_pct.toFixed(1)}%`) && conditions.includes(b.volume_vs_prior.toFixed(1) + '× volume'), conditions.slice(0, 200));
+  check(`${variant} ${b.ticker} conditions carry the gain and the volume`, conditions.includes(`+${b.gain_pct.toFixed(1)}%`) && conditions.includes(times(ratioOf(b)) + '× volume'), conditions.slice(0, 200));
+  if (b.scan === 'dollar') check(`${variant} ${b.ticker} a $-only day carries its volume ratio like any other`, ratioOf(b) !== null && ratioOf(b) === b.volume_vs_prior && conditions.includes(times(ratioOf(b)) + '× volume') && !conditions.includes('read from the checklist'), [b.volume_vs_prior, conditions.slice(0, 120)]);
   if (q.base && q.base.sessions) check(`${variant} ${b.ticker} conditions carry the base`, conditions.includes(`${q.base.sessions} sessions`), 'base');
   // the plan and the order
   const planText = await text(page, '#disc-plan');
@@ -248,7 +253,9 @@ async function checkDetail(page, variant, b, data, blocked) {
     if (copied !== null) eq(`${variant} ${b.ticker} copied text is the ticket`, copied, pre);
     else console.log(`  (clipboard not readable for ${b.ticker}; the copy check was skipped)`);
   } else if (status === 'withheld' && b.plan) check(`${variant} ${b.ticker} withheld keeps the setup`, planText.includes(usd(b.plan.stop)) && planText.includes(String(b.plan.shares)), 'setup');
-  if (status !== 'ticket' || blocked) check(`${variant} ${b.ticker} plan says why there is no order`, /No ticket tonight|No order is offered|No plan/.test(planText), planText.slice(-200));
+  if (status !== 'ticket' || blocked) check(`${variant} ${b.ticker} plan says why there is no order`, /No ticket tonight|Ticket withheld|No order is offered|No plan/.test(planText), planText.slice(-200));
+  // and never says it twice: the lead and the record's own reason are one sentence
+  if (status !== 'ticket') check(`${variant} ${b.ticker} plan says it once`, !/no ticket\W{0,4}no ticket|No ticket tonight: ticket withheld/i.test(planText), planText.slice(-200));
   // provenance
   const prov = await text(page, '#disc-provenance');
   if (b.claude && b.claude.source === 'claude') check(`${variant} ${b.ticker} claude read`, prov.includes(b.claude.reason), 'reason');
@@ -456,7 +463,15 @@ async function checkVariant(browser, base, variant, data) {
   const budget = await text(page, '#budget');
   check(`${variant} budget prints the record's own allocation sentence`, budget.includes(data.cash_budget.sentence) && budget.includes(`${data.cash_budget.slots_used} of ${data.cash_budget.slots_max} slots`), budget);
   check(`${variant} budget is labelled model allocation`, budget.includes('Model allocation') && budget.includes('not a balance'), budget);
-  for (const c of data.cash_budget.cut) check(`${variant} cut ${c.ticker} explained`, budget.includes('No ticket: ' + c.ticker) && budget.includes(c.reason), budget);
+  // every cut is named with its own reason, and the reason is given ONCE: the
+  // budget's reason for a plan the stop rule withheld already opens with
+  // "ticket withheld", so the line does not introduce it with "No ticket" too
+  for (const c of data.cash_budget.cut) {
+    const leads = /^(no ticket|ticket withheld)/i.test(c.reason);
+    check(`${variant} cut ${c.ticker} explained`,
+      budget.includes(leads ? `${c.ticker} — ${c.reason}` : `No ticket: ${c.ticker}`) && budget.includes(c.reason), budget);
+  }
+  check(`${variant} the budget says it once`, !/no ticket\W{0,4}(no ticket|ticket withheld)/i.test(budget), budget);
   eq(`${variant} order sheet rows`, await count(page, '#order-sheet tbody tr[data-ticker]'), withOrders.length);
   if (!withOrders.length) check(`${variant} order sheet says no orders`, (await text(page, '#order-sheet')).includes('No orders'), 'sheet');
   else {
@@ -786,15 +801,16 @@ async function checkModes(browser, base, data) {
 async function checkMap(browser, base, data) {
   console.log('-- the burst map');
   const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280);
-  const plottable = data.bursts.filter((b) => typeof b.gain_pct === 'number' && typeof b.volume_vs_prior === 'number');
+  const plottable = data.bursts.filter((b) => typeof b.gain_pct === 'number' && ratioOf(b) !== null);
+  eq('every burst of the fixture has a ratio the page can read', plottable.length, data.bursts.length);
   eq('the Cards | Map control is offered for the bursts', await page.locator('#discover').isVisible(), true);
   await page.click('#discover .sc-tab[data-discover="map"]'); await page.waitForTimeout(300);
   eq('map mode lays the map across the workspace', await page.getAttribute('#workspace', 'data-discover'), 'map');
   eq('one point per burst with both measurements', await count(page, '#burst-map .ss-map__point'), plottable.length);
   const pts = await page.locator('#burst-map .ss-map__point').evaluateAll((els) => els.map((e) => [e.dataset.ticker, +e.dataset.gain, +e.dataset.volume, e.getAttribute('aria-pressed')]));
-  for (const b of plottable) { const p = pts.find((x) => x[0] === b.ticker); eq(`${b.ticker} is plotted at its recorded gain and volume ratio`, p && [p[1], p[2]], [b.gain_pct, b.volume_vs_prior]); }
+  for (const b of plottable) { const p = pts.find((x) => x[0] === b.ticker); eq(`${b.ticker} is plotted at its recorded gain and volume ratio`, p && [p[1], p[2]], [b.gain_pct, ratioOf(b)]); }
   check('the map names the session and the counts', (await text(page, '#burst-map .ss-map__stamp')).includes('session ' + dateWords(data.run.session)) && (await text(page, '[data-counts]')).includes(`${data.bursts.length} bursts · ${plottable.length} plotted`), await text(page, '[data-counts]'));
-  check('the axes name the exact measurements', (await text(page, '#burst-map')).includes('Volume vs previous session (×)') && (await text(page, '#burst-map')).includes('Gain on the session vs previous close (%)'), 'axes');
+  check('the axes name the exact measurements and say which is compressed', (await text(page, '#burst-map')).includes('Volume vs previous session (×, compressed)') && (await text(page, '#burst-map')).includes('Gain on the session vs previous close (%)'), 'axes');
   check('the map says position is a measurement, not a return', (await text(page, '#burst-map .ss-map__note')).includes('not a predicted return'), 'note');
   eq('the first burst is the selected point', pts.filter((p) => p[3] === 'true').map((p) => p[0]), [data.bursts[0].ticker]);
   const other = plottable[plottable.length - 1];
@@ -876,7 +892,9 @@ async function checkFollowing(browser, base, data) {
   const withheld = (data.cash_budget.cut || []).find((c) => c.kind === 'withheld');
   if (withheld) {
     await go(page, `#/explore/bursts/${withheld.ticker}`);
-    check('a withheld setup offers observation only', (await text(page, '#detail .ss-follow')).includes('for observation, no ticket: ticket withheld'), await text(page, '#detail .ss-follow'));
+    const hint = await text(page, '#detail .ss-follow');
+    check('a withheld setup offers observation only', hint.includes('for observation, ticket withheld') && hint.includes('saved in this browser only'), hint);
+    check('the observation hint names the reason once', (hint.match(/ticket withheld/gi) || []).length === 1 && !/no ticket/i.test(hint), hint);
     await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
     check('the withheld reason stays beside the followed setup', (await text(page, '#detail .ss-action')).includes('ticket withheld') && (await text(page, `#following .ss-followed[data-ticker="${withheld.ticker}"]`)).includes('observation only, no size'), 'withheld');
     await page.click('#detail .ss-follow button[data-follow-action="remove"]'); await page.waitForTimeout(150);
@@ -977,12 +995,18 @@ async function checkStates(browser, base, data) {
         eq('without base dates the fallback shows 60 sessions', await page.locator('#detail .sc-chart--stock').getAttribute('data-sessions'), String(Math.min(60, data.bursts[0].series.length)));
       }
       if (field === 'bursts.volume_vs_prior') {
+        // a record from before the dollar scan carried the ratio: the row's own field is null and the
+        // checklist's two-place copy stands in -- plotted, printed everywhere, and said to be the checklist's
+        const first = data.bursts[0], q = first.quality.burst.volume_vs_prior;
         await page.click('#discover .sc-tab[data-discover="map"]'); await page.waitForTimeout(250);
-        eq('a burst without a volume measurement is not plotted', await page.locator('#burst-map').getAttribute('data-missing'), '1');
-        check('the unplotted burst stays listed and reachable', (await count(page, `#burst-map .ss-map__missing button[data-id="bursts:${data.bursts[0].ticker}"]`)) === 1 && (await text(page, '[data-counts]')).includes('1 without a measurement'), await text(page, '[data-counts]'));
-        await page.click(`#burst-map .ss-map__missing button[data-id="bursts:${data.bursts[0].ticker}"]`); await page.waitForTimeout(200);
-        eq('the unplotted burst opens its detail', await text(page, '#detail-h2'), data.bursts[0].ticker);
-        await page.click('#discover .sc-tab[data-discover="cards"]');
+        eq('without the row’s own ratio the checklist’s copy plots the burst', await page.locator(`#burst-map .ss-map__point[data-ticker="${first.ticker}"]`).evaluateAll((els) => els.map((e) => [+e.dataset.gain, +e.dataset.volume])), [[first.gain_pct, q]]);
+        eq('without the row’s own ratio nothing is listed as unmeasured', await page.getAttribute('#burst-map', 'data-missing'), '0');
+        await page.click('#discover .sc-tab[data-discover="cards"]'); await page.waitForTimeout(150);
+        await openAll(page, 'details');
+        const r = await readings(page, first.ticker);
+        check('the card, the detail line and the scan table print the checklist’s copy', r.card.includes('vol ' + q.toFixed(1) + '×') && r.sub.includes('on ' + q.toFixed(1) + '× volume') && r.table.includes(q.toFixed(1) + '× vol'), [r.card, r.sub, r.table]);
+        check('the measurements say the ratio was read from the checklist', r.facts.includes(q.toFixed(1) + '× volume') && r.facts.includes('read from the checklist'), r.facts.slice(0, 300));
+        eq('the chart’s burst label carries the checklist’s copy', r.labels, [(Math.round(q * 10) / 10) + '× vol']);
       }
       if (field === 'observations') check('without the observation block the shelf still renders', (await count(page, '#following .ss-following__empty')) === 1 || (await count(page, '#following .ss-followed')) >= 0, 'shelf');
       if (field === 'bursts.series') {
@@ -1023,6 +1047,486 @@ async function loadChromium() {
   return null;
 }
 
+// every place the page prints a burst's volume ratio, read back at once
+async function readings(page, ticker) {
+  return {
+    card: (await text(page, `#pick-list .ss-pick[data-ticker="${ticker}"]`)).replace(/\s+/g, ' '),
+    sub: await text(page, '#detail .ss-detail__sub'),
+    facts: (await text(page, '#disc-checklist')).replace(/\s+/g, ' '),
+    table: await text(page, `#burst-${ticker} .sc-signal-matrix__note`),
+    labels: await page.locator('#detail .sc-chart--stock text').evaluateAll((els) => els.map((e) => (e.textContent || '').match(/[0-9.]+× vol/)).filter(Boolean).map((m) => m[0]))
+  };
+}
+// a copy of the record with one alteration, served beside the fixtures and removed afterwards
+async function openMutant(browser, base, data, mutate) {
+  const copy = JSON.parse(JSON.stringify(data)); mutate(copy);
+  const p = '/tests/fixtures/page/.mutant.json';
+  await writeFile(path.join(ROOT, p), JSON.stringify(copy));
+  const opened = await open(browser, base, p, FRESH_NOW, 1280);
+  return { page: opened.page, errors: opened.errors, close: async () => { await opened.context.close(); await unlink(path.join(ROOT, p)); } };
+}
+// the volume ratio: zero is a value, an invalid or absent one is missing and said so, and a checklist copy
+// that contradicts the row's own field is printed beside it rather than hidden
+async function checkVolumeReadings(browser, base, data) {
+  console.log('-- the volume ratio readings');
+  const first = data.bursts[0], own = first.volume_vs_prior;
+  const missingCase = async (name, mutate) => {
+    const m = await openMutant(browser, base, data, mutate);
+    await m.page.click('#discover .sc-tab[data-discover="map"]'); await m.page.waitForTimeout(250);
+    eq(`${name}: the burst is not plotted`, await m.page.getAttribute('#burst-map', 'data-missing'), '1');
+    check(`${name}: the burst stays listed and reachable`, (await count(m.page, `#burst-map .ss-map__missing button[data-id="bursts:${first.ticker}"]`)) === 1 && (await text(m.page, '[data-counts]')).includes('1 without a measurement'), await text(m.page, '[data-counts]'));
+    await m.page.click(`#burst-map .ss-map__missing button[data-id="bursts:${first.ticker}"]`); await m.page.waitForTimeout(200);
+    eq(`${name}: the unplotted burst opens its detail`, await text(m.page, '#detail-h2'), first.ticker);
+    await m.page.click('#discover .sc-tab[data-discover="cards"]'); await m.page.waitForTimeout(150);
+    await openAll(m.page, 'details');
+    const r = await readings(m.page, first.ticker);
+    check(`${name}: the card, the detail line and the scan table say the ratio is missing`, r.card.includes('vol —') && r.sub.includes('on —× volume') && r.table.includes('—× vol'), [r.card, r.sub, r.table]);
+    check(`${name}: the measurements say the ratio was not recorded`, r.facts.includes('—× volume') && r.facts.includes('volume ratio not recorded'), r.facts.slice(0, 300));
+    eq(`${name}: the chart’s burst label carries no ratio`, r.labels, []);
+    eq(`${name}: page errors`, m.errors, []);
+    await m.close();
+  };
+  await missingCase('both representations absent', (c) => { c.bursts[0].volume_vs_prior = null; delete c.bursts[0].quality.burst.volume_vs_prior; });
+  await missingCase('a negative ratio and a text one', (c) => { c.bursts[0].volume_vs_prior = -1; c.bursts[0].quality.burst.volume_vs_prior = '0.9'; });
+  // zero is a value: a session that printed nothing against one that did
+  {
+    const m = await openMutant(browser, base, data, (c) => { c.bursts[0].volume_vs_prior = 0; c.bursts[0].quality.burst.volume_vs_prior = 0; });
+    await m.page.click('#discover .sc-tab[data-discover="map"]'); await m.page.waitForTimeout(250);
+    eq('a zero ratio is plotted at zero', await m.page.locator(`#burst-map .ss-map__point[data-ticker="${first.ticker}"]`).evaluateAll((els) => els.map((e) => [+e.dataset.gain, +e.dataset.volume])), [[first.gain_pct, 0]]);
+    eq('a zero ratio is not listed as unmeasured', await m.page.getAttribute('#burst-map', 'data-missing'), '0');
+    await m.page.click('#discover .sc-tab[data-discover="cards"]'); await m.page.waitForTimeout(150);
+    await openAll(m.page, 'details');
+    const r = await readings(m.page, first.ticker);
+    check('a zero ratio prints as 0.0×, never as missing', r.card.includes('vol 0.0×') && r.sub.includes('on 0.0× volume') && r.table.includes('0.0× vol') && r.facts.includes('0.0× volume') && !r.facts.includes('not recorded') && !r.facts.includes('read from the checklist'), [r.card, r.sub, r.table]);
+    eq('the chart’s burst label carries the zero', r.labels, ['0× vol']);
+    eq('zero ratio page errors', m.errors, []);
+    await m.close();
+  }
+  // the row's own field stands, and a checklist copy that is not its rounding is printed beside it
+  {
+    const other = Math.round((own + 0.5) * 100) / 100;
+    const m = await openMutant(browser, base, data, (c) => { c.bursts[0].quality.burst.volume_vs_prior = other; });
+    await m.page.click('#discover .sc-tab[data-discover="map"]'); await m.page.waitForTimeout(250);
+    eq('the row’s own ratio plots the burst, not the checklist’s', await m.page.locator(`#burst-map .ss-map__point[data-ticker="${first.ticker}"]`).evaluateAll((els) => els.map((e) => [+e.dataset.gain, +e.dataset.volume])), [[first.gain_pct, own]]);
+    await m.page.click('#discover .sc-tab[data-discover="cards"]'); await m.page.waitForTimeout(150);
+    await openAll(m.page, 'details');
+    const r = await readings(m.page, first.ticker);
+    check('the measurements print the row’s own ratio and the checklist’s disagreeing copy beside it', r.facts.includes(own.toFixed(1) + '× volume') && r.facts.includes('the checklist’s block says ' + other.toFixed(2) + '× volume'), r.facts.slice(0, 300));
+    check('the card and the detail line print the row’s own ratio', r.card.includes('vol ' + own.toFixed(1) + '×') && r.sub.includes('on ' + own.toFixed(1) + '× volume'), [r.card, r.sub]);
+    eq('disagreeing copy page errors', m.errors, []);
+    await m.close();
+  }
+  // a two-place copy of the row's own four-place ratio is its rounding, not a disagreement
+  {
+    const m = await openMutant(browser, base, data, (c) => { c.bursts[0].volume_vs_prior = 1.645; c.bursts[0].quality.burst.volume_vs_prior = 1.64; });
+    await openAll(m.page, 'details');
+    const r = await readings(m.page, first.ticker);
+    check('a rounded copy is not called a disagreement', r.facts.includes('1.6× volume') && !r.facts.includes('checklist’s block says'), r.facts.slice(0, 300));
+    eq('rounded copy page errors', m.errors, []);
+    await m.close();
+  }
+}
+
+// the volume axis and the tap: a compressed scale that keeps zero, the
+// outliers and the recorded values, and a tap resolved by distance rather
+// than by which button happened to be appended last
+async function checkMapScale(browser, base, data) {
+  console.log('-- the volume axis and the crowded tap');
+  const mapOpen = async (page) => {
+    await page.click('#discover .sc-tab[data-discover="map"]'); await page.waitForTimeout(300);
+    await page.locator('#burst-map .ss-map__surface').scrollIntoViewIfNeeded(); await page.waitForTimeout(150);
+  };
+  const ticks = (page) => page.locator('#burst-map .ss-map__axis[data-tick]').evaluateAll((els) => els.map((e) => [+e.dataset.tick, e.textContent, +e.getAttribute('y')]));
+  const dots = (page) => page.locator('#burst-map .ss-map__point').evaluateAll((els) => els.map((e) => {
+    const r = e.getBoundingClientRect();
+    return { t: e.dataset.ticker, v: +e.dataset.volume, near: +e.dataset.near, cx: r.x + r.width / 2, cy: r.y + r.height / 2 };
+  }));
+
+  // ---- the scale, over a record carrying an extreme outlier ----------
+  // the published record of 2026-09-11 put one burst at 168.7643x against a
+  // median of 1.1x; a linear axis laid 391 of 401 points on the pane floor
+  const OUTLIER = 168.7643;
+  {
+    const m = await openMutant(browser, base, data, (c) => {
+      c.bursts[c.bursts.length - 1].volume_vs_prior = OUTLIER;
+      c.bursts[c.bursts.length - 1].quality.burst.volume_vs_prior = OUTLIER;
+    });
+    await mapOpen(m.page);
+    const big = data.bursts[data.bursts.length - 1].ticker;
+    const t = await ticks(m.page);
+    check('every volume tick is labelled with the ratio it stands for', t.length >= 3 && t.every(([v, w]) => w === String(+v.toFixed(2)) + '×'), JSON.stringify(t));
+    eq('the axis starts at zero', t[0][0], 0);
+    check('the axis top is at or above the largest recorded ratio, so no outlier is clipped', t[t.length - 1][0] >= OUTLIER, JSON.stringify(t[t.length - 1]));
+    check('the ticks rise', t.every((x, i) => i === 0 || x[0] > t[i - 1][0]) && t.every((x, i) => i === 0 || x[2] < t[i - 1][2]), JSON.stringify(t.map((x) => x[0])));
+    // the compression itself, not the ladder: on a linear axis a 1x tick over a
+    // 183x top would sit at 0.5% of the pane, under the floor label. The
+    // ladder is uneven either way, so spacing-in-value proves nothing.
+    const paneTop = Math.min.apply(null, t.map((x) => x[2])), paneFloor = Math.max.apply(null, t.map((x) => x[2]));
+    const one = t.find((x) => x[0] === 1);
+    check('a 1× tick sits far above the linear position it would have, because the axis is compressed',
+      one && (paneFloor - one[2]) / (paneFloor - paneTop) > 0.15 && 1 / t[t.length - 1][0] < 0.02,
+      JSON.stringify({ one: one && one[2], paneTop, paneFloor, top: t[t.length - 1][0] }));
+    const d = await dots(m.page);
+    const outlier = d.find((x) => x.t === big), rest = d.filter((x) => x.t !== big);
+    eq('the outlier is plotted at its own recorded ratio', outlier.v, OUTLIER);
+    const floor = Math.max.apply(null, d.map((x) => x.cy));
+    check('the rest of the record does not collapse onto the pane floor under the outlier',
+      rest.filter((x) => floor - x.cy <= 5).length <= 1, JSON.stringify(rest.map((x) => [x.t, Math.round(floor - x.cy)])));
+    check('the outlier still sits above everything else', rest.every((x) => outlier.cy < x.cy), JSON.stringify([outlier, rest[0]]));
+    check('the map discloses the compression in words', (await text(m.page, '#burst-map .ss-map__note')).includes('The volume axis is compressed') && (await text(m.page, '#burst-map .ss-map__note')).includes('The gain axis is linear'), await text(m.page, '#burst-map .ss-map__note'));
+    eq('outlier page errors', m.errors, []);
+    await m.close();
+  }
+  // ---- zero is a value on the compressed axis, missing is still missing --
+  {
+    const zero = data.bursts[0].ticker;
+    const m = await openMutant(browser, base, data, (c) => {
+      c.bursts[0].volume_vs_prior = 0; c.bursts[0].quality.burst.volume_vs_prior = 0;
+      c.bursts[c.bursts.length - 1].volume_vs_prior = OUTLIER; c.bursts[c.bursts.length - 1].quality.burst.volume_vs_prior = OUTLIER;
+      c.bursts[1].volume_vs_prior = null; delete c.bursts[1].quality.burst.volume_vs_prior;
+    });
+    await mapOpen(m.page);
+    const t = await ticks(m.page), d = await dots(m.page);
+    const zeroTickY = t.find((x) => x[0] === 0)[2];
+    const zeroDot = d.find((x) => x.t === zero);
+    const pane = await m.page.locator('#burst-map .ss-map__surface').boundingBox();
+    // the pane floor, read off the vertical grid lines, which the volume
+    // scale never touches: comparing the zero point to the zero LABEL would
+    // compare it against a value drawn through the same function
+    const floorPx = await m.page.locator('#burst-map .ss-map__grid').evaluateAll((els) => {
+      const v = els.filter((e) => Math.abs(+e.getAttribute('x1') - +e.getAttribute('x2')) < 0.01);
+      return v.length ? Math.max.apply(null, v.map((e) => +e.getAttribute('y2'))) : null;
+    });
+    eq('a zero ratio is plotted, at zero', zeroDot.v, 0);
+    check('a zero ratio sits ON the pane floor', floorPx !== null && Math.abs((zeroDot.cy - pane.y) - floorPx) <= 1.5, JSON.stringify([zeroDot.cy - pane.y, floorPx]));
+    check('the 0× label stands beside it', Math.abs((zeroTickY - 4) - floorPx) <= 1.5, JSON.stringify([zeroTickY - 4, floorPx]));
+    check('the zero is the lowest point on the pane', d.every((x) => x.cy <= zeroDot.cy), JSON.stringify(d.map((x) => [x.t, Math.round(x.cy)])));
+    eq('a missing ratio is still not plotted beside a zero and an outlier', await m.page.getAttribute('#burst-map', 'data-missing'), '1');
+    eq('the unmeasured burst is still listed by name', await count(m.page, `#burst-map .ss-map__missing button[data-id="bursts:${data.bursts[1].ticker}"]`), 1);
+    eq('zero/missing/outlier page errors', m.errors, []);
+    await m.close();
+  }
+  // ---- a tap where points overlap ------------------------------------
+  // two bursts recorded at the same gain and the same ratio share a spot
+  // exactly; the browser gives the click to whichever button was appended
+  // last, so the page must ask rather than take it
+  const A = data.bursts[0].ticker, B = data.bursts[1].ticker;
+  const coincide = (c) => {
+    c.bursts[1].gain_pct = c.bursts[0].gain_pct;
+    c.bursts[1].volume_vs_prior = c.bursts[0].volume_vs_prior;
+    if (c.bursts[1].quality && c.bursts[1].quality.burst) c.bursts[1].quality.burst.volume_vs_prior = c.bursts[0].volume_vs_prior;
+  };
+  for (const [label, width, height, touch] of [['desktop', 1280, 900, false], ['phone', 390, 844, true]]) {
+    const copy = JSON.parse(JSON.stringify(data)); coincide(copy);
+    const p = '/tests/fixtures/page/.mutant-tap.json';
+    await writeFile(path.join(ROOT, p), JSON.stringify(copy));
+    const o = await open(browser, base, p, FRESH_NOW, width, { height: height, touch: touch });
+    const page = o.page;
+    // the phone taps with a finger, the desktop clicks with a mouse
+    const tap = async (x, y) => { if (touch) await page.touchscreen.tap(x, y); else await page.mouse.click(x, y); };
+    await mapOpen(page);
+    const d = await dots(page);
+    const a = d.find((x) => x.t === A), b = d.find((x) => x.t === B);
+    check(`${label}: the two bursts recorded alike share a spot`, Math.abs(a.cx - b.cx) < 1 && Math.abs(a.cy - b.cy) < 1, JSON.stringify([a, b]));
+    check(`${label}: each of them counts the other as near`, a.near >= 1 && b.near >= 1, JSON.stringify([a.near, b.near]));
+    const before = await page.getAttribute('#burst-map', 'data-selected');
+    const topmost = await page.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); const n = e && e.closest ? e.closest('.ss-map__point') : null; return n ? n.dataset.ticker : null; }, [a.cx, a.cy]);
+    await tap(a.cx, a.cy); await page.waitForTimeout(250);
+    eq(`${label}: a tap on the shared spot opens the nearby chooser`, await page.getAttribute('#burst-map', 'data-nearby'), 'open');
+    eq(`${label}: it chooses nothing on its own`, await page.getAttribute('#burst-map', 'data-selected'), before);
+    const listed = await page.locator('.ss-map__nearby-item').evaluateAll((els) => els.map((e) => e.dataset.ticker));
+    check(`${label}: both stocks under the finger are offered, not just the topmost`, listed.includes(A) && listed.includes(B), JSON.stringify({ listed, topmost }));
+    check(`${label}: the panel says how many are under the finger and that none is chosen`, (await text(page, '.ss-map__nearby h4')).includes('within a finger') && (await text(page, '.ss-map__nearby-hint')).includes('None is chosen'), await text(page, '.ss-map__nearby'));
+    eq(`${label}: the first item takes the focus`, await page.evaluate(() => document.activeElement.dataset.ticker), listed[0]);
+    // Escape closes it and chooses nothing
+    await page.keyboard.press('Escape'); await page.waitForTimeout(150);
+    eq(`${label}: Escape closes the chooser without choosing`, [await page.getAttribute('#burst-map', 'data-nearby'), await page.getAttribute('#burst-map', 'data-selected')], ['closed', before]);
+    // the stock the finger was on, chosen by name, reaches every view of it
+    await tap(a.cx, a.cy); await page.waitForTimeout(250);
+    await page.click(`.ss-map__nearby-item[data-ticker="${A}"]`); await page.waitForTimeout(300);
+    eq(`${label}: the chosen stock is the one chosen, everywhere`, [
+      await hash(page),
+      await page.getAttribute('#burst-map', 'data-selected'),
+      await page.locator(`#burst-map .ss-map__point[data-ticker="${A}"]`).getAttribute('aria-pressed'),
+      await page.locator(`#burst-map .ss-map__table button[data-id="bursts:${A}"]`).getAttribute('aria-pressed'),
+      await text(page, '#detail-h2'),
+    ], [`#/explore/bursts/${A}`, `bursts:${A}`, 'true', 'true', A]);
+    eq(`${label}: the chooser closes once a stock is chosen`, await page.getAttribute('#burst-map', 'data-nearby'), 'closed');
+    await page.click('#discover .sc-tab[data-discover="cards"]'); await page.waitForTimeout(200);
+    eq(`${label}: the cards carry the same stock`, await page.locator('#pick-list .ss-pick[aria-pressed="true"]').getAttribute('data-ticker'), A);
+    // a stock taken from outside the map is the map's selection too: the
+    // Choose stock dialog where the layout offers it (a phone), the search
+    // where it does not (.ss-choose is display:none above the breakpoint)
+    const viaChooser = await page.locator('#choose-open').isVisible();
+    if (viaChooser) {
+      await page.click('#choose-open'); await page.waitForTimeout(200);
+      await page.click(`#chooser-list .ss-chooser__item[data-id="bursts:${B}"]`); await page.waitForTimeout(300);
+    } else {
+      await page.fill('#search', B.toLowerCase()); await page.press('#search', 'Enter'); await page.waitForTimeout(300);
+    }
+    await mapOpen(page);
+    eq(`${label}: a stock taken from the ${viaChooser ? 'chooser' : 'search'} is the map's selection`, [
+      await page.getAttribute('#burst-map', 'data-selected'),
+      await page.locator(`#burst-map .ss-map__point[data-ticker="${B}"]`).getAttribute('aria-pressed'),
+      await page.locator(`#burst-map .ss-map__table button[data-id="bursts:${B}"]`).getAttribute('aria-pressed'),
+      await text(page, '#detail-h2'),
+    ], [`bursts:${B}`, 'true', 'true', B]);
+    // a point standing alone is chosen by the tap itself, with no chooser
+    const alone = (await dots(page)).filter((x) => x.near === 0);
+    if (alone.length) {
+      await tap(alone[0].cx, alone[0].cy); await page.waitForTimeout(250);
+      eq(`${label}: a tap on a point standing alone chooses it outright`, [await page.getAttribute('#burst-map', 'data-nearby'), await page.getAttribute('#burst-map', 'data-selected')], ['closed', 'bursts:' + alone[0].t]);
+    } else {
+      check(`${label}: a point standing alone exists to tap`, false, 'every point on this fixture is crowded');
+    }
+    // the keyboard names one point, so Enter takes it and never asks
+    await page.locator(`#burst-map .ss-map__point[data-ticker="${A}"]`).focus();
+    await page.keyboard.press('Enter'); await page.waitForTimeout(250);
+    eq(`${label}: Enter on a focused point chooses that point, with no chooser`, [await page.getAttribute('#burst-map', 'data-nearby'), await page.getAttribute('#burst-map', 'data-selected')], ['closed', 'bursts:' + A]);
+    // ...and the crowd is still reachable from the keyboard, beside the selection
+    eq(`${label}: a crowded selection offers its nearby list`, await page.locator('.ss-map__nearby-open').isVisible(), true);
+    check(`${label}: the selection line counts the crowd`, (await text(page, '#burst-map .ss-map__selection')).includes('within a finger of this point'), await text(page, '#burst-map .ss-map__selection'));
+    await page.click('.ss-map__nearby-open'); await page.waitForTimeout(250);
+    eq(`${label}: the nearby button opens the chooser`, await page.getAttribute('#burst-map', 'data-nearby'), 'open');
+    await page.keyboard.press('ArrowDown');
+    const moved = await page.evaluate(() => document.activeElement.dataset.ticker || document.activeElement.className);
+    check(`${label}: the arrows move inside the chooser`, moved && moved !== listed[0], String(moved));
+    await page.keyboard.press('Enter'); await page.waitForTimeout(300);
+    eq(`${label}: Enter in the chooser chooses the focused stock`, await page.getAttribute('#burst-map', 'data-nearby'), 'closed');
+    check(`${label}: a stock chosen from the keyboard is one of the two under the finger`, [A, B].includes((await page.getAttribute('#burst-map', 'data-selected') || '').replace('bursts:', '')), await page.getAttribute('#burst-map', 'data-selected'));
+    eq(`${label}: tap page errors`, o.errors, []);
+    if (shotsDir) await page.locator('#burst-map').screenshot({ path: path.join(shotsDir, `map-nearby-${width}.png`) });
+    await o.context.close();
+    await unlink(path.join(ROOT, p));
+  }
+  // the chooser's lifecycle: it is a panel the map owns, so a redraw, an
+  // unmount or a route must take it with them, and the keyboard must not
+  // escape it or be stranded when it closes
+  {
+    const copy = JSON.parse(JSON.stringify(data)); coincide(copy);
+    const p = '/tests/fixtures/page/.mutant-life.json';
+    await writeFile(path.join(ROOT, p), JSON.stringify(copy));
+    const o = await open(browser, base, p, FRESH_NOW, 1280);
+    const page = o.page;
+    const panels = () => count(page, '.ss-map__nearby');
+    // the table twin is a disclosure, and the map is rebuilt whenever it is
+    // remounted, so it has to be opened again each time it is used
+    const openTable = () => openAll(page, '#burst-map .ss-map__table');
+    const openIt = async () => {
+      await mapOpen(page);
+      const b = await page.locator(`#burst-map .ss-map__point[data-ticker="${A}"]`).boundingBox();
+      await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2); await page.waitForTimeout(300);
+      return page.getAttribute('#burst-map', 'data-nearby');
+    };
+    eq('the chooser opens on the shared spot', await openIt(), 'open');
+    eq('one panel, not two', await panels(), 1);
+    eq('opening it again replaces the panel rather than stacking one', [await openIt(), await panels()], ['open', 1]);
+    await page.setViewportSize({ width: 900, height: 900 }); await page.waitForTimeout(600);
+    eq('a redraw takes the chooser with it', [await panels(), await page.getAttribute('#burst-map', 'data-nearby')], [0, 'closed']);
+    await page.setViewportSize({ width: 1280, height: 900 }); await page.waitForTimeout(400);
+    await openIt();
+    await page.click('#discover .sc-tab[data-discover="cards"]'); await page.waitForTimeout(300);
+    eq('unmounting the map leaves no panel behind', await panels(), 0);
+    await openIt();
+    await go(page, '#/record'); await page.waitForTimeout(300);
+    eq('leaving Explore leaves no panel behind', await panels(), 0);
+    await go(page, '#/explore/bursts'); await page.waitForTimeout(300);
+    // Escape closes it and hands the focus back to a point the reader meant,
+    // never to the marker the browser hit-tested: focus on the refused
+    // topmost plus one Enter is the silent topmost, one keystroke later.
+    // A third stock is selected first, because a selected point is raised
+    // (z-index) and would otherwise hit-test as itself.
+    const C = data.bursts[2].ticker;
+    await mapOpen(page); await openTable();
+    await page.click(`#burst-map .ss-map__table button[data-id="bursts:${C}"]`); await page.waitForTimeout(300);
+    await openIt();
+    eq('the nearest stock takes the focus', await page.evaluate(() => document.activeElement.dataset.ticker), A);
+    const box = await page.locator(`#burst-map .ss-map__point[data-ticker="${A}"]`).boundingBox();
+    const hit = await page.evaluate(([x, y]) => {
+      const e = document.elementFromPoint(x, y), n = e && e.closest ? e.closest('.ss-map__point') : null;
+      return n ? n.dataset.ticker : null;
+    }, [box.x + box.width / 2, box.y + box.height / 2]);
+    check('the browser hit-tests a different stock at that spot', !!hit && hit !== A, String(hit));
+    await page.keyboard.press('Escape'); await page.waitForTimeout(250);
+    const landed = await page.evaluate(() => document.activeElement.dataset.ticker);
+    check('Escape gives the focus back to a point the reader meant, never to the hit-tested marker',
+      (await panels()) === 0 && landed !== hit && (landed === C || landed === A), JSON.stringify({ landed, hit, C, A }));
+    check('and that marker is not the one the tap resolved to either', hit !== C && hit !== A, String(hit));
+    await page.keyboard.press('Enter'); await page.waitForTimeout(300);
+    check('Enter after cancelling cannot land on the refused topmost', (await page.getAttribute('#burst-map', 'data-selected')) !== `bursts:${hit}`, await page.getAttribute('#burst-map', 'data-selected'));
+    // A selection made anywhere else is a different answer, so a standing
+    // panel that describes one tap goes with it. A DEEP LINK is the case that
+    // isolates the rule: a click elsewhere also moves the focus out of the
+    // panel, and a click that changes the page's height resizes the pane and
+    // redraws the map -- either would close the panel whatever update() does,
+    // and a mutant that removed the rule survived a table click for exactly
+    // that reason. A hash change moves the shared selection and nothing else.
+    await go(page, `#/explore/bursts/${B}`); await page.waitForTimeout(300);
+    await mapOpen(page);
+    await openIt();
+    const widthBefore = (await page.locator('#burst-map .ss-map__surface').boundingBox()).width;
+    const inPanel = await page.evaluate(() => {
+      const q = document.querySelector('.ss-map__nearby');
+      return !!q && q.contains(document.activeElement);
+    });
+    await go(page, `#/explore/bursts/${A}`); await page.waitForTimeout(400);
+    const widthAfter = (await page.locator('#burst-map .ss-map__surface').boundingBox()).width;
+    check('the focus was inside the panel and the pane did not resize, so only the selection moved',
+      inPanel && widthBefore === widthAfter, JSON.stringify([inPanel, widthBefore, widthAfter]));
+    eq('a selection that only moves the shared selection closes a standing chooser',
+      [await panels(), await page.getAttribute('#burst-map', 'data-selected')], [0, `bursts:${A}`]);
+    // and it does not drop the reader on <body>: the panel held the focus, so
+    // closing it has to hand the focus somewhere the arrow keys still work
+    check('closing it from under the focus keeps the reader on the map', await page.evaluate(() => {
+      const a = document.activeElement;
+      return !!a && a !== document.body && !!a.closest && !!a.closest('#burst-map');
+    }), await page.evaluate(() => document.activeElement ? (document.activeElement.tagName + '/' + document.activeElement.className) : 'none'));
+    // and the ordinary ways in close it too
+    await openTable();
+    await openIt();
+    await page.click(`#burst-map .ss-map__table button[data-id="bursts:${B}"]`); await page.waitForTimeout(300);
+    eq('a selection from the table closes a standing chooser', [await panels(), await page.getAttribute('#burst-map', 'data-selected')], [0, `bursts:${B}`]);
+    await openIt();
+    await page.fill('#search', B.toLowerCase()); await page.press('#search', 'Enter'); await page.waitForTimeout(350);
+    eq('a selection from the search closes a standing chooser', await panels(), 0);
+    await mapOpen(page);
+    // it is a popover, not a modal: Tab may leave it, and leaving closes it
+    // rather than stranding a panel behind the reader
+    await openIt();
+    eq('the chooser does not claim a modality the page does not have', await page.getAttribute('.ss-map__nearby', 'aria-modal'), null);
+    eq('it is a labelled dialog all the same', [await page.getAttribute('.ss-map__nearby', 'role'), await page.locator('.ss-map__nearby').getAttribute('aria-labelledby')], ['dialog', 'ss-map-nearby-h']);
+    for (let i = 0; i < 12; i++) await page.keyboard.press('Tab');
+    eq('tabbing out of the chooser closes it', await panels(), 0);
+    check('and does not strand the reader on the body', await page.evaluate(() => document.activeElement !== document.body), 'focus');
+    // dismissing it by a tap on bare pane keeps the reader's place too
+    await openIt();
+    const pane = await page.locator('#burst-map .ss-map__surface').boundingBox();
+    await page.mouse.click(pane.x + pane.width - 8, pane.y + 8); await page.waitForTimeout(250);
+    eq('a tap on bare pane closes it', await panels(), 0);
+    check('and the focus is not left on the body', await page.evaluate(() => document.activeElement !== document.body), 'focus');
+    eq('lifecycle page errors', o.errors, []);
+    await o.context.close();
+    await unlink(path.join(ROOT, p));
+  }
+}
+
+// one fact row's own value, with its <small> note stripped. The plan
+// disclosure names several prices in its notes, so a check that searched the
+// whole block passed while the ROW under it showed the wrong one: a mutant
+// that put the ticket's limit in the day-2 row survived exactly that way.
+async function factValue(page, label) {
+  const row = page.locator('#disc-plan .sc-facts > div').filter({ has: page.locator('dt', { hasText: new RegExp('^' + label + '$') }) }).first();
+  if (!(await row.count())) return null;
+  return row.locator('dd').first().evaluate((dd) => { const k = dd.cloneNode(true); k.querySelectorAll('small').forEach((n) => n.remove()); return k.textContent.trim(); });
+}
+
+// the four prices a burst ticket keeps apart -- the trigger, the ticket's own
+// executable limit, the outer +4% line where day 2 is spent, and the
+// indicative entry -- read back off the page, the order sheet, the clipboard
+// and the Following snapshot. The fixture carries one of each state.
+async function checkTicketPrices(browser, base, data) {
+  console.log('-- the ticket limit, the day-2 line and the indicative entry');
+  const planned = data.bursts.filter((b) => b.plan);
+  const narrowed = planned.find((b) => b.plan.eligible && b.plan.limit < b.plan.day2_spent_above);
+  const atCeiling = planned.find((b) => b.plan.eligible && b.plan.limit === b.plan.day2_spent_above);
+  const capped = planned.find((b) => b.plan.planned_entry_capped);
+  const withheld = planned.find((b) => !b.plan.eligible);
+  check('the fixture carries a narrowed ticket, one at the day-2 line, a capped entry and a withheld setup',
+        !!(narrowed && atCeiling && capped && withheld),
+        [narrowed && narrowed.ticker, atCeiling && atCeiling.ticker, capped && capped.ticker, withheld && withheld.ticker]);
+  if (!(narrowed && atCeiling && capped && withheld)) return;
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280);
+
+  for (const b of [narrowed, atCeiling, capped, withheld]) {
+    await go(page, `#/explore/bursts/${b.ticker}`);
+    await openAll(page, '#detail details');
+    const plan = await text(page, '#disc-plan');
+    const p = b.plan;
+    // each row's OWN value, not merely a price named somewhere in the block
+    eq(`${b.ticker}: the buy row's value is the zone up to the ticket limit`, await factValue(page, 'buy'), usd(p.entry_low) + ' – ' + usd(p.limit));
+    eq(`${b.ticker}: the skip-above row's value is the day-2 line, not the limit`, await factValue(page, 'skip if it opens above'), usd(p.day2_spent_above));
+    eq(`${b.ticker}: the skip-below row's value is the failing line`, await factValue(page, 'skip if it opens below'), usd(p.skip_if_open_below));
+    eq(`${b.ticker}: the sized-at row's value is the ticket limit`, await factValue(page, 'sized at'), usd(p.limit));
+    check(`${b.ticker}: the buy row still says what the limit is`, plan.includes('limit ' + usd(p.limit)) && plan.includes('day 2 is spent'), plan.slice(0, 600));
+    if (p.limit !== p.day2_spent_above) {
+      check(`${b.ticker}: the two prices are told apart in words`, plan.includes('the outer threshold and not the ' + usd(p.limit) + ' ticket limit'), plan.slice(0, 800));
+      check(`${b.ticker}: the narrowing is disclosed`, plan.includes(p.limit_note), plan.slice(0, 800));
+    }
+    const refs = await text(page, '#detail [data-refs]').catch(() => '');
+    if (refs) {
+      check(`${b.ticker}: the levels line names the limit`, refs.includes('limit ' + usd(p.limit)), refs);
+      eq(`${b.ticker}: the levels line names the day-2 line only when it differs`, refs.includes('too extended over ' + usd(p.day2_spent_above)), p.limit !== p.day2_spent_above);
+    }
+    if (p.planned_entry_capped) {
+      check(`${b.ticker}: the sized-at row says the indicative entry was capped at the limit`, plan.includes(usd(p.planned_entry) + ' (not a fill; the close +1% would sit over the limit'), plan.slice(0, 900));
+      check(`${b.ticker}: the indicative entry equals the limit`, p.planned_entry === p.limit, [p.planned_entry, p.limit]);
+    }
+    // the entry instruction the decision summary quotes and Following saves:
+    // the range's top is the ticket's limit, the SKIP price the day-2 line
+    const entry = (b.plan.exit_schedule || []).find((x) => x && x.key === 'entry');
+    if (entry) {
+      check(`${b.ticker}: the entry instruction buys up to the ticket's limit`, entry.instruction.includes(usd(p.entry_low) + '–' + usd(p.limit)), entry.instruction);
+      check(`${b.ticker}: the entry instruction skips at the day-2 line`, entry.instruction.includes('Skip it if it opens above ' + usd(p.day2_spent_above)), entry.instruction);
+      if (p.limit !== p.day2_spent_above) check(`${b.ticker}: the entry instruction never calls the limit a skip line`, !entry.instruction.includes('opens above ' + usd(p.limit)), entry.instruction);
+    }
+    const pre = await text(page, '#detail');
+    check(`${b.ticker}: the pre-open check names the +4% line as the extension rule`, pre.includes(usd(p.day2_spent_above) + ' (+4%) day 2 is spent'), pre.slice(0, 600));
+    if (p.eligible) check(`${b.ticker}: the pre-open check names the ticket's own limit apart from it`, pre.includes("The ticket's own limit is " + usd(p.limit)), pre.slice(0, 900));
+    else check(`${b.ticker}: a withheld setup is told there is no ticket to place`, pre.includes('There is no ticket to place'), pre.slice(0, 900));
+  }
+
+  // the order sheet: the limit column is the ticket's, the extension column the day-2 line
+  await go(page, '#/explore');
+  await openAll(page, 'details');
+  const head = await page.locator('#order-sheet thead th').allInnerTexts();
+  check('the order sheet names the extension column for the rule, not the action', head.includes('too extended over') && head.includes('limit'), head);
+  const iLimit = head.indexOf('limit'), iOuter = head.indexOf('too extended over');
+  // the sheet lists only the names the budget left an order with, so it is
+  // read for the rows it actually has rather than for every planned burst
+  const listed = await page.locator('#order-sheet tbody tr[data-ticker]').evaluateAll((rs) => rs.map((r) => r.dataset.ticker));
+  check('the order sheet lists the tickets the record left with an order', listed.length > 0, listed);
+  for (const t of listed) {
+    const b = planned.find((x) => x.ticker === t);
+    const row = page.locator(`#order-sheet tbody tr[data-ticker="${t}"] td`);
+    eq(`${t}: the order sheet's limit is the ticket's`, (await row.nth(iLimit - 1).innerText()), usd(b.plan.limit));
+    eq(`${t}: the order sheet's extension column is the day-2 line`, (await row.nth(iOuter - 1).innerText()), usd(b.plan.day2_spent_above));
+  }
+  for (const b of planned.filter((x) => x.plan.order_json)) {
+    check(`${b.ticker}: the order's own JSON limit is the ticket's limit`, b.plan.order_json.limit_price === b.plan.limit && b.plan.order_json.stop_price === b.plan.entry_ref && b.plan.order_json.stop_price < b.plan.limit, b.plan.order_json);
+  }
+
+  // the clipboard read-back and the Following snapshot carry the same prices
+  const trade = planned.find((b) => b.plan.order_json);
+  if (trade) {
+    await go(page, `#/explore/bursts/${trade.ticker}`);
+    await openAll(page, '#detail details');
+    const back = await text(page, '#detail pre[data-order]');
+    check(`${trade.ticker}: the printed ticket carries the trigger and the ticket limit`, back.includes(usd(trade.plan.entry_ref)) && back.includes(usd(trade.plan.limit)), back);
+    check(`${trade.ticker}: the printed ticket never quotes the day-2 line as its limit`, trade.plan.limit === trade.plan.day2_spent_above || !back.includes(usd(trade.plan.day2_spent_above)), back);
+    await page.locator('#detail button[data-copy]').first().click();
+    const copied = await page.evaluate(() => navigator.clipboard.readText()).catch(() => null);
+    if (copied !== null) eq(`${trade.ticker}: the clipboard is the printed ticket`, copied.trim(), back.trim());
+    await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
+    const card = await text(page, `#following .ss-followed[data-ticker="${trade.ticker}"]`);
+    check(`${trade.ticker}: the followed card saves the ticket's limit`, card.includes('limit ' + usd(trade.plan.limit)), card);
+    eq(`${trade.ticker}: the followed card names the day-2 line only when it differs`, card.includes('too extended over ' + usd(trade.plan.day2_spent_above)), trade.plan.limit !== trade.plan.day2_spent_above);
+  }
+
+  // a record from before the split carries no day-2 field: nothing invents one
+  const older = await openMutant(browser, base, data, (c) => c.bursts.forEach((b) => { if (b.plan) delete b.plan.day2_spent_above; }));
+  await go(older.page, `#/explore/bursts/${narrowed.ticker}`);
+  await openAll(older.page, '#detail details');
+  const shown = await text(older.page, '#detail');
+  check('without the day-2 field the page prints no invented price', !shown.includes('too extended over'), shown.slice(0, 400));
+  eq('without the day-2 field the page still renders', await text(older.page, '#detail-h2'), narrowed.ticker);
+  eq('without the day-2 field: page errors', older.errors, []);
+  await older.close();
+
+  eq('the ticket-price journey: page errors', errors, []);
+  await context.close();
+}
+
+
 async function main() {
   const chromium = await loadChromium();
   if (!chromium) { console.log('playwright is not installed: npm install --no-save playwright'); process.exit(1); }
@@ -1039,7 +1543,10 @@ async function main() {
     await checkMobile(browser, base, full);
     await checkModes(browser, base, full);
     await checkMap(browser, base, full);
+    await checkVolumeReadings(browser, base, full);
+    await checkMapScale(browser, base, full);
     await checkFollowing(browser, base, full);
+    await checkTicketPrices(browser, base, full);
     await checkStates(browser, base, full);
   } finally {
     await browser.close();

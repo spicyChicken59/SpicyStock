@@ -8,12 +8,14 @@ from __future__ import annotations
 
 import ast
 import json
+from datetime import date
 import math
 from pathlib import Path
 
 import pytest
+from unittest import mock
 
-from src import plan
+from src import plan, report
 from src.plan import Account, size
 
 SOURCE = Path(plan.__file__)
@@ -24,12 +26,12 @@ SOURCE = Path(plan.__file__)
 #: the 20.00 buy stop: that is the stop. Between his ideal 2% and his 4%, so
 #: the risk is halved to $25: $25 / $0.82 = 30 shares, $624.00 at the limit.
 TIGHT = dict(ticker="XYZ", close=20.00, low=19.85, high=20.10, open_=19.90, prev_close=19.00, gain_pct=5.26)
-#: close 20.00, low 19.40, high 20.10: at the 20.80 limit the low is 6.73%
-#: away and the midpoint 19.75 is 5.05%, both past his line: the ticket is
-#: withheld, the setup kept. (Every burst whose bar reaches more than about
-#: 0.16% under its close is this case: at +4% the ceiling and his 4% stop
-#: line leave no room, a strategy question the checkpoint records.)
-WIDE = dict(ticker="XYZ", close=20.00, low=19.40, high=20.10, open_=19.60, prev_close=19.00, gain_pct=5.26)
+#: close 20.00, low 18.00, high 20.10: the low caps the limit at 18.75 and
+#: the midpoint 19.05 caps it at 19.84, both at or under the 20.00 buy stop,
+#: so no limit exists that this bar can hold a stop under. The ticket is
+#: withheld and the setup kept. (A bar reaching more than about 4.2% under
+#: its close, with the close near the high, is this case.)
+WIDE = dict(ticker="XYZ", close=20.00, low=18.00, high=20.10, open_=18.50, prev_close=19.00, gain_pct=5.26)
 
 
 def burst(**overrides):
@@ -170,14 +172,20 @@ def test_the_stop_risk_multiplier_halves_between_the_ideal_and_the_maximum():
 
 
 def test_the_buy_zone_and_the_skip_thresholds():
+    """Four prices, four rules, never one field: the 50.00 trigger, the 51.56
+    ticket limit (49.50 / 0.96, under the +4% line), the 52.00 outer
+    threshold where day 2 is spent, and the 50.50 indicative entry."""
     p = burst(close=50.00, low=49.50, high=50.20, open_=49.60, prev_close=47.00)
-    assert p["entry_ref"] == 50.00
+    assert p["entry_ref"] == 50.00                                 # the trigger
     assert p["entry_low"] == 49.00 == p["skip_if_open_below"]      # -2%
-    assert p["entry_high"] == 52.00 == p["skip_if_open_above"]     # +4%
+    assert p["limit"] == 51.56 == p["entry_high"]                  # the ticket's own limit
+    assert p["day2_spent_above"] == 52.00 == p["skip_if_open_above"]   # +4%, the OUTER threshold
+    assert p["limit"] < p["day2_spent_above"] and p["limit_basis"] == "stop_line"
     assert p["extended_above"] == 54.00                            # +8%
-    assert p["planned_entry"] == 50.50                             # +1%
+    assert p["planned_entry"] == 50.50                             # +1%, under the limit
     assert p["entry_window"] == "first 30 minutes"
     assert "$49.00" in p["pre_open_check"] and "$52.00" in p["pre_open_check"] and "$54.00" in p["pre_open_check"]
+    assert "$51.56" in p["pre_open_check"] and "under that day-2 line" in p["pre_open_check"]
 
 
 def test_the_stop_cascade_takes_the_burst_low_when_it_is_within_four_percent_of_the_limit():
@@ -191,51 +199,66 @@ def test_the_stop_cascade_takes_the_burst_low_when_it_is_within_four_percent_of_
     assert p["sizing_price"] == 104.0 and p["limit"] == 104.0 == p["order_json"]["limit_price"]
 
 
-def test_the_stop_cascade_falls_to_the_range_midpoint_when_the_low_is_wide():
-    """Low 99.70 is 4.30 / 104 = 4.13% under the 104 limit; the midpoint
-    (99.70 + 100.10) / 2 = 99.90 is 3.94%, and under the 100 buy stop."""
+def test_the_stop_cascade_falls_to_the_range_midpoint_when_the_lows_ceiling_is_under_the_trigger():
+    """Low 47.00 would cap the limit at 47 / 0.96 = 48.95, under the 50.00
+    buy stop: no ticket can be written on it. The midpoint 49.00 caps it at
+    51.04, which clears the trigger, so that is the limit and the stop."""
+    p = burst(close=50.0, low=47.0, high=51.0, open_=47.5, prev_close=46.0)
+    assert p["stop_basis"] == "half_range" and p["stop"] == 49.00
+    assert p["limit"] == 51.04 and p["stop_pct"] == 4.0
+    tried = plan.burst_limit(50.0, 47.0, 51.0)["tried"]
+    assert [(t["basis"], t["ceiling"], t["room_above_trigger"]) for t in tried] \
+        == [("burst_low", 48.95, False), ("half_range", 51.04, True)]
+    assert p["eligible"] and p["action"] == "buy_at_open"
+
+
+def test_a_narrowed_limit_brings_the_burst_low_back_inside_his_line():
+    """The same bar the old fixed ceiling pushed onto the midpoint: at 104
+    the 99.70 low was 4.13% away, past his line. At the limit its own
+    ceiling names, 103.85, it is 4.00% and it is the stop."""
     p = burst(close=100.0, low=99.70, high=100.10, open_=99.80, prev_close=95.0)
-    assert p["stop_basis"] == "half_range"
-    assert p["stop"] == 99.90
-    assert p["stop_pct"] == 3.94
-    assert [c["within_max"] for c in p["stop_candidates"]] == [False, True]
-    assert [c["under_trigger"] for c in p["stop_candidates"]] == [True, True]
+    assert p["limit"] == 103.85 == plan.stop_line_ceiling(99.70)
+    assert p["stop_basis"] == "burst_low" and p["stop"] == 99.70 and p["stop_pct"] == 4.0
+    assert plan._pct(100 * (100.0 * 1.04 - 99.70) / (100.0 * 1.04)) == 4.13    # what it was at +4%
     assert p["eligible"]
 
 
-def test_the_stop_cascade_sets_four_percent_and_withholds_the_ticket_when_both_are_wide():
-    """Low 90 is 14 / 104 = 13.46% under the 104 limit, the midpoint 95 is
-    9 / 104 = 8.65%: the stop is set 4% under the limit, 99.84, a level the
-    bar does not support, and the ticket is withheld with the setup kept."""
+def test_the_ticket_is_withheld_when_no_structural_stop_leaves_a_limit_above_the_trigger():
+    """Low 90 caps the limit at 93.75 and the midpoint 95 caps it at 98.95,
+    both under the 100.00 buy stop: no limit exists that this bar can hold a
+    stop under, so the ticket is withheld and the setup kept. The reported
+    limit falls back to the day-2 ceiling, which is not a price to buy at."""
     p = burst(close=100.0, low=90.0, high=100.0, open_=91.0, prev_close=95.0)
-    assert p["stop_basis"] == "max_stop"
-    assert p["stop"] == 99.84
-    assert p["stop_pct"] == 4.0
-    assert "13.46%" in p["stop_note"] and "8.65%" in p["stop_note"] and "$99.84" in p["stop_note"]
-    assert not p["eligible"]
-    assert p["reason"].startswith("ticket withheld: at the $104.00 limit") and "13.46%" in p["reason"] \
-        and "8.65%" in p["reason"] and "the setup stands, the ticket does not" in p["reason"]
+    assert p["eligible"] is False and p["ticket_refusal"] == "no_room_above_the_trigger"
+    assert p["limit"] == 104.0 == p["day2_spent_above"] and p["limit_basis"] == "outer_ceiling"
+    assert "not a limit this setup can be bought at" in p["limit_note"]
+    assert p["stop_basis"] == "max_stop" and p["stop"] == 99.84 and p["stop_pct"] == 4.0
+    assert p["reason"].startswith("ticket withheld: no limit above the $100.00 buy stop")
+    assert "caps the limit at $93.75" in p["reason"] and "caps the limit at $98.95" in p["reason"] \
+        and "the setup stands, the ticket does not" in p["reason"]
     assert p["action"] == "refused"
     assert p["order_line"] is None and p["order_json"] is None and p["order_readback"] is None
     assert p["order_terms"] is None
-    assert "wide_stop" in p["flags"]
-    assert p["shares"] == 6        # the card still shows a size: $25 / $4.16 at the 104 limit
+    assert "no_ticket_band" in p["flags"] and "There is no ticket to place" in p["pre_open_check"]
+    assert p["shares"] == 6        # the card still shows a size: $25 / $4.16 at the 104 ceiling
 
 
-def test_the_reviewers_ticket_is_withheld_rather_than_published_as_safe():
+def test_the_reviewers_ticket_is_narrowed_rather_than_published_as_safe():
     """Close 100, low 99.50, high 100.50. Sized at the old +1% fill the ticket
-    read 24 shares (the cap) with $36 at risk; at its 104 limit those shares
-    risk $108 against a $50 budget and the 99.50 stop is 4.33% away. The
-    bar's midpoint, 100.00, is not under the 100.00 buy stop, so no stop the
-    bar supports is inside his line: the ticket is withheld, the setup kept."""
+    read 24 shares (the cap) with $36 at risk; at a fixed 104 limit those
+    shares risked $108 against a $50 budget with the 99.50 stop 4.33% away,
+    and the closeout withheld it. The limit is now the highest price that
+    stop is inside his line at -- 99.50 / 0.96 = 103.64 -- so the ticket
+    exists and every fill it permits keeps the budget and the line."""
     p = burst(close=100.0, low=99.50, high=100.50, open_=99.60, prev_close=95.0)
-    assert p["action"] == "refused" and p["eligible"] is False and p["order_json"] is None
-    assert "4.33% under the $104.00 limit" in p["reason"] and "not under the $100.00 buy stop" in p["reason"]
-    assert [c["under_trigger"] for c in p["stop_candidates"]] == [True, False]
-    assert p["stop_basis"] == "max_stop" and p["stop"] == 99.84 and p["sizing_price"] == 104.0
-    assert p["shares"] == 6 and p["ticker"] == "XYZ" and p["exits"]      # kept for inspection
-    assert "wide_stop" in p["flags"] and p["reason"] not in p["notes"]      # said once, beside the missing ticket
-    assert p["stop_note"] not in p["notes"] and any("multiplied by 0.5" in n for n in p["notes"])
+    assert p["action"] == "buy_at_open" and p["eligible"] is True
+    assert p["limit"] == 103.64 and p["day2_spent_above"] == 104.0 and p["limit_narrowed"] is True
+    assert p["stop"] == 99.50 and p["stop_basis"] == "burst_low" and p["stop_pct"] == 3.99
+    assert p["sizing_price"] == 103.64 and p["shares"] == 6 and p["risk_usd"] == 24.84   # inside the $25 half-budget
+    assert p["order_json"]["limit_price"] == 103.64 and p["order_json"]["stop_price"] == 100.0
+    assert p["stop_candidates"][1]["under_trigger"] is False      # the midpoint 100.00 is still no stop
+    assert p["reason"] is None and any("multiplied by 0.5" in n for n in p["notes"])
+    assert plan._pct(100 * (104.0 - 99.50) / 104.0) == 4.33      # what it was at the fixed ceiling
 
 
 def test_an_eligible_ticket_keeps_the_budget_and_the_cap_at_the_limit():
@@ -255,31 +278,38 @@ def test_an_eligible_ticket_keeps_the_budget_and_the_cap_at_the_limit():
 
 
 def test_the_sizing_is_at_the_limit_and_the_resize_rule_carries_the_numbers():
-    p = burst()     # TIGHT: limit 20.80, stop 19.98, 3.94% -> risk halved to $25
-    assert p["sizing_price"] == 20.80 and p["planned_entry"] == 20.20
+    p = burst()     # TIGHT: limit 20.67 (19.85 / 0.96), stop 19.85, 3.97% -> risk halved to $25
+    assert p["sizing_price"] == 20.67 == p["limit"] and p["planned_entry"] == 20.20
     assert "indicative" in p["planned_entry_note"] and "not a fill" in p["planned_entry_note"]
     assert p["risk_per_share"] == 0.82
     assert p["multipliers"] == {"regime": 1.0, "hazard": 1.0, "stop_risk": 0.5, "total": 0.5}
     assert p["stop_risk_multiplier"] == 0.5
     assert p["shares"] == 30                     # $25 / $0.82
-    assert p["position_usd"] == 624.0            # 30 x 20.80, the most the ticket can commit
+    assert p["position_usd"] == 620.10           # 30 x 20.67, the most the ticket can commit
     assert p["risk_usd"] == 24.60                # 30 x 0.82, the most a permitted fill puts at risk
     assert "risk_halved" in p["flags"]
     assert "wider than his ideal 2%" in p["stop_risk_reason"] and "ticket's limit" in p["stop_risk_reason"]
-    assert p["resize_rule"] == "if your fill differs, shares = $25.00 / (fill - $19.98), and no more than $2,500.00 of stock"
+    assert p["resize_rule"] == "if your fill differs, shares = $25.00 / (fill - $19.85), and no more than $2,500.00 of stock"
 
 
 def test_every_eligible_burst_is_sized_at_half_risk_and_the_cap_can_bind_inside_a_plan():
-    """The limit sits 4% over the close and the stop under it, so an eligible
-    burst's stop is never inside his ideal 2% of the limit: the halving
-    always applies. The position cap binds only with a larger risk budget:
-    3% risk is $300, halved $150 / $0.82 = 182 shares, over $2,500 / 20.80 = 120."""
+    """The stop sits under the buy stop and the limit over it, so an eligible
+    burst's stop is never inside his ideal 2% of the limit -- whether the
+    limit is the day-2 ceiling (over 2% by the +4% alone) or the stop's own
+    ceiling (4% by construction): the halving always applies. The position
+    cap binds only with a larger risk budget: 3% risk is $300, halved
+    $150 / $0.82 = 182 shares, over $2,500 / 20.67 = 120."""
     p = burst(account=Account(risk_pct=3))
-    assert p["stop_pct"] == 3.94 and p["multipliers"]["stop_risk"] == 0.5
+    assert p["stop_pct"] == 3.97 and p["multipliers"]["stop_risk"] == 0.5
     assert p["shares"] == 120 and p["capped_by"] == "position_cap"
-    assert p["position_usd"] == 2496.0 and p["risk_usd"] == 98.40
+    assert p["position_usd"] == 2480.40 and p["risk_usd"] == 98.40
     assert "position_capped" in p["flags"] and "risk_halved" in p["flags"]
     assert p["shares"] * p["sizing_price"] <= 2500.0 < (p["shares"] + 1) * p["sizing_price"]
+    for kw in (dict(), dict(close=50.00, low=49.95, high=50.20, open_=49.98, prev_close=47.00),
+               dict(close=100.0, low=99.50, high=100.50, open_=99.60, prev_close=95.0),
+               dict(close=50.0, low=47.0, high=51.0, open_=47.5, prev_close=46.0)):
+        q = burst(**kw)
+        assert q["eligible"] and q["stop_pct"] > plan.IDEAL_STOP_PCT, (kw, q["stop_pct"])
 
 
 def test_targets_by_price_band():
@@ -320,24 +350,26 @@ def test_every_exit_rule_is_present_with_the_right_prices():
 def test_the_plans_exits_are_from_the_indicative_entry():
     p = burst()
     assert [r["price"] for r in p["exits"][:3]] == [21.82, 22.22, 24.24]   # 20.20 x 1.08 / 1.10 / 1.20
-    assert p["exits"] == plan.exit_schedule(20.20, 19.98)
+    assert p["exits"] == plan.exit_schedule(20.20, 19.85)
     assert p["targets"] == plan.targets(20.20, 20.00)
+    assert p["planned_entry"] == 20.20 <= p["limit"] and p["planned_entry_capped"] is False
 
 
 def test_the_order_line_is_a_fidelity_buy_stop_limit_with_the_stop_attached():
     p = burst()
     assert p["action"] == "buy_at_open"
-    assert p["order_line"] == ("Buy 30 XYZ stop-limit: stop $20.00 limit $20.80, day · "
-                               "OTO sell 30 XYZ stop-loss $19.98 GTC")
-    assert p["order_readback"] == ("Buy 30 XYZ stop limit 20.00 / 20.80 day, "
-                                   "one-triggers-the-other sell 30 XYZ stop loss 19.98 GTC")
+    assert p["order_line"] == ("Buy 30 XYZ stop-limit: stop $20.00 limit $20.67, day · "
+                               "OTO sell 30 XYZ stop-loss $19.85 GTC")
+    assert p["order_readback"] == ("Buy 30 XYZ stop limit 20.00 / 20.67 day, "
+                                   "one-triggers-the-other sell 30 XYZ stop loss 19.85 GTC")
     assert p["order_json"] == {
         "symbol": "XYZ", "action": "buy", "quantity": 30, "order_type": "stop_limit",
-        "stop_price": 20.00, "limit_price": 20.80, "time_in_force": "day",
+        "stop_price": 20.00, "limit_price": 20.67, "time_in_force": "day",
         "conditional": "one_triggers_the_other",
-        "then": {"action": "sell", "quantity": 30, "order_type": "stop", "stop_price": 19.98,
+        "then": {"action": "sell", "quantity": 30, "order_type": "stop", "stop_price": 19.85,
                  "time_in_force": "gtc"},
     }
+    assert p["order_json"]["limit_price"] < p["day2_spent_above"]   # the ticket is not the +4% line
 
 
 def test_no_plain_limit_fallback_is_published():
@@ -351,9 +383,10 @@ def test_the_ticket_states_what_it_enforces_and_what_it_leaves_to_the_reader():
     assert len(terms) == 4
     assert terms[0].startswith("A day order rests until the close unless you cancel it.")
     assert "first 30 minutes" in terms[0] and "cancel it yourself" in terms[0] and "SpicyStock places and cancels nothing" in terms[0]
-    assert terms[1].startswith("An open above the $20.80 limit does not fill at the open") and "cancel it" in terms[1]
+    assert terms[1].startswith("An open above the $20.67 limit does not fill at the open") and "cancel it" in terms[1]
     assert terms[2].startswith("An open under $19.60 is the burst failing") and "$20.00" in terms[2]
-    assert terms[3].startswith("The sell stop at $19.98 is attached the moment the buy fills")
+    assert terms[3].startswith("The sell stop at $19.85 is attached the moment the buy fills")
+    assert "$20.80" not in " ".join(terms)     # the outer +4% line is not a ticket term
     assert "30 minutes" not in terms[1] + terms[2] + terms[3]      # DAY is never said to expire with the window
     anticipation = plan.anticipation_plan(ticker="ABC", close=5.00, box_high=5.10, box_low=4.90,
                                           lows_last3=[5.00, 5.02, 5.05], account=Account())
@@ -401,8 +434,8 @@ def test_hazards_halve_the_size_with_the_reason_and_never_veto():
 
 def test_the_burst_block_records_the_bar_it_was_planned_from():
     p = burst(**WIDE)
-    assert p["burst"] == {"close": 20.0, "low": 19.4, "high": 20.1, "open": 19.6, "prev_close": 19.0,
-                          "gain_pct": 5.26, "gap_pct": 3.16, "dollar_move": 0.40, "close_in_range_pct": 85.71}
+    assert p["burst"] == {"close": 20.0, "low": 18.0, "high": 20.1, "open": 18.5, "prev_close": 19.0,
+                          "gain_pct": 5.26, "gap_pct": -2.63, "dollar_move": 1.50, "close_in_range_pct": 95.24}
     assert p["kind"] == "burst" and p["scan"] == "4pct"
     assert burst(scan="dollar")["scan"] == "dollar"
 
@@ -698,13 +731,15 @@ def test_cash_budget_cuts_on_the_equity_and_counts_positions_already_open():
 
 
 def test_cash_budget_reads_real_plans():
-    """XYZ: 30 x 20.80 = $624.00. ABC: close 50, limit 52, low 49.95 is
-    2.05 / 52 = 3.94% under it; halved $25 / $2.05 = 12 shares, $624.00.
-    RED is sized at zero by breadth; WIDE's ticket is withheld by the stop rule."""
+    """XYZ: 30 x 20.67 = $620.10. ABC: close 50, low 49.95 caps the limit at
+    52.03, over the 52.00 day-2 ceiling, so the ceiling stands; 2.05 / 52 =
+    3.94% under it, halved $25 / $2.05 = 12 shares, $624.00. RED is sized at
+    zero by breadth; WIDE's ticket is withheld by the stop rule."""
     plans = [burst(), burst(ticker="ABC", close=50.00, low=49.95, high=50.20, open_=49.98, prev_close=47.00),
              burst(ticker="RED", size_multiplier=0), burst(ticker="WID", **{k: v for k, v in WIDE.items() if k != "ticker"})]
+    assert plans[1]["limit_basis"] == "outer_ceiling" and plans[1]["limit"] == 52.00
     b = plan.cash_budget(plans, Account())
-    assert b["within"] == ["XYZ", "ABC"] and b["committed_usd"] == 624.0 + 624.0
+    assert b["within"] == ["XYZ", "ABC"] and b["committed_usd"] == 620.10 + 624.0
     assert [(c["ticker"], c["kind"]) for c in b["cut"]] == [("RED", "no_new_longs"), ("WID", "withheld")]
     assert b["cut"][1]["reason"] == plans[3]["reason"]
 
@@ -841,23 +876,33 @@ def test_a_risk_count_that_exactly_meets_the_cap_is_the_risk_budgets_decision():
     assert s.shares == 125 and s.capped_by == "risk" and s.note is None
 
 
-def test_a_burst_low_exactly_four_percent_under_the_limit_is_within_the_line():
-    """104 x 0.96 = 99.84: 4.16 / 104 = 4.0%, inside; a cent lower is 4.01%,
-    and the midpoint 100.415 is not under the buy stop, so the ticket is withheld."""
-    p = burst(close=100.0, low=99.84, high=101.0, open_=99.9, prev_close=95.0)
-    assert p["stop_basis"] == "burst_low" and p["stop_pct"] == 4.0 and p["eligible"]
-    q = burst(close=100.0, low=99.83, high=101.0, open_=99.9, prev_close=95.0)
-    assert q["stop_candidates"][0]["pct_below_entry"] == 4.01 and not q["eligible"] and q["action"] == "refused"
+def test_a_ceiling_exactly_at_the_buy_stop_leaves_the_ticket_no_band():
+    """96.00 / 0.96 is 100.00 to the cent, the buy stop itself: a limit there
+    is a ticket with no band to fill in, so the low is passed over and the
+    midpoint's ceiling is taken. One cent higher, 96.01 / 0.96 = 100.0104 ->
+    100.01, clears the trigger and the low is the stop."""
+    assert plan.stop_line_ceiling(96.00) == 100.00 and plan.stop_line_ceiling(96.01) == 100.01
+    at = plan.burst_limit(100.0, 96.00, 100.0)
+    assert at["tried"][0]["ceiling"] == 100.00 and at["tried"][0]["room_above_trigger"] is False
+    assert at["stop_basis"] == "half_range" and at["limit"] == 102.08
+    over = plan.burst_limit(100.0, 96.01, 100.0)
+    assert over["stop_basis"] == "burst_low" and over["limit"] == 100.01
+    p = burst(close=100.0, low=96.01, high=100.0, open_=97.0, prev_close=95.0)
+    assert p["limit"] == 100.01 and p["stop"] == 96.01 and p["eligible"] and p["stop_pct"] == 4.0
 
 
 def test_a_candidate_stop_at_or_over_the_buy_stop_is_no_stop():
     """A bar whose midpoint sits at its close: the low is past the line and
     the midpoint is not under the 100.00 buy stop, so nothing the bar
     supports is a stop, whatever its distance from the limit."""
-    p = burst(close=100.0, low=99.50, high=100.50, open_=99.60, prev_close=95.0)
-    assert p["stop_candidates"][1]["price"] == 100.0 and p["stop_candidates"][1]["pct_below_entry"] == 3.85
-    assert p["stop_candidates"][1]["under_trigger"] is False and p["stop_candidates"][1]["within_max"] is False
-    assert p["stop_basis"] == "max_stop" and not p["eligible"]
+    p = burst(close=100.0, low=100.0, high=105.0, open_=101.0, prev_close=95.0)
+    assert [c["under_trigger"] for c in plan.burst_limit(100.0, 100.0, 105.0)["tried"]] == [False, False]
+    assert p["ticket_refusal"] == "no_structural_stop" and not p["eligible"] and "wide_stop" in p["flags"]
+    assert "is not under the $100.00 buy stop" in p["reason"]
+    assert p["stop_basis"] == "max_stop"
+    q = burst(close=100.0, low=99.50, high=100.50, open_=99.60, prev_close=95.0)
+    assert q["stop_candidates"][1]["price"] == 100.0 and q["stop_candidates"][1]["under_trigger"] is False
+    assert q["stop_basis"] == "burst_low"        # the midpoint is excluded, so the low carries it
     assert plan.burst_stop(104.0, 99.5, 100.5)["stop_basis"] == "half_range"     # with no trigger the guard is off
 
 
@@ -983,3 +1028,222 @@ def test_a_plan_the_account_cannot_size_is_cut_and_says_why():
     assert cut["BIG"] == "the configured account cannot size it: $4.03 at risk per share against a $0.50 risk budget comes to no whole share"
     assert cut["RED"] == "breadth sizes new positions at zero tonight"
     assert {c["ticker"]: c["kind"] for c in budget["cut"]} == {"BIG": "no_shares", "RED": "no_new_longs"}
+
+
+# ---------------------------------------------- the constrained ticket -----
+# The limit is the day-2 ceiling narrowed to the highest price at which the
+# structural stop is still inside his 4% line. These hold it to the contract
+# over a sweep of bar shapes rather than one fixture, and each sweep asserts
+# it reached every branch, so a sweep that quietly stopped exercising a case
+# would go red rather than pass on the ones that remain.
+
+
+def bars_across_the_range():
+    """Bars covering every shape the cascade can meet: six price decades, the
+    low from touching the close to 12% under it, the close from the top of
+    the bar to well inside it."""
+    for close in (1.10, 4.99, 20.00, 63.45, 128.31, 499.99):
+        for low_pct in (0.0, 0.05, 0.16, 0.5, 1.0, 2.0, 3.0, 3.5, 3.9, 4.0, 4.2, 5.0, 8.0, 12.0):
+            low = round(close * (1 - low_pct / 100), 2)
+            for high_pct in (0.0, 0.3, 1.5, 4.0):
+                high = round(close * (1 + high_pct / 100), 2)
+                if not low <= close <= high:
+                    continue
+                yield dict(ticker="BAR", close=close, low=low, high=high, open_=low,
+                           prev_close=round(close / 1.05, 2), gain_pct=5.0)
+
+
+def test_the_dated_schedule_skips_at_the_day_two_line_and_buys_up_to_the_limit():
+    """The entry instruction the page quotes and Following saves: the range's
+    top is the ticket's limit, the SKIP price is the day-2 threshold. An open
+    between them is not a skip the plan asked for -- it is an open the resting
+    order cannot fill at, which the ticket's own terms already cover."""
+    p = burst(close=100.0, low=99.50, high=100.50, open_=99.60, prev_close=95.0)
+    assert p["limit"] == 103.64 and p["skip_if_open_above"] == 104.0
+    line = plan.dated_schedule(p, date(2026, 9, 10))[0]["instruction"]
+    assert "inside $98.00\u2013$103.64" in line          # buy up to the ticket's limit
+    assert "Skip it if it opens above $104.00" in line   # skip at the day-2 line
+    assert "above $103.64" not in line
+    # a plan from before the two were told apart carries only entry_high, and
+    # nothing invents a second price for it
+    older = {k: v for k, v in p.items() if k != "skip_if_open_above"}
+    assert "Skip it if it opens above $103.64" in plan.dated_schedule(older, date(2026, 9, 10))[0]["instruction"]
+
+
+def test_the_limit_rule_is_archived_so_two_records_cannot_be_read_as_one():
+    """A record written under the fixed ceiling and one written under the
+    constrained limit carry the same field names and different prices. The
+    rule itself is archived, so ``app.rules_version`` separates them."""
+    assert plan.LIMIT_RULE == "stop_constrained"
+    assert plan.RULES["plan.limit_rule"] == plan.LIMIT_RULE
+    assert plan.RULES["plan.entry_above_pct"] == plan.ENTRY_ABOVE_PCT    # the outer line is still archived
+    assert plan.RULES["plan.precision.cent_floor_epsilon"] == plan.CENT_FLOOR_EPSILON
+    fixture = json.loads((Path(__file__).resolve().parent / "fixtures" / "page" / "full.json").read_text())
+    assert fixture["rules"]["plan"]["limit_rule"] == plan.LIMIT_RULE
+
+
+def test_the_ticket_limit_is_never_over_the_day_two_ceiling():
+    """The +4% line is an upper bound the narrowing can only come under, and
+    ``entry_high`` -- the top of the zone the page and the walk read -- is the
+    ticket's limit and not that line."""
+    seen = set()
+    for case in bars_across_the_range():
+        p = burst(**case)
+        close = plan._price(case["close"], "close")
+        assert p["day2_spent_above"] == plan._at_pct(close, plan.ENTRY_ABOVE_PCT), case
+        assert p["limit"] <= p["day2_spent_above"], case
+        assert p["entry_high"] == p["limit"], case
+        assert p["limit_basis"] in plan.LIMIT_BASES, case
+        seen.add(p["limit_basis"] if p["eligible"] else "refused")
+    assert seen == {"outer_ceiling", "stop_line", "refused"}, seen
+
+
+def test_every_emitted_order_keeps_the_stop_under_the_trigger_and_inside_his_line():
+    """``stop < trigger < limit`` on the ticket itself, and the stop inside
+    MAX_STOP_PCT measured at that limit -- the highest fill it permits -- after
+    the cent rounding, not before it."""
+    emitted = 0
+    for case in bars_across_the_range():
+        p = burst(**case)
+        if not p["order_json"]:
+            continue
+        emitted += 1
+        o = p["order_json"]
+        stop, trigger, limit = o["then"]["stop_price"], o["stop_price"], o["limit_price"]
+        assert stop < trigger < limit, (case, stop, trigger, limit)
+        assert plan._pct(100 * (limit - stop) / limit) <= plan.MAX_STOP_PCT, (case, stop, limit)
+        assert limit == p["limit"] == p["sizing_price"] and trigger == p["entry_ref"], case
+    assert emitted > 50, emitted
+
+
+def test_the_synthetic_stop_can_never_buy_a_ticket():
+    """``max_stop`` is a level the bar does not support: where the cascade
+    reaches it there is no order, and every ticket's stop is a price the bar
+    itself names."""
+    synthetic = 0
+    for case in bars_across_the_range():
+        p = burst(**case)
+        low = plan._price(case["low"], "low")
+        mid = plan._money((low + plan._price(case["high"], "high")) / 2)
+        if p["stop_basis"] == "max_stop":
+            synthetic += 1
+            assert not p["eligible"] and p["order_json"] is None and p["action"] == "refused", case
+        if p["eligible"]:
+            assert p["stop_basis"] in ("burst_low", "half_range"), case
+            assert p["stop"] in (low, mid), case
+    assert synthetic > 10, synthetic
+
+
+def test_the_stop_line_ceiling_rounds_down_and_the_cent_above_it_would_break_the_line():
+    """The ceiling is derived from a stop, so it rounds DOWN: at the rounded
+    price the stop is still inside his line, and for a real share of stops one
+    cent higher is not."""
+    would_break = 0
+    for cents in range(50, 60_000, 7):
+        stop = cents / 100
+        ceiling = plan.stop_line_ceiling(stop)
+        assert ceiling <= stop / (1 - plan.MAX_STOP_PCT / 100) + 1e-9, stop
+        assert plan._pct(100 * (ceiling - stop) / ceiling) <= plan.MAX_STOP_PCT, (stop, ceiling)
+        up = plan._money(ceiling + 0.01)
+        if plan._pct(100 * (up - stop) / up) > plan.MAX_STOP_PCT:
+            would_break += 1
+    assert would_break > 100, would_break
+    # end to end: a $1.09 stop's exact ceiling is $1.135417, and a ticket at
+    # the rounded-up $1.14 puts that stop 4.39% away -- past his line
+    p = burst(close=1.10, low=1.09, high=1.15, open_=1.09, prev_close=1.02)
+    assert p["limit"] == 1.13 and p["stop"] == 1.09 and p["stop_pct"] == 3.54 and p["eligible"]
+    assert plan._pct(100 * (1.14 - 1.09) / 1.14) > plan.MAX_STOP_PCT
+
+
+def test_the_indicative_entry_is_never_over_the_price_the_ticket_can_fill_at():
+    capped = 0
+    for case in bars_across_the_range():
+        p = burst(**case)
+        uncapped = plan._at_pct(plan._price(case["close"], "close"), plan.ASSUMED_SLIPPAGE_PCT)
+        assert p["planned_entry"] == min(uncapped, p["limit"]) <= p["limit"], case
+        if p["planned_entry_capped"]:
+            capped += 1
+            assert p["planned_entry"] == p["limit"] < uncapped, case
+            assert "capped at the" in p["planned_entry_note"], case
+        else:
+            assert p["planned_entry"] == uncapped and "capped at" not in p["planned_entry_note"], case
+    assert capped > 10, capped
+
+
+def test_the_targets_and_the_exit_levels_are_quoted_from_the_capped_entry():
+    """A bar whose limit lands under the close +1%: the aim and the exit
+    ladder come off the limit, not off a price the ticket could never fill."""
+    p = burst(close=126.88, low=122.57, high=127.45, open_=123.0, prev_close=120.0)
+    assert p["planned_entry_capped"] and p["planned_entry"] == p["limit"] == 127.67
+    assert p["targets"] == plan.targets(127.67, 126.88) and p["targets"]["low"] == 137.88
+    assert p["exits"] == plan.exit_schedule(127.67, p["stop"])
+    uncapped = plan._at_pct(126.88, plan.ASSUMED_SLIPPAGE_PCT)
+    assert uncapped == 128.15 > p["limit"]
+    assert p["targets"] != plan.targets(uncapped, 126.88)          # never the impossible entry
+    assert p["exits"] != plan.exit_schedule(uncapped, p["stop"])
+
+
+def test_the_day_two_threshold_is_carried_on_its_own_whatever_the_limit_does():
+    """The outer extension rule survives the narrowing as its own price and
+    its own sentence: it is the skip rule and it is never the order's limit."""
+    for case in bars_across_the_range():
+        p = burst(**case)
+        close = plan._price(case["close"], "close")
+        assert p["day2_spent_above"] == plan._at_pct(close, plan.ENTRY_ABOVE_PCT) == p["skip_if_open_above"]
+        assert p["day2_spent_pct"] == plan.ENTRY_ABOVE_PCT
+        assert f"over {plan._usd(p['day2_spent_above'])} (+{plan.ENTRY_ABOVE_PCT:g}%) day 2 is spent" \
+            in p["pre_open_check"], case
+        if p["order_terms"]:
+            assert plan._usd(p["day2_spent_above"]) not in " ".join(p["order_terms"]) \
+                or p["limit"] == p["day2_spent_above"], case
+
+
+def test_the_pre_open_check_tells_the_outer_threshold_from_the_ticket_limit():
+    narrowed = burst(close=100.0, low=99.50, high=100.50, open_=99.60, prev_close=95.0)
+    assert "over $104.00 (+4%) day 2 is spent" in narrowed["pre_open_check"]
+    assert "The ticket's own limit is $103.64, under that day-2 line" in narrowed["pre_open_check"]
+    at_ceiling = burst(close=100.0, low=99.90, high=100.0, open_=99.95, prev_close=95.0)
+    assert at_ceiling["limit"] == at_ceiling["day2_spent_above"] == 104.0
+    assert "The ticket's own limit is $104.00, the day-2 line itself" in at_ceiling["pre_open_check"]
+    withheld = burst(close=100.0, low=90.0, high=100.0, open_=91.0, prev_close=95.0)
+    assert "over $104.00 (+4%) day 2 is spent" in withheld["pre_open_check"]
+    assert "There is no ticket to place" in withheld["pre_open_check"]
+    assert "limit is" not in withheld["pre_open_check"]
+
+
+def test_a_limit_that_lands_on_the_buy_stop_emits_no_order_at_all():
+    """Cent rounding can put the ceiling exactly on the trigger. A buy
+    stop-limit with no band above its own trigger is not written: the setup
+    stands, the ticket does not, and nothing invalid reaches fidelity_orders."""
+    seen = 0
+    for case in bars_across_the_range():
+        got = plan.burst_limit(case["close"], case["low"], case["high"])
+        for cand in got["tried"]:
+            if cand["under_trigger"] and cand["limit"] <= plan._price(case["close"], "close"):
+                seen += 1
+                assert not cand["taken"], (case, cand)
+        p = burst(**case)
+        if not p["eligible"]:
+            assert p["order_json"] is None and p["order_line"] is None and p["order_terms"] is None
+            assert p["ticket_refusal"] in plan.TICKET_REFUSALS
+            assert p["reason"].startswith(report.NO_TICKET_LEADS[1])
+    assert seen > 10, seen
+    with pytest.raises(ValueError, match="stop < trigger <= limit"):
+        plan.fidelity_orders("XYZ", 1, trigger=100.0, limit=99.99, stop=96.0)
+
+
+def test_the_plan_refuses_to_publish_a_limit_its_own_cascade_would_not_hold():
+    """The ceiling is derived from a stop the cascade must reach AT it. The
+    two are one rule: if they ever part, nothing is published for that name
+    (make_plans logs and skips a ValueError) rather than a ticket whose stop
+    the run does not stand behind."""
+    for case in bars_across_the_range():
+        p = burst(**case)
+        if not p["eligible"]:
+            continue
+        got = plan.burst_stop(p["limit"], case["low"], case["high"], trigger=plan._price(case["close"], "close"))
+        assert (got["stop_basis"], got["stop"]) == (p["stop_basis"], p["stop"]), case
+    with mock.patch.object(plan, "burst_stop", lambda *a, **k: {
+            "stop": 1.0, "stop_basis": "max_stop", "stop_pct": 4.0, "stop_note": None, "stop_candidates": []}):
+        with pytest.raises(ValueError, match="but the cascade reaches"):
+            burst()

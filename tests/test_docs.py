@@ -59,7 +59,13 @@ def test_the_readme_quotes_the_scans_and_the_universe_floors():
 def test_the_readme_quotes_the_account_defaults_and_the_regime_sizes():
     assert f"default ${plan.DEFAULT_EQUITY:,.0f}, {plan.DEFAULT_RISK_PCT:g}% risk, {plan.DEFAULT_MAX_POSITION_PCT:g}% cap, four slots" in README
     assert plan.DEFAULT_MAX_OPEN_POSITIONS == 4
-    assert f"refused past {plan.MAX_STOP_PCT:g}%" in README
+    # the four prices the plan keeps apart, each quoted from its own constant
+    assert f"still inside his {plan.MAX_STOP_PCT:g}% line" in README
+    assert (f"`min(close +{plan.ENTRY_ABOVE_PCT:g}%, floor_to_cents(stop / "
+            f"(1 - plan.MAX_STOP_PCT/100)))`") in README
+    assert f"(`day2_spent_above`, the close +{plan.ENTRY_ABOVE_PCT:g}%)" in README
+    assert f"(`planned_entry`), the close +{plan.ASSUMED_SLIPPAGE_PCT:g}% capped at that limit" in README
+    assert f"`stop < trigger < limit`" in README
     assert breadth.SIZE_MULTIPLIER == {"green": 1.0, "yellow": 0.5, "red": 0.0}
     assert "yellow (half size, A+ only)" in README and pipeline.YELLOW_GRADES == ("A+",)
     assert "red (no new longs" in README
@@ -185,6 +191,29 @@ def test_the_page_smoke_reads_the_same_problem_sentences_the_page_prints():
         assert report.PROBLEM_SENTENCES[kind] == sentence, kind
 
 
+def test_the_page_and_the_mail_refuse_to_say_no_ticket_twice_by_the_same_rule():
+    """The budget's reason for a withheld plan opens with "ticket withheld",
+    so a line that introduces it with "No ticket" says it twice. Both
+    consumers drop the lead, and by the same list of words."""
+    page = (ROOT / "docs" / "app.js").read_text()
+    leads = set(re.findall(r"s\.indexOf\((NO_TICKET|CUT_WORDS\.withheld)\) === 0", page))
+    assert leads == {"NO_TICKET", "CUT_WORDS.withheld"}, leads
+    assert re.search(r"const NO_TICKET = '([^']+)'", page).group(1) == report.NO_TICKET_LEADS[0]
+    assert re.search(r"withheld: '([^']+)'", page).group(1) == report.NO_TICKET_LEADS[1]
+    for reason, doubled in ((f"{report.NO_TICKET_LEADS[1]}: at the $1.00 limit", True),
+                            (f"{report.NO_TICKET_LEADS[0]} tonight", True),
+                            ("beyond the slot cap", False)):
+        assert report.says_no_ticket(reason) is doubled, reason
+    # and the mail's own line drops the lead exactly there
+    data = {"beyond_cap": ["TSLA", "AAPL"],
+            "cash_budget": {"cut": [{"ticker": "TSLA", "reason": f"{report.NO_TICKET_LEADS[1]}: at the $129.18 limit"},
+                                    {"ticker": "AAPL", "reason": "beyond the slot cap"}]}}
+    lines = report._no_ticket_lines(data)
+    assert "No ticket for TSLA" not in lines[0] and "ticket withheld" in lines[0], lines[0]
+    assert lines[0].count("ticket withheld") == 1, lines[0]
+    assert "No ticket for AAPL: beyond the slot cap" in lines[1], lines[1]
+
+
 def test_the_page_prints_the_same_plan_status_words_the_mail_does():
     page = (ROOT / "docs" / "app.js").read_text()
     block = re.search(r"const PLAN_STATUS = \{\n(.*?)\n  \};", page, re.S).group(1)
@@ -193,3 +222,60 @@ def test_the_page_prints_the_same_plan_status_words_the_mail_does():
     for status in ("hold", "sell_half", "sell_into_strength", "exit", "stopped", "expired", "pending",
                    record.NOT_FILLED, record.UNCERTAIN, record.UNREADABLE, "unmeasured"):
         assert status in words, status
+
+
+# ------------------------------------ the four prices, kept apart -----------
+
+
+def test_only_the_plan_module_knows_the_day_two_percentage():
+    """``ENTRY_ABOVE_PCT`` is the OUTER extension threshold and nothing else
+    derives a price from it: any other module that wants that line reads the
+    field the plan publishes, so the two prices cannot drift apart in one
+    consumer while staying together in the next."""
+    readers = sorted(p.name for p in (ROOT / "src").glob("*.py")
+                     if "ENTRY_ABOVE_PCT" in p.read_text())
+    assert readers == ["plan.py"], readers
+    tools = sorted(p.name for p in (ROOT / "tools").glob("*.py")
+                   if "ENTRY_ABOVE_PCT" in p.read_text())
+    assert tools == ["entry_limit_study.py"], tools     # the retired ceiling lives there alone
+
+
+def test_no_consumer_reads_the_ticket_limit_as_the_day_two_line():
+    """Every module and the page agree on which field is which: ``limit`` and
+    ``entry_high`` are the ticket's executable limit, ``day2_spent_above``
+    and ``skip_if_open_above`` are the outer threshold. The fixture proves it
+    with a plan where the two prices differ."""
+    data = json.loads((ROOT / "tests" / "fixtures" / "page" / "full.json").read_text())
+    plans = [b["plan"] for b in data["bursts"] if b.get("plan")]
+    narrowed = [p for p in plans if p["limit"] != p["day2_spent_above"]]
+    assert narrowed, "the full fixture should carry a narrowed ticket"
+    for p in plans:
+        assert p["limit"] == p["entry_high"] <= p["day2_spent_above"] == p["skip_if_open_above"]
+        assert p["planned_entry"] <= p["limit"]
+        if p["order_json"]:
+            assert p["order_json"]["limit_price"] == p["limit"]
+            assert p["order_json"]["stop_price"] == p["entry_ref"] < p["limit"]
+    page = (ROOT / "docs" / "app.js").read_text()
+    # the page's order sheet prints the ticket's own limit and the day-2 line
+    # in two columns, and names the second for the rule rather than the action
+    assert "'too extended over'" in page and "plan.skip_if_open_above" in page
+    # the Following snapshot saves both, so a saved setup cannot be read back
+    # with the extension threshold standing in for the limit
+    assert "day2_spent_above: burst && isNum(plan.day2_spent_above)" in page
+
+
+def test_the_mail_names_the_day_two_line_only_when_it_is_not_the_limit():
+    """The digest prints the ticket's zone; where the record carries a
+    separate extension threshold it says so, and where the two are one price
+    it does not print it twice."""
+    burst = {"ticker": "AAA", "grade": "A+", "score": 9.1, "summary": "AAA: a burst.",
+             "plan": {"entry_low": 98.0, "entry_high": 103.64, "day2_spent_above": 104.0,
+                      "stop": 99.5, "shares": 6, "position_usd": 621.84}}
+    html = report._trade_block(burst, None)
+    assert "Buy zone 98.00–103.64" in html and "Too extended over 104.00" in html
+    same = json.loads(json.dumps(burst))
+    same["plan"]["entry_high"] = same["plan"]["day2_spent_above"] = 104.0
+    assert "Too extended over" not in report._trade_block(same, None)
+    older = json.loads(json.dumps(burst))
+    older["plan"].pop("day2_spent_above")             # a record from before the split
+    assert "Too extended over" not in report._trade_block(older, None)

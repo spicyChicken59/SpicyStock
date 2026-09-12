@@ -268,11 +268,19 @@ def _dollar(b: _Bars) -> dict | None:
     move = float(round(c - o, CENTS))
     if not (move >= DOLLAR_MOVE and v > MIN_VOLUME):
         return None
+    # The session's volume over the previous session's, the same ratio the
+    # 4% scan carries: a measurement beside the rule, never a term of it (the
+    # dollar rule asks for shares, not for more of them than yesterday), so
+    # it is None -- not 0, not inf -- when the previous session printed
+    # nothing or the frame has none, and the day still matches.
+    v1 = b.value("Volume", 1)
     return {
         "move": move,
         "close": c,
         "open": o,
         "volume": int(v),
+        "prev_volume": None if v1 is None else int(v1),
+        "volume_vs_prior": _ratio(v, v1),
         "close_pos_in_range": _close_position(c, b.value("High"), b.value("Low")),
     }
 

@@ -53,12 +53,8 @@ does not carry, falls back to Explore and says so.
    record's own call to action. Then two stage cards, **Bursts · N** (the
    range-expansion days the scan graded) and **Setting up · N** (the
    anticipation list: quiet, coiled names inside established momentum),
-   and inside the chosen stage — as cards, or for the bursts as a **map**
-   of the session's gain against its volume relative to the previous
-   session, every point the same selection as its card, the unmeasured
-   listed beside it, position a measurement and not a return — one
-   selectable card per stock with its grade and its status in the record's
-   words — *ticket*, *ticket
+   and inside the chosen stage one selectable card per stock with its grade
+   and its status in the record's words — *ticket*, *ticket
    withheld*, *beyond the slot cap*, *beyond the configured equity*, *no
    whole share*, *no new longs*, *vetoed*, *no ticket*, *watch* — a search
    that finds a ticker in either stage and says when it switched, and on a
@@ -66,6 +62,31 @@ does not carry, falls back to Explore and says so.
    Bursts when the scan found any, Setting up otherwise, and a chosen stage
    is never switched away from: an empty one says why it is empty. Each
    stage remembers its last chosen stock.
+   The bursts have a second view of the same list, a **map** of the
+   session's gain against its volume relative to the previous session:
+   every point the same selection as its card, the unmeasured listed
+   beside it, position a measurement and not a return (the ratio is the
+   scan's own for every burst, the dollar scan's days included; a record
+   from before 12 Sep 2026 holds it for those days only in the checklist's
+   block, and the page reads that copy and says so). The gain axis is
+   linear; the volume axis is compressed, because the ratio has no upper
+   bound and one name at 169× laid four hundred at about 1× on the pane
+   floor. Every tick is labelled with the ratio it stands for, every burst
+   is plotted at its own recorded ratio, the largest is never clipped, 0×
+   sits on the axis line, and the map says so in words. Points still
+   overlap, so a tap is resolved by distance from the tap and not by which
+   marker was drawn last: when more than one is within a finger, a compact
+   **nearby chooser** lists them nearest-first with their measurements and
+   chooses nothing until you do. It is a labelled popover, not a modal: the
+   arrows move inside it, Escape closes it and hands the focus back to the
+   stock you meant — never to the marker the browser happened to hit-test —
+   tabbing out of it closes it, any selection made elsewhere closes it, and
+   a *Nearby stocks* button beside the selection opens it from the keyboard.
+   A tap on a point standing alone chooses it outright, and the keyboard's
+   Enter takes the point it has focused. A table under the map carries every
+   burst, plotted or not. On a four-hundred-burst night almost every point
+   has a neighbour within a finger, so almost every tap asks: the cards, the
+   search and the table are the one-step path to a stock you can name.
 3. **The chosen stock.** One chart panel with one header (the symbol, its
    last close and session), the controls together above the plot, and every
    price label in a reserved right gutter with a leader back to its exact
@@ -89,18 +110,20 @@ does not carry, falls back to Explore and says so.
    button. Under it four disclosures: the conditions (one tile per
    criterion with the measured value, his threshold and the verdict in
    words, then the base, the burst and the grade); the plan, sizing and
-   order (the buy zone and the two skip lines, the stop and its basis, the
-   shares sized at the limit — the highest fill the ticket permits, so the
-   fixed quantity keeps the risk budget, the position cap and his 4% stop
-   line at every fill it can take — the position, the planned
-   price-to-stop risk, the aim, the hazards, and the order in Fidelity's
-   field order with a copy button: a buy stop-limit with a
-   one-triggers-the-other sell stop attached, and under it what the ticket
-   enforces and what it leaves to the reader); the model exit guidance,
-   dated; and the provenance (what Claude saw in the chart, the bars, the
-   rules digest). A burst whose stop is past the line at the limit keeps
-   its card and has its ticket withheld, with the reason in the action
-   area. Below the workspace, two more disclosures: **Tomorrow's
+   order (the buy zone, whose top IS the ticket's own limit; the two skip
+   lines, of which the upper one is the +4% day-2 threshold and not the
+   limit; the stop and its basis; the shares sized at the limit — the
+   highest fill the ticket permits, so the fixed quantity keeps the risk
+   budget, the position cap and his 4% stop line at every fill it can take
+   — the position, the planned price-to-stop risk, the aim, the hazards,
+   and the order in Fidelity's field order with a copy button: a buy
+   stop-limit with a one-triggers-the-other sell stop attached, and under
+   it what the ticket enforces and what it leaves to the reader); the
+   model exit guidance, dated; and the provenance (what Claude saw in the
+   chart, the bars, the rules digest). Where the limit is under the day-2
+   line the buy row says so in the plan's own words, and a burst no limit
+   above its buy stop can hold a stop under keeps its card and has its
+   ticket withheld, with the reason in the action area. Below the workspace, two more disclosures: **Tomorrow's
    tickets** (the model allocation over the configured sizing assumptions
    and the order sheet, every cut name explained) and **Everything the
    scan found** (every burst against the checklist — the six letters,
@@ -190,14 +213,24 @@ session. The run:
   key, leaves the checklist's grade standing and marks the night
   `claude_unavailable`.
 - **plan** — every A-quality burst gets a plan sized from the configured
-  account (default $10,000, 0.5% risk, 25% cap, four slots): entry zone,
-  stop (the burst low, or the bar's midpoint when the low is too far,
-  judged at the ticket's limit and refused past 4% there), shares sized at
-  that limit, the ticket, the exits and the targets from an indicative
-  entry. A trade is a plan with an order: a ticket the stop rule withholds,
-  plans past the free slots or the equity, and a plan the account cannot
-  size to a whole share, are listed as cut with the kind and the reason.
-  An anticipation ticket is judged and sized at its limit the same way.
+  account (default $10,000, 0.5% risk, 25% cap, four slots). Four prices it
+  keeps apart, because they are four rules: the **trigger**, a buy stop at
+  the burst close; the ticket's **limit** (`plan.burst_limit`), the day-2
+  ceiling narrowed to the highest price at which the structural stop is
+  still inside his 4% line,
+  `min(close +4%, floor_to_cents(stop / (1 - plan.MAX_STOP_PCT/100)))` over
+  the burst low then the bar's midpoint; the **day-2 threshold**
+  (`day2_spent_above`, the close +4%), above which his follow-through is
+  already spent — the skip rule, never the order's limit; and the
+  **indicative entry** (`planned_entry`), the close +1% capped at that
+  limit, which the exits and the targets are quoted from and which is
+  never a fill. The shares are sized at the limit. A trade is a plan with
+  an order: a setup no limit above its buy stop can hold a stop under (the
+  synthetic 4% level never buys a ticket, and a limit landing ON the
+  trigger is a ticket with no band), plans past the free slots or the
+  equity, and a plan the account cannot size to a whole share, are listed
+  as cut with the kind and the reason. An anticipation ticket is judged
+  and sized at its limit the same way.
 - **record** — the picks go to `docs/picks.json`; the open plans and the
   scorecard are computed from it and the bars.
 - **publish** — `docs/data.json` is written and validated, then the email
@@ -261,6 +294,25 @@ node tools/chart_check.mjs                  # the chart's geometry, and a render
 node tools/page_smoke.mjs --shots /tmp/shots   # the page against every fixture, read back
 python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
 ```
+
+One tool is not a check but a reading. `python tools/entry_limit_study.py
+[record.json ...]` puts three readings of every burst in an already-written
+record beside each other: the **retired** fixed ceiling (the close +4%,
+`plan.ENTRY_ABOVE_PCT`, with the stop cascade judged there), which is no
+longer in `src/` and lives in the tool alone; **production**, which is
+`plan.burst_plan()` itself and which `verify()` reproduces down to the share
+count, the action and the money; and an **oracle**, the constrained ceiling
+re-derived in the tool from the spec and held against what production wrote,
+so a drift in either raises rather than prints. The oracle never reads the
+synthetic `max_stop` fallback, so that level can rescue nothing, and it
+admits a ticket only where `stop < trigger < limit` holds at the rounded
+ceiling — strictly under and strictly over, because a limit at the buy stop
+is a ticket with no band. It reports candidate coverage, the retired
+ceiling's stop-rule rejections, what production admits and refuses (by
+refusal), and what inputs are missing, each kept apart from the regime,
+grade and budget exclusions, and it counts what the narrower limit carried
+with it. It changes no rule, writes nothing, reads no forward return, and is
+not a backtest or a claim about either ceiling.
 
 The fixtures under `tests/fixtures/page/` are records the real pipeline wrote
 over a synthetic market through the same doubles the tests use, one per
@@ -327,6 +379,7 @@ docs/           index.html · app.js · app.css · app-chart.js · app-map.js ·
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py
+                entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)
 .github/        evening.yml · intraday.yml · tests.yml · publish-dashboard.yml · secret-scan.yml
 ```
 

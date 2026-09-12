@@ -720,7 +720,11 @@ def test_the_digest_prints_an_uncertain_plan_and_a_withheld_ticket_in_the_pages_
                                 "cut": [{"ticker": "WHD", "kind": "withheld", "reason": withheld["plan"]["reason"]}]})
     text = _rendered(digest_html(build(**night)))
     assert "UNCERTAIN" in text and uncertain["instruction"] in text
-    assert "No ticket for WHD: ticket withheld: at the $12.71 limit the stop is 8.6% away." in text
+    # the budget's reason already opens with "ticket withheld", so the line
+    # does not introduce it with "No ticket" as well and say it twice
+    assert "WHD — ticket withheld: at the $12.71 limit the stop is 8.6% away." in text
+    assert "No ticket for WHD" not in text
+    assert text.count("ticket withheld: at the $12.71 limit") == 1, text
     assert "Beyond the slot cap" not in text
     assert "Model allocation: tomorrow's tickets would commit $852.00 of the configured $10,000.00; 2 of 4 slots (1 open model plan). Not a balance or buying power." in text
     assert "Open model plans" in text and "What you hold" not in text

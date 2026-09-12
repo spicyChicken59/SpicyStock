@@ -244,9 +244,13 @@ def dollar_frame(*, c: float, o: float = 23.0, v: float = 100_001, **envelope) -
 
 
 def test_dollar_breakout_rounds_the_move_to_cents_once():
-    """23.90 - 23.00 is 0.8999999999999986 in binary; the rule reads $0.90."""
+    """23.90 - 23.00 is 0.8999999999999986 in binary; the rule reads $0.90.
+    The row carries the previous session's volume and the ratio to it, as
+    the 4% scan's row does: 100,001 over 200,000 is 0.5, a matching day on
+    half of yesterday's shares."""
     got = scans.dollar_breakout(dollar_frame(c=23.90, h=24.0, l=22.9))
     assert got == {"move": 0.9, "close": 23.9, "open": 23.0, "volume": 100_001,
+                   "prev_volume": 200_000, "volume_vs_prior": 0.5,
                    "close_pos_in_range": 0.9091}   # (23.9 - 22.9) / (24.0 - 22.9)
 
 
@@ -287,6 +291,31 @@ def test_dollar_breakout_with_an_unreadable_input_is_not_a_match(column):
     df = dollar_frame(c=23.90)
     df.iloc[-1, list(COLUMNS).index(column)] = np.nan
     assert scans.dollar_breakout(df) is None
+
+
+def test_the_dollar_scan_measures_volume_against_the_previous_session_like_the_burst_scan():
+    """One field, one meaning: v over v1 at RATIO_DECIMALS whichever scan
+    wrote it. The dollar rule never asked for more shares than yesterday, so
+    a ratio under 1 is the measurement of a matching day and not a missing
+    one; on a day both scans see, both carry the same number."""
+    got = scans.dollar_breakout(dollar_frame(c=23.90, v=100_001))
+    assert got["prev_volume"] == 200_000 and got["volume_vs_prior"] == 0.5     # 100,001 / 200,000
+    quiet = frame([bar(23.0, v=100_000)] * 2 + [bar(23.90, o=23.0, v=133_333)])
+    found = scans.scan_all(quiet)
+    assert found["burst"] is None, "+3.9% is the dollar scan's day alone"
+    assert found["dollar"]["volume_vs_prior"] == 1.3333
+    both = scans.scan_all(burst_frame())
+    assert both["burst"]["volume_vs_prior"] == both["dollar"]["volume_vs_prior"] == 1.3333
+
+
+def test_a_dollar_day_whose_previous_session_printed_nothing_has_no_ratio_and_still_matches():
+    """The denominator is the previous session's volume: zero or absent, the
+    ratio is None -- never 0, never inf -- and the day still matches, the
+    ratio being a measurement beside the rule and not a term of it."""
+    halted = scans.dollar_breakout(frame([bar(23.0), bar(23.0, v=0), bar(23.90, o=23.0, v=100_001)]))
+    assert halted is not None and halted["prev_volume"] == 0 and halted["volume_vs_prior"] is None
+    alone = scans.dollar_breakout(frame([bar(23.90, o=23.0, v=100_001)]))
+    assert alone is not None and alone["prev_volume"] is None and alone["volume_vs_prior"] is None
 
 
 # ------------------------------------------------------- double trouble ----

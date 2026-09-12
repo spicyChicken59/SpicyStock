@@ -44,7 +44,7 @@ sys.path.insert(0, str(ROOT))
 
 import pandas as pd  # noqa: E402
 
-from src import charts, market_data, pipeline, plan, record  # noqa: E402
+from src import charts, market_data, pipeline, plan, record, scans  # noqa: E402
 from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient  # noqa: E402
 from tests.synthetic import make_ohlcv  # noqa: E402
 from tests.test_quality import frame as qframe, ideal_bars  # noqa: E402
@@ -70,25 +70,56 @@ BASE_NAMES = ["ANET", "CRDO", "DELL", "ELF", "FIX", "GLW", "HOOD", "IONQ", "JBL"
 
 
 # ---------------------------------------------------------------- market ---
-#: A burst bar this many percent of its close wide keeps its midpoint inside
-#: his 4% stop line at the +4% ceiling (the ticket's limit). The field guide's
-#: textbook bar, with its low 4.7% under the close, does not: its ticket is
-#: withheld at the limit, and TSLA below carries it to show that.
-TIGHT_BAR = dict(burst_range_pct=0.25, base_range=0.15, prior_range=0.1)
+#: The bar shapes the four A-quality bursts carry, so the page shows every
+#: state the constrained ticket limit can be in. A bar whose low sits within
+#: about 0.16% of its close keeps the day-2 ceiling as its limit; anything
+#: deeper narrows it to the stop's own ceiling, and a bar reaching more than
+#: about 4.2% under the close (with the close near the high) can hold no
+#: limit above its buy stop at all.
+#: (P) the limit is the day-2 ceiling itself: the low is 0.14% under the close.
+AT_CEILING = dict(burst_range_pct=0.15, base_range=0.15, prior_range=0.1)
+#: (P) narrowed under the close +1%, so the indicative entry is capped at the
+#: limit: the low is 3.4% under the close.
+CAPPED_ENTRY = dict(burst_range_pct=3.6, base_range=0.15, prior_range=0.1)
+#: (P) no limit above the buy stop: the low is 8.6% under the close.
+NO_TICKET_BAR = dict(burst_range_pct=9.0, base_range=0.15, prior_range=0.1)
 
 
 def burst_frames() -> dict[str, pd.DataFrame]:
-    """Four A-quality bursts -- three whose tickets qualify at their limit and
-    the textbook one whose ticket is withheld -- one loose-base B, one H-only
-    miss (an anticipation setup), and the coil."""
+    """Four A-quality bursts -- the field guide's textbook bar, whose ticket
+    the fixed +4% ceiling withheld and the stop's own ceiling now narrows to;
+    one whose limit IS the day-2 ceiling; one narrowed under the close +1%,
+    so the indicative entry is capped at the limit; and one no limit above
+    its buy stop can hold a stop under -- then one loose-base B, one H-only
+    miss (an anticipation setup), one $-only day, and the coil."""
     return {
-        "AAPL": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000, **TIGHT_BAR)),
-        "AMD": qframe(ideal_bars(burst_gain=5.2, close_pos=0.9, burst_vol=2_600_000, base_quiet=12, **TIGHT_BAR)),
-        "NVDA": qframe(ideal_bars(burst_gain=7.4, close_pos=0.85, burst_vol=3_400_000, base_quiet=18, leg_steps=[1.4] * 14, **TIGHT_BAR)),
-        "TSLA": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000)),
+        "AAPL": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000)),
+        "AMD": qframe(ideal_bars(burst_gain=5.2, close_pos=0.9, burst_vol=2_600_000, base_quiet=12, **AT_CEILING)),
+        "NVDA": qframe(ideal_bars(burst_gain=7.4, close_pos=0.85, burst_vol=3_400_000, base_quiet=18, leg_steps=[1.4] * 14, **CAPPED_ENTRY)),
+        "TSLA": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000, **NO_TICKET_BAR)),
         "PLUG": qframe(ideal_bars(burst_gain=5.0, close_pos=0.55)),
+        "DLLR": dollar_only(),
         "COIL": coil(),
     }
+
+
+def dollar_only() -> pd.DataFrame:
+    """A quiet walk near $70 whose last session opens at the previous close and
+    closes 2% up on 0.8649 of the previous session's volume: the dollar
+    scan's day alone (a body over $0.90, no 4% burst), with a volume ratio
+    under 1 that is a measurement and not a hole -- RVTY's shape on the first
+    real night, a $1.91 body, +2.8%, on 0.86x the previous session. Four
+    places in the row, two in the checklist's block, as the real record has."""
+    df = make_ohlcv("base", seed=[SEED, 501], days=280, start_price=60.0)
+    prev_close, prev_volume = float(df["Close"].iloc[-2]), float(df["Volume"].iloc[-2])
+    o, c = round(prev_close, 2), round(prev_close * 1.02, 2)
+    assert c / prev_close < scans.BURST_RATIO and c - o >= scans.DOLLAR_MOVE, (prev_close, c)
+    df.iloc[-1, df.columns.get_loc("Open")] = o
+    df.iloc[-1, df.columns.get_loc("High")] = round(c + 1.2, 2)
+    df.iloc[-1, df.columns.get_loc("Low")] = round(o - 0.3, 2)
+    df.iloc[-1, df.columns.get_loc("Close")] = c
+    df.iloc[-1, df.columns.get_loc("Volume")] = round(prev_volume * 0.8649)
+    return df
 
 
 def base_frames() -> dict[str, pd.DataFrame]:
@@ -323,12 +354,27 @@ def expected_shape(variant: str, data: dict) -> None:
         kinds = {c["ticker"]: c["kind"] for c in data["cash_budget"]["cut"]}
         assert "withheld" in kinds.values() and "slot_cap" in kinds.values(), kinds
         assert kinds.get("TSLA") == "withheld", kinds
+        # every state the constrained ticket limit can be in, so the page has
+        # a card for each: a limit AT the day-2 ceiling, one narrowed under
+        # it, one narrowed under the close +1% (the indicative entry capped),
+        # and one no limit above the buy stop can hold a stop under
+        states = set()
+        for b in data["bursts"]:
+            pl = b.get("plan")
+            if not pl:
+                continue
+            states.add("withheld" if not pl["eligible"] else
+                       "capped" if pl["planned_entry_capped"] else pl["limit_basis"])
+        assert states == {"outer_ceiling", "stop_line", "capped", "withheld"}, states
         assert data["scorecard"]["readable"] and data["scorecard"]["uncertain"] > 0, data["scorecard"]
         statuses = {p["ticker"]: p["status"] for p in data["open_plans"]}
         assert statuses == {"NBIS": "hold", "SMCI": record.UNCERTAIN, "VRT": "sell_into_strength"}, statuses
         vrt = next(p for p in data["open_plans"] if p["ticker"] == "VRT")
         assert vrt["shares"] == 3 and vrt["sold"] == 2 and vrt["remaining"] == 1, (vrt["shares"], vrt["sold"], vrt["remaining"])
         assert data["watchlist"]["top"], "no coiled name"
+        dollar = [b for b in data["bursts"] if b["scan"] == "dollar"]
+        assert dollar and all(isinstance(b["volume_vs_prior"], float) and 0 < b["volume_vs_prior"] < 1 for b in dollar), \
+            [(b["ticker"], b.get("volume_vs_prior")) for b in dollar]
         assert problems == []
     elif variant == "degraded":
         assert set(problems) == {"claude_unavailable", "chart_missing"}, problems
