@@ -750,3 +750,63 @@ exist, not whether they win.
 
 **Next action.** On the next green or yellow session dispatch the dry run and
 check the study against what the run withholds and writes.
+
+## Checkpoint, 12 Sep 2026 — the handoff, validated by execution
+
+**Revision.** Branch `claude/volume-repair-mobile-entry-zo54u9` at
+`31628d8`, taken over from an interrupted builder. Verified before anything was
+touched: a clean tree, no stray file, no disabled test, no TODO left by
+the two commits, the published record still `origin/main`'s to the byte. This checkpoint is the only commit added;
+nothing was merged, deployed, dispatched or mailed.
+
+**Every check rerun here rather than inherited.** 1076 tests pass, none
+skipped; the seven fixtures are current through the real generator; the
+chart check is 163/163. The page smoke is 2690/2690 bare and **2692/2692
+with `--shots`** — two checks (the light-theme page's errors, the
+Following store recovering after a blocked write) run only when shots are
+asked for, and `--shots` is what CI runs, so the tip's 2690 is the bare
+number and not a stale one. The suite and the fixture check were also run
+under **Python 3.12**, CI's interpreter rather than this sandbox's 3.11:
+1076 pass and the seven fixtures still reproduce. GitHub says the secret
+scan is green on this tip and on `3248093`.
+
+**The rule recomputed, not read.** `plan.burst_limit()` was run again over
+the `full` fixture's four bars: AAPL narrowed to $126.47 under its $129.18
+day-2 line, AMD at the outer ceiling ($128.20 both), NVDA's indicative
+entry capped at its $128.12 limit, TSLA withheld because both candidates
+cap at or under its $124.21 buy stop ($118.32, $124.14). The screenshots
+were looked at, not only the exit code: each plan row carries its own
+price, the Fidelity sheet writes the ticket's limit with the day-2 line in
+its own *too extended over* column, the followed card saves both, and the
+phone's map keeps its compressed volume axis and its nearby chooser.
+
+**The study reproduced.** Over the unchanged run-47 record: coverage 401;
+the retired fixed ceiling 20 / 381; production 378 / 23; 358 rescued;
+every limit at or under its day-2 line; 93 indicative entries capped; the
+green-night decision set **52 / 0 / 50 / 47**. PENN, SBET and JVA are the
+three ceilings landing exactly on the trigger — PENN falls to the
+midpoint, the other two are refused — so the three rows that differ from
+the reading's proposal are the band rule, not a rounding accident.
+
+**The mutants killed again.** Fifteen over the code (the cent floor, both
+band strictnesses, a synthetic candidate, the entry cap, the day-2 field,
+the skip rule, the dated schedule, the order and sizing prices, the pick,
+the record's shape check, the fill sentence, the mail) all die, each in
+the tests that name its rule and not only in the study's oracle; a bare
+`0.96` in `stop_line_ceiling()` dies against the literal guard. Three page
+mutants die too: the ticket limit in the *skip if it opens above* row (the
+one the tip commit exists for) fails two row-scoped assertions, the same
+price in the order sheet's limit column fails one, and a Following
+snapshot saving the day-2 line as the limit fails three.
+
+**No defect found, nothing corrected.** Kept as recorded: `limit_narrowed`
+is derivable from `limit_basis`; the CLAUDE.md line cap cannot fail
+because `prose()` collapses the file to one line.
+
+**Blockers.** None offline. Not run and not claimable: a live fetch, a
+real chart read, Resend, Pages, and the CI test job, which runs on `main`
+and on pull requests only — this branch has had the secret scan alone.
+
+**Next action.** Unchanged: dispatch `evening.yml` with dry_run on a green
+or yellow session and check the study against what the run withholds and
+writes.
