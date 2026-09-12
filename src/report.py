@@ -832,16 +832,36 @@ def _alert_row(row: dict) -> str:
             + f'</div><p style="margin:8px 0 0">{" · ".join(facts)}</p>' + ticket + "</div>")
 
 
+#: The words that already say a stock has no ticket. A reason that opens with
+#: one of them must not be introduced by another: the budget's own reason for
+#: a withheld plan begins "ticket withheld: at the $X limit ...", and
+#: "No ticket for TSLA: ticket withheld: ..." says it twice. The page holds
+#: the same rule in ``docs/app.js`` (``saysNoTicket``), and
+#: ``tests/test_docs.py`` holds the two equal.
+NO_TICKET_LEADS = ("no ticket", "ticket withheld")
+
+
+def says_no_ticket(reason: str) -> bool:
+    """Does this reason already open with the words for 'there is no ticket'?"""
+    low = _text(reason).lower()
+    return any(low.startswith(lead) for lead in NO_TICKET_LEADS)
+
+
 def _no_ticket_lines(data: dict) -> list[str]:
     """One line per A-quality plan without a ticket, with the budget's
     reason: withheld by the stop rule, past the slots or the equity, or
-    sized to no whole share."""
+    sized to no whole share. The reason is said ONCE."""
     beyond = [t for t in data.get("beyond_cap", []) if _text(str(t))] if isinstance(data.get("beyond_cap"), list) else []
     if not beyond:
         return []
     reasons = {c.get("ticker"): _text(c.get("reason")) for c in (_get(data, "cash_budget", "cut") or [])
                if isinstance(c, dict)}
-    return [f'<p style="{_S_MUTED}">No ticket for {esc(t)}: {esc(reasons.get(t) or "see the page")}.</p>' for t in beyond]
+    lines = []
+    for t in beyond:
+        why = reasons.get(t) or "see the page"
+        head = f"{esc(t)} — " if says_no_ticket(why) else f"No ticket for {esc(t)}: "
+        lines.append(f'<p style="{_S_MUTED}">{head}{esc(why)}.</p>')
+    return lines
 
 
 def _problems_block(problems: Any) -> str:

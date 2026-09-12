@@ -185,6 +185,29 @@ def test_the_page_smoke_reads_the_same_problem_sentences_the_page_prints():
         assert report.PROBLEM_SENTENCES[kind] == sentence, kind
 
 
+def test_the_page_and_the_mail_refuse_to_say_no_ticket_twice_by_the_same_rule():
+    """The budget's reason for a withheld plan opens with "ticket withheld",
+    so a line that introduces it with "No ticket" says it twice. Both
+    consumers drop the lead, and by the same list of words."""
+    page = (ROOT / "docs" / "app.js").read_text()
+    leads = set(re.findall(r"s\.indexOf\((NO_TICKET|CUT_WORDS\.withheld)\) === 0", page))
+    assert leads == {"NO_TICKET", "CUT_WORDS.withheld"}, leads
+    assert re.search(r"const NO_TICKET = '([^']+)'", page).group(1) == report.NO_TICKET_LEADS[0]
+    assert re.search(r"withheld: '([^']+)'", page).group(1) == report.NO_TICKET_LEADS[1]
+    for reason, doubled in ((f"{report.NO_TICKET_LEADS[1]}: at the $1.00 limit", True),
+                            (f"{report.NO_TICKET_LEADS[0]} tonight", True),
+                            ("beyond the slot cap", False)):
+        assert report.says_no_ticket(reason) is doubled, reason
+    # and the mail's own line drops the lead exactly there
+    data = {"beyond_cap": ["TSLA", "AAPL"],
+            "cash_budget": {"cut": [{"ticker": "TSLA", "reason": f"{report.NO_TICKET_LEADS[1]}: at the $129.18 limit"},
+                                    {"ticker": "AAPL", "reason": "beyond the slot cap"}]}}
+    lines = report._no_ticket_lines(data)
+    assert "No ticket for TSLA" not in lines[0] and "ticket withheld" in lines[0], lines[0]
+    assert lines[0].count("ticket withheld") == 1, lines[0]
+    assert "No ticket for AAPL: beyond the slot cap" in lines[1], lines[1]
+
+
 def test_the_page_prints_the_same_plan_status_words_the_mail_does():
     page = (ROOT / "docs" / "app.js").read_text()
     block = re.search(r"const PLAN_STATUS = \{\n(.*?)\n  \};", page, re.S).group(1)

@@ -164,7 +164,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-What is measured offline: 1027 tests, the chart check, and the page smoke
+What is measured offline: 1028 tests, the chart check, and the page smoke
 over six fixtures walked through every view, stock, search, the chooser,
 the keyboard, deep links and the old anchors, then the phone and the stale,
 failed, field-dropped and no-record states. What is NOT: the full-market
@@ -493,3 +493,120 @@ unobserved. Omit: trade logging, a portfolio, execution.
 **Next action.** Merge this branch so the next run writes the ratio; on the
 next green or yellow session dispatch the dry run and count the A-quality
 bursts withheld at the limit.
+
+## Checkpoint, 12 Sep 2026 — the map's scale and its taps
+
+**Revision.** Branch `claude/volume-repair-mobile-entry-zo54u9`, started at
+`5649c71`: the volume repair `d1fb272` with `origin/main` (run 47) merged in,
+never merged to `main` and carrying no pull request of its own. `docs/data.json`,
+`docs/picks.json` and the universe directory are byte-for-byte `origin/main`'s
+throughout, and the repair itself was not re-done.
+
+**The repair is merge-ready, measured at `5649c71`** (offline, through the
+doubles): 1027 tests, `make_fixture.py --check` 7 fixtures current, chart check
+163/163, page smoke 2507/2507. Not run here, not claimable: a live fetch,
+Resend, Pages, CI itself.
+
+**Reproduced in Chromium over that unchanged record** (401 bursts, session
+2026-09-11, `scratchpad/repro/map_repro.mjs`): the volume axis read 0.0×, 45.8×,
+91.5×, 137.3×, 183.0× against a median burst of 1.08×, and 391 of 401 points sat
+within five pixels of the pane floor on a phone, across twelve distinct pixel
+rows; the selection sentence listed forty-nine tickers as sharing one spot. A
+point's hit box is 44 px, so 393 of 401 markers had another stock's button over
+their own centre: a tap at RVTY's own centre selected PDS on a phone, QCOM at
+1280. Over the six page fixtures, thirteen stock pages printed "for observation,
+no ticket: no ticket".
+
+**Changed.** The volume axis is compressed and the gain axis is not
+(`SCStock.map.volumeScale()`): `log1p(v / VOLUME_KNEE)` over
+`log1p(top / VOLUME_KNEE)`, the top still the largest recorded ratio with the
+headroom the linear axis had. It is a POSITION and nothing else — the ticks are
+real ratios off a ladder thinned by `TICK_MIN_GAP`, every point keeps its
+recorded value, nothing is clipped, binned or winsorised, and `log1p(0)` is 0, so
+a zero ratio is ON the axis line and still told apart from a burst with no
+measurement, which is not plotted and is listed by name. A tap is resolved by
+distance from the tap within `TAP_RADIUS` (half the 44 px box the browser
+hit-tests), never by which marker was appended last: one point in reach is chosen
+outright, more than one opens a compact nearby chooser, nearest first, that
+chooses nothing until the reader does. Enter or Space on a focused point names
+one point and takes it — measured in Chromium, a mouse click and a touch tap both
+report `detail` 1 and a `pointerType`, Enter reports 0 and `''` — and the crowd
+stays reachable by a *Nearby stocks (N)* button beside the selection. One radius
+feeds the badge, the spoken label and the chooser. The duplicated copy is one
+helper each way (`noTicketLead()` for the decision summary, the short status
+words; `noTicketPhrase()` for the plan disclosure, the record's reason once and
+never after a lead that already said it; the Following hint takes the short
+words, because the action area above it has just printed the reason in full).
+
+**After** (same script, same record): ticks 0×, 0.25×, 1×, 3×, 10×, 25×, 50×,
+183× on a phone; 62 distinct pixel rows for 401 points against 12, one point on
+the floor against 391, 325 distinct spots against 129. A tap at RVTY's centre
+opens a chooser of the 323 stocks within a finger, RVTY first, and choosing it
+selects RVTY in the map, the cards, the chart and the table. Zero duplicated
+phrases over the same 35 stock pages. **Not fixed, and not fixable this way:**
+401 points in a 262×200 px pane is 0.13 points per square pixel, so even at an
+8 px radius the median point has 72 neighbours on a phone. The map is now a
+readable distribution with an honest way out of any tap; the cards, the search
+and the table are still the precise way to a named stock.
+
+**Checks run** (offline): 1028 tests; 7 fixtures current; chart check 163/163;
+page smoke 2623 with `checkMapScale` — the outlier, zero, missing, the
+crowded tap at real coordinates (a finger on the phone, a mouse at 1280) and the
+chooser's lifecycle. Its first run found four holes, all closed: `data-nearby`
+did not exist until a chooser had opened; two points recorded alike had a third
+neighbour, so the count assertion was over-specific; and the decision summary had
+swallowed the whole withhold reason where a short status word belongs.
+
+**The mutants and the review.** Eleven page mutants; eight died on the first pass and
+**`zero off the floor` survived** — a hole of the third shape this file names: the
+check compared the zero POINT against the 0× LABEL, and both are drawn through the
+same `at()`, so moving one moved the other. The pane floor is read off the vertical
+grid lines now, which the scale never touches, and it dies. A second check could
+not fail for the reason it named: "the ticks are not evenly spaced, because the
+axis is compressed" was reading the tick LADDER, which is uneven on a linear axis
+too; it asks where the 1× tick sits now, which on a linear axis over a 183× top
+would be half a percent off the floor. And `stale panel survives` survived twice
+before it bit: the panel closed anyway because the click moved the focus out of it,
+and because selecting a different stock lengthened the page, raised a scrollbar,
+narrowed the pane and redrew the map. A deep link moves the shared selection and
+nothing else, and that is the case the check uses.
+
+Three survived and each showed a hole, closed with the check it was missing.
+
+A reviewer reading the chooser back in Chromium returned four, all reproduced, all
+fixed. Two were the same defect twice over: cancelling handed the focus to the
+marker the browser had HIT-TESTED — the one the chooser exists to refuse — so a
+reader who tapped LMAT, pressed Escape and then Enter got QCOM, a stock the chooser
+had not even listed (the silent topmost, one keystroke later); and a selection made
+elsewhere left the panel standing over a fifth of the pane, still describing a tap
+that was over. Then: the panel claimed `aria-modal` over a page that stayed live
+behind it — 1646 buttons still tabbable — and held Tab in against the claim, so it
+is a labelled popover now that Tab may leave and leaving closes; and dismissing it
+by a press on bare pane or a redraw dropped the focus on `<body>`, because the
+press's own default action runs after the handler. A fifth, that a crowded point's
+accessible name promised "choosing it opens the nearby list" when the keyboard
+does the opposite, is a wording fix. A reviewer over the whole diff added one
+more that the standing rule demands and I had not swept: the same doubled phrase
+was still in the MAIL (`report._no_ticket_lines()` printed "No ticket for TSLA:
+ticket withheld: ...") and in the page's own budget line. One list of leading
+words now (`report.NO_TICKET_LEADS`, `saysNoTicket()` on the page), and
+`tests/test_docs.py` holds the two equal, as it does the status words. The same
+review found the smoke's scratch records — full copies of a record, carrying the
+rule `key` fields the secret scan reads as credentials — written inside
+`tests/fixtures/page/` on a path `.gitleaks.toml` does not allowlist and nothing
+ignored; one anchored `.gitignore` line covers them. A sixth is measured and left alone: on a
+401-burst night 397 of 401 points have a neighbour within a finger on a phone, so
+nearly every tap opens the chooser. Narrowing the auto-choose radius to the dot's
+own was tried and moves 4 of 401 to 16 of 401 — a second constant for nothing. The
+map is a readable distribution with an honest way out of any tap; the cards, the
+search and the table are the one-step path to a named stock.
+
+**Keep / fix / defer / omit.** Keep everything above. Fix next if it bites: on a
+record whose smallest ratio is well over zero the pane's bottom fifth is empty,
+the price of keeping 0× on the axis; `test_claude_md_is_short_and_names_the_
+fixture_count` still measures collapsed prose, so its cap cannot fail. Defer to
+Astra: the +4% ceiling against his 4% stop line. Omit: trade logging, a
+portfolio, execution.
+
+**Next action.** On the next green or yellow session dispatch the dry run and
+count the A-quality bursts withheld at the limit from its artifact.

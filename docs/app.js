@@ -611,6 +611,40 @@
     if (CUT_WORDS[status]) return [CUT_WORDS[status], CUT_TONE[status] || 'neutral'];
     return STATUS_WORDS[status] || [words(status || 'no ticket'), 'neutral'];
   }
+  // Saying there is no ticket, once. STATUS_WORDS already answers "no ticket"
+  // for below_grade, not_admitted and no_plan and CUT_WORDS answers "ticket
+  // withheld", so a sentence that leads with those words must not close with
+  // them too: the page printed "for observation, no ticket: no ticket" on
+  // thirteen fixture stock pages, and "No ticket tonight (no ticket)".
+  const NO_TICKET = 'no ticket';
+  // a reason that already opens with the words for "there is no ticket"
+  const saysNoTicket = (s) => { s = text(s).toLowerCase(); return s.indexOf(NO_TICKET) === 0 || s.indexOf(CUT_WORDS.withheld) === 0; };
+  // the record's own reason, else the status words -- but never the bare
+  // words "no ticket", which every caller here has already said
+  function noTicketWhy(c) {
+    const own = text(c && c.reason);
+    if (own) return own.replace(/[.]$/, '');
+    const w = statusWords(c && c.status)[0];
+    return w && w !== NO_TICKET ? w : '';
+  }
+  // `lead`, then the record's own reason -- or the reason alone when it
+  // already leads with those words, so neither is said twice.
+  function noTicketPhrase(lead, c) {
+    const why = noTicketWhy(c);
+    if (!why) return lead;
+    return saysNoTicket(why) ? why : lead + ': ' + why;
+  }
+  // the long form, for the plan disclosure: the reason in full, once
+  const noTicketLine = (c) => cap(sentence(noTicketPhrase('No ticket tonight', c)));
+  // the short form, for the decision summary, which is a summary: the words
+  // the card's chip already wears, with no parenthesis when they are the lead
+  // itself. The reason in full belongs to the action area and the disclosure,
+  // and the Following hint takes these same short words because it sits
+  // directly under the action area that has just printed the reason.
+  const noTicketLead = (c) => {
+    const w = statusWords(c && c.status)[0];
+    return 'No ticket tonight' + (w && w !== NO_TICKET ? ' (' + w + ')' : '') + '.';
+  };
   const listRule = (data, key, fallback) => { const r = ((data.rules || {}).pipeline || {})[key]; return Array.isArray(r) && r.length ? r : fallback; };
   function buildModel(data) {
     const trades = data.trades || [], cb = data.cash_budget || {}, cuts = {};
@@ -1118,7 +1152,7 @@
         redraw(); renderFollowing(); followJump();
       });
       box.appendChild(btn);
-      box.appendChild(el('p', { 'class': 'ss-follow__hint', text: setup.suggested_shares ? plural(setup.suggested_shares, 'share') + ' suggested by the plan · saved in this browser only' : (c.status === 'ticket' ? 'for observation, no size suggested' : 'for observation, no ticket: ' + (statusWords(c.status)[0]) + ' · saved in this browser only') }));
+      box.appendChild(el('p', { 'class': 'ss-follow__hint', text: setup.suggested_shares ? plural(setup.suggested_shares, 'share') + ' suggested by the plan · saved in this browser only' : (c.status === 'ticket' ? 'for observation, no size suggested' : 'for observation, ' + statusWords(c.status)[0] + ' · saved in this browser only') }));
       return box;
     }
     box.appendChild(chip('following', 'good'));
@@ -1213,7 +1247,7 @@
     const entry = entryInstruction(plan);
     const need = c.status === 'ticket'
       ? [entry || (text(plan.order_line) ? sentence(plan.order_line) : 'The plan carries no entry instruction.')]
-      : [c.plan ? 'No ticket tonight (' + statusWords(c.status)[0] + '). The setup would need: ' + (entry || 'an entry the plan does not spell out.') : 'Nothing: ' + sentence(c.reason)];
+      : [c.plan ? noTicketLead(c) + ' The setup would need: ' + (entry || 'an entry the plan does not spell out.') : 'Nothing: ' + sentence(c.reason)];
     const wait = c.plan
       ? [text(plan.pre_open_check) ? cap(sentence(plan.pre_open_check)) : '', isNum(plan.stop) ? 'Stop ' + stopWords(plan) + (plan.stop_basis !== 'max_stop' && isNum(plan.stop_pct) && isNum(plan.sizing_price) ? ' · ' + plain(plan.stop_pct) + '% under the ' + usd(plan.sizing_price) + ' limit' : '') + '.' : '']
       : [cap(sentence(c.reason))];
@@ -1229,7 +1263,7 @@
     const entry = entryInstruction(plan);
     const need = c.status === 'ticket'
       ? [entry || (text(plan.order_line) ? sentence(plan.order_line) : 'The plan carries no entry instruction.')]
-      : [c.plan ? 'No ticket tonight (' + statusWords(c.status)[0] + '). The setup would need: ' + (entry || sentence(wl.instruction) || 'an entry the plan does not spell out.') : (text(wl.instruction) ? sentence(wl.instruction) : 'The run wrote no plan for it.')];
+      : [c.plan ? noTicketLead(c) + ' The setup would need: ' + (entry || sentence(wl.instruction) || 'an entry the plan does not spell out.') : (text(wl.instruction) ? sentence(wl.instruction) : 'The run wrote no plan for it.')];
     const wait = c.plan
       ? [text(plan.gap_rule) ? cap(sentence(plan.gap_rule)) : '', isNum(plan.stop) ? 'Stop ' + usd(plan.stop) + (text(plan.stop_basis) ? ' · ' + plan.stop_basis : '') + (isNum(plan.stop_pct) && isNum(plan.limit) ? ' · ' + plain(plan.stop_pct) + '% under the ' + usd(plan.limit) + ' limit' : '') + '.' : '']
       : [cap(sentence(c.reason))];
@@ -1376,7 +1410,7 @@
     if (text(plan.resize_rule)) kids.push(el('p', { 'class': 'sc-note', text: cap(sentence(plan.resize_rule)) }));
     const hint = blockedNow && c.status === 'ticket' ? 'No order is offered from a page that is ' + stateWords(st) + '.'
       : c.status === 'ticket' ? 'No order line was written for this plan.'
-      : 'No ticket tonight: ' + (c.reason || statusWords(c.status)[0]) + '. The setup is kept here for inspection.';
+      : noTicketLine(c) + ' The setup is kept here for inspection.';
     kids.push(orderBlock(plan, hint, withheld));
     return disclosure('disc-plan', 'Conditional plan, sizing and order', withheld ? (blockedNow && c.status === 'ticket' ? 'not offered' : statusWords(c.status)[0]) : 'sized at the limit', kids);
   }
@@ -1461,7 +1495,10 @@
     budget.appendChild(el('strong', { text: cb.sentence || ('Model allocation: tomorrow’s tickets would commit ' + usd(cb.committed_usd, 0) + ' of the configured ' + usd(acct.equity, 0) + ' · ' + plain(cb.slots_used) + ' of ' + plain(cb.slots_max) + ' slots') }));
     if (isNum(cb.at_risk_usd)) budget.appendChild(d.createTextNode(' · ' + usd(cb.at_risk_usd, 0) + ' planned price-to-stop risk'));
     budget.appendChild(d.createTextNode(' · over the configured sizing assumptions, not a balance, settled cash or buying power'));
-    (cb.cut || []).forEach((c) => budget.appendChild(el('span', { 'class': 'sc-note', text: 'No ticket: ' + c.ticker + ' — ' + c.reason })));
+    // the cut's own reason already opens with "ticket withheld" when the stop
+    // rule refused it, so the lead is dropped rather than said twice
+    (cb.cut || []).forEach((c) => budget.appendChild(el('span', { 'class': 'sc-note',
+      text: saysNoTicket(c.reason) ? c.ticker + ' — ' + c.reason : 'No ticket: ' + c.ticker + ' — ' + c.reason })));
     const sheet = clear($('orders-table'));
     const table = el('table', { 'class': 'sc-table sc-table--compact ss-orders', id: 'order-sheet' });
     table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Tomorrow’s orders in Fidelity’s field order' }));

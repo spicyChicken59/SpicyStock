@@ -53,15 +53,8 @@ does not carry, falls back to Explore and says so.
    record's own call to action. Then two stage cards, **Bursts · N** (the
    range-expansion days the scan graded) and **Setting up · N** (the
    anticipation list: quiet, coiled names inside established momentum),
-   and inside the chosen stage — as cards, or for the bursts as a **map**
-   of the session's gain against its volume relative to the previous
-   session, every point the same selection as its card, the unmeasured
-   listed beside it, position a measurement and not a return (the ratio
-   is the scan's own for every burst, the dollar scan's days included;
-   a record from before 12 Sep 2026 holds it for those days only in the
-   checklist's block, and the page reads that copy and says so) — one
-   selectable card per stock with its grade and its status in the record's
-   words — *ticket*, *ticket
+   and inside the chosen stage one selectable card per stock with its grade
+   and its status in the record's words — *ticket*, *ticket
    withheld*, *beyond the slot cap*, *beyond the configured equity*, *no
    whole share*, *no new longs*, *vetoed*, *no ticket*, *watch* — a search
    that finds a ticker in either stage and says when it switched, and on a
@@ -69,6 +62,31 @@ does not carry, falls back to Explore and says so.
    Bursts when the scan found any, Setting up otherwise, and a chosen stage
    is never switched away from: an empty one says why it is empty. Each
    stage remembers its last chosen stock.
+   The bursts have a second view of the same list, a **map** of the
+   session's gain against its volume relative to the previous session:
+   every point the same selection as its card, the unmeasured listed
+   beside it, position a measurement and not a return (the ratio is the
+   scan's own for every burst, the dollar scan's days included; a record
+   from before 12 Sep 2026 holds it for those days only in the checklist's
+   block, and the page reads that copy and says so). The gain axis is
+   linear; the volume axis is compressed, because the ratio has no upper
+   bound and one name at 169× laid four hundred at about 1× on the pane
+   floor. Every tick is labelled with the ratio it stands for, every burst
+   is plotted at its own recorded ratio, the largest is never clipped, 0×
+   sits on the axis line, and the map says so in words. Points still
+   overlap, so a tap is resolved by distance from the tap and not by which
+   marker was drawn last: when more than one is within a finger, a compact
+   **nearby chooser** lists them nearest-first with their measurements and
+   chooses nothing until you do. It is a labelled popover, not a modal: the
+   arrows move inside it, Escape closes it and hands the focus back to the
+   stock you meant — never to the marker the browser happened to hit-test —
+   tabbing out of it closes it, any selection made elsewhere closes it, and
+   a *Nearby stocks* button beside the selection opens it from the keyboard.
+   A tap on a point standing alone chooses it outright, and the keyboard's
+   Enter takes the point it has focused. A table under the map carries every
+   burst, plotted or not. On a four-hundred-burst night almost every point
+   has a neighbour within a finger, so almost every tap asks: the cards, the
+   search and the table are the one-step path to a stock you can name.
 3. **The chosen stock.** One chart panel with one header (the symbol, its
    last close and session), the controls together above the plot, and every
    price label in a reserved right gutter with a leader back to its exact
