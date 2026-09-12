@@ -808,9 +808,13 @@
       const sub = s === 'bursts'
         ? (n ? tickets + ' with a ticket · ' + (n - tickets) + ' without' : 'range-expansion days, graded')
         : (n ? tickets + ' with a ticket · ' + (n - tickets) + ' to watch' : 'quiet, coiled names inside momentum');
+      // name, count and the sub are laid out by grid area, so the phone can put
+      // the count beside the name and give the sub -- which is where the ticket
+      // count is said -- the card's full width instead of dropping it
       const btn = el('button', { 'class': 'ss-stage', type: 'button', 'data-stage': s, 'data-count': String(n), 'aria-pressed': 'false', 'aria-controls': 'workspace' }, [
-        el('span', null, [el('span', { 'class': 'ss-stage__name', text: STAGE_NAME[s] }), el('span', { 'class': 'ss-stage__sub', text: sub })]),
-        el('span', { 'class': 'ss-stage__count' }, [d.createTextNode(String(n)), el('small', { text: n === 1 ? 'stock' : 'stocks' })])
+        el('span', { 'class': 'ss-stage__name', text: STAGE_NAME[s] }),
+        el('span', { 'class': 'ss-stage__count' }, [d.createTextNode(String(n)), el('small', { text: n === 1 ? 'stock' : 'stocks' })]),
+        el('span', { 'class': 'ss-stage__sub', text: sub })
       ]);
       btn.addEventListener('click', () => { state.gesture = true; navigate(routeHash(s, state.selected[s])); });
       box.appendChild(btn);
@@ -987,8 +991,8 @@
     const panel = el('figure', { 'class': 'ss-chart-panel', 'data-mode': prefs.mode, 'data-range': prefs.range });
     // one header strip: the symbol, its last close and session; the mode and the range controls together; the legend for the mode
     const legendBox = el('div', { 'class': 'ss-chart-panel__legend' });
-    const modeTabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-label': 'Chart mode' });
-    const rangeTabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-label': 'Sessions shown' });
+    const modeTabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-labelledby': 'chart-view-label' });
+    const rangeTabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-labelledby': 'chart-range-label' });
     const toggleInput = el('input', { type: 'checkbox', checked: prefs.closeLine ? '' : null });
     const toggle = el('label', { 'class': 'ss-chart-panel__toggle', hidden: prefs.mode === 'candles' ? null : '' }, [toggleInput, 'close line']);
     panel.appendChild(el('div', { 'class': 'ss-chart-panel__head' }, [
@@ -998,7 +1002,13 @@
         el('span', { 'class': 'sc-hint', text: last ? 'close ' + dateWords(last.date) : 'no bars archived' }),
         demo ? chip('demo data', 'warn') : null
       ]),
-      el('div', { 'class': 'ss-chart-panel__tools' }, [modeTabs, el('div', { 'class': 'ss-chart-panel__group' }, [el('span', { 'class': 'ss-chart-panel__caption', 'aria-hidden': 'true', text: 'range' }), rangeTabs]), toggle])
+      // two segmented groups in one strip: each is captioned, and the caption is
+      // the group's own name (aria-labelledby), because "setup" is a mode AND a
+      // range and neither row could be told from the other without it
+      el('div', { 'class': 'ss-chart-panel__tools' }, [
+        el('div', { 'class': 'sc-field sc-field--group' }, [el('span', { 'class': 'sc-field__label', id: 'chart-view-label', text: 'view' }), modeTabs]),
+        el('div', { 'class': 'sc-field sc-field--group' }, [el('span', { 'class': 'sc-field__label', id: 'chart-range-label', text: 'range' }), rangeTabs]),
+        toggle])
     ]));
     const mount = el('div', { 'class': 'ss-chart-mount', id: 'chart-mount' });
     panel.appendChild(mount);
@@ -1138,7 +1148,7 @@
   function followBlock(c) {
     const setup = followSetupOf(c), id = SCStock.follow.identity(setup), st0 = SCStock.follow.status();
     const item = st0.available ? SCStock.follow.find(id) : null;
-    const box = el('div', { 'class': 'ss-follow', 'data-follow': item ? 'following' : 'not-following', 'data-follow-id': id });
+    const box = el('div', { 'class': 'sc-actionbar__more ss-follow', 'data-follow': item ? 'following' : 'not-following', 'data-follow-id': id });
     const redraw = () => { const next = followBlock(c); box.parentNode.replaceChild(next, box); return next; };
     const warn = (msg) => { box.querySelectorAll('.ss-follow__warn').forEach((x) => x.remove()); box.appendChild(el('p', { 'class': 'ss-follow__warn', role: 'alert', text: msg })); };
     if (!st0.available) {
@@ -1288,7 +1298,7 @@
   }
   function actionArea(c) {
     const sw = statusWords(c.status), blockedNow = !!(st && blocked(st)), plan = c.plan || {};
-    const box = el('div', { 'class': 'ss-action', 'data-ticket': c.status === 'ticket' ? (blockedNow ? 'blocked' : 'order') : c.status });
+    const box = el('div', { 'class': 'sc-actionbar ss-action', 'data-ticket': c.status === 'ticket' ? (blockedNow ? 'blocked' : 'order') : c.status });
     let line, btn;
     if (c.status === 'ticket' && !blockedNow) {
       line = 'Conditional ticket: ' + (text(plan.order_line) ? plan.order_line : 'see the plan') + '. It fills only on its own terms tomorrow; nothing here is placed for you.';

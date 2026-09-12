@@ -1,6 +1,6 @@
 /* ==========================================================================
-   SpicyChicken Design System — sc.css  v2.10.0
-   Mohammed Tahir Madni · github.com/spicyChicken59
+   SpicyChicken Design System — sc.css  v2.11.0
+   SpicyChicken · github.com/spicyChicken59
 
    One file, no build step. Drop it in (or link it) and every page shares the
    same surfaces, type, components and chart colors.
@@ -451,6 +451,16 @@ a.sc-btn[aria-disabled="true"] { pointer-events: none; }   /* stops the click, n
 
 /* Inputs & selects */
 .sc-field { display: flex; align-items: center; gap: 8px; min-height: 24px; font: 600 11.5px/1 var(--sc-font-mono); letter-spacing: .3px; text-transform: lowercase; color: var(--sc-text-2); }
+/* A caption beside a segmented control. <label> can only name one labelable
+   control, and a role="group" is not one, so the group form is a <div> whose
+   caption is its own element and whose group points at it by id:
+   <div class="sc-field sc-field--group"><span class="sc-field__label" id="x">range</span>
+     <div class="sc-tabs" role="group" aria-labelledby="x"> … </div></div>
+   Two unlabelled segmented rows side by side are unreadable as soon as their
+   words overlap (a "setup" mode beside a "setup" range); the caption is what
+   tells them apart, for the eye and for a screen reader, in one place. */
+.sc-field--group { align-items: center; flex-wrap: nowrap; }
+.sc-field__label { white-space: nowrap; }
 .sc-input, .sc-select { font: 500 14px var(--sc-font-body); color: var(--sc-heading); background: var(--sc-surface); border: 1px solid var(--sc-border-control); border-radius: var(--sc-r-sm); padding: 8px 10px; transition: border-color var(--sc-motion) var(--sc-ease); min-width: 0; }
 .sc-input::placeholder { color: var(--sc-text-3); }
 .sc-input:hover, .sc-select:hover { border-color: var(--sc-brand-strong); }
@@ -552,7 +562,10 @@ a.sc-btn[aria-disabled="true"] { pointer-events: none; }   /* stops the click, n
 .sc-details[open] summary::before { content: "↓ "; content: "↓ " / ""; }
 
 /* Tabs — a segmented control (pill row). Contract: <div class="sc-tabs" role="group" aria-label="…">
-   with <button class="sc-tab" aria-pressed="true|false">. aria-selected is styled too for old markup. */
+   with <button class="sc-tab" aria-pressed="true|false">. aria-selected is styled too for old markup.
+   More than one group in a row: caption each with .sc-field--group and swap the
+   aria-label for aria-labelledby, so the words the reader sees are the words
+   assistive tech announces. */
 .sc-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
 .sc-tab { font: 600 11px/1 var(--sc-font-mono); letter-spacing: .3px; text-transform: lowercase; padding: 8px 13px; border-radius: var(--sc-r-sm); border: 1px solid var(--sc-border); background: var(--sc-surface); color: var(--sc-heading); cursor: pointer; transition: background var(--sc-motion) var(--sc-ease), border-color var(--sc-motion) var(--sc-ease); }
 .sc-tab:hover { background: var(--sc-hover); border-color: var(--sc-brand-strong); }
@@ -562,6 +575,26 @@ a.sc-btn[aria-disabled="true"] { pointer-events: none; }   /* stops the click, n
 /* Notice — the stop-and-read block */
 .sc-notice { background: var(--sc-surface); border: 2px solid var(--sc-danger); border-radius: var(--sc-r-md); padding: 16px 18px; margin: var(--sc-s3) 0; }
 .sc-notice .sc-eyebrow { color: var(--sc-danger); }
+
+/* Action bar — the one action available here, its status word and the reason
+   beside it, on one line while there is room. Contract: an optional .sc-chip,
+   one <p> saying what is on offer or why nothing is, one .sc-btn, and an
+   optional __more row for whatever follows from the action.
+   Narrow, it stacks: the paragraph loses the row basis first. A flex-basis
+   written for a row becomes a HEIGHT once the container turns into a column,
+   which is how a one-line sentence ends up 260px tall and pushes the only
+   button on the page under the fold — measured, on a phone, in a consumer. */
+.sc-actionbar { display: flex; align-items: center; gap: var(--sc-s2) var(--sc-s3); flex-wrap: wrap; padding: var(--sc-s2) var(--sc-s3); border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); background: var(--sc-raised); }
+.sc-actionbar > p { flex: 1 1 260px; min-width: 0; margin: 0; color: var(--sc-text); font-size: var(--sc-text-sm); line-height: 1.5; }
+.sc-actionbar > .sc-chip { flex: 0 0 auto; }
+.sc-actionbar > .sc-btn { flex: 0 0 auto; }
+.sc-actionbar__more { flex: 1 1 100%; display: flex; align-items: center; gap: var(--sc-s1) var(--sc-s2); flex-wrap: wrap; padding-top: var(--sc-s2); border-top: 1px dashed var(--sc-border); }
+@media (max-width: 720px) {
+  .sc-actionbar { flex-direction: column; align-items: stretch; }
+  .sc-actionbar > p { flex: 0 0 auto; }
+  .sc-actionbar > .sc-chip { align-self: flex-start; }
+  .sc-actionbar > .sc-btn { justify-content: center; }
+}
 
 /* Footer & watermark — brand endorsement lives here, small, always the same */
 .sc-foot { background: var(--sc-ink); color: var(--sc-on-ink-3); padding: 20px var(--sc-s4); margin-top: var(--sc-s6); font: 500 10.5px/1.8 var(--sc-font-mono); letter-spacing: .3px; text-transform: lowercase; display: flex; justify-content: space-between; align-items: center; gap: var(--sc-s3); flex-wrap: wrap; border-top: 1px solid var(--sc-ink-line); }

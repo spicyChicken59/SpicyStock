@@ -19,6 +19,14 @@
 .ss-notice p { margin: 4px 0 0; }
 .ss-notice p:first-of-type { margin-top: 0; }
 .ss-view { margin-top: var(--sc-s3); }
+/* On a phone the masthead already costs three rows; 56px of page padding and
+   view margin on top of it pushed the verdict to a third of the screen. */
+@media (max-width: 720px) {
+  /* .sc-wrap--wide.sc-page sets the page's 32px top padding at the same
+     specificity, so this pairs the page class with the wrap it is on. */
+  .sc-wrap--wide.ss-page { padding-block-start: var(--sc-s1); }
+  .ss-page > .ss-view { margin-top: var(--sc-s2); }
+}
 .ss-view > .sc-chapter { margin-bottom: var(--sc-s3); }
 
 /* ---- Explore: the compact market context ---------------------------------- */
@@ -41,19 +49,29 @@
 
 /* ---- the two stage cards --------------------------------------------------- */
 .ss-stages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-s2); margin-top: var(--sc-s3); }
-.ss-stage { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--sc-s1) var(--sc-s2); align-items: center; text-align: left; padding: var(--sc-s2) var(--sc-s3); border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); background: var(--sc-surface); color: var(--sc-text); cursor: pointer; font: inherit; transition: border-color var(--sc-motion) var(--sc-ease), background var(--sc-motion) var(--sc-ease); }
+.ss-stage { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name count' 'sub count'; gap: 2px var(--sc-s2); align-items: center; text-align: left; padding: var(--sc-s2) var(--sc-s3); border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); background: var(--sc-surface); color: var(--sc-text); cursor: pointer; font: inherit; transition: border-color var(--sc-motion) var(--sc-ease), background var(--sc-motion) var(--sc-ease); }
 .ss-stage:hover { background: var(--sc-hover); border-color: var(--sc-brand-strong); }
 .ss-stage:focus-visible { outline: 2px solid var(--sc-focus); outline-offset: 2px; }
 .ss-stage[aria-pressed="true"] { border-color: var(--sc-brand-line); background: var(--sc-brand-fill); box-shadow: inset 0 0 0 1px var(--sc-brand-line); }
-.ss-stage__name { display: block; font: 700 var(--sc-h3)/1.15 var(--sc-font-display); letter-spacing: -.02em; color: var(--sc-heading); }
+.ss-stage__name { grid-area: name; align-self: end; display: block; font: 700 var(--sc-h3)/1.15 var(--sc-font-display); letter-spacing: -.02em; color: var(--sc-heading); }
 .ss-stage__name::after { content: ''; display: inline-block; width: 8px; height: 8px; margin-left: 8px; border-radius: 50%; border: 1px solid var(--sc-border-strong); vertical-align: middle; }
 .ss-stage[aria-pressed="true"] .ss-stage__name::after { background: var(--sc-brand); border-color: var(--sc-brand); }
-.ss-stage__sub { display: block; margin-top: 2px; color: var(--sc-text-2); font-size: var(--sc-text-sm); }
-.ss-stage__count { display: block; font: 700 clamp(26px, 3vw, 34px)/1 var(--sc-font-body); letter-spacing: -.03em; color: var(--sc-heading); font-variant-numeric: tabular-nums; text-align: right; }
+.ss-stage__sub { grid-area: sub; align-self: start; display: block; color: var(--sc-text-2); font-size: var(--sc-text-sm); }
+.ss-stage__count { grid-area: count; display: block; font: 700 clamp(26px, 3vw, 34px)/1 var(--sc-font-body); letter-spacing: -.03em; color: var(--sc-heading); font-variant-numeric: tabular-nums; text-align: right; }
 .ss-stage__count small { display: block; margin-top: 4px; font: 500 10.5px/1.4 var(--sc-font-mono); letter-spacing: .2px; color: var(--sc-text-2); text-align: right; }
 @media (max-width: 480px) {
-  .ss-stage { padding: var(--sc-s2); }
-  .ss-stage__sub { display: none; }
+  /* The card is ~135px wide inside its padding at 390 and ~100 at 320, so the
+     name and the number share one line only at phone sizes, and the unit word
+     under the number goes: the sub-line below says what the stocks are, and
+     the sub is the line that carries the ticket count. */
+  .ss-stage { padding: var(--sc-s2); grid-template-areas: 'name count' 'sub sub'; gap: 4px var(--sc-s1); align-items: center; }
+  .ss-stage__name { align-self: center; font-size: var(--sc-text-md); }
+  /* the selection dot wraps to its own line on an 87px name column; the card's
+     own pressed border and fill say the same thing, so it goes on a phone */
+  .ss-stage__name::after { display: none; }
+  .ss-stage__count { align-self: center; font-size: 24px; }
+  .ss-stage__count small { display: none; }
+  .ss-stage__sub { font-size: var(--sc-text-xs); line-height: 1.45; }
 }
 
 /* ---- the workspace: a candidate column beside the stock detail ------------------ */
@@ -97,10 +115,9 @@
 .ss-chart-panel__id .sc-figure { font-size: var(--sc-text-md); }
 .ss-chart-panel__price { font: 700 var(--sc-text-md)/1 var(--sc-font-body); letter-spacing: -.02em; color: var(--sc-heading); font-variant-numeric: tabular-nums; }
 .ss-chart-panel__legend .sc-legend { margin: 0 0 var(--sc-s1); }
-.ss-chart-panel__tools { display: flex; align-items: center; gap: var(--sc-s2); flex-wrap: wrap; }
+.ss-chart-panel__tools { display: flex; align-items: center; gap: var(--sc-s1) var(--sc-s3); flex-wrap: wrap; }
 .ss-chart-panel__tools .sc-tabs { gap: 4px; }
-.ss-chart-panel__group { display: flex; align-items: center; gap: var(--sc-s2); }
-.ss-chart-panel__caption { font: 500 11px/1 var(--sc-font-mono); color: var(--sc-text-3); }
+.ss-chart-panel__tools .sc-field { gap: var(--sc-s1); }   /* caption to its own group, wider gap between groups */
 .ss-chart-panel__toggle { display: inline-flex; align-items: center; gap: 6px; font: 500 11px/1 var(--sc-font-mono); color: var(--sc-text-2); cursor: pointer; }
 .ss-chart-panel__toggle input { margin: 0; accent-color: var(--sc-brand); }
 .ss-chart-mount { min-height: 200px; }
@@ -126,10 +143,11 @@
 .ss-decision__item p + p { margin-top: 4px; }
 @media (max-width: 900px) { .ss-decision { grid-template-columns: minmax(0, 1fr); } }
 
-/* the action area: the conditional plan, or the reason there is none */
-.ss-action { margin-top: var(--sc-s3); padding: var(--sc-s2) var(--sc-s3); border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); background: var(--sc-raised); display: flex; align-items: center; gap: var(--sc-s2) var(--sc-s3); flex-wrap: wrap; }
-.ss-action p { margin: 0; flex: 1 1 260px; color: var(--sc-text); font-size: var(--sc-text-sm); line-height: 1.5; }
-.ss-action .sc-chip { flex: 0 0 auto; }
+/* the action area: the conditional plan, or the reason there is none.
+   The bar itself is the system's .sc-actionbar (sc.css); only its place in
+   this page is here. Its phone layout -- the sentence releasing the row
+   basis it would otherwise keep as a 260px height -- lives upstream too. */
+.ss-action { margin-top: var(--sc-s3); }
 .ss-detail .sc-disclosure { margin-block: var(--sc-s2) 0; }
 .ss-detail .sc-disclosure__body > .sc-eyebrow { margin-top: var(--sc-s3); }
 .ss-detail .sc-disclosure__body > .sc-eyebrow:first-child { margin-top: 0; }
@@ -168,8 +186,6 @@
   .ss-detail { margin-top: var(--sc-s2); }
   .ss-detail__back { display: inline-flex; margin-top: 2px; }
   .ss-detail__chips { justify-content: flex-start; }
-  .ss-action { flex-direction: column; align-items: stretch; }
-  .ss-action .sc-btn { justify-content: center; }
 }
 
 /* ---- the chooser dialog ---------------------------------------------------------- */
@@ -334,7 +350,6 @@
 .ss-map__empty strong { color: var(--sc-heading); font-size: var(--sc-text-lg); }
 
 /* ---- Following: the action, the shelf ---------------------------------------------- */
-.ss-follow { display: flex; align-items: center; gap: var(--sc-s1) var(--sc-s2); flex-wrap: wrap; flex: 1 1 100%; padding-top: var(--sc-s2); border-top: 1px dashed var(--sc-border); }
 .ss-follow__hint { margin: 0; flex: 1 1 200px; color: var(--sc-text-2); font-size: var(--sc-text-sm); }
 .ss-follow__warn { margin: 0; flex: 1 1 100%; color: var(--sc-text); font-size: var(--sc-text-sm); }
 .ss-follow__form { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
