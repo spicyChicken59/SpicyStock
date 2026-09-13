@@ -820,7 +820,13 @@ writes.
 **Revision.** SpicyStock `claude/vibrant-volta-7ft7cn` from `5515515` (`main`, the
 merge of #52); design-system `claude/vibrant-volta-7ft7cn` from `edacaff`, one
 commit `6f10309` = **v2.11.0**. `docs/data.json` and `docs/picks.json` are
-`origin/main`'s to the byte. Nothing merged, deployed, tagged, dispatched or mailed.
+`origin/main`'s to the byte. **Both pairs are merged since:** SpicyStock
+`c3d6d1d` (#53) and design-system `1ffd905` (#22), each a merge commit, so
+`6f10309` is on the sheet's `main` and the vendored provenance still resolves.
+Merging SpicyStock published: `publish-dashboard.yml` fires on any push to
+`main` touching `docs/**`, so Pages built and deployed clean at `c3d6d1d` —
+the same run-47 record under the new layout, no record byte changed. Nothing
+was dispatched or mailed, and the run itself was never re-run.
 
 **Rendered before it was edited**, over the unchanged run-47 record and the marked
 `full` fixture at 1280×900, 390×844 and 320 px, both themes, the clock pinned.
@@ -874,11 +880,23 @@ page scrolls sideways: 315 px of content at 195, 240 and 280 px, the masthead li
 the footer and the Following empty state. Identical on `5515515`; the brief's floor
 is 320 px, where it is clean.
 
-**Blockers.** None offline. Not run and not claimable: a live fetch, a real chart
-read, Resend, Pages, CI, and the `v2.11.0` tag — `check.mjs` reports its absence as
-a reminder on a branch, and every documented jsDelivr pin 404s until it is cut.
+**Blockers.** CI is green on SpicyStock's `main` (Tests, the secret scan, the
+dashboard publication and the Pages deploy all pass at `c3d6d1d`). The design
+system's `main` is RED, on one gate and one only: `check: 1 problem — origin
+has no v2.11.0 tag`, with all seventeen other gates ok. That red is not this
+milestone's: the previous merge to that `main` (`edacaff`, 10 Sep) failed the
+same way on `no v2.10.0 tag`, and `origin` carries no tag past `v2.4.0` — the
+repo has been deferring the cut for six minors. **The tag cannot be pushed from
+this sandbox:** `git push origin v2.11.0` returns HTTP 403 at the agent proxy,
+which allows `refs/heads/*` and refuses `refs/tags/*`, and the proxy's own
+README says to report a 403 rather than route around it; the GitHub tools here
+create branches, not tags. It needs one command from a machine with push
+rights. Still not claimable, unchanged: a live fetch, a real chart read, Resend,
+and expectancy.
 
-**Next action.** Unchanged and still the method's: on a green or yellow session
-dispatch `evening.yml` with dry_run and check the study against what the run
-withholds and writes. For these two repositories: review the pair, cut `v2.11.0`
-upstream when the sheet is merged, and re-vendor if the tag moves the snapshot.
+**Next action.** First, from a machine that can push tags:
+`git tag v2.11.0 1ffd905 && git push origin v2.11.0`, which is the only thing
+between the sheet's `main` and green — no re-vendor follows it, since a tag
+moves no byte and the snapshot's provenance already names `6f10309`. Then the
+method's own, unchanged: on a green or yellow session dispatch `evening.yml`
+with dry_run and check the study against what the run withholds and writes.
