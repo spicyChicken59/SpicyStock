@@ -279,3 +279,66 @@ def test_the_mail_names_the_day_two_line_only_when_it_is_not_the_limit():
     older = json.loads(json.dumps(burst))
     older["plan"].pop("day2_spent_above")             # a record from before the split
     assert "Too extended over" not in report._trade_block(older, None)
+
+
+# --------------------------------- the publication gate's own reach ---------
+# tools/publish_dashboard.py is the only check that reads what a reader is
+# actually served. It kept its list of files in a tuple beside the page, and
+# the tuple named six of the seventeen: the design system's own sc.css -- where
+# the v2.11.0 action bar and field group live -- the burst map and the Following
+# shelf were never fetched, while the gate printed "Verified". It reads the list
+# off docs/index.html now, and these hold it to the page.
+def test_the_publication_gate_fetches_every_asset_the_page_cannot_work_without():
+    from tools import publish_dashboard
+    verified = set(publish_dashboard.public_files(ROOT))
+    for name in ("index.html", "data.json", "picks.json",
+                 "app.js", "app.css", "app-chart.js", "app-map.js", "app-follow.js",
+                 "design-system/sc.css", "design-system/sc-charts.js",
+                 "design-system/sc-theme.js", "design-system/sc-motion.js"):
+        assert name in verified, f"publication never fetches {name}; readers could get a stale one"
+
+
+def test_the_publication_gate_covers_every_local_reference_the_page_makes():
+    """Read the page a different way from the tool, so this cannot pass by
+    agreeing with the tool's own parse: whatever index.html grows next is
+    verified without being listed anywhere."""
+    from tools import publish_dashboard
+    verified = set(publish_dashboard.public_files(ROOT))
+    page = (ROOT / "docs" / "index.html").read_text()
+    referenced = {token for token in re.findall(r"[\"']([\w./-]+\.(?:js|css|json|png|svg|ico))[\"']", page)
+                  if "://" not in token and not token.startswith("/")}
+    assert referenced, "no local asset was found in docs/index.html at all"
+    assert referenced <= verified, sorted(referenced - verified)
+
+
+def test_the_publication_gate_refuses_a_reference_the_checkout_does_not_carry(tmp_path):
+    """A page asking for a file main does not publish is a 404 for every
+    reader. The gate names it and stops, rather than verifying the rest and
+    reporting success."""
+    from tools import publish_dashboard
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "index.html").write_text('<link rel="stylesheet" href="ghost.css">')
+    for name in publish_dashboard.RECORD_FILES:
+        (docs / name).write_text("{}")
+    with pytest.raises(RuntimeError, match="ghost.css"):
+        publish_dashboard.public_files(tmp_path)
+    (docs / "ghost.css").write_text("/* published now */")
+    assert "ghost.css" in publish_dashboard.public_files(tmp_path)
+
+
+def test_the_publication_gate_skips_what_it_cannot_publish(tmp_path):
+    """A CDN font, an absolute URL and a bare fragment are not files in docs/;
+    reading them off the page must not turn publication red."""
+    from tools import publish_dashboard
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "index.html").write_text(
+        '<link href="https://fonts.googleapis.com/css2?family=X" rel="stylesheet">'
+        '<link href="//cdn.example/x.css" rel="stylesheet">'
+        '<a href="https://github.com/spicyChicken59">src</a>'
+        '<a href="#method">skip</a><a href="/absolute.js">skip</a>'
+        '<script src="../outside.js"></script>')
+    for name in publish_dashboard.RECORD_FILES:
+        (docs / name).write_text("{}")
+    assert publish_dashboard.public_files(tmp_path) == ("index.html", *publish_dashboard.RECORD_FILES)
