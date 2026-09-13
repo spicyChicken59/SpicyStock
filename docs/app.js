@@ -1127,6 +1127,11 @@
     host.querySelectorAll('.ss-pick').forEach((b) => { const on = !!sel && b.getAttribute('data-id') === sel.id; b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; if (on) seenSelected = true; });
     if (!seenSelected) { const firstPick = host.querySelector('.ss-pick'); if (firstPick) firstPick.tabIndex = 0; }
     if (sel && state.gesture && narrow()) { const b = host.querySelector('.ss-pick[aria-pressed="true"]'); if (b && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' }); }
+    // Which pins the lens hides is a reading of the CURRENT lens, so the tray
+    // cannot be left behind by a change to it. It is redrawn only when what it
+    // SHOWS has changed, because this runs on every search keystroke and a
+    // rebuild under the reader would take the open replace-prompt with it.
+    if (trayKey !== trayState()) renderTray();
     syncPins();
     // the lens, the subset and the stage total in one sentence; on a page that
     // offers no order, a recorded ticket is named as the record's, not as one
@@ -1555,9 +1560,18 @@
       b.setAttribute('aria-label', (on ? 'Unpin ' : 'Pin ') + b.getAttribute('data-ticker') + ' for comparison');
     });
   }
+  // everything the tray draws: the pins, whether each is inside its stage's
+  // own lens, and the question it may be asking
+  let trayKey = null;
+  function trayState() {
+    if (!model) return '';
+    return pinned().map((id) => { const c = model.byId[id]; return c.id + (lensPass(c, lensOf(c.stage)) ? '+' : '-') + lensOf(c.stage); }).join(',')
+      + '|' + (state.pinAsk ? state.pinAsk.kind + ':' + state.pinAsk.id : '');
+  }
   function renderTray() {
     const tray = $('compare-tray');
     if (!tray || !model) return;
+    trayKey = trayState();
     const held = pinned().map((id) => model.byId[id]);
     clear(tray);
     tray.hidden = !held.length && !state.pinAsk;
@@ -1566,9 +1580,13 @@
     tray.appendChild(el('span', { 'class': 'sc-eyebrow ss-tray__label', text: 'compare' }));
     const chips = el('div', { 'class': 'ss-tray__pins' });
     held.forEach((c) => {
-      const item = el('span', { 'class': 'ss-tray__pin', 'data-ticker': c.ticker }, [
+      // a pin the reader's own lens no longer shows: kept, and SAID -- a stock
+      // in the comparison that is not in the list behind it is otherwise a
+      // stock from nowhere
+      const hiddenBy = lensPass(c, lensOf(c.stage)) ? null : lensOf(c.stage);
+      const item = el('span', { 'class': 'ss-tray__pin', 'data-ticker': c.ticker, 'data-hidden-by': hiddenBy }, [
         el('b', { 'class': 'sc-case', text: c.ticker }),
-        el('small', { text: STAGE_NAME[c.stage].toLowerCase() + ' · ' + statusWords(c.status)[0] })
+        el('small', { text: STAGE_NAME[c.stage].toLowerCase() + ' · ' + statusWords(c.status)[0] + (hiddenBy ? ' · outside the ' + LENS_WORDS[hiddenBy] + ' lens' : '') })
       ]);
       const x = el('button', { 'class': 'ss-tray__drop', type: 'button', 'aria-label': 'Remove ' + c.ticker + ' from the comparison', text: '✕' });
       x.addEventListener('click', () => unpin(c.id));
@@ -1583,6 +1601,19 @@
     const clr = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', 'data-tray-clear': '', text: 'Clear' });
     clr.addEventListener('click', () => { state.pins = []; state.pinAsk = null; renderTray(); syncPins(); });
     tray.appendChild(clr);
+    // the pins the lens is hiding, named once, each with one click to it: the
+    // pin is never dropped and never silently outside the list behind it
+    const away = held.filter((c) => !lensPass(c, lensOf(c.stage)));
+    if (away.length) {
+      const note = el('div', { 'class': 'ss-tray__away', 'data-away': String(away.length) });
+      note.appendChild(el('p', { text: away.map((c) => c.ticker).join(' and ') + (away.length === 1 ? ' is' : ' are') + ' pinned but outside the ' + LENS_WORDS[lensOf(away[0].stage)] + ' lens, so ' + (away.length === 1 ? 'it is' : 'they are') + ' not in the list behind this. ' + (away.length === 1 ? 'It stays' : 'They stay') + ' pinned; the comparison reads the record, not the lens.' }));
+      away.forEach((c) => {
+        const b = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', 'data-tray-show': c.ticker, text: 'Show ' + c.ticker });
+        b.addEventListener('click', () => { state.gesture = true; navigate(routeHash(c.stage, c.id)); });
+        note.appendChild(b);
+      });
+      tray.appendChild(note);
+    }
     if (!state.pinAsk) return;
     // the third pin, and the cross-stage pin: explained, decided by the reader
     const asked = model.byId[state.pinAsk.id];
@@ -1822,7 +1853,11 @@
     const lens = lensOf('bursts'), total = model.stages.bursts.length;
     mapView = SCStock.map.render(host, { points: mapPoints(), selectedId: state.selected.bursts, sessionWords: dateWords(run.session), demo: demo,
       subset: lens === 'all' && !state.query ? null : { total: total, words: LENS_WORDS[lens] + ' lens' + (state.query ? ' · ‘' + state.query + '’' : '') },
-      onSelect: (id) => { state.gesture = true; navigate(routeHash('bursts', id)); } });
+      onSelect: (id) => { state.gesture = true; navigate(routeHash('bursts', id)); },
+      // the map's Compare toggle is the cards' own button, placed there: two
+      // candidates can be pinned from the map the reader is already reading
+      // without a detour through the cards to find them again
+      control: (p, where) => { const c = model.byId[p.id]; return c ? pinButton(c, where) : null; } });
     mapKey = key;
   }
   function renderDiscover(stage) {
@@ -2522,24 +2557,46 @@
   }
 
   // ---------------------------------------------------------------- the chooser
+  // The chooser reaches EVERY stock in the record, which is what it is for --
+  // so it is the one door that must say where the reader is going. A name the
+  // stage's own lens hides is listed under its own heading, marked on the item
+  // and ordered after the ones in the lens, because choosing it widens the
+  // lens for that stock: saying so afterwards, once the page has already
+  // moved, is telling the reader what happened rather than what will.
   function fillChooser(q) {
-    const list = clear($('chooser-list')); let n = 0, first = null;
+    const list = clear($('chooser-list')); let n = 0, away = 0, first = null;
     STAGES.forEach((s) => {
       const items = model.stages[s].filter((c) => matches(c, q));
       if (!items.length) return;
-      list.appendChild(el('div', { 'class': 'sc-eyebrow ss-chooser__group', text: STAGE_NAME[s].toLowerCase() + ' · ' + items.length }));
-      items.forEach((c) => {
-        n++;
-        const sw = statusWords(c.status);
-        const b = el('button', { 'class': 'ss-chooser__item', type: 'button', 'data-id': c.id, 'aria-pressed': state.selected[s] === c.id ? 'true' : 'false' }, [
-          el('b', { 'class': 'sc-case', text: c.ticker }), el('span', { text: pickReason(c) }), chip(sw[0], sw[1])
-        ]);
-        b.addEventListener('click', (e) => { e.preventDefault(); choose(c); });
-        if (!first) first = b;
-        list.appendChild(b);
-      });
+      const lens = lensOf(s), inLens = items.filter((c) => lensPass(c, lens)), outside = items.filter((c) => !lensPass(c, lens));
+      const group = (label, rows, out) => {
+        if (!rows.length) return;
+        list.appendChild(el('div', { 'class': 'sc-eyebrow ss-chooser__group', 'data-group': out ? 'outside' : 'in', text: label }));
+        if (out) list.appendChild(el('p', { 'class': 'sc-hint ss-chooser__why', text: 'Choosing one of these shows every ' + (s === 'bursts' ? 'burst' : 'setup') + ' so it can be inspected; your ' + LENS_WORDS[lens] + ' lens is not changed for next time.' }));
+        rows.forEach((c) => {
+          n++; if (out) away++;
+          const sw = statusWords(c.status);
+          const b = el('button', { 'class': 'ss-chooser__item', type: 'button', 'data-id': c.id, 'data-in-lens': out ? 'false' : 'true',
+            'aria-pressed': state.selected[s] === c.id ? 'true' : 'false' }, [
+            el('b', { 'class': 'sc-case', text: c.ticker }),
+            out ? el('em', { 'class': 'ss-chooser__away', text: 'outside the lens' }) : null,
+            el('span', { text: pickReason(c) }), chip(sw[0], sw[1])
+          ]);
+          b.addEventListener('click', (e) => { e.preventDefault(); choose(c); });
+          if (!first) first = b;
+          list.appendChild(b);
+        });
+      };
+      const name = STAGE_NAME[s].toLowerCase();
+      if (!outside.length) group(name + ' · ' + items.length, items, false);
+      else {
+        group(name + ' · ' + inLens.length + ' in the ' + LENS_WORDS[lens] + ' lens', inLens, false);
+        group(name + ' · ' + outside.length + ' outside it', outside, true);
+      }
     });
-    $('chooser-status').textContent = n ? n + ' stock' + (n === 1 ? '' : 's') + (q ? ' match ‘' + q + '’' : ' in tonight’s record') + '; Enter chooses the first.' : 'No stock matching ‘' + q + '’ in tonight’s record.';
+    $('chooser-status').textContent = n ? n + ' stock' + (n === 1 ? '' : 's') + (q ? ' match ‘' + q + '’' : ' in tonight’s record')
+      + (away ? ', ' + away + ' of them outside the lens you are reading' : '') + '; Enter chooses the first.'
+      : 'No stock matching ‘' + q + '’ in tonight’s record.';
     return first;
   }
   function openChooser() {

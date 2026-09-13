@@ -60,7 +60,12 @@ does not carry, falls back to Explore and says so.
    withheld*, *beyond the slot cap*, *beyond the configured equity*, *no
    whole share*, *no new longs*, *vetoed*, *no ticket*, *watch* — a search
    that finds a ticker in either stage and says when it switched, and on a
-   phone a rail of cards with a *Choose stock* dialog. The first load shows
+   phone a rail of cards with a *Choose stock* dialog. That dialog reaches
+   every stock in the record, which is what it is for, so it says which of
+   them the lens in front of the reader holds and which it hides: two
+   counted groups, the hidden ones marked and listed second, and one line
+   saying that choosing one of those widens the lens for that stock without
+   changing the lens kept for next time. The first load shows
    Bursts when the scan found any, Setting up otherwise, and a chosen stage
    is never switched away from: an empty one says why it is empty. Each
    stage remembers its last chosen stock.
@@ -108,7 +113,9 @@ does not carry, falls back to Explore and says so.
    a *Nearby stocks* button beside the selection opens it from the keyboard.
    A tap on a point standing alone chooses it outright, and the keyboard's
    Enter takes the point it has focused. A table under the map carries every
-   burst, plotted or not. On a four-hundred-burst night almost every point
+   burst, plotted or not, and both the chosen point and every table row
+   carry the same *Compare* toggle the cards carry, so two candidates can be
+   pinned from the map without going back to the cards to find them again. On a four-hundred-burst night almost every point
    has a neighbour within a finger, so almost every tap asks: the cards, the
    search and the table are the one-step path to a stock you can name.
 3. **The chosen stock.** One chart panel with one header (the symbol, its
@@ -193,7 +200,11 @@ does not carry, falls back to Explore and says so.
    reason there is none. A row the two differ on is marked; nothing
    declares a winner, and a value the record does not carry reads *not
    recorded* rather than as a failure. A third pin asks which of the two it
-   replaces; a pin from the other stage is explained rather than refused.
+   replaces; a pin from the other stage is explained rather than refused. A
+   pin the reader then narrows the lens past is never dropped: the chip says
+   which lens is hiding it, the tray says it stays pinned because the
+   comparison reads the record rather than the lens, and one click goes to
+   it.
    On a phone an A/B switch shows one chart at a time while both symbols
    and both statuses stay on screen. *Open setup* and the same Follow
    action are offered from each side, and closing returns the reader to the
