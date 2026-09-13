@@ -168,7 +168,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-What is measured offline: 1076 tests, the chart check, and the page smoke
+What is measured offline: 1080 tests, the chart check, and the page smoke
 over six fixtures walked through every view, stock, search, the chooser,
 the keyboard, deep links and the old anchors, then the phone and the stale,
 failed, field-dropped and no-record states. What is NOT: the full-market
@@ -909,3 +909,103 @@ a green or yellow session dispatch `evening.yml` with dry_run and check the
 study against what the run withholds and writes. The tag needed no re-vendor —
 it moves no byte, and the snapshot's provenance already names `6f10309`, which
 is on the sheet's `main`.
+
+## Checkpoint, 13 Sep 2026 — the release-candidate acceptance, and the gate that under-reported
+
+**Revision.** Branch `claude/spicystock-release-acceptance-l5a1nm` cut from
+`main` at `f7f2e8e`, the merge of #54 — already merged when this began, so
+nothing of it was re-done. `docs/data.json` and `docs/picks.json` are untouched:
+still run 47's record, `origin/main`'s to the byte.
+
+**Executed here, not inherited**, at `f7f2e8e` on this sandbox's 3.11.15 /
+pandas 3.0.5: 1076 tests pass at `f7f2e8e` and 1080 with the four added here;
+7 fixtures current through the real generator; chart check 163/163; page smoke
+2700/2700 with `--shots`. CI at `f7f2e8e` is green on its own runners — Tests
+34730044133, Secret scan 34730044031, Pages deploy 34730043404.
+
+**The candidate's run path has real-market evidence already.** `src/`,
+`requirements.txt` and `evening.yml` are **byte-identical** between `5515515`
+and `f7f2e8e`, and `5515515` is where run **51** (`34720798332`, artifact
+`10306165995`) ran a full-market dry run on 12 Sep: 3014 names, 12 chart reads,
+`published 2026-09-11: Stand aside.`, exit 0, nothing committed. So the
+constrained-limit code has been executed against the real market — on a RED
+session. No duplicate run was paid for.
+
+**What that cannot prove, and why no dispatch would fix it today.** 13 Sep is a
+Sunday and 12 Sep a Saturday: the newest session the bars carry is Friday
+2026-09-11, the red one. A dispatch now re-derives the same stand-aside at full
+provider cost. **Live qualifying-ticket acceptance is NOT RUN**, first possible
+Monday 2026-09-14 after 6:16 PM ET, and only if breadth is green or yellow.
+
+**The published record is one rules generation behind the code.** Its
+`rules_version` is `2fe10c171341`; the code at `f7f2e8e` computes
+`765180855b90`, differing by exactly `plan.limit_rule` (None →
+`stop_constrained`) and `plan.precision.cent_floor_epsilon`. The versioning
+works: no published page has yet shown a constrained-limit ticket.
+
+**One reproduced defect, fixed.** `tools/publish_dashboard.py` is the only check
+that reads what a reader is *served*, and it had no test. `docs/index.html` loads
+fourteen local assets; its hand-kept tuple named **six**. The design
+system's own `sc.css` — where v2.11.0's action bar and field group live, the
+whole substance of #53 — plus `app-map.js` and `app-follow.js` were never
+fetched, while the gate printed "Verified". It reads the list off the page now
+(`public_files()`, 17 files) and names a referenced file the checkout lacks
+instead of skipping it. Four mutants die, two of them selectively.
+
+**Blockers.** The served page cannot be read from this sandbox: the proxy
+refuses `spicychicken59.github.io` and Actions' blob host with 403 CONNECT, so
+run 51's artifact was read through its log, not unzipped. Distribution rests on
+the runner-side check instead, which at `c3d6d1d` fetched the public bytes and
+matched them — and `docs/` is byte-identical `c3d6d1d`→`f7f2e8e`.
+
+**Keep / fix / defer / omit.** Keep: everything above; the verified `6f10309`
+pin (22 files, provenance = source = disk), un-re-vendored. **Fix, and it is a
+FAIL not a defer:** `test_claude_md_is_short_and_names_the_fixture_count`
+asserts `len(CLAUDE_MD.splitlines()) <= 150` over `prose()`, which collapses
+every newline — tightened to `<= 1` it still passes. The file is 911 raw lines
+and 9,377 words against a nominal 150. Moving the cap to match reality is this
+file's own named anti-pattern, so it needs an owner's call: trim, or retire the
+clause. Defer to Astra: the <320 px overflow, pre-existing and identical on
+`5515515` (the supported floor is 320 px, clean, 66 of 67 extra checks). Omit:
+trade logging, a portfolio, execution.
+
+**Next action.** Monday 2026-09-14 after 6:16 PM ET, on a green or yellow
+session, dispatch `evening.yml` with `dry_run=true` and reconcile the artifact
+against `tools/entry_limit_study.py`'s green-night line — 52 reach the stop
+rule, 0 eligible at the retired ceiling, 50 in production, 47 sizing to a whole
+share.
+
+### NEXT BUILDER PROMPT
+
+Continue SpicyStock at `main` (verify the tip; `f7f2e8e` when this was written)
+plus PR from `claude/spicystock-release-acceptance-l5a1nm`. Do ONE of these; do
+not re-run the design pass, the upstream extraction, the tag, or this
+acceptance sweep.
+
+**(a) The live qualifying-ticket acceptance, if a green or yellow session
+exists.** Requires explicit dispatch/billing approval — a dry run still pays
+Alpaca and twelve Anthropic chart reads. Dispatch `evening.yml` with
+`dry_run=true`, `session=""`, `skip_email=false` (dry run mails nothing; the
+`Persist the run` step is skipped and nothing is committed). Then, from the
+artifact: confirm `app.rules_version` is the code's own digest; that every
+eligible burst has `limit <= day2_spent_above`, `stop < entry_ref < limit`,
+`entry_high == limit`, `planned_entry == min(close +1%, limit)`; that each
+whole-share ticket's stop is within 4% of its LIMIT; and that refusals carry
+`ticket_refusal` with the setup kept and no order. Reconcile the eligible /
+withheld counts against `python tools/entry_limit_study.py <record>`, whose
+green-night line is 52 / 0 / 50 / 47. A red or closed session proves
+stand-aside only — say so and stop. Never change regime, data or rules to
+manufacture a ticket.
+
+**(b) The CLAUDE.md length gate, which currently cannot fail.** Decide with the
+owner: trim this file to a cap that binds, or retire the length clause and
+guard something that can fail. Then make the assertion read the RAW file, not
+`prose()`. Prove it fails.
+
+Offline gates for either: `python3 -m pytest tests/ -q` (the `pytest` on PATH
+here is a uv tool without pandas), `python tools/make_fixture.py --check`,
+`node tools/chart_check.mjs`, `node tools/page_smoke.mjs --shots <dir>`. This
+sandbox reaches neither the served page nor Actions' artifact blobs (403
+CONNECT); read a run through its job log, and report the limit rather than
+routing around it. Not claimable without a live night: Resend delivering, a
+real chart read, and any trading edge.

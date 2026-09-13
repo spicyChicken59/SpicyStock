@@ -244,7 +244,10 @@ session. The run:
 - **publish** — `docs/data.json` is written and validated, then the email
   goes out. The workflow commits `docs/` back on exit 0, 2 or 3 (never a
   rehearsal), and `publish-dashboard.yml` asks GitHub Pages for a build,
-  because a token push does not trigger one.
+  because a token push does not trigger one. It then fetches every file the
+  page loads -- the HTML, both records, each script and stylesheet, the
+  vendored design system -- and fails unless the public bytes are the
+  commit's; the list is read off `docs/index.html`, not kept beside it.
 
 Exit codes are the workflow's contract: **0** clean, **1** failed before
 publishing (the failure notice is mailed instead, when the failure came
