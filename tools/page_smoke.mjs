@@ -36,6 +36,11 @@ const TRADE_GRADES = ['A+', 'A'];   // the grades the run gives an order (pipeli
 
 const args = process.argv.slice(2);
 const shotsDir = args.includes('--shots') ? args[args.indexOf('--shots') + 1] : null;
+// --only <name[,name]> runs just those suites (variant names, or lens/compare/
+// evidence/map/mobile/modes/following/volume/mapscale/ticket/states). It is for
+// judging a mutant in a minute; CI and the milestone gate run everything.
+const only = args.includes('--only') ? String(args[args.indexOf('--only') + 1] || '').split(',').filter(Boolean) : null;
+const runs = (name) => !only || only.includes(name);
 
 let checks = 0, failures = 0;
 function check(name, ok, detail) {
@@ -82,10 +87,13 @@ async function open(browser, base, dataUrl, now, width, opts) {
     errors.push('request failed: ' + u + ' ' + (r.failure() || {}).errorText);
   });
   page.on('response', (r) => { if (r.status() >= 400 && exempt(r.url())) aborted.push(r.url()); });
-  await page.addInitScript(({ dataUrl, now, theme }) => {
+  await page.addInitScript(({ dataUrl, now, theme, lens, sort }) => {
     window.SCStock = { dataUrl, now };
     if (theme) try { localStorage.setItem('sc-theme', theme); } catch (e) { /* no storage */ }
-  }, { dataUrl, now, theme: opts.theme });
+    // seed the reader's remembered lens the way the page itself stores it, so a
+    // suite about something else opens on the whole stage rather than a subset
+    if (lens || sort) try { localStorage.setItem('spicystock:lens:v1', JSON.stringify({ bursts: lens || null, 'setting-up': lens || null, sort: sort || null })); } catch (e) { /* no storage */ }
+  }, { dataUrl, now, theme: opts.theme, lens: opts.lens || null, sort: opts.sort || null });
   await page.goto(base + '/docs/index.html' + (opts.hash || ''), { waitUntil: 'load' });
   await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'), null, { timeout: 15000 });
   await page.waitForTimeout(250);
@@ -100,12 +108,20 @@ function settle(errors, aborted) {
 const text = (page, sel) => page.locator(sel).first().innerText();
 const count = (page, sel) => page.locator(sel).count();
 const usd = (v, dec = 2) => (v < 0 ? '−' : '') + '$' + Math.abs(v).toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const pctOf = (v, dec = 1) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(dec) + '%';   // the page's pct()
 const hash = (page) => page.evaluate(() => location.hash);
 const go = async (page, h) => { await page.evaluate((h) => { location.hash = h; }, h); await page.waitForTimeout(120); };
 const visibleView = (page) => page.evaluate(() => Array.from(document.querySelectorAll('.ss-view')).filter((s) => !s.hidden).map((s) => s.id));
 const openAll = (page, sel) => page.evaluate((sel) => document.querySelectorAll(sel).forEach((d) => { d.open = true; }), sel);
 const active = (page) => page.evaluate(() => { const a = document.activeElement; return a ? (a.id || '') + '/' + (a.className || '') + '/' + (a.dataset ? a.dataset.ticker || '' : '') : ''; });
 const clickPick = async (page, ticker) => { await page.locator(`#pick-list .ss-pick[data-ticker="${ticker}"]`).click(); await page.waitForTimeout(150); };
+// the lens: the page opens on A-quality when the record archived an A or A+
+// burst and on every burst otherwise (docs/app.js defaultLens(); the smoke
+// works it out again, off the record, rather than reading the page's answer)
+const openingLens = (data) => ((data.bursts || []).some((b) => TRADE_GRADES.includes(b.grade)) ? 'a' : 'all');
+const lensNow = (page) => page.locator('#lens .sc-tab[aria-pressed="true"]').first().getAttribute('data-lens');
+const setLens = async (page, lens) => { await page.locator(`#lens .sc-tab[data-lens="${lens}"]`).click(); await page.waitForTimeout(180); };
+const cardTickers = (page) => page.locator('#pick-list .ss-pick').evaluateAll((els) => els.map((e) => e.dataset.ticker));
 
 // the Setup range: the base and a short run of context before it, as docs/app.js frames it (the smoke computes it again, on its own)
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -353,6 +369,13 @@ async function checkVariant(browser, base, variant, data) {
   // the stocks of the default stage: one selectable card each, the first chosen, the route canonical
   const pickOf = async () => page.locator('#pick-list .ss-pick').evaluateAll((els) => els.map((e) => [e.dataset.ticker, e.dataset.status, e.getAttribute('aria-pressed')]));
   if (defaultStage === 'bursts' && data.bursts.length) {
+    // the lens this record opens on, and the A-quality subset it shows; the
+    // walk below is of the whole stage, so it is widened first
+    eq(`${variant} opens on the lens the record earns`, await lensNow(page), openingLens(data));
+    eq(`${variant} the A-quality lens is exactly the archived A and A+ grades`,
+      openingLens(data) === 'a' ? await cardTickers(page) : null,
+      openingLens(data) === 'a' ? data.bursts.filter((b) => TRADE_GRADES.includes(b.grade)).map((b) => b.ticker) : null);
+    await setLens(page, 'all');
     const picks = await pickOf();
     eq(`${variant} one card per burst, in rank order`, picks.map((p) => p[0]), data.bursts.map((b) => b.ticker));
     eq(`${variant} card statuses read off the record`, picks.map((p) => p[1]), data.bursts.map((b) => burstStatus(b, data)));
@@ -741,7 +764,7 @@ async function checkMobile(browser, base, data) {
 async function checkModes(browser, base, data) {
   console.log('-- the chart modes');
   const coil = data.watchlist.top.find((r) => r.ticker === 'COIL') || data.watchlist.top[0];
-  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { hash: `#/explore/setting-up/${coil.ticker}` });
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/setting-up/${coil.ticker}` });
   const read = () => page.evaluate(() => {
     const host = document.querySelector('#chart-mount .sc-chart--stock'), svg = host.querySelector('svg');
     const level = (k) => { const l = svg.querySelector(`[data-level="${k}"]`); return l ? l.getAttribute('y1') : null; };
@@ -827,7 +850,7 @@ async function checkModes(browser, base, data) {
   }
   await context.close();
   // the phone: the cluster still reads apart at 390px
-  const m = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { height: 844, hash: `#/explore/setting-up/${coil.ticker}` });
+  const m = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { height: 844, lens: 'all', hash: `#/explore/setting-up/${coil.ticker}` });
   const ml = await m.page.evaluate(() => Array.from(document.querySelectorAll('#chart-mount svg text[data-kind]')).filter((t) => /^(stop|trigger|limit|close)$/.test(t.getAttribute('data-kind'))).map((t) => +t.getAttribute('y')).sort((a, b) => a - b));
   eq('phone: the COIL cluster has its four labels', ml.length, 4);
   check('phone: the COIL cluster labels never overlap', ml.every((y, i) => !i || y - ml[i - 1] >= 14), ml.join(','));
@@ -841,7 +864,7 @@ async function checkModes(browser, base, data) {
 // the burst map: the recorded measurements, one selection with the cards, the chooser and the route
 async function checkMap(browser, base, data) {
   console.log('-- the burst map');
-  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280);
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all' });
   const plottable = data.bursts.filter((b) => typeof b.gain_pct === 'number' && ratioOf(b) !== null);
   eq('every burst of the fixture has a ratio the page can read', plottable.length, data.bursts.length);
   eq('the Cards | Map control is offered for the bursts', await page.locator('#discover').isVisible(), true);
@@ -881,7 +904,7 @@ async function checkMap(browser, base, data) {
   eq('map page errors', errors, []);
   if (shotsDir) { await page.locator('#burst-map').screenshot({ path: path.join(shotsDir, 'map-1280.png') }); await page.screenshot({ path: path.join(shotsDir, 'map-page-1280.png') }); }
   await context.close();
-  const m = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { height: 844 });
+  const m = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { height: 844, lens: 'all' });
   await m.page.click('#discover .sc-tab[data-discover="map"]'); await m.page.waitForTimeout(300);
   eq('phone: the map is drawn', await count(m.page, '#burst-map .ss-map__point'), plottable.length);
   const mb = await m.page.locator('#burst-map').boundingBox();
@@ -1099,11 +1122,11 @@ async function readings(page, ticker) {
   };
 }
 // a copy of the record with one alteration, served beside the fixtures and removed afterwards
-async function openMutant(browser, base, data, mutate) {
+async function openMutant(browser, base, data, mutate, opts) {
   const copy = JSON.parse(JSON.stringify(data)); mutate(copy);
   const p = '/tests/fixtures/page/.mutant.json';
   await writeFile(path.join(ROOT, p), JSON.stringify(copy));
-  const opened = await open(browser, base, p, FRESH_NOW, 1280);
+  const opened = await open(browser, base, p, FRESH_NOW, (opts && opts.width) || 1280, Object.assign({ lens: 'all' }, opts));
   return { page: opened.page, errors: opened.errors, close: async () => { await opened.context.close(); await unlink(path.join(ROOT, p)); } };
 }
 // the volume ratio: zero is a value, an invalid or absent one is missing and said so, and a checklist copy
@@ -1261,7 +1284,7 @@ async function checkMapScale(browser, base, data) {
     const copy = JSON.parse(JSON.stringify(data)); coincide(copy);
     const p = '/tests/fixtures/page/.mutant-tap.json';
     await writeFile(path.join(ROOT, p), JSON.stringify(copy));
-    const o = await open(browser, base, p, FRESH_NOW, width, { height: height, touch: touch });
+    const o = await open(browser, base, p, FRESH_NOW, width, { height: height, touch: touch, lens: 'all' });
     const page = o.page;
     // the phone taps with a finger, the desktop clicks with a mouse
     const tap = async (x, y) => { if (touch) await page.touchscreen.tap(x, y); else await page.mouse.click(x, y); };
@@ -1347,7 +1370,7 @@ async function checkMapScale(browser, base, data) {
     const copy = JSON.parse(JSON.stringify(data)); coincide(copy);
     const p = '/tests/fixtures/page/.mutant-life.json';
     await writeFile(path.join(ROOT, p), JSON.stringify(copy));
-    const o = await open(browser, base, p, FRESH_NOW, 1280);
+    const o = await open(browser, base, p, FRESH_NOW, 1280, { lens: 'all' });
     const page = o.page;
     const panels = () => count(page, '.ss-map__nearby');
     // the table twin is a disclosure, and the map is rebuilt whenever it is
@@ -1568,6 +1591,549 @@ async function checkTicketPrices(browser, base, data) {
 }
 
 
+// ---------------------------------------------------------------- the lenses
+// Every subset below is worked out from the RECORD and compared with what the
+// page draws -- never with the page's own count. The map is read back for the
+// same population, because the defect worth catching is cards and map quietly
+// showing two different sets. And a lens is a reading of the record, never a
+// permission: a page that offers no order still offers none with "with
+// ticket" in force.
+async function checkLens(browser, base, data) {
+  console.log('-- the discovery lenses');
+  const ticketed = data.bursts.filter((b) => burstStatus(b, data) === 'ticket').map((b) => b.ticker);
+  const aQuality = data.bursts.filter((b) => TRADE_GRADES.includes(b.grade)).map((b) => b.ticker);
+  const all = data.bursts.map((b) => b.ticker);
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280);
+
+  eq('the lens row offers A-quality, all, with ticket and following', await page.locator('#lens .sc-tab[data-lens]').evaluateAll((e) => e.map((x) => x.dataset.lens)), ['a', 'all', 'ticket', 'following']);
+  eq('each lens wears the count it will show', await page.locator('#lens .sc-tab[data-lens]').evaluateAll((e) => e.map((x) => [x.dataset.lens, +x.dataset.count])),
+    [['a', aQuality.length], ['all', all.length], ['ticket', ticketed.length], ['following', 0]]);
+  eq('the A-quality lens shows the archived A and A+ grades', await cardTickers(page), aQuality);
+  eq('the heading keeps the stage total beside the subset', await text(page, '#picks-h2'), `bursts · ${aQuality.length} of ${all.length}`);
+  await setLens(page, 'ticket');
+  eq('the ticket lens shows the stocks the record wrote a ticket for', await cardTickers(page), ticketed);
+  await setLens(page, 'all');
+  eq('the all lens shows every burst', await cardTickers(page), all);
+  // the map is the cards' twin: the same names, and a count that reconciles
+  await setLens(page, 'a');
+  await page.click('#discover .sc-tab[data-discover="map"]'); await page.waitForTimeout(350);
+  eq('the map plots the lens\'s own subset', await page.locator('#burst-map .ss-map__point').evaluateAll((e) => e.map((x) => x.dataset.ticker)), aQuality);
+  eq('the map\'s table twin lists the same subset', await count(page, '#burst-map .ss-map__table tbody tr'), aQuality.length);
+  check('the map reconciles its subset with the stage total and names the lens',
+    (await text(page, '#burst-map [data-counts]')).includes(`${aQuality.length} bursts of ${all.length} · A-quality lens`), await text(page, '#burst-map [data-counts]'));
+  await setLens(page, 'all');
+  await page.waitForTimeout(250);
+  eq('widening the lens widens the map with it', await count(page, '#burst-map .ss-map__point'), all.length);
+  check('an unnarrowed map says nothing about a lens', !(await text(page, '#burst-map [data-counts]')).includes('lens'), await text(page, '#burst-map [data-counts]'));
+  await page.click('#discover .sc-tab[data-discover="cards"]'); await page.waitForTimeout(200);
+
+  // the stepper walks the same list, and the published rank stays a label
+  await setLens(page, 'a');
+  eq('the stepper counts the visible list', await text(page, '#detail [data-where]'), `1 of ${aQuality.length}`);
+  await page.click('#detail .ss-step[data-step="next"]'); await page.waitForTimeout(200);
+  eq('next steps inside the lens', [await text(page, '#detail-h2'), await text(page, '#detail [data-where]')], [aQuality[1], `2 of ${aQuality.length}`]);
+  eq('the cards carry the published rank whatever the lens', await page.locator('#pick-list .ss-pick').evaluateAll((e) => e.map((x) => +x.dataset.rank)), aQuality.map((t) => data.bursts.findIndex((b) => b.ticker === t) + 1));
+
+  // sorting is presentation: the order changes, the rank label does not
+  await setLens(page, 'all');
+  await page.click('#lens .sc-tab[data-sort="gain"]'); await page.waitForTimeout(250);
+  const byGain = data.bursts.slice().sort((x, y) => (y.gain_pct - x.gain_pct) || (data.bursts.indexOf(x) - data.bursts.indexOf(y))).map((b) => b.ticker);
+  eq('sorting by gain reorders the cards by the recorded gain', await cardTickers(page), byGain);
+  eq('sorting leaves every published rank where the run put it', await page.locator('#pick-list .ss-pick').evaluateAll((e) => e.map((x) => [x.dataset.ticker, +x.dataset.rank])), byGain.map((t) => [t, data.bursts.findIndex((b) => b.ticker === t) + 1]));
+  check('the status line says what it is sorted by', (await text(page, '#picks-status')).includes('sorted by the session’s gain'), await text(page, '#picks-status'));
+  await page.click('#lens .sc-tab[data-sort="rank"]'); await page.waitForTimeout(200);
+  eq('rank restores the run\'s own order', await cardTickers(page), all);
+
+  // reset: one action back to the record's own lens, order and search
+  await setLens(page, 'ticket');
+  await page.fill('#search', 'A'); await page.waitForTimeout(200);
+  eq('the reset appears once a filter is in force', await count(page, '#lens [data-reset]'), 1);
+  await page.click('#lens [data-reset]'); await page.waitForTimeout(250);
+  eq('reset returns to the lens the record earns, with the search cleared', [await lensNow(page), await page.inputValue('#search')], [openingLens(data), '']);
+  eq('reset leaves no reset to press', await count(page, '#lens [data-reset]'), 0);
+
+  // an exact ticker the lens hides is explained and offered, never denied
+  const hidden = data.bursts.find((b) => !TRADE_GRADES.includes(b.grade));
+  await page.fill('#search', hidden.ticker); await page.waitForTimeout(250);
+  eq('a stock behind the lens is not called missing', await count(page, '#pick-list [data-empty="lens-hidden"]'), 1);
+  const hiddenBox = await text(page, '#pick-list [data-empty="lens-hidden"]');
+  check('it says which lens is hiding it and what it is graded', hiddenBox.includes('hidden by the A-quality lens') && hiddenBox.includes('graded ' + hidden.grade), hiddenBox);
+  await page.click('#pick-list [data-lens-out]'); await page.waitForTimeout(300);
+  eq('one action inspects it', [await text(page, '#detail-h2'), await hash(page)], [hidden.ticker, `#/explore/bursts/${hidden.ticker}`]);
+  check('and the page says the lens was widened for it', (await text(page, '#picks-status')).includes('outside the A-quality lens'), await text(page, '#picks-status'));
+  eq('lens page errors', errors, []);
+  await context.close();
+
+  // Every A-quality burst in the fixtures happens to be A+, so a lens that read
+  // A+ ALONE would pass every check above. The lens reads the record's OWN
+  // trade grades, so a plain A belongs in it too.
+  const plainA = await openMutant(browser, base, data, (c) => { c.bursts[0].grade = 'A'; }, { lens: 'a' });
+  check('the A-quality lens is the record’s own trade grades, not A+ alone',
+    (await cardTickers(plainA.page)).includes(data.bursts[0].ticker), await cardTickers(plainA.page));
+  eq('plain-A lens page errors', plainA.errors, []);
+  await plainA.close();
+
+  // a bookmark that NAMES a stock the stored lens hides is a request to inspect
+  // it: the lens widens on that load, says so, and is not written to storage
+  const deep = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'a', hash: `#/explore/bursts/${hidden.ticker}` });
+  eq('a bookmarked stock behind the lens still opens', await text(deep.page, '#detail-h2'), hidden.ticker);
+  check('and the page says which lens it widened', (await text(deep.page, '#picks-status')).includes('outside the A-quality lens'), await text(deep.page, '#picks-status'));
+  await deep.page.goto(await deep.page.url().replace(/#.*$/, ''), { waitUntil: 'load' });
+  await deep.page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'));
+  await deep.page.waitForTimeout(400);
+  eq('the widening was never stored: a plain visit is A-quality again', await lensNow(deep.page), 'a');
+  eq('deep-link lens page errors', deep.errors, []);
+  await deep.context.close();
+
+  // the Following lens: this browser's shelf, and nothing else
+  const f = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { hash: `#/explore/bursts/${aQuality[1]}` });
+  eq('following is empty before anything is followed', await f.page.locator('#lens .sc-tab[data-lens="following"]').getAttribute('data-count'), '0');
+  await f.page.click('#detail .ss-follow button[data-follow-action="add"]'); await f.page.waitForTimeout(250);
+  eq('following counts the setup just saved', await f.page.locator('#lens .sc-tab[data-lens="following"]').getAttribute('data-count'), '1');
+  await setLens(f.page, 'following');
+  eq('the following lens shows exactly what this browser saved', await cardTickers(f.page), [aQuality[1]]);
+  await f.page.click('#detail .ss-follow button[data-follow-action="remove"]'); await f.page.waitForTimeout(300);
+  // the reader's own action emptied the lens: the page must stay in it and say
+  // so, not step out to every burst because the hash still names the stock
+  eq('unfollowing empties the lens and stays in it', [await lensNow(f.page), await count(f.page, '#pick-list [data-empty="lens"]')], ['following', 1]);
+  check('the empty following lens explains itself', (await text(f.page, '#pick-list [data-empty="lens"]')).includes('Following shelf'), await text(f.page, '#pick-list [data-empty="lens"]'));
+  await f.page.click('#pick-list [data-lens-out]'); await f.page.waitForTimeout(250);
+  eq('one action recovers it', await cardTickers(f.page), all);
+  eq('following lens page errors', f.errors, []);
+  await f.context.close();
+
+  // A saved signal belongs to the night it was saved on. The next night's
+  // record carries the same symbol under a DIFFERENT identity, so the shelf
+  // keeps the old one, the lens does not count it as a candidate of tonight's
+  // record, and tonight's signal is offered on its own terms -- never a silent
+  // substitution of one signal for another.
+  {
+    const t = data.bursts[0].ticker;
+    const o = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${t}` });
+    await o.page.click('#detail .ss-follow button[data-follow-action="add"]'); await o.page.waitForTimeout(250);
+    const saved = await o.page.evaluate(() => window.SCStock.follow.list().map((i) => [i.ticker, i.session]));
+    eq(`${t} is saved under the session it was signalled on`, saved, [[t, data.run.session]]);
+    const next = '2026-09-11';
+    const copy = JSON.parse(JSON.stringify(data));
+    copy.run.session = next; copy.run.expected_session = next;
+    copy.bursts.forEach((b) => { if ((b.series || []).length) b.series[b.series.length - 1].date = next; });
+    const p2 = '/tests/fixtures/page/.mutant-night.json';
+    await writeFile(path.join(ROOT, p2), JSON.stringify(copy));
+    // the next night in the same browser: a later init script wins, and the
+    // query makes it a real navigation (a goto that moves only the fragment is
+    // a same-document one, and nothing re-runs)
+    await o.page.addInitScript((u) => { window.SCStock = { dataUrl: u, now: '2026-09-11T22:31:00Z' }; }, p2);
+    await o.page.goto(base + `/docs/index.html?night=2#/explore/bursts/${t}`, { waitUntil: 'load' });
+    await o.page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'));
+    await o.page.waitForTimeout(400);
+    eq('the page is on the next night', await o.page.evaluate(() => window.SCStock.data.run.session), next);
+    eq('the older saved signal is kept, not replaced by tonight’s', await o.page.evaluate(() => window.SCStock.follow.list().map((i) => [i.ticker, i.session])), [[t, data.run.session]]);
+    eq('and it is not counted among tonight’s candidates', await o.page.locator('#lens .sc-tab[data-lens="following"]').getAttribute('data-count'), '0');
+    eq('tonight’s signal for the same symbol is offered on its own terms', await count(o.page, '#detail .ss-follow button[data-follow-action="add"]'), 1);
+    eq('while the shelf still carries the older one', await count(o.page, `#following .ss-followed[data-ticker="${t}"]`), 1);
+    eq('two-night follow page errors', o.errors, []);
+    await o.context.close();
+    await unlink(path.join(ROOT, p2));
+  }
+
+  // a lens the reader chose survives a reload, empty or not: nothing is widened behind their back
+  const red = JSON.parse(await readFile(path.join(FIXTURES, 'red.json'), 'utf8'));
+  const r1 = await open(browser, base, '/tests/fixtures/page/red.json', FRESH_NOW, 1280);
+  eq('a red record still opens on its A-quality research', [await lensNow(r1.page), (await cardTickers(r1.page)).length], ['a', red.bursts.filter((b) => TRADE_GRADES.includes(b.grade)).length]);
+  eq('and offers no order anywhere on it', [await count(r1.page, '#detail pre[data-order]'), await count(r1.page, '#order-sheet tbody tr[data-ticker]')], [0, 0]);
+  eq('no card on it claims a ticket', await count(r1.page, '#pick-list .ss-pick[data-status="ticket"]'), 0);
+  await setLens(r1.page, 'ticket');
+  eq('the ticket lens on a red night is empty and says so', await count(r1.page, '#pick-list [data-empty="lens"]'), 1);
+  check('and names breadth as the reason', (await text(r1.page, '#pick-list [data-empty="lens"]')).includes('breadth is red'), await text(r1.page, '#pick-list [data-empty="lens"]'));
+  await r1.page.reload({ waitUntil: 'load' }); await r1.page.waitForTimeout(600);
+  eq('a reload does not silently widen an empty lens', [await lensNow(r1.page), await count(r1.page, '#pick-list [data-empty="lens"]')], ['ticket', 1]);
+  eq('red lens page errors', r1.errors, []);
+  await r1.context.close();
+
+  // a record with no A-quality burst opens on every burst rather than on nothing
+  const nt = JSON.parse(await readFile(path.join(FIXTURES, 'notrade.json'), 'utf8'));
+  const n1 = await open(browser, base, '/tests/fixtures/page/notrade.json', FRESH_NOW, 1280);
+  eq('without an A grade the first visit shows every burst', [await lensNow(n1.page), (await cardTickers(n1.page)).length], ['all', nt.bursts.length]);
+  eq('and the A-quality lens says it would show none', await n1.page.locator('#lens .sc-tab[data-lens="a"]').getAttribute('data-count'), '0');
+  eq('no-A page errors', n1.errors, []);
+  await n1.context.close();
+
+  // THE SAFETY GATE: a page that offers no order offers none through a lens
+  const stale = await open(browser, base, '/tests/fixtures/page/full.json', STALE1_NOW, 1280, { lens: 'ticket' });
+  eq('a stale page still shows the record\'s ticketed stock', await cardTickers(stale.page), ticketed);
+  eq('but writes no order for it', [await count(stale.page, '#detail pre[data-order]'), await count(stale.page, '#order-sheet tbody tr[data-ticker]')], [0, 0]);
+  eq('and the action area says it is not offered', await stale.page.locator('#detail .ss-action').getAttribute('data-ticket'), 'blocked');
+  check('the lens says the ticket is the record\'s, not an offer', (await text(stale.page, '#picks-status')).includes('as the record wrote them'), await text(stale.page, '#picks-status'));
+  eq('stale lens page errors', stale.errors, []);
+  await stale.context.close();
+
+  // A missing measurement sorts last and is never read as a zero. Every gain in
+  // the fixtures -- and every one of the 401 in the published record, the
+  // smallest +0.07% -- is positive, so a missing GAIN read as zero would still
+  // sort last and prove nothing. The volume ratio is the discriminating case:
+  // zero is a value the record writes, so a burst measured at 0x must outrank
+  // one that was not measured at all, and reading missing as zero ties them.
+  const zeroT = data.bursts[1].ticker, noneT = data.bursts[0].ticker;
+  const nog = await openMutant(browser, base, data, (c) => {
+    c.bursts[0].volume_vs_prior = null; delete c.bursts[0].quality.burst.volume_vs_prior;
+    c.bursts[1].volume_vs_prior = 0; c.bursts[1].quality.burst.volume_vs_prior = 0;
+  }, { sort: 'volume' });
+  const order = await cardTickers(nog.page);
+  eq('a burst with no volume measurement sorts last', order[order.length - 1], noneT);
+  eq('and one the record measured at zero still outranks it', order[order.length - 2], zeroT);
+  check('the unmeasured card says so', (await text(nog.page, `#pick-list .ss-pick[data-ticker="${noneT}"]`)).includes('vol —'), await text(nog.page, `#pick-list .ss-pick[data-ticker="${noneT}"]`));
+  check('and the zero card prints the zero', (await text(nog.page, `#pick-list .ss-pick[data-ticker="${zeroT}"]`)).includes('vol 0.0×'), await text(nog.page, `#pick-list .ss-pick[data-ticker="${zeroT}"]`));
+  eq('missing-measure sort page errors', nog.errors, []);
+  await nog.close();
+}
+
+// ---------------------------------------------------------------- comparison
+// Two charts on one page is the thing that used to be impossible: one global
+// host, fixed ids, and a second mount disposing the first. So this reads back
+// both instances, their ids, and the live-chart count the module keeps.
+async function checkCompare(browser, base, data) {
+  console.log('-- comparing two setups');
+  const live = (page) => page.evaluate(() => window.SCStock.liveCharts());
+  const ids = (page) => page.evaluate(() => Array.from(document.querySelectorAll('[id]')).map((e) => e.id));
+  const A = data.bursts[0], B = data.bursts[1];
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all' });
+
+  eq('every card offers a Compare toggle beside its selection button', await count(page, '#pick-list .ss-pick-item .ss-pin'), data.bursts.length);
+  eq('the toggle is never inside the selection button', await count(page, '#pick-list .ss-pick .ss-pin'), 0);
+  eq('the tray is out of the way until something is pinned', await page.locator('#compare-tray').isVisible(), false);
+  const before = await hash(page);
+  await page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${B.ticker}"]) .ss-pin`); await page.waitForTimeout(200);
+  eq('pinning navigates nowhere', await hash(page), before);
+  eq('pinning follows nothing', await page.evaluate(() => (window.SCStock.follow.list() || []).length), 0);
+  check('one pin asks for a second and offers no comparison yet', (await text(page, '#compare-tray')).includes('pin one more') && await page.locator('#compare-open').isDisabled(), await text(page, '#compare-tray'));
+  await page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${A.ticker}"]) .ss-pin`); await page.waitForTimeout(200);
+  eq('two pins enable the comparison', await page.locator('#compare-open').isDisabled(), false);
+  eq('the tray names both, with the stage and the status the record gives them', await page.locator('#compare-tray .ss-tray__pin').evaluateAll((e) => e.map((x) => x.dataset.ticker)), [B.ticker, A.ticker]);
+
+  // a third asks; it never drops one silently
+  const C = data.bursts[2];
+  await page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${C.ticker}"]) .ss-pin`); await page.waitForTimeout(200);
+  eq('a third pin asks which to replace', await page.locator('#compare-tray .ss-tray__ask').getAttribute('data-ask'), 'replace');
+  eq('and offers each of the two by name', await page.locator('#compare-tray [data-ask-action="replace"]').evaluateAll((e) => e.map((x) => x.dataset.ticker)), [B.ticker, A.ticker]);
+  eq('until it is answered the pair is untouched', await page.locator('#compare-tray .ss-tray__pin').evaluateAll((e) => e.map((x) => x.dataset.ticker)), [B.ticker, A.ticker]);
+  await page.click('#compare-tray [data-ask-action="cancel"]'); await page.waitForTimeout(150);
+  eq('keeping the pair keeps the pair', [await count(page, '#compare-tray .ss-tray__ask'), await page.locator('#compare-tray .ss-tray__pin').evaluateAll((e) => e.map((x) => x.dataset.ticker))], [0, [B.ticker, A.ticker]]);
+  await page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${C.ticker}"]) .ss-pin`); await page.waitForTimeout(150);
+  await page.click(`#compare-tray [data-ask-action="replace"][data-ticker="${B.ticker}"]`); await page.waitForTimeout(200);
+  eq('replacing swaps exactly the one named', await page.locator('#compare-tray .ss-tray__pin').evaluateAll((e) => e.map((x) => x.dataset.ticker)), [C.ticker, A.ticker]);
+
+  // the other stage is explained, not silently refused
+  const coil = data.watchlist.top[0];
+  await page.locator('#stages .ss-stage[data-stage="setting-up"]').click(); await page.waitForTimeout(250);
+  await page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${coil.ticker}"]) .ss-pin`); await page.waitForTimeout(200);
+  eq('a pin from the other stage is explained', await page.locator('#compare-tray .ss-tray__ask').getAttribute('data-ask'), 'stage');
+  check('and says why the two are not put side by side', (await text(page, '#compare-tray .ss-tray__ask')).includes('one stage and one published session'), await text(page, '#compare-tray .ss-tray__ask'));
+  await page.click('#compare-tray [data-ask-action="restart"]'); await page.waitForTimeout(200);
+  eq('starting again keeps only the new one', await page.locator('#compare-tray .ss-tray__pin').evaluateAll((e) => e.map((x) => x.dataset.ticker)), [coil.ticker]);
+  await page.click('#compare-tray [data-tray-clear]'); await page.waitForTimeout(150);
+  eq('clearing puts the tray away', await page.locator('#compare-tray').isVisible(), false);
+
+  // two charts, side by side, each its own instance
+  await page.locator('#stages .ss-stage[data-stage="bursts"]').click(); await page.waitForTimeout(250);
+  const one = await live(page);
+  eq('one chart is live before the sheet opens', one, 1);
+  await page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${A.ticker}"]) .ss-pin`);
+  await page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${B.ticker}"]) .ss-pin`); await page.waitForTimeout(200);
+  const routeBefore = await hash(page), lensBefore = await lensNow(page);
+  await page.click('#compare-open'); await page.waitForTimeout(700);
+  eq('the sheet opens', await page.evaluate(() => document.getElementById('compare').open), true);
+  eq('two charts are drawn and neither disposed the other', [await count(page, '#compare .sc-chart--stock'), await live(page)], [2, 3]);
+  eq('each panel owns its own mount id', await page.locator('#compare .ss-chart-mount').evaluateAll((e) => e.map((x) => x.id)), ['cmp-a-mount', 'cmp-b-mount']);
+  const allIds = await ids(page);
+  eq('no id is written twice while both charts stand', allIds.length, new Set(allIds).size);
+  eq('each chart is its own stock', await page.locator('#compare .sc-chart--stock').evaluateAll((e) => e.map((x) => x.dataset.ticker)), [A.ticker, B.ticker]);
+  // each keeps its own price scale and its own dates: the two are never on one axis
+  const scales = await page.locator('#compare .sc-chart--stock').evaluateAll((els) => els.map((h) => ({
+    ticker: h.dataset.ticker, sessions: h.dataset.sessions,
+    gutter: Array.from(h.querySelectorAll('svg text[data-kind]')).map((t) => t.textContent).join('|')
+  })));
+  check('each panel keeps its own price labels', scales.length === 2 && scales[0].gutter && scales[1].gutter && scales[0].gutter !== scales[1].gutter, JSON.stringify(scales));
+  const ranges = await page.locator('#compare .ss-chart-panel__range').allInnerTexts();
+  check('each panel labels its own actual range', ranges.length === 2 && ranges.every((r) => /^Showing \d+ sessions, .+ – .+ \d{4} · /.test(r.replace(/\s+/g, ' '))), JSON.stringify(ranges));
+  // the common controls drive both, and the per-panel strips stay out of the way
+  eq('the per-panel control strips are hidden under the common ones', await page.locator('#compare .ss-chart-panel__tools').evaluateAll((e) => e.map((x) => x.hidden)), [true, true]);
+  await page.click('#compare .ss-compare__tools .sc-tab[data-mode="candles"]'); await page.waitForTimeout(400);
+  eq('one mode choice redraws both charts', await page.locator('#compare .sc-chart--stock').evaluateAll((e) => e.map((x) => x.dataset.mode)), ['candles', 'candles']);
+  await page.click('#compare .ss-compare__tools .sc-tab[data-range="120"]'); await page.waitForTimeout(400);
+  eq('one range choice redraws both charts', await page.locator('#compare .sc-chart--stock').evaluateAll((e) => e.map((x) => x.dataset.range)), ['120', '120']);
+  eq('and both are still live', await live(page), 3);
+  // the facts: the record's own values, aligned, with no winner declared
+  const facts = await page.locator('#compare-table tbody tr').evaluateAll((rows) => rows.map((r) => [r.dataset.fact, r.dataset.differs, r.children[1].textContent.trim(), r.children[2].textContent.trim()]));
+  // the rows exist in the DOM either way: what matters is that the sheet gives
+  // them the height they need (a scrolling column flex box shrinks its items)
+  const factsBox = await page.evaluate(() => { const b = document.querySelector('#compare .ss-compare__facts'), t = document.getElementById('compare-table');
+    return { drawn: Math.round(b.getBoundingClientRect().height), content: t.scrollHeight }; });
+  check('the aligned facts are drawn at the height their rows need', factsBox.drawn >= factsBox.content - 2, JSON.stringify(factsBox));
+  const fact = (k) => facts.find((f) => f[0] === k);
+  eq(`${A.ticker}: the compared grade is the archived one`, fact('grade')[2], A.grade + ' · ' + A.score.toFixed(1));
+  eq(`${B.ticker}: the compared grade is the archived one`, fact('grade')[3], B.grade + ' · ' + B.score.toFixed(1));
+  eq('the compared gains are the recorded gains', [fact('gain')[2], fact('gain')[3]], [pctOf(A.gain_pct), pctOf(B.gain_pct)]);
+  eq('the volume row names which ratio it is', await page.locator('#compare-table tr[data-fact="volume"] th').innerText(), 'volume vs previous session');
+  eq('the compared volume ratios are the recorded ones', [fact('volume')[2], fact('volume')[3]], [ratioOf(A).toFixed(1) + '×', ratioOf(B).toFixed(1) + '×']);
+  if (A.plan) eq(`${A.ticker}: the compared trigger is the plan's`, fact('trigger')[2], usd(A.plan.entry_ref));
+  if (A.plan) eq(`${A.ticker}: the compared limit is the ticket's`, fact('limit')[2], usd(A.plan.limit));
+  if (B.plan) eq(`${B.ticker}: the compared limit is the ticket's`, fact('limit')[3], usd(B.plan.limit));
+  check('a row the two differ on is marked, one they share is not', fact('gain')[1] === 'true' && fact('provenance')[1] === 'false', JSON.stringify(facts.map((f) => [f[0], f[1]])));
+  // the table's own caption and the sheet's footnote exist to DENY a verdict,
+  // so the rows, the column heads and the panels are read without them
+  const compared = (await page.locator('#compare-table thead, #compare-table tbody').allInnerTexts()).join(' ') + ' ' + (await text(page, '#compare .ss-compare__panels'));
+  check('nothing in the comparison itself declares a winner', !/\b(winner|better|best|stronger|weaker|beats|wins|leads)\b/i.test(compared), (compared.match(/.{0,60}(winner|better|best|stronger|weaker|beats|wins|leads)/i) || [''])[0]);
+  eq('no row is marked as the one to take', await count(page, '#compare-table [data-best], #compare-table .is-best'), 0);
+  check('and the caption says the mark is a difference, not a verdict', (await text(page, '#compare')).includes('nothing here says which setup is better'), 'caption');
+  if (shotsDir) await page.screenshot({ path: path.join(shotsDir, 'compare-1280.png') });
+
+  // closing: both instances dropped, the reader's place restored
+  const scrollBefore = await page.evaluate(() => window.pageYOffset);
+  await page.keyboard.press('Escape'); await page.waitForTimeout(500);
+  eq('Escape closes the sheet', await page.evaluate(() => document.getElementById('compare').open), false);
+  eq('both comparison charts are disposed', await live(page), 1);
+  eq('nothing of the sheet is left in the page', await count(page, '#compare .sc-chart--stock'), 0);
+  eq('focus returns to what opened it', await page.evaluate(() => (document.activeElement || {}).id || ''), 'compare-open');
+  eq('the reader keeps their place', await page.evaluate(() => window.pageYOffset), scrollBefore);
+  eq('the selection and the lens are untouched', [await hash(page), await lensNow(page)], [routeBefore, lensBefore]);
+  // opening and closing repeatedly leaks nothing and shows no stale content
+  for (let i = 0; i < 3; i++) {
+    await page.click('#compare-open'); await page.waitForTimeout(450);
+    eq(`open ${i + 1}: two charts, three live`, [await count(page, '#compare .sc-chart--stock'), await live(page)], [2, 3]);
+    const again = await ids(page);
+    eq(`open ${i + 1}: still no duplicated id`, again.length, new Set(again).size);
+    await page.keyboard.press('Escape'); await page.waitForTimeout(400);
+    eq(`close ${i + 1}: back to one live chart`, await live(page), 1);
+  }
+  // a replaced pin shows the new pair, not the old one
+  await page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${C.ticker}"]) .ss-pin`); await page.waitForTimeout(150);
+  await page.click(`#compare-tray [data-ask-action="replace"][data-ticker="${A.ticker}"]`); await page.waitForTimeout(200);
+  await page.click('#compare-open'); await page.waitForTimeout(500);
+  eq('the sheet shows the pair now pinned', await page.locator('#compare .sc-chart--stock').evaluateAll((e) => e.map((x) => x.dataset.ticker)), [C.ticker, B.ticker]);
+  // Open setup leaves the sheet for that stock
+  await page.click(`#compare [data-open-setup="${C.ticker}"]`); await page.waitForTimeout(500);
+  eq('Open setup closes the sheet and opens that stock', [await page.evaluate(() => document.getElementById('compare').open), await text(page, '#detail-h2')], [false, C.ticker]);
+  eq('and leaves one chart live', await live(page), 1);
+  eq('compare page errors', errors, []);
+  await context.close();
+
+  // following from the comparison is the one save there is, and the record is untouched
+  const fl = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all' });
+  await fl.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${A.ticker}"]) .ss-pin`);
+  await fl.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${B.ticker}"]) .ss-pin`); await fl.page.waitForTimeout(200);
+  await fl.page.click('#compare-open'); await fl.page.waitForTimeout(500);
+  await fl.page.click('#compare [data-side="a"] .ss-follow button[data-follow-action="add"]'); await fl.page.waitForTimeout(250);
+  eq('following from the comparison saves one setup in this browser', await fl.page.evaluate(() => window.SCStock.follow.list().map((i) => i.ticker)), [A.ticker]);
+  eq('and the published record is not touched by it', await fl.page.evaluate(() => JSON.stringify(window.SCStock.data.trades) + '|' + JSON.stringify(window.SCStock.data.scorecard)),
+    JSON.stringify(data.trades) + '|' + JSON.stringify(data.scorecard));
+  eq('comparison follow page errors', fl.errors, []);
+  await fl.context.close();
+
+  // Two balanced panels: a long company name on one side must not push its
+  // chart below the other's. The fixture's names are short, so the case is
+  // made rather than hoped for -- the published record's are not short.
+  const longName = await openMutant(browser, base, data, (c) => { c.bursts[0].name = 'A Very Long Company Name Corporation Of America Incorporated Holdings International Group Common Stock Class A Ordinary Shares'; }, { lens: 'all' });
+  await longName.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${A.ticker}"]) .ss-pin`);
+  await longName.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${B.ticker}"]) .ss-pin`); await longName.page.waitForTimeout(200);
+  await longName.page.click('#compare-open'); await longName.page.waitForTimeout(600);
+  const tops = await longName.page.locator('#compare .ss-compare__side .ss-chart-panel').evaluateAll((e) => e.map((x) => Math.round(x.getBoundingClientRect().top)));
+  check('the two panels start their charts at the same height', tops.length === 2 && Math.abs(tops[0] - tops[1]) <= 1, tops);
+  const names = await longName.page.locator('#compare .ss-compare__side .ss-compare__name').evaluateAll((e) => e.map((x) => Math.round(x.getBoundingClientRect().height)));
+  check('and neither identity block grew a second line', names.length === 2 && Math.abs(names[0] - names[1]) <= 1, names);
+  eq('long-name comparison page errors', longName.errors, []);
+  await longName.close();
+
+  // a side with no archived bars is the designed absence, and the other still draws
+  const nb = await openMutant(browser, base, data, (c) => { c.bursts[1].series = []; }, { lens: 'all' });
+  await nb.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${A.ticker}"]) .ss-pin`);
+  await nb.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${B.ticker}"]) .ss-pin`); await nb.page.waitForTimeout(200);
+  await nb.page.click('#compare-open'); await nb.page.waitForTimeout(500);
+  eq('the side without bars says so rather than inventing a chart', [await count(nb.page, '#compare [data-side="b"] [data-chart="unavailable"]'), await count(nb.page, '#compare [data-side="b"] .sc-chart--stock')], [1, 0]);
+  eq('and the side with bars still draws', await count(nb.page, '#compare [data-side="a"] .sc-chart--stock'), 1);
+  check('the facts still compare what the record does carry', (await text(nb.page, '#compare-table')).includes(B.ticker), 'facts');
+  eq('no-bars comparison page errors', nb.errors, []);
+  await nb.close();
+
+  // the phone: one chart at a time, both symbols and both statuses on screen
+  const m = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { height: 844, lens: 'all' });
+  await m.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${A.ticker}"]) .ss-pin`);
+  await m.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${B.ticker}"]) .ss-pin`); await m.page.waitForTimeout(200);
+  await m.page.click('#compare-open'); await m.page.waitForTimeout(700);
+  eq('phone: the A/B switch is offered', await m.page.locator('#compare .ss-compare__ab').isVisible(), true);
+  const visibleCharts = () => m.page.locator('#compare .ss-chart-panel').evaluateAll((e) => e.filter((x) => x.getClientRects().length).length);
+  eq('phone: one chart is drawn at a time', await visibleCharts(), 1);
+  const bothIds = await m.page.locator('#compare .ss-compare__both .ss-compare__id').evaluateAll((e) => e.map((x) => [x.dataset.idOf, x.getClientRects().length > 0]));
+  eq('phone: both symbols and both statuses stay on screen', bothIds, [[A.ticker, true], [B.ticker, true]]);
+  const bothBox = await m.page.locator('#compare .ss-compare__both').boundingBox();
+  check('phone: both identities are above the fold', bothBox && bothBox.y + bothBox.height <= 844, JSON.stringify(bothBox));
+  await m.page.click('#compare .ss-compare__ab .sc-tab[data-ab="b"]'); await m.page.waitForTimeout(500);
+  eq('phone: the switch changes which chart is drawn', await m.page.locator('#compare .ss-chart-panel').evaluateAll((e) => e.map((x) => [x.dataset.ticker, x.getClientRects().length > 0])), [[A.ticker, false], [B.ticker, true]]);
+  check('phone: the revealed chart is measured for the screen it is on', await m.page.evaluate(() => { const s = document.querySelector('#compare [data-side="b"] svg'); return s && +s.getAttribute('width') <= 390; }), 'width');
+  eq('phone: the aligned facts are still there', await count(m.page, '#compare-table tbody tr'), facts.length);
+  const mBox = await m.page.evaluate(() => { const b = document.querySelector('#compare .ss-compare__facts'), t = document.getElementById('compare-table');
+    return { drawn: Math.round(b.getBoundingClientRect().height), content: t.scrollHeight }; });
+  check('phone: and drawn at the height their rows need', mBox.drawn >= mBox.content - 2, JSON.stringify(mBox));
+  const overflow = await m.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
+  eq('phone: the sheet does not scroll sideways', overflow, true);
+  if (shotsDir) await m.page.screenshot({ path: path.join(shotsDir, 'compare-390.png') });
+  eq('phone comparison page errors', m.errors, []);
+  await m.context.close();
+}
+
+// ---------------------------------------------------------------- the evidence on the chart
+// Every anchor is a DATE the run archived. The two mutants here are the point:
+// a series with a later observation appended must still mark the SIGNAL day,
+// and a series missing the bar before the signal must mark the one that did
+// print, not the previous calendar day.
+async function checkEvidence(browser, base, data) {
+  console.log('-- the recorded evidence, on the chart');
+  const b = data.bursts[0], series = b.series, session = data.run.session;
+  const markOf = (page, sel) => page.locator(sel || '#chart-mount .sc-chart--stock').getAttribute('data-highlight');
+  const levels = (page) => page.evaluate(() => {
+    const svg = document.querySelector('#chart-mount svg');
+    const at = (k) => { const l = svg.querySelector(`[data-level="${k}"]`); return l ? l.getAttribute('y1') : null; };
+    return { stop: at('stop'), trigger: at('trigger'), close: at('close'), grid: Array.from(svg.querySelectorAll('.sc-chart__grid')).map((g) => g.getAttribute('y1')).join(',') };
+  });
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${b.ticker}` });
+
+  eq('a burst offers the base, the burst day and the prior day', await page.locator('#detail .ss-evidence [data-anchor]').evaluateAll((e) => e.map((x) => x.dataset.anchor)), ['base', 'burst', 'prior']);
+  eq('nothing is marked until the reader asks', await markOf(page), null);
+  const geomBefore = await levels(page);
+
+  // the base: exactly the archived start and end
+  await page.click('#detail .ss-evidence [data-anchor="base"]'); await page.waitForTimeout(300);
+  eq('Base marks exactly the archived base dates', await markOf(page), `${b.quality.base.start}/${b.quality.base.end}`);
+  eq('the marker is drawn once', await count(page, '#chart-mount .sc-chart__evidence-band'), 1);
+  eq('marking a date range moves no price', await levels(page), geomBefore);
+  const explain = await text(page, '#detail .ss-evidence__explain');
+  check('the explanation names the dates it marked', explain.includes(dateWords(b.quality.base.start)) && explain.includes(dateWords(b.quality.base.end)), explain.slice(0, 160));
+  check('and prints the recorded measurement', explain.includes(`${b.quality.base.sessions} sessions`) && explain.includes(usd(b.quality.base.low) + '–' + usd(b.quality.base.high)), explain.slice(0, 300));
+  const cons = b.quality.checks.find((c) => c.key === 'consolidation');
+  check('with the producer\'s own threshold and verdict, not the page\'s arithmetic', explain.includes(cons.threshold) && explain.includes(cons.display), explain.slice(0, 600));
+  eq('the verdict is the checklist\'s', await page.locator('#detail .ss-evidence__check[data-check="consolidation"]').getAttribute('data-verdict'), cons.pass ? (cons.marginal ? 'partial' : 'pass') : 'fail');
+
+  // the burst day and the prior day, by observation
+  await page.click('#detail .ss-evidence [data-anchor="burst"]'); await page.waitForTimeout(250);
+  eq('Burst day marks the session the record was published for', await markOf(page), session);
+  await page.click('#detail .ss-evidence [data-anchor="prior"]'); await page.waitForTimeout(250);
+  const priorDate = series[series.findIndex((x) => x.date === session) - 1].date;
+  eq('Prior day marks the bar before it in the archived series', await markOf(page), priorDate);
+  check('and prints that bar\'s own prices', (await text(page, '#detail .ss-evidence__explain')).includes('close ' + usd(series[series.findIndex((x) => x.date === session) - 1].c)), await text(page, '#detail .ss-evidence__explain'));
+
+  // clearing, and the mode it must survive
+  await page.click('#detail .ss-evidence [data-anchor="prior"]'); await page.waitForTimeout(200);
+  eq('pressing the pressed control clears the mark', await markOf(page), null);
+  await page.click('#detail .ss-evidence [data-anchor="base"]'); await page.waitForTimeout(250);
+  await page.click('#detail .sc-tab[data-mode="line"]'); await page.waitForTimeout(350);
+  eq('a mode change keeps the mark on the same dates', [await page.locator('#chart-mount .sc-chart--stock').getAttribute('data-mode'), await markOf(page)], ['line', `${b.quality.base.start}/${b.quality.base.end}`]);
+  await page.click('#detail .sc-tab[data-mode="setup"]'); await page.waitForTimeout(300);
+  await page.click('#detail [data-evidence-clear]'); await page.waitForTimeout(200);
+  eq('Clear clears it', [await markOf(page), await count(page, '#chart-mount .sc-chart__evidence-band')], [null, 0]);
+
+  // the checklist tile is the SAME mechanism, not a second one
+  await openAll(page, '#detail details');
+  // The record dates a base, a signal session and the bar before it. Everything
+  // else the checklist measures -- the prior leg's linearity, the trend's age,
+  // the run of up days -- has numbers and no dates, so ALL of those must stay
+  // tiles: naming one of them here would leave the others free to be drawn.
+  const tileTag = (want) => page.locator('#detail .ss-checks [data-check]').evaluateAll((e, w) => e.filter((x) => (x.tagName === 'BUTTON') === w).map((x) => x.dataset.check).sort(), want);
+  eq('exactly the checks the record dates are ways onto the chart', await tileTag(true), ['close_near_high', 'consolidation', 'narrow_or_negative', 'range_expansion', 'volume']);
+  eq('and every undated one stays a tile', await tileTag(false), ['linearity', 'two_days', 'young_trend']);
+  await page.click('#detail .ss-checks [data-check="consolidation"]'); await page.waitForTimeout(350);
+  eq('the tile marks the base through the one mechanism', await markOf(page), `${b.quality.base.start}/${b.quality.base.end}`);
+  eq('and the evidence control shows as pressed', await page.locator('#detail .ss-evidence [data-anchor="base"]').getAttribute('aria-pressed'), 'true');
+  await page.click('#detail .ss-checks [data-check="volume"]'); await page.waitForTimeout(300);
+  eq('a burst-day check marks the burst day', await markOf(page), session);
+
+  // choosing another stock rebinds: nothing of the last one survives
+  const other = data.bursts[1];
+  await clickPick(page, other.ticker);
+  eq('a new stock starts unmarked', await markOf(page), null);
+  eq('and its evidence controls are unpressed', await page.locator('#detail .ss-evidence [data-anchor]').evaluateAll((e) => e.map((x) => x.getAttribute('aria-pressed'))), ['false', 'false', 'false']);
+  await page.click('#detail .ss-evidence [data-anchor="base"]'); await page.waitForTimeout(300);
+  eq('the new stock marks its OWN archived base', await markOf(page), `${other.quality.base.start}/${other.quality.base.end}`);
+
+  // a coil offers its box, and nothing that is not recorded for it
+  const coil = data.watchlist.top[0];
+  await go(page, `#/explore/setting-up/${coil.ticker}`); await page.waitForTimeout(300);
+  eq('a coil offers the box alone', await page.locator('#detail .ss-evidence [data-anchor]').evaluateAll((e) => e.map((x) => x.dataset.anchor)), ['box']);
+  await page.click('#detail .ss-evidence [data-anchor="box"]'); await page.waitForTimeout(300);
+  eq('and marks the recorded box dates', await markOf(page), `${coil.box.start}/${coil.box.end}`);
+  check('saying it is measured and not graded', (await text(page, '#detail .ss-evidence__explain')).includes('measured, not graded'), await text(page, '#detail .ss-evidence__explain'));
+  await openAll(page, '#detail details');
+  await page.click('#detail .ss-fact__show[data-anchor="box"]'); await page.waitForTimeout(300);
+  eq('the coil\'s box row is the same mechanism too', await markOf(page), `${coil.box.start}/${coil.box.end}`);
+  if (shotsDir) await page.locator('#detail .ss-chart-panel').screenshot({ path: path.join(shotsDir, 'evidence-1280.png') });
+  eq('evidence page errors', errors, []);
+  await context.close();
+
+  // THE BURST DAY IS THE SIGNAL, not the last bar: a later observation appended
+  // to the frame must not move it (this is what an index-from-the-end reads)
+  const later = { date: '2026-09-11', o: series[series.length - 1].c, h: series[series.length - 1].c * 1.02, l: series[series.length - 1].c * 0.99, c: series[series.length - 1].c * 1.01, v: 1000000 };
+  const app = await openMutant(browser, base, data, (c) => { c.bursts[0].series = c.bursts[0].series.concat([later]); }, { lens: 'all' });
+  await go(app.page, `#/explore/bursts/${b.ticker}`); await app.page.waitForTimeout(300);
+  await app.page.click('#detail .ss-evidence [data-anchor="burst"]'); await app.page.waitForTimeout(300);
+  eq('a later observation does not move the burst day', await markOf(app.page), session);
+  await app.page.click('#detail .ss-evidence [data-anchor="prior"]'); await app.page.waitForTimeout(300);
+  eq('nor the prior day', await markOf(app.page), priorDate);
+  eq('appended-observation page errors', app.errors, []);
+  await app.close();
+
+  // THE PRIOR DAY IS THE PREVIOUS OBSERVATION, not the previous date: with the
+  // bar before the signal missing, it is the one that did print
+  const gap = await openMutant(browser, base, data, (c) => {
+    const s = c.bursts[0].series, i = s.findIndex((x) => x.date === session);
+    s.splice(i - 1, 1);
+  }, { lens: 'all' });
+  await go(gap.page, `#/explore/bursts/${b.ticker}`); await gap.page.waitForTimeout(300);
+  await gap.page.click('#detail .ss-evidence [data-anchor="prior"]'); await gap.page.waitForTimeout(300);
+  const gapPrior = series[series.findIndex((x) => x.date === session) - 2].date;
+  eq('the prior day is the previous bar that printed', await markOf(gap.page), gapPrior);
+  check('and it is not the previous calendar day', gapPrior !== priorDate, [gapPrior, priorDate]);
+  eq('gap page errors', gap.errors, []);
+  await gap.close();
+
+  // evidence outside the range on screen: offered, never taken silently
+  const far = await openMutant(browser, base, data, (c) => {
+    const s = c.bursts[0].series, q = c.bursts[0].quality.base;
+    q.start = s[2].date; q.end = s[7].date;
+    q.low = Math.min(...s.slice(2, 8).map((x) => x.l)); q.high = Math.max(...s.slice(2, 8).map((x) => x.h));
+  }, { lens: 'all' });
+  await go(far.page, `#/explore/bursts/${b.ticker}`); await far.page.waitForTimeout(300);
+  await far.page.click('#detail .ss-evidence [data-anchor="base"]'); await far.page.waitForTimeout(300);
+  await far.page.click('#detail .sc-tab[data-range="60"]'); await far.page.waitForTimeout(400);
+  eq('a range that does not hold the evidence draws no marker', [await markOf(far.page), await count(far.page, '#chart-mount .sc-chart__evidence-band')], [null, 0]);
+  eq('and the explanation offers the range that does', await count(far.page, '#detail [data-anchor-state="out-of-range"] [data-show-range]'), 1);
+  await far.page.click('#detail [data-show-range]'); await far.page.waitForTimeout(400);
+  const farBase = JSON.parse(await readFile(path.join(FIXTURES, 'full.json'), 'utf8'));
+  eq('taking the offer shows it', [await far.page.locator('#chart-mount .sc-chart--stock').getAttribute('data-range'), await markOf(far.page)],
+    ['setup', `${farBase.bursts[0].series[2].date}/${farBase.bursts[0].series[7].date}`]);
+  eq('out-of-range page errors', far.errors, []);
+  await far.close();
+
+  // no dates, no anchor: the words stand and nothing is drawn for them
+  const nodate = await openMutant(browser, base, data, (c) => { delete c.bursts[0].quality.base.start; delete c.bursts[0].quality.base.end; }, { lens: 'all' });
+  await go(nodate.page, `#/explore/bursts/${b.ticker}`); await nodate.page.waitForTimeout(300);
+  eq('without base dates there is no Base control', await count(nodate.page, '#detail .ss-evidence [data-anchor="base"]'), 0);
+  await openAll(nodate.page, '#detail details');
+  eq('and its check is not clickable either', await nodate.page.locator('#detail .ss-checks [data-check="consolidation"]').evaluateAll((e) => e.map((x) => x.tagName)), ['DIV']);
+  check('while the checklist still prints its measurement', (await text(nodate.page, '#detail .ss-checks')).length > 20, 'checks');
+  eq('no-dates page errors', nodate.errors, []);
+  await nodate.close();
+
+  // no bars at all: the evidence keeps its words and says there is no chart
+  const nobars = await openMutant(browser, base, data, (c) => { c.bursts[0].series = []; }, { lens: 'all' });
+  await go(nobars.page, `#/explore/bursts/${b.ticker}`); await nobars.page.waitForTimeout(300);
+  eq('without bars the base is still offered as text', await count(nobars.page, '#detail .ss-evidence [data-anchor="base"]'), 1);
+  eq('but the burst day, which is read off the frame, is not', await count(nobars.page, '#detail .ss-evidence [data-anchor="burst"]'), 0);
+  await nobars.page.click('#detail .ss-evidence [data-anchor="base"]'); await nobars.page.waitForTimeout(250);
+  const noChart = await text(nobars.page, '#detail .ss-evidence__explain');
+  check('the measurement is printed and the missing chart is named', noChart.includes(`${b.quality.base.sessions} sessions`) && noChart.includes('no chart to sit on'), noChart.slice(0, 300));
+  eq('and no chart is invented for it', await count(nobars.page, '#chart-mount .sc-chart--stock'), 0);
+  eq('no-bars evidence page errors', nobars.errors, []);
+  await nobars.close();
+}
+
 async function main() {
   const chromium = await loadChromium();
   if (!chromium) { console.log('playwright is not installed: npm install --no-save playwright'); process.exit(1); }
@@ -1575,20 +2141,23 @@ async function main() {
   const { server, base } = await serve();
   const browser = await chromium.launch();
   try {
-    let full = null;
+    let full = JSON.parse(await readFile(path.join(FIXTURES, 'full.json'), 'utf8'));
     for (const v of VARIANTS) {
+      if (!runs(v)) continue;
       const data = JSON.parse(await readFile(path.join(FIXTURES, `${v}.json`), 'utf8'));
-      if (v === 'full') full = data;
       await checkVariant(browser, base, v, data);
     }
-    await checkMobile(browser, base, full);
-    await checkModes(browser, base, full);
-    await checkMap(browser, base, full);
-    await checkVolumeReadings(browser, base, full);
-    await checkMapScale(browser, base, full);
-    await checkFollowing(browser, base, full);
-    await checkTicketPrices(browser, base, full);
-    await checkStates(browser, base, full);
+    if (runs('mobile')) await checkMobile(browser, base, full);
+    if (runs('modes')) await checkModes(browser, base, full);
+    if (runs('lens')) await checkLens(browser, base, full);
+    if (runs('compare')) await checkCompare(browser, base, full);
+    if (runs('evidence')) await checkEvidence(browser, base, full);
+    if (runs('map')) await checkMap(browser, base, full);
+    if (runs('volume')) await checkVolumeReadings(browser, base, full);
+    if (runs('mapscale')) await checkMapScale(browser, base, full);
+    if (runs('following')) await checkFollowing(browser, base, full);
+    if (runs('ticket')) await checkTicketPrices(browser, base, full);
+    if (runs('states')) await checkStates(browser, base, full);
   } finally {
     await browser.close();
     server.close();

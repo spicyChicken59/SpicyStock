@@ -69,7 +69,12 @@
     </div>
     <div id="demo-notice" hidden></div>
 
-    <div class="ss-stages" id="stages" role="group" aria-label="Choose a stage"></div>
+    <div class="ss-band" id="stage-band">
+      <div class="ss-stages" id="stages" role="group" aria-label="Choose a stage"></div>
+      <div class="ss-lens" id="lens" role="group" aria-label="Narrow this stage"></div>
+    </div>
+
+    <div class="ss-tray" id="compare-tray" role="group" aria-label="Pinned for comparison" hidden></div>
 
     <div class="ss-workspace" id="workspace">
       <aside class="ss-picks" id="picks" aria-labelledby="picks-h2">
@@ -200,6 +205,8 @@
     <div class="ss-chooser__list" id="chooser-list" role="group" aria-label="Every stock in this record"></div>
   </form>
 </dialog>
+
+<dialog class="ss-compare" id="compare" aria-labelledby="compare-h2"></dialog>
 
 <footer class="sc-foot">
   <span id="foot-line">SpicyStock · paper prices, one venue's prints, no slippage · not investment advice</span>

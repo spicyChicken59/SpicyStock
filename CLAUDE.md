@@ -103,12 +103,23 @@ open plans, scorecard) → `report.build()` and validate → email. Exit codes
 
 The page (`docs/app.js`) is a small hash-routed application over the
 record: Explore (the market in a line, two stage cards that always say how
-many of their stocks carry a ticket, one selectable card per stock, one
-stock in focus with its chart, four decision answers, the action area --
-the design system's `.sc-actionbar`, a row on a desktop and a stack on a
-phone -- and four disclosures), Record, Market and Method, with the
-tickets and the scan as disclosures under the workspace and one next action
-under every view. It computes one thing of the market — the status chip
+many of their stocks carry a ticket, a lens row beside them, one selectable
+card per stock, one stock in focus with its chart, four decision answers,
+the action area -- the design system's `.sc-actionbar`, a row on a desktop
+and a stack on a phone -- and four disclosures), Record, Market and Method,
+with the tickets and the scan as disclosures under the workspace and one
+next action under every view. `visible(stage)` is the ONE
+visible-candidate selector -- the lens (`lensPass()`: the archived grade
+against `tradeGrades`, the record's own `ticket` status, this browser's
+Following shelf), the ticker search and the sort, in that order -- and the
+cards, the map, the counts and the detail's stepper all read it, so a
+subset can never differ between them. `defaultLens()` opens on A-quality
+when the record archived one and on every burst otherwise; a lens the
+reader chooses is stored (`spicystock:lens:v1`) and never widened behind
+them, an empty one explains itself and offers one click out, and a lens is
+a reading of the record and never a permission -- `blocked(st)` still
+refuses every order under *With ticket*. A route that NAMES a stock the
+lens hides widens it for that stock, says so, and does not store it. It computes one thing of the market — the status chip
 from the record's session and the ET clock (`status()`) — and prints
 everything else verbatim, including the six cover sentences and the plan
 instructions. `buildModel()` is the one adapter, and every status it gives a
@@ -130,7 +141,25 @@ and the limit told apart, an aim past the visible range named in a
 reference area; a coil is drawn with its box and its trigger and no burst
 candle, and a name without archived bars gets the chart-unavailable
 state. The mode, range and close-line choices are remembered in this
-browser (`spicystock:chart:v1`). `pipeline.SERIES_TOP` bursts by rank carry
+browser (`spicystock:chart:v1`). `chartPanel(c, {idPrefix})` is the panel
+factory: the host, its observers and its tooltip belong to the handle it
+returns and every id it writes is namespaced, so the comparison sheet can
+mount `cmp-a` and `cmp-b` beside the detail's `chart` and neither disposes
+another (`SCStock.liveCharts()` counts the undisposed ones). Under the plot
+a *Show on chart* row marks recorded evidence -- `evidenceItems()`: the
+base's archived `start`/`end`/bounds, the burst day read off `run.session`
+(never the last bar, which a later observation would move), the previous
+ARCHIVED bar before it, a coil's box -- and `options.highlight` in
+`app-chart.js` draws it as a dashed column over those sessions in every
+mode. It is a marker and never a level: it is kept out of the domain, so
+turning it on moves no price, no label and no gutter. `CHECK_ANCHOR` is the
+one mechanism the checklist tiles share; a check the record dates no range
+for (linearity, the trend's age, the up-day run) stays a tile and is never
+made clickable. Compare pins two candidates of one stage and one record
+(`togglePin()`: a third asks which to replace, the other stage is
+explained), and the sheet gives each its own chart, its own price scale and
+its own range sentence under one set of view/range controls, with an
+aligned table of what the record says and no winner declared. `pipeline.SERIES_TOP` bursts by rank carry
 their bars beside the trades, the cut names and the closest miss, so a
 chosen burst has its chart without a second fetch. Under Bursts the cards
 have a Map twin (`docs/app-map.js`, restored from the `29e3205` signal
@@ -168,10 +197,11 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-What is measured offline: 1080 tests, the chart check, and the page smoke
-over six fixtures walked through every view, stock, search, the chooser,
-the keyboard, deep links and the old anchors, then the phone and the stale,
-failed, field-dropped and no-record states. What is NOT: the full-market
+What is measured offline: 1082 tests, the chart check, and the page smoke
+over six fixtures walked through every view, stock, lens, search, the
+chooser, the comparison, the recorded evidence, the keyboard, deep links
+and the old anchors, then the phone and the stale, failed, field-dropped
+and no-record states. What is NOT: the full-market
 fetch time from a runner (the dry-run dispatch measures it), a real Claude
 reply to a real chart, Resend delivering, Pages building after the
 commit-back. Each of those is observed on the first live night, and this
@@ -975,12 +1005,76 @@ against `tools/entry_limit_study.py`'s green-night line — 52 reach the stop
 rule, 0 eligible at the retired ceiling, 50 in production, 47 sizing to a whole
 share.
 
+## Checkpoint, 13 Sep 2026 — narrow it, compare two, show the evidence
+
+**Revision.** Branch `claude/spicystock-compare-evidence-y3hykv` from `main` at
+`cf08c900` (#55 already merged; the branch was at that tip, clean and empty).
+`docs/data.json` and `docs/picks.json` are `origin/main`'s to the byte — run
+47's record — and nothing was merged, deployed, dispatched or mailed. The
+vendored snapshot is untouched; every new style is `ss-*`.
+
+**One selector, three capabilities.** `visible(stage)` is the only
+visible-candidate list — lens, search, sort — read by the cards, the map, the
+counts and the detail's stepper, so the map can no longer plot a population the
+cards do not. The lens asks four questions of fields the run wrote and is never
+a permission: it turns the published record's 401 bursts into the 52 graded
+A-quality, and a stale page under *With ticket* still offers no order. Compare
+pins two candidates of one stage and one record, each with its own chart
+instance (`chartPanel(c, {idPrefix})`: `cmp-a`, `cmp-b` and the detail's `chart`
+coexist; `SCStock.liveCharts()` proves the teardown). *Show on chart* marks the
+archived base, the signal session read off `run.session` and the previous
+archived bar, in every mode and outside the domain, so it moves no price.
+
+**Measured, not argued.** At 1280×900 the chart's top is 667 px over the marked
+fixture (identical to `cf08c900`) and 625 px over the published record: the lens
+rides beside the stage cards, in the half of that band they leave empty, and the
+stepper stacks under the chips. At 390 px the search stays at 809 px, unchanged,
+the lens moving into the rail head (`lensHome()`). Nothing scrolls sideways.
+
+**Three defects, each reproduced before it was fixed.** Unfollowing the last
+saved setup jumped out of the Following lens — the deep-link widen fired on a
+re-render, and now fires only for a stock the reader was not already on. A
+checklist tile stayed clickable for a stock whose base carried no dates: a tile
+reads THIS stock's own anchors now. And the comparison's evidence table rendered
+**2 px tall over 502 px of rows** — the dialog's scrolling column flex shrinking
+its items, the class that squeezed the chooser, closed with `flex: 0 0 auto`.
+
+**Checks.** 1082 tests (2 new, holding the page's anchors to keys `quality.py`
+writes and dates the record carries); 7 fixtures current; chart check 178/178
+(15 new); page smoke 2904/2904 with `--shots` (three new suites, 194 checks);
+the journey 160/160 over the published record at 1280 and 390, the ticket
+fixture, a red night, a stale clock, a record with no bars and no dated base,
+and one symbol under two signal identities. **Thirty-two mutants: 29 died on the
+first pass and 3 survived**, each a hole — a missing gain read as zero still
+sorted last, every gain in every record being positive (the volume ratio, where
+zero IS a value, discriminates); the undated-check assertion named `linearity`
+and left `young_trend` free; nothing read the two panels' alignment. All die now.
+
+**CI green on its own runners** at `dd8a50d` (#56): pytest 103698824535, page
+103698824435, gitleaks 103698824509, the PR `clean` with no review thread. The
+page job — the chart check and the full smoke with `--shots` — took **3 m 57 s
+against its 15-minute cap**, so the three new suites left the margin intact; the
+same smoke takes about twenty-five minutes in this sandbox, which is the slow
+machine, not the gate.
+
+**Keep / fix / defer / omit.** Keep everything above. Fix if it bites: the
+chooser reaches a stock any lens hides, the notice saying so only afterwards; a
+401-point map is rebuilt per keystroke while the search is typed in map mode.
+Defer to Astra: the +4% ceiling against his 4% stop line; the <320 px overflow,
+pre-existing. Omit: trade logging, a portfolio, execution. **Blockers: none.
+Not claimable, unchanged:** a live fetch, a real chart read, Resend, Pages, and
+any trading edge — this changes what the reader sees, not what wins.
+
+**Next action.** The method's own, untouched here: on a green or yellow session
+dispatch `evening.yml` with `dry_run=true` and reconcile the artifact against
+`tools/entry_limit_study.py`'s green-night line, 52 / 0 / 50 / 47.
+
 ### NEXT BUILDER PROMPT
 
-Continue SpicyStock at `main` (verify the tip; `f7f2e8e` when this was written)
-plus PR from `claude/spicystock-release-acceptance-l5a1nm`. Do ONE of these; do
-not re-run the design pass, the upstream extraction, the tag, or this
-acceptance sweep.
+Continue SpicyStock at `main` (verify the tip) plus the PR from
+`claude/spicystock-compare-evidence-y3hykv`. Do ONE of these; do not re-run the
+discovery lens, the comparison, the chart evidence, the design pass or the
+release acceptance.
 
 **(a) The live qualifying-ticket acceptance, if a green or yellow session
 exists.** Requires explicit dispatch/billing approval — a dry run still pays
@@ -997,15 +1091,19 @@ green-night line is 52 / 0 / 50 / 47. A red or closed session proves
 stand-aside only — say so and stop. Never change regime, data or rules to
 manufacture a ticket.
 
-**(b) The CLAUDE.md length gate, which currently cannot fail.** Decide with the
+**(b) The CLAUDE.md length gate, which still cannot fail.** Decide with the
 owner: trim this file to a cap that binds, or retire the length clause and
 guard something that can fail. Then make the assertion read the RAW file, not
 `prose()`. Prove it fails.
 
 Offline gates for either: `python3 -m pytest tests/ -q` (the `pytest` on PATH
-here is a uv tool without pandas), `python tools/make_fixture.py --check`,
-`node tools/chart_check.mjs`, `node tools/page_smoke.mjs --shots <dir>`. This
-sandbox reaches neither the served page nor Actions' artifact blobs (403
-CONNECT); read a run through its job log, and report the limit rather than
-routing around it. Not claimable without a live night: Resend delivering, a
-real chart read, and any trading edge.
+here is a uv tool without pandas; `pip install -r requirements-dev.txt` first
+on a fresh container), `python tools/make_fixture.py --check`, `node
+tools/chart_check.mjs`, `node tools/page_smoke.mjs --shots <dir>`. The smoke
+takes about twenty-five minutes in full; `--only <suite>` runs one of
+`lens`, `compare`, `evidence`, `map`, `mobile`, `modes`, `following`, `volume`,
+`mapscale`, `ticket`, `states` or a fixture name, which is what a mutant
+should be judged by. This sandbox reaches neither the served page nor Actions'
+artifact blobs (403 CONNECT); read a run through its job log, and report the
+limit rather than routing around it. Not claimable without a live night: Resend
+delivering, a real chart read, and any trading edge.

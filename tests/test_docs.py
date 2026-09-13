@@ -163,6 +163,52 @@ def test_claude_md_is_short_and_names_the_fixture_count():
     assert f"over {['six'][0]} fixtures" in CLAUDE_MD and len(make_fixture.VARIANTS) == 6
 
 
+# --------------------------------------------- the page's chart anchors ----
+# The evidence row marks a stretch of chart for a recorded check. Every anchor
+# is resolved against a field the run wrote, so the two failures worth pinning
+# are a key the grader does not write (a control that would mark nothing) and
+# a record that stopped carrying the dates the anchor is resolved against --
+# the shape-one-level-in class this repository keeps producing.
+PAGE_JS = (ROOT / "docs" / "app.js").read_text()
+FULL_FIXTURE = json.loads((ROOT / "tests" / "fixtures" / "page" / "full.json").read_text())
+
+
+def page_anchors() -> dict[str, str]:
+    block = re.search(r"const CHECK_ANCHOR = \{(.*?)\};", PAGE_JS, re.S).group(1)
+    return dict(re.findall(r"(\w+):\s*'(\w+)'", block))
+
+
+def test_the_pages_chart_anchors_name_checks_the_grader_writes():
+    anchored = page_anchors()
+    assert anchored, "docs/app.js anchors no check to the chart"
+    written = {c["key"] for b in FULL_FIXTURE["bursts"] for c in b["quality"]["checks"]}
+    assert set(anchored) <= written, (
+        f"the page anchors {sorted(set(anchored) - written)}, which quality.py does not write; "
+        "the tile would be a button that marks nothing")
+    # a check the record dates no range for is shown in words and never drawn:
+    # linearity, the trend's age and the run of up days have measurements but
+    # no start and end, so anchoring one would mean inventing a region
+    undated = {"linearity", "young_trend", "two_days"}
+    assert not (set(anchored) & undated), (
+        f"{sorted(set(anchored) & undated)} carries no recorded date range; "
+        "show its evidence in words instead of drawing a region for it")
+
+
+def test_the_record_carries_every_field_the_chart_anchors_resolve_against():
+    run = FULL_FIXTURE["run"]
+    assert run.get("session"), "the record names no session, so no burst day can be found"
+    for b in FULL_FIXTURE["bursts"]:
+        base = b["quality"]["base"]
+        assert {"start", "end", "low", "high"} <= set(base), f"{b['ticker']}'s base carries {sorted(base)}"
+        series = b.get("series") or []
+        if series:
+            dates = [x["date"] for x in series]
+            assert run["session"] in dates, f"{b['ticker']}'s archived frame stops before the session it was picked on"
+            # the day before the signal is the previous ARCHIVED bar, so there
+            # has to be one: a frame that begins at the signal has no prior day
+            assert dates.index(run["session"]) > 0, f"{b['ticker']}'s frame begins at the signal"
+
+
 # ------------------------------------------------------------ rulebook ----
 def test_the_rulebook_bands_are_the_graders():
     bands = {g: s for s, g in grader.GRADE_BANDS}

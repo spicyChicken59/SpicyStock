@@ -6,8 +6,14 @@
    measurement stays listed and reachable. Restored from the first build's
    docs/signal-map.js (29e3205) against the current record.
 
-     SCStock.map.render(host, {points, selectedId, session, onSelect, demo})
+     SCStock.map.render(host, {points, selectedId, session, onSelect, demo, subset})
        -> { update(selectedId), dispose() }
+
+   points is whatever the page's one visible-candidate selector handed over --
+   the map plots that list and nothing else. `subset: {total, words}` names the
+   stage's own total and the lens that narrowed it, so the count line says
+   "4 bursts of 401 · A-quality lens" rather than passing a subset off as the
+   whole night; without it the count reads as every burst, as it always did.
 
    points: [{id, ticker, gain, volume, grade, score, rank, statusWords,
              statusTone, source: 'claude'|'checklist'|null, chartSeen}]
@@ -100,7 +106,11 @@
 
     const head = el('div', { 'class': 'ss-map__head' }, [
       el('div', null, [el('h3', { 'class': 'ss-map__title', text: 'Burst map' }), el('p', { 'class': 'ss-map__stamp', text: (opts.sessionWords ? 'session ' + opts.sessionWords : 'session not recorded') + (opts.demo ? ' · demo data' : '') })]),
-      el('p', { 'class': 'ss-map__count', 'data-counts': '', text: points.length + ' burst' + (points.length === 1 ? '' : 's') + ' · ' + plotted.length + ' plotted' + (missing.length ? ' · ' + missing.length + ' without a measurement' : '') })
+      // the subset the page handed it, reconciled with the stage's own total,
+      // so a narrowed map never reads as the whole night
+      el('p', { 'class': 'ss-map__count', 'data-counts': '', text: points.length + ' burst' + (points.length === 1 ? '' : 's')
+        + (opts.subset && isNum(opts.subset.total) ? ' of ' + opts.subset.total + (opts.subset.words ? ' · ' + opts.subset.words : '') : '')
+        + ' · ' + plotted.length + ' plotted' + (missing.length ? ' · ' + missing.length + ' without a measurement' : '') })
     ]);
     const surface = el('div', { 'class': 'ss-map__surface', role: 'group', 'aria-label': 'Bursts by the session’s gain and its volume relative to the previous session' });
     const legend = el('div', { 'class': 'ss-map__legend', 'aria-hidden': 'true' }, [
