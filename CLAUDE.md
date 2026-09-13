@@ -1050,14 +1050,20 @@ sorted last, every gain in every record being positive (the volume ratio, where
 zero IS a value, discriminates); the undated-check assertion named `linearity`
 and left `young_trend` free; nothing read the two panels' alignment. All die now.
 
+**CI green on its own runners** at `dd8a50d` (#56): pytest 103698824535, page
+103698824435, gitleaks 103698824509, the PR `clean` with no review thread. The
+page job — the chart check and the full smoke with `--shots` — took **3 m 57 s
+against its 15-minute cap**, so the three new suites left the margin intact; the
+same smoke takes about twenty-five minutes in this sandbox, which is the slow
+machine, not the gate.
+
 **Keep / fix / defer / omit.** Keep everything above. Fix if it bites: the
 chooser reaches a stock any lens hides, the notice saying so only afterwards; a
 401-point map is rebuilt per keystroke while the search is typed in map mode.
 Defer to Astra: the +4% ceiling against his 4% stop line; the <320 px overflow,
-pre-existing. Omit: trade logging, a portfolio, execution. **Blockers: none
-offline. Not claimable, unchanged:** a live fetch, a real chart read, Resend,
-Pages, CI, and any trading edge — this changes what the reader sees, not what
-wins.
+pre-existing. Omit: trade logging, a portfolio, execution. **Blockers: none.
+Not claimable, unchanged:** a live fetch, a real chart read, Resend, Pages, and
+any trading edge — this changes what the reader sees, not what wins.
 
 **Next action.** The method's own, untouched here: on a green or yellow session
 dispatch `evening.yml` with `dry_run=true` and reconcile the artifact against
