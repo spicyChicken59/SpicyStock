@@ -1010,8 +1010,16 @@ share.
 **Revision.** Branch `claude/spicystock-compare-evidence-y3hykv` from `main` at
 `cf08c900` (#55 already merged; the branch was at that tip, clean and empty).
 `docs/data.json` and `docs/picks.json` are `origin/main`'s to the byte — run
-47's record — and nothing was merged, deployed, dispatched or mailed. The
-vendored snapshot is untouched; every new style is `ss-*`.
+47's record. The vendored snapshot is untouched; every new style is `ss-*`.
+**Merged to `main` as `017b776` (#56) on Tahir's word, and merging published:**
+`publish-dashboard.yml` fires on any push to `main` touching `docs/**`, so Pages
+rebuilt and the gate waited for the new `app.js`, `app.css`, `app-chart.js` and
+`app-map.js` to appear before printing *Verified: every one of the 17 public
+files matches committed main* — the first time that gate, repaired in #55, has
+had a change to those files to prove. All four post-merge runs are green
+(Tests 34752200664, Secret scan 34752200734, publication 34752200728, Pages
+34752206578; the Pages run 34752200299 was cancelled as superseded, as at
+`cf08c900`). No evening run was dispatched and no mail was sent.
 
 **One selector, three capabilities.** `visible(stage)` is the only
 visible-candidate list — lens, search, sort — read by the cards, the map, the
@@ -1062,8 +1070,9 @@ chooser reaches a stock any lens hides, the notice saying so only afterwards; a
 401-point map is rebuilt per keystroke while the search is typed in map mode.
 Defer to Astra: the +4% ceiling against his 4% stop line; the <320 px overflow,
 pre-existing. Omit: trade logging, a portfolio, execution. **Blockers: none.
-Not claimable, unchanged:** a live fetch, a real chart read, Resend, Pages, and
-any trading edge — this changes what the reader sees, not what wins.
+Not claimable:** a live fetch, a real chart read, Resend, and any trading edge —
+this changes what the reader sees, not what wins. Pages is claimable now, and
+only because the publication gate fetched the served bytes and matched them.
 
 **Next action.** The method's own, untouched here: on a green or yellow session
 dispatch `evening.yml` with `dry_run=true` and reconcile the artifact against
@@ -1071,10 +1080,9 @@ dispatch `evening.yml` with `dry_run=true` and reconcile the artifact against
 
 ### NEXT BUILDER PROMPT
 
-Continue SpicyStock at `main` (verify the tip) plus the PR from
-`claude/spicystock-compare-evidence-y3hykv`. Do ONE of these; do not re-run the
-discovery lens, the comparison, the chart evidence, the design pass or the
-release acceptance.
+Continue SpicyStock at `main` (verify the tip; `017b776` when this was written,
+the merge of #56). Do ONE of these; do not re-run the discovery lens, the
+comparison, the chart evidence, the design pass or the release acceptance.
 
 **(a) The live qualifying-ticket acceptance, if a green or yellow session
 exists.** Requires explicit dispatch/billing approval — a dry run still pays
