@@ -6,8 +6,16 @@
    measurement stays listed and reachable. Restored from the first build's
    docs/signal-map.js (29e3205) against the current record.
 
-     SCStock.map.render(host, {points, selectedId, session, onSelect, demo, subset})
+     SCStock.map.render(host, {points, selectedId, session, onSelect, demo,
+                               subset, control})
        -> { update(selectedId), dispose() }
+
+   `control(point, where)` is the page's own per-stock control -- the Compare
+   toggle -- built by whoever owns it and merely PLACED here: beside the
+   chosen point (`where` is 'map') and in a column of the table twin
+   ('map-table'). The map never implements pinning itself, so a pin made on
+   the map and one made on a card cannot become two mechanisms. Without it
+   the column is not written and nothing else changes.
 
    points is whatever the page's one visible-candidate selector handed over --
    the map plots that list and nothing else. `subset: {total, words}` names the
@@ -121,7 +129,8 @@
     // the selected point's way into the nearby chooser, for a reader who
     // arrived by the keyboard, by search or from a card rather than by a tap
     const nearbyBtn = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm ss-map__nearby-open', type: 'button', hidden: true });
-    const selectionRow = el('div', { 'class': 'ss-map__selection-row' }, [selection, nearbyBtn]);
+    const controlHost = el('div', { 'class': 'ss-map__control' });
+    const selectionRow = el('div', { 'class': 'ss-map__selection-row' }, [selection, nearbyBtn, controlHost]);
     const note = el('p', { 'class': 'ss-map__note', text: 'Each point is a recorded burst. Position is a measurement on the recorded session — the close against the previous close, the volume against the previous session — not a predicted return. ' + SCALE_WORDS + (missing.length ? ' ' + missing.length + ' burst' + (missing.length === 1 ? ' lacks' : 's lack') + ' a complete measurement and stay listed below.' : '') });
     host.appendChild(head); host.appendChild(surface); host.appendChild(legend); host.appendChild(selectionRow); host.appendChild(note);
 
@@ -139,7 +148,8 @@
     const details = el('details', { 'class': 'sc-details ss-map__table' }, [el('summary', { text: 'table view · every burst and its measurements' })]);
     const table = el('table', { 'class': 'sc-table sc-table--compact' });
     table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Every recorded burst: gain on the session, volume vs previous session, grade, rank, source' }));
-    table.appendChild(el('thead', null, el('tr', null, ['burst', 'gain', 'volume vs prev', 'grade', 'rank', 'source', 'plotted'].map((h, i) => el('th', { scope: 'col', 'class': i === 1 || i === 2 || i === 4 ? 'sc-num' : null, text: h })))));
+    const heads = ['burst', 'gain', 'volume vs prev', 'grade', 'rank', 'source', 'plotted'].concat(opts.control ? ['compare'] : []);
+    table.appendChild(el('thead', null, el('tr', null, heads.map((h, i) => el('th', { scope: 'col', 'class': i === 1 || i === 2 || i === 4 ? 'sc-num' : null, text: h })))));
     const tbody = el('tbody');
     points.forEach((p) => {
       const b = el('button', { 'class': 'sc-signal-matrix__name', type: 'button', 'data-id': p.id, 'aria-pressed': p.id === selectedId ? 'true' : 'false', text: p.ticker });
@@ -147,7 +157,8 @@
       tbody.appendChild(el('tr', { 'data-id': p.id }, [
         el('th', { scope: 'row', 'class': 'sc-case' }, b), el('td', { 'class': 'sc-num', text: pct(p.gain) }), el('td', { 'class': 'sc-num', text: times(p.volume) }),
         el('td', { text: (p.grade || '—') + (isNum(p.score) ? ' · ' + p.score.toFixed(1) : '') }), el('td', { 'class': 'sc-num', text: isNum(p.rank) ? String(p.rank) : '—' }),
-        el('td', { text: sourceWords(p) }), el('td', { text: canPlot(p) ? 'yes' : 'no' })
+        el('td', { text: sourceWords(p) }), el('td', { text: canPlot(p) ? 'yes' : 'no' }),
+        opts.control ? el('td', { 'class': 'ss-map__cell-compare' }, opts.control(p, 'map-table')) : null
       ]));
     });
     table.appendChild(tbody);
@@ -178,6 +189,9 @@
       nearbyBtn.hidden = !near;
       nearbyBtn.textContent = near ? 'Nearby stocks (' + (near + 1) + ')' : '';
       nearbyBtn.setAttribute('aria-label', near ? 'Choose among the ' + (near + 1) + ' stocks within a finger of this point, including ' + p.ticker : '');
+      // the selected point's own Compare toggle, rebuilt for whoever is chosen
+      while (controlHost.firstChild) controlHost.removeChild(controlHost.firstChild);
+      if (opts.control && p) { const c = opts.control(p, 'map'); if (c) controlHost.appendChild(c); }
       host.setAttribute('data-selected', selectedId || '');
       host.setAttribute('data-near', String(near));
       return chosen;

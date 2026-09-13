@@ -126,7 +126,12 @@ instructions. `buildModel()` is the one adapter, and every status it gives a
 stock is read off a field the run wrote (`trades[]`,
 `cash_budget.cut[].kind`, `plan.eligible`, `plan.action`, `quality.vetoes`,
 the grade against `rules.pipeline.trade_grades`); nothing in the browser
-scans, grades, sizes or fetches. `parseHash()` and `applyRoute()` are the
+scans, grades, sizes or fetches. `fillChooser()` reaches every stock
+in the record, which is what it is for, so it is the one door that says so
+first: each stage is split into what the lens holds and what it hides, both
+counted, the hidden ones marked and listed second, and one line says that
+choosing one widens the lens for that stock without changing the stored one.
+`parseHash()` and `applyRoute()` are the
 router: the selection is remembered per stage, the hash is rewritten to the
 resolved route without a history entry, so Back works and a bookmark
 reloads to its stock, and the old one-page anchors map onto the routes. The
@@ -157,7 +162,10 @@ one mechanism the checklist tiles share; a check the record dates no range
 for (linearity, the trend's age, the up-day run) stays a tile and is never
 made clickable. Compare pins two candidates of one stage and one record
 (`togglePin()`: a third asks which to replace, the other stage is
-explained), and the sheet gives each its own chart, its own price scale and
+explained; a pin the lens later hides is marked, named and reachable in one
+click, never dropped -- `trayState()` redraws the tray only when what it
+shows has changed, because the list behind it is redrawn on every
+keystroke), and the sheet gives each its own chart, its own price scale and
 its own range sentence under one set of view/range controls, with an
 aligned table of what the record says and no winner declared. `pipeline.SERIES_TOP` bursts by rank carry
 their bars beside the trades, the cut names and the closest miss, so a
@@ -166,7 +174,10 @@ have a Map twin (`docs/app-map.js`, restored from the `29e3205` signal
 map): the session's gain against its volume ratio, every point a recorded
 number, the selection shared with the cards, the search and the chooser,
 a table under
-it and the names it cannot plot listed by reason. The ratio is read one way
+it and the names it cannot plot listed by reason. Its `control(point, where)`
+hook takes the page's OWN `pinButton()` and places it beside the chosen point
+and in the table's `compare` column, so two candidates are pinned from the map
+without a detour through the cards and the map never grows a second pin. The ratio is read one way
 everywhere (`volumeRatio()`: the row's own field, the scan's measurement
 for every burst since the dollar scan carried it; for a record from before
 that, run 46 and earlier, the checklist's two-place copy, said to be the
@@ -199,7 +210,9 @@ configured sizing assumptions", never what the reader holds.
 
 What is measured offline: 1082 tests, the chart check, and the page smoke
 over six fixtures walked through every view, stock, lens, search, the
-chooser, the comparison, the recorded evidence, the keyboard, deep links
+chooser and what its lens hides, the comparison and the pins a lens no
+longer shows, the map's own Compare column, the recorded evidence, the
+keyboard, deep links
 and the old anchors, then the phone and the stale, failed, field-dropped
 and no-record states. What is NOT: the full-market
 fetch time from a runner (the dry-run dispatch measures it), a real Claude
@@ -1077,6 +1090,67 @@ only because the publication gate fetched the served bytes and matched them.
 **Next action.** The method's own, untouched here: on a green or yellow session
 dispatch `evening.yml` with `dry_run=true` and reconcile the artifact against
 `tools/entry_limit_study.py`'s green-night line, 52 / 0 / 50 / 47.
+
+## Checkpoint, 13 Sep 2026 — the lens, where the reader reaches past it
+
+**Revision.** Branch `claude/spicystock-compare-evidence-j30kl4` from `main` at
+`9597898` (the merge of #57). The brief's three capabilities — the lens, the
+comparison, the chart evidence — were ALREADY merged as #56 and none was
+re-done; this is what reading them back in Chromium showed they left open.
+Both published records are `origin/main`'s to the byte, run 47's; no Python
+was touched.
+
+**Reproduced before anything was edited**, over that record (401 bursts, the
+A-quality lens showing 52): the **chooser** listed all 416 stocks with nothing
+marking the 364 the lens hides, and the widen notice came only after the page
+had moved; a **pin** made under *All bursts* survived a narrowing to A-quality
+unmarked — a stock in the comparison that is in no list behind it; and the
+**map**, the cards' own twin, had no Compare toggle at all, so the journey
+(inspect on the map → pin two → compare) went back through the cards to find
+them again. One class, in a new place: a control that reaches a stock
+without carrying the reader's context — `visible(stage)` feeds the cards, the
+map, the counts and the stepper, and these three were the doors it never
+reached.
+
+**Changed.** `fillChooser()` splits each stage into what the lens holds and what
+it hides, counts both, marks the hidden (`data-in-lens`), lists them second so
+Enter takes a stock the reader can see, and says BEFORE the choice what it will
+do — and that the stored lens is not changed by it.
+`renderTray()` marks a pin the current lens hides, names it once with one click
+to it, and is redrawn with the list only when `trayState()` changes.
+`SCStock.map.render()` takes `control(point, where)` and places it beside the
+chosen point and in a `compare` column of the table twin; `mountMap()` supplies
+`pinButton()` itself, so the map's pin IS the cards' pin, never a second
+mechanism.
+
+**Measured** (offline, through the doubles): 1082 tests; 7 fixtures current;
+chart check 178/178; page smoke **2952/2952** with `--shots`, a new `reach`
+suite of 48, all 48 red at `9597898`. The journey was walked **80/80** over the
+published record at 1280 and 390 px, the ticket fixture, a red night and two
+blocked states: two pinned FROM the map, compared, the evidence read inside the
+sheet, one setup opened, followed, the lens and stock still there on Back. No
+sideways scroll at 320 or 390 px, either theme. A tap on a 401-burst night still
+opens the nearby chooser, so the journey takes a point by Enter, as documented.
+
+**The mutants.** Eleven over the new rules, all dead. A shape this file names
+returned: "the prompt survives a keystroke" passed on an incidental fact — the
+prompt is re-rendered from state either way — so it reads the FOCUS now, and the
+redraw is pinned both ways. Three controls — the map's selection sentence, the
+tray's slot wording, the chooser's reason text — all SURVIVED.
+
+**Keep / fix / defer / omit.** Keep everything above and #56's capabilities
+untouched. Fix if it bites: the chooser's group heading is an `.sc-eyebrow`,
+which lowercases, so the lens reads "a-quality" there as on its own tab. Defer
+to Astra: the +4% ceiling against his 4% stop line; the <320 px overflow;
+`test_claude_md_is_short_and_names_the_fixture_count`, still unfailable — that
+cleanup is a separate pass. Omit: trade logging, a portfolio, execution.
+
+**Blockers: none. Not claimable**, unchanged: a live fetch, a real chart read,
+Resend, and any trading edge.
+
+**Next action.** The method's own: on a green or yellow session dispatch
+`evening.yml` with `dry_run=true` and reconcile the artifact against
+`entry_limit_study.py`'s green-night line, 52 / 0 / 50 / 47.
 
 ### NEXT BUILDER PROMPT
 

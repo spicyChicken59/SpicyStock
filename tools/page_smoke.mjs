@@ -37,7 +37,7 @@ const TRADE_GRADES = ['A+', 'A'];   // the grades the run gives an order (pipeli
 const args = process.argv.slice(2);
 const shotsDir = args.includes('--shots') ? args[args.indexOf('--shots') + 1] : null;
 // --only <name[,name]> runs just those suites (variant names, or lens/compare/
-// evidence/map/mobile/modes/following/volume/mapscale/ticket/states). It is for
+// evidence/map/reach/mobile/modes/following/volume/mapscale/ticket/states). It is for
 // judging a mutant in a minute; CI and the milestone gate run everything.
 const only = args.includes('--only') ? String(args[args.indexOf('--only') + 1] || '').split(',').filter(Boolean) : null;
 const runs = (name) => !only || only.includes(name);
@@ -106,6 +106,18 @@ function settle(errors, aborted) {
 }
 
 const text = (page, sel) => page.locator(sel).first().innerText();
+// where a check's whole point is that an element EXISTS and says something,
+// absence is the failure: read it without waiting out the locator's timeout
+const said = async (page, sel) => (await page.locator(sel).count()) ? page.locator(sel).first().innerText() : '';
+const attr = async (page, sel, name) => (await page.locator(sel).count()) ? page.locator(sel).first().getAttribute(name) : null;
+// a click whose target may be the very thing a mutant removed: it is checked
+// for, not waited for, so the suite reports a missing control instead of hanging
+const tap = async (page, sel, name) => {
+  const there = !!(await page.locator(sel).count());
+  check(name, there, there ? undefined : `no ${sel} to click`);
+  if (!there) return false;
+  await page.locator(sel).first().click(); await page.waitForTimeout(200); return true;
+};
 const count = (page, sel) => page.locator(sel).count();
 const usd = (v, dec = 2) => (v < 0 ? '−' : '') + '$' + Math.abs(v).toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 const pctOf = (v, dec = 1) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(dec) + '%';   // the page's pct()
@@ -2134,6 +2146,121 @@ async function checkEvidence(browser, base, data) {
   await nobars.close();
 }
 
+// ---------------------------------------------------------------- reaching past the lens
+// visible(stage) is the page's ONE visible-candidate selector, and the cards,
+// the map, the counts and the stepper all read it. But three controls reach a
+// stock from outside that list: the chooser, which is every stock in the
+// record by design; the comparison tray, whose pins outlive a lens change; and
+// the map, which had no way to pin at all. Each is read here against the
+// RECORD's own grades, never against the page's answer.
+async function checkReach(browser, base, data) {
+  console.log('-- the lens, where the reader reaches past it');
+  const aQuality = data.bursts.filter((b) => TRADE_GRADES.includes(b.grade)).map((b) => b.ticker);
+  const all = data.bursts.map((b) => b.ticker);
+  const outside = all.filter((t) => !aQuality.includes(t));
+  const coils = data.watchlist.top.map((c) => c.ticker);
+  check('the fixture can tell the lens apart from the record', outside.length > 0 && aQuality.length > 0, `${aQuality.length} A-quality, ${outside.length} outside`);
+
+  // ---- the chooser, at the width that offers it
+  const ch = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { height: 844, lens: 'a' });
+  await ch.page.click('#choose-open'); await ch.page.waitForTimeout(250);
+  const itemsIn = () => ch.page.locator('#chooser-list .ss-chooser__item[data-in-lens="true"] b').evaluateAll((e) => e.map((x) => x.textContent));
+  const itemsOut = () => ch.page.locator('#chooser-list .ss-chooser__item[data-in-lens="false"] b').evaluateAll((e) => e.map((x) => x.textContent));
+  eq('the chooser marks the stocks the lens holds', await itemsIn(), aQuality.concat(coils));
+  eq('and marks the ones it hides, rather than listing them alike', await itemsOut(), outside);
+  eq('every stock in the record is still reachable', await count(ch.page, '#chooser-list .ss-chooser__item'), all.length + coils.length);
+  eq('the in-lens group comes first, so Enter chooses a stock the reader can see',
+    await ch.page.locator('#chooser-list .ss-chooser__item').first().getAttribute('data-in-lens'), 'true');
+  check('the status line says how many are outside the lens BEFORE one is chosen',
+    (await text(ch.page, '#chooser-status')).includes(`${outside.length} of them outside the lens you are reading`), await text(ch.page, '#chooser-status'));
+  check('the outside group says what choosing one will do',
+    (await said(ch.page, '#chooser-list .ss-chooser__why')).includes('your A-quality lens is not changed for next time'), await said(ch.page, '#chooser-list .ss-chooser__why'));
+  eq('the group headings count each side', await ch.page.locator('#chooser-list .ss-chooser__group').evaluateAll((e) => e.map((x) => x.textContent)),
+    [`bursts · ${aQuality.length} in the A-quality lens`, `bursts · ${outside.length} outside it`, `setting up · ${coils.length}`]);
+  // choosing one outside still works, still says so, and still does not store the widening
+  await tap(ch.page, `#chooser-list .ss-chooser__item[data-id="bursts:${outside[0]}"]`, 'a stock outside the lens is still choosable');
+  await ch.page.waitForTimeout(150);
+  eq('choosing a hidden stock opens it', await said(ch.page, '#detail-h2'), outside[0]);
+  check('and the page says the lens was widened for it', (await text(ch.page, '#picks-status')).includes(`${outside[0]} is outside the A-quality lens`), await text(ch.page, '#picks-status'));
+  eq('the reader\'s own stored lens is untouched by that widening',
+    await ch.page.evaluate(() => JSON.parse(localStorage.getItem('spicystock:lens:v1') || '{}').bursts), 'a');
+  // an unnarrowed lens hides nothing, so the chooser says nothing about one
+  eq('no chooser check left the page in error', ch.errors, []);
+  await ch.context.close();
+
+  const wide = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { height: 844, lens: 'all' });
+  await wide.page.click('#choose-open'); await wide.page.waitForTimeout(250);
+  eq('a lens that hides nothing adds no second group', await count(wide.page, '#chooser-list [data-group="outside"]'), 0);
+  eq('and marks nothing as outside it', await count(wide.page, '#chooser-list .ss-chooser__item[data-in-lens="false"]'), 0);
+  check('nor mentions a lens in the count', !(await text(wide.page, '#chooser-status')).includes('outside the lens'), await text(wide.page, '#chooser-status'));
+  eq('no wide-lens chooser errors', wide.errors, []);
+  await wide.context.close();
+
+  // ---- the tray: a pin outlives a lens change, and says so
+  const tr = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all' });
+  await tr.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${outside[0]}"]) .ss-pin`); await tr.page.waitForTimeout(200);
+  await tr.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${aQuality[0]}"]) .ss-pin`); await tr.page.waitForTimeout(200);
+  eq('both are pinned under the wide lens', await tr.page.locator('#compare-tray .ss-tray__pin').evaluateAll((e) => e.map((x) => x.dataset.ticker)), [outside[0], aQuality[0]]);
+  eq('and neither is marked, because the lens hides neither', await count(tr.page, '#compare-tray .ss-tray__pin[data-hidden-by]'), 0);
+  await setLens(tr.page, 'a');
+  eq('narrowing the lens drops no pin', await tr.page.locator('#compare-tray .ss-tray__pin').evaluateAll((e) => e.map((x) => x.dataset.ticker)), [outside[0], aQuality[0]]);
+  eq('the pin the lens now hides is the one marked', await tr.page.locator('#compare-tray .ss-tray__pin[data-hidden-by]').evaluateAll((e) => e.map((x) => x.dataset.ticker)), [outside[0]]);
+  check('the chip itself names the lens that hides it', (await said(tr.page, `#compare-tray .ss-tray__pin[data-ticker="${outside[0]}"]`)).includes('outside the A-quality lens'),
+    await said(tr.page, `#compare-tray .ss-tray__pin[data-ticker="${outside[0]}"]`));
+  check('and the tray says it stays pinned and why the comparison still holds it',
+    (await said(tr.page, '#compare-tray .ss-tray__away')).includes('not in the list behind this') && (await said(tr.page, '#compare-tray .ss-tray__away')).includes('reads the record, not the lens'),
+    await said(tr.page, '#compare-tray .ss-tray__away'));
+  eq('the note names the hidden pin and only it', await tr.page.locator('#compare-tray .ss-tray__away [data-tray-show]').evaluateAll((e) => e.map((x) => x.dataset.trayShow)), [outside[0]]);
+  check('and does not name the pin the lens still shows', !(await said(tr.page, '#compare-tray .ss-tray__away')).includes(aQuality[0]), await said(tr.page, '#compare-tray .ss-tray__away'));
+  eq('the comparison is still offered over the pair', await tr.page.locator('#compare-open').isDisabled(), false);
+  // The tray is redrawn WITH the list, and the list is redrawn on every
+  // keystroke -- so it must be redrawn only when what it shows has changed.
+  // A rebuild under the reader drops whatever they had focused in it onto
+  // <body>; the re-rendered PROMPT would look identical, so the focus is
+  // what this reads. The query is dispatched without touching the search
+  // box, because focusing it would move the focus by itself.
+  const typeSearch = (q) => tr.page.evaluate((q) => { const i = document.getElementById('search'); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); }, q);
+  await tr.page.focus('#compare-tray [data-tray-clear]');
+  await typeSearch(aQuality[0].slice(0, 1)); await tr.page.waitForTimeout(250);
+  eq('a keystroke in the search does not drop the focus held in the tray',
+    await tr.page.evaluate(() => !!(document.activeElement && document.activeElement.hasAttribute && document.activeElement.hasAttribute('data-tray-clear'))), true);
+  await typeSearch(''); await tr.page.waitForTimeout(200);
+  eq('and the tray still holds the pair after it', await tr.page.locator('#compare-tray .ss-tray__pin').evaluateAll((e) => e.map((x) => x.dataset.ticker)), [outside[0], aQuality[0]]);
+  await tap(tr.page, `#compare-tray [data-tray-show="${outside[0]}"]`, 'the tray offers one click to the hidden pin');
+  await tr.page.waitForTimeout(150);
+  eq('one click reaches the hidden pin', await said(tr.page, '#detail-h2'), outside[0]);
+  eq('no tray errors', tr.errors, []);
+  await tr.context.close();
+
+  // ---- the map: the same Compare toggle, where the reader is already reading
+  const mp = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all' });
+  await mp.page.click('#discover .sc-tab[data-discover="map"]'); await mp.page.waitForTimeout(350);
+  eq('the map table carries a compare column', await mp.page.locator('#burst-map .ss-map__table thead th').evaluateAll((e) => e.map((x) => x.textContent)),
+    ['burst', 'gain', 'volume vs prev', 'grade', 'rank', 'source', 'plotted', 'compare']);
+  eq('every mapped burst has one', await count(mp.page, '#burst-map .ss-map__table .ss-pin'), all.length);
+  await openAll(mp.page, '#burst-map .ss-map__table'); await mp.page.waitForTimeout(150);
+  await mp.page.click(`#burst-map .ss-map__point[data-ticker="${all[1]}"]`); await mp.page.waitForTimeout(300);
+  eq('the chosen point carries one beside its measurements', await attr(mp.page, '#burst-map .ss-map__control .ss-pin', 'data-ticker'), all[1]);
+  await tap(mp.page, '#burst-map .ss-map__control .ss-pin', 'the chosen point\'s toggle can be used');
+  await tap(mp.page, `#burst-map .ss-map__table .ss-pin[data-ticker="${all[3]}"]`, 'a table row\'s toggle can be used');
+  eq('two can be pinned without leaving the map', await mp.page.locator('#compare-tray .ss-tray__pin').evaluateAll((e) => e.map((x) => x.dataset.ticker)), [all[1], all[3]]);
+  // one mechanism, not two: the card's own toggle reads the pin the map made
+  eq('the map\'s pin IS the card\'s pin', await attr(mp.page, `#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${all[1]}"]) .ss-pin`, 'aria-pressed'), 'true');
+  eq('and the map\'s own copies agree with it', await attr(mp.page, `#burst-map .ss-map__table .ss-pin[data-ticker="${all[1]}"]`, 'aria-pressed'), 'true');
+  const beforeMap = await hash(mp.page);
+  await tap(mp.page, `#burst-map .ss-map__table .ss-pin[data-ticker="${all[5]}"]`, 'a third can be offered from the map');
+  eq('pinning from the map navigates nowhere', await hash(mp.page), beforeMap);
+  eq('and a third still asks which to replace', await attr(mp.page, '#compare-tray .ss-tray__ask', 'data-ask'), 'replace');
+  await tap(mp.page, '#compare-tray [data-ask-action="cancel"]', 'the third can be declined from the map');
+  await tap(mp.page, '#compare-open', 'the comparison opens from the map');
+  await mp.page.waitForTimeout(600);
+  eq('the sheet opens over the pair pinned on the map', await mp.page.locator('#compare .ss-compare__side').evaluateAll((e) => e.map((x) => x.dataset.ticker)), [all[1], all[3]]);
+  eq('each side keeps its own namespaced panel', await mp.page.locator('#compare .ss-chart-panel').evaluateAll((e) => e.map((x) => x.dataset.panel)), ['cmp-a', 'cmp-b']);
+  eq('with two live charts, as from the cards', await mp.page.evaluate(() => window.SCStock.liveCharts()), 3);
+  eq('no map-compare errors', mp.errors, []);
+  await mp.context.close();
+}
+
 async function main() {
   const chromium = await loadChromium();
   if (!chromium) { console.log('playwright is not installed: npm install --no-save playwright'); process.exit(1); }
@@ -2153,6 +2280,7 @@ async function main() {
     if (runs('compare')) await checkCompare(browser, base, full);
     if (runs('evidence')) await checkEvidence(browser, base, full);
     if (runs('map')) await checkMap(browser, base, full);
+    if (runs('reach')) await checkReach(browser, base, full);
     if (runs('volume')) await checkVolumeReadings(browser, base, full);
     if (runs('mapscale')) await checkMapScale(browser, base, full);
     if (runs('following')) await checkFollowing(browser, base, full);
