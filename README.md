@@ -64,6 +64,28 @@ does not carry, falls back to Explore and says so.
    Bursts when the scan found any, Setting up otherwise, and a chosen stage
    is never switched away from: an empty one says why it is empty. Each
    stage remembers its last chosen stock.
+   A **lens** narrows the stage, each option a question asked of a field the
+   run wrote and each wearing the count it will show: *A-quality* (the A and
+   A+ grades this record archived), *All bursts*, *With ticket* (a ticket
+   written into the published record) and *Following* (tonight's candidates
+   already on this browser's shelf); Setting up has the last three. The
+   first visit opens on A-quality when the record archived an A or A+ burst
+   and on every burst otherwise, so the first screen is never empty — on the
+   published 401-burst night that is 52 stocks rather than 401. A lens the
+   reader chooses is remembered in this browser and never widened behind
+   their back: an empty one stays empty, explains itself and offers one
+   click out. *With ticket* is a reading of the record and never a
+   permission — a stale, pending, failed or sample page still withholds
+   every order, and says so beside the list. The heading keeps the stage's
+   own total beside the subset (*bursts · 52 of 401*), the lens combines
+   with the ticker search, and a search that matches a stock the lens is
+   hiding says which lens is hiding it and offers to inspect it rather than
+   claiming it does not exist. An optional sort offers the run's rank (the
+   default), the session's gain and volume against the previous session;
+   it changes the order only, every card keeps its published rank as its
+   own label, and a stock the record has no measurement for sorts last
+   rather than as a zero. One visible-candidate list feeds the cards, the
+   map, the counts and the previous/next stepper beside the chosen stock.
    The bursts have a second view of the same list, a **map** of the
    session's gain against its volume relative to the previous session:
    every point the same selection as its card, the unmeasured listed
@@ -137,6 +159,45 @@ does not carry, falls back to Explore and says so.
    scan found** (every burst against the checklist — the six letters,
    range expansion and volume — sortable by score, each name a way to its
    card, the closest miss named above it).
+   A **Show on chart** row under the plot marks the recorded evidence: the
+   *Base* (the producer's own archived start, end and bounds), the *Burst
+   day* (the session the record was published for, not whichever bar is
+   last after a later observation is appended) and the *Prior day* (the
+   previous archived observation before that signal, not the previous
+   calendar day); a coil offers its *Box*. Choosing one draws a dashed
+   column over exactly those sessions — in every mode, with the recorded
+   bounds as edges when both already sit inside the drawn scale — and prints
+   beside it the recorded measurement, the producer's own threshold and his
+   verdict in words (*pass*, *partial*, *fail*, *not measured*). The marker
+   is a position and nothing else: it widens no scale, moves no level and
+   moves no label, so turning it on leaves every price where it was. The
+   checklist tiles the record dated are the same mechanism — pressing
+   *consolidation quality* marks the base, pressing *higher volume* marks
+   the burst day — and a check the record carries no date range for
+   (linearity, the trend's age, the run of up days) stays a tile and is
+   never made clickable rather than a region being invented for it.
+   Evidence outside the range on screen is offered (*Show recorded range*)
+   and never taken silently; a name with no archived bars keeps the words
+   and says there is no chart to sit on.
+   A **Compare** toggle sits beside each card's selection button and in the
+   chosen stock's own tool row — never inside either, so pinning neither
+   chooses the stock nor follows it. Two pinned candidates of one stage and
+   one published record open a comparison sheet: two balanced panels, each
+   its own chart instance with its own price scale, its own dates and its
+   own range sentence (the two are never drawn on one axis), one set of
+   view and range controls driving both, and under them an aligned table of
+   what the record says — grade and how it was graded, session gain, the
+   volume ratio named for what it measures, the base or box, the trigger,
+   the ticket limit, the stop and its published distance, the main
+   qualifying reason, the principal concern, and the ticket or the exact
+   reason there is none. A row the two differ on is marked; nothing
+   declares a winner, and a value the record does not carry reads *not
+   recorded* rather than as a failure. A third pin asks which of the two it
+   replaces; a pin from the other stage is explained rather than refused.
+   On a phone an A/B switch shows one chart at a time while both symbols
+   and both statuses stay on screen. *Open setup* and the same Follow
+   action are offered from each side, and closing returns the reader to the
+   stock, the lens, the scroll and the focus they left.
 4. **Record.** **Open model plans** is every pick from the last five
    sessions walked from bars alone as a model: *day 3: sell half*,
    *stopped*, *not filled*, *uncertain* (the bars cannot say whether it

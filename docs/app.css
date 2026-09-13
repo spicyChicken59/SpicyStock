@@ -104,6 +104,16 @@
 .ss-detail { min-width: 0; }
 .ss-detail:focus { outline: none; }
 .ss-detail__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sc-s2) var(--sc-s3); flex-wrap: wrap; }
+/* Above the phone breakpoint the head is a two-column grid: the identity on
+   the left, the chips over the tools on the right. The identity block is the
+   taller of the two, so the stepper and the Compare toggle cost the chart no
+   height at all -- as a third flex child they added a row of their own. */
+@media (min-width: 721px) {
+  .ss-detail__head { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'id chips' 'id tools'; align-items: start; gap: 6px var(--sc-s3); }
+  .ss-detail__head > div:first-child { grid-area: id; }
+  .ss-detail__chips { grid-area: chips; align-self: start; }
+  .ss-detail__tools { grid-area: tools; justify-content: flex-end; align-self: start; }
+}
 .ss-detail__h2 { margin: 2px 0 0; font: 700 clamp(26px, 3vw, 34px)/1.1 var(--sc-font-display); letter-spacing: -.02em; color: var(--sc-heading); }
 .ss-detail__sub { margin: 4px 0 0; }
 .ss-detail__chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
@@ -114,7 +124,8 @@
 .ss-chart-panel__id { display: flex; align-items: baseline; gap: var(--sc-s2); flex-wrap: wrap; }
 .ss-chart-panel__id .sc-figure { font-size: var(--sc-text-md); }
 .ss-chart-panel__price { font: 700 var(--sc-text-md)/1 var(--sc-font-body); letter-spacing: -.02em; color: var(--sc-heading); font-variant-numeric: tabular-nums; }
-.ss-chart-panel__legend .sc-legend { margin: 0 0 var(--sc-s1); }
+.ss-chart-panel__legend { margin-top: var(--sc-s2); }
+.ss-chart-panel__legend .sc-legend { margin: 0; }
 .ss-chart-panel__tools { display: flex; align-items: center; gap: var(--sc-s1) var(--sc-s3); flex-wrap: wrap; }
 .ss-chart-panel__tools .sc-tabs { gap: 4px; }
 .ss-chart-panel__tools .sc-field { gap: var(--sc-s1); }   /* caption to its own group, wider gap between groups */
@@ -348,6 +359,151 @@
 .ss-map__table { margin: 0 var(--sc-s3) var(--sc-s3); }
 .ss-map__empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: var(--sc-s4); text-align: center; color: var(--sc-text-2); font-size: var(--sc-text-sm); }
 .ss-map__empty strong { color: var(--sc-heading); font-size: var(--sc-text-lg); }
+
+/* ---- the lens row: narrowing a stage, with the counts in the control -----------------
+   Measured at 1280x900: four captioned controls stacked in the 300px rail
+   cost the chart 120px of the first screen, and a full-width row of their own
+   cost it 44. The two stage cards need about half the band's width, so on a
+   desktop the lens rides in the space beside them and costs nothing; on a
+   phone it goes under the search, in the rail head (docs/app.js lensHome()). */
+.ss-band { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sc-s2); }
+.ss-stages { margin-top: 0; }
+.ss-view > .ss-band { margin-top: var(--sc-s3); }
+.ss-lens { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sc-s1) var(--sc-s3); min-width: 0; }
+.ss-lens:empty { display: none; }
+@media (min-width: 1000px) {
+  .ss-band { grid-template-columns: minmax(0, 1.3fr) minmax(290px, 1fr); align-items: center; gap: var(--sc-s3); }
+  .ss-lens { align-self: center; }
+}
+.ss-lens__field { gap: var(--sc-s1); flex-wrap: wrap; min-width: 0; }
+.ss-lens__tabs { gap: 4px; }
+.ss-lens .sc-tab { padding: 6px 9px; display: inline-flex; align-items: center; gap: 5px; }
+/* the count rides inside its own control, so "which lens" and "how many" are read together */
+.ss-lens__tab small { font: 700 10px/1 var(--sc-font-mono); padding: 2px 4px; border-radius: var(--sc-r-sm); background: var(--sc-raised); color: var(--sc-text-2); font-variant-numeric: tabular-nums; }
+.ss-lens__tab[aria-pressed="true"] small { background: color-mix(in srgb, var(--sc-white) 22%, transparent); color: var(--sc-white); }
+.ss-lens__reset { margin-left: auto; }
+@media (pointer: coarse) { .ss-lens .sc-tab, .ss-lens__reset { min-height: 36px; } }
+@media (max-width: 720px) {
+  /* in the rail head the lens takes its own line, and scrolls rather than
+     wrapping to four rows: the search above it must stay in the first screen */
+  .ss-picks__head > .ss-lens { flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; gap: var(--sc-s2); padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+  .ss-picks__head > .ss-lens > * { flex: 0 0 auto; }
+  .ss-picks__head > .ss-lens .ss-lens__tabs { flex-wrap: nowrap; }
+  .ss-picks__head > .ss-lens .ss-lens__reset { margin-left: 0; }
+}
+
+/* the candidate card: the published rank stays its own label, and the Compare
+   toggle is a row of its own -- never a control inside the selection button */
+/* the tools row belongs to the card above it: the list gets more air between
+   items than the card gets to its own control, so the grouping reads by
+   proximity without the selection button swallowing a second control */
+.ss-pick-item { flex-direction: column; gap: 0; }
+.ss-picks__list { gap: var(--sc-s3); }
+.ss-pick__rank { color: var(--sc-text-3); }
+.ss-pick__tools { display: flex; justify-content: flex-end; padding: 5px var(--sc-s1) 0; }
+.ss-pin { padding: 5px 10px; font-size: 11px; }
+.ss-pin[aria-pressed="true"] { color: var(--sc-accent); border-color: color-mix(in srgb, var(--sc-accent) 45%, transparent); background: var(--sc-accent-fill); }
+@media (pointer: coarse) { .ss-pin { min-height: 36px; } }
+
+/* ---- the comparison tray: what is pinned, and the one way on -------------------------- */
+.ss-tray { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sc-s1) var(--sc-s2); margin-top: var(--sc-s2); padding: var(--sc-s2) var(--sc-s3); border: 1px solid var(--sc-border-strong); border-radius: var(--sc-r-md); background: var(--sc-raised); }
+.ss-tray__label { margin: 0; flex: 0 0 auto; }
+.ss-tray__pins { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; }
+.ss-tray__pin { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border: 1px solid var(--sc-border); border-radius: var(--sc-r-sm); background: var(--sc-surface); }
+.ss-tray__pin b { font: 700 var(--sc-text-sm)/1.2 var(--sc-font-mono); color: var(--sc-heading); }
+.ss-tray__pin small { font: 500 10.5px/1.4 var(--sc-font-mono); color: var(--sc-text-2); }
+.ss-tray__drop { min-width: 24px; min-height: 24px; padding: 0; border: 0; border-radius: var(--sc-r-sm); background: transparent; color: var(--sc-text-2); cursor: pointer; font: 600 12px/1 var(--sc-font-mono); }
+.ss-tray__drop:hover { background: var(--sc-hover); color: var(--sc-heading); }
+.ss-tray__slot { padding: 4px 10px; border: 1px dashed var(--sc-border-strong); border-radius: var(--sc-r-sm); color: var(--sc-text-3); font: 500 11px/1.6 var(--sc-font-mono); }
+.ss-tray__ask { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sc-s1) var(--sc-s2); padding-top: var(--sc-s2); border-top: 1px solid var(--sc-border); }
+.ss-tray__ask p { flex: 1 1 100%; margin: 0; color: var(--sc-text); font-size: var(--sc-text-sm); line-height: 1.5; }
+@media (pointer: coarse) { .ss-tray__drop { min-width: 32px; min-height: 32px; } }
+
+/* ---- the detail's stepper and its own Compare toggle ---------------------------------- */
+.ss-detail__tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex: 0 0 auto; }
+.ss-step { min-width: 34px; justify-content: center; padding: 6px 8px; font: 600 14px/1 var(--sc-font-mono); }
+.ss-step__where { font: 500 11px/1.6 var(--sc-font-mono); color: var(--sc-text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---- the evidence row: one highlight and one explanation at a time -------------------- */
+.ss-evidence { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sc-s1) var(--sc-s2); margin-top: var(--sc-s2); }
+.ss-evidence__tabs { gap: 4px; }
+.ss-evidence .sc-tab { padding: 6px 10px; }
+@media (pointer: coarse) { .ss-evidence .sc-tab { min-height: 36px; } }
+.ss-evidence__explain { margin-top: var(--sc-s2); padding: var(--sc-s2) var(--sc-s3); border: 1px solid var(--sc-border-strong); border-radius: var(--sc-r-md); background: var(--sc-raised); }
+.ss-evidence__explain[hidden] { display: none; }
+.ss-evidence__head { display: flex; align-items: baseline; gap: var(--sc-s2); flex-wrap: wrap; }
+.ss-evidence__head h4 { margin: 0; font-size: var(--sc-text-md); color: var(--sc-heading); }
+.ss-evidence__head .sc-btn { margin-left: auto; }
+.ss-evidence__dates { font: 500 11px/1.6 var(--sc-font-mono); color: var(--sc-text-2); }
+.ss-evidence__lede { margin: 4px 0 0; color: var(--sc-text-2); font-size: var(--sc-text-sm); line-height: 1.5; }
+.ss-evidence__measured { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--sc-s2); margin: var(--sc-s2) 0 0; color: var(--sc-text); font-size: var(--sc-text-sm); }
+.ss-evidence__measured .sc-eyebrow { margin: 0; flex: 0 0 auto; }
+.ss-evidence__check { margin-top: var(--sc-s2); padding-top: var(--sc-s2); border-top: 1px solid var(--sc-border); }
+.ss-evidence__check-head { display: flex; align-items: center; gap: var(--sc-s2); flex-wrap: wrap; }
+.ss-evidence__check-head strong { color: var(--sc-heading); font-size: var(--sc-text-sm); }
+.ss-evidence__value { margin: 4px 0 0; font: 500 11.5px/1.6 var(--sc-font-mono); color: var(--sc-text); overflow-wrap: anywhere; }
+.ss-evidence__threshold, .ss-evidence__note { margin: 2px 0 0; color: var(--sc-text-2); font-size: var(--sc-text-sm); line-height: 1.5; }
+.ss-evidence__explain .sc-btn { margin-left: 6px; }
+/* a check the record dated is a way onto the chart; one that is not stays a tile */
+.ss-check--anchored { appearance: none; width: 100%; border: 1px solid transparent; border-radius: var(--sc-r-sm); font: inherit; cursor: pointer; transition: border-color var(--sc-motion) var(--sc-ease); }
+.ss-check--anchored:hover { border-color: var(--sc-border-control); }
+.ss-check--anchored:focus-visible { outline: 2px solid var(--sc-focus); outline-offset: 2px; }
+.ss-check--anchored[aria-pressed="true"] { border-color: var(--sc-heading); }
+.ss-check__show { font: 500 9.5px/1.3 var(--sc-font-mono); color: var(--sc-text-3); letter-spacing: .2px; text-decoration: underline; text-underline-offset: 2px; }
+.ss-checks .sc-signal--good .ss-check__show, .ss-checks .sc-signal--caution .ss-check__show, .ss-checks .sc-signal--blocked .ss-check__show { color: inherit; opacity: .85; }
+.ss-fact__with-show { display: inline-flex; align-items: baseline; gap: var(--sc-s2); flex-wrap: wrap; }
+.ss-fact__show { padding: 0; border: 0; background: none; color: var(--sc-brand); cursor: pointer; font: 500 11px/1.6 var(--sc-font-mono); text-decoration: underline; text-underline-offset: 2px; }
+
+/* ---- the comparison sheet: two panels, common controls, aligned facts ----------------- */
+.ss-compare { width: min(1180px, calc(100vw - 32px)); max-height: min(92vh, 1040px); padding: 0; border: 1px solid var(--sc-border-strong); border-radius: var(--sc-r-lg); background: var(--sc-bg); color: var(--sc-text); box-shadow: var(--sc-shadow-pop); }
+.ss-compare::backdrop { background: var(--sc-scrim, rgba(0, 0, 0, .6)); }
+.ss-compare__wrap { display: flex; flex-direction: column; gap: var(--sc-s3); padding: var(--sc-s3); max-height: inherit; overflow-y: auto; }
+/* A column flex box that scrolls shrinks its items to fit: the facts table
+   rendered 2px tall over 502px of rows, the same way the chooser's items were
+   squeezed. Every row of this sheet keeps the height its content needs. */
+.ss-compare__wrap > * { flex: 0 0 auto; }
+.ss-compare__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sc-s2); }
+.ss-compare__head h2 { margin: 2px 0 0; font: 700 clamp(20px, 2.4vw, 26px)/1.15 var(--sc-font-display); letter-spacing: -.02em; color: var(--sc-heading); }
+.ss-compare__tools { display: flex; align-items: center; gap: var(--sc-s1) var(--sc-s3); flex-wrap: wrap; padding-bottom: var(--sc-s2); border-bottom: 1px solid var(--sc-border); }
+.ss-compare__tools .sc-field { gap: var(--sc-s1); }
+.ss-compare__ab-field { display: none; }
+.ss-compare__both { display: none; }
+.ss-compare__panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-s3); align-items: start; }
+.ss-compare__side { min-width: 0; display: flex; flex-direction: column; }
+.ss-compare__id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ss-compare__id-row { display: flex; align-items: center; gap: var(--sc-s2); flex-wrap: wrap; min-width: 0; }
+.ss-compare__id h3 { margin: 0; font: 700 var(--sc-text-lg)/1.2 var(--sc-font-mono); color: var(--sc-heading); }
+/* one line, always: a long company name must not push one chart below the other */
+.ss-compare__name { margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ss-compare__tag { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--sc-brand-line); color: var(--sc-white); font: 700 11px/1 var(--sc-font-mono); }
+.ss-compare__side .ss-chart-panel { margin-top: var(--sc-s2); }
+.ss-compare__actions { display: flex; align-items: center; gap: var(--sc-s2); flex-wrap: wrap; margin-top: var(--sc-s2); }
+.ss-compare__actions .ss-follow { flex: 1 1 220px; display: flex; align-items: center; gap: var(--sc-s2); flex-wrap: wrap; padding: 0; border: 0; background: none; }
+.ss-compare__facts { border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); background: var(--sc-surface); }
+.ss-compare__table th[scope="row"] { color: var(--sc-text-2); font: 500 11px/1.5 var(--sc-font-mono); white-space: nowrap; }
+.ss-compare__table thead th { font-size: 12px; }
+.ss-compare__table td { color: var(--sc-text); vertical-align: top; }
+.ss-compare__table td[data-missing] { color: var(--sc-text-3); }
+/* restrained emphasis: a marked row is one the two records DIFFER on, never a winner */
+.ss-compare__table tr[data-differs="true"] th[scope="row"] { box-shadow: inset 2px 0 0 var(--sc-accent); padding-left: 10px; color: var(--sc-heading); }
+@media (max-width: 720px) {
+  .ss-compare { width: 100vw; max-width: 100vw; max-height: 100vh; border-radius: 0; border: 0; }
+  .ss-compare__wrap { padding: var(--sc-s2); gap: var(--sc-s2); }
+  .ss-compare__ab-field { display: flex; }
+  .ss-compare__panels { grid-template-columns: minmax(0, 1fr); gap: var(--sc-s2); }
+  /* one chart at a time; both symbols and both statuses ride in the strip
+     above it, the active one marked, so neither is ever off screen */
+  .ss-compare__both { display: flex; flex-direction: column; gap: 6px; }
+  .ss-compare__both .ss-compare__id { padding: 6px var(--sc-s2); border: 1px solid var(--sc-border); border-radius: var(--sc-r-sm); background: var(--sc-surface); opacity: .62; }
+  .ss-compare__both .ss-compare__name { display: none; }   /* the phone's strip is the identity, not the prose */
+  .ss-compare__both[data-active="a"] [data-side="a"], .ss-compare__both[data-active="b"] [data-side="b"] { opacity: 1; border-color: var(--sc-brand-line); background: var(--sc-brand-fill); }
+  .ss-compare__side > .ss-compare__id { display: none; }
+  .ss-compare__panels[data-active="a"] [data-side="b"] .ss-chart-panel,
+  .ss-compare__panels[data-active="a"] [data-side="b"] .ss-compare__actions,
+  .ss-compare__panels[data-active="b"] [data-side="a"] .ss-chart-panel,
+  .ss-compare__panels[data-active="b"] [data-side="a"] .ss-compare__actions { display: none; }
+  .ss-compare__side { padding-bottom: var(--sc-s1); }
+}
 
 /* ---- Following: the action, the shelf ---------------------------------------------- */
 .ss-follow__hint { margin: 0; flex: 1 1 200px; color: var(--sc-text-2); font-size: var(--sc-text-sm); }

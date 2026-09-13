@@ -74,6 +74,30 @@
   const STOP_BASIS = { burst_low: 'the burst day’s low', half_range: 'the burst bar’s midpoint' };
   const STAGES = ['bursts', 'setting-up'];
   const STAGE_NAME = { bursts: 'Bursts', 'setting-up': 'Setting up' };
+  // The lenses: four ways to narrow a stage, each a question asked of a field
+  // the run wrote. `a` reads the archived grade against the record's own
+  // trade grades; `ticket` reads the status the record gives the stock, which
+  // is a fact ABOUT THE RECORD and never a permission -- a stale, failed,
+  // pending or sample page still refuses every order, because the order is
+  // offered by blocked(st) and the run's own fields, not by this list.
+  // `following` reads this browser's shelf. Nothing here scans or grades.
+  const LENSES = {
+    bursts: [['a', 'A-quality', 'the A and A+ grades this record archived'], ['all', 'All bursts', 'every burst the scan archived'],
+      ['ticket', 'With ticket', 'a ticket written into the published record'], ['following', 'Following', 'tonight’s candidates you already saved in this browser']],
+    'setting-up': [['all', 'All setups', 'every coil the anticipation scans admitted'],
+      ['ticket', 'With ticket', 'a ticket written into the published record'], ['following', 'Following', 'tonight’s candidates you already saved in this browser']]
+  };
+  const LENS_WORDS = { a: 'A-quality', all: 'all', ticket: 'with a ticket', following: 'following' };
+  // Sorting is presentation. It is offered where the record measures the key
+  // for every row (the bursts' own session), never invented for the coils.
+  const SORTS = [['rank', 'rank', 'the run’s own order'], ['gain', 'gain', 'the session’s gain, largest first'], ['volume', 'volume', 'volume against the previous session, largest first']];
+  const SORT_WORDS = { rank: 'the run’s rank', gain: 'the session’s gain', volume: 'volume vs the previous session' };
+  // Which recorded check is anchored to which stretch of chart. A check whose
+  // evidence the record carries no dates for -- linearity, the trend's age,
+  // the run of up days -- is NOT here: its words are shown and the anchor is
+  // said to be unavailable, rather than a convincing region being invented.
+  const CHECK_ANCHOR = { consolidation: 'base', close_near_high: 'burst', range_expansion: 'burst', volume: 'burst', narrow_or_negative: 'prior' };
+  const ANCHOR_WORDS = { base: 'Base', burst: 'Burst day', prior: 'Prior day', box: 'Box' };
   const VIEWS = ['explore', 'record', 'market', 'method'];
   const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -703,6 +727,84 @@
       tickets: { bursts: count(bursts, (c) => c.status === 'ticket'), 'setting-up': count(settingUp, (c) => c.status === 'ticket') },
       counts: wl.counts || {}, tradeGrades: tradeGrades };
   }
+  // ------------------------------------------------- the one visible-candidate selector
+  // The cards, the map, the counts, the previous/next stepper, the chooser's
+  // stage groups and the search all read `visible(stage)`. One list, so the
+  // map can never show a population the cards do not.
+  const LENS_KEY = 'spicystock:lens:v1';
+  const stored = { bursts: null, 'setting-up': null, sort: null };
+  function loadLens() {
+    try {
+      const raw = w.localStorage && w.localStorage.getItem(LENS_KEY), saved = raw ? JSON.parse(raw) : null;
+      if (!saved || typeof saved !== 'object') return;
+      STAGES.forEach((s) => { if (LENSES[s].some((l) => l[0] === saved[s])) stored[s] = saved[s]; });
+      if (SORTS.some((x) => x[0] === saved.sort)) stored.sort = saved.sort;
+    } catch (e) { /* a blocked or corrupt store keeps the record's own default */ }
+  }
+  function saveLens() {
+    try { w.localStorage.setItem(LENS_KEY, JSON.stringify({ bursts: stored.bursts, 'setting-up': stored['setting-up'], sort: stored.sort })); } catch (e) { /* not remembered; still applied */ }
+  }
+  // the lens a first visit opens on: A-quality when this record archived an
+  // A or A+ burst, else every burst -- never an empty first screen
+  function defaultLens(stage) {
+    if (stage !== 'bursts') return 'all';
+    return model && model.stages.bursts.some((c) => model.tradeGrades.indexOf(c.grade) >= 0) ? 'a' : 'all';
+  }
+  const lensOf = (stage) => state.lens[stage] || defaultLens(stage);
+  // the ids this browser's shelf holds for tonight's record, rebuilt only when
+  // the shelf changes (a 400-burst stage asks this once per render, not 400 times)
+  let followIndex = null;
+  function followedIds() {
+    if (followIndex) return followIndex;
+    followIndex = {};
+    try { SCStock.follow.list().forEach((it) => { if (it && it.id) followIndex[it.id] = true; }); } catch (e) { /* an unreadable shelf follows nothing */ }
+    return followIndex;
+  }
+  const invalidateFollow = () => { followIndex = null; };
+  function isFollowed(c) {
+    const run = current.run || {}, app = current.app || {};
+    // the identity is four fields, and this asks for them through the same
+    // SCStock.follow.identity() the Follow button uses, so the two cannot drift
+    try {
+      return !!followedIds()[SCStock.follow.identity({ kind: c.stage === 'bursts' ? 'burst' : 'anticipation',
+        ticker: c.ticker, session: run.session || '', rules_version: app.rules_version || '' })];
+    } catch (e) { return false; }
+  }
+  function lensPass(c, lens) {
+    if (lens === 'a') return model.tradeGrades.indexOf(c.grade) >= 0;
+    if (lens === 'ticket') return c.status === 'ticket';
+    if (lens === 'following') return isFollowed(c);
+    return true;
+  }
+  const sortable = (stage) => stage === 'bursts';   // the coils record no session gain or volume ratio of their own
+  const sortOf = (stage) => (sortable(stage) ? (stored.sort || state.sort || 'rank') : 'rank');
+  // a missing measurement sorts last in either direction; it is never a zero
+  function sorted(list, key) {
+    if (key === 'rank') return list;
+    const value = (c) => (key === 'gain' ? (isNum(c.row.gain_pct) ? c.row.gain_pct : null) : volumeRatio(c.row).value);
+    return list.slice().sort((a, b) => {
+      const va = value(a), vb = value(b);
+      if (!isNum(va) && !isNum(vb)) return a.rank - b.rank;
+      if (!isNum(va)) return 1;
+      if (!isNum(vb)) return -1;
+      return vb - va || a.rank - b.rank;
+    });
+  }
+  const lensed = (stage) => (model.stages[stage] || []).filter((c) => lensPass(c, lensOf(stage)));
+  function visible(stage) {
+    return sorted(lensed(stage).filter((c) => matches(c, state.query)), sortOf(stage));
+  }
+  const lensCount = (stage, lens) => (model.stages[stage] || []).filter((c) => lensPass(c, lens)).length;
+  // the state that decides which cards exist and in what order; the picks, the
+  // map and the stepper are all rebuilt together when it changes
+  const picksKey = () => state.stage + '|' + lensOf(state.stage) + '|' + sortOf(state.stage) + '|' + state.query;
+  function setLens(stage, lens, remember) {
+    state.lens[stage] = lens;
+    if (remember) { stored[stage] = lens; saveLens(); }
+  }
+  const lensIsDefault = (stage) => lensOf(stage) === defaultLens(stage);
+  const filtersActive = () => !lensIsDefault(state.stage) || !!state.query || sortOf(state.stage) !== 'rank';
+
   function pickReason(c) {
     if (c.stage === 'bursts') {
       const s = firstSentence(text(c.row.summary).replace(/^[A-Z0-9.\-]+:\s*/, ''));
@@ -720,7 +822,8 @@
   // history entry) so what is bookmarked is what is shown. The old
   // one-page anchors (#hold, #orders, #trade-X, #burst-X, #closest-miss,
   // #scan-details, #also-quiet) still land where they used to.
-  const state = { view: 'explore', stage: null, selected: { bursts: null, 'setting-up': null }, query: '', range: 60, notice: '', picksKey: null, detailKey: null, gesture: false };
+  const state = { view: 'explore', stage: null, selected: { bursts: null, 'setting-up': null }, query: '', range: 60, notice: '', picksKey: null, detailKey: null, gesture: false,
+    lens: { bursts: null, 'setting-up': null }, sort: 'rank', pins: [], pinAsk: null };
   let current = null, model = null, st = null, pendingNotice = '', pendingFocus = '', chooserOpener = null;
   let demo = false;   // the record is a pipeline-written fixture over a synthetic market
   const LEGACY = {
@@ -771,6 +874,7 @@
     let canon = '#/' + state.view;
     if (state.view === 'explore') {
       let stage = route.stage || state.stage || model.defaultStage;
+      const wasOn = state.selected[stage];   // before the route moves it: what the reader was already looking at
       if (route.ticker) {
         const here = stage + ':' + route.ticker;
         if (model.byId[here]) state.selected[stage] = here;
@@ -783,8 +887,25 @@
         }
       }
       state.stage = stage;
-      const list = model.stages[stage];
-      if (!state.selected[stage] || !model.byId[state.selected[stage]]) state.selected[stage] = list.length ? list[0].id : null;
+      // A route that NAMES A STOCK THE READER IS NOT ALREADY ON is a request to
+      // inspect that stock: when the lens hides it the lens widens, says so, and
+      // is not written to storage -- so the next fresh visit still opens on the
+      // reader's own choice. A route over the stock already chosen is a
+      // re-render (a lens change, an unfollow) and must widen nothing: the page
+      // jumped out of the Following lens the moment the last setup left it.
+      const named = route.ticker ? model.byId[stage + ':' + route.ticker] : null;
+      const asked = named && named.id !== wasOn ? named : null;
+      if (asked && !lensPass(asked, lensOf(stage))) {
+        const was = lensOf(stage);
+        setLens(stage, 'all', false);
+        state.notice = (state.notice ? state.notice + ' ' : '') + asked.ticker + ' is outside the ' + LENS_WORDS[was] + ' lens; showing every ' + (stage === 'bursts' ? 'burst' : 'setup') + ' so it can be inspected.';
+      }
+      // The selection belongs to the LENS, not to the search box: a find-as-you-
+      // type with no match narrows the cards and leaves the chosen stock alone,
+      // while a lens that no longer holds it moves to the first it does hold.
+      const inLens = sorted(lensed(stage), sortOf(stage));
+      const sel = state.selected[stage] ? model.byId[state.selected[stage]] : null;
+      if (!sel || inLens.indexOf(sel) < 0) state.selected[stage] = inLens.length ? inLens[0].id : null;
       canon = routeHash(stage, state.selected[stage]);
     }
     showView(!first && previousView !== state.view);
@@ -838,18 +959,103 @@
   function setQuery(q) { state.query = q; $('search').value = q; if (model && state.view === 'explore') renderPicks(); }
   function pickItem(c) {
     const sw = statusWords(c.status);
-    const btn = el('button', { 'class': 'ss-pick', type: 'button', 'data-id': c.id, 'data-ticker': c.ticker, 'data-status': c.status, 'aria-pressed': 'false', 'aria-controls': 'detail', tabindex: '-1' }, [
+    const btn = el('button', { 'class': 'ss-pick', type: 'button', 'data-id': c.id, 'data-ticker': c.ticker, 'data-status': c.status, 'data-rank': String(c.rank), 'aria-pressed': 'false', 'aria-controls': 'detail', tabindex: '-1' }, [
       el('span', { 'class': 'ss-pick__row' }, [
         el('span', { 'class': 'ss-pick__ticker sc-case', text: c.ticker }),
         c.grade ? chip(c.grade + (isNum(c.score) ? ' · ' + c.score.toFixed(1) : ''), 'brand', true) : null,
         chip(sw[0], sw[1])
       ]),
       el('span', { 'class': 'ss-pick__reason', text: pickReason(c) }),
-      el('span', { 'class': 'ss-pick__measures' }, c.measures.map((m) => el('span', null, [m[0] + ' ', el('b', { text: m[1] })])))
+      el('span', { 'class': 'ss-pick__measures' }, c.measures.map((m) => el('span', null, [m[0] + ' ', el('b', { text: m[1] })]))
+        // the published rank stays a label of its own, whatever the cards are sorted by
+        .concat([el('span', { 'class': 'ss-pick__rank', text: 'rank ' + plain(c.rank) })]))
     ]);
     btn.addEventListener('click', () => { state.gesture = true; navigate(routeHash(c.stage, c.id)); });
     btn.addEventListener('focus', () => { d.querySelectorAll('#pick-list .ss-pick').forEach((p) => { p.tabIndex = p === btn ? 0 : -1; }); });
-    return el('div', { 'class': 'ss-pick-item', role: 'listitem' }, btn);
+    // the Compare toggle is a SIBLING of the selection button, never inside it:
+    // pinning must not choose the stock, and choosing must not pin it
+    return el('div', { 'class': 'ss-pick-item', role: 'listitem' }, [btn, el('div', { 'class': 'ss-pick__tools' }, pinButton(c, 'card'))]);
+  }
+  // ---- the lens row: four ways to narrow a stage, the counts, the reset
+  function lensTabs(stage) {
+    const box = el('div', { 'class': 'sc-tabs ss-lens__tabs', role: 'group', 'aria-labelledby': 'lens-label' });
+    const now = lensOf(stage);
+    LENSES[stage].forEach((l) => {
+      const n = lensCount(stage, l[0]);
+      const t = el('button', { 'class': 'sc-tab ss-lens__tab', type: 'button', 'data-lens': l[0], 'data-count': String(n),
+        'aria-pressed': l[0] === now ? 'true' : 'false', title: l[2] }, [d.createTextNode(l[1]), el('small', { text: String(n) })]);
+      t.addEventListener('click', () => {
+        if (lensOf(stage) === l[0]) return;
+        setLens(stage, l[0], true);
+        state.notice = '';
+        state.gesture = true;
+        applyRoute(parseHash(w.location.hash));
+      });
+      box.appendChild(t);
+    });
+    return box;
+  }
+  function sortTabs(stage) {
+    const box = el('div', { 'class': 'sc-tabs ss-lens__tabs', role: 'group', 'aria-labelledby': 'sort-label' });
+    const now = sortOf(stage);
+    SORTS.forEach((s) => {
+      const t = el('button', { 'class': 'sc-tab', type: 'button', 'data-sort': s[0], 'aria-pressed': s[0] === now ? 'true' : 'false', title: s[2], text: s[1] });
+      t.addEventListener('click', () => {
+        if (sortOf(stage) === s[0]) return;
+        state.sort = s[0]; stored.sort = s[0]; saveLens();
+        state.gesture = true;
+        applyRoute(parseHash(w.location.hash));
+      });
+      box.appendChild(t);
+    });
+    return box;
+  }
+  // Where the lens row lives. On a desktop it rides in the stage band, in the
+  // space beside the two cards, so narrowing a stage costs the chart nothing
+  // of the first screen. On a phone that band is already two stacked cards
+  // and the one thing that must stay above the fold is the search, so the
+  // lens goes under it, with the list it narrows.
+  const lensHome = () => (narrow() ? (($('picks') || {}).querySelector ? $('picks').querySelector('.ss-picks__head') : null) : $('stage-band'));
+  function renderLens(stage) {
+    const host = $('lens');
+    if (!host) return;
+    const home = lensHome();
+    if (home && host.parentNode !== home) {
+      if (narrow()) home.insertBefore(host, $('picks-status'));
+      else home.appendChild(host);
+    }
+    clear(host);
+    host.appendChild(el('div', { 'class': 'sc-field sc-field--group ss-lens__field' }, [
+      el('span', { 'class': 'sc-field__label', id: 'lens-label', text: 'show' }), lensTabs(stage)]));
+    if (sortable(stage)) host.appendChild(el('div', { 'class': 'sc-field sc-field--group ss-lens__field' }, [
+      el('span', { 'class': 'sc-field__label', id: 'sort-label', text: 'sort' }), sortTabs(stage)]));
+    if (filtersActive()) {
+      const reset = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm ss-lens__reset', type: 'button', 'data-reset': '', text: 'Reset' });
+      reset.addEventListener('click', () => {
+        setLens(stage, defaultLens(stage), true);
+        state.sort = 'rank'; stored.sort = 'rank'; saveLens();
+        state.query = ''; $('search').value = '';
+        state.notice = '';
+        state.gesture = true;
+        applyRoute(parseHash(w.location.hash));
+      });
+      host.appendChild(reset);
+    }
+  }
+  // a lens with nothing in it says which lens, why, and offers one way out
+  function emptyLens(stage, lens) {
+    const box = el('div', { 'class': 'ss-picks__empty', 'data-empty': 'lens', 'data-lens': lens });
+    const total = model.stages[stage].length, noun = stage === 'bursts' ? 'burst' : 'setup';
+    const reg = ((current.breadth || {}).regime || {}).verdict;
+    let why;
+    if (lens === 'a') why = 'No ' + noun + ' in tonight’s record is graded ' + model.tradeGrades.join(' or ') + '. All ' + plural(total, noun) + ' are still here to inspect.';
+    else if (lens === 'ticket') why = 'No ' + noun + ' carries a ticket in tonight’s record' + (reg === 'red' ? ': breadth is red, so the run wrote no order' : '') + '. All ' + plural(total, noun) + ' are still here to inspect.';
+    else why = 'Nothing from tonight’s record is in your Following shelf yet. Follow a setup from its action area and it appears here; it is saved in this browser only.';
+    box.appendChild(el('p', { text: why }));
+    const out = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-lens-out': 'all', text: 'Show all · ' + total });
+    out.addEventListener('click', () => { setLens(stage, 'all', true); state.gesture = true; applyRoute(parseHash(w.location.hash)); });
+    box.appendChild(out);
+    return box;
   }
   function emptyStage(stage) {
     const box = el('div', { 'class': 'ss-picks__empty', 'data-empty': stage }), run = current.run || {}, counts = model.counts;
@@ -873,6 +1079,23 @@
   function noMatch(stage, q) {
     const box = el('div', { 'class': 'ss-picks__empty', 'data-empty': 'search' });
     const other = STAGES.find((s) => s !== stage), elsewhere = model.stages[other].filter((c) => matches(c, q));
+    // a stock the LENS is hiding exists: say so and offer it, never "no such stock"
+    const hidden = model.stages[stage].filter((c) => matches(c, q));
+    if (hidden.length) {
+      const one = hidden.find((c) => c.ticker === q) || hidden[0];
+      box.setAttribute('data-empty', 'lens-hidden');
+      box.appendChild(el('p', { text: (hidden.length === 1 ? one.ticker + ' is' : hidden.slice(0, 3).map((c) => c.ticker).join(', ') + (hidden.length > 3 ? ' and ' + (hidden.length - 3) + ' more are' : ' are')) + ' in ' + STAGE_NAME[stage] + ' tonight, hidden by the ' + LENS_WORDS[lensOf(stage)] + ' lens' + (one.grade ? ' (' + one.ticker + ' is graded ' + one.grade + ')' : '') + '.' }));
+      const show = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-lens-out': 'all', text: 'Inspect ' + one.ticker + ' anyway' });
+      show.addEventListener('click', () => {
+        pendingNotice = one.ticker + ' is outside the ' + LENS_WORDS[lensOf(stage)] + ' lens; showing every ' + (stage === 'bursts' ? 'burst' : 'setup') + ' so it can be inspected.';
+        setLens(stage, 'all', false); setQuery(''); state.gesture = true; navigate(routeHash(stage, one.id));
+      });
+      box.appendChild(show);
+      const clearOnly = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Clear search' });
+      clearOnly.addEventListener('click', () => { setQuery(''); $('search').focus(); });
+      box.appendChild(clearOnly);
+      return box;
+    }
     box.appendChild(el('p', { text: 'No stock matching ‘' + q + '’ in ' + STAGE_NAME[stage] + (elsewhere.length ? '; ' + elsewhere.slice(0, 3).map((c) => c.ticker).join(', ') + (elsewhere.length === 1 ? ' matches' : ' match') + ' in ' + STAGE_NAME[other] + '.' : ', or anywhere in tonight’s record.') }));
     if (elsewhere.length) {
       const b = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Show ' + elsewhere[0].ticker + ' in ' + STAGE_NAME[other] });
@@ -886,12 +1109,15 @@
   }
   function renderPicks() {
     const stage = state.stage, list = model.stages[stage], q = state.query, host = $('pick-list');
+    const lens = lensOf(stage), inLens = lensed(stage), shown = visible(stage), key = picksKey();
+    renderLens(stage);
     renderDiscover(stage);
-    const shown = list.filter((c) => matches(c, q)), key = stage + '|' + q;
-    $('picks-h2').textContent = STAGE_NAME[stage].toLowerCase() + ' · ' + list.length;
+    // the stage's own total stays beside the subset, always
+    $('picks-h2').textContent = STAGE_NAME[stage].toLowerCase() + ' · ' + shown.length + ' of ' + list.length;
     if (state.picksKey !== key) {
       clear(host);
       if (!list.length) host.appendChild(emptyStage(stage));
+      else if (!inLens.length) host.appendChild(emptyLens(stage, lens));
       else if (!shown.length) host.appendChild(noMatch(stage, q));
       else shown.forEach((c) => host.appendChild(pickItem(c)));
       state.picksKey = key;
@@ -901,10 +1127,15 @@
     host.querySelectorAll('.ss-pick').forEach((b) => { const on = !!sel && b.getAttribute('data-id') === sel.id; b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; if (on) seenSelected = true; });
     if (!seenSelected) { const firstPick = host.querySelector('.ss-pick'); if (firstPick) firstPick.tabIndex = 0; }
     if (sel && state.gesture && narrow()) { const b = host.querySelector('.ss-pick[aria-pressed="true"]'); if (b && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' }); }
+    syncPins();
+    // the lens, the subset and the stage total in one sentence; on a page that
+    // offers no order, a recorded ticket is named as the record's, not as one
+    const lensLine = lens === 'all' ? '' : ' · ' + LENS_WORDS[lens] + ' lens' + (lens === 'ticket' && st && blocked(st) ? ', as the record wrote them — no order is offered from a page that is ' + stateWords(st) : '');
     let status;
     if (!list.length) status = 'Nothing in ' + STAGE_NAME[stage] + ' tonight.';
-    else if (q) status = shown.length + ' of ' + list.length + ' match ‘' + q + '’' + (shown.length ? '; Enter chooses the first.' : '.');
-    else if (sel) status = sel.ticker + ' · ' + (list.indexOf(sel) + 1) + ' of ' + list.length + ' in ' + STAGE_NAME[stage] + '.';
+    else if (!inLens.length) status = 'No ' + (stage === 'bursts' ? 'burst' : 'setup') + ' matches the ' + LENS_WORDS[lens] + ' lens; ' + plural(list.length, 'stock') + ' in ' + STAGE_NAME[stage] + '.';
+    else if (q) status = shown.length + ' of ' + inLens.length + ' match ‘' + q + '’' + (shown.length ? '; Enter chooses the first.' : '.') + lensLine;
+    else if (sel) status = sel.ticker + ' · ' + (shown.indexOf(sel) + 1) + ' of ' + shown.length + ' shown, ' + list.length + ' in ' + STAGE_NAME[stage] + lensLine + (sortOf(stage) === 'rank' ? '' : ' · sorted by ' + SORT_WORDS[sortOf(stage)]) + '.';
     else status = '';
     $('picks-status').textContent = (state.notice ? state.notice + ' ' : '') + status;
   }
@@ -921,9 +1152,15 @@
   // ---------------------------------------------------------------- Explore: the chosen stock
   function detailEmpty(stage) {
     const box = el('div', { 'class': 'ss-chart-empty', 'data-detail': 'empty' });
-    const cover = current.cover || {};
-    box.appendChild(el('strong', { text: model.stages[stage].length ? 'Choose a stock. ' : 'Nothing to show for ' + STAGE_NAME[stage] + ' tonight. ' }));
-    box.appendChild(d.createTextNode(model.stages[stage].length ? 'Its chart, its conditions and its conditional plan appear here.' : (cover.dek ? cover.dek + ' ' : '') + 'The market view has the breadth in full; the record view has the open model plans.'));
+    const cover = current.cover || {}, total = model.stages[stage].length, lens = lensOf(stage);
+    if (total && !lensed(stage).length) {
+      box.setAttribute('data-detail', 'lens');
+      box.appendChild(el('strong', { text: 'Nothing matches the ' + LENS_WORDS[lens] + ' lens. ' }));
+      box.appendChild(d.createTextNode('All ' + plural(total, 'stock') + ' in ' + STAGE_NAME[stage] + ' are still in the record; widen the lens beside the list to inspect them.'));
+      return box;
+    }
+    box.appendChild(el('strong', { text: total ? 'Choose a stock. ' : 'Nothing to show for ' + STAGE_NAME[stage] + ' tonight. ' }));
+    box.appendChild(d.createTextNode(total ? 'Its chart, its conditions and its conditional plan appear here.' : (cover.dek ? cover.dek + ' ' : '') + 'The market view has the breadth in full; the record view has the open model plans.'));
     return box;
   }
   function detailHead(c) {
@@ -944,12 +1181,96 @@
         el('h2', { 'class': 'ss-detail__h2 sc-case', id: 'detail-h2', text: c.ticker }),
         el('p', { 'class': 'sc-hint ss-detail__sub', text: sub })
       ]),
-      el('div', { 'class': 'ss-detail__chips' }, chips.concat([back]))
+      el('div', { 'class': 'ss-detail__chips' }, chips.concat([back])),
+      detailTools(c)
     ]);
   }
-  // the one live chart: disposed (observers, tooltip, listeners) before another is drawn
-  let chartHost = null;
-  function disposeChart() { if (chartHost && chartHost.dispose) chartHost.dispose(); chartHost = null; }
+  // the stepper walks the SAME visible candidates the cards and the map show,
+  // so "next" never lands on a stock the lens is hiding; the Compare toggle
+  // stands beside it, independent of the card that chose this stock
+  function detailTools(c) {
+    const shown = visible(c.stage), at = shown.indexOf(c);
+    const box = el('div', { 'class': 'ss-detail__tools' });
+    const step = (delta, label, aria) => {
+      const b = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm ss-step', type: 'button', 'data-step': delta > 0 ? 'next' : 'prev', 'aria-label': aria, text: label,
+        disabled: at < 0 || at + delta < 0 || at + delta >= shown.length ? '' : null });
+      b.addEventListener('click', () => { const n = shown[at + delta]; if (n) { state.gesture = true; navigate(routeHash(n.stage, n.id)); } });
+      return b;
+    };
+    box.appendChild(step(-1, '‹', 'Previous stock in this list'));
+    box.appendChild(el('span', { 'class': 'ss-step__where', 'data-where': '', text: at < 0 ? 'not in these matches' : (at + 1) + ' of ' + shown.length }));
+    box.appendChild(step(1, '›', 'Next stock in this list'));
+    box.appendChild(pinButton(c, 'detail'));
+    return box;
+  }
+  // ------------------------------------------------- the recorded evidence, and where it sits
+  // Every anchor below is a DATE the run archived, resolved against the bars
+  // the record carries. Nothing is derived: a check with no recorded date
+  // range -- linearity, the trend's age, the run of up days -- gets no anchor
+  // and says so, rather than a convincing region being drawn for it.
+  const checksOf = (c) => { const m = {}; (((c.row || {}).quality || {}).checks || []).forEach((x) => { if (x && x.key) m[x.key] = x; }); return m; };
+  const vetoedCheck = (key, vetoes) => (key === 'two_days' && vetoes.indexOf('up_days') >= 0) || (key === 'linearity' && vetoes.indexOf('not_linear') >= 0);
+  // the four words the checklist's own fields spell, plus the veto: one place,
+  // read by the tiles, the scan cells and the evidence panel alike
+  function checkVerdict(chk, vetoed) {
+    if (vetoed) return 'veto';
+    if (!chk) return 'not measured';
+    if (chk.pass) return chk.marginal ? 'partial' : 'pass';
+    return chk.status === 'unmeasured' ? 'not measured' : 'fail';
+  }
+  const VERDICT_TONE = { pass: 'good', partial: 'warn', fail: 'danger', veto: 'danger', 'not measured': 'neutral' };
+  // the signal session: the session the record was PUBLISHED FOR, never the
+  // last bar in the frame -- a later observation appended to the series would
+  // otherwise move the burst day onto a candle that never burst
+  function signalDate(c) {
+    const run = current.run || {};
+    const s = text(run.session);
+    return s && idxOf(c.series, s) >= 0 ? s : null;
+  }
+  function evidenceItems(c) {
+    const items = [], series = c.series;
+    if (c.stage === 'bursts') {
+      const b = c.row, q = b.quality || {}, base = q.base || {}, chk = checksOf(c), vetoes = q.vetoes || [];
+      if (text(base.start) && text(base.end)) {
+        const bd = (base.breakdown_dates || []).length;
+        items.push({ key: 'base', label: ANCHOR_WORDS.base, from: base.start, to: base.end, low: base.low, high: base.high,
+          lede: 'The quiet range the burst came out of, as the run recorded it.',
+          measured: (isNum(base.sessions) ? plain(base.sessions) + ' sessions' : 'sessions not recorded') + ' · ' + plain(base.depth_pct) + '% deep · ' + usd(base.low) + '–' + usd(base.high) + (bd ? ' · ' + plural(bd, 'breakdown') : ''),
+          checks: ['consolidation'] });
+      }
+      const sig = signalDate(c);
+      if (sig) {
+        items.push({ key: 'burst', label: ANCHOR_WORDS.burst, from: sig, to: sig, low: b.low, high: b.high,
+          lede: 'The range-expansion session the scan found — the signal itself.',
+          measured: pct(b.gain_pct) + ' on ' + volumeTimes(b) + '× volume · open ' + usd(b.open) + ' · high ' + usd(b.high) + ' · low ' + usd(b.low) + ' · close ' + usd(b.close),
+          checks: ['close_near_high', 'range_expansion', 'volume'] });
+        // the previous trading OBSERVATION, one archived bar back, never the previous date
+        const i = idxOf(series, sig);
+        if (i > 0) {
+          const p = series[i - 1];
+          items.push({ key: 'prior', label: ANCHOR_WORDS.prior, from: p.date, to: p.date, low: p.l, high: p.h,
+            lede: 'The session before the signal — the last bar that printed before it, not the previous calendar day.',
+            measured: 'open ' + usd(p.o) + ' · high ' + usd(p.h) + ' · low ' + usd(p.l) + ' · close ' + usd(p.c),
+            checks: ['narrow_or_negative'] });
+        }
+      }
+      return items.map((it) => Object.assign(it, { rows: it.checks.map((k) => ({ key: k, check: chk[k], verdict: checkVerdict(chk[k], vetoedCheck(k, vetoes)) })) }));
+    }
+    const r = c.row, box = r.box || {};
+    if (text(box.start) && text(box.end)) {
+      items.push({ key: 'box', label: ANCHOR_WORDS.box, from: box.start, to: box.end, low: box.low, high: box.high,
+        lede: 'The coil the buy stop sits over, as the anticipation scans measured it.',
+        measured: (isNum(box.sessions) ? plain(box.sessions) + ' sessions' : 'sessions not recorded') + ' · ' + usd(box.low) + '–' + usd(box.high) + (isNum(box.spread) ? ' · spread ' + plain(box.spread) + '%' : ''),
+        note: 'Anticipation names are measured, not graded: the record carries no pass or fail for a coil.', rows: [] });
+    }
+    return items;
+  }
+  // the first range that holds the whole anchor, so "show the recorded range"
+  // names a range that works rather than moving the reader somewhere blind
+  function rangeHolding(c, item) {
+    return CHART_RANGES.find((r) => { const s = rangeSlice(c, r).series; return idxOf(s, item.from) >= 0 && idxOf(s, item.to) >= 0; }) || null;
+  }
+
   const chartHeight = () => (narrow() ? 300 : 400);
   // the plan's levels in one line beside the chart, the aim named even when it sits outside the visible range
   function referenceLine(c, g) {
@@ -964,8 +1285,10 @@
     if (isNum(t.low) && isNum(t.high)) parts.push('aim +' + plain(t.low_pct) + '% ' + usd(t.low) + ' / +' + plain(t.high_pct) + '% ' + usd(t.high) + (g && g.target && g.target.offscale ? ' (outside the visible range)' : ''));
     return parts.length ? 'Levels: ' + parts.join(' · ') : 'No plan levels for this name.';
   }
-  function mountChart(mount, c) {
-    disposeChart();
+  // One chart, owned by whoever built it. The host, its observers and its
+  // tooltip belong to the returned handle, never to a page-wide variable, so
+  // mounting a second chart cannot dispose the first.
+  function mountChart(mount, c, height) {
     clear(mount);
     if (!c.series.length) {
       mount.style.minHeight = '';
@@ -975,7 +1298,7 @@
       ]));
       return null;
     }
-    const slice = rangeSlice(c, prefs.range), height = chartHeight();
+    const slice = rangeSlice(c, prefs.range);
     mount.style.minHeight = height + 'px';
     const host = SCStock.chart(slice.series, chartOptionsFor(c, slice.series, height));
     host.setAttribute('data-sessions', String(slice.series.length));
@@ -983,84 +1306,497 @@
     host.setAttribute('data-stage', c.stage);
     host.setAttribute('data-range', slice.range);
     mount.appendChild(host);
-    chartHost = host;
     return { host: host, slice: slice };
   }
-  function detailChart(c) {
+  // ------------------------------------------------- the chart panel, one instance at a time
+  // Every id it writes is namespaced by `idPrefix`, and the host it mounts is
+  // this handle's own: two panels can stand side by side and neither disposes
+  // the other. `onPrefs` lets an owner that drives several panels from one set
+  // of controls (the comparison) hide the per-panel strip and redraw the rest.
+  function chartPanel(c, opts) {
+    opts = opts || {};
+    const idp = opts.idPrefix || 'chart';
     const run = current.run || {}, all = c.series, last = all.length ? all[all.length - 1] : null;
-    const panel = el('figure', { 'class': 'ss-chart-panel', 'data-mode': prefs.mode, 'data-range': prefs.range });
-    // one header strip: the symbol, its last close and session; the mode and the range controls together; the legend for the mode
+    const evid = evidenceItems(c);
+    let live = null, host = null, chosen = null;
+    const panelHeight = () => opts.height || chartHeight();
+    const panel = el('figure', { 'class': 'ss-chart-panel', 'data-panel': idp, 'data-ticker': c.ticker, 'data-mode': prefs.mode, 'data-range': prefs.range });
     const legendBox = el('div', { 'class': 'ss-chart-panel__legend' });
-    const modeTabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-labelledby': 'chart-view-label' });
-    const rangeTabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-labelledby': 'chart-range-label' });
+    const modeTabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-labelledby': idp + '-view-label' });
+    const rangeTabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-labelledby': idp + '-range-label' });
     const toggleInput = el('input', { type: 'checkbox', checked: prefs.closeLine ? '' : null });
     const toggle = el('label', { 'class': 'ss-chart-panel__toggle', hidden: prefs.mode === 'candles' ? null : '' }, [toggleInput, 'close line']);
+    // one header strip: the symbol, its last close and session; the mode and the range controls together; the legend for the mode
+    const tools = el('div', { 'class': 'ss-chart-panel__tools' }, [
+      // two segmented groups in one strip: each is captioned, and the caption is
+      // the group's own name (aria-labelledby), because "setup" is a mode AND a
+      // range and neither row could be told from the other without it
+      el('div', { 'class': 'sc-field sc-field--group' }, [el('span', { 'class': 'sc-field__label', id: idp + '-view-label', text: 'view' }), modeTabs]),
+      el('div', { 'class': 'sc-field sc-field--group' }, [el('span', { 'class': 'sc-field__label', id: idp + '-range-label', text: 'range' }), rangeTabs]),
+      toggle]);
+    if (opts.tools === false) tools.hidden = true;
     panel.appendChild(el('div', { 'class': 'ss-chart-panel__head' }, [
       el('div', { 'class': 'ss-chart-panel__id' }, [
         el('span', { 'class': 'sc-figure', text: c.ticker }),
         last && isNum(last.c) ? el('span', { 'class': 'ss-chart-panel__price', text: usd(last.c) }) : null,
         el('span', { 'class': 'sc-hint', text: last ? 'close ' + dateWords(last.date) : 'no bars archived' }),
         demo ? chip('demo data', 'warn') : null
-      ]),
-      // two segmented groups in one strip: each is captioned, and the caption is
-      // the group's own name (aria-labelledby), because "setup" is a mode AND a
-      // range and neither row could be told from the other without it
-      el('div', { 'class': 'ss-chart-panel__tools' }, [
-        el('div', { 'class': 'sc-field sc-field--group' }, [el('span', { 'class': 'sc-field__label', id: 'chart-view-label', text: 'view' }), modeTabs]),
-        el('div', { 'class': 'sc-field sc-field--group' }, [el('span', { 'class': 'sc-field__label', id: 'chart-range-label', text: 'range' }), rangeTabs]),
-        toggle])
+      ]), tools
     ]));
-    const mount = el('div', { 'class': 'ss-chart-mount', id: 'chart-mount' });
+    const mount = el('div', { 'class': 'ss-chart-mount', id: idp + '-mount' });
     panel.appendChild(mount);
+    // the chart's own key sits with the chart; the evidence controls and the
+    // one explanation come directly under it, and the disclosure sentences last
+    panel.appendChild(legendBox);
+    const evidenceRow = el('div', { 'class': 'ss-evidence', 'data-evidence-row': idp });
+    const explain = el('div', { 'class': 'ss-evidence__explain', id: idp + '-evidence', role: 'status', 'aria-live': 'polite' });
+    panel.appendChild(evidenceRow); panel.appendChild(explain);
     const rangeLine = el('p', { 'class': 'ss-chart-panel__range' }), refLine = el('p', { 'class': 'ss-chart-panel__refs', 'data-refs': '' });
     panel.appendChild(el('figcaption', { 'class': 'sc-chart-caption' }, [
-      legendBox, rangeLine, refLine,
+      rangeLine, refLine,
       el('p', { text: (all.length ? 'Alpaca ' + String(run.feed || '').toUpperCase() + ' daily bars, drawn from the same numbers as the plan' : 'No bars archived for ' + c.ticker) + (c.row.chart ? ' · ' : '.') }, c.row.chart ? [el('a', { 'class': 'sc-link--quiet', href: c.row.chart, text: 'the chart the grader saw' })] : null)
     ]));
-    let live = mountChart(mount, c);
+
+    // the marker in the CURRENT slice: the anchor is dates, so a range change
+    // rebinds it and a range that does not hold it draws nothing at all
+    function markOf() {
+      if (!chosen || !live) return null;
+      const s = live.slice.series, from = idxOf(s, chosen.from), to = idxOf(s, chosen.to);
+      if (from < 0 || to < 0) return null;
+      return { from: from, to: to, low: chosen.low, high: chosen.high, label: chosen.label.toLowerCase() };
+    }
+    function paint() {
+      if (!host) return;
+      host.update({ highlight: markOf() });
+    }
+    function drawExplain() {
+      clear(explain);
+      evidenceRow.querySelectorAll('[data-anchor]').forEach((b) => b.setAttribute('aria-pressed', chosen && b.getAttribute('data-anchor') === chosen.key ? 'true' : 'false'));
+      panel.setAttribute('data-evidence', chosen ? chosen.key : '');
+      explain.hidden = !chosen;
+      if (!chosen) return;
+      const s = live ? live.slice.series : [], inRange = !!live && idxOf(s, chosen.from) >= 0 && idxOf(s, chosen.to) >= 0;
+      const span = chosen.from === chosen.to ? dateWords(chosen.from) : dateWords(chosen.from) + ' – ' + dateWords(chosen.to);
+      const head = el('div', { 'class': 'ss-evidence__head' }, [
+        el('h4', { text: chosen.label }), el('span', { 'class': 'ss-evidence__dates', text: span }),
+        el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', 'data-evidence-clear': '', text: 'Clear' })
+      ]);
+      head.querySelector('[data-evidence-clear]').addEventListener('click', () => { select(null); });
+      explain.appendChild(head);
+      explain.appendChild(el('p', { 'class': 'ss-evidence__lede', text: chosen.lede }));
+      explain.appendChild(el('p', { 'class': 'ss-evidence__measured' }, [el('span', { 'class': 'sc-eyebrow', text: 'measured' }), el('span', { text: chosen.measured })]));
+      (chosen.rows || []).forEach((r) => {
+        const tone = VERDICT_TONE[r.verdict] || 'neutral';
+        explain.appendChild(el('div', { 'class': 'ss-evidence__check', 'data-check': r.key, 'data-verdict': r.verdict }, [
+          el('div', { 'class': 'ss-evidence__check-head' }, [
+            el('strong', { text: r.check ? (r.check.label || words(r.key)) : words(r.key) }), chip(r.verdict, tone)]),
+          el('p', { 'class': 'ss-evidence__value', text: r.check && text(r.check.display) ? r.check.display : 'not measured in this record' }),
+          el('p', { 'class': 'ss-evidence__threshold', text: r.check && text(r.check.threshold) ? 'his threshold: ' + r.check.threshold : 'no threshold archived' }),
+          r.check && text(r.check.note) ? el('p', { 'class': 'ss-evidence__note', text: r.check.note }) : null
+        ]));
+      });
+      if (chosen.note) explain.appendChild(el('p', { 'class': 'sc-hint', text: chosen.note }));
+      if (!all.length) explain.appendChild(el('p', { 'class': 'sc-hint', 'data-anchor-state': 'no-bars', text: 'No bars are archived for ' + c.ticker + ' in tonight’s record, so this evidence has no chart to sit on. The numbers above are the record’s own.' }));
+      else if (!inRange) {
+        const r = rangeHolding(c, chosen);
+        const p = el('p', { 'class': 'sc-hint', 'data-anchor-state': r ? 'out-of-range' : 'unanchored' }, [
+          d.createTextNode(r ? 'These sessions are outside the range on screen. ' : 'These sessions are outside every range this chart offers, so they cannot be marked here. ')]);
+        if (r) {
+          const b = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-show-range': r, text: 'Show recorded range' });
+          b.addEventListener('click', () => setRange(r));
+          p.appendChild(b);
+        }
+        explain.appendChild(p);
+      }
+    }
+    function select(key) {
+      const next = key ? evid.find((x) => x.key === key) || null : null;
+      chosen = next && chosen && chosen.key === next.key ? null : next;   // pressing the pressed one clears it
+      paint();
+      drawExplain();
+    }
+    function buildEvidence() {
+      clear(evidenceRow);
+      if (!evid.length) { evidenceRow.hidden = true; return; }
+      evidenceRow.hidden = false;
+      evidenceRow.appendChild(el('span', { 'class': 'sc-field__label', id: idp + '-evidence-label', text: 'show on chart' }));
+      const group = el('div', { 'class': 'sc-tabs ss-evidence__tabs', role: 'group', 'aria-labelledby': idp + '-evidence-label' });
+      evid.forEach((it) => {
+        const b = el('button', { 'class': 'sc-tab', type: 'button', 'data-anchor': it.key, 'aria-pressed': 'false', 'aria-controls': idp + '-evidence', title: it.lede, text: it.label });
+        b.addEventListener('click', () => select(it.key));
+        group.appendChild(b);
+      });
+      evidenceRow.appendChild(group);
+    }
     function disclose() {
-      const g = chartHost && chartHost.geometry ? chartHost.geometry() : null, series = live ? live.slice.series : [];
+      const g = host && host.geometry ? host.geometry() : null, series = live ? live.slice.series : [];
       rangeLine.textContent = series.length ? 'Showing ' + plural(series.length, 'session') + ', ' + dateShort(series[0].date) + ' – ' + dateShort(series[series.length - 1].date) + ' ' + String(series[series.length - 1].date).slice(0, 4) + ' · ' + live.slice.note + '.' : '';
       refLine.textContent = referenceLine(c, g);
-      clear(legendBox); if (chartHost && chartHost.legend) legendBox.appendChild(chartHost.legend());
+      clear(legendBox); if (host && host.legend) legendBox.appendChild(host.legend());
       panel.setAttribute('data-mode', prefs.mode); panel.setAttribute('data-range', prefs.range);
       toggle.hidden = prefs.mode !== 'candles';
       modeTabs.querySelectorAll('.sc-tab').forEach((t) => t.setAttribute('aria-pressed', t.getAttribute('data-mode') === prefs.mode ? 'true' : 'false'));
       rangeTabs.querySelectorAll('.sc-tab').forEach((t) => t.setAttribute('aria-pressed', t.getAttribute('data-range') === prefs.range ? 'true' : 'false'));
+      if (toggleInput.checked !== prefs.closeLine) toggleInput.checked = prefs.closeLine;
+    }
+    function setMode(m) {
+      prefs.mode = m; savePrefs();
+      if (host) host.update({ mode: m, closeLine: prefs.closeLine, highlight: markOf() });
+      disclose(); drawExplain();
+      if (typeof opts.onPrefs === 'function') opts.onPrefs('mode', m, handle);
+    }
+    function setRange(r) {
+      prefs.range = r; savePrefs();
+      if (host) {
+        const slice = rangeSlice(c, r);
+        live = { host: host, slice: slice };
+        host.update(Object.assign({ series: slice.series }, chartOptionsFor(c, slice.series, panelHeight()), { highlight: markOf() }));
+        host.setAttribute('data-sessions', String(slice.series.length)); host.setAttribute('data-range', slice.range);
+      }
+      disclose(); drawExplain();
+      if (typeof opts.onPrefs === 'function') opts.onPrefs('range', r, handle);
+    }
+    function setCloseLine(on) {
+      prefs.closeLine = !!on; savePrefs();
+      if (host) host.update({ closeLine: prefs.closeLine });
+      disclose();
+      if (typeof opts.onPrefs === 'function') opts.onPrefs('closeLine', prefs.closeLine, handle);
     }
     CHART_MODES.forEach((m) => {
       const t = el('button', { 'class': 'sc-tab', type: 'button', 'data-mode': m, 'aria-pressed': m === prefs.mode ? 'true' : 'false', text: MODE_WORDS[m], disabled: all.length ? null : '' });
-      t.addEventListener('click', () => { prefs.mode = m; savePrefs(); if (chartHost) chartHost.update({ mode: m, closeLine: prefs.closeLine }); disclose(); });
+      t.addEventListener('click', () => setMode(m));
       modeTabs.appendChild(t);
     });
     CHART_RANGES.forEach((r) => {
       const t = el('button', { 'class': 'sc-tab', type: 'button', 'data-range': r, 'aria-pressed': r === prefs.range ? 'true' : 'false', 'aria-label': RANGE_WORDS[r], title: RANGE_WORDS[r], disabled: all.length ? null : '', text: r === 'setup' ? 'setup' : r });
-      t.addEventListener('click', () => {
-        prefs.range = r; savePrefs();
-        if (!chartHost) return;
-        const slice = rangeSlice(c, r);
-        chartHost.update(Object.assign({ series: slice.series }, chartOptionsFor(c, slice.series, chartHeight())));
-        chartHost.setAttribute('data-sessions', String(slice.series.length)); chartHost.setAttribute('data-range', slice.range);
-        live = { host: chartHost, slice: slice };
-        disclose();
-      });
+      t.addEventListener('click', () => setRange(r));
       rangeTabs.appendChild(t);
     });
-    toggleInput.addEventListener('change', () => { prefs.closeLine = !!toggleInput.checked; savePrefs(); if (chartHost) chartHost.update({ closeLine: prefs.closeLine }); });
+    toggleInput.addEventListener('change', () => setCloseLine(toggleInput.checked));
+    live = mountChart(mount, c, panelHeight());
+    host = live ? live.host : null;
+    buildEvidence();
     disclose();
-    return panel;
+    drawExplain();
+    const handle = {
+      node: panel, ticker: c.ticker, candidate: c,
+      // an owner driving several panels: apply the shared choice without
+      // re-emitting it, so two panels cannot chase each other round
+      applyPrefs: function () {
+        if (!host) { disclose(); return; }
+        const slice = rangeSlice(c, prefs.range);
+        live = { host: host, slice: slice };
+        host.update(Object.assign({ series: slice.series }, chartOptionsFor(c, slice.series, panelHeight()), { highlight: markOf() }));
+        host.setAttribute('data-sessions', String(slice.series.length)); host.setAttribute('data-range', slice.range);
+        disclose(); drawExplain();
+      },
+      showEvidence: function (key) { if (evid.some((x) => x.key === key) && (!chosen || chosen.key !== key)) select(key); },
+      anchors: function () { return evid.map((x) => x.key); },
+      dispose: function () { if (host && host.dispose) host.dispose(); host = null; live = null; }
+    };
+    return handle;
   }
+  // the detail's own panel: the page-wide one, kept so renderDetail can drop it
+  let detailPanel = null;
+  function disposeChart() { if (detailPanel) { detailPanel.dispose(); detailPanel = null; } }
+  function detailChart(c) {
+    disposeChart();
+    detailPanel = chartPanel(c, { idPrefix: 'chart' });
+    return detailPanel.node;
+  }
+  // a checklist tile and its evidence control are the same mechanism: one
+  // anchor, selected in one place, drawn on one chart
+  function showEvidenceFromCheck(key) {
+    const anchor = CHECK_ANCHOR[key];
+    if (!detailPanel || !anchor) return;
+    detailPanel.showEvidence(anchor);
+    scrollTo(detailPanel.node);
+    const btn = detailPanel.node.querySelector('[data-anchor="' + anchor + '"]');
+    if (btn) btn.focus({ preventScroll: true });
+  }
+  // ---------------------------------------------------------------- Compare: exactly two setups
+  // Pinning is not selecting and not following: it navigates nowhere, saves
+  // nothing and writes nothing. Two candidates of the SAME stage and the same
+  // published record can be compared; a third asks which to replace rather
+  // than dropping one silently, and a pin from the other stage is explained.
+  const PIN_MAX = 2;
+  const pinned = () => state.pins.filter((id) => model && model.byId[id]);
+  const isPinned = (c) => state.pins.indexOf(c.id) >= 0;
+  function pinButton(c, where) {
+    const on = isPinned(c);
+    const b = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm ss-pin', type: 'button', 'data-pin': c.id, 'data-ticker': c.ticker, 'data-pin-where': where,
+      'aria-pressed': on ? 'true' : 'false', 'aria-label': (on ? 'Unpin ' : 'Pin ') + c.ticker + ' for comparison', text: on ? 'Pinned' : 'Compare' });
+    b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); togglePin(c); });
+    return b;
+  }
+  function togglePin(c) {
+    state.pinAsk = null;
+    const at = state.pins.indexOf(c.id);
+    if (at >= 0) state.pins.splice(at, 1);
+    else {
+      const held = pinned().map((id) => model.byId[id]);
+      if (held.length && held[0].stage !== c.stage) state.pinAsk = { kind: 'stage', id: c.id };
+      else if (held.length >= PIN_MAX) state.pinAsk = { kind: 'replace', id: c.id };
+      else state.pins.push(c.id);
+    }
+    renderTray(); syncPins();
+  }
+  function unpin(id) {
+    const at = state.pins.indexOf(id);
+    if (at >= 0) state.pins.splice(at, 1);
+    state.pinAsk = null;
+    renderTray(); syncPins();
+  }
+  function syncPins() {
+    d.querySelectorAll('.ss-pin').forEach((b) => {
+      const on = state.pins.indexOf(b.getAttribute('data-pin')) >= 0;
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.textContent = on ? 'Pinned' : 'Compare';
+      b.setAttribute('aria-label', (on ? 'Unpin ' : 'Pin ') + b.getAttribute('data-ticker') + ' for comparison');
+    });
+  }
+  function renderTray() {
+    const tray = $('compare-tray');
+    if (!tray || !model) return;
+    const held = pinned().map((id) => model.byId[id]);
+    clear(tray);
+    tray.hidden = !held.length && !state.pinAsk;
+    tray.setAttribute('data-pins', String(held.length));
+    if (tray.hidden) return;
+    tray.appendChild(el('span', { 'class': 'sc-eyebrow ss-tray__label', text: 'compare' }));
+    const chips = el('div', { 'class': 'ss-tray__pins' });
+    held.forEach((c) => {
+      const item = el('span', { 'class': 'ss-tray__pin', 'data-ticker': c.ticker }, [
+        el('b', { 'class': 'sc-case', text: c.ticker }),
+        el('small', { text: STAGE_NAME[c.stage].toLowerCase() + ' · ' + statusWords(c.status)[0] })
+      ]);
+      const x = el('button', { 'class': 'ss-tray__drop', type: 'button', 'aria-label': 'Remove ' + c.ticker + ' from the comparison', text: '✕' });
+      x.addEventListener('click', () => unpin(c.id));
+      item.appendChild(x);
+      chips.appendChild(item);
+    });
+    if (held.length < PIN_MAX) chips.appendChild(el('span', { 'class': 'ss-tray__slot', text: 'pin one more' }));
+    tray.appendChild(chips);
+    const go = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', id: 'compare-open', text: 'Compare 2', disabled: held.length === PIN_MAX ? null : '' });
+    go.addEventListener('click', () => openCompare());
+    tray.appendChild(go);
+    const clr = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', 'data-tray-clear': '', text: 'Clear' });
+    clr.addEventListener('click', () => { state.pins = []; state.pinAsk = null; renderTray(); syncPins(); });
+    tray.appendChild(clr);
+    if (!state.pinAsk) return;
+    // the third pin, and the cross-stage pin: explained, decided by the reader
+    const asked = model.byId[state.pinAsk.id];
+    const ask = el('div', { 'class': 'ss-tray__ask', role: 'group', 'data-ask': state.pinAsk.kind });
+    if (state.pinAsk.kind === 'stage') {
+      ask.appendChild(el('p', { text: 'A comparison holds two stocks from one stage and one published session. ' + asked.ticker + ' is in ' + STAGE_NAME[asked.stage] + '; the pair pinned is in ' + STAGE_NAME[held[0].stage] + '. Their fields are not the same measurements, so they are not put side by side.' }));
+      const fresh = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-ask-action': 'restart', text: 'Start a new comparison with ' + asked.ticker });
+      fresh.addEventListener('click', () => { state.pins = [asked.id]; state.pinAsk = null; renderTray(); syncPins(); });
+      ask.appendChild(fresh);
+    } else {
+      ask.appendChild(el('p', { text: 'Two are already pinned. Which does ' + asked.ticker + ' replace?' }));
+      held.forEach((c) => {
+        const b = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-ask-action': 'replace', 'data-ticker': c.ticker, text: 'Replace ' + c.ticker });
+        b.addEventListener('click', () => { state.pins = state.pins.map((id) => (id === c.id ? asked.id : id)); state.pinAsk = null; renderTray(); syncPins(); });
+        ask.appendChild(b);
+      });
+    }
+    const cancel = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', 'data-ask-action': 'cancel', text: 'Keep the pair' });
+    cancel.addEventListener('click', () => { state.pinAsk = null; renderTray(); syncPins(); });
+    ask.appendChild(cancel);
+    tray.appendChild(ask);
+  }
+
+  // the aligned evidence: every value read off the same fields the card and
+  // the detail read, so a number here can never differ from the one there
+  function cmpFacts(c) {
+    const burst = c.stage === 'bursts', b = c.row, plan = c.plan || {}, q = b.quality || {}, cl = b.claude || {};
+    const base = burst ? (q.base || {}) : (b.box || {});
+    const vr = burst ? volumeRatio(b) : null;
+    const trig = burst ? plan.entry_ref : plan.trigger, lim = burst ? plan.entry_high : plan.limit;
+    const why = burst ? sentence(firstSentence(text(b.summary).replace(/^[A-Z0-9.\-]+:\s*/, ''))) : pickReason(c);
+    const concern = firstText(burst ? cl.key_risk : '', plan.stop_risk_reason, plan.hazards, plan.notes);
+    return {
+      grade: c.grade ? c.grade + (isNum(c.score) ? ' · ' + c.score.toFixed(1) : '') : null,
+      provenance: burst ? (cl.source === 'claude' ? 'chart reader' + (cl.agree === false ? ', lowered the grade' : cl.agree === true ? ', agreed' : '') + (cl.chart_seen === false ? ' · numbers only, no chart' : '') : 'checklist alone') : 'measured, not graded',
+      gain: burst ? (isNum(b.gain_pct) ? pct(b.gain_pct) : null) : (isNum(b.pct_change_today) ? pct(b.pct_change_today) : null),
+      volume: burst ? (vr.value === null ? null : vr.value.toFixed(1) + '×' + (vr.source === 'checklist' ? ' (the checklist’s copy)' : '')) : (isNum(b.volume_ratio) ? b.volume_ratio.toFixed(2) + '×' : null),
+      base: text(base.start) && text(base.end) ? (isNum(base.sessions) ? plain(base.sessions) + ' sessions' : 'sessions not recorded') + ' · ' + usd(base.low) + '–' + usd(base.high) + (burst && isNum(base.depth_pct) ? ' · ' + plain(base.depth_pct) + '% deep' : '') + ' · ' + dateShort(base.start) + '–' + dateShort(base.end) : null,
+      trigger: isNum(trig) ? usd(trig) : null,
+      limit: isNum(lim) ? usd(lim) : null,
+      stop: isNum(plan.stop) ? stopWords(plan) : null,
+      stopPct: isNum(plan.stop_pct) ? plain(plan.stop_pct) + '% under the ' + usd(plan.sizing_price || lim) + ' limit' : null,
+      why: why || null,
+      concern: concern ? cap(sentence(concern)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : null),
+      ticket: c.status === 'ticket' ? (st && blocked(st) ? 'recorded, not offered from a page that is ' + stateWords(st) : (text(plan.order_line) || 'a ticket in the record')) : cap(sentence(noTicketPhrase('No ticket', c)))
+    };
+  }
+  function compareTable(a, b) {
+    const fa = cmpFacts(a), fb = cmpFacts(b), burst = a.stage === 'bursts';
+    const rows = [
+      ['grade', 'grade'], ['provenance', 'graded by'],
+      ['gain', burst ? 'session gain' : 'change today'],
+      ['volume', burst ? 'volume vs previous session' : 'volume vs its average'],
+      ['base', burst ? 'base' : 'box'],
+      ['trigger', 'trigger (buy stop)'], ['limit', 'ticket limit'], ['stop', 'stop'], ['stopPct', 'published stop distance'],
+      ['why', 'main qualifying reason'], ['concern', 'principal concern'], ['ticket', 'ticket']
+    ].filter((r) => fa[r[0]] !== null || fb[r[0]] !== null);
+    const table = el('table', { 'class': 'sc-table sc-table--compact ss-compare__table', id: 'compare-table' });
+    table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'What the record says about ' + a.ticker + ' and ' + b.ticker + '. A marked row is one where the two differ; it does not say which is better.' }));
+    table.appendChild(el('thead', null, el('tr', null, [el('th', { scope: 'col', text: '' }), el('th', { scope: 'col', 'class': 'sc-case', text: a.ticker }), el('th', { scope: 'col', 'class': 'sc-case', text: b.ticker })])));
+    const body = el('tbody');
+    rows.forEach((r) => {
+      const va = fa[r[0]], vb = fb[r[0]];
+      body.appendChild(el('tr', { 'data-fact': r[0], 'data-differs': va !== null && vb !== null && va !== vb ? 'true' : 'false' }, [
+        el('th', { scope: 'row', text: r[1] }),
+        el('td', { text: va === null ? '— not recorded' : va, 'data-missing': va === null ? '' : null }),
+        el('td', { text: vb === null ? '— not recorded' : vb, 'data-missing': vb === null ? '' : null })
+      ]));
+    });
+    table.appendChild(body);
+    return table;
+  }
+  let comparePanels = [], compareReturn = null;
+  function disposeCompare() {
+    comparePanels.forEach((p) => p.dispose());
+    comparePanels = [];
+  }
+  // one identity builder, used inside each side on a desktop and in the phone's
+  // shared strip, so both symbols and both statuses stay on screen either way
+  function compareId(c, side, tag) {
+    const sw = statusWords(c.status);
+    // the symbol and its chips on one line, the company name on a second that
+    // never wraps: the two panels then start their charts at the same height,
+    // whatever the record calls the company
+    return el('div', { 'class': 'ss-compare__id', 'data-side': side, 'data-id-of': c.ticker }, [
+      el('div', { 'class': 'ss-compare__id-row' }, [
+        el('span', { 'class': 'ss-compare__tag', 'aria-hidden': 'true', text: tag || side.toUpperCase() }),
+        el('h3', { 'class': 'sc-case', text: c.ticker }),
+        c.grade ? chip(c.grade + (isNum(c.score) ? ' · ' + c.score.toFixed(1) : ''), 'brand', true) : null,
+        chip(sw[0], sw[1])
+      ]),
+      el('p', { 'class': 'sc-hint ss-compare__name', text: c.name || '—' })
+    ]);
+  }
+  function compareSide(c, side, idp, height) {
+    const panel = chartPanel(c, { idPrefix: idp, tools: false, height: height });
+    comparePanels.push(panel);
+    const box = el('section', { 'class': 'ss-compare__side', 'data-side': side, 'data-ticker': c.ticker, 'aria-label': c.ticker });
+    box.appendChild(compareId(c, side));
+    box.appendChild(panel.node);
+    const actions = el('div', { 'class': 'ss-compare__actions' });
+    const open = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-open-setup': c.ticker, text: 'Open setup' });
+    open.addEventListener('click', () => { closeCompare(); pendingFocus = 'detail'; state.gesture = true; navigate(routeHash(c.stage, c.id)); });
+    actions.appendChild(open);
+    actions.appendChild(followBlock(c));
+    box.appendChild(actions);
+    return box;
+  }
+  function buildCompare(dlg, a, b) {
+    disposeCompare();
+    clear(dlg);
+    const run = current.run || {};
+    const wrap = el('div', { 'class': 'ss-compare__wrap' });
+    const close = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', id: 'compare-close', text: 'Close' });
+    close.addEventListener('click', () => closeCompare());
+    wrap.appendChild(el('header', { 'class': 'ss-compare__head' }, [
+      el('div', null, [
+        el('div', { 'class': 'sc-eyebrow', text: STAGE_NAME[a.stage].toLowerCase() + ' · ' + dateWords(run.session) + (demo ? ' · demo data' : '') }),
+        el('h2', { id: 'compare-h2' }, [el('span', { 'class': 'sc-case', text: a.ticker }), d.createTextNode(' and '), el('span', { 'class': 'sc-case', text: b.ticker })])
+      ]), close]));
+    // the common controls: one choice, both charts; each chart keeps its own
+    // price scale and its own dates, because they are two different stocks
+    const modeTabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-labelledby': 'compare-view-label' });
+    const rangeTabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-labelledby': 'compare-range-label' });
+    const abTabs = el('div', { 'class': 'sc-tabs ss-compare__ab', role: 'group', 'aria-labelledby': 'compare-ab-label' });
+    const tools = el('div', { 'class': 'ss-compare__tools' }, [
+      el('div', { 'class': 'sc-field sc-field--group' }, [el('span', { 'class': 'sc-field__label', id: 'compare-view-label', text: 'view' }), modeTabs]),
+      el('div', { 'class': 'sc-field sc-field--group' }, [el('span', { 'class': 'sc-field__label', id: 'compare-range-label', text: 'range' }), rangeTabs]),
+      el('div', { 'class': 'sc-field sc-field--group ss-compare__ab-field' }, [el('span', { 'class': 'sc-field__label', id: 'compare-ab-label', text: 'chart' }), abTabs])
+    ]);
+    wrap.appendChild(tools);
+    const height = narrow() ? 280 : 340;
+    // the phone shows one chart at a time, so both identities ride above it
+    const both = el('div', { 'class': 'ss-compare__both', 'data-active': 'a' }, [compareId(a, 'a'), compareId(b, 'b')]);
+    wrap.appendChild(both);
+    const panels = el('div', { 'class': 'ss-compare__panels', 'data-active': 'a' });
+    panels.appendChild(compareSide(a, 'a', 'cmp-a', height));
+    panels.appendChild(compareSide(b, 'b', 'cmp-b', height));
+    wrap.appendChild(panels);
+    wrap.appendChild(el('div', { 'class': 'sc-table-scroll ss-compare__facts' }, compareTable(a, b)));
+    wrap.appendChild(el('p', { 'class': 'sc-hint', text: 'Every value is the published record’s own, for ' + dateWords(run.session) + '. A marked row is one the two records differ on — it is not a verdict, and nothing here says which setup is better. Each chart keeps its own price scale and its own dates; the two are never drawn on one axis.' }));
+    dlg.appendChild(wrap);
+    function sync() {
+      modeTabs.querySelectorAll('.sc-tab').forEach((t) => t.setAttribute('aria-pressed', t.getAttribute('data-mode') === prefs.mode ? 'true' : 'false'));
+      rangeTabs.querySelectorAll('.sc-tab').forEach((t) => t.setAttribute('aria-pressed', t.getAttribute('data-range') === prefs.range ? 'true' : 'false'));
+    }
+    CHART_MODES.forEach((m) => {
+      const t = el('button', { 'class': 'sc-tab', type: 'button', 'data-mode': m, 'aria-pressed': m === prefs.mode ? 'true' : 'false', text: MODE_WORDS[m] });
+      t.addEventListener('click', () => { prefs.mode = m; savePrefs(); comparePanels.forEach((p) => p.applyPrefs()); sync(); });
+      modeTabs.appendChild(t);
+    });
+    CHART_RANGES.forEach((r) => {
+      const t = el('button', { 'class': 'sc-tab', type: 'button', 'data-range': r, 'aria-pressed': r === prefs.range ? 'true' : 'false', 'aria-label': RANGE_WORDS[r], title: RANGE_WORDS[r], text: r === 'setup' ? 'setup' : r });
+      t.addEventListener('click', () => { prefs.range = r; savePrefs(); comparePanels.forEach((p) => p.applyPrefs()); sync(); });
+      rangeTabs.appendChild(t);
+    });
+    // the phone shows one chart at a time; both symbols and both statuses stay
+    [['a', a.ticker], ['b', b.ticker]].forEach((pair) => {
+      const t = el('button', { 'class': 'sc-tab sc-tab--case', type: 'button', 'data-ab': pair[0], 'aria-pressed': pair[0] === 'a' ? 'true' : 'false', text: pair[1] });
+      t.addEventListener('click', () => {
+        panels.setAttribute('data-active', pair[0]);
+        both.setAttribute('data-active', pair[0]);
+        abTabs.querySelectorAll('.sc-tab').forEach((x) => x.setAttribute('aria-pressed', x.getAttribute('data-ab') === pair[0] ? 'true' : 'false'));
+        comparePanels.forEach((p) => p.applyPrefs());   // a chart revealed at zero width re-measures
+      });
+      abTabs.appendChild(t);
+    });
+    sync();
+    return close;
+  }
+  function openCompare() {
+    const ids = pinned();
+    const dlg = $('compare');
+    if (!dlg || ids.length !== PIN_MAX) return;
+    const a = model.byId[ids[0]], b = model.byId[ids[1]];
+    compareReturn = { focus: d.activeElement, scroll: w.pageYOffset || w.scrollY || 0, mode: prefs.mode, range: prefs.range };
+    const close = buildCompare(dlg, a, b);
+    dlg.returnValue = '';
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+    close.focus();
+  }
+  function closeCompare() {
+    const dlg = $('compare');
+    if (!dlg) return;
+    if (dlg.open && dlg.close) dlg.close('closed'); else dlg.removeAttribute('open');
+  }
+  // one teardown, whichever way the sheet was dismissed (button, Escape, backdrop)
+  function afterCompareClose() {
+    const dlg = $('compare'), back = compareReturn;
+    disposeCompare();
+    clear(dlg);
+    compareReturn = null;
+    if (!back) return;
+    // the reader's earlier place: the same stock, the same lens, the same
+    // scroll, the same focus -- and a mode or range changed in the sheet
+    // applied to the detail's chart, because that choice is theirs everywhere
+    if (model && state.view === 'explore' && (back.mode !== prefs.mode || back.range !== prefs.range)) { state.detailKey = null; renderDetail(); }
+    if (back.focus && back.focus.isConnected && back.focus.focus) back.focus.focus({ preventScroll: true });
+    w.scrollTo(0, back.scroll);
+  }
+
   // ---------------------------------------------------------------- discovery: Cards | Map (Bursts only)
   // The map is an overview of the stage's bursts by the recorded session's
   // gain and volume ratio, on the page's one selection state; the cards and
   // the map are two views of the same list, and the choice is a preference
   // kept in this browser. Setting up is never mapped: its names have not burst.
   const DISCOVER_KEY = 'spicystock:discover:v1';
-  let discover = 'cards', mapView = null;
+  let discover = 'cards', mapView = null, mapKey = null;
   function loadDiscover() { try { const v = w.localStorage && w.localStorage.getItem(DISCOVER_KEY); if (v === 'map' || v === 'cards') discover = v; } catch (e) { /* the default stands */ } }
   function saveDiscover() { try { w.localStorage.setItem(DISCOVER_KEY, discover); } catch (e) { /* not remembered */ } }
   function mapPoints() {
-    return model.stages.bursts.map((c) => ({
+    // the same list the cards draw, in the same order: the map is the cards'
+    // twin and can never plot a population the cards do not show
+    return visible('bursts').map((c) => ({
       id: c.id, ticker: c.ticker, gain: isNum(c.row.gain_pct) ? c.row.gain_pct : null, volume: volumeRatio(c.row).value,
       grade: c.grade, score: c.score, rank: c.rank, statusWords: statusWords(c.status)[0], statusTone: statusWords(c.status)[1],
       source: c.row.claude && c.row.claude.source === 'claude' ? 'claude' : (c.row.quality && c.row.quality.checks ? 'checklist' : null),
@@ -1069,18 +1805,25 @@
   }
   function unmountMap() {
     if (mapView) { mapView.dispose(); mapView = null; }
+    mapKey = null;
     const host = $('burst-map'); if (host) host.parentNode.removeChild(host);
   }
   function mountMap() {
     const ws = $('workspace'), run = current.run || {};
     let host = $('burst-map');
-    if (host && mapView) { mapView.update(state.selected.bursts); return; }
+    // the map is redrawn whenever the visible set changes, and only then:
+    // a cached map over a stale lens is the cards and the map disagreeing
+    const key = picksKey();
+    if (host && mapView && mapKey === key) { mapView.update(state.selected.bursts); return; }
     unmountMap();
     host = el('div', { id: 'burst-map' });
     const picks = $('picks'), head = picks ? picks.querySelector('.ss-picks__head') : null;
     if (head) picks.insertBefore(host, head.nextSibling); else ws.insertBefore(host, ws.firstChild);
+    const lens = lensOf('bursts'), total = model.stages.bursts.length;
     mapView = SCStock.map.render(host, { points: mapPoints(), selectedId: state.selected.bursts, sessionWords: dateWords(run.session), demo: demo,
+      subset: lens === 'all' && !state.query ? null : { total: total, words: LENS_WORDS[lens] + ' lens' + (state.query ? ' · ‘' + state.query + '’' : '') },
       onSelect: (id) => { state.gesture = true; navigate(routeHash('bursts', id)); } });
+    mapKey = key;
   }
   function renderDiscover(stage) {
     const ctl = $('discover'), ws = $('workspace');
@@ -1161,7 +1904,7 @@
       btn.addEventListener('click', () => {
         const res = SCStock.follow.add(setup);
         if (!res.ok) { warn(res.error); return; }
-        redraw(); renderFollowing(); followJump();
+        redraw(); afterFollowChange();
       });
       box.appendChild(btn);
       box.appendChild(el('p', { 'class': 'ss-follow__hint', text: setup.suggested_shares ? plural(setup.suggested_shares, 'share') + ' suggested by the plan · saved in this browser only' : (c.status === 'ticket' ? 'for observation, no size suggested' : 'for observation, ' + statusWords(c.status)[0] + ' · saved in this browser only') }));
@@ -1185,13 +1928,13 @@
         const n = input.value.trim() === '' ? NaN : Number(input.value);
         const res = SCStock.follow.setShares(id, Number.isInteger(n) ? n : NaN);
         if (!res.ok) { warn(res.error); return; }
-        redraw(); renderFollowing();
+        redraw(); afterFollowChange();
       });
-      clearBtn.addEventListener('click', () => { const res = SCStock.follow.setShares(id, null); if (!res.ok) { warn(res.error); return; } redraw(); renderFollowing(); });
+      clearBtn.addEventListener('click', () => { const res = SCStock.follow.setShares(id, null); if (!res.ok) { warn(res.error); return; } redraw(); afterFollowChange(); });
       cancel.addEventListener('click', () => { redraw(); });
       edit.replaceWith(form); input.focus();
     });
-    undo.addEventListener('click', () => { const res = SCStock.follow.remove(id); if (!res.ok) { warn(res.error); return; } redraw(); renderFollowing(); followJump(); });
+    undo.addEventListener('click', () => { const res = SCStock.follow.remove(id); if (!res.ok) { warn(res.error); return; } redraw(); afterFollowChange(); });
     box.appendChild(edit); box.appendChild(undo); box.appendChild(link);
     return box;
   }
@@ -1223,7 +1966,7 @@
     const openBtn = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Open chart' });
     openBtn.addEventListener('click', () => open.click());
     const remove = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Remove' });
-    remove.addEventListener('click', () => { const res = SCStock.follow.remove(item.id); if (!res.ok) { setFollowStatus(res.error); return; } renderFollowing(); followJump(); if (state.view === 'explore') renderDetailFollow(); });
+    remove.addEventListener('click', () => { const res = SCStock.follow.remove(item.id); if (!res.ok) { setFollowStatus(res.error); return; } if (state.view === 'explore') renderDetailFollow(); afterFollowChange(); });
     actions.appendChild(openBtn); actions.appendChild(remove);
     card.appendChild(actions);
     return card;
@@ -1238,6 +1981,17 @@
     setFollowStatus(st0.error || '');
     if (!items.length) { list.appendChild(el('div', { 'class': 'ss-following__empty', text: st0.available ? 'Nothing followed yet. Follow a setup from its action area to keep it in view here; it is saved in this browser only, and a saved plan is never a trade.' : 'Nothing can be followed in this browser.' })); return; }
     items.slice().reverse().forEach((it) => list.appendChild(followedCard(it)));
+  }
+  // One refresh after any change to the shelf: the shelf itself, the jump
+  // link, the lens counts (Following is a lens) and, when that lens is the one
+  // in force, the list and the selection, since a stock just unfollowed leaves it.
+  function afterFollowChange() {
+    invalidateFollow();
+    renderFollowing(); followJump();
+    if (!model || state.view !== 'explore') return;
+    state.picksKey = null;
+    if (lensOf(state.stage) === 'following') applyRoute(parseHash(w.location.hash));
+    else renderPicks();
   }
   // the chosen stock's follow block, redrawn after a change made from the shelf
   function renderDetailFollow() {
@@ -1330,17 +2084,47 @@
     pairs.forEach((p) => { if (!p) return; dl.appendChild(el('div', { 'class': p[3] ? 'is-wide' : null }, [el('dt', { text: p[0] }), el('dd', null, [p[1], p[2] ? el('small', { text: p[2] }) : null])])); });
     return dl;
   }
-  function checkTile(c, vetoed) {
-    const tone = vetoed ? 'blocked' : !c ? null : c.pass ? (c.marginal ? 'caution' : 'good') : 'blocked';
-    const glyph = vetoed ? '✕' : !c ? '—' : c.pass ? (c.marginal ? '~' : '✓') : '✕';
-    const word = vetoed ? 'veto' : !c ? 'not measured' : c.pass ? (c.marginal ? 'partial' : 'pass') : (c.status === 'unmeasured' ? 'not measured' : 'fail');
-    const display = c ? String(c.display || '') : '', threshold = c ? String(c.threshold || '') : '';
-    return el('div', { 'class': 'sc-signal' + (tone ? ' sc-signal--' + tone : ''), 'data-check': c ? c.key : null, 'data-verdict': word, title: c ? [display, threshold ? 'threshold: ' + threshold : '', c.note].filter(Boolean).join('\n') : null }, [
-      el('span', { 'class': 'ss-check__label', text: c ? (c.label || words(c.key)) : '—' }),
+  const VERDICT_GLYPH = { pass: '✓', partial: '~', fail: '✕', veto: '✕', 'not measured': '—' };
+  const VERDICT_SIGNAL = { pass: 'good', partial: 'caution', fail: 'blocked', veto: 'blocked', 'not measured': null };
+  // A check the record dated is a way ONTO the chart: the tile and the evidence
+  // row are one mechanism, so "inspect the base" has a single implementation.
+  // A check with no recorded dates stays a tile and is never made clickable --
+  // and `offered` is THIS stock's own anchors, because a class of check the
+  // record usually dates is not a promise that this record dated this one.
+  function checkTile(chk, vetoed, offered) {
+    const word = checkVerdict(chk, vetoed), tone = VERDICT_SIGNAL[word], glyph = VERDICT_GLYPH[word];
+    const display = chk ? String(chk.display || '') : '', threshold = chk ? String(chk.threshold || '') : '';
+    const key = chk && CHECK_ANCHOR[chk.key] ? CHECK_ANCHOR[chk.key] : null;
+    const anchor = key && offered && offered[key] ? key : null;
+    const attrs = { 'class': 'sc-signal' + (tone ? ' sc-signal--' + tone : '') + (anchor ? ' ss-check--anchored' : ''),
+      'data-check': chk ? chk.key : null, 'data-verdict': word, 'data-anchor': anchor,
+      title: chk ? [display, threshold ? 'threshold: ' + threshold : '', chk.note].filter(Boolean).join('\n') : null };
+    const kids = [
+      el('span', { 'class': 'ss-check__label', text: chk ? (chk.label || words(chk.key)) : '—' }),
       el('span', { 'class': 'sc-signal__glyph', 'aria-hidden': 'true', text: glyph }),
       el('span', { 'class': 'sc-signal__label', text: word + (display ? ' · ' + display.split(' ')[0] : '') }),
-      c ? el('span', { 'class': 'sc-signal__note', text: threshold.length > 64 ? threshold.slice(0, 62).replace(/\s+\S*$/, '') + '…' : threshold }) : null
-    ]);
+      chk ? el('span', { 'class': 'sc-signal__note', text: threshold.length > 64 ? threshold.slice(0, 62).replace(/\s+\S*$/, '') + '…' : threshold }) : null,
+      anchor ? el('span', { 'class': 'ss-check__show', text: 'show the ' + ANCHOR_WORDS[anchor].toLowerCase() + ' on the chart' }) : null
+    ];
+    if (!anchor) return el('div', attrs, kids);
+    attrs.type = 'button';
+    const btn = el('button', attrs, kids);
+    btn.addEventListener('click', () => showEvidenceFromCheck(chk.key));
+    return btn;
+  }
+  // the coil's own dated evidence, on the same one mechanism as the tiles
+  function boxValue(box) {
+    const words_ = isNum(box.sessions) ? plain(box.sessions) + ' sessions · ' + usd(box.low) + '–' + usd(box.high) : '—';
+    if (!(text(box.start) && text(box.end))) return words_;
+    const btn = el('button', { 'class': 'ss-fact__show', type: 'button', 'data-anchor': 'box', text: 'show on chart' });
+    btn.addEventListener('click', () => {
+      if (!detailPanel) return;
+      detailPanel.showEvidence('box');
+      scrollTo(detailPanel.node);
+      const b = detailPanel.node.querySelector('[data-anchor="box"]');
+      if (b) b.focus({ preventScroll: true });
+    });
+    return el('span', { 'class': 'ss-fact__with-show' }, [el('span', { text: words_ }), btn]);
   }
   function discChecklist(c) {
     const kids = [];
@@ -1348,7 +2132,10 @@
       const b = c.row, q = b.quality || {}, base = q.base || {}, checks = q.checks || [], vetoes = q.vetoes || [];
       const passes = checks.filter((x) => x && x.pass).length;
       kids.push(el('p', { 'class': 'sc-hint', text: checks.length ? 'Bonde’s ' + checks.length + ' A-quality criteria: the verdict in words, the measured value, his threshold. ' + passes + ' of ' + checks.length + ' pass (' + plain(q.passes) + ' of the ' + plain(q.of) + ' letters).' : 'No checklist was archived for this burst.' }));
-      if (checks.length) kids.push(el('div', { 'class': 'ss-checks' }, checks.map((x) => checkTile(x, (x.key === 'two_days' && vetoes.indexOf('up_days') >= 0) || (x.key === 'linearity' && vetoes.indexOf('not_linear') >= 0)))));
+      // the anchors THIS stock's record actually carries, so a tile is a way
+      // onto the chart only where there is something for it to mark
+      const offered = {}; evidenceItems(c).forEach((it) => { offered[it.key] = true; });
+      if (checks.length) kids.push(el('div', { 'class': 'ss-checks' }, checks.map((x) => checkTile(x, vetoedCheck(x.key, vetoes), offered))));
       if (vetoes.length) kids.push(el('p', { 'class': 'sc-note', text: 'Veto: ' + vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') + '.' }));
       kids.push(el('div', { 'class': 'sc-eyebrow', text: 'the measurements' }));
       const vr = volumeRatio(b);
@@ -1370,7 +2157,7 @@
         ['setups', (r.setups || []).length ? r.setups.join(', ') : '—', (r.reasons_failed || []).length ? 'not: ' + r.reasons_failed.join(', ') : ''],
         ['quiet', plain(r.quiet_days) + ' days', isNum(r.narrow_range_days) ? plain(r.narrow_range_days) + ' narrow-range days' + (r.tight_today ? ' · tight today' : '') : ''],
         ['range', plain(r.range_pct) + '%', (isNum(r.range_recent_pct) ? 'recent ' + plain(r.range_recent_pct) + '%' : '') + (isNum(r.range_base_pct) ? ' · base ' + plain(r.range_base_pct) + '%' : '') + (isNum(r.adr20_pct) ? ' · 20-day ADR ' + plain(r.adr20_pct) + '%' : '')],
-        ['the box', isNum(box.sessions) ? plain(box.sessions) + ' sessions · ' + usd(box.low) + '–' + usd(box.high) : '—', box.start && box.end ? dateShort(box.start) + ' to ' + dateShort(box.end) + (isNum(box.spread) ? ' · spread ' + plain(box.spread) + '%' : '') : ''],
+        ['the box', boxValue(box), box.start && box.end ? dateShort(box.start) + ' to ' + dateShort(box.end) + (isNum(box.spread) ? ' · spread ' + plain(box.spread) + '%' : '') : ''],
         ['volume', isNum(r.volume_ratio) ? r.volume_ratio.toFixed(2) + '× its average' : '—', r.vol_dry ? 'dry' : ''],
         ['momentum', isNum(r.ti65) ? 'TI65 ' + r.ti65.toFixed(3) : (isNum(r.extension) ? 'extension ' + r.extension.toFixed(2) : '—'), (isNum(r.up_run) ? plain(r.up_run) + ' up days in a row' : '') + (isNum(r.breakdowns) ? ' · ' + plural(r.breakdowns, 'breakdown') : '')],
         ['close', usd(r.close), isNum(r.pct_change_today) ? pct(r.pct_change_today) + ' today' : '']
@@ -1492,6 +2279,11 @@
       void box.offsetWidth;
       box.classList.add('is-fresh');
     }
+    // the stepper counts the CURRENT visible list, so a lens or a search that
+    // changed without changing the stock still says where this stock sits
+    const tools = box.querySelector('.ss-detail__tools');
+    if (tools && c) tools.parentNode.replaceChild(detailTools(c), tools);
+    syncPins();
     if (pendingFocus === 'detail') { pendingFocus = ''; box.focus({ preventScroll: true }); scrollTo(box); }
     else if (state.gesture && narrow() && c) scrollTo(box);
     state.gesture = false;
@@ -1790,6 +2582,20 @@
     cs.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); const first = $('chooser-list').querySelector('.ss-chooser__item'); if (first) first.click(); } });
     dlg.addEventListener('close', () => { if (dlg.returnValue !== 'chosen') { const back = chooserOpener && chooserOpener.focus ? chooserOpener : $('choose-open'); back.focus(); } chooserOpener = null; });
     dlg.addEventListener('click', (e) => { if (e.target === dlg && dlg.close) dlg.close('backdrop'); });
+    // the lens row changes home at the phone breakpoint; nothing else moves
+    if (w.matchMedia) {
+      const mq = w.matchMedia('(max-width: 720px)');
+      const onBreak = () => { if (model && state.view === 'explore') renderLens(state.stage); };
+      if (mq.addEventListener) mq.addEventListener('change', onBreak);
+      else if (mq.addListener) mq.addListener(onBreak);
+    }
+    // the comparison sheet: one teardown whichever way it was dismissed --
+    // the Close button, Escape, or a press on the backdrop
+    const cmp = $('compare');
+    if (cmp) {
+      cmp.addEventListener('close', afterCompareClose);
+      cmp.addEventListener('click', (e) => { if (e.target === cmp) closeCompare(); });
+    }
     w.addEventListener('hashchange', () => applyRoute(parseHash(w.location.hash)));
   }
 
@@ -1801,8 +2607,16 @@
     st = status(data, now); SCStock.state = st;
     model = buildModel(data); SCStock.model = model;
     SCStock.follow.setDemo(demo);
+    invalidateFollow();
     unmountMap();
+    closeCompare();
+    disposeCompare();
     state.stage = null; state.selected = { bursts: null, 'setting-up': null }; state.query = ''; state.picksKey = null; state.detailKey = null; state.notice = '';
+    // a comparison belongs to one published record: a new one clears it, and
+    // the lens the reader chose is re-read against the record now on screen
+    state.pins = []; state.pinAsk = null;
+    STAGES.forEach((s) => { state.lens[s] = stored[s]; });
+    state.sort = stored.sort || 'rank';
     $('search').value = '';
     renderStatus(data, st);
     renderMarketBar(data, st);
@@ -1817,6 +2631,7 @@
     renderFooter(data);
     renderFollowing();
     followJump();
+    renderTray();
     applyRoute(parseHash(w.location.hash), true);
     d.title = 'SpicyStock · ' + ((data.cover || {}).h1 || 'no verdict');
     if (w.SC && w.SC.reading && w.SC.reading.refresh) { try { w.SC.reading.refresh(); } catch (e) { /* optional */ } }
@@ -1846,6 +2661,7 @@
   }
   function boot() {
     loadPrefs();
+    loadLens();
     loadDiscover();
     wire();
     const src = (w.SCStock && w.SCStock.dataUrl) || 'data.json';

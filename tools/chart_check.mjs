@@ -253,6 +253,59 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
   ok('a trigger at the last close is labelled once, as the close, and the zone low is its own label', ak.includes('close') && !ak.includes('trigger') && ak.includes('zone') && ak.includes('limit') && ak.includes('stop'), ak.join(','));
   ok('a burst keeps its setup marks in setup mode and loses them in the other modes only at draw time', ga.burst && ga.burst.label && ga.box && ga.box.label && ga.mode === 'setup');
   ok('a gap bar stays a gap in the close trace', SCStock.chartGeometry(bars, { gutterLabels: true, mode: 'line' }, 640, 320).closePoints[31] === null);
+
+  // --- the evidence marker: a POSITION over sessions, and nothing else -------
+  // It must never widen the domain, move a level, shift a label or change the
+  // gutter: turning it on is the one thing that must leave every price where
+  // the reader last saw it. Its bounds are drawn only when both sit inside the
+  // domain already, because an edge clamped to the frame is not a price.
+  {
+    const at3 = (d) => s2.findIndex((x) => x.date === d);
+    const bOpts = { ticker: 'AAPL', card: true, futureSlots: 6, targetRuler: true, ma: [], burstIndex: s2.length - 1, gutterLabels: true,
+      box: { start: Math.max(0, at3(base.start)), end: at3(base.end), low: base.low, high: base.high },
+      stop: ap.stop, trigger: ap.entry_ref, entryLow: ap.entry_low, entryHigh: ap.entry_high, targetLow: ap.targets.low, targetHigh: ap.targets.high, targetRef: ap.planned_entry };
+    const bare = SCStock.chartGeometry(s2, bOpts, 900, 380);
+    const bs = at3(base.start), be = at3(base.end);
+    const marked = SCStock.chartGeometry(s2, { ...bOpts, highlight: { from: bs, to: be, low: base.low, high: base.high, label: 'base' } }, 900, 380);
+    ok('the marker widens no scale and moves no label',
+      marked.domain.lo === bare.domain.lo && marked.domain.hi === bare.domain.hi && marked.gutter === bare.gutter
+      && marked.stop.y === bare.stop.y && marked.entry.y1 === bare.entry.y1 && marked.plot.right === bare.plot.right
+      && JSON.stringify(marked.rightLabels.map((l) => [l.kind, l.y])) === JSON.stringify(bare.rightLabels.map((l) => [l.kind, l.y])),
+      JSON.stringify([marked.domain, bare.domain, marked.gutter, bare.gutter]));
+    ok('the marker spans exactly the sessions it was given, at the bar pitch',
+      marked.highlight.start === bs && marked.highlight.end === be && marked.highlight.sessions === be - bs + 1
+      && Math.abs(marked.highlight.x - (marked.plot.left + bs * marked.slot)) < 0.11
+      && Math.abs(marked.highlight.w - (be - bs + 1) * marked.slot) < 0.11,
+      JSON.stringify(marked.highlight));
+    ok('it names the dates it marks, from the bars themselves', marked.highlight.from === s2[bs].date && marked.highlight.to === s2[be].date);
+    ok('it runs from the price pane to the floor of the volume pane',
+      marked.highlight.y === marked.plot.top && Math.abs(marked.highlight.y + marked.highlight.h - marked.vol.bottom) < 0.11);
+    ok('its bounds are drawn at their exact prices when the domain already holds them',
+      marked.highlight.edges && Math.abs(marked.highlight.edges.y1 - marked.y(base.high)) < 0.11 && Math.abs(marked.highlight.edges.y2 - marked.y(base.low)) < 0.11);
+    const outside = SCStock.chartGeometry(s2, { ...bOpts, highlight: { from: bs, to: be, low: bare.domain.lo - 10, high: base.high } }, 900, 380);
+    ok('a bound outside the domain is not drawn, rather than clamped to the frame', outside.highlight && outside.highlight.edges === null);
+    ok('a bound that is not recorded at all draws no edge', SCStock.chartGeometry(s2, { ...bOpts, highlight: { from: bs, to: be } }, 900, 380).highlight.edges === null);
+    const one = SCStock.chartGeometry(s2, { ...bOpts, highlight: { from: s2.length - 1 } }, 900, 380);
+    ok('a single session is one bar wide and names one date', one.highlight.sessions === 1 && Math.abs(one.highlight.w - one.slot) < 0.11 && one.highlight.from === one.highlight.to);
+    const rev = SCStock.chartGeometry(s2, { ...bOpts, highlight: { from: be, to: bs } }, 900, 380);
+    ok('the ends are read in either order', rev.highlight.start === bs && rev.highlight.end === be);
+    const over = SCStock.chartGeometry(s2, { ...bOpts, highlight: { from: -5, to: s2.length + 40 } }, 900, 380);
+    ok('an index past either end is clamped to the drawn series', over.highlight.start === 0 && over.highlight.end === s2.length - 1);
+    ok('no marker is the default, in every mode',
+      ['setup', 'candles', 'line'].every((mode) => SCStock.chartGeometry(s2, { ...bOpts, mode }, 900, 380).highlight === null));
+    ok('the marker survives a mode change, on the same sessions',
+      ['candles', 'line'].every((mode) => {
+        const m = SCStock.chartGeometry(s2, { ...bOpts, mode, highlight: { from: bs, to: be, low: base.low, high: base.high } }, 900, 380);
+        return m.highlight.start === bs && m.highlight.end === be && m.highlight.x === marked.highlight.x;
+      }));
+    ok('its caption sits above the plot, clear of the collision pass',
+      marked.highlight.label && marked.highlight.label.text === 'base' && marked.highlight.label.y < marked.plot.top && marked.highlight.label.y > 0);
+    ok('a marker with no caption draws none', SCStock.chartGeometry(s2, { ...bOpts, highlight: { from: bs, to: be } }, 900, 380).highlight.label === null);
+    // at a phone's width a marker on the last sessions would run its caption
+    // off the gutter, so the caption flips to the right edge instead
+    const narrowG = SCStock.chartGeometry(s2, { ...bOpts, highlight: { from: s2.length - 2, to: s2.length - 1, label: 'burst day' } }, 280, 300);
+    ok('a caption with no room to the right is anchored from the other end', narrowG.highlight.label.anchor === 'end' && narrowG.highlight.label.x <= narrowG.plot.right);
+  }
 }
 
 // --- 2. rendering ---------------------------------------------------------------

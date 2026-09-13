@@ -43,8 +43,18 @@
                          so and the page prints the reference beside the chart.
      head: false         no in-chart head; the page draws the panel header.
      closeLine: true     a quiet closing-price trace over the candles.
+     highlight: {from, to, low, high, label}
+                         the reader's evidence marker: a dashed column over the
+                         sessions from..to (indexes into the drawn series), in
+                         every mode, with the recorded price bounds as edges
+                         when both sit inside the drawn domain. It is a MARKER
+                         and never a level: it widens no scale, moves no label
+                         and is left out of the domain, so turning it on and off
+                         cannot shift a price by a pixel. null clears it.
    The host answers host.update(options) (redraw in place, same observers)
-   and host.dispose() (drop the observers, the tooltip and the listeners). */
+   and host.dispose() (drop the observers, the tooltip and the listeners).
+   SCStock.liveCharts() counts the hosts that have been drawn and not yet
+   disposed, so a page that mounts two charts can prove it dropped both. */
 (function (w) {
   'use strict';
   var SCStock = w.SCStock = w.SCStock || {};
@@ -54,6 +64,7 @@
   var DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   var MODES = ['setup', 'candles', 'line'];
   var styled = false;
+  var liveCharts = 0;   /* hosts drawn and not yet disposed; see SCStock.liveCharts */
 
   function sc() {
     if (!w.SC || !w.SC.ticks || !w.SC.spreadLabels) throw new Error('app-chart.js needs sc-charts.js loaded first');
@@ -150,6 +161,16 @@
       var bs = Math.max(0, Math.min(n - 1, Math.floor(box.start))), be = Math.max(0, Math.min(n - 1, Math.floor(box.end)));
       box = n && bs <= be && num(box.low) !== null && num(box.high) !== null && box.low < box.high
         ? { start: bs, end: be, low: box.low, high: box.high } : null;
+    }
+    /* the evidence marker: sessions only, clamped to the drawn series. Its
+       prices are carried but never widened into the domain -- a marker that
+       moved the scale would change the very geometry it is pointing at. */
+    var mark = options.highlight && num(options.highlight.from) !== null ? options.highlight : null;
+    if (mark) {
+      var ms = Math.max(0, Math.min(n - 1, Math.floor(mark.from)));
+      var me = num(mark.to) === null ? ms : Math.max(0, Math.min(n - 1, Math.floor(mark.to)));
+      if (me < ms) { var msw = ms; ms = me; me = msw; }
+      mark = n ? { start: ms, end: me, low: num(mark.low), high: num(mark.high), text: typeof mark.label === 'string' ? mark.label : null } : null;
     }
     if (entryLow !== null && entryHigh !== null && entryLow > entryHigh) { var t = entryLow; entryLow = entryHigh; entryHigh = t; }
     if (targetLow !== null && targetHigh !== null && targetLow > targetHigh) { var t2 = targetLow; targetLow = targetHigh; targetHigh = t2; }
@@ -281,6 +302,25 @@
       if (x1 + btext.length * CHAR + 8 > plot.right) { blx = x2 - 2; banchor = 'end'; }
       boxG = { x: x1, y: by1, w: r1(x2 - x1), h: r1(by2 - by1), start: box.start, end: box.end, low: box.low, high: box.high, sessions: sessions,
                label: { x: blx, y: above ? r1(by1 - 4) : r1(by2 + 12), text: btext, anchor: banchor } };
+    }
+
+    /* the evidence marker, at the same session pitch as the base box */
+    var highlight = null;
+    if (mark) {
+      var hx1 = r1(plot.left + mark.start * slot), hx2 = r1(plot.left + (mark.end + 1) * slot);
+      var hsess = mark.end - mark.start + 1;
+      highlight = { start: mark.start, end: mark.end, sessions: hsess, low: mark.low, high: mark.high,
+                    x: hx1, w: r1(hx2 - hx1), y: plot.top, h: r1(vol.bottom - plot.top),
+                    from: bars[mark.start].date, to: bars[mark.end].date, edges: null, label: null };
+      /* the recorded bounds are drawn only when both are inside the domain:
+         an edge clamped to the frame would read as a price that is not one */
+      if (mark.low !== null && mark.high !== null && mark.low < mark.high && mark.low >= lo && mark.high <= hi)
+        highlight.edges = { y1: y(mark.high), y2: y(mark.low) };
+      if (mark.text) {
+        var hanchor = 'start', hlx = hx1 + 2;
+        if (hx1 + mark.text.length * CHAR + 6 > plot.right) { hanchor = 'end'; hlx = Math.min(hx2 - 2, plot.right); }
+        highlight.label = { x: hlx, y: Math.max(9, plot.top - 5), text: mark.text, anchor: hanchor };
+      }
     }
 
     /* moving averages */
@@ -563,7 +603,7 @@
       domain: { lo: lo, hi: hi }, volMax: vmax, lastClose: lastClose, lastPoint: lastPoint, decimals: decimals,
       x: x, y: y, vy: vy,
       grid: grid, dateTicks: kept, bars: out, ma: maPaths, closePoints: closePoints,
-      box: boxG, burst: burst, stop: stopG, stopTag: stopTag, entry: entryG, trigger: triggerG, target: targetG,
+      box: boxG, highlight: highlight, burst: burst, stop: stopG, stopTag: stopTag, entry: entryG, trigger: triggerG, target: targetG,
       upTicks: upTicks, breakdownMarks: bdMarks, rangeBracket: bracket, tomorrow: tomorrow, volAvg: volAvg,
       leftLabels: left, rightLabels: right
     };
@@ -595,6 +635,11 @@
       '.sc-chart__strip{fill:var(--sc-tone,var(--sc-chart-context));fill-opacity:.9}',
       '.sc-chart__box{fill:var(--sc-tone,var(--sc-chart-context));fill-opacity:.2;stroke:var(--sc-tone,var(--sc-chart-context));stroke-width:1.3;stroke-dasharray:4 3}',
       '.sc-chart--stock.is-panel .sc-chart__box{fill-opacity:.12;stroke-width:1}',
+      /* the evidence marker is the reader's, not the method's: no tone slot,
+         so it is never mistaken for a level the plan was sized from */
+      '.sc-chart__evidence-band{fill:var(--sc-heading);fill-opacity:.08;stroke:var(--sc-heading);stroke-width:1.5;stroke-opacity:.85;stroke-dasharray:3 3}',
+      '.sc-chart__evidence-edge{fill:none;stroke:var(--sc-heading);stroke-width:1.5;stroke-opacity:.9}',
+      '.sc-chart__evidence-text{font:700 10.5px var(--sc-font-mono);fill:var(--sc-heading);letter-spacing:.2px}',
       '.sc-chart__level{fill:none;stroke:var(--sc-tone,var(--sc-chart-context));stroke-width:1.3}',
       '.sc-chart__level--dashed{stroke-dasharray:6 4}',
       '.sc-chart__level--dotted{stroke-dasharray:2 3}',
@@ -698,6 +743,17 @@
     if (g.box && setup) {
       svg.appendChild(SC.svg('rect', { 'class': 'sc-chart__box', style: toneStyle('chart-context'), x: g.box.x, y: g.box.y, width: g.box.w, height: g.box.h }));
     }
+    /* the evidence marker, in every mode, under the bars it points at: the
+       sessions as a dashed column, the recorded bounds as edges inside it */
+    if (g.highlight) {
+      var hg = SC.svg('g', { 'class': 'sc-chart__evidence', 'data-evidence': String(g.highlight.sessions) });
+      hg.appendChild(SC.svg('rect', { 'class': 'sc-chart__evidence-band', x: g.highlight.x, y: g.highlight.y, width: g.highlight.w, height: g.highlight.h }));
+      if (g.highlight.edges) {
+        hg.appendChild(SC.svg('line', { 'class': 'sc-chart__evidence-edge', 'data-edge': 'high', x1: g.highlight.x, x2: g.highlight.x + g.highlight.w, y1: g.highlight.edges.y1, y2: g.highlight.edges.y1 }));
+        hg.appendChild(SC.svg('line', { 'class': 'sc-chart__evidence-edge', 'data-edge': 'low', x1: g.highlight.x, x2: g.highlight.x + g.highlight.w, y1: g.highlight.edges.y2, y2: g.highlight.edges.y2 }));
+      }
+      svg.appendChild(hg);
+    }
     /* volume */
     var vg = SC.svg('g', { style: toneStyle('chart-context') }), vb = SC.svg('g', { style: toneStyle(setup ? (card ? 'chart-emphasis' : 'accent') : 'chart-context') });
     for (i = 0; i < g.bars.length; i++) {
@@ -771,6 +827,9 @@
     }
     /* labels, on surface plates so they read over candles */
     var labels = SC.svg('g');
+    /* the marker's own caption sits in the top margin, above the plot and
+       clear of the collision pass, so naming the evidence moves no label */
+    if (g.highlight && g.highlight.label) labels.appendChild(SC.svg('text', { 'class': 'sc-chart__evidence-text', 'data-evidence-label': '', x: g.highlight.label.x, y: g.highlight.label.y, 'text-anchor': g.highlight.label.anchor }, g.highlight.label.text));
     if (g.box && g.box.label && setup) plate(labels, SC, g.box.label);
     for (i = 0; i < g.leftLabels.length; i++) {
       var ld = g.leftLabels[i].leader;
@@ -908,6 +967,7 @@
     if (g.trigger) s += '. Trigger ' + fmtPrice(g.trigger.price);
     if (g.stop) s += '. Stop ' + fmtPrice(g.stop.price);
     if (g.target) s += '. Target ' + fmtPrice(g.target.low) + ' to ' + fmtPrice(g.target.high);
+    if (g.highlight) s += '. Marked: ' + ((g.highlight.label && g.highlight.label.text) || (g.highlight.sessions + ' session' + (g.highlight.sessions === 1 ? '' : 's'))) + ', ' + g.highlight.from + (g.highlight.to === g.highlight.from ? '' : ' to ' + g.highlight.to);
     return s + '. Use the arrow keys to step through the sessions; the table view below lists the same numbers.';
   }
   function chart(series, options) {
@@ -988,9 +1048,12 @@
       state.svg = svg;
       host.setAttribute('aria-label', ariaLabel(g, options));
       host.setAttribute('data-mode', g.mode);
+      if (g.highlight) host.setAttribute('data-highlight', g.highlight.from + (g.highlight.to === g.highlight.from ? '' : '/' + g.highlight.to));
+      else host.removeAttribute('data-highlight');
       if (state.index !== null) focus(state.index);
     }
     draw();
+    liveCharts++;
     if (!options.compact && options.head !== false) { state.head = buildHead(SC, options, state.g); host.insertBefore(state.head, host.firstChild); }
     host.appendChild(stage);
     state.twin = buildTwin(SC, state.g, options);
@@ -1043,6 +1106,7 @@
     host.dispose = function () {
       if (state.disposed) return;
       state.disposed = true;
+      liveCharts--;
       if (observer) observer.disconnect(); else w.removeEventListener('resize', onResize);
       tip.hide();
       if (tip.destroy) tip.destroy();
@@ -1051,6 +1115,7 @@
   }
 
   SCStock.chart = chart;
+  SCStock.liveCharts = function () { return liveCharts; };
   SCStock.chartGeometry = chartGeometry;
   SCStock.chartModes = MODES.slice();
   SCStock.sma = sma;
