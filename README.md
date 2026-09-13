@@ -53,6 +53,8 @@ does not carry, falls back to Explore and says so.
    record's own call to action. Then two stage cards, **Bursts · N** (the
    range-expansion days the scan graded) and **Setting up · N** (the
    anticipation list: quiet, coiled names inside established momentum),
+   each under its count saying how many of them carry a ticket — the line
+   a phone keeps, because that is the stage's own action state —
    and inside the chosen stage one selectable card per stock with its grade
    and its status in the record's words — *ticket*, *ticket
    withheld*, *beyond the slot cap*, *beyond the configured equity*, *no
@@ -98,7 +100,11 @@ does not carry, falls back to Explore and says so.
    toggle) and *Line* (the recorded closes) — and three ranges: the *Setup
    range* (the base and a short run of context before it, the dates
    disclosed; without base dates it says so and shows 60), 60 and 120
-   sessions. The mode and the range are remembered in the browser. The aim
+   sessions. Each group of controls carries its own visible caption —
+   *view* over the modes, *range* over the ranges — which is also the name
+   assistive tech announces for it: *setup* is a mode AND a range, and an
+   uncaptioned row of pills cannot be told from the one beside it. The mode
+   and the range are remembered in the browser. The aim
    levels are printed beside the chart, and say so when they sit outside
    the visible range; a coil draws its box and its trigger and no burst
    candle; a name without archived bars says *Chart unavailable* and keeps
@@ -107,7 +113,9 @@ does not carry, falls back to Explore and says so.
    or makes me wait?*, *principal risk or limitation*. Then the action
    area: the conditional ticket's order line with *View conditional plan*,
    or the reason there is no ticket with *Inspect conditions* — never a buy
-   button. Under it four disclosures: the conditions (one tile per
+   button. It is the design system's own action bar (`.sc-actionbar`): a
+   row on a desktop, and on a phone a stack whose button follows its
+   sentence directly. Under it four disclosures: the conditions (one tile per
    criterion with the measured value, his threshold and the verdict in
    words, then the base, the burst and the grade); the plan, sizing and
    order (the buy zone, whose top IS the ticket's own limit; the two skip

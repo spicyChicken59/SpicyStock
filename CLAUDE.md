@@ -102,9 +102,11 @@ open plans, scorecard) → `report.build()` and validate → email. Exit codes
 `run_intraday()` is dispatch-only and never commits.
 
 The page (`docs/app.js`) is a small hash-routed application over the
-record: Explore (the market in a line, two stage cards, one selectable card
-per stock, one stock in focus with its chart, four decision answers, the
-action area and four disclosures), Record, Market and Method, with the
+record: Explore (the market in a line, two stage cards that always say how
+many of their stocks carry a ticket, one selectable card per stock, one
+stock in focus with its chart, four decision answers, the action area --
+the design system's `.sc-actionbar`, a row on a desktop and a stack on a
+phone -- and four disclosures), Record, Market and Method, with the
 tickets and the scan as disclosures under the workspace and one next action
 under every view. It computes one thing of the market — the status chip
 from the record's session and the ET clock (`status()`) — and prints
@@ -118,8 +120,10 @@ router: the selection is remembered per stage, the hash is rewritten to the
 resolved route without a history entry, so Back works and a bookmark
 reloads to its stock, and the old one-page anchors map onto the routes. The
 chart (`docs/app-chart.js`) is annotated SVG on the SpicyChicken design
-system snapshot under `docs/design-system/`: one panel, Setup | Candles |
-Line over one geometry (`SCStock.chartGeometry()`), a Setup range that
+system snapshot under `docs/design-system/` (v2.11.0): one panel, two
+captioned control groups (`view`, `range`, each a `.sc-field--group` the
+group names with `aria-labelledby`, because *setup* is a mode AND a range),
+Setup | Candles | Line over one geometry (`SCStock.chartGeometry()`), a Setup range that
 frames the base (`rangeSlice()`), the level labels in a reserved gutter
 with leader lines while the lines stay at their exact prices, the trigger
 and the limit told apart, an aim past the visible range named in a
@@ -810,3 +814,71 @@ and on pull requests only — this branch has had the secret scan alone.
 **Next action.** Unchanged: dispatch `evening.yml` with dry_run on a green
 or yellow session and check the study against what the run withholds and
 writes.
+
+## Checkpoint, 12 Sep 2026 — three weak points in the Explore journey, two patterns promoted
+
+**Revision.** SpicyStock `claude/vibrant-volta-7ft7cn` from `5515515` (`main`, the
+merge of #52); design-system `claude/vibrant-volta-7ft7cn` from `edacaff`, one
+commit `6f10309` = **v2.11.0**. `docs/data.json` and `docs/picks.json` are
+`origin/main`'s to the byte. Nothing merged, deployed, tagged, dispatched or mailed.
+
+**Rendered before it was edited**, over the unchanged run-47 record and the marked
+`full` fixture at 1280×900, 390×844 and 320 px, both themes, the clock pinned.
+Three weaknesses, each measured in Chromium rather than argued:
+
+1. **The one action was buried on a phone.** `.ss-action` stacks under 720 px, and
+   its paragraph kept `flex: 1 1 260px` — a basis written for a row becomes a
+   HEIGHT in a column, so a three-line sentence sat in a 260 px box with 181 px of
+   empty bar between it and the only button, ticket and no-ticket alike.
+2. **The chart strip was two look-alike rows.** Two `sc-tabs` groups side by side,
+   the first with no visible caption and the second captioned only *range*, while
+   *setup* is a button in BOTH (the annotated mode, and the window framing the base).
+3. **The phone dropped the stage's action state.** `.ss-stage__sub` was
+   `display: none` under 480 px — the only line saying how many of a stage's stocks
+   carry a ticket — and the verdict began 232 px down an 844 px screen (310 of 800
+   at 320 px), under a masthead of three rows and 56 px of page padding.
+
+**Promoted, not re-invented.** Both fixes were patterns consumers had already
+improvised, so they went upstream rather than into `app.css`: **`.sc-actionbar`**
+(`__more`) — chip, one sentence, one button, a follow-on row — whose phone rule is
+the released row basis; and **`.sc-field--group`** with `.sc-field__label`, making
+official the captioned `role="group"` SpicyCar was already writing as a bare
+`div.sc-field`. Documented in `DESIGN_SYSTEM.md` §6, `VISUAL-RECIPES.md` and two
+`CHECKLIST.md` lines, shown in the style guide on a release page that imports
+nothing of this repo, version bumped by the one-stream rule. `app.css` lost the
+duplicated layout; `docs/design-system/` was refreshed with `build/vendor.mjs`
+(22 files, every SHA-256 verified against the source tree, commit `6f10309`).
+The snapshot also crossed `271647f…edacaff`, which changed one line: the sheet's
+by-line reads *SpicyChicken*, not a person.
+
+**After** (same record, same phone): the action bar 490 px → 252, its sentence
+260 → 20, the button directly under it; *view* and *range* caption their own
+groups and each IS the group's accessible name; both stage cards say
+"N with a ticket · M without" at every width, the count beside the name and no
+collision from 320 px up; the verdict starts at 200 px instead of 232.
+Desktop is untouched by design.
+
+**Measured offline.** 1076 tests; 7 fixtures current; chart check 163/163; page
+smoke 2700/2700 with `--shots`, six new checks; 66 of 67 extra checks (320 px, 200%
+zoom, reduced motion, keyboard, the withheld / no-bars / stale / failed / closed /
+no-trade states, a blocked store, and the remembered mode, range and deep link).
+Upstream `npm run check` green (107 component blocks, 357 classes findable) and
+`visual-check --browser` 6/6. **Each new check was run against `5515515` and
+fails there**; the one that also passes there (the button spanning the bar) dies
+under its own mutant, the stacked bar not stretching. Two of them could not have
+failed as first written — `innerText` reads a `display: none` element, and a count
+of `.sc-tabs` is the same on both trees — the third and second shapes this file names.
+
+**The one failure, pre-existing and left.** Under 320 px (200% zoom on a phone) the
+page scrolls sideways: 315 px of content at 195, 240 and 280 px, the masthead links,
+the footer and the Following empty state. Identical on `5515515`; the brief's floor
+is 320 px, where it is clean.
+
+**Blockers.** None offline. Not run and not claimable: a live fetch, a real chart
+read, Resend, Pages, CI, and the `v2.11.0` tag — `check.mjs` reports its absence as
+a reminder on a branch, and every documented jsDelivr pin 404s until it is cut.
+
+**Next action.** Unchanged and still the method's: on a green or yellow session
+dispatch `evening.yml` with dry_run and check the study against what the run
+withholds and writes. For these two repositories: review the pair, cut `v2.11.0`
+upstream when the sheet is merged, and re-vendor if the tag moves the snapshot.

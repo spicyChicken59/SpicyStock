@@ -657,6 +657,30 @@ async function checkMobile(browser, base, data) {
   const box = async (sel) => page.locator(sel).first().boundingBox();
   const stages = await box('#stages'), search = await box('#search'), choose = await box('#choose-open');
   check('phone: the stage cards are in the first screen', stages && stages.y + stages.height <= 844, JSON.stringify(stages));
+  // the stage card's sub-line is where a stage says how many of its stocks
+  // carry a ticket; a phone that drops it loses the action state entirely
+  const phoneStages = await page.locator('#stages .ss-stage__sub').evaluateAll((els) => els.map((e) =>
+    ({ text: e.innerText.replace(/\s+/g, ' ').trim(), drawn: e.getClientRects().length > 0 })));   // innerText reads a display:none element too; the rects do not
+  check('phone: each stage card still draws how many carry a ticket', phoneStages.length === 2 && phoneStages.every((s) => s.drawn && /\d+ with a ticket/.test(s.text)), JSON.stringify(phoneStages));
+  // the action bar is the system's .sc-actionbar: stacked on a phone, with the
+  // sentence keeping only the height its own text needs. A flex-basis written
+  // for a row becomes a HEIGHT in a column and buries the button under an
+  // empty band -- 260px of it, measured on this page before the bar was shared.
+  const actionGeom = await page.evaluate(() => {
+    const bar = document.querySelector('#detail .ss-action');
+    if (!bar) return null;
+    const p = bar.querySelector('p'), btn = bar.querySelector('button[data-open]');
+    if (!p || !btn) return null;
+    const range = document.createRange(); range.selectNodeContents(p);
+    const text = range.getBoundingClientRect(), pbox = p.getBoundingClientRect(), bbox = btn.getBoundingClientRect(), bar0 = bar.getBoundingClientRect();
+    const cs = getComputedStyle(bar);
+    return { column: cs.flexDirection === 'column', box: Math.round(pbox.height), text: Math.round(text.height),
+      toButton: Math.round(bbox.top - text.bottom), button: Math.round(bbox.width), bottom: Math.round(bbox.bottom),
+      content: Math.round(bar0.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)) };
+  });
+  check('phone: the action bar stacks and its sentence keeps its own height', actionGeom && actionGeom.column && actionGeom.box <= actionGeom.text + 6, JSON.stringify(actionGeom));
+  check('phone: no empty band between the sentence and the action', actionGeom && actionGeom.toButton >= 0 && actionGeom.toButton <= 32, JSON.stringify(actionGeom));
+  check('phone: the action spans the bar', actionGeom && actionGeom.button >= actionGeom.content - 2, JSON.stringify(actionGeom));
   check('phone: the search and the chooser button are in the first screen', search && choose && search.y + search.height <= 844 && choose.y + choose.height <= 844, JSON.stringify([search, choose]));
   eq('phone: the chooser button is visible', await page.locator('#choose-open').isVisible(), true);
   const rail = await page.evaluate(() => { const l = document.getElementById('pick-list'); return { row: getComputedStyle(l).flexDirection, scroll: l.scrollWidth > l.clientWidth }; });
@@ -702,6 +726,9 @@ async function checkMobile(browser, base, data) {
   // the desktop's first screen: market context, the stages, the stocks and a meaningful part of the chart
   const desk = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280);
   const d = async (sel) => desk.page.locator(sel).first().boundingBox();
+  const deskStages = await desk.page.locator('#stages .ss-stage__sub').evaluateAll((els) => els.map((e) =>
+    ({ text: e.innerText.replace(/\s+/g, ' ').trim(), drawn: e.getClientRects().length > 0 })));
+  eq('the phone and the desktop stage cards carry the same ticket counts', phoneStages, deskStages);
   const bar = await d('#market-bar'), st = await d('#stages'), firstPick = await d('#pick-list .ss-pick'), chart = await d('#chart-mount');
   check('desktop: the market bar, the stages and the first stock are in the first screen', bar && st && firstPick && bar.y >= 0 && st.y + st.height <= 900 && firstPick.y + firstPick.height <= 900, JSON.stringify([bar, st, firstPick]));
   check('desktop: a meaningful part of the chart is in the first screen', chart && chart.y + 220 <= 900, JSON.stringify(chart));
@@ -725,6 +752,20 @@ async function checkModes(browser, base, data) {
       levelsTable: Array.from(document.querySelectorAll('#chart-mount [data-sc-twin="levels"] tbody tr')).map((r) => r.textContent.replace(/\s+/g, ' ').trim()).join(' | ') };
   });
   const hover = async () => { await page.locator('#chart-mount .sc-chart__hit').scrollIntoViewIfNeeded(); const box = await page.locator('#chart-mount .sc-chart__hit').boundingBox(); await page.mouse.move(box.x - 2, box.y - 2); await page.mouse.move(box.x + box.width * 0.35, box.y + box.height / 2); await page.waitForTimeout(120); return (await page.locator('#chart-mount .sc-tooltip').innerText().catch(() => '')).replace(/\s+/g, ' '); };
+  // the two segmented groups in the panel's strip: each visibly captioned, and
+  // its caption is the group's accessible name -- "setup" is a mode AND a
+  // range, so an uncaptioned row cannot be told from the one beside it
+  const groups = await page.evaluate(() => Array.from(document.querySelectorAll('#detail .ss-chart-panel__tools .sc-tabs')).map((g) => {
+    const id = g.getAttribute('aria-labelledby'), label = id ? document.getElementById(id) : null;
+    return { kind: g.querySelector('.sc-tab') ? (g.querySelector('.sc-tab').dataset.mode ? 'mode' : 'range') : '?',
+      caption: label ? label.textContent.trim() : null, visible: !!(label && label.getClientRects().length),
+      captioned: !!(label && g.closest('.sc-field--group') && g.closest('.sc-field--group').contains(label)),
+      ariaLabel: g.getAttribute('aria-label'), buttons: Array.from(g.querySelectorAll('.sc-tab')).map((b) => b.textContent.trim().toLowerCase()) };
+  }));
+  eq('the chart strip has two captioned groups', await count(page, '#detail .ss-chart-panel__tools .sc-field--group .sc-tabs'), 2);
+  check('each chart control group names a caption the reader can see', groups.every((g) => g.caption && g.visible && g.captioned && !g.ariaLabel), JSON.stringify(groups));
+  check('the two captions differ, though a button word is in both', groups[0] && groups[1] && groups[0].caption !== groups[1].caption
+    && groups[0].buttons.some((b) => groups[1].buttons.includes(b)), JSON.stringify(groups.map((g) => [g.caption, g.buttons])));
   const seen = {};
   for (const mode of ['setup', 'candles', 'line']) {
     await page.click(`#detail .sc-tab[data-mode="${mode}"]`); await page.waitForTimeout(150);
