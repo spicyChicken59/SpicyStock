@@ -1183,10 +1183,18 @@ Resend, and any trading edge.
 ## Checkpoint, 14 Sep 2026 — a followed setup that outlives its record
 
 **Revision.** Branch `claude/spicystock-follow-through-clqeb8` from `main` at
-`e0f68d9` (the merge of #58), clean and empty at that tip; two commits on it,
-pushed as **#59**. `docs/data.json`, `docs/picks.json` and the vendored
-`docs/design-system/` are untouched to the byte; no sibling repository was
-written; nothing was merged, deployed, dispatched or mailed.
+`e0f68d9` (the merge of #58), clean and empty at that tip; three commits on
+it, pushed as **#59** and **merged to `main` as `97609cb`** on Tahir's word.
+`docs/data.json`, `docs/picks.json` and the vendored `docs/design-system/` are
+untouched to the byte; no sibling repository was written; no evening run was
+dispatched and no mail was sent. **Merging published**, as it does on any push
+to `main` touching `docs/**`: all four runs are green on `97609cb` (Tests
+34796937896, Secret scan 34796938005, publication 34796937880, Pages 34796945221;
+Pages run 34796937072 was cancelled as superseded, as at `cf08c900` and
+`dd8a50d`), and the publication gate waited for the five changed files —
+`index.html`, `app.css`, `app-chart.js`, `app-follow.js`, `app.js` — to appear
+on the served site before printing *Verified: every one of the 17 public files
+matches committed main*.
 
 **Reproduced first, over two records** (`scratchpad/repro/follow_repro.mjs` at
 `e0f68d9`): a setup followed on the `full` night saved no chart and no
