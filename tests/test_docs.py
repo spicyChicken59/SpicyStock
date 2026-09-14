@@ -96,7 +96,9 @@ def test_the_readme_names_the_crons_and_the_bonde_median():
 def test_the_readme_lists_the_fixture_variants_the_generator_makes():
     listed = re.search(r"\(`(.*?)`\)", README.split("one per state the page can be in")[1]).group(1)
     assert tuple(listed.split("`, `")) == make_fixture.VARIANTS
-    for variant in make_fixture.VARIANTS:
+    sequels = re.search(r"sequels of the `full` night \(`(.*?)`\)", README).group(1)
+    assert tuple(sequels.split("`, `")) == make_fixture.SEQUELS
+    for variant in make_fixture.VARIANTS + make_fixture.SEQUELS:
         assert (ROOT / "tests" / "fixtures" / "page" / f"{variant}.json").exists(), variant
 
 
@@ -160,10 +162,74 @@ def collected_tests() -> int:
 
 def test_claude_md_is_short_and_names_the_fixture_count():
     assert len(CLAUDE_MD.splitlines()) <= 150
-    assert f"over {['six'][0]} fixtures" in CLAUDE_MD and len(make_fixture.VARIANTS) == 6
+    every = make_fixture.VARIANTS + make_fixture.SEQUELS
+    assert f"over {['eight'][0]} fixtures" in CLAUDE_MD and len(every) == 8
 
 
 # --------------------------------------------- the page's chart anchors ----
+# --------------------------------------------- the sequential fixtures ----
+# `next` and `revised` exist so a setup followed on the `full` night can be
+# read against a genuinely newer record. What makes them useful is exactly
+# what is asserted here: a LATER session that INHERITED the full night (not a
+# second first night), two followed symbols gone from the candidates, a newer
+# signal for one that stayed, one that has moved stage -- and, for `revised`,
+# the SAME session at a different close, which is a correction and never
+# another trading day. A regeneration that lost any of these would leave the
+# page suite asserting nothing, because the two records would be the same.
+SEQUELS = {name: json.loads((ROOT / "tests" / "fixtures" / "page" / f"{name}.json").read_text())
+           for name in make_fixture.SEQUELS}
+
+
+def test_the_sequels_are_a_later_session_that_inherited_the_full_night():
+    full = json.loads((ROOT / "tests" / "fixtures" / "page" / "full.json").read_text())
+    for name, data in SEQUELS.items():
+        assert data["run"]["session"] > full["run"]["session"], name
+        # inherited, not seeded afresh: the full night's picks are its open
+        # model plans, and its own observations are carried with their `since`
+        picked = {p["picked"] for p in data["open_plans"]}
+        assert full["run"]["session"] in picked, (name, sorted(picked))
+        for sym in ("AAPL", "TSLA"):
+            obs = data["observations"]["symbols"][sym]
+            assert obs["date"] == data["run"]["session"], (name, sym, obs)
+            assert obs["since"] == full["run"]["session"], (name, sym, obs)
+
+
+def test_the_sequels_move_the_symbols_a_follow_through_reading_needs():
+    full = json.loads((ROOT / "tests" / "fixtures" / "page" / "full.json").read_text())
+    was_coil = {r["ticker"] for r in full["watchlist"]["top"]}
+    for name, data in SEQUELS.items():
+        bursts = {b["ticker"] for b in data["bursts"]}
+        coils = {r["ticker"] for r in data["watchlist"]["top"] + data["watchlist"]["also_quiet"]}
+        # the ticket and the withheld setup have left the record altogether
+        assert not ({full["trades"][0], "TSLA"} & (bursts | coils)), (name, sorted(bursts | coils))
+        # one burst has burst again: a newer signal for a symbol already followed
+        assert "NVDA" in bursts and "NVDA" in {b["ticker"] for b in full["bursts"]}, name
+        # and the coil has broken out: a newer signal in the OTHER stage
+        assert was_coil and was_coil <= bursts and not (was_coil & coils), (name, sorted(was_coil))
+
+
+def test_the_revised_fixture_is_a_correction_and_not_another_day():
+    a, b = SEQUELS["next"], SEQUELS["revised"]
+    assert a["run"]["session"] == b["run"]["session"]
+    moved = {sym: (a["observations"]["symbols"][sym]["c"], obs["c"])
+             for sym, obs in b["observations"]["symbols"].items()
+             if obs["c"] != a["observations"]["symbols"][sym]["c"]}
+    assert set(moved) == {"AAPL"}, moved
+    was, now = moved["AAPL"]
+    assert round(abs(now - was) * 100) == make_fixture.REVISION_CENTS, moved
+    assert a["observations"]["symbols"]["AAPL"]["date"] == b["observations"]["symbols"]["AAPL"]["date"]
+
+
+def test_the_declining_ticket_closes_under_the_stop_its_plan_named():
+    """The `next` night's AAPL is under the stop the `full` night's plan named,
+    so the page has a real price to speak about there -- and a price below a
+    stop reference is a statement about a price, never a fill or a stop-out."""
+    full = json.loads((ROOT / "tests" / "fixtures" / "page" / "full.json").read_text())
+    plan = next(b["plan"] for b in full["bursts"] if b["ticker"] == "AAPL")
+    for name, data in SEQUELS.items():
+        assert data["observations"]["symbols"]["AAPL"]["c"] < plan["stop"], (name, plan["stop"])
+
+
 # The evidence row marks a stretch of chart for a recorded check. Every anchor
 # is resolved against a field the run wrote, so the two failures worth pinning
 # are a key the grader does not write (a control that would mark nothing) and

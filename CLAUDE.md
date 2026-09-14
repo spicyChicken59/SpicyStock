@@ -182,14 +182,42 @@ everywhere (`volumeRatio()`: the row's own field, the scan's measurement
 for every burst since the dollar scan carried it; for a record from before
 that, run 46 and earlier, the checklist's two-place copy, said to be the
 checklist's in the measurements; else missing and said so, zero a value).
-Following (`docs/app-follow.js`) is a shelf at the end of Explore: one
-click keeps a setup's own snapshot and suggested whole-share quantity in
-this browser only (`spicystock:following:v1`, versioned, keyed by kind,
-symbol, session and rules identity, a corrupt store set aside), an
-optional reference size is labelled the reader's, a later observation is
-read off the record's `observations` block (`pipeline.observations()`, the
-newest archived bar per signal name for `OBSERVATION_DAYS`), and nothing
-of it reaches the record, the mail or the scorecard. A page over a fixture
+Following (`docs/app-follow.js`, payload version 2) is a shelf at the end
+of Explore, and a saved setup outlives the record it came from: one click
+freezes the setup's own snapshot, its suggested whole-share quantity AND
+the evidence the record carried for that signal -- the archived bars up to
+the signal session, capped at `EVIDENCE_BARS`, and the dated anchors drawn
+on them -- in this browser only (`spicystock:following:v1`, keyed by kind,
+symbol, session and rules identity; a corrupt store set aside, an entry
+with no identity set aside by name, a v1 payload upgraded only after it has
+been copied beside itself and the new one has read back, a payload from a
+FUTURE version left untouched and every write to it refused). Each record
+loaded afterwards contributes at most one observation per market DATE
+(`recordObservations()` over `recordBarsFor()`: the archived series, the
+`observations` block, the record's own rows, the open plan -- fullest source
+wins the date), so a re-render, a reload and a theme change add none; an
+OLDER record never replaces a newer observation; a different close on a
+date already observed is a REVISION of that trading day carrying what it
+replaced; a session no record carried stays missing; `OBSERVATION_MAX`
+dates are kept and the original is not one of them. `basisOf()` asks the
+bars rather than assuming: a session both records hold, priced the same, is
+`match`; an EARLIER session whose close has moved means the archive was
+re-priced since (a split does that) and the change is withheld with the
+reason; nothing in common is `unknown`, said so, and the change still
+shown. `#/followed/<identity>` opens the saved setup's own sheet over
+whatever the reader was on -- *At the signal* (the frozen chart through the
+same `chartPanel()`, the levels, the grade THAT record gave, its
+limitations, and its instruction shown as dated history) against *Since the
+signal* (the observed closes, their dates, their sources and their
+revisions) -- and never substitutes tonight's setup for it: a current
+signal for the same symbol is a separate, named link, and a symbol on no
+list tonight says so. `recoverEvidence()` gives a v1 follow its chart back
+only from a record that IS its signal, never from a newer same-ticker one.
+`modelUpdateOf()` attaches the record's open model plan only on the same
+session, the same family and the same rules identity; anything else is
+named as another signal's. An optional reference size is labelled the
+reader's, and nothing of any of it reaches the record, the mail, the
+scorecard or the URL. A page over a fixture
 says so: `data-ss-demo`, a chip, a notice and a marked simulated
 chart-reader reply.
 
@@ -208,8 +236,8 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-What is measured offline: 1082 tests, the chart check, and the page smoke
-over six fixtures walked through every view, stock, lens, search, the
+What is measured offline: 1086 tests, the chart check, and the page smoke
+over eight fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
 keyboard, deep links

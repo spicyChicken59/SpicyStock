@@ -400,7 +400,13 @@ not a backtest or a claim about either ceiling.
 The fixtures under `tests/fixtures/page/` are records the real pipeline wrote
 over a synthetic market through the same doubles the tests use, one per
 state the page can be in (`full`, `degraded`, `notrade`, `yellow`, `red`,
-`closed`), and `docs/data.json` on a fresh clone is the `full` one until the
+`closed`), plus two sequels of the `full` night (`next`, `revised`) run over
+the docs that night wrote, so a setup followed then can be read against a
+genuinely newer record: `next` is the same market one session on, where the
+ticket and the withheld setup have left the record, one burst has burst
+again and the coil has broken out; `revised` is that same session re-run on
+later bars, one close a few cents off — a correction and not another trading
+day. `docs/data.json` on a fresh clone is the `full` one until the
 first real night replaces it. The page smoke opens each in Chromium and
 compares what it reads back with the record it was handed — every stock in
 both stages, the search, the chooser and the rail on a phone, the keyboard,

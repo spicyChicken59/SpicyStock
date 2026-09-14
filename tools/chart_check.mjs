@@ -253,6 +253,26 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
   ok('a trigger at the last close is labelled once, as the close, and the zone low is its own label', ak.includes('close') && !ak.includes('trigger') && ak.includes('zone') && ak.includes('limit') && ak.includes('stop'), ak.join(','));
   ok('a burst keeps its setup marks in setup mode and loses them in the other modes only at draw time', ga.burst && ga.burst.label && ga.box && ga.box.label && ga.mode === 'setup');
   ok('a gap bar stays a gap in the close trace', SCStock.chartGeometry(bars, { gutterLabels: true, mode: 'line' }, 640, 320).closePoints[31] === null);
+  // the empty slots after the last bar: "tomorrow" is only true of a chart
+  // drawn from tonight's record, so an ARCHIVED signal's chart names them
+  // itself -- the label is the caller's, and the default is unchanged
+  {
+    const fOpts = { ticker: 'AAPL', card: true, futureSlots: 6, ma: [], burstIndex: s2.length - 1, gutterLabels: true };
+    const now = SCStock.chartGeometry(s2, fOpts, 900, 380);
+    const saved = SCStock.chartGeometry(s2, { ...fOpts, futureLabel: 'the session after →' }, 900, 380);
+    ok('the future gutter is named tomorrow by default', now.tomorrow && now.tomorrow.text === 'tomorrow →', JSON.stringify(now.tomorrow));
+    // a longer label is placed by the same collision pass as the default, so
+    // it moves within the plot rather than overlapping a level or leaving it
+    ok('and an archived chart names it its own way, placed inside the plot',
+      saved.tomorrow && saved.tomorrow.text === 'the session after →'
+      && saved.tomorrow.y >= saved.plot.top && saved.tomorrow.y <= saved.plot.bottom
+      && saved.tomorrow.x >= saved.plot.left && saved.tomorrow.x <= saved.plot.right + 1,
+      JSON.stringify([saved.tomorrow, saved.plot]));
+    ok('an empty or non-string label falls back to the default rather than printing nothing',
+      SCStock.chartGeometry(s2, { ...fOpts, futureLabel: '' }, 900, 380).tomorrow.text === 'tomorrow →'
+      && SCStock.chartGeometry(s2, { ...fOpts, futureLabel: 7 }, 900, 380).tomorrow.text === 'tomorrow →');
+    ok('naming it moves no price and no label', JSON.stringify(saved.rightLabels) === JSON.stringify(now.rightLabels) && saved.domain.lo === now.domain.lo && saved.domain.hi === now.domain.hi);
+  }
 
   // --- the evidence marker: a POSITION over sessions, and nothing else -------
   // It must never widen the domain, move a level, shift a label or change the

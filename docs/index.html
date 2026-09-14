@@ -88,7 +88,10 @@
           </form>
           <button class="sc-btn sc-btn--secondary sc-btn--sm ss-choose" type="button" id="choose-open" aria-haspopup="dialog" aria-controls="chooser">Choose stock</button>
           <div class="sc-tabs ss-discover" id="discover" role="group" aria-label="Show the bursts as" hidden></div>
-          <a class="sc-link--quiet ss-follow-jump" id="following-jump" href="#following" hidden>Following · 0</a>
+          <div class="ss-updates" id="following-jump-box" hidden>
+            <a class="sc-link--quiet ss-follow-jump" id="following-jump" href="#following">Following · 0</a>
+            <span class="sc-hint ss-updates__line" id="following-updates" hidden></span>
+          </div>
           <p class="sc-hint ss-picks__status" id="picks-status" role="status" aria-live="polite"></p>
         </div>
         <div class="ss-picks__list" id="pick-list" role="list" aria-label="Stocks in this stage"></div>
@@ -207,6 +210,7 @@
 </dialog>
 
 <dialog class="ss-compare" id="compare" aria-labelledby="compare-h2"></dialog>
+<dialog class="ss-saved" id="saved" aria-labelledby="saved-h2"></dialog>
 
 <footer class="sc-foot">
   <span id="foot-line">SpicyStock · paper prices, one venue's prints, no slippage · not investment advice</span>
