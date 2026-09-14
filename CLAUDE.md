@@ -1299,9 +1299,30 @@ dispatch `evening.yml` with `dry_run=true` and reconcile the artifact against
 
 **Revision.** Branch `claude/spicystock-follow-through-clqeb8` restarted from
 `main` at `14f9d18` (the merge of #60, which was already merged when this
-began). `docs/data.json`, `docs/picks.json` and the vendored
-`docs/design-system/` are untouched to the byte; no sibling repository was
-written; nothing was merged, deployed, dispatched or mailed.
+began); six commits on it, pushed as **#61** and **merged to `main` as
+`ce2c6c1`** on Tahir's word. `docs/data.json`, `docs/picks.json` and the
+vendored `docs/design-system/` are untouched to the byte; no sibling
+repository was written; no evening run was dispatched and no mail was sent.
+**Merging published**, as it does on any push to `main` touching `docs/**`:
+all four runs are green on `ce2c6c1` (Tests 34839198850 — `pytest` and the
+`page` job, the chart check and the FULL smoke with `--shots`, 5 m 48 s;
+Secret scan 34839198817; publication 34839198750; Pages 34839210085, with
+run 34839197636 cancelled as superseded, as at `cf08c900`, `dd8a50d` and
+`97609cb`). The publication gate WAITED for the three changed files —
+`index.html`, `app.css`, `app.js` — to appear on the served site before
+printing *Verified: every one of the 17 public files matches committed
+main*, so Pages is claimable on this commit and the served bytes are this
+commit's.
+
+**One red on `main` that is not this milestone's, checked rather than
+assumed.** The SCHEDULED Secret scan (34811928399, 06:04 on `14f9d18`)
+fails where the push-triggered scan on the same SHA passed at 02:01: the
+scheduled run scans all 233 commits and reports 14 findings in
+`tools/research_cockpit_smoke.mjs` at `742c2695` (8 Sep), a first-build
+file that no longer exists on `main`. A push scan covers only the pushed
+commit, which is the asymmetry this file's environment note already
+describes. Nothing here touches it, and it will keep failing on every
+scheduled run until the historical fingerprints are allowlisted.
 
 **Reproduced first** (`scratchpad/repro/session_repro.mjs`, over the published
 record and the ticket fixtures at five pinned clocks): at 11:00 AM and 3:00 PM
