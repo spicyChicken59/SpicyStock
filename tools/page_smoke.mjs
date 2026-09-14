@@ -1138,6 +1138,18 @@ async function checkStates(browser, base, data) {
   eq('missing record state', await page.getAttribute('html', 'data-ss-rendered'), 'error');
   check('missing record next', (await text(page, '#next-h3')).startsWith('Do not place any order'), 'next');
   eq('missing record: the detail says so', await count(page, '#detail [data-detail="error"]'), 1);
+  // A clock re-reading over the no-record page used to repaint the market bar
+  // with "No verdict." over the sentence saying the record could not be read:
+  // `failed()` leaves `current` a stub so the saved setups still read, and that
+  // stub has a `run`, so "is there a record" could not be asked of it. The
+  // events are fired here because a real browser fires them on its own timing
+  // -- this failed on a runner and passed in the sandbox until it was pinned.
+  await page.evaluate(() => { window.dispatchEvent(new Event('focus')); window.dispatchEvent(new Event('pageshow')); document.dispatchEvent(new Event('visibilitychange')); });
+  await page.waitForTimeout(200);
+  eq('missing record: a clock re-reading does not paint over it',
+    [await text(page, '#cover-h1'), await page.getAttribute('html', 'data-ss-rendered')],
+    ['The record could not be read.', 'error']);
+  eq('and the re-reading refuses outright', await page.evaluate(() => window.SCStock.reclock()), false);
   eq('missing record: no stages to choose', await count(page, '#stages [data-empty="record"]'), 1);
   await page.locator('#nav a[data-view="record"]').click();
   await page.waitForTimeout(150);

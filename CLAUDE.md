@@ -1378,6 +1378,18 @@ commit. The rule stands and is now twice earned: do not run a mutation harness
 while anything else may touch the tree, and never `git add -A` while one is
 alive. The full smoke run that overlapped it is void and was re-run.
 
+**CI caught what the sandbox did not.** The `page` job was red on a tree whose
+local smoke was 3543/3543: the no-record page came back reading *"No verdict."*
+under `data-ss-rendered="failed"` instead of *"The record could not be read."*
+under `error`. `failed()` leaves `current` a stub so the Following shelf and a
+saved setup still read — and that stub HAS a `run` object, so `reclock()`'s
+"is there a record" guard was asking a question `current` could not answer. The
+`pageshow` the browser fires on its own then repainted the market bar over the
+failure sentence. Order-dependent, so it passed here and failed on a runner.
+`loaded` is the flag now, set by `render()` and cleared by `failed()`, and the
+check that pins it fires the three events itself rather than waiting for the
+browser to — proved red without the fix, green with it.
+
 One smoke failure did not recur and is recorded rather than chased: on one
 combined run the volume-sort check read a pick card mid-render; three runs
 alone and the full smoke are green.

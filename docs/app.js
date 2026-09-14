@@ -1060,6 +1060,12 @@
   //: every clock re-reading. `st` is its publication half and stays what it
   //: was; every surface that offers an action asks this and nothing else.
   let av = null;
+  //: whether a RECORD is on screen. `failed()` leaves `current` a stub so the
+  //: Following shelf and a saved setup still read, and that stub has a `run`
+  //: object -- so "is there a record" cannot be asked of `current` alone, and
+  //: a clock re-reading over the no-record page would repaint the market bar
+  //: with "No verdict." over the sentence saying the record could not be read.
+  let loaded = false;
   //: the clock the page is reading. Injected (SCStock.now, or a Date handed to
   //: render) so a test pins an instant; when it is injected, the page does not
   //: move it on its own -- a pinned clock that ticked would be no pin at all.
@@ -3516,7 +3522,7 @@
   }
   // the one re-reading. Returns true when something on the page changed.
   function reclock() {
-    if (!current || !current.run || clockPinned) return false;
+    if (!loaded || !current || !current.run || clockPinned) return false;
     const next = availability(current, new Date());
     const same = av && next.phase === av.phase && next.pub.state === av.pub.state &&
       next.pub.chip === av.pub.chip && next.offered === av.offered;
@@ -3742,6 +3748,7 @@
     clockAt = now ? new Date(now) : new Date();
     clockPinned = !!now;
     copyRefused = null;
+    loaded = true;
     // the bytes belong to the loader that read them; a record handed straight to
     // render() (a test, a fixture) has none, and `sameBytes()` says so
     rawRecord = null;
@@ -3807,6 +3814,8 @@
     // than null so every reader of it -- the shelf, the saved sheet, its
     // chart -- has the shape it indexes into.
     current = { run: {}, app: {} };
+    loaded = false;
+    if (clockTimer) { w.clearInterval(clockTimer); clockTimer = null; }
     $('cover-h1').textContent = 'The record could not be read.';
     $('cover-dek').textContent = message;
     clear($('status-slot')).appendChild(chip('no record', 'danger'));
