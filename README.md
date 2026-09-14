@@ -127,7 +127,11 @@ does not carry, falls back to Explore and says so.
    overlap, so a tap is resolved by distance from the tap and not by which
    marker was drawn last: when more than one is within a finger, a compact
    **nearby chooser** lists them nearest-first with their measurements and
-   chooses nothing until you do. It is a labelled popover, not a modal: the
+   chooses nothing until you do. It is the design system's own `.sc-pick`,
+   which was written from this page's panel and two others like it, so the
+   page keeps the behaviour and the sheet supplies the look: a finger's 44px
+   a row, the stock's name, what else the record knows about it, and the
+   session's gain as the row's figure. It is a labelled popover, not a modal: the
    arrows move inside it, Escape closes it and hands the focus back to the
    stock you meant — never to the marker the browser happened to hit-test —
    tabbing out of it closes it, any selection made elsewhere closes it, and

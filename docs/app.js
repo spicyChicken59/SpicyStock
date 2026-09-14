@@ -111,6 +111,21 @@
   const num = (v, dec) => isNum(v) ? thousands(v.toFixed(dec === undefined ? 0 : dec)) : '—';
   const usd = (v, dec) => isNum(v) ? (v < 0 ? '−' : '') + '$' + thousands(Math.abs(v).toFixed(dec === undefined ? 2 : dec)) : '—';
   const pct = (v, dec) => isNum(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(dec === undefined ? 1 : dec) + '%' : '—';
+  // How a printed number was arrived at (design system v2.13.0, §4h). Recorded
+  // is the default and wears no class; these two are the other two answers, and
+  // both are applied from what the RECORD says about a figure, never from a
+  // computation this page has just done. Each wraps the VALUE and never the row
+  // or the cell -- a slot styled by a descendant rule (`.sc-facts dd`, a `td`
+  // under its table's own class) wins on specificity otherwise -- and the words
+  // stay in the markup either way, because the mark is reinforcement and the
+  // word is the meaning.
+  // `unreported`: the source never supplied it. Mono, lowercase, its own size,
+  // never tabular, so an absence cannot align or weigh like a measurement.
+  const unreported = (words) => el('span', { 'class': 'sc-unreported', text: words });
+  // `estimate`: derived from the run's stated assumptions. The ticket's own
+  // terms -- the trigger, the limit, the stop, the day-2 line -- are exact and
+  // are NEVER marked with it.
+  const estimate = (figure) => el('span', { 'class': 'sc-estimate', text: figure });
   // The session's volume over the previous session's, read one way for every
   // consumer (the card, the detail line, the measurements, the map, the scan
   // table, the chart's burst label). The row's own field is the scan's
@@ -1661,8 +1676,12 @@
         explain.appendChild(el('div', { 'class': 'ss-evidence__check', 'data-check': r.key, 'data-verdict': r.verdict }, [
           el('div', { 'class': 'ss-evidence__check-head' }, [
             el('strong', { text: r.check ? (r.check.label || words(r.key)) : words(r.key) }), chip(r.verdict, tone)]),
-          el('p', { 'class': 'ss-evidence__value', text: r.check && text(r.check.display) ? r.check.display : 'not measured in this record' }),
-          el('p', { 'class': 'ss-evidence__threshold', text: r.check && text(r.check.threshold) ? 'his threshold: ' + r.check.threshold : 'no threshold archived' }),
+          r.check && text(r.check.display)
+            ? el('p', { 'class': 'ss-evidence__value', text: r.check.display })
+            : el('p', { 'class': 'ss-evidence__value' }, [unreported('not measured in this record')]),
+          r.check && text(r.check.threshold)
+            ? el('p', { 'class': 'ss-evidence__threshold', text: 'his threshold: ' + r.check.threshold })
+            : el('p', { 'class': 'ss-evidence__threshold' }, [unreported('no threshold archived')]),
           r.check && text(r.check.note) ? el('p', { 'class': 'ss-evidence__note', text: r.check.note }) : null
         ]));
       });
@@ -1948,8 +1967,8 @@
       const va = fa[r[0]], vb = fb[r[0]];
       body.appendChild(el('tr', { 'data-fact': r[0], 'data-differs': va !== null && vb !== null && va !== vb ? 'true' : 'false' }, [
         el('th', { scope: 'row', text: r[1] }),
-        el('td', { text: va === null ? '— not recorded' : va, 'data-missing': va === null ? '' : null }),
-        el('td', { text: vb === null ? '— not recorded' : vb, 'data-missing': vb === null ? '' : null })
+        el('td', { 'data-missing': va === null ? '' : null }, [va === null ? unreported('not recorded') : va]),
+        el('td', { 'data-missing': vb === null ? '' : null }, [vb === null ? unreported('not recorded') : vb])
       ]));
     });
     table.appendChild(body);
@@ -2633,7 +2652,9 @@
     put('limit', isNum(lv.limit) ? usd(lv.limit) : '');
     put('too extended over', isNum(lv.day2_spent_above) && lv.day2_spent_above !== lv.limit ? usd(lv.day2_spent_above) : '');
     put('stop', isNum(lv.stop) ? usd(lv.stop) + (STOP_BASIS[lv.stop_basis] ? ' · ' + STOP_BASIS[lv.stop_basis] : '') : '');
-    put('aim', isNum(lv.target_low) && isNum(lv.target_high) ? usd(lv.target_low) + '–' + usd(lv.target_high) : '');
+    put('aim', isNum(lv.target_low) && isNum(lv.target_high)
+      ? [estimate(usd(lv.target_low) + '–' + usd(lv.target_high)), ' · estimated from the indicative entry']
+      : '');
     put('size', isNum(item.reference_shares)
       ? 'your reference size ' + plural(item.reference_shares, 'share') + (isNum(item.suggested_shares) ? ' · the plan suggested ' + item.suggested_shares : '')
       : (isNum(item.suggested_shares) ? plural(item.suggested_shares, 'share') + ' suggested by that plan' : 'observation only, no size'));
@@ -2655,7 +2676,8 @@
       ]));
     }
     const dl = el('dl', { 'class': 'ss-saved__facts' });
-    savedFacts(item).forEach((r) => dl.appendChild(el('div', null, [el('dt', { text: r[0] }), el('dd', { text: r[1] })])));
+    savedFacts(item).forEach((r) => dl.appendChild(el('div', null, [el('dt', { text: r[0] }),
+      typeof r[1] === 'string' ? el('dd', { text: r[1] }) : el('dd', null, r[1])])));
     box.appendChild(dl);
     if (text(snap.summary)) box.appendChild(el('p', { 'class': 'ss-saved__quote' }, [el('span', { 'class': 'sc-eyebrow', text: 'the record said' }), ' “' + snap.summary + '”']));
     if (text(snap.withheld_reason)) box.appendChild(el('p', { 'class': 'ss-saved__quote', 'data-saved-reason': '' }, [el('span', { 'class': 'sc-eyebrow', text: 'no ticket, because' }), ' ' + cap(sentence(snap.withheld_reason))]));

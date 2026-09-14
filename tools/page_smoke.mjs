@@ -1351,6 +1351,24 @@ async function checkFollowThrough(browser, base, full) {
   check('with the original levels, unchanged by the newer record',
     facts.includes(usd(tradeRow.plan.stop)) && facts.includes(usd(tradeRow.plan.entry_high)) && facts.includes(usd(tradeRow.close)), facts.slice(0, 300));
   check('the grade it was given THEN, named as that record’s', facts.includes(tradeRow.grade) && facts.includes('in that record'), facts.slice(0, 200));
+  // The aim is the 8-20% band quoted from the indicative entry, which the run
+  // itself calls an estimate and never a fill; the trigger, the limit and the
+  // stop in the same column are the ticket's own exact terms. `.sc-estimate`
+  // (v2.13.0 §4h) says which is which, and the word is in the markup.
+  const basis = await page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll('#saved .ss-saved__facts > div'));
+    const mark = (name) => {
+      const row = rows.find((r) => r.querySelector('dt').textContent.trim() === name);
+      if (!row) return null;
+      const dd = row.querySelector('dd');
+      return { words: dd.textContent.trim(), estimate: !!dd.querySelector('.sc-estimate') };
+    };
+    return { aim: mark('aim'), trigger: mark('trigger'), limit: mark('limit'), stop: mark('stop') };
+  });
+  check('the aim is marked as derived, and says what from',
+    !!basis.aim && basis.aim.estimate && basis.aim.words.includes('estimated from the indicative entry'), JSON.stringify(basis));
+  check('and the ticket’s own terms beside it are never made approximate',
+    ['trigger', 'limit', 'stop'].every((k) => basis[k] && !basis[k].estimate), JSON.stringify(basis));
   eq('a chart drawn from the saved bars', await attr(page, '#saved [data-panel="saved"] .sc-chart--stock', 'data-ticker'), trade);
   eq('and it does not dispose the detail’s own', await page.evaluate(() => SCStock.liveCharts()), 2);
   const archived = await said(page, '#saved [data-archived-order]');
@@ -1834,16 +1852,51 @@ async function checkMapScale(browser, base, data) {
     await tap(a.cx, a.cy); await page.waitForTimeout(250);
     eq(`${label}: a tap on the shared spot opens the nearby chooser`, await page.getAttribute('#burst-map', 'data-nearby'), 'open');
     eq(`${label}: it chooses nothing on its own`, await page.getAttribute('#burst-map', 'data-selected'), before);
-    const listed = await page.locator('.ss-map__nearby-item').evaluateAll((els) => els.map((e) => e.dataset.ticker));
+    const listed = await page.locator('.sc-pick__item').evaluateAll((els) => els.map((e) => e.dataset.ticker));
     check(`${label}: both stocks under the finger are offered, not just the topmost`, listed.includes(A) && listed.includes(B), JSON.stringify({ listed, topmost }));
-    check(`${label}: the panel says how many are under the finger and that none is chosen`, (await text(page, '.ss-map__nearby h4')).includes('within a finger') && (await text(page, '.ss-map__nearby-hint')).includes('None is chosen'), await text(page, '.ss-map__nearby'));
+    check(`${label}: the panel says how many are under the finger and that none is chosen`, (await text(page, '.sc-pick h4')).includes('within a finger') && (await text(page, '.sc-pick__hint')).includes('None is chosen'), await text(page, '.sc-pick'));
     eq(`${label}: the first item takes the focus`, await page.evaluate(() => document.activeElement.dataset.ticker), listed[0]);
+    // The panel IS the design system's `.sc-pick` (v2.13.0 §4f) and not a local
+    // look-alike: its item is the 44px the release asks a finger for, it names
+    // the stock in `__name`, what else is known in `__meta`, and the map's own
+    // vertical value in the released `.sc-figure` slot.
+    eq(`${label}: nothing of the local chooser's own classes is left`, await count(page, '.ss-map__nearby, .ss-map__nearby-item, .ss-map__nearby-hint, .ss-map__nearby-measures, .ss-map__nearby-grade'), 0);
+    const shape = await page.locator('.sc-pick__item').evaluateAll((els) => els.map((e) => ({
+      t: e.dataset.ticker, h: Math.round(e.getBoundingClientRect().height),
+      minH: getComputedStyle(e).minHeight,
+      name: (e.querySelector('.sc-pick__name') || {}).textContent || null,
+      meta: (e.querySelector('.sc-pick__meta') || {}).textContent || null,
+      figure: (e.querySelector('.sc-figure') || {}).textContent || null,
+      spoken: e.getAttribute('aria-label') || '' })));
+    check(`${label}: the item declares the 44px the release asks a finger for`,
+      shape.length > 1 && shape.every((s) => s.minH === '44px'), JSON.stringify(shape.map((s) => [s.t, s.minH])));
+    check(`${label}: and is drawn at least that tall`,
+      shape.every((s) => s.h >= 44), JSON.stringify(shape.map((s) => [s.t, s.h])));
+    check(`${label}: each item fills the released name, meta and figure slots`,
+      shape.every((s) => s.name === s.t && /volume/.test(s.meta || '') && /^[+−]?\d+(\.\d)?%$/.test(s.figure || '')), JSON.stringify(shape));
+    check(`${label}: and is spoken as one sentence, so the grid's order cannot mislead`,
+      shape.every((s) => s.spoken.startsWith(s.t + ':') && s.spoken.includes('volume')), JSON.stringify(shape.map((s) => s.spoken)));
+    // The release sizes `.sc-pick` against its host and expects the host to let
+    // it overflow; THIS host clips (`.ss-map { overflow: hidden }`), so the
+    // panel has to fit inside the pane and carry its own scroll. A max-height
+    // that outgrew the pane would cut the last option off with nothing saying so.
+    const fit = await page.evaluate(() => {
+      const node = document.querySelector('.sc-pick');
+      const pane = document.querySelector('#burst-map .ss-map__surface').getBoundingClientRect();
+      const box = node.getBoundingClientRect();
+      return { inside: box.top >= pane.top - 1 && box.bottom <= pane.bottom + 1 && box.left >= pane.left - 1 && box.right <= pane.right + 1,
+               scrollable: getComputedStyle(node).overflowY === 'auto',
+               pane: Math.round(pane.height), panel: Math.round(box.height),
+               clipped: node.scrollHeight > node.clientHeight + 1 };
+    });
+    check(`${label}: the panel fits the pane its host clips, and scrolls rather than cutting an option off`,
+      fit.inside && fit.scrollable, JSON.stringify(fit));
     // Escape closes it and chooses nothing
     await page.keyboard.press('Escape'); await page.waitForTimeout(150);
     eq(`${label}: Escape closes the chooser without choosing`, [await page.getAttribute('#burst-map', 'data-nearby'), await page.getAttribute('#burst-map', 'data-selected')], ['closed', before]);
     // the stock the finger was on, chosen by name, reaches every view of it
     await tap(a.cx, a.cy); await page.waitForTimeout(250);
-    await page.click(`.ss-map__nearby-item[data-ticker="${A}"]`); await page.waitForTimeout(300);
+    await page.click(`.sc-pick__item[data-ticker="${A}"]`); await page.waitForTimeout(300);
     eq(`${label}: the chosen stock is the one chosen, everywhere`, [
       await hash(page),
       await page.getAttribute('#burst-map', 'data-selected'),
@@ -1888,6 +1941,12 @@ async function checkMapScale(browser, base, data) {
     check(`${label}: the selection line counts the crowd`, (await text(page, '#burst-map .ss-map__selection')).includes('within a finger of this point'), await text(page, '#burst-map .ss-map__selection'));
     await page.click('.ss-map__nearby-open'); await page.waitForTimeout(250);
     eq(`${label}: the nearby button opens the chooser`, await page.getAttribute('#burst-map', 'data-nearby'), 'open');
+    // The panel OPEN, which no shot ever caught: the component has to be LOOKED
+    // at. It goes here and not beside the crowded tap because an element
+    // screenshot scrolls its element into view, which moves the viewport out
+    // from under the tap coordinates measured before it -- everything after
+    // this point is driven by focus, not by coordinates.
+    if (shotsDir) await page.locator('#burst-map').screenshot({ path: path.join(shotsDir, `map-pick-open-${label}.png`) });
     await page.keyboard.press('ArrowDown');
     const moved = await page.evaluate(() => document.activeElement.dataset.ticker || document.activeElement.className);
     check(`${label}: the arrows move inside the chooser`, moved && moved !== listed[0], String(moved));
@@ -1908,7 +1967,7 @@ async function checkMapScale(browser, base, data) {
     await writeFile(path.join(ROOT, p), JSON.stringify(copy));
     const o = await open(browser, base, p, FRESH_NOW, 1280, { lens: 'all' });
     const page = o.page;
-    const panels = () => count(page, '.ss-map__nearby');
+    const panels = () => count(page, '.sc-pick');
     // the table twin is a disclosure, and the map is rebuilt whenever it is
     // remounted, so it has to be opened again each time it is used
     const openTable = () => openAll(page, '#burst-map .ss-map__table');
@@ -1966,7 +2025,7 @@ async function checkMapScale(browser, base, data) {
     await openIt();
     const widthBefore = (await page.locator('#burst-map .ss-map__surface').boundingBox()).width;
     const inPanel = await page.evaluate(() => {
-      const q = document.querySelector('.ss-map__nearby');
+      const q = document.querySelector('.sc-pick');
       return !!q && q.contains(document.activeElement);
     });
     await go(page, `#/explore/bursts/${A}`); await page.waitForTimeout(400);
@@ -1993,8 +2052,8 @@ async function checkMapScale(browser, base, data) {
     // it is a popover, not a modal: Tab may leave it, and leaving closes it
     // rather than stranding a panel behind the reader
     await openIt();
-    eq('the chooser does not claim a modality the page does not have', await page.getAttribute('.ss-map__nearby', 'aria-modal'), null);
-    eq('it is a labelled dialog all the same', [await page.getAttribute('.ss-map__nearby', 'role'), await page.locator('.ss-map__nearby').getAttribute('aria-labelledby')], ['dialog', 'ss-map-nearby-h']);
+    eq('the chooser does not claim a modality the page does not have', await page.getAttribute('.sc-pick', 'aria-modal'), null);
+    eq('it is a labelled dialog all the same', [await page.getAttribute('.sc-pick', 'role'), await page.locator('.sc-pick').getAttribute('aria-labelledby')], ['dialog', 'ss-map-nearby-h']);
     for (let i = 0; i < 12; i++) await page.keyboard.press('Tab');
     eq('tabbing out of the chooser closes it', await panels(), 0);
     check('and does not strand the reader on the body', await page.evaluate(() => document.activeElement !== document.body), 'focus');
@@ -2514,6 +2573,38 @@ async function checkCompare(browser, base, data) {
   if (shotsDir) await m.page.screenshot({ path: path.join(shotsDir, 'compare-390.png') });
   eq('phone comparison page errors', m.errors, []);
   await m.context.close();
+
+  // A value the record never supplied wears the design system's `.sc-unreported`
+  // (v2.13.0 §4h): the WORDS stay -- the mark is reinforcement, not the meaning
+  // -- but it must not align with, weigh like, or be mistaken for a measurement
+  // sitting in the same column. Every compared field is present in the fixture,
+  // so one is dropped here to make the case exist at all.
+  const missing = JSON.parse(JSON.stringify(data));
+  delete missing.bursts[0].gain_pct;
+  const missPath = '/tests/fixtures/page/.compare-missing.json';
+  await writeFile(path.join(ROOT, missPath), JSON.stringify(missing));
+  try {
+    const u = await open(browser, base, missPath, FRESH_NOW, 1280, { lens: 'all' });
+    await u.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${A.ticker}"]) .ss-pin`);
+    await u.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${B.ticker}"]) .ss-pin`); await u.page.waitForTimeout(200);
+    await u.page.click('#compare-open'); await u.page.waitForTimeout(600);
+    const cells = await u.page.locator('#compare-table tbody td').evaluateAll((els) => els.map((e) => {
+      const span = e.querySelector('.sc-unreported');
+      return { missing: e.hasAttribute('data-missing'), words: e.textContent.trim(), wrapped: !!span,
+               cellFont: getComputedStyle(e).fontFamily, valueFont: getComputedStyle(span || e).fontFamily };
+    }));
+    const absent = cells.filter((c) => c.missing), present = cells.filter((c) => !c.missing);
+    check('a compared value the record never supplied exists to be marked', absent.length >= 1,
+      JSON.stringify(cells.map((c) => [c.missing, c.words.slice(0, 24)])));
+    check('and it says so in words, inside .sc-unreported',
+      absent.every((c) => c.wrapped && c.words === 'not recorded'), JSON.stringify(absent));
+    check('and it is set as an absence rather than as a figure',
+      absent.every((c) => c.valueFont !== c.cellFont), JSON.stringify(absent.map((c) => [c.cellFont, c.valueFont])));
+    check('a value the record DID supply is neither marked nor wrapped',
+      present.length > 1 && present.every((c) => !c.wrapped), JSON.stringify(present.slice(0, 3)));
+    eq('missing-value comparison page errors', u.errors, []);
+    await u.context.close();
+  } finally { await unlink(path.join(ROOT, missPath)); }
 }
 
 // ---------------------------------------------------------------- the evidence on the chart
