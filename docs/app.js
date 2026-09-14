@@ -318,7 +318,7 @@
   function phaseOf(tm, now) {
     if (!tm || !tm.known) return 'unknown';
     const t = (now || new Date()).getTime();
-    if (t < tm.opens.getTime()) return 'upcoming';
+    if (t < tm.opens.getTime() - 60000) return 'upcoming';
     return t < tm.cutoff.getTime() ? 'open' : 'ended';
   }
   // a session's phase from its DATE alone, for a saved setup whose own night

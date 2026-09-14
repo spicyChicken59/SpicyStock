@@ -271,7 +271,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-What is measured offline: 1086 tests, the chart check, and the page smoke
+What is measured offline: 1107 tests, the chart check, and the page smoke
 over eight fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -1293,6 +1293,82 @@ week later, not what wins.
 
 **Next action.** The method's own, untouched here: on a green or yellow session
 dispatch `evening.yml` with `dry_run=true` and reconcile the artifact against
+`entry_limit_study.py`'s green-night line, 52 / 0 / 50 / 47.
+
+## Checkpoint, 14 Sep 2026 — the session-aware desk
+
+**Revision.** Branch `claude/spicystock-follow-through-clqeb8` restarted from
+`main` at `14f9d18` (the merge of #60, which was already merged when this
+began). `docs/data.json`, `docs/picks.json` and the vendored
+`docs/design-system/` are untouched to the byte; no sibling repository was
+written; nothing was merged, deployed, dispatched or mailed.
+
+**Reproduced first** (`scratchpad/repro/session_repro.mjs`, over the published
+record and the ticket fixtures at five pinned clocks): at 11:00 AM and 3:00 PM
+ET on the very session its plans were for, the page said *"Place the 1 order
+from tomorrow's tickets in Fidelity before 9:28 AM"*, the action bar said the
+ticket *"fills only on its own terms tomorrow"*, and the copy control was live.
+Publication was `fresh` and `blocked` false at every instant — correctly, the
+record WAS fresh. Freshness was being read as permission.
+
+**The run serializes the window once** (`src/timing.py`, `run.timing`). The
+applicable session is `plan.next_sessions(session, 1)[0]`, the same call
+`dated_schedule()` makes for its day 1, so the block and every plan's schedule
+name one date by construction. The instants are built with `zoneinfo` from
+named policy times, so DST is the tz database's answer (−05:00 in December,
+−04:00 after the spring-forward Sunday) and no offset is written by hand. A
+closed night uses the one holiday fact the run ever gets — its expected session
+printed no bars — and applies the standing plans to the weekday after THAT,
+naming the closed date. What it cannot read it says: `no_holiday_calendar`,
+`regular_hours_assumed`. `rules_version` moved to `cf1422d7ad5c`, so no older
+record reads as one of these.
+
+**One answer, six surfaces.** `availability(data, now)` is asked by the compact
+area, the stock action bar, the plan disclosure and its copy control, the
+ticket sheet, the comparison's ticket row and the next action. Timing NARROWS
+and never widens: a red night still leads with *no new longs*, a stale page
+stays refused under a window that IS open, and a record with no timing block —
+or a half-written one — is *research only*. A window that ended keeps the
+setup, its evidence and the published ticket readable and offers none of it to
+place; the cancellation is conditional and SpicyStock is said to cancel
+nothing. The clock is re-read on visibility, focus, page restoration and a
+bounded tick, repainting only the words that changed. `checkUpdates()` compares
+the served BYTES, refuses a record older than the one on screen, lets a press
+supersede one in flight, and hands back stage, stock, search and a half-typed
+reference size while closing a comparison rather than remapping its pins.
+
+**Measured offline.** 1107 tests (21 new); 9 fixtures current through the real
+generator; chart check 182/182; page smoke 3538 with two new suites (`session`
+94, `refresh` 46). Screenshots at 1280, 390 and 320 px, both themes, looked at.
+
+**Defects this milestone's own checks found, all fixed.** A second press was
+REFUSED while one was in flight, so the out-of-order guard could never run.
+"Unchanged" was a stamp of session, publish time and rules digest — exactly
+what a same-session re-publish keeps. `repaint()` dropped focus on the body
+when the control the reader was on was the one the clock withdrew. The copy
+refusal was appended to the subtree that catching the page up rebuilds. And
+the compact area regressed the first screen (bar 156→246 px at 1280, 295→394
+at 390): the regime went back to the verdict it belongs to, each clock fact
+carries its chip beside its LABEL, and the update control shares the quiet
+links row. Two test defects: a clipboard assertion that was no evidence
+(Chromium's clipboard is shared across contexts), and the blocked-states hint
+asserted by a fixed sentence rather than the state's own word.
+
+**Nine mutants over the timing rules all die**, each in the tests that name it,
+with a control mutant staying green. Two survived the first pass — both the
+shape this file names second, a test passing on an incidental fact about a
+generated fixture — and both assert against the live modules now.
+
+**NOT run:** the page-side mutation pass over the two new suites' rules. That
+is a gap, not a pass. One smoke failure did not recur and is recorded rather
+than chased: on one combined run the volume-sort check read a pick card
+mid-render; three runs alone and the full smoke are green.
+
+**Blockers: none. Not claimable**, unchanged: a live fetch, a real chart read,
+Resend, Pages, and any trading edge.
+
+**Next action.** The method's own: on a green or yellow session dispatch
+`evening.yml` with `dry_run=true` and reconcile the artifact against
 `entry_limit_study.py`'s green-night line, 52 / 0 / 50 / 47.
 
 ### NEXT BUILDER PROMPT
