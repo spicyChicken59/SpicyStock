@@ -108,7 +108,42 @@ card per stock, one stock in focus with its chart, four decision answers,
 the action area -- the design system's `.sc-actionbar`, a row on a desktop
 and a stack on a phone -- and four disclosures), Record, Market and Method,
 with the tickets and the scan as disclosures under the workspace and one
-next action under every view. `visible(stage)` is the ONE
+next action under every view.
+
+**A record carries two facts about time and the page keeps them apart**,
+because freshness is not permission. `status()` is publication: is this the
+newest record and did the run finish. `run.timing` (`src/timing.py`, written
+by `pipeline.plan_timing()`) is ACTION TIMING: the session the published
+plans are FOR -- `plan.next_sessions(session, 1)[0]`, the same call
+`dated_schedule()` makes for its day 1, so the two cannot disagree -- and
+the instants its entry window is scheduled between, built with `zoneinfo`
+from `REGULAR_OPEN_ET` and `plan.ENTRY_WINDOW_MINUTES` so DST is the tz
+database's answer and no offset is ever written by hand. `PREPARE_BEFORE_ET`
+(9:28 AM) is the desk's own reminder and its own field, never the cutoff. A
+closed night uses the one holiday fact the run ever gets -- its expected
+session printed no bars -- and applies the standing plans to the weekday
+after THAT, naming the closed date; what it cannot read it says, in `limits`.
+`availability(data, now)` is the ONE answer every surface that offers an
+action asks (the compact area, the stock action bar, `discPlan()` and its
+copy control, `renderTickets()`, `cmpFacts()`, `nextAction()`), and timing
+NARROWS and never widens: a red night still leads with no new longs, a stale
+page is refused under a window that is open, and a record with no timing
+block -- or a half-written one, which `timingOf()` refuses one level in -- is
+research only. A window that ended keeps the setup, its evidence and the
+ticket the record published readable (`recordedTicket()`) and offers none of
+it to place; the cancellation sentence is conditional and SpicyStock is said
+to place and cancel nothing. `reclock()` re-reads the clock on visibility,
+focus, page restoration and a bounded tick while visible, repaints only the
+words that changed through `repaint()` (a chart is never disposed, an open
+disclosure stays open, and focus falls back to the replacement's own first
+control rather than the body), and `copyGuard()` asks again immediately
+before a copy writes. `checkUpdates()` re-reads the same static file and
+nothing else: it compares the served BYTES (a stamp of session, publish time
+and rules digest cannot see a re-publish of the same session on later bars),
+refuses a record older than the one on screen, lets a press supersede one in
+flight so only the newest answer lands, and hands the reader back their
+stage, stock, search and half-typed reference size while closing a
+comparison rather than remapping its pins. `visible(stage)` is the ONE
 visible-candidate selector -- the lens (`lensPass()`: the archived grade
 against `tradeGrades`, the record's own `ticket` status, this browser's
 Following shelf), the ticker search and the sort, in that order -- and the

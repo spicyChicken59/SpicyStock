@@ -1057,7 +1057,13 @@ async function checkStates(browser, base, data) {
     eq(`${name} the trade's action area withholds the order`, await page.locator('#detail .ss-action').getAttribute('data-ticket'), 'blocked');
     eq(`${name} no order block`, await count(page, '#detail pre[data-order]'), 0);
     await openAll(page, '#detail details');
-    check(`${name} the plan says why`, (await text(page, '#disc-plan')).includes('No order is offered'), 'plan');
+    // the reason is the one shared answer's, which names the state it is in
+    // (docs/app.js stateWords()); asserted by that word rather than by a fixed
+    // sentence, so the check is about the rule and not about its wording
+    const stateWord = { pending: 'waiting for tonight\u2019s run', failed: 'without a verdict' }[state] || 'stale';
+    check(`${name} the plan says why, in the state's own word`,
+      (await text(page, '#disc-plan')).includes(stateWord), (await text(page, '#disc-plan')).slice(0, 140));
+    eq(`${name} and offers no copy control`, await count(page, '#disc-plan [data-copy]'), 0);
     eq(`${name} the order sheet is empty`, await count(page, '#order-sheet tbody tr[data-ticker]'), 0);
     eq(`${name} page errors`, errors, []);
     if (shotsDir && name === 'stale2') await page.screenshot({ path: path.join(shotsDir, 'stale2-1280-dark.png'), fullPage: true });
@@ -2847,7 +2853,8 @@ async function checkSession(browser, base, full) {
 
   // ---- the compact area tells the two facts apart
   eq('the market area has one line for the data and one for the plan',
-    await page.locator('#market-facts > div').evaluateAll((e) => e.map((x) => x.dataset.fact)), ['regime', 'data', 'plan']);
+    await page.locator('#market-facts > div').evaluateAll((e) => e.map((x) => x.dataset.fact)), ['data', 'plan']);
+  check('with the regime beside the verdict it belongs to', !!(await count(page, '#cover-regime .sc-chip')), 'no regime chip on the verdict');
   const dataLine = await said(page, '#market-facts [data-fact="data"]'), planLine = await said(page, '#market-facts [data-fact="plan"]');
   check('the data line names the measured session and the publication time',
     dataLine.includes(dateWords(next.run.session)) && /published \d+:\d\d [AP]M ET/.test(dataLine), dataLine);
@@ -2940,10 +2947,15 @@ async function checkSession(browser, base, full) {
     eq('a reader inside the window has a copy control', await count(p3, '#disc-plan [data-copy]'), 1);
     // the window closes while the disclosure is open, and the page is NOT told
     await p3.evaluate((iso) => { window.__fake = new Date(iso).getTime(); }, WHEN.after[0]);
+    // Chromium's clipboard is shared across the contexts of one browser, so
+    // "it is empty" is no evidence on its own: a suite that copied earlier
+    // would have left its own text there. It is written first, and must be
+    // exactly what is read back.
+    await p3.evaluate(() => navigator.clipboard.writeText('nothing was copied').catch(() => {}));
     await p3.locator('#disc-plan [data-copy]').first().click();
-    await p3.waitForTimeout(200);
+    await p3.waitForTimeout(250);
     const clip = await p3.evaluate(() => navigator.clipboard.readText().catch(() => ''));
-    eq('pressing it after the window closed copies nothing', clip, '');
+    eq('pressing it after the window closed copies nothing', clip, 'nothing was copied');
     // the refusal is said in the action area, because catching the page up
     // rebuilds the disclosure the button was in
     const refused = await said(p3, '[data-copy-refused]');
@@ -3084,8 +3096,9 @@ async function checkRefresh(browser, base, full) {
   await serveWith(page, '**/full.json?*', box);
   check('the control is beside the publication line it re-reads',
     !!(await count(page, '#market-bar #market-refresh #check-updates')), 'no control in the market area');
-  check('and says what it does and does not do',
-    (await said2(page)).includes('Nothing is scanned or graded'), await said2(page));
+  check('and says what it does and does not do, without a line of its own at rest',
+    (await attr(page, '#check-updates', 'title')).includes('Nothing is scanned or graded') &&
+    (await page.locator('#refresh-said').isHidden()), await attr(page, '#check-updates', 'title'));
 
   // the reader's own state, set before anything is re-read
   await setLens(page, 'a');
