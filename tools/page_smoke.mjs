@@ -24,7 +24,10 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FIXTURES = path.join(ROOT, 'tests', 'fixtures', 'page');
-const VARIANTS = ['full', 'degraded', 'notrade', 'yellow', 'red', 'closed'];
+const VARIANTS = ['full', 'degraded', 'notrade', 'yellow', 'red', 'closed', 'next'];
+// the sequels a follow-through reading needs beside the nights: the same
+// market one session on, and that session re-run on later bars
+const SEQUELS = ['next', 'revised'];
 // The instant every fixture was generated for: Thursday 10 Sep 2026, 6:31 PM ET.
 const FRESH_NOW = '2026-09-10T22:31:00Z';
 const PENDING_NOW = '2026-09-11T20:30:00Z';   // Friday 4:30 PM ET, before the run
@@ -37,7 +40,7 @@ const TRADE_GRADES = ['A+', 'A'];   // the grades the run gives an order (pipeli
 const args = process.argv.slice(2);
 const shotsDir = args.includes('--shots') ? args[args.indexOf('--shots') + 1] : null;
 // --only <name[,name]> runs just those suites (variant names, or lens/compare/
-// evidence/map/reach/mobile/modes/following/volume/mapscale/ticket/states). It is for
+// evidence/map/reach/mobile/modes/following/through/volume/mapscale/ticket/states). It is for
 // judging a mutant in a minute; CI and the milestone gate run everything.
 const only = args.includes('--only') ? String(args[args.indexOf('--only') + 1] || '').split(',').filter(Boolean) : null;
 const runs = (name) => !only || only.includes(name);
@@ -138,6 +141,7 @@ const cardTickers = (page) => page.locator('#pick-list .ss-pick').evaluateAll((e
 // the Setup range: the base and a short run of context before it, as docs/app.js frames it (the smoke computes it again, on its own)
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const dateWords = (iso) => { const dt = new Date(iso + 'T12:00:00Z'); return WD[dt.getUTCDay()] + ' ' + dt.getUTCDate() + ' ' + MON[dt.getUTCMonth()]; }; // the page's spelling
+const dateShort = (iso) => { const dt = new Date(iso + 'T12:00:00Z'); return dt.getUTCDate() + ' ' + MON[dt.getUTCMonth()]; };
 function setupSessions(series, base) {
   const bs = base && base.start ? series.findIndex((x) => x.date === base.start) : -1, be = base && base.end ? series.findIndex((x) => x.date === base.end) : -1;
   if (bs < 0 || be < bs) return Math.min(60, series.length);
@@ -566,7 +570,14 @@ async function checkVariant(browser, base, variant, data) {
     const drawn = WALKED.includes(p.status) && p.last_close !== null && p.targets;
     eq(`${variant} ${p.ticker} benchmark ${drawn ? 'drawn' : 'not drawn'}`, await row.locator('.sc-benchmark').count(), drawn ? 1 : 0);
     if (p.status === 'uncertain') check(`${variant} ${p.ticker} uncertain row says the model holds nothing`, body.includes('UNCERTAIN') && body.includes('the model holds no position here'), body.slice(-200));
-    if (typeof p.sold === 'number' && p.sold > 0 && p.remaining > 0) check(`${variant} ${p.ticker} whole-share sale in the instruction`, body.includes(`${p.sold} of ${p.shares}`) && body.includes(`remaining ${p.remaining}`), p.instruction);
+    // the whole-share contract: the sentence names the sale in shares, and the
+    // record's own counts are whole and add up to the position. `remaining N`
+    // was asserted here until the `next` fixture showed the phrase belongs to
+    // ONE status's wording (sell_into_strength's), so the check passed on an
+    // incidental fact about the fixture rather than on the rule it names.
+    if (typeof p.sold === 'number' && p.sold > 0 && p.remaining > 0) check(`${variant} ${p.ticker} whole-share sale in the instruction`,
+      body.includes(`${p.sold} of ${p.shares}`) && Number.isInteger(p.sold) && Number.isInteger(p.remaining) && p.sold + p.remaining === p.shares,
+      `${p.instruction} [${p.sold}+${p.remaining} of ${p.shares}]`);
   }
   if (!data.open_plans.length) check(`${variant} says no open plans`, (await text(page, '#hold-rows')).includes('No open model plans'), 'hold');
   const record = await text(page, '#record-card');
@@ -940,10 +951,12 @@ async function checkFollowing(browser, base, data) {
   eq('the count control moves', await text(page, '#following-jump'), 'Following · 1');
   const card = () => text(page, `#following .ss-followed[data-ticker="${trade.ticker}"]`);
   check('the card keeps the saved plan levels', (await card()).includes('stop ' + usd(trade.plan.stop)) && (await card()).includes('limit ' + usd(trade.plan.entry_high)), await card());
-  check('the card shows the latest close with its date and no newer observation', (await card()).includes(usd(trade.close)) && (await card()).includes('no newer observation available'), await card());
+  check('and dates the status it archived', (await card()).includes(dateShort(data.run.session) + ' record'), await card());
+  check('the card shows the signal close under what was frozen', (await card()).includes(usd(trade.close)) && (await card()).includes('at the signal'), await card());
+  check('and says plainly that nothing later has been seen yet', (await card()).includes('since the signal') && (await card()).includes('No later close has been observed'), await card());
   const ownWords = () => page.locator(`#following .ss-followed[data-ticker="${trade.ticker}"]`).first().evaluate((c) => { const k = c.cloneNode(true); k.querySelectorAll('.ss-followed__note').forEach((n) => n.remove()); return k.innerText; });
   check('the card never asserts a fill or a holding in its own words', !/\b(bought|filled|held|sold|stopped out)\b/i.test(await ownWords()), await ownWords());
-  check('the record’s sentence on the card is quoted and labelled as the record’s', /the (record|model plan) says\s*“/.test(await card()), await card());
+  check('the record’s sentence on the card is quoted and labelled as the record’s', /the record says\s*“/.test(await card()), await card());
   await page.click('#detail .ss-follow button[data-follow-action="add"]').catch(() => {});
   eq('a second click is idempotent', await count(page, '#following .ss-followed'), 1);
   await page.click('#detail .ss-follow button[data-follow-action="edit"]');
@@ -1108,6 +1121,482 @@ async function checkStates(browser, base, data) {
   eq('missing record: the views still switch', await visibleView(page), ['view-record']);
   if (shotsDir) await page.screenshot({ path: path.join(shotsDir, 'no-record-1280-dark.png'), fullPage: true });
   await context.close();
+}
+
+
+// ------------------------------------------------------------ follow-through
+// A setup followed on one night, read back over the nights after it. The
+// records are the pipeline's own sequels (`next` and `revised`, the same
+// market one session on, and the second a re-run of that session on later
+// bars), so what is asserted here is what the run would actually write.
+const FOLLOW_KEY = 'spicystock:following:demo:v1';
+// a store written by the PREVIOUS version of this page: a v1 payload, with a
+// size the reader set and a symbol no record here carries
+const LEGACY = { version: 1, items: [{ id: 'burst:ZZZZ:2026-08-14:old-rules', ticker: 'ZZZZ', kind: 'burst', stage: 'bursts',
+  session: '2026-08-14', rules_version: 'old-rules', saved_at: '2026-08-14T22:40:00.000Z', suggested_shares: 3, reference_shares: 5, demo: true,
+  snapshot: { name: 'Legacy Holdings', close: 40.5, close_date: '2026-08-14', grade: 'A', score: 8.2, status: 'ticket', status_words: 'ticket',
+    levels: { trigger: 40.5, limit: 41.2, stop: 38.9 }, instruction: 'Buy on a print over $40.50.', summary: 'A tight base and a clean burst.' } }] };
+const seedStore = (page, payload) => page.evaluate(([k, v]) => { localStorage.setItem(k, JSON.stringify(v)); }, [FOLLOW_KEY, payload]);
+const readStore = (page) => page.evaluate((k) => JSON.parse(localStorage.getItem(k)), FOLLOW_KEY);
+const storeKeys = (page) => page.evaluate(() => Object.keys(localStorage).filter((k) => /following/.test(k)).sort());
+// what the page READS (the store is only rewritten when something is written,
+// so a repaired entry is repaired in the reading before it is on disk)
+const shownObs = (page, ticker) => page.evaluate((t) => {
+  const it = SCStock.follow.list().find((x) => x.ticker === t);
+  return it ? (it.observations || []).map((o) => [o.date, o.c]) : null;
+}, ticker);
+const obsOf = (page, ticker) => page.evaluate(([k, t]) => {
+  const it = JSON.parse(localStorage.getItem(k)).items.find((x) => x.ticker === t);
+  return it ? (it.observations || []).map((o) => [o.date, o.c, o.from_session, !!o.revised, o.basis]) : null;
+}, [FOLLOW_KEY, ticker]);
+const rerender = async (page, data, now) => { await page.evaluate(([d, n]) => { SCStock.render(d, new Date(n)); }, [data, now]); await page.waitForTimeout(320); };
+const followFrom = async (page, ticker) => {
+  await go(page, `#/explore/bursts/${ticker}`);
+  const add = page.locator('#detail .ss-follow button[data-follow-action="add"]');
+  if (await add.count()) { await add.click(); await page.waitForTimeout(220); }
+};
+const cardOf = (page, t) => said(page, `#following .ss-followed[data-ticker="${t}"]`);
+const openSaved = async (page, t) => {
+  const opened = await tap(page, `#following .ss-followed[data-ticker="${t}"] [data-open-saved]`, `${t}: the card offers its saved setup`);
+  if (opened) await page.waitForTimeout(280);
+  return opened;
+};
+const closeSaved = (page) => tap(page, '#saved-close', 'the sheet offers a way out');
+const savedTitle = (page) => said(page, '#saved-h2');
+// by identity, for a shelf holding two saved setups on one symbol
+const openSavedById = async (page, id, name) => { const ok = await tap(page, `#following .ss-followed[data-follow-id="${id}"] [data-open-saved]`, name); if (ok) await page.waitForTimeout(280); return ok; };
+
+async function checkFollowThrough(browser, base, full) {
+  console.log('-- follow-through: a saved setup after the night it was saved');
+  const next = JSON.parse(await readFile(path.join(FIXTURES, 'next.json'), 'utf8'));
+  const revised = JSON.parse(await readFile(path.join(FIXTURES, 'revised.json'), 'utf8'));
+  const NEXT_NOW = '2026-09-11T22:31:00Z', LATER_NOW = '2026-09-11T23:20:00Z';
+  const trade = full.trades[0], tradeRow = full.bursts.find((b) => b.ticker === trade);   // AAPL: the ticket, gone from the next record
+  const withheld = (full.cash_budget.cut || []).find((c) => c.kind === 'withheld').ticker;   // TSLA: kept for observation
+  const obsNext = next.observations.symbols[trade], obsRev = revised.observations.symbols[trade];
+  check('the sequels are a genuinely newer record', next.run.session > full.run.session, `${full.run.session} -> ${next.run.session}`);
+  check('and the revision is the SAME session on a different close', revised.run.session === next.run.session && obsRev.c !== obsNext.c, `${obsNext.c} -> ${obsRev.c}`);
+
+  // ---- a store written by the previous version of this page
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
+  await seedStore(page, LEGACY);
+  await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(300);
+  eq('a v1 store is upgraded in place', (await readStore(page)).version, 2);
+  eq('and the payload it replaced is kept beside it', await storeKeys(page), [FOLLOW_KEY, FOLLOW_KEY + '.previous']);
+  eq('verbatim', await page.evaluate((k) => JSON.parse(localStorage.getItem(k + '.previous')), FOLLOW_KEY), LEGACY);
+  const legacy = (await readStore(page)).items[0];
+  eq('the migrated setup keeps its size, its date and its levels',
+    [legacy.reference_shares, legacy.saved_at, legacy.snapshot.levels.stop, legacy.snapshot.grade], [5, LEGACY.items[0].saved_at, 38.9, 'A']);
+  eq('and has no chart, because none was saved then', [legacy.evidence, legacy.observations], [null, []]);
+  check('the reader is told the upgrade happened', (await text(page, '#following-status')).includes('carried over'), await text(page, '#following-status'));
+  // the copy is what makes the upgrade safe, so the case that matters is the
+  // one where it does NOT take: the old payload must be left exactly as it was
+  {
+    const { context: c3, page: p3, errors: e3 } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
+    await seedStore(p3, LEGACY);
+    await p3.evaluate((k) => {
+      const real = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key, v) { if (key === k + '.previous') return; return real.call(this, key, v); };
+    }, FOLLOW_KEY);
+    await p3.evaluate(() => { SCStock.render(SCStock.data, new Date('2026-09-10T22:31:00Z')); });
+    await p3.waitForTimeout(300);
+    eq('a copy that does not take leaves the old payload exactly as it was', await readStore(p3), LEGACY);
+    check('and says the list was left as it was', (await text(p3, '#following-status')).includes('left as it was'), await text(p3, '#following-status'));
+    eq('while the setups still read', await count(p3, '#following .ss-followed'), 1);
+    eq('copy-failure page errors', e3, []);
+    await c3.close();
+  }
+  await openSaved(page, 'ZZZZ');
+  check('its saved detail says the chart was not saved rather than drawing one',
+    (await said(page, '#saved [data-chart="unsaved"]')).includes('Original chart was not saved') && !(await count(page, '#saved [data-panel="saved"]')), await said(page, '#saved [data-chart="unsaved"]'));
+  check('and it is not a dead end: the levels and the reason are still there',
+    (await said(page, '#saved .ss-saved__facts')).includes(usd(38.9)) && (await said(page, '#saved .ss-saved__quote')).includes('tight base'), await said(page, '#saved .ss-saved__facts'));
+  // a chart may be RECOVERED for it, and only from the record that is this
+  // signal: the same kind, symbol, session and rules identity
+  await closeSaved(page); await page.waitForTimeout(250);
+  {
+    const { context: c4, page: p4, errors: e4 } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
+    const sameSignal = Object.assign({}, LEGACY.items[0], { id: `burst:${trade}:${full.run.session}:${full.app.rules_version}`,
+      ticker: trade, session: full.run.session, rules_version: full.app.rules_version,
+      snapshot: Object.assign({}, LEGACY.items[0].snapshot, { close: tradeRow.close, close_date: full.run.session }) });
+    const newerTicker = Object.assign({}, LEGACY.items[0], { id: `burst:${trade}:2026-08-14:${full.app.rules_version}`, ticker: trade });
+    await seedStore(p4, { version: 1, items: [sameSignal, newerTicker] });
+    await p4.reload(); await p4.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await p4.waitForTimeout(320);
+    const back = (await readStore(p4)).items;
+    const recovered = back.find((x) => x.id === sameSignal.id), other = back.find((x) => x.id === newerTicker.id);
+    eq('a v1 follow gets its chart back from the record that IS its signal',
+      [!!(recovered.evidence && recovered.evidence.series.length), recovered.evidence && recovered.evidence.recovered], [true, true]);
+    check('bounded at the signal session, like one saved then',
+      recovered.evidence.series.every((b) => b.date <= full.run.session), 'a bar after the signal was recovered');
+    eq('and a v1 follow for the same TICKER under another session gets none', other.evidence, null);
+    await openSavedById(p4, sameSignal.id, 'the recovered setup opens by its own identity');
+    check('the sheet says the chart was recovered rather than saved then',
+      (await said(p4, '#saved .sc-chart-caption')).includes('recovered from'), await said(p4, '#saved .sc-chart-caption'));
+    eq('recovery page errors', e4, []);
+    await c4.close();
+  }
+
+  // ---- a store this page does not understand is left alone
+  await seedStore(page, { version: 99, items: [{ id: 'x', ticker: 'FUTURE', kind: 'burst', session: '2026-09-10', snapshot: {} }] });
+  await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(300);
+  eq('a newer schema is read as nothing rather than overwritten', (await readStore(page)).version, 99);
+  check('and the reader is told why nothing can be saved', (await text(page, '#following-status')).includes('newer version'), await text(page, '#following-status'));
+  await page.click('#detail .ss-follow button[data-follow-action="add"]').catch(() => {});
+  await page.waitForTimeout(200);
+  eq('a follow attempted over it writes nothing', (await readStore(page)).version, 99);
+  check('and says so', (await text(page, '#detail .ss-follow')).includes('newer version'), await text(page, '#detail .ss-follow'));
+
+  // ---- an entry with no identity is set aside by name, and the rest survive
+  await seedStore(page, { version: 2, items: [LEGACY.items[0], { ticker: '', snapshot: {} }, Object.assign({}, LEGACY.items[0], { id: 'burst:YYYY:2026-08-14:old-rules', ticker: 'YYYY', observations: [{ date: 'not-a-date', c: 1 }, { date: '2026-08-20', c: 41 }] })] });
+  await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(300);
+  eq('a readable entry beside an unreadable one still shows', await count(page, '#following .ss-followed'), 2);
+  check('the unreadable one is named, not silently dropped', (await text(page, '#following-status')).includes('set aside'), await text(page, '#following-status'));
+  eq('and is kept where it can be recovered', await page.evaluate((k) => JSON.parse(localStorage.getItem(k + '.rejected')).items.length, FOLLOW_KEY), 1);
+  eq('a malformed observation is dropped where the page reads it', await shownObs(page, 'YYYY'), [['2026-08-20', 41]]);
+  check('and that is named too', (await text(page, '#following-status')).includes('no date or no price'), await text(page, '#following-status'));
+
+  // ---- the journey proper
+  await page.evaluate((k) => { ['', '.previous', '.rejected', '.corrupt'].forEach((s) => localStorage.removeItem(k + s)); }, FOLLOW_KEY);
+  await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(250);
+  const publicBefore = await page.evaluate(() => JSON.stringify([SCStock.data.scorecard, SCStock.data.trades, SCStock.data.cash_budget]));
+  const again = next.bursts[0].ticker;   // NVDA: a burst in BOTH records, so two signals, two identities
+  await followFrom(page, trade);
+  await followFrom(page, withheld);
+  await followFrom(page, again);
+  const saved = (await readStore(page)).items.find((x) => x.ticker === trade);
+  eq('a follow freezes the bars the record carried for that signal',
+    [saved.evidence.series.length, saved.evidence.series[saved.evidence.series.length - 1].date], [tradeRow.series.length, full.run.session]);
+  check('and only bars at or before the signal session', saved.evidence.series.every((b) => b.date <= full.run.session), 'a bar after the signal was saved');
+  // the STORE holds that bound too, not only the page that wrote it: an item
+  // whose saved chart has grown a later candle is read back without it, so a
+  // frozen original cannot acquire a bar the reader never saw
+  {
+    const grown = JSON.parse(JSON.stringify(await readStore(page)));
+    grown.items.forEach((it) => { if (it.evidence) it.evidence.series = it.evidence.series.concat([{ date: '2026-09-30', o: 1, h: 2, l: 1, c: 1.5, v: 1 }]); });
+    await seedStore(page, grown);
+    const back = await page.evaluate((t) => { const it = SCStock.follow.list().find((x) => x.ticker === t); return it.evidence.series.map((b) => b.date).slice(-2); }, trade);
+    check('a bar printed after the signal is dropped when the store is read', back.every((d) => d <= full.run.session), JSON.stringify(back));
+    await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(250);
+  }
+  eq('with the dated anchors drawn on them', saved.evidence.anchors.map((a) => a.key), ['base', 'burst', 'prior']);
+  eq('and no observation yet: the signal day is the baseline, not an observation', saved.observations, []);
+
+  // ---- a genuinely newer record
+  await rerender(page, next, NEXT_NOW);
+  check('the followed symbol has left the record', !(next.bursts || []).some((b) => b.ticker === trade), 'still a burst');
+  eq('one observation, dated by the market and not by the render', await obsOf(page, trade), [[obsNext.date, obsNext.c, next.run.session, false, 'unknown']]);
+  const card = await cardOf(page, trade);
+  check('the card answers what was followed and when its signal was', card.includes(trade) && card.includes(dateWords(full.run.session)), card.slice(0, 120));
+  check('what the latest observation is, and when', card.includes(usd(obsNext.c)) && card.includes(dateWords(obsNext.date)), card.slice(0, 240));
+  check('what changed against the signal close', card.includes(pctOf((obsNext.c / tradeRow.close - 1) * 100)), card.slice(0, 240));
+  check('and whether it is current for the record on screen', card.includes('tonight’s record'), card.slice(0, 260));
+  eq('the card marks it as current', await attr(page, `#following .ss-followed[data-ticker="${trade}"]`, 'data-observed'), 'current');
+  check('the archived status is dated, so it cannot read as a ticket available now',
+    card.includes(dateShort(full.run.session) + ' record'), card.slice(0, 160));
+  check('the movement is still labelled as recorded prices, not a result', card.includes('not your result'), card.slice(0, 400));
+  eq('one observation draws one point and no line', await page.locator(`#following .ss-followed[data-ticker="${trade}"] .ss-trail`).getAttribute('data-points'), '1');
+  eq('and never a joining line', await count(page, `#following .ss-followed[data-ticker="${trade}"] .ss-trail polyline, #following .ss-followed[data-ticker="${trade}"] .ss-trail path`), 0);
+  const updates = await said(page, '#following-updates');
+  check('the updates summary says what its count is counted against', /Latest:/.test(updates) && updates.includes(dateShort(next.run.session)), updates);
+  check('and never calls them alerts, trades or signals', !/alert|unread|new trade|buy signal/i.test(updates), updates);
+
+  // idempotence: a re-render, a reload and a theme change add nothing
+  const after = await obsOf(page, trade);
+  await rerender(page, next, NEXT_NOW);
+  eq('the same record rendered again adds no observation', await obsOf(page, trade), after);
+  await page.evaluate(() => { document.documentElement.setAttribute('data-theme', 'light'); });
+  await page.waitForTimeout(150);
+  eq('a theme change adds none either', await obsOf(page, trade), after);
+
+  // ---- the saved setup's own detail, for a symbol the record no longer has
+  await openSaved(page, trade);
+  eq('Open followed setup routes by the saved identity', await hash(page), '#/followed/' + encodeURIComponent(saved.id));
+  eq('and opens THAT setup, not tonight’s first card', await savedTitle(page), trade);
+  const facts = await said(page, '#saved .ss-saved__facts');
+  check('with the original levels, unchanged by the newer record',
+    facts.includes(usd(tradeRow.plan.stop)) && facts.includes(usd(tradeRow.plan.entry_high)) && facts.includes(usd(tradeRow.close)), facts.slice(0, 300));
+  check('the grade it was given THEN, named as that record’s', facts.includes(tradeRow.grade) && facts.includes('in that record'), facts.slice(0, 200));
+  eq('a chart drawn from the saved bars', await attr(page, '#saved [data-panel="saved"] .sc-chart--stock', 'data-ticker'), trade);
+  eq('and it does not dispose the detail’s own', await page.evaluate(() => SCStock.liveCharts()), 2);
+  const archived = await said(page, '#saved [data-archived-order]');
+  check('the instruction from that record is shown as dated history',
+    archived.includes(dateWords(full.run.session)) && /not an instruction for today/.test(archived), archived.slice(0, 260));
+  eq('no order can be placed from the sheet', await count(page, '#saved [data-copy-order], #saved [data-order-json]'), 0);
+  check('a symbol on no list tonight says so rather than offering another', (await said(page, '#saved [data-current-setup="none"]')).includes('no current setup'), await said(page, '#saved [data-current-setup="none"]'));
+  const since = await said(page, '#saved [data-saved="since"]');
+  check('the later observation is in its own section with its actual date', since.includes(usd(obsNext.c)) && since.includes(dateWords(obsNext.date)), since.slice(0, 200));
+  check('and the limitation is stated in full there', since.includes('nothing confirms'), since.slice(0, 400));
+  eq('the card and the detail reconcile to the same observation count', await count(page, '#saved [data-obs-row]'), 1);
+  await closeSaved(page); await page.waitForTimeout(280);
+
+  // ---- a NEWER signal for the same ticker must not be substituted
+  const savedAgain = (await readStore(page)).items.find((x) => x.ticker === again);
+  eq('the setup saved for this symbol is the EARLIER signal', savedAgain.session, full.run.session);
+  check('and tonight’s record carries a newer one for it', (next.bursts || []).some((b) => b.ticker === again), 'no newer signal to confuse it with');
+  await openSaved(page, again);
+  check('and the sheet offers the CURRENT setup as a separate, named thing',
+    (await said(page, '#saved [data-current-setup]')).length > 0 || (await count(page, `#saved [data-current-setup="${again}"]`)) === 1, await said(page, '#saved .ss-saved__foot'));
+  // the symbol IS in tonight's record, with a newer signal and newer bars, so
+  // this is where a chart drawn from the record instead of from the saved copy
+  // would show: the panel's own last bar must be the SAVED signal's
+  {
+    const head = await said(page, '#saved [data-panel="saved"] .ss-chart-panel__head');
+    check('the saved chart is the copy this browser froze, not tonight’s bars',
+      head.includes(dateWords(savedAgain.session)) && head.includes(usd(savedAgain.snapshot.close)), head.slice(0, 160));
+    const tonight = next.bursts.find((b) => b.ticker === again);
+    check('and tonight’s own last bar is NOT what it shows',
+      tonight.series[tonight.series.length - 1].date !== savedAgain.session
+        && !head.includes(usd(tonight.series[tonight.series.length - 1].c)), head.slice(0, 160));
+  }
+  await closeSaved(page); await page.waitForTimeout(250);
+
+  // ---- a same-session revision, then an older record
+  await rerender(page, revised, LATER_NOW);
+  eq('a different close on a session already observed is a revision, not a new day',
+    await obsOf(page, trade), [[obsRev.date, obsRev.c, revised.run.session, true, 'unknown']]);
+  check('and the card marks it', (await cardOf(page, trade)).includes('revised'), await cardOf(page, trade));
+  // An older record that carries a session ALREADY OBSERVED at a different
+  // price. The `full` night alone proves nothing here: every bar it holds for
+  // this symbol is at or before the signal, so the merge never reaches the
+  // rule -- a check that passed because a different rule rejected.
+  const late = JSON.parse(JSON.stringify(next));
+  late.run.session = '2026-09-15';
+  // its observation block and its open model plan still hold the 11 Sep bar at
+  // the price the `next` run published; leaving either in would have this
+  // later record re-publish a session the revision already corrected, which is
+  // the revision rule and not the one under test
+  delete late.observations.symbols[trade];
+  late.open_plans = (late.open_plans || []).filter((p) => p.ticker !== trade);
+  late.bursts.push(Object.assign({}, tradeRow, { series: [
+    { date: '2026-09-14', o: 118, h: 119, l: 117, c: 118.5, v: 1e6 },
+    { date: '2026-09-15', o: 119, h: 120, l: 118, c: 119.5, v: 1e6 }] }));
+  await rerender(page, late, '2026-09-15T22:31:00Z');
+  eq('a later record adds the sessions it carries', (await obsOf(page, trade)).map((r) => r[0]), [obsRev.date, '2026-09-14', '2026-09-15']);
+  const stale = JSON.parse(JSON.stringify(late));
+  stale.run.session = '2026-09-14';
+  stale.bursts[stale.bursts.length - 1].series = [{ date: '2026-09-14', o: 118, h: 119, l: 117, c: 111.11, v: 1e6 }];
+  await rerender(page, stale, '2026-09-14T22:31:00Z');
+  eq('an older record cannot replace a session a newer one already priced',
+    (await obsOf(page, trade)).map((r) => [r[0], r[1], r[2]]),
+    [[obsRev.date, obsRev.c, revised.run.session], ['2026-09-14', 118.5, '2026-09-15'], ['2026-09-15', 119.5, '2026-09-15']]);
+  await rerender(page, full, FRESH_NOW);
+  eq('and a record from before the signal contributes nothing at all', (await obsOf(page, trade)).length, 3);
+  eq('the card says the observation is newer than the record on screen', await attr(page, `#following .ss-followed[data-ticker="${trade}"]`, 'data-observed'), 'ahead');
+  check('in words', (await cardOf(page, trade)).includes('newer than this record'), await cardOf(page, trade));
+  eq('nothing followed reached the record', await page.evaluate(() => JSON.stringify([SCStock.data.scorecard, SCStock.data.trades, SCStock.data.cash_budget])), publicBefore);
+  check('and nothing followed reached the URL', !/ZZZZ|reference|shares/.test(await hash(page)), await hash(page));
+  eq('follow-through page errors', errors, []);
+  if (shotsDir) {
+    await page.evaluate(() => { document.documentElement.removeAttribute('data-theme'); });
+    await rerender(page, next, NEXT_NOW);
+    await page.locator('#following').screenshot({ path: path.join(shotsDir, 'following-through-1280.png') });
+    await openSaved(page, trade);
+    await page.locator('#saved').screenshot({ path: path.join(shotsDir, 'saved-setup-1280.png') });
+    await closeSaved(page); await page.waitForTimeout(200);
+  }
+  await context.close();
+  await checkFollowBasis(browser, base, full, next);
+  await checkFollowContext(browser, base, full, next);
+  await checkFollowStates(browser, base, full, next);
+}
+
+// The price basis, the observation bound, and the model plan's provenance:
+// each asked of a record built for the question, because no pipeline fixture
+// can carry a split or twenty-five sessions of one symbol.
+async function checkFollowBasis(browser, base, full, next) {
+  const trade = full.trades[0], tradeRow = full.bursts.find((b) => b.ticker === trade);
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
+  await followFrom(page, trade);
+
+  // a record that carries a session the saved bars also carry, priced the same
+  const same = JSON.parse(JSON.stringify(next));
+  same.bursts.push(Object.assign({}, tradeRow, { series: tradeRow.series.concat([{ date: next.run.session, o: 120, h: 121, l: 119, c: 120.5, v: 1e6 }]) }));
+  await rerender(page, same, '2026-09-11T22:31:00Z');
+  eq('a session recorded in both, priced the same, confirms the basis', (await obsOf(page, trade))[0][4], 'match');
+  check('and the change is shown plainly', (await cardOf(page, trade)).includes(pctOf((120.5 / tradeRow.close - 1) * 100)) && !/basis not confirmed/.test(await cardOf(page, trade)), await cardOf(page, trade));
+
+  // the same record with every earlier bar re-priced: a split, as the archive shows one
+  const split = JSON.parse(JSON.stringify(same));
+  split.bursts[split.bursts.length - 1].series = split.bursts[split.bursts.length - 1].series.map((b) => Object.assign({}, b, { o: b.o / 2, h: b.h / 2, l: b.l / 2, c: b.c / 2 }));
+  split.run.session = '2026-09-14';
+  split.observations.symbols[trade] = { date: '2026-09-14', o: 60, h: 61, l: 59, c: 60.2, v: 1e6, since: full.run.session };
+  await rerender(page, split, '2026-09-14T22:31:00Z');
+  const rows = await obsOf(page, trade);
+  eq('a session already observed printing a different close reads as a re-priced archive', rows[rows.length - 1][4], 'adjusted');
+  const adj = await said(page, `#following .ss-followed[data-ticker="${trade}"] [data-group="since"]`);
+  check('and no change is shown across it', !/[−+]\d+\.\d%/.test(adj), adj);
+  check('the limitation is disclosed instead', adj.includes('re-adjusted'), adj);
+  check('while the price and its date still are', adj.includes(usd(60.2)) && adj.includes(dateWords('2026-09-14')), adj);
+
+  // the bound, and the original beneath it
+  const many = JSON.parse(JSON.stringify(next));
+  const bars = [];
+  for (let i = 1; i <= 30; i++) { const d = new Date(Date.UTC(2026, 8, 11)); d.setUTCDate(d.getUTCDate() + i); bars.push({ date: d.toISOString().slice(0, 10), o: 100 + i, h: 101 + i, l: 99 + i, c: 100 + i, v: 1e6 }); }
+  many.run.session = bars[bars.length - 1].date;
+  many.bursts.push(Object.assign({}, tradeRow, { series: bars }));
+  await rerender(page, many, '2026-10-21T22:31:00Z');
+  const kept = await obsOf(page, trade);
+  eq('at most the newest OBSERVATION_MAX sessions are kept', [kept.length, kept[kept.length - 1][0]], [await page.evaluate(() => SCStock.follow.OBSERVATION_MAX), bars[bars.length - 1].date]);
+  const item = (await readStore(page)).items.find((x) => x.ticker === trade);
+  eq('and the original snapshot survives the bound untouched', [item.snapshot.close, item.snapshot.levels.stop, item.evidence.series.length],
+    [tradeRow.close, tradeRow.plan.stop, tradeRow.series.length]);
+  check('a session no record carried is simply absent, never filled in',
+    kept.every((r) => bars.some((b) => b.date === r[0])) && !kept.some((r) => r[0] === '2026-09-19'), JSON.stringify(kept.slice(0, 3)));
+
+  // the model plan: a ticker alone is not a signal
+  const plans = JSON.parse(JSON.stringify(next));
+  const mine = (plans.open_plans || []).find((p) => p.ticker === trade);
+  check('the sequel keeps an open model plan for the followed signal', !!mine, 'no open plan to test with');
+  await rerender(page, plans, '2026-09-11T22:31:00Z');
+  await openSaved(page, trade);
+  eq('a plan for the same session, kind and rules is attached to the setup', await count(page, '#saved [data-model-update="matched"]'), 1);
+  await closeSaved(page); await page.waitForTimeout(220);
+  const other = JSON.parse(JSON.stringify(plans));
+  other.open_plans.forEach((p) => { if (p.ticker === trade) p.picked = '2026-08-03'; });
+  await rerender(page, other, '2026-09-11T22:31:00Z');
+  await openSaved(page, trade);
+  eq('a plan picked on another session is shown apart, never as this one’s update', [await count(page, '#saved [data-model-update="matched"]'), await count(page, '#saved [data-model-update="apart"]')], [0, 1]);
+  check('and says which signal it is for', (await said(page, '#saved [data-model-update="apart"]')).includes(dateWords('2026-08-03')), await said(page, '#saved [data-model-update="apart"]'));
+  await closeSaved(page); await page.waitForTimeout(220);
+  const rules = JSON.parse(JSON.stringify(plans));
+  rules.app.rules_version = 'ffffffffffff';
+  await rerender(page, rules, '2026-09-11T22:31:00Z');
+  await openSaved(page, trade);
+  eq('a plan written under different rules is shown apart too', [await count(page, '#saved [data-model-update="matched"]'), await count(page, '#saved [data-model-update="apart"]')], [0, 1]);
+  check('naming both rule identities', (await said(page, '#saved [data-model-update="apart"]')).includes('ffffffff'), await said(page, '#saved [data-model-update="apart"]'));
+  eq('basis page errors', errors, []);
+  await context.close();
+}
+
+// The reader's place: opening a saved setup and coming back must leave the
+// lens, the pins, the selection, the scroll and the focus exactly as they were.
+async function checkFollowContext(browser, base, full, next) {
+  const trade = full.trades[0];
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
+  await followFrom(page, trade);
+  const others = full.bursts.filter((b) => b.ticker !== trade).slice(0, 2).map((b) => b.ticker);
+  for (const t of others) { await clickPick(page, t); await page.locator(`#pick-list .ss-pick[data-ticker="${t}"] [data-pin]`).click().catch(() => {}); await page.waitForTimeout(150); }
+  await setLens(page, 'a');
+  await clickPick(page, trade);
+  const beforeState = { lens: await lensNow(page), hash: await hash(page), pins: await count(page, '#compare-tray [data-pin-id], #compare-tray .ss-tray__item') };
+  // where the reader is when they press the button: the shelf, in view
+  await page.locator(`#following .ss-followed[data-ticker="${trade}"] [data-open-saved]`).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(200);
+  const scrollBefore = await page.evaluate(() => window.pageYOffset);
+  check('the shelf is scrolled to, not the top of the page', scrollBefore > 200, String(scrollBefore));
+  await page.locator(`#following .ss-followed[data-ticker="${trade}"] [data-open-saved]`).click();
+  await page.waitForTimeout(380);
+  eq('the sheet is over the page, not instead of it', [await count(page, '#saved[open]'), await visibleView(page)], [1, ['view-explore']]);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(400);
+  eq('Escape puts the reader back on the route they came from', await hash(page), beforeState.hash);
+  eq('with the same lens', await lensNow(page), beforeState.lens);
+  eq('the same pins', await count(page, '#compare-tray [data-pin-id], #compare-tray .ss-tray__item'), beforeState.pins);
+  check('and the same scroll', Math.abs((await page.evaluate(() => window.pageYOffset)) - scrollBefore) < 40, `${await page.evaluate(() => window.pageYOffset)} vs ${scrollBefore}`);
+  eq('focus is back on the control that opened it', await page.evaluate(() => (document.activeElement && document.activeElement.dataset.openSaved) || '(none)'), `burst:${trade}:${full.run.session}:${full.app.rules_version}`);
+  // a saved setup the lens hides is still reachable by its own route
+  await rerender(page, next, '2026-09-11T22:31:00Z');
+  await page.evaluate(() => { location.hash = '#/explore'; }); await page.waitForTimeout(200);
+  await go(page, '#/followed/' + encodeURIComponent(`burst:${trade}:${full.run.session}:${full.app.rules_version}`));
+  await page.waitForTimeout(350);
+  eq('a deep link opens the saved setup even when the symbol is in no list', [await count(page, '#saved[open]'), await savedTitle(page)], [1, trade]);
+  await closeSaved(page); await page.waitForTimeout(300);
+  check('and closing it leaves a route the page can show', /^#\/explore/.test(await hash(page)), await hash(page));
+  eq('context page errors', errors, []);
+  await context.close();
+}
+
+// The states a saved setup has to survive that no single page can show: a
+// second tab writing the same store, a store too full for the chart, the
+// keyboard alone, and the phone.
+async function checkFollowStates(browser, base, full, next) {
+  const trade = full.trades[0], other = full.bursts.find((b) => b.ticker !== trade).ticker;
+
+  // --- two tabs, one origin -------------------------------------------
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
+  const twoErrors = [];
+  await ctx.addInitScript(({ dataUrl, now }) => {
+    window.SCStock = { dataUrl, now };
+    try { localStorage.setItem('spicystock:lens:v1', JSON.stringify({ bursts: 'all', 'setting-up': 'all', sort: null })); } catch (e) { /* none */ }
+  }, { dataUrl: '/tests/fixtures/page/full.json', now: FRESH_NOW });
+  const a = await ctx.newPage(), b = await ctx.newPage();
+  a.on('pageerror', (e) => twoErrors.push('a: ' + e.message));
+  b.on('pageerror', (e) => twoErrors.push('b: ' + e.message));
+  for (const p of [a, b]) {
+    await p.goto(base + `/docs/index.html#/explore/bursts/${trade}`, { waitUntil: 'load' });
+    await p.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'));
+  }
+  await a.click('#detail .ss-follow button[data-follow-action="add"]'); await a.waitForTimeout(250);
+  await b.waitForTimeout(400);
+  eq('a follow in one tab shows in the other without a reload', await count(b, '#following .ss-followed'), 1);
+  // the second tab follows something else; the first must not write its stale list back
+  await go(b, `#/explore/bursts/${other}`);
+  await b.click('#detail .ss-follow button[data-follow-action="add"]'); await b.waitForTimeout(300);
+  await a.click('#detail .ss-follow button[data-follow-action="edit"]');
+  await a.fill('#detail .ss-follow__form input', '9');
+  await a.click('#detail .ss-follow__form button[type="submit"]'); await a.waitForTimeout(300);
+  const both = await a.evaluate((k) => JSON.parse(localStorage.getItem(k)).items.map((x) => [x.ticker, x.reference_shares]), FOLLOW_KEY);
+  eq('an edit in one tab keeps the other tab’s follow', both.length, 2);
+  eq('and applies to its own', both.find((r) => r[0] === trade)[1], 9);
+  eq('two-tab page errors', twoErrors, []);
+  await ctx.close();
+
+  // --- a store with no room for the chart -------------------------------
+  {
+    const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
+    // refuse any write over a few kilobytes, which is a quota as a browser reports one
+    await page.evaluate(() => {
+      window.__setItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (k, v) {
+        if (/following/.test(k) && String(v).length > 4000) { const e = new Error('quota'); e.name = 'QuotaExceededError'; throw e; }
+        return window.__setItem.call(this, k, v);
+      };
+    });
+    await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(300);
+    eq('a store with no room still saves the setup', await attr(page, '#detail .ss-follow', 'data-follow'), 'following');
+    eq('without its chart', await page.evaluate((k) => JSON.parse(localStorage.getItem(k)).items[0].evidence, FOLLOW_KEY), null);
+    await openSaved(page, trade);
+    check('and the sheet says so rather than drawing one from tonight',
+      (await said(page, '#saved [data-chart="unsaved"]')).includes('Original chart was not saved'), await said(page, '#saved [data-chart="unsaved"]'));
+    await page.evaluate(() => { Storage.prototype.setItem = window.__setItem; });
+    eq('full-store page errors', errors, []);
+    await context.close();
+  }
+
+  // --- the keyboard alone, and the phone --------------------------------
+  {
+    const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { lens: 'all', height: 844, hash: `#/explore/bursts/${trade}` });
+    await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(250);
+    await rerender(page, next, '2026-09-11T22:31:00Z');
+    eq('the phone stacks the shelf full-width', await page.locator('#following .ss-followed').first().evaluate((n) => Math.round(n.getBoundingClientRect().width) > window.innerWidth * 0.75), true);
+    eq('and nothing scrolls sideways', await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0);
+    // reach the saved setup by keyboard only
+    await page.locator(`#following .ss-followed[data-ticker="${trade}"] [data-open-saved]`).focus();
+    await page.keyboard.press('Enter'); await page.waitForTimeout(400);
+    eq('Enter on the card’s button opens the saved setup', [await count(page, '#saved[open]'), await savedTitle(page)], [1, trade]);
+    check('and the focus is inside the sheet', await page.evaluate(() => !!document.activeElement.closest('#saved')), await active(page));
+    await page.keyboard.press('Escape'); await page.waitForTimeout(400);
+    eq('Escape closes it', await count(page, '#saved[open]'), 0);
+    eq('phone sideways after the sheet', await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0);
+    if (shotsDir) await page.locator('#following').screenshot({ path: path.join(shotsDir, 'following-through-390.png') });
+    eq('phone follow-through page errors', errors, []);
+    await context.close();
+  }
+
+  // --- a reference size the reader set survives an observation -----------
+  {
+    const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
+    await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(220);
+    await page.click('#detail .ss-follow button[data-follow-action="edit"]');
+    await page.fill('#detail .ss-follow__form input', '17');
+    await page.click('#detail .ss-follow__form button[type="submit"]'); await page.waitForTimeout(260);
+    await rerender(page, next, '2026-09-11T22:31:00Z');
+    eq('a reference size survives the observations that arrive after it',
+      await page.evaluate((k) => JSON.parse(localStorage.getItem(k)).items[0].reference_shares, FOLLOW_KEY), 17);
+    check('and is still labelled as the reader’s', (await cardOf(page, trade)).includes('your reference size 17 shares'), await cardOf(page, trade));
+    eq('states page errors', errors, []);
+    await context.close();
+  }
 }
 
 // playwright is not a repo dependency: a global install beside node (the
@@ -2264,7 +2753,7 @@ async function checkReach(browser, base, data) {
 async function main() {
   const chromium = await loadChromium();
   if (!chromium) { console.log('playwright is not installed: npm install --no-save playwright'); process.exit(1); }
-  for (const v of VARIANTS) if (!existsSync(path.join(FIXTURES, `${v}.json`))) { console.log(`missing fixture ${v}.json -- run python tools/make_fixture.py`); process.exit(1); }
+  for (const v of VARIANTS.concat(SEQUELS)) if (!existsSync(path.join(FIXTURES, `${v}.json`))) { console.log(`missing fixture ${v}.json -- run python tools/make_fixture.py`); process.exit(1); }
   const { server, base } = await serve();
   const browser = await chromium.launch();
   try {
@@ -2284,6 +2773,7 @@ async function main() {
     if (runs('volume')) await checkVolumeReadings(browser, base, full);
     if (runs('mapscale')) await checkMapScale(browser, base, full);
     if (runs('following')) await checkFollowing(browser, base, full);
+    if (runs('through')) await checkFollowThrough(browser, base, full);
     if (runs('ticket')) await checkTicketPrices(browser, base, full);
     if (runs('states')) await checkStates(browser, base, full);
   } finally {

@@ -13,6 +13,10 @@
    Card options (PRODUCT-SPEC section 6), every one off by default so the
    geometry check in tools/chart_check.mjs reads the same numbers it always did:
      futureSlots: 6      empty bar-widths right of the last bar ("tomorrow")
+     futureLabel         what those slots are called; the default is
+                         "tomorrow -> ", which is only true of a chart drawn
+                         from tonight's record. A chart of an ARCHIVED signal
+                         names the session after that signal instead.
      targetRuler: true   the target band is a right-gutter ruler with two ticks
                          ("+8%", "+20%") clamped to the scale and never widens it
      card: true          card labels: the buy zone is the accent fill from the
@@ -178,6 +182,7 @@
     burstIndex = burstIndex !== null && burstIndex >= 0 && burstIndex < n && bars[burstIndex].candle ? Math.floor(burstIndex) : null;
     var card = !!options.card, ruler = !!options.targetRuler;
     var futureSlots = Math.max(0, Math.floor(num(options.futureSlots) || 0));
+    var futureLabel = typeof options.futureLabel === 'string' && options.futureLabel ? options.futureLabel : 'tomorrow \u2192';
     var upDays = Math.max(0, Math.floor(num(options.upDays) || 0));
     var volRatio = num(options.burstVolumeRatio), rangeExp = num(options.rangeExpansion), volAvgN = num(options.volumeAvg);
 
@@ -482,7 +487,7 @@
     if (card && future) {
       var ty0 = plot.top + 10;
       if (entryG && entryG.y1 < ty0 + 8) ty0 = r1(Math.min(plot.bottom - 4, entryG.y2 + 14));
-      tomorrow = { x: r1(future.x + 4), y: ty0, text: 'tomorrow →' };
+      tomorrow = { x: r1(future.x + 4), y: ty0, text: futureLabel };
     }
     if (card && volAvgN !== null && volAvgN >= 1) {
       var vols = [], vpts = [], vlast = null;

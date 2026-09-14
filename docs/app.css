@@ -530,7 +530,7 @@
 .ss-following__empty { padding: var(--sc-s3); border: 1px dashed var(--sc-border-strong); border-radius: var(--sc-r-md); color: var(--sc-text-2); font-size: var(--sc-text-sm); }
 .ss-followed { border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); background: var(--sc-raised); padding: var(--sc-s2) var(--sc-s3); display: flex; flex-direction: column; gap: 6px; }
 .ss-followed__row { display: flex; align-items: center; gap: var(--sc-s2); flex-wrap: wrap; }
-.ss-followed__row .sc-chip { margin-left: auto; }
+.ss-followed__chips { margin-left: auto; display: flex; justify-content: flex-end; gap: 5px; flex-wrap: wrap; }
 .ss-followed__ticker { font: 700 var(--sc-text-lg)/1.2 var(--sc-font-mono); color: var(--sc-heading); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--sc-border-strong); }
 .ss-followed__meta { font: 500 11px/1.6 var(--sc-font-mono); color: var(--sc-text-2); }
 .ss-followed dl { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin: 0; font-size: var(--sc-text-sm); }
@@ -540,7 +540,79 @@
 .ss-followed__note-label { font: 500 10.5px/1.6 var(--sc-font-mono); color: var(--sc-text-3); margin-right: 4px; }
 .ss-followed__note { margin: 0; font-size: var(--sc-text-sm); color: var(--sc-text-2); }
 .ss-followed__actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+/* the two halves of a followed card: what was frozen, and what has been seen
+   since. The grouping IS the distinction, so neither needs a paragraph. */
+.ss-followed__group { display: flex; flex-direction: column; gap: 4px; padding: 6px var(--sc-s2); border: 1px solid var(--sc-border); border-radius: var(--sc-r-sm); background: var(--sc-surface); }
+.ss-followed__group[data-group="since"] { background: var(--sc-bg); }
+.ss-followed__group > .sc-eyebrow { color: var(--sc-text-3); }
+.ss-followed__group p { margin: 0; }
+.ss-followed__levels { font: 500 var(--sc-text-sm)/1.5 var(--sc-font-mono); color: var(--sc-text); }
+.ss-followed__size, .ss-followed__caveat, .ss-followed__limit { font-size: var(--sc-text-sm); color: var(--sc-text-2); }
+.ss-followed__latest { display: flex; align-items: baseline; gap: var(--sc-s2); flex-wrap: wrap; }
+.ss-followed__latest strong { font: 700 var(--sc-text-lg)/1.2 var(--sc-font-mono); color: var(--sc-heading); }
+.ss-followed__latest--none { font-size: var(--sc-text-sm); color: var(--sc-text-2); }
+.ss-followed__when { font: 500 11px/1.6 var(--sc-font-mono); color: var(--sc-text-2); }
+/* direction, stated quietly: a colour on the number and nothing that flashes */
+.ss-followed__move { font: 600 var(--sc-text-sm)/1.5 var(--sc-font-mono); color: var(--sc-text-2); }
+.ss-followed__move[data-dir="up"] { color: var(--sc-good); }
+.ss-followed__move[data-dir="down"] { color: var(--sc-danger); }
+.ss-followed[data-observed="older"] .ss-followed__group[data-group="since"] { border-style: dashed; }
+/* the observed trail: dots at their own dates and never a line between them,
+   because a line would claim the sessions nothing was observed for */
+.ss-trail { margin: 2px 0 0; display: flex; flex-direction: column; gap: 2px; }
+.ss-trail__svg { width: 100%; height: 46px; overflow: visible; }
+.ss-trail__base { stroke: var(--sc-border-strong); stroke-width: 1; stroke-dasharray: 3 3; }
+.ss-trail__signal { fill: var(--sc-surface); stroke: var(--sc-text-3); stroke-width: 1.5; }
+.ss-trail__dot { fill: var(--sc-text-2); }
+.ss-trail__dot[data-dir="up"] { fill: var(--sc-good); }
+.ss-trail__dot[data-dir="down"] { fill: var(--sc-danger); }
+.ss-trail figcaption { font-size: 11px; }
+/* the Following jump control: the count, and under it what the count is
+   counted against -- never a badge that reads as unread mail */
+.ss-updates { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ss-updates__line { font: 500 10.5px/1.5 var(--sc-font-mono); color: var(--sc-text-3); }
+
+/* ---------------------------------------------------------------- the saved setup's own sheet */
+.ss-saved { width: min(880px, calc(100vw - 32px)); max-height: min(92vh, 1040px); padding: 0; border: 1px solid var(--sc-border-strong); border-radius: var(--sc-r-lg); background: var(--sc-bg); color: var(--sc-text); box-shadow: var(--sc-shadow-pop); }
+.ss-saved::backdrop { background: var(--sc-scrim, rgba(0, 0, 0, .6)); }
+.ss-saved__wrap { display: flex; flex-direction: column; gap: var(--sc-s3); padding: var(--sc-s3); max-height: inherit; overflow-y: auto; }
+.ss-saved__wrap > * { flex: 0 0 auto; }   /* a scrolling column must not shrink its own rows */
+.ss-saved__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sc-s2); flex-wrap: wrap; }
+.ss-saved__head h2 { margin: 2px 0 0; display: flex; align-items: baseline; gap: var(--sc-s2); flex-wrap: wrap; font: 700 clamp(20px, 2.4vw, 26px)/1.15 var(--sc-font-display); letter-spacing: -.02em; color: var(--sc-heading); }
+.ss-saved__name { font: 400 var(--sc-text-sm)/1.4 var(--sc-font-body); color: var(--sc-text-2); }
+.ss-saved__chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.ss-saved__note { margin: 0; font-size: var(--sc-text-sm); color: var(--sc-text); padding: 6px var(--sc-s2); border-left: 2px solid var(--sc-accent); background: var(--sc-surface); border-radius: 0 var(--sc-r-sm) var(--sc-r-sm) 0; }
+.ss-saved__section { display: flex; flex-direction: column; gap: var(--sc-s2); padding: var(--sc-s3); border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); background: var(--sc-surface); }
+.ss-saved__section[data-saved="since"] { background: var(--sc-bg); }
+.ss-saved__section > h3 { margin: 0; color: var(--sc-text-3); }
+.ss-saved__section > * { flex: 0 0 auto; }
+.ss-saved__lede, .ss-saved__limit { margin: 0; font-size: var(--sc-text-sm); color: var(--sc-text-2); }
+.ss-saved__facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px var(--sc-s3); margin: 0; font-size: var(--sc-text-sm); }
+.ss-saved__facts > div { display: grid; grid-template-columns: 9em minmax(0, 1fr); gap: 2px var(--sc-s2); align-items: baseline; }
+.ss-saved__facts dt { color: var(--sc-text-3); font: 500 10.5px/1.6 var(--sc-font-mono); }
+.ss-saved__facts dd { margin: 0; color: var(--sc-text); }
+.ss-saved__quote { margin: 0; font-size: var(--sc-text-sm); color: var(--sc-text-2); }
+.ss-saved__limits { margin: 0; padding-left: 1.1em; font-size: var(--sc-text-sm); color: var(--sc-text-2); }
+.ss-saved__archived { display: flex; flex-direction: column; gap: 2px; padding: 6px var(--sc-s2); border: 1px dashed var(--sc-border-strong); border-radius: var(--sc-r-sm); }
+.ss-saved__archived p { margin: 0; }
+.ss-saved__order { font-size: var(--sc-text-sm); color: var(--sc-text-2); }
+.ss-saved__latest { display: flex; align-items: baseline; gap: var(--sc-s2); flex-wrap: wrap; margin: 0; }
+.ss-saved__latest strong { font: 700 clamp(18px, 2vw, 22px)/1.2 var(--sc-font-mono); color: var(--sc-heading); }
+.ss-saved__latest--none { font-size: var(--sc-text-sm); color: var(--sc-text-2); }
+.ss-saved__obs { border: 1px solid var(--sc-border); border-radius: var(--sc-r-sm); background: var(--sc-surface); }
+.ss-saved__model { display: flex; flex-direction: column; gap: 2px; padding: 6px var(--sc-s2); border: 1px solid var(--sc-border); border-radius: var(--sc-r-sm); background: var(--sc-surface); }
+.ss-saved__model p { margin: 0; font-size: var(--sc-text-sm); }
+.ss-saved__foot { display: flex; align-items: center; gap: var(--sc-s2); flex-wrap: wrap; }
+.ss-saved__foot .sc-hint { flex: 1 1 260px; margin: 0; }
 @media (max-width: 720px) {
   .ss-map__surface { min-height: 260px; }
   .ss-map__axis-title { font-size: 11px; }
+  .ss-following__list { grid-template-columns: minmax(0, 1fr); }
+  .ss-saved { width: 100vw; max-width: 100vw; max-height: 100vh; border-radius: 0; border: 0; }
+  .ss-saved__wrap { padding: var(--sc-s2); gap: var(--sc-s2); }
+  .ss-saved__section { padding: var(--sc-s2); }
+  .ss-saved__facts { grid-template-columns: minmax(0, 1fr); }
+  .ss-saved__facts > div { grid-template-columns: 8em minmax(0, 1fr); }
+  /* a basis written for a row becomes a height in a column */
+  .ss-saved__foot .sc-hint { flex: 0 0 auto; }
 }

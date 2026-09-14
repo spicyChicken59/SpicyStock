@@ -182,14 +182,42 @@ everywhere (`volumeRatio()`: the row's own field, the scan's measurement
 for every burst since the dollar scan carried it; for a record from before
 that, run 46 and earlier, the checklist's two-place copy, said to be the
 checklist's in the measurements; else missing and said so, zero a value).
-Following (`docs/app-follow.js`) is a shelf at the end of Explore: one
-click keeps a setup's own snapshot and suggested whole-share quantity in
-this browser only (`spicystock:following:v1`, versioned, keyed by kind,
-symbol, session and rules identity, a corrupt store set aside), an
-optional reference size is labelled the reader's, a later observation is
-read off the record's `observations` block (`pipeline.observations()`, the
-newest archived bar per signal name for `OBSERVATION_DAYS`), and nothing
-of it reaches the record, the mail or the scorecard. A page over a fixture
+Following (`docs/app-follow.js`, payload version 2) is a shelf at the end
+of Explore, and a saved setup outlives the record it came from: one click
+freezes the setup's own snapshot, its suggested whole-share quantity AND
+the evidence the record carried for that signal -- the archived bars up to
+the signal session, capped at `EVIDENCE_BARS`, and the dated anchors drawn
+on them -- in this browser only (`spicystock:following:v1`, keyed by kind,
+symbol, session and rules identity; a corrupt store set aside, an entry
+with no identity set aside by name, a v1 payload upgraded only after it has
+been copied beside itself and the new one has read back, a payload from a
+FUTURE version left untouched and every write to it refused). Each record
+loaded afterwards contributes at most one observation per market DATE
+(`recordObservations()` over `recordBarsFor()`: the archived series, the
+`observations` block, the record's own rows, the open plan -- fullest source
+wins the date), so a re-render, a reload and a theme change add none; an
+OLDER record never replaces a newer observation; a different close on a
+date already observed is a REVISION of that trading day carrying what it
+replaced; a session no record carried stays missing; `OBSERVATION_MAX`
+dates are kept and the original is not one of them. `basisOf()` asks the
+bars rather than assuming: a session both records hold, priced the same, is
+`match`; an EARLIER session whose close has moved means the archive was
+re-priced since (a split does that) and the change is withheld with the
+reason; nothing in common is `unknown`, said so, and the change still
+shown. `#/followed/<identity>` opens the saved setup's own sheet over
+whatever the reader was on -- *At the signal* (the frozen chart through the
+same `chartPanel()`, the levels, the grade THAT record gave, its
+limitations, and its instruction shown as dated history) against *Since the
+signal* (the observed closes, their dates, their sources and their
+revisions) -- and never substitutes tonight's setup for it: a current
+signal for the same symbol is a separate, named link, and a symbol on no
+list tonight says so. `recoverEvidence()` gives a v1 follow its chart back
+only from a record that IS its signal, never from a newer same-ticker one.
+`modelUpdateOf()` attaches the record's open model plan only on the same
+session, the same family and the same rules identity; anything else is
+named as another signal's. An optional reference size is labelled the
+reader's, and nothing of any of it reaches the record, the mail, the
+scorecard or the URL. A page over a fixture
 says so: `data-ss-demo`, a chip, a notice and a marked simulated
 chart-reader reply.
 
@@ -208,8 +236,8 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-What is measured offline: 1082 tests, the chart check, and the page smoke
-over six fixtures walked through every view, stock, lens, search, the
+What is measured offline: 1086 tests, the chart check, and the page smoke
+over eight fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
 keyboard, deep links
@@ -1150,6 +1178,78 @@ Resend, and any trading edge.
 
 **Next action.** The method's own: on a green or yellow session dispatch
 `evening.yml` with `dry_run=true` and reconcile the artifact against
+`entry_limit_study.py`'s green-night line, 52 / 0 / 50 / 47.
+
+## Checkpoint, 14 Sep 2026 — a followed setup that outlives its record
+
+**Revision.** Branch `claude/spicystock-follow-through-clqeb8` from `main` at
+`e0f68d9` (the merge of #58), clean and empty at that tip; two commits on it,
+pushed as **#59**. `docs/data.json`, `docs/picks.json` and the vendored
+`docs/design-system/` are untouched to the byte; no sibling repository was
+written; nothing was merged, deployed, dispatched or mailed.
+
+**Reproduced first, over two records** (`scratchpad/repro/follow_repro.mjs` at
+`e0f68d9`): a setup followed on the `full` night saved no chart and no
+observation history, there was no way into a saved setup by its identity, and
+*Open chart* on the followed AAPL — a symbol that had LEFT the newer record —
+navigated to **NVDA**, silently, because `routeHash()` looks the id up in
+tonight's model and drops the ticker when it is not there. The same session
+re-run on later bars rewrote −5.5% to −5.2% with nothing saying it was one
+trading day read twice; an OLDER record put the card back to "no newer
+observation available", losing the 11 September close and claiming none
+existed. The archived ticket chip and the order sentence read as current on a
+night the symbol was in no scan.
+
+**The records that made it measurable.** `make_fixture.py` writes two sequels
+over the docs the `full` night wrote, so each inherits its record and its
+picks as a real night does: `next` (Friday — the ticket and the withheld setup
+gone, AAPL closing under the stop its own plan named, NVDA bursting again, the
+coil breaking out into *Bursts*, NVDA carrying the night's one ticket) and
+`revised` (that same session on later bars, AAPL's close 37¢ off). Eight
+fixtures; the other six byte-identical.
+
+**Measured.** 1086 tests; 9 fixtures current through the real generator; chart
+check 182/182; **CI green on its own runners at `e7ba821`** — pytest, gitleaks
+and the `page` job, which is the chart check and the FULL smoke with
+`--shots`: **3364/3364** in 5 m 08 s, the new `through` suite (133 checks) the
+longest single one at 91 s.
+
+**The mutation pass, and a harness bug of mine.** Thirty-two mutants over the
+new rules. The runner assigned four repo copies BY INDEX while running four
+threads, so two mutants could share a copy and each `finally` restore erased
+the other's mutation — six false survivors, and most of an evening. Fixed (a
+queue: one copy held per mutant). Twenty-three died in that flawed pass; of
+the six reported survivors, three re-judged individually now die, and **three
+were real holes, each closed with the check it showed was missing**: "an older
+record cannot replace it" passed because a DIFFERENT rule rejected (every bar
+the `full` night holds for that symbol is at or before the signal, so the
+merge never reached the guard); the migration's read-back of its own COPY was
+never exercised at its failure point; and the STORE's bound on frozen bars was
+untested, the page-side filter being equivalent on any real record. **NOT
+run:** the remaining ~25 mutants under the fixed harness. That is a gap, not a
+pass.
+
+**One process failure worth recording.** A command of mine contained `git
+checkout -- .` and reverted every uncommitted file. All eleven were
+reconstructed from the session's own patches; the proof it is exact is that
+`make_fixture.py --check` reproduces both surviving fixtures byte-for-byte.
+Commit before running anything that can touch the tree.
+
+**Keep / fix / defer / omit.** Keep everything above. Fix if it bites:
+observations that ARE contiguous real OHLC could use the existing chart modes
+rather than the dotted trail (the trail is right for a sparse series and is
+what is built). Note for a later authorised promotion, NOT upstream now: the
+bounded sheet with a head strip and a scrolling column whose rows are
+`flex: 0 0 auto`, and the two-group card. Defer to Astra: the +4% ceiling
+against his 4% stop line; the <320 px overflow; the CLAUDE.md length gate,
+still unfailable. Omit: trade logging, a portfolio, execution.
+
+**Blockers: none. Not claimable**, unchanged: a live fetch, a real chart read,
+Resend, and any trading edge — this changes what a reader can still read a
+week later, not what wins.
+
+**Next action.** The method's own, untouched here: on a green or yellow session
+dispatch `evening.yml` with `dry_run=true` and reconcile the artifact against
 `entry_limit_study.py`'s green-night line, 52 / 0 / 50 / 47.
 
 ### NEXT BUILDER PROMPT

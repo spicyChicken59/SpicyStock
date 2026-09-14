@@ -576,6 +576,9 @@
   function chartOptionsFor(c, series, height) {
     const o = c.stage === 'bursts' ? burstChartOptions(c.row, series, height) : coilChartOptions(c.row, series, height);
     o.mode = prefs.mode; o.closeLine = prefs.closeLine; o.gutterLabels = true; o.head = false;
+    // "tomorrow" is only true of a chart drawn from tonight's record; a saved
+    // setup's chart is of a night that has already had its next session
+    if (text(c.signalSession)) o.futureLabel = 'the session after →';
     return o;
   }
   function burstChartOptions(b, series, height) {
@@ -825,6 +828,8 @@
   const state = { view: 'explore', stage: null, selected: { bursts: null, 'setting-up': null }, query: '', range: 60, notice: '', picksKey: null, detailKey: null, gesture: false,
     lens: { bursts: null, 'setting-up': null }, sort: 'rank', pins: [], pinAsk: null };
   let current = null, model = null, st = null, pendingNotice = '', pendingFocus = '', chooserOpener = null;
+  //: the route the reader was on before a saved setup was opened over it
+  let lastHash = '';
   let demo = false;   // the record is a pipeline-written fixture over a synthetic market
   const LEGACY = {
     hold: { view: 'record', anchor: 'hold' }, record: { view: 'record', anchor: 'record-card' }, breadth: { view: 'market' }, method: { view: 'method' },
@@ -838,6 +843,12 @@
     if (!hash || hash === '/') return { view: 'explore' };
     if (hash.charAt(0) === '/') {
       const parts = hash.split('/').filter(Boolean).map((p) => { try { return decodeURIComponent(p); } catch (e) { return p; } });
+      // A SAVED setup is named by its own identity, not by a stage and a
+      // ticker: the symbol may be in another stage tonight, under a newer
+      // signal, or in no list at all. `keepView` leaves the reader's view,
+      // lens and selection exactly where they were -- the sheet opens over
+      // them and closing it puts them back.
+      if (parts[0] === 'followed') return parts.length === 2 ? { followed: parts[1], keepView: true } : { view: 'explore', unknown: '#' + hash };
       if (VIEWS.indexOf(parts[0]) < 0) return { view: 'explore', unknown: '#' + hash };
       if (parts[0] !== 'explore') return parts.length > 1 ? { view: parts[0], unknown: '#' + hash } : { view: parts[0] };
       const out = { view: 'explore' };
@@ -865,10 +876,11 @@
   SCStock.navigate = navigate;
   const reducedMotion = () => !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const scrollTo = (node) => { if (node && node.scrollIntoView) node.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' }); };
+  const savedHash = (id) => '#/followed/' + encodeURIComponent(id);
   function applyRoute(route, first) {
     const previousView = state.view;
-    state.view = VIEWS.indexOf(route.view) >= 0 ? route.view : 'explore';
-    if (!model) { showView(false); return; }
+    state.view = route.keepView && VIEWS.indexOf(state.view) >= 0 ? state.view : (VIEWS.indexOf(route.view) >= 0 ? route.view : 'explore');
+    if (!model) { showView(false); if (route.followed) openSaved(route.followed, true); return; }
     state.notice = route.unknown ? 'There is no ' + route.unknown + ' on this page; showing ' + (route.view === 'explore' ? 'Explore' : cap(route.view)) + '.' : pendingNotice;
     pendingNotice = '';
     let canon = '#/' + state.view;
@@ -910,7 +922,12 @@
     }
     showView(!first && previousView !== state.view);
     if (state.view === 'explore') renderExplore();
+    // the saved setup keeps its own hash, so a bookmark reopens it; every
+    // other route is rewritten to the one it resolved to
+    if (route.followed) canon = savedHash(route.followed);
     if (w.location.hash !== canon && w.history && w.history.replaceState) { try { w.history.replaceState(null, '', canon); } catch (e) { /* a file: URL may refuse */ } }
+    if (!route.followed) lastHash = canon;
+    if (route.followed) openSaved(route.followed, first); else closeSaved();
     if (route.open) { const det = $(route.open); if (det) det.open = true; }
     if (route.open || route.anchor) { const target = $(route.anchor || route.open); if (target) scrollTo(target); }
   }
@@ -1227,9 +1244,12 @@
   // the signal session: the session the record was PUBLISHED FOR, never the
   // last bar in the frame -- a later observation appended to the series would
   // otherwise move the burst day onto a candle that never burst
+  // A SAVED setup carries its own session (`signalSession`), because the night
+  // it was archived is not tonight; a candidate of the loaded record has none
+  // and reads the run's.
   function signalDate(c) {
     const run = current.run || {};
-    const s = text(run.session);
+    const s = text(c.signalSession) || text(run.session);
     return s && idxOf(c.series, s) >= 0 ? s : null;
   }
   function evidenceItems(c) {
@@ -1322,7 +1342,9 @@
     opts = opts || {};
     const idp = opts.idPrefix || 'chart';
     const run = current.run || {}, all = c.series, last = all.length ? all[all.length - 1] : null;
-    const evid = evidenceItems(c);
+    // a saved setup brings the evidence the record carried the night it was
+    // archived; a candidate of the loaded record has the run's own
+    const evid = c.evidence && c.evidence.length ? c.evidence : evidenceItems(c);
     let live = null, host = null, chosen = null;
     const panelHeight = () => opts.height || chartHeight();
     const panel = el('figure', { 'class': 'ss-chart-panel', 'data-panel': idp, 'data-ticker': c.ticker, 'data-mode': prefs.mode, 'data-range': prefs.range });
@@ -1359,7 +1381,8 @@
     const rangeLine = el('p', { 'class': 'ss-chart-panel__range' }), refLine = el('p', { 'class': 'ss-chart-panel__refs', 'data-refs': '' });
     panel.appendChild(el('figcaption', { 'class': 'sc-chart-caption' }, [
       rangeLine, refLine,
-      el('p', { text: (all.length ? 'Alpaca ' + String(run.feed || '').toUpperCase() + ' daily bars, drawn from the same numbers as the plan' : 'No bars archived for ' + c.ticker) + (c.row.chart ? ' · ' : '.') }, c.row.chart ? [el('a', { 'class': 'sc-link--quiet', href: c.row.chart, text: 'the chart the grader saw' })] : null)
+      // a saved setup says where ITS bars came from; a candidate of the loaded record says where tonight's did
+      el('p', { text: (text(c.barsNote) || (all.length ? 'Alpaca ' + String(run.feed || '').toUpperCase() + ' daily bars, drawn from the same numbers as the plan' : 'No bars archived for ' + c.ticker)) + (c.row.chart ? ' · ' : '.') }, c.row.chart ? [el('a', { 'class': 'sc-link--quiet', href: c.row.chart, text: 'the chart the grader saw' })] : null)
     ]));
 
     // the marker in the CURRENT slice: the anchor is dates, so a range change
@@ -1878,11 +1901,26 @@
   }
 
   // ---------------------------------------------------------------- Following: a saved setup, in this browser
-  // The button saves the setup's own snapshot with its suggested whole-share
-  // quantity; one optional reference size is the reader's and changes
-  // nothing else. The shelf shows each saved setup against the newest bar the
-  // record carries for it (observations, else the record's own rows), and
-  // never says bought, filled, held, sold or stopped out.
+  // The button freezes the setup's own snapshot with its suggested whole-share
+  // quantity AND the evidence the record carried for that signal -- the bars
+  // up to the signal session and the dated anchors drawn on them -- so the
+  // setup stays readable long after its record is gone. One optional
+  // reference size is the reader's and changes nothing else. Every record
+  // loaded afterwards contributes at most one observation per market date;
+  // the original is never rewritten, and no sentence here says bought,
+  // filled, held, sold or stopped out.
+  function followEvidenceOf(c) {
+    const run = current.run || {}, app = current.app || {}, sig = signalDate(c) || text(run.session);
+    // only bars at or before the signal's own session: what was on the screen
+    // that night, never a candle that printed after it
+    const series = (c.series || []).filter((b) => b && text(b.date) && (!sig || b.date <= sig));
+    if (!series.length) return null;
+    return {
+      series: series.slice(-SCStock.follow.EVIDENCE_BARS),
+      anchors: evidenceItems(c).map((it) => ({ key: it.key, label: it.label, from: it.from, to: it.to, low: it.low, high: it.high, lede: it.lede, measured: it.measured })),
+      from: { session: text(run.session), rules_version: text(app.rules_version) }
+    };
+  }
   function followSetupOf(c) {
     const run = current.run || {}, app = current.app || {}, plan = c.plan || {}, t = plan.targets || {}, b = c.row;
     const burst = c.stage === 'bursts';
@@ -1890,6 +1928,7 @@
     return {
       ticker: c.ticker, kind: burst ? 'burst' : 'anticipation', stage: c.stage, session: run.session || '', rules_version: app.rules_version || '',
       suggested_shares: hasTicket ? plan.shares : null,
+      evidence: followEvidenceOf(c),
       snapshot: {
         name: c.name || '', close: isNum(b.close) ? b.close : null, close_date: run.session || '', grade: c.grade || null, score: isNum(c.score) ? c.score : null,
         status: c.status, status_words: statusWords(c.status)[0],
@@ -1898,30 +1937,226 @@
           stop: plan.stop, stop_basis: plan.stop_basis || null,
           target_low: t.low, target_high: t.high, target_low_pct: t.low_pct, target_high_pct: t.high_pct },
         order_line: text(plan.order_line), instruction: entryInstruction(plan), summary: burst ? sentence(firstSentence(text(b.summary).replace(/^[A-Z0-9.\-]+:\s*/, ''))) : pickReason(c),
-        withheld_reason: c.status !== 'ticket' ? text(c.reason) : ''
+        withheld_reason: c.status !== 'ticket' ? text(c.reason) : '',
+        limitations: savedLimitations(c)
       }
     };
   }
-  // the newest bar the record carries for a symbol: the observation block, else the record's own rows
-  function latestObservation(ticker) {
-    const obs = ((current.observations || {}).symbols || {})[ticker];
-    if (obs && text(obs.date) && isNum(obs.c)) return { date: obs.date, close: obs.c, source: 'observations' };
-    const run = current.run || {};
-    const b = (current.bursts || []).find((x) => x && x.ticker === ticker);
-    if (b && isNum(b.close) && run.session) return { date: run.session, close: b.close, source: 'burst' };
-    const r = ((current.watchlist || {}).top || []).concat((current.watchlist || {}).also_quiet || []).find((x) => x && x.ticker === ticker);
-    if (r && isNum(r.close) && run.session) return { date: run.session, close: r.close, source: 'watchlist' };
-    const o = (current.open_plans || []).find((x) => x && x.ticker === ticker);
-    if (o && isNum(o.last_close) && text(o.last_date)) return { date: o.last_date, close: o.last_close, source: 'open plan' };
-    return null;
+  // what the record itself said this setup could NOT show, frozen with it: a
+  // grade the checklist alone gave, a chart the reader never saw, a veto
+  function savedLimitations(c) {
+    const out = [], b = c.row || {}, cl = b.claude || {}, q = b.quality || {};
+    if (c.stage === 'bursts') {
+      if (cl.source !== 'claude') out.push('graded by the checklist alone; the chart reader did not answer for this name');
+      else if (cl.chart_seen === false) out.push('the chart reader answered without a chart');
+      (q.vetoes || []).forEach((v) => out.push('veto: ' + (VETO_WORDS[v] || words(v))));
+    } else out.push('anticipation names are measured, not graded: the record carries no pass or fail for a coil');
+    if (!(c.series || []).length) out.push('no daily bars were archived for it, so no chart was saved');
+    return out;
   }
-  const modelUpdateOf = (item) => (current.open_plans || []).find((o) => o && o.ticker === item.ticker && o.picked === item.session) || null;
+
+  // ------------------------------------------------- what the loaded record can say about a saved symbol
+  // Every dated bar the record carries for one ticker, in increasing order of
+  // how much of the bar it holds, so the fullest source wins its date. Nothing
+  // is fetched and nothing is derived: each entry is a number the run wrote.
+  function recordBarsFor(ticker) {
+    const run = current.run || {}, session = text(run.session), out = {};
+    const put = (date, o, h, l, c, v, source) => {
+      if (!text(date) || !isNum(c)) return;
+      out[date] = { date: date, o: isNum(o) ? o : null, h: isNum(h) ? h : null, l: isNum(l) ? l : null, c: c, v: isNum(v) ? v : null, source: source };
+    };
+    const p = (current.open_plans || []).find((x) => x && x.ticker === ticker);
+    if (p) put(text(p.last_date), null, null, null, p.last_close, null, 'the open model plan');
+    const wl = current.watchlist || {}, r = (wl.top || []).concat(wl.also_quiet || []).find((x) => x && x.ticker === ticker);
+    if (r) put(session, null, null, null, r.close, null, 'the record’s watchlist row');
+    const b = (current.bursts || []).find((x) => x && x.ticker === ticker);
+    if (b) put(session, b.open, b.high, b.low, b.close, b.volume, 'the record’s burst row');
+    const ob = ((current.observations || {}).symbols || {})[ticker];
+    if (ob) put(text(ob.date), ob.o, ob.h, ob.l, ob.c, ob.v, 'the record’s observation block');
+    STAGES.forEach((s) => {
+      const cand = model ? model.byId[s + ':' + ticker] : null;
+      (cand ? cand.series : []).forEach((x) => put(text(x.date), x.o, x.h, x.l, x.c, x.v, 'the record’s archived bars'));
+    });
+    return Object.keys(out).sort().map((k) => out[k]);
+  }
+  // Are the record's prices on the same footing as the ones this setup was
+  // saved under? The bars are asked, not assumed: a session BOTH already hold
+  // answers it. Same close, same basis. A different close on a session
+  // EARLIER than the one being published means every earlier bar has been
+  // re-priced since (a split does exactly that), and no comparison across it
+  // would be honest. Nothing in common, and the answer is that we do not know.
+  const BASIS_CENTS = 0.005;
+  function basisOf(item, bars, session) {
+    const known = {}, snap = item.snapshot || {};
+    ((item.evidence || {}).series || []).forEach((b) => { known[b.date] = b.c; });
+    (item.observations || []).forEach((o) => { known[o.date] = o.c; });
+    if (text(snap.close_date) && isNum(snap.close)) known[snap.close_date] = snap.close;
+    let seen = false;
+    for (let i = 0; i < bars.length; i++) {
+      const b = bars[i];
+      if (!(b.date in known)) continue;
+      if (Math.abs(known[b.date] - b.c) > BASIS_CENTS) { if (b.date < session) return 'adjusted'; }
+      else seen = true;
+    }
+    return seen ? 'match' : 'unknown';
+  }
+  // A setup saved before this page saved charts can have its ORIGINAL chart
+  // back -- but only from a record that IS that signal. `currentSetupFor().same`
+  // compares the whole identity (kind, symbol, session and rules), so a newer
+  // signal for the same ticker can never supply one, and an original already
+  // saved is never replaced.
+  function recoverEvidence() {
+    if (!model) return 0;
+    let items = [];
+    try { items = SCStock.follow.list(); } catch (e) { return 0; }
+    let n = 0;
+    items.forEach((it) => {
+      if (it.evidence) return;
+      const cur = currentSetupFor(it);
+      if (!cur || !cur.same) return;
+      const ev = followEvidenceOf(cur.candidate);
+      if (ev && SCStock.follow.attachEvidence(it.id, ev).attached) n++;
+    });
+    if (n) invalidateFollow();
+    return n;
+  }
+  // One pass per loaded record, over the whole shelf: a merge that changes
+  // nothing writes nothing, which is what makes a re-render, a reload and a
+  // theme change cost no observation.
+  function recordObservations() {
+    const run = current.run || {}, app = current.app || {}, session = text(run.session);
+    if (!session) return null;
+    let items = [];
+    try { items = SCStock.follow.list(); } catch (e) { return null; }
+    const updates = [];
+    items.forEach((it) => {
+      const bars = recordBarsFor(it.ticker);
+      if (bars.length) updates.push({ id: it.id, bars: bars, from_session: session, from_rules: text(app.rules_version), basis: basisOf(it, bars, session) });
+    });
+    if (!updates.length) return null;
+    const res = SCStock.follow.observe(updates);
+    if (res && res.changed) invalidateFollow();
+    return res;
+  }
+
+  // ------------------------------------------------- reading one saved setup
+  // What is known about whether the two records priced this symbol the same
+  // way, said in full where there is room (the saved detail) and in a few
+  // words where there is not (the card), so neither place invents certainty.
+  const BASIS_WORDS = {
+    match: '',
+    unknown: 'No session is recorded in both, so nothing confirms the two were priced the same way.',
+    adjusted: 'A session recorded for this symbol now prints a different close, so the archive has been re-priced since the signal; the two prices are not comparable and no change is shown.'
+  };
+  const BASIS_SHORT = { match: '', unknown: 'basis not confirmed', adjusted: 'prices re-adjusted since; no change shown' };
+  // Where the newest observation stands against the record ON SCREEN: it came
+  // from it, from a record NEWER than it (the page is showing an older one
+  // than this browser has already read), or from an earlier one and nothing
+  // since. The reader is told which, because "latest" alone would be a claim
+  // about the market rather than about what has been loaded here.
+  const STAND_WORDS = { current: ['tonight’s record', 'neutral'], ahead: ['newer than this record', 'warn'],
+    older: ['older than tonight', 'warn'], unknown: ['no record loaded', 'neutral'] };
+  function observationState(item) {
+    const snap = item.snapshot || {}, run = current.run || {}, session = text(run.session);
+    const obs = item.observations || [], latest = obs.length ? obs[obs.length - 1] : null;
+    const base = isNum(snap.close) && snap.close > 0 ? snap.close : null;
+    const out = { latest: latest, count: obs.length, base: base, baseDate: text(snap.close_date) || item.session,
+      stand: 'unknown', current: false, change: null, basis: latest ? latest.basis : null, limitation: '', coverage: '', brief: '' };
+    if (!latest) {
+      out.coverage = 'No later session has been observed for ' + item.ticker + ' in any record this page has loaded'
+        + (session ? ', tonight’s included' : '') + '; the setup is shown as it was saved.';
+      return out;   // the one line above already says it; a second would repeat it
+    }
+    const from = text(latest.from_session) || latest.date;
+    out.stand = !session ? 'unknown' : from === session ? 'current' : from > session ? 'ahead' : 'older';
+    out.current = out.stand === 'current';
+    if (latest.basis === 'adjusted') out.limitation = BASIS_WORDS.adjusted;
+    else if (base) out.change = (latest.c / base - 1) * 100;
+    if (latest.basis === 'unknown') out.limitation = BASIS_WORDS.unknown;
+    let short = '';
+    if (out.stand === 'older') {
+      out.coverage = 'Nothing newer: tonight’s record (' + dateWords(session) + ') carries no session for ' + item.ticker + ' after this one.';
+      short = 'nothing newer in tonight’s record';
+    } else if (out.stand === 'ahead') {
+      out.coverage = 'This close came from the ' + dateWords(from) + ' record, which is newer than the one on screen (' + dateWords(session) + '); the page is showing an older record than this browser has already read.';
+      short = 'from the ' + dateShort(from) + ' record; this page shows ' + dateShort(session);
+    } else if (out.stand === 'unknown') {
+      out.coverage = 'No record is loaded, so this is the newest observation this browser holds.';
+      short = 'no record loaded';
+    }
+    // the card's one line: the caveat that must never be dropped, then what
+    // is limited about this reading -- never the three paragraphs the saved
+    // detail has room for
+    out.brief = ['recorded closes, not your result', short, BASIS_SHORT[out.basis] || ''].filter(Boolean).join(' · ');
+    return out;
+  }
+  // The open model plan the record keeps for THIS signal. A ticker alone is
+  // not a signal: the plan must be for the same session and the same family,
+  // and it must have been written under the rules this setup was saved under.
+  // Anything else is named as another signal's and shown apart, never folded
+  // into the saved plan.
+  function modelUpdateOf(item) {
+    const app = current.app || {};
+    const same = (current.open_plans || []).filter((o) => o && o.ticker === item.ticker);
+    if (!same.length) return { plan: null, matched: false, why: '' };
+    const exact = same.find((o) => text(o.picked) === item.session && text(o.kind) === item.kind);
+    if (!exact) {
+      const other = same[0];
+      return { plan: null, matched: false, other: other,
+        why: 'The record keeps an open model plan for ' + item.ticker + ', but it was picked ' + dateWords(text(other.picked)) + ' — a different signal from this one, so it is not this setup’s.' };
+    }
+    if (text(app.rules_version) && text(item.rules_version) && app.rules_version !== item.rules_version) {
+      return { plan: null, matched: false, other: exact,
+        why: 'The record’s model plan for this signal was written under different rules (' + app.rules_version.slice(0, 8) + ' against the saved ' + item.rules_version.slice(0, 8) + '), so it is shown apart from the saved plan rather than as an update to it.' };
+    }
+    return { plan: exact, matched: true, why: '' };
+  }
+  // is this symbol in the loaded record at all, and is it THIS signal?
+  function currentSetupFor(item) {
+    if (!model) return null;
+    const c = model.byId[item.stage + ':' + item.ticker] || STAGES.map((s) => model.byId[s + ':' + item.ticker]).filter(Boolean)[0] || null;
+    if (!c) return null;
+    const run = current.run || {}, app = current.app || {};
+    const id = SCStock.follow.identity({ kind: c.stage === 'bursts' ? 'burst' : 'anticipation', ticker: c.ticker,
+      session: text(run.session), rules_version: text(app.rules_version) });
+    return { candidate: c, same: id === item.id, movedStage: c.stage !== item.stage };
+  }
+  // the archived status, said as the record's and dated, so it can never be
+  // read as a ticket available now
+  const archivedWords = (item) => (text((item.snapshot || {}).status_words) || 'no ticket') + ' · ' + dateShort(item.session) + ' record';
   let followStatus = null;
+  // A count of prices, not of alerts. It says what the number is counted
+  // against -- tonight's session -- because "3 updates" beside a stock list
+  // would read as three new trades, which is the one thing it is not.
+  function updatesSummary(items) {
+    const session = text((current.run || {}).session);
+    let fresh = 0, older = 0, ahead = 0, none = 0;
+    items.forEach((it) => {
+      const o = observationState(it);
+      if (!o.latest) none++; else if (o.stand === 'current') fresh++; else if (o.stand === 'ahead') ahead++; else older++;
+    });
+    if (!items.length) return '';
+    const parts = [];
+    if (fresh) parts.push(fresh + (session ? ' with a close from ' + dateShort(session) : ' current'));
+    if (ahead) parts.push(ahead + ' from a newer record');
+    if (older) parts.push(older + ' older');
+    if (none) parts.push(none + ' not seen since the signal');
+    return parts.join(' · ');
+  }
   function followJump() {
-    const link = $('following-jump'); if (!link) return;
-    const n = SCStock.follow.list().length;
-    link.textContent = 'Following · ' + n;
+    const link = $('following-jump'), box = $('following-jump-box'), sum = $('following-updates');
+    if (!link) return;
+    let items = [];
+    try { items = SCStock.follow.list(); } catch (e) { items = []; }
+    link.textContent = 'Following · ' + items.length;
     link.hidden = false;
+    if (box) box.hidden = false;
+    if (sum) {
+      const words = updatesSummary(items);
+      sum.textContent = words ? 'Latest: ' + words : '';
+      sum.hidden = !words;
+      sum.title = words ? 'Observed closes, counted against tonight’s record. Not alerts, not new trades and not buy signals.' : '';
+    }
   }
   function followBlock(c) {
     const setup = followSetupOf(c), id = SCStock.follow.identity(setup), st0 = SCStock.follow.status();
@@ -1973,32 +2208,102 @@
     box.appendChild(edit); box.appendChild(undo); box.appendChild(link);
     return box;
   }
+  // business days between two dates: the trail's own x axis, so a gap in the
+  // dots is a session nothing was observed for and adjacent dots are adjacent
+  // sessions. A market holiday reads as a gap, which overstates what is
+  // missing rather than hiding it.
+  function bdaysBetween(from, to) {
+    const a = parseISO(from), b = parseISO(to);
+    if (!a || !b || b < a) return 0;
+    let n = 0;
+    const cur = new Date(a.getTime());
+    while (cur < b) { cur.setUTCDate(cur.getUTCDate() + 1); if (isWeekday(cur)) n++; }
+    return n;
+  }
+  const TRAIL_W = 240, TRAIL_H = 46;
+  // The observed closes as dots at their own dates, with the signal close as
+  // the baseline. Dots are NEVER joined: a line between two observations would
+  // claim the sessions between them, which this page has not seen. One
+  // observation draws one dot and says its value.
+  function observedTrail(item, o) {
+    const obs = item.observations || [];
+    if (!obs.length || !isNum(o.base)) return null;
+    const first = o.baseDate, last = obs[obs.length - 1].date;
+    const span = Math.max(1, bdaysBetween(first, last));
+    const values = [o.base].concat(obs.map((x) => x.c));
+    let lo = Math.min.apply(null, values), hi = Math.max.apply(null, values);
+    const pad = (hi - lo) * 0.18 || Math.max(0.01, hi * 0.01);
+    lo -= pad; hi += pad;
+    const x = (date) => 10 + bdaysBetween(first, date) / span * (TRAIL_W - 20);
+    const y = (v) => Math.round((TRAIL_H - 9 - (v - lo) / (hi - lo) * (TRAIL_H - 18)) * 10) / 10;
+    const kids = [
+      svg('line', { 'class': 'ss-trail__base', x1: 2, x2: TRAIL_W - 2, y1: y(o.base), y2: y(o.base) }),
+      svg('circle', { 'class': 'ss-trail__signal', cx: x(first), cy: y(o.base), r: 3 })
+    ];
+    obs.forEach((p) => {
+      const dir = p.c > o.base ? 'up' : p.c < o.base ? 'down' : 'flat';
+      kids.push(svg('circle', { 'class': 'ss-trail__dot', 'data-dir': dir, 'data-date': p.date, cx: x(p.date), cy: y(p.c), r: 3.2 }));
+    });
+    // the spoken label carries the prices, because a screen reader cannot see
+    // the dots; the caption explains the drawing, and never repeats the number
+    // printed directly above it
+    const spoken = obs.length === 1
+      ? 'One observed close, ' + usd(obs[0].c) + ' on ' + dateWords(obs[0].date) + ', against the ' + usd(o.base) + ' signal close.'
+      : plural(obs.length, 'observed close') + ' from ' + usd(obs[0].c) + ' on ' + dateWords(obs[0].date) + ' to ' + usd(obs[obs.length - 1].c) + ' on ' + dateWords(last) + ', against the ' + usd(o.base) + ' signal close.';
+    const caption = obs.length === 1
+      ? 'One observed close against the ' + usd(o.base) + ' signal close (dashed).'
+      : plural(obs.length, 'observed close') + ', ' + dateShort(obs[0].date) + ' to ' + dateShort(last) + ', against the ' + usd(o.base) + ' signal close (dashed). Sessions with no observation are left empty and the dots are not joined.';
+    return el('figure', { 'class': 'ss-trail', 'data-points': String(obs.length) }, [
+      svg('svg', { viewBox: '0 0 ' + TRAIL_W + ' ' + TRAIL_H, 'class': 'ss-trail__svg', role: 'img', 'aria-label': spoken, focusable: 'false' }, kids),
+      el('figcaption', { 'class': 'sc-hint', text: caption })
+    ]);
+  }
   function followedCard(item) {
-    const snap = item.snapshot || {}, lv = snap.levels || {}, obs = latestObservation(item.ticker), upd = modelUpdateOf(item);
-    const card = el('article', { 'class': 'ss-followed', 'data-follow-id': item.id, 'data-ticker': item.ticker });
-    const open = el('button', { 'class': 'ss-followed__ticker sc-case', type: 'button', text: item.ticker, 'data-open': routeHash(item.stage === 'setting-up' ? 'setting-up' : 'bursts', item.stage + ':' + item.ticker) });
-    open.addEventListener('click', () => { pendingFocus = 'detail'; state.gesture = true; navigate(open.getAttribute('data-open')); });
-    card.appendChild(el('div', { 'class': 'ss-followed__row' }, [open, el('span', { 'class': 'ss-followed__meta', text: (item.kind === 'anticipation' ? 'setting up' : 'burst') + ' · signal ' + dateWords(item.session) }), snap.status_words ? chip(snap.status_words, snap.status === 'ticket' ? 'good' : 'neutral') : null, item.demo ? chip('demo', 'warn') : null]));
-    const dl = el('dl');
-    const row = (dt, dd) => { if (dd) dl.appendChild(el('div', null, [el('dt', { text: dt }), el('dd', { text: dd })])); };
-    row('size', isNum(item.reference_shares) ? 'your reference size ' + plural(item.reference_shares, 'share') + (isNum(item.suggested_shares) ? ' · plan suggested ' + item.suggested_shares : '') : (isNum(item.suggested_shares) ? plural(item.suggested_shares, 'share') + ' suggested' : 'observation only, no size'));
-    const newer = obs && obs.date > (snap.close_date || '');
-    if (obs) row('latest close', usd(obs.close) + ' · ' + dateWords(obs.date) + (newer ? '' : ' · no newer observation available'));
-    else row('latest close', 'no observation in this record · last seen ' + dateWords(snap.close_date) + (isNum(snap.close) ? ' at ' + usd(snap.close) : ''));
-    if (newer && isNum(snap.close) && snap.close > 0) row('since the signal', pct((obs.close / snap.close - 1) * 100) + ' from the ' + usd(snap.close) + ' close on ' + dateShort(snap.close_date) + ' · price movement on the record’s bars, not your result');
+    const snap = item.snapshot || {}, lv = snap.levels || {}, o = observationState(item);
+    const card = el('article', { 'class': 'ss-followed', 'data-follow-id': item.id, 'data-ticker': item.ticker,
+      'data-observed': o.latest ? o.stand : 'none' });
+    const open = el('button', { 'class': 'ss-followed__ticker sc-case', type: 'button', text: item.ticker, 'data-open-followed': item.id });
+    open.addEventListener('click', () => { state.gesture = true; navigate(savedHash(item.id)); });
+    // what was followed, and when its signal was
+    card.appendChild(el('div', { 'class': 'ss-followed__row' }, [open,
+      el('span', { 'class': 'ss-followed__meta', text: (item.kind === 'anticipation' ? 'setting up' : 'burst') + ' · signal ' + dateWords(item.session) }),
+      el('div', { 'class': 'ss-followed__chips' }, [chip(archivedWords(item), snap.status === 'ticket' ? 'good' : 'neutral', true), item.demo ? chip('demo', 'warn') : null])]));
+    // group one: the original, frozen
+    const at = el('div', { 'class': 'ss-followed__group', 'data-group': 'signal' }, [el('span', { 'class': 'sc-eyebrow', text: 'at the signal' })]);
     const levels = [];
+    if (isNum(snap.close)) levels.push('close ' + usd(snap.close));
     if (isNum(lv.trigger)) levels.push('trigger ' + usd(lv.trigger));
     if (isNum(lv.limit)) levels.push('limit ' + usd(lv.limit));
+    // four prices, four rules: the limit is the executable one and the day-2
+    // line is the outer extension threshold, so a card that saved both says both
     if (isNum(lv.day2_spent_above) && lv.day2_spent_above !== lv.limit) levels.push('too extended over ' + usd(lv.day2_spent_above));
     if (isNum(lv.stop)) levels.push('stop ' + usd(lv.stop));
-    if (isNum(lv.target_low) && isNum(lv.target_high)) levels.push('aim ' + usd(lv.target_low) + '–' + usd(lv.target_high));
-    row('saved plan', levels.length ? levels.join(' · ') : 'no plan levels');
-    if (upd) row('model update', 'day ' + plain(upd.day) + ' · ' + (PLAN_STATUS[upd.status] ? PLAN_STATUS[upd.status][0] : words(upd.status)) + (isNum(upd.current_stop) ? ' · stop now ' + usd(upd.current_stop) : '') + ' (the model plan, separate from your saved plan)');
-    card.appendChild(dl);
-    const note = upd && text(upd.instruction) ? upd.instruction : (snap.instruction || snap.summary || snap.withheld_reason || '');
-    if (note) card.appendChild(el('p', { 'class': 'ss-followed__note' }, [el('span', { 'class': 'ss-followed__note-label', text: upd && text(upd.instruction) ? 'the model plan says' : 'the record says' }), ' “' + note + '”']));
+    at.appendChild(el('p', { 'class': 'ss-followed__levels', text: levels.length ? levels.join(' · ') : 'no plan levels were recorded' }));
+    at.appendChild(el('p', { 'class': 'ss-followed__size', text: isNum(item.reference_shares)
+      ? 'your reference size ' + plural(item.reference_shares, 'share') + (isNum(item.suggested_shares) ? ' · plan suggested ' + item.suggested_shares : '')
+      : (isNum(item.suggested_shares) ? plural(item.suggested_shares, 'share') + ' suggested by the plan' : 'observation only, no size') }));
+    card.appendChild(at);
+    // group two: what has been seen since
+    const since = el('div', { 'class': 'ss-followed__group', 'data-group': 'since' }, [el('span', { 'class': 'sc-eyebrow', text: 'since the signal' })]);
+    if (o.latest) {
+      since.appendChild(el('p', { 'class': 'ss-followed__latest' }, [
+        el('strong', { text: usd(o.latest.c) }),
+        el('span', { 'class': 'ss-followed__when', text: dateWords(o.latest.date) }),
+        isNum(o.change) ? el('span', { 'class': 'ss-followed__move', 'data-dir': o.change > 0 ? 'up' : o.change < 0 ? 'down' : 'flat', text: pct(o.change) }) : null,
+        chip(STAND_WORDS[o.stand][0], STAND_WORDS[o.stand][1]),
+        o.latest.revised ? chip('revised', 'warn') : null
+      ]));
+      const trail = observedTrail(item, o);
+      if (trail) since.appendChild(trail);
+    } else {
+      since.appendChild(el('p', { 'class': 'ss-followed__latest ss-followed__latest--none', text: 'No later close has been observed.' }));
+    }
+    // one line, not three paragraphs: the whole of it is said in the saved detail
+    if (o.brief) since.appendChild(el('p', { 'class': 'sc-hint ss-followed__caveat', title: [o.limitation, o.coverage].filter(Boolean).join(' '), text: o.brief }));
+    card.appendChild(since);
+    if (text(snap.summary)) card.appendChild(el('p', { 'class': 'ss-followed__note' }, [el('span', { 'class': 'ss-followed__note-label', text: 'the record says' }), ' “' + snap.summary + '”']));
     const actions = el('div', { 'class': 'ss-followed__actions' });
-    const openBtn = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Open chart' });
+    const openBtn = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Open followed setup', 'data-open-saved': item.id });
     openBtn.addEventListener('click', () => open.click());
     const remove = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Remove' });
     remove.addEventListener('click', () => { const res = SCStock.follow.remove(item.id); if (!res.ok) { setFollowStatus(res.error); return; } if (state.view === 'explore') renderDetailFollow(); afterFollowChange(); });
@@ -2013,7 +2318,15 @@
     clear(list);
     const st0 = SCStock.follow.status(), items = st0.available ? SCStock.follow.list() : [];
     if (count) count.textContent = items.length ? plural(items.length, 'setup') + ' · saved in this browser' : 'saved in this browser';
-    setFollowStatus(st0.error || '');
+    // a migration is reported for as long as the page is open, because the
+    // store it happened to no longer says it did
+    const mig = st0.migration && st0.migration.ok ? st0.migration.note : (st0.migration && st0.migration.error) || '';
+    // EVERY problem the store reported, not the first: an entry set aside, an
+    // observation dropped and an upgrade are three different things to have
+    // been told about, and a list read twice must not lose any of them
+    const notes = (st0.notes || []).filter((n) => n && n !== mig);
+    const rest = notes.length ? notes : [st0.error && st0.error !== mig ? st0.error : ''];
+    setFollowStatus([mig, st0.aside && rest.indexOf(st0.aside) < 0 ? st0.aside : ''].concat(rest).filter(Boolean).join(' '));
     if (!items.length) { list.appendChild(el('div', { 'class': 'ss-following__empty', text: st0.available ? 'Nothing followed yet. Follow a setup from its action area to keep it in view here; it is saved in this browser only, and a saved plan is never a trade.' : 'Nothing can be followed in this browser.' })); return; }
     items.slice().reverse().forEach((it) => list.appendChild(followedCard(it)));
   }
@@ -2028,10 +2341,232 @@
     if (lensOf(state.stage) === 'following') applyRoute(parseHash(w.location.hash));
     else renderPicks();
   }
+  // another tab followed, unfollowed or resized something: this one re-reads
+  // the store rather than writing its own idea of the list over it
+  SCStock.follow.onChange(() => { if (current) { invalidateFollow(); renderFollowing(); followJump(); if (savedOpen) openSaved(savedOpen, false); } });
   // the chosen stock's follow block, redrawn after a change made from the shelf
   function renderDetailFollow() {
     const box = d.querySelector('#detail .ss-follow'), c = model && model.byId[state.selected[state.stage]];
     if (box && c) box.parentNode.replaceChild(followBlock(c), box);
+  }
+
+  // ------------------------------------------------- the saved setup's own detail
+  // Keyed by the saved identity -- kind, ticker, signal session, rules -- and
+  // never by tonight's stage and ticker, because the symbol may be in another
+  // stage tonight, under a newer signal, or in no list at all. What it shows
+  // is the record of the night it was saved: a ticket there is a ticket THERE,
+  // and the only way to an order that could be placed is the current record's
+  // own card, behind the freshness, regime and eligibility guards that offer it.
+  let savedOpen = null, savedPanel = null, savedReturn = null;
+  function savedCandidate(item) {
+    const snap = item.snapshot || {}, lv = snap.levels || {}, ev = item.evidence;
+    if (!ev || !(ev.series || []).length) return null;
+    const plan = { stop: lv.stop, stop_basis: lv.stop_basis, entry_ref: lv.trigger, entry_low: lv.entry_low, entry_high: lv.limit,
+      day2_spent_above: lv.day2_spent_above, planned_entry: null,
+      targets: { low: lv.target_low, high: lv.target_high, low_pct: lv.target_low_pct, high_pct: lv.target_high_pct } };
+    const anchors = ev.anchors || [], base = anchors.find((a) => a.key === 'base'), box = anchors.find((a) => a.key === 'box');
+    const row = { ticker: item.ticker, close: snap.close, summary: snap.summary, plan: plan, chart: null,
+      quality: { base: base ? { start: base.from, end: base.to, low: base.low, high: base.high, breakdown_dates: [] } : {}, checks: [], vetoes: [] },
+      box: box ? { start: box.from, end: box.to, low: box.low, high: box.high } : {} };
+    return { id: 'saved:' + item.id, stage: item.stage === 'setting-up' ? 'setting-up' : 'bursts', ticker: item.ticker, name: text(snap.name),
+      grade: snap.grade || null, score: isNum(snap.score) ? snap.score : null, status: snap.status, reason: text(snap.withheld_reason),
+      plan: plan, row: row, quiet: false, flags: [], series: ev.series, signalSession: item.session,
+      barsNote: (ev.recovered
+        ? 'The daily bars this browser recovered from the ' + dateWords(item.session) + ' record — the same signal this setup was saved from, matched on symbol, session and rules identity'
+        : 'The daily bars this browser saved from the ' + dateWords(item.session) + ' record') + ', up to the signal session',
+      evidence: anchors.map((a) => ({ key: a.key, label: text(a.label) || ANCHOR_WORDS[a.key] || a.key, from: a.from, to: a.to, low: a.low, high: a.high,
+        lede: text(a.lede), measured: text(a.measured), rows: [] })) };
+  }
+  function savedFacts(item) {
+    const snap = item.snapshot || {}, lv = snap.levels || {}, rows = [];
+    const put = (k, v) => { if (v) rows.push([k, v]); };
+    put('stage', (item.kind === 'anticipation' ? 'setting up' : 'burst') + ' · ' + dateWords(item.session));
+    put('grade', snap.grade ? snap.grade + (isNum(snap.score) ? ' · ' + snap.score.toFixed(1) : '') + ' in that record' : 'no grade was archived');
+    put('signal close', isNum(snap.close) ? usd(snap.close) + ' on ' + dateWords(text(snap.close_date) || item.session) : '');
+    put('trigger', isNum(lv.trigger) ? usd(lv.trigger) : '');
+    put('limit', isNum(lv.limit) ? usd(lv.limit) : '');
+    put('too extended over', isNum(lv.day2_spent_above) && lv.day2_spent_above !== lv.limit ? usd(lv.day2_spent_above) : '');
+    put('stop', isNum(lv.stop) ? usd(lv.stop) + (STOP_BASIS[lv.stop_basis] ? ' · ' + STOP_BASIS[lv.stop_basis] : '') : '');
+    put('aim', isNum(lv.target_low) && isNum(lv.target_high) ? usd(lv.target_low) + '–' + usd(lv.target_high) : '');
+    put('size', isNum(item.reference_shares)
+      ? 'your reference size ' + plural(item.reference_shares, 'share') + (isNum(item.suggested_shares) ? ' · the plan suggested ' + item.suggested_shares : '')
+      : (isNum(item.suggested_shares) ? plural(item.suggested_shares, 'share') + ' suggested by that plan' : 'observation only, no size'));
+    put('saved', text(item.saved_at) ? dateWords(item.saved_at.slice(0, 10)) + ' in this browser' : 'in this browser');
+    return rows;
+  }
+  function savedSignalSection(item) {
+    const snap = item.snapshot || {}, box = el('section', { 'class': 'ss-saved__section', 'data-saved': 'signal' });
+    box.appendChild(el('h3', { 'class': 'sc-eyebrow', text: 'at the signal' }));
+    box.appendChild(el('p', { 'class': 'ss-saved__lede', text: 'The ' + dateWords(item.session) + ' record as it stood, saved in this browser and never rewritten by a later one.' }));
+    const c = savedCandidate(item);
+    if (c) {
+      savedPanel = chartPanel(c, { idPrefix: 'saved', height: narrow() ? 280 : 340 });
+      box.appendChild(savedPanel.node);
+    } else {
+      box.appendChild(el('div', { 'class': 'ss-chart-empty', 'data-chart': 'unsaved' }, [
+        el('strong', { text: 'Original chart was not saved. ' }),
+        'This setup was kept before this page saved chart evidence, or the record carried no daily bars for ' + item.ticker + ' that night. The levels and the reasons below are the ones saved with it; no chart is reconstructed from a later record, because a later record is a different signal.'
+      ]));
+    }
+    const dl = el('dl', { 'class': 'ss-saved__facts' });
+    savedFacts(item).forEach((r) => dl.appendChild(el('div', null, [el('dt', { text: r[0] }), el('dd', { text: r[1] })])));
+    box.appendChild(dl);
+    if (text(snap.summary)) box.appendChild(el('p', { 'class': 'ss-saved__quote' }, [el('span', { 'class': 'sc-eyebrow', text: 'the record said' }), ' “' + snap.summary + '”']));
+    if (text(snap.withheld_reason)) box.appendChild(el('p', { 'class': 'ss-saved__quote', 'data-saved-reason': '' }, [el('span', { 'class': 'sc-eyebrow', text: 'no ticket, because' }), ' ' + cap(sentence(snap.withheld_reason))]));
+    const lim = (snap.limitations || []).slice();
+    if (lim.length) {
+      box.appendChild(el('p', { 'class': 'sc-eyebrow', text: 'what that record could not show' }));
+      box.appendChild(el('ul', { 'class': 'ss-saved__limits' }, lim.map((x) => el('li', { text: cap(x) }))));
+    }
+    if (text(snap.instruction) || text(snap.order_line)) {
+      box.appendChild(el('div', { 'class': 'ss-saved__archived', 'data-archived-order': '' }, [
+        el('span', { 'class': 'sc-eyebrow', text: 'the instruction in that record' }),
+        el('p', { 'class': 'ss-saved__order', text: '“' + (text(snap.instruction) || text(snap.order_line)) + '”' }),
+        el('p', { 'class': 'sc-hint', text: 'Recorded for ' + dateWords(item.session) + ' and shown as history. It is not an instruction for today, and no order can be placed from it here.' })
+      ]));
+    }
+    return box;
+  }
+  function savedSinceSection(item) {
+    const o = observationState(item), box = el('section', { 'class': 'ss-saved__section', 'data-saved': 'since' });
+    box.appendChild(el('h3', { 'class': 'sc-eyebrow', text: 'since the signal' }));
+    if (o.latest) {
+      box.appendChild(el('p', { 'class': 'ss-saved__latest' }, [
+        el('strong', { text: usd(o.latest.c) }), el('span', { 'class': 'ss-followed__when', text: dateWords(o.latest.date) }),
+        isNum(o.change) ? el('span', { 'class': 'ss-followed__move', 'data-dir': o.change > 0 ? 'up' : o.change < 0 ? 'down' : 'flat', text: pct(o.change) + ' from the signal close' }) : null,
+        chip(STAND_WORDS[o.stand][0], STAND_WORDS[o.stand][1])
+      ]));
+      const trail = observedTrail(item, o);
+      if (trail) box.appendChild(trail);
+    } else box.appendChild(el('p', { 'class': 'ss-saved__latest ss-saved__latest--none', text: 'No later close has been observed for ' + item.ticker + '.' }));
+    if (o.limitation) box.appendChild(el('p', { 'class': 'sc-hint ss-saved__limit', text: o.limitation }));
+    if (o.coverage) box.appendChild(el('p', { 'class': 'sc-hint ss-saved__limit', text: o.coverage }));
+    if (o.count) {
+      const head = ['session', 'close', 'against the signal', 'where it came from'];
+      const rows = (item.observations || []).slice().reverse().map((ob) => [
+        dateWords(ob.date) + (ob.revised ? ' · revised' : ''), usd(ob.c),
+        o.basis === 'adjusted' || !isNum(o.base) ? 'not comparable' : pct((ob.c / o.base - 1) * 100),
+        text(ob.source) + (text(ob.from_session) ? ' · ' + dateShort(ob.from_session) + ' record' : '')
+      ]);
+      box.appendChild(el('div', { 'class': 'sc-table-scroll ss-saved__obs' }, [
+        el('table', { 'class': 'sc-table' }, [
+          el('thead', null, [el('tr', null, head.map((h) => el('th', { text: h })))]),
+          el('tbody', null, rows.map((r, i) => el('tr', { 'data-obs-row': String(i) }, r.map((v) => el('td', { text: v })))))
+        ])
+      ]));
+      const revised = (item.observations || []).filter((ob) => ob.revised);
+      if (revised.length) box.appendChild(el('p', { 'class': 'sc-hint', text: revised.length === 1
+        ? 'One session was re-published with a different close and is marked revised: the same trading day read again on later bars, not a second day.'
+        : revised.length + ' sessions were re-published with different closes and are marked revised: the same trading days read again on later bars, not further days.' }));
+      box.appendChild(el('p', { 'class': 'sc-hint', text: 'At most ' + SCStock.follow.OBSERVATION_MAX + ' observed sessions are kept per setup, which is a limit on this list and not on how long a setup is held. Sessions no record here carried are simply missing; no price is filled in for them.' }));
+    }
+    const upd = modelUpdateOf(item);
+    if (upd.plan && upd.matched) {
+      const p = upd.plan;
+      box.appendChild(el('div', { 'class': 'ss-saved__model', 'data-model-update': 'matched' }, [
+        el('span', { 'class': 'sc-eyebrow', text: 'the model plan for this signal' }),
+        el('p', null, [d.createTextNode('Day ' + plain(p.day) + ' · '), chip(PLAN_STATUS[p.status] ? PLAN_STATUS[p.status][0] : words(p.status), PLAN_STATUS[p.status] ? PLAN_STATUS[p.status][1] : 'neutral'),
+          d.createTextNode(isNum(p.current_stop) ? ' · stop now ' + usd(p.current_stop) : '')]),
+        text(p.instruction) ? el('p', { 'class': 'ss-saved__quote', text: '“' + p.instruction + '”' }) : null,
+        el('p', { 'class': 'sc-hint', text: 'The model’s own plan over configured sizing assumptions, matched to this signal by its session and its rules. It is not your position and not a record of anything you did.' })
+      ]));
+    } else if (upd.why) {
+      box.appendChild(el('div', { 'class': 'ss-saved__model', 'data-model-update': 'apart' }, [
+        el('span', { 'class': 'sc-eyebrow', text: 'a model plan, but not this signal’s' }),
+        el('p', { 'class': 'sc-hint', text: upd.why })
+      ]));
+    }
+    return box;
+  }
+  function buildSaved(dlg, item, id) {
+    disposeSaved();
+    clear(dlg);
+    const wrap = el('div', { 'class': 'ss-saved__wrap' });
+    const close = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', id: 'saved-close', text: 'Close' });
+    close.addEventListener('click', () => closeSaved());
+    if (!item) {
+      wrap.appendChild(el('header', { 'class': 'ss-saved__head' }, [
+        el('div', null, [el('div', { 'class': 'sc-eyebrow', text: 'saved setup' }), el('h2', { id: 'saved-h2', text: 'Not saved in this browser' })]), close]));
+      wrap.appendChild(el('p', { 'class': 'ss-saved__lede', 'data-saved-missing': '', text: 'This link names a setup saved in a browser, and this browser does not hold it. A followed setup lives in local storage and travels nowhere: not to the record, not to the repository, not to another device. Nothing is missing from the record — there is simply no local copy here.' }));
+      wrap.appendChild(el('p', { 'class': 'sc-hint', text: 'The identity in the link is ' + id + '.' }));
+      dlg.appendChild(wrap);
+      return close;
+    }
+    const snap = item.snapshot || {};
+    wrap.appendChild(el('header', { 'class': 'ss-saved__head' }, [
+      el('div', null, [
+        el('div', { 'class': 'sc-eyebrow', text: 'saved setup · ' + (item.kind === 'anticipation' ? 'setting up' : 'burst') + ' · signal ' + dateWords(item.session) }),
+        el('h2', { id: 'saved-h2' }, [el('span', { 'class': 'sc-case', text: item.ticker }), text(snap.name) ? el('small', { 'class': 'ss-saved__name', text: snap.name }) : null])
+      ]),
+      el('div', { 'class': 'ss-saved__chips' }, [chip(archivedWords(item), snap.status === 'ticket' ? 'good' : 'neutral', true), item.demo ? chip('demo', 'warn') : null]),
+      close]));
+    wrap.appendChild(el('p', { 'class': 'ss-saved__note', text: cap((text(snap.status_words) || 'no ticket')) + ' in the ' + dateWords(item.session) + ' record — a fact about that record, not a ticket available now.' }));
+    wrap.appendChild(savedSignalSection(item));
+    wrap.appendChild(savedSinceSection(item));
+    const foot = el('div', { 'class': 'ss-saved__foot' });
+    const cur = currentSetupFor(item);
+    if (cur && cur.same) {
+      const b = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-current-setup': cur.candidate.ticker, text: 'Open it in tonight’s record' });
+      b.addEventListener('click', () => { pendingFocus = 'detail'; state.gesture = true; navigate(routeHash(cur.candidate.stage, cur.candidate.id)); });
+      foot.appendChild(b);
+      foot.appendChild(el('p', { 'class': 'sc-hint', text: 'This is the same signal tonight’s record carries, so the card there is this setup, live.' }));
+    } else if (cur) {
+      const b = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-current-setup': cur.candidate.ticker, text: 'Current setup for ' + cur.candidate.ticker });
+      b.addEventListener('click', () => { pendingFocus = 'detail'; state.gesture = true; navigate(routeHash(cur.candidate.stage, cur.candidate.id)); });
+      foot.appendChild(b);
+      foot.appendChild(el('p', { 'class': 'sc-hint', text: 'Tonight’s record carries a ' + (cur.movedStage ? STAGE_NAME[cur.candidate.stage].toLowerCase() + ' ' : '') + 'signal for ' + cur.candidate.ticker + ' from ' + dateWords(text((current.run || {}).session)) + '. It is a different signal with its own grade, its own levels and its own status; any ticket it carries is offered there, under tonight’s guards.' }));
+    } else {
+      foot.appendChild(el('p', { 'class': 'sc-hint', 'data-current-setup': 'none', text: model
+        ? item.ticker + ' is on no list in tonight’s record, so there is no current setup to open. The saved one above is unaffected.'
+        : 'No record is loaded, so there is no current setup to compare this with. The saved one above is unaffected: it lives in this browser.' }));
+    }
+    const remove = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', 'data-saved-remove': '', text: 'Remove from Following' });
+    remove.addEventListener('click', () => {
+      const res = SCStock.follow.remove(item.id);
+      if (!res.ok) { foot.appendChild(el('p', { 'class': 'ss-follow__warn', role: 'alert', text: res.error })); return; }
+      closeSaved(); if (state.view === 'explore') renderDetailFollow(); afterFollowChange();
+    });
+    foot.appendChild(remove);
+    wrap.appendChild(foot);
+    dlg.appendChild(wrap);
+    return close;
+  }
+  function disposeSaved() { if (savedPanel) { savedPanel.dispose(); savedPanel = null; } }
+  function openSaved(id, first) {
+    const dlg = $('saved');
+    if (!dlg) return;
+    let item = null;
+    try { item = SCStock.follow.find(id); } catch (e) { item = null; }
+    // where the reader was: kept on the FIRST open, so re-reading the sheet
+    // over a newer record does not overwrite it with the sheet's own route
+    if (savedOpen !== id || !dlg.open) savedReturn = { focus: d.activeElement, scroll: w.pageYOffset || w.scrollY || 0, hash: first ? '' : lastHash };
+    savedOpen = id;
+    const close = buildSaved(dlg, item, id);
+    if (!dlg.open) { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', ''); close.focus(); }
+  }
+  function closeSaved() {
+    const dlg = $('saved');
+    if (!dlg) return;
+    if (dlg.open && dlg.close) dlg.close('closed');
+    else if (dlg.hasAttribute('open')) { dlg.removeAttribute('open'); afterSavedClose(); }
+    else savedOpen = null;
+  }
+  // One teardown, whichever way the sheet was dismissed. Dismissed IN PLACE
+  // (Close, Escape, the backdrop) the hash still names the sheet, so it is
+  // taken back to the route the reader came from and their focus and scroll
+  // with it; dismissed BY a route they asked for (tonight's card, another
+  // saved setup) the new route owns both and nothing is restored over it.
+  function afterSavedClose() {
+    const dlg = $('saved'), b = savedReturn, wasOpen = savedOpen;
+    savedOpen = null; savedReturn = null;
+    disposeSaved();
+    clear(dlg);
+    if (!wasOpen || String(w.location.hash).indexOf('#/followed/') !== 0) return;
+    const to = b && b.hash && b.hash.indexOf('#/followed/') !== 0 ? b.hash : '#/explore';
+    if (w.location.hash !== to) w.location.hash = to;
+    if (!b) return;
+    if (b.focus && b.focus.isConnected && b.focus.focus) b.focus.focus({ preventScroll: true });
+    w.scrollTo(0, b.scroll);
   }
 
   function entryInstruction(plan) {
@@ -2653,6 +3188,12 @@
       cmp.addEventListener('close', afterCompareClose);
       cmp.addEventListener('click', (e) => { if (e.target === cmp) closeCompare(); });
     }
+    // the saved setup's own sheet, dismissed the same three ways
+    const sv = $('saved');
+    if (sv) {
+      sv.addEventListener('close', afterSavedClose);
+      sv.addEventListener('click', (e) => { if (e.target === sv) closeSaved(); });
+    }
     w.addEventListener('hashchange', () => applyRoute(parseHash(w.location.hash)));
   }
 
@@ -2686,6 +3227,11 @@
     renderRecordView(data);
     renderNext(data, st);
     renderFooter(data);
+    // one observation pass per loaded record, BEFORE the shelf is drawn, so
+    // the card and the saved detail read the same saved history rather than
+    // each re-deriving one from the record
+    recoverEvidence();
+    recordObservations();
     renderFollowing();
     followJump();
     renderTray();
@@ -2699,6 +3245,12 @@
   SCStock.render = render;
 
   function failed(message) {
+    // A record that would not load erases nothing of the reader's own: the
+    // saved setups are in this browser, not in the record, so the shelf still
+    // reads and a bookmark into one still opens. `current` is a stub rather
+    // than null so every reader of it -- the shelf, the saved sheet, its
+    // chart -- has the shape it indexes into.
+    current = { run: {}, app: {} };
     $('cover-h1').textContent = 'The record could not be read.';
     $('cover-dek').textContent = message;
     clear($('status-slot')).appendChild(chip('no record', 'danger'));
@@ -2711,7 +3263,9 @@
     $('orders-summary').textContent = 'Tomorrow’s tickets · none';
     $('scan-summary').textContent = 'Everything the scan found · no record';
     clear($('hold-rows')).appendChild(empty('No record loaded.'));
-    const fl = $('following-list'); if (fl) { clear(fl).appendChild(el('div', { 'class': 'ss-following__empty', text: 'No record loaded, so nothing to observe.' })); }
+    renderFollowing(); followJump();
+    const fl = $('following-list');
+    if (fl && !fl.childElementCount) clear(fl).appendChild(el('div', { 'class': 'ss-following__empty', text: 'No record loaded, so nothing to observe.' }));
     clear($('record-card')).appendChild(empty('No record loaded.'));
     applyRoute(parseHash(w.location.hash), true);
     d.documentElement.setAttribute('data-ss-rendered', 'error');

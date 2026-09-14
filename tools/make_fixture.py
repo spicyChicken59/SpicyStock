@@ -24,6 +24,18 @@ Variants (each a night, all pinned to the same Thursday evening):
             falls under Bonde's line, A+ alone trades     -> "Trade small."
   red       six names break down: the down-4% alarm       -> "Stand aside."
   closed    no bar for the expected session               -> "Market closed."
+
+Two sequels are the SAME market one session later, each run over the docs the
+`full` night wrote, so they inherit its record and its picks the way a real
+night does. They exist so a setup followed on the full night can be read
+against a genuinely newer record:
+  next      Friday: the ticket and the withheld setup print a quiet day and
+            leave the record; one burst bursts again (a newer signal for a
+            symbol already followed) and the coil breaks out (a newer signal
+            for a symbol now in another stage); the observation block carries
+            the newer bars
+  revised   the SAME Friday session re-run on later bars -- one close a few
+            cents off what `next` published: a correction, not a new day
 The `full` variant's data.json is also what docs/data.json holds on a fresh
 clone, so the page renders before the first real run replaces it.
 """
@@ -47,13 +59,20 @@ import pandas as pd  # noqa: E402
 from src import charts, market_data, pipeline, plan, record, scans  # noqa: E402
 from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient  # noqa: E402
 from tests.synthetic import make_ohlcv  # noqa: E402
-from tests.test_quality import frame as qframe, ideal_bars  # noqa: E402
+from tests.test_quality import burst_bar, frame as qframe, ideal_bars, quiet as quiet_bar  # noqa: E402
 from tests.test_watchlist import coil  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures" / "page"
 VARIANTS = ("full", "degraded", "notrade", "yellow", "red", "closed")
+#: the sequels, each run over the docs the `full` night wrote
+SEQUELS = ("next", "revised")
 EVENING = datetime(2026, 9, 10, 22, 30, tzinfo=timezone.utc)   # Thursday, after the close
 SESSION = date(2026, 9, 10)
+FOLLOW_EVENING = datetime(2026, 9, 11, 22, 30, tzinfo=timezone.utc)   # Friday, one session on
+FOLLOW_SESSION = date(2026, 9, 11)
+#: cents the revised run's AAPL close sits off the one `next` published: the
+#: same session on later bars, which is a correction and not a new day
+REVISION_CENTS = 37
 SEED = 20260910
 CLAUDE = {"A+": {"score": 9.3, "grade": "A+",
                  "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
@@ -215,13 +234,75 @@ def hold_tape(frames: dict[str, pd.DataFrame]) -> None:
         write(smci, pos, picked * 1.004, picked * 1.012, picked * 0.998, picked * 1.006)
 
 
-def register(fake: FakeAlpaca, variant: str) -> list[str]:
+def append_bar(df: pd.DataFrame, row: list[float]) -> pd.DataFrame:
+    """One more session on the end of a frame. The double re-dates every frame
+    it serves to the request's own end, so the index handed in only has to be
+    ordered and one longer; the bar's SHAPE is the fact being added."""
+    stamp = df.index[-1] + pd.tseries.offsets.BDay(1)
+    one = pd.DataFrame([row], index=pd.DatetimeIndex([stamp], name=df.index.name),
+                       columns=list(df.columns), dtype=float)
+    return pd.concat([df, one])
+
+
+def quiet_tail(df: pd.DataFrame, *, ratio: float = 0.997, volume: float = 0.35) -> list[float]:
+    """A session that no scan of the night claims: it opens at the last close
+    and closes UNDER it, so the body is negative (never the dollar scan's
+    move) and the gain is far under the burst ratio."""
+    prev, vol = float(df["Close"].iloc[-1]), float(df["Volume"].iloc[-1])
+    return quiet_bar(round(prev * ratio, 2), round(prev, 2), round(vol * volume), 0.6)
+
+
+#: AAPL's session after the ticket: a decline that closes UNDER the stop the
+#: saved plan named, so a page reading a followed setup has a price below its
+#: original stop reference to speak about -- which is a statement about a
+#: price and never a fill, a stop-out or a result.
+AAPL_DECLINE = 0.945
+
+
+def sequel_frames(revised: bool) -> dict[str, pd.DataFrame]:
+    """The full night's market with one more session on every frame.
+
+    AAPL (the ticket) declines under the stop its saved plan named and TSLA
+    (the setup whose ticket was withheld) prints a quiet day: two setups
+    followed last night that have left tonight's record altogether, one of
+    them under its own stop reference. NVDA bursts again -- a NEWER SIGNAL for
+    a symbol already followed, in the same stage -- and COIL breaks out of its
+    coil, a newer signal for a symbol that was in *setting up* and is in
+    *bursts* tonight while its own model plan is still open. `revised` is the
+    same session on later bars: AAPL's close a few cents off what `next`
+    published, which is a correction and not another trading day.
+    """
     frames = {**burst_frames(), **base_frames()}
     hold_tape(frames)
-    if variant == "yellow":
-        red_tape(frames, 3)
-    elif variant == "red":
-        red_tape(frames, 6)
+    tails: dict[str, list[float]] = {}
+    for name in ("TSLA", "AMD", "PLUG", "DLLR"):
+        tails[name] = quiet_tail(frames[name])
+    for name in BASE_NAMES:
+        tails[name] = quiet_tail(frames[name])
+    tails["AAPL"] = quiet_tail(frames["AAPL"], ratio=AAPL_DECLINE)
+    # the two newer signals: one in the stage it was already in, one that has
+    # moved stages since the night a reader followed it
+    tails["NVDA"] = burst_bar(float(frames["NVDA"]["Close"].iloc[-1]), 5.6, 0.9,
+                              round(float(frames["NVDA"]["Volume"].iloc[-1]) * 1.2))
+    tails["COIL"] = burst_bar(float(frames["COIL"]["Close"].iloc[-1]), 5.0, 0.92,
+                              round(float(frames["COIL"]["Volume"].iloc[-1]) * 4.0))
+    if revised:
+        o, h, l, c, v = tails["AAPL"]
+        c = round(c + REVISION_CENTS / 100, 2)
+        tails["AAPL"] = [o, max(h, round(c + 0.05, 2)), l, c, v]
+    return {name: append_bar(df, tails[name]) for name, df in frames.items()}
+
+
+def register(fake: FakeAlpaca, variant: str) -> list[str]:
+    if variant in SEQUELS:
+        frames = sequel_frames(variant == "revised")
+    else:
+        frames = {**burst_frames(), **base_frames()}
+        hold_tape(frames)
+        if variant == "yellow":
+            red_tape(frames, 3)
+        elif variant == "red":
+            red_tape(frames, 6)
     for name, df in frames.items():
         fake.add_history(name, df)
     fake.add_history("SPY", make_ohlcv("base", seed=[SEED, 999], days=280, start_price=560.0))
@@ -273,7 +354,10 @@ def run_variant(variant: str, docs: Path) -> dict:
     fake = FakeAlpaca()
     tickers = register(fake, variant)
     docs.mkdir(parents=True, exist_ok=True)
-    record.save(prior_picks(fake), docs)
+    # a sequel inherits the record and the picks the full night wrote, the way
+    # a real night inherits the last one; seeding it again would throw them away
+    if variant not in SEQUELS:
+        record.save(prior_picks(fake), docs)
     claude = type("FixtureClaude", (FakeAnthropic,), {"calls": [], "payload": {}, "raw": None, "raises": None})
 
     def answer(metrics: dict) -> dict:
@@ -316,7 +400,8 @@ def run_variant(variant: str, docs: Path) -> dict:
             mock.patch("anthropic.Anthropic", make_client), \
             mock.patch.object(charts, "render_chart", render), \
             mock.patch.object(pipeline.grader, "MODEL", "claude-sonnet-4-6"):
-        rep = pipeline.run_evening(tickers=tickers, docs=docs, now=EVENING)
+        rep = pipeline.run_evening(tickers=tickers, docs=docs,
+                                   now=FOLLOW_EVENING if variant in SEQUELS else EVENING)
     if not rep.published:
         raise SystemExit(f"{variant}: the pipeline did not publish ({rep.failure})")
     data = json.loads((docs / pipeline.DATA_FILE).read_text())
@@ -389,6 +474,21 @@ def expected_shape(variant: str, data: dict) -> None:
         assert h1 == "Stand aside." and data["breadth"]["regime"]["verdict"] == "red", h1
     elif variant == "closed":
         assert h1 == "Market closed. Plans unchanged." and data["run"]["session_state"] == "closed", h1
+    elif variant in SEQUELS:
+        # the night after, and the four facts a follow-through reading needs of
+        # it: a newer session, two followed symbols gone from the candidates,
+        # a newer signal for one that stayed, and a newer signal in the stage
+        # the coil was NOT in last night
+        assert data["run"]["session"] == FOLLOW_SESSION.isoformat(), data["run"]["session"]
+        bursts = {b["ticker"] for b in data["bursts"]}
+        coils = {r["ticker"] for r in data["watchlist"]["top"] + data["watchlist"]["also_quiet"]}
+        assert not ({"AAPL", "TSLA"} & (bursts | coils)), sorted({"AAPL", "TSLA"} & (bursts | coils))
+        assert "NVDA" in bursts and "COIL" in bursts and "COIL" not in coils, (sorted(bursts), sorted(coils))
+        obs = data["observations"]["symbols"]
+        assert obs["AAPL"]["date"] == FOLLOW_SESSION.isoformat(), obs.get("AAPL")
+        assert obs["AAPL"]["since"] == SESSION.isoformat(), obs.get("AAPL")
+        assert {p["ticker"] for p in data["open_plans"]} >= {"AAPL"}, data["open_plans"]
+        assert problems == [], problems
 
 
 def build_all() -> dict[str, dict]:
@@ -401,6 +501,15 @@ def build_all() -> dict[str, dict]:
             out[variant] = data
             if variant == "full":
                 out["full-picks"] = {"fixture": "full", **json.loads((docs / record.PICKS_FILE).read_text())}
+                # each sequel runs over a COPY of the docs this night wrote, so
+                # both inherit the same record and neither sees the other's
+                for sequel in SEQUELS:
+                    with tempfile.TemporaryDirectory() as tmp2:
+                        seq = Path(tmp2) / "docs"
+                        shutil.copytree(docs, seq)
+                        sdata = run_variant(sequel, seq)
+                        expected_shape(sequel, sdata)
+                        out[sequel] = sdata
     return out
 
 
