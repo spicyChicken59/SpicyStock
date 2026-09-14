@@ -1422,40 +1422,124 @@ Resend, Pages, and any trading edge.
 `evening.yml` with `dry_run=true` and reconcile the artifact against
 `entry_limit_study.py`'s green-night line, 52 / 0 / 50 / 47.
 
+## Checkpoint, 14 Sep 2026 — the shared v2.13.0 release, and the scan that could not go green
+
+**Revision.** `claude/inspiring-albattani-shbuoa` from `main` at `3d60ae1` (#62),
+clean and empty at that tip. `docs/data.json`, `docs/picks.json` and all nine
+fixtures are `origin/main`'s to the byte — still run 47's record. No sibling
+repository was written; nothing dispatched, merged, deployed or mailed. Two
+commits, separately reviewable: the adoption, and the scanner.
+
+**The lag, closed by the generator.** `node build/vendor.mjs` from a clean checkout
+of the released source (`14a752d`, the v2.13.0 tag), never by hand: 22 files,
+`2.11.0/6f10309` → `2.13.0/14a752d`, every manifest hash equal to the installed
+bytes AND to the clean source, 22/22 both ways. PURELY ADDITIVE — `sc.css`'s only
+non-added line is its own version header.
+
+**Adopted.** `.sc-pick` replaces the map's `.ss-map__nearby*`. The release was written FROM
+this page's panel, so the behaviour was already its contract; twelve local rules
+go, and back come a real focus ring, the 44px a finger needs, and
+`--sc-shadow-pop` in place of the one raw `rgba()` left here. The item fills the
+released name/meta/figure slots and speaks `describe(p)`, so the grid's order
+cannot mislead a reader who hears it; one override, a ticker keeps its mono. `.sc-unreported` wraps the comparison's absent cells
+and an unmeasured check; `.sc-estimate` marks the saved setup's `aim`, the one
+DERIVED figure in a column of exact ticket terms. Trigger, limit and stop are never
+marked.
+
+**Refused, on a measurement.** `.sc-compare-pair` and `.sc-signal-matrix--fit` are
+for a comparison too narrow for two record columns. At 390×844 this one is not:
+356px of table in a 384px column, no page overflow, identity sticky; only 320px
+scrolls, inside its own region. `[data-differs]` stays a documented adapter — the
+released block is byte-identical but scoped to `.sc-signal-matrix`, whose 680px
+floor would put a scroller inside the dialog. `.is-best` refused: a difference is
+not a winner.
+
+**The scan, disposed of at finding level.** Run 34811928399's 14 `generic-api-key`
+findings reproduce exactly under gitleaks 8.24.3 with the action's own flags over
+235 commits. All 14 are `localStorage` key names read at their commits, in four
+first-build files deleted in `01c000d`; none on `main`, none a credential.
+`.gitleaksignore` carries their twelve fingerprints — one rule, one line, one
+immutable commit each — every detector and the whole history kept. Proved:
+14/exit 2 → 0/exit 0 over the same 235 commits; planted credential-shaped values
+are still caught in an affected path AND a live path; re-introducing the same key
+is flagged again. A `paths` allowlist was measured and rejected: it hides a real
+credential at those paths forever.
+
+**Measured here.** 1107 tests; 9 fixtures current; chart check 182/182; smoke
+3564/3564 with `--shots` against 3545 at `3d60ae1`. **Six mutants, five dead on
+the first pass and one SURVIVOR** — the second shape this file names: the 44px
+check read the item's RENDERED height, which its two grid rows already make about
+69px, so 40 and 44 drew identically and it passed on an incidental fact. It reads
+the DECLARED rule now and dies. One defect of mine: an element screenshot scrolls
+its element into view, moving the viewport out from under coordinates measured
+before it. Siblings validated, unwritten, both green: Home `19ddcf6` 22/22
+(137 / 42 / 603 records / 138 browser checks), and `89e4c99..19ddcf6` is markdown
+only — the `dist` TREE OBJECT is identical, so no republication is owed. Car
+`62db117` 22/22 (570 unittests, dashboard 309/309, sheet 320 KB of 400 KiB); its
+`ad5aa0f` is the tag's SECOND PARENT on the SAME TREE, so it IS the tag.
+
+**Blockers.** None offline. Not claimable: the served bytes of any of the three
+sites (403 CONNECT), Actions' artifact blobs, a live fetch, a real chart read,
+Resend, and whether the committed ignore turns the SCHEDULED job green — visible
+only on the next scheduled or dispatched scan, and none was dispatched.
+
+**Keep / fix / defer / omit.** Keep everything above; fix, nothing found. Defer,
+all pre-existing: the +4% ceiling against his 4% stop line; the <320px overflow;
+the CLAUDE.md length gate, still unfailable; and gitleaks 8.24.3 ships NO Anthropic
+detector, so an `sk-ant-` value is invisible to this scan — proved by a planted
+control. For Car's owner: `docs/design-review/` still records #78's numbers that
+#79 superseded, and two NON-CI harnesses fail on a `#signal-card` that computes
+`display:none`, proved pre-existing. Omit: trade logging, a portfolio, execution.
+
+**Next action.** Review and a merge decision; merging PUBLISHES, because
+`publish-dashboard.yml` fires on any push to `main` touching `docs/**`. Then the
+method's own: on a green or yellow session dispatch `evening.yml` with
+`dry_run=true` and reconcile against `entry_limit_study.py`'s green-night line,
+52 / 0 / 50 / 47.
+
 ### NEXT BUILDER PROMPT
 
-Continue SpicyStock at `main` (verify the tip; `017b776` when this was written,
-the merge of #56). Do ONE of these; do not re-run the discovery lens, the
-comparison, the chart evidence, the design pass or the release acceptance.
+Continue SpicyStock at `main` (verify the tip; `3d60ae1` when this was written,
+with `claude/inspiring-albattani-shbuoa` open for review on top of it). The
+v2.13.0 adoption and the scanner disposition are DONE — do not re-vendor, do not
+re-open the chooser, the comparison, the figure basis, or the historical
+findings. Two things remain, and the first is not code.
 
-**(a) The live qualifying-ticket acceptance, if a green or yellow session
-exists.** Requires explicit dispatch/billing approval — a dry run still pays
-Alpaca and twelve Anthropic chart reads. Dispatch `evening.yml` with
-`dry_run=true`, `session=""`, `skip_email=false` (dry run mails nothing; the
-`Persist the run` step is skipped and nothing is committed). Then, from the
-artifact: confirm `app.rules_version` is the code's own digest; that every
-eligible burst has `limit <= day2_spent_above`, `stop < entry_ref < limit`,
-`entry_high == limit`, `planned_entry == min(close +1%, limit)`; that each
-whole-share ticket's stop is within 4% of its LIMIT; and that refusals carry
-`ticket_refusal` with the setup kept and no order. Reconcile the eligible /
-withheld counts against `python tools/entry_limit_study.py <record>`, whose
-green-night line is 52 / 0 / 50 / 47. A red or closed session proves
-stand-aside only — say so and stop. Never change regime, data or rules to
-manufacture a ticket.
+**(a) The merge decision, which is a publication.** `publish-dashboard.yml` fires
+on any push to `main` touching `docs/**`, and this branch changes `docs/`. Merging
+therefore serves new bytes. After the merge, confirm all four runs are green on the
+merge commit (Tests, Secret scan, Publish committed dashboard, Pages) and that the
+publication gate printed *Verified: every one of the 17 public files matches
+committed main* — it waits for the changed files to appear on the served site, and
+`sc.css`, `app.css`, `app.js` and `app-map.js` all changed here. Then dispatch
+`secret-scan.yml` once (free, no provider cost) and confirm the FULL-HISTORY scan
+is green: that is the one claim this pass could not make, because a scheduled scan
+last ran at `14f9d18` and none was dispatched here.
 
-**(b) The CLAUDE.md length gate, which still cannot fail.** Decide with the
-owner: trim this file to a cap that binds, or retire the length clause and
-guard something that can fail. Then make the assertion read the RAW file, not
-`prose()`. Prove it fails.
+**(b) The live qualifying-ticket acceptance, unchanged and still owed.** Requires
+explicit dispatch/billing approval — a dry run still pays Alpaca and twelve
+Anthropic chart reads. On a green or yellow session dispatch `evening.yml` with
+`dry_run=true`, `session=""`. From the artifact: confirm `app.rules_version` is the
+code's own digest; that every eligible burst has `limit <= day2_spent_above`,
+`stop < entry_ref < limit`, `entry_high == limit`, `planned_entry == min(close +1%,
+limit)`; that each whole-share ticket's stop is within 4% of its LIMIT; and that
+refusals carry `ticket_refusal` with the setup kept and no order. Reconcile against
+`python tools/entry_limit_study.py <record>`, whose green-night line is 52 / 0 / 50
+/ 47. A red or closed session proves stand-aside only — say so and stop. Never
+change regime, data or rules to manufacture a ticket.
 
-Offline gates for either: `python3 -m pytest tests/ -q` (the `pytest` on PATH
-here is a uv tool without pandas; `pip install -r requirements-dev.txt` first
-on a fresh container), `python tools/make_fixture.py --check`, `node
-tools/chart_check.mjs`, `node tools/page_smoke.mjs --shots <dir>`. The smoke
-takes about twenty-five minutes in full; `--only <suite>` runs one of
-`lens`, `compare`, `evidence`, `map`, `mobile`, `modes`, `following`, `volume`,
-`mapscale`, `ticket`, `states` or a fixture name, which is what a mutant
-should be judged by. This sandbox reaches neither the served page nor Actions'
-artifact blobs (403 CONNECT); read a run through its job log, and report the
-limit rather than routing around it. Not claimable without a live night: Resend
-delivering, a real chart read, and any trading edge.
+Offline gates: `python3 -m pytest tests/ -q` (`pip install -r requirements-dev.txt`
+first on a fresh container), `python tools/make_fixture.py --check`, `node
+tools/chart_check.mjs`, `node tools/page_smoke.mjs --shots <dir>`. The full smoke
+takes about fifty minutes here; `--only <suite>` runs one of the seven fixture
+variants or `mobile`, `modes`, `lens`, `compare`, `evidence`, `map`, `reach`,
+`volume`, `mapscale`, `following`, `through`, `session`, `refresh`, `ticket`,
+`states` — which is what a mutant should be judged by. `--shots` CHANGES the totals,
+not just the artefacts, so quote the `--shots` number. This sandbox reaches neither
+the served page nor Actions' artifact blobs (403 CONNECT); read a run through its
+job log and report the limit rather than routing around it. Not claimable without a
+live night: Resend delivering, a real chart read, and any trading edge.
+
+Do not touch SpicyHome or SpicyCar. Both are on v2.13.0, both were validated here
+and neither needed a change; their own findings are recorded in the checkpoint above
+and belong to their owners.
