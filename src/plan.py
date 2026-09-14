@@ -66,8 +66,12 @@ ENTRY_ABOVE_PCT = 4.0
 #: (B) "+8% same or next day -> exit 50%": a gap of that size is an entry he
 #: would be SELLING into. The hard ceiling above ENTRY_ABOVE_PCT.
 SKIP_GAP_PCT = 8.0
-#: (B) "I enter most breakouts in first 30 minutes."
-ENTRY_WINDOW = "first 30 minutes"
+#: (B) "I enter most breakouts in first 30 minutes." The number is named so
+#: `timing.py` can serialize the window's cutoff as an instant instead of the
+#: page reading "30" out of the phrase; the phrase is written FROM it, so the
+#: two cannot come apart. The window itself is unchanged.
+ENTRY_WINDOW_MINUTES = 30
+ENTRY_WINDOW = f"first {ENTRY_WINDOW_MINUTES} minutes"
 #: (P) an INDICATIVE entry, the burst close plus this: the exit levels and the
 #: targets are quoted from it. The shares are not sized here but at the
 #: limit (``SIZING_BASIS``); a real fill is re-sized by the resize rule.
@@ -208,6 +212,7 @@ RULES: dict[str, Any] = {
     "plan.entry_above_pct": ENTRY_ABOVE_PCT,
     "plan.skip_gap_pct": SKIP_GAP_PCT,
     "plan.entry_window": ENTRY_WINDOW,
+    "plan.entry_window_minutes": ENTRY_WINDOW_MINUTES,
     "plan.assumed_slippage_pct": ASSUMED_SLIPPAGE_PCT,
     "plan.sizing_basis": SIZING_BASIS,
     "plan.limit_rule": LIMIT_RULE,

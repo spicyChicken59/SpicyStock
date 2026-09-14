@@ -39,11 +39,25 @@
 .ss-market__facts dd { margin: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; color: var(--sc-text); font-size: var(--sc-text-sm); }
 .ss-market__links { margin: var(--sc-s2) 0 0; font: 500 12px/1.6 var(--sc-font-mono); color: var(--sc-text-2); }
 .ss-market__links a + a { margin-left: var(--sc-s2); }
+/* Two facts about a record, told apart by eye: what was MEASURED and when it
+   was published, against which session the plans are FOR and where its entry
+   window stands. One green chip must never be read as covering both. */
+.ss-market__facts > div[data-fact="data"], .ss-market__facts > div[data-fact="plan"] {
+  padding-left: var(--sc-s2); border-left: 2px solid var(--sc-border); }
+.ss-market__facts > div[data-fact="data"] { border-left-color: var(--sc-text-3); }
+.ss-market__facts > div[data-fact="plan"] { border-left-color: var(--sc-brand, var(--sc-text-2)); }
+/* the one update control, beside the publication line it re-reads */
+.ss-refresh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px var(--sc-s2); margin: var(--sc-s2) 0 0; }
+.ss-refresh__said { margin: 0; font-size: var(--sc-text-sm); color: var(--sc-text-2); flex: 1 1 18ch; min-width: 0; }
+.ss-refresh__said[data-outcome="newer"], .ss-refresh__said[data-outcome="revised"] { color: var(--sc-heading); font-weight: 500; }
+.ss-refresh__said[data-outcome="failed"], .ss-refresh__said[data-outcome="invalid"], .ss-refresh__said[data-outcome="older"] { color: var(--sc-warn-text, var(--sc-text)); }
+/* the recorded ticket a closed window leaves readable: printed, never offered */
+.ss-order--history { margin-bottom: var(--sc-s3); opacity: .92; }
+.ss-order--history .ss-order__pre { border-style: dashed; }
 @media (max-width: 720px) {
   .ss-market { grid-template-columns: minmax(0, 1fr); gap: var(--sc-s2); }
   .ss-market__h1 { font-size: 21px; }
   .ss-market__dek { font-size: var(--sc-text-sm); }
-  .ss-market__facts > div[data-fact="published"] { display: none; }   /* the run strip on the method view carries it */
   .ss-market__links { margin-top: var(--sc-s1); }
 }
 

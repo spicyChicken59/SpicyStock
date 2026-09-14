@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "4e3d4ead892c"
+  "rules_version": "cf1422d7ad5c"
  },
  "cover": {
   "h1": "Trade tomorrow. 1 A-quality burst.",
@@ -61,6 +61,26 @@
   "fetch_seconds": 0.0,
   "rules_version": "v2.0",
   "type": "evening",
+  "timing": {
+   "applicable_session": "2026-09-14",
+   "measured_session": "2026-09-11",
+   "closed_session": null,
+   "timezone": "America/New_York",
+   "opens_at": "2026-09-14T09:30:00-04:00",
+   "cutoff_at": "2026-09-14T10:00:00-04:00",
+   "prepare_by": "2026-09-14T09:28:00-04:00",
+   "closes_at": "2026-09-14T16:00:00-04:00",
+   "opens_et": "09:30",
+   "cutoff_et": "10:00",
+   "prepare_by_et": "09:28",
+   "window": "first 30 minutes",
+   "window_minutes": 30,
+   "basis": "weekday_after_session",
+   "limits": [
+    "no_holiday_calendar",
+    "regular_hours_assumed"
+   ]
+  },
   "sanitised": {
    "replaced": 0,
    "paths": []
@@ -222,6 +242,7 @@
    "entry_above_pct": 4.0,
    "skip_gap_pct": 8.0,
    "entry_window": "first 30 minutes",
+   "entry_window_minutes": 30,
    "assumed_slippage_pct": 1.0,
    "sizing_basis": "order_limit",
    "limit_rule": "stop_constrained",
@@ -308,6 +329,19 @@
    "max_picks": 260,
    "benchmark": "SPY",
    "known_fill": "open_inside_zone"
+  },
+  "timing": {
+   "regular_open_et": "09:30",
+   "regular_close_et": "16:00",
+   "prepare_before_et": "09:28",
+   "bases": [
+    "weekday_after_session",
+    "weekday_after_closed_session"
+   ],
+   "limits": [
+    "no_holiday_calendar",
+    "regular_hours_assumed"
+   ]
   },
   "pipeline": {
    "max_reads": 12,
@@ -4111,7 +4145,7 @@
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.session_state and this, against the browser's clock in ET.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
   "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
-  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), coverage, counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), coverage, counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all, with the calendar it could not read named in its limits. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",

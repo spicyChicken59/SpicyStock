@@ -28,6 +28,8 @@ from typing import Any
 
 import resend
 
+from src import timing
+
 log = logging.getLogger(__name__)
 
 # --- identity ----------------------------------------------------------------
@@ -114,7 +116,11 @@ CONTRACT: dict[str, str] = {
     "run": "The run that produced this file: session, session_state, expected_session, status "
            "(ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the "
            "page prints one fixed sentence per kind), coverage, counts, email state, timings. run.sanitised "
-           "counts the non-finite numbers replaced with null on the way in.",
+           "counts the non-finite numbers replaced with null on the way in. run.timing is a different fact "
+           "from the two above it: the session tonight's plans are FOR and the instants its entry window is "
+           "scheduled between, offset and all, with the calendar it could not read named in its limits. A "
+           "record without it is one published before the field existed, and the page says entry timing is "
+           "unavailable rather than guessing at a deadline.",
     "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
     "account": "The configured sizing assumptions every plan below was computed from: equity, risk per "
                "trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
@@ -540,6 +546,64 @@ def _sanitise(value: Any, path: str, replaced: list[str]) -> Any:
     return value
 
 
+def timing_faults(block: Any) -> list[str]:
+    """What is wrong with ``run.timing``, one string per fault.
+
+    ABSENT IS NOT A FAULT: every record published before the block existed has
+    none, and the page answers "entry timing unavailable" for them. A block
+    that IS there is held to its shape one level in, the class this repository
+    produces most often -- a half-written window whose cutoff the page would
+    compare against and get an answer for is worse than no window at all.
+    """
+    if block is None:
+        return []
+    if not isinstance(block, dict):
+        return ["run.timing is neither absent nor an object"]
+    faults: list[str] = []
+    for key in ("applicable_session", "measured_session"):
+        if not isinstance(_iso_day(block.get(key)), dt.date):
+            faults.append(f"run.timing.{key} is not a YYYY-MM-DD date")
+    applicable, measured = _iso_day(block.get("applicable_session")), _iso_day(block.get("measured_session"))
+    if isinstance(applicable, dt.date) and isinstance(measured, dt.date) and applicable <= measured:
+        faults.append("run.timing.applicable_session is not after its measured_session")
+    stamps = {}
+    for key in ("opens_at", "cutoff_at", "prepare_by", "closes_at"):
+        stamps[key] = when = _aware(block.get(key))
+        if when is None:
+            faults.append(f"run.timing.{key} is not an ISO-8601 instant with an offset")
+    if stamps["opens_at"] and stamps["cutoff_at"] and stamps["cutoff_at"] <= stamps["opens_at"]:
+        faults.append("run.timing.cutoff_at is not after its opens_at, so the window has no width")
+    if stamps["opens_at"] and isinstance(applicable, dt.date) and stamps["opens_at"].date() != applicable:
+        faults.append("run.timing.opens_at is not on its own applicable_session")
+    if block.get("basis") not in timing.BASES:
+        faults.append(f"run.timing.basis {block.get('basis')!r} is not one of {timing.BASES}")
+    limits = block.get("limits")
+    if not isinstance(limits, list) or any(x not in timing.LIMITS for x in limits):
+        faults.append(f"run.timing.limits is not a list of {timing.LIMITS}")
+    if not _text(block.get("window")) or not isinstance(block.get("window_minutes"), int):
+        faults.append("run.timing needs the window's words and its whole number of minutes")
+    return faults
+
+
+def _iso_day(value: Any) -> dt.date | None:
+    try:
+        return dt.date.fromisoformat(value) if isinstance(value, str) else None
+    except ValueError:
+        return None
+
+
+def _aware(value: Any) -> dt.datetime | None:
+    """One serialized instant, refused unless it carries an offset: read in the
+    reader's own zone it would be a different moment on every desk."""
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo is not None else None
+
+
 def validate(data: dict) -> None:
     """Refuse a file the page could not render honestly. Every failure is
     named, in one ValueError, so a night with two is not fixed twice."""
@@ -564,6 +628,7 @@ def validate(data: dict) -> None:
                 faults.append(f"run.problems[{i}].kind {p['kind']!r} is not one of the seven words")
             if not isinstance(p["message"], str) or len(p["message"]) > MESSAGE_MAX_CHARS:
                 faults.append(f"run.problems[{i}].message is not plain text of at most {MESSAGE_MAX_CHARS} chars")
+    faults.extend(timing_faults(run.get("timing")))
     verdict = _get(data, "breadth", "regime", "verdict")
     if verdict is not None and verdict not in REGIMES:
         faults.append(f"breadth.regime.verdict {verdict!r} is not one of {REGIMES}")

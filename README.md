@@ -462,6 +462,7 @@ what the bars say happened to them.
 ```
 src/            pipeline.py (the run) · universe.py · market_data.py · clock.py
                 scans.py · quality.py · breadth.py · watchlist.py · plan.py
+                timing.py (which session a plan is for, and when its window is over)
                 grader.py · charts.py · record.py · report.py
 docs/           index.html · app.js · app.css · app-chart.js · app-map.js · app-follow.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)

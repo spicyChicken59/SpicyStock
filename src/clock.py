@@ -13,11 +13,16 @@ import os
 from datetime import date, datetime, time as time_of_day, timedelta, timezone
 from zoneinfo import ZoneInfo
 
+#: The one spelling of the market's zone. Written once so a module that
+#: serializes it (`timing.py`) and a module that reads a clock in it cannot
+#: name two different zones.
+MARKET_TZ_NAME = "America/New_York"
+
 try:
-    MARKET_TZ = ZoneInfo("America/New_York")
+    MARKET_TZ = ZoneInfo(MARKET_TZ_NAME)
 except Exception as e:  # pragma: no cover - depends on the host's tz database
     raise RuntimeError(
-        "the America/New_York time zone is unavailable, so this module cannot "
+        f"the {MARKET_TZ_NAME} time zone is unavailable, so this module cannot "
         "tell which session a run targets; `pip install tzdata`"
     ) from e
 
