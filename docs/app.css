@@ -630,3 +630,7 @@
   /* a basis written for a row becomes a height in a column */
   .ss-saved__foot .sc-hint { flex: 0 0 auto; }
 }
+
+/* a copy the clock refused: said where the reader was looking, not where the
+   button was -- catching the page up rebuilds that surface in the same breath */
+.ss-action__refused { margin: 0; font-size: var(--sc-text-sm); font-weight: 500; color: var(--sc-heading); }

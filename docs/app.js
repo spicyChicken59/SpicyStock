@@ -665,6 +665,9 @@
   // The guard every current-ticket action asks immediately before it acts:
   // null to go ahead, else the reason it is refused NOW. It re-reads the clock
   // rather than trusting the answer the surface was drawn with.
+  //: the last refusal a copy control gave, so the reader is told it did not
+  //: copy even though the surface it was on is rebuilt in the same breath
+  let copyRefused = null;
   function copyGuard() {
     if (!current || !current.run) return 'No record is loaded, so there is no ticket to copy.';
     const nowAv = clockPinned ? av : availability(current, new Date());
@@ -682,10 +685,9 @@
       if (refusal) {
         btn.disabled = true;
         btn.textContent = 'No longer offered';
-        const say = el('p', { 'class': 'sc-hint', 'data-copy-refused': '', text: refusal });
-        const host = btn.parentNode && btn.parentNode.parentNode;
-        if (host && !host.querySelector('[data-copy-refused]')) host.appendChild(say);
-        // and the page catches up, so the rest of it stops saying otherwise
+        // recorded as page state first: catching the page up rebuilds the very
+        // surface this button is in, so a note appended here would not survive
+        copyRefused = { ticker: pre && pre.getAttribute('data-ticker'), text: 'Nothing was copied: ' + refusal };
         reclock();
         return;
       }
@@ -2866,6 +2868,8 @@
       box.appendChild(chip(sw[0], sw[1]));
     }
     box.appendChild(el('p', { text: line }));
+    if (copyRefused && copyRefused.ticker === c.ticker)
+      box.appendChild(el('p', { 'class': 'ss-action__refused', 'data-copy-refused': '', role: 'alert', text: copyRefused.text }));
     btn.addEventListener('click', () => openDisclosure(btn.getAttribute('data-open')));
     box.appendChild(btn);
     box.appendChild(followBlock(c));
@@ -3537,12 +3541,23 @@
   // found again by the attribute that identifies it.
   function repaint(node, build) {
     if (!node || !node.parentNode) return null;
-    const key = node.contains(d.activeElement) ? focusKey(d.activeElement) : null;
+    const held = node.contains(d.activeElement);
+    const key = held ? focusKey(d.activeElement) : null;
     const wasOpen = node.tagName === 'DETAILS' ? node.open : null;
     const next = build();
     node.parentNode.replaceChild(next, node);
     if (wasOpen !== null && 'open' in next) next.open = wasOpen;
-    if (key) { const back = next.querySelector(key); if (back && back.focus) back.focus({ preventScroll: true }); }
+    if (!held) return next;
+    // The control the reader was on may be the very one the clock withdrew --
+    // a copy button on a window that closed is exactly that. Focus falls back
+    // to the replacement itself rather than to the body, so the reader stays
+    // where they were reading instead of at the top of the document.
+    const back = (key && next.querySelector(key)) ||
+      next.querySelector('summary, button, [href], input') || next;
+    if (back.focus) {
+      if (back === next && !next.hasAttribute('tabindex')) next.setAttribute('tabindex', '-1');
+      back.focus({ preventScroll: true });
+    }
     return next;
   }
   const FOCUS_KEYS = ['data-open', 'data-copy', 'data-follow', 'data-open-saved', 'data-pin', 'data-go'];
@@ -3678,6 +3693,7 @@
     d.documentElement.setAttribute('data-ss-demo', demo ? 'true' : 'false');
     clockAt = now ? new Date(now) : new Date();
     clockPinned = !!now;
+    copyRefused = null;
     av = availability(data, clockAt); st = av.pub; SCStock.state = st; SCStock.avail = av;
     model = buildModel(data); SCStock.model = model;
     SCStock.follow.setDemo(demo);
