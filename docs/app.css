@@ -33,9 +33,15 @@
 .ss-market { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--sc-s3) var(--sc-s4); align-items: start; }
 .ss-market__h1 { margin: var(--sc-s1) 0 0; font: 700 clamp(22px, 2.6vw, 30px)/1.15 var(--sc-font-display); letter-spacing: -.02em; color: var(--sc-heading); }
 .ss-market__dek { margin: var(--sc-s1) 0 0; color: var(--sc-text); font-size: var(--sc-text-md); max-width: 62ch; }
-.ss-market__facts { display: flex; flex-wrap: wrap; gap: var(--sc-s1) var(--sc-s3); margin: 0; }
+/* the regime beside the verdict it belongs to, one line at every width */
+.ss-market__regime { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: var(--sc-s1) 0 0; color: var(--sc-text-2); font-size: var(--sc-text-sm); }
+.ss-market__facts { display: flex; flex-wrap: wrap; gap: 4px var(--sc-s3); margin: 0; }
 .ss-market__facts > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.ss-market__facts dt { font: 500 10.5px/1.4 var(--sc-font-mono); letter-spacing: .3px; text-transform: lowercase; color: var(--sc-text-3); }
+/* the label and the chip that qualifies it, on one line: the chip belongs to
+   the fact it sits on, and a fact of two rows rather than three is what keeps
+   the workspace on the first screen at 390 px */
+.ss-market__facts dt { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font: 500 10.5px/1.4 var(--sc-font-mono); letter-spacing: .3px; text-transform: lowercase; color: var(--sc-text-3); }
+.ss-market__facts > div[data-fact="data"], .ss-market__facts > div[data-fact="plan"] { flex: 1 1 22ch; }
 .ss-market__facts dd { margin: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; color: var(--sc-text); font-size: var(--sc-text-sm); }
 .ss-market__links { margin: var(--sc-s2) 0 0; font: 500 12px/1.6 var(--sc-font-mono); color: var(--sc-text-2); }
 .ss-market__links a + a { margin-left: var(--sc-s2); }
@@ -46,9 +52,13 @@
   padding-left: var(--sc-s2); border-left: 2px solid var(--sc-border); }
 .ss-market__facts > div[data-fact="data"] { border-left-color: var(--sc-text-3); }
 .ss-market__facts > div[data-fact="plan"] { border-left-color: var(--sc-brand, var(--sc-text-2)); }
-/* the one update control, beside the publication line it re-reads */
-.ss-refresh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px var(--sc-s2); margin: var(--sc-s2) 0 0; }
-.ss-refresh__said { margin: 0; font-size: var(--sc-text-sm); color: var(--sc-text-2); flex: 1 1 18ch; min-width: 0; }
+/* the one update control, on the quiet row beside the publication line it
+   re-reads. A row of its own cost the workspace its place on the first screen,
+   which is the weakness the milestone before this one closed. */
+.ss-market__foot { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--sc-s3); margin: var(--sc-s1) 0 0; }
+.ss-market__foot > .ss-market__links { margin: 0; }
+.ss-refresh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--sc-s2); min-width: 0; }
+.ss-refresh__said { margin: 0; font-size: var(--sc-text-sm); color: var(--sc-text-2); flex: 1 1 16ch; min-width: 0; }
 .ss-refresh__said[data-outcome="newer"], .ss-refresh__said[data-outcome="revised"] { color: var(--sc-heading); font-weight: 500; }
 .ss-refresh__said[data-outcome="failed"], .ss-refresh__said[data-outcome="invalid"], .ss-refresh__said[data-outcome="older"] { color: var(--sc-warn-text, var(--sc-text)); }
 /* the recorded ticket a closed window leaves readable: printed, never offered */
@@ -59,6 +69,13 @@
   .ss-market__h1 { font-size: 21px; }
   .ss-market__dek { font-size: var(--sc-text-sm); }
   .ss-market__links { margin-top: var(--sc-s1); }
+  /* At phone width the market and method links are the masthead's own nav tabs,
+     visible at the top of every screen, so repeating them here is duplication
+     and not information -- unlike a stage's ticket count, which lives nowhere
+     else and is why hiding it was a defect. Dropping them puts the record's
+     own call to action and the update control on one line, which is what
+     leaves the search and the chooser on the first screen. */
+  .ss-market__links a:not(#cover-action) { display: none; }
 }
 
 /* ---- the two stage cards --------------------------------------------------- */
@@ -634,3 +651,4 @@
 /* a copy the clock refused: said where the reader was looking, not where the
    button was -- catching the page up rebuilds that surface in the same breath */
 .ss-action__refused { margin: 0; font-size: var(--sc-text-sm); font-weight: 500; color: var(--sc-heading); }
+

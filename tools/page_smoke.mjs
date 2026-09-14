@@ -40,7 +40,7 @@ const TRADE_GRADES = ['A+', 'A'];   // the grades the run gives an order (pipeli
 const args = process.argv.slice(2);
 const shotsDir = args.includes('--shots') ? args[args.indexOf('--shots') + 1] : null;
 // --only <name[,name]> runs just those suites (variant names, or lens/compare/
-// evidence/map/reach/mobile/modes/following/through/session/volume/mapscale/ticket/states). It is for
+// evidence/map/reach/mobile/modes/following/through/session/refresh/volume/mapscale/ticket/states). It is for
 // judging a mutant in a minute; CI and the milestone gate run everything.
 const only = args.includes('--only') ? String(args[args.indexOf('--only') + 1] || '').split(',').filter(Boolean) : null;
 const runs = (name) => !only || only.includes(name);
@@ -363,9 +363,20 @@ async function checkVariant(browser, base, variant, data) {
   eq(`${variant} action`, await text(page, '#cover-action'), data.cover.action_label);
   const target = data.cover.action_target;
   check(`${variant} cover action target exists`, (await page.locator(target).count()) === 1, target);
+  // the regime sits with the VERDICT it belongs to; the two facts beside them
+  // are about time, and each carries its own chip
+  const regimeLine = await text(page, '#cover-regime');
+  check(`${variant} the verdict names the regime`, regimeLine.includes(data.breadth.regime.verdict.toUpperCase()), regimeLine);
+  check(`${variant} and the ratio`, regimeLine.includes(String(data.breadth.ratio_10d)), regimeLine);
   const facts = await text(page, '#market-facts');
-  check(`${variant} market bar names the regime`, facts.includes(data.breadth.regime.verdict.toUpperCase()), facts);
-  check(`${variant} market bar names the ratio`, facts.includes(String(data.breadth.ratio_10d)), facts);
+  check(`${variant} the data line names the measured session and when it published`,
+    facts.includes(dateWords(data.run.session)) && /published \d+:\d\d [AP]M ET/.test(facts), facts);
+  check(`${variant} the plan line names the session the plans are for`,
+    facts.includes(dateWords(data.run.timing.applicable_session)), facts);
+  check(`${variant} and the two carry one chip each, so neither covers the other`,
+    (await page.locator('#market-facts [data-fact="data"] .sc-chip').count()) === 1 &&
+    (await page.locator('#market-facts [data-fact="plan"] .sc-chip').count()) === 1,
+    'a fact without its own chip');
   eq(`${variant} explore is the view`, await visibleView(page), ['view-explore']);
   // a fixture is sample data and says so, everywhere it could be mistaken for a live record
   eq(`${variant} the page marks the fixture as demo data`, await page.getAttribute('html', 'data-ss-demo'), 'true');
@@ -3043,6 +3054,193 @@ async function checkSession(browser, base, full) {
   await context.close();
 }
 
+// ---------------------------------------------------------------------------
+// Check for updates: re-reading the same static file, transactionally, without
+// taking the reader's place with it. Every answer is served by a route so the
+// suite decides what the file says -- unchanged, newer, older, a revision of
+// the same session, unreadable, or nothing at all.
+// ---------------------------------------------------------------------------
+async function checkRefresh(browser, base, full) {
+  console.log('-- refresh: loading a newer record safely, and saying what it cost');
+  const next = JSON.parse(await readFile(path.join(FIXTURES, 'next.json'), 'utf8'));
+  const revised = JSON.parse(await readFile(path.join(FIXTURES, 'revised.json'), 'utf8'));
+  const said2 = (page) => text(page, '#refresh-said');
+  const press = async (page) => { await page.locator('#check-updates').click(); await page.waitForTimeout(450); };
+  // whatever the route is told to answer with next; null aborts the request
+  const serveWith = async (page, url, box) => {
+    await page.route(url, async (route) => {
+      const answer = box.body;
+      if (answer === null) return route.abort('failed');
+      if (box.delayMs) await new Promise((r) => setTimeout(r, box.delayMs));
+      return route.fulfill({ status: box.status || 200, contentType: 'application/json',
+        body: typeof answer === 'string' ? answer : JSON.stringify(answer) });
+    });
+  };
+
+  // ---- booted on the OLDER record, so a newer one is a real forward step
+  const box = { body: next };
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280,
+    { lens: 'all', hash: `#/explore/bursts/${full.trades[0]}` });
+  await serveWith(page, '**/full.json?*', box);
+  check('the control is beside the publication line it re-reads',
+    !!(await count(page, '#market-bar #market-refresh #check-updates')), 'no control in the market area');
+  check('and says what it does and does not do',
+    (await said2(page)).includes('Nothing is scanned or graded'), await said2(page));
+
+  // the reader's own state, set before anything is re-read
+  await setLens(page, 'a');
+  await page.locator('#search').fill('AA');
+  await page.locator('#pick-list .ss-pick').first().click();
+  await page.waitForTimeout(200);
+  const wasStock = await attr(page, '#detail', 'data-selected'), wasLens = await lensNow(page);
+  await page.click('#detail .sc-tab[data-mode="candles"]');
+  await page.waitForTimeout(200);
+  await page.locator('[data-follow-action="add"]').first().click();
+  await page.waitForTimeout(250);
+  const ids = async (pg) => ((await readStore(pg)) || { items: [] }).items.map((x) => x.id);
+  const bars = async (pg) => ((await readStore(pg)) || { items: [] }).items.map((x) => ((x.evidence || {}).series || []).length);
+  const obsCounts = async (pg) => ((await readStore(pg)) || { items: [] }).items.map((x) => (x.observations || []).length);
+  const savedIds = await ids(page), savedEvidence = await bars(page);
+  eq('a setup is saved before the reload', savedIds.length, 1);
+
+  // ---- unchanged: the same BYTES, and nothing at all moves. The file's own
+  // text, not a re-serialization of it: "unchanged" means the served file is
+  // identical, which is the only reading that catches a same-session
+  // re-publish whose session, publish stamp and rules digest all match.
+  box.body = await readFile(path.join(FIXTURES, 'full.json'), 'utf8');
+  const obsBefore = await obsCounts(page);
+  await press(page);
+  eq('the same record is reported unchanged', (await said2(page)).startsWith('No newer record'), true);
+  eq('and the reader is left exactly where they were', [await attr(page, '#detail', 'data-selected'), await lensNow(page), await page.locator('#search').inputValue()], [wasStock, wasLens, 'AA']);
+  eq('an unchanged check adds no Following observation', await obsCounts(page), obsBefore);
+
+  // ---- unreadable, and then unreachable: nothing changes, and it says so
+  for (const [what, body, starts] of [
+    ['not a record this page can read', {}, 'The published file is not a record'],
+    ['a record whose window has no width', JSON.parse(JSON.stringify(Object.assign({}, next, { run: Object.assign({}, next.run, { timing: Object.assign({}, next.run.timing, { cutoff_at: next.run.timing.opens_at }) }) }))), 'The published file is not a record'],
+    ['not JSON at all', 'half a fi', 'The published record could not be re-read'],
+    ['nothing at all', null, 'The published record could not be re-read'],
+  ]) {
+    box.body = body;
+    await press(page);
+    check(`${what}: it is not loaded`, (await said2(page)).startsWith(starts), await said2(page));
+    eq(`${what}: and the record on screen is untouched`, await page.evaluate(() => window.SCStock.data.run.session), full.run.session);
+    eq(`${what}: with the reader still where they were`, await attr(page, '#detail', 'data-selected'), wasStock);
+  }
+
+  // ---- out of order: a slow first answer cannot land over a fast second
+  {
+    box.body = next; box.delayMs = 900;
+    await page.locator('#check-updates').click();
+    await page.waitForTimeout(120);
+    eq('a check in flight says so on the control', await attr(page, '#check-updates', 'data-check'), 'busy');
+    check('and the control is still pressable, so a hanging check is not a dead end',
+      !(await page.locator('#check-updates').isDisabled()), 'the control went dead while checking');
+    // the second press answers at once, with the file's own bytes, so its
+    // outcome ("unchanged") is unmistakably different from the slow one's
+    box.body = await readFile(path.join(FIXTURES, 'full.json'), 'utf8'); box.delayMs = 0;
+    await page.locator('#check-updates').click();
+    await page.waitForTimeout(1600);
+    check('the answer that stands is the newest press, not the first to arrive',
+      (await said2(page)).startsWith('No newer record'), await said2(page));
+    eq('and the slow answer was dropped rather than applied', await page.evaluate(() => window.SCStock.data.run.session), full.run.session);
+  }
+
+  // ---- a comparison open across the load: explained, not remapped
+  {
+    await page.locator('#search').fill('');
+    await setLens(page, 'all');
+    await page.waitForTimeout(250);
+    const two = (await cardTickers(page)).slice(0, 2);
+    eq('the whole stage is in view, so two can be pinned', two.length, 2);
+    for (const t of two) { await page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${t}"]) .ss-pin`); await page.waitForTimeout(180); }
+    await tap(page, '#compare-open', 'the comparison opens before the load');
+    await page.waitForTimeout(500);
+    eq('two are pinned and compared', await count(page, '#compare .ss-compare__side'), 2);
+    box.body = next;
+    // the comparison is a real modal, so the control behind it cannot be
+    // clicked -- which is right. The case still has to be handled: a load can
+    // reach the page while the sheet stands (a reader with two tabs, a press
+    // whose answer arrives late), so it is driven directly here.
+    eq('the control is behind the comparison, as a modal means it to be',
+      await page.evaluate(() => {
+        const b = document.getElementById('check-updates').getBoundingClientRect();
+        return document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2) !== document.getElementById('check-updates');
+      }), true);
+    await page.evaluate(() => window.SCStock.checkUpdates());
+    await page.waitForTimeout(500);
+    check('a newer record is loaded', (await said2(page)).startsWith('A newer record loaded'), await said2(page));
+    eq('the comparison is closed rather than remapped onto other stocks', await page.evaluate(() => document.getElementById('compare').open), false);
+    check('and the reader is told why, in the same breath',
+      (await said2(page)).includes('pinned pair belongs to the record it was pinned from'), await said2(page));
+    eq('no chart is left mounted from it', await page.evaluate(() => window.SCStock.liveCharts()), 1);
+    eq('the record on screen is the newer one', await page.evaluate(() => window.SCStock.data.run.session), next.run.session);
+  }
+
+  // ---- the reader's private saves are untouched by any of it
+  eq('every saved identity survives the load', await ids(page), savedIds);
+  eq('with its frozen evidence unchanged', await bars(page), savedEvidence);
+  eq('and the chart mode the reader chose is still theirs',
+    await page.evaluate(() => (JSON.parse(localStorage.getItem('spicystock:chart:v1')) || {}).mode), 'candles');
+  // one deliberate abort: the request itself, and the browser's anonymous
+  // console line for it. Named here rather than swept into the exempt list,
+  // because it is this check's own doing and nothing else's.
+  eq('the only failures are the one request this check aborted on purpose',
+    errors.filter((e) => !/full\.json\?at=/.test(e) && e !== 'console: Failed to load resource: net::ERR_FAILED'), []);
+  eq('and it is exactly one request', errors.filter((e) => /^request failed/.test(e)).length, 1);
+  await context.close();
+
+  // ---- older, a revision, and a half-typed reference size
+  {
+    const b2 = { body: revised };
+    const { context: c2, page: p2, errors: e2 } = await open(browser, base, '/tests/fixtures/page/next.json', '2026-09-11T22:31:00Z', 1280,
+      { lens: 'all', hash: `#/explore/bursts/${next.trades[0]}` });
+    await serveWith(p2, '**/next.json?*', b2);
+    b2.body = full;
+    await press(p2);
+    check('a file for an EARLIER session is refused rather than applied backwards',
+      (await said2(p2)).startsWith('The published file is for an earlier session'), await said2(p2));
+    eq('and the newer record stays on screen', await p2.evaluate(() => window.SCStock.data.run.session), next.run.session);
+
+    // a follow, then a half-typed size, then a load
+    await p2.locator('[data-follow-action="add"]').first().click();
+    await p2.waitForTimeout(250);
+    await p2.locator('[data-follow-action="edit"]').first().click();
+    await p2.waitForTimeout(200);
+    await p2.locator('.ss-follow__form input').first().fill('17');
+    const savedShares = (await readStore(p2)).items[0].reference_shares;
+    b2.body = revised;
+    await press(p2);
+    check('the same session re-published is called a revision, not a new day',
+      (await said2(p2)).includes('the same session on later bars, not a new one'), await said2(p2));
+    eq('the record loaded is the revision', await p2.evaluate(() => [window.SCStock.data.run.session, window.SCStock.data.run.published_at]),
+      [revised.run.session, revised.run.published_at]);
+    eq('a half-typed reference size is handed back, unsaved', [await p2.locator('.ss-follow__form input').first().inputValue(),
+      (await readStore(p2)).items[0].reference_shares], ['17', savedShares]);
+    check('and a revision is recorded as a revision of that trading day',
+      ((await readStore(p2)).items[0].observations || []).every((o) => !o.replaced || o.replaced.c !== o.c), 'a revision lost what it replaced');
+    // a saved setup's own sheet, open across a load: it is this browser's, so
+    // it survives a record change by construction -- proved, not assumed
+    const id = (await readStore(p2)).items[0].id;
+    await go(p2, `#/followed/${encodeURIComponent(id)}`);
+    await p2.waitForTimeout(400);
+    eq('a saved setup sheet is open before the load', await p2.evaluate(() => document.getElementById('saved').open), true);
+    b2.body = next;
+    // a saved sheet is a modal too, and the same reasoning applies
+    eq('the control is behind the saved sheet, as a modal means it to be',
+      await p2.evaluate(() => {
+        const b = document.getElementById('check-updates').getBoundingClientRect();
+        return document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2) !== document.getElementById('check-updates');
+      }), true);
+    await p2.evaluate(() => window.SCStock.checkUpdates());
+    await p2.waitForTimeout(500);
+    eq('and is still open, on the same saved identity, after it',
+      [await p2.evaluate(() => document.getElementById('saved').open), await attr(p2, '#saved [data-saved-id]', 'data-saved-id')], [true, id]);
+    eq('older-and-revision page errors', e2, []);
+    await c2.close();
+  }
+}
+
 async function main() {
   const chromium = await loadChromium();
   if (!chromium) { console.log('playwright is not installed: npm install --no-save playwright'); process.exit(1); }
@@ -3068,6 +3266,7 @@ async function main() {
     if (runs('following')) await checkFollowing(browser, base, full);
     if (runs('through')) await checkFollowThrough(browser, base, full);
     if (runs('session')) await checkSession(browser, base, full);
+    if (runs('refresh')) await checkRefresh(browser, base, full);
     if (runs('ticket')) await checkTicketPrices(browser, base, full);
     if (runs('states')) await checkStates(browser, base, full);
   } finally {

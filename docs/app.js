@@ -406,23 +406,40 @@
   // ---------------------------------------------------------------- the market, in a line
   function renderMarketBar(data, st) {
     const run = data.run || {}, cover = data.cover || {}, b = data.breadth || {}, reg = b.regime || {};
-    $('cover-eyebrow').textContent = 'spicystock · ' + (run.session || '—') + ' · evening run';
+    // The verdict is the record's own sentence, printed verbatim -- and its
+    // "Trade tomorrow." was written on the evening of its session, when
+    // tomorrow was the session it names. Once that session's window is behind
+    // the reader, the eyebrow says the sentence is the archived one rather
+    // than rewriting it: the page does not edit the record's words, and does
+    // not leave a headline in 30px type reading as today's instruction.
+    const asPublished = av.phase === 'ended' || av.pubBlocked;
+    $('cover-eyebrow').textContent = 'spicystock · ' + (run.session || '—') + ' · evening run' +
+      (asPublished ? ' · the verdict as published' : '');
     $('cover-h1').textContent = cover.h1 || 'No verdict.';
     $('cover-dek').textContent = cover.dek || '';
     const facts = clear($('market-facts'));
-    const fact = (dt, kids, key) => facts.appendChild(el('div', { 'data-fact': key || dt }, [el('dt', { text: dt }), el('dd', null, kids)]));
+    // the chip sits beside the LABEL, not after the value: it qualifies that
+    // fact and says so by where it is, and the fact is two rows rather than
+    // three -- which is what keeps the workspace on the first screen at 390 px
+    const fact = (dt, kids, key, tag) => facts.appendChild(el('div', { 'data-fact': key || dt }, [
+      el('dt', null, [el('span', { text: dt }), tag || null]), el('dd', null, kids)]));
+    // The regime belongs to the VERDICT, which is what the h1 and the dek are:
+    // the two facts beside them are about time, and a third about the market
+    // both read as one list and cost the workspace its place on a phone.
     const size = reg.size_multiplier;
     const sizeWords = size === 1 ? 'full size' : size === 0 ? 'no new longs' : isNum(size) ? 'size at ' + (size * 100).toFixed(0) + '%' : '';
-    fact('regime', [chip((reg.verdict || 'unknown').toUpperCase(), REGIME_TONE[reg.verdict] || 'neutral', true), el('span', { text: sizeWords + (isNum(b.ratio_10d) ? ' · 10-day ratio ' + plain(b.ratio_10d) : '') })]);
+    const regimeLine = clear($('cover-regime'));
+    regimeLine.appendChild(chip((reg.verdict || 'unknown').toUpperCase(), REGIME_TONE[reg.verdict] || 'neutral', true));
+    regimeLine.appendChild(el('span', { text: sizeWords + (isNum(b.ratio_10d) ? ' · 10-day ratio ' + plain(b.ratio_10d) : '') }));
     // The two facts, apart. "data through" is what was measured and when it
     // was published; the publication chip belongs HERE and covers this line
     // alone. "plan for" is the session the plans are for and where its entry
     // window stands, which no freshness chip can answer.
-    fact('data through', [el('span', { text: dateWords(run.session) + (run.session_state === 'closed' ? ' · closed on ' + dateWords(run.expected_session) : '') + ' · published ' + timeET(run.published_at) }), chip(st.chip, st.tone, st.keepCase)], 'data');
+    fact('data through', [el('span', { text: dateWords(run.session) + (run.session_state === 'closed' ? ' · closed on ' + dateWords(run.expected_session) : '') + ' · published ' + timeET(run.published_at) })],
+      'data', chip(st.chip, st.tone, st.keepCase));
     const tm = av.timing;
-    fact('plan for', tm.known
-      ? [el('span', { text: dateWords(tm.session) + ' · window ' + windowWords(tm) }), chip('entry window ' + PHASE_WORDS[av.phase], PHASE_TONE[av.phase])]
-      : [el('span', { text: 'not recorded' }), chip('entry timing unavailable', 'warn')], 'plan');
+    fact('plan for', [el('span', { text: tm.known ? dateWords(tm.session) + ' · window ' + windowWords(tm) : 'not recorded' })],
+      'plan', chip(tm.known ? 'entry window ' + PHASE_WORDS[av.phase] : 'entry timing unavailable', tm.known ? PHASE_TONE[av.phase] : 'warn'));
     renderRefresh();
     const notice = $('demo-notice');
     if (notice) {
@@ -435,8 +452,10 @@
     const links = clear($('market-links'));
     const offered = !!(av && av.offered), label = offered ? (cover.action_label || 'Open model plans') : 'Open model plans', target = offered ? (cover.action_target || '#hold') : '#hold';
     links.appendChild(el('a', { 'class': 'sc-link--quiet', id: 'cover-action', href: target, text: label }));
-    links.appendChild(el('a', { 'class': 'sc-link--quiet', href: '#/market', text: 'market detail' }));
-    links.appendChild(el('a', { 'class': 'sc-link--quiet', href: '#/method', text: 'run details' }));
+    // the two views these reach, spelled as the nav spells them: one line at
+    // 390 px, which is what leaves room for the update control beside them
+    links.appendChild(el('a', { 'class': 'sc-link--quiet', href: '#/market', text: 'market' }));
+    links.appendChild(el('a', { 'class': 'sc-link--quiet', href: '#/method', text: 'method' }));
   }
 
   // ---------------------------------------------------------------- run strip (the method view)
@@ -2702,7 +2721,9 @@
   function buildSaved(dlg, item, id) {
     disposeSaved();
     clear(dlg);
-    const wrap = el('div', { 'class': 'ss-saved__wrap' });
+    // the identity on the sheet itself: a reader (and a check) can see WHICH
+    // saved setup is open, which is the whole point of a sheet keyed by one
+    const wrap = el('div', { 'class': 'ss-saved__wrap', 'data-saved-id': id });
     const close = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', id: 'saved-close', text: 'Close' });
     close.addEventListener('click', () => closeSaved());
     if (!item) {
@@ -3590,11 +3611,24 @@
     invalid: 'The published file is not a record this page can read, so it was not loaded. Nothing here changed.'
   };
   let updateSeq = 0, updateBusy = false, updateSaid = '', updateOutcome = '';
-  // what makes two loads the same load: the session it is for, when it was
-  // published, and the rules that made it
-  function recordStamp(data) {
-    const run = (data && data.run) || {}, app = (data && data.app) || {};
-    return [run.session || '', run.published_at || data.generated || '', app.rules_version || ''].join('|');
+  //: the bytes the page was last loaded from, so "unchanged" means the served
+  //: file is identical and not merely stamped alike. A re-publish of the same
+  //: session on later bars keeps its session, its published_at AND its rules
+  //: digest, and moves only its numbers -- which is exactly the case a stamp of
+  //: those fields cannot see, and one string comparison can.
+  let rawRecord = null;
+  // true when the served bytes are the record already on screen. Falls back to
+  // re-serializing what is in memory for a page handed a record directly (a
+  // test, a fixture), so the answer is exact either way.
+  //
+  // The cost of reading bytes rather than meaning: a re-publish that changed
+  // only whitespace reads as a revision and is loaded. `report.write()` writes
+  // one shape every time, so that is a re-run whose numbers came out the same
+  // -- a re-render nobody is hurt by, and the price of never missing a
+  // re-publish that DID move a number under an unchanged publish stamp.
+  function sameBytes(raw) {
+    if (rawRecord !== null) return raw === rawRecord;
+    try { return !!current && raw === JSON.stringify(current); } catch (e) { return false; }
   }
   function renderRefresh() {
     const host = $('market-refresh');
@@ -3603,13 +3637,20 @@
     // finger is on the button keeps it
     const hadFocus = host.contains(d.activeElement);
     clear(host);
+    // the control stays pressable while a check is in flight: a reader whose
+    // first press is hanging must be able to try again, and the sequence number
+    // below is what makes the newest answer the only one that can land
     const btn = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', id: 'check-updates',
-      text: updateBusy ? 'Checking…' : 'Check for updates', 'data-check': '' });
-    if (updateBusy) btn.disabled = true;
+      text: updateBusy ? 'Checking…' : 'Check for updates', 'data-check': updateBusy ? 'busy' : '' });
     btn.addEventListener('click', checkUpdates);
     host.appendChild(btn);
-    host.appendChild(el('p', { 'class': 'ss-refresh__said', id: 'refresh-said', role: 'status', 'aria-live': 'polite',
-      'data-outcome': updateOutcome || null, text: updateSaid || 'Reads the published file again. Nothing is scanned or graded.' }));
+    // at rest the control says what it does and nothing more; the outcome line
+    // appears only once a check has actually answered
+    btn.title = 'Re-reads the published record. Nothing is scanned or graded.';
+    const line = el('p', { 'class': 'ss-refresh__said', id: 'refresh-said', role: 'status', 'aria-live': 'polite',
+      'data-outcome': updateOutcome || null, text: updateSaid });
+    if (!updateSaid) line.hidden = true;
+    host.appendChild(line);
     if (hadFocus && !btn.disabled) btn.focus({ preventScroll: true });
   }
   function saidUpdate(outcome, message) {
@@ -3618,38 +3659,44 @@
     renderRefresh();
   }
   function checkUpdates() {
-    if (updateBusy) return;
+    // a second press SUPERSEDES the one in flight rather than being refused;
+    // every answer carries the sequence it was asked under and a stale one is
+    // dropped, so a slow first response cannot land over a fast second
     const seq = ++updateSeq;
     saidUpdate('checking');
     const src = ((w.SCStock && w.SCStock.dataUrl) || 'data.json');
     const bust = src + (src.indexOf('?') >= 0 ? '&' : '?') + 'at=' + Date.now();
     w.fetch(bust, { cache: 'no-store' })
-      .then((r) => { if (!r.ok) throw new Error('answered ' + r.status); return r.json(); })
-      .then((next) => { if (seq === updateSeq) applyUpdate(next); })
+      .then((r) => { if (!r.ok) throw new Error('answered ' + r.status); return r.text(); })
+      .then((raw) => { if (seq === updateSeq) applyUpdate(raw); })
       .catch(() => { if (seq === updateSeq) saidUpdate('failed'); });
   }
   // the decision, with nothing replaced until every question is answered
-  function applyUpdate(next) {
+  function applyUpdate(raw) {
+    // identical bytes: nothing is parsed, nothing is rendered, and the
+    // Following shelf is not asked to observe a session it already has
+    if (sameBytes(raw)) { saidUpdate('unchanged'); return; }
+    let next = null;
+    try { next = JSON.parse(raw); } catch (e) { saidUpdate('failed'); return; }
     if (!next || typeof next !== 'object' || next.schema_version !== 2 || !next.run ||
         !Array.isArray(next.bursts) || !next.run.session) { saidUpdate('invalid'); return; }
-    if (SCStock.timingFaults(next).length) { saidUpdate('invalid'); return; }
+    if (timingFaults(next).length) { saidUpdate('invalid'); return; }
     const here = current && current.run ? current.run.session : null;
     const there = next.run.session;
-    if (!here) { loadUpdate(next, 'newer', 'A record loaded: ' + dateWords(there) + '.'); return; }
+    if (!here) { loadUpdate(raw, next, 'newer', 'A record loaded: ' + dateWords(there) + '.'); return; }
     if (there < here) { saidUpdate('older'); return; }
-    if (recordStamp(next) === recordStamp(current)) { saidUpdate('unchanged'); return; }
     // the same trading day, re-measured on later bars: a REVISION, not a new
     // session, and the word matters -- the reader's saved observations of that
     // date are revisions of it too, not a second day
-    if (there === here) { loadUpdate(next, 'revised', dateWords(there) + ' was re-published, so it was re-read: the same session on later bars, not a new one.'); return; }
-    loadUpdate(next, 'newer', 'A newer record loaded: ' + dateWords(there) + ' replaces ' + dateWords(here) + '.');
+    if (there === here) { loadUpdate(raw, next, 'revised', dateWords(there) + ' was re-published, so it was re-read: the same session on later bars, not a new one.'); return; }
+    loadUpdate(raw, next, 'newer', 'A newer record loaded: ' + dateWords(there) + ' replaces ' + dateWords(here) + '.');
   }
   // What a reader keeps across a load, and what they are TOLD they lost. The
   // record changes; the reader's own place in it, their private saves and
   // their preferences do not. A comparison pair is the one thing that cannot
   // survive: it was pinned from one published record and two names remapped
   // onto a different one would be a comparison nobody made.
-  function loadUpdate(next, outcome, message) {
+  function loadUpdate(raw, next, outcome, message) {
     const keep = {
       view: state.view, stage: state.stage, selected: Object.assign({}, state.selected),
       query: $('search') ? $('search').value : '', hash: String(w.location.hash || ''),
@@ -3657,6 +3704,7 @@
       savedOpen: savedOpen, comparing: !!(state.pins.length === 2 && $('compare') && $('compare').open)
     };
     render(next, clockPinned ? clockAt : null, keep);
+    rawRecord = raw;
     const lost = [];
     if (keep.pins.length) lost.push(keep.pins.length === 2 && keep.comparing
       ? 'The comparison was closed: a pinned pair belongs to the record it was pinned from.'
@@ -3694,6 +3742,9 @@
     clockAt = now ? new Date(now) : new Date();
     clockPinned = !!now;
     copyRefused = null;
+    // the bytes belong to the loader that read them; a record handed straight to
+    // render() (a test, a fixture) has none, and `sameBytes()` says so
+    rawRecord = null;
     av = availability(data, clockAt); st = av.pub; SCStock.state = st; SCStock.avail = av;
     model = buildModel(data); SCStock.model = model;
     SCStock.follow.setDemo(demo);
@@ -3782,10 +3833,15 @@
     wire();
     const src = (w.SCStock && w.SCStock.dataUrl) || 'data.json';
     w.fetch(src, { cache: 'no-store' })
-      .then((r) => { if (!r.ok) throw new Error('data.json answered ' + r.status); return r.json(); })
+      .then((r) => { if (!r.ok) throw new Error('data.json answered ' + r.status); return r.text(); })
       // an injected clock is a PIN and the page does not move it; without one
       // the page reads the real clock and re-reads it as the day goes on
-      .then((data) => { if (!data || data.schema_version !== 2 || !data.run) throw new Error('not a schema_version 2 record'); render(data, w.SCStock.now ? new Date(w.SCStock.now) : null); })
+      .then((raw) => {
+        const data = JSON.parse(raw);
+        if (!data || data.schema_version !== 2 || !data.run) throw new Error('not a schema_version 2 record');
+        render(data, w.SCStock.now ? new Date(w.SCStock.now) : null);
+        rawRecord = raw;
+      })
       .catch((e) => failed(String(e && e.message || e)));
   }
   if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', boot); else boot();
