@@ -1180,6 +1180,78 @@ Resend, and any trading edge.
 `evening.yml` with `dry_run=true` and reconcile the artifact against
 `entry_limit_study.py`'s green-night line, 52 / 0 / 50 / 47.
 
+## Checkpoint, 14 Sep 2026 — a followed setup that outlives its record
+
+**Revision.** Branch `claude/spicystock-follow-through-clqeb8` from `main` at
+`e0f68d9` (the merge of #58), clean and empty at that tip; two commits on it,
+pushed as **#59**. `docs/data.json`, `docs/picks.json` and the vendored
+`docs/design-system/` are untouched to the byte; no sibling repository was
+written; nothing was merged, deployed, dispatched or mailed.
+
+**Reproduced first, over two records** (`scratchpad/repro/follow_repro.mjs` at
+`e0f68d9`): a setup followed on the `full` night saved no chart and no
+observation history, there was no way into a saved setup by its identity, and
+*Open chart* on the followed AAPL — a symbol that had LEFT the newer record —
+navigated to **NVDA**, silently, because `routeHash()` looks the id up in
+tonight's model and drops the ticker when it is not there. The same session
+re-run on later bars rewrote −5.5% to −5.2% with nothing saying it was one
+trading day read twice; an OLDER record put the card back to "no newer
+observation available", losing the 11 September close and claiming none
+existed. The archived ticket chip and the order sentence read as current on a
+night the symbol was in no scan.
+
+**The records that made it measurable.** `make_fixture.py` writes two sequels
+over the docs the `full` night wrote, so each inherits its record and its
+picks as a real night does: `next` (Friday — the ticket and the withheld setup
+gone, AAPL closing under the stop its own plan named, NVDA bursting again, the
+coil breaking out into *Bursts*, NVDA carrying the night's one ticket) and
+`revised` (that same session on later bars, AAPL's close 37¢ off). Eight
+fixtures; the other six byte-identical.
+
+**Measured.** 1086 tests; 9 fixtures current through the real generator; chart
+check 182/182; **CI green on its own runners at `e7ba821`** — pytest, gitleaks
+and the `page` job, which is the chart check and the FULL smoke with
+`--shots`: **3364/3364** in 5 m 08 s, the new `through` suite (133 checks) the
+longest single one at 91 s.
+
+**The mutation pass, and a harness bug of mine.** Thirty-two mutants over the
+new rules. The runner assigned four repo copies BY INDEX while running four
+threads, so two mutants could share a copy and each `finally` restore erased
+the other's mutation — six false survivors, and most of an evening. Fixed (a
+queue: one copy held per mutant). Twenty-three died in that flawed pass; of
+the six reported survivors, three re-judged individually now die, and **three
+were real holes, each closed with the check it showed was missing**: "an older
+record cannot replace it" passed because a DIFFERENT rule rejected (every bar
+the `full` night holds for that symbol is at or before the signal, so the
+merge never reached the guard); the migration's read-back of its own COPY was
+never exercised at its failure point; and the STORE's bound on frozen bars was
+untested, the page-side filter being equivalent on any real record. **NOT
+run:** the remaining ~25 mutants under the fixed harness. That is a gap, not a
+pass.
+
+**One process failure worth recording.** A command of mine contained `git
+checkout -- .` and reverted every uncommitted file. All eleven were
+reconstructed from the session's own patches; the proof it is exact is that
+`make_fixture.py --check` reproduces both surviving fixtures byte-for-byte.
+Commit before running anything that can touch the tree.
+
+**Keep / fix / defer / omit.** Keep everything above. Fix if it bites:
+observations that ARE contiguous real OHLC could use the existing chart modes
+rather than the dotted trail (the trail is right for a sparse series and is
+what is built). Note for a later authorised promotion, NOT upstream now: the
+bounded sheet with a head strip and a scrolling column whose rows are
+`flex: 0 0 auto`, and the two-group card. Defer to Astra: the +4% ceiling
+against his 4% stop line; the <320 px overflow; the CLAUDE.md length gate,
+still unfailable. Omit: trade logging, a portfolio, execution.
+
+**Blockers: none. Not claimable**, unchanged: a live fetch, a real chart read,
+Resend, and any trading edge — this changes what a reader can still read a
+week later, not what wins.
+
+**Next action.** The method's own, untouched here: on a green or yellow session
+dispatch `evening.yml` with `dry_run=true` and reconcile the artifact against
+`entry_limit_study.py`'s green-night line, 52 / 0 / 50 / 47.
+
 ### NEXT BUILDER PROMPT
 
 Continue SpicyStock at `main` (verify the tip; `017b776` when this was written,
