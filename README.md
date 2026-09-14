@@ -36,7 +36,9 @@ land where they used to. Choosing a stock fetches nothing, grades nothing
 and sizes nothing; a route the page does not know, or a symbol the record
 does not carry, falls back to Explore and says so.
 
-1. **The status chip.** The one thing the page computes: from the record's
+1. **The two clocks.** A record carries two different facts about time and
+   the page keeps them apart, because freshness is not permission.
+   **Publication** is the one thing the page computes: from the record's
    session and the browser's clock in ET it says *fresh*, *tonight's run
    pending*, *STALE · 1 session behind* (closed or failed, it cannot tell),
    *STALE · N sessions behind* (never a closure: no two US market holidays
@@ -44,6 +46,25 @@ does not carry, falls back to Explore and says so.
    problem kind. A stale page says *Do not place these orders*, points at
    the run log, and withholds every ticket from the action area, the plan
    and the order sheet, keeping the setups.
+   **Action timing** is the run's own (`run.timing`, `src/timing.py`): the
+   session the published plans are FOR and the instants its entry window is
+   scheduled between, offset and all, so the page compares rather than
+   derives and never writes a UTC offset of its own. The window is
+   *upcoming*, *in progress* or *ended*; a record published before the field
+   existed, or one whose block is half written, is *entry timing
+   unavailable — research only*. One calculation answers both
+   (`availability(data, now)`) and every surface that offers an action asks
+   it: the compact area, a stock's action bar, the plan disclosure and its
+   copy control, the ticket sheet, the comparison's ticket row and the next
+   action. Timing narrows and never widens — a red night still leads with
+   *no new longs*, a stale page is refused under a window that is open, and
+   a window that ended leaves the setup, its evidence and the ticket the
+   record published readable while offering none of it to place. The clock
+   is re-read when the tab comes back, the window takes focus, the browser
+   restores the page and on a bounded tick while visible, repainting only
+   the words that changed — the chart, the lens, the comparison, an open
+   disclosure and the reader's focus all stay where they were — and a copy
+   asks again immediately before it writes.
 2. **Explore**, the default view. The market in a line: the verdict, one
    of six sentences — *Trade tomorrow. N A-quality bursts.* · *Trade small.
    N A+ bursts.* (a yellow regime) · *Stand aside.* (red) · *Nothing
@@ -244,9 +265,29 @@ does not carry, falls back to Explore and says so.
    fixture, a *demo data* chip on the chart panel and the burst map, a
    *demo* chip on a followed card, and a chart-reader reply labelled
    simulated. Demo follows are kept under their own browser key.
-9. **The next action**, under every view: place the N orders from
-   tomorrow's tickets before 9:28 AM, nothing to place, no new longs, plans
-   unchanged, or do not place these orders.
+9. **The next action**, under every view, and it names the session rather
+   than saying *tomorrow*: *Plan for Mon 14 Sep: place the N orders in
+   Fidelity before 9:28 AM ET* before the window, *The entry window for Mon
+   14 Sep is in progress* inside it (with the last observed data timestamp
+   kept in view, and live trigger and fill conditions said to be unverified
+   here), *The entry window for Mon 14 Sep has ended* after it — where the
+   cancellation is conditional, *if you submitted an order that did not
+   fill*, and SpicyStock is said to place and cancel nothing. Otherwise
+   nothing to place, no new longs, plans unchanged, or do not place these
+   orders. 9:28 AM is the desk's own preparation reminder
+   (`timing.PREPARE_BEFORE_ET`), never the cutoff.
+10. **Check for updates**, one control beside the publication line. It
+   re-reads the same static record and nothing else — no rescan, no grading
+   call, no paid request, no dispatch, no polling. It reports unchanged (the
+   served bytes are identical, so no Following observation is added), a
+   newer session, a file for an EARLIER session (refused rather than applied
+   backwards), the same session re-published on later bars (a revision of
+   that trading day, not a second one), or a file it could not read or
+   reach. A press supersedes one in flight and only the newest answer can
+   land. A load hands back the stage, the stock and the search, keeps the
+   theme, the lens, the chart's mode and range, every saved identity with
+   its frozen evidence and a half-typed reference size — and closes a
+   comparison rather than remapping its pins onto other stocks, saying so.
 
 The email is the same record in fewer words: the verdict, the breadth line,
 one block per trade with its order line and the day-order term, the plans
@@ -462,6 +503,7 @@ what the bars say happened to them.
 ```
 src/            pipeline.py (the run) · universe.py · market_data.py · clock.py
                 scans.py · quality.py · breadth.py · watchlist.py · plan.py
+                timing.py (which session a plan is for, and when its window is over)
                 grader.py · charts.py · record.py · report.py
 docs/           index.html · app.js · app.css · app-chart.js · app-map.js · app-follow.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)

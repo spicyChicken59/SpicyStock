@@ -40,7 +40,7 @@ const TRADE_GRADES = ['A+', 'A'];   // the grades the run gives an order (pipeli
 const args = process.argv.slice(2);
 const shotsDir = args.includes('--shots') ? args[args.indexOf('--shots') + 1] : null;
 // --only <name[,name]> runs just those suites (variant names, or lens/compare/
-// evidence/map/reach/mobile/modes/following/through/volume/mapscale/ticket/states). It is for
+// evidence/map/reach/mobile/modes/following/through/session/refresh/volume/mapscale/ticket/states). It is for
 // judging a mutant in a minute; CI and the milestone gate run everything.
 const only = args.includes('--only') ? String(args[args.indexOf('--only') + 1] || '').split(',').filter(Boolean) : null;
 const runs = (name) => !only || only.includes(name);
@@ -363,9 +363,20 @@ async function checkVariant(browser, base, variant, data) {
   eq(`${variant} action`, await text(page, '#cover-action'), data.cover.action_label);
   const target = data.cover.action_target;
   check(`${variant} cover action target exists`, (await page.locator(target).count()) === 1, target);
+  // the regime sits with the VERDICT it belongs to; the two facts beside them
+  // are about time, and each carries its own chip
+  const regimeLine = await text(page, '#cover-regime');
+  check(`${variant} the verdict names the regime`, regimeLine.includes(data.breadth.regime.verdict.toUpperCase()), regimeLine);
+  check(`${variant} and the ratio`, regimeLine.includes(String(data.breadth.ratio_10d)), regimeLine);
   const facts = await text(page, '#market-facts');
-  check(`${variant} market bar names the regime`, facts.includes(data.breadth.regime.verdict.toUpperCase()), facts);
-  check(`${variant} market bar names the ratio`, facts.includes(String(data.breadth.ratio_10d)), facts);
+  check(`${variant} the data line names the measured session and when it published`,
+    facts.includes(dateWords(data.run.session)) && /published \d+:\d\d [AP]M ET/.test(facts), facts);
+  check(`${variant} the plan line names the session the plans are for`,
+    facts.includes(dateWords(data.run.timing.applicable_session)), facts);
+  check(`${variant} and the two carry one chip each, so neither covers the other`,
+    (await page.locator('#market-facts [data-fact="data"] .sc-chip').count()) === 1 &&
+    (await page.locator('#market-facts [data-fact="plan"] .sc-chip').count()) === 1,
+    'a fact without its own chip');
   eq(`${variant} explore is the view`, await visibleView(page), ['view-explore']);
   // a fixture is sample data and says so, everywhere it could be mistaken for a live record
   eq(`${variant} the page marks the fixture as demo data`, await page.getAttribute('html', 'data-ss-demo'), 'true');
@@ -657,13 +668,19 @@ async function checkVariant(browser, base, variant, data) {
     check(`${variant} the switch is announced`, (await text(page, '#picks-status')).includes('shown instead'), await text(page, '#picks-status'));
   }
 
-  // the next action, whatever the view
+  // the next action, whatever the view. The headline names the SESSION the
+  // plans are for -- read off the record's own timing block, never off a word
+  // the page happens to print -- because "tomorrow" is true for one evening
+  // and wrong from the next midnight, on the very day it means.
   await go(page, '#/explore');
-  const next = await text(page, '#next-h3');
+  const next = await text(page, '#next-h3'), forDay = dateWords(data.run.timing.applicable_session);
   if (variant === 'closed') check(`${variant} next: plans unchanged`, next.startsWith('Plans unchanged'), next);
   else if (data.breadth.regime.verdict === 'red') check(`${variant} next: no new longs`, next.startsWith('No new longs'), next);
-  else if (withOrders.length) check(`${variant} next: place N orders`, next.startsWith(`Place the ${withOrders.length} order`), next);
-  else check(`${variant} next: nothing new`, /^Nothing/.test(next), next);
+  else if (withOrders.length) check(`${variant} next: place N orders, for a named session`,
+    next === `Plan for ${forDay}: place the ${withOrders.length} order${withOrders.length === 1 ? '' : 's'} in Fidelity before 9:28 AM ET. Exits first.`, next);
+  else check(`${variant} next: nothing new, for a named session`, /^Nothing/.test(next) && next.includes(forDay), next);
+  check(`${variant} next never names a deadline that has passed`, !/before 9:28 AM/.test(next) || await attr(page, 'html', 'data-ss-window') === 'upcoming',
+    `${next} @ window ${await attr(page, 'html', 'data-ss-window')}`);
 
   // footer and errors
   check(`${variant} footer names the feed and the rules`, (await text(page, '#foot-line')).includes(data.app.rules_version), 'foot');
@@ -1040,7 +1057,13 @@ async function checkStates(browser, base, data) {
     eq(`${name} the trade's action area withholds the order`, await page.locator('#detail .ss-action').getAttribute('data-ticket'), 'blocked');
     eq(`${name} no order block`, await count(page, '#detail pre[data-order]'), 0);
     await openAll(page, '#detail details');
-    check(`${name} the plan says why`, (await text(page, '#disc-plan')).includes('No order is offered'), 'plan');
+    // the reason is the one shared answer's, which names the state it is in
+    // (docs/app.js stateWords()); asserted by that word rather than by a fixed
+    // sentence, so the check is about the rule and not about its wording
+    const stateWord = { pending: 'waiting for tonight\u2019s run', failed: 'without a verdict' }[state] || 'stale';
+    check(`${name} the plan says why, in the state's own word`,
+      (await text(page, '#disc-plan')).includes(stateWord), (await text(page, '#disc-plan')).slice(0, 140));
+    eq(`${name} and offers no copy control`, await count(page, '#disc-plan [data-copy]'), 0);
     eq(`${name} the order sheet is empty`, await count(page, '#order-sheet tbody tr[data-ticker]'), 0);
     eq(`${name} page errors`, errors, []);
     if (shotsDir && name === 'stale2') await page.screenshot({ path: path.join(shotsDir, 'stale2-1280-dark.png'), fullPage: true });
@@ -1115,6 +1138,18 @@ async function checkStates(browser, base, data) {
   eq('missing record state', await page.getAttribute('html', 'data-ss-rendered'), 'error');
   check('missing record next', (await text(page, '#next-h3')).startsWith('Do not place any order'), 'next');
   eq('missing record: the detail says so', await count(page, '#detail [data-detail="error"]'), 1);
+  // A clock re-reading over the no-record page used to repaint the market bar
+  // with "No verdict." over the sentence saying the record could not be read:
+  // `failed()` leaves `current` a stub so the saved setups still read, and that
+  // stub has a `run`, so "is there a record" could not be asked of it. The
+  // events are fired here because a real browser fires them on its own timing
+  // -- this failed on a runner and passed in the sandbox until it was pinned.
+  await page.evaluate(() => { window.dispatchEvent(new Event('focus')); window.dispatchEvent(new Event('pageshow')); document.dispatchEvent(new Event('visibilitychange')); });
+  await page.waitForTimeout(200);
+  eq('missing record: a clock re-reading does not paint over it',
+    [await text(page, '#cover-h1'), await page.getAttribute('html', 'data-ss-rendered')],
+    ['The record could not be read.', 'error']);
+  eq('and the re-reading refuses outright', await page.evaluate(() => window.SCStock.reclock()), false);
   eq('missing record: no stages to choose', await count(page, '#stages [data-empty="record"]'), 1);
   await page.locator('#nav a[data-view="record"]').click();
   await page.waitForTimeout(150);
@@ -2750,6 +2785,487 @@ async function checkReach(browser, base, data) {
   await mp.context.close();
 }
 
+// ---------------------------------------------------------------------------
+// The session-aware desk: which session the plans are for, whether its entry
+// window is still applicable, and loading a newer record without taking the
+// reader's place with it.
+//
+// The clock is INJECTED at every instant here (SCStock.render(data, when)), so
+// no check in this suite depends on the hour it runs -- this repository's worst
+// shape of unfailable test. Every instant is stated in market time beside its
+// UTC, because a reader of this file has to be able to check the arithmetic.
+// ---------------------------------------------------------------------------
+
+// September 2026 is EDT, UTC-4. `next.json` is measured on Friday 11 Sep and
+// its plans are for Monday 14 Sep, whose window is 9:30-10:00 AM ET.
+const WHEN = {
+  evening: ['2026-09-11T22:31:00Z', 'Fri 11 Sep 6:31 PM ET, the evening it published'],
+  saturday: ['2026-09-12T13:45:00Z', 'Sat 12 Sep 9:45 AM ET, the window\'s clock time on a weekend'],
+  sunday: ['2026-09-13T18:00:00Z', 'Sun 13 Sep 2:00 PM ET'],
+  before: ['2026-09-14T13:00:00Z', 'Mon 14 Sep 9:00 AM ET, before the open'],
+  ready: ['2026-09-14T13:28:00Z', 'Mon 14 Sep 9:28 AM ET, the preparation reminder'],
+  bell: ['2026-09-14T13:30:00Z', 'Mon 14 Sep 9:30 AM ET, the bell'],
+  inside: ['2026-09-14T13:40:00Z', 'Mon 14 Sep 9:40 AM ET, inside the window'],
+  last: ['2026-09-14T13:59:59Z', 'Mon 14 Sep 9:59:59 AM ET, its last second'],
+  cutoff: ['2026-09-14T14:00:00Z', 'Mon 14 Sep 10:00 AM ET, the cutoff itself'],
+  after: ['2026-09-14T15:00:00Z', 'Mon 14 Sep 11:00 AM ET, the acceptance instant'],
+  evening2: ['2026-09-14T21:00:00Z', 'Mon 14 Sep 5:00 PM ET, after the close'],
+};
+// an instant on a record's OWN applicable session at a market-clock time,
+// built from the offset the record carries rather than from arithmetic here
+const atSession = (tm, hhmm) => new Date(`${tm.applicable_session}T${hhmm}:00${tm.opens_at.slice(-6)}`).toISOString();
+const phaseAt = (page, data, key) => page.evaluate(([d, at]) => {
+  window.SCStock.render(d, new Date(at));
+  const a = window.SCStock.avail;
+  return { phase: a.phase, offered: a.offered, lead: a.lead, pub: a.pub.state, reason: a.reason };
+}, [data, WHEN[key][0]]);
+
+async function checkSession(browser, base, full) {
+  console.log('-- session: which session the plans are for, and whether its window is still open');
+  const next = JSON.parse(await readFile(path.join(FIXTURES, 'next.json'), 'utf8'));
+  const revised = JSON.parse(await readFile(path.join(FIXTURES, 'revised.json'), 'utf8'));
+  const closed = JSON.parse(await readFile(path.join(FIXTURES, 'closed.json'), 'utf8'));
+  const red = JSON.parse(await readFile(path.join(FIXTURES, 'red.json'), 'utf8'));
+  const tm = next.run.timing, forDay = dateWords(tm.applicable_session);
+  const order = next.trades.find((t) => { const b = next.bursts.find((x) => x.ticker === t); return b && b.plan && b.plan.order_json; });
+  check('the fixture this suite needs carries a ticket for a named session', !!order && !!tm, `${order} for ${tm && tm.applicable_session}`);
+  eq('and the applicable session is the weekday after the measured one', [tm.measured_session, tm.applicable_session], ['2026-09-11', '2026-09-14']);
+
+  // ---- the phase at every boundary, on one page, the clock moved under it
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/next.json', WHEN.evening[0], 1280,
+    { lens: 'all', hash: `#/explore/bursts/${order}` });
+  const want = { evening: 'upcoming', saturday: 'upcoming', sunday: 'upcoming', before: 'upcoming', ready: 'upcoming',
+    bell: 'open', inside: 'open', last: 'open', cutoff: 'ended', after: 'ended', evening2: 'ended' };
+  // by evening2 the record IS a session behind (the next run has not landed),
+  // so publication refuses there too: the one instant where both do
+  const pubWant = { evening2: 'pending' };
+  for (const key of Object.keys(want)) {
+    const got = await phaseAt(page, next, key);
+    eq(`${WHEN[key][1]} -> the window is ${want[key]}`, got.phase, want[key]);
+    eq(`  and an order is ${want[key] === 'ended' ? 'not ' : ''}offered there`, got.offered, want[key] !== 'ended');
+    eq(`  publication at ${key}`, got.pub, pubWant[key] || 'fresh');
+  }
+  eq('at the one instant where both refuse, publication is the reason given',
+    (await phaseAt(page, next, 'evening2')).lead, 'not offered');
+  // the weekend cases are the ones a naive "is it 9:45 yet" would get wrong:
+  // Saturday at 9:45 AM ET is inside the window's CLOCK TIME and is not a session
+  check('a weekend at the window\'s own clock time is still upcoming, not open',
+    (await phaseAt(page, next, 'saturday')).phase === 'upcoming', 'a Saturday read as an open window');
+
+  // ---- THE ACCEPTANCE: the 11:00 AM page no longer names a passed deadline
+  await phaseAt(page, next, 'after');
+  const nextH3 = await text(page, '#next-h3'), nextP = await text(page, '#next-p');
+  check('at 11:00 AM the next action does NOT tell the reader to act before 9:28 AM',
+    !/before 9:28/.test(nextH3 + ' ' + nextP), `${nextH3} | ${nextP}`);
+  check('it says the window for that named session has ended',
+    nextH3 === `The entry window for ${forDay} has ended.`, nextH3);
+  check('and it never says "tomorrow" of the day it is on', !/tomorrow/i.test(nextH3 + ' ' + nextP), `${nextH3} | ${nextP}`);
+  check('the cancellation is conditional and claims nothing was cancelled for the reader',
+    /If you submitted an order that did not fill/.test(nextP) && /places nothing and cancels nothing/.test(nextP), nextP);
+
+  // ---- the compact area tells the two facts apart
+  eq('the market area has one line for the data and one for the plan',
+    await page.locator('#market-facts > div').evaluateAll((e) => e.map((x) => x.dataset.fact)), ['data', 'plan']);
+  check('with the regime beside the verdict it belongs to', !!(await count(page, '#cover-regime .sc-chip')), 'no regime chip on the verdict');
+  const dataLine = await said(page, '#market-facts [data-fact="data"]'), planLine = await said(page, '#market-facts [data-fact="plan"]');
+  check('the data line names the measured session and the publication time',
+    dataLine.includes(dateWords(next.run.session)) && /published \d+:\d\d [AP]M ET/.test(dataLine), dataLine);
+  check('and carries the freshness chip, which covers it and nothing else', dataLine.includes('fresh'), dataLine);
+  check('the plan line names the applicable session and the window',
+    planLine.includes(forDay) && planLine.includes('9:30–10:00 AM ET'), planLine);
+  check('and its own chip says the window ended, beside a fresh data line',
+    planLine.includes('entry window ended'), planLine);
+  check('so no single green chip can be read as covering both', !/fresh/.test(planLine), planLine);
+
+  // ---- every action surface, at the same instant
+  const bar = await said(page, '.ss-action');
+  eq('the stock action bar is marked with the window it is in', await attr(page, '.ss-action', 'data-window'), 'ended');
+  check('it gives the reason and keeps the setup readable',
+    bar.includes(`entry window for ${forDay} ended`) && /stay readable/.test(bar), bar);
+  check('its button inspects the recorded ticket rather than offering it',
+    (await said(page, '.ss-action [data-open]')).includes('Inspect the recorded ticket'), await said(page, '.ss-action [data-open]'));
+  await openAll(page, '#disc-plan');
+  eq('the plan disclosure offers no copy control', await count(page, '#disc-plan [data-copy]'), 0);
+  eq('and prints what the record published, as history', await count(page, '#disc-plan [data-recorded-ticket]'), 1);
+  check('marked as history and not as an order to place',
+    (await said(page, '#disc-plan [data-recorded-ticket]')).includes('History, not an order to place'), await said(page, '#disc-plan [data-recorded-ticket]'));
+  await openAll(page, '#orders');
+  check('the ticket sheet says the window ended in its own summary',
+    (await text(page, '#orders-summary')).includes('window ended') && (await text(page, '#orders-summary')).startsWith(forDay), await text(page, '#orders-summary'));
+  eq('and offers no order row', await count(page, '#order-sheet tbody tr[data-ticker]'), 0);
+  check('naming the window rather than staleness', (await said(page, '#order-sheet tbody .sc-empty')).includes('window'), await said(page, '#order-sheet tbody .sc-empty'));
+
+  // ---- the same surfaces INSIDE the window: offered, and honest about what
+  // the page cannot see
+  await phaseAt(page, next, 'inside');
+  eq('inside the window the sheet offers its order again', await count(page, '#order-sheet tbody tr[data-ticker]'), 1);
+  await openAll(page, '#disc-plan');
+  eq('and the copy control is back', await count(page, '#disc-plan [data-copy]'), 1);
+  check('the next action says the window is in progress, not that a trigger has been met',
+    (await text(page, '#next-h3')).includes('is in progress') && /not verified here/.test(await text(page, '#next-p')), await text(page, '#next-p'));
+  check('the last observed data timestamp stays visible inside the window',
+    /published \d+:\d\d [AP]M ET/.test(await said(page, '#market-facts [data-fact="data"]')), await said(page, '#market-facts [data-fact="data"]'));
+  check('the action bar names the window it fills inside, and never "tomorrow"',
+    (await said(page, '.ss-action')).includes(`inside ${forDay}`) && !/tomorrow/i.test(await said(page, '.ss-action')), await said(page, '.ss-action'));
+
+  // ---- a tab left open ACROSS the deadline, the clock its own
+  {
+    const { context: c2, page: p2, errors: e2 } = await open(browser, base, '/tests/fixtures/page/next.json', null, 1280,
+      { lens: 'all', hash: `#/explore/bursts/${order}` });
+    // the page's own clock, moved by moving Date itself: the tab was opened
+    // inside the window and is still open an hour after it closed
+    await p2.evaluate((iso) => {
+      const Real = Date, fixed = new Real(iso).getTime();
+      window.__fake = fixed;
+      function Fake(...a) { return a.length ? new Real(...a) : new Real(window.__fake); }
+      Fake.now = () => window.__fake; Fake.parse = Real.parse; Fake.UTC = Real.UTC;
+      Fake.prototype = Real.prototype;
+      window.Date = Fake;
+    }, WHEN.inside[0]);
+    await p2.evaluate(() => window.SCStock.reclock());
+    eq('a tab opened inside the window says so', await attr(p2, 'html', 'data-ss-window'), 'open');
+    const chartBefore = await p2.evaluate(() => window.SCStock.liveCharts());
+    await openAll(p2, '#disc-plan');
+    await p2.locator('#disc-plan [data-copy]').first().focus();
+    await p2.evaluate((iso) => { window.__fake = new Date(iso).getTime(); }, WHEN.after[0]);
+    const moved = await p2.evaluate(() => window.SCStock.reclock());
+    eq('crossing the deadline while it sits there changes the answer', [moved, await attr(p2, 'html', 'data-ss-window')], [true, 'ended']);
+    check('the left-open tab now says the window ended', (await text(p2, '#next-h3')).includes('has ended'), await text(p2, '#next-h3'));
+    eq('and the copy control is gone from under the reader', await count(p2, '#disc-plan [data-copy]'), 0);
+    eq('the chart was NOT torn down to say so', await p2.evaluate(() => window.SCStock.liveCharts()), chartBefore);
+    eq('the plan disclosure the reader had open stays open', await p2.evaluate(() => document.getElementById('disc-plan').open), true);
+    check('and the focus did not fall on the body',
+      await p2.evaluate(() => document.activeElement !== document.body && document.activeElement.tagName !== 'HTML'),
+      await p2.evaluate(() => document.activeElement.tagName + '/' + document.activeElement.className));
+    // a second re-reading with nothing changed repaints nothing
+    eq('a re-reading that changes no answer repaints nothing', await p2.evaluate(() => window.SCStock.reclock()), false);
+    eq('left-open-tab page errors', e2, []);
+    await c2.close();
+  }
+
+  // ---- a copy that is pressed after the window closed under it
+  {
+    const { context: c3, page: p3, errors: e3 } = await open(browser, base, '/tests/fixtures/page/next.json', null, 1280,
+      { lens: 'all', hash: `#/explore/bursts/${order}` });
+    await p3.evaluate((iso) => {
+      const Real = Date, fixed = new Real(iso).getTime();
+      window.__fake = fixed;
+      function Fake(...a) { return a.length ? new Real(...a) : new Real(window.__fake); }
+      Fake.now = () => window.__fake; Fake.parse = Real.parse; Fake.UTC = Real.UTC; Fake.prototype = Real.prototype;
+      window.Date = Fake;
+    }, WHEN.last[0]);
+    await p3.evaluate(() => window.SCStock.reclock());
+    await openAll(p3, '#disc-plan');
+    eq('a reader inside the window has a copy control', await count(p3, '#disc-plan [data-copy]'), 1);
+    // the window closes while the disclosure is open, and the page is NOT told
+    await p3.evaluate((iso) => { window.__fake = new Date(iso).getTime(); }, WHEN.after[0]);
+    // Chromium's clipboard is shared across the contexts of one browser, so
+    // "it is empty" is no evidence on its own: a suite that copied earlier
+    // would have left its own text there. It is written first, and must be
+    // exactly what is read back.
+    await p3.evaluate(() => navigator.clipboard.writeText('nothing was copied').catch(() => {}));
+    await p3.locator('#disc-plan [data-copy]').first().click();
+    await p3.waitForTimeout(250);
+    const clip = await p3.evaluate(() => navigator.clipboard.readText().catch(() => ''));
+    eq('pressing it after the window closed copies nothing', clip, 'nothing was copied');
+    // the refusal is said in the action area, because catching the page up
+    // rebuilds the disclosure the button was in
+    const refused = await said(p3, '[data-copy-refused]');
+    check('and says, where the reader is looking, that nothing was copied',
+      refused.includes('Nothing was copied') && refused.includes('ended'), refused);
+    check('the rest of the page catches up with it', (await text(p3, '#next-h3')).includes('has ended'), await text(p3, '#next-h3'));
+    eq('late-copy page errors', e3, []);
+    await c3.close();
+  }
+
+  // ---- timing NARROWS and never widens
+  {
+    // a red night's headline stays the regime's, with the window said beside it
+    const r = await open(browser, base, '/tests/fixtures/page/red.json', atSession(red.run.timing, '09:00'), 1280, { lens: 'all' });
+    check('a red night still leads with no new longs, whatever the clock',
+      (await text(r.page, '#next-h3')).startsWith('No new longs'), await text(r.page, '#next-h3'));
+    check('and the window is named beside it, not instead of it',
+      (await text(r.page, '#next-p')).includes('entry window for'), await text(r.page, '#next-p'));
+    eq('red-night page errors', r.errors, []);
+    await r.context.close();
+    // a closed night names the day that did not happen
+    const clTm = closed.run.timing;
+    const cl = await open(browser, base, '/tests/fixtures/page/closed.json', atSession(clTm, '09:00'), 1280, { lens: 'all' });
+    check('a closed night says the plans dated for the closed day apply to the next session',
+      (await text(cl.page, '#next-p')).includes(dateWords(clTm.closed_session)) &&
+      (await said(cl.page, '#market-facts [data-fact="plan"]')).includes(dateWords(clTm.applicable_session)),
+      `${await text(cl.page, '#next-p')} | ${await said(cl.page, '#market-facts [data-fact="plan"]')}`);
+    eq('closed-night page errors', cl.errors, []);
+    await cl.context.close();
+    // a stale page is refused whatever the window says: publication first
+    const s = await open(browser, base, '/tests/fixtures/page/full.json', STALE2_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${full.trades[0]}` });
+    const openWindow = await s.page.evaluate((d) => {
+      // a window that IS open, on a record the page is four sessions behind on
+      const forged = JSON.parse(JSON.stringify(d));
+      forged.run.timing.applicable_session = '2026-09-16';
+      forged.run.timing.opens_at = '2026-09-16T09:30:00-04:00';
+      forged.run.timing.cutoff_at = '2026-09-16T10:00:00-04:00';
+      forged.run.timing.prepare_by = '2026-09-16T09:28:00-04:00';
+      forged.run.timing.closes_at = '2026-09-16T16:00:00-04:00';
+      window.SCStock.render(forged, new Date('2026-09-16T13:40:00Z'));
+      const a = window.SCStock.avail;
+      return { phase: a.phase, offered: a.offered, lead: a.lead, pub: a.pub.state };
+    }, full);
+    eq('an OPEN window cannot make a stale page actionable', [openWindow.phase, openWindow.pub, openWindow.offered], ['open', 'stale2', false]);
+    eq('and the reason given is the staleness, not the clock', openWindow.lead, 'not offered');
+    eq('stale-page page errors', s.errors, []);
+    await s.context.close();
+  }
+
+  // ---- a record with no timing block at all: research only
+  {
+    const { context: c4, page: p4, errors: e4 } = await open(browser, base, '/tests/fixtures/page/next.json', WHEN.evening[0], 1280,
+      { lens: 'all', hash: `#/explore/bursts/${order}` });
+    const legacy = await p4.evaluate((d) => {
+      const old = JSON.parse(JSON.stringify(d));
+      delete old.run.timing;
+      window.SCStock.render(old, new Date('2026-09-11T22:31:00Z'));
+      const a = window.SCStock.avail;
+      return { phase: a.phase, offered: a.offered, lead: a.lead, reason: a.reason };
+    }, next);
+    eq('a record published before the field existed is unknown, and offers nothing', [legacy.phase, legacy.offered], ['unknown', false]);
+    check('and says research only in those words', legacy.reason.includes('Entry timing unavailable — research only'), legacy.reason);
+    check('the plan line says the timing is not recorded rather than inventing one',
+      (await said(p4, '#market-facts [data-fact="plan"]')).includes('entry timing unavailable'), await said(p4, '#market-facts [data-fact="plan"]'));
+    eq('no order is offered from it', await count(p4, '#order-sheet tbody tr[data-ticker]'), 0);
+    await openAll(p4, '#disc-plan');
+    eq('and no copy control', await count(p4, '#disc-plan [data-copy]'), 0);
+    // a half-written block is worse than none and reads the same way
+    for (const [what, mutate] of [
+      ['a cutoff before its own opening', (t) => { t.cutoff_at = '2026-09-14T09:00:00-04:00'; }],
+      ['an instant with no offset', (t) => { t.opens_at = '2026-09-14T09:30:00'; }],
+      ['an opening on another session', (t) => { t.opens_at = '2026-09-15T09:30:00-04:00'; }],
+      ['no applicable session', (t) => { delete t.applicable_session; }],
+    ]) {
+      const got = await p4.evaluate(([d, which]) => {
+        const bad = JSON.parse(JSON.stringify(d));
+        const t = bad.run.timing;
+        if (which === 0) t.cutoff_at = '2026-09-14T09:00:00-04:00';
+        if (which === 1) t.opens_at = '2026-09-14T09:30:00';
+        if (which === 2) t.opens_at = '2026-09-15T09:30:00-04:00';
+        if (which === 3) delete t.applicable_session;
+        window.SCStock.render(bad, new Date('2026-09-14T13:40:00Z'));
+        return { phase: window.SCStock.avail.phase, faults: window.SCStock.timingFaults(bad).length };
+      }, [next, [['a cutoff before its own opening', 0], ['an instant with no offset', 1], ['an opening on another session', 2], ['no applicable session', 3]].findIndex((x) => x[0] === what)]);
+      check(`${what} is refused rather than compared against`, got.phase === 'unknown' && got.faults > 0, JSON.stringify(got));
+    }
+    eq('legacy-record page errors', e4, []);
+    await c4.close();
+  }
+  eq('session page errors', errors, []);
+  if (shotsDir) {
+    await mkdir(shotsDir, { recursive: true });
+    for (const [w, h] of [[1280, 900], [390, 844], [320, 720]]) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.waitForTimeout(250);
+      await go(page, '#/explore');
+      await phaseAt(page, next, 'after');
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.screenshot({ path: path.join(shotsDir, `session-ended-${w}.png`) });
+      eq(`the compact area does not scroll sideways at ${w} px`,
+        await page.evaluate(() => document.getElementById('market-bar').scrollWidth <= document.documentElement.clientWidth + 1), true);
+      eq(`nor does the page at ${w} px`,
+        await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), w >= 320);
+      await phaseAt(page, next, 'inside');
+      await page.screenshot({ path: path.join(shotsDir, `session-open-${w}.png`) });
+    }
+  }
+  await context.close();
+}
+
+// ---------------------------------------------------------------------------
+// Check for updates: re-reading the same static file, transactionally, without
+// taking the reader's place with it. Every answer is served by a route so the
+// suite decides what the file says -- unchanged, newer, older, a revision of
+// the same session, unreadable, or nothing at all.
+// ---------------------------------------------------------------------------
+async function checkRefresh(browser, base, full) {
+  console.log('-- refresh: loading a newer record safely, and saying what it cost');
+  const next = JSON.parse(await readFile(path.join(FIXTURES, 'next.json'), 'utf8'));
+  const revised = JSON.parse(await readFile(path.join(FIXTURES, 'revised.json'), 'utf8'));
+  const said2 = (page) => text(page, '#refresh-said');
+  const press = async (page) => { await page.locator('#check-updates').click(); await page.waitForTimeout(450); };
+  // whatever the route is told to answer with next; null aborts the request
+  const serveWith = async (page, url, box) => {
+    await page.route(url, async (route) => {
+      const answer = box.body;
+      if (answer === null) return route.abort('failed');
+      if (box.delayMs) await new Promise((r) => setTimeout(r, box.delayMs));
+      return route.fulfill({ status: box.status || 200, contentType: 'application/json',
+        body: typeof answer === 'string' ? answer : JSON.stringify(answer) });
+    });
+  };
+
+  // ---- booted on the OLDER record, so a newer one is a real forward step
+  const box = { body: next };
+  const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280,
+    { lens: 'all', hash: `#/explore/bursts/${full.trades[0]}` });
+  await serveWith(page, '**/full.json?*', box);
+  check('the control is beside the publication line it re-reads',
+    !!(await count(page, '#market-bar #market-refresh #check-updates')), 'no control in the market area');
+  check('and says what it does and does not do, without a line of its own at rest',
+    (await attr(page, '#check-updates', 'title')).includes('Nothing is scanned or graded') &&
+    (await page.locator('#refresh-said').isHidden()), await attr(page, '#check-updates', 'title'));
+
+  // the reader's own state, set before anything is re-read
+  await setLens(page, 'a');
+  await page.locator('#search').fill('AA');
+  await page.locator('#pick-list .ss-pick').first().click();
+  await page.waitForTimeout(200);
+  const wasStock = await attr(page, '#detail', 'data-selected'), wasLens = await lensNow(page);
+  await page.click('#detail .sc-tab[data-mode="candles"]');
+  await page.waitForTimeout(200);
+  await page.locator('[data-follow-action="add"]').first().click();
+  await page.waitForTimeout(250);
+  const ids = async (pg) => ((await readStore(pg)) || { items: [] }).items.map((x) => x.id);
+  const bars = async (pg) => ((await readStore(pg)) || { items: [] }).items.map((x) => ((x.evidence || {}).series || []).length);
+  const obsCounts = async (pg) => ((await readStore(pg)) || { items: [] }).items.map((x) => (x.observations || []).length);
+  const savedIds = await ids(page), savedEvidence = await bars(page);
+  eq('a setup is saved before the reload', savedIds.length, 1);
+
+  // ---- unchanged: the same BYTES, and nothing at all moves. The file's own
+  // text, not a re-serialization of it: "unchanged" means the served file is
+  // identical, which is the only reading that catches a same-session
+  // re-publish whose session, publish stamp and rules digest all match.
+  box.body = await readFile(path.join(FIXTURES, 'full.json'), 'utf8');
+  const obsBefore = await obsCounts(page);
+  await press(page);
+  eq('the same record is reported unchanged', (await said2(page)).startsWith('No newer record'), true);
+  eq('and the reader is left exactly where they were', [await attr(page, '#detail', 'data-selected'), await lensNow(page), await page.locator('#search').inputValue()], [wasStock, wasLens, 'AA']);
+  eq('an unchanged check adds no Following observation', await obsCounts(page), obsBefore);
+
+  // ---- unreadable, and then unreachable: nothing changes, and it says so
+  for (const [what, body, starts] of [
+    ['not a record this page can read', {}, 'The published file is not a record'],
+    ['a record whose window has no width', JSON.parse(JSON.stringify(Object.assign({}, next, { run: Object.assign({}, next.run, { timing: Object.assign({}, next.run.timing, { cutoff_at: next.run.timing.opens_at }) }) }))), 'The published file is not a record'],
+    ['not JSON at all', 'half a fi', 'The published record could not be re-read'],
+    ['nothing at all', null, 'The published record could not be re-read'],
+  ]) {
+    box.body = body;
+    await press(page);
+    check(`${what}: it is not loaded`, (await said2(page)).startsWith(starts), await said2(page));
+    eq(`${what}: and the record on screen is untouched`, await page.evaluate(() => window.SCStock.data.run.session), full.run.session);
+    eq(`${what}: with the reader still where they were`, await attr(page, '#detail', 'data-selected'), wasStock);
+  }
+
+  // ---- out of order: a slow first answer cannot land over a fast second
+  {
+    box.body = next; box.delayMs = 900;
+    await page.locator('#check-updates').click();
+    await page.waitForTimeout(120);
+    eq('a check in flight says so on the control', await attr(page, '#check-updates', 'data-check'), 'busy');
+    check('and the control is still pressable, so a hanging check is not a dead end',
+      !(await page.locator('#check-updates').isDisabled()), 'the control went dead while checking');
+    // the second press answers at once, with the file's own bytes, so its
+    // outcome ("unchanged") is unmistakably different from the slow one's
+    box.body = await readFile(path.join(FIXTURES, 'full.json'), 'utf8'); box.delayMs = 0;
+    await page.locator('#check-updates').click();
+    await page.waitForTimeout(1600);
+    check('the answer that stands is the newest press, not the first to arrive',
+      (await said2(page)).startsWith('No newer record'), await said2(page));
+    eq('and the slow answer was dropped rather than applied', await page.evaluate(() => window.SCStock.data.run.session), full.run.session);
+  }
+
+  // ---- a comparison open across the load: explained, not remapped
+  {
+    await page.locator('#search').fill('');
+    await setLens(page, 'all');
+    await page.waitForTimeout(250);
+    const two = (await cardTickers(page)).slice(0, 2);
+    eq('the whole stage is in view, so two can be pinned', two.length, 2);
+    for (const t of two) { await page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${t}"]) .ss-pin`); await page.waitForTimeout(180); }
+    await tap(page, '#compare-open', 'the comparison opens before the load');
+    await page.waitForTimeout(500);
+    eq('two are pinned and compared', await count(page, '#compare .ss-compare__side'), 2);
+    box.body = next;
+    // the comparison is a real modal, so the control behind it cannot be
+    // clicked -- which is right. The case still has to be handled: a load can
+    // reach the page while the sheet stands (a reader with two tabs, a press
+    // whose answer arrives late), so it is driven directly here.
+    eq('the control is behind the comparison, as a modal means it to be',
+      await page.evaluate(() => {
+        const b = document.getElementById('check-updates').getBoundingClientRect();
+        return document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2) !== document.getElementById('check-updates');
+      }), true);
+    await page.evaluate(() => window.SCStock.checkUpdates());
+    await page.waitForTimeout(500);
+    check('a newer record is loaded', (await said2(page)).startsWith('A newer record loaded'), await said2(page));
+    eq('the comparison is closed rather than remapped onto other stocks', await page.evaluate(() => document.getElementById('compare').open), false);
+    check('and the reader is told why, in the same breath',
+      (await said2(page)).includes('pinned pair belongs to the record it was pinned from'), await said2(page));
+    eq('no chart is left mounted from it', await page.evaluate(() => window.SCStock.liveCharts()), 1);
+    eq('the record on screen is the newer one', await page.evaluate(() => window.SCStock.data.run.session), next.run.session);
+  }
+
+  // ---- the reader's private saves are untouched by any of it
+  eq('every saved identity survives the load', await ids(page), savedIds);
+  eq('with its frozen evidence unchanged', await bars(page), savedEvidence);
+  eq('and the chart mode the reader chose is still theirs',
+    await page.evaluate(() => (JSON.parse(localStorage.getItem('spicystock:chart:v1')) || {}).mode), 'candles');
+  // one deliberate abort: the request itself, and the browser's anonymous
+  // console line for it. Named here rather than swept into the exempt list,
+  // because it is this check's own doing and nothing else's.
+  eq('the only failures are the one request this check aborted on purpose',
+    errors.filter((e) => !/full\.json\?at=/.test(e) && e !== 'console: Failed to load resource: net::ERR_FAILED'), []);
+  eq('and it is exactly one request', errors.filter((e) => /^request failed/.test(e)).length, 1);
+  await context.close();
+
+  // ---- older, a revision, and a half-typed reference size
+  {
+    const b2 = { body: revised };
+    const { context: c2, page: p2, errors: e2 } = await open(browser, base, '/tests/fixtures/page/next.json', '2026-09-11T22:31:00Z', 1280,
+      { lens: 'all', hash: `#/explore/bursts/${next.trades[0]}` });
+    await serveWith(p2, '**/next.json?*', b2);
+    b2.body = full;
+    await press(p2);
+    check('a file for an EARLIER session is refused rather than applied backwards',
+      (await said2(p2)).startsWith('The published file is for an earlier session'), await said2(p2));
+    eq('and the newer record stays on screen', await p2.evaluate(() => window.SCStock.data.run.session), next.run.session);
+
+    // a follow, then a half-typed size, then a load
+    await p2.locator('[data-follow-action="add"]').first().click();
+    await p2.waitForTimeout(250);
+    await p2.locator('[data-follow-action="edit"]').first().click();
+    await p2.waitForTimeout(200);
+    await p2.locator('.ss-follow__form input').first().fill('17');
+    const savedShares = (await readStore(p2)).items[0].reference_shares;
+    b2.body = revised;
+    await press(p2);
+    check('the same session re-published is called a revision, not a new day',
+      (await said2(p2)).includes('the same session on later bars, not a new one'), await said2(p2));
+    eq('the record loaded is the revision', await p2.evaluate(() => [window.SCStock.data.run.session, window.SCStock.data.run.published_at]),
+      [revised.run.session, revised.run.published_at]);
+    eq('a half-typed reference size is handed back, unsaved', [await p2.locator('.ss-follow__form input').first().inputValue(),
+      (await readStore(p2)).items[0].reference_shares], ['17', savedShares]);
+    check('and a revision is recorded as a revision of that trading day',
+      ((await readStore(p2)).items[0].observations || []).every((o) => !o.replaced || o.replaced.c !== o.c), 'a revision lost what it replaced');
+    // a saved setup's own sheet, open across a load: it is this browser's, so
+    // it survives a record change by construction -- proved, not assumed
+    const id = (await readStore(p2)).items[0].id;
+    await go(p2, `#/followed/${encodeURIComponent(id)}`);
+    await p2.waitForTimeout(400);
+    eq('a saved setup sheet is open before the load', await p2.evaluate(() => document.getElementById('saved').open), true);
+    b2.body = next;
+    // a saved sheet is a modal too, and the same reasoning applies
+    eq('the control is behind the saved sheet, as a modal means it to be',
+      await p2.evaluate(() => {
+        const b = document.getElementById('check-updates').getBoundingClientRect();
+        return document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2) !== document.getElementById('check-updates');
+      }), true);
+    await p2.evaluate(() => window.SCStock.checkUpdates());
+    await p2.waitForTimeout(500);
+    eq('and is still open, on the same saved identity, after it',
+      [await p2.evaluate(() => document.getElementById('saved').open), await attr(p2, '#saved [data-saved-id]', 'data-saved-id')], [true, id]);
+    eq('older-and-revision page errors', e2, []);
+    await c2.close();
+  }
+}
+
 async function main() {
   const chromium = await loadChromium();
   if (!chromium) { console.log('playwright is not installed: npm install --no-save playwright'); process.exit(1); }
@@ -2774,6 +3290,8 @@ async function main() {
     if (runs('mapscale')) await checkMapScale(browser, base, full);
     if (runs('following')) await checkFollowing(browser, base, full);
     if (runs('through')) await checkFollowThrough(browser, base, full);
+    if (runs('session')) await checkSession(browser, base, full);
+    if (runs('refresh')) await checkRefresh(browser, base, full);
     if (runs('ticket')) await checkTicketPrices(browser, base, full);
     if (runs('states')) await checkStates(browser, base, full);
   } finally {

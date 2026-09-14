@@ -233,6 +233,150 @@
   const BLOCKED = ['stale1', 'stale2', 'pending', 'failed'];
   const blocked = (st) => BLOCKED.indexOf(st.state) >= 0;
 
+  // ---------------------------------------------------------------- the two clocks
+  // A record carries two different facts about time, and `status()` above is
+  // only the first of them: is this the newest record, and did the run
+  // finish? PUBLICATION. The second is which session the published plans are
+  // FOR and whether that session's entry window is still ahead, running or
+  // over: ACTION TIMING, and nothing above knows it. A record can be
+  // perfectly fresh and its window three hours gone; the page used to print
+  // the first as though it settled the second, and told a reader at eleven
+  // o'clock to place orders "before 9:28 AM".
+  //
+  // The run serializes the window (`run.timing`, src/timing.py) so the page
+  // never reads a deadline out of an English instruction and never writes a
+  // UTC offset of its own: the instants arrive with their offsets, and where
+  // only a DATE is available the comparison is made in ET wall-clock terms
+  // through `etParts()`, which asks the browser's own tz database.
+  const PHASE_WORDS = { upcoming: 'upcoming', open: 'in progress', ended: 'ended', unknown: 'unavailable' };
+  const PHASE_TONE = { upcoming: 'brand', open: 'good', ended: 'neutral', unknown: 'warn' };
+  // one sentence per src/timing.py LIMITS key (tests/test_docs.py holds the two lists equal)
+  const TIMING_LIMITS = {
+    no_holiday_calendar: 'SpicyStock carries no market-holiday calendar, so the applicable session is the next weekday: a holiday moves it, and the date is printed so the mistake is visible.',
+    regular_hours_assumed: 'The window is the regular session’s: a shortened session closes early and still opens at 9:30 AM ET.'
+  };
+
+  function instant(value) {
+    if (typeof value !== 'string' || !value) return null;
+    // an instant without an offset would be a different moment on every desk
+    if (!/[+-]\d\d:?\d\d$|Z$/.test(value)) return null;
+    const t = Date.parse(value);
+    return isFinite(t) ? new Date(t) : null;
+  }
+  // The record's own timing block, read once and never inferred, and held to
+  // its shape one level in -- the class this repository produces most often is
+  // a structure read off disk whose shape nothing checked until a consumer
+  // broke. A HALF-written window is worse than none: the page would compare
+  // against it and get an answer. `faults` names what is wrong (empty for a
+  // record that simply has no block, which is every record published before
+  // the field existed), and `known` is false either way.
+  function timingOf(data) {
+    const t = (data && data.run && data.run.timing);
+    const out = { known: false, present: false, faults: [], session: null, opens: null, cutoff: null,
+      prepareBy: null, closes: null,
+      window: ((((data || {}).rules || {}).plan || {}).entry_window) || 'entry window',
+      windowMinutes: null, closedSession: null, basis: null, limits: [], et: {} };
+    if (t === null || t === undefined) return out;
+    out.present = true;
+    if (typeof t !== 'object' || Array.isArray(t)) { out.faults.push('run.timing is neither absent nor an object'); return out; }
+    out.session = text(t.applicable_session) ? t.applicable_session : null;
+    out.opens = instant(t.opens_at); out.cutoff = instant(t.cutoff_at);
+    out.prepareBy = instant(t.prepare_by); out.closes = instant(t.closes_at);
+    out.closedSession = text(t.closed_session) ? t.closed_session : null;
+    out.basis = text(t.basis) ? t.basis : null;
+    out.limits = (t.limits || []).filter((k) => TIMING_LIMITS[k]);
+    out.et = { opens: text(t.opens_et) ? t.opens_et : null, cutoff: text(t.cutoff_et) ? t.cutoff_et : null,
+      prepareBy: text(t.prepare_by_et) ? t.prepare_by_et : null };
+    if (text(t.window)) out.window = t.window;
+    if (isNum(t.window_minutes)) out.windowMinutes = t.window_minutes;
+    const day = (iso) => /^\d{4}-\d\d-\d\d$/.test(String(iso || ''));
+    if (!day(out.session)) out.faults.push('run.timing.applicable_session is not a YYYY-MM-DD date');
+    if (!day(t.measured_session)) out.faults.push('run.timing.measured_session is not a YYYY-MM-DD date');
+    else if (day(out.session) && out.session <= t.measured_session) out.faults.push('run.timing.applicable_session is not after its measured_session');
+    ['opens_at', 'cutoff_at', 'prepare_by', 'closes_at'].forEach((k) => {
+      if (!instant(t[k])) out.faults.push('run.timing.' + k + ' is not an ISO-8601 instant with an offset');
+    });
+    if (out.opens && out.cutoff && out.cutoff <= out.opens) out.faults.push('run.timing.cutoff_at is not after its opens_at, so the window has no width');
+    // the instant is serialized in market time, so its own date prefix is the
+    // session it belongs to -- no zone arithmetic to get this wrong
+    if (out.opens && day(out.session) && String(t.opens_at).slice(0, 10) !== out.session) out.faults.push('run.timing.opens_at is not on its own applicable_session');
+    if (!clockET(t.opens_et) || !clockET(t.cutoff_et)) out.faults.push('run.timing needs opens_et and cutoff_et as HH:MM');
+    if (!text(t.window) || !isNum(t.window_minutes)) out.faults.push('run.timing needs the window’s words and its whole number of minutes');
+    if (!text(t.basis)) out.faults.push('run.timing.basis is missing');
+    if (!Array.isArray(t.limits)) out.faults.push('run.timing.limits is not a list');
+    out.known = !out.faults.length;
+    return out;
+  }
+  // the shape check on its own, for a record offered to the page by an update
+  // check: a block that IS there and is broken refuses the whole load, because
+  // a run that wrote it wrong wrote something else wrong too
+  const timingFaults = (data) => timingOf(data).faults;
+  SCStock.timingFaults = timingFaults;
+  // the same rule src/timing.py `phase()` pins: open from the bell up to but
+  // NOT including the cutoff, because the window is the first N minutes and
+  // at the cutoff the last of them is over
+  function phaseOf(tm, now) {
+    if (!tm || !tm.known) return 'unknown';
+    const t = (now || new Date()).getTime();
+    if (t < tm.opens.getTime()) return 'upcoming';
+    return t < tm.cutoff.getTime() ? 'open' : 'ended';
+  }
+  // a session's phase from its DATE alone, for a saved setup whose own night
+  // is not the record on screen. No offset arithmetic: `now` is read in ET
+  // and compared as wall clock against the policy times the run serialized.
+  function phaseOfSession(iso, tm, now) {
+    if (!text(iso) || !tm || !tm.et || !tm.et.opens || !tm.et.cutoff) return 'unknown';
+    const et = etParts(now || new Date());
+    if (iso > et.date) return 'upcoming';
+    if (iso < et.date) return 'ended';
+    const mins = et.hour * 60 + et.minute, hm = (s) => (+s.slice(0, 2)) * 60 + (+s.slice(3, 5));
+    if (mins < hm(tm.et.opens)) return 'upcoming';
+    return mins < hm(tm.et.cutoff) ? 'open' : 'ended';
+  }
+  const clockET = (hhmm, suffix) => { const m = /^(\d\d):(\d\d)$/.exec(String(hhmm || '')); if (!m) return null;
+    const h = +m[1]; return ((h % 12) || 12) + ':' + m[2] + (suffix === false ? '' : (h < 12 ? ' AM' : ' PM') + ' ET'); };
+  // "9:30-10:00 AM ET", the meridiem and the zone said once when both share them
+  function windowWords(tm) {
+    const a = tm.et.opens, b = tm.et.cutoff;
+    if (!a || !b) return '—';
+    const half = (s) => (+s.slice(0, 2)) < 12;
+    return half(a) === half(b) ? clockET(a, false) + '\u2013' + clockET(b) : clockET(a) + '\u2013' + clockET(b);
+  }
+
+  // THE one answer to "may the reader act on tonight's tickets now?", and the
+  // only place any surface asks it. Three different things can refuse, and
+  // each keeps its own voice so the page never gives the wrong reason:
+  //
+  //   publication — stale, pending, failed: there is no current record
+  //   timing      — the window is over, or the record does not say when it is
+  //   the record  — red breadth, a withheld ticket, no whole share
+  //
+  // Timing NARROWS and never widens. `offered` is false whenever publication
+  // says so, whatever the clock; a window that is open cannot make a stale
+  // page actionable, and `unknown` is research only, never permission.
+  function availability(data, now) {
+    const at = now || new Date();
+    const pub = status(data, now), tm = timingOf(data), ph = phaseOf(tm, at);
+    const pubBlocked = blocked(pub);
+    const timingBlocked = ph === 'ended' || ph === 'unknown';
+    const av = { at: at, pub: pub, timing: tm, phase: ph, pubBlocked: pubBlocked, timingBlocked: timingBlocked,
+      offered: !pubBlocked && !timingBlocked, reason: '', lead: '', word: PHASE_WORDS[ph], tone: PHASE_TONE[ph] };
+    if (pubBlocked) {
+      av.reason = 'The page is ' + stateWords(pub) + '. ' + sentence(pub.sentence);
+      av.lead = 'not offered';
+    } else if (ph === 'ended') {
+      av.reason = 'The entry window for ' + dateWords(tm.session) + ' ended at ' + timeET(tm.cutoff.toISOString()) +
+        '. The setup, its evidence and the ticket the record published stay readable; this is history now, not an order to place.';
+      av.lead = 'window ended';
+    } else if (ph === 'unknown') {
+      av.reason = 'Entry timing unavailable — research only. This record does not say which session its plans are for, so the page will not name a deadline for them.';
+      av.lead = 'timing unavailable';
+    }
+    return av;
+  }
+  SCStock.availability = availability;
+  SCStock.timingOf = timingOf;
+
   // ---------------------------------------------------------------- masthead
   function renderStatus(data, st) {
     const slot = clear($('status-slot'));
@@ -262,16 +406,41 @@
   // ---------------------------------------------------------------- the market, in a line
   function renderMarketBar(data, st) {
     const run = data.run || {}, cover = data.cover || {}, b = data.breadth || {}, reg = b.regime || {};
-    $('cover-eyebrow').textContent = 'spicystock · ' + (run.session || '—') + ' · evening run';
+    // The verdict is the record's own sentence, printed verbatim -- and its
+    // "Trade tomorrow." was written on the evening of its session, when
+    // tomorrow was the session it names. Once that session's window is behind
+    // the reader, the eyebrow says the sentence is the archived one rather
+    // than rewriting it: the page does not edit the record's words, and does
+    // not leave a headline in 30px type reading as today's instruction.
+    const asPublished = av.phase === 'ended' || av.pubBlocked;
+    $('cover-eyebrow').textContent = 'spicystock · ' + (run.session || '—') + ' · evening run' +
+      (asPublished ? ' · the verdict as published' : '');
     $('cover-h1').textContent = cover.h1 || 'No verdict.';
     $('cover-dek').textContent = cover.dek || '';
     const facts = clear($('market-facts'));
-    const fact = (dt, kids) => facts.appendChild(el('div', { 'data-fact': dt }, [el('dt', { text: dt }), el('dd', null, kids)]));
-    fact('session', [el('span', { text: dateWords(run.session) + (run.session_state === 'closed' ? ' · closed on ' + dateWords(run.expected_session) : '') })]);
+    // the chip sits beside the LABEL, not after the value: it qualifies that
+    // fact and says so by where it is, and the fact is two rows rather than
+    // three -- which is what keeps the workspace on the first screen at 390 px
+    const fact = (dt, kids, key, tag) => facts.appendChild(el('div', { 'data-fact': key || dt }, [
+      el('dt', null, [el('span', { text: dt }), tag || null]), el('dd', null, kids)]));
+    // The regime belongs to the VERDICT, which is what the h1 and the dek are:
+    // the two facts beside them are about time, and a third about the market
+    // both read as one list and cost the workspace its place on a phone.
     const size = reg.size_multiplier;
     const sizeWords = size === 1 ? 'full size' : size === 0 ? 'no new longs' : isNum(size) ? 'size at ' + (size * 100).toFixed(0) + '%' : '';
-    fact('regime', [chip((reg.verdict || 'unknown').toUpperCase(), REGIME_TONE[reg.verdict] || 'neutral', true), el('span', { text: sizeWords + (isNum(b.ratio_10d) ? ' · 10-day ratio ' + plain(b.ratio_10d) : '') })]);
-    fact('published', [el('span', { text: timeET(run.published_at) + ' · run ' + (run.status || '—') + ' · email ' + (run.email || '—') })]);
+    const regimeLine = clear($('cover-regime'));
+    regimeLine.appendChild(chip((reg.verdict || 'unknown').toUpperCase(), REGIME_TONE[reg.verdict] || 'neutral', true));
+    regimeLine.appendChild(el('span', { text: sizeWords + (isNum(b.ratio_10d) ? ' · 10-day ratio ' + plain(b.ratio_10d) : '') }));
+    // The two facts, apart. "data through" is what was measured and when it
+    // was published; the publication chip belongs HERE and covers this line
+    // alone. "plan for" is the session the plans are for and where its entry
+    // window stands, which no freshness chip can answer.
+    fact('data through', [el('span', { text: dateWords(run.session) + (run.session_state === 'closed' ? ' · closed on ' + dateWords(run.expected_session) : '') + ' · published ' + timeET(run.published_at) })],
+      'data', chip(st.chip, st.tone, st.keepCase));
+    const tm = av.timing;
+    fact('plan for', [el('span', { text: tm.known ? dateWords(tm.session) + ' · window ' + windowWords(tm) : 'not recorded' })],
+      'plan', chip(tm.known ? 'entry window ' + PHASE_WORDS[av.phase] : 'entry timing unavailable', tm.known ? PHASE_TONE[av.phase] : 'warn'));
+    renderRefresh();
     const notice = $('demo-notice');
     if (notice) {
       clear(notice);
@@ -281,10 +450,12 @@
     // the record's own call to action (Tomorrow's orders / Open model plans),
     // falling back to the model plans on a page that offers no order
     const links = clear($('market-links'));
-    const offered = !blocked(st), label = offered ? (cover.action_label || 'Open model plans') : 'Open model plans', target = offered ? (cover.action_target || '#hold') : '#hold';
+    const offered = !!(av && av.offered), label = offered ? (cover.action_label || 'Open model plans') : 'Open model plans', target = offered ? (cover.action_target || '#hold') : '#hold';
     links.appendChild(el('a', { 'class': 'sc-link--quiet', id: 'cover-action', href: target, text: label }));
-    links.appendChild(el('a', { 'class': 'sc-link--quiet', href: '#/market', text: 'market detail' }));
-    links.appendChild(el('a', { 'class': 'sc-link--quiet', href: '#/method', text: 'run details' }));
+    // the two views these reach, spelled as the nav spells them: one line at
+    // 390 px, which is what leaves room for the update control beside them
+    links.appendChild(el('a', { 'class': 'sc-link--quiet', href: '#/market', text: 'market' }));
+    links.appendChild(el('a', { 'class': 'sc-link--quiet', href: '#/method', text: 'method' }));
   }
 
   // ---------------------------------------------------------------- run strip (the method view)
@@ -314,6 +485,19 @@
     line('Graded by ' + (run.model || '—') + ' from the chart and the numbers; the model may only lower a grade, never raise it.');
     line('Rules ' + (app.rules_version || '—') + ': a digest of every strategy constant in this record, so two nights under different numbers never read as one. Universe identity ' + (uni.identity || '—') + '.');
     line('Timing: ' + num(run.elapsed_seconds) + ' s for the run, ' + num(run.fetch_seconds) + ' s of it fetching; generated ' + (run.published_at || '—') + '.');
+    // what the record says about WHEN its plans apply, and what its calendar
+    // could not read. Printed here rather than argued: the run wrote it.
+    const tm = av.timing;
+    if (tm.known) {
+      line('The plans are for ' + dateWords(tm.session) + ', whose scheduled entry window is ' + windowWords(tm) +
+        ' (' + tm.window + '), have the orders ready by ' + clockET(tm.et.prepareBy) + '. Times are ' +
+        ((run.timing || {}).timezone || 'America/New_York') + ', carried with their offsets so no clock here guesses one.' +
+        (tm.closedSession ? ' The market was closed on ' + dateWords(tm.closedSession) + ', so the plans dated for it apply to this session instead.' : ''));
+      tm.limits.forEach((k) => line('Entry-timing limitation: ' + TIMING_LIMITS[k]));
+    } else {
+      line('This record does not say which session its plans are for' + (tm.present ? ' in a shape this page can read' : '') +
+        ', so the page names no entry deadline for them: research only.');
+    }
     (run.problems || []).forEach((p) => { if (p && PROBLEMS[p.kind]) line('Problem recorded (' + words(p.kind) + '): ' + PROBLEMS[p.kind]); });
     if (run.run_id) {
       const li = el('li', null, [el('a', { href: 'https://github.com/' + REPO + '/actions/runs/' + run.run_id, target: '_blank', rel: 'noopener', text: 'The run log for this record' }), d.createTextNode(' · '), el('a', { href: RUNS_URL, target: '_blank', rel: 'noopener', text: 'every evening run' })]);
@@ -497,9 +681,35 @@
     }
     return lines;
   }
-  function copyButton(getText, pre) {
+  // The guard every current-ticket action asks immediately before it acts:
+  // null to go ahead, else the reason it is refused NOW. It re-reads the clock
+  // rather than trusting the answer the surface was drawn with.
+  //: the last refusal a copy control gave, so the reader is told it did not
+  //: copy even though the surface it was on is rebuilt in the same breath
+  let copyRefused = null;
+  function copyGuard() {
+    if (!current || !current.run) return 'No record is loaded, so there is no ticket to copy.';
+    const nowAv = clockPinned ? av : availability(current, new Date());
+    return nowAv.offered ? null : nowAv.reason;
+  }
+  // A copy is an ACTION, and the clock may have moved since the button was
+  // drawn: a reader who opened the disclosure at 9:55 and copied at 10:02
+  // would otherwise carry a ticket out of a window that closed in between. So
+  // the guard is asked again here, immediately before the write, and a refusal
+  // replaces the button with its reason rather than copying anyway.
+  function copyButton(getText, pre, guard) {
     const btn = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Copy', 'data-copy': '' });
     btn.addEventListener('click', () => {
+      const refusal = guard ? guard() : null;
+      if (refusal) {
+        btn.disabled = true;
+        btn.textContent = 'No longer offered';
+        // recorded as page state first: catching the page up rebuilds the very
+        // surface this button is in, so a note appended here would not survive
+        copyRefused = { ticker: pre && pre.getAttribute('data-ticker'), text: 'Nothing was copied: ' + refusal };
+        reclock();
+        return;
+      }
       const text = getText();
       const done = () => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = 'Copy'; }, 1600); };
       const fallback = () => {
@@ -510,15 +720,33 @@
     });
     return btn;
   }
-  // the order, as written by the run: shown only when the plan carries one
-  // and the page is not stale, pending or without a verdict
+  // What the record published for a ticket the clock has withdrawn: the same
+  // lines, printed and dated, with no copy control. A window that ended is
+  // not a reason to hide what was published for it -- the reader may need to
+  // read back an order already sitting in a broker -- but it is every reason
+  // not to hand it over as something to place now.
+  function recordedTicket(plan, avail) {
+    const lines = ticket(plan.order_json) || [];
+    const wrap = el('div', { 'class': 'ss-order ss-order--history', 'data-recorded-ticket': plan.ticker || '' });
+    wrap.appendChild(el('div', { 'class': 'ss-order__head' }, [
+      el('span', { 'class': 'sc-eyebrow', style: 'margin:0', text: 'what the record published for ' + dateWords(avail.timing.session) }),
+      chip(avail.lead, PHASE_TONE[avail.phase])]));
+    const pre = el('pre', { 'class': 'ss-order__pre', 'data-recorded': '', 'data-ticker': plan.ticker || '' });
+    lines.forEach((line, i) => { if (i) pre.appendChild(d.createTextNode('\n')); pre.appendChild(el('span', { text: line })); });
+    wrap.appendChild(pre);
+    wrap.appendChild(el('p', { 'class': 'ss-order__readback', text: 'History, not an order to place. ' + cancelLine() }));
+    return wrap;
+  }
+  // the order, as written by the run: shown only when the plan carries one,
+  // the page is not stale, pending or without a verdict, AND the session its
+  // entry window belongs to has not had that window close
   function orderBlock(plan, extraHint, withheld) {
     const lines = withheld ? null : ticket(plan.order_json);
     const wrap = el('div', { 'class': 'ss-order' });
     if (!lines) { wrap.appendChild(el('p', { 'class': 'sc-hint', text: extraHint || 'No order.' })); return wrap; }
     const pre = el('pre', { 'class': 'ss-order__pre', 'data-order': '', 'data-ticker': plan.ticker || '' });
     lines.forEach((line, i) => { if (i) pre.appendChild(d.createTextNode('\n')); pre.appendChild(el('span', { text: line })); });
-    wrap.appendChild(el('div', { 'class': 'ss-order__head' }, [el('span', { 'class': 'sc-eyebrow', style: 'margin:0', text: 'the order, in Fidelity’s field order' }), copyButton(() => pre.textContent, pre)]));
+    wrap.appendChild(el('div', { 'class': 'ss-order__head' }, [el('span', { 'class': 'sc-eyebrow', style: 'margin:0', text: 'the order, in Fidelity’s field order' }), copyButton(() => pre.textContent, pre, copyGuard)]));
     wrap.appendChild(pre);
     if (plan.order_line) wrap.appendChild(el('p', { 'class': 'ss-order__readback', text: 'Read it back: ' + plan.order_line }));
     const terms = (plan.order_terms || []).filter((t) => typeof t === 'string' && t);
@@ -828,6 +1056,21 @@
   const state = { view: 'explore', stage: null, selected: { bursts: null, 'setting-up': null }, query: '', range: 60, notice: '', picksKey: null, detailKey: null, gesture: false,
     lens: { bursts: null, 'setting-up': null }, sort: 'rank', pins: [], pinAsk: null };
   let current = null, model = null, st = null, pendingNotice = '', pendingFocus = '', chooserOpener = null;
+  //: the shared action-availability answer, recomputed on every render and on
+  //: every clock re-reading. `st` is its publication half and stays what it
+  //: was; every surface that offers an action asks this and nothing else.
+  let av = null;
+  //: whether a RECORD is on screen. `failed()` leaves `current` a stub so the
+  //: Following shelf and a saved setup still read, and that stub has a `run`
+  //: object -- so "is there a record" cannot be asked of `current` alone, and
+  //: a clock re-reading over the no-record page would repaint the market bar
+  //: with "No verdict." over the sentence saying the record could not be read.
+  let loaded = false;
+  //: the clock the page is reading. Injected (SCStock.now, or a Date handed to
+  //: render) so a test pins an instant; when it is injected, the page does not
+  //: move it on its own -- a pinned clock that ticked would be no pin at all.
+  let clockAt = null, clockPinned = false;
+  const nowAt = () => clockPinned ? new Date(clockAt.getTime()) : new Date();
   //: the route the reader was on before a saved setup was opened over it
   let lastHash = '';
   let demo = false;   // the record is a pipeline-written fixture over a synthetic market
@@ -1152,7 +1395,7 @@
     syncPins();
     // the lens, the subset and the stage total in one sentence; on a page that
     // offers no order, a recorded ticket is named as the record's, not as one
-    const lensLine = lens === 'all' ? '' : ' · ' + LENS_WORDS[lens] + ' lens' + (lens === 'ticket' && st && blocked(st) ? ', as the record wrote them — no order is offered from a page that is ' + stateWords(st) : '');
+    const lensLine = lens === 'all' ? '' : ' · ' + LENS_WORDS[lens] + ' lens' + (lens === 'ticket' && av && !av.offered ? ', as the record wrote them — ' + av.lead + ', so no order is offered' : '');
     let status;
     if (!list.length) status = 'Nothing in ' + STAGE_NAME[stage] + ' tonight.';
     else if (!inLens.length) status = 'No ' + (stage === 'bursts' ? 'burst' : 'setup') + ' matches the ' + LENS_WORDS[lens] + ' lens; ' + plural(list.length, 'stock') + ' in ' + STAGE_NAME[stage] + '.';
@@ -1681,7 +1924,10 @@
       stopPct: isNum(plan.stop_pct) ? plain(plan.stop_pct) + '% under the ' + usd(plan.sizing_price || lim) + ' limit' : null,
       why: why || null,
       concern: concern ? cap(sentence(concern)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : null),
-      ticket: c.status === 'ticket' ? (st && blocked(st) ? 'recorded, not offered from a page that is ' + stateWords(st) : (text(plan.order_line) || 'a ticket in the record')) : cap(sentence(noTicketPhrase('No ticket', c)))
+      ticket: c.status === 'ticket'
+        ? (av && !av.offered ? 'recorded for ' + dateWords(av.timing.session) + ', ' + av.lead + ' — ' + (text(plan.order_line) || 'a ticket in the record')
+          : (text(plan.order_line) || 'a ticket in the record'))
+        : cap(sentence(noTicketPhrase('No ticket', c)))
     };
   }
   function compareTable(a, b) {
@@ -2481,7 +2727,9 @@
   function buildSaved(dlg, item, id) {
     disposeSaved();
     clear(dlg);
-    const wrap = el('div', { 'class': 'ss-saved__wrap' });
+    // the identity on the sheet itself: a reader (and a check) can see WHICH
+    // saved setup is open, which is the whole point of a sheet keyed by one
+    const wrap = el('div', { 'class': 'ss-saved__wrap', 'data-saved-id': id });
     const close = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', id: 'saved-close', text: 'Close' });
     close.addEventListener('click', () => closeSaved());
     if (!item) {
@@ -2621,23 +2869,34 @@
     const s = det.querySelector('summary'); if (s) { s.tabIndex = 0; s.focus({ preventScroll: true }); }
   }
   function actionArea(c) {
-    const sw = statusWords(c.status), blockedNow = !!(st && blocked(st)), plan = c.plan || {};
-    const box = el('div', { 'class': 'sc-actionbar ss-action', 'data-ticket': c.status === 'ticket' ? (blockedNow ? 'blocked' : 'order') : c.status });
+    const sw = statusWords(c.status), offered = !!(av && av.offered), plan = c.plan || {};
+    const tm = (av || {}).timing || {}, ph = (av || {}).phase || 'unknown';
+    const box = el('div', { 'class': 'sc-actionbar ss-action', 'data-ticket': c.status === 'ticket' ? (offered ? 'order' : 'blocked') : c.status,
+      'data-window': ph });
     let line, btn;
-    if (c.status === 'ticket' && !blockedNow) {
-      line = 'Conditional ticket: ' + (text(plan.order_line) ? plan.order_line : 'see the plan') + '. It fills only on its own terms tomorrow; nothing here is placed for you.';
+    if (c.status === 'ticket' && offered) {
+      // the day the ticket is for, named: "tomorrow" is true for one evening
+      // and wrong from the next midnight, on the very session it means
+      const when = ph === 'open' ? 'inside ' + dateWords(tm.session) + '’s entry window, which runs to ' + timeET(tm.cutoff.toISOString())
+        : 'on its own terms in ' + dateWords(tm.session) + '’s entry window';
+      line = 'Conditional ticket: ' + (text(plan.order_line) ? plan.order_line : 'see the plan') + '. It fills only ' + when + '; nothing here is placed for you.';
       btn = el('button', { 'class': 'sc-btn sc-btn--secondary', type: 'button', text: 'View conditional plan', 'data-open': 'disc-plan' });
       box.appendChild(chip(sw[0], sw[1]));
     } else if (c.status === 'ticket') {
-      line = 'The ticket is not offered from a page that is ' + stateWords(st) + '. ' + sentence(st.sentence);
-      btn = el('button', { 'class': 'sc-btn sc-btn--secondary', type: 'button', text: 'Inspect conditions', 'data-open': 'disc-checklist' });
-      box.appendChild(chip('not offered', 'warn'));
+      // the recorded ticket stays inspectable; only placing it is withdrawn
+      line = av.reason;
+      btn = el('button', { 'class': 'sc-btn sc-btn--secondary', type: 'button',
+        text: av.timingBlocked ? 'Inspect the recorded ticket' : 'Inspect conditions',
+        'data-open': av.timingBlocked ? 'disc-plan' : 'disc-checklist' });
+      box.appendChild(chip(av.lead, av.pubBlocked ? 'warn' : PHASE_TONE[ph]));
     } else {
       line = (c.reason ? cap(sentence(c.reason)) : 'No ticket tonight.') + (c.plan ? ' The setup is kept here for inspection.' : '');
       btn = el('button', { 'class': 'sc-btn sc-btn--secondary', type: 'button', text: 'Inspect conditions', 'data-open': 'disc-checklist' });
       box.appendChild(chip(sw[0], sw[1]));
     }
     box.appendChild(el('p', { text: line }));
+    if (copyRefused && copyRefused.ticker === c.ticker)
+      box.appendChild(el('p', { 'class': 'ss-action__refused', 'data-copy-refused': '', role: 'alert', text: copyRefused.text }));
     btn.addEventListener('click', () => openDisclosure(btn.getAttribute('data-open')));
     box.appendChild(btn);
     box.appendChild(followBlock(c));
@@ -2742,7 +3001,7 @@
       kids.push(el('p', { 'class': 'sc-hint', text: 'No plan: ' + sentence(c.reason) + (c.stage === 'bursts' ? ' A grade, a plan and a ticket are three different things; this burst has the first.' : '') }));
       return disclosure('disc-plan', 'Conditional plan, sizing and order', 'none', kids);
     }
-    const blockedNow = !!(st && blocked(st)), withheld = c.status !== 'ticket' || blockedNow, t = plan.targets || {};
+    const offered = !!(av && av.offered), withheld = c.status !== 'ticket' || !offered, t = plan.targets || {};
     if (c.stage === 'bursts') {
       kids.push(factList([
         ['buy', usd(plan.entry_low) + ' – ' + usd(plan.entry_high), (plan.entry_window || '') + ' · a buy stop at ' + usd(plan.entry_ref) + ', limit ' + usd(plan.entry_high) + (text(plan.limit_note) ? ' · ' + plan.limit_note : ''), true],
@@ -2778,11 +3037,14 @@
     }
     if (text(plan.sizing_note)) kids.push(el('p', { 'class': 'sc-note', text: cap(sentence(plan.sizing_note)) }));
     if (text(plan.resize_rule)) kids.push(el('p', { 'class': 'sc-note', text: cap(sentence(plan.resize_rule)) }));
-    const hint = blockedNow && c.status === 'ticket' ? 'No order is offered from a page that is ' + stateWords(st) + '.'
+    const hint = c.status === 'ticket' && !offered ? av.reason + (av.timingBlocked ? ' ' + cancelLine() : '')
       : c.status === 'ticket' ? 'No order line was written for this plan.'
       : noTicketLine(c) + ' The setup is kept here for inspection.';
+    // the ticket the record published stays printed as history even when it is
+    // no longer offered: withdrawing the COPY is not erasing the evidence
+    if (c.status === 'ticket' && av.timingBlocked && plan.order_json) kids.push(recordedTicket(plan, av));
     kids.push(orderBlock(plan, hint, withheld));
-    return disclosure('disc-plan', 'Conditional plan, sizing and order', withheld ? (blockedNow && c.status === 'ticket' ? 'not offered' : statusWords(c.status)[0]) : 'sized at the limit', kids);
+    return disclosure('disc-plan', 'Conditional plan, sizing and order', withheld ? (c.status === 'ticket' ? av.lead : statusWords(c.status)[0]) : 'sized at the limit', kids);
   }
   function discExits(c) {
     const plan = c.plan, kids = [];
@@ -2862,9 +3124,11 @@
   // ---------------------------------------------------------------- the tickets, as a disclosure
   function renderTickets(data) {
     const bursts = by(data.bursts || []), trades = (data.trades || []).map((t) => bursts[t]).filter(Boolean);
-    const withOrders = trades.filter((b) => b.plan && b.plan.order_json), blockedNow = !!(st && blocked(st));
-    const regime = ((data.breadth || {}).regime || {}).verdict;
-    $('orders-summary').textContent = 'Tomorrow’s tickets · ' + (withOrders.length ? plural(withOrders.length, 'order') + (blockedNow ? ', not offered' : '') : 'none');
+    const withOrders = trades.filter((b) => b.plan && b.plan.order_json), offered = !!(av && av.offered);
+    const tm = av.timing, regime = ((data.breadth || {}).regime || {}).verdict;
+    // the session, not "tomorrow": the sheet is read on the day it is for
+    const forDay = tm.known ? dateWords(tm.session) + '’s tickets' : 'Tickets, session undated';
+    $('orders-summary').textContent = forDay + ' · ' + (withOrders.length ? plural(withOrders.length, 'order') + (offered ? '' : ', ' + av.lead) : 'none');
     const cb = data.cash_budget || {}, acct = data.account || {};
     const budget = clear($('budget'));
     budget.appendChild(el('strong', { text: cb.sentence || ('Model allocation: tomorrow’s tickets would commit ' + usd(cb.committed_usd, 0) + ' of the configured ' + usd(acct.equity, 0) + ' · ' + plain(cb.slots_used) + ' of ' + plain(cb.slots_max) + ' slots') }));
@@ -2876,10 +3140,10 @@
       text: saysNoTicket(c.reason) ? c.ticker + ' — ' + c.reason : 'No ticket: ' + c.ticker + ' — ' + c.reason })));
     const sheet = clear($('orders-table'));
     const table = el('table', { 'class': 'sc-table sc-table--compact ss-orders', id: 'order-sheet' });
-    table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Tomorrow’s orders in Fidelity’s field order' }));
+    table.appendChild(el('caption', { 'class': 'sc-sr-only', text: (tm.known ? dateWords(tm.session) + '’s orders' : 'The orders') + ' in Fidelity’s field order' }));
     table.appendChild(el('thead', null, el('tr', null, ['symbol', 'action', 'shares', 'type', 'stop (trigger)', 'limit', 'tif', 'then OTO sell stop', 'too extended over', 'planned risk'].map((h, i) => el('th', { scope: 'col', 'class': i >= 2 && i !== 3 && i !== 6 ? 'sc-num' : null, text: h })))));
     const body = el('tbody');
-    const rows = blockedNow ? [] : withOrders;
+    const rows = offered ? withOrders : [];
     rows.forEach((b) => {
       const o = b.plan.order_json, t = o.then || {};
       const name = el('button', { 'class': 'sc-signal-matrix__name', type: 'button', text: b.ticker, 'data-go': routeHash('bursts', 'bursts:' + b.ticker) });
@@ -2892,7 +3156,7 @@
         el('td', { 'class': 'sc-num', text: usd(b.plan.skip_if_open_above) }), el('td', { 'class': 'sc-num', text: usd(b.plan.risk_usd) })
       ]));
     });
-    if (!rows.length) body.appendChild(el('tr', { 'class': 'sc-empty' }, el('td', { colspan: '10', text: blockedNow && withOrders.length ? 'No orders offered: the page is ' + stateWords(st) + '.' : st && st.state === 'closed' ? 'No orders: the market was closed and the plans stand.' : regime === 'red' ? 'No orders: breadth is red.' : 'No orders tomorrow.' })));
+    if (!rows.length) body.appendChild(el('tr', { 'class': 'sc-empty' }, el('td', { colspan: '10', text: !offered && withOrders.length ? 'No orders offered: ' + av.reason : st && st.state === 'closed' ? 'No orders: the market was closed and the plans stand.' : regime === 'red' ? 'No orders: breadth is red.' : 'No orders for ' + (tm.known ? dateWords(tm.session) : 'the next session') + '.' })));
     table.appendChild(body);
     const committed = rows.reduce((a, b) => a + (b.plan.position_usd || 0), 0), risk = rows.reduce((a, b) => a + (b.plan.risk_usd || 0), 0);
     table.appendChild(el('tfoot', null, el('tr', null, el('td', { colspan: '10', text: plural(rows.length, 'order') + ' · ' + usd(committed, 0) + ' would be committed at the limits · ' + usd(risk, 0) + ' planned price-to-stop risk · ' + (isNum(acct.equity) && acct.equity ? (100 * committed / acct.equity).toFixed(1) : '—') + '% of the configured equity' }))));
@@ -3044,17 +3308,50 @@
   }
 
   // ---------------------------------------------------------------- next
+  // The one next action, and the surface the session-aware pass exists for:
+  // it used to name the desk's 9:28 AM reminder at every hour of every day,
+  // so a reader at eleven o'clock was told to act before a deadline ninety
+  // minutes gone, on "tomorrow's" tickets, on the very day they were for.
+  //
+  // The order of refusal is publication, then the record's own safeguards,
+  // then the clock -- timing narrows and never overrides, so a red night's
+  // headline stays "no new longs" and the window's state is said beside it.
+  function timingLine(tm, ph) {
+    if (ph === 'unknown') return 'This record does not say which session its plans are for, so the page will not name a deadline for them.';
+    const day = dateWords(tm.session), ends = timeET(tm.cutoff.toISOString());
+    if (ph === 'ended') return 'The entry window for ' + day + ' ended at ' + ends + '; nothing here is an order to place now.';
+    if (ph === 'open') return 'The scheduled entry window for ' + day + ' runs to ' + ends + '. This page reads the published record, not live prices: whether a trigger or a fill condition has been met is not verified here.';
+    return 'The entry window for ' + day + ' opens at ' + timeET(tm.opens.toISOString()) + ' and runs to ' + ends + '.';
+  }
+  function cancelLine() {
+    return 'If you submitted an order that did not fill, check or cancel it in your broker: SpicyStock places nothing and cancels nothing.';
+  }
   function nextAction(data, s) {
     const bursts = by(data.bursts || []);
     const orders = (data.trades || []).map((t) => bursts[t]).filter((b) => b && b.plan && b.plan.order_json).length;
     const open = (data.open_plans || []).length, red = ((data.breadth || {}).regime || {}).verdict === 'red';
-    if (blocked(s)) return ['Do not place these orders.', 'Wait for tonight’s run to publish, or check the run log. Nothing on this page is tomorrow’s plan.', 'stale'];
-    const window = ((data.rules || {}).plan || {}).entry_window || 'entry window';
-    if (s.state === 'closed') return ['Plans unchanged. Check the open model plans before ' + ORDERS_BY + '.', 'The market was closed; there is nothing new to place.', 'closed'];
-    if (red) return ['No new longs. Work the exits in the record before ' + ORDERS_BY + '.', 'Breadth is red: tighten the stops and sell into strength.', 'red'];
-    if (orders) return ['Place the ' + plural(orders, 'order') + ' from tomorrow’s tickets in Fidelity before ' + ORDERS_BY + '. Exits first.', 'Attach each sell stop the moment its buy fills, and cancel any order that has not filled by the end of the ' + window + '.', 'orders'];
-    if (open) return ['Nothing new to place. Work the exits in the record before ' + ORDERS_BY + '.', 'No burst qualified with a ticket tonight; the open model plans still carry their instructions.', 'quiet'];
-    return ['Nothing to place. Keep cash.', 'No burst qualified and nothing is held. Come back after the next run.', 'quiet'];
+    if (blocked(s)) return ['Do not place these orders.', 'Wait for tonight’s run to publish, or check the run log. Nothing on this page is the next session’s plan.', 'stale'];
+    const tm = av.timing, ph = av.phase, window = tm.window;
+    const line = timingLine(tm, ph);
+    const day = tm.known ? dateWords(tm.session) : null;
+    const by_ = tm.prepareBy ? timeET(tm.prepareBy.toISOString()) : ORDERS_BY;
+    // the record's own safeguards first, with the window's state beside them
+    if (s.state === 'closed') return ['Plans unchanged. Check the open model plans.', 'The market was closed on ' + dateWords(tm.closedSession || s.expected) + ', so the plans dated for it had no session. ' + line, 'closed'];
+    if (red) return ['No new longs. Work the exits in the open model plans.', 'Breadth is red: tighten the stops and sell into strength. ' + line, 'red'];
+    if (ph === 'unknown') return ['Entry timing unavailable — research only.', line + ' Read the setups and the evidence; do not place an order from a page that cannot date it.', 'stale'];
+    if (ph === 'ended') {
+      return orders
+        ? ['The entry window for ' + day + ' has ended.', 'The ' + plural(orders, 'ticket') + ' the record published for it ' + (orders === 1 ? 'stays' : 'stay') + ' readable as history, and ' + (orders === 1 ? 'is' : 'are') + ' no longer offered to place. ' + cancelLine(), 'ended']
+        : ['The entry window for ' + day + ' has ended.', 'Nothing new was offered for it. Work the exits in the open model plans and wait for the next run.', 'ended'];
+    }
+    if (ph === 'open') {
+      return orders
+        ? ['The entry window for ' + day + ' is in progress.', 'Place the ' + plural(orders, 'order') + ' on their own terms, exits first, and cancel any that has not filled by the end of the ' + window + '. ' + line, 'orders']
+        : ['Nothing new to place in ' + day + '’s window.', 'No burst qualified with a ticket. ' + line, 'quiet'];
+    }
+    if (orders) return ['Plan for ' + day + ': place the ' + plural(orders, 'order') + ' in Fidelity before ' + by_ + '. Exits first.', 'Attach each sell stop the moment its buy fills, and cancel any order that has not filled by the end of the ' + window + '. ' + line, 'orders'];
+    if (open) return ['Nothing new to place for ' + day + '. Work the exits in the open model plans.', 'No burst qualified with a ticket tonight; the open model plans still carry their instructions. ' + line, 'quiet'];
+    return ['Nothing to place for ' + day + '. Keep cash.', 'No burst qualified and nothing is held. Come back after the next run. ' + line, 'quiet'];
   }
   function renderNext(data, s) {
     const n = nextAction(data, s);
@@ -3153,6 +3450,13 @@
 
   // ---------------------------------------------------------------- wiring (once)
   function wire() {
+    // The clock, re-read where a page that was left alone comes back: a tab
+    // brought forward, a window given focus, and a page the browser restored
+    // from its back/forward cache -- which is served from a snapshot and would
+    // otherwise show the words of whatever hour it was put away at.
+    d.addEventListener('visibilitychange', () => { if (!d.hidden) reclock(); });
+    w.addEventListener('focus', () => reclock());
+    w.addEventListener('pageshow', () => reclock());
     const input = $('search');
     input.addEventListener('input', () => { state.query = input.value.trim().toUpperCase(); if (model && state.view === 'explore') renderPicks(); });
     $('search-form').addEventListener('submit', (e) => { e.preventDefault(); if (!model) return; const q = input.value.trim().toUpperCase(); if (q) resolveSearch(q); });
@@ -3197,12 +3501,258 @@
     w.addEventListener('hashchange', () => applyRoute(parseHash(w.location.hash)));
   }
 
+  // ---------------------------------------------------------------- the clock, re-read
+  // A page left open crosses the deadline it is describing, so the answer is
+  // re-read: on every render, when the tab becomes visible again, when the
+  // window takes focus, when the browser restores the page from its back /
+  // forward cache, and on a bounded tick while the tab is visible.
+  //
+  // What it does NOT do: re-render. The charts, the map, the lens, the
+  // comparison, the saved sheet, the search box and the focus are all left
+  // exactly where they are; only the surfaces whose words depend on the clock
+  // are repainted, and only when the ANSWER changed. There is no countdown
+  // and no cue that appears at the bell: a reader watching the page is told
+  // the same thing a reader arriving is told.
+  const CLOCK_TICK_MS = 30000;   // a bounded re-read while visible, not a countdown
+  let clockTimer = null;
+  function watchClock() {
+    if (clockTimer) { w.clearInterval(clockTimer); clockTimer = null; }
+    if (clockPinned) return;     // a pinned clock does not tick
+    clockTimer = w.setInterval(() => { if (!d.hidden) reclock(); }, CLOCK_TICK_MS);
+  }
+  // the one re-reading. Returns true when something on the page changed.
+  function reclock() {
+    if (!loaded || !current || !current.run || clockPinned) return false;
+    const next = availability(current, new Date());
+    const same = av && next.phase === av.phase && next.pub.state === av.pub.state &&
+      next.pub.chip === av.pub.chip && next.offered === av.offered;
+    clockAt = next.at;
+    av = next; st = av.pub; SCStock.state = st; SCStock.avail = av;
+    if (same) return false;
+    // the clock-dependent surfaces, and nothing else: no chart is disposed, no
+    // lens re-read, no comparison closed, no saved sheet dismissed, and the
+    // detail's chart instance is left standing while the words beside it change
+    renderStatus(current, st);
+    renderMarketBar(current, st);
+    renderTickets(current);
+    renderNext(current, st);
+    reclockDetail();
+    renderFollowing();
+    renderTray();
+    if (comparePanels.length && state.pins.length === 2) reclockCompare();
+    d.documentElement.setAttribute('data-ss-rendered', st.state);
+    d.documentElement.setAttribute('data-ss-window', av.phase);
+    return true;
+  }
+  SCStock.reclock = reclock;
+
+  // The chosen stock's clock-dependent parts, in place. `renderDetail()` would
+  // rebuild the whole panel and dispose the chart, which is exactly what a
+  // reader mid-reading must not have happen; these two children carry every
+  // word the clock touches.
+  function reclockDetail() {
+    const box = $('detail'), c = model && state.stage ? model.byId[state.selected[state.stage]] : null;
+    if (!box || !c) return;
+    repaint(box.querySelector('.ss-action'), () => actionArea(c));
+    repaint($('disc-plan'), () => discPlan(c));
+  }
+  // the comparison's fact table, whose ticket row says whether an order stands
+  function reclockCompare() {
+    const t = $('compare-table');
+    if (!t) return;
+    const a = model.byId[state.pins[0]], b = model.byId[state.pins[1]];
+    if (a && b) repaint(t.parentNode, () => el('div', { 'class': 'sc-table-scroll ss-compare__facts' }, compareTable(a, b)));
+  }
+  // Swap a subtree for a freshly built one without taking the reader's place
+  // with it: a disclosure that was open stays open, and whatever had focus is
+  // found again by the attribute that identifies it.
+  function repaint(node, build) {
+    if (!node || !node.parentNode) return null;
+    const held = node.contains(d.activeElement);
+    const key = held ? focusKey(d.activeElement) : null;
+    const wasOpen = node.tagName === 'DETAILS' ? node.open : null;
+    const next = build();
+    node.parentNode.replaceChild(next, node);
+    if (wasOpen !== null && 'open' in next) next.open = wasOpen;
+    if (!held) return next;
+    // The control the reader was on may be the very one the clock withdrew --
+    // a copy button on a window that closed is exactly that. Focus falls back
+    // to the replacement itself rather than to the body, so the reader stays
+    // where they were reading instead of at the top of the document.
+    const back = (key && next.querySelector(key)) ||
+      next.querySelector('summary, button, [href], input') || next;
+    if (back.focus) {
+      if (back === next && !next.hasAttribute('tabindex')) next.setAttribute('tabindex', '-1');
+      back.focus({ preventScroll: true });
+    }
+    return next;
+  }
+  const FOCUS_KEYS = ['data-open', 'data-copy', 'data-follow', 'data-open-saved', 'data-pin', 'data-go'];
+  function focusKey(node) {
+    if (!node || !node.getAttribute) return null;
+    for (let i = 0; i < FOCUS_KEYS.length; i++) {
+      const a = FOCUS_KEYS[i];
+      if (node.hasAttribute(a)) return '[' + a + '="' + String(node.getAttribute(a)).replace(/"/g, '\\"') + '"]';
+    }
+    return null;
+  }
+
+  // ---------------------------------------------------------------- check for updates
+  // One control, beside the publication line it is about, that re-reads the
+  // SAME static file the page booted from. It rescans nothing, grades nothing,
+  // asks no provider, dispatches no workflow, sends no notification and polls
+  // on no timer: a reader presses it, or it does not happen.
+  //
+  // The load is transactional. The bytes are parsed, held to the schema, the
+  // run and the timing shape, and COMPARED against what is on screen before
+  // anything is replaced; a record that is older than the one in front of the
+  // reader is refused rather than applied backwards. Only the newest press
+  // counts: an answer whose sequence is not the current one is dropped, so a
+  // slow first response cannot land over a fast second.
+  const UPDATE_SAID = {
+    checking: 'Re-reading the published record…',
+    unchanged: 'No newer record: this is still the published one.',
+    older: 'The published file is for an earlier session than the one on screen, so it was not loaded. Nothing here changed.',
+    failed: 'The published record could not be re-read. Nothing here changed.',
+    invalid: 'The published file is not a record this page can read, so it was not loaded. Nothing here changed.'
+  };
+  let updateSeq = 0, updateBusy = false, updateSaid = '', updateOutcome = '';
+  //: the bytes the page was last loaded from, so "unchanged" means the served
+  //: file is identical and not merely stamped alike. A re-publish of the same
+  //: session on later bars keeps its session, its published_at AND its rules
+  //: digest, and moves only its numbers -- which is exactly the case a stamp of
+  //: those fields cannot see, and one string comparison can.
+  let rawRecord = null;
+  // true when the served bytes are the record already on screen. Falls back to
+  // re-serializing what is in memory for a page handed a record directly (a
+  // test, a fixture), so the answer is exact either way.
+  //
+  // The cost of reading bytes rather than meaning: a re-publish that changed
+  // only whitespace reads as a revision and is loaded. `report.write()` writes
+  // one shape every time, so that is a re-run whose numbers came out the same
+  // -- a re-render nobody is hurt by, and the price of never missing a
+  // re-publish that DID move a number under an unchanged publish stamp.
+  function sameBytes(raw) {
+    if (rawRecord !== null) return raw === rawRecord;
+    try { return !!current && raw === JSON.stringify(current); } catch (e) { return false; }
+  }
+  function renderRefresh() {
+    const host = $('market-refresh');
+    if (!host) return;
+    // a clock re-reading repaints the bar around this control; a reader whose
+    // finger is on the button keeps it
+    const hadFocus = host.contains(d.activeElement);
+    clear(host);
+    // the control stays pressable while a check is in flight: a reader whose
+    // first press is hanging must be able to try again, and the sequence number
+    // below is what makes the newest answer the only one that can land
+    const btn = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', id: 'check-updates',
+      text: updateBusy ? 'Checking…' : 'Check for updates', 'data-check': updateBusy ? 'busy' : '' });
+    btn.addEventListener('click', checkUpdates);
+    host.appendChild(btn);
+    // at rest the control says what it does and nothing more; the outcome line
+    // appears only once a check has actually answered
+    btn.title = 'Re-reads the published record. Nothing is scanned or graded.';
+    const line = el('p', { 'class': 'ss-refresh__said', id: 'refresh-said', role: 'status', 'aria-live': 'polite',
+      'data-outcome': updateOutcome || null, text: updateSaid });
+    if (!updateSaid) line.hidden = true;
+    host.appendChild(line);
+    if (hadFocus && !btn.disabled) btn.focus({ preventScroll: true });
+  }
+  function saidUpdate(outcome, message) {
+    updateOutcome = outcome; updateSaid = message || UPDATE_SAID[outcome] || '';
+    updateBusy = outcome === 'checking';
+    renderRefresh();
+  }
+  function checkUpdates() {
+    // a second press SUPERSEDES the one in flight rather than being refused;
+    // every answer carries the sequence it was asked under and a stale one is
+    // dropped, so a slow first response cannot land over a fast second
+    const seq = ++updateSeq;
+    saidUpdate('checking');
+    const src = ((w.SCStock && w.SCStock.dataUrl) || 'data.json');
+    const bust = src + (src.indexOf('?') >= 0 ? '&' : '?') + 'at=' + Date.now();
+    w.fetch(bust, { cache: 'no-store' })
+      .then((r) => { if (!r.ok) throw new Error('answered ' + r.status); return r.text(); })
+      .then((raw) => { if (seq === updateSeq) applyUpdate(raw); })
+      .catch(() => { if (seq === updateSeq) saidUpdate('failed'); });
+  }
+  // the decision, with nothing replaced until every question is answered
+  function applyUpdate(raw) {
+    // identical bytes: nothing is parsed, nothing is rendered, and the
+    // Following shelf is not asked to observe a session it already has
+    if (sameBytes(raw)) { saidUpdate('unchanged'); return; }
+    let next = null;
+    try { next = JSON.parse(raw); } catch (e) { saidUpdate('failed'); return; }
+    if (!next || typeof next !== 'object' || next.schema_version !== 2 || !next.run ||
+        !Array.isArray(next.bursts) || !next.run.session) { saidUpdate('invalid'); return; }
+    if (timingFaults(next).length) { saidUpdate('invalid'); return; }
+    const here = current && current.run ? current.run.session : null;
+    const there = next.run.session;
+    if (!here) { loadUpdate(raw, next, 'newer', 'A record loaded: ' + dateWords(there) + '.'); return; }
+    if (there < here) { saidUpdate('older'); return; }
+    // the same trading day, re-measured on later bars: a REVISION, not a new
+    // session, and the word matters -- the reader's saved observations of that
+    // date are revisions of it too, not a second day
+    if (there === here) { loadUpdate(raw, next, 'revised', dateWords(there) + ' was re-published, so it was re-read: the same session on later bars, not a new one.'); return; }
+    loadUpdate(raw, next, 'newer', 'A newer record loaded: ' + dateWords(there) + ' replaces ' + dateWords(here) + '.');
+  }
+  // What a reader keeps across a load, and what they are TOLD they lost. The
+  // record changes; the reader's own place in it, their private saves and
+  // their preferences do not. A comparison pair is the one thing that cannot
+  // survive: it was pinned from one published record and two names remapped
+  // onto a different one would be a comparison nobody made.
+  function loadUpdate(raw, next, outcome, message) {
+    const keep = {
+      view: state.view, stage: state.stage, selected: Object.assign({}, state.selected),
+      query: $('search') ? $('search').value : '', hash: String(w.location.hash || ''),
+      pins: state.pins.slice(), scroll: w.pageYOffset || 0, sizeForm: openSizeForm(),
+      savedOpen: savedOpen, comparing: !!(state.pins.length === 2 && $('compare') && $('compare').open)
+    };
+    render(next, clockPinned ? clockAt : null, keep);
+    rawRecord = raw;
+    const lost = [];
+    if (keep.pins.length) lost.push(keep.pins.length === 2 && keep.comparing
+      ? 'The comparison was closed: a pinned pair belongs to the record it was pinned from.'
+      : 'The pins were cleared: a pin belongs to the record it was made in.');
+    if (keep.stage && keep.selected[keep.stage] && !(model.byId[keep.selected[keep.stage]]))
+      lost.push('The stock you were on is not in this record.');
+    saidUpdate(outcome, [message].concat(lost).join(' '));
+  }
+  // an open reference-size form, so a half-typed number survives the load
+  function openSizeForm() {
+    const form = d.querySelector('.ss-follow__form');
+    if (!form) return null;
+    const host = form.closest('[data-follow-id]'), input = form.querySelector('input');
+    return host && input ? { id: host.getAttribute('data-follow-id'), value: input.value,
+      focused: form.contains(d.activeElement) } : null;
+  }
+  function restoreSizeForm(want) {
+    if (!want) return;
+    const host = d.querySelector('[data-follow-id="' + String(want.id).replace(/"/g, '\\"') + '"]');
+    const edit = host ? host.querySelector('[data-follow-action="edit"]') : null;
+    if (!edit) return;
+    edit.click();
+    const input = host.querySelector('.ss-follow__form input');
+    if (!input) return;
+    input.value = want.value;
+    if (want.focused) input.focus();
+  }
+  SCStock.checkUpdates = checkUpdates;
+
   // ---------------------------------------------------------------- render
-  function render(data, now) {
+  function render(data, now, keep) {
     current = data; SCStock.data = data;
     demo = !!data.fixture;
     d.documentElement.setAttribute('data-ss-demo', demo ? 'true' : 'false');
-    st = status(data, now); SCStock.state = st;
+    clockAt = now ? new Date(now) : new Date();
+    clockPinned = !!now;
+    copyRefused = null;
+    loaded = true;
+    // the bytes belong to the loader that read them; a record handed straight to
+    // render() (a test, a fixture) has none, and `sameBytes()` says so
+    rawRecord = null;
+    av = availability(data, clockAt); st = av.pub; SCStock.state = st; SCStock.avail = av;
     model = buildModel(data); SCStock.model = model;
     SCStock.follow.setDemo(demo);
     invalidateFollow();
@@ -3216,6 +3766,16 @@
     STAGES.forEach((s) => { state.lens[s] = stored[s]; });
     state.sort = stored.sort || 'rank';
     $('search').value = '';
+    // An update check hands back the reader's place: the stage they were on,
+    // the stock if the new record still carries it, and the ticker they had
+    // typed. The lens and the chart's mode and range come out of this
+    // browser's own store and were never the record's to reset. The pins are
+    // NOT restored -- `loadUpdate()` says so out loud instead.
+    if (keep) {
+      if (keep.stage) state.stage = keep.stage;
+      STAGES.forEach((s) => { const id = keep.selected && keep.selected[s]; if (id && model.byId[id]) state.selected[s] = id; });
+      if (keep.query) { $('search').value = keep.query; state.query = keep.query.trim().toUpperCase(); }
+    }
     renderStatus(data, st);
     renderMarketBar(data, st);
     renderMethod(data);
@@ -3235,10 +3795,13 @@
     renderFollowing();
     followJump();
     renderTray();
-    applyRoute(parseHash(w.location.hash), true);
+    applyRoute(parseHash(keep && keep.hash ? keep.hash : w.location.hash), true);
     d.title = 'SpicyStock · ' + ((data.cover || {}).h1 || 'no verdict');
     if (w.SC && w.SC.reading && w.SC.reading.refresh) { try { w.SC.reading.refresh(); } catch (e) { /* optional */ } }
     d.documentElement.setAttribute('data-ss-rendered', st.state);
+    d.documentElement.setAttribute('data-ss-window', av.phase);
+    if (keep) { restoreSizeForm(keep.sizeForm); if (keep.scroll) w.scrollTo(0, keep.scroll); }
+    watchClock();
     liveRunLog();
     return st;
   }
@@ -3251,6 +3814,8 @@
     // than null so every reader of it -- the shelf, the saved sheet, its
     // chart -- has the shape it indexes into.
     current = { run: {}, app: {} };
+    loaded = false;
+    if (clockTimer) { w.clearInterval(clockTimer); clockTimer = null; }
     $('cover-h1').textContent = 'The record could not be read.';
     $('cover-dek').textContent = message;
     clear($('status-slot')).appendChild(chip('no record', 'danger'));
@@ -3277,8 +3842,15 @@
     wire();
     const src = (w.SCStock && w.SCStock.dataUrl) || 'data.json';
     w.fetch(src, { cache: 'no-store' })
-      .then((r) => { if (!r.ok) throw new Error('data.json answered ' + r.status); return r.json(); })
-      .then((data) => { if (!data || data.schema_version !== 2 || !data.run) throw new Error('not a schema_version 2 record'); render(data, w.SCStock.now ? new Date(w.SCStock.now) : new Date()); })
+      .then((r) => { if (!r.ok) throw new Error('data.json answered ' + r.status); return r.text(); })
+      // an injected clock is a PIN and the page does not move it; without one
+      // the page reads the real clock and re-reads it as the day goes on
+      .then((raw) => {
+        const data = JSON.parse(raw);
+        if (!data || data.schema_version !== 2 || !data.run) throw new Error('not a schema_version 2 record');
+        render(data, w.SCStock.now ? new Date(w.SCStock.now) : null);
+        rawRecord = raw;
+      })
       .catch((e) => failed(String(e && e.message || e)));
   }
   if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', boot); else boot();

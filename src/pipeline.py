@@ -20,6 +20,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 
 from src import breadth, charts, clock, grader, market_data, plan, quality, record, report, scans
+from src import timing
 from src import universe
 from src import watchlist
 
@@ -509,7 +510,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's floors and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, RULES):
+    for block in (scans.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.min_price": universe.MIN_PRICE, "universe.min_volume": universe.MIN_VOLUME,
@@ -679,6 +680,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             "run_id": os.environ.get("GITHUB_RUN_ID_FOR_RECORD") or None,
             "elapsed_seconds": elapsed, "fetch_seconds": round(fetch_seconds, 1),
             "rules_version": RULES_VERSION_NOTE, "type": "evening",
+            "timing": plan_timing(session, expected, closed),
         }
         # a closed night is filed under the session that did not happen, so the
         # reliability row shows the holiday as closed and keeps the night before
@@ -757,6 +759,33 @@ def night_session(expected: date, session: date, closed: bool) -> str:
     """The session a night is filed under in the reliability row: the one
     it published for, which on a closed night is the day nobody traded."""
     return (expected if closed else session).isoformat()
+
+
+def plan_timing(session: date, expected: date, closed: bool) -> dict:
+    """The night's ``run.timing``: which session tonight's plans are FOR and
+    when its entry window is scheduled.
+
+    On an open night the applicable session is ``plan.next_sessions(session,
+    1)[0]``, the very call ``plan.dated_schedule()`` makes for its day 1, so
+    the block and every plan's schedule name the same date by construction
+    rather than by agreement.
+
+    On a CLOSED night the run has the one piece of holiday knowledge this
+    repository ever gets: ``expected`` printed no bars, so it was not a
+    session. The plans that stood for it are dated for it and apply to the
+    weekday after it instead, which is what the block says -- with ``expected``
+    kept as ``closed_session`` so the page can explain the plan's own day 1
+    rather than contradict it.
+
+    It is written on every night, red and closed included: which session a
+    reader would act on is a fact about the record even when the record offers
+    nothing to do.
+    """
+    basis = timing.BASIS_AFTER_CLOSED if closed else timing.BASIS_WEEKDAY_AFTER
+    applicable = plan.next_sessions(expected if closed else session, 1)[0]
+    return timing.plan_timing(session, applicable, window=plan.ENTRY_WINDOW,
+                              window_minutes=plan.ENTRY_WINDOW_MINUTES, basis=basis,
+                              closed_session=expected if closed else None)
 
 
 def run_status(rep: RunReport, closed: bool) -> str:
