@@ -1259,12 +1259,25 @@ async function checkFollowThrough(browser, base, full) {
   await page.evaluate((k) => { ['', '.previous', '.rejected', '.corrupt'].forEach((s) => localStorage.removeItem(k + s)); }, FOLLOW_KEY);
   await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(250);
   const publicBefore = await page.evaluate(() => JSON.stringify([SCStock.data.scorecard, SCStock.data.trades, SCStock.data.cash_budget]));
+  const again = next.bursts[0].ticker;   // NVDA: a burst in BOTH records, so two signals, two identities
   await followFrom(page, trade);
   await followFrom(page, withheld);
+  await followFrom(page, again);
   const saved = (await readStore(page)).items.find((x) => x.ticker === trade);
   eq('a follow freezes the bars the record carried for that signal',
     [saved.evidence.series.length, saved.evidence.series[saved.evidence.series.length - 1].date], [tradeRow.series.length, full.run.session]);
   check('and only bars at or before the signal session', saved.evidence.series.every((b) => b.date <= full.run.session), 'a bar after the signal was saved');
+  // the STORE holds that bound too, not only the page that wrote it: an item
+  // whose saved chart has grown a later candle is read back without it, so a
+  // frozen original cannot acquire a bar the reader never saw
+  {
+    const grown = JSON.parse(JSON.stringify(await readStore(page)));
+    grown.items.forEach((it) => { if (it.evidence) it.evidence.series = it.evidence.series.concat([{ date: '2026-09-30', o: 1, h: 2, l: 1, c: 1.5, v: 1 }]); });
+    await seedStore(page, grown);
+    const back = await page.evaluate((t) => { const it = SCStock.follow.list().find((x) => x.ticker === t); return it.evidence.series.map((b) => b.date).slice(-2); }, trade);
+    check('a bar printed after the signal is dropped when the store is read', back.every((d) => d <= full.run.session), JSON.stringify(back));
+    await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(250);
+  }
   eq('with the dated anchors drawn on them', saved.evidence.anchors.map((a) => a.key), ['base', 'burst', 'prior']);
   eq('and no observation yet: the signal day is the baseline, not an observation', saved.observations, []);
 
@@ -1317,14 +1330,24 @@ async function checkFollowThrough(browser, base, full) {
   await closeSaved(page); await page.waitForTimeout(280);
 
   // ---- a NEWER signal for the same ticker must not be substituted
-  const again = next.bursts[0].ticker;    // NVDA: a burst in both records, two identities
-  await followFrom(page, again);
-  await rerender(page, next, NEXT_NOW);
-  const ids = (await readStore(page)).items.filter((x) => x.ticker === again).map((x) => x.id);
-  eq('the same ticker under two sessions is two saved setups', ids.length, 1);
+  const savedAgain = (await readStore(page)).items.find((x) => x.ticker === again);
+  eq('the setup saved for this symbol is the EARLIER signal', savedAgain.session, full.run.session);
+  check('and tonight’s record carries a newer one for it', (next.bursts || []).some((b) => b.ticker === again), 'no newer signal to confuse it with');
   await openSaved(page, again);
   check('and the sheet offers the CURRENT setup as a separate, named thing',
     (await said(page, '#saved [data-current-setup]')).length > 0 || (await count(page, `#saved [data-current-setup="${again}"]`)) === 1, await said(page, '#saved .ss-saved__foot'));
+  // the symbol IS in tonight's record, with a newer signal and newer bars, so
+  // this is where a chart drawn from the record instead of from the saved copy
+  // would show: the panel's own last bar must be the SAVED signal's
+  {
+    const head = await said(page, '#saved [data-panel="saved"] .ss-chart-panel__head');
+    check('the saved chart is the copy this browser froze, not tonight’s bars',
+      head.includes(dateWords(savedAgain.session)) && head.includes(usd(savedAgain.snapshot.close)), head.slice(0, 160));
+    const tonight = next.bursts.find((b) => b.ticker === again);
+    check('and tonight’s own last bar is NOT what it shows',
+      tonight.series[tonight.series.length - 1].date !== savedAgain.session
+        && !head.includes(usd(tonight.series[tonight.series.length - 1].c)), head.slice(0, 160));
+  }
   await closeSaved(page); await page.waitForTimeout(250);
 
   // ---- a same-session revision, then an older record
