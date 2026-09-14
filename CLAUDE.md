@@ -1359,10 +1359,28 @@ with a control mutant staying green. Two survived the first pass — both the
 shape this file names second, a test passing on an incidental fact about a
 generated fixture — and both assert against the live modules now.
 
-**NOT run:** the page-side mutation pass over the two new suites' rules. That
-is a gap, not a pass. One smoke failure did not recur and is recorded rather
-than chased: on one combined run the volume-sort check read a pick card
-mid-render; three runs alone and the full smoke are green.
+**The page-side pass was abandoned three mutants in, and that is a gap, not a
+pass.** Of the three judged: the window staying open AT its cutoff dies, an
+ended window still offering the order dies, and **`the window opens a minute
+early` SURVIVED** — the `session` suite reads the phase at 9:00, 9:28, 9:30 and
+9:40, and none of those falls in the minute a sixty-second shift moves. The
+boundary is pinned in pytest (`test_the_phase_at_every_boundary_of_the_window`
+asserts one second either side) but not in the browser. The remaining
+twenty-one mutants were never run.
+
+**And a process failure, mine, the one this file already warns about.** A
+mutant batch was still running in the background when I committed: `1f649c8`
+captured `the window opens a minute early` in `docs/app.js` and I pushed it and
+opened a pull request on it. Found by reading `git status` rather than by any
+check — no gate would have caught a commit whose tests ran before it. Reverted
+in the commit after, with `docs/app.js` proved byte-identical to the last clean
+commit. The rule stands and is now twice earned: do not run a mutation harness
+while anything else may touch the tree, and never `git add -A` while one is
+alive. The full smoke run that overlapped it is void and was re-run.
+
+One smoke failure did not recur and is recorded rather than chased: on one
+combined run the volume-sort check read a pick card mid-render; three runs
+alone and the full smoke are green.
 
 **Blockers: none. Not claimable**, unchanged: a live fetch, a real chart read,
 Resend, Pages, and any trading edge.

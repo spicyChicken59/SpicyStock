@@ -92,3 +92,10 @@ __pycache__/
 # one nested anywhere under docs/ or tools/, which nothing here creates and
 # nothing should quietly swallow.
 /node_modules/
+
+# The agent scratchpad: reproduction scripts, mutation harnesses and the page
+# smoke's screenshots. Every checkpoint in CLAUDE.md cites `scratchpad/repro/`
+# scripts and none of them has ever been committed -- the evidence that
+# matters is the checkpoint's own account of what they printed, and 56 PNGs
+# in a pull request are noise. Local only.
+scratchpad/
