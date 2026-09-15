@@ -1476,9 +1476,12 @@ window 9:30–10:00 AM ET*, the first `run.timing` block to render), no order is
 offered at any phase of a red night, and the lens's A-quality count is 53 — the
 study's green-night line, reached independently in the browser.
 
-**Keep / fix / defer / omit.** Keep everything above. Fix, nothing found: the
-lens row's clipped right edge at 390px is `.ss-lens`, a real `overflow-x`
-scroller whose *With ticket* button is reachable at 320px too. Defer, all
+**Keep / fix / defer / omit.** Keep everything above. Fix, nothing in the product:
+the lens row's clipped right edge at 390px is `.ss-lens`, a real `overflow-x`
+scroller whose *With ticket* button is reachable at 320px too. One defect of mine,
+found by a reader's question and by no gate: trimming this checkpoint to the
+brief's word budget deleted the sibling findings while leaving the prompt below
+pointing at them. A cut needs a re-read, not a word count. Defer, all
 pre-existing: the <320px overflow; the CLAUDE.md length gate, still unfailable;
 gitleaks 8.24.3 ships no Anthropic detector, so `sk-ant-` is invisible here.
 Omit: trade logging, a portfolio, execution.
@@ -1529,6 +1532,13 @@ This sandbox reaches neither the served page nor Actions' artifact blobs (403
 CONNECT); read a run through its job log and report the limit rather than routing
 around it.
 
-Do not touch SpicyHome or SpicyCar. Both are on v2.13.0, both were validated and
-neither needed a change; their findings are recorded in the checkpoint above and
-belong to their owners.
+Do not touch SpicyHome or SpicyCar; neither needed a change. All three apps carry
+byte-identical v2.13.0 assets -- the same 22 SHA-256s -- Stock's and Home's
+provenance naming the tag `14a752d` and Car's naming `ad5aa0f`, that tag's second
+parent on the same tree. Validated at Home `19ddcf6` and Car `62db117`; Home's tip
+has moved to `b745197` since, its own tracker bot writing data only, with the
+provenance unchanged. Two findings stay OPEN in Car, to be fixed in THAT repository
+rather than here -- not because they are another owner's, since all four
+repositories are one account's: `docs/design-review/` still records #78's numbers
+that #79 superseded, and two NON-CI harnesses fail on a `#signal-card` that
+computes `display:none`. Both were proved pre-existing.
