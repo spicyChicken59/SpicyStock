@@ -305,7 +305,21 @@ def test_the_archived_rules_carry_the_timing_constants_the_code_holds(full_recor
     assert report.rules_version(moved) != report.rules_version(nested)
     # the fixture was written by this code, so it carries the same block
     assert full_record["rules"]["timing"] == nested["timing"]
-    # the published record predates the block, so its digest cannot be this one
+    # The published record is rewritten by every evening run, so anything asserted
+    # here about WHICH generation wrote it is an accident of the calendar. This
+    # said `run.timing is None`, true only while run 47's record stood, and went
+    # red the night a run first published one (`fbaed5c`, 2026-09-14) -- the first
+    # shape CLAUDE.md names, and one that could not have failed for its own reason.
+    # Nor can its digest be compared with the fixture's: they differ in
+    # `universe.identity` alone, the real universe against the test double, so
+    # that comparison passes for a reason that has nothing to do with timing.
+    # What is true of EVERY record is that its archived rules digest to its own
+    # recorded version -- which is what makes two records made under different
+    # numbers unreadable as one.
     published = json.loads((ROOT / "docs" / "data.json").read_text())
-    assert published["run"].get("timing") is None
-    assert published["app"]["rules_version"] != full_record["app"]["rules_version"]
+    assert report.rules_version(published["rules"]) == published["app"]["rules_version"]
+    # and a record carrying the timing block archived the timing constants it ran
+    # under. The KEYS, not the values: a record published before a constant moved
+    # is legitimately one generation behind the code until the next run.
+    if published["run"].get("timing") is not None:
+        assert set(published["rules"]["timing"]) == set(nested["timing"])
