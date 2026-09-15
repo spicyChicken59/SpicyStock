@@ -1581,8 +1581,12 @@ were 10.86/184.73; original grades remained A. Focused Python verification passe
 The new destination protection fails on baseline for the missing destination.
 Removing VICR’s later coverage identity fails the intended window test while
 its source-control test passes. These are not real-browser acceptance results.
-Final normal verification commands remain required at this handoff revision;
-the execution handoff records their results, not historical test totals.
+Final normal verification commands run at the handoff revision; the execution
+handoff records their results separately from historical totals. The first full
+pass had 1110 passes and four SDK-construction failures from missing runtime
+`socksio`; installing proxy support resolved all 65 grader checks without a
+repository change or disabling the proxy. Fixtures: 9 current. Real-browser
+checks remain blocked as described below.
 
 **Impact and limits.** `docs/continuity/measurements.json` records the published-bar
 replay: observations cover 72→877 symbols / 989 identities; compressed data grows
