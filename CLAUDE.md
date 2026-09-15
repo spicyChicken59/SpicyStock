@@ -271,7 +271,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1136 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1137 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eight fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -1717,3 +1717,11 @@ live model replay. OMIT historical regrading or product expansion. Installed
 and latest released design system remain v2.13.0, source `14a752d`, 22/22 hashes
 match; no assets changed. Next: independent PR review and separate merge
 authorization. Nothing merged, deployed, manually dispatched or emailed here.
+
+PR #68's first automatic Secret Scan classified two copied public breadth
+identifiers in `tests/fixtures/grading/record.json` as generic credentials.
+The original source is already covered by the existing rule-key disposition;
+the new fixture path was not. A second AND allowlist matches only those two
+exact values at that exact path, with scope protection in the regression suite.
+No fixture bytes, credential, default detector or historical commit changed.
+The initial Tests run and subsequent CI results are linked from PR #68.

@@ -2,6 +2,8 @@
 import copy
 import hashlib
 import json
+import re
+import tomllib
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -195,3 +197,22 @@ def test_a_mismatched_contract_cannot_smuggle_another_admission_rule():
     block["applicable_rules"]["burst"] = rules["burst"]
     with pytest.raises(ValueError, match="identity disagrees"):
         grader.user_text({"scan": "dollar", "discovery": block})
+
+
+def test_historical_context_disposition_is_exact_value_and_exact_path_only():
+    config = tomllib.loads((ROOT / ".gitleaks.toml").read_text())
+    assert config["extend"]["useDefault"] is True
+    rule = next(r for r in config["rules"] if r["id"] == "generic-api-key")
+    dispositions = rule["allowlists"]
+    def allowed(path, value):
+        return any(a["condition"] == "AND" and a["regexTarget"] == "secret" and
+                   any(re.search(p, path) for p in a["paths"]) and
+                   any(re.search(p, value) for p in a["regexes"]) for a in dispositions)
+    path = "tests/fixtures/grading/record.json"
+    for value in ("down25_quarter", "pct_above_40ma"):
+        assert allowed(path, value)
+        assert not allowed(path + ".backup", value)
+        assert not allowed("tests/fixtures/grading/another.json", value)
+        assert not allowed("unrelated.txt", value)
+    for value in ("another_rule_name", "down25_quarter_extra", "pct_above_40ma_extra", "NOT_A_RULE"):
+        assert not allowed(path, value)
