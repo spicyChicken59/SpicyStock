@@ -1,0 +1,44 @@
+# Findings the full-history secret scan proved are not credentials.
+#
+# gitleaks' generic-api-key rule fires on a lowercase identifier with digits
+# next to the word `key`. The v1 build wrote its browser-storage keys with
+# DOTS -- `spicystock.trades.v2`, `spicystock.trade-journal.v1` -- assigned to
+# `KEY` and `LEGACY_KEY`, so `localStorage.getItem` arguments read to the
+# scanner as credentials. Every one of the fourteen findings below is such a
+# key: read at the commit named, in the four files the v2 rewrite deleted in
+# 01c000d. Nothing here was ever a secret, and nothing here is on `main`.
+#
+# Each line is ONE finding: <commit>:<path>:<rule>:<line>. It suppresses that
+# line of that immutable historical commit and nothing else -- not the file,
+# not the value, not the rule. Proved: re-introducing the same storage key in
+# a NEW commit is flagged again, and planted credential-shaped values are
+# still found in these very paths. Never add a line here for a finding you
+# have not read at its commit and shown is not a secret.
+#
+# The current code writes these keys with COLONS (`spicystock:following:v1`)
+# for the same reason; see CLAUDE.md's note on the scan.
+
+# docs/stockbee-plan.js @ 2a6b3e56 (2026-09-08) line 4 — browser-storage key
+2a6b3e560e3818db6fe79f8cb930c2cb39d83e3a:docs/stockbee-plan.js:generic-api-key:4
+# tools/research_cockpit_smoke.mjs @ 2a6b3e56 (2026-09-08) line 658 — browser-storage key
+2a6b3e560e3818db6fe79f8cb930c2cb39d83e3a:tools/research_cockpit_smoke.mjs:generic-api-key:658
+# tools/research_cockpit_smoke.mjs @ 2a6b3e56 (2026-09-08) line 659 — browser-storage key
+2a6b3e560e3818db6fe79f8cb930c2cb39d83e3a:tools/research_cockpit_smoke.mjs:generic-api-key:659
+# docs/trade-state.js @ 68685338 (2026-09-08) line 9 — two browser-storage keys on one line
+68685338588e824478b483e361932bb87920baba:docs/trade-state.js:generic-api-key:9
+# tools/trade_state_checks.mjs @ 68685338 (2026-09-08) line 7 — browser-storage key
+68685338588e824478b483e361932bb87920baba:tools/trade_state_checks.mjs:generic-api-key:7
+# tools/trade_state_checks.mjs @ 68685338 (2026-09-08) line 8 — browser-storage key
+68685338588e824478b483e361932bb87920baba:tools/trade_state_checks.mjs:generic-api-key:8
+# docs/stockbee-plan.js @ 742c2695 (2026-09-08) line 4 — browser-storage key
+742c2695357cce04f5b0043d8f44be5b5bf53d33:docs/stockbee-plan.js:generic-api-key:4
+# tools/research_cockpit_smoke.mjs @ 742c2695 (2026-09-08) line 656 — browser-storage key
+742c2695357cce04f5b0043d8f44be5b5bf53d33:tools/research_cockpit_smoke.mjs:generic-api-key:656
+# tools/research_cockpit_smoke.mjs @ 742c2695 (2026-09-08) line 657 — browser-storage key
+742c2695357cce04f5b0043d8f44be5b5bf53d33:tools/research_cockpit_smoke.mjs:generic-api-key:657
+# docs/trade-state.js @ e95d6d57 (2026-09-08) line 9 — two browser-storage keys on one line
+e95d6d57d5b2ad0cce963b233dbdc53523fc2958:docs/trade-state.js:generic-api-key:9
+# tools/trade_state_checks.mjs @ e95d6d57 (2026-09-08) line 7 — browser-storage key
+e95d6d57d5b2ad0cce963b233dbdc53523fc2958:tools/trade_state_checks.mjs:generic-api-key:7
+# tools/trade_state_checks.mjs @ e95d6d57 (2026-09-08) line 8 — browser-storage key
+e95d6d57d5b2ad0cce963b233dbdc53523fc2958:tools/trade_state_checks.mjs:generic-api-key:8

@@ -227,32 +227,39 @@
       closeNearby(false);
       panelOpener = back || w.document.activeElement;
       let shown = Math.min(NEARBY_SHOWN, list.length);
-      const head = el('div', { 'class': 'ss-map__nearby-head' }, [
+      const head = el('div', { 'class': 'sc-pick__head' }, [
         el('h4', { id: 'ss-map-nearby-h', text: list.length + ' stocks within a finger of this tap' }),
         el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Close', 'data-nearby': 'close' })
       ]);
-      const hint = el('p', { 'class': 'ss-map__nearby-hint' });
-      const items = el('div', { 'class': 'ss-map__nearby-list', role: 'group', 'aria-label': 'The stocks within a finger of the tap, nearest first' });
+      const hint = el('p', { 'class': 'sc-pick__hint' });
+      const items = el('div', { 'class': 'sc-pick__list', role: 'group', 'aria-label': 'The stocks within a finger of the tap, nearest first' });
       // a labelled popover, not a modal: the page behind it stays live, so
       // claiming aria-modal would tell a screen reader in browse mode that the
       // rest of the page does not exist while it is up
-      panel = el('div', { 'class': 'ss-map__nearby', role: 'dialog', 'aria-labelledby': 'ss-map-nearby-h' }, [head, hint, items]);
+      panel = el('div', { 'class': 'sc-pick', role: 'dialog', 'aria-labelledby': 'ss-map-nearby-h' }, [head, hint, items]);
+      let moreBtn = null;
       function fill() {
+        // the release hangs `__more` beside the list rather than inside it, so
+        // it takes the panel's gap; a refill therefore has to take it down first
+        if (moreBtn && moreBtn.parentNode) moreBtn.parentNode.removeChild(moreBtn);
+        moreBtn = null;
         while (items.firstChild) items.removeChild(items.firstChild);
         list.slice(0, shown).forEach((q) => {
           const p = q.p;
-          const b = el('button', { 'class': 'ss-map__nearby-item', type: 'button', 'data-id': p.id, 'data-ticker': p.ticker, 'aria-pressed': p.id === selectedId ? 'true' : 'false' }, [
-            el('b', { 'class': 'sc-case', text: p.ticker }),
-            el('span', { 'class': 'ss-map__nearby-measures', text: pct(p.gain) + ' · ' + times(p.volume) + ' volume' }),
-            el('span', { 'class': 'ss-map__nearby-grade', text: (p.grade || '—') + (isNum(p.rank) ? ' · rank ' + p.rank : '') })
+          // the whole row is spoken as one sentence, so the reading order does
+          // not depend on which grid area each part is placed in
+          const b = el('button', { 'class': 'sc-pick__item', type: 'button', 'data-id': p.id, 'data-ticker': p.ticker, 'aria-pressed': p.id === selectedId ? 'true' : 'false', 'aria-label': describe(p) }, [
+            el('span', { 'class': 'sc-pick__name sc-case', text: p.ticker }),
+            el('span', { 'class': 'sc-pick__meta', text: times(p.volume) + ' volume · ' + (p.grade || '—') + (isNum(p.rank) ? ' · rank ' + p.rank : '') }),
+            el('span', { 'class': 'sc-figure', text: pct(p.gain) })
           ]);
           b.addEventListener('click', () => { const id = p.id; closeNearby(false); choose(id); const m = markers[id]; if (m) m.focus(); });
           items.appendChild(b);
         });
         if (shown < list.length) {
-          const more = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm ss-map__nearby-more', type: 'button', 'data-nearby': 'more', text: 'Show the other ' + (list.length - shown) });
-          more.addEventListener('click', () => { shown = list.length; fill(); const first = items.querySelector('.ss-map__nearby-item'); if (first) first.focus(); });
-          items.appendChild(more);
+          moreBtn = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm sc-pick__more', type: 'button', 'data-nearby': 'more', text: 'Show the other ' + (list.length - shown) });
+          moreBtn.addEventListener('click', () => { shown = list.length; fill(); const first = items.querySelector('.sc-pick__item'); if (first) first.focus(); });
+          panel.appendChild(moreBtn);
         }
         hint.textContent = 'The ' + Math.min(shown, list.length) + ' nearest the tap, of ' + list.length + '. None is chosen until you choose one; Escape closes this, and every burst is also in the cards and the table below.';
       }
@@ -284,7 +291,7 @@
       panel.style.left = Math.max(6, Math.min(at.x - box.width / 2, pane.width - box.width - 6)) + 'px';
       panel.style.top = Math.max(6, Math.min(at.y + 14, pane.height - box.height - 6)) + 'px';
       host.setAttribute('data-nearby', 'open');
-      const first = items.querySelector('.ss-map__nearby-item');
+      const first = items.querySelector('.sc-pick__item');
       if (first) first.focus();
     }
     // every plotted point within a finger of (x, y), nearest first
