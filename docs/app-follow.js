@@ -7,6 +7,7 @@
    never a purchase price, an execution or a P&L. Nothing here reaches the
    record, the repository, the email or the model's scorecard.
 
+     Mutators below return Promises and acquire the same origin-wide Web Lock.
      SCStock.follow.setDemo(bool)      -> demo follows live under their own key
      SCStock.follow.status()           -> {available, error, count, migration, notes}
      SCStock.follow.list()             -> [item]  (validated; a corrupt store is set aside)
@@ -42,7 +43,7 @@
 (function (w) {
   'use strict';
   const SCStock = w.SCStock = w.SCStock || {};
-  const VERSION = 2;
+  const VERSION = 3;
   const KEY = 'spicystock:following:v1';
   const DEMO_KEY = 'spicystock:following:demo:v1';
   //: the migrated-from payload, kept beside the store and never read back into it
@@ -90,7 +91,7 @@
   function cleanObs(o) {
     const bar = cleanBar(o);
     if (!bar) return null;
-    const out = Object.assign(bar, {
+    const out = Object.assign({}, o, bar, {
       from_session: isDate(o.from_session) ? o.from_session : null,
       from_rules: text(o.from_rules), source: text(o.source) || 'record',
       basis: ['match', 'adjusted', 'unknown'].indexOf(o.basis) >= 0 ? o.basis : 'unknown'
@@ -117,8 +118,8 @@
     const anchors = (Array.isArray(e.anchors) ? e.anchors : []).filter((a) => a && typeof a === 'object' && text(a.key) && isDate(a.from) && isDate(a.to) && a.to <= session)
       .slice(0, 8).map((a) => ({ key: text(a.key), label: text(a.label), from: a.from, to: a.to, low: num(a.low), high: num(a.high) }));
     if (!series.length) return null;
-    return { series: series, anchors: anchors, recovered: !!e.recovered,
-      from: { session: isDate(e.from && e.from.session) ? e.from.session : null, rules_version: text(e.from && e.from.rules_version) } };
+    return Object.assign({}, e, { series: series, anchors: anchors, recovered: !!e.recovered,
+      from: Object.assign({}, e.from || {}, { session: isDate(e.from && e.from.session) ? e.from.session : null, rules_version: text(e.from && e.from.rules_version) }) });
   }
   // An entry off disk, repaired rather than discarded: what can be read is
   // kept and what cannot is named. Identity is the one thing that cannot be
@@ -129,12 +130,12 @@
     const shares = (v) => (isInt(v) && v > 0 && v <= SHARES_MAX ? v : null);
     const raw = Array.isArray(it.observations) ? it.observations : [];
     const before = { bad: raw.filter((o) => !cleanObs(o)).length, ev: !!(it.evidence && Array.isArray(it.evidence.series) && it.evidence.series.length) };
-    const out = {
+    const out = Object.assign({}, it, {
       v: VERSION, id: it.id, ticker: it.ticker, kind: it.kind, stage: text(it.stage), session: it.session,
       rules_version: text(it.rules_version), saved_at: text(it.saved_at), demo: !!it.demo,
       suggested_shares: shares(it.suggested_shares), reference_shares: shares(it.reference_shares),
       snapshot: it.snapshot, evidence: cleanEvidence(it.evidence, it.session), observations: boundObs(it.observations)
-    };
+    });
     if (before.ev && !out.evidence) problems.push(out.ticker + ': the saved chart could not be read and was left out; the setup itself is unchanged.');
     if (before.bad) problems.push(out.ticker + ': ' + before.bad + (before.bad === 1 ? ' saved observation had no date or no price' : ' saved observations had no date or no price') + ' and was left out; the setup itself is unchanged.');
     return out;
@@ -145,6 +146,8 @@
   // which the NEXT read clears -- the first reader of the store would
   // otherwise be the only one ever told.
   let lastError = null, lastNotes = [], migration = null, frozen = null, aside = null;
+  let inTransaction = false, migrationQueued = false, writeBlocked = null;
+  let envelope = {};
   // A store this page does not understand is LEFT ALONE: it is read as empty
   // for display and every write is refused, because overwriting a newer
   // schema with this one's idea of a list would throw away the reader's data.
@@ -161,12 +164,14 @@
     const s = storage();
     if (!s) { lastError = 'This browser offers no storage, so nothing can be followed here.'; return []; }
     const got = readRaw(s);
-    if (got.blocked) { lastError = 'Storage is blocked in this browser; nothing can be followed here.'; return []; }
-    if (got.empty) { lastError = null; frozen = null; return []; }
+    if (got.blocked) { writeBlocked = 'Storage could not be read; nothing was overwritten.'; lastError = 'Storage is blocked in this browser; nothing can be followed here.'; return []; }
+    if (got.empty) { lastError = null; frozen = null; envelope = {}; return []; }
     const parsed = got.parsed;
+    envelope = parsed && typeof parsed === 'object' ? parsed : {};
+    writeBlocked = null;
     if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.items) || !isInt(parsed.version)) {
       // set the unreadable list aside, never over it
-      try { s.setItem(keyFor() + CORRUPT, got.raw); s.removeItem(keyFor()); } catch (e) { /* nothing more to do */ }
+      try { s.setItem(keyFor() + CORRUPT, got.raw); if (s.getItem(keyFor() + CORRUPT) !== got.raw) throw new Error('backup'); s.removeItem(keyFor()); } catch (e) { writeBlocked = 'The unreadable saved list could not be backed up; it was left untouched.'; }
       aside = 'The saved list in this browser could not be read and was set aside; it starts empty.';
       lastError = aside;
       frozen = null;
@@ -183,11 +188,22 @@
     parsed.items.forEach((it) => { const c = coerceItem(it, problems); if (c) items.push(c); else rejected.push(it); });
     if (rejected.length) {
       // an entry with no identity is kept OUT of the list and beside it, named
-      try { s.setItem(keyFor() + REJECTED, JSON.stringify({ version: parsed.version, items: rejected })); } catch (e) { /* nothing more to do */ }
+      try { const backup = JSON.stringify({ version: parsed.version, items: rejected }); s.setItem(keyFor() + REJECTED, backup); if (s.getItem(keyFor() + REJECTED) !== backup) throw new Error('backup'); } catch (e) { writeBlocked = 'Unreadable entries could not be backed up; nothing was overwritten.'; }
       problems.push(rejected.length === 1 ? 'One saved entry had no symbol or session to identify it; it was set aside rather than shown.'
         : rejected.length + ' saved entries had no symbol or session to identify them; they were set aside rather than shown.');
     }
-    if (parsed.version < VERSION) migrate(s, got.raw, items, problems);
+    if (parsed.version < VERSION) {
+      if (inTransaction) migrate(s, got.raw, items, problems);
+      else if (!migrationQueued) {
+        migrationQueued = true;
+        Promise.resolve().then(() => commit('migrate')).then(() => {
+          // This tab receives no storage event for its own asynchronous upgrade.
+          // Report success or failure while the guard prevents a failed backup
+          // from immediately queuing another migration during the UI refresh.
+          listeners.forEach((fn) => { try { fn(); } catch (err) { /* keep other listeners */ } });
+        }).finally(() => { migrationQueued = false; });
+      }
+    }
     lastNotes = problems;
     lastError = problems.length ? problems[0] : null;
     return items;
@@ -196,16 +212,19 @@
   // is read back before the migration is called done; a write that does not
   // read back leaves the old list exactly where it was.
   function migrate(s, raw, items, problems) {
-    migration = { from: null, to: VERSION, kept: items.length, ok: false };
+    migration = { from: envelope.version, to: VERSION, kept: items.length, ok: false };
+    let backupKey;
     try {
-      s.setItem(keyFor() + BACKUP, raw);
-      if (s.getItem(keyFor() + BACKUP) !== raw) throw new Error('the copy did not read back');
+      backupKey = s.getItem(keyFor() + BACKUP) ? keyFor() + BACKUP + '.v' + envelope.version : keyFor() + BACKUP;
+      if (!s.getItem(backupKey)) s.setItem(backupKey, raw);
+      if (s.getItem(backupKey) !== raw) throw new Error('the copy did not read back');
     } catch (e) {
       migration.error = 'The saved list could not be copied before upgrading it, so it was left as it was; it still reads here.';
       problems.push(migration.error);
+      writeBlocked = migration.error;
       return;
     }
-    const payload = JSON.stringify({ version: VERSION, items: items });
+    const payload = JSON.stringify(Object.assign({}, envelope, { version: VERSION, items: items }));
     try {
       s.setItem(keyFor(), payload);
       if (s.getItem(keyFor()) !== payload) throw new Error('the upgrade did not read back');
@@ -213,33 +232,78 @@
       try { s.setItem(keyFor(), raw); } catch (e2) { /* the old payload is still under BACKUP */ }
       migration.error = 'The saved list could not be upgraded in this browser; it was left as it was.';
       problems.push(migration.error);
+      writeBlocked = migration.error;
       return;
     }
     migration.ok = true;
     // the sentence lives on `migration` rather than in the notes, because the
     // notes are re-read off a store that is no longer the old one: a reader
     // who upgraded should still be told, on the render that follows
-    migration.note = items.length === 1
-      ? 'One setup saved by an earlier version of this page was carried over, with its saved size and the date it was saved; its original chart was not saved then, so it has none.'
-      : items.length + ' setups saved by an earlier version of this page were carried over, with their saved sizes and the dates they were saved; their original charts were not saved then, so they have none.';
+    migration.note = problems.concat(items.length + ' saved setups were carried over with original evidence and reference shares unchanged. Optional USD amounts remain blank.').join(' ');
     problems.push(migration.note);
   }
   function write(items) {
     const s = storage();
-    if (!s) return { ok: false, error: 'This browser offers no storage, so nothing was saved.' };
-    if (frozen) return { ok: false, error: 'This browser holds a saved list from a newer version of this page; nothing was written over it.' };
-    const payload = JSON.stringify({ version: VERSION, items: items });
+    if (!s || frozen || writeBlocked) return { ok: false, error: writeBlocked || 'Storage is blocked or from a newer version; nothing was written over it.' };
+    const payload = JSON.stringify(Object.assign({}, envelope, { version: VERSION, items: items }));
+    let before;
     try {
+      before = s.getItem(keyFor());
       s.setItem(keyFor(), payload);
-      if (s.getItem(keyFor()) !== payload) return { ok: false, error: 'The save did not read back; nothing is saved.' };
+      if (s.getItem(keyFor()) !== payload) throw new Error('readback');
       lastError = null;
       return { ok: true };
     } catch (e) {
-      return { ok: false, error: 'Could not save in this browser (storage is blocked or full); nothing is saved.' };
+      // Restore the prior valid payload after a write/readback failure. Keep
+      // the proposed input in memory; the UI also retains its editable draft.
+      pendingWrite = { prior: before === undefined ? null : before, proposed: payload };
+      try { if (before !== undefined) { if (before === null) s.removeItem(keyFor()); else s.setItem(keyFor(), before); } } catch (ignored) { /* backup/draft remain recoverable */ }
+      return { ok: false, error: 'Could not confirm the save. Prior data was retained where storage allowed; your input remains available to retry. Keep this tab open to download a recovery copy.' };
     }
   }
+  let pendingWrite = null;
+  // All page writes use an origin-wide Web Lock, including observation
+  // ingestion and migration. Read again INSIDE the lock: no stale list can
+  // replace another tab's save. Conflicting edits use lock acquisition order;
+  // editing an item removed by another tab fails rather than resurrecting it.
+  async function commit(action, ...args) {
+    const locks = w.navigator && w.navigator.locks;
+    if (!locks) return { ok: false, error: 'Safe saving needs browser Web Locks (HTTPS). Your existing setups are still readable.' };
+    const key = keyFor();
+    try { return await locks.request(key, () => {
+      if (key !== keyFor()) return { ok: false, error: 'The record changed before saving. Please retry.' };
+      inTransaction = true;
+      try {
+        if (action === 'migrate') { read(); return { ok: !writeBlocked && !frozen }; }
+        const operations = { add, remove, setShares, setAnnotation, observe, attachEvidence };
+        if (!operations[action]) return { ok: false, error: 'Unknown saved setup action.' };
+        return operations[action](...args);
+      } finally { inTransaction = false; }
+    }); } catch (error) { return { ok: false, error: 'Storage could not complete the save. Your input remains available to retry.' }; }
+  }
+  function parseAmount(raw) {
+    if (raw === '' || raw === null) return null;
+    if (typeof raw !== 'string' || !/^\d+(?:\.\d{1,2})?$/.test(raw)) return undefined;
+    const [whole, fraction = ''] = raw.split('.');
+    const cents = BigInt(whole) * 100n + BigInt((fraction + '00').slice(0, 2));
+    return cents > 0n && cents <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(cents) : undefined;
+  }
+  function setAnnotation(id, field, value) {
+    const amount = field === 'amount' ? parseAmount(value) : null;
+    if (field === 'amount' && amount === undefined) return { ok: false, error: 'Enter a positive USD amount with at most two decimal places, or clear it.' };
+    if (field !== 'amount' && (field !== 'taken' || typeof value !== 'boolean')) return { ok: false, error: 'Invalid annotation.' };
+    const items = read(), item = items.find(it => it.id === id);
+    if (!item) return { ok: false, error: 'That setup was removed. Your input has not been saved.' };
+    const a = Object.assign({}, item.annotation || {}), now = new Date().toISOString();
+    if (field === 'amount') { a.reference_amount = amount === null ? null : { currency: 'USD', minor_units: amount }; a.amount_marked_at = now; }
+    else { a.taken = value; a.taken_marked_at = now; }
+    item.annotation = a;
+    const res = write(items);
+    return res.ok ? { ok: true, item } : res;
+  }
   function identity(setup) {
-    return [text(setup.kind) || 'setup', text(setup.ticker), text(setup.session), text(setup.rules_version) || 'rules'].join(':');
+    const base = [text(setup.kind) || 'setup', text(setup.ticker), text(setup.session), text(setup.rules_version) || 'rules'].join(':');
+    return setup.revision_id ? base + ':' + text(setup.revision_id) : base;
   }
   // A follow keeps the setup's own evidence. When the write will not fit, the
   // setup is saved WITHOUT its chart and says so: a follow that reports
@@ -252,7 +316,7 @@
     const problems = [];
     const item = coerceItem({
       id: id, ticker: text(setup.ticker), kind: text(setup.kind) || 'setup', stage: text(setup.stage), session: setup.session,
-      rules_version: text(setup.rules_version), saved_at: new Date().toISOString(),
+      rules_version: text(setup.rules_version), provenance: setup.provenance || null, saved_at: new Date().toISOString(),
       suggested_shares: setup.suggested_shares, reference_shares: null,
       snapshot: setup.snapshot && typeof setup.snapshot === 'object' ? setup.snapshot : {},
       evidence: setup.evidence || null, observations: setup.observations || [], demo: demo
@@ -261,7 +325,7 @@
     let res = write(items.concat([item]));
     if (!res.ok && item.evidence) {
       // the chart is the large part; the setup is the point
-      const lean = Object.assign({}, item, { evidence: null });
+      const lean = Object.assign({}, item, { evidence: null, evidence_dropped: true });
       const retry = write(items.concat([lean]));
       if (retry.ok) return { ok: true, item: lean, existed: false, evidenceDropped: true };
     }
@@ -335,7 +399,7 @@
         // the signal's own session is the baseline the snapshot froze; a later
         // record's copy of it is evidence about the basis, never an observation
         if (!bar || bar.date <= item.session) return;
-        const inc = cleanObs(Object.assign({}, bar, { from_session: u.from_session, from_rules: u.from_rules,
+        const inc = cleanObs(Object.assign({}, bar, { from_session: raw.from_session || u.from_session, from_rules: raw.from_rules || u.from_rules, revised: raw.revised, revised_from: raw.revised_from,
           source: text(raw.source) || u.source, basis: u.basis }));
         if (!inc) return;
         const got = mergeOne(byDate[bar.date], inc);
@@ -368,13 +432,14 @@
     setDemo: function (v) { demo = !!v; },
     status: function () {
       const ok = available();
-      const items = ok ? read() : [];
+      const items = read();
       return { available: ok, error: ok ? (lastError || aside) : (lastError || 'Storage is blocked in this browser; nothing can be followed here.'),
         count: items.length, notes: lastNotes.slice(), migration: migration, aside: aside, frozen: frozen };
     },
     list: function () { return read(); },
     find: function (id) { return read().find((it) => it.id === id) || null; },
-    add: add, remove: remove, setShares: setShares, observe: observe, attachEvidence: attachEvidence, identity: identity,
+    commit: commit, parseAmount: parseAmount, setAnnotation: (...a) => commit('setAnnotation', ...a), pending: () => pendingWrite,
+    add: (...a) => commit('add', ...a), remove: (...a) => commit('remove', ...a), setShares: (...a) => commit('setShares', ...a), observe: (...a) => commit('observe', ...a), attachEvidence: (...a) => commit('attachEvidence', ...a), identity: identity,
     onChange: function (fn) { if (typeof fn === 'function') listeners.push(fn); }
   };
 })(window);

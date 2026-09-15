@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "scripts": {"test:continuity": "node tools/continuity_check.mjs"},
+  "devDependencies": {"jsdom": "30.0.1"}
+}

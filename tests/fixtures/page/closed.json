@@ -880,7 +880,19 @@
     "l": 25.34,
     "c": 25.6,
     "v": 3340542.9456,
-    "since": "2026-09-09"
+    "since": "2026-09-09",
+    "history": [
+     {
+      "date": "2026-09-09",
+      "o": 25.52,
+      "h": 25.8,
+      "l": 25.34,
+      "c": 25.6,
+      "v": 3340542.9456,
+      "from_session": "2026-09-09",
+      "source": "public observation history"
+     }
+    ]
    },
    "SMCI": {
     "date": "2026-09-09",
@@ -889,7 +901,19 @@
     "l": 24.51,
     "c": 24.71,
     "v": 2922668.9783,
-    "since": "2026-09-09"
+    "since": "2026-09-09",
+    "history": [
+     {
+      "date": "2026-09-09",
+      "o": 24.66,
+      "h": 24.85,
+      "l": 24.51,
+      "c": 24.71,
+      "v": 2922668.9783,
+      "from_session": "2026-09-09",
+      "source": "public observation history"
+     }
+    ]
    },
    "VRT": {
     "date": "2026-09-09",
@@ -898,9 +922,23 @@
     "l": 196.9,
     "c": 197.4,
     "v": 3329998.9182,
-    "since": "2026-09-09"
+    "since": "2026-09-09",
+    "history": [
+     {
+      "date": "2026-09-09",
+      "o": 197.1,
+      "h": 197.7,
+      "l": 196.9,
+      "c": 197.4,
+      "v": 3329998.9182,
+      "from_session": "2026-09-09",
+      "source": "public observation history"
+     }
+    ]
    }
-  }
+  },
+  "signals": {},
+  "history_max": 20
  },
  "closest_miss": null,
  "_contract": {
@@ -921,7 +959,7 @@
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
   "scorecard": "The rules' record over the published plans as a model of their fills, always with n, the read threshold and the uncertain count by reason. Rates are over settled plans alone. The rules' record, not yours. Null until a plan has settled.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
-  "observations": "The newest daily bar per symbol for the recorded signals -- the trades, the cut names, the charted bursts, the anticipation list, the open plans -- and, for the days the block names, the symbols an earlier record observed: date, o, h, l, c, v and the session each was first observed from. Read by the page's Following shelf; derived from bars already fetched, never a quote feed. A symbol without a bar tonight keeps its last observation, dated as it was.",
+  "observations": "Public coverage of every published saveable signal, independent of local saves. Each signal keeps its own identity and 21-calendar-day window. Symbols carry the latest real bar plus up to 20 dated observations from already-fetched frames; missing bars stay missing, and missing frames retain earlier actual observations. This is research coverage, never a quote feed or personal trading history.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."
  },
  "fixture": "closed"

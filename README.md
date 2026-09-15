@@ -250,20 +250,28 @@ does not carry, falls back to Explore and says so.
 6. **Method.** Tonight's run (coverage, grades, reads, delivery, timing,
    the run log), how to read the page, and the configured sizing
    assumptions every ticket was computed from.
-7. **Following.** One click beside a stock's action area — *Follow this
-   setup*, with the plan's suggested whole-share quantity when it has a
-   ticket, for observation alone when it does not — keeps the setup on a
-   compact shelf at the end of Explore, saved in this browser only (a
-   versioned store keyed by symbol, session, kind and rules identity;
-   idempotent; a blocked or corrupt store is named, never reported as
-   saved). A card carries the saved plan's levels, one optional reference
-   size of the reader's, the latest close the record carries for the
-   symbol (the `observations` block, else the record's own rows, else the
-   last observed date and *no newer observation available*), the movement
-   since the signal close as price movement and not a result, and the
-   model plan's update separately labelled. A saved plan is never a fill,
-   a holding, a sale or a stop-out, and nothing here reaches the record,
-   the mail or the scorecard.
+7. **My setups.** A prominent peer to **Today’s scan**, reachable even when
+   empty. **Save setup** on cards, details and comparison entries freezes the
+   exact signal in this browser. Discovery’s **Saved in this scan** lens is
+   only a subset; My setups includes every local save regardless of filters,
+   grade or membership. Legacy Following links and saved identity links remain.
+   Optional **I took this setup** and **Reference amount (USD)** annotations
+   are local notes, never execution data. A marking timestamp is not a purchase
+   date. Amounts start unknown, use integer cents and clear back to unknown;
+   existing suggested/reference whole-share values retain their meanings.
+   Schema v3 migrates the existing Following key with preserved backups and
+   unknown fields. Page writes use Web Locks on HTTPS to serialize tabs;
+   conflicts follow lock acquisition order and removed items are not resurrected
+   by stale edits. Without Web Locks the saved list is readable but writes fail
+   explicitly. No cross-device synchronization is provided.
+   **Find earlier setup** searches a public, source-addressed catalog on demand.
+   It retains 21 calendar days, up to 84 distinct publications and 10,000 signals
+   per publication, within 128 MiB. Originals load only when selected; chart
+   evidence is at most the authentic 120 published bars. Absent charts stay
+   absent. Revisions keep separate provenance. An unavailable original is never
+   reconstructed from a later signal. Local saves do not expire with this window.
+   Observed movement uses the dated original research close, not personal P&L;
+   neither saving nor marking can create a ticket or change public strategy results.
 8. **Sample data.** A record written by `tools/make_fixture.py` says so:
    a *Do not trade sample data* notice under the market bar naming the
    fixture, a *demo data* chip on the chart panel and the burst map, a
@@ -465,9 +473,9 @@ stale states, drops fourteen fields in turn (a burst without bars must say
 `docs/data.json` (schema 2) is one object: `run`, `cover`, `breadth`,
 `bursts[]`, `trades[]`, `beyond_cap[]`, `cash_budget`, `watchlist`,
 `open_plans[]`, `scorecard`, `nights[]`, `account`, `rules`, `closest_miss`,
-`observations` (the newest bar per recorded signal — the trades, the cut
-names, the charted bursts, the anticipation list, the open plans — carried
-for three weeks, for the page's Following shelf),
+`observations` (every saveable published signal's own identity and 21-day
+window, plus up to 20 real dated observations per symbol from frames already
+fetched; missing frames retain dated real observations),
 `app`, and `_contract`, which names every top-level key in a sentence.
 `rules` is every module's constants nested by family, and `app.rules_version`
 is a digest of that block, so two records produced by different numbers can
@@ -505,7 +513,8 @@ what the bars say happened to them.
 ## Layout
 
 ```
-src/            pipeline.py (the run) · universe.py · market_data.py · clock.py
+src/            history.py (public recovery and coverage)
+                pipeline.py (the run) · universe.py · market_data.py · clock.py
                 scans.py · quality.py · breadth.py · watchlist.py · plan.py
                 timing.py (which session a plan is for, and when its window is over)
                 grader.py · charts.py · record.py · report.py
@@ -519,3 +528,14 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
 ```
 
 Paper prices, one venue's prints, no slippage. Not investment advice.
+
+## Continuity development
+
+`python tools/backfill_history.py` builds `docs/history/` from existing published
+v2 Git records without provider or chart-reader calls. The evening pipeline
+maintains the catalog from final published bytes; it does not read local saves.
+Initial backfill dates: September 11 and 14, 2026; September 11 has two distinct
+publications. Both carry ATEC's original chart and neither carries VICR's.
+`npm ci && npm run test:continuity` runs offline DOM/store regressions. This
+is not browser or layout acceptance; use the existing Playwright checks too.
+The original two records are gzip fixtures under `tests/fixtures/continuity/`.

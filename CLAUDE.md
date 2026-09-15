@@ -102,7 +102,7 @@ open plans, scorecard) → `report.build()` and validate → email. Exit codes
 `run_intraday()` is dispatch-only and never commits.
 
 The page (`docs/app.js`) is a small hash-routed application over the
-record: Explore (the market in a line, two stage cards that always say how
+record: Today’s scan / Explore (the market in a line, two stage cards that always say how
 many of their stocks carry a ticket, a lens row beside them, one selectable
 card per stock, one stock in focus with its chart, four decision answers,
 the action area -- the design system's `.sc-actionbar`, a row on a desktop
@@ -217,8 +217,8 @@ everywhere (`volumeRatio()`: the row's own field, the scan's measurement
 for every burst since the dollar scan carried it; for a record from before
 that, run 46 and earlier, the checklist's two-place copy, said to be the
 checklist's in the measurements; else missing and said so, zero a value).
-Following (`docs/app-follow.js`, payload version 2) is a shelf at the end
-of Explore, and a saved setup outlives the record it came from: one click
+My setups (`docs/app-follow.js`, payload version 3) is a peer destination to
+Today’s scan (the existing Explore route), and a saved setup outlives the record it came from: one click
 freezes the setup's own snapshot, its suggested whole-share quantity AND
 the evidence the record carried for that signal -- the archived bars up to
 the signal session, capped at `EVIDENCE_BARS`, and the dated anchors drawn
@@ -271,7 +271,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-What is measured offline: 1107 tests, the chart check, and the page smoke
+The suite now collects 1114 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eight fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -1542,3 +1542,123 @@ rather than here -- not because they are another owner's, since all four
 repositories are one account's: `docs/design-review/` still records #78's numbers
 that #79 superseded, and two NON-CI harnesses fail on a `#signal-card` that
 computes `display:none`. Both were proved pre-existing.
+
+## Checkpoint, 15 Sep 2026 — local saved-research continuity milestone
+
+**Scope and state.** Tahir explicitly authorized Stock-only local implementation
+and offline verification in this execution. Branch `continuity/my-setups` starts
+at `0233b309a43d3c3f64d30ee974d2be15d1fcea28`; live main was rechecked unchanged,
+with zero open PRs at preflight. No push, PR, merge, deployment, dispatch, paid
+scan, email, credential or sibling-repository change is authorized or performed.
+This checkpoint supersedes the older NEXT BUILDER PROMPT above. Astra High was
+requested; the runtime exposes no authoritative selected-model/effort field.
+
+**Implemented.** Today’s scan and My setups are peer destinations, using existing
+Explore/Following routes and cards. Card/detail/comparison saves use the same
+store. Saved originals remain independent of current filters and membership.
+Optional “I took this setup” and USD reference amounts are browser-local
+annotations, never execution data. Schema 3 preserves legacy share fields,
+original evidence, unknown fields and migration backups. Currency is explicit
+integer cents; clear means unknown. Web Locks serialize mutations across tabs;
+conflicts follow acquisition order and stale edits cannot resurrect removals.
+Failed writes preserve editable drafts and offer a local recovery copy.
+
+**Recovery and coverage.** `src/history.py` and `tools/backfill_history.py` retain
+published originals by source blob, with a lazy index/context/evidence contract.
+Three authentic publications cover September 11 and 14, including both September
+11 revisions. ATEC’s required original has 120 bars; both inspected September 11
+originals lack VICR’s chart. No chart is reconstructed. Actions artifact metadata
+was read, but artifact binaries were not inspected here. Public coverage now
+includes every saveable signal, with separate signal dates and a 21-calendar-day
+window, up to 20 real observations and no new provider/chart-reader calls.
+Catalog bounds are 84 publications, 10,000 signals per publication, 256 KiB per
+lazy file and 128 MiB total. Local saves do not expire.
+
+**Verified so far.** Baseline DOM reproduction saved both September 11 cases and
+retained them on September 14: no deletion was reproduced. Their later closes
+were 10.86/184.73; original grades remained A. Focused Python verification passed
+180 checks, then 40 closeout checks; offline DOM/store verification passed 83.
+The new destination protection fails on baseline for the missing destination.
+Removing VICR’s later coverage identity fails the intended window test while
+its source-control test passes. These are not real-browser acceptance results.
+Final normal verification commands run at the handoff revision; the execution
+handoff records their results separately from historical totals. The first full
+pass had 1110 passes and four SDK-construction failures from missing runtime
+`socksio`; installing proxy support resolved all 65 grader checks without a
+repository change or disabling the proxy. Fixtures: 9 current. Real-browser
+checks remain blocked as described below.
+
+**Impact and limits.** `docs/continuity/measurements.json` records the published-bar
+replay: observations cover 72→877 symbols / 989 identities; compressed data grows
+363,932→410,038 bytes. The recovery index is 74,023 bytes compressed; originals
+load on demand. Initial requests: +0; first search: 1; inspection: 2. Actual future
+full-frame payload was not measured. Browser/layout acceptance is BLOCKED:
+Playwright’s Chromium is absent and official downloads time out. Desktop,
+390/320px, both themes and real keyboard acceptance remain unaccepted.
+
+**Keep/fix/defer/omit.** Keep existing discovery, session guards and model results.
+Fix only continuity. Defer all queued campaigns; omit portfolios, executions,
+personal P&L and cross-device sync. Design v2.13.0 remains installed/released;
+22 source blobs matched, with vendored assets untouched. The scanner’s existing
+rule-key exception now also names immutable recovery paths; detectors and
+historical fingerprints are unchanged. See `docs/continuity/README.md` for
+reusable patterns, source evidence and remaining verification.
+
+## Checkpoint, 15 Sep 2026 — PR #67 browser merge-gate correction
+
+The correction starts at remote `ac96f6894d44049a8e58659530b3ee630e21994c`,
+with main still `0233b309a43d3c3f64d30ee974d2be15d1fcea28`. The original local
+commits remain on their branch; their published replacements have identical
+trees. Tahir authorized corrections on the existing PR branch. No merge,
+manual deployment, paid/provider scan or workflow dispatch is part of this work.
+During verification, main advanced independently to
+`442db489342660d7588d16dcc18e6c126187c1e6` (`run 2026-09-15`, published data and
+universe directory only). That work is preserved; the PR's merge base remains
+`0233b309a43d3c3f64d30ee974d2be15d1fcea28`, without a rebase or merge.
+
+The exact page-job log from Tests run 35030039637 (job 104586138583) showed two
+layout regressions: `checkMobile()` measured the chart at y=682.78125, exceeding
+the existing y+220<=900 first-screen limit; `checkCompare()` timed out because
+AMD's selection button intercepted the click on AAPL's mobile Compare control.
+The latter reproduces locally in Chromium 141 / Playwright 1.56.1, installed
+through Playwright's official fallback download. The original CI screenshot
+artifact 10421440924 was downloaded, hash-verified and visually inspected.
+
+The added column wrapping and 100% flex basis pushed each mobile card's action
+row into the next column. Removing those two rules keeps Save and Compare below
+their own selection. Equal desktop band columns accommodate the longer saved
+scan-lens label without adding height above the chart. Removing small-screen
+nav link side padding also keeps the new labels on one row at 390px with the
+fallback font; that font exposed the existing search/chooser viewport check
+locally. Text size, destination names and existing assertions are unchanged.
+
+New rendered-bounds protections fail on the uncorrected CSS at 390/320px in both
+themes. The corrected mobile/comparison suites pass 120/120 checks. Continuing
+past the original blocker exposed saved-setup regressions: asynchronous migration
+did not notify its own tab, migration sanitization notices disappeared on the
+next read, and rebuilding the saved shelf on dialog route changes destroyed the
+opener needed for Escape focus restoration. The correction reports migration
+completion while its queue guard is active, retains those notices in the existing
+in-memory migration note, and keeps the shelf's nodes during dialog routing.
+
+The remaining test-contract corrections explicitly visit My setups before
+measuring its phone shelf and visit a candidate before attempting a save. The
+return-context test now clicks and counts actual sibling Compare controls, with
+a two-pin precondition. The generated next/revised fixtures carry the unchanged
+signal close in public observation history, so their basis is `match`, not the
+old latest-only fixture's `unknown`. A separate latest-only case preserves the
+unknown-basis and full-disclosure assertions; re-pricing protections are intact.
+Final local verification: `python3 -m pytest tests/ -q` passes 1,114 tests;
+`python tools/make_fixture.py --check` confirms nine current fixtures;
+`npm run test:continuity` passes 83 checks; `node tools/chart_check.mjs` passes
+182 checks; and `node tools/page_smoke.mjs --shots <evidence-directory>` passes
+3,577 checks. Focused follow-through passes 141/141. Original and corrected
+desktop/mobile screenshots were actually inspected, including 390/320px and both
+themes. No local browser gate remains blocked. Automatic CI is recorded on PR
+#67. Correction evidence lives outside the checkout under
+`evidence/pr67-correction`, including the original job log and CI screenshots,
+negative rendered-bounds checks, focused browser logs and corrected screenshots.
+README.md and .env.example were swept: no product contract, threshold or
+environment variable changed. Store schema 3, original evidence, public history,
+private annotations, strategy populations and design-system v2.13.0 remain
+unchanged. This is a merge-gate correction, not the next reliability campaign.

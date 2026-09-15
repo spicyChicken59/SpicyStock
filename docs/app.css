@@ -414,7 +414,9 @@
 .ss-lens { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sc-s1) var(--sc-s3); min-width: 0; }
 .ss-lens:empty { display: none; }
 @media (min-width: 1000px) {
-  .ss-band { grid-template-columns: minmax(0, 1.3fr) minmax(290px, 1fr); align-items: center; gap: var(--sc-s3); }
+  /* The complete saved destination leaves a longer, distinct scan-lens label.
+     Give that field half the band so it does not add a row above the chart. */
+  .ss-band { grid-template-columns: minmax(0, 1fr) minmax(290px, 1fr); align-items: center; gap: var(--sc-s3); }
   .ss-lens { align-self: center; }
 }
 .ss-lens__field { gap: var(--sc-s1); flex-wrap: wrap; min-width: 0; }
@@ -659,3 +661,27 @@
    button was -- catching the page up rebuilds that surface in the same breath */
 .ss-action__refused { margin: 0; font-size: var(--sc-text-sm); font-weight: 500; color: var(--sc-heading); }
 
+
+/* Continuity: reuse cards/fields; no portfolio or account metrics. */
+.ss-nav { flex-wrap: wrap; }
+.ss-nav a[data-view="explore"], .ss-nav a[data-view="setups"] { font-weight: 700; }
+.ss-history { margin: var(--sc-s4) 0; }
+.ss-history__search { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; padding: 1rem 0; }
+.ss-history__search input { width: 10rem; max-width: 100%; }
+.ss-history__result { padding: 1rem 0; border-top: 1px solid var(--sc-border); }
+.ss-history__source, .ss-saved__facts dd { overflow-wrap: anywhere; }
+.ss-annotation { padding: 1rem; border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); margin-bottom: 1rem; }
+.ss-annotation__taken { display: flex; gap: .5rem; align-items: center; margin-bottom: 1rem; }
+.ss-annotation__amount { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.ss-annotation__amount input { width: 10rem; max-width: 100%; }
+.ss-pick__tools { display: flex; gap: .5rem; flex-wrap: wrap; }
+.ss-history__preview { min-width: 0; }
+@media (max-width: 420px) {
+  .ss-nav { gap: .35rem; }
+  .ss-nav a { font-size: .8rem; padding-inline: 0; }
+  .ss-annotation__amount input { width: 100%; }
+}
+
+/* Cards already stack their selection and tools in a column. Wrapping that
+   column with a 100% basis pushes the tools underneath the next mobile card. */
+.ss-pick__tools { width: 100%; justify-content: flex-end; }

@@ -149,11 +149,11 @@ CONTRACT: dict[str, str] = {
                  "rules' record, not yours. Null until a plan has settled.",
     "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows "
                     "it when trades is empty. Null when every burst is a trade or there were none.",
-    "observations": "The newest daily bar per symbol for the recorded signals -- the trades, the cut names, "
-                    "the charted bursts, the anticipation list, the open plans -- and, for the days the block "
-                    "names, the symbols an earlier record observed: date, o, h, l, c, v and the session each was "
-                    "first observed from. Read by the page's Following shelf; derived from bars already fetched, "
-                    "never a quote feed. A symbol without a bar tonight keeps its last observation, dated as it was.",
+    "observations": "Public coverage of every published saveable signal, independent of local saves. "
+                    "Each signal keeps its own identity and 21-calendar-day window. Symbols carry the "
+                    "latest real bar plus up to 20 dated observations from already-fetched frames; "
+                    "missing bars stay missing, and missing frames retain earlier actual observations. "
+                    "This is research coverage, never a quote feed or personal trading history.",
     "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused.",
 }
 
@@ -682,6 +682,17 @@ def validate(data: dict) -> None:
             if not isinstance(sym, str) or not isinstance(row, dict) or "date" not in row or "c" not in row:
                 faults.append(f"observations.symbols[{sym!r}] is not a bar with a date and a close")
                 break
+    if isinstance(obs, dict) and "signals" in obs:
+        from src import history
+        if not isinstance(obs["signals"], dict):
+            faults.append("observations.signals is not an object")
+        if obs.get("history_max") != history.OBSERVATIONS_MAX:
+            faults.append("observations.history_max is not the supported bound")
+        for sym, row in obs.get("symbols", {}).items():
+            bars = row.get("history", []) if isinstance(row, dict) else []
+            if (not isinstance(bars, list) or len(bars) > history.OBSERVATIONS_MAX
+                    or any(not history.valid_bar(b) for b in bars)):
+                faults.append(f"observations history for {sym} is invalid")
     contract = data.get("_contract")
     if not isinstance(contract, dict) or set(contract) != set(data):
         faults.append("_contract does not name exactly the top-level keys")

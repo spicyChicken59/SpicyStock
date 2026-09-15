@@ -4054,7 +4054,29 @@
     "l": 117.03,
     "c": 117.75,
     "v": 1050000.0,
-    "since": "2026-09-10"
+    "since": "2026-09-10",
+    "history": [
+     {
+      "date": "2026-09-10",
+      "o": 118.96,
+      "h": 124.49,
+      "l": 118.35,
+      "c": 124.21,
+      "v": 3000000.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     },
+     {
+      "date": "2026-09-11",
+      "o": 124.21,
+      "h": 124.56,
+      "l": 117.03,
+      "c": 117.75,
+      "v": 1050000.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     }
+    ]
    },
    "AMD": {
     "date": "2026-09-11",
@@ -4063,7 +4085,29 @@
     "l": 122.53,
     "c": 122.9,
     "v": 910000.0,
-    "since": "2026-09-10"
+    "since": "2026-09-10",
+    "history": [
+     {
+      "date": "2026-09-10",
+      "o": 123.12,
+      "h": 123.28,
+      "l": 123.1,
+      "c": 123.27,
+      "v": 2600000.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     },
+     {
+      "date": "2026-09-11",
+      "o": 123.27,
+      "h": 123.64,
+      "l": 122.53,
+      "c": 122.9,
+      "v": 910000.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     }
+    ]
    },
    "COIL": {
     "date": "2026-09-11",
@@ -4072,7 +4116,29 @@
     "l": 111.1,
     "c": 115.5,
     "v": 480000.0,
-    "since": "2026-09-10"
+    "since": "2026-09-10",
+    "history": [
+     {
+      "date": "2026-09-10",
+      "o": 110.0,
+      "h": 110.5,
+      "l": 109.5,
+      "c": 110.0,
+      "v": 120000.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     },
+     {
+      "date": "2026-09-11",
+      "o": 111.58,
+      "h": 115.86,
+      "l": 111.1,
+      "c": 115.5,
+      "v": 480000.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     }
+    ]
    },
    "DLLR": {
     "date": "2026-09-11",
@@ -4081,7 +4147,29 @@
     "l": 72.49,
     "c": 72.71,
     "v": 973679.0,
-    "since": "2026-09-10"
+    "since": "2026-09-10",
+    "history": [
+     {
+      "date": "2026-09-10",
+      "o": 71.5,
+      "h": 74.13,
+      "l": 71.2,
+      "c": 72.93,
+      "v": 2781939.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     },
+     {
+      "date": "2026-09-11",
+      "o": 72.93,
+      "h": 73.15,
+      "l": 72.49,
+      "c": 72.71,
+      "v": 973679.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     }
+    ]
    },
    "NBIS": {
     "date": "2026-09-11",
@@ -4090,7 +4178,29 @@
     "l": 25.59,
     "c": 25.67,
     "v": 884923.0,
-    "since": "2026-09-10"
+    "since": "2026-09-10",
+    "history": [
+     {
+      "date": "2026-09-10",
+      "o": 25.67,
+      "h": 25.96,
+      "l": 25.49,
+      "c": 25.75,
+      "v": 2528350.3248,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     },
+     {
+      "date": "2026-09-11",
+      "o": 25.75,
+      "h": 25.83,
+      "l": 25.59,
+      "c": 25.67,
+      "v": 884923.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     }
+    ]
    },
    "NVDA": {
     "date": "2026-09-11",
@@ -4099,7 +4209,29 @@
     "l": 128.15,
     "c": 133.99,
     "v": 4080000.0,
-    "since": "2026-09-10"
+    "since": "2026-09-10",
+    "history": [
+     {
+      "date": "2026-09-10",
+      "o": 123.46,
+      "h": 127.57,
+      "l": 123.0,
+      "c": 126.88,
+      "v": 3400000.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     },
+     {
+      "date": "2026-09-11",
+      "o": 128.8,
+      "h": 134.61,
+      "l": 128.15,
+      "c": 133.99,
+      "v": 4080000.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     }
+    ]
    },
    "PLUG": {
     "date": "2026-09-11",
@@ -4108,7 +4240,29 @@
     "l": 122.3,
     "c": 122.67,
     "v": 1050000.0,
-    "since": "2026-09-10"
+    "since": "2026-09-10",
+    "history": [
+     {
+      "date": "2026-09-10",
+      "o": 119.2,
+      "h": 126.81,
+      "l": 118.35,
+      "c": 123.04,
+      "v": 3000000.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     },
+     {
+      "date": "2026-09-11",
+      "o": 123.04,
+      "h": 123.41,
+      "l": 122.3,
+      "c": 122.67,
+      "v": 1050000.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     }
+    ]
    },
    "SMCI": {
     "date": "2026-09-11",
@@ -4117,7 +4271,29 @@
     "l": 24.57,
     "c": 24.64,
     "v": 903855.0,
-    "since": "2026-09-10"
+    "since": "2026-09-10",
+    "history": [
+     {
+      "date": "2026-09-10",
+      "o": 24.66,
+      "h": 24.85,
+      "l": 24.51,
+      "c": 24.71,
+      "v": 2582444.0691,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     },
+     {
+      "date": "2026-09-11",
+      "o": 24.71,
+      "h": 24.78,
+      "l": 24.57,
+      "c": 24.64,
+      "v": 903855.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     }
+    ]
    },
    "TSLA": {
     "date": "2026-09-11",
@@ -4126,7 +4302,29 @@
     "l": 123.47,
     "c": 123.84,
     "v": 1050000.0,
-    "since": "2026-09-10"
+    "since": "2026-09-10",
+    "history": [
+     {
+      "date": "2026-09-10",
+      "o": 114.71,
+      "h": 124.77,
+      "l": 113.59,
+      "c": 124.21,
+      "v": 3000000.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     },
+     {
+      "date": "2026-09-11",
+      "o": 124.21,
+      "h": 124.58,
+      "l": 123.47,
+      "c": 123.84,
+      "v": 1050000.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     }
+    ]
    },
    "VRT": {
     "date": "2026-09-11",
@@ -4135,9 +4333,101 @@
     "l": 196.82,
     "c": 197.41,
     "v": 1008080.0,
-    "since": "2026-09-10"
+    "since": "2026-09-11",
+    "history": [
+     {
+      "date": "2026-09-11",
+      "o": 198.0,
+      "h": 198.59,
+      "l": 196.82,
+      "c": 197.41,
+      "v": 1008080.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     }
+    ]
    }
-  }
+  },
+  "signals": {
+   "burst:AAPL:2026-09-10:cf1422d7ad5c": {
+    "ticker": "AAPL",
+    "session": "2026-09-10",
+    "kind": "burst",
+    "rules_version": "cf1422d7ad5c",
+    "coverage": "observed"
+   },
+   "burst:AMD:2026-09-10:cf1422d7ad5c": {
+    "ticker": "AMD",
+    "session": "2026-09-10",
+    "kind": "burst",
+    "rules_version": "cf1422d7ad5c",
+    "coverage": "observed"
+   },
+   "burst:NVDA:2026-09-10:cf1422d7ad5c": {
+    "ticker": "NVDA",
+    "session": "2026-09-10",
+    "kind": "burst",
+    "rules_version": "cf1422d7ad5c",
+    "coverage": "observed"
+   },
+   "burst:TSLA:2026-09-10:cf1422d7ad5c": {
+    "ticker": "TSLA",
+    "session": "2026-09-10",
+    "kind": "burst",
+    "rules_version": "cf1422d7ad5c",
+    "coverage": "observed"
+   },
+   "burst:PLUG:2026-09-10:cf1422d7ad5c": {
+    "ticker": "PLUG",
+    "session": "2026-09-10",
+    "kind": "burst",
+    "rules_version": "cf1422d7ad5c",
+    "coverage": "observed"
+   },
+   "burst:DLLR:2026-09-10:cf1422d7ad5c": {
+    "ticker": "DLLR",
+    "session": "2026-09-10",
+    "kind": "burst",
+    "rules_version": "cf1422d7ad5c",
+    "coverage": "observed"
+   },
+   "anticipation:COIL:2026-09-10:cf1422d7ad5c": {
+    "ticker": "COIL",
+    "session": "2026-09-10",
+    "kind": "anticipation",
+    "rules_version": "cf1422d7ad5c",
+    "coverage": "observed"
+   },
+   "burst:NVDA:2026-09-11:cf1422d7ad5c": {
+    "ticker": "NVDA",
+    "session": "2026-09-11",
+    "kind": "burst",
+    "rules_version": "cf1422d7ad5c",
+    "coverage": "observed"
+   },
+   "burst:COIL:2026-09-11:cf1422d7ad5c": {
+    "ticker": "COIL",
+    "session": "2026-09-11",
+    "kind": "burst",
+    "rules_version": "cf1422d7ad5c",
+    "coverage": "observed"
+   },
+   "anticipation:VRT:2026-09-11:cf1422d7ad5c": {
+    "ticker": "VRT",
+    "session": "2026-09-11",
+    "kind": "anticipation",
+    "rules_version": "cf1422d7ad5c",
+    "coverage": "observed"
+   },
+   "anticipation:AMD:2026-09-11:cf1422d7ad5c": {
+    "ticker": "AMD",
+    "session": "2026-09-11",
+    "kind": "anticipation",
+    "rules_version": "cf1422d7ad5c",
+    "coverage": "observed"
+   }
+  },
+  "history_max": 20
  },
  "closest_miss": null,
  "_contract": {
@@ -4158,7 +4448,7 @@
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
   "scorecard": "The rules' record over the published plans as a model of their fills, always with n, the read threshold and the uncertain count by reason. Rates are over settled plans alone. The rules' record, not yours. Null until a plan has settled.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
-  "observations": "The newest daily bar per symbol for the recorded signals -- the trades, the cut names, the charted bursts, the anticipation list, the open plans -- and, for the days the block names, the symbols an earlier record observed: date, o, h, l, c, v and the session each was first observed from. Read by the page's Following shelf; derived from bars already fetched, never a quote feed. A symbol without a bar tonight keeps its last observation, dated as it was.",
+  "observations": "Public coverage of every published saveable signal, independent of local saves. Each signal keeps its own identity and 21-calendar-day window. Symbols carry the latest real bar plus up to 20 dated observations from already-fetched frames; missing bars stay missing, and missing frames retain earlier actual observations. This is research coverage, never a quote feed or personal trading history.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."
  },
  "fixture": "revised"
