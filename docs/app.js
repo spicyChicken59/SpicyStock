@@ -1181,7 +1181,9 @@
     }
     showView(!first && previousView !== state.view);
     if (state.view === 'explore') renderExplore();
-    if (state.view === 'setups') renderFollowing();
+    // Keep the opener node through a saved sheet's open/close route changes.
+    // Store changes and record loads already refresh this destination.
+    if (state.view === 'setups' && previousView !== 'setups') renderFollowing();
     // the saved setup keeps its own hash, so a bookmark reopens it; every
     // other route is rewritten to the one it resolved to
     if (route.followed) canon = savedHash(route.followed);

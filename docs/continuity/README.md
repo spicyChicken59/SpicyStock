@@ -56,7 +56,16 @@ and store code offline. JSDOM is explicitly not a real browser or a layout test.
 `tests/test_history.py` exercises source hashes, coverage, bounds, revisions,
 retention and unchanged provider/chart-reader call counts. Existing Playwright
 commands remain required for desktop, 390/320px, both themes, keyboard and focus.
-They are blocked here because Chromium is unavailable and its download times out.
+They were blocked during the original implementation session. For the PR #67
+correction, Playwright 1.56.1's official fallback download installed Chromium.
+The mobile/comparison browser suites pass 120 checks after correcting wrapped
+card actions and spacing for the longer navigation/lens labels. The new card
+containment checks fail on the reviewed PR head at both 390 and 320px in both
+themes; no existing assertion was relaxed. See the later CLAUDE.md checkpoint
+and PR #67 checks for the normal verification and automatic CI results.
+The subsequent saved-setup checks also protect migration notices and Escape
+focus restoration. Tests explicitly navigate to the destination they measure;
+history-bearing and latest-only observation cases retain separate basis checks.
 
 The existing generic-api-key exception for lowercase underscored rule identifiers
 now includes only the source-addressed recovery JSON paths. The value regex,

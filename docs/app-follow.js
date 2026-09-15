@@ -194,7 +194,15 @@
     }
     if (parsed.version < VERSION) {
       if (inTransaction) migrate(s, got.raw, items, problems);
-      else if (!migrationQueued) { migrationQueued = true; Promise.resolve().then(() => commit('migrate')).finally(() => { migrationQueued = false; }); }
+      else if (!migrationQueued) {
+        migrationQueued = true;
+        Promise.resolve().then(() => commit('migrate')).then(() => {
+          // This tab receives no storage event for its own asynchronous upgrade.
+          // Report success or failure while the guard prevents a failed backup
+          // from immediately queuing another migration during the UI refresh.
+          listeners.forEach((fn) => { try { fn(); } catch (err) { /* keep other listeners */ } });
+        }).finally(() => { migrationQueued = false; });
+      }
     }
     lastNotes = problems;
     lastError = problems.length ? problems[0] : null;
@@ -231,7 +239,7 @@
     // the sentence lives on `migration` rather than in the notes, because the
     // notes are re-read off a store that is no longer the old one: a reader
     // who upgraded should still be told, on the render that follows
-    migration.note = items.length + ' saved setups were carried over with original evidence and reference shares unchanged. Optional USD amounts remain blank.';
+    migration.note = problems.concat(items.length + ' saved setups were carried over with original evidence and reference shares unchanged. Optional USD amounts remain blank.').join(' ');
     problems.push(migration.note);
   }
   function write(items) {

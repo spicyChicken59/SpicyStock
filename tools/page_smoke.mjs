@@ -713,11 +713,27 @@ async function checkVariant(browser, base, variant, data) {
   }
 }
 
+// A column card must keep its actions underneath its selection button. Column
+// wrapping can put the actions under the next card while they still count as
+// visible DOM controls, so inspect the actual rendered bounds.
+async function checkCardTools(page, label) {
+  const cards = await page.locator('#pick-list .ss-pick-item').evaluateAll((items) => items.slice(0, 2).map((item) => {
+    const box = (e) => { const r = e.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom }; };
+    const tools = item.querySelector('.ss-pick__tools');
+    return { ticker: item.querySelector('.ss-pick').dataset.ticker, item: box(item), pick: box(item.querySelector('.ss-pick')),
+      tools: box(tools), buttons: [...tools.querySelectorAll('button')].map(box) };
+  }));
+  check(`${label}: both cards keep Save and Compare below their own selection`, cards.length === 2 && cards.every((c) =>
+    c.buttons.length === 2 && c.tools.top >= c.pick.bottom - 1 && c.tools.bottom <= c.item.bottom + 1 &&
+    c.buttons.every((b) => b.left >= c.item.left - 1 && b.right <= c.item.right + 1 && b.bottom <= c.item.bottom + 1)), JSON.stringify(cards));
+}
+
 // the phone: the stage and stock controls in the first screen, a rail of cards, the chooser dialog
 async function checkMobile(browser, base, data) {
   console.log('-- the phone');
   const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { height: 844 });
   if (shotsDir) { await mkdir(shotsDir, { recursive: true }); await page.screenshot({ path: path.join(shotsDir, 'full-390-dark.png') }); await page.screenshot({ path: path.join(shotsDir, 'full-390-dark-full.png'), fullPage: true }); }
+  await checkCardTools(page, '390 dark');
   const box = async (sel) => page.locator(sel).first().boundingBox();
   const stages = await box('#stages'), search = await box('#search'), choose = await box('#choose-open');
   check('phone: the stage cards are in the first screen', stages && stages.y + stages.height <= 844, JSON.stringify(stages));
@@ -787,6 +803,16 @@ async function checkMobile(browser, base, data) {
   eq('reduced motion: the page renders', await count(calm.page, '#detail .sc-chart--stock'), 1);
   eq('reduced motion page errors', calm.errors, []);
   await calm.context.close();
+  for (const [width, theme] of [[390, 'light'], [320, 'dark'], [320, 'light']]) {
+    const rail = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, width, { height: 844, theme, lens: 'all' });
+    await checkCardTools(rail.page, `${width} ${theme}`);
+    if (shotsDir) {
+      await rail.page.locator('#pick-list [data-save-setup]').first().focus();
+      await rail.page.screenshot({ path: path.join(shotsDir, `card-tools-${width}-${theme}.png`) });
+    }
+    eq(`${width} ${theme} card tools page errors`, rail.errors, []);
+    await rail.context.close();
+  }
   // the desktop's first screen: market context, the stages, the stocks and a meaningful part of the chart
   const desk = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280);
   const d = async (sel) => desk.page.locator(sel).first().boundingBox();
@@ -1277,6 +1303,9 @@ async function checkFollowThrough(browser, base, full) {
   await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(300);
   eq('a newer schema is read as nothing rather than overwritten', (await readStore(page)).version, 99);
   check('and the reader is told why nothing can be saved', (await text(page, '#following-status')).includes('newer version'), await text(page, '#following-status'));
+  // Closing a saved sheet now returns to My setups. Open the candidate before
+  // checking its save refusal; a hidden/absent detail is not that protection.
+  await go(page, `#/explore/bursts/${trade}`);
   await page.click('#detail .ss-follow button[data-follow-action="add"]').catch(() => {});
   await page.waitForTimeout(200);
   eq('a follow attempted over it writes nothing', (await readStore(page)).version, 99);
@@ -1320,7 +1349,8 @@ async function checkFollowThrough(browser, base, full) {
   // ---- a genuinely newer record
   await rerender(page, next, NEXT_NOW);
   check('the followed symbol has left the record', !(next.bursts || []).some((b) => b.ticker === trade), 'still a burst');
-  eq('one observation, dated by the market and not by the render', await obsOf(page, trade), [[obsNext.date, obsNext.c, next.run.session, false, 'unknown']]);
+  check('public history carries the unchanged signal close', obsNext.history.some((b) => b.date === full.run.session && b.c === tradeRow.close));
+  eq('one observation, dated by the market and not by the render', await obsOf(page, trade), [[obsNext.date, obsNext.c, next.run.session, false, 'match']]);
   const card = await cardOf(page, trade);
   check('the card answers what was followed and when its signal was', card.includes(trade) && card.includes(dateWords(full.run.session)), card.slice(0, 120));
   check('what the latest observation is, and when', card.includes(usd(obsNext.c)) && card.includes(dateWords(obsNext.date)), card.slice(0, 240));
@@ -1379,7 +1409,7 @@ async function checkFollowThrough(browser, base, full) {
   check('a symbol on no list tonight says so rather than offering another', (await said(page, '#saved [data-current-setup="none"]')).includes('no current setup'), await said(page, '#saved [data-current-setup="none"]'));
   const since = await said(page, '#saved [data-saved="since"]');
   check('the later observation is in its own section with its actual date', since.includes(usd(obsNext.c)) && since.includes(dateWords(obsNext.date)), since.slice(0, 200));
-  check('and the limitation is stated in full there', since.includes('nothing confirms'), since.slice(0, 400));
+  check('overlapping public history does not claim the basis is unknown', !since.includes('nothing confirms'), since.slice(0, 400));
   eq('the card and the detail reconcile to the same observation count', await count(page, '#saved [data-obs-row]'), 1);
   await closeSaved(page); await page.waitForTimeout(280);
 
@@ -1407,7 +1437,7 @@ async function checkFollowThrough(browser, base, full) {
   // ---- a same-session revision, then an older record
   await rerender(page, revised, LATER_NOW);
   eq('a different close on a session already observed is a revision, not a new day',
-    await obsOf(page, trade), [[obsRev.date, obsRev.c, revised.run.session, true, 'unknown']]);
+    await obsOf(page, trade), [[obsRev.date, obsRev.c, revised.run.session, true, 'match']]);
   check('and the card marks it', (await cardOf(page, trade)).includes('revised'), await cardOf(page, trade));
   // An older record that carries a session ALREADY OBSERVED at a different
   // price. The `full` night alone proves nothing here: every bar it holds for
@@ -1461,6 +1491,17 @@ async function checkFollowBasis(browser, base, full, next) {
   const trade = full.trades[0], tradeRow = full.bursts.find((b) => b.ticker === trade);
   const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
   await followFrom(page, trade);
+
+  // A legacy latest-only observation has no overlapping session. Keep the
+  // uncertainty protection separate from today's history-bearing fixtures.
+  const noOverlap = JSON.parse(JSON.stringify(next));
+  delete noOverlap.observations.symbols[trade].history;
+  await rerender(page, noOverlap, '2026-09-11T22:31:00Z');
+  eq('without an overlapping session the basis stays unknown', (await obsOf(page, trade))[0][4], 'unknown');
+  await openSaved(page, trade);
+  const unknown = await said(page, '#saved [data-saved="since"]');
+  check('and the limitation is stated in full there', unknown.includes('nothing confirms'), unknown.slice(0, 400));
+  await closeSaved(page);
 
   // a record that carries a session the saved bars also carry, priced the same
   const same = JSON.parse(JSON.stringify(next));
@@ -1529,10 +1570,11 @@ async function checkFollowContext(browser, base, full, next) {
   const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
   await followFrom(page, trade);
   const others = full.bursts.filter((b) => b.ticker !== trade).slice(0, 2).map((b) => b.ticker);
-  for (const t of others) { await clickPick(page, t); await page.locator(`#pick-list .ss-pick[data-ticker="${t}"] [data-pin]`).click().catch(() => {}); await page.waitForTimeout(150); }
+  for (const t of others) { await clickPick(page, t); await page.locator(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${t}"]) .ss-pin`).click(); await page.waitForTimeout(150); }
   await setLens(page, 'a');
   await clickPick(page, trade);
-  const beforeState = { lens: await lensNow(page), hash: await hash(page), pins: await count(page, '#compare-tray [data-pin-id], #compare-tray .ss-tray__item') };
+  const beforeState = { lens: await lensNow(page), hash: await hash(page), pins: await count(page, '#compare-tray .ss-tray__pin') };
+  eq('the return-context check starts with two actual pins', beforeState.pins, 2);
   // The saved destination owns the sheet's return route.
   await go(page, '#/setups'); beforeState.hash = '#/setups';
   await page.locator(`#following .ss-followed[data-ticker="${trade}"] [data-open-saved]`).scrollIntoViewIfNeeded();
@@ -1546,7 +1588,7 @@ async function checkFollowContext(browser, base, full, next) {
   await page.waitForTimeout(400);
   eq('Escape puts the reader back on the route they came from', await hash(page), beforeState.hash);
   eq('with the same lens', await lensNow(page), beforeState.lens);
-  eq('the same pins', await count(page, '#compare-tray [data-pin-id], #compare-tray .ss-tray__item'), beforeState.pins);
+  eq('the same pins', await count(page, '#compare-tray .ss-tray__pin'), beforeState.pins);
   check('and the same scroll', Math.abs((await page.evaluate(() => window.pageYOffset)) - scrollBefore) < 40, `${await page.evaluate(() => window.pageYOffset)} vs ${scrollBefore}`);
   eq('focus is back on the control that opened it', await page.evaluate(() => (document.activeElement && document.activeElement.dataset.openSaved) || '(none)'), `burst:${trade}:${full.run.session}:${full.app.rules_version}`);
   // a saved setup the lens hides is still reachable by its own route
@@ -1623,6 +1665,7 @@ async function checkFollowStates(browser, base, full, next) {
     const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { lens: 'all', height: 844, hash: `#/explore/bursts/${trade}` });
     await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(250);
     await rerender(page, next, '2026-09-11T22:31:00Z');
+    await go(page, '#/setups');
     eq('the phone stacks the shelf full-width', await page.locator('#following .ss-followed').first().evaluate((n) => Math.round(n.getBoundingClientRect().width) > window.innerWidth * 0.75), true);
     eq('and nothing scrolls sideways', await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0);
     // reach the saved setup by keyboard only

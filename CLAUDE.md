@@ -1603,3 +1603,62 @@ personal P&L and cross-device sync. Design v2.13.0 remains installed/released;
 rule-key exception now also names immutable recovery paths; detectors and
 historical fingerprints are unchanged. See `docs/continuity/README.md` for
 reusable patterns, source evidence and remaining verification.
+
+## Checkpoint, 15 Sep 2026 — PR #67 browser merge-gate correction
+
+The correction starts at remote `ac96f6894d44049a8e58659530b3ee630e21994c`,
+with main still `0233b309a43d3c3f64d30ee974d2be15d1fcea28`. The original local
+commits remain on their branch; their published replacements have identical
+trees. Tahir authorized corrections on the existing PR branch. No merge,
+manual deployment, paid/provider scan or workflow dispatch is part of this work.
+During verification, main advanced independently to
+`442db489342660d7588d16dcc18e6c126187c1e6` (`run 2026-09-15`, published data and
+universe directory only). That work is preserved; the PR's merge base remains
+`0233b309a43d3c3f64d30ee974d2be15d1fcea28`, without a rebase or merge.
+
+The exact page-job log from Tests run 35030039637 (job 104586138583) showed two
+layout regressions: `checkMobile()` measured the chart at y=682.78125, exceeding
+the existing y+220<=900 first-screen limit; `checkCompare()` timed out because
+AMD's selection button intercepted the click on AAPL's mobile Compare control.
+The latter reproduces locally in Chromium 141 / Playwright 1.56.1, installed
+through Playwright's official fallback download. The original CI screenshot
+artifact 10421440924 was downloaded, hash-verified and visually inspected.
+
+The added column wrapping and 100% flex basis pushed each mobile card's action
+row into the next column. Removing those two rules keeps Save and Compare below
+their own selection. Equal desktop band columns accommodate the longer saved
+scan-lens label without adding height above the chart. Removing small-screen
+nav link side padding also keeps the new labels on one row at 390px with the
+fallback font; that font exposed the existing search/chooser viewport check
+locally. Text size, destination names and existing assertions are unchanged.
+
+New rendered-bounds protections fail on the uncorrected CSS at 390/320px in both
+themes. The corrected mobile/comparison suites pass 120/120 checks. Continuing
+past the original blocker exposed saved-setup regressions: asynchronous migration
+did not notify its own tab, migration sanitization notices disappeared on the
+next read, and rebuilding the saved shelf on dialog route changes destroyed the
+opener needed for Escape focus restoration. The correction reports migration
+completion while its queue guard is active, retains those notices in the existing
+in-memory migration note, and keeps the shelf's nodes during dialog routing.
+
+The remaining test-contract corrections explicitly visit My setups before
+measuring its phone shelf and visit a candidate before attempting a save. The
+return-context test now clicks and counts actual sibling Compare controls, with
+a two-pin precondition. The generated next/revised fixtures carry the unchanged
+signal close in public observation history, so their basis is `match`, not the
+old latest-only fixture's `unknown`. A separate latest-only case preserves the
+unknown-basis and full-disclosure assertions; re-pricing protections are intact.
+Final local verification: `python3 -m pytest tests/ -q` passes 1,114 tests;
+`python tools/make_fixture.py --check` confirms nine current fixtures;
+`npm run test:continuity` passes 83 checks; `node tools/chart_check.mjs` passes
+182 checks; and `node tools/page_smoke.mjs --shots <evidence-directory>` passes
+3,577 checks. Focused follow-through passes 141/141. Original and corrected
+desktop/mobile screenshots were actually inspected, including 390/320px and both
+themes. No local browser gate remains blocked. Automatic CI is recorded on PR
+#67. Correction evidence lives outside the checkout under
+`evidence/pr67-correction`, including the original job log and CI screenshots,
+negative rendered-bounds checks, focused browser logs and corrected screenshots.
+README.md and .env.example were swept: no product contract, threshold or
+environment variable changed. Store schema 3, original evidence, public history,
+private annotations, strategy populations and design-system v2.13.0 remain
+unchanged. This is a merge-gate correction, not the next reliability campaign.

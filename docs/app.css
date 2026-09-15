@@ -414,7 +414,9 @@
 .ss-lens { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sc-s1) var(--sc-s3); min-width: 0; }
 .ss-lens:empty { display: none; }
 @media (min-width: 1000px) {
-  .ss-band { grid-template-columns: minmax(0, 1.3fr) minmax(290px, 1fr); align-items: center; gap: var(--sc-s3); }
+  /* The complete saved destination leaves a longer, distinct scan-lens label.
+     Give that field half the band so it does not add a row above the chart. */
+  .ss-band { grid-template-columns: minmax(0, 1fr) minmax(290px, 1fr); align-items: center; gap: var(--sc-s3); }
   .ss-lens { align-self: center; }
 }
 .ss-lens__field { gap: var(--sc-s1); flex-wrap: wrap; min-width: 0; }
@@ -676,10 +678,10 @@
 .ss-history__preview { min-width: 0; }
 @media (max-width: 420px) {
   .ss-nav { gap: .35rem; }
-  .ss-nav a { font-size: .8rem; }
+  .ss-nav a { font-size: .8rem; padding-inline: 0; }
   .ss-annotation__amount input { width: 100%; }
 }
 
-.ss-pick-item { flex-wrap: wrap; }
-.ss-pick-item > .ss-pick { flex-basis: 100%; }
+/* Cards already stack their selection and tools in a column. Wrapping that
+   column with a 100% basis pushes the tools underneath the next mobile card. */
 .ss-pick__tools { width: 100%; justify-content: flex-end; }
