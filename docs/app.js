@@ -46,8 +46,8 @@
   const PROBLEMS = {
     universe_cached: "The stock directory could not be refreshed; tonight's universe is the cached one.",
     coverage_thin: "Part of the universe was not read: the bars fetch ran out of time or names answered late.",
-    claude_unavailable: "The model did not answer; every grade tonight is the checklist's alone.",
-    claude_partial: "The model answered for some names and not others; the rest are graded by the checklist alone.",
+    claude_unavailable: "No usable chart-reader judgement; every grade tonight is the checklist's alone.",
+    claude_partial: "Chart-reader judgements were accepted for some names; the rest are graded by the checklist alone.",
     chart_missing: "A chart did not render; the grade stands on the numbers.",
     email_failed: "The digest could not be delivered; the page is the record.",
     push_retried: "Committing the record took more than one push."
@@ -3281,7 +3281,7 @@
           text(cl.entry_note) ? el('p', null, [el('strong', { text: 'At the open: ' }), cl.entry_note]) : null,
           el('p', { 'class': 'sc-hint', text: 'Model grade ' + (cl.grade || '—') + (isNum(cl.score) ? ' · ' + cl.score.toFixed(1) : '') + (cl.chart_seen === false ? ' · read from the numbers alone, no chart' : '') })
         ]));
-      } else kids.push(el('p', { 'class': 'sc-hint ss-nomodel', text: 'Graded by the checklist alone; the model did not answer' + (cl && text(cl.error) ? ' (' + cl.error + ')' : '') + '.' }));
+      } else kids.push(el('p', { 'class': 'sc-hint ss-nomodel', text: 'Graded by the checklist alone; no usable chart-reader judgement' + (cl && text(cl.error) ? ' (' + cl.error + ')' : '') + '.' }));
     } else kids.push(el('p', { 'class': 'sc-hint', text: 'Anticipation names are measured, not graded: no chart reader, no letters.' }));
     kids.push(factList([
       ['bars', 'Alpaca ' + String(run.feed || '').toUpperCase() + ', daily', c.series.length ? plural(c.series.length, 'session') + ' archived through ' + dateWords(c.series[c.series.length - 1].date) : 'none archived for this name'],

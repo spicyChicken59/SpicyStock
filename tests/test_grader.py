@@ -17,6 +17,7 @@ the caching test load-bearing. Nothing here opens a socket.
 from __future__ import annotations
 
 import inspect
+import hashlib
 import json
 import logging
 from pathlib import Path
@@ -615,7 +616,9 @@ def test_a_graded_row_records_the_model_and_that_the_chart_was_seen(claude, ohlc
     result = grade_candidate("AAA", metrics(), chart, SYSTEM)
     prov = result["provenance"]
     assert prov == {"source": SOURCE_CLAUDE, "model": claude.calls[0]["model"],
-                    "chart_seen": True, "error": None}
+                    "chart_seen": True, "error": None,
+                    "request_text_sha256": hashlib.sha256(json.dumps(
+                        {"system": SYSTEM, "user": user_text(metrics())}, sort_keys=True).encode()).hexdigest()}
     blocks = claude.calls[0]["messages"][0]["content"]
     images = [b for b in blocks if b["type"] == "image"]
     assert len(images) == 1
@@ -633,7 +636,7 @@ def test_a_grade_made_without_the_chart_says_so_and_attaches_nothing(claude):
 def test_a_row_carries_exactly_the_published_keys(claude):
     result = grade_candidate("AAA", metrics(), None, SYSTEM)
     assert set(result) == {"grade", "score", "reason", "key_risk", "entry_note", "provenance"}
-    assert set(result["provenance"]) == {"source", "model", "chart_seen", "error"}
+    assert set(result["provenance"]) == {"source", "model", "chart_seen", "error", "request_text_sha256"}
 
 
 # ------------------------------------------------------------- the budget ----

@@ -21,10 +21,13 @@ Four properties the transport keeps, each verified on the old scorer:
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import logging
 import os
 from pathlib import Path
+
+from src import discovery
 
 log = logging.getLogger(__name__)
 
@@ -140,6 +143,10 @@ class ScoreFormatError(ValueError):
     """The model replied, but not with a score this pipeline can rank."""
 
 
+class DiscoveryConflict(ValueError):
+    """A reply rejects a candidate using an inapplicable discovery threshold."""
+
+
 # ---------------------------------------------------------------- client ----
 def _client():
     import anthropic
@@ -192,9 +199,13 @@ def _reply_shape() -> str:
 
 def user_text(metrics: dict) -> str:
     """The text block; `sort_keys` so two runs over one candidate are byte-identical."""
+    block = discovery.for_metrics(metrics)
+    if block is not None:
+        metrics = {**{k: v for k, v in metrics.items() if k != "recorded_rules"}, "discovery": block}
     return (
         "Grade this momentum burst candidate strictly according to the "
         "strategy rules in your instructions.\n\n"
+        + discovery.instruction(block) +
         f"METRICS:\n{json.dumps(metrics, indent=2, sort_keys=True, default=str)}\n\n"
         "Respond with ONLY a JSON object, no markdown fences, in this exact shape:\n"
         f"{_reply_shape()}"
@@ -407,17 +418,27 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
     content.append({"type": "text", "text": user_text(metrics)})
 
     kwargs = request_kwargs(system_prompt, content)
+    text_hash = hashlib.sha256(json.dumps({"system": system_prompt, "user": content[-1]["text"]},
+                                          sort_keys=True).encode()).hexdigest()
     last_error: Exception | None = None
     for attempt in range(1, attempts + 1):
         try:
             resp = _client().messages.create(**kwargs)
             parsed = _validated(_extract_json(_reply_text(resp)))
+            conflicts = discovery.conflicting_fields(discovery.for_metrics(metrics), parsed)
+            if conflicts:
+                # Account for the real response, but never spend an extra call
+                # trying to make an invalid discovery judgement acceptable.
+                if usage is not None:
+                    for key, value in cache_usage(resp).items():
+                        usage[key] = usage.get(key, 0) + value
+                raise DiscoveryConflict("inapplicable discovery rule in " + ", ".join(conflicts))
         except Exception as e:  # noqa: BLE001 -- narrowed by the retry and provenance below
             last_error = e
             log.warning("Claude grading attempt %d/%d failed for %s: %s",
                         attempt, attempts, ticker, _error_text(e))
-            if is_fatal_auth_failure(_error_text(e)):
-                break  # a rejected key is not transient; the retry is theatre
+            if isinstance(e, DiscoveryConflict) or is_fatal_auth_failure(_error_text(e)):
+                break  # neither an admission conflict nor a rejected key merits a retry
             if isinstance(e, ScoreFormatError):
                 # Ask again, differently. A transport error keeps the
                 # original request: there was nothing wrong with it.
@@ -432,12 +453,15 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
             "model": kwargs["model"],
             "chart_seen": chart_seen,
             "error": None,
+            "request_text_sha256": text_hash,
         }
         return parsed
 
     log.error("Claude grading failed for %s after %d attempts (%s) -- checklist fallback",
               ticker, attempts, _error_text(last_error))
-    return _fallback(metrics, _error_text(last_error))
+    fallback = _fallback(metrics, _error_text(last_error))
+    fallback["provenance"]["request_text_sha256"] = text_hash
+    return fallback
 
 
 # ----------------------------------------------------------- grading all ----

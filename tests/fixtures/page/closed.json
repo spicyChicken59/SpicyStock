@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "cf1422d7ad5c"
+  "rules_version": "a10516091332"
  },
  "cover": {
   "h1": "Market closed. Plans unchanged.",
@@ -168,6 +168,9 @@
    "ratio_decimals": 4,
    "pct_decimals": 2,
    "price_decimals": 2
+  },
+  "grading": {
+   "discovery_version": 1
   },
   "quality": {
    "base_search_sessions": 40,

@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "cf1422d7ad5c"
+  "rules_version": "a10516091332"
  },
  "cover": {
   "h1": "Trade tomorrow. 1 A-quality burst.",
@@ -27,7 +27,7 @@
    {
     "stage": "grade",
     "kind": "claude_unavailable",
-    "message": "no reply for any of 6 names"
+    "message": "no usable judgement for any of 6 names"
    }
   ],
   "dry_run": false,
@@ -179,6 +179,9 @@
    "ratio_decimals": 4,
    "pct_decimals": 2,
    "price_decimals": 2
+  },
+  "grading": {
+   "discovery_version": 1
   },
   "quality": {
    "base_search_sessions": 40,
@@ -702,6 +705,7 @@
    "gain_pct": 6.0,
    "volume": 3000000.0,
    "volume_vs_prior": 5.0,
+   "prev_volume": 600000,
    "dollar_volume": 372630000,
    "dollar_move": 5.25,
    "extension_pct": 5.2,
@@ -929,6 +933,35 @@
    "score": 10.0,
    "vetoes": [],
    "reclass": null,
+   "discovery": {
+    "version": 1,
+    "admitted_by": [
+     "burst",
+     "dollar"
+    ],
+    "applicable_rules": {
+     "burst": {
+      "min_ratio": 1.04,
+      "volume_above_prior": true,
+      "min_volume": 100000
+     },
+     "dollar": {
+      "min_move": 0.9,
+      "min_volume_exclusive": 100000
+     }
+    },
+    "inapplicable_rules": {},
+    "measurements": {
+     "close": 124.21,
+     "prev_close": 117.18,
+     "open": 118.96,
+     "gain_pct": 6.0,
+     "volume": 3000000,
+     "prev_volume": 600000,
+     "volume_vs_prior": 5.0,
+     "dollar_move": 5.25
+    }
+   },
    "grade": "A+",
    "plan": {
     "ticker": "AAPL",
@@ -1191,7 +1224,9 @@
     "entry_note": null,
     "source": "fallback",
     "chart_seen": false,
-    "error": "RuntimeError: upstream connect error"
+    "error": "RuntimeError: upstream connect error",
+    "request_text_sha256": "18ff56fa40aecc51765b536ad98ca751284bdfe03bdfecfab25112b4823e2aef",
+    "discovery_version": 1
    },
    "rank": 1,
    "series": [
@@ -2115,6 +2150,7 @@
    "gain_pct": 5.2,
    "volume": 2600000.0,
    "volume_vs_prior": 4.3333,
+   "prev_volume": 600000,
    "dollar_volume": 320502000,
    "dollar_move": null,
    "extension_pct": 4.9,
@@ -2342,6 +2378,35 @@
    "score": 10.0,
    "vetoes": [],
    "reclass": null,
+   "discovery": {
+    "version": 1,
+    "admitted_by": [
+     "burst"
+    ],
+    "applicable_rules": {
+     "burst": {
+      "min_ratio": 1.04,
+      "volume_above_prior": true,
+      "min_volume": 100000
+     }
+    },
+    "inapplicable_rules": {
+     "dollar": {
+      "min_move": 0.9,
+      "min_volume_exclusive": 100000
+     }
+    },
+    "measurements": {
+     "close": 123.27,
+     "prev_close": 117.18,
+     "open": 123.12,
+     "gain_pct": 5.2,
+     "volume": 2600000,
+     "prev_volume": 600000,
+     "volume_vs_prior": 4.3333,
+     "dollar_move": null
+    }
+   },
    "grade": "A+",
    "plan": {
     "ticker": "AMD",
@@ -2603,7 +2668,9 @@
     "entry_note": null,
     "source": "fallback",
     "chart_seen": false,
-    "error": "RuntimeError: upstream connect error"
+    "error": "RuntimeError: upstream connect error",
+    "request_text_sha256": "c8a1eaa6fd45b4374599b3b98490f58b6919023fd08a5520a42b653ca3a27692",
+    "discovery_version": 1
    },
    "rank": 2,
    "series": [
@@ -3495,6 +3562,7 @@
    "gain_pct": 7.4,
    "volume": 3400000.0,
    "volume_vs_prior": 5.6667,
+   "prev_volume": 600000,
    "dollar_volume": 431392000,
    "dollar_move": 3.42,
    "extension_pct": 6.8,
@@ -3722,6 +3790,35 @@
    "score": 10.0,
    "vetoes": [],
    "reclass": null,
+   "discovery": {
+    "version": 1,
+    "admitted_by": [
+     "burst",
+     "dollar"
+    ],
+    "applicable_rules": {
+     "burst": {
+      "min_ratio": 1.04,
+      "volume_above_prior": true,
+      "min_volume": 100000
+     },
+     "dollar": {
+      "min_move": 0.9,
+      "min_volume_exclusive": 100000
+     }
+    },
+    "inapplicable_rules": {},
+    "measurements": {
+     "close": 126.88,
+     "prev_close": 118.14,
+     "open": 123.46,
+     "gain_pct": 7.4,
+     "volume": 3400000,
+     "prev_volume": 600000,
+     "volume_vs_prior": 5.6667,
+     "dollar_move": 3.42
+    }
+   },
    "grade": "A+",
    "plan": {
     "ticker": "NVDA",
@@ -3984,7 +4081,9 @@
     "entry_note": null,
     "source": "fallback",
     "chart_seen": false,
-    "error": "RuntimeError: upstream connect error"
+    "error": "RuntimeError: upstream connect error",
+    "request_text_sha256": "8c08e717a41295a68afa110f489bf1bd76559d850247df48eb8c58e94f6232bf",
+    "discovery_version": 1
    },
    "rank": 3,
    "series": [
@@ -4916,6 +5015,7 @@
    "gain_pct": 6.0,
    "volume": 3000000.0,
    "volume_vs_prior": 5.0,
+   "prev_volume": 600000,
    "dollar_volume": 372630000,
    "dollar_move": 9.5,
    "extension_pct": 5.2,
@@ -5143,6 +5243,35 @@
    "score": 10.0,
    "vetoes": [],
    "reclass": null,
+   "discovery": {
+    "version": 1,
+    "admitted_by": [
+     "burst",
+     "dollar"
+    ],
+    "applicable_rules": {
+     "burst": {
+      "min_ratio": 1.04,
+      "volume_above_prior": true,
+      "min_volume": 100000
+     },
+     "dollar": {
+      "min_move": 0.9,
+      "min_volume_exclusive": 100000
+     }
+    },
+    "inapplicable_rules": {},
+    "measurements": {
+     "close": 124.21,
+     "prev_close": 117.18,
+     "open": 114.71,
+     "gain_pct": 6.0,
+     "volume": 3000000,
+     "prev_volume": 600000,
+     "volume_vs_prior": 5.0,
+     "dollar_move": 9.5
+    }
+   },
    "grade": "A+",
    "plan": {
     "ticker": "TSLA",
@@ -5384,7 +5513,9 @@
     "entry_note": null,
     "source": "fallback",
     "chart_seen": false,
-    "error": "RuntimeError: upstream connect error"
+    "error": "RuntimeError: upstream connect error",
+    "request_text_sha256": "4fbbc5872d1b63c0f393e051494a1fe4d1244d33c91df42633320df2abac4a3a",
+    "discovery_version": 1
    },
    "rank": 4,
    "series": [
@@ -6308,6 +6439,7 @@
    "gain_pct": 5.0,
    "volume": 3000000.0,
    "volume_vs_prior": 5.0,
+   "prev_volume": 600000,
    "dollar_volume": 369120000,
    "dollar_move": 3.84,
    "extension_pct": 4.3,
@@ -6536,6 +6668,35 @@
    "score": 8.5,
    "vetoes": [],
    "reclass": "anticipation",
+   "discovery": {
+    "version": 1,
+    "admitted_by": [
+     "burst",
+     "dollar"
+    ],
+    "applicable_rules": {
+     "burst": {
+      "min_ratio": 1.04,
+      "volume_above_prior": true,
+      "min_volume": 100000
+     },
+     "dollar": {
+      "min_move": 0.9,
+      "min_volume_exclusive": 100000
+     }
+    },
+    "inapplicable_rules": {},
+    "measurements": {
+     "close": 123.04,
+     "prev_close": 117.18,
+     "open": 119.2,
+     "gain_pct": 5.0,
+     "volume": 3000000,
+     "prev_volume": 600000,
+     "volume_vs_prior": 5.0,
+     "dollar_move": 3.84
+    }
+   },
    "grade": "B",
    "plan": null,
    "chart": "charts/PLUG.png",
@@ -6548,7 +6709,9 @@
     "entry_note": null,
     "source": "fallback",
     "chart_seen": false,
-    "error": "RuntimeError: upstream connect error"
+    "error": "RuntimeError: upstream connect error",
+    "request_text_sha256": "de30ab6a8a17309fcca4f9b2ff76b816081dadece93ebd11b57664ba4c83a9e9",
+    "discovery_version": 1
    },
    "rank": 5,
    "series": [
@@ -7472,6 +7635,7 @@
    "gain_pct": 2.0,
    "volume": 2781939.0,
    "volume_vs_prior": 0.8649,
+   "prev_volume": 3216487,
    "dollar_volume": 202886811.27,
    "dollar_move": 1.43,
    "extension_pct": 3.3,
@@ -7700,6 +7864,35 @@
    "score": 6.5,
    "vetoes": [],
    "reclass": null,
+   "discovery": {
+    "version": 1,
+    "admitted_by": [
+     "dollar"
+    ],
+    "applicable_rules": {
+     "dollar": {
+      "min_move": 0.9,
+      "min_volume_exclusive": 100000
+     }
+    },
+    "inapplicable_rules": {
+     "burst": {
+      "min_ratio": 1.04,
+      "volume_above_prior": true,
+      "min_volume": 100000
+     }
+    },
+    "measurements": {
+     "close": 72.93,
+     "prev_close": 71.4989,
+     "open": 71.5,
+     "gain_pct": 2.0,
+     "volume": 2781939,
+     "prev_volume": 3216487,
+     "volume_vs_prior": 0.8649,
+     "dollar_move": 1.43
+    }
+   },
    "grade": "B",
    "plan": null,
    "chart": "charts/DLLR.png",
@@ -7712,7 +7905,9 @@
     "entry_note": null,
     "source": "fallback",
     "chart_seen": false,
-    "error": "RuntimeError: upstream connect error"
+    "error": "RuntimeError: upstream connect error",
+    "request_text_sha256": "0f05120597e8b12c06f242ebf94ba9f73ac842a2f21cd1ba673895ac50da01bd",
+    "discovery_version": 1
    },
    "rank": 6,
    "series": [
@@ -10403,53 +10598,53 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:cf1422d7ad5c": {
+   "burst:AAPL:2026-09-10:a10516091332": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cf1422d7ad5c",
+    "rules_version": "a10516091332",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:cf1422d7ad5c": {
+   "burst:AMD:2026-09-10:a10516091332": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cf1422d7ad5c",
+    "rules_version": "a10516091332",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:cf1422d7ad5c": {
+   "burst:NVDA:2026-09-10:a10516091332": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cf1422d7ad5c",
+    "rules_version": "a10516091332",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:cf1422d7ad5c": {
+   "burst:TSLA:2026-09-10:a10516091332": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cf1422d7ad5c",
+    "rules_version": "a10516091332",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:cf1422d7ad5c": {
+   "burst:PLUG:2026-09-10:a10516091332": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cf1422d7ad5c",
+    "rules_version": "a10516091332",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:cf1422d7ad5c": {
+   "burst:DLLR:2026-09-10:a10516091332": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cf1422d7ad5c",
+    "rules_version": "a10516091332",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:cf1422d7ad5c": {
+   "anticipation:COIL:2026-09-10:a10516091332": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "cf1422d7ad5c",
+    "rules_version": "a10516091332",
     "coverage": "observed"
    }
   },
