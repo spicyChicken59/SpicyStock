@@ -333,7 +333,7 @@ session. The run:
 - **breadth** — the Market Monitor columns and the regime: green (full
   size), yellow (half size, A+ only), red (no new longs; the open plans get
   a tighten-and-sell clause).
-- **scan** — Bonde's own formulas: `c/c1 >= 1.04 and v > v1 and v >= 100000`
+- **scan** — the repository's recorded formulas: `c/c1 >= 1.04 and v > v1 and v >= 100000`
   and the dollar breakout `c - o >= 0.90 and v > 100000`, then the
   checklist over every hit: **2** not up two days in a row, **L** a linear
   prior leg, **Y** a young trend, **N** a narrow or negative prior day,
@@ -344,7 +344,18 @@ session. The run:
   bursts by mechanical grade and may only LOWER a grade, never raise it;
   the rulebook it reads is `knowledge/strategy.md`. No reply, or a refused
   key, leaves the checklist's grade standing and marks the night
-  `claude_unavailable`.
+  `claude_unavailable`. Each reaction row archives a versioned `discovery`
+  block from those same scan rules and measurements: `burst`, `dollar` or
+  both, with applicable and explicitly inapplicable rules kept apart. A
+  dollar-only candidate does not require a +4% close-to-close gain. Quality
+  can still be lowered for independent chart/checklist evidence. Recognized
+  contradictory replies are rejected whole into mechanical fallback without
+  a retry; their score and explanation are not published as chart judgement.
+  This narrow text guard is not a semantic correctness guarantee. The reader
+  result archives the discovery version and a SHA-256 of the initial system
+  and user text; transport, cache prefix and down-only clamping remain intact.
+  See `tests/fixtures/grading/history-audit.json` for the bounded, manually
+  reviewed historical audit. Old published reasons and grades are unchanged.
 - **plan** — every A-quality burst gets a plan sized from the configured
   account (default $10,000, 0.5% risk, 25% cap, four slots). Four prices it
   keeps apart, because they are four rules: the **trigger**, a buy stop at
@@ -515,7 +526,7 @@ what the bars say happened to them.
 ```
 src/            history.py (public recovery and coverage)
                 pipeline.py (the run) · universe.py · market_data.py · clock.py
-                scans.py · quality.py · breadth.py · watchlist.py · plan.py
+                scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 timing.py (which session a plan is for, and when its window is over)
                 grader.py · charts.py · record.py · report.py
 docs/           index.html · app.js · app.css · app-chart.js · app-map.js · app-follow.js · design-system/

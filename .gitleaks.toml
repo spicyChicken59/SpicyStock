@@ -1,5 +1,5 @@
 # Keep every default detector. No file, commit or detector is excluded; the
-# one allowlist below is narrow on both the value and the path, and the
+# allowlists below are narrow on both the value and the path, and the
 # condition is AND, so both have to match.
 #
 # The run's rules are records with a "key" field ("abnormal_10pct",
@@ -21,3 +21,13 @@ condition = "AND"
 regexTarget = "secret"
 regexes = ['''^[a-z]+[a-z0-9]*(_[a-z0-9]+)+$''']
 paths = ['''^(src/[a-z0-9_]+\.py|docs/(data|picks)\.json|docs/history/[a-f0-9]{40}/(record|(burst|anticipation)-[A-Z0-9][A-Z0-9.-]{0,15})\.json|tests/fixtures/page/[a-z]+\.json)$''']
+
+# PR #68's byte-identical historical context fixture repeats two public
+# breadth identifiers already present in the allowed recovery original.
+# Keep the original bytes; disposition only these two values at this path.
+[[rules.allowlists]]
+description = "Two public breadth identifiers in the immutable grading context fixture"
+condition = "AND"
+regexTarget = "secret"
+regexes = ['''^(down25_quarter|pct_above_40ma)$''']
+paths = ['''^tests/fixtures/grading/record\.json$''']

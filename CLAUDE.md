@@ -271,7 +271,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1114 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1137 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eight fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -1662,3 +1662,66 @@ README.md and .env.example were swept: no product contract, threshold or
 environment variable changed. Store schema 3, original evidence, public history,
 private annotations, strategy populations and design-system v2.13.0 remain
 unchanged. This is a merge-gate correction, not the next reliability campaign.
+
+## Checkpoint, 15 Sep 2026 — scan-aware grading contract
+
+SpicyStock only, branch `grading/scan-aware-contract`, from verified main
+`4f640d95f154ece89d26f57e76ca53a4e0abc0f2`. The checkout was clean, with no
+open PRs or intervening main changes. Existing local branches were preserved.
+This is the first bounded reliability milestone; the older paid-scan prompt
+does not apply. XHigh/Standard was requested; selected runtime effort was not
+exposed. The project context and original field-guide attachment were available
+and consulted, including its primary/community/implementation distinctions.
+
+**Reproduced.** September 14 CACI and ROKU were dollar-only but their reader
+reasons incorrectly required +4%; ROKU's entry note repeated it. Their gains
+were +2.57% / +1.63%, dollar bodies $9.78 / $2.14. CACI's independent Y/base
+concerns and ROKU's weak contextual volume/base concerns remain legitimate
+inputs. No corrected grade is asserted. Original rows matched Git blob
+`a89ab122d7e0160df6a63c30957668447ace1103` exactly.
+
+**Implemented.** `discovery.contract()` copies the scanner's recorded rules
+and decision measurements, including its rounded prices/whole shares, into
+version 1: admitted routes, applicable rules, explicitly inapplicable rules and
+measurements. The block reaches quality metrics, the deterministic request and
+the published row. Reader provenance adds its version and initial system/user
+text SHA-256. The rulebook separates discovery from quality. Recognized
+alternative-threshold replies and the reviewed universal-percent construction
+fall back whole, without retry or fabricated chart judgement. This text guard
+is bounded protection, not semantic certification of arbitrary future prose.
+The page/report now say “no usable chart-reader judgement” for fallback.
+
+**Audit.** `tests/fixtures/grading/history-audit.json` covers all 1,404 retained
+entries, 1,359 reaction rows and all 36 model replies across three publications
+on September 11/14: eight explicit contradictions (CACI, ROKU, EPAM, DGX, CAKE,
+ADP), one additional ADP universal-percent rejection, two ambiguous contextual
+critiques and 25 with no observed discovery contradiction. All 36 reviewed rows
+match their original Git blobs. Historical bytes/grades were not rewritten.
+
+**Verification.** Five negative cases failed on the starting implementation
+for missing discovery context. Focused scanner/quality/grader/pipeline/report/
+history/docs checks passed; all nine definite old contradictions are exercised
+with scripted replies. Full pytest: PASS, 1,136; fixture check: PASS, nine;
+continuity: PASS, 83; chart: PASS, 182. Focused browser: PASS, 467. Full page:
+PASS, 3,613. Screenshots were inspected, including dated original reasons
+on desktop, 390px and 320px. Evidence is under `evidence/scan-grading` outside
+the checkout; CI results and exact published head belong to the milestone PR.
+
+**Limits and next action.** Zero live market/provider/model calls; paid replay
+NOT RUN. The six-row full fixture grows 223,781→228,193 bytes, gzip
+26,480→27,159; no extra requests. Published data/picks/history are unchanged.
+KEEP scan formulas, down-only grading, cache/parser/fallback, ticket/breadth
+gates, continuity and private annotations. FIX the admission contract only.
+DEFER dollar source-validation, broader measurement/provenance reliability and
+live model replay. OMIT historical regrading or product expansion. Installed
+and latest released design system remain v2.13.0, source `14a752d`, 22/22 hashes
+match; no assets changed. Next: independent PR review and separate merge
+authorization. Nothing merged, deployed, manually dispatched or emailed here.
+
+PR #68's first automatic Secret Scan classified two copied public breadth
+identifiers in `tests/fixtures/grading/record.json` as generic credentials.
+The original source is already covered by the existing rule-key disposition;
+the new fixture path was not. A second AND allowlist matches only those two
+exact values at that exact path, with scope protection in the regression suite.
+No fixture bytes, credential, default detector or historical commit changed.
+The initial Tests run and subsequent CI results are linked from PR #68.

@@ -294,7 +294,7 @@ async function checkDetail(page, variant, b, data, blocked) {
   if (b.claude && b.claude.source === 'claude') check(`${variant} ${b.ticker} claude read`, prov.includes(b.claude.reason), 'reason');
   if (b.claude && b.claude.source === 'claude') check(`${variant} ${b.ticker} a fixture's reader reply is labelled simulated`, prov.includes('simulated chart-reader reply') && !prov.includes('claude read the chart'), prov.slice(0, 120));
   if ((b.series || []).length) check(`${variant} ${b.ticker} chart panel carries the demo chip`, (await text(page, '#detail .ss-chart-panel__head')).includes('demo data'), 'chip');
-  else check(`${variant} ${b.ticker} says the model did not answer`, prov.includes('the model did not answer'), 'nomodel');
+  else check(`${variant} ${b.ticker} says no usable model judgement`, prov.includes('no usable chart-reader judgement'), 'nomodel');
   check(`${variant} ${b.ticker} provenance names the rules`, prov.includes(data.app.rules_version), 'rules');
 }
 
@@ -1058,8 +1058,8 @@ async function checkFollowing(browser, base, data) {
 const SENTENCES = {
   universe_cached: 'The stock directory could not ',
   coverage_thin: 'Part of the universe was not r',
-  claude_unavailable: 'The model did not answer; ever',
-  claude_partial: 'The model answered for some na',
+  claude_unavailable: 'No usable chart-reader judgement',
+  claude_partial: 'Chart-reader judgements were accepted',
   chart_missing: 'A chart did not render; the gr',
   email_failed: 'The digest could not be delive',
   push_retried: 'Committing the record took mor'
@@ -3403,6 +3403,51 @@ async function checkRefresh(browser, base, full) {
   }
 }
 
+async function checkGradingHistory(browser, base) {
+  console.log('-- grading history');
+  const dir = path.join(ROOT, 'tests', 'fixtures', 'grading');
+  const audit = JSON.parse(await readFile(path.join(dir, 'history-audit.json'), 'utf8'));
+  const id = 'a89ab122d7e0160df6a63c30957668447ace1103';
+  const entries = audit.rows.filter(r => ['CACI', 'ROKU'].includes(r.ticker)).map(r => ({
+    ticker: r.ticker, kind: 'burst', grade: r.final_grade, scan: r.scan,
+    source: id, path: r.path, sha256: r.sha256, chart: false
+  }));
+  // Pin the original public contract; this test outlives its rolling retention.
+  const index = { version: 1, as_of: audit.history_as_of, days: audit.days,
+    dates: audit.dates, records: { [id]: audit.sources[id] }, entries };
+  for (const [width, theme] of [[1280, 'dark'], [390, 'light'], [320, 'dark'], [320, 'light']]) {
+    const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json',
+      '2026-09-15T22:31:00Z', width, { theme, hash: '#/setups' });
+    await page.route('**/history/index.json', route => route.fulfill({ json: index }));
+    await page.route(`**/history/${id}/*.json`, async route => {
+      const name = new URL(route.request().url()).pathname.split('/').at(-1);
+      await route.fulfill({ contentType: 'application/json', body: await readFile(path.join(dir, name), 'utf8') });
+    });
+    await page.locator('#earlier-setups summary').click();
+    for (const ticker of ['CACI', 'ROKU']) {
+      const original = JSON.parse(await readFile(path.join(dir, `burst-${ticker}.json`), 'utf8')).row;
+      await page.locator('#history-ticker').fill(ticker);
+      await page.locator('#history-search button').click();
+      await page.locator(`[data-history-inspect="${id}"]`).click();
+      await page.locator('[data-history-save]').waitFor();
+      const preview = await text(page, '#history-results');
+      check(`${ticker} ${width}/${theme} original reason is visibly historical`,
+        preview.includes('Historical research only.') && preview.includes('Original chart reader: ' + original.claude.reason));
+      check(`${ticker} ${width}/${theme} exact session, scan, source and unchanged grade`,
+        preview.includes('2026-09-14') && preview.includes('scan dollar') && preview.includes(id) &&
+        preview.includes('Published grade: ' + original.grade));
+      eq(`${ticker} ${width}/${theme} recovery creates no ticket`, await count(page, '#history-results [data-order-copy]'), 0);
+      check(`${ticker} ${width}/${theme} page fits viewport`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+      if (shotsDir && ticker === 'ROKU') {
+        await mkdir(shotsDir, { recursive: true });
+        await page.locator('#history-results').screenshot({ path: path.join(shotsDir, `grading-history-${width}-${theme}.png`) });
+      }
+    }
+    eq(`grading history ${width}/${theme} runtime errors`, errors.slice(), []);
+    await context.close();
+  }
+}
+
 async function main() {
   const chromium = await loadChromium();
   if (!chromium) { console.log('playwright is not installed: npm install --no-save playwright'); process.exit(1); }
@@ -3431,6 +3476,7 @@ async function main() {
     if (runs('refresh')) await checkRefresh(browser, base, full);
     if (runs('ticket')) await checkTicketPrices(browser, base, full);
     if (runs('states')) await checkStates(browser, base, full);
+    if (runs('grading')) await checkGradingHistory(browser, base);
   } finally {
     await browser.close();
     server.close();

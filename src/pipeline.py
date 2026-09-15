@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 
-from src import history, breadth, charts, clock, grader, market_data, plan, quality, record, report, scans
+from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
 from src import timing
 from src import universe
 from src import watchlist
@@ -311,6 +311,7 @@ def scan_frames(frames: dict[str, pd.DataFrame], uni: universe.Universe,
             "open": _num(last["Open"]), "high": _num(last["High"]), "low": _num(last["Low"]),
             "gain_pct": source.get("gain_pct", _gain(last, prev)),
             "volume": _num(last["Volume"]), "volume_vs_prior": volume_ratio,
+            "prev_volume": (burst or dollar)["prev_volume"],
             "dollar_volume": source.get("dollar_volume", _num(float(last["Close"]) * float(last["Volume"]))),
             "dollar_move": (dollar or {}).get("move"),
             "extension_pct": extension_pct(df),
@@ -321,6 +322,10 @@ def scan_frames(frames: dict[str, pd.DataFrame], uni: universe.Universe,
             "reclass": assessment.reclass,
             "_assessment": assessment,
         }
+        # Admission was decided on the scanner's cent prices / whole shares.
+        # The display row may retain finer provider precision; never substitute
+        # those values for the ones that actually passed the scan.
+        row["discovery"] = discovery.contract({**row, **(burst or {}), **(dollar or {})})
         bursts.append(row)
     if measured and errors / max(measured + errors, 1) > MAX_ERROR_FRACTION:
         raise RuntimeError(f"{errors} of {measured + errors} names raised inside the scan: "
@@ -384,11 +389,12 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
             box = (base["start"], base["end"], base["low"], base["high"]) if base else None
             chart_path = charts.render_chart(b["ticker"], df, str(charts_dir), box=box,
                                              stop=(b.get("plan") or {}).get("stop"),
-                                             title=f"{b['ticker']} — daily, burst {b['gain_pct']}%")
+                                             title=f"{b['ticker']} — {b['scan']} scan, close change {b['gain_pct']}%")
         except Exception as exc:  # noqa: BLE001
             rep.problem("chart_missing", f"{b['ticker']}: {type(exc).__name__}")
         b["chart"] = f"{CHARTS_DIR_NAME}/{b['ticker']}.png" if chart_path else None
-        extra = {"scan": b["scan"], "flags": b["flags"], "gain_pct": b["gain_pct"],
+        extra = {"scan": b["scan"], "discovery": b["discovery"],
+                 "flags": b["flags"], "gain_pct": b["gain_pct"],
                  "volume_vs_prior": b["volume_vs_prior"], "dollar_volume": b["dollar_volume"]}
         candidates.append({"ticker": b["ticker"],
                            "metrics": quality.metrics_for_model(assessment, b["ticker"], b["close"], extra),
@@ -420,8 +426,10 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
                            "entry_note": None, "source": prov.get("source", "fallback"),
                            "chart_seen": False, "error": prov.get("error")}
             b["grade"] = b["grade_mechanical"]
+        b["claude"]["request_text_sha256"] = prov.get("request_text_sha256")
+        b["claude"]["discovery_version"] = discovery.VERSION
     if candidates and done == 0:
-        rep.problem("claude_unavailable", f"no reply for any of {len(candidates)} names")
+        rep.problem("claude_unavailable", f"no usable judgement for any of {len(candidates)} names")
     elif unavailable:
         rep.problem("claude_partial", f"{unavailable} of {len(candidates)} names not read")
     if usage:
@@ -512,7 +520,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's floors and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.min_price": universe.MIN_PRICE, "universe.min_volume": universe.MIN_VOLUME,

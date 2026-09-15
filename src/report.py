@@ -56,8 +56,8 @@ PROBLEM_KINDS: tuple[str, ...] = (
 PROBLEM_SENTENCES: dict[str, str] = {
     "universe_cached": "The stock directory could not be refreshed; tonight's universe is the cached one.",
     "coverage_thin": "Part of the universe was not read: the bars fetch ran out of time or names answered late.",
-    "claude_unavailable": "The model did not answer; every grade tonight is the checklist's alone.",
-    "claude_partial": "The model answered for some names and not others; the rest are graded by the checklist alone.",
+    "claude_unavailable": "No usable chart-reader judgement; every grade tonight is the checklist's alone.",
+    "claude_partial": "Chart-reader judgements were accepted for some names; the rest are graded by the checklist alone.",
     "chart_missing": "A chart did not render; the grade stands on the numbers.",
     "email_failed": "The digest could not be delivered; the page is the record.",
     "push_retried": "Committing the record took more than one push.",
