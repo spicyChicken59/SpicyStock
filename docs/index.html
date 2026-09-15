@@ -36,7 +36,8 @@
   </a>
   <div class="sc-masthead__right ss-masthead__right">
     <nav class="sc-nav ss-nav" id="nav" aria-label="Views">
-      <a href="#/explore" data-view="explore">Explore</a>
+      <a href="#/explore" data-view="explore">Today’s scan</a>
+      <a href="#/setups" data-view="setups">My setups</a>
       <a href="#/record" data-view="record">Record</a>
       <a href="#/market" data-view="market">Market</a>
       <a href="#/method" data-view="method">Method</a>
@@ -119,15 +120,19 @@
       </div>
     </details>
 
+  </section>
+
+  <section class="ss-view" id="view-setups" data-view="setups" aria-labelledby="following-h3" hidden>
     <section class="sc-card ss-following" id="following" aria-labelledby="following-h3">
       <div class="sc-card__head">
         <div>
-          <h3 id="following-h3">Following</h3>
-          <p class="sc-hint" id="following-hint">The setups you chose to keep in view, saved in this browser only. A saved plan is not a fill, a holding or a result; the record and the scorecard never see it.</p>
+          <h1 id="following-h3">My setups</h1>
+          <p class="sc-hint" id="following-hint">Saved in this browser only. Setups stay here when the scan changes. No cross-device sync. Published price movement is research, not personal P&amp;L.</p>
         </div>
         <span id="following-count"></span>
       </div>
       <p class="sc-hint ss-following__status" id="following-status" role="status" aria-live="polite" hidden></p>
+      <details class="sc-disclosure ss-history" id="earlier-setups"><summary>Find earlier setup</summary><form id="history-search" class="ss-history__search"><label for="history-ticker">Ticker</label><input id="history-ticker" class="sc-input" type="search" placeholder="ATEC" maxlength="16" autocomplete="off" autocapitalize="characters"><button class="sc-btn sc-btn--secondary" type="submit">Find</button></form><p id="history-status" class="sc-hint" role="status"></p><div id="history-results"></div></details>
       <div class="ss-following__list" id="following-list"></div>
     </section>
   </section>

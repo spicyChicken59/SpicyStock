@@ -659,3 +659,27 @@
    button was -- catching the page up rebuilds that surface in the same breath */
 .ss-action__refused { margin: 0; font-size: var(--sc-text-sm); font-weight: 500; color: var(--sc-heading); }
 
+
+/* Continuity: reuse cards/fields; no portfolio or account metrics. */
+.ss-nav { flex-wrap: wrap; }
+.ss-nav a[data-view="explore"], .ss-nav a[data-view="setups"] { font-weight: 700; }
+.ss-history { margin: var(--sc-s4) 0; }
+.ss-history__search { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; padding: 1rem 0; }
+.ss-history__search input { width: 10rem; max-width: 100%; }
+.ss-history__result { padding: 1rem 0; border-top: 1px solid var(--sc-border); }
+.ss-history__source, .ss-saved__facts dd { overflow-wrap: anywhere; }
+.ss-annotation { padding: 1rem; border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); margin-bottom: 1rem; }
+.ss-annotation__taken { display: flex; gap: .5rem; align-items: center; margin-bottom: 1rem; }
+.ss-annotation__amount { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.ss-annotation__amount input { width: 10rem; max-width: 100%; }
+.ss-pick__tools { display: flex; gap: .5rem; flex-wrap: wrap; }
+.ss-history__preview { min-width: 0; }
+@media (max-width: 420px) {
+  .ss-nav { gap: .35rem; }
+  .ss-nav a { font-size: .8rem; }
+  .ss-annotation__amount input { width: 100%; }
+}
+
+.ss-pick-item { flex-wrap: wrap; }
+.ss-pick-item > .ss-pick { flex-basis: 100%; }
+.ss-pick__tools { width: 100%; justify-content: flex-end; }

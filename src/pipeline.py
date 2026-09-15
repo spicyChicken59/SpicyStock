@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 
-from src import breadth, charts, clock, grader, market_data, plan, quality, record, report, scans
+from src import history, breadth, charts, clock, grader, market_data, plan, quality, record, report, scans
 from src import timing
 from src import universe
 from src import watchlist
@@ -223,7 +223,7 @@ def _iso_date(value) -> date | None:
 
 
 def observations(frames: dict[str, pd.DataFrame], previous: dict | None, symbols: set[str],
-                 session: date) -> dict:
+                 session: date, signal_set: dict | None = None) -> dict:
     """The newest bar per symbol for the recorded signals -- the trades, the
     cut names, the charted bursts, the anticipation list, the open plans --
     and, for OBSERVATION_DAYS, the symbols an earlier record observed. A
@@ -232,6 +232,8 @@ def observations(frames: dict[str, pd.DataFrame], previous: dict | None, symbols
     with no frame tonight keeps its last observation, dated as it was; a
     symbol with neither is not listed. A committed fixture's block is never
     carried (load_previous() drops it with the rest of the fixture)."""
+    if signal_set is not None:
+        return history.observe(frames, previous, signal_set, session, series_of, symbols)
     carried: dict[str, dict] = {}
     block = (previous or {}).get("observations")
     prior = block.get("symbols") if isinstance(block, dict) else None
@@ -688,9 +690,12 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                                                         "status": run_status(rep, closed),
                                                         "published_at": generated})
         account_block = account.to_dict() | {"notes": plan.account_notes(account)}
+        public_signals = history.signals({"run": run_block, "app": {"rules_version": report.rules_version(build_rules(uni))},
+                                          "bursts": published_bursts, "watchlist": lists})
         observed = observations(frames, previous,
-                                keep_series | {r["ticker"] for r in lists.get("top", []) + lists.get("also_quiet", []) if r.get("ticker")}
-                                | {o["ticker"] for o in open_plans if o.get("ticker")}, session)
+                                {r["ticker"] for r in published_bursts}
+                                | {r["ticker"] for r in lists.get("top", []) + lists.get("also_quiet", [])}
+                                | {o["ticker"] for o in open_plans if o.get("ticker")}, session, public_signals)
         data = report.build(run_block, account_block, build_rules(uni), breadth_block, published_bursts,
                             trades, beyond_cap, budget, lists, open_plans, scorecard, nights, generated,
                             observations=observed)
@@ -712,10 +717,14 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                 data["run"]["email"] = "failed"
                 restamp(data, rep, closed)
                 report.write(data, docs / DATA_FILE)
+                if not data.get("fixture"):
+                    history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
                 rep.fail(exc)
                 return rep
         restamp(data, rep, closed)
         report.write(data, docs / DATA_FILE)
+        if not data.get("fixture"):
+            history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
         return rep
     except PreflightError:
         raise

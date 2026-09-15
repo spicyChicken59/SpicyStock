@@ -1,0 +1,69 @@
+{
+  "basis": "Offline replay from available published bars only; actual subsequent provider-frame payload is not measured.",
+  "before": {
+    "observations": {
+      "raw": 7570,
+      "gzip": 2011
+    },
+    "data": {
+      "raw": 4478880,
+      "gzip": 363932
+    },
+    "symbols": 72,
+    "bursts": 558
+  },
+  "after_replay": {
+    "observations": {
+      "raw": 391492,
+      "gzip": 38138
+    },
+    "data": {
+      "raw": 5028922,
+      "gzip": 410038
+    },
+    "symbols": 877,
+    "signal_identities": 989,
+    "actual_dated_bars": 1011
+  },
+  "recovery": {
+    "index": {
+      "raw": 394226,
+      "gzip": 74023
+    },
+    "files": 1408,
+    "total_raw": 8589233,
+    "sum_individual_gzip": 3003235,
+    "records": 3,
+    "entries": 1404,
+    "dates": [
+      "2026-09-11",
+      "2026-09-14"
+    ],
+    "on_demand_examples": {
+      "ATEC": {
+        "raw": 14146,
+        "gzip": 4261
+      },
+      "VICR": {
+        "raw": 5150,
+        "gzip": 1845
+      }
+    }
+  },
+  "requests": {
+    "additional_initial": 0,
+    "first_history_search": 1,
+    "inspect_original": 2,
+    "provider_increment": 0,
+    "paid_chart_reader_increment": 0
+  },
+  "bounds": {
+    "public_days": 21,
+    "public_revisions": 84,
+    "signals_per_publication": 10000,
+    "catalog_bytes": 134217728,
+    "original_bars_per_setup": 120,
+    "local_observations_per_setup": 20,
+    "private_store_growth": "O(saved setups), originals <=120 bars, observations <=20; no append-only operation log. Fixed legacy backups are retained."
+  }
+}

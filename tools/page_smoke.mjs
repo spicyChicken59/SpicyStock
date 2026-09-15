@@ -116,6 +116,7 @@ const attr = async (page, sel, name) => (await page.locator(sel).count()) ? page
 // a click whose target may be the very thing a mutant removed: it is checked
 // for, not waited for, so the suite reports a missing control instead of hanging
 const tap = async (page, sel, name) => {
+  if (sel.startsWith('#following ') && !(await page.locator('#view-setups').isVisible())) { await go(page, '#/setups'); }
   const there = !!(await page.locator(sel).count());
   check(name, there, there ? undefined : `no ${sel} to click`);
   if (!there) return false;
@@ -960,12 +961,12 @@ async function checkFollowing(browser, base, data) {
   const trade = data.bursts.find((b) => b.ticker === data.trades[0]);
   const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { hash: `#/explore/bursts/${trade.ticker}` });
   const publicBefore = await page.evaluate(() => JSON.stringify([SCStock.data.scorecard, SCStock.data.trades, SCStock.data.cash_budget, SCStock.data.bursts.map((b) => b.plan && b.plan.order_line)]));
-  eq('nothing followed yet', await text(page, '#following-jump'), 'Following · 0');
+  eq('nothing followed yet', await text(page, '#following-jump'), 'My setups · 0');
   check('the follow button names the suggested size', (await text(page, '#detail .ss-follow')).includes(`${trade.plan.shares} shares suggested`), await text(page, '#detail .ss-follow'));
   await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
   eq('one click follows', await page.locator('#detail .ss-follow').getAttribute('data-follow'), 'following');
   eq('the shelf shows the setup', await count(page, `#following .ss-followed[data-ticker="${trade.ticker}"]`), 1);
-  eq('the count control moves', await text(page, '#following-jump'), 'Following · 1');
+  eq('the count control moves', await text(page, '#following-jump'), 'My setups · 1');
   const card = () => text(page, `#following .ss-followed[data-ticker="${trade.ticker}"]`);
   check('the card keeps the saved plan levels', (await card()).includes('stop ' + usd(trade.plan.stop)) && (await card()).includes('limit ' + usd(trade.plan.entry_high)), await card());
   check('and dates the status it archived', (await card()).includes(dateShort(data.run.session) + ' record'), await card());
@@ -1007,17 +1008,17 @@ async function checkFollowing(browser, base, data) {
   }
   await go(page, `#/explore/bursts/${trade.ticker}`);
   await page.click('#detail .ss-follow button[data-follow-action="remove"]'); await page.waitForTimeout(200);
-  eq('undo removes the setup', [await page.locator('#detail .ss-follow').getAttribute('data-follow'), await count(page, '#following .ss-followed'), await text(page, '#following-jump')], ['not-following', 0, 'Following · 0']);
+  eq('undo removes the setup', [await page.locator('#detail .ss-follow').getAttribute('data-follow'), await count(page, '#following .ss-followed'), await text(page, '#following-jump')], ['not-following', 0, 'My setups · 0']);
   // a blocked write says so and never shows Following
   await page.evaluate(() => { window.__setItem = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error('blocked'); }; });
   await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
   eq('a blocked write is not a follow', await page.locator('#detail .ss-follow').getAttribute('data-follow'), 'not-following');
-  check('a blocked write is named', (await text(page, '#detail .ss-follow')).includes('Could not save in this browser'), await text(page, '#detail .ss-follow'));
+  check('a blocked write is named', (await text(page, '#detail .ss-follow')).includes('Could not confirm the save'), await text(page, '#detail .ss-follow'));
   eq('following page errors', errors, []);
   await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
   eq('a second blocked write does not stack its sentence', await count(page, '#detail .ss-follow .ss-follow__warn'), 1);
   await page.evaluate(() => { Storage.prototype.setItem = window.__setItem; });
-  if (shotsDir) { await go(page, `#/explore/bursts/${trade.ticker}`); await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200); eq('the store works again once unblocked', await page.locator('#detail .ss-follow').getAttribute('data-follow'), 'following'); await page.locator('#detail .ss-action').screenshot({ path: path.join(shotsDir, 'follow-action-1280.png') }); await page.locator('#following').screenshot({ path: path.join(shotsDir, 'following-1280.png') }); }
+  if (shotsDir) { await go(page, `#/explore/bursts/${trade.ticker}`); await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200); eq('the store works again once unblocked', await page.locator('#detail .ss-follow').getAttribute('data-follow'), 'following'); await page.locator('#detail .ss-action').screenshot({ path: path.join(shotsDir, 'follow-action-1280.png') }); await go(page, '#/setups'); await page.locator('#following').screenshot({ path: path.join(shotsDir, 'following-1280.png') }); }
   await context.close();
   // a corrupt store is set aside, named, and starts empty
   const c2 = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { hash: `#/explore/bursts/${trade.ticker}` });
@@ -1216,7 +1217,7 @@ async function checkFollowThrough(browser, base, full) {
   const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
   await seedStore(page, LEGACY);
   await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(300);
-  eq('a v1 store is upgraded in place', (await readStore(page)).version, 2);
+  eq('a v1 store is upgraded in place', (await readStore(page)).version, 3);
   eq('and the payload it replaced is kept beside it', await storeKeys(page), [FOLLOW_KEY, FOLLOW_KEY + '.previous']);
   eq('verbatim', await page.evaluate((k) => JSON.parse(localStorage.getItem(k + '.previous')), FOLLOW_KEY), LEGACY);
   const legacy = (await readStore(page)).items[0];
@@ -1442,7 +1443,7 @@ async function checkFollowThrough(browser, base, full) {
   if (shotsDir) {
     await page.evaluate(() => { document.documentElement.removeAttribute('data-theme'); });
     await rerender(page, next, NEXT_NOW);
-    await page.locator('#following').screenshot({ path: path.join(shotsDir, 'following-through-1280.png') });
+    await go(page, '#/setups'); await page.locator('#following').screenshot({ path: path.join(shotsDir, 'following-through-1280.png') });
     await openSaved(page, trade);
     await page.locator('#saved').screenshot({ path: path.join(shotsDir, 'saved-setup-1280.png') });
     await closeSaved(page); await page.waitForTimeout(200);
@@ -1532,14 +1533,15 @@ async function checkFollowContext(browser, base, full, next) {
   await setLens(page, 'a');
   await clickPick(page, trade);
   const beforeState = { lens: await lensNow(page), hash: await hash(page), pins: await count(page, '#compare-tray [data-pin-id], #compare-tray .ss-tray__item') };
-  // where the reader is when they press the button: the shelf, in view
+  // The saved destination owns the sheet's return route.
+  await go(page, '#/setups'); beforeState.hash = '#/setups';
   await page.locator(`#following .ss-followed[data-ticker="${trade}"] [data-open-saved]`).scrollIntoViewIfNeeded();
   await page.waitForTimeout(200);
   const scrollBefore = await page.evaluate(() => window.pageYOffset);
-  check('the shelf is scrolled to, not the top of the page', scrollBefore > 200, String(scrollBefore));
+  check('the saved destination is visible', await page.locator('#view-setups').isVisible());
   await page.locator(`#following .ss-followed[data-ticker="${trade}"] [data-open-saved]`).click();
   await page.waitForTimeout(380);
-  eq('the sheet is over the page, not instead of it', [await count(page, '#saved[open]'), await visibleView(page)], [1, ['view-explore']]);
+  eq('the sheet is over the page, not instead of it', [await count(page, '#saved[open]'), await visibleView(page)], [1, ['view-setups']]);
   await page.keyboard.press('Escape');
   await page.waitForTimeout(400);
   eq('Escape puts the reader back on the route they came from', await hash(page), beforeState.hash);
@@ -1624,6 +1626,7 @@ async function checkFollowStates(browser, base, full, next) {
     eq('the phone stacks the shelf full-width', await page.locator('#following .ss-followed').first().evaluate((n) => Math.round(n.getBoundingClientRect().width) > window.innerWidth * 0.75), true);
     eq('and nothing scrolls sideways', await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0);
     // reach the saved setup by keyboard only
+    await go(page, "#/setups");
     await page.locator(`#following .ss-followed[data-ticker="${trade}"] [data-open-saved]`).focus();
     await page.keyboard.press('Enter'); await page.waitForTimeout(400);
     eq('Enter on the card’s button opens the saved setup', [await count(page, '#saved[open]'), await savedTitle(page)], [1, trade]);
@@ -1631,7 +1634,7 @@ async function checkFollowStates(browser, base, full, next) {
     await page.keyboard.press('Escape'); await page.waitForTimeout(400);
     eq('Escape closes it', await count(page, '#saved[open]'), 0);
     eq('phone sideways after the sheet', await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0);
-    if (shotsDir) await page.locator('#following').screenshot({ path: path.join(shotsDir, 'following-through-390.png') });
+    if (shotsDir) { await go(page, '#/setups'); await page.locator('#following').screenshot({ path: path.join(shotsDir, 'following-through-390.png') }); }
     eq('phone follow-through page errors', errors, []);
     await context.close();
   }
@@ -2291,7 +2294,7 @@ async function checkLens(browser, base, data) {
   // the reader's own action emptied the lens: the page must stay in it and say
   // so, not step out to every burst because the hash still names the stock
   eq('unfollowing empties the lens and stays in it', [await lensNow(f.page), await count(f.page, '#pick-list [data-empty="lens"]')], ['following', 1]);
-  check('the empty following lens explains itself', (await text(f.page, '#pick-list [data-empty="lens"]')).includes('Following shelf'), await text(f.page, '#pick-list [data-empty="lens"]'));
+  check('the empty following lens explains itself', (await text(f.page, '#pick-list [data-empty="lens"]')).includes('My setups'), await text(f.page, '#pick-list [data-empty="lens"]'));
   await f.page.click('#pick-list [data-lens-out]'); await f.page.waitForTimeout(250);
   eq('one action recovers it', await cardTickers(f.page), all);
   eq('following lens page errors', f.errors, []);

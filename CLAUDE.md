@@ -102,7 +102,7 @@ open plans, scorecard) → `report.build()` and validate → email. Exit codes
 `run_intraday()` is dispatch-only and never commits.
 
 The page (`docs/app.js`) is a small hash-routed application over the
-record: Explore (the market in a line, two stage cards that always say how
+record: Today’s scan / Explore (the market in a line, two stage cards that always say how
 many of their stocks carry a ticket, a lens row beside them, one selectable
 card per stock, one stock in focus with its chart, four decision answers,
 the action area -- the design system's `.sc-actionbar`, a row on a desktop
@@ -217,8 +217,8 @@ everywhere (`volumeRatio()`: the row's own field, the scan's measurement
 for every burst since the dollar scan carried it; for a record from before
 that, run 46 and earlier, the checklist's two-place copy, said to be the
 checklist's in the measurements; else missing and said so, zero a value).
-Following (`docs/app-follow.js`, payload version 2) is a shelf at the end
-of Explore, and a saved setup outlives the record it came from: one click
+My setups (`docs/app-follow.js`, payload version 3) is a peer destination to
+Today’s scan (the existing Explore route), and a saved setup outlives the record it came from: one click
 freezes the setup's own snapshot, its suggested whole-share quantity AND
 the evidence the record carried for that signal -- the archived bars up to
 the signal session, capped at `EVIDENCE_BARS`, and the dated anchors drawn
@@ -271,7 +271,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-What is measured offline: 1107 tests, the chart check, and the page smoke
+The suite now collects 1114 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eight fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -1542,3 +1542,60 @@ rather than here -- not because they are another owner's, since all four
 repositories are one account's: `docs/design-review/` still records #78's numbers
 that #79 superseded, and two NON-CI harnesses fail on a `#signal-card` that
 computes `display:none`. Both were proved pre-existing.
+
+## Checkpoint, 15 Sep 2026 — local saved-research continuity milestone
+
+**Scope and state.** Tahir explicitly authorized Stock-only local implementation
+and offline verification in this execution. Branch `continuity/my-setups` starts
+at `0233b309a43d3c3f64d30ee974d2be15d1fcea28`; live main was rechecked unchanged,
+with zero open PRs at preflight. No push, PR, merge, deployment, dispatch, paid
+scan, email, credential or sibling-repository change is authorized or performed.
+This checkpoint supersedes the older NEXT BUILDER PROMPT above. Astra High was
+requested; the runtime exposes no authoritative selected-model/effort field.
+
+**Implemented.** Today’s scan and My setups are peer destinations, using existing
+Explore/Following routes and cards. Card/detail/comparison saves use the same
+store. Saved originals remain independent of current filters and membership.
+Optional “I took this setup” and USD reference amounts are browser-local
+annotations, never execution data. Schema 3 preserves legacy share fields,
+original evidence, unknown fields and migration backups. Currency is explicit
+integer cents; clear means unknown. Web Locks serialize mutations across tabs;
+conflicts follow acquisition order and stale edits cannot resurrect removals.
+Failed writes preserve editable drafts and offer a local recovery copy.
+
+**Recovery and coverage.** `src/history.py` and `tools/backfill_history.py` retain
+published originals by source blob, with a lazy index/context/evidence contract.
+Three authentic publications cover September 11 and 14, including both September
+11 revisions. ATEC’s required original has 120 bars; both inspected September 11
+originals lack VICR’s chart. No chart is reconstructed. Actions artifact metadata
+was read, but artifact binaries were not inspected here. Public coverage now
+includes every saveable signal, with separate signal dates and a 21-calendar-day
+window, up to 20 real observations and no new provider/chart-reader calls.
+Catalog bounds are 84 publications, 10,000 signals per publication, 256 KiB per
+lazy file and 128 MiB total. Local saves do not expire.
+
+**Verified so far.** Baseline DOM reproduction saved both September 11 cases and
+retained them on September 14: no deletion was reproduced. Their later closes
+were 10.86/184.73; original grades remained A. Focused Python verification passed
+180 checks, then 40 closeout checks; offline DOM/store verification passed 83.
+The new destination protection fails on baseline for the missing destination.
+Removing VICR’s later coverage identity fails the intended window test while
+its source-control test passes. These are not real-browser acceptance results.
+Final normal verification commands remain required at this handoff revision;
+the execution handoff records their results, not historical test totals.
+
+**Impact and limits.** `docs/continuity/measurements.json` records the published-bar
+replay: observations cover 72→877 symbols / 989 identities; compressed data grows
+363,932→410,038 bytes. The recovery index is 74,023 bytes compressed; originals
+load on demand. Initial requests: +0; first search: 1; inspection: 2. Actual future
+full-frame payload was not measured. Browser/layout acceptance is BLOCKED:
+Playwright’s Chromium is absent and official downloads time out. Desktop,
+390/320px, both themes and real keyboard acceptance remain unaccepted.
+
+**Keep/fix/defer/omit.** Keep existing discovery, session guards and model results.
+Fix only continuity. Defer all queued campaigns; omit portfolios, executions,
+personal P&L and cross-device sync. Design v2.13.0 remains installed/released;
+22 source blobs matched, with vendored assets untouched. The scanner’s existing
+rule-key exception now also names immutable recovery paths; detectors and
+historical fingerprints are unchanged. See `docs/continuity/README.md` for
+reusable patterns, source evidence and remaining verification.

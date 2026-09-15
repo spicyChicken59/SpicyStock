@@ -16,8 +16,8 @@ useDefault = true
 id = "generic-api-key"
 
 [[rules.allowlists]]
-description = "A rule key (lowercase, underscored, digits allowed) in a module, the record or a page fixture"
+description = "A rule key (lowercase, underscored, digits allowed) in a module, the record, an immutable recovery original or a page fixture"
 condition = "AND"
 regexTarget = "secret"
 regexes = ['''^[a-z]+[a-z0-9]*(_[a-z0-9]+)+$''']
-paths = ['''^(src/[a-z0-9_]+\.py|docs/(data|picks)\.json|tests/fixtures/page/[a-z]+\.json)$''']
+paths = ['''^(src/[a-z0-9_]+\.py|docs/(data|picks)\.json|docs/history/[a-f0-9]{40}/(record|(burst|anticipation)-[A-Z0-9][A-Z0-9.-]{0,15})\.json|tests/fixtures/page/[a-z]+\.json)$''']

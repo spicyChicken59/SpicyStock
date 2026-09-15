@@ -83,9 +83,9 @@
   // `following` reads this browser's shelf. Nothing here scans or grades.
   const LENSES = {
     bursts: [['a', 'A-quality', 'the A and A+ grades this record archived'], ['all', 'All bursts', 'every burst the scan archived'],
-      ['ticket', 'With ticket', 'a ticket written into the published record'], ['following', 'Following', 'tonight’s candidates you already saved in this browser']],
+      ['ticket', 'With ticket', 'a ticket written into the published record'], ['following', 'Saved in this scan', 'tonight’s candidates you already saved in this browser']],
     'setting-up': [['all', 'All setups', 'every coil the anticipation scans admitted'],
-      ['ticket', 'With ticket', 'a ticket written into the published record'], ['following', 'Following', 'tonight’s candidates you already saved in this browser']]
+      ['ticket', 'With ticket', 'a ticket written into the published record'], ['following', 'Saved in this scan', 'tonight’s candidates you already saved in this browser']]
   };
   const LENS_WORDS = { a: 'A-quality', all: 'all', ticket: 'with a ticket', following: 'following' };
   // Sorting is presentation. It is offered where the record measures the key
@@ -98,7 +98,7 @@
   // said to be unavailable, rather than a convincing region being invented.
   const CHECK_ANCHOR = { consolidation: 'base', close_near_high: 'burst', range_expansion: 'burst', volume: 'burst', narrow_or_negative: 'prior' };
   const ANCHOR_WORDS = { base: 'Base', burst: 'Burst day', prior: 'Prior day', box: 'Box' };
-  const VIEWS = ['explore', 'record', 'market', 'method'];
+  const VIEWS = ['explore', 'setups', 'record', 'market', 'method'];
   const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -1094,7 +1094,7 @@
     orders: { view: 'explore', open: 'orders' }, scan: { view: 'explore', open: 'scan' }, 'scan-details': { view: 'explore', open: 'scan' },
     'closest-miss': { view: 'explore', open: 'scan', anchor: 'closest-miss' }, tomorrow: { view: 'explore', stage: 'bursts' }, trades: { view: 'explore', stage: 'bursts' },
     alerts: { view: 'explore', stage: 'setting-up' }, 'also-quiet': { view: 'explore', stage: 'setting-up' }, cover: { view: 'explore' }, main: { view: 'explore' }, next: { view: 'explore', anchor: 'next' },
-    following: { view: 'explore', anchor: 'following' }
+    following: { view: 'setups', anchor: 'following' }
   };
   function parseHash(hash) {
     hash = String(hash || '').replace(/^#/, '');
@@ -1107,6 +1107,7 @@
       // lens and selection exactly where they were -- the sheet opens over
       // them and closing it puts them back.
       if (parts[0] === 'followed') return parts.length === 2 ? { followed: parts[1], keepView: true } : { view: 'explore', unknown: '#' + hash };
+      if (parts[0] === 'following') return { view: 'setups' };
       if (VIEWS.indexOf(parts[0]) < 0) return { view: 'explore', unknown: '#' + hash };
       if (parts[0] !== 'explore') return parts.length > 1 ? { view: parts[0], unknown: '#' + hash } : { view: parts[0] };
       const out = { view: 'explore' };
@@ -1180,6 +1181,7 @@
     }
     showView(!first && previousView !== state.view);
     if (state.view === 'explore') renderExplore();
+    if (state.view === 'setups') renderFollowing();
     // the saved setup keeps its own hash, so a bookmark reopens it; every
     // other route is rewritten to the one it resolved to
     if (route.followed) canon = savedHash(route.followed);
@@ -1249,7 +1251,7 @@
     btn.addEventListener('focus', () => { d.querySelectorAll('#pick-list .ss-pick').forEach((p) => { p.tabIndex = p === btn ? 0 : -1; }); });
     // the Compare toggle is a SIBLING of the selection button, never inside it:
     // pinning must not choose the stock, and choosing must not pin it
-    return el('div', { 'class': 'ss-pick-item', role: 'listitem' }, [btn, el('div', { 'class': 'ss-pick__tools' }, pinButton(c, 'card'))]);
+    return el('div', { 'class': 'ss-pick-item', role: 'listitem' }, [btn, el('div', { 'class': 'ss-pick__tools' }, [saveButton(c), pinButton(c, 'card')])]);
   }
   // ---- the lens row: four ways to narrow a stage, the counts, the reset
   function lensTabs(stage) {
@@ -1325,7 +1327,7 @@
     let why;
     if (lens === 'a') why = 'No ' + noun + ' in tonight’s record is graded ' + model.tradeGrades.join(' or ') + '. All ' + plural(total, noun) + ' are still here to inspect.';
     else if (lens === 'ticket') why = 'No ' + noun + ' carries a ticket in tonight’s record' + (reg === 'red' ? ': breadth is red, so the run wrote no order' : '') + '. All ' + plural(total, noun) + ' are still here to inspect.';
-    else why = 'Nothing from tonight’s record is in your Following shelf yet. Follow a setup from its action area and it appears here; it is saved in this browser only.';
+    else why = 'No saved setup matches this scan. My setups contains all your saved signals, including those absent or hidden here.';
     box.appendChild(el('p', { text: why }));
     const out = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-lens-out': 'all', text: 'Show all · ' + total });
     out.addEventListener('click', () => { setLens(stage, 'all', true); state.gesture = true; applyRoute(parseHash(w.location.hash)); });
@@ -2174,8 +2176,9 @@
   // loaded afterwards contributes at most one observation per market date;
   // the original is never rewritten, and no sentence here says bought,
   // filled, held, sold or stopped out.
-  function followEvidenceOf(c) {
-    const run = current.run || {}, app = current.app || {}, sig = signalDate(c) || text(run.session);
+  function followEvidenceOf(c, record) {
+    record = record || current;
+    const run = record.run || {}, app = record.app || {}, sig = text(c.signalSession) || text(run.session);
     // only bars at or before the signal's own session: what was on the screen
     // that night, never a candle that printed after it
     const series = (c.series || []).filter((b) => b && text(b.date) && (!sig || b.date <= sig));
@@ -2186,17 +2189,19 @@
       from: { session: text(run.session), rules_version: text(app.rules_version) }
     };
   }
-  function followSetupOf(c) {
-    const run = current.run || {}, app = current.app || {}, plan = c.plan || {}, t = plan.targets || {}, b = c.row;
+  function followSetupOf(c, record) {
+    record = record || current;
+    const run = record.run || {}, app = record.app || {}, plan = c.plan || {}, t = plan.targets || {}, b = c.row;
     const burst = c.stage === 'bursts';
     const hasTicket = c.status === 'ticket' && isNum(plan.shares) && plan.shares > 0;
     return {
       ticker: c.ticker, kind: burst ? 'burst' : 'anticipation', stage: c.stage, session: run.session || '', rules_version: app.rules_version || '',
       suggested_shares: hasTicket ? plan.shares : null,
-      evidence: followEvidenceOf(c),
+      evidence: followEvidenceOf(c, record),
+      provenance: record.provenance || { session: run.session, published_at: run.published_at, run_id: run.run_id, rules_version: app.rules_version },
       snapshot: {
         name: c.name || '', close: isNum(b.close) ? b.close : null, close_date: run.session || '', grade: c.grade || null, score: isNum(c.score) ? c.score : null,
-        status: c.status, status_words: statusWords(c.status)[0],
+        status: c.status, status_words: statusWords(c.status)[0], scan: b.scan || null, reader_reason: text((b.claude || {}).reason),
         levels: { entry_low: burst ? plan.entry_low : plan.trigger, entry_high: burst ? plan.entry_high : plan.limit, trigger: burst ? plan.entry_ref : plan.trigger,
           limit: burst ? plan.entry_high : plan.limit, day2_spent_above: burst && isNum(plan.day2_spent_above) ? plan.day2_spent_above : null,
           stop: plan.stop, stop_basis: plan.stop_basis || null,
@@ -2226,9 +2231,9 @@
   // is fetched and nothing is derived: each entry is a number the run wrote.
   function recordBarsFor(ticker) {
     const run = current.run || {}, session = text(run.session), out = {};
-    const put = (date, o, h, l, c, v, source) => {
+    const put = (date, o, h, l, c, v, source, origin) => {
       if (!text(date) || !isNum(c)) return;
-      out[date] = { date: date, o: isNum(o) ? o : null, h: isNum(h) ? h : null, l: isNum(l) ? l : null, c: c, v: isNum(v) ? v : null, source: source };
+      out[date] = { date: date, o: isNum(o) ? o : null, h: isNum(h) ? h : null, l: isNum(l) ? l : null, c: c, v: isNum(v) ? v : null, source: source, from_session: origin || session };
     };
     const p = (current.open_plans || []).find((x) => x && x.ticker === ticker);
     if (p) put(text(p.last_date), null, null, null, p.last_close, null, 'the open model plan');
@@ -2237,7 +2242,10 @@
     const b = (current.bursts || []).find((x) => x && x.ticker === ticker);
     if (b) put(session, b.open, b.high, b.low, b.close, b.volume, 'the record’s burst row');
     const ob = ((current.observations || {}).symbols || {})[ticker];
-    if (ob) put(text(ob.date), ob.o, ob.h, ob.l, ob.c, ob.v, 'the record’s observation block');
+    if (ob) {
+      (ob.history || []).forEach(b => put(text(b.date), b.o, b.h, b.l, b.c, b.v, 'public observation history', b.from_session));
+      if (!(ob.history || []).length) put(text(ob.date), ob.o, ob.h, ob.l, ob.c, ob.v, 'the record’s observation block', ob.date < session ? ob.date : session);
+    }
     STAGES.forEach((s) => {
       const cand = model ? model.byId[s + ':' + ticker] : null;
       (cand ? cand.series : []).forEach((x) => put(text(x.date), x.o, x.h, x.l, x.c, x.v, 'the record’s archived bars'));
@@ -2270,25 +2278,25 @@
   // compares the whole identity (kind, symbol, session and rules), so a newer
   // signal for the same ticker can never supply one, and an original already
   // saved is never replaced.
-  function recoverEvidence() {
+  async function recoverEvidence() {
     if (!model) return 0;
     let items = [];
     try { items = SCStock.follow.list(); } catch (e) { return 0; }
     let n = 0;
-    items.forEach((it) => {
-      if (it.evidence) return;
+    for (const it of items) {
+      if (it.evidence) continue;
       const cur = currentSetupFor(it);
-      if (!cur || !cur.same) return;
+      if (!cur || !cur.same) continue;
       const ev = followEvidenceOf(cur.candidate);
-      if (ev && SCStock.follow.attachEvidence(it.id, ev).attached) n++;
-    });
+      if (ev && (await SCStock.follow.commit('attachEvidence', it.id, ev)).attached) n++;
+    }
     if (n) invalidateFollow();
     return n;
   }
   // One pass per loaded record, over the whole shelf: a merge that changes
   // nothing writes nothing, which is what makes a re-render, a reload and a
   // theme change cost no observation.
-  function recordObservations() {
+  async function recordObservations() {
     const run = current.run || {}, app = current.app || {}, session = text(run.session);
     if (!session) return null;
     let items = [];
@@ -2299,7 +2307,7 @@
       if (bars.length) updates.push({ id: it.id, bars: bars, from_session: session, from_rules: text(app.rules_version), basis: basisOf(it, bars, session) });
     });
     if (!updates.length) return null;
-    const res = SCStock.follow.observe(updates);
+    const res = await SCStock.follow.commit('observe', updates);
     if (res && res.changed) invalidateFollow();
     return res;
   }
@@ -2333,7 +2341,7 @@
       return out;   // the one line above already says it; a second would repeat it
     }
     const from = text(latest.from_session) || latest.date;
-    out.stand = !session ? 'unknown' : from === session ? 'current' : from > session ? 'ahead' : 'older';
+    out.stand = !session ? 'unknown' : latest.date === session ? 'current' : latest.date > session ? 'ahead' : 'older';
     out.current = out.stand === 'current';
     if (latest.basis === 'adjusted') out.limitation = BASIS_WORDS.adjusted;
     else if (base) out.change = (latest.c / base - 1) * 100;
@@ -2384,7 +2392,8 @@
     const run = current.run || {}, app = current.app || {};
     const id = SCStock.follow.identity({ kind: c.stage === 'bursts' ? 'burst' : 'anticipation', ticker: c.ticker,
       session: text(run.session), rules_version: text(app.rules_version) });
-    return { candidate: c, same: id === item.id, movedStage: c.stage !== item.stage };
+    const samePublication = !(item.provenance || {}).published_at || item.provenance.published_at === run.published_at;
+    return { candidate: c, same: (id === item.id || item.id.startsWith(id + ':')) && samePublication, movedStage: c.stage !== item.stage };
   }
   // the archived status, said as the record's and dated, so it can never be
   // read as a ticket available now
@@ -2413,7 +2422,7 @@
     if (!link) return;
     let items = [];
     try { items = SCStock.follow.list(); } catch (e) { items = []; }
-    link.textContent = 'Following · ' + items.length;
+    link.textContent = 'My setups · ' + items.length;
     link.hidden = false;
     if (box) box.hidden = false;
     if (sum) {
@@ -2423,34 +2432,175 @@
       sum.title = words ? 'Observed closes, counted against tonight’s record. Not alerts, not new trades and not buy signals.' : '';
     }
   }
+  function setupForSave(c) {
+    const setup = followSetupOf(c), existing = SCStock.follow.find(SCStock.follow.identity(setup));
+    const pub = setup.provenance && setup.provenance.published_at;
+    if (existing && pub && (existing.provenance || {}).published_at && existing.provenance.published_at !== pub) setup.revision_id = 'publication-' + pub;
+    return setup;
+  }
+  function saveButton(c) {
+    const setup = setupForSave(c), id = SCStock.follow.identity(setup), saved = SCStock.follow.find(id);
+    const b = el('button', { type: 'button', 'class': 'sc-btn sc-btn--secondary sc-btn--sm', 'data-save-setup': c.ticker, text: saved ? 'Saved · open' : 'Save setup' });
+    b.addEventListener('click', async () => {
+      if (SCStock.follow.find(id)) { navigate(savedHash(id)); return; }
+      b.disabled = true;
+      const result = await SCStock.follow.commit('add', setup);
+      b.disabled = false;
+      if (!result.ok) { b.insertAdjacentElement('afterend', el('p', { role: 'alert', text: result.error })); return; }
+      afterFollowChange(); renderDetailFollow();
+      if (result.evidenceDropped) setFollowStatus('Setup saved, but its chart did not fit in browser storage. Original chart was not saved.');
+      const replacement = [...d.querySelectorAll('[data-save-setup]')].find(x => x.dataset.saveSetup === c.ticker);
+      if (replacement) replacement.focus();
+    });
+    return b;
+  }
+  const annotationDrafts = new Map();
+  function amountText(amount) {
+    const cents = amount && amount.currency === 'USD' && Number.isSafeInteger(amount.minor_units) ? amount.minor_units : null;
+    return cents === null ? '' : String(Math.floor(cents / 100)) + '.' + String(cents % 100).padStart(2, '0');
+  }
+  function annotationForm(item) {
+    const a = item.annotation || {}, form = el('form', { 'class': 'ss-annotation', novalidate: '' });
+    const taken = el('input', { type: 'checkbox', id: 'setup-taken', checked: a.taken ? '' : null });
+    const amount = el('input', { id: 'setup-amount', 'class': 'sc-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'Optional', value: annotationDrafts.has(item.id) ? annotationDrafts.get(item.id) : amountText(a.reference_amount) });
+    const message = el('p', { 'class': 'sc-hint', role: 'status', 'data-annotation-status': '', text: annotationDrafts.has(item.id) ? 'Unsaved amount: save to keep this edit.' : '' });
+    const submit = el('button', { type: 'submit', 'class': 'sc-btn sc-btn--secondary sc-btn--sm', text: 'Save amount' });
+    const clearAmount = el('button', { type: 'button', 'class': 'sc-btn sc-btn--ghost sc-btn--sm', text: 'Clear amount' });
+    form.appendChild(el('label', { 'class': 'ss-annotation__taken', for: 'setup-taken' }, [taken, ' I took this setup']));
+    form.appendChild(el('label', { for: 'setup-amount', text: 'Reference amount (USD)' }));
+    form.appendChild(el('div', { 'class': 'ss-annotation__amount' }, [amount, submit, clearAmount]));
+    form.appendChild(el('p', { 'class': 'sc-hint', text: 'Optional, browser-local notes. A marking time is not a purchase date. Unmarked means unmarked. Amounts do not imply shares, fills or personal P&L.' }));
+    form.appendChild(message);
+    if (a.taken_marked_at) form.appendChild(el('p', { 'class': 'sc-hint', text: 'Indication marked at ' + a.taken_marked_at + ' (not a purchase date).' }));
+    amount.addEventListener('input', () => annotationDrafts.set(item.id, amount.value));
+    taken.addEventListener('change', async () => {
+      const want = taken.checked;
+      const res = await SCStock.follow.commit('setAnnotation', item.id, 'taken', want);
+      message.textContent = res.ok ? 'Indication saved in this browser.' : res.error;
+      if (!res.ok) taken.checked = !want;
+      afterFollowChange();
+    });
+    const save = async () => {
+      const draft = amount.value.trim(); annotationDrafts.set(item.id, draft);
+      submit.disabled = true;
+      const res = await SCStock.follow.commit('setAnnotation', item.id, 'amount', draft);
+      submit.disabled = false;
+      message.textContent = res.ok ? (draft ? 'Reference amount saved in this browser.' : 'Amount cleared; reference amount is unknown.') : res.error;
+      if (!res.ok) recoveryDownload(form);
+      if (res.ok) { annotationDrafts.delete(item.id); afterFollowChange(); }
+    };
+    form.addEventListener('submit', e => { e.preventDefault(); save(); });
+    clearAmount.addEventListener('click', () => { amount.value = ''; save(); });
+    return form;
+  }
+
+  // Public recovery is loaded only on request. No annotation, amount, saved
+  // identity, or private selection is sent: index search happens in memory.
+  let recoveryIndex = null, recoveryRequest = 0, recoveryPanel = null;
+  async function publicJSON(path, digest) {
+    if (!/^(?:index\.json|[a-f0-9]{40}\/(?:record|(?:burst|anticipation)-[A-Z0-9][A-Z0-9.-]{0,15})\.json)$/.test(path)) throw new Error('Invalid archive path.');
+    const response = await fetch('history/' + path, { credentials: 'omit', referrerPolicy: 'no-referrer' });
+    if (!response.ok) throw new Error('This original is unavailable in the retained public archive.');
+    const bytes = await response.arrayBuffer();
+    if (bytes.byteLength > (path === 'index.json' ? 8 * 1024 * 1024 : 256 * 1024)) throw new Error('Archive exceeds the supported bound.');
+    if (digest) {
+      const actual = [...new Uint8Array(await w.crypto.subtle.digest('SHA-256', bytes))].map(x => x.toString(16).padStart(2, '0')).join('');
+      if (actual !== digest) throw new Error('Archived source failed its integrity check. Nothing was saved.');
+    }
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+  async function findEarlier(event) {
+    event.preventDefault();
+    const request = ++recoveryRequest, ticker = $('history-ticker').value.trim().toUpperCase();
+    const status = $('history-status'), host = clear($('history-results'));
+    if (recoveryPanel) { recoveryPanel.dispose(); recoveryPanel = null; }
+    if (!/^[A-Z0-9][A-Z0-9.-]{0,15}$/.test(ticker)) { status.textContent = 'Enter a ticker such as ATEC or VICR.'; return; }
+    status.textContent = 'Reading the public archive…';
+    try {
+      if (!recoveryIndex) recoveryIndex = await publicJSON('index.json');
+      const index = recoveryIndex;
+      if (index.version !== 1 || !Array.isArray(index.entries) || !Array.isArray(index.dates) || !index.records) throw new Error('This public archive version is unavailable.');
+      if (request !== recoveryRequest) return;
+      status.textContent = 'Available signal dates: ' + index.dates.join(', ') + '. Public window: ' + index.days + ' calendar days through ' + index.as_of + '. Local saves do not expire.';
+      const cutoff = new Date(nowAt()); cutoff.setUTCDate(cutoff.getUTCDate() - index.days);
+      const hits = index.entries.filter(e => e.ticker === ticker && index.records[e.source] && index.records[e.source].session >= cutoff.toISOString().slice(0, 10));
+      if (!hits.length) { host.appendChild(el('p', { text: 'No retained published original found for ' + ticker + '. It may be unavailable or outside the public window; no recommendation was reconstructed.' })); return; }
+      hits.forEach(entry => {
+        const source = index.records[entry.source];
+        const card = el('article', { 'class': 'ss-history__result', 'data-history-source': entry.source });
+        card.appendChild(el('h3', { text: ticker + ' · ' + source.session + ' · ' + entry.kind }));
+        card.appendChild(el('p', { 'class': 'sc-hint', text: 'Published grade: ' + (entry.grade || 'not graded') + (entry.scan ? ' · scan ' + entry.scan : '') + ' · ' + (entry.chart ? 'original chart available' : 'Original chart unavailable in this archived record') }));
+        card.appendChild(el('p', { 'class': 'sc-hint ss-history__source', text: 'Published ' + source.published_at + ' · source ' + entry.source }));
+        const inspect = el('button', { type: 'button', 'class': 'sc-btn sc-btn--secondary sc-btn--sm', text: 'Inspect original', 'data-history-inspect': entry.source });
+        inspect.addEventListener('click', async () => {
+          inspect.disabled = true;
+          try {
+            const [context, evidence] = await Promise.all([publicJSON(entry.source + '/record.json', source.context_sha256), publicJSON(entry.path, entry.sha256)]);
+            if (request !== recoveryRequest) return;
+            if (evidence.source !== entry.source || evidence.row.ticker !== ticker || evidence.kind !== entry.kind || context.run.session !== source.session || context.app.rules_version !== source.rules_version) throw new Error('Archive identity does not match the selected original.');
+            const record = Object.assign({}, context, { bursts: evidence.kind === 'burst' ? [evidence.row] : [], watchlist: { top: evidence.kind === 'anticipation' && !evidence.quiet ? [evidence.row] : [], also_quiet: evidence.kind === 'anticipation' && evidence.quiet ? [evidence.row] : [] } });
+            const c = buildModel(record).byId[(entry.kind === 'burst' ? 'bursts:' : 'setting-up:') + ticker];
+            c.signalSession = source.session;
+            const setup = followSetupOf(c, record);
+            setup.provenance = source;
+            if (setup.evidence) setup.evidence.recovered = true;
+            const previous = SCStock.follow.find(SCStock.follow.identity(setup));
+            if (previous && ((previous.provenance || {}).record_id !== source.record_id) && ((previous.provenance || {}).published_at !== source.published_at)) setup.revision_id = source.record_id;
+            const preview = el('div', { 'class': 'ss-history__preview' });
+            preview.appendChild(el('p', { text: 'Original status: ' + statusWords(c.status)[0] + '. ' + c.reason + '. Signal close ' + usd(c.row.close) + ' on ' + source.session + '. Historical research only.' }));
+            preview.appendChild(el('p', { text: setup.snapshot.summary }));
+            if (setup.snapshot.reader_reason) preview.appendChild(el('p', { 'class': 'sc-hint', text: 'Original chart reader: ' + setup.snapshot.reader_reason }));
+            if (recoveryPanel) recoveryPanel.dispose();
+            if (c.series.length) { recoveryPanel = chartPanel(c, { idPrefix: 'recovery', height: 280 }); preview.appendChild(recoveryPanel.node); }
+            else preview.appendChild(el('p', { text: 'Original chart unavailable in this archived record. No later chart is substituted.' }));
+            const save = el('button', { type: 'button', 'class': 'sc-btn sc-btn--secondary', text: 'Save this original', 'data-history-save': ticker });
+            save.addEventListener('click', async () => {
+              const result = await SCStock.follow.commit('add', setup);
+              if (!result.ok) { status.textContent = result.error; return; }
+              await recordObservations(); afterFollowChange();
+              if (result.evidenceDropped) status.textContent = 'Setup saved, but chart evidence did not fit; the chart was not saved.';
+              navigate(savedHash(result.item.id));
+            });
+            preview.appendChild(save); card.querySelector('.ss-history__preview')?.remove(); card.appendChild(preview); save.focus();
+          } catch (error) { status.textContent = error.message; } finally { inspect.disabled = false; }
+        });
+        card.appendChild(inspect); host.appendChild(card);
+      });
+    } catch (error) { status.textContent = error.message; }
+  }
+  $('history-search').addEventListener('submit', findEarlier);
+
   function followBlock(c) {
-    const setup = followSetupOf(c), id = SCStock.follow.identity(setup), st0 = SCStock.follow.status();
-    const item = st0.available ? SCStock.follow.find(id) : null;
+    const setup = setupForSave(c), id = SCStock.follow.identity(setup), st0 = SCStock.follow.status();
+    const item = SCStock.follow.find(id);
     const box = el('div', { 'class': 'sc-actionbar__more ss-follow', 'data-follow': item ? 'following' : 'not-following', 'data-follow-id': id });
     const redraw = () => { const next = followBlock(c); box.parentNode.replaceChild(next, box); return next; };
-    const warn = (msg) => { box.querySelectorAll('.ss-follow__warn').forEach((x) => x.remove()); box.appendChild(el('p', { 'class': 'ss-follow__warn', role: 'alert', text: msg })); };
+    const warn = (msg) => { box.querySelectorAll('.ss-follow__warn').forEach((x) => x.remove()); box.appendChild(el('p', { 'class': 'ss-follow__warn', role: 'alert', text: msg })); recoveryDownload(box); };
     if (!st0.available) {
       box.appendChild(chip('not saved', 'neutral'));
       warn(st0.error || 'Storage is blocked in this browser; nothing can be followed here.');
       return box;
     }
     if (!item) {
-      const btn = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Follow this setup', 'data-follow-action': 'add' });
-      btn.addEventListener('click', () => {
-        const res = SCStock.follow.add(setup);
+      const btn = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Save setup', 'data-follow-action': 'add' });
+      btn.addEventListener('click', async () => {
+        const res = await SCStock.follow.commit('add', setup);
         if (!res.ok) { warn(res.error); return; }
-        redraw(); afterFollowChange();
+        const next = redraw(); afterFollowChange();
+        if (res.evidenceDropped) { next.appendChild(el('p', { role: 'alert', text: 'Setup saved, but chart evidence did not fit. Original chart was not saved.' })); }
+        const focus = next.querySelector('a,button'); if (focus) focus.focus();
       });
       box.appendChild(btn);
       box.appendChild(el('p', { 'class': 'ss-follow__hint', text: setup.suggested_shares ? plural(setup.suggested_shares, 'share') + ' suggested by the plan · saved in this browser only' : (c.status === 'ticket' ? 'for observation, no size suggested' : 'for observation, ' + statusWords(c.status)[0] + ' · saved in this browser only') }));
       return box;
     }
-    box.appendChild(chip('following', 'good'));
+    box.appendChild(chip('saved', 'good'));
+    if (item.evidence_dropped) box.appendChild(el('p', { role: 'alert', text: 'Setup saved without chart evidence: browser storage was full.' }));
     const size = isNum(item.reference_shares) ? 'your reference size ' + plural(item.reference_shares, 'share') + (isNum(item.suggested_shares) ? ' (plan suggested ' + item.suggested_shares + ')' : '') : (isNum(item.suggested_shares) ? plural(item.suggested_shares, 'share') + ' suggested by the plan' : 'for observation, no size');
     box.appendChild(el('p', { 'class': 'ss-follow__hint', text: size + ' · saved in this browser, not a broker fill' }));
     const edit = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Edit size', 'data-follow-action': 'edit' });
-    const undo = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Undo', 'data-follow-action': 'remove' });
-    const link = el('a', { 'class': 'sc-link--quiet', href: '#following', text: 'Following shelf' });
+    const undo = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Remove', 'data-follow-action': 'remove' });
+    const link = el('a', { 'class': 'sc-link--quiet', href: '#following', text: 'Open My setups' });
     edit.addEventListener('click', () => {
       const form = el('form', { 'class': 'ss-follow__form', novalidate: '' });
       const input = el('input', { 'class': 'sc-input', type: 'number', min: '1', max: String(SCStock.follow.SHARES_MAX), step: '1', inputmode: 'numeric', value: String(isNum(item.reference_shares) ? item.reference_shares : (item.suggested_shares || 1)), 'aria-label': 'Your reference size in whole shares' });
@@ -2458,19 +2608,21 @@
       const cancel = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Cancel' });
       const clearBtn = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Use the suggested size', hidden: isNum(item.reference_shares) ? null : '' });
       form.appendChild(input); form.appendChild(save); form.appendChild(clearBtn); form.appendChild(cancel);
-      form.addEventListener('submit', (e) => {
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const n = input.value.trim() === '' ? NaN : Number(input.value);
-        const res = SCStock.follow.setShares(id, Number.isInteger(n) ? n : NaN);
+        const res = await SCStock.follow.commit('setShares', id, Number.isInteger(n) ? n : NaN);
         if (!res.ok) { warn(res.error); return; }
         redraw(); afterFollowChange();
       });
-      clearBtn.addEventListener('click', () => { const res = SCStock.follow.setShares(id, null); if (!res.ok) { warn(res.error); return; } redraw(); afterFollowChange(); });
+      clearBtn.addEventListener('click', async () => { const res = await SCStock.follow.commit('setShares', id, null); if (!res.ok) { warn(res.error); return; } redraw(); afterFollowChange(); });
       cancel.addEventListener('click', () => { redraw(); });
       edit.replaceWith(form); input.focus();
     });
-    undo.addEventListener('click', () => { const res = SCStock.follow.remove(id); if (!res.ok) { warn(res.error); return; } redraw(); afterFollowChange(); });
+    undo.addEventListener('click', async () => { const res = await SCStock.follow.commit('remove', id); if (!res.ok) { warn(res.error); return; } redraw(); afterFollowChange(); });
     box.appendChild(edit); box.appendChild(undo); box.appendChild(link);
+    const open = el('button', { type: 'button', 'class': 'sc-btn sc-btn--secondary sc-btn--sm', text: 'Open saved setup' });
+    open.addEventListener('click', () => { closeCompare(); navigate(savedHash(id)); }); box.appendChild(open);
     return box;
   }
   // business days between two dates: the trail's own x axis, so a gap in the
@@ -2532,7 +2684,7 @@
     // what was followed, and when its signal was
     card.appendChild(el('div', { 'class': 'ss-followed__row' }, [open,
       el('span', { 'class': 'ss-followed__meta', text: (item.kind === 'anticipation' ? 'setting up' : 'burst') + ' · signal ' + dateWords(item.session) }),
-      el('div', { 'class': 'ss-followed__chips' }, [chip(archivedWords(item), snap.status === 'ticket' ? 'good' : 'neutral', true), item.demo ? chip('demo', 'warn') : null])]));
+      el('div', { 'class': 'ss-followed__chips' }, [snap.grade ? chip('original ' + snap.grade, 'brand') : null, chip(archivedWords(item), snap.status === 'ticket' ? 'good' : 'neutral', true), item.demo ? chip('demo', 'warn') : null])]));
     // group one: the original, frozen
     const at = el('div', { 'class': 'ss-followed__group', 'data-group': 'signal' }, [el('span', { 'class': 'sc-eyebrow', text: 'at the signal' })]);
     const levels = [];
@@ -2547,6 +2699,9 @@
     at.appendChild(el('p', { 'class': 'ss-followed__size', text: isNum(item.reference_shares)
       ? 'your reference size ' + plural(item.reference_shares, 'share') + (isNum(item.suggested_shares) ? ' · plan suggested ' + item.suggested_shares : '')
       : (isNum(item.suggested_shares) ? plural(item.suggested_shares, 'share') + ' suggested by the plan' : 'observation only, no size') }));
+    const annotation = item.annotation || {};
+    if (annotation.taken) at.appendChild(el('p', { 'class': 'sc-hint', text: 'You marked: I took this setup' }));
+    if (annotation.reference_amount) at.appendChild(el('p', { 'class': 'sc-hint', text: 'Reference amount: USD ' + amountText(annotation.reference_amount) }));
     card.appendChild(at);
     // group two: what has been seen since
     const since = el('div', { 'class': 'ss-followed__group', 'data-group': 'since' }, [el('span', { 'class': 'sc-eyebrow', text: 'since the signal' })]);
@@ -2568,20 +2723,32 @@
     card.appendChild(since);
     if (text(snap.summary)) card.appendChild(el('p', { 'class': 'ss-followed__note' }, [el('span', { 'class': 'ss-followed__note-label', text: 'the record says' }), ' “' + snap.summary + '”']));
     const actions = el('div', { 'class': 'ss-followed__actions' });
-    const openBtn = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Open followed setup', 'data-open-saved': item.id });
+    const openBtn = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Open saved setup', 'data-open-saved': item.id });
     openBtn.addEventListener('click', () => open.click());
     const remove = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', text: 'Remove' });
-    remove.addEventListener('click', () => { const res = SCStock.follow.remove(item.id); if (!res.ok) { setFollowStatus(res.error); return; } if (state.view === 'explore') renderDetailFollow(); afterFollowChange(); });
+    remove.addEventListener('click', async () => { const res = await SCStock.follow.commit('remove', item.id); if (!res.ok) { setFollowStatus(res.error); return; } if (state.view === 'explore') renderDetailFollow(); afterFollowChange(); });
     actions.appendChild(openBtn); actions.appendChild(remove);
     card.appendChild(actions);
     return card;
+  }
+  function recoveryDownload(host) {
+    if (!SCStock.follow.pending() || host.querySelector('[data-storage-recovery]')) return;
+    const button = el('button', { type: 'button', 'class': 'sc-btn sc-btn--secondary sc-btn--sm', 'data-storage-recovery': '', text: 'Download recovery copy' });
+    button.addEventListener('click', () => {
+      const pending = SCStock.follow.pending();
+      const url = URL.createObjectURL(new Blob([JSON.stringify(pending, null, 2)], { type: 'application/json' }));
+      const link = el('a', { href: url, download: 'spicystock-local-recovery.json' }); link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+    host.appendChild(button);
   }
   function setFollowStatus(msg) { const p = $('following-status'); if (!p) return; p.textContent = msg || ''; p.hidden = !msg; }
   function renderFollowing() {
     const list = $('following-list'), count = $('following-count');
     if (!list) return;
     clear(list);
-    const st0 = SCStock.follow.status(), items = st0.available ? SCStock.follow.list() : [];
+    recoveryDownload($('following'));
+    const st0 = SCStock.follow.status(), items = SCStock.follow.list();
     if (count) count.textContent = items.length ? plural(items.length, 'setup') + ' · saved in this browser' : 'saved in this browser';
     // a migration is reported for as long as the page is open, because the
     // store it happened to no longer says it did
@@ -2592,7 +2759,7 @@
     const notes = (st0.notes || []).filter((n) => n && n !== mig);
     const rest = notes.length ? notes : [st0.error && st0.error !== mig ? st0.error : ''];
     setFollowStatus([mig, st0.aside && rest.indexOf(st0.aside) < 0 ? st0.aside : ''].concat(rest).filter(Boolean).join(' '));
-    if (!items.length) { list.appendChild(el('div', { 'class': 'ss-following__empty', text: st0.available ? 'Nothing followed yet. Follow a setup from its action area to keep it in view here; it is saved in this browser only, and a saved plan is never a trade.' : 'Nothing can be followed in this browser.' })); return; }
+    if (!items.length) { list.appendChild(el('div', { 'class': 'ss-following__empty', text: st0.available ? 'No saved setups yet. Save a setup from Today’s scan, or find an earlier published signal above. No amount or purchase information is needed.' : 'Nothing can be followed in this browser.' })); return; }
     items.slice().reverse().forEach((it) => list.appendChild(followedCard(it)));
   }
   // One refresh after any change to the shelf: the shelf itself, the jump
@@ -2608,7 +2775,7 @@
   }
   // another tab followed, unfollowed or resized something: this one re-reads
   // the store rather than writing its own idea of the list over it
-  SCStock.follow.onChange(() => { if (current) { invalidateFollow(); renderFollowing(); followJump(); if (savedOpen) openSaved(savedOpen, false); } });
+  SCStock.follow.onChange(() => { if (current) { invalidateFollow(); renderFollowing(); followJump(); if (savedOpen) openSaved(savedOpen, false); renderDetailFollow(); if (model && state.view === 'explore') { state.picksKey = null; renderPicks(); } } });
   // the chosen stock's follow block, redrawn after a change made from the shelf
   function renderDetailFollow() {
     const box = d.querySelector('#detail .ss-follow'), c = model && model.byId[state.selected[state.stage]];
@@ -2646,6 +2813,9 @@
     const snap = item.snapshot || {}, lv = snap.levels || {}, rows = [];
     const put = (k, v) => { if (v) rows.push([k, v]); };
     put('stage', (item.kind === 'anticipation' ? 'setting up' : 'burst') + ' · ' + dateWords(item.session));
+    put('published', (item.provenance || {}).published_at || 'publication time not retained in this older save');
+    put('source record', (item.provenance || {}).record_id || ((item.provenance || {}).run_id ? 'workflow run ' + item.provenance.run_id : 'source identifier not retained in this older save'));
+    put('scan', snap.scan);
     put('grade', snap.grade ? snap.grade + (isNum(snap.score) ? ' · ' + snap.score.toFixed(1) : '') + ' in that record' : 'no grade was archived');
     put('signal close', isNum(snap.close) ? usd(snap.close) + ' on ' + dateWords(text(snap.close_date) || item.session) : '');
     put('trigger', isNum(lv.trigger) ? usd(lv.trigger) : '');
@@ -2671,7 +2841,7 @@
       box.appendChild(savedPanel.node);
     } else {
       box.appendChild(el('div', { 'class': 'ss-chart-empty', 'data-chart': 'unsaved' }, [
-        el('strong', { text: 'Original chart was not saved. ' }),
+        el('strong', { text: item.evidence_dropped ? 'Original chart was not saved because browser storage was full. ' : item.provenance && item.provenance.record_id ? 'Original chart unavailable in this archived record. ' : 'Original chart was not saved. ' }),
         'This setup was kept before this page saved chart evidence, or the record carried no daily bars for ' + item.ticker + ' that night. The levels and the reasons below are the ones saved with it; no chart is reconstructed from a later record, because a later record is a different signal.'
       ]));
     }
@@ -2679,6 +2849,7 @@
     savedFacts(item).forEach((r) => dl.appendChild(el('div', null, [el('dt', { text: r[0] }),
       typeof r[1] === 'string' ? el('dd', { text: r[1] }) : el('dd', null, r[1])])));
     box.appendChild(dl);
+    if (snap.reader_reason) box.appendChild(el('p', { 'class': 'sc-hint', text: 'Original chart reader: ' + snap.reader_reason }));
     if (text(snap.summary)) box.appendChild(el('p', { 'class': 'ss-saved__quote' }, [el('span', { 'class': 'sc-eyebrow', text: 'the record said' }), ' “' + snap.summary + '”']));
     if (text(snap.withheld_reason)) box.appendChild(el('p', { 'class': 'ss-saved__quote', 'data-saved-reason': '' }, [el('span', { 'class': 'sc-eyebrow', text: 'no ticket, because' }), ' ' + cap(sentence(snap.withheld_reason))]));
     const lim = (snap.limitations || []).slice();
@@ -2708,6 +2879,10 @@
       if (trail) box.appendChild(trail);
     } else box.appendChild(el('p', { 'class': 'ss-saved__latest ss-saved__latest--none', text: 'No later close has been observed for ' + item.ticker + '.' }));
     if (o.limitation) box.appendChild(el('p', { 'class': 'sc-hint ss-saved__limit', text: o.limitation }));
+    const horizon = (current.observations || {}).days || 21;
+    const daysSince = (parseISO(text((current.run || {}).session)) - parseISO(item.session)) / 86400000;
+    const coverage = daysSince > horizon ? 'The public observation window has ended. Your saved setup and last actual observation remain here.' : !recordBarsFor(item.ticker).length ? 'Not observed in the loaded record. This does not establish a delisting.' : '';
+    if (coverage) box.appendChild(el('p', { 'class': 'sc-hint', text: coverage }));
     if (o.coverage) box.appendChild(el('p', { 'class': 'sc-hint ss-saved__limit', text: o.coverage }));
     if (o.count) {
       const head = ['session', 'close', 'against the signal', 'where it came from'];
@@ -2759,6 +2934,7 @@
         el('div', null, [el('div', { 'class': 'sc-eyebrow', text: 'saved setup' }), el('h2', { id: 'saved-h2', text: 'Not saved in this browser' })]), close]));
       wrap.appendChild(el('p', { 'class': 'ss-saved__lede', 'data-saved-missing': '', text: 'This link names a setup saved in a browser, and this browser does not hold it. A followed setup lives in local storage and travels nowhere: not to the record, not to the repository, not to another device. Nothing is missing from the record — there is simply no local copy here.' }));
       wrap.appendChild(el('p', { 'class': 'sc-hint', text: 'The identity in the link is ' + id + '.' }));
+      if (annotationDrafts.has(id)) wrap.appendChild(el('label', { text: 'Your unsaved reference amount (USD)' }, el('input', { 'class': 'sc-input', value: annotationDrafts.get(id), 'aria-label': 'Unsaved reference amount, available to copy' })));
       dlg.appendChild(wrap);
       return close;
     }
@@ -2771,6 +2947,7 @@
       el('div', { 'class': 'ss-saved__chips' }, [chip(archivedWords(item), snap.status === 'ticket' ? 'good' : 'neutral', true), item.demo ? chip('demo', 'warn') : null]),
       close]));
     wrap.appendChild(el('p', { 'class': 'ss-saved__note', text: cap((text(snap.status_words) || 'no ticket')) + ' in the ' + dateWords(item.session) + ' record — a fact about that record, not a ticket available now.' }));
+    wrap.appendChild(annotationForm(item));
     wrap.appendChild(savedSignalSection(item));
     wrap.appendChild(savedSinceSection(item));
     const foot = el('div', { 'class': 'ss-saved__foot' });
@@ -2790,9 +2967,9 @@
         ? item.ticker + ' is on no list in tonight’s record, so there is no current setup to open. The saved one above is unaffected.'
         : 'No record is loaded, so there is no current setup to compare this with. The saved one above is unaffected: it lives in this browser.' }));
     }
-    const remove = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', 'data-saved-remove': '', text: 'Remove from Following' });
-    remove.addEventListener('click', () => {
-      const res = SCStock.follow.remove(item.id);
+    const remove = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', 'data-saved-remove': '', text: 'Remove from My setups' });
+    remove.addEventListener('click', async () => {
+      const res = await SCStock.follow.commit('remove', item.id);
       if (!res.ok) { foot.appendChild(el('p', { 'class': 'ss-follow__warn', role: 'alert', text: res.error })); return; }
       closeSaved(); if (state.view === 'explore') renderDetailFollow(); afterFollowChange();
     });
@@ -2811,7 +2988,10 @@
     // over a newer record does not overwrite it with the sheet's own route
     if (savedOpen !== id || !dlg.open) savedReturn = { focus: d.activeElement, scroll: w.pageYOffset || w.scrollY || 0, hash: first ? '' : lastHash };
     savedOpen = id;
+    const active = d.activeElement, focused = active && dlg.contains(active) ? active.id : null;
+    const selection = focused === 'setup-amount' ? [active.selectionStart, active.selectionEnd] : null;
     const close = buildSaved(dlg, item, id);
+    if (focused && $(focused)) { $(focused).focus(); if (selection) $(focused).setSelectionRange(...selection); }
     if (!dlg.open) { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', ''); close.focus(); }
   }
   function closeSaved() {
@@ -2832,7 +3012,7 @@
     disposeSaved();
     clear(dlg);
     if (!wasOpen || String(w.location.hash).indexOf('#/followed/') !== 0) return;
-    const to = b && b.hash && b.hash.indexOf('#/followed/') !== 0 ? b.hash : '#/explore';
+    const to = b && b.hash && b.hash.indexOf('#/followed/') !== 0 ? b.hash : '#/setups';
     if (w.location.hash !== to) w.location.hash = to;
     if (!b) return;
     if (b.focus && b.focus.isConnected && b.focus.focus) b.focus.focus({ preventScroll: true });
@@ -3812,8 +3992,7 @@
     // one observation pass per loaded record, BEFORE the shelf is drawn, so
     // the card and the saved detail read the same saved history rather than
     // each re-deriving one from the record
-    recoverEvidence();
-    recordObservations();
+    recoverEvidence().then(recordObservations).then(() => { renderFollowing(); followJump(); if (savedOpen) openSaved(savedOpen, false); });
     renderFollowing();
     followJump();
     renderTray();
