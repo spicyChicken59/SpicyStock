@@ -688,6 +688,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
 
         rep.stage = "plan"
         rec = record.load(docs)
+        record_problem = rec.get("problem")
         if rec.get("problem"):
             log.warning("picks.json: %s", rec["problem"])
         open_now = record.open_plans(rec, frames, session.isoformat(), regime.get("verdict", "green"))
@@ -759,7 +760,8 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             rec = record.append(rec, session.isoformat(), picks, regime.get("verdict", "green"))
         walk_session = expected if closed else session
         open_plans = record.open_plans(rec, frames, walk_session.isoformat(), regime.get("verdict", "green"))
-        scorecard = record.scorecard(rec, frames, session.isoformat())
+        scorecard = record.scorecard(rec, frames, session.isoformat(), input_basis=run_block["input_basis"],
+                                     replay_rules_version=report.rules_version(rules_block), problem=record_problem)
 
         rep.stage = "publish"
         miss = report.closest_miss([_strip_private(b) for b in bursts], trades, beyond_cap)

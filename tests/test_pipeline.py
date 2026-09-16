@@ -101,7 +101,7 @@ def test_a_clean_night_publishes_a_trade_with_its_ticket_and_records_the_pick(ma
     assert [r["ticker"] for r in watch["top"]] == ["COIL"]
     assert watch["top"][0]["plan"]["order_line"] and watch["top"][0]["box"]["sessions"] >= 3
     assert watch["instruction"] == plan.ANTICIPATION_INSTRUCTION and watch["counts"]["coiled"] == 1
-    assert data["open_plans"] == [] and data["scorecard"]["plans"] == 0
+    assert data["open_plans"] == [] and data["scorecard"]["plans"] == data["scorecard"]["pending"] == 2
     assert data["nights"] == [{"session": SESSION, "status": "ok", "published_at": data["generated"]}]
     assert data["rules"]["plan"]["final_exit_day"] == plan.FINAL_EXIT_DAY
     assert data["breadth"]["universe"] >= 12 and data["breadth"]["notes"][0]["key"] == "ratio_10d"
@@ -122,7 +122,10 @@ def test_the_next_night_follows_the_pick_from_bars_alone(market, claude, fake_re
     assert set(held) == {"AAA", "COIL"}
     assert held["AAA"]["picked"] == SESSION and held["AAA"]["day"] == 1 and held["AAA"]["targets"]
     assert held["AAA"]["status"] in ("hold", "sell_half", "stopped", "exit", record.NOT_FILLED, record.UNCERTAIN)
-    assert len(data["nights"]) == 2 and data["scorecard"]["plans"] == 2
+    assert len(data["nights"]) == 2
+    published = json.loads((docs / record.PICKS_FILE).read_text())["picks"]
+    assert data["scorecard"]["plans"] == len(published)
+    assert data["scorecard"]["pending"] == sum(p["date"] == "2026-09-11" for p in published)
 
 
 def test_a_dry_run_writes_the_record_and_mails_nothing_and_records_no_pick(market, claude, fake_resend, tmp_path):
@@ -146,7 +149,7 @@ def test_the_committed_fixture_lends_the_first_night_neither_its_nights_nor_its_
     rep, data, docs = evening(tmp_path, market, now=datetime(2026, 9, 11, 22, 30, tzinfo=timezone.utc))
     assert rep.exit_code() == 0, rep.problems
     assert data["nights"] == [{"session": "2026-09-11", "status": "ok", "published_at": data["generated"]}]
-    assert data["open_plans"] == [] and data["scorecard"]["plans"] == 0
+    assert data["open_plans"] == [] and data["scorecard"]["plans"] == data["scorecard"]["pending"] == 2
     assert "fixture" not in data
     picks = json.loads((docs / record.PICKS_FILE).read_text())
     assert "fixture" not in picks and [p["ticker"] for p in picks["picks"]] == ["AAA", "COIL"]

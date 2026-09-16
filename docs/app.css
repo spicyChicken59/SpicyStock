@@ -705,3 +705,6 @@
 /* Cards already stack their selection and tools in a column. Wrapping that
    column with a 100% basis pushes the tools underneath the next mobile card. */
 .ss-pick__tools { width: 100%; justify-content: flex-end; }
+
+/* Reuse the shared count strip at a compact scale, including two columns on phones. */
+.ss-scorecard-counts { --sc-stat-pad: var(--sc-s2); --sc-stat-size: 30px; }

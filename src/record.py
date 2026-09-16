@@ -11,7 +11,8 @@ every night, both computed from the bars the run already fetched:
   a human having typed a fill. It is a model of the published plan; nothing
   here knows what the reader holds.
 * ``scorecard()``: the same walk over the last ``SCORECARD_SESSIONS`` sessions
-  of picks, settled at day 5, in R (the published stop is one R on the whole
+  of picks plus the current publication, settled at day 5 with complete bars,
+  in R (the published stop is one R on the whole
   position, every sale weighted by the whole shares it sold), beside SPY over
   the same days as one comparison line. It is the rules' record, not the
   reader's, and it is unreadable as a rate below ``SCORECARD_MIN_PLANS`` --
@@ -37,6 +38,7 @@ import json
 import logging
 import math
 import os
+import statistics
 import time
 from datetime import date, timedelta
 from pathlib import Path
@@ -88,7 +90,7 @@ SCORECARD_NOTE = ("from bars alone, a model and not a brokerage record: a fill i
                   "open at or over the trigger and at or under the limit; a day that reaches the trigger after "
                   "the open, an open past the limit or under the skip line that could still have filled, and a "
                   "fill-day low under the stop are uncertain, counted here and in no rate; the published stop "
-                  "is one R on the whole position, every sale weighted by the whole shares it sold, settled by "
+                  "is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by "
                   f"day {plan.FINAL_EXIT_DAY}")
 
 #: The keys a pick must carry to be walked; anything else it carries is kept.
@@ -501,74 +503,100 @@ def _spy_move(spy: pd.DataFrame | None, entry_date: str, exit_date: str) -> floa
     return 100 * (b["c"] / a["o"] - 1)
 
 
-def scorecard(rec: dict, frames: dict[str, pd.DataFrame], session: str) -> dict:
-    """The rules' record over the last ``SCORECARD_SESSIONS`` sessions of
-    picks: how many plans, how many the bars can say filled, how many are
-    uncertain (by reason) or could not have filled, wins and losses among
-    the settled ones, average and summed R, and SPY over the same days.
-    Every count is a count; the rates are over the settled plans alone, None
-    until ``SCORECARD_MIN_PLANS`` have settled -- an uncertain plan never
-    counts toward that -- and the page prints the counts either way."""
-    window = set(sessions_before(frames, session, SCORECARD_SESSIONS))
-    spy = frames.get(BENCHMARK)
-    plans = filled = wins = losses = settled = open_now = uncertain = not_filled = unreadable = unscored = 0
-    reasons: dict[str, int] = {}
-    rs: list[float] = []
-    spy_moves: list[float] = []
+# Reporting contract, not a trading rule. These mutually exclusive buckets
+# reconcile to all retained publications in the stated window.
+SCORECARD_VERSION = 2
+SCORECARD_BUCKETS = ("settled", "open", "pending", "uncertain", "not_filled", "unmeasured", "unreadable", "unscored")
+
+
+def scorecard_rows(rec: dict, frames: dict[str, pd.DataFrame], session: str) -> list[dict]:
+    """One audit row per retained plan in the prior window or current session.
+
+    Replay remains the sole fill/exit authority. Only its five-session horizon
+    is supplied: a hole after that horizon cannot erase a resolved result.
+    An unfinished walk with stale coverage is unmeasured, not currently open.
+    """
+    window = set(sessions_before(frames, session, SCORECARD_SESSIONS)) | {session}
+    rows = []
     for pick in rec.get("picks", []):
         if pick["date"] not in window:
             continue
-        df = frames.get(pick["ticker"])
-        if df is None:
-            continue
-        bars = later_bars(df, pick["date"], session)
-        if not bars:
-            continue
-        row = replay(pick, bars, "green")
-        plans += 1
-        if row["status"] == UNCERTAIN:
-            uncertain += 1
-            reasons[row["uncertainty"]] = reasons.get(row["uncertainty"], 0) + 1
-            continue
-        if row["status"] == NOT_FILLED:
-            not_filled += 1
-            continue
-        if row["status"] == UNREADABLE:
-            unreadable += 1
-            continue
-        filled += 1
-        if row["status"] not in SETTLED:
-            open_now += 1
-            continue
-        r = r_multiple(row, pick["stop"])
-        if r is None:
-            unscored += 1
-            continue
-        settled += 1
-        rs.append(r)
-        if r > 0:
-            wins += 1
-        elif r < 0:
-            losses += 1
-        exit_date = next((e["date"] for e in reversed(row.get("events", [])) if e.get("price") is not None), None)
-        move = _spy_move(spy, bars[0]["date"], exit_date or bars[-1]["date"])
-        if move is not None:
-            spy_moves.append(move)
+        horizon = str(exchange_sessions.next_sessions(date.fromisoformat(pick["date"]), OPEN_PLAN_SESSIONS)[-1])
+        through = min(session, horizon)
+        bars = later_bars(frames.get(pick["ticker"]), pick["date"], through)
+        row = {"ticker": pick["ticker"], "picked": pick["date"], "kind": pick["kind"],
+               "grade": pick.get("grade"), "regime": pick.get("regime"),
+               "evidence_ref": pick.get("evidence_ref"), "through": bars[-1]["date"] if bars else None,
+               "horizon": horizon, "r": None, "spy_pct": None, "filled": False,
+               "uncertainty": None, "status": None}
+        if pick["date"] == session:
+            row["bucket"] = "pending"
+        elif not bars:
+            row["bucket"] = "unmeasured"
+        else:
+            walk = replay(pick, bars, "green")
+            status = row["status"] = walk["status"]
+            row["uncertainty"] = walk.get("uncertainty")
+            if status in (UNCERTAIN, NOT_FILLED, UNREADABLE):
+                row["bucket"] = status
+            else:
+                row["filled"] = True
+                if status in SETTLED:
+                    row["r"] = r_multiple(walk, pick["stop"])
+                    row["bucket"] = "settled" if row["r"] is not None else "unscored"
+                    if row["r"] is not None:
+                        exit_date = next((e["date"] for e in reversed(walk.get("events", [])) if e.get("shares", 0) > 0), walk.get("last_date"))
+                        row["spy_pct"] = _spy_move(frames.get(BENCHMARK), bars[0]["date"], exit_date)
+                else:
+                    row["bucket"] = "open" if bars[-1]["date"] == through else "unmeasured"
+        rows.append(row)
+    return rows
+
+
+def summarize_scorecard(rows: list[dict]) -> dict:
+    """The public summary and offline strata share these exact denominators."""
+    counts = {key: sum(r["bucket"] == key for r in rows) for key in SCORECARD_BUCKETS}
+    rs = [r["r"] for r in rows if r["bucket"] == "settled"]
+    spy_moves = [r["spy_pct"] for r in rows if r["bucket"] == "settled" and r["spy_pct"] is not None]
+    settled = counts["settled"]
     readable = settled >= SCORECARD_MIN_PLANS
+    wins, losses, breakeven = (sum(r > 0 for r in rs), sum(r < 0 for r in rs), sum(r == 0 for r in rs))
+    reasons = {key: sum(r["uncertainty"] == key for r in rows if r["bucket"] == UNCERTAIN) for key in UNCERTAIN_REASONS}
     return {
-        "plans": plans, "filled": filled, "settled": settled, "open": open_now,
-        "uncertain": uncertain,
+        **counts, "plans": len(rows), "filled": sum(r["filled"] for r in rows),
         "uncertain_reasons": [{"kind": k, "count": reasons[k], "words": UNCERTAIN_WORDS[k]}
-                              for k in UNCERTAIN_REASONS if reasons.get(k)],
-        "not_filled": not_filled, "unreadable": unreadable, "unscored": unscored,
-        "wins": wins, "losses": losses,
+                              for k in UNCERTAIN_REASONS if reasons[k]],
+        "wins": wins, "losses": losses, "breakeven": breakeven,
+        "metric_denominator": settled,
         "win_rate": round(wins / settled, 3) if readable and settled else None,
         "avg_r": round(math.fsum(rs) / settled, 2) if readable and settled else None,
-        "sum_r": round(math.fsum(rs), 2) if settled else None,
+        "median_r": round(statistics.median(rs), 2) if readable and rs else None,
+        "sum_r": round(math.fsum(rs), 2) if rs else None,
         "spy_avg_pct": round(math.fsum(spy_moves) / len(spy_moves), 2) if readable and spy_moves else None,
+        "benchmark_pairs": len(spy_moves),
         "min_read": SCORECARD_MIN_PLANS, "readable": readable,
-        "sessions": SCORECARD_SESSIONS, "note": SCORECARD_NOTE,
     }
+
+
+def scorecard(rec: dict, frames: dict[str, pd.DataFrame], session: str, *, input_basis=None,
+              replay_rules_version=None, problem=None) -> dict:
+    """All retained plans; personal browser choices never enter this function.
+
+    Current-session plans await their first session. Missing observations stay
+    in the denominator, outside rates. The retained-file/window limits and
+    replay basis are explicit; original rules/scan attribution needs the exact
+    publication, not an inference from a ticker or from today's rules.
+    """
+    window = sessions_before(frames, session, SCORECARD_SESSIONS)
+    rows = scorecard_rows(rec, frames, session)
+    return {**summarize_scorecard(rows), "contract_version": SCORECARD_VERSION,
+        "sessions": SCORECARD_SESSIONS, "note": SCORECARD_NOTE,
+        "population": {"from": min(window) if window else session, "through": session,
+            "includes_current": True, "retained": len(rec.get("picks", [])),
+            "outside_window": len(rec.get("picks", [])) - len(rows),
+            "at_capacity": len(rec.get("picks", [])) >= MAX_PICKS,
+            "problem": problem or rec.get("problem")},
+        "input_basis": input_basis, "replay_rules_version": replay_rules_version}
 
 
 # --------------------------------------------------------------- nights ----

@@ -1571,11 +1571,16 @@
   }
  ],
  "scorecard": {
-  "plans": 47,
-  "filled": 18,
   "settled": 18,
   "open": 0,
+  "pending": 0,
   "uncertain": 27,
+  "not_filled": 2,
+  "unmeasured": 0,
+  "unreadable": 0,
+  "unscored": 0,
+  "plans": 47,
+  "filled": 18,
   "uncertain_reasons": [
    {
     "kind": "trigger_timing",
@@ -1583,19 +1588,39 @@
     "words": "reached the trigger after the open, at a time the bar cannot give"
    }
   ],
-  "not_filled": 2,
-  "unreadable": 0,
-  "unscored": 0,
   "wins": 0,
   "losses": 18,
+  "breakeven": 0,
+  "metric_denominator": 18,
   "win_rate": null,
   "avg_r": null,
+  "median_r": null,
   "sum_r": -3.12,
   "spy_avg_pct": null,
+  "benchmark_pairs": 18,
   "min_read": 20,
   "readable": false,
+  "contract_version": 2,
   "sessions": 60,
-  "note": "from bars alone, a model and not a brokerage record: a fill is booked only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold, settled by day 5"
+  "note": "from bars alone, a model and not a brokerage record: a fill is booked only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by day 5",
+  "population": {
+   "from": "2026-06-15",
+   "through": "2026-09-10",
+   "includes_current": true,
+   "retained": 47,
+   "outside_window": 0,
+   "at_capacity": false,
+   "problem": null
+  },
+  "input_basis": {
+   "provider": "Alpaca",
+   "feed": "sip",
+   "adjustment": "split",
+   "timeframe": "1Day",
+   "expected_session": "2026-09-10",
+   "evaluated_session": "2026-09-10"
+  },
+  "replay_rules_version": "a6354faa5da9"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -1685,7 +1710,7 @@
   "cash_budget": "Model allocation: what next-session tickets would commit against the configured equity, the model slots used (open model plans count), and every plan without a ticket with its kind and reason. Never a balance or buying power.",
   "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
-  "scorecard": "The rules' record over the published plans as a model of their fills, always with n, the read threshold and the uncertain count by reason. Rates are over settled plans alone. The rules' record, not yours. Null until a plan has settled.",
+  "scorecard": "All retained published plans in the stated window, including pending and missing evidence. Disjoint outcome counts reconcile to plans; rates use resolved plans alone, with an explicit denominator and minimum sample. Public model results, independent of personal selections.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
   "observations": "Public coverage of every published saveable signal, independent of local saves. Each signal keeps its own identity and 21-calendar-day window. Symbols carry the latest real bar plus up to 20 dated observations from already-fetched frames; missing bars stay missing, and missing frames retain earlier actual observations. This is research coverage, never a quote feed or personal trading history.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."

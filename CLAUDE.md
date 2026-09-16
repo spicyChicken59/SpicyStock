@@ -272,7 +272,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1321 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1333 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -2069,3 +2069,65 @@ Installed/latest design v2.13.0, source 14a752d: 22/22 hashes intact, zero drift
 Next: complete milestone 2 gates, open and merge only its accepted exact head,
 verify new main/publication, then complete milestone 3 using the existing public
 Record scorecard. No personal performance calculation or parallel outcome engine.
+
+
+## Checkpoint, 16 Sep 2026 — overnight campaign, public model scorecard
+
+Milestone 2 PR #74 merged as `e6fa0a967d1765e4600222853df3043c430f5d62`, from
+reviewed head `a2882e57929e4f92a7ba73d1823da77c0e365511`. Local verification:
+1,321 Python, 12 fixtures, 90 continuity, 182 chart and 4,437 page checks PASS.
+Exact-head Tests and Secret Scan PASS; clean/mergeable gates passed. Main matched
+the reviewed tree. Automatic publication, Pages and post-merge checks passed.
+No manual dispatch or live scan. User explicitly authorized these campaign merges.
+
+Milestone 3 branch `product/model-scorecard` starts from that accepted main.
+There were no other open PRs or intervening publication commits at branch start.
+The existing scorecard silently skipped plans without bars, hid coverage counts,
+and could lose a resolved result to gaps after its five-session horizon. Six
+new baseline tests failed before correction. Replay/fill/exit rules themselves
+remain unchanged; there is one outcome engine. Missing or stale unfinished
+observations now stay unmeasured, rather than disappearing or implying open.
+Current-publication plans stay pending and all eight outcome buckets reconcile.
+
+Reporting contract 2 records the population window, retained-file limitations,
+input basis and replay rules digest. Wins/losses/breakeven reconcile to resolved;
+mean/median R and win rate have that explicit denominator and the existing
+20-resolved display threshold. SPY has its own pair count. Counts are not an edge
+claim. The existing Record page leads with a compact shared count strip; rates
+are a line, methodology a disclosure, model-plan rows follow. Small samples and
+legacy incomplete accounting are explicit. Initial stacked mobile tiles were
+replaced after screenshot inspection; chart dimensions are unchanged.
+
+Offline `tools/scorecard_analysis.py` calls the same replay/summary, preserving
+unknowns in full partitions by original rules version, burst/dollar/both,
+grade, entry regime, kind and reader source. Native attribution requires all
+four original receipt digests and an integrity-verified publication. No source
+frame replay is claimed by that metadata check. Supplied offline outcome bars
+still need independently established basis; no provider calls are made.
+
+Twelve focused accounting/analysis tests cover missing/pending/stale coverage,
+all outcome classes, rounded breakeven, no invented zero result, horizon,
+retention, exact attribution and CLI behavior. Four mutations (missing-plan
+omission, stale-as-open, guessed attribution, small-sample rate display) were
+killed; independent controls passed. Focused record/pipeline/provenance/docs verification passes 222 tests; the
+complete fixture/browser journey passes 498 checks after the compact spacing
+pass. Final normal gates and exact CI are recorded in the PR closeout. Screenshots are inspected at 1280/390/320px
+in both themes. `.env.example` was reviewed; no environment/workflow change.
+
+Production data/picks, history, source objects, discovery/provenance v1, grading,
+plan constants and all existing receipts remain unchanged. Generated page
+fixtures differ only in scorecard and its descriptive contract: +634–635 raw
+bytes, +216–238 gzip bytes. Live data.json remains 2,962,276 raw / 264,521 gzip.
+No extra chart series or browser requests. Installed/latest design v2.13.0,
+source 14a752dd0269bd6ebbb7080eb0d9e1922cd1ef2c, 22/22 hashes, zero drift.
+
+KEEP the trust stack, original signals, browser-only selection and uncertain
+outcomes. FIX public denominator/coverage and compact Record readability.
+DEFER prospective qualifying-ticket evidence, actual execution reconciliation
+and trading-edge evaluation; none was performed with synthetic fixtures.
+OMIT Fidelity/broker connections, strategy tuning, parallel outcome engines,
+new dashboards/workflows, paid/provider/model calls and manual deployments.
+Next: complete exact-head gates, merge only the accepted PR, verify new main
+and automatic publication, then report completion of the three received
+milestones. The supplied campaign message ended mid-milestone 3 at “Personal”;
+no additional milestones or missing instructions were invented.
