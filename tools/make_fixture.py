@@ -25,6 +25,9 @@ Variants (each a night, all pinned to the same Thursday evening):
   red       six names break down: the down-4% alarm       -> "Stand aside."
   closed    no bar for the expected session               -> "Market closed."
 
+  empty     complete selection, zero reaction candidates -> honest empty result
+  partial   quiet market, budget stops after two thirds -> incomplete empty result
+
 Two sequels are the SAME market one session later, each run over the docs the
 `full` night wrote, so they inherit its record and its picks the way a real
 night does. They exist so a setup followed on the full night can be read
@@ -63,7 +66,7 @@ from tests.test_quality import burst_bar, frame as qframe, ideal_bars, quiet as 
 from tests.test_watchlist import coil  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures" / "page"
-VARIANTS = ("full", "degraded", "notrade", "yellow", "red", "closed")
+VARIANTS = ("full", "degraded", "notrade", "yellow", "red", "closed", "empty", "partial")
 #: the sequels, each run over the docs the `full` night wrote
 SEQUELS = ("next", "revised")
 EVENING = datetime(2026, 9, 10, 22, 30, tzinfo=timezone.utc)   # Thursday, after the close
@@ -353,6 +356,10 @@ def prior_picks(fake: FakeAlpaca) -> dict:
 def run_variant(variant: str, docs: Path) -> dict:
     fake = FakeAlpaca()
     tickers = register(fake, variant)
+    if variant in ("empty", "partial"):
+        quiet = make_ohlcv("flat", seed=SEED, days=280)
+        for ticker in tickers:
+            fake.add_history(ticker, quiet)
     docs.mkdir(parents=True, exist_ok=True)
     # a sequel inherits the record and the picks the full night wrote, the way
     # a real night inherits the last one; seeding it again would throw them away
@@ -399,9 +406,11 @@ def run_variant(variant: str, docs: Path) -> dict:
             mock.patch.object(market_data, "StockHistoricalDataClient", lambda *a, **k: FakeDataClient(fake, *a, **k)), \
             mock.patch("anthropic.Anthropic", make_client), \
             mock.patch.object(charts, "render_chart", render), \
-            mock.patch.object(pipeline.grader, "MODEL", "claude-sonnet-4-6"):
+            mock.patch.object(pipeline.grader, "MODEL", "claude-sonnet-4-6"), \
+            mock.patch.object(pipeline, "FETCH_CHUNK", max(1, len(tickers) * 2 // 3) if variant == "partial" else pipeline.FETCH_CHUNK):
         rep = pipeline.run_evening(tickers=tickers, docs=docs,
-                                   now=FOLLOW_EVENING if variant in SEQUELS else EVENING)
+                                   now=FOLLOW_EVENING if variant in SEQUELS else EVENING,
+                                   fetch_budget=-1 if variant == "partial" else pipeline.FETCH_BUDGET_SECONDS)
     if not rep.published:
         raise SystemExit(f"{variant}: the pipeline did not publish ({rep.failure})")
     data = json.loads((docs / pipeline.DATA_FILE).read_text())
@@ -433,6 +442,10 @@ def expected_shape(variant: str, data: dict) -> None:
     it fails here rather than shipping a fixture that shows nothing."""
     h1 = data["cover"]["h1"]
     problems = [p["kind"] for p in data["run"]["problems"]]
+    if variant in ("empty", "partial"):
+        assert data["bursts"] == [] and data["trades"] == []
+        assert data["run"]["coverage"]["acceptance"]["status"] == ("degraded" if variant == "partial" else "ok")
+        assert ("evaluated subset" in h1) == (variant == "partial")
     if variant == "full":
         assert h1.startswith("Trade tomorrow."), h1
         assert len(data["trades"]) >= 1 and data["beyond_cap"], (data["trades"], data["beyond_cap"])

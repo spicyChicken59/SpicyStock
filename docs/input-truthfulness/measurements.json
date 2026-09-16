@@ -1,0 +1,61 @@
+{
+  "base": "7e6d056672079e2ac46b6e5a84ae9589f1648e80",
+  "directory_fetched_at": "2026-09-15T22:23:17.742823+00:00",
+  "directory_compressed_sha256": "c31214fbabadbbfaf71cc9b64f1fd15d49e570f9a8eb714929880935152b289d",
+  "before": {
+    "stocks": 3039,
+    "intended_with_benchmark": 3040,
+    "selection_identity": "d900829ad8057af9",
+    "counts": {
+      "listed": 7141,
+      "volume under 100,000 shares": 700,
+      "not verified common stock": 1622,
+      "blank check company": 162,
+      "unknown industry": 162,
+      "price under $3": 1058,
+      "symbol format": 398,
+      "seed exception": 7,
+      "admitted": 3039
+    },
+    "estimated_initial_sdk_batches": 31,
+    "mock_sdk_requests": 31,
+    "mock_returned_bars": 790400,
+    "selection_median_ms": 33.204,
+    "mock_fetch_seconds": 13.26
+  },
+  "after": {
+    "stocks": 4797,
+    "intended_with_benchmark": 4798,
+    "selection_identity": "7f9181f7c83bcc8f",
+    "counts": {
+      "listed": 7141,
+      "not verified common stock": 1622,
+      "blank check company": 162,
+      "unknown industry": 162,
+      "symbol format": 398,
+      "seed exception": 7,
+      "admitted": 4797
+    },
+    "estimated_initial_sdk_batches": 48,
+    "mock_sdk_requests": 48,
+    "mock_returned_bars": 1247480,
+    "selection_median_ms": 35.776,
+    "mock_fetch_seconds": 20.186
+  },
+  "full_record_before": {
+    "raw": 228193,
+    "gzip": 27159
+  },
+  "full_record_after": {
+    "raw": 231724,
+    "gzip": 28034
+  },
+  "provider_calls": 0,
+  "model_calls": 0,
+  "limits": [
+    "One archived directory; not point-in-time membership.",
+    "Uniform synthetic 260-bar frames; returned bars and elapsed times are mocked, not live provider measurements.",
+    "Initial SDK batch estimates exclude pagination and retries; no dollar cost is inferred.",
+    "900-second fetch budget and 12-read model cap unchanged; candidate-dependent calls can vary within the cap."
+  ]
+}

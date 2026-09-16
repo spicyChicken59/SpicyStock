@@ -352,7 +352,7 @@ def test_a_nan_anywhere_becomes_null_and_is_counted():
     assert data["bursts"][0]["quality"]["base_depth_pct"] is None
     assert data["run"]["sanitised"]["replaced"] == 2
     assert set(data["run"]["sanitised"]["paths"]) == {"bursts[].volume_vs_prior", "bursts[].quality.base_depth_pct"}
-    assert "nan" not in json.dumps(data).lower().replace("financ", "")
+    json.dumps(data, allow_nan=False)  # reject non-finite numbers without matching words like provenance
     assert "NaN" not in json.dumps(data, allow_nan=False)
 
 

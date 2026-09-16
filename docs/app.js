@@ -431,7 +431,8 @@
     $('cover-eyebrow').textContent = 'spicystock · ' + (run.session || '—') + ' · evening run' +
       (asPublished ? ' · the verdict as published' : '');
     $('cover-h1').textContent = cover.h1 || 'No verdict.';
-    $('cover-dek').textContent = cover.dek || '';
+    const warning = inputWarning(run), dek = cover.dek || '';
+    $('cover-dek').textContent = dek + (warning && !dek.includes(warning) ? ' ' + warning : '');
     const facts = clear($('market-facts'));
     // the chip sits beside the LABEL, not after the value: it qualifies that
     // fact and says so by where it is, and the fact is two rows rather than
@@ -473,6 +474,20 @@
     links.appendChild(el('a', { 'class': 'sc-link--quiet', href: '#/method', text: 'method' }));
   }
 
+  function barBasis(run) {
+    const b = (run || {}).input_basis || {};
+    return b.adjustment === 'split' ? 'split-adjusted (not dividend-adjusted)' : 'adjustment basis not recorded';
+  }
+  function inputWarning(run) {
+    const cov = (run || {}).coverage || {}, a = cov.acceptance || {};
+    if (!cov.version) return 'Input completeness was not recorded for this publication; an empty result does not establish that no setups existed.';
+    if (a.status === 'ok') return '';
+    return 'Incomplete input coverage: ' + num(a.ready_stocks) + ' of ' + num(a.intended_stocks) +
+      ' intended stocks had usable session bars. ' + num(cov.unfetched_budget) + ' fetch names were never attempted ' +
+      '(fetch counts include the benchmark); stocks excluded by capacity: ' + num(a.capacity_excluded) + '; ' + num(cov.errors) +
+      ' scan/quality errors occurred. Results describe only the evaluated subset.';
+  }
+
   // ---------------------------------------------------------------- run strip (the method view)
   function stat(label, value, note, lead) {
     return el('div', { 'class': 'sc-stat' + (lead ? ' sc-stat--lead' : '') }, [
@@ -485,7 +500,9 @@
     const run = data.run || {}, cov = run.coverage || {}, g = run.graded || {}, reads = run.reads || {};
     const strip = clear($('run-strip'));
     strip.appendChild(stat('session', dateWords(run.session), run.session_state === 'closed' ? 'closed on ' + dateWords(run.expected_session) : 'evening run · ' + (run.status || '—')));
-    strip.appendChild(stat('covered', num(cov.with_bars) + ' of ' + num(cov.requested), num(cov.measured) + ' measured · ' + num(cov.stale) + ' stale · ' + num(cov.no_bars) + ' no bar'));
+    const a = cov.acceptance || {};
+    strip.appendChild(stat('session bars ready', cov.version ? num(a.ready_stocks) + ' of ' + num(a.intended_stocks) : 'not recorded',
+      cov.version ? num(cov.measured) + ' measured · ' + num(cov.unfetched_budget) + ' unfetched · ' + (a.status || 'unknown') : 'legacy record; completeness unknown'));
     strip.appendChild(stat('bursts', num(run.bursts), 'Bonde’s median night is ' + BONDE_MEDIAN_NIGHT));
     strip.appendChild(stat('graded', num(g.a) + ' A · ' + num(g.a_plus) + ' A+', num(g.b) + ' B · ' + num(g.c) + ' C · ' + num(g.skip) + ' skip'));
     strip.appendChild(stat('claude', num(reads.done) + ' of ' + num(reads.requested) + ' read', reads.unavailable_reason ? 'unavailable: ' + words(reads.unavailable_reason) : 'chart + numbers, may only lower a grade'));
@@ -496,7 +513,32 @@
     const run = data.run || {}, uni = run.universe || {}, app = data.app || {}, acct = data.account || {};
     const meta = clear($('run-meta'));
     const line = (t) => meta.appendChild(el('li', { text: t }));
-    line('Bars: Alpaca ' + String(run.feed || '').toUpperCase() + ', daily, the request window sixteen minutes behind the clock; ' + num(uni.size) + ' common stocks from ' + (uni.source || '—') + (uni.label ? ' (' + uni.label + ')' : '') + '.');
+    line('Bars: Alpaca ' + String(run.feed || '').toUpperCase() + ', daily, ' + barBasis(run) + ', the request window sixteen minutes behind the clock; ' + num(uni.size) + ' selected stocks from ' + (uni.source || '—') + (uni.label ? ' (' + uni.label + ')' : '') + '.');
+    const cov = run.coverage || {}, a = cov.acceptance || {}, sel = uni.selection || {};
+    line('Universe snapshot: ' + (uni.fetched_at || 'no directory timestamp recorded') +
+      '; relative to scan session: ' + words(uni.snapshot_relation || 'unrecorded') +
+      '. ' + (uni.membership_limit || 'This record does not establish historical point-in-time membership.'));
+    if (sel.kind) {
+      line('Selection: ' + num(sel.listed) + ' directory rows; ' + num(sel.security_admitted) + ' security-type admissions; ' +
+        num(sel.security_excluded) + ' exclusions; ' + num(sel.duplicate_rows) + ' duplicate rows; ' +
+        num((sel.seed_overrides || {}).count) + ' seed overrides; ' + num((sel.seed_added || {}).count) + ' seed additions; ' +
+        num(sel.manual_admitted || 0) + ' directly selected; ' + num((sel.capacity_excluded || {}).count) + ' capacity exclusions.');
+      const reasons = Object.entries(sel.exclusions || {}).map(([key, p]) => words(key) + ': ' + num(p.count));
+      if (reasons.length) line('Classification exclusions: ' + reasons.join('; ') + '.');
+    }
+    if (cov.version) {
+      line('Coverage / input basis: ' + num(a.ready_stocks) + ' of ' + num(a.intended_stocks) + ' intended stocks had usable session bars (' +
+        (isNum(a.fraction) ? (100 * a.fraction).toFixed(1) + '%' : 'unknown') + '); acceptance ' + a.status +
+        '. The benchmark is excluded from this denominator. Coverage below ' + (100 * a.minimum_fraction) + '% refuses publication; any missing stocks or capacity cuts degrade it.');
+      line('Fetch, including benchmark: ' + num(cov.intended) + ' intended = ' + num(cov.requested) + ' requested + ' + num(cov.unfetched_budget) +
+        ' budget-unfetched. Requested = ' + num(cov.with_bars) + ' returned + ' + num(cov.no_bars) + ' no bars + ' + num(cov.dropped) + ' failed after retry.');
+      line('Returned frames: ' + num(cov.stale) + ' stale; ' + num(cov.gapped) + ' missing required previous session; ' + num(cov.unreadable) +
+        ' unreadable; ' + num(cov.session_ready) + ' session-ready. ' + num(cov.duplicate_bars) + ' duplicate timestamps repaired (overlapping diagnostic).');
+      line('Actual sessions: ' + Object.entries((cov.sessions || {}).latest_bar_dates || {}).map(([day, n]) => day + ': ' + num(n)).join('; ') +
+        '. Expected ' + (run.expected_session || 'unknown') + '; evaluated ' + (run.session || 'unknown') + '.');
+      line('Scan: ' + num(cov.price_excluded) + ' excluded by current-session price; ' + num(cov.scan_ready) + ' scan-ready; ' + num(cov.measured) +
+        ' measured; ' + num(cov.errors) + ' scan/quality errors. Reaction matches: ' + Object.entries(cov.matched || {}).map(([k, n]) => k + ': ' + num(n)).join('; ') + '.');
+    } else line(inputWarning(run));
     line('Graded by ' + (run.model || '—') + ' from the chart and the numbers; the model may only lower a grade, never raise it.');
     line('Rules ' + (app.rules_version || '—') + ': a digest of every strategy constant in this record, so two nights under different numbers never read as one. Universe identity ' + (uni.identity || '—') + '.');
     line('Timing: ' + num(run.elapsed_seconds) + ' s for the run, ' + num(run.fetch_seconds) + ' s of it fetching; generated ' + (run.published_at || '—') + '.');
@@ -521,7 +563,7 @@
     const body = clear($('method-body'));
     body.appendChild(el('p', { text: 'SpicyStock is an implementation of Pradeep Bonde’s momentum burst method with explicit assumptions: a 4% range-expansion day out of a quiet base, bought the next morning inside a narrow zone with the stop under the burst bar, sold into strength over three to five days, and only when breadth allows it. It is not a proven edge and it knows nothing about what you hold.' }));
     body.appendChild(el('p', { text: 'Setting up is the anticipation list: quiet, coiled names inside established momentum, with a buy stop a few cents over the box. Bursts are the range-expansion days the scan found on the session, graded on Bonde’s checklist; a grade, a plan and a ticket are three different things, and the page says which a stock has. Every ticket is sized at its limit, the highest fill it permits, so the fixed quantity keeps the risk budget, the position cap and his 4% stop line at every fill it can take; a stop past that line at the limit withholds the ticket and keeps the setup.' }));
-    body.appendChild(el('p', { text: 'The Record is a model: a fill is booked only at the next open inside the ticket, the published stop is one R, sales are whole shares, and a fill the daily bars cannot establish is uncertain and scored nowhere. Paper prices, one venue’s prints, no slippage. Not investment advice.' }));
+    body.appendChild(el('p', { text: 'The Record is a model: a fill is booked only at the next open inside the ticket, the published stop is one R, sales are whole shares, and a fill the daily bars cannot establish is uncertain and scored nowhere. Paper prices, published daily bars, no slippage. Not investment advice.' }));
     body.appendChild(el('p', null, [el('a', { href: METHOD_URL, target: '_blank', rel: 'noopener', text: 'Whose number each rule is (knowledge/method.md)' }), d.createTextNode(' · '), el('a', { href: RULEBOOK_URL, target: '_blank', rel: 'noopener', text: 'the rulebook the chart reader follows (knowledge/strategy.md)' })]));
     const notes = clear($('account-notes'));
     (acct.notes || []).forEach((n) => notes.appendChild(el('li', { text: n })));
@@ -1330,7 +1372,7 @@
     if (lens === 'a') why = 'No ' + noun + ' in tonight’s record is graded ' + model.tradeGrades.join(' or ') + '. All ' + plural(total, noun) + ' are still here to inspect.';
     else if (lens === 'ticket') why = 'No ' + noun + ' carries a ticket in tonight’s record' + (reg === 'red' ? ': breadth is red, so the run wrote no order' : '') + '. All ' + plural(total, noun) + ' are still here to inspect.';
     else why = 'No saved setup matches this scan. My setups contains all your saved signals, including those absent or hidden here.';
-    box.appendChild(el('p', { text: why }));
+    box.appendChild(el('p', { text: why + (inputWarning(current.run) ? ' ' + inputWarning(current.run) : '') }));
     const out = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-lens-out': 'all', text: 'Show all · ' + total });
     out.addEventListener('click', () => { setLens(stage, 'all', true); state.gesture = true; applyRoute(parseHash(w.location.hash)); });
     box.appendChild(out);
@@ -1347,7 +1389,7 @@
     } else {
       why = 'Nothing setting up tonight.' + (isNum(counts.coiled) ? ' The anticipation scans found ' + num(counts.coiled) + ' quiet ' + (counts.coiled === 1 ? 'stock' : 'stocks') + ' inside momentum' + (isNum(counts.admitted) ? ', ' + num(counts.admitted) + ' admitted' : '') + '.' : '');
     }
-    box.appendChild(el('p', { text: why }));
+    box.appendChild(el('p', { text: why + (inputWarning(run) ? ' ' + inputWarning(run) : '') }));
     if (otherN) {
       const b = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'See ' + STAGE_NAME[other] + ' · ' + otherN });
       b.addEventListener('click', () => { state.gesture = true; navigate(routeHash(other, state.selected[other])); });
@@ -2202,6 +2244,7 @@
       evidence: followEvidenceOf(c, record),
       provenance: record.provenance || { session: run.session, published_at: run.published_at, run_id: run.run_id, rules_version: app.rules_version },
       snapshot: {
+        input_basis: run.input_basis || null, universe: run.universe ? { source: run.universe.source, fetched_at: run.universe.fetched_at, identity: run.universe.identity, snapshot_relation: run.universe.snapshot_relation } : null,
         name: c.name || '', close: isNum(b.close) ? b.close : null, close_date: run.session || '', grade: c.grade || null, score: isNum(c.score) ? c.score : null,
         status: c.status, status_words: statusWords(c.status)[0], scan: b.scan || null, reader_reason: text((b.claude || {}).reason),
         levels: { entry_low: burst ? plan.entry_low : plan.trigger, entry_high: burst ? plan.entry_high : plan.limit, trigger: burst ? plan.entry_ref : plan.trigger,
@@ -2949,6 +2992,7 @@
       el('div', { 'class': 'ss-saved__chips' }, [chip(archivedWords(item), snap.status === 'ticket' ? 'good' : 'neutral', true), item.demo ? chip('demo', 'warn') : null]),
       close]));
     wrap.appendChild(el('p', { 'class': 'ss-saved__note', text: cap((text(snap.status_words) || 'no ticket')) + ' in the ' + dateWords(item.session) + ' record — a fact about that record, not a ticket available now.' }));
+    wrap.appendChild(el('p', { 'class': 'sc-hint', 'data-saved-input-basis': '', text: 'Original bars: ' + barBasis({ input_basis: snap.input_basis }) + '. Directory snapshot: ' + ((snap.universe || {}).fetched_at || 'not recorded') + '; historical membership is not established.' }));
     wrap.appendChild(annotationForm(item));
     wrap.appendChild(savedSignalSection(item));
     wrap.appendChild(savedSinceSection(item));
@@ -3041,7 +3085,7 @@
       ? [text(plan.pre_open_check) ? cap(sentence(plan.pre_open_check)) : '', isNum(plan.stop) ? 'Stop ' + stopWords(plan) + (plan.stop_basis !== 'max_stop' && isNum(plan.stop_pct) && isNum(plan.sizing_price) ? ' · ' + plain(plan.stop_pct) + '% under the ' + usd(plan.sizing_price) + ' limit' : '') + '.' : '']
       : [cap(sentence(c.reason))];
     const riskText = firstText(cl.key_risk, plan.stop_risk_reason, plan.hazards, plan.notes);
-    const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'None recorded beyond the method’s own: paper prices, one venue’s prints, no slippage.'),
+    const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'None recorded beyond the method’s own: paper prices, published daily bars, no slippage.'),
       c.series.length ? '' : 'No bars are archived for this name, so there is no chart to read.'];
     return [['why', 'Why this stock?', why], ['need', 'What would need to happen?', need], ['wait', 'What invalidates it, or makes me wait?', wait], ['risk', 'Principal risk or limitation', risk]];
   }
@@ -3057,7 +3101,7 @@
       ? [text(plan.gap_rule) ? cap(sentence(plan.gap_rule)) : '', isNum(plan.stop) ? 'Stop ' + usd(plan.stop) + (text(plan.stop_basis) ? ' · ' + plan.stop_basis : '') + (isNum(plan.stop_pct) && isNum(plan.limit) ? ' · ' + plain(plan.stop_pct) + '% under the ' + usd(plan.limit) + ' limit' : '') + '.' : '']
       : [cap(sentence(c.reason))];
     const riskText = firstText(plan.stop_risk_reason, plan.hazards, plan.notes);
-    const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'None recorded beyond the method’s own: paper prices, one venue’s prints, no slippage.'),
+    const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'None recorded beyond the method’s own: paper prices, published daily bars, no slippage.'),
       c.series.length ? '' : 'No bars are archived for this name, so there is no chart to read.'];
     return [['why', 'Why this stock?', why], ['need', 'What would need to happen?', need], ['wait', 'What invalidates it, or makes me wait?', wait], ['risk', 'Principal risk or limitation', risk]];
   }
@@ -3284,7 +3328,7 @@
       } else kids.push(el('p', { 'class': 'sc-hint ss-nomodel', text: 'Graded by the checklist alone; no usable chart-reader judgement' + (cl && text(cl.error) ? ' (' + cl.error + ')' : '') + '.' }));
     } else kids.push(el('p', { 'class': 'sc-hint', text: 'Anticipation names are measured, not graded: no chart reader, no letters.' }));
     kids.push(factList([
-      ['bars', 'Alpaca ' + String(run.feed || '').toUpperCase() + ', daily', c.series.length ? plural(c.series.length, 'session') + ' archived through ' + dateWords(c.series[c.series.length - 1].date) : 'none archived for this name'],
+      ['bars', 'Alpaca ' + String(run.feed || '').toUpperCase() + ', daily, ' + barBasis(run), c.series.length ? plural(c.series.length, 'session') + ' archived through ' + dateWords(c.series[c.series.length - 1].date) : 'none archived for this name'],
       ['rules', app.rules_version || '—', 'the digest of every strategy constant in this record'],
       ['run', (run.status || '—') + ' · ' + dateWords(run.session), 'published ' + timeET(run.published_at)],
       b.chart ? ['chart file', b.chart, 'the PNG the grader was shown, when the run rendered it'] : null
@@ -3531,6 +3575,11 @@
     return 'If you submitted an order that did not fill, check or cancel it in your broker: SpicyStock places nothing and cancels nothing.';
   }
   function nextAction(data, s) {
+    const result = nextActionCore(data, s), warning = inputWarning(data.run);
+    if (warning) result[1] += ' ' + warning;
+    return result;
+  }
+  function nextActionCore(data, s) {
     const bursts = by(data.bursts || []);
     const orders = (data.trades || []).map((t) => bursts[t]).filter((b) => b && b.plan && b.plan.order_json).length;
     const open = (data.open_plans || []).length, red = ((data.breadth || {}).regime || {}).verdict === 'red';
@@ -3567,10 +3616,10 @@
   function renderFooter(data) {
     const run = data.run || {}, uni = run.universe || {}, app = data.app || {};
     const foot = clear($('foot-line'));
-    foot.appendChild(d.createTextNode('bars: Alpaca ' + String(run.feed || '').toUpperCase() + ', daily, 16-minute holdback · universe: ' + (uni.source || '—') + ', ' + num(uni.size) + ' common stocks · graded by ' + (run.model || '—') + ' · rules ' + (app.rules_version || '—') + ' · run ' + (run.status || '—') + ' · '));
+    foot.appendChild(d.createTextNode('bars: Alpaca ' + String(run.feed || '').toUpperCase() + ', daily, ' + barBasis(run) + ', 16-minute holdback · universe: ' + (uni.source || '—') + ', ' + num(uni.size) + ' common stocks · graded by ' + (run.model || '—') + ' · rules ' + (app.rules_version || '—') + ' · run ' + (run.status || '—') + ' · '));
     if (run.run_id) { foot.appendChild(el('a', { href: 'https://github.com/' + REPO + '/actions/runs/' + run.run_id, target: '_blank', rel: 'noopener', text: 'run ' + run.run_id })); foot.appendChild(d.createTextNode(' · ')); }
     foot.appendChild(el('a', { href: RUNS_URL, target: '_blank', rel: 'noopener', text: 'dispatch' }));
-    foot.appendChild(d.createTextNode(' · generated ' + (run.published_at ? timeET(run.published_at) : '—') + ' · paper prices, one venue’s prints, no slippage · not investment advice'));
+    foot.appendChild(d.createTextNode(' · generated ' + (run.published_at ? timeET(run.published_at) : '—') + ' · paper prices, published daily bars, no slippage · not investment advice'));
   }
 
   // ---------------------------------------------------------------- live run log (optional; silent on failure)
