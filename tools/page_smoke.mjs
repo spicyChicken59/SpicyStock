@@ -17,6 +17,7 @@
    exception, a failed request that is not a chart PNG or a Google font).
    Needs playwright (npm install --no-save playwright) and its chromium. */
 import { createServer } from 'node:http';
+import { checkActionability } from './actionability_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -97,6 +98,7 @@ async function open(browser, base, dataUrl, now, width, opts) {
     // suite about something else opens on the whole stage rather than a subset
     if (lens || sort) try { localStorage.setItem('spicystock:lens:v1', JSON.stringify({ bursts: lens || null, 'setting-up': lens || null, sort: sort || null })); } catch (e) { /* no storage */ }
   }, { dataUrl, now, theme: opts.theme, lens: opts.lens || null, sort: opts.sort || null });
+  if (opts.beforeLoad) await opts.beforeLoad(page, context);
   await page.goto(base + '/docs/index.html' + (opts.hash || ''), { waitUntil: 'load' });
   await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'), null, { timeout: 15000 });
   await page.waitForTimeout(250);
@@ -228,14 +230,16 @@ async function checkDetail(page, variant, b, data, blocked) {
   const action = await text(page, '#detail .ss-action');
   const ticketAttr = await page.locator('#detail .ss-action').getAttribute('data-ticket');
   check(`${variant} ${b.ticker} action never says buy now`, !/buy now/i.test(action), action);
-  const btn = await text(page, '#detail .ss-action > button[data-open]');
+  const btn = await text(page, '#detail .ss-action [data-open]');
   if (status === 'ticket' && !blocked) {
     eq(`${variant} ${b.ticker} action carries the order`, ticketAttr, 'order');
-    check(`${variant} ${b.ticker} action prints the order line`, action.includes(b.plan.order_line), action);
-    eq(`${variant} ${b.ticker} action button`, btn, 'View conditional plan');
+    const order = b.plan.order_json;
+    eq(`${variant} ${b.ticker} action prints recorded order fields`, await page.locator('#detail [data-plan-value]').allTextContents(),
+      [usd(order.stop_price), usd(order.limit_price), usd(order.then.stop_price), order.quantity + ' shares']);
+    eq(`${variant} ${b.ticker} action button`, btn, 'Plan details');
   } else if (status === 'ticket') {
     eq(`${variant} ${b.ticker} action withholds the order on a blocked page`, ticketAttr, 'blocked');
-    eq(`${variant} ${b.ticker} action button`, btn, 'Inspect conditions');
+    eq(`${variant} ${b.ticker} action button`, btn, 'Inspect recorded plan');
   } else {
     eq(`${variant} ${b.ticker} action status`, ticketAttr, status);
     eq(`${variant} ${b.ticker} action button`, btn, 'Inspect conditions');
@@ -426,7 +430,7 @@ async function checkVariant(browser, base, variant, data) {
     const first = trades.find((b) => b.plan && b.plan.order_json);
     if (first) {
       await clickPick(page, first.ticker);
-      await page.locator('#detail .ss-action > button[data-open]').click();
+      await page.locator('#detail .ss-action [data-open]').click();
       await page.waitForTimeout(150);
       eq(`${variant} the plan disclosure opens on request`, await page.evaluate(() => document.getElementById('disc-plan').open), true);
       check(`${variant} focus lands on the plan`, (await active(page)).startsWith('/'), await active(page));
@@ -759,7 +763,7 @@ async function checkMobile(browser, base, data) {
   const actionGeom = await page.evaluate(() => {
     const bar = document.querySelector('#detail .ss-action');
     if (!bar) return null;
-    const p = bar.querySelector('p'), btn = bar.querySelector('button[data-open]');
+    const p = bar.querySelector('p:last-of-type'), btn = bar.querySelector('.ss-action__controls');
     if (!p || !btn) return null;
     const range = document.createRange(); range.selectNodeContents(p);
     const text = range.getBoundingClientRect(), pbox = p.getBoundingClientRect(), bbox = btn.getBoundingClientRect(), bar0 = bar.getBoundingClientRect();
@@ -823,7 +827,8 @@ async function checkMobile(browser, base, data) {
     eq(`${width} ${theme} card tools page errors`, rail.errors, []);
     await rail.context.close();
   }
-  // the desktop's first screen: market context, the stages, the stocks and a meaningful part of the chart
+  // The first screen now answers whether there is an entry and shows its
+  // recorded levels. The unchanged full-height chart follows that decision.
   const desk = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280);
   const d = async (sel) => desk.page.locator(sel).first().boundingBox();
   const deskStages = await desk.page.locator('#stages .ss-stage__sub').evaluateAll((els) => els.map((e) =>
@@ -831,7 +836,9 @@ async function checkMobile(browser, base, data) {
   eq('the phone and the desktop stage cards carry the same ticket counts', phoneStages, deskStages);
   const bar = await d('#market-bar'), st = await d('#stages'), firstPick = await d('#pick-list .ss-pick'), chart = await d('#chart-mount');
   check('desktop: the market bar, the stages and the first stock are in the first screen', bar && st && firstPick && bar.y >= 0 && st.y + st.height <= 900 && firstPick.y + firstPick.height <= 900, JSON.stringify([bar, st, firstPick]));
-  check('desktop: a meaningful part of the chart is in the first screen', chart && chart.y + 220 <= 900, JSON.stringify(chart));
+  const levelsBox = await desk.page.locator('#detail .ss-action__levels').boundingBox();
+  check('desktop: the recorded action levels fit in the first screen', levelsBox && levelsBox.y + levelsBox.height <= 900, JSON.stringify(levelsBox));
+  check('desktop: the chart follows the action summary', chart && levelsBox && chart.y > levelsBox.y + levelsBox.height, JSON.stringify(chart));
   if (shotsDir) await desk.page.screenshot({ path: path.join(shotsDir, 'full-1280-viewport.png') });
   await desk.context.close();
 }
@@ -1159,7 +1166,7 @@ async function checkStates(browser, base, data) {
       }
       if (field === 'observations') check('without the observation block the shelf still renders', (await count(page, '#following .ss-following__empty')) === 1 || (await count(page, '#following .ss-followed')) >= 0, 'shelf');
       if (field === 'bursts.series') {
-        eq('without bars the first burst shows the chart-unavailable state', await count(page, '#detail [data-chart="unavailable"]'), 1);
+        eq('without browser bars the first burst offers its retained source', await count(page, '#detail [data-load-chart]'), 1);
         eq('without bars no chart is drawn', await count(page, '#detail .sc-chart--stock'), 0);
         eq('without bars the conditions still stand', await count(page, '#disc-checklist .sc-signal'), data.bursts[0].quality.checks.length);
         await clickPick(page, data.bursts[1].ticker);
@@ -2599,7 +2606,7 @@ async function checkCompare(browser, base, data) {
   await nb.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${A.ticker}"]) .ss-pin`);
   await nb.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${B.ticker}"]) .ss-pin`); await nb.page.waitForTimeout(200);
   await nb.page.click('#compare-open'); await nb.page.waitForTimeout(500);
-  eq('the side without bars says so rather than inventing a chart', [await count(nb.page, '#compare [data-side="b"] [data-chart="unavailable"]'), await count(nb.page, '#compare [data-side="b"] .sc-chart--stock')], [1, 0]);
+  eq('the side without browser bars offers its retained source without inventing a chart', [await count(nb.page, '#compare [data-side="b"] [data-load-chart]'), await count(nb.page, '#compare [data-side="b"] .sc-chart--stock')], [1, 0]);
   eq('and the side with bars still draws', await count(nb.page, '#compare [data-side="a"] .sc-chart--stock'), 1);
   check('the facts still compare what the record does carry', (await text(nb.page, '#compare-table')).includes(B.ticker), 'facts');
   eq('no-bars comparison page errors', nb.errors, []);
@@ -3030,7 +3037,7 @@ async function checkSession(browser, base, full) {
   check('it gives the reason and keeps the setup readable',
     bar.includes(`entry window for ${forDay} ended`) && /stay readable/.test(bar), bar);
   check('its button inspects the recorded ticket rather than offering it',
-    (await said(page, '.ss-action [data-open]')).includes('Inspect the recorded ticket'), await said(page, '.ss-action [data-open]'));
+    (await said(page, '.ss-action [data-open]')).includes('Inspect recorded plan'), await said(page, '.ss-action [data-open]'));
   await openAll(page, '#disc-plan');
   eq('the plan disclosure offers no copy control', await count(page, '#disc-plan [data-copy]'), 0);
   eq('and prints what the record published, as history', await count(page, '#disc-plan [data-recorded-ticket]'), 1);
@@ -3053,7 +3060,7 @@ async function checkSession(browser, base, full) {
   check('the last observed data timestamp stays visible inside the window',
     /published \d+:\d\d [AP]M ET/.test(await said(page, '#market-facts [data-fact="data"]')), await said(page, '#market-facts [data-fact="data"]'));
   check('the action bar names the window it fills inside, and never "tomorrow"',
-    (await said(page, '.ss-action')).includes(`inside ${forDay}`) && !/tomorrow/i.test(await said(page, '.ss-action')), await said(page, '.ss-action'));
+    (await said(page, '.ss-action')).includes(next.run.timing.applicable_session) && !/tomorrow/i.test(await said(page, '.ss-action')), await said(page, '.ss-action'));
 
   // ---- a tab left open ACROSS the deadline, the clock its own
   {
@@ -3577,6 +3584,7 @@ async function main() {
       const data = JSON.parse(await readFile(path.join(FIXTURES, `${v}.json`), 'utf8'));
       await checkVariant(browser, base, v, data);
     }
+    if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
     if (runs('calendar')) await checkExchangeCalendar(browser, base);
     if (runs('provenance')) await checkPlanEvidence(browser, base);
     if (runs('mobile')) await checkMobile(browser, base, full);

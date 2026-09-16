@@ -104,9 +104,9 @@ open plans, scorecard) → `report.build()` and validate → email. Exit codes
 The page (`docs/app.js`) is a small hash-routed application over the
 record: Today’s scan / Explore (the market in a line, two stage cards that always say how
 many of their stocks carry a ticket, a lens row beside them, one selectable
-card per stock, one stock in focus with its chart, four decision answers,
-the action area -- the design system's `.sc-actionbar`, a row on a desktop
-and a stack on a phone -- and four disclosures), Record, Market and Method,
+card per stock, one stock in focus with its recorded entry decision, chart,
+four decision answers and four disclosures; a Burst's compact action grid
+precedes its chart, while anticipation keeps its existing action position), Record, Market and Method,
 with the tickets and the scan as disclosures under the workspace and one
 next action under every view.
 
@@ -272,7 +272,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1276 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1304 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -1964,3 +1964,57 @@ DEFER prospective live qualifying-ticket validation and profitability evaluation
 OMIT tuning, dashboard expansion, anticipation/EP edits and paid membership
 research. Provider/model/market scan, email, manual dispatch, merge and deployment
 actions: zero. Next: review the focused PR; no merge authorization is inferred.
+
+
+## Checkpoint, 16 Sep 2026 — Burst actionability and chart readability
+
+Base `964316f30a81035abf4dd5bd4be3ffbb2520a2fe` (merge #72), verified against
+origin/main; branch `ux/burst-actionability`. Clean starting checkout, no open
+PRs or applicable AGENTS.md. Latest checkpoint read. Astra only, no subagents.
+Normal Stock branch/edit/commit/push/PR work is authorized in this session;
+no merge, deployment, provider/model scan, email or settings/secret changes.
+
+Before: the selected Burst put its chart and four explanations ahead of an
+order sentence and disclosure. Now its recorded conditional stop-limit values
+and applicable session appear directly under the stock header. Copy uses the
+same recorded ticket and clock guard. Plan details retains sizing/terms; a
+non-ticket/expired setup leads with No SpicyStock entry and its existing reason.
+Browse cards stay compact. No trading levels or sizing are computed in JavaScript.
+
+Candidate series remain first choice. New provenance-enabled Bursts lacking
+browser series offer explicit Load recorded chart in detail/Compare. The bounded
+same-origin gzip reader verifies typed float64 source identity and reference
+context/dates, then displays up to 120 exact retained rows. It does not replay
+strategy or claim the complete decision chain is browser-verified. No eager
+requests or new assets; one 8,501-byte gzip fixture source request on demand,
+zero on repeat selection. Failed/late responses preserve the rest of the page.
+Saved originals and history recovery are unchanged. The committed legacy snapshot
+still has 25 charts across 342 Bursts and no source receipts: no fabricated
+retroactive recovery is claimed. See docs/actionability/README.md and measurements.
+
+Evidence selection still only highlights. Focus evidence explicitly frames
+recorded dates with context; restore returns to the prior Setup/60/120 range.
+Focus never writes that preference. Earlier focused ranges cannot relabel their
+last bar as the burst. Screenshots at 1280/390/320px in both themes support the
+new composition; drawing heights stay 400/300px. The first desktop viewport now
+prioritizes actionable values, with the full chart immediately following.
+
+Validation: 1,304 Python tests, all 12 fixture checks, 89 continuity checks and
+182 chart checks pass. Three integrity/value/focus mutations are killed with
+six unaffected controls. The full page run passed 4,379/4,380: its only failure
+was an old missing-browser-bars assertion expecting unavailable instead of the
+new retained-source button. The corrected states suite passes 168/168; a full
+4,380-check rerun and automatic exact-head CI are recorded in the PR closeout.
+The first chart gate caught ES5 syntax in the standalone renderer; moving the
+loader to app.js restored app-chart.js byte-for-byte and the final gate passes.
+All 1,497 protected source/fixture/history/design files match the base. No
+runtime rule, discovery/provenance version or evidence identity changes. Existing
+September 11/14 grades and data/picks remain immutable. Installed shared design
+v2.13.0 retains all 22 hashes; siblings and shared upstream were read-only.
+
+KEEP #68–#72 trust contracts, history, annotations, calendar, grading and ticket
+gates. FIX selected-stock actionability, authentic optional charts and explicit
+focus only. DEFER following-plan observation/reconciliation, live qualifying-ticket
+validation and profitability work. OMIT Fidelity connectivity, personal execution
+tracking, scoreboards, strategy changes and paid research. Next: final gates and
+one focused PR for review; do not merge or deploy.

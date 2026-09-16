@@ -190,6 +190,23 @@
    this page is here. Its phone layout -- the sentence releasing the row
    basis it would otherwise keep as a 260px height -- lives upstream too. */
 .ss-action { margin-top: var(--sc-s3); }
+.ss-action--burst { display: flex; flex-direction: column; align-items: stretch; gap: var(--sc-s2); }
+.ss-action--burst > p { flex: none; margin: 0; }
+.ss-action__head { display: flex; gap: var(--sc-s2); justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.ss-action__head h3 { margin: 0; font: 700 var(--sc-text-md)/1.4 var(--sc-font-body); color: var(--sc-heading); }
+.ss-action__levels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sc-s2); margin: 0; }
+.ss-action__levels dt { font: 500 10px/1.5 var(--sc-font-mono); color: var(--sc-text-2); text-transform: uppercase; }
+.ss-action__levels dd { margin: 2px 0 0; font: 700 var(--sc-text-lg)/1.4 var(--sc-font-body); color: var(--sc-heading); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.ss-action__controls { display: flex; flex-wrap: wrap; gap: var(--sc-s2); }
+.ss-action--burst .ss-action__sizing { font-size: var(--sc-text-sm); color: var(--sc-text-2); }
+.ss-chart-focus { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--sc-s2); margin-top: var(--sc-s2); font-size: var(--sc-text-sm); }
+.ss-chart-focus[hidden] { display: none; }
+[data-chart-recovery] .ss-chart-mount > [role="status"] { font-size: var(--sc-text-sm); margin-block: var(--sc-s3) var(--sc-s2); }
+@media (max-width: 600px) {
+  .ss-action__levels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ss-action__controls > button { flex: 1 1 110px; min-height: 44px; }
+  .ss-chart-focus button, [data-evidence-focus], [data-load-chart] { min-height: 44px; }
+}
 .ss-detail .sc-disclosure { margin-block: var(--sc-s2) 0; }
 .ss-detail .sc-disclosure__body > .sc-eyebrow { margin-top: var(--sc-s3); }
 .ss-detail .sc-disclosure__body > .sc-eyebrow:first-child { margin-top: 0; }
